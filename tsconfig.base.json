@@ -7,8 +7,9 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["libs/shared/*"],
-      "@/server/src/*": ["apps/server/src/*"]
+      "@/client/*": ["apps/client/src/*"],
+      "@/server/*": ["apps/server/src/*"],
+      "@/shared/*": ["libs/shared/src/*"],
     },
     "esModuleInterop": true,
     "skipLibCheck": true,

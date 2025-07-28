@@ -1,14 +1,17 @@
 import { prisma } from '../../prisma/client';
-import { RegisterInput } from './auth.types';
-import { hashPassword } from '../../utils/hash';
+import { RegisterInput, LoginInput } from './auth.types';
+import { hashPassword, comparePassword } from '../../utils/hash';
+import jwt from 'jsonwebtoken';
 
-export const registerUser = async (input: RegisterInput) => {
+export const registerUser = async (
+    input: RegisterInput
+  ) => {
   const existing = await prisma.user.findUnique({
     where: { email: input.email },
-  });
+  }); 
 
   if (existing) {
-    throw new Error('User already exists');
+    throw new Error('User with this email already exists');
   }
 
   const hashed = await hashPassword(input.password);
@@ -21,4 +24,28 @@ export const registerUser = async (input: RegisterInput) => {
   });
 
   return user;
+};
+
+export const loginUser = async (input: LoginInput) => {
+  const user = await prisma.user.findUnique({ where: { email: input.email } });
+
+  if (!user) {
+    throw new Error('Invalid email or password');
+  }
+
+  const isValid = await comparePassword(input.password, user.password);
+
+  if (!isValid) {
+    throw new Error('Invalid email or password');
+  }
+
+  const expiresIn = input.remember ? '30d' : '1h';
+
+  const token = jwt.sign(
+    { userId: user.id, email: user.email },
+    process.env.JWT_SECRET!,
+    { expiresIn, algorithm: "HS256" }
+  );
+
+  return { token, user };
 };
