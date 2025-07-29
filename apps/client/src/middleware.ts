@@ -6,6 +6,7 @@ const PUBLIC_FILE = /\.(.*)$/;
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
+  const { pathname } = request.nextUrl;
 
   // ignoruj statyczne pliki i api
   if (
@@ -25,9 +26,9 @@ export async function middleware(request: NextRequest) {
       token,
       new TextEncoder().encode(process.env.JWT_SECRET!)
     );
-  console.log("✅ JWT OK:", payload);
-
-    // możesz tu dodać np. user role → request.headers.set(...)
+    if (pathname.startsWith('/admin') && payload.role !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
     return NextResponse.next();
   } catch (err) {
     console.error('Invalid JWT', err);
@@ -36,5 +37,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: ['/dashboard/:path*', '/admin/:path*'],
 };

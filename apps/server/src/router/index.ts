@@ -1,11 +1,13 @@
 import { Router } from 'express';
 import authRoutes from '../modules/auth/auth.routes';
-// import botRoutes from '../modules/bot/bot.routes'; ← przyszłość
+import dashboardRoutes from './dashboard.routes';
+import adminRoutes from './admin.routes';
 
 const router = Router();
 
 router.use('/auth', authRoutes);
-// router.use('/bots', botRoutes);
+router.use('/dashboard', dashboardRoutes);
+router.use('/admin', adminRoutes);
 
 
 // Health check route

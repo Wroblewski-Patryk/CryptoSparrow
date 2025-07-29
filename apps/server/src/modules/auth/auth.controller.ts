@@ -10,10 +10,10 @@ export const register = async (req: Request, res: Response) => {
     const user = await registerUser(input);
 
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET!,
       {
-        expiresIn: '7d',
+        expiresIn: '30d',
         algorithm: 'HS256',
       }
     );
