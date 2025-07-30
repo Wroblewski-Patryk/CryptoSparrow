@@ -2,7 +2,14 @@ packages:
   - apps/*
   - libs/*
 
+ignoredBuiltDependencies:
+  - esbuild
+
 onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
   - '@tailwindcss/oxide'
+  - bcrypt
+  - prisma
   - sharp
   - unrs-resolver

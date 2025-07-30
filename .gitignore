@@ -1,2 +1,4 @@
 node_modules
 apps/server/.gitignore
+apps/server/public/avatars/*
+!apps/server/public/avatars/default.png

@@ -7,7 +7,14 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET!);
-    (req as any).user = payload;
+
+    // Tu robisz zawsze user.id
+    (req as any).user = {
+      id: (payload as any).userId,
+      email: (payload as any).email,
+      role: (payload as any).role,
+    };
+
     next();
   } catch {
     return res.status(401).json({ error: 'Nieprawidłowy token' });

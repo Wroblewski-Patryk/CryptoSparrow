@@ -8,7 +8,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white dark:bg-gray-900 shadow-md">
-      <div className="container mx-auto flex justify-between items-center px-6 py-4">
+      <div className="container max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
         <Link href="/" className="text-xl font-headline font-bold text-gray-900 dark:text-white">
           <img src="/logo.png" alt="Logotype - CryptoSparrow" className="h-8 w-8 mr-2 float-left" />
           CryptoSparrow

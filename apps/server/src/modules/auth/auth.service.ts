@@ -16,10 +16,14 @@ export const registerUser = async (
 
   const hashed = await hashPassword(input.password);
 
+  const serverUrl = process.env.SERVER_URL+':'+process.env.SERVER_PORT;
+  const avatarUrl = serverUrl + "/avatars/default.png";
+
   const user = await prisma.user.create({
     data: {
       email: input.email,
       password: hashed,
+      avatarUrl: avatarUrl
     },
   });
 

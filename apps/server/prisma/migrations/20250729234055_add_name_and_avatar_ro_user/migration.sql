@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "ApiKey" ALTER COLUMN "exchange" SET DEFAULT 'BINANCE';

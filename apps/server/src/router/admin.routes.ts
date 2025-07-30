@@ -6,7 +6,7 @@ const router = Router();
 
 router.use(requireAuth, requireRole('ADMIN'));
 
-router.get('/users', (req, res) => {
+router.get('/', (req, res) => {
   res.json({ message: 'Panel admina, widoczny tylko dla admina!' });
 });
 
