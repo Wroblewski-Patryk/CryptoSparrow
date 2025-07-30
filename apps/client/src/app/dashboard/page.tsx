@@ -21,9 +21,7 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto py-8">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p>Witaj, {user?.email}</p>
-        <Link href="/dashboard/profile" className="text-blue-500 hover:underline">
-          Go to Profile
-        </Link>
+        
       </div>
     </div>
   );
