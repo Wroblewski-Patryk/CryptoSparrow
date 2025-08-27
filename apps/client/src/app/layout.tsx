@@ -22,7 +22,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body>
-        <Toaster position="top-center" richColors />
+        <Toaster
+          position="top-center"
+          duration={2500}
+          closeButton
+          richColors />
         <AuthProvider>
           {children}
         </AuthProvider>
