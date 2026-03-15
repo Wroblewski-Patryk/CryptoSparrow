@@ -57,7 +57,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `test(engine): deterministic simulator tests for pnl/fees/funding`
 
 ## Phase 3 - Paper and Live Futures (MVP Trading Modes)
-- [ ] `feat(engine): paper runtime loop on live market feed`
+- [x] `feat(engine): paper runtime loop on live market feed`
 - [ ] `feat(engine): paper position lifecycle and order simulation parity`
 - [ ] `feat(exchange): CCXT futures connector scaffold`
 - [ ] `feat(exchange): live order placement adapter with retries`
@@ -138,3 +138,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added backtests API endpoints for run create/list/get with ownership checks and strategy ownership validation.
 - 2026-03-15: Added backtests API endpoints for run trades list and run report read with ownership isolation and e2e coverage.
 - 2026-03-15: Expanded simulator unit coverage for deterministic repeats, accounting identity, and explicit slippage cost regression cases.
+- 2026-03-15: Added paper runtime service loop for polling live market feed with stop control and per-symbol non-overlapping tick execution.
