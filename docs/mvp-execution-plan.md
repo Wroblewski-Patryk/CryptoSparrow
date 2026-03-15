@@ -36,7 +36,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(db): add SymbolGroup model`
 - [x] `feat(db): add Bot and BotStrategy models`
 - [x] `feat(db): add Position, Order, Trade, Signal models`
-- [ ] `feat(db): add BacktestRun, BacktestTrade, BacktestReport models`
+- [x] `feat(db): add BacktestRun, BacktestTrade, BacktestReport models`
 - [ ] `feat(db): add Log model for audit trail`
 - [ ] `feat(api): markets module CRUD (filters, whitelist/blacklist, auto-exclude rules)`
 - [ ] `feat(api): bots module CRUD (execution mode, opt-in flags, limits)`
@@ -121,3 +121,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added SymbolGroup Prisma model linked to MarketUniverse and User with symbol list storage and migration SQL.
 - 2026-03-15: Added Bot and BotStrategy Prisma models with execution mode, live opt-in flag, position limit, and strategy-to-group mapping migration.
 - 2026-03-15: Added Position, Order, Trade, and Signal Prisma models with trading enums, ownership relations, and one-open-position-per-symbol index.
+- 2026-03-15: Added BacktestRun, BacktestTrade, and BacktestReport Prisma models with status lifecycle, run-level trade mapping, and one-to-one report relation.
