@@ -7,16 +7,16 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `feat(db): add Position, Order, Trade, Signal models`
 - [ ] `feat(db): add BacktestRun, BacktestTrade, BacktestReport models`
 - [ ] `feat(db): add Log model for audit trail`
 - [ ] `feat(api): markets module CRUD (filters, whitelist/blacklist, auto-exclude rules)`
 - [ ] `feat(api): bots module CRUD (execution mode, opt-in flags, limits)`
+- [ ] `feat(api): orders and positions read endpoints`
 
 ## NEXT
-- [ ] `feat(api): orders and positions read endpoints`
 - [ ] `feat(api): ownership checks for all new entities`
 - [ ] `test(api): add data isolation tests for markets/bots/orders/positions/backtests`
+- [ ] `feat(engine): market-data ingestion service (OHLCV) with caching`
 
 ## BLOCKED
 - [ ] (empty)
@@ -42,6 +42,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-15 `feat(db): add MarketUniverse model`
 - [x] 2026-03-15 `feat(db): add SymbolGroup model`
 - [x] 2026-03-15 `feat(db): add Bot and BotStrategy models`
+- [x] 2026-03-15 `feat(db): add Position, Order, Trade, Signal models`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

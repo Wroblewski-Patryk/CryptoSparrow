@@ -28,6 +28,10 @@ model User {
   marketUniverses MarketUniverse[]
   symbolGroups SymbolGroup[]
   bots      Bot[]
+  positions Position[]
+  orders    Order[]
+  trades    Trade[]
+  signals   Signal[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -75,6 +79,10 @@ model Strategy {
 
   user         User     @relation(fields: [userId], references: [id])
   botStrategies BotStrategy[]
+  positions     Position[]
+  orders        Order[]
+  trades        Trade[]
+  signals       Signal[]
 }
 
 model MarketUniverse {
@@ -131,6 +139,10 @@ model Bot {
 
   user              User            @relation(fields: [userId], references: [id])
   botStrategies     BotStrategy[]
+  positions         Position[]
+  orders            Order[]
+  trades            Trade[]
+  signals           Signal[]
 
   @@index([userId])
 }
@@ -160,4 +172,179 @@ enum BotMode {
   PAPER
   LIVE
   LOCAL
+}
+
+model Position {
+  id                String         @id @default(uuid())
+  userId            String
+  botId             String?
+  strategyId        String?
+
+  symbol            String
+  side              PositionSide
+  status            PositionStatus @default(OPEN)
+  entryPrice        Float
+  quantity          Float
+  leverage          Int            @default(1)
+  stopLoss          Float?
+  takeProfit        Float?
+  openedAt          DateTime       @default(now())
+  closedAt          DateTime?
+  realizedPnl       Float?
+  unrealizedPnl     Float?
+
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  user              User           @relation(fields: [userId], references: [id])
+  bot               Bot?           @relation(fields: [botId], references: [id])
+  strategy          Strategy?      @relation(fields: [strategyId], references: [id])
+  orders            Order[]
+  trades            Trade[]
+
+  @@index([userId])
+  @@index([botId])
+  @@index([strategyId])
+  @@index([symbol])
+  @@index([status])
+}
+
+model Order {
+  id                String      @id @default(uuid())
+  userId            String
+  botId             String?
+  strategyId        String?
+  positionId        String?
+
+  symbol            String
+  side              OrderSide
+  type              OrderType
+  status            OrderStatus  @default(PENDING)
+  quantity          Float
+  price             Float?
+  stopPrice         Float?
+  filledQuantity    Float        @default(0)
+  averageFillPrice  Float?
+  fee               Float?
+  exchangeOrderId   String?
+  submittedAt       DateTime?
+  filledAt          DateTime?
+  canceledAt        DateTime?
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  user              User        @relation(fields: [userId], references: [id])
+  bot               Bot?        @relation(fields: [botId], references: [id])
+  strategy          Strategy?   @relation(fields: [strategyId], references: [id])
+  position          Position?   @relation(fields: [positionId], references: [id])
+  trades            Trade[]
+
+  @@index([userId])
+  @@index([botId])
+  @@index([strategyId])
+  @@index([positionId])
+  @@index([symbol])
+  @@index([status])
+}
+
+model Trade {
+  id                String      @id @default(uuid())
+  userId            String
+  botId             String?
+  strategyId        String?
+  orderId           String?
+  positionId        String?
+
+  symbol            String
+  side              OrderSide
+  price             Float
+  quantity          Float
+  fee               Float?
+  realizedPnl       Float?
+  executedAt        DateTime    @default(now())
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  user              User        @relation(fields: [userId], references: [id])
+  bot               Bot?        @relation(fields: [botId], references: [id])
+  strategy          Strategy?   @relation(fields: [strategyId], references: [id])
+  order             Order?      @relation(fields: [orderId], references: [id])
+  position          Position?   @relation(fields: [positionId], references: [id])
+
+  @@index([userId])
+  @@index([botId])
+  @@index([strategyId])
+  @@index([orderId])
+  @@index([positionId])
+  @@index([symbol])
+}
+
+model Signal {
+  id                String          @id @default(uuid())
+  userId            String
+  botId             String?
+  strategyId        String?
+
+  symbol            String
+  timeframe         String
+  direction         SignalDirection
+  confidence        Float?
+  payload           Json?
+  triggeredAt       DateTime        @default(now())
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  user              User            @relation(fields: [userId], references: [id])
+  bot               Bot?            @relation(fields: [botId], references: [id])
+  strategy          Strategy?       @relation(fields: [strategyId], references: [id])
+
+  @@index([userId])
+  @@index([botId])
+  @@index([strategyId])
+  @@index([symbol])
+  @@index([triggeredAt])
+}
+
+enum PositionSide {
+  LONG
+  SHORT
+}
+
+enum PositionStatus {
+  OPEN
+  CLOSED
+  LIQUIDATED
+}
+
+enum OrderSide {
+  BUY
+  SELL
+}
+
+enum OrderType {
+  MARKET
+  LIMIT
+  STOP
+  STOP_LIMIT
+  TAKE_PROFIT
+  TRAILING
+}
+
+enum OrderStatus {
+  PENDING
+  OPEN
+  PARTIALLY_FILLED
+  FILLED
+  CANCELED
+  REJECTED
+  EXPIRED
+}
+
+enum SignalDirection {
+  LONG
+  SHORT
+  EXIT
 }
