@@ -1,10 +1,13 @@
 import { Router } from 'express';
 import { register, me, login, logout } from './auth.controller';
+import { createRateLimiter } from '../../middleware/rateLimit';
 
 const router = Router();
+const authLimiter = createRateLimiter({ windowMs: 60_000, max: 20 });
+const loginLimiter = createRateLimiter({ windowMs: 60_000, max: 10 });
 
-router.post('/register', register);
-router.get('/me', me);
-router.post('/login', login);
-router.post('/logout', logout);
+router.post('/register', authLimiter, register);
+router.get('/me', authLimiter, me);
+router.post('/login', loginLimiter, login);
+router.post('/logout', authLimiter, logout);
 export default router;
