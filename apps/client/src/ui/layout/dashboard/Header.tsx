@@ -20,6 +20,8 @@ export default function Header() {
             <li><Link href="/dashboard/builder">Builder</Link></li>
             <li><Link href="/dashboard/strategies">Strategie</Link></li>
             <li><Link href="/dashboard/backtest">Analiza wsteczna</Link></li>
+            <li><Link href="/dashboard/orders">Orders</Link></li>
+            <li><Link href="/dashboard/positions">Positions</Link></li>
             <li><Link href="/dashboard/bots">Boty</Link></li>
           </ul>
           <ul className="menu menu-horizontal px-1">
