@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { PageTitle } from 'apps/client/src/ui/layout/dashboard/PageTitle';
 import { LoadingState } from 'apps/client/src/ui/components/ViewState';
 import SafetyBar from 'apps/client/src/ui/layout/dashboard/SafetyBar';
+import RiskNoticeFooter from 'apps/client/src/ui/layout/dashboard/RiskNoticeFooter';
 
 const kpiCards = [
   { label: 'Open Positions', value: '3', tone: 'text-info' },
@@ -166,11 +167,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className='mt-6'>
-          <div className='alert alert-info'>
-            <span>Data above is temporary UI seed data and will be connected to live modules in upcoming tasks.</span>
-          </div>
-        </div>
+        <RiskNoticeFooter />
     </section>
   );
 }
