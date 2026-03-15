@@ -3,6 +3,7 @@ import Indicators from "./Indicators";
 import { IndicatorMeta, OpenProps, UserIndicator } from "../../types/StrategyForm.type";
 import { listStrategyIndicators } from "../../api/strategies.api";
 import { toast } from "sonner";
+import { handleError } from "apps/client/src/lib/handleError";
 
 export function Open({ data, setData }: OpenProps) {
 	const [availableIndicators, setAvailableIndicators] = useState<IndicatorMeta[]>([]);
@@ -12,8 +13,8 @@ export function Open({ data, setData }: OpenProps) {
 			try {
 				const data = await listStrategyIndicators();
 				setAvailableIndicators(data);
-			} catch (e: any) {
-				toast.error("Nie udało się pobrać listy wskaźników", { description: e?.response?.data?.message });
+			} catch (e: unknown) {
+				toast.error("Nie udało się pobrać listy wskaźników", { description: handleError(e) });
 				setAvailableIndicators([])
 			}
 		})();
@@ -98,3 +99,4 @@ export function Open({ data, setData }: OpenProps) {
 		</div >
 	);
 }
+

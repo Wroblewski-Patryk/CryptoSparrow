@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, SetStateAction } from "react";
+import { useState, useEffect } from "react";
 import { useUser } from "../hooks/useUser";
 import { toast } from "sonner";
 import api from "../../../lib/api";
@@ -48,7 +48,7 @@ export default function ProfileForm() {
         avatarUrl,
       });
       toast.success("Zapisano zmiany profilu!");
-    } catch (err: any) {
+    } catch {
       toast.error("Nie udało się zapisać zmian.");
     }
     setSaving(false);
@@ -119,3 +119,4 @@ export default function ProfileForm() {
     </form>
   );
 }
+

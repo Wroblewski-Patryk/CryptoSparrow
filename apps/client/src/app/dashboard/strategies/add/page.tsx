@@ -6,6 +6,7 @@ import StrategiesForm from "apps/client/src/features/strategies/components/Strat
 import { StrategyFormState } from "apps/client/src/features/strategies/types/StrategyForm.type";
 import { toast } from "sonner";
 import { createStrategy } from "apps/client/src/features/strategies/api/strategies.api";
+import { handleError } from "apps/client/src/lib/handleError";
 
 export default function StrategiesPageAdd() {
     const router = useRouter();
@@ -15,8 +16,8 @@ export default function StrategiesPageAdd() {
             const created = await createStrategy(form);
             toast.success("Strategia utworzona");
             router.push(`/dashboard/strategies/${created.id}`);
-        } catch (e: any) {
-            toast.error("Błąd tworzenia strategii", { description: e?.response?.data?.message });
+        } catch (e: unknown) {
+            toast.error("Błąd tworzenia strategii", { description: handleError(e) });
         }
     };
     return (
@@ -35,3 +36,4 @@ export default function StrategiesPageAdd() {
         </section>
     );
 }  
+

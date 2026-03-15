@@ -9,6 +9,7 @@ import { getStrategy, updateStrategy } from "apps/client/src/features/strategies
 import { StrategyFormState } from "apps/client/src/features/strategies/types/StrategyForm.type";
 import { dtoToForm } from "apps/client/src/features/strategies/utils/StrategyForm.map";
 import { toast } from "sonner";
+import { handleError } from "apps/client/src/lib/handleError";
 
 export default function StrategiesPageEdit() {
     const { id } = useParams<{ id: string }>();
@@ -20,8 +21,8 @@ export default function StrategiesPageEdit() {
             try {
                 const data = await getStrategy(id);
                 setInitial(dtoToForm(data));
-            } catch (e: any) {
-                toast.error("Nie znaleziono strategii", { description: e?.response?.data?.message });
+            } catch (e: unknown) {
+                toast.error("Nie znaleziono strategii", { description: handleError(e) });
                 router.push("/dashboard/strategies");
             }
         })();
@@ -31,8 +32,8 @@ export default function StrategiesPageEdit() {
         try {
             await updateStrategy(id, form);
             toast.success("Strategia zaktualizowana");
-        } catch (e: any) {
-            toast.error("Błąd zapisu strategii", { description: e?.response?.data?.message });
+        } catch (e: unknown) {
+            toast.error("Błąd zapisu strategii", { description: handleError(e) });
         }
     };
 
@@ -57,3 +58,4 @@ export default function StrategiesPageEdit() {
         </section>
     );
 }  
+

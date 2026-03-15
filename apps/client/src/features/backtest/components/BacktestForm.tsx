@@ -212,7 +212,7 @@ export function BacktestForm() {
                                 key={t.key}
                                 role="tab"
                                 type="button"
-                                onClick={() => setActiveTab(t.key as any)}
+                                onClick={() => setActiveTab(t.key as "chart" | "trades" | "metrics" | "logs")}
                                 className={`tab ${activeTab === t.key ? 'tab-active' : ''}`}
                             >
                                 {t.label}
@@ -330,3 +330,4 @@ export function BacktestForm() {
         </form>
     );
 }
+

@@ -17,7 +17,7 @@ describe("LoginForm", () => {
       <LoginForm
         onSubmit={vi.fn()}
         register={mockRegister}
-        errors={{} as any}
+        errors={{}}
         isSubmitting={false}
         status=""
         message=""
@@ -28,3 +28,4 @@ describe("LoginForm", () => {
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
   });
 });
+
