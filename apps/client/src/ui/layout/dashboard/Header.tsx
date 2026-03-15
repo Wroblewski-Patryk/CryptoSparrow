@@ -20,7 +20,7 @@ export default function Header() {
             <li><Link href="/dashboard/builder">Builder</Link></li>
             <li><Link href="/dashboard/strategies">Strategie</Link></li>
             <li><Link href="/dashboard/backtest">Analiza wsteczna</Link></li>
-            <li><Link href="/dashboard/automation">Automatyzacja(boty)</Link></li>
+            <li><Link href="/dashboard/bots">Boty</Link></li>
           </ul>
           <ul className="menu menu-horizontal px-1">
             <li className="ml-4"><ProfileButton /></li>

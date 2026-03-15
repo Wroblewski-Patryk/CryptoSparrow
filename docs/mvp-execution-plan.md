@@ -77,7 +77,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(ui-control-center): add risk notice footer with logs drill-down shortcut`
 - [x] `feat(ui): dashboard/markets flow`
 - [x] `feat(ui): dashboard/builder strategy editor + presets`
-- [ ] `feat(ui): dashboard/bots management + mode status`
+- [x] `feat(ui): dashboard/bots management + mode status`
 - [ ] `feat(ui): dashboard/orders and dashboard/positions`
 - [ ] `feat(ui): dashboard home widgets for live positions/orders snapshot and recent actions feed`
 - [ ] `feat(ui): dashboard/backtest full UX + overlays + summary`
@@ -167,3 +167,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Implemented dashboard markets flow with market-universe list/create/delete wired to backend markets API and UI-state handling.
 - 2026-03-15: Closed MVP decision on rule nesting depth as out-of-scope beyond top-level logic with flat rules.
 - 2026-03-15: Added dashboard builder page with code-defined strategy presets and editor flow wired to strategy create endpoint.
+- 2026-03-15: Added bots management dashboard flow with CRUD wiring, mode/risk status badges, and inline control updates.

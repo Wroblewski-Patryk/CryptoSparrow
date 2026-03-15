@@ -7,14 +7,14 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `feat(ui): dashboard/bots management + mode status`
 - [ ] `feat(ui): dashboard/orders and dashboard/positions`
 - [ ] `feat(ui): dashboard home widgets for live positions/orders snapshot and recent actions feed`
 - [ ] `feat(ui): dashboard/backtest full UX + overlays + summary`
 - [ ] `feat(ui): dashboard/reports performance views`
+- [ ] `feat(ui): dashboard/logs audit trail`
 
 ## NEXT
-- [ ] `feat(ui): dashboard/logs audit trail`
+- [ ] `feat(ui): dashboard/exchanges api-key connections`
 
 ## BLOCKED
 - [ ] (empty)
@@ -75,6 +75,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-15 `docs(decisions): close MVP rule nesting depth as explicitly out-of-scope`
 - [x] 2026-03-15 `feat(ui): dashboard/markets flow`
 - [x] 2026-03-15 `feat(ui): dashboard/builder strategy editor + presets`
+- [x] 2026-03-15 `feat(ui): dashboard/bots management + mode status`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
