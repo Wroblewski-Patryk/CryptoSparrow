@@ -15,6 +15,18 @@ const registerAndLogin = async (email: string) => {
 
 describe("API Keys security contract", () => {
   beforeEach(async () => {
+    await prisma.trade.deleteMany();
+    await prisma.order.deleteMany();
+    await prisma.position.deleteMany();
+    await prisma.signal.deleteMany();
+    await prisma.backtestTrade.deleteMany();
+    await prisma.backtestReport.deleteMany();
+    await prisma.backtestRun.deleteMany();
+    await prisma.log.deleteMany();
+    await prisma.botStrategy.deleteMany();
+    await prisma.bot.deleteMany();
+    await prisma.symbolGroup.deleteMany();
+    await prisma.marketUniverse.deleteMany();
     await prisma.apiKey.deleteMany();
     await prisma.strategy.deleteMany();
     await prisma.user.deleteMany();
@@ -60,5 +72,29 @@ describe("API Keys security contract", () => {
     expect(listRes.body[0].apiSecret).toBeUndefined();
     expect(listRes.body[0].apiKey).toContain("********");
     expect(listRes.body[0].apiKey).not.toBe(payload.apiKey);
+  });
+
+  it("enforces ownership on update and delete", async () => {
+    const owner = await registerAndLogin("apikey-owner@example.com");
+    const other = await registerAndLogin("apikey-other@example.com");
+
+    const createRes = await owner.post("/dashboard/profile/apiKeys").send({
+      label: "owner-key",
+      exchange: "BINANCE",
+      apiKey: "OWNERAPIKEY1234",
+      apiSecret: "OWNERSECRET1234",
+    });
+    expect(createRes.status).toBe(201);
+    const keyId = createRes.body.id as string;
+
+    const updateRes = await other.patch(`/dashboard/profile/apiKeys/${keyId}`).send({
+      label: "hijacked",
+    });
+    expect(updateRes.status).toBe(404);
+    expect(updateRes.body.error.message).toBe("Not found");
+
+    const deleteRes = await other.delete(`/dashboard/profile/apiKeys/${keyId}`);
+    expect(deleteRes.status).toBe(404);
+    expect(deleteRes.body.error.message).toBe("Not found");
   });
 });

@@ -34,6 +34,7 @@ export const updateStrategy = async (req: Request, res: Response) => {
     if (!userId) return sendError(res, 401, 'Unauthorized');
     const { id } = req.params;
     const strategy = await strategyService.updateStrategy(id, userId, req.body);
+    if (!strategy) return sendError(res, 404, 'Not found');
     res.json(strategy);
 };
 
@@ -42,6 +43,7 @@ export const deleteStrategy = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return sendError(res, 401, 'Unauthorized');
     const { id } = req.params;
-    await strategyService.deleteStrategy(id, userId);
+    const deleted = await strategyService.deleteStrategy(id, userId);
+    if (!deleted) return sendError(res, 404, 'Not found');
     res.status(204).end();
 };

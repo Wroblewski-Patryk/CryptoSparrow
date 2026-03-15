@@ -41,7 +41,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(api): markets module CRUD (filters, whitelist/blacklist, auto-exclude rules)`
 - [x] `feat(api): bots module CRUD (execution mode, opt-in flags, limits)`
 - [x] `feat(api): orders and positions read endpoints`
-- [ ] `feat(api): ownership checks for all new entities`
+- [x] `feat(api): ownership checks for all new entities`
 - [ ] `test(api): add data isolation tests for markets/bots/orders/positions/backtests`
 
 ## Phase 2 - Trading Engine Core (Backtest-First)
@@ -126,3 +126,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added markets API CRUD for market universes with validation, ownership checks, and e2e contract coverage.
 - 2026-03-15: Added bots API CRUD with execution mode, live opt-in, position limits, ownership checks, and e2e coverage.
 - 2026-03-15: Added read-only orders and positions API endpoints with query filters, ownership checks, and e2e coverage.
+- 2026-03-15: Standardized ownership behavior to return 404 on foreign resources for strategy and api-key update/delete paths.

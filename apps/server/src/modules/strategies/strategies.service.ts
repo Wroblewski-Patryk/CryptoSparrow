@@ -14,9 +14,16 @@ export const createStrategy = async (userId: string, data: CreateStrategyDto) =>
 };
 
 export const updateStrategy = async (id: string, userId: string, data: Partial<CreateStrategyDto>) => {
-    return prisma.strategy.update({ where: { id, userId }, data });
+    const existing = await getStrategyById(id, userId);
+    if (!existing) return null;
+
+    return prisma.strategy.update({ where: { id: existing.id }, data });
 };
 
 export const deleteStrategy = async (id: string, userId: string) => {
-    return prisma.strategy.delete({ where: { id, userId } });
+    const existing = await getStrategyById(id, userId);
+    if (!existing) return false;
+
+    await prisma.strategy.delete({ where: { id: existing.id } });
+    return true;
 };

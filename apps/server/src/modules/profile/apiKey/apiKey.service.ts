@@ -71,14 +71,25 @@ export const updateApiKey = async (
     ...(data.apiSecret && { apiSecret: encrypt(data.apiSecret) }),
   };
 
-  return prisma.apiKey.updateMany({
+  const result = await prisma.apiKey.updateMany({
     where: { id, userId },
     data: updateData,
   });
+
+  if (result.count === 0) return null;
+
+  const updated = await prisma.apiKey.findFirst({
+    where: { id, userId },
+  });
+
+  if (!updated) return null;
+  return toPublicApiKey(updated);
 };
 
 export const deleteApiKey = async (userId: string, id: string) => {
-  return prisma.apiKey.deleteMany({ 
+  const result = await prisma.apiKey.deleteMany({ 
     where: { id, userId } 
   });
+
+  return result.count > 0;
 };

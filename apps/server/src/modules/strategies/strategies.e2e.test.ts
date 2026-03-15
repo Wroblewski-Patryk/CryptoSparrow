@@ -29,6 +29,18 @@ const registerAndLogin = async (email: string) => {
 
 describe('Strategies CRUD contract', () => {
   beforeEach(async () => {
+    await prisma.trade.deleteMany();
+    await prisma.order.deleteMany();
+    await prisma.position.deleteMany();
+    await prisma.signal.deleteMany();
+    await prisma.backtestTrade.deleteMany();
+    await prisma.backtestReport.deleteMany();
+    await prisma.backtestRun.deleteMany();
+    await prisma.log.deleteMany();
+    await prisma.botStrategy.deleteMany();
+    await prisma.bot.deleteMany();
+    await prisma.symbolGroup.deleteMany();
+    await prisma.marketUniverse.deleteMany();
     await prisma.apiKey.deleteMany();
     await prisma.strategy.deleteMany();
     await prisma.user.deleteMany();
@@ -91,9 +103,11 @@ describe('Strategies CRUD contract', () => {
     const updateRes = await otherAgent.put(`/dashboard/strategies/${strategyId}`).send({
       name: 'Should not update',
     });
-    expect(updateRes.status).toBe(500);
+    expect(updateRes.status).toBe(404);
+    expect(updateRes.body.error.message).toBe('Not found');
 
     const deleteRes = await otherAgent.delete(`/dashboard/strategies/${strategyId}`);
-    expect(deleteRes.status).toBe(500);
+    expect(deleteRes.status).toBe(404);
+    expect(deleteRes.body.error.message).toBe('Not found');
   });
 });

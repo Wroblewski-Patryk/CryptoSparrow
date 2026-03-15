@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import * as apiKeyService from './apiKey.service';
 import { apiKeySchema } from './apiKey.types';
 import { sendValidationError } from '../../../utils/formatZodError';
+import { sendError } from '../../../utils/apiError';
 
 type UserRequest = Request & { user: { id: string } };
 
@@ -28,11 +29,13 @@ export const update = async (req: UserRequest, res: Response) => {
     return sendValidationError(res, error);
   }
 
-  const key = await apiKeyService.updateApiKey(req.user.id, req.params.id, req.body);
-  res.json(key);
+  const result = await apiKeyService.updateApiKey(req.user.id, req.params.id, req.body);
+  if (!result) return sendError(res, 404, 'Not found');
+  res.json(result);
 };
 
 export const remove = async (req: UserRequest, res: Response) => {
-  await apiKeyService.deleteApiKey(req.user.id, req.params.id);
+  const deleted = await apiKeyService.deleteApiKey(req.user.id, req.params.id);
+  if (!deleted) return sendError(res, 404, 'Not found');
   res.status(204).end();
 };
