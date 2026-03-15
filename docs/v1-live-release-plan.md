@@ -51,6 +51,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [ ] `feat(ui): audit/log explorer with decision trace`
 - [ ] `feat(i18n): complete EN/PL parity and localization QA`
 - [ ] `feat(accessibility): full accessibility pass for core dashboard`
+- [ ] `feat(ui-theme): optional isometric visual mode for dashboard (late-stage polish, non-blocking)`
 - [ ] `docs(user): onboarding, safety guide, FAQ, and troubleshooting`
 - [ ] `docs(operator): production operations handbook`
 
@@ -73,3 +74,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 ## Progress Log
 - 2026-03-15: Initialized V1.0 live release plan.
 - 2026-03-15: Aligned V1.0 structure with architecture, security, testing, and release-readiness docs.
+- 2026-03-15: Added optional isometric dashboard visual mode as late-stage V1 polish item.

@@ -12,6 +12,13 @@
 - Supertest for API endpoints.
 - Testing Library for UI behavior.
 
+## Manual Verification Standard
+- Frontend changes require manual UI verification in addition to automated tests.
+- Backend changes require manual API verification in addition to automated tests.
+- Delivery summary for each task must include:
+  - automated tests run and result,
+  - manual checks run (UI/API) and result.
+
 ## Planned Tests
 - Regression tests for auth flows.
 - Contract tests for strategy endpoints.
