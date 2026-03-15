@@ -54,7 +54,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(engine): TP/SL/trailing/DCA position management`
 - [x] `feat(api): backtest run/create/list endpoints`
 - [x] `feat(api): backtest trade list and report endpoints`
-- [ ] `test(engine): deterministic simulator tests for pnl/fees/funding`
+- [x] `test(engine): deterministic simulator tests for pnl/fees/funding`
 
 ## Phase 3 - Paper and Live Futures (MVP Trading Modes)
 - [ ] `feat(engine): paper runtime loop on live market feed`
@@ -137,3 +137,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added position management engine for TP/SL/trailing stop and DCA with deterministic state transitions.
 - 2026-03-15: Added backtests API endpoints for run create/list/get with ownership checks and strategy ownership validation.
 - 2026-03-15: Added backtests API endpoints for run trades list and run report read with ownership isolation and e2e coverage.
+- 2026-03-15: Expanded simulator unit coverage for deterministic repeats, accounting identity, and explicit slippage cost regression cases.
