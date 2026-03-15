@@ -26,6 +26,7 @@ model User {
   apiKeys   ApiKey[]
   strategies Strategy[]
   marketUniverses MarketUniverse[]
+  symbolGroups SymbolGroup[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -89,6 +90,25 @@ model MarketUniverse {
   updatedAt         DateTime @updatedAt
 
   user              User     @relation(fields: [userId], references: [id])
+  symbolGroups      SymbolGroup[]
 
   @@index([userId])
+}
+
+model SymbolGroup {
+  id                String         @id @default(uuid())
+  userId            String
+  marketUniverseId  String
+
+  name              String
+  symbols           String[]       @default([])
+
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  user              User           @relation(fields: [userId], references: [id])
+  marketUniverse    MarketUniverse @relation(fields: [marketUniverseId], references: [id])
+
+  @@index([userId])
+  @@index([marketUniverseId])
 }

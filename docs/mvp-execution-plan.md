@@ -33,7 +33,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 
 ## Phase 1 - Data Model and Core API (MVP Foundation)
 - [x] `feat(db): add MarketUniverse model`
-- [ ] `feat(db): add SymbolGroup model`
+- [x] `feat(db): add SymbolGroup model`
 - [ ] `feat(db): add Bot and BotStrategy models`
 - [ ] `feat(db): add Position, Order, Trade, Signal models`
 - [ ] `feat(db): add BacktestRun, BacktestTrade, BacktestReport models`
@@ -118,3 +118,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Audited legacy dashboard patterns and defined control-center IA priorities for positions/orders-first home.
 - 2026-03-15: Implemented post-login control-center dashboard with KPI, positions/orders snapshots, quick actions, and activity feed seed widgets.
 - 2026-03-15: Added MarketUniverse Prisma model with ownership relation, universe filters, whitelist/blacklist, and migration SQL.
+- 2026-03-15: Added SymbolGroup Prisma model linked to MarketUniverse and User with symbol list storage and migration SQL.
