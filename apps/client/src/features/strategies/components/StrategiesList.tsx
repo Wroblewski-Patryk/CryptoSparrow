@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LuTrash2, LuPencilLine } from "react-icons/lu";
 import axios from "axios";
@@ -7,6 +7,7 @@ import api from "apps/client/src/lib/api";
 import { toast } from "sonner";
 import { listStrategies } from "../api/strategies.api";
 import { StrategyDto } from "../types/StrategyForm.type";
+import { EmptyState, ErrorState, LoadingState } from "apps/client/src/ui/components/ViewState";
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -15,22 +16,33 @@ const getAxiosMessage = (err: unknown) => {
 
 export default function StrategiesList() {
   const [strategies, setStrategies] = useState<StrategyDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await listStrategies();
-        setStrategies(data);
-      } catch (err: unknown) {
-        toast.error("Nie udalo sie pobrac listy strategii", {
-          description: getAxiosMessage(err),
-        });
-      }
-    })();
+  const loadStrategies = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+
+    try {
+      const data = await listStrategies();
+      setStrategies(data);
+    } catch (err: unknown) {
+      const message = getAxiosMessage(err) ?? "Nie udalo sie pobrac listy strategii";
+      setLoadError(message);
+      toast.error("Nie udalo sie pobrac listy strategii", {
+        description: getAxiosMessage(err),
+      });
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadStrategies();
+  }, [loadStrategies]);
 
   const handleDelete = async () => {
     if (!selectedId) return;
@@ -48,6 +60,25 @@ export default function StrategiesList() {
 
   return (
     <div>
+      {loading && <LoadingState />}
+      {!loading && loadError && (
+        <ErrorState
+          title="Nie udalo sie pobrac listy strategii"
+          description={loadError}
+          retryLabel="Sprobuj ponownie"
+          onRetry={() => void loadStrategies()}
+        />
+      )}
+      {!loading && !loadError && strategies.length === 0 && (
+        <EmptyState
+          title="Brak strategii"
+          description="Dodaj pierwsza strategie, aby uruchomic backtest i bota."
+          actionLabel="Nowa strategia"
+          onAction={() => router.push("/dashboard/strategies/add")}
+        />
+      )}
+
+      {!loading && !loadError && strategies.length > 0 && (
       <div className="overflow-x-auto">
         <table className="table table-zebra w-full">
           <thead>
@@ -87,16 +118,10 @@ export default function StrategiesList() {
                 </td>
               </tr>
             ))}
-            {strategies.length === 0 && (
-              <tr>
-                <td colSpan={5} className="text-center opacity-50">
-                  Brak strategii
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
+      )}
 
       {showModal && (
         <dialog className="modal modal-open">

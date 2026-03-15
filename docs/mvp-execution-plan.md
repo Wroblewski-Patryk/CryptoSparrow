@@ -70,7 +70,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `docs(ui): audit legacy CryptoBot dashboard patterns for positions/orders and control-center IA`
 - [x] `feat(ui): post-login control-center dashboard with key KPIs, bot status, and quick actions`
 - [x] `feat(ui-shell): unify dashboard app shell, page headers, and breadcrumb patterns across modules`
-- [ ] `feat(ui-state): implement shared loading/empty/degraded/error/success state components`
+- [x] `feat(ui-state): implement shared loading/empty/degraded/error/success state components`
 - [ ] `feat(ui-tokens): add semantic risk and execution-mode tokens (paper/live/warning/danger) and reusable status badges`
 - [ ] `feat(ui-control-center): add sticky safety bar with mode/connectivity/heartbeat and emergency action`
 - [ ] `feat(ui-control-center): add risk notice footer with logs drill-down shortcut`
@@ -159,3 +159,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Synced MVP UX tasks with new `ui-ux-foundation.md` baseline (shell, states, tokens, control-center safety patterns, i18n, accessibility).
 - 2026-03-15: Unified dashboard shell spacing and page-header/breadcrumb patterns across control center, strategies, backtest, and profile views.
 - 2026-03-15: Added pre-trade smoke e2e coverage for critical paper/live paths, including live allow, kill-switch block, and audit-log assertions.
+- 2026-03-15: Added shared UI state components (loading, empty, degraded, error, success) with dashboard integration and unit coverage.

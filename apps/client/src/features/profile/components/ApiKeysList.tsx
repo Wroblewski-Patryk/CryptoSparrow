@@ -2,6 +2,7 @@
 import { useState } from "react";
 import ApiKeyForm, { ApiKeyFormSavePayload } from "./ApiKeyForm";
 import { useApiKeys } from "../hooks/useApiKeys";
+import { EmptyState, ErrorState, LoadingState, SuccessState } from "apps/client/src/ui/components/ViewState";
 
 export default function ApiKeysList() {
   const { keys, loading, error, handleAdd, handleEdit, handleDelete } = useApiKeys();
@@ -74,48 +75,68 @@ export default function ApiKeysList() {
           Dodaj nowy klucz
         </button>
       </div>
-      {loading && <div className="alert alert-info">Ladowanie...</div>}
-      {error && <div className="alert alert-error">{error}</div>}
-      {!loading && keys.length === 0 && <div className="alert alert-info">Brak kluczy API.</div>}
-      {!loading && keys.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="table table-zebra">
-            <thead>
-              <tr>
-                <th>Nazwa</th>
-                <th>Gielda</th>
-                <th>Utworzono</th>
-                <th>Ostatnio uzywany</th>
-                <th>API Key</th>
-                <th>Akcje</th>
-              </tr>
-            </thead>
-            <tbody>
-              {keys.map((key) => (
-                <tr key={key.id}>
-                  <td>{key.label}</td>
-                  <td>{key.exchange}</td>
-                  <td>{key.createdAt?.slice(0, 10) || "-"}</td>
-                  <td>{key.lastUsed?.slice(0, 10) || "-"}</td>
-                  <td>
-                    <span className="font-mono">
-                      {key.apiKey ? key.apiKey.slice(0, 2) + "********" + key.apiKey.slice(-2) : ""}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="flex gap-2">
-                      <button className="btn btn-sm btn-secondary" onClick={() => handleEditKey(key.id)}>
-                        Edytuj
-                      </button>
-                      <button className="btn btn-sm btn-error" onClick={() => handleDeleteKey(key.id)}>
-                        Usun
-                      </button>
-                    </div>
-                  </td>
+      {loading && <LoadingState title="Ladowanie kluczy API" />}
+      {!loading && error && (
+        <ErrorState
+          title="Nie mozna pobrac kluczy API"
+          description={error}
+          retryLabel="Odswiez"
+          onRetry={() => window.location.reload()}
+        />
+      )}
+      {!loading && !error && keys.length === 0 && (
+        <EmptyState
+          title="Brak kluczy API"
+          description="Dodaj pierwszy klucz, aby polaczyc gielde i uruchomic tryb live."
+          actionLabel="Dodaj nowy klucz"
+          onAction={handleAddKey}
+        />
+      )}
+      {!loading && !error && keys.length > 0 && (
+        <div className="space-y-3">
+          <SuccessState
+            title="Klucze API aktywne"
+            description={`Skonfigurowano ${keys.length} ${keys.length === 1 ? "klucz" : "klucze"}.`}
+          />
+          <div className="overflow-x-auto">
+            <table className="table table-zebra">
+              <thead>
+                <tr>
+                  <th>Nazwa</th>
+                  <th>Gielda</th>
+                  <th>Utworzono</th>
+                  <th>Ostatnio uzywany</th>
+                  <th>API Key</th>
+                  <th>Akcje</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {keys.map((key) => (
+                  <tr key={key.id}>
+                    <td>{key.label}</td>
+                    <td>{key.exchange}</td>
+                    <td>{key.createdAt?.slice(0, 10) || "-"}</td>
+                    <td>{key.lastUsed?.slice(0, 10) || "-"}</td>
+                    <td>
+                      <span className="font-mono">
+                        {key.apiKey ? key.apiKey.slice(0, 2) + "********" + key.apiKey.slice(-2) : ""}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="flex gap-2">
+                        <button className="btn btn-sm btn-secondary" onClick={() => handleEditKey(key.id)}>
+                          Edytuj
+                        </button>
+                        <button className="btn btn-sm btn-error" onClick={() => handleDeleteKey(key.id)}>
+                          Usun
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

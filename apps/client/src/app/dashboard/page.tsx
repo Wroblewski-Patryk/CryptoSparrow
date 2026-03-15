@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PageTitle } from 'apps/client/src/ui/layout/dashboard/PageTitle';
+import { LoadingState } from 'apps/client/src/ui/components/ViewState';
 
 const kpiCards = [
   { label: 'Open Positions', value: '3', tone: 'text-info' },
@@ -28,7 +29,9 @@ export default function DashboardPage() {
     }
   }, [loading, user]);
 
-  if (loading) return null;
+  if (loading) {
+    return <LoadingState title='Ladowanie panelu dashboard' />;
+  }
 
   return (
     <section className='w-full'>
