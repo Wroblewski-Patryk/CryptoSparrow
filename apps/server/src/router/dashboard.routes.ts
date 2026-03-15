@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/requireAuth';
 import apiKeyRouter from '../modules/profile/apiKey/apiKey.routes';
 import basicRouter from '../modules/profile/basic/basic.routes';
 import strategiesRouter from '../modules/strategies/strategies.routes';
+import marketsRouter from '../modules/markets/markets.routes';
 
 const router = Router();
 router.use(requireAuth);
@@ -20,5 +21,8 @@ router.use('/profile/apiKeys', apiKeyRouter);
 
 // Module - Strategies
 router.use('/strategies', strategiesRouter)
+
+// Module - Markets
+router.use('/markets', marketsRouter);
 
 export default router;
