@@ -11,7 +11,7 @@ Operational queue for one-task execution runs.
 - [x] `refactor(validation): centralize zod error formatting`
 - [x] `fix(server): reduce critical any usage in auth/middleware`
 - [x] `fix(client): reduce critical any usage in strategy/profile flows`
-- [ ] `test(strategies): add strategy CRUD contract tests`
+- [x] `test(strategies): add strategy CRUD contract tests`
 
 ## NEXT
 - [ ] `security(api-keys): verify encrypted-only storage and masked response`
@@ -37,6 +37,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-15 `refactor(validation): centralize zod error formatting`
 - [x] 2026-03-15 `fix(server): reduce critical any usage in auth/middleware`
 - [x] 2026-03-15 `fix(client): reduce critical any usage in strategy/profile flows`
+- [x] 2026-03-15 `test(strategies): add strategy CRUD contract tests`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

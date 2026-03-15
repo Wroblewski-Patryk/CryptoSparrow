@@ -26,7 +26,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `fix(server): reduce critical any usage in auth/middleware`
 - [x] `fix(client): reduce critical any usage in strategy/profile flows`
 - [x] `test(auth): stabilize deterministic auth regression tests`
-- [ ] `test(strategies): add strategy CRUD contract tests`
+- [x] `test(strategies): add strategy CRUD contract tests`
 - [ ] `security(api-keys): verify encrypted-only storage and masked response`
 - [ ] `security(rate-limit): add limiter for auth, market, and trading endpoints`
 - [ ] `docs(cleanup): normalize encoding and Current/Planned consistency`
@@ -110,4 +110,5 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Centralized Zod validation error formatting via shared helper.
 - 2026-03-15: Reduced critical any usage in auth/middleware via typed request user context.
 - 2026-03-15: Reduced critical any usage in strategy/profile client flows with typed payloads and DTO mapping.
+- 2026-03-15: Added strategies CRUD contract e2e tests with auth and ownership isolation checks.
 - 2026-03-15: Added dashboard planning tasks for post-login control center and positions/orders-first home widgets.
