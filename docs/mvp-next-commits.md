@@ -7,14 +7,14 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `feat(ui-tokens): semantic risk and execution-mode tokens + status badges`
 - [ ] `docs(decisions): close MVP rule nesting depth as explicitly out-of-scope`
 - [ ] `feat(ui): dashboard/markets flow`
 - [ ] `feat(ui): dashboard/builder strategy editor + presets`
 - [ ] `feat(ui): dashboard/bots management + mode status`
+- [ ] `feat(ui): dashboard/orders and dashboard/positions`
 
 ## NEXT
-- [ ] `feat(ui): dashboard/orders and dashboard/positions`
+- [ ] `feat(ui): dashboard home widgets for live positions/orders snapshot and recent actions feed`
 
 ## BLOCKED
 - [ ] (empty)
@@ -71,6 +71,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-15 `feat(ui-state): shared loading/empty/degraded/error/success components`
 - [x] 2026-03-15 `feat(ui-control-center): sticky safety bar with mode/connectivity/heartbeat/emergency action`
 - [x] 2026-03-15 `feat(ui-control-center): risk notice footer with logs shortcut`
+- [x] 2026-03-15 `feat(ui-tokens): semantic risk and execution-mode tokens + status badges`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

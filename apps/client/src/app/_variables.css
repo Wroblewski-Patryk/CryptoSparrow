@@ -1,3 +1,17 @@
 :root{
-    --max-width: 1400px
+    --max-width: 1400px;
+
+    --token-mode-paper-bg: #e0f2fe;
+    --token-mode-paper-fg: #0c4a6e;
+    --token-mode-live-bg: #fee2e2;
+    --token-mode-live-fg: #7f1d1d;
+    --token-mode-local-bg: #ecfccb;
+    --token-mode-local-fg: #365314;
+
+    --token-risk-safe-bg: #dcfce7;
+    --token-risk-safe-fg: #14532d;
+    --token-risk-warning-bg: #fef9c3;
+    --token-risk-warning-fg: #713f12;
+    --token-risk-danger-bg: #fee2e2;
+    --token-risk-danger-fg: #7f1d1d;
 }

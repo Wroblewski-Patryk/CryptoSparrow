@@ -71,7 +71,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(ui): post-login control-center dashboard with key KPIs, bot status, and quick actions`
 - [x] `feat(ui-shell): unify dashboard app shell, page headers, and breadcrumb patterns across modules`
 - [x] `feat(ui-state): implement shared loading/empty/degraded/error/success state components`
-- [ ] `feat(ui-tokens): add semantic risk and execution-mode tokens (paper/live/warning/danger) and reusable status badges`
+- [x] `feat(ui-tokens): add semantic risk and execution-mode tokens (paper/live/warning/danger) and reusable status badges`
 - [x] `feat(ui-control-center): add sticky safety bar with mode/connectivity/heartbeat and emergency action`
 - [x] `feat(ui-control-center): add risk notice footer with logs drill-down shortcut`
 - [ ] `feat(ui): dashboard/markets flow`
@@ -162,3 +162,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added shared UI state components (loading, empty, degraded, error, success) with dashboard integration and unit coverage.
 - 2026-03-15: Added sticky control-center safety bar with mode, connectivity, heartbeat status, and emergency navigation action.
 - 2026-03-15: Added control-center risk notice footer with direct shortcuts to audit logs and security settings.
+- 2026-03-15: Added semantic UI tokens for execution mode and risk levels with reusable status badge component integrated into safety bar.

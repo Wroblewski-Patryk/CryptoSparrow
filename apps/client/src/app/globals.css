@@ -2,3 +2,46 @@
 @plugin "daisyui" {
     themes: light --default, dark --prefersdark, cyberpunk, luxury;
 };
+@import './_variables.css';
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.35rem 0.6rem;
+}
+
+.status-badge.mode-paper {
+  background: var(--token-mode-paper-bg);
+  color: var(--token-mode-paper-fg);
+}
+
+.status-badge.mode-live {
+  background: var(--token-mode-live-bg);
+  color: var(--token-mode-live-fg);
+}
+
+.status-badge.mode-local {
+  background: var(--token-mode-local-bg);
+  color: var(--token-mode-local-fg);
+}
+
+.status-badge.risk-safe {
+  background: var(--token-risk-safe-bg);
+  color: var(--token-risk-safe-fg);
+}
+
+.status-badge.risk-warning {
+  background: var(--token-risk-warning-bg);
+  color: var(--token-risk-warning-fg);
+}
+
+.status-badge.risk-danger {
+  background: var(--token-risk-danger-bg);
+  color: var(--token-risk-danger-fg);
+}

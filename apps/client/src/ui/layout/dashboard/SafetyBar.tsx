@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../../../lib/api';
+import StatusBadge from '../../components/StatusBadge';
 
 type Mode = 'PAPER' | 'LIVE' | 'LOCAL';
 
@@ -58,18 +59,26 @@ export default function SafetyBar({ mode = 'PAPER' }: SafetyBarProps) {
     };
   }, []);
 
+  const modeValue = mode.toLowerCase() as 'paper' | 'live' | 'local';
+
   return (
     <div className='sticky top-16 z-30 mb-4 rounded-xl border border-base-300 bg-base-200/95 px-4 py-3 shadow-sm backdrop-blur'>
       <div className='flex flex-wrap items-center gap-3'>
-        <span className='badge badge-outline'>Mode: {mode}</span>
-        <span className={`badge ${isOnline ? 'badge-success' : 'badge-error'}`}>
-          {isOnline ? 'Connectivity: Online' : 'Connectivity: Offline'}
-        </span>
-        <span className={`badge ${degraded ? 'badge-warning' : 'badge-info'}`}>
-          {degraded
-            ? 'Heartbeat: Delayed'
-            : `Heartbeat: ${heartbeatAt ? `OK (${heartbeatAt})` : 'Checking...'}`}
-        </span>
+        <StatusBadge kind='mode' value={modeValue} />
+        <StatusBadge
+          kind='risk'
+          value={isOnline ? 'safe' : 'danger'}
+          label={isOnline ? 'Connectivity: Online' : 'Connectivity: Offline'}
+        />
+        <StatusBadge
+          kind='risk'
+          value={degraded ? 'warning' : 'safe'}
+          label={
+            degraded
+              ? 'Heartbeat: Delayed'
+              : `Heartbeat: ${heartbeatAt ? `OK (${heartbeatAt})` : 'Checking...'}`
+          }
+        />
 
         <button
           type='button'
