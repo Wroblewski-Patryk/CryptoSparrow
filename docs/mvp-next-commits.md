@@ -7,16 +7,16 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `feat(engine): rule evaluator (AND/OR + comparisons + multi-timeframe)`
 - [ ] `feat(engine): pre-trade analysis and position limit checks`
 - [ ] `feat(engine): simulator with fees/slippage/funding`
 - [ ] `feat(engine): order types market/limit/stop/stop-limit/take-profit/trailing`
 - [ ] `feat(engine): TP/SL/trailing/DCA position management`
+- [ ] `feat(api): backtest run/create/list endpoints`
 
 ## NEXT
-- [ ] `feat(api): backtest run/create/list endpoints`
 - [ ] `feat(api): backtest trade list and report endpoints`
 - [ ] `test(engine): deterministic simulator tests for pnl/fees/funding`
+- [ ] `feat(engine): paper runtime loop on live market feed`
 
 ## BLOCKED
 - [ ] (empty)
@@ -52,6 +52,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-15 `test(api): add data isolation tests for markets/bots/orders/positions/backtests`
 - [x] 2026-03-15 `feat(engine): market-data ingestion service (OHLCV) with caching`
 - [x] 2026-03-15 `feat(engine): indicator calculation adapter`
+- [x] 2026-03-15 `feat(engine): rule evaluator (AND/OR + comparisons + multi-timeframe)`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

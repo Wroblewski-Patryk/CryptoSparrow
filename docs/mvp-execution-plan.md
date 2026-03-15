@@ -47,7 +47,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 ## Phase 2 - Trading Engine Core (Backtest-First)
 - [x] `feat(engine): market-data ingestion service (OHLCV) with caching`
 - [x] `feat(engine): indicator calculation adapter`
-- [ ] `feat(engine): rule evaluator (AND/OR + comparisons + multi-timeframe)`
+- [x] `feat(engine): rule evaluator (AND/OR + comparisons + multi-timeframe)`
 - [ ] `feat(engine): pre-trade analysis and position limit checks`
 - [ ] `feat(engine): simulator with fees/slippage/funding`
 - [ ] `feat(engine): order types market/limit/stop/stop-limit/take-profit/trailing`
@@ -130,3 +130,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added cross-module data isolation e2e coverage for markets, bots, orders, positions, and backtest datasets.
 - 2026-03-15: Added market-data OHLCV ingestion service with in-memory TTL caching and unit coverage for cache hit, expiry, and force refresh.
 - 2026-03-15: Added indicator calculation adapter for SMA, EMA, and RSI with unit coverage for warmup and output ranges.
+- 2026-03-15: Added rule evaluator service for AND/OR comparison rules with multi-timeframe indicator snapshot support.
