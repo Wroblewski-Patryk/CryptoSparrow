@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import {
-  fetchApiKeys,
-  addApiKey,
-  editApiKey,
-  deleteApiKey,
-} from "../services/apiKeys.service";
+import { toast } from "sonner";
+import { fetchApiKeys, addApiKey, editApiKey, deleteApiKey } from "../services/apiKeys.service";
 import { ApiKey } from "../types/apiKey.type";
-import { toast } from "sonner"; 
+
+const getErrorMessage = (err: unknown, fallback: string) => {
+  if (err instanceof Error) return err.message;
+  return fallback;
+};
 
 export function useApiKeys() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
@@ -19,8 +19,8 @@ export function useApiKeys() {
       const data = await fetchApiKeys();
       setKeys(data);
       setError(null);
-    } catch (err: any) {
-      setError(err.message || "Błąd pobierania kluczy");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to fetch API keys"));
     }
     setLoading(false);
   };
@@ -30,12 +30,12 @@ export function useApiKeys() {
   }, []);
 
   const handleAdd = async (payload: Partial<ApiKey>) => {
-    try{
+    try {
       await addApiKey(payload);
       await refresh();
-      toast.success("Klucz został dodany!");
-    } catch (err: any) {
-      toast.error("Nie udało się dodać klucza.");
+      toast.success("Klucz zostal dodany!");
+    } catch (_err: unknown) {
+      toast.error("Nie udalo sie dodac klucza.");
     }
   };
 
@@ -43,9 +43,9 @@ export function useApiKeys() {
     try {
       await editApiKey(id, payload);
       await refresh();
-      toast.success("Klucz został zaktualizowany!");
-    } catch (err: any) {
-      toast.error("Nie udało się zaktualizować klucza.");
+      toast.success("Klucz zostal zaktualizowany!");
+    } catch (_err: unknown) {
+      toast.error("Nie udalo sie zaktualizowac klucza.");
     }
   };
 
@@ -53,9 +53,9 @@ export function useApiKeys() {
     try {
       await deleteApiKey(id);
       await refresh();
-      toast.success("Klucz został usunięty!");
-    } catch (err: any) {
-      toast.error("Nie udało się usunąć klucza.");
+      toast.success("Klucz zostal usuniety!");
+    } catch (_err: unknown) {
+      toast.error("Nie udalo sie usunac klucza.");
     }
   };
 

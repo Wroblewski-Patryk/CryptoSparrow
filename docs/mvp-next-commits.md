@@ -10,7 +10,7 @@ Operational queue for one-task execution runs.
 - [x] `docs(decisions): resolve preset storage approach for MVP`
 - [x] `refactor(validation): centralize zod error formatting`
 - [x] `fix(server): reduce critical any usage in auth/middleware`
-- [ ] `fix(client): reduce critical any usage in strategy/profile flows`
+- [x] `fix(client): reduce critical any usage in strategy/profile flows`
 - [ ] `test(strategies): add strategy CRUD contract tests`
 
 ## NEXT
@@ -36,6 +36,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-15 `docs(decisions): resolve preset storage approach for MVP`
 - [x] 2026-03-15 `refactor(validation): centralize zod error formatting`
 - [x] 2026-03-15 `fix(server): reduce critical any usage in auth/middleware`
+- [x] 2026-03-15 `fix(client): reduce critical any usage in strategy/profile flows`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

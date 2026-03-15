@@ -1,11 +1,12 @@
 export type StrategyDto = {
     id: string;
     name: string;
-    description: Text;
+    description: string;
     leverage: number;
     interval: string;
     createdAt: string;
-    config?: any;
+    walletRisk?: number;
+    config?: Record<string, unknown>;
 };
 
 export type StrategyFormProps = {
@@ -22,7 +23,7 @@ export type StrategyFormState = {
     walletRisk: number;
     openConditions: OpenConditions;
     closeConditions: CloseConditions;
-    additional: any;
+    additional: AdditionalState;
 };
 
 //SECTION BASIC

@@ -15,7 +15,7 @@ export function Basic({ data, setData }: BasicProps) {
             placeholder="np. RSI+MACD 5m"
             value={data.name}
             onChange={e =>
-              setData((prev: any) => ({ ...prev, name: e.target.value }))
+              setData(prev => ({ ...prev, name: e.target.value }))
             }
           />
         </div>
@@ -30,7 +30,7 @@ export function Basic({ data, setData }: BasicProps) {
             rows={3}
             value={data.description}
             onChange={e =>
-              setData((prev: any) => ({ ...prev, description: e.target.value }))
+              setData(prev => ({ ...prev, description: e.target.value }))
             }
           />
         </div>
@@ -44,7 +44,7 @@ export function Basic({ data, setData }: BasicProps) {
           <select
             value={data.interval}
             onChange={e =>
-              setData((prev: any) => ({ ...prev, interval: e.target.value }))
+              setData(prev => ({ ...prev, interval: e.target.value }))
             }
             className="select select-bordered w-full"
           >
@@ -68,7 +68,7 @@ export function Basic({ data, setData }: BasicProps) {
               value={data.leverage}
               className="range w-full"
               onChange={e =>
-                setData((prev: any) => ({
+                setData(prev => ({
                   ...prev,
                   leverage: Number(e.target.value),
                 }))
@@ -84,7 +84,7 @@ export function Basic({ data, setData }: BasicProps) {
                 let val = Number(e.target.value);
                 if (val < 1) val = 1;
                 if (val > 75) val = 75;
-                setData((prev: any) => ({
+                setData(prev => ({
                   ...prev,
                   leverage: val,
                 }));
@@ -105,7 +105,7 @@ export function Basic({ data, setData }: BasicProps) {
               value={data.walletRisk}
               className="range w-full"
               onChange={e =>
-                setData((prev: any) => ({
+                setData(prev => ({
                   ...prev,
                   walletRisk: Number(e.target.value),
                 }))
@@ -119,7 +119,7 @@ export function Basic({ data, setData }: BasicProps) {
               className="input input-bordered w-20"
               value={data.walletRisk}
               onChange={e =>
-                setData((prev: any) => ({
+                setData(prev => ({
                   ...prev,
                   walletRisk: Number(e.target.value),
                 }))

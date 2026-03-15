@@ -24,7 +24,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `refactor(api): unify API error response payload`
 - [x] `refactor(validation): centralize zod error formatting`
 - [x] `fix(server): reduce critical any usage in auth/middleware`
-- [ ] `fix(client): reduce critical any usage in strategy/profile flows`
+- [x] `fix(client): reduce critical any usage in strategy/profile flows`
 - [x] `test(auth): stabilize deterministic auth regression tests`
 - [ ] `test(strategies): add strategy CRUD contract tests`
 - [ ] `security(api-keys): verify encrypted-only storage and masked response`
@@ -109,4 +109,5 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Resolved MVP preset storage approach as code-defined templates in docs.
 - 2026-03-15: Centralized Zod validation error formatting via shared helper.
 - 2026-03-15: Reduced critical any usage in auth/middleware via typed request user context.
+- 2026-03-15: Reduced critical any usage in strategy/profile client flows with typed payloads and DTO mapping.
 - 2026-03-15: Added dashboard planning tasks for post-login control center and positions/orders-first home widgets.

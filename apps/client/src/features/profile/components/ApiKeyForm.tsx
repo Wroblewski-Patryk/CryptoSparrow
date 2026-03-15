@@ -1,10 +1,17 @@
-// /modules/profile/components/ApiKeyForm.tsx
 "use client";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ZodError } from "zod";
 import { apiKeySchema } from "../types/apiKeyForm.type";
 
 const EXCHANGES = ["BINANCE"];
+
+export type ApiKeyFormSavePayload = {
+  label: string;
+  exchange: string;
+  apiKey?: string;
+  apiSecret?: string;
+};
 
 export type ApiKeyFormProps = {
   defaultValues?: {
@@ -12,14 +19,13 @@ export type ApiKeyFormProps = {
     exchange: string;
   };
   isEdit?: boolean;
-  onSave: (data: { label: string; exchange: string; apiKey?: string; apiSecret?: string }) => void;
+  onSave: (data: ApiKeyFormSavePayload) => void;
   onCancel: () => void;
 };
 
 export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: ApiKeyFormProps) {
   const [label, setLabel] = useState(defaultValues?.label || "");
   const [exchange, setExchange] = useState(defaultValues?.exchange || EXCHANGES[0]);
-  // inputy na key/secret ZAWSZE puste przy edycji
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
   const [testing, setTesting] = useState(false);
@@ -28,7 +34,6 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
   const handleTest = async () => {
     setTesting(true);
     setTestResult(null);
-    // TODO: call backend do testu klucza
     setTimeout(() => {
       setTestResult(Math.random() > 0.5 ? "ok" : "fail");
       setTesting(false);
@@ -38,18 +43,22 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Przy dodawaniu wszystko wymagane, przy edycji tylko label/exchange wymagane
       if (isEdit) {
         apiKeySchema.pick({ label: true, exchange: true }).parse({ label, exchange });
       } else {
         apiKeySchema.parse({ label, exchange, apiKey, apiSecret });
       }
-      const payload: any = { label, exchange };
+
+      const payload: ApiKeyFormSavePayload = { label, exchange };
       if (apiKey) payload.apiKey = apiKey;
       if (apiSecret) payload.apiSecret = apiSecret;
       onSave(payload);
-    } catch (e: any) {
-      toast.error(e.errors?.[0]?.message || "Błąd walidacji");
+    } catch (err: unknown) {
+      if (err instanceof ZodError) {
+        toast.error(err.issues[0]?.message || "Validation error");
+        return;
+      }
+      toast.error("Validation error");
     }
   };
 
@@ -69,7 +78,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
       </div>
       <div className="form-control w-full">
         <label className="label pl-0">
-          <span className="label-text text-left w-full">Giełda</span>
+          <span className="label-text text-left w-full">Gielda</span>
         </label>
         <select
           className="select select-bordered w-full"
@@ -77,7 +86,9 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           onChange={(e) => setExchange(e.target.value)}
         >
           {EXCHANGES.map((ex) => (
-            <option key={ex} value={ex}>{ex}</option>
+            <option key={ex} value={ex}>
+              {ex}
+            </option>
           ))}
         </select>
       </div>
@@ -114,14 +125,18 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           onClick={handleTest}
           disabled={testing}
         >
-          Testuj połączenie
+          Testuj polaczenie
         </button>
         {testResult === "ok" && <span className="text-success">OK</span>}
-        {testResult === "fail" && <span className="text-error">Błąd</span>}
+        {testResult === "fail" && <span className="text-error">Blad</span>}
       </div>
       <div className="flex gap-2 mt-4">
-        <button className="btn btn-primary" type="submit">Zapisz</button>
-        <button className="btn btn-outline" type="button" onClick={onCancel}>Anuluj</button>
+        <button className="btn btn-primary" type="submit">
+          Zapisz
+        </button>
+        <button className="btn btn-outline" type="button" onClick={onCancel}>
+          Anuluj
+        </button>
       </div>
     </form>
   );

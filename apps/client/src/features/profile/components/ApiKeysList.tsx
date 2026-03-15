@@ -1,19 +1,10 @@
-// /modules/profile/components/ApiKeysList.tsx
 "use client";
 import { useState } from "react";
-import ApiKeyForm from "./ApiKeyForm";
+import ApiKeyForm, { ApiKeyFormSavePayload } from "./ApiKeyForm";
 import { useApiKeys } from "../hooks/useApiKeys";
 
 export default function ApiKeysList() {
-  const {
-    keys,
-    loading,
-    error,
-    handleAdd,
-    handleEdit,
-    handleDelete,
-    refresh,
-  } = useApiKeys();
+  const { keys, loading, error, handleAdd, handleEdit, handleDelete } = useApiKeys();
 
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -22,22 +13,19 @@ export default function ApiKeysList() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  // Dodaj nowy
   const handleAddKey = () => {
     setEditId(null);
     setModalTitle("Dodaj klucz API");
     setShowModal(true);
   };
 
-  // Edytuj istniejący
   const handleEditKey = (id: string) => {
     setEditId(id);
     setModalTitle("Edytuj klucz API");
     setShowModal(true);
   };
 
-  // Zapisz (dodaj/edytuj)
-  const handleSave = async (data: any) => {
+  const handleSave = async (data: ApiKeyFormSavePayload) => {
     if (editId) {
       await handleEdit(editId, data);
     } else {
@@ -47,7 +35,6 @@ export default function ApiKeysList() {
     setEditId(null);
   };
 
-  // Usuń
   const handleDeleteKey = (id: string) => {
     setDeleteId(id);
     setShowDeleteModal(true);
@@ -71,12 +58,11 @@ export default function ApiKeysList() {
     setEditId(null);
   };
 
-  // Dane do formularza przy edycji
-  const defaultValues =
-  editId && keys.find((k) => k.id === editId)
+  const selectedKey = editId ? keys.find((k) => k.id === editId) : undefined;
+  const defaultValues = selectedKey
     ? {
-        label: keys.find((k) => k.id === editId)!.label,
-        exchange: keys.find((k) => k.id === editId)!.exchange,
+        label: selectedKey.label,
+        exchange: selectedKey.exchange,
       }
     : undefined;
 
@@ -88,20 +74,18 @@ export default function ApiKeysList() {
           Dodaj nowy klucz
         </button>
       </div>
-      {loading && <div className="alert alert-info">Ładowanie...</div>}
+      {loading && <div className="alert alert-info">Ladowanie...</div>}
       {error && <div className="alert alert-error">{error}</div>}
-      {!loading && keys.length === 0 && (
-        <div className="alert alert-info">Brak kluczy API.</div>
-      )}
+      {!loading && keys.length === 0 && <div className="alert alert-info">Brak kluczy API.</div>}
       {!loading && keys.length > 0 && (
         <div className="overflow-x-auto">
           <table className="table table-zebra">
             <thead>
               <tr>
                 <th>Nazwa</th>
-                <th>Giełda</th>
+                <th>Gielda</th>
                 <th>Utworzono</th>
-                <th>Ostatnio używany</th>
+                <th>Ostatnio uzywany</th>
                 <th>API Key</th>
                 <th>Akcje</th>
               </tr>
@@ -115,26 +99,16 @@ export default function ApiKeysList() {
                   <td>{key.lastUsed?.slice(0, 10) || "-"}</td>
                   <td>
                     <span className="font-mono">
-                      {key.apiKey
-                        ? key.apiKey.slice(0, 2) +
-                          "********" +
-                          key.apiKey.slice(-2)
-                        : ""}
+                      {key.apiKey ? key.apiKey.slice(0, 2) + "********" + key.apiKey.slice(-2) : ""}
                     </span>
                   </td>
                   <td>
                     <div className="flex gap-2">
-                      <button
-                        className="btn btn-sm btn-secondary"
-                        onClick={() => handleEditKey(key.id)}
-                      >
+                      <button className="btn btn-sm btn-secondary" onClick={() => handleEditKey(key.id)}>
                         Edytuj
                       </button>
-                      <button
-                        className="btn btn-sm btn-error"
-                        onClick={() => handleDeleteKey(key.id)}
-                      >
-                        Usuń
+                      <button className="btn btn-sm btn-error" onClick={() => handleDeleteKey(key.id)}>
+                        Usun
                       </button>
                     </div>
                   </td>
@@ -145,7 +119,6 @@ export default function ApiKeysList() {
         </div>
       )}
 
-      {/* DaisyUI modal */}
       <dialog id="apiKeyModal" className={`modal ${showModal ? "modal-open" : ""}`}>
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-4">{modalTitle}</h3>
@@ -161,17 +134,17 @@ export default function ApiKeysList() {
           <button>close</button>
         </form>
       </dialog>
-      {/* DaisyUI modal – potwierdzenie usuwania */}
+
       <dialog id="deleteApiKeyModal" className={`modal ${showDeleteModal ? "modal-open" : ""}`}>
         <div className="modal-box">
-          <h3 className="font-bold text-lg mb-4 text-error">Usuń klucz API?</h3>
-          <p className="mb-6">Czy na pewno chcesz usunąć ten klucz? Tej operacji nie można cofnąć.</p>
+          <h3 className="font-bold text-lg mb-4 text-error">Usun klucz API?</h3>
+          <p className="mb-6">Czy na pewno chcesz usunac ten klucz? Tej operacji nie mozna cofnac.</p>
           <div className="flex gap-4 justify-end">
             <button className="btn btn-outline" type="button" onClick={cancelDelete}>
               Anuluj
             </button>
             <button className="btn btn-error" type="button" onClick={confirmDelete}>
-              Usuń
+              Usun
             </button>
           </div>
         </div>
