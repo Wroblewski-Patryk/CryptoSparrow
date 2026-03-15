@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
-import { registerUser, loginUser } from './auth.service';
-import { RegisterSchema, LoginSchema } from './auth.types';
 import { ZodError } from 'zod';
 import jwt from 'jsonwebtoken';
+import { registerUser, loginUser } from './auth.service';
+import { RegisterSchema, LoginSchema } from './auth.types';
+import { formatZodError } from '../../utils/formatZodError';
+import { sendError } from '../../utils/apiError';
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -29,9 +31,9 @@ export const register = async (req: Request, res: Response) => {
     return res.status(201).json({ message: 'User registered', user });
   } catch (error) {
     if (error instanceof ZodError) {
-      return res.status(400).json({ error: 'Invalid input' });
+      return sendError(res, 400, 'Validation failed', formatZodError(error));
     }
-    return res.status(500).json({ error: 'Registration failed' });
+    return sendError(res, 500, 'Registration failed');
   }
 };
 
@@ -51,22 +53,22 @@ export const login = async (req: Request, res: Response) => {
     return res.status(200).json({ user });
   } catch (error) {
     if (error instanceof ZodError) {
-      return res.status(400).json({ error: 'Invalid input' });
+      return sendError(res, 400, 'Validation failed', formatZodError(error));
     }
 
     const errorMessage =
       typeof error === 'object' && error !== null && 'message' in error
         ? (error as { message?: string }).message
-        : undefined;
+        : 'Login failed';
 
-    return res.status(401).json({ error: errorMessage || 'Login failed' });
+    return sendError(res, 401, errorMessage || 'Login failed');
   }
 };
 
 export const me = async (req: Request, res: Response) => {
   try {
     const token = req.cookies.token;
-    if (!token) return res.status(401).json({ message: 'Brak tokena' });
+    if (!token) return sendError(res, 401, 'Missing token');
 
     const payload = jwt.verify(token, process.env.JWT_SECRET!) as {
       userId: string;
@@ -78,11 +80,11 @@ export const me = async (req: Request, res: Response) => {
       email: payload.email,
     });
   } catch {
-    return res.status(401).json({ message: 'Nieprawidłowy token' });
+    return sendError(res, 401, 'Invalid token');
   }
 };
 
-export const logout = async (req: Request, res: Response) => {
+export const logout = async (_req: Request, res: Response) => {
   res.clearCookie('token', { path: '/' });
-  return res.status(200).json({ message: 'Wylogowano' });
+  return res.status(200).json({ message: 'Logged out' });
 };

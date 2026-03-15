@@ -18,8 +18,10 @@ app.use(express.json());
 app.use(router);
 app.use(errorHandler);
 
-app.listen(serverPort, () => {
-  console.log("Server running on "+serverUrl);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(serverPort, () => {
+    console.log("Server running on "+serverUrl);
+  });
+}
 
 export { app }

@@ -4,6 +4,8 @@ import { registerUser } from './auth.service';
 
 describe('registerUser', () => {
   beforeEach(async () => {
+    await prisma.apiKey.deleteMany();
+    await prisma.strategy.deleteMany();
     await prisma.user.deleteMany();
   });
 
@@ -29,6 +31,6 @@ describe('registerUser', () => {
         email: 'duplikat@user.com',
         password: 'test123',
       })
-    ).rejects.toThrow('User already exists');
+    ).rejects.toThrow('User with this email already exists');
   });
 });

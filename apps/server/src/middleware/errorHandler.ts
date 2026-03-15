@@ -1,6 +1,7 @@
 import { ZodError } from 'zod';
 import { Request, Response, NextFunction } from 'express';
 import { formatZodError } from '../utils/formatZodError';
+import { sendError } from '../utils/apiError';
 
 export function errorHandler(
   err: any,
@@ -9,10 +10,10 @@ export function errorHandler(
   _next: NextFunction
 ) {
   if (err instanceof ZodError) {
-    return res.status(400).json({ errors: formatZodError(err) });
+    return sendError(res, 400, 'Validation failed', formatZodError(err));
   }
 
   console.error(err);
 
-  return res.status(500).json({ error: 'Internal server error' });
+  return sendError(res, 500, 'Internal server error');
 }

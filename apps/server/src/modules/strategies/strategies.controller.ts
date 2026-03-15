@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as strategyService from './strategies.service';
+import { sendError } from '../../utils/apiError';
 
 // GET /strategies
 export const getStrategies = async (req: Request, res: Response) => {
@@ -13,7 +14,7 @@ export const getStrategy = async (req: Request, res: Response) => {
     const userId = req.user.id;
     const { id } = req.params;
     const strategy = await strategyService.getStrategyById(id, userId);
-    if (!strategy) return res.status(404).json({ message: 'Not found' });
+    if (!strategy) return sendError(res, 404, 'Not found');
     res.json(strategy);
 };
 

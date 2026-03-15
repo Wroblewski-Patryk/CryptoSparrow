@@ -5,6 +5,8 @@ import { prisma } from '../../prisma/client';
 
 describe('POST /auth/register', () => {
   beforeEach(async () => {
+    await prisma.apiKey.deleteMany();
+    await prisma.strategy.deleteMany();
     await prisma.user.deleteMany();
   });
 
@@ -30,7 +32,8 @@ describe('POST /auth/register', () => {
       });
 
     expect(res.status).toBe(400);
-    expect(res.body.errors[0].field).toBe('password');
+    expect(res.body.error.message).toBe('Validation failed');
+    expect(res.body.error.details[0].field).toBe('password');
   });
 
   it('should reject duplicate email', async () => {
@@ -48,7 +51,7 @@ describe('POST /auth/register', () => {
         password: 'test1234',
       });
 
-    expect(res.status).toBe(500); // bo rzuca Error w service
-    expect(res.body.error).toBe('Internal server error');
+    expect(res.status).toBe(500); // because service throws duplicate error
+    expect(res.body.error.message).toBe('Registration failed');
   });
 });

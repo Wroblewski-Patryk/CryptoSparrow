@@ -35,6 +35,15 @@ Primary target is advanced users who already understand trading concepts and can
 - Responsive UI for desktop, tablet, and mobile.
 - Internationalization: EN default + PL in MVP.
 
+## MVP Strategy Schema (Frozen)
+- Strategy payload uses sections: `entry`, `exit`, `risk`, `filters`, `timeframes`.
+- Schema version is fixed as `1.0` for MVP.
+- `entry` and `exit` use top-level `logic` (`AND`/`OR`) with flat `rules` arrays.
+- `risk` includes: position sizing, leverage, TP/SL, trailing, DCA, max open positions.
+- `filters` includes: symbol mode, whitelist/blacklist, stable-pair exclusion, min 24h volume.
+- `timeframes` is an explicit list used by strategy rules.
+- Deep nested rule trees are explicitly out of MVP and can be added after MVP.
+
 ## Planned Scope (After MVP)
 - Spot trading support.
 - Strategy export/import as JSON with versioned format.

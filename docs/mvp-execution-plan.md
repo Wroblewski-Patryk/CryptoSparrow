@@ -19,13 +19,13 @@ Rule: fix/cleanup/update first, then feature delivery.
 ## Phase 0 - Stabilization and Baseline (Must Finish First)
 - [x] `chore(repo): add root workspace scripts for lint/typecheck/test/build`
 - [x] `chore(ci): add minimal CI checks for client and server`
-- [ ] `docs(decisions): freeze MVP strategy schema shape (entry/exit/risk/filters/timeframes)`
+- [x] `docs(decisions): freeze MVP strategy schema shape (entry/exit/risk/filters/timeframes)`
 - [ ] `docs(decisions): resolve preset storage approach for MVP`
-- [ ] `refactor(api): unify API error response payload`
+- [x] `refactor(api): unify API error response payload`
 - [ ] `refactor(validation): centralize zod error formatting`
 - [ ] `fix(server): reduce critical any usage in auth/middleware`
 - [ ] `fix(client): reduce critical any usage in strategy/profile flows`
-- [ ] `test(auth): stabilize deterministic auth regression tests`
+- [x] `test(auth): stabilize deterministic auth regression tests`
 - [ ] `test(strategies): add strategy CRUD contract tests`
 - [ ] `security(api-keys): verify encrypted-only storage and masked response`
 - [ ] `security(rate-limit): add limiter for auth, market, and trading endpoints`
@@ -100,3 +100,6 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Expanded MVP plan to fully align with product, modules, database, trading, testing, and security docs.
 - 2026-03-15: Added root workspace scripts for lint/typecheck/test/build in package.json.
 - 2026-03-15: Added minimal GitHub Actions CI checks for client and server.
+- 2026-03-15: Frozen MVP strategy schema shape in open-decisions and product docs.
+- 2026-03-15: Unified API error response payload format across middleware and core modules.
+- 2026-03-15: Stabilized auth regression tests with deterministic DB cleanup and test-safe app startup.

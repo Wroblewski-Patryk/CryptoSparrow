@@ -1,6 +1,9 @@
-import { Request, Response } from "express";
-import * as apiKeyService from "./apiKey.service";
-import { apiKeySchema } from "./apiKey.types";
+import { Request, Response } from 'express';
+import { ZodError } from 'zod';
+import * as apiKeyService from './apiKey.service';
+import { apiKeySchema } from './apiKey.types';
+import { formatZodError } from '../../../utils/formatZodError';
+import { sendError } from '../../../utils/apiError';
 
 type UserRequest = Request & { user: { id: string } };
 
@@ -12,8 +15,11 @@ export const list = async (req: UserRequest, res: Response) => {
 export const create = async (req: UserRequest, res: Response) => {
   try {
     apiKeySchema.parse(req.body);
-  } catch (e: any) {
-    return res.status(400).json({ error: e.errors?.[0]?.message || "Błąd walidacji" });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return sendError(res, 400, 'Validation failed', formatZodError(error));
+    }
+    return sendError(res, 400, 'Validation failed');
   }
 
   const key = await apiKeyService.createApiKey(req.user.id, req.body);
@@ -23,9 +29,13 @@ export const create = async (req: UserRequest, res: Response) => {
 export const update = async (req: UserRequest, res: Response) => {
   try {
     apiKeySchema.partial().parse(req.body);
-  } catch (e: any) {
-    res.status(400).json({ error: e.errors?.[0]?.message || "Błąd walidacji" });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return sendError(res, 400, 'Validation failed', formatZodError(error));
+    }
+    return sendError(res, 400, 'Validation failed');
   }
+
   const key = await apiKeyService.updateApiKey(req.user.id, req.params.id, req.body);
   res.json(key);
 };
