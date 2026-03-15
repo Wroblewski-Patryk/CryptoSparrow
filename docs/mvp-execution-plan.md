@@ -17,8 +17,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - No mixed commits (for example feature + refactor together).
 
 ## Phase 0 - Stabilization and Baseline (Must Finish First)
-- [ ] `chore(repo): add root workspace scripts for lint/typecheck/test/build`
-- [ ] `chore(ci): add minimal CI checks for client and server`
+- [x] `chore(repo): add root workspace scripts for lint/typecheck/test/build`
+- [x] `chore(ci): add minimal CI checks for client and server`
 - [ ] `docs(decisions): freeze MVP strategy schema shape (entry/exit/risk/filters/timeframes)`
 - [ ] `docs(decisions): resolve preset storage approach for MVP`
 - [ ] `refactor(api): unify API error response payload`
@@ -98,3 +98,5 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Initialized MVP execution file and commit rules.
 - 2026-03-15: Added generic trigger-based one-task execution workflow.
 - 2026-03-15: Expanded MVP plan to fully align with product, modules, database, trading, testing, and security docs.
+- 2026-03-15: Added root workspace scripts for lint/typecheck/test/build in package.json.
+- 2026-03-15: Added minimal GitHub Actions CI checks for client and server.

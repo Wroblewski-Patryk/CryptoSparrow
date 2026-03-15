@@ -7,8 +7,8 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `chore(repo): add root workspace scripts for lint/typecheck/test/build`
-- [ ] `chore(ci): add minimal CI checks for client and server`
+- [x] `chore(repo): add root workspace scripts for lint/typecheck/test/build`
+- [x] `chore(ci): add minimal CI checks for client and server`
 - [ ] `docs(decisions): freeze MVP strategy schema shape in open-decisions/product docs`
 - [ ] `refactor(api): unify API error response payload`
 - [ ] `test(auth): stabilize deterministic auth regression tests`
@@ -26,6 +26,8 @@ Operational queue for one-task execution runs.
 ## DONE
 - [ ] 2026-03-15 `chore(planning): initialize MVP/V1 execution plans and agent blueprint`
 - [ ] 2026-03-15 `chore(planning): align trigger intent to generic one-task nudge`
+- [x] 2026-03-15 `chore(repo): add root workspace scripts for lint/typecheck/test/build`
+- [x] 2026-03-15 `chore(ci): add minimal CI checks for client and server`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
