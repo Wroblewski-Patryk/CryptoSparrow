@@ -1,4 +1,7 @@
+'use client';
+
 import Link from "next/link";
+import { useI18n } from "../../../i18n/I18nProvider";
 
 interface BreadcrumbItem {
   label: string;
@@ -13,8 +16,10 @@ interface PageTitleProps {
 }
 
 export function PageTitle({ title, breadcrumb = [], onAdd, addLabel }: PageTitleProps) {
+  const { t } = useI18n();
+
   const normalizedBreadcrumb =
-    breadcrumb.length > 0 ? breadcrumb : [{ label: "Dashboard", href: "/dashboard" }];
+    breadcrumb.length > 0 ? breadcrumb : [{ label: t("common.dashboard"), href: "/dashboard" }];
 
   return (
     <div className="mb-6 rounded-xl border border-base-300 bg-base-200 px-5 py-4 shadow-sm md:flex md:items-center md:justify-between">
@@ -33,7 +38,7 @@ export function PageTitle({ title, breadcrumb = [], onAdd, addLabel }: PageTitle
 
       {onAdd && (
         <button className="btn btn-primary mt-4 md:mt-0" onClick={onAdd}>
-          {addLabel || "Dodaj"}
+          {addLabel || t("common.add")}
         </button>
       )}
     </div>
