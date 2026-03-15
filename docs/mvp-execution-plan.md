@@ -81,7 +81,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(ui): dashboard/orders and dashboard/positions`
 - [x] `feat(ui): dashboard home widgets for live positions/orders snapshot and recent actions feed`
 - [x] `feat(ui): dashboard/backtest full UX + overlays + summary`
-- [ ] `feat(ui): dashboard/reports performance views`
+- [x] `feat(ui): dashboard/reports performance views`
 - [ ] `feat(ui): dashboard/logs audit trail`
 - [ ] `feat(ui): dashboard/exchanges api-key connections`
 - [ ] `feat(i18n): EN default + PL translation coverage`
@@ -171,3 +171,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Added dashboard orders and positions pages with backend-powered filters, table views, and component test coverage.
 - 2026-03-16: Replaced dashboard home mocks with live orders/positions widgets and recent activity feed sourced from API data.
 - 2026-03-16: Implemented full backtest UX with run creation/list, trades tab, summary cards, and modal overlay wired to backtests API.
+- 2026-03-16: Added reports performance view with aggregated KPI cards and per-run backtest report table sourced from reports API.
