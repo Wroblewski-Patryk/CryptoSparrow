@@ -9,19 +9,17 @@ export default function StrategiesPage() {
     const router = useRouter();
 
     return (
-        <section className="bg-base-100 min-h-screen">
-            <div className="max-w-7xl mx-auto">
+        <section>
                 <PageTitle
                     title="Strategie"
                     breadcrumb={[
                         { label: "Dashboard", href: "/dashboard" },
-                        { label: "Strategie", href: "/dashboard/strategies" }
+                        { label: "Strategie" }
                     ]}
                     onAdd={() => router.push("/dashboard/strategies/add")}
                     addLabel="Nowa strategia"
                 />
                 <StrategiesList />
-            </div>
         </section>
     );
 }  

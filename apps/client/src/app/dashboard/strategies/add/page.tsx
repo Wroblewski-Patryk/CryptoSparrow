@@ -20,22 +20,18 @@ export default function StrategiesPageAdd() {
         }
     };
     return (
-        <section className="bg-base-100 min-h-screen">
-            <div className="max-w-7xl mx-auto">
+        <section>
                 <PageTitle
-                    title="Strategie"
+                    title="Nowa strategia"
                     breadcrumb={[
                         { label: "Dashboard", href: "/dashboard" },
                         { label: "Strategie", href: "/dashboard/strategies" },
-                        { label: "Nowa strategia", href: "/dashboard/strategies/add" },
+                        { label: "Nowa strategia" },
                     ]}
-                    onAdd={() => router.push("/dashboard/strategies/add")}
-                    addLabel="Nowa strategia"
                 />
                 <StrategiesForm
                     onSubmit={handleCreate}
                 />
-            </div>
         </section>
     );
 }  

@@ -1,6 +1,5 @@
 'use client';
 import Link from 'next/link';
-import { useAuth } from 'apps/client/src/context/AuthContext';
 
 import ProfileButton from '../../components/ProfileButton';
 import ThemeSwitcher from '../../components/ThemeSwitch';
@@ -8,9 +7,9 @@ import ThemeSwitcher from '../../components/ThemeSwitch';
 export default function Header() {
   return (
     <header className="bg-primary sticky top-0 z-50 shadow-sm">
-      <div className="navbar max-w-7xl mx-auto">
+      <div className="navbar max-w-7xl mx-auto px-4">
         <div className="flex-1">
-          <Link href="/" className="flex items-center font-headlinedark:text-white">
+          <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-base-100">
             <img src="/logo.png" alt="Logotype - CryptoSparrow" className="h-8 w-8 mr-2" />
             CryptoSparrow
           </Link>

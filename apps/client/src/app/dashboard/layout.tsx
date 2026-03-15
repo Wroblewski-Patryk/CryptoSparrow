@@ -4,9 +4,11 @@ import Footer from "../../ui/layout/dashboard/Footer";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <main>
+    <main className="min-h-screen bg-base-100">
       <Header />
-      {children}
+      <div className="mx-auto w-full max-w-7xl px-4 py-6">
+        {children}
+      </div>
       <Footer />
     </main>
   );

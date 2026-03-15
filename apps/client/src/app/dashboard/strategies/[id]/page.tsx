@@ -39,14 +39,13 @@ export default function StrategiesPageEdit() {
     if (!initial) return null;
 
     return (
-        <section className="bg-base-100 min-h-screen">
-            <div className="max-w-7xl mx-auto">
+        <section>
                 <PageTitle
-                    title="Strategie"
+                    title={initial.name}
                     breadcrumb={[
                         { label: "Dashboard", href: "/dashboard" },
                         { label: "Strategie", href: "/dashboard/strategies" },
-                        { label: "Edycja strategii: " + initial.name, href: "/dashboard/strategies/" + id },
+                        { label: "Edycja strategii" },
                     ]}
                     onAdd={() => router.push("/dashboard/strategies/add")}
                     addLabel="Nowa strategia"
@@ -55,7 +54,6 @@ export default function StrategiesPageEdit() {
                     initial={initial}
                     onSubmit={handleUpdate}
                 />
-            </div>
         </section>
     );
 }  

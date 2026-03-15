@@ -5,6 +5,7 @@ import BasicForm from "../components/BasicForm";
 import ApiKeysList from "../components/ApiKeysList";
 import Subscription from "../components/Subscription";
 import Security from "../components/Security";
+import { PageTitle } from "apps/client/src/ui/layout/dashboard/PageTitle";
 
 const tabs = [
     { label: "Profil użytkownika", key: "basic" },
@@ -36,7 +37,15 @@ export default function ProfilePage() {
     };
     return (
         <section className="w-full">  
-            <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="py-1">
+                <PageTitle
+                    title="Profil"
+                    breadcrumb={[
+                        { label: "Dashboard", href: "/dashboard" },
+                        { label: "Profil" },
+                    ]}
+                />
+
                 <div role="tablist" className="tabs tabs-border mb-4">
                     {tabs.map((tab) => (
                     <button

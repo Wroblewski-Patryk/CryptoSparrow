@@ -31,8 +31,7 @@ export default function DashboardPage() {
   if (loading) return null;
 
   return (
-    <section className='w-full bg-base-100 min-h-screen'>
-      <div className='max-w-7xl mx-auto px-4 py-6'>
+    <section className='w-full'>
         <PageTitle
           title='Control Center'
           breadcrumb={[
@@ -166,7 +165,6 @@ export default function DashboardPage() {
             <span>Data above is temporary UI seed data and will be connected to live modules in upcoming tasks.</span>
           </div>
         </div>
-      </div>
     </section>
   );
 }
