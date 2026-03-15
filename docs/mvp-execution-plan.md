@@ -64,7 +64,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `security(live): explicit live opt-in per bot`
 - [x] `security(live): global kill-switch and emergency stop`
 - [x] `feat(logs): write audit entries for critical trading decisions`
-- [ ] `test(e2e): smoke tests for paper/live critical paths`
+- [x] `test(e2e): smoke tests for paper/live critical paths`
 
 ## Phase 4 - Dashboard Completion (MVP UX Scope)
 - [x] `docs(ui): audit legacy CryptoBot dashboard patterns for positions/orders and control-center IA`
@@ -158,3 +158,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added audit log writes for critical pre-trade decisions (allowed/blocked in LIVE and blocked decisions) with non-blocking failure handling.
 - 2026-03-15: Synced MVP UX tasks with new `ui-ux-foundation.md` baseline (shell, states, tokens, control-center safety patterns, i18n, accessibility).
 - 2026-03-15: Unified dashboard shell spacing and page-header/breadcrumb patterns across control center, strategies, backtest, and profile views.
+- 2026-03-15: Added pre-trade smoke e2e coverage for critical paper/live paths, including live allow, kill-switch block, and audit-log assertions.
