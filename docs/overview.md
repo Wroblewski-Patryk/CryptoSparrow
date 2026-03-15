@@ -19,5 +19,6 @@ Language policy: documentation stays in English.
 ## Definition of Done for Documentation
 - Feature is described in purpose, UX flow, API surface, and data storage.
 - "Current" vs "Planned" is explicitly stated.
+- Files use UTF-8 encoding and avoid mixed/mojibake characters.
 - Risks and security implications are noted.
 - Open architectural questions are tracked in `open-decisions.md`.

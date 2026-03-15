@@ -28,8 +28,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `test(auth): stabilize deterministic auth regression tests`
 - [x] `test(strategies): add strategy CRUD contract tests`
 - [x] `security(api-keys): verify encrypted-only storage and masked response`
-- [ ] `security(rate-limit): add limiter for auth, market, and trading endpoints`
-- [ ] `docs(cleanup): normalize encoding and Current/Planned consistency`
+- [x] `security(rate-limit): add limiter for auth, market, and trading endpoints`
+- [x] `docs(cleanup): normalize encoding and Current/Planned consistency`
 
 ## Phase 1 - Data Model and Core API (MVP Foundation)
 - [ ] `feat(db): add MarketUniverse model`
@@ -113,3 +113,5 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added strategies CRUD contract e2e tests with auth and ownership isolation checks.
 - 2026-03-15: Added dashboard planning tasks for post-login control center and positions/orders-first home widgets.
 - 2026-03-15: Verified API keys are encrypted at rest and masked in API responses with security e2e coverage.
+- 2026-03-15: Added in-memory rate limiting for auth, market, and trading endpoints.
+- 2026-03-15: Normalized docs consistency rules for Current/Planned sections and UTF-8 encoding.

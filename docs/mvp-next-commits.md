@@ -8,14 +8,15 @@ Operational queue for one-task execution runs.
 
 ## NOW
 - [x] `security(api-keys): verify encrypted-only storage and masked response`
-- [ ] `security(rate-limit): add limiter for auth, market, and trading endpoints`
-- [ ] `docs(cleanup): normalize encoding and Current/Planned consistency`
+- [x] `security(rate-limit): add limiter for auth, market, and trading endpoints`
+- [x] `docs(cleanup): normalize encoding and Current/Planned consistency`
 - [ ] `docs(ui): audit legacy CryptoBot dashboard patterns for positions/orders and control-center IA`
 - [ ] `feat(ui): post-login control-center dashboard with positions/orders snapshot widgets`
 
 ## NEXT
 - [ ] `feat(db): add MarketUniverse model`
 - [ ] `feat(db): add SymbolGroup model`
+- [ ] `feat(db): add Bot and BotStrategy models`
 
 ## BLOCKED
 - [ ] (empty)
@@ -34,6 +35,8 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-15 `fix(client): reduce critical any usage in strategy/profile flows`
 - [x] 2026-03-15 `test(strategies): add strategy CRUD contract tests`
 - [x] 2026-03-15 `security(api-keys): verify encrypted-only storage and masked response`
+- [x] 2026-03-15 `security(rate-limit): add limiter for auth, market, and trading endpoints`
+- [x] 2026-03-15 `docs(cleanup): normalize encoding and Current/Planned consistency`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
