@@ -49,7 +49,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(engine): indicator calculation adapter`
 - [x] `feat(engine): rule evaluator (AND/OR + comparisons + multi-timeframe)`
 - [x] `feat(engine): pre-trade analysis and position limit checks`
-- [ ] `feat(engine): simulator with fees/slippage/funding`
+- [x] `feat(engine): simulator with fees/slippage/funding`
 - [ ] `feat(engine): order types market/limit/stop/stop-limit/take-profit/trailing`
 - [ ] `feat(engine): TP/SL/trailing/DCA position management`
 - [ ] `feat(api): backtest run/create/list endpoints`
@@ -132,3 +132,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added indicator calculation adapter for SMA, EMA, and RSI with unit coverage for warmup and output ranges.
 - 2026-03-15: Added rule evaluator service for AND/OR comparison rules with multi-timeframe indicator snapshot support.
 - 2026-03-15: Added pre-trade analysis service with live opt-in enforcement and user/bot/symbol open-position limit checks.
+- 2026-03-15: Added deterministic trade simulator with fee, slippage, and funding cost accounting plus unit coverage.
