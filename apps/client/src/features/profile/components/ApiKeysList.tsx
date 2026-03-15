@@ -3,8 +3,10 @@ import { useState } from "react";
 import ApiKeyForm, { ApiKeyFormSavePayload } from "./ApiKeyForm";
 import { useApiKeys } from "../hooks/useApiKeys";
 import { EmptyState, ErrorState, LoadingState, SuccessState } from "apps/client/src/ui/components/ViewState";
+import { useLocaleFormatting } from "apps/client/src/i18n/useLocaleFormatting";
 
 export default function ApiKeysList() {
+  const { formatDate } = useLocaleFormatting();
   const { keys, loading, error, handleAdd, handleEdit, handleDelete } = useApiKeys();
 
   const [showModal, setShowModal] = useState(false);
@@ -115,8 +117,8 @@ export default function ApiKeysList() {
                   <tr key={key.id}>
                     <td>{key.label}</td>
                     <td>{key.exchange}</td>
-                    <td>{key.createdAt?.slice(0, 10) || "-"}</td>
-                    <td>{key.lastUsed?.slice(0, 10) || "-"}</td>
+                    <td>{formatDate(key.createdAt)}</td>
+                    <td>{formatDate(key.lastUsed)}</td>
                     <td>
                       <span className="font-mono">
                         {key.apiKey ? key.apiKey.slice(0, 2) + "********" + key.apiKey.slice(-2) : ""}

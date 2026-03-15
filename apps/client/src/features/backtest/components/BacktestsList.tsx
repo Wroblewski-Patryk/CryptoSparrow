@@ -11,6 +11,7 @@ import {
   LoadingState,
   SuccessState,
 } from "../../../ui/components/ViewState";
+import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { listStrategies } from "../../strategies/api/strategies.api";
 import { StrategyDto } from "../../strategies/types/StrategyForm.type";
 import {
@@ -36,6 +37,7 @@ const pnlClass = (value: number | null) => {
 };
 
 export function BacktestsList() {
+  const { formatCurrency, formatDateTime, formatNumber, formatPercent } = useLocaleFormatting();
   const [runs, setRuns] = useState<BacktestRun[]>([]);
   const [strategies, setStrategies] = useState<StrategyDto[]>([]);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
@@ -266,7 +268,7 @@ export function BacktestsList() {
                       <td>
                         <span className="badge badge-outline">{run.status}</span>
                       </td>
-                      <td>{run.startedAt?.slice(0, 16).replace("T", " ")}</td>
+                      <td>{formatDateTime(run.startedAt)}</td>
                       <td>
                         <button
                           type="button"
@@ -338,19 +340,19 @@ export function BacktestsList() {
                       <div className="grid grid-cols-2 gap-2">
                         <div className="stat bg-base-100 rounded-lg p-3">
                           <div className="stat-title">Net PnL</div>
-                          <div className={`stat-value text-xl ${pnlClass(report.netPnl)}`}>{report.netPnl ?? "-"}</div>
+                          <div className={`stat-value text-xl ${pnlClass(report.netPnl)}`}>{formatCurrency(report.netPnl)}</div>
                         </div>
                         <div className="stat bg-base-100 rounded-lg p-3">
                           <div className="stat-title">Win Rate</div>
-                          <div className="stat-value text-xl">{report.winRate ?? "-"}</div>
+                          <div className="stat-value text-xl">{formatPercent(report.winRate)}</div>
                         </div>
                         <div className="stat bg-base-100 rounded-lg p-3">
                           <div className="stat-title">Total Trades</div>
-                          <div className="stat-value text-xl">{report.totalTrades}</div>
+                          <div className="stat-value text-xl">{formatNumber(report.totalTrades)}</div>
                         </div>
                         <div className="stat bg-base-100 rounded-lg p-3">
                           <div className="stat-title">Max Drawdown</div>
-                          <div className="stat-value text-xl">{report.maxDrawdown ?? "-"}</div>
+                          <div className="stat-value text-xl">{formatPercent(report.maxDrawdown)}</div>
                         </div>
                       </div>
                     )}
@@ -377,9 +379,9 @@ export function BacktestsList() {
                             <tr key={trade.id}>
                               <td>{trade.symbol}</td>
                               <td>{trade.side}</td>
-                              <td>{trade.entryPrice}</td>
-                              <td>{trade.exitPrice}</td>
-                              <td className={trade.pnl >= 0 ? "text-success" : "text-error"}>{trade.pnl}</td>
+                              <td>{formatNumber(trade.entryPrice)}</td>
+                              <td>{formatNumber(trade.exitPrice)}</td>
+                              <td className={trade.pnl >= 0 ? "text-success" : "text-error"}>{formatCurrency(trade.pnl)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -412,11 +414,11 @@ export function BacktestsList() {
             {report && (
               <div className="mt-3 space-y-2">
                 <p>
-                  Net PnL: <strong className={pnlClass(report.netPnl)}>{report.netPnl ?? "-"}</strong>
+                  Net PnL: <strong className={pnlClass(report.netPnl)}>{formatCurrency(report.netPnl)}</strong>
                 </p>
-                <p>Win rate: <strong>{report.winRate ?? "-"}</strong></p>
-                <p>Sharpe: <strong>{report.sharpe ?? "-"}</strong></p>
-                <p>Total trades: <strong>{report.totalTrades}</strong></p>
+                <p>Win rate: <strong>{formatPercent(report.winRate)}</strong></p>
+                <p>Sharpe: <strong>{formatNumber(report.sharpe, { maximumFractionDigits: 2 })}</strong></p>
+                <p>Total trades: <strong>{formatNumber(report.totalTrades)}</strong></p>
               </div>
             )}
             <div className="modal-action">

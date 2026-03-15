@@ -3,13 +3,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { DEFAULT_LOCALE, Locale, TranslationKey, translations } from "./translations";
 
-type I18nContextValue = {
+export type I18nContextValue = {
   locale: Locale;
   setLocale: (next: Locale) => void;
   t: (key: TranslationKey) => string;
 };
 
-const I18nContext = createContext<I18nContextValue | null>(null);
+export const I18nContext = createContext<I18nContextValue | null>(null);
 
 const STORAGE_KEY = "cryptosparrow-locale";
 

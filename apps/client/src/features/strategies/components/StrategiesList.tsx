@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { listStrategies } from "../api/strategies.api";
 import { StrategyDto } from "../types/StrategyForm.type";
 import { EmptyState, ErrorState, LoadingState } from "apps/client/src/ui/components/ViewState";
+import { useLocaleFormatting } from "apps/client/src/i18n/useLocaleFormatting";
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -15,6 +16,7 @@ const getAxiosMessage = (err: unknown) => {
 };
 
 export default function StrategiesList() {
+  const { formatDate } = useLocaleFormatting();
   const [strategies, setStrategies] = useState<StrategyDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -96,7 +98,7 @@ export default function StrategiesList() {
                 <td>{strategy.name}</td>
                 <td>{strategy.leverage}x</td>
                 <td>{strategy.interval}</td>
-                <td>{strategy.createdAt?.slice(0, 10) || "-"}</td>
+                <td>{formatDate(strategy.createdAt)}</td>
                 <td className="text-center">
                   <button
                     className="btn btn-sm btn-info mr-2"

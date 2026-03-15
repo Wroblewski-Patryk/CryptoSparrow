@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { EmptyState, ErrorState, LoadingState, SuccessState } from '../../../ui/components/ViewState';
+import { useLocaleFormatting } from '../../../i18n/useLocaleFormatting';
 import {
   createMarketUniverse,
   deleteMarketUniverse,
@@ -23,6 +24,7 @@ const getAxiosMessage = (err: unknown) => {
 };
 
 export default function MarketsFlow() {
+  const { formatDate } = useLocaleFormatting();
   const [universes, setUniverses] = useState<MarketUniverse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -192,7 +194,7 @@ export default function MarketsFlow() {
                     <td>{item.baseCurrency}</td>
                     <td>{item.whitelist.join(', ') || '-'}</td>
                     <td>{item.blacklist.join(', ') || '-'}</td>
-                    <td>{item.createdAt?.slice(0, 10) ?? '-'}</td>
+                    <td>{formatDate(item.createdAt)}</td>
                     <td>
                       <button
                         type='button'

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 
 import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
+import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { listOrders } from "../services/orders.service";
 import { Order, OrderStatus } from "../types/order.type";
 
@@ -24,6 +25,7 @@ const getAxiosMessage = (err: unknown) => {
 };
 
 export default function OrdersBoard() {
+  const { formatDateTime, formatNumber } = useLocaleFormatting();
   const [orders, setOrders] = useState<Order[]>([]);
   const [status, setStatus] = useState<OrderStatus | "ALL">("ALL");
   const [symbol, setSymbol] = useState("");
@@ -129,10 +131,10 @@ export default function OrdersBoard() {
                     <td>
                       <span className="badge badge-outline">{order.status}</span>
                     </td>
-                    <td>{order.quantity}</td>
-                    <td>{order.filledQuantity}</td>
-                    <td>{order.price ?? "-"}</td>
-                    <td>{order.createdAt?.slice(0, 16).replace("T", " ") ?? "-"}</td>
+                    <td>{formatNumber(order.quantity)}</td>
+                    <td>{formatNumber(order.filledQuantity)}</td>
+                    <td>{formatNumber(order.price)}</td>
+                    <td>{formatDateTime(order.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -143,4 +145,3 @@ export default function OrdersBoard() {
     </div>
   );
 }
-

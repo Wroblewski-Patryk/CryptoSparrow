@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 
 import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
+import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { listPositions } from "../services/positions.service";
 import { Position, PositionStatus } from "../types/position.type";
 
@@ -22,6 +23,7 @@ const pnlClass = (value: number | null) => {
 };
 
 export default function PositionsBoard() {
+  const { formatDateTime, formatNumber } = useLocaleFormatting();
   const [positions, setPositions] = useState<Position[]>([]);
   const [status, setStatus] = useState<PositionStatus | "ALL">("ALL");
   const [symbol, setSymbol] = useState("");
@@ -131,12 +133,12 @@ export default function PositionsBoard() {
                     <td>
                       <span className="badge badge-outline">{position.status}</span>
                     </td>
-                    <td>{position.entryPrice}</td>
-                    <td>{position.quantity}</td>
+                    <td>{formatNumber(position.entryPrice)}</td>
+                    <td>{formatNumber(position.quantity)}</td>
                     <td>{position.leverage}x</td>
-                    <td className={pnlClass(position.unrealizedPnl)}>{position.unrealizedPnl ?? "-"}</td>
-                    <td className={pnlClass(position.realizedPnl)}>{position.realizedPnl ?? "-"}</td>
-                    <td>{position.openedAt?.slice(0, 16).replace("T", " ") ?? "-"}</td>
+                    <td className={pnlClass(position.unrealizedPnl)}>{formatNumber(position.unrealizedPnl)}</td>
+                    <td className={pnlClass(position.realizedPnl)}>{formatNumber(position.realizedPnl)}</td>
+                    <td>{formatDateTime(position.openedAt)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -147,4 +149,3 @@ export default function PositionsBoard() {
     </div>
   );
 }
-

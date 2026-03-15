@@ -5,6 +5,7 @@ import axios from "axios";
 import Link from "next/link";
 
 import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
+import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { listOrders } from "../../../features/orders/services/orders.service";
 import { Order } from "../../../features/orders/types/order.type";
 import { listPositions } from "../../../features/positions/services/positions.service";
@@ -21,13 +22,6 @@ const getAxiosMessage = (err: unknown) => {
   return (err.response?.data as { message?: string } | undefined)?.message;
 };
 
-const formatTimestamp = (iso?: string) => {
-  if (!iso) return "--:--";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "--:--";
-  return date.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
-};
-
 const pnlClass = (value: number | null) => {
   if (value == null) return "";
   if (value > 0) return "text-success";
@@ -36,6 +30,7 @@ const pnlClass = (value: number | null) => {
 };
 
 export default function HomeLiveWidgets() {
+  const { formatNumber, formatTime } = useLocaleFormatting();
   const [orders, setOrders] = useState<Order[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
   const [loading, setLoading] = useState(true);
@@ -154,9 +149,9 @@ export default function HomeLiveWidgets() {
                       <tr key={position.id}>
                         <td>{position.symbol}</td>
                         <td>{position.side}</td>
-                        <td>{position.quantity}</td>
+                        <td>{formatNumber(position.quantity)}</td>
                         <td>{position.leverage}x</td>
-                        <td className={pnlClass(position.unrealizedPnl)}>{position.unrealizedPnl ?? "-"}</td>
+                        <td className={pnlClass(position.unrealizedPnl)}>{formatNumber(position.unrealizedPnl)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -224,7 +219,7 @@ export default function HomeLiveWidgets() {
               <ul className="timeline timeline-vertical">
                 {feed.map((item) => (
                   <li key={item.key}>
-                    <div className="timeline-start text-xs opacity-60">{formatTimestamp(item.at)}</div>
+                    <div className="timeline-start text-xs opacity-60">{formatTime(item.at)}</div>
                     <div className="timeline-middle">*</div>
                     <div className="timeline-end py-2 text-sm">{item.text}</div>
                     <hr />
@@ -243,4 +238,3 @@ export default function HomeLiveWidgets() {
     </div>
   );
 }
-

@@ -3,21 +3,10 @@
 import ApiKeysList from "../../profile/components/ApiKeysList";
 import { useApiKeys } from "../../profile/hooks/useApiKeys";
 import { ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
-
-const formatDate = (value?: string) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleString("pl-PL", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 
 export default function ExchangeConnectionsView() {
+  const { formatDateTime } = useLocaleFormatting();
   const { keys, loading, error, refresh } = useApiKeys();
 
   const connectedExchanges = new Set(keys.map((key) => key.exchange)).size;
@@ -61,7 +50,7 @@ export default function ExchangeConnectionsView() {
             <div className="card bg-base-200 shadow-sm">
               <div className="card-body p-4">
                 <p className="text-sm opacity-70">Last Used</p>
-                <p className="text-base font-semibold">{formatDate(lastUsed)}</p>
+                <p className="text-base font-semibold">{formatDateTime(lastUsed)}</p>
               </div>
             </div>
           </div>
@@ -72,4 +61,3 @@ export default function ExchangeConnectionsView() {
     </div>
   );
 }
-

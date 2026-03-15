@@ -10,6 +10,7 @@ import {
   LoadingState,
   SuccessState,
 } from "../../../ui/components/ViewState";
+import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { listBacktestRuns } from "../../backtest/services/backtests.service";
 import { BacktestRun } from "../../backtest/types/backtest.type";
 import { listOrders } from "../../orders/services/orders.service";
@@ -58,20 +59,8 @@ const toAuditFromBacktest = (run: BacktestRun): AuditItem => ({
   details: `${run.name} ${run.symbol}/${run.timeframe} status=${run.status}`,
 });
 
-const formatTime = (iso?: string) => {
-  if (!iso) return "-";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleString("pl-PL", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
 export default function AuditTrailView() {
+  const { formatDateTime } = useLocaleFormatting();
   const [items, setItems] = useState<AuditItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -189,7 +178,7 @@ export default function AuditTrailView() {
             <tbody>
               {filtered.map((item) => (
                 <tr key={item.id}>
-                  <td>{formatTime(item.at)}</td>
+                  <td>{formatDateTime(item.at)}</td>
                   <td>
                     <span className="badge badge-outline">{item.source}</span>
                   </td>
@@ -209,4 +198,3 @@ export default function AuditTrailView() {
     </div>
   );
 }
-

@@ -86,7 +86,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(ui): dashboard/exchanges api-key connections`
 - [x] `feat(i18n): EN default + PL translation coverage`
 - [x] `feat(i18n): enforce translation-key usage (no hardcoded page copy) and feature-based namespaces`
-- [ ] `feat(i18n): locale-aware date/number/currency/percent formatting for dashboard data views`
+- [x] `feat(i18n): locale-aware date/number/currency/percent formatting for dashboard data views`
 - [ ] `feat(ui): responsive pass for desktop/tablet/mobile`
 - [ ] `feat(ui): PWA baseline parity for core flows`
 - [ ] `feat(a11y): keyboard/focus/semantic heading baseline for core dashboard pages`
@@ -176,3 +176,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Added exchanges dashboard view for API-key connections with connection summary cards and profile API-key management integration.
 - 2026-03-16: Added i18n provider with EN default locale, PL shell translations, language switcher, and shell-level translation wiring with i18n tests.
 - 2026-03-16: Enforced typed translation keys and moved dashboard shell copy into feature-based `dashboard.*` namespaces.
+- 2026-03-16: Added locale-aware date/time/number/currency/percent formatting utilities and integrated them across core dashboard data views.

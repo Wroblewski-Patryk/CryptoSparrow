@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
 import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
+import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { getBacktestRunReport, listBacktestRuns } from "../../backtest/services/backtests.service";
 import { BacktestReport, BacktestRun } from "../../backtest/types/backtest.type";
 
@@ -22,12 +23,8 @@ const avg = (values: number[]) => {
   return values.reduce((acc, item) => acc + item, 0) / values.length;
 };
 
-const formatMetric = (value: number | null | undefined) => {
-  if (value == null) return "-";
-  return Number.isInteger(value) ? `${value}` : value.toFixed(2);
-};
-
 export default function PerformanceReportsView() {
+  const { formatCurrency, formatNumber, formatPercent } = useLocaleFormatting();
   const [rows, setRows] = useState<RunReportRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -112,22 +109,22 @@ export default function PerformanceReportsView() {
         <div className="card bg-base-200 shadow-sm">
           <div className="card-body p-4">
             <p className="text-sm opacity-70">Avg Net PnL</p>
-            <p className={`text-3xl font-bold ${metrics.avgNetPnl >= 0 ? "text-success" : "text-error"}`}>
-              {formatMetric(metrics.avgNetPnl)}
+              <p className={`text-3xl font-bold ${metrics.avgNetPnl >= 0 ? "text-success" : "text-error"}`}>
+              {formatCurrency(metrics.avgNetPnl)}
             </p>
           </div>
         </div>
         <div className="card bg-base-200 shadow-sm">
           <div className="card-body p-4">
             <p className="text-sm opacity-70">Avg Win Rate</p>
-            <p className="text-3xl font-bold text-info">{formatMetric(metrics.avgWinRate)}%</p>
+            <p className="text-3xl font-bold text-info">{formatPercent(metrics.avgWinRate)}</p>
           </div>
         </div>
         <div className="card bg-base-200 shadow-sm">
           <div className="card-body p-4">
             <p className="text-sm opacity-70">Best Run</p>
             <p className="text-sm font-semibold truncate">{metrics.bestRunName}</p>
-            <p className="text-xl font-bold text-success">{formatMetric(metrics.bestNetPnl)}</p>
+            <p className="text-xl font-bold text-success">{formatCurrency(metrics.bestNetPnl)}</p>
           </div>
         </div>
       </div>
@@ -154,13 +151,13 @@ export default function PerformanceReportsView() {
                   <td className="font-medium">{item.run.name}</td>
                   <td>{item.run.symbol}</td>
                   <td>{item.run.timeframe}</td>
-                  <td>{item.report.totalTrades}</td>
-                  <td>{formatMetric(item.report.winRate)}%</td>
+                  <td>{formatNumber(item.report.totalTrades)}</td>
+                  <td>{formatPercent(item.report.winRate)}</td>
                   <td className={(item.report.netPnl ?? 0) >= 0 ? "text-success" : "text-error"}>
-                    {formatMetric(item.report.netPnl)}
+                    {formatCurrency(item.report.netPnl)}
                   </td>
-                  <td>{formatMetric(item.report.maxDrawdown)}</td>
-                  <td>{formatMetric(item.report.sharpe)}</td>
+                  <td>{formatPercent(item.report.maxDrawdown)}</td>
+                  <td>{formatNumber(item.report.sharpe, { maximumFractionDigits: 2 })}</td>
                 </tr>
               ))}
             </tbody>
@@ -170,4 +167,3 @@ export default function PerformanceReportsView() {
     </div>
   );
 }
-
