@@ -75,7 +75,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(ui-tokens): add semantic risk and execution-mode tokens (paper/live/warning/danger) and reusable status badges`
 - [x] `feat(ui-control-center): add sticky safety bar with mode/connectivity/heartbeat and emergency action`
 - [x] `feat(ui-control-center): add risk notice footer with logs drill-down shortcut`
-- [ ] `feat(ui): dashboard/markets flow`
+- [x] `feat(ui): dashboard/markets flow`
 - [ ] `feat(ui): dashboard/builder strategy editor + presets`
 - [ ] `feat(ui): dashboard/bots management + mode status`
 - [ ] `feat(ui): dashboard/orders and dashboard/positions`
@@ -164,4 +164,5 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added sticky control-center safety bar with mode, connectivity, heartbeat status, and emergency navigation action.
 - 2026-03-15: Added control-center risk notice footer with direct shortcuts to audit logs and security settings.
 - 2026-03-15: Added semantic UI tokens for execution mode and risk levels with reusable status badge component integrated into safety bar.
+- 2026-03-15: Implemented dashboard markets flow with market-universe list/create/delete wired to backend markets API and UI-state handling.
 - 2026-03-15: Closed MVP decision on rule nesting depth as out-of-scope beyond top-level logic with flat rules.

@@ -16,6 +16,7 @@ export default function Header() {
         </div>
         <div className="flex-none">
           <ul className="menu menu-horizontal px-1">
+            <li><Link href="/dashboard/markets">Markets</Link></li>
             <li><Link href="/dashboard/strategies">Strategie</Link></li>
             <li><Link href="/dashboard/backtest">Analiza wsteczna</Link></li>
             <li><Link href="/dashboard/automation">Automatyzacja(boty)</Link></li>
