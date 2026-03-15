@@ -7,16 +7,16 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `test(api): add data isolation tests for markets/bots/orders/positions/backtests`
 - [ ] `feat(engine): market-data ingestion service (OHLCV) with caching`
 - [ ] `feat(engine): indicator calculation adapter`
 - [ ] `feat(engine): rule evaluator (AND/OR + comparisons + multi-timeframe)`
 - [ ] `feat(engine): pre-trade analysis and position limit checks`
+- [ ] `feat(engine): simulator with fees/slippage/funding`
 
 ## NEXT
-- [ ] `feat(engine): simulator with fees/slippage/funding`
 - [ ] `feat(engine): order types market/limit/stop/stop-limit/take-profit/trailing`
 - [ ] `feat(engine): TP/SL/trailing/DCA position management`
+- [ ] `feat(api): backtest run/create/list endpoints`
 
 ## BLOCKED
 - [ ] (empty)
@@ -49,6 +49,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-15 `feat(api): bots module CRUD (execution mode, opt-in flags, limits)`
 - [x] 2026-03-15 `feat(api): orders and positions read endpoints`
 - [x] 2026-03-15 `feat(api): ownership checks for all new entities`
+- [x] 2026-03-15 `test(api): add data isolation tests for markets/bots/orders/positions/backtests`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
