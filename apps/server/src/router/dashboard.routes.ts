@@ -4,6 +4,7 @@ import apiKeyRouter from '../modules/profile/apiKey/apiKey.routes';
 import basicRouter from '../modules/profile/basic/basic.routes';
 import strategiesRouter from '../modules/strategies/strategies.routes';
 import marketsRouter from '../modules/markets/markets.routes';
+import botsRouter from '../modules/bots/bots.routes';
 
 const router = Router();
 router.use(requireAuth);
@@ -24,5 +25,8 @@ router.use('/strategies', strategiesRouter)
 
 // Module - Markets
 router.use('/markets', marketsRouter);
+
+// Module - Bots
+router.use('/bots', botsRouter);
 
 export default router;
