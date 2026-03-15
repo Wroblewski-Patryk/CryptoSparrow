@@ -1,0 +1,26 @@
+import { z } from 'zod';
+
+export const ExecutionModeSchema = z.enum(['PAPER', 'LIVE', 'LOCAL']);
+
+export const PreTradeAnalysisInputSchema = z.object({
+  userId: z.string().trim().min(1),
+  botId: z.string().trim().min(1).optional(),
+  symbol: z.string().trim().min(1),
+  mode: ExecutionModeSchema,
+  liveOptIn: z.boolean().default(false),
+  maxOpenPositionsPerUser: z.number().int().min(1).optional(),
+  maxOpenPositionsPerBot: z.number().int().min(1).optional(),
+  enforceOnePositionPerSymbol: z.boolean().default(true),
+});
+
+export type PreTradeAnalysisInput = z.input<typeof PreTradeAnalysisInputSchema>;
+
+export type PreTradeDecision = {
+  allowed: boolean;
+  reasons: string[];
+  metrics: {
+    userOpenPositions: number;
+    botOpenPositions: number | null;
+    hasOpenPositionOnSymbol: boolean;
+  };
+};
