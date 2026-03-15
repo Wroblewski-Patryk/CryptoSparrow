@@ -11,9 +11,15 @@ Operational queue for one-task execution runs.
 - [ ] `security(live): global kill-switch and emergency stop`
 - [ ] `feat(logs): write audit entries for critical trading decisions`
 - [ ] `test(e2e): smoke tests for paper/live critical paths`
-- [ ] `feat(ui): dashboard/markets flow`
+- [ ] `feat(ui-shell): unify dashboard app shell/page header/breadcrumb patterns`
 
 ## NEXT
+- [ ] `feat(ui-state): shared loading/empty/degraded/error/success components`
+- [ ] `feat(ui-control-center): sticky safety bar with mode/connectivity/heartbeat/emergency action`
+- [ ] `feat(ui-control-center): risk notice footer with logs shortcut`
+- [ ] `feat(ui-tokens): semantic risk and execution-mode tokens + status badges`
+- [ ] `docs(decisions): close MVP rule nesting depth as explicitly out-of-scope`
+- [ ] `feat(ui): dashboard/markets flow`
 - [ ] `feat(ui): dashboard/builder strategy editor + presets`
 - [ ] `feat(ui): dashboard/bots management + mode status`
 - [ ] `feat(ui): dashboard/orders and dashboard/positions`
@@ -64,6 +70,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-15 `feat(engine): paper position lifecycle and order simulation parity`
 - [x] 2026-03-15 `feat(exchange): CCXT futures connector scaffold`
 - [x] 2026-03-15 `feat(exchange): live order placement adapter with retries`
+- [x] 2026-03-15 `chore(planning): sync queue with new UI/UX foundation assumptions`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

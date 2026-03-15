@@ -69,6 +69,11 @@ Rule: fix/cleanup/update first, then feature delivery.
 ## Phase 4 - Dashboard Completion (MVP UX Scope)
 - [x] `docs(ui): audit legacy CryptoBot dashboard patterns for positions/orders and control-center IA`
 - [x] `feat(ui): post-login control-center dashboard with key KPIs, bot status, and quick actions`
+- [ ] `feat(ui-shell): unify dashboard app shell, page headers, and breadcrumb patterns across modules`
+- [ ] `feat(ui-state): implement shared loading/empty/degraded/error/success state components`
+- [ ] `feat(ui-tokens): add semantic risk and execution-mode tokens (paper/live/warning/danger) and reusable status badges`
+- [ ] `feat(ui-control-center): add sticky safety bar with mode/connectivity/heartbeat and emergency action`
+- [ ] `feat(ui-control-center): add risk notice footer with logs drill-down shortcut`
 - [ ] `feat(ui): dashboard/markets flow`
 - [ ] `feat(ui): dashboard/builder strategy editor + presets`
 - [ ] `feat(ui): dashboard/bots management + mode status`
@@ -79,9 +84,14 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `feat(ui): dashboard/logs audit trail`
 - [ ] `feat(ui): dashboard/exchanges api-key connections`
 - [ ] `feat(i18n): EN default + PL translation coverage`
+- [ ] `feat(i18n): enforce translation-key usage (no hardcoded page copy) and feature-based namespaces`
+- [ ] `feat(i18n): locale-aware date/number/currency/percent formatting for dashboard data views`
 - [ ] `feat(ui): responsive pass for desktop/tablet/mobile`
 - [ ] `feat(ui): PWA baseline parity for core flows`
+- [ ] `feat(a11y): keyboard/focus/semantic heading baseline for core dashboard pages`
 - [ ] `test(ui): EN/PL key coverage and responsive smoke tests`
+- [ ] `test(ui): view-state consistency tests for loading/empty/degraded/error/success`
+- [ ] `test(ux): control-center 10-second operator clarity checklist`
 
 ## Phase 5 - MVP Closure and Release Readiness
 - [ ] `docs(ops): MVP runbook for deployment and recovery`
@@ -90,12 +100,13 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `chore(release): MVP release checklist and changelog`
 
 ## MVP Exit Criteria
-- [ ] Phase 0 fully complete.
+- [x] Phase 0 fully complete.
 - [ ] End-to-end flow works: strategy -> backtest -> paper -> live opt-in.
 - [ ] Security guardrails active: encryption, ownership checks, rate limits, audit logs.
 - [ ] Core tests passing for auth, strategy CRUD, market/bot isolation, and trading critical paths.
 - [ ] UI scope complete for markets, builder, bots, orders, positions, backtest, reports, logs, exchanges.
 - [ ] EN/PL and responsive/PWA baseline complete for core flows.
+- [ ] Shared app shell and view-state model are consistent across core dashboard modules.
 
 ## Progress Log
 - 2026-03-15: Initialized MVP execution file and commit rules.
@@ -142,3 +153,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added paper lifecycle orchestrator for order execution parity, position management (DCA/TP/SL/trailing), and deterministic simulated close-out PnL.
 - 2026-03-15: Added CCXT futures connector scaffold with lazy client init, sandbox support, mark-price fetch, and normalized futures order placement contract.
 - 2026-03-15: Added live order adapter with retry/backoff policy for retryable exchange failures and deterministic unit coverage.
+- 2026-03-15: Synced MVP UX tasks with new `ui-ux-foundation.md` baseline (shell, states, tokens, control-center safety patterns, i18n, accessibility).

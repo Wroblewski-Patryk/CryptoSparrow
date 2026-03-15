@@ -49,6 +49,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 ## Phase E - UX, Trust, and Public Readiness
 - [ ] `feat(ui): risk-first confirmations for all live actions`
 - [ ] `feat(ui): audit/log explorer with decision trace`
+- [ ] `feat(ui-system): harden shared dashboard design system and component documentation`
 - [ ] `feat(i18n): complete EN/PL parity and localization QA`
 - [ ] `feat(accessibility): full accessibility pass for core dashboard`
 - [ ] `feat(ui-theme): optional isometric visual mode for dashboard (late-stage polish, non-blocking)`
