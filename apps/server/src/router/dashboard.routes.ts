@@ -7,6 +7,7 @@ import marketsRouter from '../modules/markets/markets.routes';
 import botsRouter from '../modules/bots/bots.routes';
 import ordersRouter from '../modules/orders/orders.routes';
 import positionsRouter from '../modules/positions/positions.routes';
+import backtestsRouter from '../modules/backtests/backtests.routes';
 
 const router = Router();
 router.use(requireAuth);
@@ -34,5 +35,8 @@ router.use('/bots', botsRouter);
 // Module - Orders and Positions (read)
 router.use('/orders', ordersRouter);
 router.use('/positions', positionsRouter);
+
+// Module - Backtests
+router.use('/backtests', backtestsRouter);
 
 export default router;

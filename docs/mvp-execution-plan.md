@@ -52,7 +52,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(engine): simulator with fees/slippage/funding`
 - [x] `feat(engine): order types market/limit/stop/stop-limit/take-profit/trailing`
 - [x] `feat(engine): TP/SL/trailing/DCA position management`
-- [ ] `feat(api): backtest run/create/list endpoints`
+- [x] `feat(api): backtest run/create/list endpoints`
 - [ ] `feat(api): backtest trade list and report endpoints`
 - [ ] `test(engine): deterministic simulator tests for pnl/fees/funding`
 
@@ -135,3 +135,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added deterministic trade simulator with fee, slippage, and funding cost accounting plus unit coverage.
 - 2026-03-15: Added order type evaluator for market, limit, stop, stop-limit, take-profit, and trailing with stateful trigger handling.
 - 2026-03-15: Added position management engine for TP/SL/trailing stop and DCA with deterministic state transitions.
+- 2026-03-15: Added backtests API endpoints for run create/list/get with ownership checks and strategy ownership validation.

@@ -7,16 +7,16 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `feat(api): backtest run/create/list endpoints`
 - [ ] `feat(api): backtest trade list and report endpoints`
 - [ ] `test(engine): deterministic simulator tests for pnl/fees/funding`
 - [ ] `feat(engine): paper runtime loop on live market feed`
 - [ ] `feat(engine): paper position lifecycle and order simulation parity`
+- [ ] `feat(exchange): CCXT futures connector scaffold`
 
 ## NEXT
-- [ ] `feat(exchange): CCXT futures connector scaffold`
 - [ ] `feat(exchange): live order placement adapter with retries`
 - [ ] `security(live): explicit live opt-in per bot`
+- [ ] `security(live): global kill-switch and emergency stop`
 
 ## BLOCKED
 - [ ] (empty)
@@ -57,6 +57,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-15 `feat(engine): simulator with fees/slippage/funding`
 - [x] 2026-03-15 `feat(engine): order types market/limit/stop/stop-limit/take-profit/trailing`
 - [x] 2026-03-15 `feat(engine): TP/SL/trailing/DCA position management`
+- [x] 2026-03-15 `feat(api): backtest run/create/list endpoints`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
