@@ -21,6 +21,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `chore(ci): add minimal CI checks for client and server`
 - [x] `docs(decisions): freeze MVP strategy schema shape (entry/exit/risk/filters/timeframes)`
 - [x] `docs(decisions): resolve preset storage approach for MVP`
+- [x] `docs(decisions): close MVP rule nesting depth as explicitly out-of-scope`
 - [x] `refactor(api): unify API error response payload`
 - [x] `refactor(validation): centralize zod error formatting`
 - [x] `fix(server): reduce critical any usage in auth/middleware`
@@ -163,3 +164,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added sticky control-center safety bar with mode, connectivity, heartbeat status, and emergency navigation action.
 - 2026-03-15: Added control-center risk notice footer with direct shortcuts to audit logs and security settings.
 - 2026-03-15: Added semantic UI tokens for execution mode and risk levels with reusable status badge component integrated into safety bar.
+- 2026-03-15: Closed MVP decision on rule nesting depth as out-of-scope beyond top-level logic with flat rules.

@@ -77,8 +77,11 @@ This file tracks intentionally unresolved architecture choices so implementation
   - Import/export versioning stays at `1.0` for MVP and can evolve after MVP.
 
 ## Rule Nesting Depth
-- Open: how deep nested condition groups should be in MVP rule-based mode.
-- Current assumption: basic nested groups supported later if not needed immediately.
+- Decision state: resolved on 2026-03-15.
+- MVP decision:
+  - Rule nesting depth beyond top-level `logic` + flat `rules` arrays is explicitly out of scope.
+  - MVP supports only one condition-group level per `entry` and `exit`.
+  - Nested trees and recursive groups are deferred to post-MVP.
 
 ## Preset Storage Format
 - Decision state: resolved on 2026-03-15.
