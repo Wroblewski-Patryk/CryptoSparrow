@@ -72,6 +72,14 @@ export const analyzePreTrade = async (
     : false;
 
   if (parsed.mode === 'LIVE') {
+    if (parsed.globalKillSwitch) {
+      reasons.push('global_kill_switch_enabled');
+    }
+
+    if (parsed.emergencyStop) {
+      reasons.push('emergency_stop_enabled');
+    }
+
     if (!parsed.botId) {
       reasons.push('live_bot_required');
     } else {

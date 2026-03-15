@@ -8,6 +8,8 @@ export const PreTradeAnalysisInputSchema = z.object({
   symbol: z.string().trim().min(1),
   mode: ExecutionModeSchema,
   liveOptIn: z.boolean().default(false),
+  globalKillSwitch: z.boolean().default(false),
+  emergencyStop: z.boolean().default(false),
   maxOpenPositionsPerUser: z.number().int().min(1).optional(),
   maxOpenPositionsPerBot: z.number().int().min(1).optional(),
   enforceOnePositionPerSymbol: z.boolean().default(true),

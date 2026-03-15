@@ -93,6 +93,42 @@ describe('preTrade analysis', () => {
     expect(decision.reasons).toContain('live_opt_in_required');
   });
 
+  it('blocks when global kill switch is enabled for live mode', async () => {
+    const store = createStore();
+
+    const decision = await analyzePreTrade(
+      {
+        userId: 'u1',
+        botId: 'b1',
+        symbol: 'BTCUSDT',
+        mode: 'LIVE',
+        globalKillSwitch: true,
+      },
+      store
+    );
+
+    expect(decision.allowed).toBe(false);
+    expect(decision.reasons).toContain('global_kill_switch_enabled');
+  });
+
+  it('blocks when emergency stop is enabled for live mode', async () => {
+    const store = createStore();
+
+    const decision = await analyzePreTrade(
+      {
+        userId: 'u1',
+        botId: 'b1',
+        symbol: 'BTCUSDT',
+        mode: 'LIVE',
+        emergencyStop: true,
+      },
+      store
+    );
+
+    expect(decision.allowed).toBe(false);
+    expect(decision.reasons).toContain('emergency_stop_enabled');
+  });
+
   it('blocks on user and bot position limits', async () => {
     const store = createStore({
       countOpenByUser: vi.fn().mockResolvedValue(5),

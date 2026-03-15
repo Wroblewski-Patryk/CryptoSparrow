@@ -62,7 +62,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(exchange): CCXT futures connector scaffold`
 - [x] `feat(exchange): live order placement adapter with retries`
 - [x] `security(live): explicit live opt-in per bot`
-- [ ] `security(live): global kill-switch and emergency stop`
+- [x] `security(live): global kill-switch and emergency stop`
 - [ ] `feat(logs): write audit entries for critical trading decisions`
 - [ ] `test(e2e): smoke tests for paper/live critical paths`
 
@@ -154,4 +154,5 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added CCXT futures connector scaffold with lazy client init, sandbox support, mark-price fetch, and normalized futures order placement contract.
 - 2026-03-15: Added live order adapter with retry/backoff policy for retryable exchange failures and deterministic unit coverage.
 - 2026-03-15: Enforced explicit live opt-in per bot in pre-trade checks by validating bot ownership, LIVE mode, and liveOptIn flag from store data.
+- 2026-03-15: Added live pre-trade kill controls via global kill-switch and emergency-stop guards with deterministic test coverage.
 - 2026-03-15: Synced MVP UX tasks with new `ui-ux-foundation.md` baseline (shell, states, tokens, control-center safety patterns, i18n, accessibility).
