@@ -1,0 +1,29 @@
+import { Request, Response } from 'express';
+import { sendError } from '../../utils/apiError';
+import { sendValidationError } from '../../utils/formatZodError';
+import { ListPositionsQuerySchema } from './positions.types';
+import * as positionsService from './positions.service';
+
+export const listPositions = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const query = ListPositionsQuerySchema.parse(req.query);
+    const positions = await positionsService.listPositions(userId, query);
+    return res.json(positions);
+  } catch (error) {
+    return sendValidationError(res, error);
+  }
+};
+
+export const getPosition = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  const { id } = req.params;
+  const position = await positionsService.getPosition(userId, id);
+  if (!position) return sendError(res, 404, 'Not found');
+
+  return res.json(position);
+};

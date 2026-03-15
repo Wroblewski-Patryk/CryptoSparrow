@@ -5,6 +5,8 @@ import basicRouter from '../modules/profile/basic/basic.routes';
 import strategiesRouter from '../modules/strategies/strategies.routes';
 import marketsRouter from '../modules/markets/markets.routes';
 import botsRouter from '../modules/bots/bots.routes';
+import ordersRouter from '../modules/orders/orders.routes';
+import positionsRouter from '../modules/positions/positions.routes';
 
 const router = Router();
 router.use(requireAuth);
@@ -28,5 +30,9 @@ router.use('/markets', marketsRouter);
 
 // Module - Bots
 router.use('/bots', botsRouter);
+
+// Module - Orders and Positions (read)
+router.use('/orders', ordersRouter);
+router.use('/positions', positionsRouter);
 
 export default router;
