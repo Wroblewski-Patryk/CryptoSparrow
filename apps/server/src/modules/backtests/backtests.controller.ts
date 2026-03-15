@@ -1,7 +1,11 @@
 import { Request, Response } from 'express';
 import { sendError } from '../../utils/apiError';
 import { sendValidationError } from '../../utils/formatZodError';
-import { CreateBacktestRunSchema, ListBacktestRunsQuerySchema } from './backtests.types';
+import {
+  CreateBacktestRunSchema,
+  ListBacktestRunsQuerySchema,
+  ListBacktestTradesQuerySchema,
+} from './backtests.types';
 import * as backtestsService from './backtests.service';
 
 export const listBacktestRuns = async (req: Request, res: Response) => {
@@ -40,4 +44,29 @@ export const createBacktestRun = async (req: Request, res: Response) => {
   } catch (error) {
     return sendValidationError(res, error);
   }
+};
+
+export const listBacktestRunTrades = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const query = ListBacktestTradesQuerySchema.parse(req.query);
+    const trades = await backtestsService.listRunTrades(userId, req.params.id, query);
+    if (!trades) return sendError(res, 404, 'Not found');
+    return res.json(trades);
+  } catch (error) {
+    return sendValidationError(res, error);
+  }
+};
+
+export const getBacktestRunReport = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  const report = await backtestsService.getRunReport(userId, req.params.id);
+  if (typeof report === 'undefined') return sendError(res, 404, 'Not found');
+  if (!report) return sendError(res, 404, 'Report not found');
+
+  return res.json(report);
 };

@@ -21,6 +21,11 @@ const createPayload = () => ({
   notes: 'quick smoke',
 });
 
+const getUserIdByEmail = async (email: string) => {
+  const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+  return user.id;
+};
+
 describe('Backtests runs contract', () => {
   beforeEach(async () => {
     await prisma.log.deleteMany();
@@ -47,13 +52,15 @@ describe('Backtests runs contract', () => {
   });
 
   it('supports create/list/get for owner', async () => {
-    const agent = await registerAndLogin('backtests-owner@example.com');
+    const ownerEmail = 'backtests-owner@example.com';
+    const agent = await registerAndLogin(ownerEmail);
 
     const createRes = await agent.post('/dashboard/backtests/runs').send(createPayload());
     expect(createRes.status).toBe(201);
     expect(createRes.body.id).toBeDefined();
     expect(createRes.body.status).toBe('PENDING');
     const runId = createRes.body.id as string;
+    const userId = await getUserIdByEmail(ownerEmail);
 
     const listRes = await agent.get('/dashboard/backtests/runs');
     expect(listRes.status).toBe(200);
@@ -63,14 +70,72 @@ describe('Backtests runs contract', () => {
     const getRes = await agent.get(`/dashboard/backtests/runs/${runId}`);
     expect(getRes.status).toBe(200);
     expect(getRes.body.id).toBe(runId);
+
+    await prisma.backtestTrade.createMany({
+      data: [
+        {
+          userId,
+          backtestRunId: runId,
+          symbol: 'BTCUSDT',
+          side: 'LONG',
+          entryPrice: 100,
+          exitPrice: 110,
+          quantity: 1,
+          openedAt: new Date('2026-01-01T00:00:00.000Z'),
+          closedAt: new Date('2026-01-01T01:00:00.000Z'),
+          pnl: 10,
+          fee: 1,
+        },
+        {
+          userId,
+          backtestRunId: runId,
+          symbol: 'BTCUSDT',
+          side: 'SHORT',
+          entryPrice: 120,
+          exitPrice: 110,
+          quantity: 1,
+          openedAt: new Date('2026-01-01T02:00:00.000Z'),
+          closedAt: new Date('2026-01-01T03:00:00.000Z'),
+          pnl: 10,
+          fee: 1,
+        },
+      ],
+    });
+    await prisma.backtestReport.create({
+      data: {
+        userId,
+        backtestRunId: runId,
+        totalTrades: 2,
+        winningTrades: 2,
+        losingTrades: 0,
+        winRate: 1,
+        netPnl: 20,
+        grossProfit: 20,
+        grossLoss: 0,
+        maxDrawdown: 0.05,
+        sharpe: 1.2,
+        metrics: { expectancy: 10 },
+      },
+    });
+
+    const tradesRes = await agent.get(`/dashboard/backtests/runs/${runId}/trades?limit=1`);
+    expect(tradesRes.status).toBe(200);
+    expect(tradesRes.body).toHaveLength(1);
+    expect(tradesRes.body[0].side).toBe('SHORT');
+
+    const reportRes = await agent.get(`/dashboard/backtests/runs/${runId}/report`);
+    expect(reportRes.status).toBe(200);
+    expect(reportRes.body.backtestRunId).toBe(runId);
+    expect(reportRes.body.totalTrades).toBe(2);
   });
 
   it('enforces ownership isolation and strategy ownership at create time', async () => {
-    const ownerAgent = await registerAndLogin('backtests-owner-2@example.com');
+    const ownerEmail = 'backtests-owner-2@example.com';
+    const ownerAgent = await registerAndLogin(ownerEmail);
     const otherAgent = await registerAndLogin('backtests-other@example.com');
 
     const ownerUser = await prisma.user.findUniqueOrThrow({
-      where: { email: 'backtests-owner-2@example.com' },
+      where: { email: ownerEmail },
     });
     const ownerStrategy = await prisma.strategy.create({
       data: {
@@ -93,11 +158,30 @@ describe('Backtests runs contract', () => {
     const otherGet = await otherAgent.get(`/dashboard/backtests/runs/${runId}`);
     expect(otherGet.status).toBe(404);
 
+    const otherTradesGet = await otherAgent.get(`/dashboard/backtests/runs/${runId}/trades`);
+    expect(otherTradesGet.status).toBe(404);
+
+    const otherReportGet = await otherAgent.get(`/dashboard/backtests/runs/${runId}/report`);
+    expect(otherReportGet.status).toBe(404);
+
     const otherCreateWithForeignStrategy = await otherAgent.post('/dashboard/backtests/runs').send({
       ...createPayload(),
       strategyId: ownerStrategy.id,
     });
     expect(otherCreateWithForeignStrategy.status).toBe(404);
     expect(otherCreateWithForeignStrategy.body.error.message).toBe('Strategy not found');
+  });
+
+  it('returns 404 when report does not exist for owned run', async () => {
+    const ownerEmail = 'backtests-owner-3@example.com';
+    const agent = await registerAndLogin(ownerEmail);
+
+    const createRes = await agent.post('/dashboard/backtests/runs').send(createPayload());
+    expect(createRes.status).toBe(201);
+    const runId = createRes.body.id as string;
+
+    const reportRes = await agent.get(`/dashboard/backtests/runs/${runId}/report`);
+    expect(reportRes.status).toBe(404);
+    expect(reportRes.body.error.message).toBe('Report not found');
   });
 });
