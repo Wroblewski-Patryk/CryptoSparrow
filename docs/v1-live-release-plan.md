@@ -1,71 +1,75 @@
 ﻿# V1.0 Official Live Plan (World-Ready)
 
-Goal: move from MVP to a production-grade public release (V1.0).
-This plan extends docs scope: reliability, safety, observability, and scale.
+Goal: move from MVP to a production-grade public release (V1.0) with reliable live trading.
 
-## Update Protocol
-- Keep this file as V1.0 source of truth.
-- Any new requirement goes first to docs, then to this plan.
-- Progress should be tracked with tiny commits and short notes.
+## Governance
+- This file is the source of truth for post-MVP delivery.
+- New requirements: update product/architecture/security docs first, then this plan.
+- Keep tiny commits and explicit progress notes.
 
-## Release Standard (Definition of V1.0)
-- Stable public live trading with explicit risk controls.
-- Strong observability (logs, metrics, alerts) and incident runbooks.
-- Reproducible deployments and rollback strategy.
-- Clear product docs and user-facing risk communication.
+## V1.0 Definition
+- Stable public live trading with explicit risk controls and auditability.
+- Operational reliability with monitoring, alerts, and incident response.
+- Reproducible deployments and rollback playbooks.
+- Clear end-user and operator documentation.
 
-## Phase A - Hardening After MVP
-- [ ] `fix(core): remove high-risk tech debt from trading paths`
+## Phase A - Post-MVP Hardening
+- [ ] `fix(core): remove high-risk technical debt in trading-critical paths`
 - [ ] `refactor(engine): isolate signal/execution/risk boundaries`
-- [ ] `security(auth): session/JWT hardening and rotation policy`
-- [ ] `security(keys): key lifecycle policy (create/rotate/revoke)`
+- [ ] `security(auth): JWT/session hardening + rotation policy`
+- [ ] `security(keys): API key lifecycle policy (create/rotate/revoke)`
+- [ ] `security(access): enforce ownership checks for all sensitive actions`
 - [ ] `test(regression): expand regression suite for critical flows`
-- [ ] `docs(security): final MVP-to-v1 threat model update`
+- [ ] `docs(security): update threat model and residual risk register`
 
-## Phase B - Reliability + Operations
-- [ ] `feat(obs): structured logging across api/worker/execution`
-- [ ] `feat(obs): metrics for latency, error rate, queue lag`
-- [ ] `feat(obs): alert rules for failed orders and stale market data`
+## Phase B - Reliability, Operations, and Runtime
+- [ ] `feat(obs): structured logging across api/worker/exchange layers`
+- [ ] `feat(obs): metrics for latency, error rate, queue lag, and order failures`
+- [ ] `feat(obs): alert rules for failed orders, stale market data, and worker health`
 - [ ] `feat(ops): health/readiness endpoints for api and workers`
-- [ ] `feat(ops): worker separation for market/backtest/execution`
-- [ ] `chore(ops): deployment runbook + rollback checklist`
+- [ ] `feat(ops): split workers for market-data/backtest/execution`
+- [ ] `chore(ops): deployment runbook + rollback checklist + incident playbook`
+- [ ] `test(drill): run incident simulation drills and document outcomes`
 
-## Phase C - Scale + Performance
-- [ ] `perf(cache): optimize Redis caching strategy for market and dashboard`
-- [ ] `perf(queue): optimize BullMQ job model for data/signal/execution`
-- [ ] `perf(db): indexes and query tuning for orders/positions/backtests`
-- [ ] `perf(api): pagination and filtering standards for large datasets`
-- [ ] `test(load): baseline load tests for api and worker throughput`
+## Phase C - Scale and Performance
+- [ ] `perf(cache): production Redis caching strategy for market and dashboard`
+- [ ] `perf(queue): BullMQ job model tuning for data/signal/execution`
+- [ ] `perf(db): indexes and query tuning for orders/positions/backtests/logs`
+- [ ] `perf(api): pagination/filtering standards for large datasets`
+- [ ] `test(load): baseline and stress tests for API/worker throughput`
 
-## Phase D - Product Scope to V1.0
+## Phase D - Product Expansion to V1.0 Scope
 - [ ] `feat(trading): spot trading support`
-- [ ] `feat(strategy): import/export JSON with format versioning`
+- [ ] `feat(strategy): strategy import/export with format versioning`
 - [ ] `feat(trading): hedge mode support`
-- [ ] `feat(risk): advanced limits (daily loss/drawdown/consecutive loss)`
+- [ ] `feat(risk): advanced limits (daily loss/drawdown/consecutive losses)`
 - [ ] `feat(risk): cooldown policies after losses`
 - [ ] `feat(data): additional sources (order book/funding/open interest)`
 
-## Phase E - UX + Trust for Public Launch
+## Phase E - UX, Trust, and Public Readiness
 - [ ] `feat(ui): risk-first confirmations for all live actions`
 - [ ] `feat(ui): audit/log explorer with decision trace`
-- [ ] `feat(i18n): complete EN/PL parity`
-- [ ] `feat(accessibility): core dashboard accessibility pass`
-- [ ] `docs(user): onboarding, safety guide, and FAQ`
+- [ ] `feat(i18n): complete EN/PL parity and localization QA`
+- [ ] `feat(accessibility): full accessibility pass for core dashboard`
+- [ ] `docs(user): onboarding, safety guide, FAQ, and troubleshooting`
+- [ ] `docs(operator): production operations handbook`
 
-## Phase F - Go-Live Execution
+## Phase F - Go-Live Program
 - [ ] `chore(release): release candidate checklist`
-- [ ] `chore(release): freeze window and bug bash`
-- [ ] `test(e2e): full go-live smoke pack`
+- [ ] `chore(release): stabilization freeze window and bug bash`
+- [ ] `test(e2e): full go-live smoke pack (live-safe)`
 - [ ] `chore(release): v1.0 tag + changelog + migration notes`
 - [ ] `chore(release): post-release monitoring and hotfix protocol`
+- [ ] `chore(release): 7-day launch review and v1.1 backlog cut`
 
 ## V1.0 Exit Criteria
 - [ ] SLOs defined and observed in production.
 - [ ] Incident response process tested with drills.
 - [ ] Security controls audited for auth, keys, and ownership.
+- [ ] Load/perf baselines met for planned public usage.
 - [ ] Public docs complete for users and operators.
-- [ ] Launch retrospective and backlog for V1.1 created.
+- [ ] Launch retrospective completed with actionable v1.1 plan.
 
 ## Progress Log
 - 2026-03-15: Initialized V1.0 live release plan.
-
+- 2026-03-15: Aligned V1.0 structure with architecture, security, testing, and release-readiness docs.
