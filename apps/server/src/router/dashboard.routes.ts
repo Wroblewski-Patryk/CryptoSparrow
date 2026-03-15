@@ -1,8 +1,8 @@
 import { Router, Request } from 'express';
 import { requireAuth } from '../middleware/requireAuth';
-import apiKeyRouter from 'modules/profile/apiKey/apiKey.routes';
-import basicRouter from 'modules/profile/basic/basic.routes';
-import strategiesRouter from 'modules/strategies/strategies.routes';
+import apiKeyRouter from '../modules/profile/apiKey/apiKey.routes';
+import basicRouter from '../modules/profile/basic/basic.routes';
+import strategiesRouter from '../modules/strategies/strategies.routes';
 
 declare global {
   namespace Express {

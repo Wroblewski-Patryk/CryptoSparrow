@@ -71,5 +71,4 @@ pnpm run build
 ```
 
 ## Notes
-- `pnpm --filter server start` currently fails due ESM directory import from `dist/router`; use `pnpm --filter server dev` for local run.
 - Current client lint/type issues can fail `build`/`lint`, but `client dev` still starts for local development.

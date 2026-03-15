@@ -2,7 +2,7 @@ import { Router } from 'express';
 import authRoutes from '../modules/auth/auth.routes';
 import dashboardRoutes from './dashboard.routes';
 import adminRoutes from './admin.routes';
-import uploadRouter from 'modules/upload/upload.routes';
+import uploadRouter from '../modules/upload/upload.routes';
 
 const router = Router();
 
