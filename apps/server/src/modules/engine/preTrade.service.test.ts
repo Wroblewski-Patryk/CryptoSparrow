@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { analyzePreTrade, BotReadStore, PositionReadStore } from './preTrade.service';
+import { analyzePreTrade, AuditLogWriter, BotReadStore, PositionReadStore } from './preTrade.service';
 
 type MockPreTradeStore = PositionReadStore & BotReadStore;
 
@@ -49,6 +49,84 @@ describe('preTrade analysis', () => {
 
     expect(decision.allowed).toBe(false);
     expect(decision.reasons).toContain('live_bot_required');
+  });
+
+  it('writes audit entry for blocked decision', async () => {
+    const store = createStore({
+      hasOpenPositionOnSymbol: vi.fn().mockResolvedValue(true),
+    });
+    const auditLogWriter: AuditLogWriter = {
+      write: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const decision = await analyzePreTrade(
+      {
+        userId: 'u1',
+        botId: 'b1',
+        symbol: 'BTCUSDT',
+        mode: 'LIVE',
+      },
+      store,
+      auditLogWriter
+    );
+
+    expect(decision.allowed).toBe(false);
+    expect(auditLogWriter.write).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'u1',
+        botId: 'b1',
+        action: 'trade.precheck.blocked',
+        level: 'WARN',
+        source: 'engine.pre-trade',
+        category: 'TRADING_DECISION',
+      })
+    );
+  });
+
+  it('writes audit entry for allowed live decision', async () => {
+    const store = createStore();
+    const auditLogWriter: AuditLogWriter = {
+      write: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const decision = await analyzePreTrade(
+      {
+        userId: 'u1',
+        botId: 'b1',
+        symbol: 'BTCUSDT',
+        mode: 'LIVE',
+      },
+      store,
+      auditLogWriter
+    );
+
+    expect(decision.allowed).toBe(true);
+    expect(auditLogWriter.write).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'trade.precheck.allowed',
+        level: 'INFO',
+      })
+    );
+  });
+
+  it('does not fail decision when audit writer throws', async () => {
+    const store = createStore();
+    const auditLogWriter: AuditLogWriter = {
+      write: vi.fn().mockRejectedValue(new Error('db unavailable')),
+    };
+
+    const decision = await analyzePreTrade(
+      {
+        userId: 'u1',
+        botId: 'b1',
+        symbol: 'BTCUSDT',
+        mode: 'LIVE',
+      },
+      store,
+      auditLogWriter
+    );
+
+    expect(decision.allowed).toBe(true);
   });
 
   it('blocks when live bot does not exist for user', async () => {

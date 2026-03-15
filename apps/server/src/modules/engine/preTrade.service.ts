@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import {
   PreTradeAnalysisInput,
@@ -16,8 +17,25 @@ type BotLiveConfig = {
   liveOptIn: boolean;
 };
 
+type PreTradeAuditEntry = {
+  userId: string;
+  botId?: string;
+  action: string;
+  level: 'INFO' | 'WARN' | 'ERROR';
+  source: string;
+  message: string;
+  category: string;
+  entityType?: string;
+  entityId?: string;
+  metadata: Prisma.InputJsonValue;
+};
+
 export interface BotReadStore {
   getBotLiveConfig(userId: string, botId: string): Promise<BotLiveConfig | null>;
+}
+
+export interface AuditLogWriter {
+  write(entry: PreTradeAuditEntry): Promise<void>;
 }
 
 type PreTradeReadStore = PositionReadStore & BotReadStore;
@@ -56,9 +74,31 @@ class PrismaPreTradeReadStore implements PreTradeReadStore {
 
 const defaultReadStore = new PrismaPreTradeReadStore();
 
+class PrismaAuditLogWriter implements AuditLogWriter {
+  async write(entry: PreTradeAuditEntry) {
+    await prisma.log.create({
+      data: {
+        userId: entry.userId,
+        botId: entry.botId,
+        action: entry.action,
+        level: entry.level,
+        source: entry.source,
+        message: entry.message,
+        category: entry.category,
+        entityType: entry.entityType,
+        entityId: entry.entityId,
+        metadata: entry.metadata,
+      },
+    });
+  }
+}
+
+const defaultAuditLogWriter = new PrismaAuditLogWriter();
+
 export const analyzePreTrade = async (
   input: PreTradeAnalysisInput,
-  readStore: PreTradeReadStore = defaultReadStore
+  readStore: PreTradeReadStore = defaultReadStore,
+  auditLogWriter: AuditLogWriter = defaultAuditLogWriter
 ): Promise<PreTradeDecision> => {
   const parsed = PreTradeAnalysisInputSchema.parse(input);
   const reasons: string[] = [];
@@ -117,7 +157,7 @@ export const analyzePreTrade = async (
     reasons.push('open_position_on_symbol_exists');
   }
 
-  return {
+  const decision = {
     allowed: reasons.length === 0,
     reasons,
     metrics: {
@@ -126,4 +166,37 @@ export const analyzePreTrade = async (
       hasOpenPositionOnSymbol,
     },
   };
+
+  const isCriticalDecision = parsed.mode === 'LIVE' || reasons.length > 0;
+  if (isCriticalDecision) {
+    try {
+      await auditLogWriter.write({
+        userId: parsed.userId,
+        botId: parsed.botId,
+        action: decision.allowed ? 'trade.precheck.allowed' : 'trade.precheck.blocked',
+        level: decision.allowed ? 'INFO' : 'WARN',
+        source: 'engine.pre-trade',
+        message: decision.allowed
+          ? `Pre-trade check allowed (${parsed.mode}) for ${parsed.symbol}`
+          : `Pre-trade check blocked (${parsed.mode}) for ${parsed.symbol}`,
+        category: 'TRADING_DECISION',
+        entityType: parsed.botId ? 'BOT' : undefined,
+        entityId: parsed.botId,
+        metadata: {
+          symbol: parsed.symbol,
+          mode: parsed.mode,
+          reasons: decision.reasons,
+          metrics: decision.metrics,
+          guardrails: {
+            globalKillSwitch: parsed.globalKillSwitch,
+            emergencyStop: parsed.emergencyStop,
+          },
+        },
+      });
+    } catch {
+      // Audit logging failures must not block risk checks.
+    }
+  }
+
+  return decision;
 };
