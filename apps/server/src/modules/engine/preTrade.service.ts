@@ -11,7 +11,18 @@ export interface PositionReadStore {
   hasOpenPositionOnSymbol(userId: string, symbol: string): Promise<boolean>;
 }
 
-class PrismaPositionReadStore implements PositionReadStore {
+type BotLiveConfig = {
+  mode: 'PAPER' | 'LIVE' | 'LOCAL';
+  liveOptIn: boolean;
+};
+
+export interface BotReadStore {
+  getBotLiveConfig(userId: string, botId: string): Promise<BotLiveConfig | null>;
+}
+
+type PreTradeReadStore = PositionReadStore & BotReadStore;
+
+class PrismaPreTradeReadStore implements PreTradeReadStore {
   async countOpenByUser(userId: string) {
     return prisma.position.count({
       where: { userId, status: 'OPEN' },
@@ -31,27 +42,51 @@ class PrismaPositionReadStore implements PositionReadStore {
     });
     return Boolean(found);
   }
+
+  async getBotLiveConfig(userId: string, botId: string) {
+    return prisma.bot.findFirst({
+      where: { id: botId, userId },
+      select: {
+        mode: true,
+        liveOptIn: true,
+      },
+    });
+  }
 }
 
-const defaultPositionStore = new PrismaPositionReadStore();
+const defaultReadStore = new PrismaPreTradeReadStore();
 
 export const analyzePreTrade = async (
   input: PreTradeAnalysisInput,
-  positionStore: PositionReadStore = defaultPositionStore
+  readStore: PreTradeReadStore = defaultReadStore
 ): Promise<PreTradeDecision> => {
   const parsed = PreTradeAnalysisInputSchema.parse(input);
   const reasons: string[] = [];
 
-  const userOpenPositions = await positionStore.countOpenByUser(parsed.userId);
+  const userOpenPositions = await readStore.countOpenByUser(parsed.userId);
   const botOpenPositions = parsed.botId
-    ? await positionStore.countOpenByBot(parsed.userId, parsed.botId)
+    ? await readStore.countOpenByBot(parsed.userId, parsed.botId)
     : null;
   const hasOpenPositionOnSymbol = parsed.enforceOnePositionPerSymbol
-    ? await positionStore.hasOpenPositionOnSymbol(parsed.userId, parsed.symbol)
+    ? await readStore.hasOpenPositionOnSymbol(parsed.userId, parsed.symbol)
     : false;
 
-  if (parsed.mode === 'LIVE' && !parsed.liveOptIn) {
-    reasons.push('live_opt_in_required');
+  if (parsed.mode === 'LIVE') {
+    if (!parsed.botId) {
+      reasons.push('live_bot_required');
+    } else {
+      const botLiveConfig = await readStore.getBotLiveConfig(parsed.userId, parsed.botId);
+      if (!botLiveConfig) {
+        reasons.push('live_bot_not_found');
+      } else {
+        if (botLiveConfig.mode !== 'LIVE') {
+          reasons.push('live_mode_bot_required');
+        }
+        if (!botLiveConfig.liveOptIn) {
+          reasons.push('live_opt_in_required');
+        }
+      }
+    }
   }
 
   if (

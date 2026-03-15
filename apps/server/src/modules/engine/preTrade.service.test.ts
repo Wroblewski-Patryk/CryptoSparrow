@@ -1,10 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
-import { analyzePreTrade, PositionReadStore } from './preTrade.service';
+import { analyzePreTrade, BotReadStore, PositionReadStore } from './preTrade.service';
 
-const createStore = (overrides?: Partial<PositionReadStore>): PositionReadStore => ({
+type MockPreTradeStore = PositionReadStore & BotReadStore;
+
+const createStore = (overrides?: Partial<MockPreTradeStore>): MockPreTradeStore => ({
   countOpenByUser: vi.fn().mockResolvedValue(0),
   countOpenByBot: vi.fn().mockResolvedValue(0),
   hasOpenPositionOnSymbol: vi.fn().mockResolvedValue(false),
+  getBotLiveConfig: vi.fn().mockResolvedValue({
+    mode: 'LIVE',
+    liveOptIn: true,
+  }),
   ...overrides,
 });
 
@@ -29,7 +35,7 @@ describe('preTrade analysis', () => {
     expect(decision.reasons).toEqual([]);
   });
 
-  it('blocks when live mode is requested without opt-in', async () => {
+  it('blocks when live mode is requested without bot id', async () => {
     const store = createStore();
 
     const decision = await analyzePreTrade(
@@ -37,12 +43,53 @@ describe('preTrade analysis', () => {
         userId: 'u1',
         symbol: 'BTCUSDT',
         mode: 'LIVE',
-        liveOptIn: false,
       },
       store
     );
 
     expect(decision.allowed).toBe(false);
+    expect(decision.reasons).toContain('live_bot_required');
+  });
+
+  it('blocks when live bot does not exist for user', async () => {
+    const store = createStore({
+      getBotLiveConfig: vi.fn().mockResolvedValue(null),
+    });
+
+    const decision = await analyzePreTrade(
+      {
+        userId: 'u1',
+        botId: 'missing-bot',
+        symbol: 'BTCUSDT',
+        mode: 'LIVE',
+      },
+      store
+    );
+
+    expect(decision.allowed).toBe(false);
+    expect(decision.reasons).toContain('live_bot_not_found');
+  });
+
+  it('blocks when bot is not explicitly allowed for live mode', async () => {
+    const store = createStore({
+      getBotLiveConfig: vi.fn().mockResolvedValue({
+        mode: 'PAPER',
+        liveOptIn: false,
+      }),
+    });
+
+    const decision = await analyzePreTrade(
+      {
+        userId: 'u1',
+        botId: 'b1',
+        symbol: 'BTCUSDT',
+        mode: 'LIVE',
+      },
+      store
+    );
+
+    expect(decision.allowed).toBe(false);
+    expect(decision.reasons).toContain('live_mode_bot_required');
     expect(decision.reasons).toContain('live_opt_in_required');
   });
 
