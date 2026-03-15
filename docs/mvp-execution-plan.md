@@ -83,7 +83,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(ui): dashboard/backtest full UX + overlays + summary`
 - [x] `feat(ui): dashboard/reports performance views`
 - [x] `feat(ui): dashboard/logs audit trail`
-- [ ] `feat(ui): dashboard/exchanges api-key connections`
+- [x] `feat(ui): dashboard/exchanges api-key connections`
 - [ ] `feat(i18n): EN default + PL translation coverage`
 - [ ] `feat(i18n): enforce translation-key usage (no hardcoded page copy) and feature-based namespaces`
 - [ ] `feat(i18n): locale-aware date/number/currency/percent formatting for dashboard data views`
@@ -173,3 +173,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Implemented full backtest UX with run creation/list, trades tab, summary cards, and modal overlay wired to backtests API.
 - 2026-03-16: Added reports performance view with aggregated KPI cards and per-run backtest report table sourced from reports API.
 - 2026-03-16: Added logs audit trail dashboard view with source filters and derived event stream from orders/positions/backtests.
+- 2026-03-16: Added exchanges dashboard view for API-key connections with connection summary cards and profile API-key management integration.

@@ -22,6 +22,7 @@ export default function Header() {
             <li><Link href="/dashboard/backtest">Analiza wsteczna</Link></li>
             <li><Link href="/dashboard/reports">Reports</Link></li>
             <li><Link href="/dashboard/logs">Logs</Link></li>
+            <li><Link href="/dashboard/exchanges">Exchanges</Link></li>
             <li><Link href="/dashboard/orders">Orders</Link></li>
             <li><Link href="/dashboard/positions">Positions</Link></li>
             <li><Link href="/dashboard/bots">Boty</Link></li>
