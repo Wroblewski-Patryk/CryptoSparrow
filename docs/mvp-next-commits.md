@@ -11,7 +11,7 @@ Operational queue for one-task execution runs.
 - [x] `security(rate-limit): add limiter for auth, market, and trading endpoints`
 - [x] `docs(cleanup): normalize encoding and Current/Planned consistency`
 - [x] `docs(ui): audit legacy CryptoBot dashboard patterns for positions/orders and control-center IA`
-- [ ] `feat(ui): post-login control-center dashboard with positions/orders snapshot widgets`
+- [x] `feat(ui): post-login control-center dashboard with positions/orders snapshot widgets`
 
 ## NEXT
 - [ ] `feat(db): add MarketUniverse model`
@@ -38,6 +38,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-15 `security(rate-limit): add limiter for auth, market, and trading endpoints`
 - [x] 2026-03-15 `docs(cleanup): normalize encoding and Current/Planned consistency`
 - [x] 2026-03-15 `docs(ui): audit legacy CryptoBot dashboard patterns for positions/orders and control-center IA`
+- [x] 2026-03-15 `feat(ui): post-login control-center dashboard with positions/orders snapshot widgets`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

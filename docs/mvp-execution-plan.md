@@ -68,7 +68,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 
 ## Phase 4 - Dashboard Completion (MVP UX Scope)
 - [x] `docs(ui): audit legacy CryptoBot dashboard patterns for positions/orders and control-center IA`
-- [ ] `feat(ui): post-login control-center dashboard with key KPIs, bot status, and quick actions`
+- [x] `feat(ui): post-login control-center dashboard with key KPIs, bot status, and quick actions`
 - [ ] `feat(ui): dashboard/markets flow`
 - [ ] `feat(ui): dashboard/builder strategy editor + presets`
 - [ ] `feat(ui): dashboard/bots management + mode status`
@@ -116,3 +116,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added in-memory rate limiting for auth, market, and trading endpoints.
 - 2026-03-15: Normalized docs consistency rules for Current/Planned sections and UTF-8 encoding.
 - 2026-03-15: Audited legacy dashboard patterns and defined control-center IA priorities for positions/orders-first home.
+- 2026-03-15: Implemented post-login control-center dashboard with KPI, positions/orders snapshots, quick actions, and activity feed seed widgets.
