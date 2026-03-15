@@ -1,7 +1,7 @@
 'use client';
 
 import { PageTitle } from "apps/client/src/ui/layout/dashboard/PageTitle";
-import { BacktestForm } from "apps/client/src/features/backtest/components/BacktestForm";
+import { BacktestsList } from "apps/client/src/features/backtest/components/BacktestsList";
 
 export default function BacktestPage() {
     return (
@@ -15,7 +15,7 @@ export default function BacktestPage() {
 
                     ]}
                 />
-                <BacktestForm />
+                <BacktestsList />
         </section>
     );
 }  

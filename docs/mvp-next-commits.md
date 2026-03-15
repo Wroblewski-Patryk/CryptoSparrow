@@ -7,14 +7,14 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `feat(ui): dashboard/backtest full UX + overlays + summary`
 - [ ] `feat(ui): dashboard/reports performance views`
 - [ ] `feat(ui): dashboard/logs audit trail`
 - [ ] `feat(ui): dashboard/exchanges api-key connections`
 - [ ] `feat(i18n): EN default + PL translation coverage`
+- [ ] `feat(i18n): enforce translation-key usage (no hardcoded page copy) and feature-based namespaces`
 
 ## NEXT
-- [ ] `feat(i18n): enforce translation-key usage (no hardcoded page copy) and feature-based namespaces`
+- [ ] `feat(i18n): locale-aware date/number/currency/percent formatting for dashboard data views`
 
 ## BLOCKED
 - [ ] (empty)
@@ -78,6 +78,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-15 `feat(ui): dashboard/bots management + mode status`
 - [x] 2026-03-16 `feat(ui): dashboard/orders and dashboard/positions`
 - [x] 2026-03-16 `feat(ui): dashboard home widgets for live positions/orders snapshot and recent actions feed`
+- [x] 2026-03-16 `feat(ui): dashboard/backtest full UX + overlays + summary`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
