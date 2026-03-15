@@ -72,7 +72,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(ui-shell): unify dashboard app shell, page headers, and breadcrumb patterns across modules`
 - [x] `feat(ui-state): implement shared loading/empty/degraded/error/success state components`
 - [ ] `feat(ui-tokens): add semantic risk and execution-mode tokens (paper/live/warning/danger) and reusable status badges`
-- [ ] `feat(ui-control-center): add sticky safety bar with mode/connectivity/heartbeat and emergency action`
+- [x] `feat(ui-control-center): add sticky safety bar with mode/connectivity/heartbeat and emergency action`
 - [ ] `feat(ui-control-center): add risk notice footer with logs drill-down shortcut`
 - [ ] `feat(ui): dashboard/markets flow`
 - [ ] `feat(ui): dashboard/builder strategy editor + presets`
@@ -160,3 +160,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Unified dashboard shell spacing and page-header/breadcrumb patterns across control center, strategies, backtest, and profile views.
 - 2026-03-15: Added pre-trade smoke e2e coverage for critical paper/live paths, including live allow, kill-switch block, and audit-log assertions.
 - 2026-03-15: Added shared UI state components (loading, empty, degraded, error, success) with dashboard integration and unit coverage.
+- 2026-03-15: Added sticky control-center safety bar with mode, connectivity, heartbeat status, and emergency navigation action.

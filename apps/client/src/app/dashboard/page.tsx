@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PageTitle } from 'apps/client/src/ui/layout/dashboard/PageTitle';
 import { LoadingState } from 'apps/client/src/ui/components/ViewState';
+import SafetyBar from 'apps/client/src/ui/layout/dashboard/SafetyBar';
 
 const kpiCards = [
   { label: 'Open Positions', value: '3', tone: 'text-info' },
@@ -42,6 +43,8 @@ export default function DashboardPage() {
             { label: 'Control Center' },
           ]}
         />
+
+        <SafetyBar mode='PAPER' />
 
         <div className='alert mb-6'>
           <span>Signed in as {user?.email}</span>
