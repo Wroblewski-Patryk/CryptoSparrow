@@ -67,7 +67,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `test(e2e): smoke tests for paper/live critical paths`
 
 ## Phase 4 - Dashboard Completion (MVP UX Scope)
-- [ ] `docs(ui): audit legacy CryptoBot dashboard patterns for positions/orders and control-center IA`
+- [x] `docs(ui): audit legacy CryptoBot dashboard patterns for positions/orders and control-center IA`
 - [ ] `feat(ui): post-login control-center dashboard with key KPIs, bot status, and quick actions`
 - [ ] `feat(ui): dashboard/markets flow`
 - [ ] `feat(ui): dashboard/builder strategy editor + presets`
@@ -115,3 +115,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Verified API keys are encrypted at rest and masked in API responses with security e2e coverage.
 - 2026-03-15: Added in-memory rate limiting for auth, market, and trading endpoints.
 - 2026-03-15: Normalized docs consistency rules for Current/Planned sections and UTF-8 encoding.
+- 2026-03-15: Audited legacy dashboard patterns and defined control-center IA priorities for positions/orders-first home.
