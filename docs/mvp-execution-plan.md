@@ -58,7 +58,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 
 ## Phase 3 - Paper and Live Futures (MVP Trading Modes)
 - [x] `feat(engine): paper runtime loop on live market feed`
-- [ ] `feat(engine): paper position lifecycle and order simulation parity`
+- [x] `feat(engine): paper position lifecycle and order simulation parity`
 - [ ] `feat(exchange): CCXT futures connector scaffold`
 - [ ] `feat(exchange): live order placement adapter with retries`
 - [ ] `security(live): explicit live opt-in per bot`
@@ -139,3 +139,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added backtests API endpoints for run trades list and run report read with ownership isolation and e2e coverage.
 - 2026-03-15: Expanded simulator unit coverage for deterministic repeats, accounting identity, and explicit slippage cost regression cases.
 - 2026-03-15: Added paper runtime service loop for polling live market feed with stop control and per-symbol non-overlapping tick execution.
+- 2026-03-15: Added paper lifecycle orchestrator for order execution parity, position management (DCA/TP/SL/trailing), and deterministic simulated close-out PnL.
