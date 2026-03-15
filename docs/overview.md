@@ -1,4 +1,4 @@
-﻿# CryptoSparrow Documentation Overview
+# CryptoSparrow Documentation Overview
 
 This documentation is the technical product compass for CryptoSparrow. It describes what exists today, what is planned, and how the pieces connect.
 Language policy: documentation stays in English.
@@ -9,6 +9,7 @@ Language policy: documentation stays in English.
 - Use `architecture.md`, `modules.md`, and `database.md` to implement features.
 - Use `trading-logic.md` and `ai.md` for the future engine.
 - Use `security-and-risk.md` as a hard guardrail.
+- Use `ui-ux-foundation.md` for global UX, dashboard assumptions, and cross-module UI consistency.
 - Keep `roadmap.md` in sync with what we are actively building.
 - Use `mvp-execution-plan.md` as the MVP master checklist.
 - Use `v1-live-release-plan.md` as the official V1.0 launch path.

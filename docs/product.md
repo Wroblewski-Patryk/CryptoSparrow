@@ -69,3 +69,19 @@ Primary target is advanced users who already understand trading concepts and can
 - Clean, serious UI. Focus on readability and safety.
 - Clear separation of backtest, paper, and live modes.
 - Every risky action must be explicit and reversible.
+- Dashboard is a safety-first control center that surfaces risk and required actions in under 10 seconds.
+- UI must prioritize explainability: users can inspect why a signal, order, or position decision happened.
+
+## UX and Design System Baseline (MVP)
+- One shared app shell and visual language across all dashboard pages.
+- Reusable component primitives for KPI cards, status cards, tables, feeds, alerts, and risk actions.
+- Unified view-state behavior (`loading`, `empty`, `degraded`, `error`, `success`) on all data-driven pages.
+- Consistent semantic color tokens for risk and execution mode (`paper`, `live`, `warning`, `danger`).
+- Uniform interaction patterns for filtering, pagination, confirmations, and destructive actions.
+
+## Localization Baseline
+- English (`en`) is the source and default locale.
+- Polish (`pl`) is supported in MVP as a complete secondary locale for core flows.
+- UI text must use translation keys (no hardcoded page strings in components).
+- All date, number, currency, and percent rendering must be locale-aware.
+- Architecture must allow adding additional locales after MVP without redesigning page structure.

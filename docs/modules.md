@@ -37,3 +37,29 @@
 - dashboard/reports. Performance summaries.
 - dashboard/logs. Audit trail and explanations.
 - dashboard/exchanges. API key connections and permissions.
+
+## Dashboard IA Order (MVP)
+- dashboard. Control Center with risk and operations priority.
+- dashboard/strategies.
+- dashboard/markets.
+- dashboard/bots.
+- dashboard/orders.
+- dashboard/positions.
+- dashboard/backtest.
+- dashboard/reports.
+- dashboard/logs.
+- dashboard/exchanges.
+- dashboard/profile.
+
+## UX Expectations Per Frontend Module (MVP)
+- dashboard (Control Center). Safety bar, KPI risk row, positions/orders snapshots, bot status, quick actions, and recent audit feed.
+- dashboard/strategies. List-first workflow with clear preset/source metadata and safe edit/delete controls.
+- dashboard/markets. Universe builder with filter explainability and explicit whitelist/blacklist outcomes.
+- dashboard/bots. Lifecycle controls with explicit paper/live mode, heartbeat visibility, and emergency controls.
+- dashboard/orders. Searchable and filterable order history with rejection reason visibility.
+- dashboard/positions. Open and closed positions with risk parameters and PnL context.
+- dashboard/backtest. Run management, chart overlays, and trade-level result inspection.
+- dashboard/reports. Performance summaries focused on PnL, drawdown, fees, and funding costs.
+- dashboard/logs. High-signal audit trail with severity, source, and actor filtering.
+- dashboard/exchanges. Connection health, permission checks, and secure API key UX.
+- dashboard/profile. Account and user preferences, including locale selection.
