@@ -60,7 +60,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(engine): paper runtime loop on live market feed`
 - [x] `feat(engine): paper position lifecycle and order simulation parity`
 - [x] `feat(exchange): CCXT futures connector scaffold`
-- [ ] `feat(exchange): live order placement adapter with retries`
+- [x] `feat(exchange): live order placement adapter with retries`
 - [ ] `security(live): explicit live opt-in per bot`
 - [ ] `security(live): global kill-switch and emergency stop`
 - [ ] `feat(logs): write audit entries for critical trading decisions`
@@ -141,3 +141,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added paper runtime service loop for polling live market feed with stop control and per-symbol non-overlapping tick execution.
 - 2026-03-15: Added paper lifecycle orchestrator for order execution parity, position management (DCA/TP/SL/trailing), and deterministic simulated close-out PnL.
 - 2026-03-15: Added CCXT futures connector scaffold with lazy client init, sandbox support, mark-price fetch, and normalized futures order placement contract.
+- 2026-03-15: Added live order adapter with retry/backoff policy for retryable exchange failures and deterministic unit coverage.
