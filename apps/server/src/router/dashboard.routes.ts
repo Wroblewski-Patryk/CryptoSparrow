@@ -4,14 +4,6 @@ import apiKeyRouter from '../modules/profile/apiKey/apiKey.routes';
 import basicRouter from '../modules/profile/basic/basic.routes';
 import strategiesRouter from '../modules/strategies/strategies.routes';
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: any;
-    }
-  }
-}
-
 const router = Router();
 router.use(requireAuth);
 router.get('/', (req, res) => {

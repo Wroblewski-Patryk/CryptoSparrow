@@ -1,9 +1,7 @@
 import { Request, Response } from 'express';
-import { ZodError } from 'zod';
 import * as apiKeyService from './apiKey.service';
 import { apiKeySchema } from './apiKey.types';
-import { formatZodError } from '../../../utils/formatZodError';
-import { sendError } from '../../../utils/apiError';
+import { sendValidationError } from '../../../utils/formatZodError';
 
 type UserRequest = Request & { user: { id: string } };
 
@@ -16,10 +14,7 @@ export const create = async (req: UserRequest, res: Response) => {
   try {
     apiKeySchema.parse(req.body);
   } catch (error) {
-    if (error instanceof ZodError) {
-      return sendError(res, 400, 'Validation failed', formatZodError(error));
-    }
-    return sendError(res, 400, 'Validation failed');
+    return sendValidationError(res, error);
   }
 
   const key = await apiKeyService.createApiKey(req.user.id, req.body);
@@ -30,10 +25,7 @@ export const update = async (req: UserRequest, res: Response) => {
   try {
     apiKeySchema.partial().parse(req.body);
   } catch (error) {
-    if (error instanceof ZodError) {
-      return sendError(res, 400, 'Validation failed', formatZodError(error));
-    }
-    return sendError(res, 400, 'Validation failed');
+    return sendValidationError(res, error);
   }
 
   const key = await apiKeyService.updateApiKey(req.user.id, req.params.id, req.body);

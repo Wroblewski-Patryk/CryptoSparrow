@@ -44,6 +44,12 @@ Primary target is advanced users who already understand trading concepts and can
 - `timeframes` is an explicit list used by strategy rules.
 - Deep nested rule trees are explicitly out of MVP and can be added after MVP.
 
+## MVP Preset Storage (Resolved)
+- Presets are code-defined templates managed in repository source.
+- MVP keeps presets read-only (no preset create/edit/delete by users).
+- API exposes predefined presets for builder selection.
+- DB-backed preset storage is deferred until post-MVP sharing/versioning needs.
+
 ## Planned Scope (After MVP)
 - Spot trading support.
 - Strategy export/import as JSON with versioned format.

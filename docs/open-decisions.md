@@ -81,8 +81,14 @@ This file tracks intentionally unresolved architecture choices so implementation
 - Current assumption: basic nested groups supported later if not needed immediately.
 
 ## Preset Storage Format
-- Open: presets as DB-stored JSON templates vs code-defined templates.
-- Current assumption: start code-defined, move to DB when sharing/versioning is needed.
+- Decision state: resolved on 2026-03-15.
+- MVP decision: keep presets code-defined (server-side templates in source control), not DB-stored.
+- Scope for MVP:
+  - Presets are read-only and versioned with application code.
+  - No user CRUD for presets in MVP.
+  - Preset selection is exposed via API as predefined options.
+- Post-MVP migration trigger:
+  - move presets to DB when user-defined sharing, version history, or per-tenant customization is required.
 
 ## Worker Split Timing
 - Open: exact threshold for splitting API and workers into separate processes.

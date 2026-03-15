@@ -20,10 +20,10 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `chore(repo): add root workspace scripts for lint/typecheck/test/build`
 - [x] `chore(ci): add minimal CI checks for client and server`
 - [x] `docs(decisions): freeze MVP strategy schema shape (entry/exit/risk/filters/timeframes)`
-- [ ] `docs(decisions): resolve preset storage approach for MVP`
+- [x] `docs(decisions): resolve preset storage approach for MVP`
 - [x] `refactor(api): unify API error response payload`
-- [ ] `refactor(validation): centralize zod error formatting`
-- [ ] `fix(server): reduce critical any usage in auth/middleware`
+- [x] `refactor(validation): centralize zod error formatting`
+- [x] `fix(server): reduce critical any usage in auth/middleware`
 - [ ] `fix(client): reduce critical any usage in strategy/profile flows`
 - [x] `test(auth): stabilize deterministic auth regression tests`
 - [ ] `test(strategies): add strategy CRUD contract tests`
@@ -67,10 +67,13 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `test(e2e): smoke tests for paper/live critical paths`
 
 ## Phase 4 - Dashboard Completion (MVP UX Scope)
+- [ ] `docs(ui): audit legacy CryptoBot dashboard patterns for positions/orders and control-center IA`
+- [ ] `feat(ui): post-login control-center dashboard with key KPIs, bot status, and quick actions`
 - [ ] `feat(ui): dashboard/markets flow`
 - [ ] `feat(ui): dashboard/builder strategy editor + presets`
 - [ ] `feat(ui): dashboard/bots management + mode status`
 - [ ] `feat(ui): dashboard/orders and dashboard/positions`
+- [ ] `feat(ui): dashboard home widgets for live positions/orders snapshot and recent actions feed`
 - [ ] `feat(ui): dashboard/backtest full UX + overlays + summary`
 - [ ] `feat(ui): dashboard/reports performance views`
 - [ ] `feat(ui): dashboard/logs audit trail`
@@ -103,3 +106,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Frozen MVP strategy schema shape in open-decisions and product docs.
 - 2026-03-15: Unified API error response payload format across middleware and core modules.
 - 2026-03-15: Stabilized auth regression tests with deterministic DB cleanup and test-safe app startup.
+- 2026-03-15: Resolved MVP preset storage approach as code-defined templates in docs.
+- 2026-03-15: Centralized Zod validation error formatting via shared helper.
+- 2026-03-15: Reduced critical any usage in auth/middleware via typed request user context.
+- 2026-03-15: Added dashboard planning tasks for post-login control center and positions/orders-first home widgets.

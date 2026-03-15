@@ -1,16 +1,16 @@
 import { ZodError } from 'zod';
 import { Request, Response, NextFunction } from 'express';
-import { formatZodError } from '../utils/formatZodError';
+import { sendValidationError } from '../utils/formatZodError';
 import { sendError } from '../utils/apiError';
 
 export function errorHandler(
-  err: any,
+  err: unknown,
   _req: Request,
   res: Response,
   _next: NextFunction
 ) {
   if (err instanceof ZodError) {
-    return sendError(res, 400, 'Validation failed', formatZodError(err));
+    return sendValidationError(res, err);
   }
 
   console.error(err);
