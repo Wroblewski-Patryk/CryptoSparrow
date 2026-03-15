@@ -7,7 +7,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-secondary text-center text-sm py-6">
-      &copy; {new Date().getFullYear()} CryptoSparrow. {t("footer.rights")}
+      &copy; {new Date().getFullYear()} CryptoSparrow. {t("dashboard.footer.rights")}
     </footer>
   );
 }

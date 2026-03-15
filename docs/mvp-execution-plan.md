@@ -85,7 +85,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(ui): dashboard/logs audit trail`
 - [x] `feat(ui): dashboard/exchanges api-key connections`
 - [x] `feat(i18n): EN default + PL translation coverage`
-- [ ] `feat(i18n): enforce translation-key usage (no hardcoded page copy) and feature-based namespaces`
+- [x] `feat(i18n): enforce translation-key usage (no hardcoded page copy) and feature-based namespaces`
 - [ ] `feat(i18n): locale-aware date/number/currency/percent formatting for dashboard data views`
 - [ ] `feat(ui): responsive pass for desktop/tablet/mobile`
 - [ ] `feat(ui): PWA baseline parity for core flows`
@@ -175,3 +175,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Added logs audit trail dashboard view with source filters and derived event stream from orders/positions/backtests.
 - 2026-03-16: Added exchanges dashboard view for API-key connections with connection summary cards and profile API-key management integration.
 - 2026-03-16: Added i18n provider with EN default locale, PL shell translations, language switcher, and shell-level translation wiring with i18n tests.
+- 2026-03-16: Enforced typed translation keys and moved dashboard shell copy into feature-based `dashboard.*` namespaces.

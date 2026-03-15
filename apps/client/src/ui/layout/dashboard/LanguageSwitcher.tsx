@@ -11,7 +11,7 @@ export default function LanguageSwitcher() {
         type="button"
         className={`btn btn-xs join-item ${locale === "en" ? "btn-primary" : "btn-outline"}`}
         onClick={() => setLocale("en")}
-        aria-label={t("common.english")}
+        aria-label={t("dashboard.common.english")}
       >
         EN
       </button>
@@ -19,7 +19,7 @@ export default function LanguageSwitcher() {
         type="button"
         className={`btn btn-xs join-item ${locale === "pl" ? "btn-primary" : "btn-outline"}`}
         onClick={() => setLocale("pl")}
-        aria-label={t("common.polish")}
+        aria-label={t("dashboard.common.polish")}
       >
         PL
       </button>

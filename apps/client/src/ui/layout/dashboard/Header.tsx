@@ -20,16 +20,16 @@ export default function Header() {
         </div>
         <div className="flex-none">
           <ul className="menu menu-horizontal px-1">
-            <li><Link href="/dashboard/markets">{t("nav.markets")}</Link></li>
-            <li><Link href="/dashboard/builder">{t("nav.builder")}</Link></li>
-            <li><Link href="/dashboard/strategies">{t("nav.strategies")}</Link></li>
-            <li><Link href="/dashboard/backtest">{t("nav.backtest")}</Link></li>
-            <li><Link href="/dashboard/reports">{t("nav.reports")}</Link></li>
-            <li><Link href="/dashboard/logs">{t("nav.logs")}</Link></li>
-            <li><Link href="/dashboard/exchanges">{t("nav.exchanges")}</Link></li>
-            <li><Link href="/dashboard/orders">{t("nav.orders")}</Link></li>
-            <li><Link href="/dashboard/positions">{t("nav.positions")}</Link></li>
-            <li><Link href="/dashboard/bots">{t("nav.bots")}</Link></li>
+            <li><Link href="/dashboard/markets">{t("dashboard.nav.markets")}</Link></li>
+            <li><Link href="/dashboard/builder">{t("dashboard.nav.builder")}</Link></li>
+            <li><Link href="/dashboard/strategies">{t("dashboard.nav.strategies")}</Link></li>
+            <li><Link href="/dashboard/backtest">{t("dashboard.nav.backtest")}</Link></li>
+            <li><Link href="/dashboard/reports">{t("dashboard.nav.reports")}</Link></li>
+            <li><Link href="/dashboard/logs">{t("dashboard.nav.logs")}</Link></li>
+            <li><Link href="/dashboard/exchanges">{t("dashboard.nav.exchanges")}</Link></li>
+            <li><Link href="/dashboard/orders">{t("dashboard.nav.orders")}</Link></li>
+            <li><Link href="/dashboard/positions">{t("dashboard.nav.positions")}</Link></li>
+            <li><Link href="/dashboard/bots">{t("dashboard.nav.bots")}</Link></li>
           </ul>
           <ul className="menu menu-horizontal px-1">
             <li className="ml-4"><ProfileButton /></li>
