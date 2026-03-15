@@ -35,6 +35,7 @@ model User {
   backtestRuns    BacktestRun[]
   backtestTrades  BacktestTrade[]
   backtestReports BacktestReport[]
+  logs      Log[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -88,6 +89,7 @@ model Strategy {
   signals       Signal[]
   backtestRuns    BacktestRun[]
   backtestTrades  BacktestTrade[]
+  logs            Log[]
 }
 
 model MarketUniverse {
@@ -148,6 +150,7 @@ model Bot {
   orders            Order[]
   trades            Trade[]
   signals           Signal[]
+  logs              Log[]
 
   @@index([userId])
 }
@@ -442,4 +445,44 @@ enum BacktestStatus {
   COMPLETED
   FAILED
   CANCELED
+}
+
+model Log {
+  id                String    @id @default(uuid())
+  userId            String
+  botId             String?
+  strategyId        String?
+
+  action            String
+  level             LogLevel  @default(INFO)
+  source            String
+  message           String
+  category          String?
+  entityType        String?
+  entityId          String?
+  actor             String?
+  ipAddress         String?
+  metadata          Json?
+  occurredAt        DateTime  @default(now())
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user              User      @relation(fields: [userId], references: [id])
+  bot               Bot?      @relation(fields: [botId], references: [id])
+  strategy          Strategy? @relation(fields: [strategyId], references: [id])
+
+  @@index([userId])
+  @@index([botId])
+  @@index([strategyId])
+  @@index([level])
+  @@index([source])
+  @@index([occurredAt])
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
 }

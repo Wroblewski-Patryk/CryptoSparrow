@@ -37,7 +37,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(db): add Bot and BotStrategy models`
 - [x] `feat(db): add Position, Order, Trade, Signal models`
 - [x] `feat(db): add BacktestRun, BacktestTrade, BacktestReport models`
-- [ ] `feat(db): add Log model for audit trail`
+- [x] `feat(db): add Log model for audit trail`
 - [ ] `feat(api): markets module CRUD (filters, whitelist/blacklist, auto-exclude rules)`
 - [ ] `feat(api): bots module CRUD (execution mode, opt-in flags, limits)`
 - [ ] `feat(api): orders and positions read endpoints`
@@ -122,3 +122,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-15: Added Bot and BotStrategy Prisma models with execution mode, live opt-in flag, position limit, and strategy-to-group mapping migration.
 - 2026-03-15: Added Position, Order, Trade, and Signal Prisma models with trading enums, ownership relations, and one-open-position-per-symbol index.
 - 2026-03-15: Added BacktestRun, BacktestTrade, and BacktestReport Prisma models with status lifecycle, run-level trade mapping, and one-to-one report relation.
+- 2026-03-15: Added Log Prisma model for audit trail with severity, source, actor, metadata, and ownership relations.
