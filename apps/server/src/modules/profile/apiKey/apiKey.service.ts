@@ -1,5 +1,6 @@
-import { encrypt } from "../../../utils/crypto";
+import { encrypt, decrypt } from "../../../utils/crypto";
 import { prisma } from "../../../prisma/client";
+import { ApiKey } from "@prisma/client";
 
 export enum Exchange {
   BINANCE = "BINANCE"
@@ -12,20 +13,50 @@ export type ApiKeyPayload = {
   apiSecret: string;
 };
 
+const maskValue = (value: string) => {
+  if (!value) return "";
+  if (value.length <= 4) return "*".repeat(value.length);
+  return `${value.slice(0, 2)}********${value.slice(-2)}`;
+};
+
+const safeMaskStoredApiKey = (encryptedApiKey: string) => {
+  try {
+    return maskValue(decrypt(encryptedApiKey));
+  } catch {
+    return "********";
+  }
+};
+
+const toPublicApiKey = (record: ApiKey) => ({
+  id: record.id,
+  userId: record.userId,
+  label: record.label,
+  exchange: record.exchange,
+  apiKey: safeMaskStoredApiKey(record.apiKey),
+  createdAt: record.createdAt,
+  updatedAt: record.updatedAt,
+  lastUsed: record.lastUsed,
+});
+
 export const listApiKeys = async (userId: string) => {
-  return prisma.apiKey.findMany({ 
-    where: { userId } 
+  const records = await prisma.apiKey.findMany({
+    where: { userId }
   });
+
+  return records.map(toPublicApiKey);
 };
 
 export const createApiKey = async (userId: string, data: ApiKeyPayload) => {
-  return prisma.apiKey.create({ 
-    data: { ...data,
+  const created = await prisma.apiKey.create({
+    data: {
+        ...data,
         apiKey: encrypt(data.apiKey),
         apiSecret: encrypt(data.apiSecret),
-        userId 
-    } 
-});
+        userId
+    }
+  });
+
+  return toPublicApiKey(created);
 };
 
 export const updateApiKey = async (
