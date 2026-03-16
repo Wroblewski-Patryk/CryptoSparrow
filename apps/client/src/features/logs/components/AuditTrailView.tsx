@@ -9,6 +9,7 @@ import {
   LoadingState,
   SuccessState,
 } from "../../../ui/components/ViewState";
+import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { listLogs } from "../services/logs.service";
 import { AuditLogEntry } from "../types/log.type";
@@ -39,6 +40,7 @@ const toAuditItem = (entry: AuditLogEntry): AuditItem => ({
 });
 
 export default function AuditTrailView() {
+  const { t } = useI18n();
   const { formatDateTime } = useLocaleFormatting();
   const [items, setItems] = useState<AuditItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,14 +76,14 @@ export default function AuditTrailView() {
     return ["all", ...Array.from(unique)];
   }, [items]);
 
-  if (loading) return <LoadingState title="Ladowanie audit trail" />;
+  if (loading) return <LoadingState title={t("dashboard.logs.loading")} />;
 
   if (error) {
     return (
       <ErrorState
-        title="Nie udalo sie zaladowac audit trail"
-        description={error}
-        retryLabel="Sprobuj ponownie"
+        title={t("dashboard.logs.loadErrorTitle")}
+        description={error ?? t("dashboard.logs.loadErrorDescription")}
+        retryLabel={t("dashboard.logs.retry")}
         onRetry={() => void load()}
       />
     );
@@ -90,46 +92,49 @@ export default function AuditTrailView() {
   if (items.length === 0) {
     return (
       <EmptyState
-        title="Brak zdarzen audit trail"
-        description="Brak wpisow logow dla wybranych filtrow."
+        title={t("dashboard.logs.emptyTitle")}
+        description={t("dashboard.logs.emptyDescription")}
       />
     );
   }
 
   return (
     <div className="space-y-4">
-      <SuccessState title="Audit trail loaded" description={`Wczytano ${items.length} zdarzen.`} />
+      <SuccessState
+        title={t("dashboard.logs.loadedTitle")}
+        description={t("dashboard.logs.loadedDescription").replace("{count}", String(items.length))}
+      />
 
       <div className="rounded-xl border border-base-300 bg-base-200 p-4">
         <div className="flex flex-wrap gap-2 items-center">
           <select
-            aria-label="Source filter"
+            aria-label={t("dashboard.logs.sourceFilterLabel")}
             className="select select-bordered select-xs"
             value={sourceFilter}
             onChange={(event) => setSourceFilter(event.target.value)}
           >
             {sourceOptions.map((source) => (
               <option key={source} value={source}>
-                {source === "all" ? "All sources" : source}
+                {source === "all" ? t("dashboard.logs.sourceAll") : source}
               </option>
             ))}
           </select>
           <select
-            aria-label="Severity filter"
+            aria-label={t("dashboard.logs.severityFilterLabel")}
             className="select select-bordered select-xs"
             value={severityFilter}
             onChange={(event) =>
               setSeverityFilter(event.target.value as "all" | "DEBUG" | "INFO" | "WARN" | "ERROR")
             }
           >
-            <option value="all">All severity</option>
+            <option value="all">{t("dashboard.logs.severityAll")}</option>
             <option value="DEBUG">DEBUG</option>
             <option value="INFO">INFO</option>
             <option value="WARN">WARN</option>
             <option value="ERROR">ERROR</option>
           </select>
           <button type="button" className="btn btn-xs btn-outline ml-auto" onClick={() => void load()}>
-            Odswiez
+            {t("dashboard.logs.refresh")}
           </button>
         </div>
 
@@ -137,12 +142,12 @@ export default function AuditTrailView() {
           <table className="table table-zebra">
             <thead>
               <tr>
-                <th>Time</th>
-                <th>Source</th>
-                <th>Severity</th>
-                <th>Action</th>
-                <th>Actor</th>
-                <th>Details</th>
+                <th>{t("dashboard.logs.tableTime")}</th>
+                <th>{t("dashboard.logs.tableSource")}</th>
+                <th>{t("dashboard.logs.tableSeverity")}</th>
+                <th>{t("dashboard.logs.tableAction")}</th>
+                <th>{t("dashboard.logs.tableActor")}</th>
+                <th>{t("dashboard.logs.tableDetails")}</th>
               </tr>
             </thead>
             <tbody>
@@ -166,7 +171,7 @@ export default function AuditTrailView() {
                     </span>
                   </td>
                   <td>{item.action}</td>
-                  <td>{item.actor ?? "-"}</td>
+                  <td>{item.actor ?? t("dashboard.logs.actorFallback")}</td>
                   <td>{item.details}</td>
                 </tr>
               ))}

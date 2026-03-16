@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import AuditTrailView from "./AuditTrailView";
+import { I18nProvider } from "../../../i18n/I18nProvider";
 
 const listLogsMock = vi.hoisted(() => vi.fn());
 
@@ -13,10 +14,14 @@ describe("AuditTrailView", () => {
   it("renders empty state when all sources are empty", async () => {
     listLogsMock.mockResolvedValue([]);
 
-    render(<AuditTrailView />);
+    render(
+      <I18nProvider>
+        <AuditTrailView />
+      </I18nProvider>
+    );
 
     await waitFor(() => {
-      expect(screen.getByText("Brak zdarzen audit trail")).toBeInTheDocument();
+      expect(screen.getByText("No audit trail events")).toBeInTheDocument();
     });
   });
 
@@ -34,7 +39,11 @@ describe("AuditTrailView", () => {
       },
     ]);
 
-    render(<AuditTrailView />);
+    render(
+      <I18nProvider>
+        <AuditTrailView />
+      </I18nProvider>
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Audit trail loaded")).toBeInTheDocument();
