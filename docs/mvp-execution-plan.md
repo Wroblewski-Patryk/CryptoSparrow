@@ -113,7 +113,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `docs(ops): MVP runbook for deployment and recovery`
 - [x] `docs(risk): user-facing trading risk notice and live consent text`
 - [x] `docs(release): known limits and post-MVP boundaries`
-- [ ] `chore(release): MVP release checklist and changelog`
+- [x] `chore(release): MVP release checklist and changelog`
 
 ## MVP Exit Criteria
 - [x] Phase 0 fully complete.
@@ -213,3 +213,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Replaced hardcoded logs/dashboard copy with translation keys and wired logs view/page to i18n provider keys.
 - 2026-03-16: Removed remaining `any` usage in profile routes/controllers and replaced with typed request/validation flow.
 - 2026-03-16: Added explicit MVP known limits and post-MVP boundary document for release communication.
+- 2026-03-16: Added MVP release checklist and project changelog for closure readiness.
