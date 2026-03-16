@@ -78,3 +78,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-15: Added optional isometric dashboard visual mode as late-stage V1 polish item.
 - 2026-03-16: Hardened paper runtime loop config validation (positive interval + non-empty symbol/timeframe) with regression tests to reduce trading-critical runtime risk.
 - 2026-03-16: Added JWT verification support for primary + previous secrets with strict issuer/audience checks to enable safer auth-secret rotation windows.
+- 2026-03-16: Added explicit API-key lifecycle actions (`rotate`/`revoke`) with ownership enforcement and contract coverage for key-management policy.

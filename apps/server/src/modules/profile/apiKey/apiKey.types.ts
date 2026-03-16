@@ -6,4 +6,11 @@ export const apiKeySchema = z.object({
   apiKey: z.string().min(8).max(100),
   apiSecret: z.string().min(8).max(100),
 });
+
+export const apiKeyRotateSchema = z.object({
+  apiKey: z.string().min(8).max(100),
+  apiSecret: z.string().min(8).max(100),
+});
+
 export type ApiKeyFormData = z.infer<typeof apiKeySchema>;
+export type ApiKeyRotateFormData = z.infer<typeof apiKeyRotateSchema>;

@@ -93,3 +93,30 @@ export const deleteApiKey = async (userId: string, id: string) => {
 
   return result.count > 0;
 };
+
+export const rotateApiKeySecretPair = async (
+  userId: string,
+  id: string,
+  data: Pick<ApiKeyPayload, 'apiKey' | 'apiSecret'>
+) => {
+  const result = await prisma.apiKey.updateMany({
+    where: { id, userId },
+    data: {
+      apiKey: encrypt(data.apiKey),
+      apiSecret: encrypt(data.apiSecret),
+    },
+  });
+
+  if (result.count === 0) return null;
+
+  const updated = await prisma.apiKey.findFirst({
+    where: { id, userId },
+  });
+
+  if (!updated) return null;
+  return toPublicApiKey(updated);
+};
+
+export const revokeApiKey = async (userId: string, id: string) => {
+  return deleteApiKey(userId, id);
+};

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import * as apiKeyService from './apiKey.service';
-import { apiKeySchema } from './apiKey.types';
+import { apiKeyRotateSchema, apiKeySchema } from './apiKey.types';
 import { sendValidationError } from '../../../utils/formatZodError';
 import { sendError } from '../../../utils/apiError';
 
@@ -48,4 +48,30 @@ export const remove = async (req: Request, res: Response) => {
   const deleted = await apiKeyService.deleteApiKey(userId, req.params.id);
   if (!deleted) return sendError(res, 404, 'Not found');
   res.status(204).end();
+};
+
+export const rotate = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    apiKeyRotateSchema.parse(req.body);
+  } catch (error) {
+    return sendValidationError(res, error);
+  }
+
+  const result = await apiKeyService.rotateApiKeySecretPair(userId, req.params.id, req.body);
+  if (!result) return sendError(res, 404, 'Not found');
+
+  return res.json(result);
+};
+
+export const revoke = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  const revoked = await apiKeyService.revokeApiKey(userId, req.params.id);
+  if (!revoked) return sendError(res, 404, 'Not found');
+
+  return res.status(204).end();
 };

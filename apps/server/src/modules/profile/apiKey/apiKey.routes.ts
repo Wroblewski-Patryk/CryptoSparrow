@@ -12,4 +12,7 @@ apiKeyRouter.route('/:id')
   .patch(controller.update) 
   .delete(controller.remove);
 
+apiKeyRouter.post('/:id/rotate', controller.rotate);
+apiKeyRouter.post('/:id/revoke', controller.revoke);
+
 export default apiKeyRouter;

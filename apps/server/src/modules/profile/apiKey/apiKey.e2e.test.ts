@@ -97,4 +97,58 @@ describe("API Keys security contract", () => {
     expect(deleteRes.status).toBe(404);
     expect(deleteRes.body.error.message).toBe("Not found");
   });
+
+  it("supports rotate and revoke lifecycle actions for owner", async () => {
+    const agent = await registerAndLogin("apikey-rotate-owner@example.com");
+
+    const createRes = await agent.post("/dashboard/profile/apiKeys").send({
+      label: "rotate-key",
+      exchange: "BINANCE",
+      apiKey: "ROTATEKEY1111",
+      apiSecret: "ROTATESECRET1111",
+    });
+    expect(createRes.status).toBe(201);
+    const keyId = createRes.body.id as string;
+
+    const rotateRes = await agent.post(`/dashboard/profile/apiKeys/${keyId}/rotate`).send({
+      apiKey: "ROTATEKEY2222",
+      apiSecret: "ROTATESECRET2222",
+    });
+    expect(rotateRes.status).toBe(200);
+    expect(rotateRes.body.id).toBe(keyId);
+    expect(rotateRes.body.apiSecret).toBeUndefined();
+    expect(rotateRes.body.apiKey).toContain("********");
+
+    const revokeRes = await agent.post(`/dashboard/profile/apiKeys/${keyId}/revoke`);
+    expect(revokeRes.status).toBe(204);
+
+    const listRes = await agent.get("/dashboard/profile/apiKeys");
+    expect(listRes.status).toBe(200);
+    expect(listRes.body).toHaveLength(0);
+  });
+
+  it("enforces ownership on rotate and revoke actions", async () => {
+    const owner = await registerAndLogin("apikey-rotate-owner-2@example.com");
+    const other = await registerAndLogin("apikey-rotate-other@example.com");
+
+    const createRes = await owner.post("/dashboard/profile/apiKeys").send({
+      label: "owner-rotate-key",
+      exchange: "BINANCE",
+      apiKey: "OWNERROTATEKEY1",
+      apiSecret: "OWNERROTATESECRET1",
+    });
+    expect(createRes.status).toBe(201);
+    const keyId = createRes.body.id as string;
+
+    const rotateRes = await other.post(`/dashboard/profile/apiKeys/${keyId}/rotate`).send({
+      apiKey: "HIJACKROTATEKEY",
+      apiSecret: "HIJACKROTATESECRET",
+    });
+    expect(rotateRes.status).toBe(404);
+    expect(rotateRes.body.error.message).toBe("Not found");
+
+    const revokeRes = await other.post(`/dashboard/profile/apiKeys/${keyId}/revoke`);
+    expect(revokeRes.status).toBe(404);
+    expect(revokeRes.body.error.message).toBe("Not found");
+  });
 });
