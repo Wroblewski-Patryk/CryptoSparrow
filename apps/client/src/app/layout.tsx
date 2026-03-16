@@ -41,6 +41,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <meta charSet="UTF-8" />
       </head>
       <body>
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         <Toaster position="top-center" duration={2500} closeButton richColors />
         <ServiceWorkerRegistration />
         <AuthProvider>{children}</AuthProvider>

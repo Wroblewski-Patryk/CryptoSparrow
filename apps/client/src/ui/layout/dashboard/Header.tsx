@@ -31,13 +31,15 @@ export default function Header() {
           </Link>
         </div>
         <div className="flex-none w-full xl:w-auto">
-          <ul className="menu menu-horizontal w-full max-w-full flex-nowrap overflow-x-auto whitespace-nowrap px-1 xl:w-auto xl:overflow-visible">
-            {navLinks.map((item) => (
-              <li key={item.href}>
-                <Link href={item.href}>{item.label}</Link>
-              </li>
-            ))}
-          </ul>
+          <nav aria-label="Dashboard navigation">
+            <ul className="menu menu-horizontal w-full max-w-full flex-nowrap overflow-x-auto whitespace-nowrap px-1 xl:w-auto xl:overflow-visible">
+              {navLinks.map((item) => (
+                <li key={item.href}>
+                  <Link href={item.href}>{item.label}</Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
           <div className="mt-2 flex items-center justify-end gap-2 px-1 xl:mt-1">
             <ProfileButton />
             <LanguageSwitcher />

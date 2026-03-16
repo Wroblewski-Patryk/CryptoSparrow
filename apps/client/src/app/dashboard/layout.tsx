@@ -6,13 +6,13 @@ import { I18nProvider } from "../../i18n/I18nProvider";
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <I18nProvider>
-      <main className="min-h-screen bg-base-100">
+      <div className="min-h-screen bg-base-100">
         <Header />
-        <div className="mx-auto w-full max-w-7xl px-4 py-6">
+        <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-7xl px-4 py-6">
           {children}
-        </div>
+        </main>
         <Footer />
-      </main>
+      </div>
     </I18nProvider>
   );
 }

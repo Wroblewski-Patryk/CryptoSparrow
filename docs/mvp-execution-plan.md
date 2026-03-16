@@ -89,7 +89,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(i18n): locale-aware date/number/currency/percent formatting for dashboard data views`
 - [x] `feat(ui): responsive pass for desktop/tablet/mobile`
 - [x] `feat(ui): PWA baseline parity for core flows`
-- [ ] `feat(a11y): keyboard/focus/semantic heading baseline for core dashboard pages`
+- [x] `feat(a11y): keyboard/focus/semantic heading baseline for core dashboard pages`
 - [ ] `test(ui): EN/PL key coverage and responsive smoke tests`
 - [ ] `test(ui): view-state consistency tests for loading/empty/degraded/error/success`
 - [ ] `test(ux): control-center 10-second operator clarity checklist`
@@ -179,3 +179,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Added locale-aware date/time/number/currency/percent formatting utilities and integrated them across core dashboard data views.
 - 2026-03-16: Improved dashboard shell responsiveness for mobile/tablet with wrapping header nav, horizontal nav scrolling, and small-screen safety-bar/page-title adjustments.
 - 2026-03-16: Added PWA baseline with manifest metadata, installable icons, service worker registration, runtime caching, and offline fallback route.
+- 2026-03-16: Added accessibility baseline with skip-to-content support, keyboard focus-visible styles, and clearer landmark semantics for dashboard/public layouts.
