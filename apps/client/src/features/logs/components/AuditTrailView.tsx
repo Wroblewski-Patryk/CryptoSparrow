@@ -4,27 +4,23 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
 import {
-  DegradedState,
   EmptyState,
   ErrorState,
   LoadingState,
   SuccessState,
 } from "../../../ui/components/ViewState";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
-import { listBacktestRuns } from "../../backtest/services/backtests.service";
-import { BacktestRun } from "../../backtest/types/backtest.type";
-import { listOrders } from "../../orders/services/orders.service";
-import { Order } from "../../orders/types/order.type";
-import { listPositions } from "../../positions/services/positions.service";
-import { Position } from "../../positions/types/position.type";
+import { listLogs } from "../services/logs.service";
+import { AuditLogEntry } from "../types/log.type";
 
 type AuditItem = {
   id: string;
-  source: "orders" | "positions" | "backtests";
-  severity: "INFO" | "WARN";
+  source: string;
+  severity: "DEBUG" | "INFO" | "WARN" | "ERROR";
   at: string;
   action: string;
   details: string;
+  actor?: string | null;
 };
 
 const getAxiosMessage = (err: unknown) => {
@@ -32,31 +28,14 @@ const getAxiosMessage = (err: unknown) => {
   return (err.response?.data as { message?: string } | undefined)?.message;
 };
 
-const toAuditFromOrder = (order: Order): AuditItem => ({
-  id: `order-${order.id}`,
-  source: "orders",
-  severity: order.status === "REJECTED" ? "WARN" : "INFO",
-  at: order.createdAt ?? "",
-  action: "order.state.changed",
-  details: `${order.symbol} ${order.side} ${order.type} -> ${order.status}`,
-});
-
-const toAuditFromPosition = (position: Position): AuditItem => ({
-  id: `position-${position.id}`,
-  source: "positions",
-  severity: position.status === "LIQUIDATED" ? "WARN" : "INFO",
-  at: position.openedAt ?? "",
-  action: "position.lifecycle",
-  details: `${position.symbol} ${position.side} status=${position.status} lev=${position.leverage}x`,
-});
-
-const toAuditFromBacktest = (run: BacktestRun): AuditItem => ({
-  id: `backtest-${run.id}`,
-  source: "backtests",
-  severity: run.status === "FAILED" ? "WARN" : "INFO",
-  at: run.startedAt ?? "",
-  action: "backtest.run",
-  details: `${run.name} ${run.symbol}/${run.timeframe} status=${run.status}`,
+const toAuditItem = (entry: AuditLogEntry): AuditItem => ({
+  id: entry.id,
+  source: entry.source,
+  severity: entry.level,
+  at: entry.occurredAt,
+  action: entry.action,
+  details: entry.message,
+  actor: entry.actor,
 });
 
 export default function AuditTrailView() {
@@ -64,40 +43,36 @@ export default function AuditTrailView() {
   const [items, setItems] = useState<AuditItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sourceFilter, setSourceFilter] = useState<"all" | "orders" | "positions" | "backtests">("all");
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [severityFilter, setSeverityFilter] = useState<"all" | "DEBUG" | "INFO" | "WARN" | "ERROR">(
+    "all"
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [orders, positions, runs] = await Promise.all([
-        listOrders({ limit: 50 }),
-        listPositions({ limit: 50 }),
-        listBacktestRuns(undefined),
-      ]);
-      const merged = [
-        ...orders.map(toAuditFromOrder),
-        ...positions.map(toAuditFromPosition),
-        ...runs.map(toAuditFromBacktest),
-      ]
-        .sort((a, b) => (a.at < b.at ? 1 : -1))
-        .slice(0, 120);
-      setItems(merged);
+      const logs = await listLogs({
+        limit: 120,
+        ...(sourceFilter !== "all" ? { source: sourceFilter } : {}),
+        ...(severityFilter !== "all" ? { severity: severityFilter } : {}),
+      });
+      setItems(logs.map(toAuditItem));
     } catch (err: unknown) {
-      setError(getAxiosMessage(err) ?? "Nie udalo sie pobrac danych do audit trail.");
+      setError(getAxiosMessage(err) ?? "Nie udalo sie pobrac logow audit trail.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [severityFilter, sourceFilter]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const filtered = useMemo(() => {
-    if (sourceFilter === "all") return items;
-    return items.filter((item) => item.source === sourceFilter);
-  }, [items, sourceFilter]);
+  const sourceOptions = useMemo(() => {
+    const unique = new Set(items.map((item) => item.source));
+    return ["all", ...Array.from(unique)];
+  }, [items]);
 
   if (loading) return <LoadingState title="Ladowanie audit trail" />;
 
@@ -116,49 +91,43 @@ export default function AuditTrailView() {
     return (
       <EmptyState
         title="Brak zdarzen audit trail"
-        description="Gdy pojawia sie aktywnosc w orders/positions/backtests, zobaczysz ja tutaj."
+        description="Brak wpisow logow dla wybranych filtrow."
       />
     );
   }
 
   return (
     <div className="space-y-4">
-      <DegradedState
-        title="Audit trail MVP (derived view)"
-        description="Widok oparty o orders/positions/backtests. Dedykowany endpoint /dashboard/logs zostanie dodany osobno."
-      />
       <SuccessState title="Audit trail loaded" description={`Wczytano ${items.length} zdarzen.`} />
 
       <div className="rounded-xl border border-base-300 bg-base-200 p-4">
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className={`btn btn-xs ${sourceFilter === "all" ? "btn-primary" : "btn-outline"}`}
-            onClick={() => setSourceFilter("all")}
+        <div className="flex flex-wrap gap-2 items-center">
+          <select
+            aria-label="Source filter"
+            className="select select-bordered select-xs"
+            value={sourceFilter}
+            onChange={(event) => setSourceFilter(event.target.value)}
           >
-            All
-          </button>
-          <button
-            type="button"
-            className={`btn btn-xs ${sourceFilter === "orders" ? "btn-primary" : "btn-outline"}`}
-            onClick={() => setSourceFilter("orders")}
+            {sourceOptions.map((source) => (
+              <option key={source} value={source}>
+                {source === "all" ? "All sources" : source}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Severity filter"
+            className="select select-bordered select-xs"
+            value={severityFilter}
+            onChange={(event) =>
+              setSeverityFilter(event.target.value as "all" | "DEBUG" | "INFO" | "WARN" | "ERROR")
+            }
           >
-            Orders
-          </button>
-          <button
-            type="button"
-            className={`btn btn-xs ${sourceFilter === "positions" ? "btn-primary" : "btn-outline"}`}
-            onClick={() => setSourceFilter("positions")}
-          >
-            Positions
-          </button>
-          <button
-            type="button"
-            className={`btn btn-xs ${sourceFilter === "backtests" ? "btn-primary" : "btn-outline"}`}
-            onClick={() => setSourceFilter("backtests")}
-          >
-            Backtests
-          </button>
+            <option value="all">All severity</option>
+            <option value="DEBUG">DEBUG</option>
+            <option value="INFO">INFO</option>
+            <option value="WARN">WARN</option>
+            <option value="ERROR">ERROR</option>
+          </select>
           <button type="button" className="btn btn-xs btn-outline ml-auto" onClick={() => void load()}>
             Odswiez
           </button>
@@ -172,22 +141,32 @@ export default function AuditTrailView() {
                 <th>Source</th>
                 <th>Severity</th>
                 <th>Action</th>
+                <th>Actor</th>
                 <th>Details</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((item) => (
+              {items.map((item) => (
                 <tr key={item.id}>
                   <td>{formatDateTime(item.at)}</td>
                   <td>
                     <span className="badge badge-outline">{item.source}</span>
                   </td>
                   <td>
-                    <span className={`badge ${item.severity === "WARN" ? "badge-warning" : "badge-info"}`}>
+                    <span
+                      className={`badge ${
+                        item.severity === "ERROR"
+                          ? "badge-error"
+                          : item.severity === "WARN"
+                            ? "badge-warning"
+                            : "badge-info"
+                      }`}
+                    >
                       {item.severity}
                     </span>
                   </td>
                   <td>{item.action}</td>
+                  <td>{item.actor ?? "-"}</td>
                   <td>{item.details}</td>
                 </tr>
               ))}

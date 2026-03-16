@@ -3,27 +3,15 @@ import { describe, expect, it, vi } from "vitest";
 
 import AuditTrailView from "./AuditTrailView";
 
-const listOrdersMock = vi.hoisted(() => vi.fn());
-const listPositionsMock = vi.hoisted(() => vi.fn());
-const listRunsMock = vi.hoisted(() => vi.fn());
+const listLogsMock = vi.hoisted(() => vi.fn());
 
-vi.mock("../../orders/services/orders.service", () => ({
-  listOrders: listOrdersMock,
-}));
-
-vi.mock("../../positions/services/positions.service", () => ({
-  listPositions: listPositionsMock,
-}));
-
-vi.mock("../../backtest/services/backtests.service", () => ({
-  listBacktestRuns: listRunsMock,
+vi.mock("../services/logs.service", () => ({
+  listLogs: listLogsMock,
 }));
 
 describe("AuditTrailView", () => {
   it("renders empty state when all sources are empty", async () => {
-    listOrdersMock.mockResolvedValue([]);
-    listPositionsMock.mockResolvedValue([]);
-    listRunsMock.mockResolvedValue([]);
+    listLogsMock.mockResolvedValue([]);
 
     render(<AuditTrailView />);
 
@@ -33,45 +21,16 @@ describe("AuditTrailView", () => {
   });
 
   it("renders entries and filters by source", async () => {
-    listOrdersMock.mockResolvedValue([
+    listLogsMock.mockResolvedValue([
       {
-        id: "o1",
-        symbol: "BTCUSDT",
-        side: "BUY",
-        type: "MARKET",
-        status: "FILLED",
-        quantity: 0.1,
-        price: 65000,
-        filledQuantity: 0.1,
-        createdAt: "2026-03-16T10:00:00.000Z",
-      },
-    ]);
-    listPositionsMock.mockResolvedValue([
-      {
-        id: "p1",
-        symbol: "ETHUSDT",
-        side: "LONG",
-        status: "OPEN",
-        entryPrice: 3000,
-        quantity: 0.5,
-        leverage: 5,
-        unrealizedPnl: 10,
-        realizedPnl: null,
-        openedAt: "2026-03-16T09:00:00.000Z",
-      },
-    ]);
-    listRunsMock.mockResolvedValue([
-      {
-        id: "r1",
-        strategyId: null,
-        name: "Run Alpha",
-        symbol: "BTCUSDT",
-        timeframe: "5m",
-        status: "COMPLETED",
-        startedAt: "2026-03-16T08:00:00.000Z",
-        finishedAt: "2026-03-16T09:00:00.000Z",
-        notes: null,
-        createdAt: "2026-03-16T08:00:00.000Z",
+        id: "l1",
+        source: "engine.pre-trade",
+        level: "INFO",
+        action: "trade.precheck.allowed",
+        message: "Allowed",
+        category: "TRADING_DECISION",
+        actor: "bot-runner",
+        occurredAt: "2026-03-16T10:00:00.000Z",
       },
     ]);
 
@@ -79,13 +38,15 @@ describe("AuditTrailView", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Audit trail loaded")).toBeInTheDocument();
-      expect(screen.getByText(/order.state.changed/i)).toBeInTheDocument();
+      expect(screen.getByText(/trade.precheck.allowed/i)).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Backtests" }));
+    fireEvent.change(screen.getByLabelText("Severity filter"), {
+      target: { value: "WARN" },
+    });
+
     await waitFor(() => {
-      expect(screen.getByText(/backtest.run/i)).toBeInTheDocument();
+      expect(listLogsMock).toHaveBeenCalledWith(expect.objectContaining({ severity: "WARN" }));
     });
   });
 });
-

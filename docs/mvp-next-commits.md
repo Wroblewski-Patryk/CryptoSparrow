@@ -9,7 +9,6 @@ Operational queue for one-task execution runs.
 ## NOW
 
 ## NEXT
-- [ ] `P1 api(logs): implement /dashboard/logs with actor/source/severity filtering`
 - [ ] `P1 infra(rate-limit): move limiter from in-memory to Redis-backed implementation`
 - [ ] `P2 auth(session): align remember-me behavior with cookie/session TTL`
 - [ ] `P2 contract(auth): implement forgot-password endpoints or remove dead client call paths`
@@ -101,6 +100,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-16 `config(api+client): fix CORS/URL parsing and remove hardcoded localhost baseURL`
 - [x] 2026-03-16 `security(crypto): migrate API-key encryption to AEAD + key versioning`
 - [x] 2026-03-16 `qa(test-suite): make server+client test suites fully green (including FK-safe cleanup)`
+- [x] 2026-03-16 `api(logs): implement /dashboard/logs with actor/source/severity filtering`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
