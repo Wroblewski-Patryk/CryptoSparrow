@@ -117,6 +117,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-16 `chore(ops): add V1 deployment/rollback/incident runbook`
 - [x] 2026-03-16 `security(keys): add API key lifecycle policy documentation for V1`
 - [x] 2026-03-16 `feat(obs): add API metrics endpoint with request counters and latency aggregate`
+- [x] 2026-03-16 `security(access): add ownership enforcement audit baseline and documentation`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

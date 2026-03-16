@@ -18,7 +18,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [ ] `refactor(engine): isolate signal/execution/risk boundaries`
 - [x] `security(auth): JWT/session hardening + rotation policy`
 - [x] `security(keys): API key lifecycle policy (create/rotate/revoke)`
-- [ ] `security(access): enforce ownership checks for all sensitive actions`
+- [x] `security(access): enforce ownership checks for all sensitive actions`
 - [x] `test(regression): expand regression suite for critical flows`
 - [x] `docs(security): update threat model and residual risk register`
 
@@ -90,3 +90,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-16: Added V1 operations runbook covering deployment gates, rollback checklist, severity model, and incident response flow.
 - 2026-03-16: Added explicit API-key lifecycle policy document (create/rotate/revoke and rotation cadence) and linked it from security docs.
 - 2026-03-16: Added baseline `/metrics` endpoint with cumulative HTTP counters and latency aggregates, wired through request middleware.
+- 2026-03-16: Added ownership-enforcement audit baseline across sensitive modules and linked the report from security docs.

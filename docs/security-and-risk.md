@@ -15,6 +15,9 @@ For MVP user-facing wording (banner, modal, consent checkbox), use:
 For API-key handling policy (create/rotate/revoke cadence), use:
 - `docs/api-key-lifecycle-policy.md`
 
+For ownership-boundary coverage snapshot, use:
+- `docs/security-ownership-audit.md`
+
 ## Authentication Plan
 - MVP: email + password.
 - After MVP: OAuth (Google and others).
