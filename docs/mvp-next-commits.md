@@ -101,6 +101,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-16 `cleanup(types): remove remaining any from profile routes/controllers`
 - [x] 2026-03-16 `docs(release): known limits and post-MVP boundaries`
 - [x] 2026-03-16 `chore(release): MVP release checklist and changelog`
+- [x] 2026-03-16 `docs(sync): align stale plan checkboxes with delivered implementation state`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

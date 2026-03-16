@@ -29,7 +29,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `P2 contract(auth): either implement forgot-password endpoints or remove dead client calls`
 - [x] `P2 i18n: remove remaining hardcoded UI strings from dashboard/logs and related views`
 - [x] `P3 cleanup(types): remove remaining any in profile routes/controllers`
-- [ ] `docs(sync): correct plan claims that conflict with actual implementation status`
+- [x] `docs(sync): correct plan claims that conflict with actual implementation status`
 
 ## Phase 0 - Stabilization and Baseline (Must Finish First)
 - [x] `chore(repo): add root workspace scripts for lint/typecheck/test/build`
@@ -97,10 +97,10 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(ui): dashboard home widgets for live positions/orders snapshot and recent actions feed`
 - [x] `feat(ui): dashboard/backtest full UX + overlays + summary`
 - [x] `feat(ui): dashboard/reports performance views`
-- [ ] `feat(ui): dashboard/logs audit trail backed by real logs API`
+- [x] `feat(ui): dashboard/logs audit trail backed by real logs API`
 - [x] `feat(ui): dashboard/exchanges api-key connections`
 - [x] `feat(i18n): EN default + PL translation coverage`
-- [ ] `feat(i18n): enforce translation-key usage (no hardcoded page copy) and feature-based namespaces`
+- [x] `feat(i18n): enforce translation-key usage (no hardcoded page copy) and feature-based namespaces`
 - [x] `feat(i18n): locale-aware date/number/currency/percent formatting for dashboard data views`
 - [x] `feat(ui): responsive pass for desktop/tablet/mobile`
 - [x] `feat(ui): PWA baseline parity for core flows`
@@ -214,3 +214,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Removed remaining `any` usage in profile routes/controllers and replaced with typed request/validation flow.
 - 2026-03-16: Added explicit MVP known limits and post-MVP boundary document for release communication.
 - 2026-03-16: Added MVP release checklist and project changelog for closure readiness.
+- 2026-03-16: Synced stale plan checkboxes to match delivered logs API and i18n hardcoded-copy cleanup status.
