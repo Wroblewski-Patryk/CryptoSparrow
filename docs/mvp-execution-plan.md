@@ -17,7 +17,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - No mixed commits (for example feature + refactor together).
 
 ## Audit Remediation Gate (Must Be Done Before Any New Feature Work)
-- [ ] `P0 security(upload): protect upload endpoint with auth + MIME and size validation + abuse limits`
+- [x] `P0 security(upload): protect upload endpoint with auth + MIME and size validation + abuse limits`
 - [ ] `P0 security(live-consent): add consentTextVersion to bot/live consent flow (schema, DTO, persistence, audit)`
 - [ ] `P1 config(api): harden APP_URL/CORS parsing and remove undefined:* edge cases`
 - [ ] `P1 config(client): remove hardcoded localhost baseURL and switch to env/runtime-safe config`
@@ -201,3 +201,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Added MVP operations runbook covering deployment steps, health verification, rollback, and recovery playbooks.
 - 2026-03-16: Added MVP user-facing risk notice and live-consent text pack (EN/PL) with consent-versioning and audit logging guidance.
 - 2026-03-16: Added audit remediation gate (P0-P3) and reprioritized queue before any further feature work.
+- 2026-03-16: Secured avatar upload endpoint with auth, rate limiting, strict MIME/size validation, and upload e2e coverage.
