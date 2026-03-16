@@ -26,4 +26,6 @@
 - Deterministic simulator tests for fees, slippage, and funding.
 - i18n tests for EN/PL key coverage and fallback behavior.
 - Responsive tests for desktop/tablet/mobile core dashboards.
+- UX manual checklist for control-center 10-second operator clarity:
+  - `docs/control-center-10s-checklist.md`
 - Performance tests after trading engine rollout.
