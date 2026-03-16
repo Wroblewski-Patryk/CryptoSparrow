@@ -1,0 +1,61 @@
+import request from 'supertest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { app } from '../index';
+
+const originalWorkerMode = process.env.WORKER_MODE;
+const originalMarketQueue = process.env.WORKER_MARKET_DATA_QUEUE;
+const originalBacktestQueue = process.env.WORKER_BACKTEST_QUEUE;
+const originalExecutionQueue = process.env.WORKER_EXECUTION_QUEUE;
+
+afterEach(() => {
+  process.env.WORKER_MODE = originalWorkerMode;
+  process.env.WORKER_MARKET_DATA_QUEUE = originalMarketQueue;
+  process.env.WORKER_BACKTEST_QUEUE = originalBacktestQueue;
+  process.env.WORKER_EXECUTION_QUEUE = originalExecutionQueue;
+});
+
+describe('workers health and readiness endpoints', () => {
+  it('returns workers health status', async () => {
+    process.env.WORKER_MODE = 'inline';
+    const res = await request(app).get('/workers/health');
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('ok');
+    expect(res.body.service).toBe('workers');
+    expect(res.body.mode).toBe('inline');
+  });
+
+  it('returns ready in non-split mode', async () => {
+    process.env.WORKER_MODE = 'inline';
+    const res = await request(app).get('/workers/ready');
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('ready');
+    expect(res.body.mode).toBe('inline');
+  });
+
+  it('returns not_ready in split mode when required queues are missing', async () => {
+    process.env.WORKER_MODE = 'split';
+    process.env.WORKER_MARKET_DATA_QUEUE = '';
+    process.env.WORKER_BACKTEST_QUEUE = '';
+    process.env.WORKER_EXECUTION_QUEUE = '';
+
+    const res = await request(app).get('/workers/ready');
+    expect(res.status).toBe(503);
+    expect(res.body.status).toBe('not_ready');
+    expect(res.body.missing).toContain('WORKER_MARKET_DATA_QUEUE');
+    expect(res.body.missing).toContain('WORKER_BACKTEST_QUEUE');
+    expect(res.body.missing).toContain('WORKER_EXECUTION_QUEUE');
+  });
+
+  it('returns ready in split mode when queue envs are provided', async () => {
+    process.env.WORKER_MODE = 'split';
+    process.env.WORKER_MARKET_DATA_QUEUE = 'market-data';
+    process.env.WORKER_BACKTEST_QUEUE = 'backtests';
+    process.env.WORKER_EXECUTION_QUEUE = 'execution';
+
+    const res = await request(app).get('/workers/ready');
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('ready');
+    expect(res.body.mode).toBe('split');
+  });
+});
+

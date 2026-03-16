@@ -26,7 +26,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [ ] `feat(obs): structured logging across api/worker/exchange layers`
 - [ ] `feat(obs): metrics for latency, error rate, queue lag, and order failures`
 - [ ] `feat(obs): alert rules for failed orders, stale market data, and worker health`
-- [ ] `feat(ops): health/readiness endpoints for api and workers`
+- [x] `feat(ops): health/readiness endpoints for api and workers`
 - [ ] `feat(ops): split workers for market-data/backtest/execution`
 - [x] `chore(ops): deployment runbook + rollback checklist + incident playbook`
 - [ ] `test(drill): run incident simulation drills and document outcomes`
@@ -94,3 +94,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-16: Added baseline V1 alert-rule catalog for failed orders, stale market data, and worker-heartbeat loss with severity/action mapping.
 - 2026-03-16: Reduced trading-critical runtime debt by adding explicit input guards for paper lifecycle ticks (markPrice and entry quantity) with regression tests.
 - 2026-03-16: Isolated pre-trade risk evaluation into dedicated pure service to separate risk decision logic from IO/audit orchestration.
+- 2026-03-16: Added worker health/readiness endpoints with split-mode queue-env checks and regression coverage.

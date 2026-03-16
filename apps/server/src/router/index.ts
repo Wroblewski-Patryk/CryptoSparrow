@@ -43,6 +43,50 @@ router.get('/metrics', (_req, res) => {
   return res.status(200).json(metricsStore.snapshot());
 });
 
+router.get('/workers/health', (_req, res) => {
+  const mode = process.env.WORKER_MODE?.trim() || 'inline';
+  return res.status(200).json({
+    status: 'ok',
+    service: 'workers',
+    mode,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+router.get('/workers/ready', (_req, res) => {
+  const mode = process.env.WORKER_MODE?.trim() || 'inline';
+
+  if (mode !== 'split') {
+    return res.status(200).json({
+      status: 'ready',
+      service: 'workers',
+      mode,
+      details: 'Dedicated workers not required in current mode',
+    });
+  }
+
+  const missing = [
+    !process.env.WORKER_MARKET_DATA_QUEUE && 'WORKER_MARKET_DATA_QUEUE',
+    !process.env.WORKER_BACKTEST_QUEUE && 'WORKER_BACKTEST_QUEUE',
+    !process.env.WORKER_EXECUTION_QUEUE && 'WORKER_EXECUTION_QUEUE',
+  ].filter(Boolean);
+
+  if (missing.length > 0) {
+    return res.status(503).json({
+      status: 'not_ready',
+      service: 'workers',
+      mode,
+      missing,
+    });
+  }
+
+  return res.status(200).json({
+    status: 'ready',
+    service: 'workers',
+    mode,
+  });
+});
+
 router.use('/upload', uploadRouter);
 
 export default router;
