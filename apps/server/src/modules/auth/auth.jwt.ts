@@ -10,18 +10,35 @@ type AuthTokenPayload = JwtPayload & {
 const JWT_ISSUER = 'cryptosparrow';
 const JWT_AUDIENCE = 'cryptosparrow-app';
 
+const getPreviousSecretExpiry = () => {
+  const rawValue = process.env.JWT_SECRET_PREVIOUS_UNTIL?.trim();
+  if (!rawValue) return null;
+
+  const parsedMs = Date.parse(rawValue);
+  if (Number.isNaN(parsedMs)) {
+    throw new Error('JWT_SECRET_PREVIOUS_UNTIL must be a valid ISO datetime');
+  }
+
+  return parsedMs;
+};
+
 const getJwtSecrets = () => {
   const primarySecret = process.env.JWT_SECRET?.trim();
   const previousSecrets = (process.env.JWT_SECRET_PREVIOUS ?? '')
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean);
+  const previousSecretExpiryMs = getPreviousSecretExpiry();
 
   if (!primarySecret) {
     throw new Error('JWT_SECRET is not configured');
   }
 
-  return [primarySecret, ...previousSecrets];
+  const isPreviousWindowOpen =
+    previousSecrets.length > 0 &&
+    (previousSecretExpiryMs === null || Date.now() <= previousSecretExpiryMs);
+
+  return isPreviousWindowOpen ? [primarySecret, ...previousSecrets] : [primarySecret];
 };
 
 export const signAuthToken = (
@@ -52,4 +69,3 @@ export const verifyAuthToken = (token: string): AuthTokenPayload => {
 
   throw new Error('Invalid token');
 };
-

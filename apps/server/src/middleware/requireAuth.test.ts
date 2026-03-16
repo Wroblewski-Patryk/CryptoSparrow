@@ -5,16 +5,19 @@ import { app } from '../index';
 
 const originalJwtSecret = process.env.JWT_SECRET;
 const originalJwtSecretPrevious = process.env.JWT_SECRET_PREVIOUS;
+const originalJwtSecretPreviousUntil = process.env.JWT_SECRET_PREVIOUS_UNTIL;
 
 afterEach(() => {
   process.env.JWT_SECRET = originalJwtSecret;
   process.env.JWT_SECRET_PREVIOUS = originalJwtSecretPrevious;
+  process.env.JWT_SECRET_PREVIOUS_UNTIL = originalJwtSecretPreviousUntil;
 });
 
 describe('requireAuth middleware', () => {
   it('accepts dashboard access for token signed with previous secret during rotation', async () => {
     process.env.JWT_SECRET = 'new-secret';
     process.env.JWT_SECRET_PREVIOUS = 'old-secret';
+    process.env.JWT_SECRET_PREVIOUS_UNTIL = '2999-01-01T00:00:00.000Z';
 
     const token = jwt.sign(
       {
@@ -61,4 +64,3 @@ describe('requireAuth middleware', () => {
     expect(res.body.error.message).toBe('Invalid token');
   });
 });
-

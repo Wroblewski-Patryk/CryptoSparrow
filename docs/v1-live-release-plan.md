@@ -16,7 +16,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 ## Phase A - Post-MVP Hardening
 - [ ] `fix(core): remove high-risk technical debt in trading-critical paths`
 - [ ] `refactor(engine): isolate signal/execution/risk boundaries`
-- [ ] `security(auth): JWT/session hardening + rotation policy`
+- [x] `security(auth): JWT/session hardening + rotation policy`
 - [ ] `security(keys): API key lifecycle policy (create/rotate/revoke)`
 - [ ] `security(access): enforce ownership checks for all sensitive actions`
 - [x] `test(regression): expand regression suite for critical flows`
@@ -85,3 +85,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-16: Expanded regression coverage for auth middleware to include secret-rotation compatibility and strict issuer/audience claim enforcement.
 - 2026-03-16: Added API `/health` and `/ready` endpoints with runtime config readiness checks as baseline for Phase B operations hardening.
 - 2026-03-16: Added baseline structured API request logging (JSON payload with method/path/status/duration/timestamp) as first observability layer.
+- 2026-03-16: Added explicit JWT previous-secret expiry policy (`JWT_SECRET_PREVIOUS_UNTIL`) with regression coverage for open and expired rotation windows.

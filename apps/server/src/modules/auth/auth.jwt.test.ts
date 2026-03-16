@@ -4,10 +4,12 @@ import { signAuthToken, verifyAuthToken } from './auth.jwt';
 
 const originalJwtSecret = process.env.JWT_SECRET;
 const originalJwtSecretPrevious = process.env.JWT_SECRET_PREVIOUS;
+const originalJwtSecretPreviousUntil = process.env.JWT_SECRET_PREVIOUS_UNTIL;
 
 afterEach(() => {
   process.env.JWT_SECRET = originalJwtSecret;
   process.env.JWT_SECRET_PREVIOUS = originalJwtSecretPrevious;
+  process.env.JWT_SECRET_PREVIOUS_UNTIL = originalJwtSecretPreviousUntil;
 });
 
 describe('auth.jwt', () => {
@@ -33,6 +35,7 @@ describe('auth.jwt', () => {
   it('accepts token signed with previous secret during rotation window', () => {
     process.env.JWT_SECRET = 'new-primary-secret';
     process.env.JWT_SECRET_PREVIOUS = 'old-secret';
+    process.env.JWT_SECRET_PREVIOUS_UNTIL = '2999-01-01T00:00:00.000Z';
 
     const legacyToken = jwt.sign(
       {
@@ -52,5 +55,27 @@ describe('auth.jwt', () => {
     const payload = verifyAuthToken(legacyToken);
     expect(payload.userId).toBe('user-legacy');
   });
-});
 
+  it('rejects token signed with previous secret after rotation window expires', () => {
+    process.env.JWT_SECRET = 'new-primary-secret';
+    process.env.JWT_SECRET_PREVIOUS = 'old-secret';
+    process.env.JWT_SECRET_PREVIOUS_UNTIL = '2000-01-01T00:00:00.000Z';
+
+    const legacyToken = jwt.sign(
+      {
+        userId: 'user-expired',
+        email: 'expired@example.com',
+        role: 'USER',
+      },
+      'old-secret',
+      {
+        expiresIn: '1h',
+        algorithm: 'HS256',
+        issuer: 'cryptosparrow',
+        audience: 'cryptosparrow-app',
+      }
+    );
+
+    expect(() => verifyAuthToken(legacyToken)).toThrow('Invalid token');
+  });
+});

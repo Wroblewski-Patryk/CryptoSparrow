@@ -112,6 +112,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-16 `test(regression): add auth middleware rotation and issuer/audience claim checks`
 - [x] 2026-03-16 `feat(ops): add API health/readiness endpoints with config checks + tests`
 - [x] 2026-03-16 `feat(obs): add baseline structured request logging middleware for API`
+- [x] 2026-03-16 `security(auth): enforce bounded previous-secret JWT rotation window policy`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

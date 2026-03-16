@@ -50,6 +50,7 @@ For MVP user-facing wording (banner, modal, consent checkbox), use:
 
 ### Mitigations Implemented
 - JWT verification hardened with issuer/audience checks and controlled previous-secret rotation support.
+- Rotation window for previous JWT secret can be bounded via `JWT_SECRET_PREVIOUS_UNTIL` (ISO datetime).
 - Ownership checks standardized to scoped lookups (`id + userId`) on sensitive reads/writes.
 - API keys encrypted at rest (AEAD) and masked in all API responses.
 - Live mode guardrails: explicit opt-in, consent version, kill-switch/emergency-stop checks.
