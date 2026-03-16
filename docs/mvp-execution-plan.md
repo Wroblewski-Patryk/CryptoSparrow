@@ -23,7 +23,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `P1 config(client): remove hardcoded localhost baseURL and switch to env/runtime-safe config`
 - [x] `P1 security(crypto): migrate API-key encryption from CBC to AEAD (AES-GCM or XChaCha20-Poly1305) with key versioning`
 - [x] `P1 api(logs): implement real logs API (`/dashboard/logs`) with actor/source/severity filters`
-- [ ] `P1 infra(rate-limit): replace in-memory limiter with Redis-backed strategy and bounded key growth`
+- [x] `P1 infra(rate-limit): replace in-memory limiter with Redis-backed strategy and bounded key growth`
 - [x] `P1 qa(test-suite): restore fully green test run for server + client with FK-safe cleanup`
 - [ ] `P2 auth(session): align remember-me JWT semantics with cookie/session TTL`
 - [ ] `P2 contract(auth): either implement forgot-password endpoints or remove dead client calls`
@@ -207,3 +207,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Migrated API-key encryption to AES-GCM with key versioning and legacy CBC backward compatibility during decrypt.
 - 2026-03-16: Restored fully green server/client tests by adding FK-safe cleanup coverage and consistent Next router test mocks.
 - 2026-03-16: Implemented `/dashboard/logs` backend with source/actor/severity filtering and wired logs dashboard to real API data.
+- 2026-03-16: Replaced in-memory rate limiting with Redis-backed counters and TTL-based bounded key growth, with local fallback.

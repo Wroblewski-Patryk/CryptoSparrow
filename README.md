@@ -22,6 +22,7 @@ pnpm install
 - Server: `apps/server/.env` (`SERVER_URL`, `SERVER_PORT`, `CLIENT_URL`, `CLIENT_PORT`).
 - Client: `apps/client/.env.local` with `NEXT_PUBLIC_API_BASE_URL` (for example `http://localhost:3001`).
 - Optional: set `CORS_ORIGINS` (comma-separated) in server env to allow multiple frontend origins.
+- Rate limiter Redis: set `REDIS_URL` in server env (default fallback: `redis://localhost:6379`).
 - API-key crypto (server): use `API_KEY_ENCRYPTION_KEYS` (for example `v1:old-key,v2:new-key`) and `API_KEY_ENCRYPTION_ACTIVE_VERSION` (for example `v2`). Legacy `API_KEY_ENCRYPTION` remains as backward-compatible fallback.
 
 ### 3) Start infrastructure (terminal A)
