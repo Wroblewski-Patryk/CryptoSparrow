@@ -79,3 +79,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-16: Hardened paper runtime loop config validation (positive interval + non-empty symbol/timeframe) with regression tests to reduce trading-critical runtime risk.
 - 2026-03-16: Added JWT verification support for primary + previous secrets with strict issuer/audience checks to enable safer auth-secret rotation windows.
 - 2026-03-16: Added explicit API-key lifecycle actions (`rotate`/`revoke`) with ownership enforcement and contract coverage for key-management policy.
+- 2026-03-16: Redacted password hash from auth/profile read/write responses by introducing a shared public-user selector and tightening response contracts.

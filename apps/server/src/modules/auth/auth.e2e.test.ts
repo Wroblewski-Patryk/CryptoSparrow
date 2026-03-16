@@ -34,6 +34,7 @@ describe('POST /auth/register', () => {
     expect(res.status).toBe(201);
     expect(res.body.user).toBeDefined();
     expect(res.body.user.email).toBe('test@example.com');
+    expect(res.body.user.password).toBeUndefined();
   });
 
   it('should reject weak password', async () => {
@@ -98,6 +99,7 @@ describe('POST /auth/register', () => {
     });
 
     expect(res.status).toBe(200);
+    expect(res.body.user.password).toBeUndefined();
     const setCookie = res.headers['set-cookie']?.[0] ?? '';
     expect(setCookie).toContain(`Max-Age=${Math.floor(REMEMBER_ME_TTL_MS / 1000)}`);
   });

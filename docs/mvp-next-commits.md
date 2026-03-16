@@ -106,6 +106,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-16 `fix(core): harden paper runtime config validation in trading loop`
 - [x] 2026-03-16 `security(auth): add JWT primary+previous secret verification path for key rotation`
 - [x] 2026-03-16 `security(keys): add API key rotate/revoke lifecycle endpoints with ownership checks`
+- [x] 2026-03-16 `security(access): redact password hash from auth/profile API responses`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

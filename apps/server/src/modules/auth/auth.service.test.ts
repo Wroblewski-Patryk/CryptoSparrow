@@ -29,7 +29,10 @@ describe('registerUser', () => {
 
     expect(user).toBeDefined();
     expect(user.email).toBe('test@user.com');
-    expect(user.password).not.toBe('test123'); 
+    const dbUser = await prisma.user.findUniqueOrThrow({
+      where: { email: 'test@user.com' },
+    });
+    expect(dbUser.password).not.toBe('test123');
   });
 
   it('should throw if user exists', async () => {

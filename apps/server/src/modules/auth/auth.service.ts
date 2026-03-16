@@ -4,6 +4,7 @@ import { hashPassword, comparePassword } from '../../utils/hash';
 import { serverUrl } from '../../config/runtime';
 import { getSessionJwtExpiresIn } from './auth.session';
 import { signAuthToken } from './auth.jwt';
+import { publicUserSelect } from '../users/publicUser';
 
 export const registerUser = async (
     input: RegisterInput
@@ -26,13 +27,20 @@ export const registerUser = async (
       password: hashed,
       avatarUrl: avatarUrl
     },
+    select: publicUserSelect,
   });
 
   return user;
 };
 
 export const loginUser = async (input: LoginInput) => {
-  const user = await prisma.user.findUnique({ where: { email: input.email } });
+  const user = await prisma.user.findUnique({
+    where: { email: input.email },
+    select: {
+      ...publicUserSelect,
+      password: true,
+    },
+  });
 
   if (!user) {
     throw new Error('Invalid email or password');
@@ -49,5 +57,6 @@ export const loginUser = async (input: LoginInput) => {
     getSessionJwtExpiresIn(input.remember)
   );
 
-  return { token, user };
+  const { password: _passwordHash, ...publicUser } = user;
+  return { token, user: publicUser };
 };
