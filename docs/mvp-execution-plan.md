@@ -91,7 +91,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(ui): PWA baseline parity for core flows`
 - [x] `feat(a11y): keyboard/focus/semantic heading baseline for core dashboard pages`
 - [x] `test(ui): EN/PL key coverage and responsive smoke tests`
-- [ ] `test(ui): view-state consistency tests for loading/empty/degraded/error/success`
+- [x] `test(ui): view-state consistency tests for loading/empty/degraded/error/success`
 - [ ] `test(ux): control-center 10-second operator clarity checklist`
 
 ## Phase 5 - MVP Closure and Release Readiness
@@ -181,3 +181,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Added PWA baseline with manifest metadata, installable icons, service worker registration, runtime caching, and offline fallback route.
 - 2026-03-16: Added accessibility baseline with skip-to-content support, keyboard focus-visible styles, and clearer landmark semantics for dashboard/public layouts.
 - 2026-03-16: Added UI test coverage for EN/PL translation-key parity and responsive dashboard-header smoke rendering.
+- 2026-03-16: Extended shared ViewState tests for consistent title/description rendering and action-button visibility rules across loading/empty/degraded/error/success variants.
