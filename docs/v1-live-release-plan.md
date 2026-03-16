@@ -19,7 +19,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [ ] `security(auth): JWT/session hardening + rotation policy`
 - [ ] `security(keys): API key lifecycle policy (create/rotate/revoke)`
 - [ ] `security(access): enforce ownership checks for all sensitive actions`
-- [ ] `test(regression): expand regression suite for critical flows`
+- [x] `test(regression): expand regression suite for critical flows`
 - [x] `docs(security): update threat model and residual risk register`
 
 ## Phase B - Reliability, Operations, and Runtime
@@ -82,3 +82,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-16: Redacted password hash from auth/profile read/write responses by introducing a shared public-user selector and tightening response contracts.
 - 2026-03-16: Hardened ownership semantics for profile deletion by removing id-parameter delete route and validating self-only delete path with e2e coverage.
 - 2026-03-16: Updated security documentation with V1 baseline threat model and residual risk register, including mitigations and explicit follow-up actions.
+- 2026-03-16: Expanded regression coverage for auth middleware to include secret-rotation compatibility and strict issuer/audience claim enforcement.
