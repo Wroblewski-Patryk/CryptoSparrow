@@ -16,6 +16,21 @@ Rule: fix/cleanup/update first, then feature delivery.
 - Preferred order: `fix` / `refactor` / `test` / `chore` before `feat`.
 - No mixed commits (for example feature + refactor together).
 
+## Audit Remediation Gate (Must Be Done Before Any New Feature Work)
+- [ ] `P0 security(upload): protect upload endpoint with auth + MIME and size validation + abuse limits`
+- [ ] `P0 security(live-consent): add consentTextVersion to bot/live consent flow (schema, DTO, persistence, audit)`
+- [ ] `P1 config(api): harden APP_URL/CORS parsing and remove undefined:* edge cases`
+- [ ] `P1 config(client): remove hardcoded localhost baseURL and switch to env/runtime-safe config`
+- [ ] `P1 security(crypto): migrate API-key encryption from CBC to AEAD (AES-GCM or XChaCha20-Poly1305) with key versioning`
+- [ ] `P1 api(logs): implement real logs API (`/dashboard/logs`) with actor/source/severity filters`
+- [ ] `P1 infra(rate-limit): replace in-memory limiter with Redis-backed strategy and bounded key growth`
+- [ ] `P1 qa(test-suite): restore fully green test run for server + client with FK-safe cleanup`
+- [ ] `P2 auth(session): align remember-me JWT semantics with cookie/session TTL`
+- [ ] `P2 contract(auth): either implement forgot-password endpoints or remove dead client calls`
+- [ ] `P2 i18n: remove remaining hardcoded UI strings from dashboard/logs and related views`
+- [ ] `P3 cleanup(types): remove remaining any in profile routes/controllers`
+- [ ] `docs(sync): correct plan claims that conflict with actual implementation status`
+
 ## Phase 0 - Stabilization and Baseline (Must Finish First)
 - [x] `chore(repo): add root workspace scripts for lint/typecheck/test/build`
 - [x] `chore(ci): add minimal CI checks for client and server`
@@ -82,10 +97,10 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(ui): dashboard home widgets for live positions/orders snapshot and recent actions feed`
 - [x] `feat(ui): dashboard/backtest full UX + overlays + summary`
 - [x] `feat(ui): dashboard/reports performance views`
-- [x] `feat(ui): dashboard/logs audit trail`
+- [ ] `feat(ui): dashboard/logs audit trail backed by real logs API`
 - [x] `feat(ui): dashboard/exchanges api-key connections`
 - [x] `feat(i18n): EN default + PL translation coverage`
-- [x] `feat(i18n): enforce translation-key usage (no hardcoded page copy) and feature-based namespaces`
+- [ ] `feat(i18n): enforce translation-key usage (no hardcoded page copy) and feature-based namespaces`
 - [x] `feat(i18n): locale-aware date/number/currency/percent formatting for dashboard data views`
 - [x] `feat(ui): responsive pass for desktop/tablet/mobile`
 - [x] `feat(ui): PWA baseline parity for core flows`
@@ -185,3 +200,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Added manual UX checklist for 10-second control-center operator clarity and linked it in testing strategy docs.
 - 2026-03-16: Added MVP operations runbook covering deployment steps, health verification, rollback, and recovery playbooks.
 - 2026-03-16: Added MVP user-facing risk notice and live-consent text pack (EN/PL) with consent-versioning and audit logging guidance.
+- 2026-03-16: Added audit remediation gate (P0-P3) and reprioritized queue before any further feature work.

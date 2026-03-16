@@ -15,6 +15,7 @@ Language policy: documentation stays in English.
 - Use `v1-live-release-plan.md` as the official V1.0 launch path.
 - Use `mvp-next-commits.md` as the active short queue.
 - Use `project-delivery-plan.md` for end-to-end stage mapping (MVP -> V1.0).
+- Use `audit-remediation-2026-03-16.md` for the current high-priority remediation gate.
 - Use `agent-setup-blueprint.md` to coordinate role-based agents.
 
 ## Definition of Done for Documentation

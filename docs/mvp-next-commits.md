@@ -7,9 +7,20 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `docs(release): known limits and post-MVP boundaries`
+- [ ] `P0 security(upload): protect upload endpoint with auth + MIME/size validation + abuse limits`
+- [ ] `P0 security(live-consent): add consentTextVersion end-to-end (schema, DTO, persistence, audit)`
+- [ ] `P1 config(api+client): fix CORS/URL parsing and remove hardcoded localhost baseURL`
+- [ ] `P1 security(crypto): migrate API-key encryption to AEAD + key versioning`
+- [ ] `P1 qa(test-suite): make server+client test suites fully green (including FK-safe cleanup)`
 
 ## NEXT
+- [ ] `P1 api(logs): implement /dashboard/logs with actor/source/severity filtering`
+- [ ] `P1 infra(rate-limit): move limiter from in-memory to Redis-backed implementation`
+- [ ] `P2 auth(session): align remember-me behavior with cookie/session TTL`
+- [ ] `P2 contract(auth): implement forgot-password endpoints or remove dead client call paths`
+- [ ] `P2 i18n: remove remaining hardcoded strings in logs/dashboard views`
+- [ ] `P3 cleanup(types): remove remaining any from profile routes/controllers`
+- [ ] `docs(release): known limits and post-MVP boundaries`
 - [ ] `chore(release): MVP release checklist and changelog`
 
 ## BLOCKED
@@ -89,6 +100,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-16 `test(ux): control-center 10-second operator clarity checklist`
 - [x] 2026-03-16 `docs(ops): MVP runbook for deployment and recovery`
 - [x] 2026-03-16 `docs(risk): user-facing trading risk notice and live consent text`
+- [x] 2026-03-16 `chore(planning): reprioritize queue to audit remediation gate (P0-P3)`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
