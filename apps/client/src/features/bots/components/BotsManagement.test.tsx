@@ -53,9 +53,9 @@ describe("BotsManagement", () => {
         mode: "PAPER",
         isActive: false,
         liveOptIn: false,
+        consentTextVersion: null,
         maxOpenPositions: 3,
       });
     });
   });
 });
-

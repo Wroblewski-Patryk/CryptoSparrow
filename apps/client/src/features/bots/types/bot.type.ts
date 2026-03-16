@@ -6,6 +6,7 @@ export type Bot = {
   mode: BotMode;
   isActive: boolean;
   liveOptIn: boolean;
+  consentTextVersion?: string | null;
   maxOpenPositions: number;
   createdAt?: string;
   updatedAt?: string;
@@ -16,8 +17,8 @@ export type CreateBotInput = {
   mode: BotMode;
   isActive: boolean;
   liveOptIn: boolean;
+  consentTextVersion?: string | null;
   maxOpenPositions: number;
 };
 
 export type UpdateBotInput = Partial<CreateBotInput>;
-

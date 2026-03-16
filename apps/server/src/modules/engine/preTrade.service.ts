@@ -15,6 +15,7 @@ export interface PositionReadStore {
 type BotLiveConfig = {
   mode: 'PAPER' | 'LIVE' | 'LOCAL';
   liveOptIn: boolean;
+  consentTextVersion: string | null;
 };
 
 type PreTradeAuditEntry = {
@@ -67,6 +68,7 @@ class PrismaPreTradeReadStore implements PreTradeReadStore {
       select: {
         mode: true,
         liveOptIn: true,
+        consentTextVersion: true,
       },
     });
   }
@@ -132,6 +134,9 @@ export const analyzePreTrade = async (
         }
         if (!botLiveConfig.liveOptIn) {
           reasons.push('live_opt_in_required');
+        }
+        if (!botLiveConfig.consentTextVersion) {
+          reasons.push('live_consent_version_required');
         }
       }
     }

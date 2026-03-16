@@ -10,6 +10,7 @@ const createStore = (overrides?: Partial<MockPreTradeStore>): MockPreTradeStore 
   getBotLiveConfig: vi.fn().mockResolvedValue({
     mode: 'LIVE',
     liveOptIn: true,
+    consentTextVersion: 'mvp-v1',
   }),
   ...overrides,
 });
@@ -153,6 +154,7 @@ describe('preTrade analysis', () => {
       getBotLiveConfig: vi.fn().mockResolvedValue({
         mode: 'PAPER',
         liveOptIn: false,
+        consentTextVersion: null,
       }),
     });
 
@@ -169,6 +171,29 @@ describe('preTrade analysis', () => {
     expect(decision.allowed).toBe(false);
     expect(decision.reasons).toContain('live_mode_bot_required');
     expect(decision.reasons).toContain('live_opt_in_required');
+  });
+
+  it('blocks when live consent version is missing', async () => {
+    const store = createStore({
+      getBotLiveConfig: vi.fn().mockResolvedValue({
+        mode: 'LIVE',
+        liveOptIn: true,
+        consentTextVersion: null,
+      }),
+    });
+
+    const decision = await analyzePreTrade(
+      {
+        userId: 'u1',
+        botId: 'b1',
+        symbol: 'BTCUSDT',
+        mode: 'LIVE',
+      },
+      store
+    );
+
+    expect(decision.allowed).toBe(false);
+    expect(decision.reasons).toContain('live_consent_version_required');
   });
 
   it('blocks when global kill switch is enabled for live mode', async () => {

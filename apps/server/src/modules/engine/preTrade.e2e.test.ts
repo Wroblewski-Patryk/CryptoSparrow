@@ -31,6 +31,7 @@ describe('preTrade e2e smoke (paper/live critical paths)', () => {
         name: 'Live bot',
         mode: 'LIVE',
         liveOptIn: true,
+        consentTextVersion: 'mvp-v1',
         isActive: true,
       },
     });
@@ -67,6 +68,7 @@ describe('preTrade e2e smoke (paper/live critical paths)', () => {
         name: 'Live bot guarded',
         mode: 'LIVE',
         liveOptIn: true,
+        consentTextVersion: 'mvp-v1',
         isActive: true,
       },
     });

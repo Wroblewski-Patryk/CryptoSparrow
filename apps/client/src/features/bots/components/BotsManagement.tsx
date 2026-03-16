@@ -9,6 +9,8 @@ import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/
 import { createBot, deleteBot, listBots, updateBot } from "../services/bots.service";
 import { Bot, BotMode } from "../types/bot.type";
 
+const LIVE_CONSENT_TEXT_VERSION = "mvp-v1";
+
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
   return (err.response?.data as { message?: string } | undefined)?.message;
@@ -68,6 +70,7 @@ export default function BotsManagement() {
         mode,
         isActive: false,
         liveOptIn: false,
+        consentTextVersion: null,
         maxOpenPositions,
       });
       setBots((prev) => [created, ...prev]);
@@ -94,6 +97,7 @@ export default function BotsManagement() {
         mode: bot.mode,
         isActive: bot.isActive,
         liveOptIn: bot.liveOptIn,
+        consentTextVersion: bot.liveOptIn ? LIVE_CONSENT_TEXT_VERSION : null,
         maxOpenPositions: bot.maxOpenPositions,
       });
       patchBot(bot.id, updated);

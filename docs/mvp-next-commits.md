@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `P0 security(live-consent): add consentTextVersion end-to-end (schema, DTO, persistence, audit)`
 - [ ] `P1 config(api+client): fix CORS/URL parsing and remove hardcoded localhost baseURL`
 - [ ] `P1 security(crypto): migrate API-key encryption to AEAD + key versioning`
 - [ ] `P1 qa(test-suite): make server+client test suites fully green (including FK-safe cleanup)`
@@ -101,6 +100,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-16 `docs(risk): user-facing trading risk notice and live consent text`
 - [x] 2026-03-16 `chore(planning): reprioritize queue to audit remediation gate (P0-P3)`
 - [x] 2026-03-16 `security(upload): protect upload endpoint with auth + MIME/size validation + abuse limits`
+- [x] 2026-03-16 `security(live-consent): add consentTextVersion end-to-end (schema, DTO, persistence, audit)`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

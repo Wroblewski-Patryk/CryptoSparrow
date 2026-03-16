@@ -32,6 +32,9 @@ export const createBot = async (req: Request, res: Response) => {
     const created = await botsService.createBot(userId, payload);
     return res.status(201).json(created);
   } catch (error) {
+    if (error instanceof Error && error.message === 'LIVE_CONSENT_VERSION_REQUIRED') {
+      return sendError(res, 400, 'consentTextVersion is required when liveOptIn is enabled');
+    }
     return sendValidationError(res, error);
   }
 };
@@ -48,6 +51,9 @@ export const updateBot = async (req: Request, res: Response) => {
 
     return res.json(updated);
   } catch (error) {
+    if (error instanceof Error && error.message === 'LIVE_CONSENT_VERSION_REQUIRED') {
+      return sendError(res, 400, 'consentTextVersion is required when liveOptIn is enabled');
+    }
     return sendValidationError(res, error);
   }
 };

@@ -139,6 +139,7 @@ model Bot {
   mode              BotMode         @default(PAPER)
   isActive          Boolean         @default(false)
   liveOptIn         Boolean         @default(false)
+  consentTextVersion String?
   maxOpenPositions  Int             @default(1)
 
   createdAt         DateTime        @default(now())

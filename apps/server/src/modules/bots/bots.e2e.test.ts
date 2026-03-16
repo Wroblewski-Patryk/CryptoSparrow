@@ -23,6 +23,14 @@ const createPayload = () => ({
 
 describe('Bots module contract', () => {
   beforeEach(async () => {
+    await prisma.log.deleteMany();
+    await prisma.backtestReport.deleteMany();
+    await prisma.backtestTrade.deleteMany();
+    await prisma.backtestRun.deleteMany();
+    await prisma.trade.deleteMany();
+    await prisma.order.deleteMany();
+    await prisma.position.deleteMany();
+    await prisma.signal.deleteMany();
     await prisma.botStrategy.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
@@ -61,11 +69,13 @@ describe('Bots module contract', () => {
     const updateRes = await agent.put(`/dashboard/bots/${botId}`).send({
       mode: 'LIVE',
       liveOptIn: true,
+      consentTextVersion: 'mvp-v1',
       maxOpenPositions: 5,
     });
     expect(updateRes.status).toBe(200);
     expect(updateRes.body.mode).toBe('LIVE');
     expect(updateRes.body.liveOptIn).toBe(true);
+    expect(updateRes.body.consentTextVersion).toBe('mvp-v1');
     expect(updateRes.body.maxOpenPositions).toBe(5);
 
     const deleteRes = await agent.delete(`/dashboard/bots/${botId}`);
@@ -94,5 +104,40 @@ describe('Bots module contract', () => {
 
     const deleteRes = await other.delete(`/dashboard/bots/${botId}`);
     expect(deleteRes.status).toBe(404);
+  });
+
+  it('requires consentTextVersion when enabling live opt-in and writes consent audit log', async () => {
+    const agent = await registerAndLogin('bots-consent@example.com');
+
+    const createRes = await agent.post('/dashboard/bots').send(createPayload());
+    expect(createRes.status).toBe(201);
+    const botId = createRes.body.id as string;
+
+    const missingConsentRes = await agent.put(`/dashboard/bots/${botId}`).send({
+      mode: 'LIVE',
+      liveOptIn: true,
+    });
+    expect(missingConsentRes.status).toBe(400);
+    expect(missingConsentRes.body.error.message).toBe(
+      'consentTextVersion is required when liveOptIn is enabled'
+    );
+
+    const withConsentRes = await agent.put(`/dashboard/bots/${botId}`).send({
+      mode: 'LIVE',
+      liveOptIn: true,
+      consentTextVersion: 'mvp-v1',
+    });
+    expect(withConsentRes.status).toBe(200);
+
+    const consentLog = await prisma.log.findFirst({
+      where: {
+        userId: withConsentRes.body.userId,
+        botId,
+        action: 'bot.live_consent.accepted',
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(consentLog).toBeTruthy();
+    expect(consentLog?.category).toBe('RISK_CONSENT');
   });
 });
