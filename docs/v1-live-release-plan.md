@@ -15,7 +15,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 
 ## Phase A - Post-MVP Hardening
 - [x] `fix(core): remove high-risk technical debt in trading-critical paths`
-- [ ] `refactor(engine): isolate signal/execution/risk boundaries`
+- [x] `refactor(engine): isolate signal/execution/risk boundaries`
 - [x] `security(auth): JWT/session hardening + rotation policy`
 - [x] `security(keys): API key lifecycle policy (create/rotate/revoke)`
 - [x] `security(access): enforce ownership checks for all sensitive actions`
@@ -93,3 +93,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-16: Added ownership-enforcement audit baseline across sensitive modules and linked the report from security docs.
 - 2026-03-16: Added baseline V1 alert-rule catalog for failed orders, stale market data, and worker-heartbeat loss with severity/action mapping.
 - 2026-03-16: Reduced trading-critical runtime debt by adding explicit input guards for paper lifecycle ticks (markPrice and entry quantity) with regression tests.
+- 2026-03-16: Isolated pre-trade risk evaluation into dedicated pure service to separate risk decision logic from IO/audit orchestration.

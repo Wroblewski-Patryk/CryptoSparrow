@@ -16,6 +16,13 @@ export const PreTradeAnalysisInputSchema = z.object({
 });
 
 export type PreTradeAnalysisInput = z.input<typeof PreTradeAnalysisInputSchema>;
+export type PreTradeAnalysisParsedInput = z.output<typeof PreTradeAnalysisInputSchema>;
+
+export type PreTradeBotLiveConfig = {
+  mode: 'PAPER' | 'LIVE' | 'LOCAL';
+  liveOptIn: boolean;
+  consentTextVersion: string | null;
+};
 
 export type PreTradeDecision = {
   allowed: boolean;

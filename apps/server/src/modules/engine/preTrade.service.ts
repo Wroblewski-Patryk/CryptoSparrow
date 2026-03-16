@@ -3,20 +3,16 @@ import { prisma } from '../../prisma/client';
 import {
   PreTradeAnalysisInput,
   PreTradeAnalysisInputSchema,
+  PreTradeBotLiveConfig,
   PreTradeDecision,
 } from './preTrade.types';
+import { evaluatePreTradeRiskReasons } from './preTradeRisk.service';
 
 export interface PositionReadStore {
   countOpenByUser(userId: string): Promise<number>;
   countOpenByBot(userId: string, botId: string): Promise<number>;
   hasOpenPositionOnSymbol(userId: string, symbol: string): Promise<boolean>;
 }
-
-type BotLiveConfig = {
-  mode: 'PAPER' | 'LIVE' | 'LOCAL';
-  liveOptIn: boolean;
-  consentTextVersion: string | null;
-};
 
 type PreTradeAuditEntry = {
   userId: string;
@@ -32,7 +28,7 @@ type PreTradeAuditEntry = {
 };
 
 export interface BotReadStore {
-  getBotLiveConfig(userId: string, botId: string): Promise<BotLiveConfig | null>;
+  getBotLiveConfig(userId: string, botId: string): Promise<PreTradeBotLiveConfig | null>;
 }
 
 export interface AuditLogWriter {
@@ -103,7 +99,6 @@ export const analyzePreTrade = async (
   auditLogWriter: AuditLogWriter = defaultAuditLogWriter
 ): Promise<PreTradeDecision> => {
   const parsed = PreTradeAnalysisInputSchema.parse(input);
-  const reasons: string[] = [];
 
   const userOpenPositions = await readStore.countOpenByUser(parsed.userId);
   const botOpenPositions = parsed.botId
@@ -112,55 +107,16 @@ export const analyzePreTrade = async (
   const hasOpenPositionOnSymbol = parsed.enforceOnePositionPerSymbol
     ? await readStore.hasOpenPositionOnSymbol(parsed.userId, parsed.symbol)
     : false;
-
-  if (parsed.mode === 'LIVE') {
-    if (parsed.globalKillSwitch) {
-      reasons.push('global_kill_switch_enabled');
-    }
-
-    if (parsed.emergencyStop) {
-      reasons.push('emergency_stop_enabled');
-    }
-
-    if (!parsed.botId) {
-      reasons.push('live_bot_required');
-    } else {
-      const botLiveConfig = await readStore.getBotLiveConfig(parsed.userId, parsed.botId);
-      if (!botLiveConfig) {
-        reasons.push('live_bot_not_found');
-      } else {
-        if (botLiveConfig.mode !== 'LIVE') {
-          reasons.push('live_mode_bot_required');
-        }
-        if (!botLiveConfig.liveOptIn) {
-          reasons.push('live_opt_in_required');
-        }
-        if (!botLiveConfig.consentTextVersion) {
-          reasons.push('live_consent_version_required');
-        }
-      }
-    }
-  }
-
-  if (
-    typeof parsed.maxOpenPositionsPerUser === 'number' &&
-    userOpenPositions >= parsed.maxOpenPositionsPerUser
-  ) {
-    reasons.push('user_open_positions_limit_reached');
-  }
-
-  if (
-    parsed.botId &&
-    typeof parsed.maxOpenPositionsPerBot === 'number' &&
-    typeof botOpenPositions === 'number' &&
-    botOpenPositions >= parsed.maxOpenPositionsPerBot
-  ) {
-    reasons.push('bot_open_positions_limit_reached');
-  }
-
-  if (hasOpenPositionOnSymbol) {
-    reasons.push('open_position_on_symbol_exists');
-  }
+  const botLiveConfig = parsed.botId
+    ? await readStore.getBotLiveConfig(parsed.userId, parsed.botId)
+    : null;
+  const reasons = evaluatePreTradeRiskReasons({
+    parsed,
+    userOpenPositions,
+    botOpenPositions,
+    hasOpenPositionOnSymbol,
+    botLiveConfig,
+  });
 
   const decision = {
     allowed: reasons.length === 0,
