@@ -82,4 +82,44 @@ describe('LiveOrderAdapter', () => {
     expect(placeOrder).toHaveBeenCalledTimes(3);
     expect(sleep).toHaveBeenCalledTimes(2);
   });
+
+  it('emits structured retry and success logs', async () => {
+    const placeOrder = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('Network timeout'))
+      .mockResolvedValue({ id: 'ok-logs', raw: {} });
+    const connector = { placeOrder } as unknown as CcxtFuturesConnector;
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const logger = {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    };
+    const adapter = new LiveOrderAdapter(connector, sleep, logger);
+
+    const result = await adapter.placeLiveOrderWithRetry({
+      order: liveOrder,
+      retryPolicy: { maxAttempts: 3, baseDelayMs: 100 },
+    });
+
+    expect(result.id).toBe('ok-logs');
+    expect(logger.warn).toHaveBeenCalledTimes(1);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'exchange.live_order.retry',
+        attempt: 1,
+        maxAttempts: 3,
+        delayMs: 100,
+      })
+    );
+    expect(logger.info).toHaveBeenCalledTimes(1);
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'exchange.live_order.success',
+        attempt: 2,
+        maxAttempts: 3,
+      })
+    );
+    expect(logger.error).not.toHaveBeenCalled();
+  });
 });

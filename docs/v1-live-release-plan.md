@@ -86,3 +86,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-16: Added API `/health` and `/ready` endpoints with runtime config readiness checks as baseline for Phase B operations hardening.
 - 2026-03-16: Added baseline structured API request logging (JSON payload with method/path/status/duration/timestamp) as first observability layer.
 - 2026-03-16: Added explicit JWT previous-secret expiry policy (`JWT_SECRET_PREVIOUS_UNTIL`) with regression coverage for open and expired rotation windows.
+- 2026-03-16: Added structured logging in exchange live-order adapter for retry, success, and terminal failure events (attempt metadata included).
