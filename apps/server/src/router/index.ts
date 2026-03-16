@@ -3,6 +3,7 @@ import authRoutes from '../modules/auth/auth.routes';
 import dashboardRoutes from './dashboard.routes';
 import adminRoutes from './admin.routes';
 import uploadRouter from '../modules/upload/upload.routes';
+import { metricsStore } from '../observability/metrics';
 
 const router = Router();
 
@@ -36,6 +37,10 @@ router.get('/ready', (_req, res) => {
     status: 'ready',
     service: 'api',
   });
+});
+
+router.get('/metrics', (_req, res) => {
+  return res.status(200).json(metricsStore.snapshot());
 });
 
 router.use('/upload', uploadRouter);
