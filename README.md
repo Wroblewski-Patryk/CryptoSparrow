@@ -75,3 +75,4 @@ pnpm --filter client start
 - Added CI workflow: `.github/workflows/ci.yml`.
 - Fixed server build runtime path by compiling server to CommonJS (`apps/server/tsconfig.json`).
 - Added local runbook: `docs/local-development.md`.
+- Added MVP ops runbook (deployment + recovery): `docs/mvp-ops-runbook.md`.

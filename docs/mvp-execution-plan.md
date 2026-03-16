@@ -95,7 +95,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `test(ux): control-center 10-second operator clarity checklist`
 
 ## Phase 5 - MVP Closure and Release Readiness
-- [ ] `docs(ops): MVP runbook for deployment and recovery`
+- [x] `docs(ops): MVP runbook for deployment and recovery`
 - [ ] `docs(risk): user-facing trading risk notice and live consent text`
 - [ ] `docs(release): known limits and post-MVP boundaries`
 - [ ] `chore(release): MVP release checklist and changelog`
@@ -183,3 +183,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Added UI test coverage for EN/PL translation-key parity and responsive dashboard-header smoke rendering.
 - 2026-03-16: Extended shared ViewState tests for consistent title/description rendering and action-button visibility rules across loading/empty/degraded/error/success variants.
 - 2026-03-16: Added manual UX checklist for 10-second control-center operator clarity and linked it in testing strategy docs.
+- 2026-03-16: Added MVP operations runbook covering deployment steps, health verification, rollback, and recovery playbooks.
