@@ -76,3 +76,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-15: Initialized V1.0 live release plan.
 - 2026-03-15: Aligned V1.0 structure with architecture, security, testing, and release-readiness docs.
 - 2026-03-15: Added optional isometric dashboard visual mode as late-stage V1 polish item.
+- 2026-03-16: Hardened paper runtime loop config validation (positive interval + non-empty symbol/timeframe) with regression tests to reduce trading-critical runtime risk.

@@ -16,6 +16,21 @@ export type PaperRuntimeConfig = {
   tasks: PaperRuntimeTask[];
 };
 
+const validateRuntimeConfig = (config: PaperRuntimeConfig) => {
+  if (!Number.isFinite(config.pollIntervalMs) || config.pollIntervalMs <= 0) {
+    throw new Error('Paper runtime requires a positive pollIntervalMs');
+  }
+
+  for (const task of config.tasks) {
+    if (!task.symbol || task.symbol.trim().length === 0) {
+      throw new Error('Paper runtime task requires a non-empty symbol');
+    }
+    if (!task.timeframe || task.timeframe.trim().length === 0) {
+      throw new Error('Paper runtime task requires a non-empty timeframe');
+    }
+  }
+};
+
 export class PaperRuntimeService {
   private timer: NodeJS.Timeout | null = null;
   private inFlightTaskKeys = new Set<string>();
@@ -28,6 +43,7 @@ export class PaperRuntimeService {
 
   start(config: PaperRuntimeConfig) {
     if (this.timer) return;
+    validateRuntimeConfig(config);
     if (config.tasks.length === 0) return;
 
     this.timer = setInterval(() => {

@@ -90,4 +90,39 @@ describe('PaperRuntimeService', () => {
     await vi.advanceTimersByTimeAsync(1000);
     expect(marketDataService.ingestOHLCV).toHaveBeenCalledTimes(2);
   });
+
+  it('rejects invalid poll interval values', () => {
+    const marketDataService: PaperRuntimeMarketDataService = {
+      ingestOHLCV: vi.fn().mockResolvedValue(baseCandles),
+    };
+    const runtime = new PaperRuntimeService(marketDataService);
+
+    expect(() =>
+      runtime.start({
+        pollIntervalMs: 0,
+        tasks: [{ symbol: 'BTCUSDT', timeframe: '1m', onTick: vi.fn() }],
+      })
+    ).toThrow('Paper runtime requires a positive pollIntervalMs');
+  });
+
+  it('rejects tasks with empty symbol/timeframe', () => {
+    const marketDataService: PaperRuntimeMarketDataService = {
+      ingestOHLCV: vi.fn().mockResolvedValue(baseCandles),
+    };
+    const runtime = new PaperRuntimeService(marketDataService);
+
+    expect(() =>
+      runtime.start({
+        pollIntervalMs: 1000,
+        tasks: [{ symbol: ' ', timeframe: '1m', onTick: vi.fn() }],
+      })
+    ).toThrow('Paper runtime task requires a non-empty symbol');
+
+    expect(() =>
+      runtime.start({
+        pollIntervalMs: 1000,
+        tasks: [{ symbol: 'BTCUSDT', timeframe: ' ', onTick: vi.fn() }],
+      })
+    ).toThrow('Paper runtime task requires a non-empty timeframe');
+  });
 });
