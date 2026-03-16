@@ -90,7 +90,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(ui): responsive pass for desktop/tablet/mobile`
 - [x] `feat(ui): PWA baseline parity for core flows`
 - [x] `feat(a11y): keyboard/focus/semantic heading baseline for core dashboard pages`
-- [ ] `test(ui): EN/PL key coverage and responsive smoke tests`
+- [x] `test(ui): EN/PL key coverage and responsive smoke tests`
 - [ ] `test(ui): view-state consistency tests for loading/empty/degraded/error/success`
 - [ ] `test(ux): control-center 10-second operator clarity checklist`
 
@@ -180,3 +180,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Improved dashboard shell responsiveness for mobile/tablet with wrapping header nav, horizontal nav scrolling, and small-screen safety-bar/page-title adjustments.
 - 2026-03-16: Added PWA baseline with manifest metadata, installable icons, service worker registration, runtime caching, and offline fallback route.
 - 2026-03-16: Added accessibility baseline with skip-to-content support, keyboard focus-visible styles, and clearer landmark semantics for dashboard/public layouts.
+- 2026-03-16: Added UI test coverage for EN/PL translation-key parity and responsive dashboard-header smoke rendering.

@@ -7,8 +7,14 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [ ] `test(ui): view-state consistency tests for loading/empty/degraded/error/success`
+- [ ] `test(ux): control-center 10-second operator clarity checklist`
+- [ ] `docs(ops): MVP runbook for deployment and recovery`
+- [ ] `docs(risk): user-facing trading risk notice and live consent text`
+- [ ] `docs(release): known limits and post-MVP boundaries`
 
 ## NEXT
+- [ ] `chore(release): MVP release checklist and changelog`
 
 ## BLOCKED
 - [ ] (empty)
@@ -82,6 +88,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-16 `feat(ui): responsive pass for desktop/tablet/mobile`
 - [x] 2026-03-16 `feat(ui): PWA baseline parity for core flows`
 - [x] 2026-03-16 `feat(a11y): keyboard/focus/semantic heading baseline for core dashboard pages`
+- [x] 2026-03-16 `test(ui): EN/PL key coverage and responsive smoke tests`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
