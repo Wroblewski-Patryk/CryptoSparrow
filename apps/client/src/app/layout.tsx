@@ -1,13 +1,33 @@
 import './globals.css';
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '../context/AuthContext';
+import ServiceWorkerRegistration from '../ui/pwa/ServiceWorkerRegistration';
 
 export const metadata: Metadata = {
   title: 'CryptoSparrow',
-  description: 'Twój AI bot do handlu na Binance Futures',
+  description: 'Twoj AI bot do handlu na Binance Futures',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    title: 'CryptoSparrow',
+    statusBarStyle: 'default',
+  },
+  icons: {
+    icon: [
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#2563eb',
 };
 
 interface RootLayoutProps {
@@ -19,17 +39,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html lang="en">
       <head>
         <meta charSet="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body>
-        <Toaster
-          position="top-center"
-          duration={2500}
-          closeButton
-          richColors />
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <Toaster position="top-center" duration={2500} closeButton richColors />
+        <ServiceWorkerRegistration />
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
