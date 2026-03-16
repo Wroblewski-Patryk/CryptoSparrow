@@ -6,9 +6,7 @@ const basicRouter = Router();
 
 basicRouter.route('/')
   .get(controller.getProfile)
-  .patch(controller.updateProfile);
-
-basicRouter.route('/:id')
+  .patch(controller.updateProfile)
   .delete(controller.deleteUser);
 
 export default basicRouter;
