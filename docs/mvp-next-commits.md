@@ -9,7 +9,6 @@ Operational queue for one-task execution runs.
 ## NOW
 
 ## NEXT
-- [ ] `P3 cleanup(types): remove remaining any from profile routes/controllers`
 - [ ] `docs(release): known limits and post-MVP boundaries`
 - [ ] `chore(release): MVP release checklist and changelog`
 
@@ -101,6 +100,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-16 `auth(session): align remember-me behavior with cookie/session TTL`
 - [x] 2026-03-16 `contract(auth): remove dead forgot-password client call paths`
 - [x] 2026-03-16 `i18n: remove remaining hardcoded strings in logs/dashboard views`
+- [x] 2026-03-16 `cleanup(types): remove remaining any from profile routes/controllers`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

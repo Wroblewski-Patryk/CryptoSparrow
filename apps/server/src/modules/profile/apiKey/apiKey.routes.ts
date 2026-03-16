@@ -5,11 +5,11 @@ import * as controller from './apiKey.controller';
 const apiKeyRouter = Router();
 
 apiKeyRouter.route('/')
-  .get((req, res) => controller.list(req as any, res))
-  .post((req, res) => controller.create(req as any, res));
+  .get(controller.list)
+  .post(controller.create);
 
 apiKeyRouter.route('/:id')
-  .patch((req, res) => controller.update(req as any, res)) 
-  .delete((req, res) => controller.remove(req as any, res));
+  .patch(controller.update) 
+  .delete(controller.remove);
 
 export default apiKeyRouter;

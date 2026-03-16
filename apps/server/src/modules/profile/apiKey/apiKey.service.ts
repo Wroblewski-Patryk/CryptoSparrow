@@ -1,6 +1,6 @@
 import { encrypt, decrypt } from "../../../utils/crypto";
 import { prisma } from "../../../prisma/client";
-import { ApiKey } from "@prisma/client";
+import { ApiKey, Prisma } from "@prisma/client";
 
 export enum Exchange {
   BINANCE = "BINANCE"
@@ -64,7 +64,7 @@ export const updateApiKey = async (
   id: string,
   data: Partial<ApiKeyPayload>
 ) => {
-  const updateData: any = {
+  const updateData: Prisma.ApiKeyUpdateManyMutationInput = {
     ...(data.label && { label: data.label }),
     ...(data.exchange && { exchange: data.exchange }),
     ...(data.apiKey && { apiKey: encrypt(data.apiKey) }),

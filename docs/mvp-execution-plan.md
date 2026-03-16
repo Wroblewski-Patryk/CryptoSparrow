@@ -28,7 +28,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `P2 auth(session): align remember-me JWT semantics with cookie/session TTL`
 - [x] `P2 contract(auth): either implement forgot-password endpoints or remove dead client calls`
 - [x] `P2 i18n: remove remaining hardcoded UI strings from dashboard/logs and related views`
-- [ ] `P3 cleanup(types): remove remaining any in profile routes/controllers`
+- [x] `P3 cleanup(types): remove remaining any in profile routes/controllers`
 - [ ] `docs(sync): correct plan claims that conflict with actual implementation status`
 
 ## Phase 0 - Stabilization and Baseline (Must Finish First)
@@ -211,3 +211,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Unified remember-me JWT and cookie TTL semantics with explicit auth session constants and e2e coverage.
 - 2026-03-16: Removed dead forgot-password client call paths to align auth contract with implemented backend endpoints.
 - 2026-03-16: Replaced hardcoded logs/dashboard copy with translation keys and wired logs view/page to i18n provider keys.
+- 2026-03-16: Removed remaining `any` usage in profile routes/controllers and replaced with typed request/validation flow.

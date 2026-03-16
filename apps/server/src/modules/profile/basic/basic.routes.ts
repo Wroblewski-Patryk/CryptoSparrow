@@ -5,10 +5,10 @@ import * as controller from './basic.controller';
 const basicRouter = Router();
 
 basicRouter.route('/')
-  .get((req, res) => controller.getProfile(req as any, res))
-  .patch((req, res) => controller.updateProfile(req as any, res));
+  .get(controller.getProfile)
+  .patch(controller.updateProfile);
 
 basicRouter.route('/:id')
-  .delete((req, res) => controller.deleteUser(req as any, res));
+  .delete(controller.deleteUser);
 
 export default basicRouter;
