@@ -3,6 +3,7 @@ import { RegisterInput, LoginInput } from './auth.types';
 import { hashPassword, comparePassword } from '../../utils/hash';
 import jwt from 'jsonwebtoken';
 import { serverUrl } from '../../config/runtime';
+import { getSessionJwtExpiresIn } from './auth.session';
 
 export const registerUser = async (
     input: RegisterInput
@@ -43,12 +44,10 @@ export const loginUser = async (input: LoginInput) => {
     throw new Error('Invalid email or password');
   }
 
-  const expiresIn = input.remember ? '30d' : '1h';
-
   const token = jwt.sign(
     { userId: user.id, email: user.email, role: user.role },
     process.env.JWT_SECRET!,
-    { expiresIn, algorithm: "HS256" }
+    { expiresIn: getSessionJwtExpiresIn(input.remember), algorithm: "HS256" }
   );
 
   return { token, user };

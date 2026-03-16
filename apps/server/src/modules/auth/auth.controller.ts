@@ -4,6 +4,11 @@ import { registerUser, loginUser } from './auth.service';
 import { RegisterSchema, LoginSchema } from './auth.types';
 import { sendValidationError } from '../../utils/formatZodError';
 import { sendError } from '../../utils/apiError';
+import {
+  getSessionJwtExpiresIn,
+  getSessionTtlMs,
+  REMEMBER_ME_TTL_MS,
+} from './auth.session';
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -14,7 +19,7 @@ export const register = async (req: Request, res: Response) => {
       { userId: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET!,
       {
-        expiresIn: '30d',
+        expiresIn: getSessionJwtExpiresIn(true),
         algorithm: 'HS256',
       }
     );
@@ -22,7 +27,7 @@ export const register = async (req: Request, res: Response) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: REMEMBER_ME_TTL_MS,
       path: '/',
       sameSite: 'lax',
     });
@@ -44,11 +49,12 @@ export const login = async (req: Request, res: Response) => {
   try {
     const input = LoginSchema.parse(req.body);
     const { token, user } = await loginUser(input);
+    const maxAge = getSessionTtlMs(input.remember);
 
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 1000 * 60 * 60 * 24,
+      maxAge,
       path: '/',
       sameSite: 'lax',
     });

@@ -2,6 +2,7 @@ import request from 'supertest';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { app } from '../../index';
 import { prisma } from '../../prisma/client';
+import { REMEMBER_ME_TTL_MS, SESSION_TTL_MS } from './auth.session';
 
 describe('POST /auth/register', () => {
   beforeEach(async () => {
@@ -65,5 +66,39 @@ describe('POST /auth/register', () => {
 
     expect(res.status).toBe(500); // because service throws duplicate error
     expect(res.body.error.message).toBe('Registration failed');
+  });
+
+  it('sets short-lived cookie for login without remember me', async () => {
+    await request(app).post('/auth/register').send({
+      email: 'session-short@example.com',
+      password: 'test1234',
+    });
+
+    const res = await request(app).post('/auth/login').send({
+      email: 'session-short@example.com',
+      password: 'test1234',
+      remember: false,
+    });
+
+    expect(res.status).toBe(200);
+    const setCookie = res.headers['set-cookie']?.[0] ?? '';
+    expect(setCookie).toContain(`Max-Age=${Math.floor(SESSION_TTL_MS / 1000)}`);
+  });
+
+  it('sets remember-me cookie for login with remember flag', async () => {
+    await request(app).post('/auth/register').send({
+      email: 'session-remember@example.com',
+      password: 'test1234',
+    });
+
+    const res = await request(app).post('/auth/login').send({
+      email: 'session-remember@example.com',
+      password: 'test1234',
+      remember: true,
+    });
+
+    expect(res.status).toBe(200);
+    const setCookie = res.headers['set-cookie']?.[0] ?? '';
+    expect(setCookie).toContain(`Max-Age=${Math.floor(REMEMBER_ME_TTL_MS / 1000)}`);
   });
 });
