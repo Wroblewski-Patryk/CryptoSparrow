@@ -117,12 +117,12 @@ Rule: fix/cleanup/update first, then feature delivery.
 
 ## MVP Exit Criteria
 - [x] Phase 0 fully complete.
-- [ ] End-to-end flow works: strategy -> backtest -> paper -> live opt-in.
-- [ ] Security guardrails active: encryption, ownership checks, rate limits, audit logs.
-- [ ] Core tests passing for auth, strategy CRUD, market/bot isolation, and trading critical paths.
-- [ ] UI scope complete for markets, builder, bots, orders, positions, backtest, reports, logs, exchanges.
-- [ ] EN/PL and responsive/PWA baseline complete for core flows.
-- [ ] Shared app shell and view-state model are consistent across core dashboard modules.
+- [x] End-to-end flow works: strategy -> backtest -> paper -> live opt-in.
+- [x] Security guardrails active: encryption, ownership checks, rate limits, audit logs.
+- [x] Core tests passing for auth, strategy CRUD, market/bot isolation, and trading critical paths.
+- [x] UI scope complete for markets, builder, bots, orders, positions, backtest, reports, logs, exchanges.
+- [x] EN/PL and responsive/PWA baseline complete for core flows.
+- [x] Shared app shell and view-state model are consistent across core dashboard modules.
 
 ## Progress Log
 - 2026-03-15: Initialized MVP execution file and commit rules.
@@ -215,3 +215,5 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Added explicit MVP known limits and post-MVP boundary document for release communication.
 - 2026-03-16: Added MVP release checklist and project changelog for closure readiness.
 - 2026-03-16: Synced stale plan checkboxes to match delivered logs API and i18n hardcoded-copy cleanup status.
+- 2026-03-16: Updated MVP exit criteria to reflect verified guardrails, green core suites, and completed UI/i18n shell baselines.
+- 2026-03-16: Added automated server e2e smoke flow for strategy -> backtest -> paper -> live opt-in guardrail path.

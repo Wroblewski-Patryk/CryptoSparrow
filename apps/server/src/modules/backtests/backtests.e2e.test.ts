@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { app } from '../../index';
+import { analyzePreTrade } from '../engine/preTrade.service';
 import { prisma } from '../../prisma/client';
 
 const registerAndLogin = async (email: string) => {
@@ -183,5 +184,76 @@ describe('Backtests runs contract', () => {
     const reportRes = await agent.get(`/dashboard/backtests/runs/${runId}/report`);
     expect(reportRes.status).toBe(404);
     expect(reportRes.body.error.message).toBe('Report not found');
+  });
+
+  it('covers strategy -> backtest -> paper -> live opt-in critical flow', async () => {
+    const ownerEmail = 'backtests-owner-flow@example.com';
+    const agent = await registerAndLogin(ownerEmail);
+
+    const strategyRes = await agent.post('/dashboard/strategies').send({
+      name: 'Flow strategy',
+      description: 'MVP critical path strategy',
+      interval: '1h',
+      leverage: 2,
+      walletRisk: 1,
+      config: {
+        open: { logic: 'AND', rules: [] },
+        close: { logic: 'OR', rules: [] },
+      },
+    });
+    expect(strategyRes.status).toBe(201);
+    const strategyId = strategyRes.body.id as string;
+
+    const runRes = await agent.post('/dashboard/backtests/runs').send({
+      ...createPayload(),
+      strategyId,
+    });
+    expect(runRes.status).toBe(201);
+    expect(runRes.body.strategyId).toBe(strategyId);
+
+    const userId = await getUserIdByEmail(ownerEmail);
+    const bot = await prisma.bot.create({
+      data: {
+        userId,
+        name: 'Flow live bot',
+        mode: 'LIVE',
+        liveOptIn: false,
+        consentTextVersion: null,
+        isActive: true,
+      },
+    });
+
+    const paperDecision = await analyzePreTrade({
+      userId,
+      symbol: 'BTCUSDT',
+      mode: 'PAPER',
+    });
+    expect(paperDecision.allowed).toBe(true);
+
+    const liveBlockedDecision = await analyzePreTrade({
+      userId,
+      botId: bot.id,
+      symbol: 'BTCUSDT',
+      mode: 'LIVE',
+    });
+    expect(liveBlockedDecision.allowed).toBe(false);
+    expect(liveBlockedDecision.reasons).toContain('live_opt_in_required');
+    expect(liveBlockedDecision.reasons).toContain('live_consent_version_required');
+
+    await prisma.bot.update({
+      where: { id: bot.id },
+      data: {
+        liveOptIn: true,
+        consentTextVersion: 'mvp-v1',
+      },
+    });
+
+    const liveAllowedDecision = await analyzePreTrade({
+      userId,
+      botId: bot.id,
+      symbol: 'BTCUSDT',
+      mode: 'LIVE',
+    });
+    expect(liveAllowedDecision.allowed).toBe(true);
   });
 });
