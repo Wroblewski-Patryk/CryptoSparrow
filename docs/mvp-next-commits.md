@@ -108,6 +108,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-16 `security(keys): add API key rotate/revoke lifecycle endpoints with ownership checks`
 - [x] 2026-03-16 `security(access): redact password hash from auth/profile API responses`
 - [x] 2026-03-16 `security(access): narrow profile delete endpoint to self-route only (no :id path)`
+- [x] 2026-03-16 `docs(security): add threat model and residual risk register baseline`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
