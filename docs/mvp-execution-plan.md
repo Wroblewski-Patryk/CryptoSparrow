@@ -21,7 +21,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `P0 security(live-consent): add consentTextVersion to bot/live consent flow (schema, DTO, persistence, audit)`
 - [x] `P1 config(api): harden APP_URL/CORS parsing and remove undefined:* edge cases`
 - [x] `P1 config(client): remove hardcoded localhost baseURL and switch to env/runtime-safe config`
-- [ ] `P1 security(crypto): migrate API-key encryption from CBC to AEAD (AES-GCM or XChaCha20-Poly1305) with key versioning`
+- [x] `P1 security(crypto): migrate API-key encryption from CBC to AEAD (AES-GCM or XChaCha20-Poly1305) with key versioning`
 - [ ] `P1 api(logs): implement real logs API (`/dashboard/logs`) with actor/source/severity filters`
 - [ ] `P1 infra(rate-limit): replace in-memory limiter with Redis-backed strategy and bounded key growth`
 - [ ] `P1 qa(test-suite): restore fully green test run for server + client with FK-safe cleanup`
@@ -204,3 +204,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Secured avatar upload endpoint with auth, rate limiting, strict MIME/size validation, and upload e2e coverage.
 - 2026-03-16: Added `consentTextVersion` across bot live-consent flow with persistence, API validation, pre-trade enforcement, and audit logging.
 - 2026-03-16: Hardened runtime URL/CORS parsing in server config and switched client API base URL to env-driven setup.
+- 2026-03-16: Migrated API-key encryption to AES-GCM with key versioning and legacy CBC backward compatibility during decrypt.

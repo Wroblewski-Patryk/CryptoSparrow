@@ -62,8 +62,8 @@ describe("API Keys security contract", () => {
 
     expect(dbRecord.apiKey).not.toBe(payload.apiKey);
     expect(dbRecord.apiSecret).not.toBe(payload.apiSecret);
-    expect(dbRecord.apiKey).toContain(":");
-    expect(dbRecord.apiSecret).toContain(":");
+    expect(dbRecord.apiKey).toContain("gcm");
+    expect(dbRecord.apiSecret).toContain("gcm");
 
     const listRes = await agent.get("/dashboard/profile/apiKeys");
     expect(listRes.status).toBe(200);
