@@ -1,20 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt, { JwtPayload } from 'jsonwebtoken';
 import { sendError } from '../utils/apiError';
-import { AuthRole } from '../types/express';
-
-type TokenPayload = JwtPayload & {
-  userId?: string;
-  email?: string;
-  role?: AuthRole;
-};
+import { verifyAuthToken } from '../modules/auth/auth.jwt';
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const token = req.cookies.token;
   if (!token) return sendError(res, 401, 'Missing token');
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET!) as TokenPayload;
+    const payload = verifyAuthToken(token);
 
     if (!payload.userId || !payload.email || !payload.role) {
       return sendError(res, 401, 'Invalid token');

@@ -1,9 +1,9 @@
 import { prisma } from '../../prisma/client';
 import { RegisterInput, LoginInput } from './auth.types';
 import { hashPassword, comparePassword } from '../../utils/hash';
-import jwt from 'jsonwebtoken';
 import { serverUrl } from '../../config/runtime';
 import { getSessionJwtExpiresIn } from './auth.session';
+import { signAuthToken } from './auth.jwt';
 
 export const registerUser = async (
     input: RegisterInput
@@ -44,10 +44,9 @@ export const loginUser = async (input: LoginInput) => {
     throw new Error('Invalid email or password');
   }
 
-  const token = jwt.sign(
+  const token = signAuthToken(
     { userId: user.id, email: user.email, role: user.role },
-    process.env.JWT_SECRET!,
-    { expiresIn: getSessionJwtExpiresIn(input.remember), algorithm: "HS256" }
+    getSessionJwtExpiresIn(input.remember)
   );
 
   return { token, user };

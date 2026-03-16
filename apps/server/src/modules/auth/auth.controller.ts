@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
 import { registerUser, loginUser } from './auth.service';
 import { RegisterSchema, LoginSchema } from './auth.types';
 import { sendValidationError } from '../../utils/formatZodError';
@@ -9,19 +8,16 @@ import {
   getSessionTtlMs,
   REMEMBER_ME_TTL_MS,
 } from './auth.session';
+import { signAuthToken, verifyAuthToken } from './auth.jwt';
 
 export const register = async (req: Request, res: Response) => {
   try {
     const input = RegisterSchema.parse(req.body);
     const user = await registerUser(input);
 
-    const token = jwt.sign(
+    const token = signAuthToken(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET!,
-      {
-        expiresIn: getSessionJwtExpiresIn(true),
-        algorithm: 'HS256',
-      }
+      getSessionJwtExpiresIn(true)
     );
 
     res.cookie('token', token, {
@@ -83,10 +79,7 @@ export const me = async (req: Request, res: Response) => {
     const token = req.cookies.token;
     if (!token) return sendError(res, 401, 'Missing token');
 
-    const payload = jwt.verify(token, process.env.JWT_SECRET!) as {
-      userId: string;
-      email: string;
-    };
+    const payload = verifyAuthToken(token);
 
     return res.status(200).json({
       id: payload.userId,
