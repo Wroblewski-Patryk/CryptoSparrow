@@ -28,7 +28,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [ ] `feat(obs): alert rules for failed orders, stale market data, and worker health`
 - [ ] `feat(ops): health/readiness endpoints for api and workers`
 - [ ] `feat(ops): split workers for market-data/backtest/execution`
-- [ ] `chore(ops): deployment runbook + rollback checklist + incident playbook`
+- [x] `chore(ops): deployment runbook + rollback checklist + incident playbook`
 - [ ] `test(drill): run incident simulation drills and document outcomes`
 
 ## Phase C - Scale and Performance
@@ -87,3 +87,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-16: Added baseline structured API request logging (JSON payload with method/path/status/duration/timestamp) as first observability layer.
 - 2026-03-16: Added explicit JWT previous-secret expiry policy (`JWT_SECRET_PREVIOUS_UNTIL`) with regression coverage for open and expired rotation windows.
 - 2026-03-16: Added structured logging in exchange live-order adapter for retry, success, and terminal failure events (attempt metadata included).
+- 2026-03-16: Added V1 operations runbook covering deployment gates, rollback checklist, severity model, and incident response flow.
