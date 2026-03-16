@@ -20,9 +20,14 @@ const getUserId = async (email: string) => {
 
 describe('Orders and positions read contract', () => {
   beforeEach(async () => {
+    await prisma.log.deleteMany();
+    await prisma.backtestReport.deleteMany();
+    await prisma.backtestTrade.deleteMany();
+    await prisma.backtestRun.deleteMany();
     await prisma.trade.deleteMany();
     await prisma.order.deleteMany();
     await prisma.position.deleteMany();
+    await prisma.signal.deleteMany();
     await prisma.botStrategy.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();

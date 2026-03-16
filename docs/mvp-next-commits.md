@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `P1 qa(test-suite): make server+client test suites fully green (including FK-safe cleanup)`
 
 ## NEXT
 - [ ] `P1 api(logs): implement /dashboard/logs with actor/source/severity filtering`
@@ -101,6 +100,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-16 `security(live-consent): add consentTextVersion end-to-end (schema, DTO, persistence, audit)`
 - [x] 2026-03-16 `config(api+client): fix CORS/URL parsing and remove hardcoded localhost baseURL`
 - [x] 2026-03-16 `security(crypto): migrate API-key encryption to AEAD + key versioning`
+- [x] 2026-03-16 `qa(test-suite): make server+client test suites fully green (including FK-safe cleanup)`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

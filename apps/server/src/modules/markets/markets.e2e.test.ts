@@ -24,6 +24,17 @@ const createPayload = () => ({
 
 describe('Markets module contract', () => {
   beforeEach(async () => {
+    await prisma.log.deleteMany();
+    await prisma.backtestReport.deleteMany();
+    await prisma.backtestTrade.deleteMany();
+    await prisma.backtestRun.deleteMany();
+    await prisma.trade.deleteMany();
+    await prisma.order.deleteMany();
+    await prisma.position.deleteMany();
+    await prisma.signal.deleteMany();
+    await prisma.botStrategy.deleteMany();
+    await prisma.bot.deleteMany();
+    await prisma.symbolGroup.deleteMany();
     await prisma.strategy.deleteMany();
     await prisma.marketUniverse.deleteMany();
     await prisma.apiKey.deleteMany();
