@@ -4,6 +4,7 @@ import dashboardRoutes from './dashboard.routes';
 import adminRoutes from './admin.routes';
 import uploadRouter from '../modules/upload/upload.routes';
 import { metricsStore } from '../observability/metrics';
+import { evaluateRuntimeAlerts } from '../observability/alerts';
 
 const router = Router();
 
@@ -41,6 +42,26 @@ router.get('/ready', (_req, res) => {
 
 router.get('/metrics', (_req, res) => {
   return res.status(200).json(metricsStore.snapshot());
+});
+
+router.get('/alerts', (_req, res) => {
+  const nowMs = Date.now();
+  const marketDataLastAtRaw = process.env.WORKER_LAST_MARKET_DATA_AT ?? '';
+  const workerHeartbeatLastAtRaw = process.env.WORKER_LAST_HEARTBEAT_AT ?? '';
+  const marketDataLastAtMs = Number.isNaN(Date.parse(marketDataLastAtRaw))
+    ? null
+    : Date.parse(marketDataLastAtRaw);
+  const workerHeartbeatLastAtMs = Number.isNaN(Date.parse(workerHeartbeatLastAtRaw))
+    ? null
+    : Date.parse(workerHeartbeatLastAtRaw);
+
+  const alerts = evaluateRuntimeAlerts({
+    nowMs,
+    marketDataLastAtMs,
+    workerHeartbeatLastAtMs,
+  });
+
+  return res.status(200).json({ alerts });
 });
 
 router.get('/workers/health', (_req, res) => {
