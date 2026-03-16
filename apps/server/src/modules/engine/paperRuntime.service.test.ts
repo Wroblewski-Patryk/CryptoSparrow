@@ -125,4 +125,57 @@ describe('PaperRuntimeService', () => {
       })
     ).toThrow('Paper runtime task requires a non-empty timeframe');
   });
+
+  it('emits structured worker logs for skip/error/success paths', async () => {
+    let releaseFetch: () => void = () => {};
+    const pendingFetch = new Promise<void>((resolve) => {
+      releaseFetch = resolve;
+    });
+    const marketDataService: PaperRuntimeMarketDataService = {
+      ingestOHLCV: vi
+        .fn()
+        .mockImplementationOnce(async () => {
+          await pendingFetch;
+          return baseCandles;
+        })
+        .mockResolvedValueOnce(baseCandles)
+        .mockRejectedValueOnce(new Error('feed unavailable')),
+    };
+    const logger = {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    };
+    const runtime = new PaperRuntimeService(marketDataService, logger);
+
+    const slowOnTick = vi.fn().mockResolvedValue(undefined);
+    const failingOnTick = vi.fn().mockRejectedValue(new Error('handler failed'));
+
+    const firstRun = runtime.runOnce([{ symbol: 'BTCUSDT', timeframe: '1m', onTick: slowOnTick }]);
+    await Promise.resolve();
+    await runtime.runOnce([{ symbol: 'BTCUSDT', timeframe: '1m', onTick: vi.fn() }]);
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'worker.paper_runtime.task_skipped_inflight',
+      })
+    );
+
+    releaseFetch();
+    await firstRun;
+
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'worker.paper_runtime.task_processed',
+        candlesCount: baseCandles.length,
+      })
+    );
+
+    await runtime.runOnce([{ symbol: 'ETHUSDT', timeframe: '1m', onTick: failingOnTick }]);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'worker.paper_runtime.task_failed',
+      })
+    );
+  });
 });

@@ -4,6 +4,21 @@ export interface PaperRuntimeMarketDataService {
   ingestOHLCV(input: OhlcvRequest, forceRefresh?: boolean): Promise<OhlcvCandle[]>;
 }
 
+type WorkerRuntimeLogPayload = {
+  event: string;
+  taskKey?: string;
+  symbol?: string;
+  timeframe?: string;
+  candlesCount?: number;
+  error?: string;
+};
+
+type WorkerRuntimeLogger = {
+  info: (payload: WorkerRuntimeLogPayload) => void;
+  warn: (payload: WorkerRuntimeLogPayload) => void;
+  error: (payload: WorkerRuntimeLogPayload) => void;
+};
+
 export type PaperRuntimeTask = {
   symbol: string;
   timeframe: string;
@@ -31,11 +46,35 @@ const validateRuntimeConfig = (config: PaperRuntimeConfig) => {
   }
 };
 
+const emitWorkerLog = (
+  level: 'info' | 'warn' | 'error',
+  payload: WorkerRuntimeLogPayload
+) => {
+  if (process.env.NODE_ENV === 'test') return;
+  console.log(
+    JSON.stringify({
+      level,
+      module: 'worker.paper-runtime',
+      timestamp: new Date().toISOString(),
+      ...payload,
+    })
+  );
+};
+
+const defaultWorkerRuntimeLogger: WorkerRuntimeLogger = {
+  info: (payload) => emitWorkerLog('info', payload),
+  warn: (payload) => emitWorkerLog('warn', payload),
+  error: (payload) => emitWorkerLog('error', payload),
+};
+
 export class PaperRuntimeService {
   private timer: NodeJS.Timeout | null = null;
   private inFlightTaskKeys = new Set<string>();
 
-  constructor(private readonly marketDataService: PaperRuntimeMarketDataService) {}
+  constructor(
+    private readonly marketDataService: PaperRuntimeMarketDataService,
+    private readonly logger: WorkerRuntimeLogger = defaultWorkerRuntimeLogger
+  ) {}
 
   isRunning() {
     return this.timer !== null;
@@ -68,7 +107,15 @@ export class PaperRuntimeService {
 
   private async processTask(task: PaperRuntimeTask) {
     const taskKey = `${task.symbol.toUpperCase()}|${task.timeframe}`;
-    if (this.inFlightTaskKeys.has(taskKey)) return;
+    if (this.inFlightTaskKeys.has(taskKey)) {
+      this.logger.warn({
+        event: 'worker.paper_runtime.task_skipped_inflight',
+        taskKey,
+        symbol: task.symbol,
+        timeframe: task.timeframe,
+      });
+      return;
+    }
 
     this.inFlightTaskKeys.add(taskKey);
 
@@ -83,7 +130,21 @@ export class PaperRuntimeService {
       );
 
       await task.onTick(candles);
-    } catch {
+      this.logger.info({
+        event: 'worker.paper_runtime.task_processed',
+        taskKey,
+        symbol: task.symbol,
+        timeframe: task.timeframe,
+        candlesCount: candles.length,
+      });
+    } catch (error) {
+      this.logger.error({
+        event: 'worker.paper_runtime.task_failed',
+        taskKey,
+        symbol: task.symbol,
+        timeframe: task.timeframe,
+        error: error instanceof Error ? error.message : 'unknown_error',
+      });
       // Runtime loop should continue after transient data/handler errors.
     } finally {
       this.inFlightTaskKeys.delete(taskKey);

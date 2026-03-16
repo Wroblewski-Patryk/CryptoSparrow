@@ -23,7 +23,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [x] `docs(security): update threat model and residual risk register`
 
 ## Phase B - Reliability, Operations, and Runtime
-- [ ] `feat(obs): structured logging across api/worker/exchange layers`
+- [x] `feat(obs): structured logging across api/worker/exchange layers`
 - [ ] `feat(obs): metrics for latency, error rate, queue lag, and order failures`
 - [ ] `feat(obs): alert rules for failed orders, stale market data, and worker health`
 - [x] `feat(ops): health/readiness endpoints for api and workers`
@@ -95,3 +95,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-16: Reduced trading-critical runtime debt by adding explicit input guards for paper lifecycle ticks (markPrice and entry quantity) with regression tests.
 - 2026-03-16: Isolated pre-trade risk evaluation into dedicated pure service to separate risk decision logic from IO/audit orchestration.
 - 2026-03-16: Added worker health/readiness endpoints with split-mode queue-env checks and regression coverage.
+- 2026-03-16: Completed structured logging baseline across API requests, worker runtime loop, and exchange order adapter events.
