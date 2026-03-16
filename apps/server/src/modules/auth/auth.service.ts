@@ -2,6 +2,7 @@ import { prisma } from '../../prisma/client';
 import { RegisterInput, LoginInput } from './auth.types';
 import { hashPassword, comparePassword } from '../../utils/hash';
 import jwt from 'jsonwebtoken';
+import { serverUrl } from '../../config/runtime';
 
 export const registerUser = async (
     input: RegisterInput
@@ -16,8 +17,7 @@ export const registerUser = async (
 
   const hashed = await hashPassword(input.password);
 
-  const serverUrl = process.env.SERVER_URL+':'+process.env.SERVER_PORT;
-  const avatarUrl = serverUrl + "/avatars/default.png";
+  const avatarUrl = `${serverUrl}/avatars/default.png`;
 
   const user = await prisma.user.create({
     data: {

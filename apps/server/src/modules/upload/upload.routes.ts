@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import { sendError } from '../../utils/apiError';
 import { requireAuth } from '../../middleware/requireAuth';
 import { createRateLimiter } from '../../middleware/rateLimit';
+import { serverUrl } from '../../config/runtime';
 
 const uploadRouter = Router();
 const uploadLimiter = createRateLimiter({ windowMs: 60_000, max: 20 });
@@ -63,9 +64,7 @@ uploadRouter.post('/avatar', requireAuth, uploadLimiter, async (req, res) => {
   try {
     await sharp(req.file.path).resize(150, 150).jpeg({ quality: 80 }).toFile(outPath);
     await fs.promises.unlink(req.file.path);
-    const serverUrl =
-      process.env.SERVER_URL + ':' + process.env.SERVER_PORT || 'http://localhost:3001';
-    const url = serverUrl + '/avatars/' + outFilename;
+    const url = `${serverUrl}/avatars/${outFilename}`;
     return res.json({ url });
   } catch {
     await fs.promises.unlink(req.file.path).catch(() => undefined);
