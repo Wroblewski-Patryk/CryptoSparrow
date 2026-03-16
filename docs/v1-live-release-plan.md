@@ -32,7 +32,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [x] `test(drill): run incident simulation drills and document outcomes`
 
 ## Phase C - Scale and Performance
-- [ ] `perf(cache): production Redis caching strategy for market and dashboard`
+- [x] `perf(cache): production Redis caching strategy for market and dashboard`
 - [ ] `perf(queue): BullMQ job model tuning for data/signal/execution`
 - [ ] `perf(db): indexes and query tuning for orders/positions/backtests/logs`
 - [ ] `perf(api): pagination/filtering standards for large datasets`
@@ -100,3 +100,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-16: Added runtime alert evaluator and `/alerts` endpoint covering order-failure spikes, stale market data, queue lag pressure, and missing worker heartbeat.
 - 2026-03-16: Added dedicated market-data/backtest/execution worker entrypoints and dev scripts with heartbeat bootstrap for split-worker runtime mode.
 - 2026-03-16: Added documented incident drill runs (failure spike, stale data, missing heartbeat) with outcomes and follow-up actions.
+- 2026-03-16: Extended market-data caching with Redis-backed read/write path and resilient fallback to local in-memory cache.

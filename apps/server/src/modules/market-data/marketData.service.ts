@@ -1,4 +1,5 @@
 import { OhlcvCandle, OhlcvRequest, OhlcvRequestSchema } from './marketData.types';
+import { createClient } from 'redis';
 
 export interface MarketDataProvider {
   fetchOHLCV(input: OhlcvRequest): Promise<OhlcvCandle[]>;
@@ -13,15 +14,44 @@ type CacheEntry = {
 type MarketDataServiceOptions = {
   cacheTtlMs?: number;
   maxEntries?: number;
+  useRedisCache?: boolean;
 };
 
 const DEFAULT_CACHE_TTL_MS = 30_000;
 const DEFAULT_MAX_ENTRIES = 500;
+const DEFAULT_REDIS_URL = 'redis://localhost:6379';
+
+type RedisClient = ReturnType<typeof createClient>;
+let redisClientPromise: Promise<RedisClient | null> | null = null;
+
+const getRedisClient = async () => {
+  if (process.env.NODE_ENV === 'test') return null;
+
+  if (!redisClientPromise) {
+    redisClientPromise = (async () => {
+      try {
+        const client = createClient({
+          url: process.env.REDIS_URL || DEFAULT_REDIS_URL,
+        });
+        client.on('error', () => {
+          // Fallback to local cache when Redis is unavailable.
+        });
+        await client.connect();
+        return client;
+      } catch {
+        return null;
+      }
+    })();
+  }
+
+  return redisClientPromise;
+};
 
 export class MarketDataService {
   private readonly cache = new Map<string, CacheEntry>();
   private readonly cacheTtlMs: number;
   private readonly maxEntries: number;
+  private readonly useRedisCache: boolean;
 
   constructor(
     private readonly provider: MarketDataProvider,
@@ -29,6 +59,7 @@ export class MarketDataService {
   ) {
     this.cacheTtlMs = options.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
     this.maxEntries = options.maxEntries ?? DEFAULT_MAX_ENTRIES;
+    this.useRedisCache = options.useRedisCache ?? true;
   }
 
   async ingestOHLCV(input: OhlcvRequest, forceRefresh = false): Promise<OhlcvCandle[]> {
@@ -43,6 +74,17 @@ export class MarketDataService {
       if (cached && cached.expiresAt > now) {
         return cached.value;
       }
+
+      const redisCached = await this.readFromRedis(cacheKey);
+      if (redisCached) {
+        this.cache.set(cacheKey, {
+          value: redisCached,
+          expiresAt: now + this.cacheTtlMs,
+          createdAt: now,
+        });
+        this.enforceMaxEntries();
+        return redisCached;
+      }
     }
 
     const fresh = await this.provider.fetchOHLCV(parsed);
@@ -53,6 +95,7 @@ export class MarketDataService {
       createdAt: now,
     });
     this.enforceMaxEntries();
+    await this.writeToRedis(cacheKey, fresh);
 
     return fresh;
   }
@@ -79,6 +122,34 @@ export class MarketDataService {
     const oldestEntry = [...this.cache.entries()].sort((a, b) => a[1].createdAt - b[1].createdAt)[0];
     if (oldestEntry) {
       this.cache.delete(oldestEntry[0]);
+    }
+  }
+
+  private async readFromRedis(cacheKey: string) {
+    if (!this.useRedisCache) return null;
+    const client = await getRedisClient();
+    if (!client) return null;
+
+    try {
+      const raw = await client.get(`market:${cacheKey}`);
+      if (!raw) return null;
+      return JSON.parse(raw) as OhlcvCandle[];
+    } catch {
+      return null;
+    }
+  }
+
+  private async writeToRedis(cacheKey: string, value: OhlcvCandle[]) {
+    if (!this.useRedisCache) return;
+    const client = await getRedisClient();
+    if (!client) return;
+
+    try {
+      await client.set(`market:${cacheKey}`, JSON.stringify(value), {
+        PX: this.cacheTtlMs,
+      });
+    } catch {
+      // Redis write failures should not block market ingestion path.
     }
   }
 }
