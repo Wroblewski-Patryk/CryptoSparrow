@@ -54,6 +54,7 @@ Operational baseline for production deployment, rollback, and incident response 
 
 ## Alerting Reference
 - Use baseline alert definitions from `docs/v1-alert-rules.md`.
+- Record and review drill outcomes in `docs/v1-incident-drills.md`.
 
 ## Ownership
 - Incident commander: backend on-call owner.

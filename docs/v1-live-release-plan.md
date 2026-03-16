@@ -29,7 +29,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [x] `feat(ops): health/readiness endpoints for api and workers`
 - [x] `feat(ops): split workers for market-data/backtest/execution`
 - [x] `chore(ops): deployment runbook + rollback checklist + incident playbook`
-- [ ] `test(drill): run incident simulation drills and document outcomes`
+- [x] `test(drill): run incident simulation drills and document outcomes`
 
 ## Phase C - Scale and Performance
 - [ ] `perf(cache): production Redis caching strategy for market and dashboard`
@@ -99,3 +99,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-16: Extended `/metrics` with exchange retry/failure counters and worker queue-lag gauges, completing latency/error/queue/order-failure metric baseline.
 - 2026-03-16: Added runtime alert evaluator and `/alerts` endpoint covering order-failure spikes, stale market data, queue lag pressure, and missing worker heartbeat.
 - 2026-03-16: Added dedicated market-data/backtest/execution worker entrypoints and dev scripts with heartbeat bootstrap for split-worker runtime mode.
+- 2026-03-16: Added documented incident drill runs (failure spike, stale data, missing heartbeat) with outcomes and follow-up actions.
