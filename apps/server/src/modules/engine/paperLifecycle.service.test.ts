@@ -128,4 +128,30 @@ describe('paper lifecycle', () => {
     expect(closeTick.nextState.position).toBeNull();
     expect(closeTick.tradeResult?.netPnl).toBeCloseTo(17.394, 4);
   });
+
+  it('rejects invalid mark price and entry quantity', () => {
+    expect(() =>
+      processPaperLifecycleTick(emptyState(), {
+        markPrice: 0,
+        entryOrder: {
+          type: 'MARKET',
+          side: 'BUY',
+          quantity: 1,
+        },
+        management: {},
+      })
+    ).toThrow('Paper lifecycle requires a positive markPrice');
+
+    expect(() =>
+      processPaperLifecycleTick(emptyState(), {
+        markPrice: 100,
+        entryOrder: {
+          type: 'MARKET',
+          side: 'BUY',
+          quantity: 0,
+        },
+        management: {},
+      })
+    ).toThrow('Paper lifecycle requires a positive entry order quantity');
+  });
 });

@@ -39,10 +39,22 @@ export type PaperLifecycleTickResult = {
 const toPositionSide = (orderSide: 'BUY' | 'SELL'): 'LONG' | 'SHORT' =>
   orderSide === 'BUY' ? 'LONG' : 'SHORT';
 
+const validateLifecycleInput = (input: PaperLifecycleInput) => {
+  if (!Number.isFinite(input.markPrice) || input.markPrice <= 0) {
+    throw new Error('Paper lifecycle requires a positive markPrice');
+  }
+
+  if (!Number.isFinite(input.entryOrder.quantity) || input.entryOrder.quantity <= 0) {
+    throw new Error('Paper lifecycle requires a positive entry order quantity');
+  }
+};
+
 export const processPaperLifecycleTick = (
   state: PaperLifecycleState,
   input: PaperLifecycleInput
 ): PaperLifecycleTickResult => {
+  validateLifecycleInput(input);
+
   if (!state.position) {
     const entryEval = evaluateOrderExecution(
       {
