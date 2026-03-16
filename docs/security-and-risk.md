@@ -12,6 +12,9 @@ CryptoSparrow is not financial advice. Trading involves risk and users remain re
 For MVP user-facing wording (banner, modal, consent checkbox), use:
 - `docs/mvp-risk-consent-text.md`
 
+For API-key handling policy (create/rotate/revoke cadence), use:
+- `docs/api-key-lifecycle-policy.md`
+
 ## Authentication Plan
 - MVP: email + password.
 - After MVP: OAuth (Google and others).

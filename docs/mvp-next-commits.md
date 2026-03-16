@@ -115,6 +115,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-16 `security(auth): enforce bounded previous-secret JWT rotation window policy`
 - [x] 2026-03-16 `feat(obs): add structured exchange order retry/success/failure logs`
 - [x] 2026-03-16 `chore(ops): add V1 deployment/rollback/incident runbook`
+- [x] 2026-03-16 `security(keys): add API key lifecycle policy documentation for V1`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
