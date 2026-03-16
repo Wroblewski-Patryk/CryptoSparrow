@@ -27,7 +27,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [x] `feat(obs): metrics for latency, error rate, queue lag, and order failures`
 - [x] `feat(obs): alert rules for failed orders, stale market data, and worker health`
 - [x] `feat(ops): health/readiness endpoints for api and workers`
-- [ ] `feat(ops): split workers for market-data/backtest/execution`
+- [x] `feat(ops): split workers for market-data/backtest/execution`
 - [x] `chore(ops): deployment runbook + rollback checklist + incident playbook`
 - [ ] `test(drill): run incident simulation drills and document outcomes`
 
@@ -98,3 +98,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-16: Completed structured logging baseline across API requests, worker runtime loop, and exchange order adapter events.
 - 2026-03-16: Extended `/metrics` with exchange retry/failure counters and worker queue-lag gauges, completing latency/error/queue/order-failure metric baseline.
 - 2026-03-16: Added runtime alert evaluator and `/alerts` endpoint covering order-failure spikes, stale market data, queue lag pressure, and missing worker heartbeat.
+- 2026-03-16: Added dedicated market-data/backtest/execution worker entrypoints and dev scripts with heartbeat bootstrap for split-worker runtime mode.
