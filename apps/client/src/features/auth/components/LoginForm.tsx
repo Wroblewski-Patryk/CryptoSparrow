@@ -64,7 +64,7 @@ export default function LoginForm() {
           </Link>
         </p>
         <p className="text-center">
-          <Link href="/auth/password" className="link link-hover">Forgot password?</Link>
+          <span className="opacity-70">Password reset will be available after MVP.</span>
         </p>
 
       </fieldset>    

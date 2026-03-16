@@ -26,7 +26,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `P1 infra(rate-limit): replace in-memory limiter with Redis-backed strategy and bounded key growth`
 - [x] `P1 qa(test-suite): restore fully green test run for server + client with FK-safe cleanup`
 - [x] `P2 auth(session): align remember-me JWT semantics with cookie/session TTL`
-- [ ] `P2 contract(auth): either implement forgot-password endpoints or remove dead client calls`
+- [x] `P2 contract(auth): either implement forgot-password endpoints or remove dead client calls`
 - [ ] `P2 i18n: remove remaining hardcoded UI strings from dashboard/logs and related views`
 - [ ] `P3 cleanup(types): remove remaining any in profile routes/controllers`
 - [ ] `docs(sync): correct plan claims that conflict with actual implementation status`
@@ -209,3 +209,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Implemented `/dashboard/logs` backend with source/actor/severity filtering and wired logs dashboard to real API data.
 - 2026-03-16: Replaced in-memory rate limiting with Redis-backed counters and TTL-based bounded key growth, with local fallback.
 - 2026-03-16: Unified remember-me JWT and cookie TTL semantics with explicit auth session constants and e2e coverage.
+- 2026-03-16: Removed dead forgot-password client call paths to align auth contract with implemented backend endpoints.

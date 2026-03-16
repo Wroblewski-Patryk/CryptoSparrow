@@ -66,12 +66,12 @@ export default function RegisterForm(){
 
         <p className="text-center">
           Have an account? {" "}
-          <Link href="/auth/register" className="link link-hover">
-            Sign up
+          <Link href="/auth/login" className="link link-hover">
+            Log in
           </Link>
         </p>
         <p className="text-center">
-          <Link href="/auth/password" className="link link-hover">Forgot password?</Link>
+          <span className="opacity-70">Password reset will be available after MVP.</span>
         </p>
       </fieldset>
     </form>

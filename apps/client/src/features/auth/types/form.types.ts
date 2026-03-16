@@ -22,12 +22,5 @@ export const loginSchema = z.object({
   remember: z.boolean().optional(),
 });
 
-export const forgotPasswordSchema = z.object({
-  email: z.string()
-    .regex(/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/,{ message: "Podaj poprawny email" }),
-});
-
-
 export type RegisterFormData = z.infer<typeof registerSchema>;
 export type LoginFormData = z.infer<typeof loginSchema>;
-export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
