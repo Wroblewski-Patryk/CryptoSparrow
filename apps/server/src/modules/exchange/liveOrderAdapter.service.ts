@@ -1,6 +1,7 @@
 import { CcxtFuturesConnector } from './ccxtFuturesConnector.service';
 import { CcxtFuturesOrderResult } from './ccxtFuturesConnector.types';
 import { PlaceLiveOrderInput, PlaceLiveOrderInputSchema } from './liveOrderAdapter.types';
+import { metricsStore } from '../../observability/metrics';
 
 type SleepFn = (delayMs: number) => Promise<void>;
 type LogLevel = 'info' | 'warn' | 'error';
@@ -67,6 +68,7 @@ export class LiveOrderAdapter {
 
     while (attempt < maxAttempts) {
       attempt += 1;
+      metricsStore.recordExchangeOrderAttempt();
       try {
         const result = await this.connector.placeOrder(parsed.order);
         this.logger.info({
@@ -82,6 +84,7 @@ export class LiveOrderAdapter {
         lastError = error;
         const canRetry = attempt < maxAttempts && isRetryableError(error);
         if (!canRetry) {
+          metricsStore.recordExchangeOrderFailure();
           this.logger.error({
             event: 'exchange.live_order.failed',
             attempt,
@@ -95,6 +98,7 @@ export class LiveOrderAdapter {
         }
 
         const delay = baseDelayMs * attempt;
+        metricsStore.recordExchangeOrderRetry();
         this.logger.warn({
           event: 'exchange.live_order.retry',
           attempt,

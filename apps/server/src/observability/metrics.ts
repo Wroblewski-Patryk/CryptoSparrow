@@ -7,6 +7,18 @@ type MetricsSnapshot = {
     totalDurationMs: number;
     avgDurationMs: number;
   };
+  exchange: {
+    orderAttempts: number;
+    orderRetries: number;
+    orderFailures: number;
+  };
+  worker: {
+    queueLag: {
+      marketData: number;
+      backtest: number;
+      execution: number;
+    };
+  };
 };
 
 type HttpMetricInput = {
@@ -20,6 +32,12 @@ class InMemoryMetricsStore {
   private status4xx = 0;
   private status5xx = 0;
   private totalDurationMs = 0;
+  private exchangeOrderAttempts = 0;
+  private exchangeOrderRetries = 0;
+  private exchangeOrderFailures = 0;
+  private marketDataQueueLag = 0;
+  private backtestQueueLag = 0;
+  private executionQueueLag = 0;
 
   recordHttp(input: HttpMetricInput) {
     this.requestsTotal += 1;
@@ -38,6 +56,25 @@ class InMemoryMetricsStore {
     }
   }
 
+  recordExchangeOrderAttempt() {
+    this.exchangeOrderAttempts += 1;
+  }
+
+  recordExchangeOrderRetry() {
+    this.exchangeOrderRetries += 1;
+  }
+
+  recordExchangeOrderFailure() {
+    this.exchangeOrderFailures += 1;
+  }
+
+  setWorkerQueueLag(kind: 'marketData' | 'backtest' | 'execution', lag: number) {
+    const value = Number.isFinite(lag) ? Math.max(0, lag) : 0;
+    if (kind === 'marketData') this.marketDataQueueLag = value;
+    if (kind === 'backtest') this.backtestQueueLag = value;
+    if (kind === 'execution') this.executionQueueLag = value;
+  }
+
   snapshot(): MetricsSnapshot {
     const avgDurationMs = this.requestsTotal > 0 ? this.totalDurationMs / this.requestsTotal : 0;
     return {
@@ -49,9 +86,20 @@ class InMemoryMetricsStore {
         totalDurationMs: this.totalDurationMs,
         avgDurationMs,
       },
+      exchange: {
+        orderAttempts: this.exchangeOrderAttempts,
+        orderRetries: this.exchangeOrderRetries,
+        orderFailures: this.exchangeOrderFailures,
+      },
+      worker: {
+        queueLag: {
+          marketData: this.marketDataQueueLag,
+          backtest: this.backtestQueueLag,
+          execution: this.executionQueueLag,
+        },
+      },
     };
   }
 }
 
 export const metricsStore = new InMemoryMetricsStore();
-

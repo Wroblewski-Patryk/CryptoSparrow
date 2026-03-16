@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { app } from '../index';
+import { metricsStore } from '../observability/metrics';
 
 type MetricsPayload = {
   http: {
@@ -10,6 +11,18 @@ type MetricsPayload = {
     status5xx: number;
     totalDurationMs: number;
     avgDurationMs: number;
+  };
+  exchange: {
+    orderAttempts: number;
+    orderRetries: number;
+    orderFailures: number;
+  };
+  worker: {
+    queueLag: {
+      marketData: number;
+      backtest: number;
+      execution: number;
+    };
   };
 };
 
@@ -34,5 +47,24 @@ describe('metrics endpoint', () => {
     expect(after.http.totalDurationMs).toBeGreaterThanOrEqual(before.http.totalDurationMs);
     expect(after.http.avgDurationMs).toBeGreaterThanOrEqual(0);
   });
-});
 
+  it('exposes exchange failure/retry counters and worker queue lag gauges', async () => {
+    const before = await getMetrics();
+
+    metricsStore.recordExchangeOrderAttempt();
+    metricsStore.recordExchangeOrderRetry();
+    metricsStore.recordExchangeOrderFailure();
+    metricsStore.setWorkerQueueLag('marketData', 5);
+    metricsStore.setWorkerQueueLag('backtest', 2);
+    metricsStore.setWorkerQueueLag('execution', 1);
+
+    const after = await getMetrics();
+
+    expect(after.exchange.orderAttempts).toBeGreaterThanOrEqual(before.exchange.orderAttempts + 1);
+    expect(after.exchange.orderRetries).toBeGreaterThanOrEqual(before.exchange.orderRetries + 1);
+    expect(after.exchange.orderFailures).toBeGreaterThanOrEqual(before.exchange.orderFailures + 1);
+    expect(after.worker.queueLag.marketData).toBe(5);
+    expect(after.worker.queueLag.backtest).toBe(2);
+    expect(after.worker.queueLag.execution).toBe(1);
+  });
+});

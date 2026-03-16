@@ -55,6 +55,12 @@ router.get('/workers/health', (_req, res) => {
 
 router.get('/workers/ready', (_req, res) => {
   const mode = process.env.WORKER_MODE?.trim() || 'inline';
+  const marketDataLag = Number.parseInt(process.env.WORKER_MARKET_DATA_QUEUE_LAG ?? '0', 10);
+  const backtestLag = Number.parseInt(process.env.WORKER_BACKTEST_QUEUE_LAG ?? '0', 10);
+  const executionLag = Number.parseInt(process.env.WORKER_EXECUTION_QUEUE_LAG ?? '0', 10);
+  metricsStore.setWorkerQueueLag('marketData', Number.isNaN(marketDataLag) ? 0 : marketDataLag);
+  metricsStore.setWorkerQueueLag('backtest', Number.isNaN(backtestLag) ? 0 : backtestLag);
+  metricsStore.setWorkerQueueLag('execution', Number.isNaN(executionLag) ? 0 : executionLag);
 
   if (mode !== 'split') {
     return res.status(200).json({

@@ -123,6 +123,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-16 `refactor(engine): isolate pre-trade risk decision logic from IO/audit layer`
 - [x] 2026-03-16 `feat(ops): add workers health/readiness endpoints with split-mode checks`
 - [x] 2026-03-16 `feat(obs): complete structured logging baseline for api, worker, and exchange`
+- [x] 2026-03-16 `feat(obs): complete metrics baseline for latency/error/queue-lag/order-failures`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
