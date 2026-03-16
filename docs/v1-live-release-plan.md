@@ -91,3 +91,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-16: Added explicit API-key lifecycle policy document (create/rotate/revoke and rotation cadence) and linked it from security docs.
 - 2026-03-16: Added baseline `/metrics` endpoint with cumulative HTTP counters and latency aggregates, wired through request middleware.
 - 2026-03-16: Added ownership-enforcement audit baseline across sensitive modules and linked the report from security docs.
+- 2026-03-16: Added baseline V1 alert-rule catalog for failed orders, stale market data, and worker-heartbeat loss with severity/action mapping.

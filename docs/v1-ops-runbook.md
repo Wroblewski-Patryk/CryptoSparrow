@@ -52,6 +52,9 @@ Operational baseline for production deployment, rollback, and incident response 
 6. Recover service and validate smoke checks.
 7. Write post-incident summary with root cause and follow-up tasks.
 
+## Alerting Reference
+- Use baseline alert definitions from `docs/v1-alert-rules.md`.
+
 ## Ownership
 - Incident commander: backend on-call owner.
 - Deployment owner: release engineer.
