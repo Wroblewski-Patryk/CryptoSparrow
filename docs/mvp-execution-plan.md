@@ -96,7 +96,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 
 ## Phase 5 - MVP Closure and Release Readiness
 - [x] `docs(ops): MVP runbook for deployment and recovery`
-- [ ] `docs(risk): user-facing trading risk notice and live consent text`
+- [x] `docs(risk): user-facing trading risk notice and live consent text`
 - [ ] `docs(release): known limits and post-MVP boundaries`
 - [ ] `chore(release): MVP release checklist and changelog`
 
@@ -184,3 +184,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-16: Extended shared ViewState tests for consistent title/description rendering and action-button visibility rules across loading/empty/degraded/error/success variants.
 - 2026-03-16: Added manual UX checklist for 10-second control-center operator clarity and linked it in testing strategy docs.
 - 2026-03-16: Added MVP operations runbook covering deployment steps, health verification, rollback, and recovery playbooks.
+- 2026-03-16: Added MVP user-facing risk notice and live-consent text pack (EN/PL) with consent-versioning and audit logging guidance.

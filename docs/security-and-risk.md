@@ -9,6 +9,9 @@
 ## Trading Risk Notice
 CryptoSparrow is not financial advice. Trading involves risk and users remain responsible for their decisions. Automated execution should require explicit user consent.
 
+For MVP user-facing wording (banner, modal, consent checkbox), use:
+- `docs/mvp-risk-consent-text.md`
+
 ## Authentication Plan
 - MVP: email + password.
 - After MVP: OAuth (Google and others).
@@ -23,3 +26,4 @@ CryptoSparrow is not financial advice. Trading involves risk and users remain re
 - All sensitive actions require authentication and ownership checks.
 - Rate limiting for all trading and market endpoints.
 - Live trading must be an explicit opt-in per bot.
+- Live consent acceptance must be audit-logged with text version (`consentTextVersion`).
