@@ -62,7 +62,7 @@ export default function SafetyBar({ mode = 'PAPER' }: SafetyBarProps) {
   const modeValue = mode.toLowerCase() as 'paper' | 'live' | 'local';
 
   return (
-    <div className='sticky top-16 z-30 mb-4 rounded-xl border border-base-300 bg-base-200/95 px-4 py-3 shadow-sm backdrop-blur'>
+    <div className='sticky top-16 z-30 mb-4 rounded-xl border border-base-300 bg-base-200/95 px-3 py-3 shadow-sm backdrop-blur sm:px-4'>
       <div className='flex flex-wrap items-center gap-3'>
         <StatusBadge kind='mode' value={modeValue} />
         <StatusBadge
@@ -82,7 +82,7 @@ export default function SafetyBar({ mode = 'PAPER' }: SafetyBarProps) {
 
         <button
           type='button'
-          className='btn btn-error btn-xs ml-auto'
+          className='btn btn-error btn-xs w-full sm:ml-auto sm:w-auto'
           onClick={() => router.push('/dashboard/profile#security')}
         >
           Emergency Stop

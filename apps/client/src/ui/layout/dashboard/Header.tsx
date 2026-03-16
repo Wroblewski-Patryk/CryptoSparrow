@@ -8,36 +8,41 @@ import LanguageSwitcher from './LanguageSwitcher';
 
 export default function Header() {
   const { t } = useI18n();
+  const navLinks = [
+    { href: "/dashboard/markets", label: t("dashboard.nav.markets") },
+    { href: "/dashboard/builder", label: t("dashboard.nav.builder") },
+    { href: "/dashboard/strategies", label: t("dashboard.nav.strategies") },
+    { href: "/dashboard/backtest", label: t("dashboard.nav.backtest") },
+    { href: "/dashboard/reports", label: t("dashboard.nav.reports") },
+    { href: "/dashboard/logs", label: t("dashboard.nav.logs") },
+    { href: "/dashboard/exchanges", label: t("dashboard.nav.exchanges") },
+    { href: "/dashboard/orders", label: t("dashboard.nav.orders") },
+    { href: "/dashboard/positions", label: t("dashboard.nav.positions") },
+    { href: "/dashboard/bots", label: t("dashboard.nav.bots") },
+  ];
 
   return (
     <header className="bg-primary sticky top-0 z-50 shadow-sm">
-      <div className="navbar max-w-7xl mx-auto px-4">
-        <div className="flex-1">
+      <div className="navbar max-w-7xl mx-auto flex-wrap items-start gap-2 px-4 py-2 xl:flex-nowrap xl:items-center">
+        <div className="flex-1 min-w-0">
           <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-base-100">
             <img src="/logo.png" alt="Logotype - CryptoSparrow" className="h-8 w-8 mr-2" />
-            CryptoSparrow
+            <span className="truncate">CryptoSparrow</span>
           </Link>
         </div>
-        <div className="flex-none">
-          <ul className="menu menu-horizontal px-1">
-            <li><Link href="/dashboard/markets">{t("dashboard.nav.markets")}</Link></li>
-            <li><Link href="/dashboard/builder">{t("dashboard.nav.builder")}</Link></li>
-            <li><Link href="/dashboard/strategies">{t("dashboard.nav.strategies")}</Link></li>
-            <li><Link href="/dashboard/backtest">{t("dashboard.nav.backtest")}</Link></li>
-            <li><Link href="/dashboard/reports">{t("dashboard.nav.reports")}</Link></li>
-            <li><Link href="/dashboard/logs">{t("dashboard.nav.logs")}</Link></li>
-            <li><Link href="/dashboard/exchanges">{t("dashboard.nav.exchanges")}</Link></li>
-            <li><Link href="/dashboard/orders">{t("dashboard.nav.orders")}</Link></li>
-            <li><Link href="/dashboard/positions">{t("dashboard.nav.positions")}</Link></li>
-            <li><Link href="/dashboard/bots">{t("dashboard.nav.bots")}</Link></li>
+        <div className="flex-none w-full xl:w-auto">
+          <ul className="menu menu-horizontal w-full max-w-full flex-nowrap overflow-x-auto whitespace-nowrap px-1 xl:w-auto xl:overflow-visible">
+            {navLinks.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href}>{item.label}</Link>
+              </li>
+            ))}
           </ul>
-          <ul className="menu menu-horizontal px-1">
-            <li className="ml-4"><ProfileButton /></li>
-          </ul>
-          <ul className="menu menu-horizontal px-1">
-            <li className="mr-2"><LanguageSwitcher /></li>
-            <li><ThemeSwitcher /></li>
-          </ul>
+          <div className="mt-2 flex items-center justify-end gap-2 px-1 xl:mt-1">
+            <ProfileButton />
+            <LanguageSwitcher />
+            <ThemeSwitcher />
+          </div>
         </div>
       </div>
     </header>

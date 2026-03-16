@@ -25,7 +25,7 @@ export function PageTitle({ title, breadcrumb = [], onAdd, addLabel }: PageTitle
     <div className="mb-6 rounded-xl border border-base-300 bg-base-200 px-5 py-4 shadow-sm md:flex md:items-center md:justify-between">
       <div className="min-w-0">
         <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{title}</h1>
-        <div className="breadcrumbs mt-2 text-sm opacity-80">
+        <div className="breadcrumbs mt-2 max-w-full overflow-x-auto text-sm opacity-80">
           <ul>
             {normalizedBreadcrumb.map((item) => (
               <li key={item.href || item.label}>
