@@ -85,7 +85,7 @@ export class CcxtFuturesConnector {
     const client = await this.getOrCreateClient();
     const params: Record<string, unknown> = {};
 
-    if (typeof request.reduceOnly === 'boolean') {
+    if (this.config.marketType === 'future' && typeof request.reduceOnly === 'boolean') {
       params.reduceOnly = request.reduceOnly;
     }
     if (request.clientOrderId) {
@@ -133,7 +133,7 @@ export class CcxtFuturesConnector {
       password: this.config.password,
       enableRateLimit: this.config.enableRateLimit,
       options: {
-        defaultType: 'future',
+        defaultType: this.config.marketType,
       },
     });
 

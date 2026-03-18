@@ -105,3 +105,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Added composite performance indexes and migration for orders/positions/backtests/logs list/filter query patterns.
 - 2026-03-19: Added queue tuning profiles with env-driven overrides for market-data/backtest/execution workers and regression tests for defaults/overrides/fallback validation.
 - 2026-03-19: Added baseline/stress load-test runner for API and worker monitoring endpoints, with configurable thresholds and documented execution flow.
+- 2026-03-19: Started spot-support delivery by extending exchange connector with `marketType` (`future`/`spot`) runtime options and futures-only parameter guards.

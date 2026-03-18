@@ -38,6 +38,14 @@ describe('CcxtFuturesConnector scaffold', () => {
     await connector.connect();
 
     expect(factory).toHaveBeenCalledTimes(1);
+    expect(factory).toHaveBeenCalledWith(
+      'binanceusdm',
+      expect.objectContaining({
+        options: expect.objectContaining({
+          defaultType: 'future',
+        }),
+      })
+    );
     expect(client.setSandboxMode).toHaveBeenCalledWith(true);
     expect(client.loadMarkets).toHaveBeenCalledTimes(1);
   });
@@ -82,5 +90,43 @@ describe('CcxtFuturesConnector scaffold', () => {
     );
     expect(order.id).toBe('order-1');
     expect(order.status).toBe('open');
+  });
+
+  it('configures spot mode and skips futures-only reduceOnly param', async () => {
+    const client = createMockClient();
+    const factory: CcxtClientFactory = vi.fn().mockResolvedValue(client);
+    const connector = new CcxtFuturesConnector(
+      {
+        exchangeId: 'binance',
+        marketType: 'spot',
+      },
+      factory
+    );
+
+    await connector.connect();
+    await connector.placeOrder({
+      symbol: 'BTC/USDT',
+      type: 'market',
+      side: 'buy',
+      amount: 0.2,
+      reduceOnly: true,
+    });
+
+    expect(factory).toHaveBeenCalledWith(
+      'binance',
+      expect.objectContaining({
+        options: expect.objectContaining({
+          defaultType: 'spot',
+        }),
+      })
+    );
+    expect(client.createOrder).toHaveBeenCalledWith(
+      'BTC/USDT',
+      'market',
+      'buy',
+      0.2,
+      undefined,
+      {}
+    );
   });
 });

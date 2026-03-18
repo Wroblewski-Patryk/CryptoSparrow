@@ -5,6 +5,7 @@ export const CcxtFuturesConnectorConfigSchema = z.object({
   apiKey: z.string().trim().min(1).optional(),
   secret: z.string().trim().min(1).optional(),
   password: z.string().trim().min(1).optional(),
+  marketType: z.enum(['future', 'spot']).default('future'),
   sandbox: z.boolean().default(false),
   enableRateLimit: z.boolean().default(true),
 });
