@@ -1,21 +1,18 @@
-// Typ strategii w bazie
-export interface Strategy {
-    id: string;
-    userId: string;
-    name: string;
-    description?: string;
-    type: string;
-    config: any; // można dać Record<string, any> albo zdefiniować dokładniej
-    createdAt: Date;
-    updatedAt: Date;
+import type { Prisma } from '@prisma/client';
+
+export interface CreateStrategyDto {
+  name: string;
+  description?: string;
+  interval: string;
+  leverage: number;
+  walletRisk: number;
+  config: Prisma.JsonValue;
 }
 
-// DTO do tworzenia/edycji
-export interface CreateStrategyDto {
-    name: string;
-    description?: string;
-    interval: string;
-    leverage: number;
-    walletRisk: number;
-    config: any;
-}
+export const STRATEGY_EXPORT_FORMAT_VERSION = 'strategy.v1' as const;
+
+export type StrategyExportPackage = {
+  formatVersion: typeof STRATEGY_EXPORT_FORMAT_VERSION;
+  exportedAt: string;
+  strategy: CreateStrategyDto;
+};

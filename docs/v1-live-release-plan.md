@@ -40,7 +40,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 
 ## Phase D - Product Expansion to V1.0 Scope
 - [ ] `feat(trading): spot trading support`
-- [ ] `feat(strategy): strategy import/export with format versioning`
+- [x] `feat(strategy): strategy import/export with format versioning`
 - [ ] `feat(trading): hedge mode support`
 - [ ] `feat(risk): advanced limits (daily loss/drawdown/consecutive losses)`
 - [ ] `feat(risk): cooldown policies after losses`
@@ -106,3 +106,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Added queue tuning profiles with env-driven overrides for market-data/backtest/execution workers and regression tests for defaults/overrides/fallback validation.
 - 2026-03-19: Added baseline/stress load-test runner for API and worker monitoring endpoints, with configurable thresholds and documented execution flow.
 - 2026-03-19: Started spot-support delivery by extending exchange connector with `marketType` (`future`/`spot`) runtime options and futures-only parameter guards.
+- 2026-03-19: Added strategy export/import API with `strategy.v1` package versioning and ownership-safe contract coverage.

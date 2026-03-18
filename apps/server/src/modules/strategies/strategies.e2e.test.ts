@@ -88,6 +88,39 @@ describe('Strategies CRUD contract', () => {
     expect(getDeletedRes.body.error.message).toBe('Not found');
   });
 
+  it('supports export/import flow with format versioning', async () => {
+    const agent = await registerAndLogin('strategies-export@example.com');
+
+    const createRes = await agent.post('/dashboard/strategies').send(createStrategyPayload());
+    expect(createRes.status).toBe(201);
+    const strategyId = createRes.body.id as string;
+
+    const exportRes = await agent.get(`/dashboard/strategies/${strategyId}/export`);
+    expect(exportRes.status).toBe(200);
+    expect(exportRes.body.formatVersion).toBe('strategy.v1');
+    expect(exportRes.body.strategy.name).toBe('RSI + MACD');
+
+    const importRes = await agent.post('/dashboard/strategies/import').send(exportRes.body);
+    expect(importRes.status).toBe(201);
+    expect(importRes.body.id).toBeDefined();
+    expect(importRes.body.id).not.toBe(strategyId);
+    expect(importRes.body.name).toBe(exportRes.body.strategy.name);
+    expect(importRes.body.interval).toBe(exportRes.body.strategy.interval);
+  });
+
+  it('rejects import when formatVersion is invalid', async () => {
+    const agent = await registerAndLogin('strategies-import-invalid@example.com');
+    const invalidPayload = {
+      formatVersion: 'strategy.v0',
+      exportedAt: new Date().toISOString(),
+      strategy: createStrategyPayload(),
+    };
+
+    const importRes = await agent.post('/dashboard/strategies/import').send(invalidPayload);
+    expect(importRes.status).toBe(400);
+    expect(importRes.body.error.message).toBe('Invalid strategy import payload');
+  });
+
   it('enforces ownership isolation on get/update/delete', async () => {
     const ownerAgent = await registerAndLogin('strategies-owner-2@example.com');
     const otherAgent = await registerAndLogin('strategies-other@example.com');

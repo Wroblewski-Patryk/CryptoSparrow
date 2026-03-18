@@ -12,7 +12,9 @@ strategiesRouter.use('/indicators', indicatorsRouter);
 
 //Main
 strategiesRouter.get('/', tradingReadLimiter, strategyController.getStrategies);
+strategiesRouter.post('/import', tradingWriteLimiter, strategyController.importStrategy);
 strategiesRouter.get('/:id', tradingReadLimiter, strategyController.getStrategy);
+strategiesRouter.get('/:id/export', tradingReadLimiter, strategyController.exportStrategy);
 strategiesRouter.post('/', tradingWriteLimiter, strategyController.createStrategy);
 strategiesRouter.put('/:id', tradingWriteLimiter, strategyController.updateStrategy);
 strategiesRouter.delete('/:id', tradingWriteLimiter, strategyController.deleteStrategy);

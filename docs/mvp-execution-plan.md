@@ -220,3 +220,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Continued post-MVP queue performance hardening by adding env-tunable worker queue profiles in V1 release track.
 - 2026-03-19: Added post-MVP load baseline/stress test runner and execution docs for API and worker monitoring endpoints.
 - 2026-03-19: Began V1 spot-trading expansion with connector-level market type switch (`future`/`spot`) and safety guard for futures-only order params.
+- 2026-03-19: Added strategy import/export API flow with explicit `strategy.v1` format-version contract for post-MVP product expansion.

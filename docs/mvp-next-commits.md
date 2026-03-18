@@ -133,6 +133,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `perf(queue): add queue tuning profiles with env overrides for split workers`
 - [x] 2026-03-19 `test(load): add baseline and stress load runner for api/workers`
 - [x] 2026-03-19 `feat(trading): start spot support with exchange marketType toggle`
+- [x] 2026-03-19 `feat(strategy): add strategy import/export endpoints with strategy.v1 format`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
