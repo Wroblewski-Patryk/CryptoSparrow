@@ -99,3 +99,4 @@ Useful overrides:
 - Added MVP ops runbook (deployment + recovery): `docs/mvp-ops-runbook.md`.
 - Added V1 operator handbook: `docs/operator-handbook.md`.
 - Added V1 user guide (onboarding/safety/FAQ): `docs/user-guide.md`.
+- Added localization QA checklist: `docs/localization-qa.md`.

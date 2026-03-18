@@ -28,6 +28,8 @@
 - Responsive tests for desktop/tablet/mobile core dashboards.
 - UX manual checklist for control-center 10-second operator clarity:
   - `docs/control-center-10s-checklist.md`
+- Localization QA checklist:
+  - `docs/localization-qa.md`
 - Load tests for API and worker monitoring endpoints:
   - baseline: `pnpm --filter server test:load:baseline`
   - stress: `pnpm --filter server test:load:stress`

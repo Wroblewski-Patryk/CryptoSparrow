@@ -136,6 +136,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `feat(strategy): add strategy import/export endpoints with strategy.v1 format`
 - [x] 2026-03-19 `docs(operator): add production operations handbook`
 - [x] 2026-03-19 `docs(user): add onboarding safety faq troubleshooting guide`
+- [x] 2026-03-19 `feat(i18n): add localization QA checklist and locale-formatting tests`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
