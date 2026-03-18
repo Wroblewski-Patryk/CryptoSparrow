@@ -1,5 +1,4 @@
 'use client';
-import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext'; 
 import { LuKey, LuLogOut, LuSettings, LuSubscript, LuUser } from 'react-icons/lu';
 
@@ -16,7 +15,7 @@ export default function ProfileButton() {
   if (loading) return <span className="mt-2 loading loading-dots loading-xs text-secondary"></span>;
   return (  
     <details>
-      <summary><LuUser className="float-left" />Moje konto</summary>
+      <summary aria-label="Open account menu"><LuUser className="float-left" />Moje konto</summary>
       <ul className="bg-base-100 rounded-t-none"> 
         {profileMenu.map(item => (
         <li key={item.hash}>
@@ -36,6 +35,7 @@ export default function ProfileButton() {
           <button 
             onClick={logout} 
             className="cursor-pointer"
+            aria-label="Wyloguj"
             ><LuLogOut className='float-left'/> Wyloguj
           </button>
         </li>

@@ -225,3 +225,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Added V1 user guide with onboarding, safety recommendations, FAQ, troubleshooting, and live-readiness checklist.
 - 2026-03-19: Completed localization QA baseline via EN/PL parity checks, locale-formatting tests, and release checklist documentation.
 - 2026-03-19: Added optional dashboard isometric visual mode with persistent toggle and targeted UI test coverage.
+- 2026-03-19: Improved dashboard accessibility controls with stronger menu semantics and heartbeat status live-region announcements.

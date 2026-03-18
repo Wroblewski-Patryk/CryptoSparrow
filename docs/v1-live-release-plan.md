@@ -111,3 +111,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Added user-facing V1 guide covering onboarding flow, safety-first rules, FAQ, troubleshooting, and live-readiness checklist.
 - 2026-03-19: Completed localization QA baseline with EN/PL parity checks, locale-formatting tests, and dedicated QA checklist for release verification.
 - 2026-03-19: Added optional dashboard isometric visual mode toggle with persisted preference and dedicated UI regression coverage.
+- 2026-03-19: Improved accessibility in dashboard controls by hardening theme/account switcher semantics and adding screen-reader heartbeat live-region updates.

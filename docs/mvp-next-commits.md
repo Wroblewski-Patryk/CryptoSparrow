@@ -138,6 +138,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `docs(user): add onboarding safety faq troubleshooting guide`
 - [x] 2026-03-19 `feat(i18n): add localization QA checklist and locale-formatting tests`
 - [x] 2026-03-19 `feat(ui-theme): add optional dashboard isometric mode toggle`
+- [x] 2026-03-19 `feat(accessibility): improve dashboard control semantics and live regions`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
