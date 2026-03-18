@@ -54,7 +54,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [ ] `feat(accessibility): full accessibility pass for core dashboard`
 - [ ] `feat(ui-theme): optional isometric visual mode for dashboard (late-stage polish, non-blocking)`
 - [ ] `docs(user): onboarding, safety guide, FAQ, and troubleshooting`
-- [ ] `docs(operator): production operations handbook`
+- [x] `docs(operator): production operations handbook`
 
 ## Phase F - Go-Live Program
 - [ ] `chore(release): release candidate checklist`
@@ -107,3 +107,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Added baseline/stress load-test runner for API and worker monitoring endpoints, with configurable thresholds and documented execution flow.
 - 2026-03-19: Started spot-support delivery by extending exchange connector with `marketType` (`future`/`spot`) runtime options and futures-only parameter guards.
 - 2026-03-19: Added strategy export/import API with `strategy.v1` package versioning and ownership-safe contract coverage.
+- 2026-03-19: Added production operator handbook with shift checklists, monitoring routine, safe deployment flow, and incident/operator procedures.
