@@ -135,6 +135,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `feat(trading): start spot support with exchange marketType toggle`
 - [x] 2026-03-19 `feat(strategy): add strategy import/export endpoints with strategy.v1 format`
 - [x] 2026-03-19 `docs(operator): add production operations handbook`
+- [x] 2026-03-19 `docs(user): add onboarding safety faq troubleshooting guide`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

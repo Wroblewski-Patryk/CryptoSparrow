@@ -53,7 +53,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [ ] `feat(i18n): complete EN/PL parity and localization QA`
 - [ ] `feat(accessibility): full accessibility pass for core dashboard`
 - [ ] `feat(ui-theme): optional isometric visual mode for dashboard (late-stage polish, non-blocking)`
-- [ ] `docs(user): onboarding, safety guide, FAQ, and troubleshooting`
+- [x] `docs(user): onboarding, safety guide, FAQ, and troubleshooting`
 - [x] `docs(operator): production operations handbook`
 
 ## Phase F - Go-Live Program
@@ -108,3 +108,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Started spot-support delivery by extending exchange connector with `marketType` (`future`/`spot`) runtime options and futures-only parameter guards.
 - 2026-03-19: Added strategy export/import API with `strategy.v1` package versioning and ownership-safe contract coverage.
 - 2026-03-19: Added production operator handbook with shift checklists, monitoring routine, safe deployment flow, and incident/operator procedures.
+- 2026-03-19: Added user-facing V1 guide covering onboarding flow, safety-first rules, FAQ, troubleshooting, and live-readiness checklist.
