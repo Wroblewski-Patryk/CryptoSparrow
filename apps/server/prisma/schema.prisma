@@ -212,6 +212,9 @@ model Position {
   trades            Trade[]
 
   @@index([userId])
+  @@index([userId, openedAt])
+  @@index([userId, status, openedAt])
+  @@index([userId, symbol, openedAt])
   @@index([botId])
   @@index([strategyId])
   @@index([symbol])
@@ -250,6 +253,9 @@ model Order {
   trades            Trade[]
 
   @@index([userId])
+  @@index([userId, createdAt])
+  @@index([userId, status, createdAt])
+  @@index([userId, symbol, createdAt])
   @@index([botId])
   @@index([strategyId])
   @@index([positionId])
@@ -381,6 +387,8 @@ model BacktestRun {
   report            BacktestReport?
 
   @@index([userId])
+  @@index([userId, createdAt])
+  @@index([userId, status, createdAt])
   @@index([strategyId])
   @@index([status])
   @@index([startedAt])
@@ -410,6 +418,7 @@ model BacktestTrade {
   backtestRun       BacktestRun   @relation(fields: [backtestRunId], references: [id])
 
   @@index([userId])
+  @@index([userId, backtestRunId, closedAt])
   @@index([strategyId])
   @@index([backtestRunId])
   @@index([symbol])
@@ -474,6 +483,10 @@ model Log {
   strategy          Strategy? @relation(fields: [strategyId], references: [id])
 
   @@index([userId])
+  @@index([userId, occurredAt])
+  @@index([userId, source, occurredAt])
+  @@index([userId, actor, occurredAt])
+  @@index([userId, level, occurredAt])
   @@index([botId])
   @@index([strategyId])
   @@index([level])

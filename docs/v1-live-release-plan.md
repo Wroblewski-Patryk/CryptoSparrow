@@ -34,7 +34,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 ## Phase C - Scale and Performance
 - [x] `perf(cache): production Redis caching strategy for market and dashboard`
 - [ ] `perf(queue): BullMQ job model tuning for data/signal/execution`
-- [ ] `perf(db): indexes and query tuning for orders/positions/backtests/logs`
+- [x] `perf(db): indexes and query tuning for orders/positions/backtests/logs`
 - [x] `perf(api): pagination/filtering standards for large datasets`
 - [ ] `test(load): baseline and stress tests for API/worker throughput`
 
@@ -102,3 +102,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-16: Added documented incident drill runs (failure spike, stale data, missing heartbeat) with outcomes and follow-up actions.
 - 2026-03-16: Extended market-data caching with Redis-backed read/write path and resilient fallback to local in-memory cache.
 - 2026-03-19: Standardized API pagination (`page` + `limit`) for orders, positions, and logs with validation regression tests.
+- 2026-03-19: Added composite performance indexes and migration for orders/positions/backtests/logs list/filter query patterns.
