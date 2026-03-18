@@ -5,6 +5,7 @@ import ProfileButton from '../../components/ProfileButton';
 import ThemeSwitcher from '../../components/ThemeSwitch';
 import { useI18n } from '../../../i18n/I18nProvider';
 import LanguageSwitcher from './LanguageSwitcher';
+import IsometricModeToggle from './IsometricModeToggle';
 
 export default function Header() {
   const { t } = useI18n();
@@ -43,6 +44,7 @@ export default function Header() {
           <div className="mt-2 flex items-center justify-end gap-2 px-1 xl:mt-1">
             <ProfileButton />
             <LanguageSwitcher />
+            <IsometricModeToggle />
             <ThemeSwitcher />
           </div>
         </div>

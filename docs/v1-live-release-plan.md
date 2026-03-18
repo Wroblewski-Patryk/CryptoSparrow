@@ -52,7 +52,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [ ] `feat(ui-system): harden shared dashboard design system and component documentation`
 - [x] `feat(i18n): complete EN/PL parity and localization QA`
 - [ ] `feat(accessibility): full accessibility pass for core dashboard`
-- [ ] `feat(ui-theme): optional isometric visual mode for dashboard (late-stage polish, non-blocking)`
+- [x] `feat(ui-theme): optional isometric visual mode for dashboard (late-stage polish, non-blocking)`
 - [x] `docs(user): onboarding, safety guide, FAQ, and troubleshooting`
 - [x] `docs(operator): production operations handbook`
 
@@ -110,3 +110,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Added production operator handbook with shift checklists, monitoring routine, safe deployment flow, and incident/operator procedures.
 - 2026-03-19: Added user-facing V1 guide covering onboarding flow, safety-first rules, FAQ, troubleshooting, and live-readiness checklist.
 - 2026-03-19: Completed localization QA baseline with EN/PL parity checks, locale-formatting tests, and dedicated QA checklist for release verification.
+- 2026-03-19: Added optional dashboard isometric visual mode toggle with persisted preference and dedicated UI regression coverage.

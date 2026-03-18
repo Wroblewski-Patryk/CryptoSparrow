@@ -224,3 +224,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Added V1 production operator handbook covering shift checks, monitoring cadence, deployment safety, and incident operation flow.
 - 2026-03-19: Added V1 user guide with onboarding, safety recommendations, FAQ, troubleshooting, and live-readiness checklist.
 - 2026-03-19: Completed localization QA baseline via EN/PL parity checks, locale-formatting tests, and release checklist documentation.
+- 2026-03-19: Added optional dashboard isometric visual mode with persistent toggle and targeted UI test coverage.
