@@ -226,3 +226,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Completed localization QA baseline via EN/PL parity checks, locale-formatting tests, and release checklist documentation.
 - 2026-03-19: Added optional dashboard isometric visual mode with persistent toggle and targeted UI test coverage.
 - 2026-03-19: Improved dashboard accessibility controls with stronger menu semantics and heartbeat status live-region announcements.
+- 2026-03-19: Synced module map docs with strategy import/export support and explicit `strategy.v1` package contract.

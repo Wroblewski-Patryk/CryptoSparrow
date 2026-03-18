@@ -3,7 +3,7 @@
 ## Backend Modules (Current)
 - auth. Registration, login, JWT handling.
 - profile. User profile management.
-- strategies. CRUD for strategies and configuration.
+- strategies. CRUD for strategies/configuration + import/export (`strategy.v1` package format).
 - indicators. Indicator metadata endpoints.
 - upload. File upload services.
 - middleware. Auth and error handling.
