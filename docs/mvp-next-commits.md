@@ -128,6 +128,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-16 `feat(ops): add split worker entrypoints for market-data/backtest/execution`
 - [x] 2026-03-16 `test(drill): document incident drill outcomes for v1 ops scenarios`
 - [x] 2026-03-16 `perf(cache): add Redis-backed market-data cache with local fallback`
+- [x] 2026-03-19 `perf(api): standardize pagination query contract across logs/orders/positions`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

@@ -6,6 +6,7 @@ export const LogsQuerySchema = z.object({
   actor: z.string().trim().min(1).optional(),
   severity: z.nativeEnum(LogLevel).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(100),
+  page: z.coerce.number().int().min(1).default(1),
 });
 
 export type LogsQuery = z.infer<typeof LogsQuerySchema>;

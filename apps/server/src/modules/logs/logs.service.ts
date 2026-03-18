@@ -2,6 +2,7 @@ import { prisma } from "../../prisma/client";
 import { LogsQuery } from "./logs.types";
 
 export const listLogs = async (userId: string, query: LogsQuery) => {
+  const skip = (query.page - 1) * query.limit;
   return prisma.log.findMany({
     where: {
       userId,
@@ -10,6 +11,7 @@ export const listLogs = async (userId: string, query: LogsQuery) => {
       ...(query.severity && { level: query.severity }),
     },
     orderBy: { occurredAt: "desc" },
+    skip,
     take: query.limit,
   });
 };

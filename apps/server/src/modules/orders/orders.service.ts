@@ -2,6 +2,7 @@ import { prisma } from '../../prisma/client';
 import { ListOrdersQuery } from './orders.types';
 
 export const listOrders = async (userId: string, query: ListOrdersQuery) => {
+  const skip = (query.page - 1) * query.limit;
   const where = {
     userId,
     ...(query.status ? { status: query.status } : {}),
@@ -10,6 +11,7 @@ export const listOrders = async (userId: string, query: ListOrdersQuery) => {
 
   return prisma.order.findMany({
     where,
+    skip,
     take: query.limit,
     orderBy: { createdAt: 'desc' },
   });
