@@ -77,6 +77,20 @@ pnpm --filter client build
 pnpm --filter client start
 ```
 
+## Load Testing (Server)
+With backend running on `http://localhost:3001`:
+
+```bash
+pnpm --filter server test:load:baseline
+pnpm --filter server test:load:stress
+```
+
+Useful overrides:
+- `LOAD_TEST_TARGET_URL` (default `http://localhost:3001`)
+- `LOAD_TEST_DURATION_MS`
+- `LOAD_TEST_CONCURRENCY`
+- `LOAD_TEST_PATHS` (comma-separated paths, default `/health,/ready,/metrics,/workers/health`)
+
 ## Recent changes in this setup
 - Added root workspace scripts in `package.json`: `lint`, `typecheck`, `test`, `build`.
 - Added CI workflow: `.github/workflows/ci.yml`.

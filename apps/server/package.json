@@ -10,6 +10,8 @@
     "dev:worker:market-data": "tsx watch src/workers/marketData.worker.ts",
     "dev:worker:backtest": "tsx watch src/workers/backtest.worker.ts",
     "dev:worker:execution": "tsx watch src/workers/execution.worker.ts",
+    "test:load:baseline": "node scripts/load-test.mjs baseline",
+    "test:load:stress": "node scripts/load-test.mjs stress",
     "build": "tsc",
     "start": "node dist/index.js"
   },
