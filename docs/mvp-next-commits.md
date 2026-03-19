@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `decision(stream): choose SSE vs WebSocket fan-out for client transport and document contract`
 - [ ] `feat(ui): implement dashboard live market bar (price, 24h delta, candle freshness, stream health)`
 - [ ] `feat(orders-write): add open/cancel/close order API endpoints with mode/risk guards`
 - [ ] `feat(execution-orchestrator): wire runtime signal -> order -> position flow for paper/live`
@@ -185,6 +184,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `feat(data): add market-data sources for order book/funding/open interest`
 - [x] 2026-03-19 `test(e2e): pass full go-live smoke pack with auto infra+migrations orchestration`
 - [x] 2026-03-19 `feat(market-stream): add Binance WebSocket ingestion worker and normalize ticker/candle events`
+- [x] 2026-03-19 `decision(stream): choose SSE fan-out for MVP and document stream transport contract`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

@@ -98,8 +98,10 @@ This file tracks intentionally unresolved architecture choices so implementation
 - Current assumption: split when queue lag or API latency exceeds acceptable limits.
 
 ## Stream Transport to Frontend
-- Open: server-to-client transport for market stream (`SSE` vs app-level `WebSocket`).
-- Current assumption: start with SSE for simplicity and observability, keep upgrade path to WebSocket gateway.
+- Decision state: resolved on 2026-03-19.
+- MVP decision: use `SSE` for market stream fan-out to dashboard clients.
+- Contract: see `docs/stream-transport-contract.md`.
+- Post-MVP path: keep upgrade path to app-level WebSocket gateway for bidirectional scenarios.
 
 ## Accessibility Scope
 - Open: full accessibility pass timeline.

@@ -117,7 +117,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 
 ## Phase 6 - MVP Freeze Gap Closure (As of 2026-03-19)
 - [ ] `feat(market-stream): implement end-to-end Binance WebSocket ingest for ticker/candle runtime feed`
-- [ ] `decision(stream): close SSE vs WebSocket fan-out decision and lock MVP transport contract`
+- [x] `decision(stream): close SSE vs WebSocket fan-out decision and lock MVP transport contract`
 - [ ] `feat(ui): add dashboard live market bar with stream status, last price, and candle freshness`
 - [ ] `feat(orders-write): add open/cancel/close order actions with risk-first confirmations`
 - [ ] `feat(execution-orchestrator): wire signal -> order -> position lifecycle for paper/live runtime paths`
@@ -275,3 +275,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Validated full go-live smoke flow end-to-end (Docker infra lifecycle + Prisma migrate deploy + server/client smoke suites) with green result.
 - 2026-03-19: Added MVP freeze-gap closure phase (stream transport, live market bar, write-side orders, orchestrator wiring) from updated roadmap/product limits.
 - 2026-03-19: Added Binance market-stream worker scaffold with normalized ticker/kline event parsing for upcoming live dashboard stream fan-out.
+- 2026-03-19: Closed stream transport decision for MVP (SSE fan-out) and documented event contract plus reliability rules for frontend/backend integration.
