@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { sendError } from '../../utils/apiError';
 import { sendValidationError } from '../../utils/formatZodError';
+import { livePositionReconciliationLoop } from './livePositionReconciliation.service';
 import { ListPositionsQuerySchema } from './positions.types';
 import * as positionsService from './positions.service';
 
@@ -26,4 +27,15 @@ export const getPosition = async (req: Request, res: Response) => {
   if (!position) return sendError(res, 404, 'Not found');
 
   return res.json(position);
+};
+
+export const getLiveReconciliationStatus = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  const status = livePositionReconciliationLoop.getStatus();
+  return res.json({
+    ...status,
+    workerHeartbeatAt: process.env.WORKER_LAST_HEARTBEAT_AT ?? null,
+  });
 };

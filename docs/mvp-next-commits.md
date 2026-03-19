@@ -7,10 +7,9 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `feat(positions-live): add live position reconciliation loop and heartbeat/status exposure`
+- [ ] `feat(backtest): finalize overlays/report visuals for MVP completeness`
 
 ## NEXT
-- [ ] `feat(backtest): finalize overlays/report visuals for MVP completeness`
 - [ ] `test(e2e): add stream-to-order orchestration smoke test path`
 - [ ] `docs(mvp): sync Current Scope and Current Limitations after freeze-gap delivery`
 - [ ] `chore(release): re-run MVP release checklist after freeze-gap closure`
@@ -185,6 +184,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `feat(ui): implement dashboard live market bar (price/24h delta/candle freshness/stream health)`
 - [x] 2026-03-19 `feat(orders-write): add open/cancel/close order API endpoints with mode/risk guards`
 - [x] 2026-03-19 `feat(execution-orchestrator): wire runtime signal -> order -> position flow for paper/live`
+- [x] 2026-03-19 `feat(positions-live): add live position reconciliation loop and heartbeat/status exposure`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

@@ -121,7 +121,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(ui): add dashboard live market bar with stream status, last price, and candle freshness`
 - [x] `feat(orders-write): add open/cancel/close order actions with risk-first confirmations`
 - [x] `feat(execution-orchestrator): wire signal -> order -> position lifecycle for paper/live runtime paths`
-- [ ] `feat(positions-live): add live position reconciliation/update loop`
+- [x] `feat(positions-live): add live position reconciliation/update loop`
 - [ ] `feat(backtest): finalize chart overlays and report visualizations to MVP-complete state`
 - [ ] `test(e2e): add runtime orchestration smoke path covering stream -> signal -> order -> position updates`
 
@@ -279,3 +279,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Implemented dashboard live market bar component with SSE listener and UI indicators for price, 24h delta, candle freshness, and stream health state.
 - 2026-03-19: Added orders write-side API (`open`/`cancel`/`close`) with LIVE risk acknowledgments, bot eligibility guards, and contract e2e coverage.
 - 2026-03-19: Wired runtime execution orchestrator service for signal -> order -> position lifecycle (LONG/SHORT/EXIT) with paper/live-compatible flow contracts.
+- 2026-03-19: Added live position reconciliation loop with heartbeat/status exposure (`/dashboard/positions/live-status`) and execution-worker startup integration.
