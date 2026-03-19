@@ -12,7 +12,7 @@ export default function LoginPage() {
     if (!loading && user) {
       router.replace('/dashboard');
     }
-  }, [user, loading]);
+  }, [user, loading, router]);
 
   if (loading) return null;
 

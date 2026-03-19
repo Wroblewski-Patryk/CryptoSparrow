@@ -26,7 +26,7 @@ export default function StrategiesPageEdit() {
                 router.push("/dashboard/strategies");
             }
         })();
-    }, [id]);
+    }, [id, router]);
 
     const handleUpdate = async (form: StrategyFormState) => {
         try {

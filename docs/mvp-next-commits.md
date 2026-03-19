@@ -156,6 +156,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `feat(ui): add bots market filter and fix market/status column mapping`
 - [x] 2026-03-19 `feat(engine): include bot marketType in pre-trade live config and audit metadata`
 - [x] 2026-03-19 `feat(ui): add risk-first confirmation before deleting active/live bot`
+- [x] 2026-03-19 `fix(client): resolve missing router useEffect deps in auth/dashboard pages`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

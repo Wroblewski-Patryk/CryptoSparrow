@@ -16,7 +16,7 @@ export default function DashboardPage() {
     if (!loading && !user) {
       router.push('/auth/login');
     }
-  }, [loading, user]);
+  }, [loading, user, router]);
 
   if (loading) {
     return <LoadingState title='Ladowanie panelu dashboard' />;
