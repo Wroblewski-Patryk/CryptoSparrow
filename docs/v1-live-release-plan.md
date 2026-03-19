@@ -130,3 +130,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Extended pre-trade decision trace for spot rollout by persisting bot `marketType` in critical live-path audit metadata.
 - 2026-03-19: Extended risk-first confirmations by requiring operator confirmation before deleting active/LIVE bot configurations.
 - 2026-03-19: Reduced client lint noise by fixing missing `router` hook dependencies in auth and dashboard navigation guards.
+- 2026-03-19: Reduced remaining client lint/typecheck warnings by cleaning profile hooks and fixing backtest form resolver/type wiring.

@@ -34,7 +34,7 @@ export function useApiKeys() {
       await addApiKey(payload);
       await refresh();
       toast.success("Klucz zostal dodany!");
-    } catch (_err: unknown) {
+    } catch {
       toast.error("Nie udalo sie dodac klucza.");
     }
   };
@@ -44,7 +44,7 @@ export function useApiKeys() {
       await editApiKey(id, payload);
       await refresh();
       toast.success("Klucz zostal zaktualizowany!");
-    } catch (_err: unknown) {
+    } catch {
       toast.error("Nie udalo sie zaktualizowac klucza.");
     }
   };
@@ -54,7 +54,7 @@ export function useApiKeys() {
       await deleteApiKey(id);
       await refresh();
       toast.success("Klucz zostal usuniety!");
-    } catch (_err: unknown) {
+    } catch {
       toast.error("Nie udalo sie usunac klucza.");
     }
   };

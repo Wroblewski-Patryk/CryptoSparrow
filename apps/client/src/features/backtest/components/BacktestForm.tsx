@@ -34,7 +34,8 @@ const FormZ = z.object({
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Maksymalny zakres to 14 dni.', path: ['to'] });
     }
 });
-type FormData = z.infer<typeof FormZ>;
+type FormData = z.input<typeof FormZ>;
+type FormOutput = z.output<typeof FormZ>;
 
 /** ---- tabs ---- */
 const tabs = [
@@ -116,11 +117,11 @@ function SearchableMarketSelect({
 /** ---- main form ---- */
 export function BacktestForm() {
     const [activeTab, setActiveTab] = useState<'chart' | 'trades' | 'metrics' | 'logs'>('chart');
-    const [result, setResult] = useState<MockResult | null>(mock);
+    const [result] = useState<MockResult | null>(mock);
 
     const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } =
-        useForm<FormData>({
-            // resolver: zodResolver(FormZ),
+        useForm<FormData, unknown, FormOutput>({
+            resolver: zodResolver(FormZ),
             defaultValues: {
                 symbol: 'BTC/USDT',
                 from: '',
@@ -130,10 +131,10 @@ export function BacktestForm() {
             }
         });
 
-    const initialBalance = watch('initialBalance');
+    const initialBalance = Number(watch('initialBalance') ?? 0);
     const nowLocal = toLocalDatetimeValue();
 
-    const onSubmit = async (data: FormData) => {
+    const onSubmit = async (data: FormOutput) => {
         console.log('Backtest submit', data);
         setActiveTab('metrics');
     };
@@ -146,7 +147,7 @@ export function BacktestForm() {
     }, [result]);
 
     return (
-        <form>
+        <form onSubmit={handleSubmit(onSubmit)}>
             <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 {/* 1/4 – konfiguracja */}
                 <aside className="md:col-span-1 bg-base-200 rounded-xl p-4 space-y-4">
