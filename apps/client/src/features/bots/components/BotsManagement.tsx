@@ -40,6 +40,7 @@ export default function BotsManagement() {
   const [name, setName] = useState("");
   const [mode, setMode] = useState<BotMode>("PAPER");
   const [marketType, setMarketType] = useState<TradeMarket>("FUTURES");
+  const [marketFilter, setMarketFilter] = useState<"ALL" | TradeMarket>("ALL");
   const [maxOpenPositions, setMaxOpenPositions] = useState(1);
 
   const loadBots = useCallback(async () => {
@@ -61,6 +62,10 @@ export default function BotsManagement() {
   }, [loadBots]);
 
   const canCreate = useMemo(() => name.trim().length > 0 && !creating, [creating, name]);
+  const visibleBots = useMemo(
+    () => (marketFilter === "ALL" ? bots : bots.filter((bot) => bot.marketType === marketFilter)),
+    [bots, marketFilter]
+  );
 
   const confirmLiveRisk = (message: string) => window.confirm(message);
 
@@ -241,14 +246,29 @@ export default function BotsManagement() {
             title="Bots control center aktywny"
             description={`Skonfigurowano ${bots.length} ${bots.length === 1 ? "bota" : "botow"}.`}
           />
+          <div className="flex justify-end">
+            <label className="form-control w-48">
+              <span className="label-text text-xs">Filtr rynku</span>
+              <select
+                className="select select-bordered select-sm"
+                aria-label="Filtr rynku botow"
+                value={marketFilter}
+                onChange={(event) => setMarketFilter(event.target.value as "ALL" | TradeMarket)}
+              >
+                <option value="ALL">Wszystkie</option>
+                <option value="FUTURES">FUTURES</option>
+                <option value="SPOT">SPOT</option>
+              </select>
+            </label>
+          </div>
           <div className="overflow-x-auto">
             <table className="table table-zebra">
               <thead>
                 <tr>
                   <th>Nazwa</th>
+                  <th>Rynek</th>
                   <th>Status</th>
                   <th>Tryb</th>
-                  <th>Rynek</th>
                   <th>Max positions</th>
                   <th>Live opt-in</th>
                   <th>Aktywny</th>
@@ -256,7 +276,7 @@ export default function BotsManagement() {
                 </tr>
               </thead>
               <tbody>
-                {bots.map((bot) => {
+                {visibleBots.map((bot) => {
                   const risk = toRiskBadge(bot);
                   return (
                     <tr key={bot.id}>
@@ -347,6 +367,13 @@ export default function BotsManagement() {
                     </tr>
                   );
                 })}
+                {visibleBots.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="text-center text-sm opacity-70">
+                      Brak botow dla wybranego rynku.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

@@ -240,3 +240,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Continued spot-trading delivery by adding bot `marketType` schema/API field (`FUTURES`/`SPOT`) with migration and generated Prisma client.
 - 2026-03-19: Extended bot market-type support to dashboard UI for create/edit flows, aligned with spot-trading rollout.
 - 2026-03-19: Improved spot-support compatibility by normalizing uppercase bot `marketType` aliases (`FUTURES`/`SPOT`) in the CCXT connector config path.
+- 2026-03-19: Improved bots dashboard UX for spot support by adding a market filter and correcting table market/status column alignment.

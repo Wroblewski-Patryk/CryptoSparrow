@@ -126,3 +126,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Continued spot-support rollout by adding bot-level `marketType` (`FUTURES`/`SPOT`) schema/API support with migration baseline.
 - 2026-03-19: Extended spot-support groundwork to dashboard bot management UI (create/edit market type selection) with client regression coverage.
 - 2026-03-19: Improved connector compatibility for spot rollout by accepting uppercase bot `marketType` aliases and normalizing to CCXT `future`/`spot` defaults.
+- 2026-03-19: Improved bots dashboard operability for spot rollout by adding market filter controls and fixing market/status column mapping.

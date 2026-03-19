@@ -95,4 +95,41 @@ describe("BotsManagement", () => {
       });
     });
   });
+
+  it("filters bots by market type", async () => {
+    listMock.mockResolvedValue([
+      {
+        id: "b-futures",
+        name: "Futures Bot",
+        mode: "PAPER",
+        marketType: "FUTURES",
+        isActive: false,
+        liveOptIn: false,
+        maxOpenPositions: 1,
+      },
+      {
+        id: "b-spot",
+        name: "Spot Bot",
+        mode: "PAPER",
+        marketType: "SPOT",
+        isActive: false,
+        liveOptIn: false,
+        maxOpenPositions: 1,
+      },
+    ]);
+
+    render(<BotsManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Futures Bot")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("Spot Bot")).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText("Filtr rynku botow"), {
+      target: { value: "SPOT" },
+    });
+
+    expect(screen.queryByDisplayValue("Futures Bot")).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue("Spot Bot")).toBeInTheDocument();
+  });
 });
