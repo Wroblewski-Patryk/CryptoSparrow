@@ -109,3 +109,4 @@ Useful overrides:
 - Added V1 stabilization freeze and bug bash plan: `docs/v1-stabilization-freeze.md`.
 - Added V1 post-release monitoring and hotfix protocol: `docs/v1-post-release-monitoring.md`.
 - Added V1 7-day launch review template and V1.1 backlog cut framework: `docs/v1-launch-review-template.md`.
+- Added V1 changelog and migration notes: `docs/v1-changelog.md`, `docs/v1-migration-notes.md`.

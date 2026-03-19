@@ -60,7 +60,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [x] `chore(release): release candidate checklist`
 - [x] `chore(release): stabilization freeze window and bug bash`
 - [ ] `test(e2e): full go-live smoke pack (live-safe)`
-- [ ] `chore(release): v1.0 tag + changelog + migration notes`
+- [x] `chore(release): v1.0 tag + changelog + migration notes`
 - [x] `chore(release): post-release monitoring and hotfix protocol`
 - [x] `chore(release): 7-day launch review and v1.1 backlog cut`
 
@@ -121,3 +121,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Added stabilization freeze-window and bug-bash execution plan with severity SLAs, role ownership, and release exit gates.
 - 2026-03-19: Added post-release monitoring and hotfix protocol with 7-day watch window, severity matrix, and accelerated mitigation flow.
 - 2026-03-19: Added 7-day launch review template and V1.1 backlog-cut criteria for structured post-launch prioritization.
+- 2026-03-19: Added V1 changelog and migration notes to support release tagging readiness and deployment communication.
