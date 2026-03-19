@@ -49,7 +49,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 ## Phase E - UX, Trust, and Public Readiness
 - [ ] `feat(ui): risk-first confirmations for all live actions`
 - [x] `feat(ui): audit/log explorer with decision trace`
-- [ ] `feat(ui-system): harden shared dashboard design system and component documentation`
+- [x] `feat(ui-system): harden shared dashboard design system and component documentation`
 - [x] `feat(i18n): complete EN/PL parity and localization QA`
 - [ ] `feat(accessibility): full accessibility pass for core dashboard`
 - [x] `feat(ui-theme): optional isometric visual mode for dashboard (late-stage polish, non-blocking)`
@@ -115,3 +115,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Updated module-map documentation to include strategy import/export API contract (`strategy.v1`) for operator/dev reference.
 - 2026-03-19: Added decision-trace explorer in logs dashboard with metadata drill-down panel and trace-focused filtering flow.
 - 2026-03-19: Added risk-first LIVE confirmation prompts in bot create/save flows before mode/opt-in/activation changes that can enable live trading.
+- 2026-03-19: Added dashboard design-system guide consolidating shared components, semantic tokens, interaction rules, and module conformance checklist.

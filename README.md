@@ -103,3 +103,4 @@ Useful overrides:
 - Added optional dashboard isometric visual mode toggle.
 - Added logs decision-trace explorer (metadata drill-down in dashboard logs).
 - Added risk-first LIVE confirmation prompts in bots management flow.
+- Added dashboard design-system documentation for shared UI standards.
