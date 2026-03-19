@@ -247,3 +247,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Reduced client lint/type noise by cleaning profile hook catches/effects and aligning backtest form resolver typing with `z.coerce` output.
 - 2026-03-19: Improved Next.js image best-practice alignment by migrating dashboard/public header logos from `<img>` to `next/image`.
 - 2026-03-19: Migrated profile avatar preview to `next/image` (`loader` + `unoptimized`) and reached warning-free client production build.
+- 2026-03-19: Added risk-acknowledgment guard for API-key deletion in profile/exchange flows and covered it with dedicated UI test.

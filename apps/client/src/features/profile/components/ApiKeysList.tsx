@@ -2,8 +2,8 @@
 import { useState } from "react";
 import ApiKeyForm, { ApiKeyFormSavePayload } from "./ApiKeyForm";
 import { useApiKeys } from "../hooks/useApiKeys";
-import { EmptyState, ErrorState, LoadingState, SuccessState } from "apps/client/src/ui/components/ViewState";
-import { useLocaleFormatting } from "apps/client/src/i18n/useLocaleFormatting";
+import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
+import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 
 export default function ApiKeysList() {
   const { formatDate } = useLocaleFormatting();
@@ -15,6 +15,7 @@ export default function ApiKeysList() {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteRiskAccepted, setDeleteRiskAccepted] = useState(false);
 
   const handleAddKey = () => {
     setEditId(null);
@@ -40,6 +41,7 @@ export default function ApiKeysList() {
 
   const handleDeleteKey = (id: string) => {
     setDeleteId(id);
+    setDeleteRiskAccepted(false);
     setShowDeleteModal(true);
   };
 
@@ -49,11 +51,13 @@ export default function ApiKeysList() {
     }
     setShowDeleteModal(false);
     setDeleteId(null);
+    setDeleteRiskAccepted(false);
   };
 
   const cancelDelete = () => {
     setShowDeleteModal(false);
     setDeleteId(null);
+    setDeleteRiskAccepted(false);
   };
 
   const handleCancel = () => {
@@ -161,12 +165,29 @@ export default function ApiKeysList() {
       <dialog id="deleteApiKeyModal" className={`modal ${showDeleteModal ? "modal-open" : ""}`}>
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-4 text-error">Usun klucz API?</h3>
-          <p className="mb-6">Czy na pewno chcesz usunac ten klucz? Tej operacji nie mozna cofnac.</p>
+          <p className="mb-3">Czy na pewno chcesz usunac ten klucz? Tej operacji nie mozna cofnac.</p>
+          <p className="mb-4 text-sm text-warning">
+            Ryzyko LIVE: usuniecie klucza moze zatrzymac aktywne boty handlujace na zywo.
+          </p>
+          <label className="label cursor-pointer justify-start gap-2 mb-6">
+            <input
+              type="checkbox"
+              className="checkbox checkbox-warning checkbox-sm"
+              checked={deleteRiskAccepted}
+              onChange={(event) => setDeleteRiskAccepted(event.target.checked)}
+            />
+            <span className="label-text">Rozumiem ryzyko i chce kontynuowac</span>
+          </label>
           <div className="flex gap-4 justify-end">
             <button className="btn btn-outline" type="button" onClick={cancelDelete}>
               Anuluj
             </button>
-            <button className="btn btn-error" type="button" onClick={confirmDelete}>
+            <button
+              className="btn btn-error"
+              type="button"
+              disabled={!deleteRiskAccepted}
+              onClick={confirmDelete}
+            >
               Usun
             </button>
           </div>
