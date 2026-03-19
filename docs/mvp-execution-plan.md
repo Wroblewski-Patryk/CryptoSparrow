@@ -129,8 +129,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] Phase 0 fully complete.
 - [ ] End-to-end flow works: strategy -> backtest -> paper -> live opt-in.
 - [x] Security guardrails active: encryption, ownership checks, rate limits, audit logs.
-- [ ] Core tests passing for auth, strategy CRUD, market/bot isolation, and trading critical paths.
-- [ ] UI scope complete for markets, builder, bots, orders, positions, backtest, reports, logs, exchanges.
+- [x] Core tests passing for auth, strategy CRUD, market/bot isolation, and trading critical paths.
+- [x] UI scope complete for markets, builder, bots, orders, positions, backtest, reports, logs, exchanges.
 - [x] EN/PL and responsive/PWA baseline complete for core flows.
 - [x] Shared app shell and view-state model are consistent across core dashboard modules.
 - [ ] Real-time market stream is visible in dashboard control center via server-owned transport.
@@ -283,3 +283,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Finalized backtest overlay/report visuals with equity-curve rendering in summary and modal report views, plus passing backtest component tests and client production build.
 - 2026-03-19: Added runtime smoke e2e flow for normalized stream signal ingestion through orchestrator order/position lifecycle (LONG open + EXIT close) and hardened EXIT handling for already-filled market orders.
 - 2026-03-19: Synced MVP docs to freeze-gap delivery state (scope/limitations/modules/runtime notes), including explicit distinction between delivered ingest/orchestration pieces and remaining SSE fan-out automation gap.
+- 2026-03-19: Re-ran MVP release checklist with fresh build/test/migration evidence (server/client builds green, full server/client tests green, migrations verified as up-to-date).

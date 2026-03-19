@@ -2,6 +2,15 @@
 
 ## v1.0.0 (Planned)
 
+### MVP Freeze-Gap Closure (2026-03-19)
+- Added Binance market-stream ingest worker with normalized ticker/candle payload handling.
+- Locked MVP stream transport contract to SSE fan-out semantics.
+- Added dashboard live market bar (price, 24h delta, candle freshness, stream health state).
+- Added write-side order endpoints (`open`/`cancel`/`close`) with risk acknowledgment guards.
+- Wired runtime execution orchestrator (`LONG`/`SHORT`/`EXIT`) for order/position lifecycle.
+- Added runtime smoke e2e for stream-normalized signal -> order -> position flow.
+- Finalized backtest overlay/report visuals (equity curve in summary and modal views).
+
 ### Reliability and Operations
 - Structured logging across API, workers, and exchange layers.
 - Extended metrics and runtime alerts (`/metrics`, `/alerts`).

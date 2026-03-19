@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `chore(release): re-run MVP release checklist after freeze-gap closure`
 
 ## NEXT
 
@@ -185,6 +184,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `feat(backtest): finalize overlays/report visuals for MVP completeness`
 - [x] 2026-03-19 `test(e2e): add stream-to-order orchestration smoke test path`
 - [x] 2026-03-19 `docs(mvp): sync Current Scope and Current Limitations after freeze-gap delivery`
+- [x] 2026-03-19 `chore(release): re-run MVP release checklist after freeze-gap closure`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
