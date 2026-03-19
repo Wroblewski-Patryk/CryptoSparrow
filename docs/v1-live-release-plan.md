@@ -122,3 +122,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Added post-release monitoring and hotfix protocol with 7-day watch window, severity matrix, and accelerated mitigation flow.
 - 2026-03-19: Added 7-day launch review template and V1.1 backlog-cut criteria for structured post-launch prioritization.
 - 2026-03-19: Added V1 changelog and migration notes to support release tagging readiness and deployment communication.
+- 2026-03-19: Added runnable go-live smoke-pack commands (server/client); client smoke passed, server smoke requires active Docker DB (`localhost:5432`) to complete.

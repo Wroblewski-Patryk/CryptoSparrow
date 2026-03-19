@@ -236,3 +236,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Added V1 post-release monitoring and hotfix protocol with severity-based response model and verification records.
 - 2026-03-19: Added 7-day launch review template and V1.1 backlog-cut framework for post-launch decision cadence.
 - 2026-03-19: Added V1 changelog and migration notes to formalize release communication and rollout expectations.
+- 2026-03-19: Added go-live smoke-pack scripts and docs; client smoke suite passed, server e2e smoke pending Docker DB availability.
