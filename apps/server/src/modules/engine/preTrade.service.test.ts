@@ -10,6 +10,7 @@ const createStore = (overrides?: Partial<MockPreTradeStore>): MockPreTradeStore 
   getBotLiveConfig: vi.fn().mockResolvedValue({
     mode: 'LIVE',
     marketType: 'FUTURES',
+    positionMode: 'ONE_WAY',
     liveOptIn: true,
     consentTextVersion: 'mvp-v1',
   }),
@@ -155,6 +156,7 @@ describe('preTrade analysis', () => {
       getBotLiveConfig: vi.fn().mockResolvedValue({
         mode: 'PAPER',
         marketType: 'FUTURES',
+        positionMode: 'ONE_WAY',
         liveOptIn: false,
         consentTextVersion: null,
       }),
@@ -180,6 +182,7 @@ describe('preTrade analysis', () => {
       getBotLiveConfig: vi.fn().mockResolvedValue({
         mode: 'LIVE',
         marketType: 'FUTURES',
+        positionMode: 'ONE_WAY',
         liveOptIn: true,
         consentTextVersion: null,
       }),
@@ -283,6 +286,7 @@ describe('preTrade analysis', () => {
       getBotLiveConfig: vi.fn().mockResolvedValue({
         mode: 'LIVE',
         marketType: 'SPOT',
+        positionMode: 'HEDGE',
         liveOptIn: true,
         consentTextVersion: 'mvp-v1',
       }),
@@ -306,6 +310,7 @@ describe('preTrade analysis', () => {
       expect.objectContaining({
         metadata: expect.objectContaining({
           marketType: 'SPOT',
+          positionMode: 'HEDGE',
         }),
       })
     );

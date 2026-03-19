@@ -21,6 +21,7 @@ describe('evaluatePreTradeRiskReasons', () => {
       botLiveConfig: {
         mode: 'PAPER',
         marketType: 'FUTURES',
+        positionMode: 'ONE_WAY',
         liveOptIn: false,
         consentTextVersion: null,
       },

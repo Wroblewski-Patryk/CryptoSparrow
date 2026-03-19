@@ -21,6 +21,8 @@ export const CcxtFuturesOrderRequestSchema = z.object({
   amount: z.number().positive(),
   price: z.number().positive().optional(),
   reduceOnly: z.boolean().optional(),
+  positionMode: z.enum(['ONE_WAY', 'HEDGE']).optional(),
+  positionSide: z.enum(['LONG', 'SHORT']).optional(),
   clientOrderId: z.string().trim().min(1).optional(),
 });
 

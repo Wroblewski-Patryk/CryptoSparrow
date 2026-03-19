@@ -92,6 +92,51 @@ describe('CcxtFuturesConnector scaffold', () => {
     expect(order.status).toBe('open');
   });
 
+  it('passes positionSide in futures hedge mode orders', async () => {
+    const client = createMockClient();
+    const connector = new CcxtFuturesConnector(
+      { exchangeId: 'binanceusdm', marketType: 'future' },
+      vi.fn().mockResolvedValue(client)
+    );
+
+    await connector.placeOrder({
+      symbol: 'BTC/USDT:USDT',
+      type: 'market',
+      side: 'sell',
+      amount: 0.3,
+      positionMode: 'HEDGE',
+      positionSide: 'SHORT',
+      reduceOnly: true,
+    });
+
+    expect(client.createOrder).toHaveBeenCalledWith(
+      'BTC/USDT:USDT',
+      'market',
+      'sell',
+      0.3,
+      undefined,
+      { reduceOnly: true, positionSide: 'SHORT' }
+    );
+  });
+
+  it('throws when hedge mode order is missing positionSide in futures mode', async () => {
+    const client = createMockClient();
+    const connector = new CcxtFuturesConnector(
+      { exchangeId: 'binanceusdm', marketType: 'future' },
+      vi.fn().mockResolvedValue(client)
+    );
+
+    await expect(
+      connector.placeOrder({
+        symbol: 'BTC/USDT:USDT',
+        type: 'market',
+        side: 'buy',
+        amount: 0.1,
+        positionMode: 'HEDGE',
+      })
+    ).rejects.toThrow('positionSide is required in HEDGE mode');
+  });
+
   it('configures spot mode and skips futures-only reduceOnly param', async () => {
     const client = createMockClient();
     const factory: CcxtClientFactory = vi.fn().mockResolvedValue(client);
@@ -110,6 +155,8 @@ describe('CcxtFuturesConnector scaffold', () => {
       side: 'buy',
       amount: 0.2,
       reduceOnly: true,
+      positionMode: 'HEDGE',
+      positionSide: 'LONG',
     });
 
     expect(factory).toHaveBeenCalledWith(
@@ -148,6 +195,8 @@ describe('CcxtFuturesConnector scaffold', () => {
       side: 'buy',
       amount: 0.1,
       reduceOnly: true,
+      positionMode: 'HEDGE',
+      positionSide: 'LONG',
     });
 
     expect(factory).toHaveBeenCalledWith(

@@ -21,6 +21,7 @@ export type PreTradeAnalysisParsedInput = z.output<typeof PreTradeAnalysisInputS
 export type PreTradeBotLiveConfig = {
   mode: 'PAPER' | 'LIVE' | 'LOCAL';
   marketType: 'FUTURES' | 'SPOT';
+  positionMode: 'ONE_WAY' | 'HEDGE';
   liveOptIn: boolean;
   consentTextVersion: string | null;
 };

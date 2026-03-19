@@ -85,8 +85,16 @@ export class CcxtFuturesConnector {
     const client = await this.getOrCreateClient();
     const params: Record<string, unknown> = {};
 
-    if (this.config.marketType === 'future' && typeof request.reduceOnly === 'boolean') {
-      params.reduceOnly = request.reduceOnly;
+    if (this.config.marketType === 'future') {
+      if (typeof request.reduceOnly === 'boolean') {
+        params.reduceOnly = request.reduceOnly;
+      }
+      if (request.positionMode === 'HEDGE') {
+        if (!request.positionSide) {
+          throw new Error('positionSide is required in HEDGE mode');
+        }
+        params.positionSide = request.positionSide;
+      }
     }
     if (request.clientOrderId) {
       params.clientOrderId = request.clientOrderId;

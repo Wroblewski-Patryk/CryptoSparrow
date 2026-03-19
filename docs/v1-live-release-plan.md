@@ -41,7 +41,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 ## Phase D - Product Expansion to V1.0 Scope
 - [ ] `feat(trading): spot trading support`
 - [x] `feat(strategy): strategy import/export with format versioning`
-- [ ] `feat(trading): hedge mode support`
+- [x] `feat(trading): hedge mode support`
 - [ ] `feat(risk): advanced limits (daily loss/drawdown/consecutive losses)`
 - [ ] `feat(risk): cooldown policies after losses`
 - [ ] `feat(data): additional sources (order book/funding/open interest)`
@@ -139,4 +139,5 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Wired dashboard bot filter controls to backend `marketType` query for server-sourced SPOT/FUTURES segmentation.
 - 2026-03-19: Added go-live infra helper scripts (`go-live:infra:up/down`, `test:go-live:server:with-infra`) and documented them in smoke-pack instructions.
 - 2026-03-19: Started hedge-mode delivery by introducing bot-level `positionMode` (`ONE_WAY`/`HEDGE`) in schema/API contracts as execution groundwork.
+- 2026-03-19: Completed hedge-mode backend support by enforcing futures `positionSide` for HEDGE orders in connector flow and persisting `positionMode` in pre-trade audit metadata.
 - 2026-03-19: Extended hedge-mode rollout to dashboard bot UX by adding `positionMode` create/edit controls with updated client regression tests.
