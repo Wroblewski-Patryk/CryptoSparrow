@@ -142,3 +142,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Completed hedge-mode backend support by enforcing futures `positionSide` for HEDGE orders in connector flow and persisting `positionMode` in pre-trade audit metadata.
 - 2026-03-19: Extended hedge-mode rollout to dashboard bot UX by adding `positionMode` create/edit controls with updated client regression tests.
 - 2026-03-19: Completed spot trading support in live connector contract by validating SPOT order payloads and rejecting futures-only params (`reduceOnly`, hedge `positionSide`) with regression tests.
+- 2026-03-19: Added robust smoke-pack orchestrator (`scripts/goLiveSmoke.mjs`) with auto infra up/down lifecycle; full smoke remains blocked locally until Docker Desktop engine is running.
