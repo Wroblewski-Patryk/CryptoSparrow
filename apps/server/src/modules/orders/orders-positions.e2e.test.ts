@@ -158,4 +158,94 @@ describe('Orders and positions read contract', () => {
     const ownerOrderRes = await ownerAgent.get(`/dashboard/orders/${ownerOrder.id}`);
     expect(ownerOrderRes.status).toBe(200);
   });
+
+  it('supports open/cancel/close write endpoints with LIVE risk guards', async () => {
+    const ownerAgent = await registerAndLogin('orders-write-owner@example.com');
+    const ownerId = await getUserId('orders-write-owner@example.com');
+
+    const liveWithoutAckRes = await ownerAgent.post('/dashboard/orders/open').send({
+      symbol: 'BTCUSDT',
+      side: 'BUY',
+      type: 'MARKET',
+      quantity: 0.1,
+      mode: 'LIVE',
+      riskAck: false,
+    });
+    expect(liveWithoutAckRes.status).toBe(400);
+    expect(liveWithoutAckRes.body.error.message).toBe('riskAck is required for LIVE order open');
+
+    const liveBot = await prisma.bot.create({
+      data: {
+        userId: ownerId,
+        name: 'Live Bot',
+        mode: 'LIVE',
+        marketType: 'FUTURES',
+        positionMode: 'ONE_WAY',
+        isActive: true,
+        liveOptIn: true,
+        consentTextVersion: 'mvp-v1',
+        maxOpenPositions: 3,
+      },
+    });
+
+    const openRes = await ownerAgent.post('/dashboard/orders/open').send({
+      botId: liveBot.id,
+      symbol: 'BTCUSDT',
+      side: 'BUY',
+      type: 'LIMIT',
+      quantity: 0.2,
+      price: 62000,
+      mode: 'LIVE',
+      riskAck: true,
+    });
+    expect(openRes.status).toBe(201);
+    expect(openRes.body.status).toBe('OPEN');
+
+    const cancelWithoutAckRes = await ownerAgent
+      .post(`/dashboard/orders/${openRes.body.id}/cancel`)
+      .send({ riskAck: false });
+    expect(cancelWithoutAckRes.status).toBe(400);
+    expect(cancelWithoutAckRes.body.error.message).toBe('riskAck is required to cancel order');
+
+    const cancelRes = await ownerAgent
+      .post(`/dashboard/orders/${openRes.body.id}/cancel`)
+      .send({ riskAck: true });
+    expect(cancelRes.status).toBe(200);
+    expect(cancelRes.body.status).toBe('CANCELED');
+
+    const position = await prisma.position.create({
+      data: {
+        userId: ownerId,
+        symbol: 'ETHUSDT',
+        side: 'LONG',
+        status: 'OPEN',
+        entryPrice: 3000,
+        quantity: 1,
+      },
+    });
+
+    const closableOrder = await prisma.order.create({
+      data: {
+        userId: ownerId,
+        positionId: position.id,
+        symbol: 'ETHUSDT',
+        side: 'SELL',
+        type: 'LIMIT',
+        status: 'OPEN',
+        quantity: 1,
+        price: 3200,
+      },
+    });
+
+    const closeRes = await ownerAgent
+      .post(`/dashboard/orders/${closableOrder.id}/close`)
+      .send({ riskAck: true });
+    expect(closeRes.status).toBe(200);
+    expect(closeRes.body.status).toBe('FILLED');
+
+    const closedPosition = await prisma.position.findUniqueOrThrow({
+      where: { id: position.id },
+    });
+    expect(closedPosition.status).toBe('CLOSED');
+  });
 });

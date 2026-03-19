@@ -9,3 +9,28 @@ export const ListOrdersQuerySchema = z.object({
 });
 
 export type ListOrdersQuery = z.infer<typeof ListOrdersQuerySchema>;
+
+export const OrderExecutionModeSchema = z.enum(['PAPER', 'LIVE']);
+
+export const OpenOrderSchema = z.object({
+  botId: z.string().uuid().optional(),
+  symbol: z.string().trim().min(1),
+  side: z.enum(['BUY', 'SELL']),
+  type: z.enum(['MARKET', 'LIMIT', 'STOP', 'STOP_LIMIT', 'TAKE_PROFIT', 'TRAILING']),
+  quantity: z.number().positive(),
+  price: z.number().positive().optional(),
+  mode: OrderExecutionModeSchema.default('PAPER'),
+  riskAck: z.boolean().default(false),
+});
+
+export const CancelOrderSchema = z.object({
+  riskAck: z.boolean().default(false),
+});
+
+export const CloseOrderSchema = z.object({
+  riskAck: z.boolean().default(false),
+});
+
+export type OpenOrderDto = z.infer<typeof OpenOrderSchema>;
+export type CancelOrderDto = z.infer<typeof CancelOrderSchema>;
+export type CloseOrderDto = z.infer<typeof CloseOrderSchema>;
