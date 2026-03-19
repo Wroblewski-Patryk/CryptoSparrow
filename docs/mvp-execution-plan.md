@@ -238,3 +238,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Added V1 changelog and migration notes to formalize release communication and rollout expectations.
 - 2026-03-19: Added go-live smoke-pack scripts and docs; client smoke suite passed, server e2e smoke pending Docker DB availability.
 - 2026-03-19: Continued spot-trading delivery by adding bot `marketType` schema/API field (`FUTURES`/`SPOT`) with migration and generated Prisma client.
+- 2026-03-19: Extended bot market-type support to dashboard UI for create/edit flows, aligned with spot-trading rollout.

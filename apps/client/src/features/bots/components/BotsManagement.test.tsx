@@ -26,6 +26,7 @@ describe("BotsManagement", () => {
       id: "b-live",
       name: "Live Runner",
       mode: "LIVE",
+      marketType: "FUTURES",
       isActive: false,
       liveOptIn: false,
       maxOpenPositions: 1,
@@ -66,6 +67,7 @@ describe("BotsManagement", () => {
       id: "b1",
       name: "Momentum Runner",
       mode: "PAPER",
+      marketType: "FUTURES",
       isActive: false,
       liveOptIn: false,
       maxOpenPositions: 3,
@@ -85,6 +87,7 @@ describe("BotsManagement", () => {
       expect(createMock).toHaveBeenCalledWith({
         name: "Momentum Runner",
         mode: "PAPER",
+        marketType: "FUTURES",
         isActive: false,
         liveOptIn: false,
         consentTextVersion: null,

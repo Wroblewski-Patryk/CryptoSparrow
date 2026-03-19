@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import StatusBadge from "../../../ui/components/StatusBadge";
 import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
 import { createBot, deleteBot, listBots, updateBot } from "../services/bots.service";
-import { Bot, BotMode } from "../types/bot.type";
+import { Bot, BotMode, TradeMarket } from "../types/bot.type";
 
 const LIVE_CONSENT_TEXT_VERSION = "mvp-v1";
 
@@ -39,6 +39,7 @@ export default function BotsManagement() {
 
   const [name, setName] = useState("");
   const [mode, setMode] = useState<BotMode>("PAPER");
+  const [marketType, setMarketType] = useState<TradeMarket>("FUTURES");
   const [maxOpenPositions, setMaxOpenPositions] = useState(1);
 
   const loadBots = useCallback(async () => {
@@ -79,6 +80,7 @@ export default function BotsManagement() {
       const created = await createBot({
         name: name.trim(),
         mode,
+        marketType,
         isActive: false,
         liveOptIn: false,
         consentTextVersion: null,
@@ -88,6 +90,7 @@ export default function BotsManagement() {
       setServerSnapshot((prev) => ({ ...prev, [created.id]: created }));
       setName("");
       setMode("PAPER");
+      setMarketType("FUTURES");
       setMaxOpenPositions(1);
       toast.success("Bot utworzony");
     } catch (err: unknown) {
@@ -123,6 +126,7 @@ export default function BotsManagement() {
       const updated = await updateBot(bot.id, {
         name: bot.name,
         mode: bot.mode,
+        marketType: bot.marketType,
         isActive: bot.isActive,
         liveOptIn: bot.liveOptIn,
         consentTextVersion: bot.liveOptIn ? LIVE_CONSENT_TEXT_VERSION : null,
@@ -159,7 +163,7 @@ export default function BotsManagement() {
         <p className="text-sm opacity-70">
           Dodaj bota i ustaw tryb uruchomienia. LIVE wymaga opt-in.
         </p>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
           <label className="form-control">
             <span className="label-text">Nazwa</span>
             <input
@@ -181,6 +185,18 @@ export default function BotsManagement() {
               <option value="PAPER">PAPER</option>
               <option value="LIVE">LIVE</option>
               <option value="LOCAL">LOCAL</option>
+            </select>
+          </label>
+          <label className="form-control">
+            <span className="label-text">Rynek</span>
+            <select
+              className="select select-bordered"
+              aria-label="Rynek bota"
+              value={marketType}
+              onChange={(event) => setMarketType(event.target.value as TradeMarket)}
+            >
+              <option value="FUTURES">FUTURES</option>
+              <option value="SPOT">SPOT</option>
             </select>
           </label>
           <label className="form-control">
@@ -232,6 +248,7 @@ export default function BotsManagement() {
                   <th>Nazwa</th>
                   <th>Status</th>
                   <th>Tryb</th>
+                  <th>Rynek</th>
                   <th>Max positions</th>
                   <th>Live opt-in</th>
                   <th>Aktywny</th>
@@ -249,6 +266,18 @@ export default function BotsManagement() {
                           value={bot.name}
                           onChange={(event) => patchBot(bot.id, { name: event.target.value })}
                         />
+                      </td>
+                      <td>
+                        <select
+                          className="select select-bordered select-xs w-full"
+                          value={bot.marketType}
+                          onChange={(event) =>
+                            patchBot(bot.id, { marketType: event.target.value as TradeMarket })
+                          }
+                        >
+                          <option value="FUTURES">FUTURES</option>
+                          <option value="SPOT">SPOT</option>
+                        </select>
                       </td>
                       <td>
                         <StatusBadge kind="risk" value={risk.value} label={risk.label} />

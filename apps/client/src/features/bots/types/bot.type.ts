@@ -1,9 +1,11 @@
 export type BotMode = "PAPER" | "LIVE" | "LOCAL";
+export type TradeMarket = "FUTURES" | "SPOT";
 
 export type Bot = {
   id: string;
   name: string;
   mode: BotMode;
+  marketType: TradeMarket;
   isActive: boolean;
   liveOptIn: boolean;
   consentTextVersion?: string | null;
@@ -15,6 +17,7 @@ export type Bot = {
 export type CreateBotInput = {
   name: string;
   mode: BotMode;
+  marketType: TradeMarket;
   isActive: boolean;
   liveOptIn: boolean;
   consentTextVersion?: string | null;

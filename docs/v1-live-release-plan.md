@@ -124,3 +124,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Added V1 changelog and migration notes to support release tagging readiness and deployment communication.
 - 2026-03-19: Added runnable go-live smoke-pack commands (server/client); client smoke passed, server smoke requires active Docker DB (`localhost:5432`) to complete.
 - 2026-03-19: Continued spot-support rollout by adding bot-level `marketType` (`FUTURES`/`SPOT`) schema/API support with migration baseline.
+- 2026-03-19: Extended spot-support groundwork to dashboard bot management UI (create/edit market type selection) with client regression coverage.
