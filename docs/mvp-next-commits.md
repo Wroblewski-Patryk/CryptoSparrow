@@ -143,6 +143,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `feat(ui): add logs decision-trace explorer with metadata panel`
 - [x] 2026-03-19 `feat(ui): add risk-first confirmations for LIVE bot actions`
 - [x] 2026-03-19 `feat(ui-system): add shared dashboard design-system documentation`
+- [x] 2026-03-19 `feat(accessibility): finish dashboard pass with nav semantics and audit checklist`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

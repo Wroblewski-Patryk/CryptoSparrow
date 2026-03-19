@@ -104,3 +104,4 @@ Useful overrides:
 - Added logs decision-trace explorer (metadata drill-down in dashboard logs).
 - Added risk-first LIVE confirmation prompts in bots management flow.
 - Added dashboard design-system documentation for shared UI standards.
+- Added dashboard accessibility audit checklist and active-nav accessibility semantics.

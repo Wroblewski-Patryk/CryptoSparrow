@@ -7,6 +7,10 @@ vi.mock("../../components/ProfileButton", () => ({
   default: () => <button type="button">Profile</button>,
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/dashboard/markets",
+}));
+
 describe("Header responsive smoke", () => {
   it("renders navigation landmark and horizontal overflow container", () => {
     render(
@@ -17,6 +21,7 @@ describe("Header responsive smoke", () => {
 
     expect(screen.getByRole("navigation", { name: "Dashboard navigation" })).toBeInTheDocument();
     expect(screen.getByText("Markets")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Markets" })).toHaveAttribute("aria-current", "page");
 
     const scroller = document.querySelector("ul.overflow-x-auto");
     expect(scroller).toBeTruthy();

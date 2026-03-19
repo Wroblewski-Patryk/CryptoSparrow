@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 import ProfileButton from '../../components/ProfileButton';
 import ThemeSwitcher from '../../components/ThemeSwitch';
@@ -9,6 +10,7 @@ import IsometricModeToggle from './IsometricModeToggle';
 
 export default function Header() {
   const { t } = useI18n();
+  const pathname = usePathname();
   const navLinks = [
     { href: "/dashboard/markets", label: t("dashboard.nav.markets") },
     { href: "/dashboard/builder", label: t("dashboard.nav.builder") },
@@ -36,7 +38,9 @@ export default function Header() {
             <ul className="menu menu-horizontal w-full max-w-full flex-nowrap overflow-x-auto whitespace-nowrap px-1 xl:w-auto xl:overflow-visible">
               {navLinks.map((item) => (
                 <li key={item.href}>
-                  <Link href={item.href}>{item.label}</Link>
+                  <Link href={item.href} aria-current={pathname === item.href ? 'page' : undefined}>
+                    {item.label}
+                  </Link>
                 </li>
               ))}
             </ul>

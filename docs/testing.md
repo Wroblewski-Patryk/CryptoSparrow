@@ -30,6 +30,8 @@
   - `docs/control-center-10s-checklist.md`
 - Localization QA checklist:
   - `docs/localization-qa.md`
+- Accessibility audit checklist:
+  - `docs/accessibility-dashboard-audit.md`
 - Load tests for API and worker monitoring endpoints:
   - baseline: `pnpm --filter server test:load:baseline`
   - stress: `pnpm --filter server test:load:stress`
