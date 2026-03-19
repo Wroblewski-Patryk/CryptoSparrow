@@ -1,5 +1,5 @@
 import type { QueueTuning } from '../queue/queueTuning';
-type WorkerName = 'market-data' | 'backtest' | 'execution';
+type WorkerName = 'market-data' | 'backtest' | 'execution' | 'market-stream';
 
 type WorkerBootstrapConfig = {
   workerName: WorkerName;
