@@ -152,6 +152,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `test(e2e): add go-live smoke-pack commands (client green, server blocked without docker db)`
 - [x] 2026-03-19 `feat(trading): add bot marketType schema/api groundwork for spot support`
 - [x] 2026-03-19 `feat(trading): expose bot marketType in dashboard bots flow`
+- [x] 2026-03-19 `feat(trading): normalize spot/futures marketType aliases in exchange connector`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

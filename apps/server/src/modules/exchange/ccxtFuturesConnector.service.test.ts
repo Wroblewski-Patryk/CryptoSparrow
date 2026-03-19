@@ -129,4 +129,42 @@ describe('CcxtFuturesConnector scaffold', () => {
       {}
     );
   });
+
+  it('normalizes uppercase marketType aliases from bot config', async () => {
+    const client = createMockClient();
+    const factory: CcxtClientFactory = vi.fn().mockResolvedValue(client);
+    const connector = new CcxtFuturesConnector(
+      {
+        exchangeId: 'binance',
+        marketType: 'SPOT',
+      },
+      factory
+    );
+
+    await connector.connect();
+    await connector.placeOrder({
+      symbol: 'BTC/USDT',
+      type: 'market',
+      side: 'buy',
+      amount: 0.1,
+      reduceOnly: true,
+    });
+
+    expect(factory).toHaveBeenCalledWith(
+      'binance',
+      expect.objectContaining({
+        options: expect.objectContaining({
+          defaultType: 'spot',
+        }),
+      })
+    );
+    expect(client.createOrder).toHaveBeenCalledWith(
+      'BTC/USDT',
+      'market',
+      'buy',
+      0.1,
+      undefined,
+      {}
+    );
+  });
 });

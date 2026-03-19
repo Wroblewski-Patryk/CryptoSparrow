@@ -1,11 +1,15 @@
 import { z } from 'zod';
 
+const CcxtMarketTypeSchema = z
+  .enum(['future', 'spot', 'FUTURES', 'SPOT'])
+  .transform((value) => (value === 'FUTURES' ? 'future' : value === 'SPOT' ? 'spot' : value));
+
 export const CcxtFuturesConnectorConfigSchema = z.object({
   exchangeId: z.string().trim().min(1),
   apiKey: z.string().trim().min(1).optional(),
   secret: z.string().trim().min(1).optional(),
   password: z.string().trim().min(1).optional(),
-  marketType: z.enum(['future', 'spot']).default('future'),
+  marketType: CcxtMarketTypeSchema.default('future'),
   sandbox: z.boolean().default(false),
   enableRateLimit: z.boolean().default(true),
 });
