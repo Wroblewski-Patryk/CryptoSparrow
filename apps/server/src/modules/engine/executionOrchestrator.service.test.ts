@@ -180,6 +180,6 @@ describe('orchestrateRuntimeSignal', () => {
       expect.objectContaining({ side: 'SELL', quantity: 0.2, mode: 'LIVE' })
     );
     expect(positionGateway.closePosition).toHaveBeenCalledWith('position-open', 'u1');
-    expect(orderGateway.closeOrder).toHaveBeenCalledWith('u1', 'order-1', { riskAck: true });
+    expect(orderGateway.closeOrder).not.toHaveBeenCalled();
   });
 });

@@ -99,7 +99,9 @@ export const orchestrateRuntimeSignal = async (
     });
 
     await positionGateway.closePosition(openPosition.id, input.userId);
-    await orderGateway.closeOrder(input.userId, closeOrder.id, { riskAck: true });
+    if (closeOrder.status === 'OPEN' || closeOrder.status === 'PARTIALLY_FILLED') {
+      await orderGateway.closeOrder(input.userId, closeOrder.id, { riskAck: true });
+    }
 
     return {
       status: 'closed',

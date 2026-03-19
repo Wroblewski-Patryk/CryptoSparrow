@@ -123,7 +123,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(execution-orchestrator): wire signal -> order -> position lifecycle for paper/live runtime paths`
 - [x] `feat(positions-live): add live position reconciliation/update loop`
 - [x] `feat(backtest): finalize chart overlays and report visualizations to MVP-complete state`
-- [ ] `test(e2e): add runtime orchestration smoke path covering stream -> signal -> order -> position updates`
+- [x] `test(e2e): add runtime orchestration smoke path covering stream -> signal -> order -> position updates`
 
 ## MVP Exit Criteria
 - [x] Phase 0 fully complete.
@@ -281,3 +281,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Wired runtime execution orchestrator service for signal -> order -> position lifecycle (LONG/SHORT/EXIT) with paper/live-compatible flow contracts.
 - 2026-03-19: Added live position reconciliation loop with heartbeat/status exposure (`/dashboard/positions/live-status`) and execution-worker startup integration.
 - 2026-03-19: Finalized backtest overlay/report visuals with equity-curve rendering in summary and modal report views, plus passing backtest component tests and client production build.
+- 2026-03-19: Added runtime smoke e2e flow for normalized stream signal ingestion through orchestrator order/position lifecycle (LONG open + EXIT close) and hardened EXIT handling for already-filled market orders.
