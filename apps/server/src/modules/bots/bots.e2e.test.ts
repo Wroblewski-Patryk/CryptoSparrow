@@ -16,6 +16,7 @@ const registerAndLogin = async (email: string) => {
 const createPayload = () => ({
   name: 'Momentum Runner',
   mode: 'PAPER',
+  marketType: 'FUTURES',
   isActive: false,
   liveOptIn: false,
   maxOpenPositions: 3,
@@ -65,15 +66,18 @@ describe('Bots module contract', () => {
     expect(getRes.status).toBe(200);
     expect(getRes.body.id).toBe(botId);
     expect(getRes.body.mode).toBe('PAPER');
+    expect(getRes.body.marketType).toBe('FUTURES');
 
     const updateRes = await agent.put(`/dashboard/bots/${botId}`).send({
       mode: 'LIVE',
+      marketType: 'SPOT',
       liveOptIn: true,
       consentTextVersion: 'mvp-v1',
       maxOpenPositions: 5,
     });
     expect(updateRes.status).toBe(200);
     expect(updateRes.body.mode).toBe('LIVE');
+    expect(updateRes.body.marketType).toBe('SPOT');
     expect(updateRes.body.liveOptIn).toBe(true);
     expect(updateRes.body.consentTextVersion).toBe('mvp-v1');
     expect(updateRes.body.maxOpenPositions).toBe(5);

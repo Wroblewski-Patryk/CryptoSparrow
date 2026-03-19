@@ -137,6 +137,7 @@ model Bot {
 
   name              String
   mode              BotMode         @default(PAPER)
+  marketType        TradeMarket     @default(FUTURES)
   isActive          Boolean         @default(false)
   liveOptIn         Boolean         @default(false)
   consentTextVersion String?
@@ -154,6 +155,11 @@ model Bot {
   logs              Log[]
 
   @@index([userId])
+}
+
+enum TradeMarket {
+  FUTURES
+  SPOT
 }
 
 model BotStrategy {
