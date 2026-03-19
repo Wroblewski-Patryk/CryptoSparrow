@@ -162,6 +162,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `fix(client): migrate profile avatar preview to next/image and clear build warnings`
 - [x] 2026-03-19 `feat(ui): require risk acknowledgment before deleting API key`
 - [x] 2026-03-19 `docs(ui-copy): update app metadata and landing copy to spot+futures wording`
+- [x] 2026-03-19 `feat(api): add bots list marketType filter query for spot/futures operations`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

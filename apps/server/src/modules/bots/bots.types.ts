@@ -22,6 +22,10 @@ export const CreateBotSchema = z.object({
 });
 
 export const UpdateBotSchema = CreateBotSchema.partial();
+export const ListBotsQuerySchema = z.object({
+  marketType: TradeMarketSchema.optional(),
+});
 
 export type CreateBotDto = z.infer<typeof CreateBotSchema>;
 export type UpdateBotDto = z.infer<typeof UpdateBotSchema>;
+export type ListBotsQueryDto = z.infer<typeof ListBotsQuerySchema>;

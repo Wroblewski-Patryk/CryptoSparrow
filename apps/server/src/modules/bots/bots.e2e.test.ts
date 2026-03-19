@@ -55,12 +55,30 @@ describe('Bots module contract', () => {
     expect(createRes.body.id).toBeDefined();
     expect(createRes.body.name).toBe('Momentum Runner');
     const botId = createRes.body.id as string;
+    const futuresBotId = botId;
+
+    const createSpotRes = await agent.post('/dashboard/bots').send({
+      ...createPayload(),
+      name: 'Spot Runner',
+      marketType: 'SPOT',
+    });
+    expect(createSpotRes.status).toBe(201);
+    const spotBotId = createSpotRes.body.id as string;
 
     const listRes = await agent.get('/dashboard/bots');
     expect(listRes.status).toBe(200);
     expect(Array.isArray(listRes.body)).toBe(true);
-    expect(listRes.body).toHaveLength(1);
-    expect(listRes.body[0].id).toBe(botId);
+    expect(listRes.body).toHaveLength(2);
+
+    const futuresListRes = await agent.get('/dashboard/bots').query({ marketType: 'FUTURES' });
+    expect(futuresListRes.status).toBe(200);
+    expect(futuresListRes.body).toHaveLength(1);
+    expect(futuresListRes.body[0].id).toBe(futuresBotId);
+
+    const spotListRes = await agent.get('/dashboard/bots').query({ marketType: 'SPOT' });
+    expect(spotListRes.status).toBe(200);
+    expect(spotListRes.body).toHaveLength(1);
+    expect(spotListRes.body[0].id).toBe(spotBotId);
 
     const getRes = await agent.get(`/dashboard/bots/${botId}`);
     expect(getRes.status).toBe(200);

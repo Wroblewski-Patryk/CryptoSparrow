@@ -1,5 +1,5 @@
 import { prisma } from '../../prisma/client';
-import { CreateBotDto, UpdateBotDto } from './bots.types';
+import { CreateBotDto, ListBotsQueryDto, UpdateBotDto } from './bots.types';
 
 type BotConsentState = {
   mode: 'PAPER' | 'LIVE' | 'LOCAL';
@@ -50,9 +50,12 @@ const writeLiveConsentAudit = async (params: {
   }
 };
 
-export const listBots = async (userId: string) => {
+export const listBots = async (userId: string, query: ListBotsQueryDto = {}) => {
   return prisma.bot.findMany({
-    where: { userId },
+    where: {
+      userId,
+      ...(query.marketType ? { marketType: query.marketType } : {}),
+    },
     orderBy: { createdAt: 'desc' },
   });
 };

@@ -2,14 +2,19 @@ import { Request, Response } from 'express';
 import { sendError } from '../../utils/apiError';
 import { sendValidationError } from '../../utils/formatZodError';
 import * as botsService from './bots.service';
-import { CreateBotSchema, UpdateBotSchema } from './bots.types';
+import { CreateBotSchema, ListBotsQuerySchema, UpdateBotSchema } from './bots.types';
 
 export const listBots = async (req: Request, res: Response) => {
   const userId = req.user?.id;
   if (!userId) return sendError(res, 401, 'Unauthorized');
 
-  const bots = await botsService.listBots(userId);
-  return res.json(bots);
+  try {
+    const query = ListBotsQuerySchema.parse(req.query);
+    const bots = await botsService.listBots(userId, query);
+    return res.json(bots);
+  } catch (error) {
+    return sendValidationError(res, error);
+  }
 };
 
 export const getBot = async (req: Request, res: Response) => {
