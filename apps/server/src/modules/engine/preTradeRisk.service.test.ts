@@ -20,6 +20,7 @@ describe('evaluatePreTradeRiskReasons', () => {
       hasOpenPositionOnSymbol: false,
       botLiveConfig: {
         mode: 'PAPER',
+        marketType: 'FUTURES',
         liveOptIn: false,
         consentTextVersion: null,
       },
@@ -59,4 +60,3 @@ describe('evaluatePreTradeRiskReasons', () => {
     expect(reasons).toContain('open_position_on_symbol_exists');
   });
 });
-

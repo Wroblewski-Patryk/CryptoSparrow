@@ -63,6 +63,7 @@ class PrismaPreTradeReadStore implements PreTradeReadStore {
       where: { id: botId, userId },
       select: {
         mode: true,
+        marketType: true,
         liveOptIn: true,
         consentTextVersion: true,
       },
@@ -146,6 +147,7 @@ export const analyzePreTrade = async (
         metadata: {
           symbol: parsed.symbol,
           mode: parsed.mode,
+          marketType: botLiveConfig?.marketType ?? null,
           reasons: decision.reasons,
           metrics: decision.metrics,
           guardrails: {

@@ -241,3 +241,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Extended bot market-type support to dashboard UI for create/edit flows, aligned with spot-trading rollout.
 - 2026-03-19: Improved spot-support compatibility by normalizing uppercase bot `marketType` aliases (`FUTURES`/`SPOT`) in the CCXT connector config path.
 - 2026-03-19: Improved bots dashboard UX for spot support by adding a market filter and correcting table market/status column alignment.
+- 2026-03-19: Extended pre-trade live-path context by including bot `marketType` in live config reads and audit metadata for decision traceability.

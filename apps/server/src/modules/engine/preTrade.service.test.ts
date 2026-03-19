@@ -9,6 +9,7 @@ const createStore = (overrides?: Partial<MockPreTradeStore>): MockPreTradeStore 
   hasOpenPositionOnSymbol: vi.fn().mockResolvedValue(false),
   getBotLiveConfig: vi.fn().mockResolvedValue({
     mode: 'LIVE',
+    marketType: 'FUTURES',
     liveOptIn: true,
     consentTextVersion: 'mvp-v1',
   }),
@@ -153,6 +154,7 @@ describe('preTrade analysis', () => {
     const store = createStore({
       getBotLiveConfig: vi.fn().mockResolvedValue({
         mode: 'PAPER',
+        marketType: 'FUTURES',
         liveOptIn: false,
         consentTextVersion: null,
       }),
@@ -177,6 +179,7 @@ describe('preTrade analysis', () => {
     const store = createStore({
       getBotLiveConfig: vi.fn().mockResolvedValue({
         mode: 'LIVE',
+        marketType: 'FUTURES',
         liveOptIn: true,
         consentTextVersion: null,
       }),
@@ -273,5 +276,38 @@ describe('preTrade analysis', () => {
 
     expect(decision.allowed).toBe(false);
     expect(decision.reasons).toContain('open_position_on_symbol_exists');
+  });
+
+  it('writes bot marketType into pre-trade audit metadata', async () => {
+    const store = createStore({
+      getBotLiveConfig: vi.fn().mockResolvedValue({
+        mode: 'LIVE',
+        marketType: 'SPOT',
+        liveOptIn: true,
+        consentTextVersion: 'mvp-v1',
+      }),
+    });
+    const auditLogWriter: AuditLogWriter = {
+      write: vi.fn().mockResolvedValue(undefined),
+    };
+
+    await analyzePreTrade(
+      {
+        userId: 'u1',
+        botId: 'b1',
+        symbol: 'BTCUSDT',
+        mode: 'LIVE',
+      },
+      store,
+      auditLogWriter
+    );
+
+    expect(auditLogWriter.write).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          marketType: 'SPOT',
+        }),
+      })
+    );
   });
 });

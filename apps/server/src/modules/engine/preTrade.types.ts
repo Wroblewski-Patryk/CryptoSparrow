@@ -20,6 +20,7 @@ export type PreTradeAnalysisParsedInput = z.output<typeof PreTradeAnalysisInputS
 
 export type PreTradeBotLiveConfig = {
   mode: 'PAPER' | 'LIVE' | 'LOCAL';
+  marketType: 'FUTURES' | 'SPOT';
   liveOptIn: boolean;
   consentTextVersion: string | null;
 };

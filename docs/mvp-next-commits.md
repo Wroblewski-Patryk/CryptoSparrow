@@ -154,6 +154,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `feat(trading): expose bot marketType in dashboard bots flow`
 - [x] 2026-03-19 `feat(trading): normalize spot/futures marketType aliases in exchange connector`
 - [x] 2026-03-19 `feat(ui): add bots market filter and fix market/status column mapping`
+- [x] 2026-03-19 `feat(engine): include bot marketType in pre-trade live config and audit metadata`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
