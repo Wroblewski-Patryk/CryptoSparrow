@@ -234,3 +234,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Added V1 release-candidate checklist to formalize go-live quality/security/ops gates and sign-off flow.
 - 2026-03-19: Added V1 stabilization freeze and bug-bash plan to control pre-release change scope and defect triage SLAs.
 - 2026-03-19: Added V1 post-release monitoring and hotfix protocol with severity-based response model and verification records.
+- 2026-03-19: Added 7-day launch review template and V1.1 backlog-cut framework for post-launch decision cadence.

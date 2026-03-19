@@ -147,6 +147,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `chore(release): add v1 release candidate checklist`
 - [x] 2026-03-19 `chore(release): add stabilization freeze and bug-bash plan`
 - [x] 2026-03-19 `chore(release): add post-release monitoring and hotfix protocol`
+- [x] 2026-03-19 `chore(release): add 7-day launch review and v1.1 backlog template`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
