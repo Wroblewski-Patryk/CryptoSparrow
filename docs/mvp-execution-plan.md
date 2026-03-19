@@ -257,3 +257,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Completed hedge-mode backend flow by validating HEDGE `positionSide` in futures connector orders and extending pre-trade audit metadata with bot `positionMode`.
 - 2026-03-19: Finalized spot connector behavior by validating SPOT order contract and rejecting futures-only order params in live execution flow.
 - 2026-03-19: Added go-live smoke orchestrator script with automatic infra up/down lifecycle to make server/client smoke runs reproducible and cleanup-safe.
+- 2026-03-19: Added advanced pre-trade risk limit evaluation for daily loss, drawdown, and consecutive losses with regression tests.

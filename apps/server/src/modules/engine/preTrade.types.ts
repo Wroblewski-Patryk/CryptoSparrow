@@ -13,6 +13,13 @@ export const PreTradeAnalysisInputSchema = z.object({
   maxOpenPositionsPerUser: z.number().int().min(1).optional(),
   maxOpenPositionsPerBot: z.number().int().min(1).optional(),
   enforceOnePositionPerSymbol: z.boolean().default(true),
+  maxDailyLossUsd: z.number().positive().optional(),
+  maxDrawdownPercent: z.number().positive().max(100).optional(),
+  maxConsecutiveLosses: z.number().int().min(1).optional(),
+  dailyPnlUsd: z.number().optional(),
+  peakEquityUsd: z.number().positive().optional(),
+  currentEquityUsd: z.number().nonnegative().optional(),
+  consecutiveLosses: z.number().int().min(0).optional(),
 });
 
 export type PreTradeAnalysisInput = z.input<typeof PreTradeAnalysisInputSchema>;

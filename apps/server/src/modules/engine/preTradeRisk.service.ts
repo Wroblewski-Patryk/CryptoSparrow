@@ -58,6 +58,32 @@ export const evaluatePreTradeRiskReasons = (input: EvaluatePreTradeRiskInput) =>
     reasons.push('open_position_on_symbol_exists');
   }
 
+  if (typeof parsed.maxDailyLossUsd === 'number' && typeof parsed.dailyPnlUsd === 'number') {
+    const absoluteDailyLoss = parsed.dailyPnlUsd < 0 ? Math.abs(parsed.dailyPnlUsd) : 0;
+    if (absoluteDailyLoss >= parsed.maxDailyLossUsd) {
+      reasons.push('daily_loss_limit_reached');
+    }
+  }
+
+  if (
+    typeof parsed.maxDrawdownPercent === 'number' &&
+    typeof parsed.peakEquityUsd === 'number' &&
+    typeof parsed.currentEquityUsd === 'number' &&
+    parsed.peakEquityUsd > 0
+  ) {
+    const drawdownPercent = ((parsed.peakEquityUsd - parsed.currentEquityUsd) / parsed.peakEquityUsd) * 100;
+    if (drawdownPercent >= parsed.maxDrawdownPercent) {
+      reasons.push('drawdown_limit_reached');
+    }
+  }
+
+  if (
+    typeof parsed.maxConsecutiveLosses === 'number' &&
+    typeof parsed.consecutiveLosses === 'number' &&
+    parsed.consecutiveLosses >= parsed.maxConsecutiveLosses
+  ) {
+    reasons.push('consecutive_losses_limit_reached');
+  }
+
   return reasons;
 };
-

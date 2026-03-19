@@ -60,4 +60,53 @@ describe('evaluatePreTradeRiskReasons', () => {
 
     expect(reasons).toContain('open_position_on_symbol_exists');
   });
+
+  it('returns advanced daily-loss reason when threshold is reached', () => {
+    const reasons = evaluatePreTradeRiskReasons({
+      parsed: parseInput({
+        mode: 'PAPER',
+        maxDailyLossUsd: 250,
+        dailyPnlUsd: -260,
+      }),
+      userOpenPositions: 0,
+      botOpenPositions: 0,
+      hasOpenPositionOnSymbol: false,
+      botLiveConfig: null,
+    });
+
+    expect(reasons).toContain('daily_loss_limit_reached');
+  });
+
+  it('returns advanced drawdown reason when threshold is reached', () => {
+    const reasons = evaluatePreTradeRiskReasons({
+      parsed: parseInput({
+        mode: 'PAPER',
+        maxDrawdownPercent: 10,
+        peakEquityUsd: 1000,
+        currentEquityUsd: 850,
+      }),
+      userOpenPositions: 0,
+      botOpenPositions: 0,
+      hasOpenPositionOnSymbol: false,
+      botLiveConfig: null,
+    });
+
+    expect(reasons).toContain('drawdown_limit_reached');
+  });
+
+  it('returns advanced consecutive-losses reason when threshold is reached', () => {
+    const reasons = evaluatePreTradeRiskReasons({
+      parsed: parseInput({
+        mode: 'PAPER',
+        maxConsecutiveLosses: 3,
+        consecutiveLosses: 3,
+      }),
+      userOpenPositions: 0,
+      botOpenPositions: 0,
+      hasOpenPositionOnSymbol: false,
+      botLiveConfig: null,
+    });
+
+    expect(reasons).toContain('consecutive_losses_limit_reached');
+  });
 });
