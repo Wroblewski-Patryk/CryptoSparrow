@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '../../../context/AuthContext';
 import { LuLayoutDashboard } from "react-icons/lu";
 import ProfileButton from '../../components/ProfileButton';
@@ -13,7 +14,7 @@ export default function Header() {
       <div className="navbar max-w-7xl mx-auto">
         <div className="flex-1">
           <Link href="/" className="flex items-center font-headlinedark:text-white">
-            <img src="/logo.png" alt="Logotype - CryptoSparrow" className="h-8 w-8 mr-2" />
+            <Image src="/logo.png" alt="Logotype - CryptoSparrow" width={32} height={32} className="h-8 w-8 mr-2" />
             CryptoSparrow
           </Link>
         </div>

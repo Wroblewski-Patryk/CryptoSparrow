@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 
 import ProfileButton from '../../components/ProfileButton';
 import ThemeSwitcher from '../../components/ThemeSwitch';
@@ -29,7 +30,7 @@ export default function Header() {
       <div className="navbar max-w-7xl mx-auto flex-wrap items-start gap-2 px-4 py-2 xl:flex-nowrap xl:items-center">
         <div className="flex-1 min-w-0">
           <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-base-100">
-            <img src="/logo.png" alt="Logotype - CryptoSparrow" className="h-8 w-8 mr-2" />
+            <Image src="/logo.png" alt="Logotype - CryptoSparrow" width={32} height={32} className="h-8 w-8 mr-2" />
             <span className="truncate">CryptoSparrow</span>
           </Link>
         </div>
