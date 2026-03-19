@@ -128,3 +128,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Improved connector compatibility for spot rollout by accepting uppercase bot `marketType` aliases and normalizing to CCXT `future`/`spot` defaults.
 - 2026-03-19: Improved bots dashboard operability for spot rollout by adding market filter controls and fixing market/status column mapping.
 - 2026-03-19: Extended pre-trade decision trace for spot rollout by persisting bot `marketType` in critical live-path audit metadata.
+- 2026-03-19: Extended risk-first confirmations by requiring operator confirmation before deleting active/LIVE bot configurations.

@@ -132,4 +132,32 @@ describe("BotsManagement", () => {
     expect(screen.queryByDisplayValue("Futures Bot")).not.toBeInTheDocument();
     expect(screen.getByDisplayValue("Spot Bot")).toBeInTheDocument();
   });
+
+  it("requires confirmation before deleting active LIVE bot", async () => {
+    listMock.mockResolvedValue([
+      {
+        id: "b-live",
+        name: "Live Bot",
+        mode: "LIVE",
+        marketType: "FUTURES",
+        isActive: true,
+        liveOptIn: true,
+        maxOpenPositions: 1,
+      },
+    ]);
+    deleteMock.mockResolvedValue(undefined);
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+
+    render(<BotsManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Live Bot")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Usun" }));
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(deleteMock).not.toHaveBeenCalled();
+    confirmSpy.mockRestore();
+  });
 });

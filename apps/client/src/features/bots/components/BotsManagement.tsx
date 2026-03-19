@@ -148,11 +148,18 @@ export default function BotsManagement() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    setDeletingId(id);
+  const handleDelete = async (bot: Bot) => {
+    if (bot.mode === "LIVE" || bot.liveOptIn || bot.isActive) {
+      const accepted = confirmLiveRisk(
+        "Potwierdzenie LIVE: usuniecie tego bota zatrzyma aktywna konfiguracje tradingowa. Kontynuowac?"
+      );
+      if (!accepted) return;
+    }
+
+    setDeletingId(bot.id);
     try {
-      await deleteBot(id);
-      setBots((prev) => prev.filter((bot) => bot.id !== id));
+      await deleteBot(bot.id);
+      setBots((prev) => prev.filter((item) => item.id !== bot.id));
       toast.success("Bot usuniety");
     } catch (err: unknown) {
       toast.error("Nie udalo sie usunac bota", { description: getAxiosMessage(err) });
@@ -358,7 +365,7 @@ export default function BotsManagement() {
                             type="button"
                             className="btn btn-error btn-xs"
                             disabled={deletingId === bot.id}
-                            onClick={() => void handleDelete(bot.id)}
+                            onClick={() => void handleDelete(bot)}
                           >
                             {deletingId === bot.id ? "Usuwanie..." : "Usun"}
                           </button>
