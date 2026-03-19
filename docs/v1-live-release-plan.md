@@ -39,7 +39,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [x] `test(load): baseline and stress tests for API/worker throughput`
 
 ## Phase D - Product Expansion to V1.0 Scope
-- [ ] `feat(trading): spot trading support`
+- [x] `feat(trading): spot trading support`
 - [x] `feat(strategy): strategy import/export with format versioning`
 - [x] `feat(trading): hedge mode support`
 - [ ] `feat(risk): advanced limits (daily loss/drawdown/consecutive losses)`
@@ -141,3 +141,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Started hedge-mode delivery by introducing bot-level `positionMode` (`ONE_WAY`/`HEDGE`) in schema/API contracts as execution groundwork.
 - 2026-03-19: Completed hedge-mode backend support by enforcing futures `positionSide` for HEDGE orders in connector flow and persisting `positionMode` in pre-trade audit metadata.
 - 2026-03-19: Extended hedge-mode rollout to dashboard bot UX by adding `positionMode` create/edit controls with updated client regression tests.
+- 2026-03-19: Completed spot trading support in live connector contract by validating SPOT order payloads and rejecting futures-only params (`reduceOnly`, hedge `positionSide`) with regression tests.

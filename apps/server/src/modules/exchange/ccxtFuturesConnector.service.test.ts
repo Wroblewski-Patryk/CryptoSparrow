@@ -137,7 +137,7 @@ describe('CcxtFuturesConnector scaffold', () => {
     ).rejects.toThrow('positionSide is required in HEDGE mode');
   });
 
-  it('configures spot mode and skips futures-only reduceOnly param', async () => {
+  it('configures spot mode and places vanilla spot orders', async () => {
     const client = createMockClient();
     const factory: CcxtClientFactory = vi.fn().mockResolvedValue(client);
     const connector = new CcxtFuturesConnector(
@@ -154,9 +154,6 @@ describe('CcxtFuturesConnector scaffold', () => {
       type: 'market',
       side: 'buy',
       amount: 0.2,
-      reduceOnly: true,
-      positionMode: 'HEDGE',
-      positionSide: 'LONG',
     });
 
     expect(factory).toHaveBeenCalledWith(
@@ -177,6 +174,35 @@ describe('CcxtFuturesConnector scaffold', () => {
     );
   });
 
+  it('rejects futures-only params in spot mode', async () => {
+    const client = createMockClient();
+    const connector = new CcxtFuturesConnector(
+      { exchangeId: 'binance', marketType: 'spot' },
+      vi.fn().mockResolvedValue(client)
+    );
+
+    await expect(
+      connector.placeOrder({
+        symbol: 'BTC/USDT',
+        type: 'market',
+        side: 'buy',
+        amount: 0.2,
+        reduceOnly: true,
+      })
+    ).rejects.toThrow('reduceOnly is not supported in SPOT mode');
+
+    await expect(
+      connector.placeOrder({
+        symbol: 'BTC/USDT',
+        type: 'market',
+        side: 'buy',
+        amount: 0.2,
+        positionMode: 'HEDGE',
+        positionSide: 'LONG',
+      })
+    ).rejects.toThrow('HEDGE position parameters are not supported in SPOT mode');
+  });
+
   it('normalizes uppercase marketType aliases from bot config', async () => {
     const client = createMockClient();
     const factory: CcxtClientFactory = vi.fn().mockResolvedValue(client);
@@ -194,9 +220,6 @@ describe('CcxtFuturesConnector scaffold', () => {
       type: 'market',
       side: 'buy',
       amount: 0.1,
-      reduceOnly: true,
-      positionMode: 'HEDGE',
-      positionSide: 'LONG',
     });
 
     expect(factory).toHaveBeenCalledWith(

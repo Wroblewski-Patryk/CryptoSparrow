@@ -95,6 +95,13 @@ export class CcxtFuturesConnector {
         }
         params.positionSide = request.positionSide;
       }
+    } else if (this.config.marketType === 'spot') {
+      if (typeof request.reduceOnly === 'boolean') {
+        throw new Error('reduceOnly is not supported in SPOT mode');
+      }
+      if (request.positionMode === 'HEDGE' || request.positionSide) {
+        throw new Error('HEDGE position parameters are not supported in SPOT mode');
+      }
     }
     if (request.clientOrderId) {
       params.clientOrderId = request.clientOrderId;

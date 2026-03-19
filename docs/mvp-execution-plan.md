@@ -255,3 +255,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Started hedge-mode groundwork by adding bot `positionMode` (`ONE_WAY`/`HEDGE`) to Prisma schema, API validation, and contract assertions.
 - 2026-03-19: Exposed bot `positionMode` in dashboard create/edit flows and synchronized client bot tests with the new ONE_WAY/HEDGE contract.
 - 2026-03-19: Completed hedge-mode backend flow by validating HEDGE `positionSide` in futures connector orders and extending pre-trade audit metadata with bot `positionMode`.
+- 2026-03-19: Finalized spot connector behavior by validating SPOT order contract and rejecting futures-only order params in live execution flow.
