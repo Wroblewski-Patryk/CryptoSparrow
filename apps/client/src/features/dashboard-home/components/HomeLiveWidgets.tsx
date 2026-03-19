@@ -10,6 +10,7 @@ import { listOrders } from "../../../features/orders/services/orders.service";
 import { Order } from "../../../features/orders/types/order.type";
 import { listPositions } from "../../../features/positions/services/positions.service";
 import { Position } from "../../../features/positions/types/position.type";
+import LiveMarketBar from "./LiveMarketBar";
 
 type FeedItem = {
   key: string;
@@ -115,6 +116,8 @@ export default function HomeLiveWidgets() {
 
   return (
     <div className="space-y-6">
+      <LiveMarketBar symbols={["BTCUSDT", "ETHUSDT"]} interval="1m" />
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {kpiCards.map((card) => (
           <div key={card.label} className="card bg-base-200 shadow-sm">

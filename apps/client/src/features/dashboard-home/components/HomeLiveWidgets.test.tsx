@@ -59,7 +59,7 @@ describe("HomeLiveWidgets", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Live snapshot synced")).toBeInTheDocument();
-      expect(screen.getByText("ETHUSDT")).toBeInTheDocument();
+      expect(screen.getAllByText("ETHUSDT").length).toBeGreaterThan(0);
       expect(screen.getByText(/MARKET BTCUSDT BUY/i)).toBeInTheDocument();
     });
   });
