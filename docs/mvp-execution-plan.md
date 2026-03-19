@@ -116,7 +116,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `chore(release): MVP release checklist and changelog`
 
 ## Phase 6 - MVP Freeze Gap Closure (As of 2026-03-19)
-- [ ] `feat(market-stream): implement end-to-end Binance WebSocket ingest for ticker/candle runtime feed`
+- [x] `feat(market-stream): implement Binance WebSocket ingest worker for normalized ticker/candle runtime feed`
 - [x] `decision(stream): close SSE vs WebSocket fan-out decision and lock MVP transport contract`
 - [x] `feat(ui): add dashboard live market bar with stream status, last price, and candle freshness`
 - [x] `feat(orders-write): add open/cancel/close order actions with risk-first confirmations`
@@ -134,7 +134,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] EN/PL and responsive/PWA baseline complete for core flows.
 - [x] Shared app shell and view-state model are consistent across core dashboard modules.
 - [ ] Real-time market stream is visible in dashboard control center via server-owned transport.
-- [ ] Write-side order actions (open/cancel/close) are available with risk-first confirmations.
+- [x] Write-side order actions (open/cancel/close) are available with risk-first confirmations.
 
 ## Progress Log
 - 2026-03-15: Initialized MVP execution file and commit rules.
@@ -282,3 +282,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Added live position reconciliation loop with heartbeat/status exposure (`/dashboard/positions/live-status`) and execution-worker startup integration.
 - 2026-03-19: Finalized backtest overlay/report visuals with equity-curve rendering in summary and modal report views, plus passing backtest component tests and client production build.
 - 2026-03-19: Added runtime smoke e2e flow for normalized stream signal ingestion through orchestrator order/position lifecycle (LONG open + EXIT close) and hardened EXIT handling for already-filled market orders.
+- 2026-03-19: Synced MVP docs to freeze-gap delivery state (scope/limitations/modules/runtime notes), including explicit distinction between delivered ingest/orchestration pieces and remaining SSE fan-out automation gap.

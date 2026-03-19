@@ -39,9 +39,10 @@
 
 ## Current Runtime Reality (As of 2026-03-19)
 - Dashboard widgets are populated via REST reads (orders/positions snapshots).
-- Heartbeat/health signaling exists, but not a full market stream UI pipeline.
+- Dashboard includes live market bar UI wired for SSE consumption and stream-health signaling.
 - Exchange connector and live-order adapter exist at service level.
-- WebSocket ingestion from Binance Futures/Spot is not wired end-to-end yet.
+- Binance Futures/Spot WebSocket ingest worker exists with normalized events.
+- Full server-owned SSE fan-out and stream-to-signal runtime automation are still staged.
 
 ## Market Data Transport Strategy
 - MVP target: exchange prices and live candles via WebSocket streams.

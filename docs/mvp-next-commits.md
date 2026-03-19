@@ -7,10 +7,9 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `docs(mvp): sync Current Scope and Current Limitations after freeze-gap delivery`
+- [ ] `chore(release): re-run MVP release checklist after freeze-gap closure`
 
 ## NEXT
-- [ ] `chore(release): re-run MVP release checklist after freeze-gap closure`
 
 ## BLOCKED
 - [ ] 2026-03-19 `exit-gates(v1-production): SLO/incident/security/load/public-docs/launch-review criteria require production evidence and launch-cycle checkpoints`
@@ -185,6 +184,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `feat(positions-live): add live position reconciliation loop and heartbeat/status exposure`
 - [x] 2026-03-19 `feat(backtest): finalize overlays/report visuals for MVP completeness`
 - [x] 2026-03-19 `test(e2e): add stream-to-order orchestration smoke test path`
+- [x] 2026-03-19 `docs(mvp): sync Current Scope and Current Limitations after freeze-gap delivery`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

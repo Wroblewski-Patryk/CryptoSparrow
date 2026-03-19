@@ -6,20 +6,20 @@
 - strategies. Strategy CRUD and indicator metadata.
 - markets. Market universe CRUD (base, whitelist, blacklist).
 - bots. Bot CRUD with LIVE opt-in consent validation.
-- orders. Read endpoints for order history and details.
-- positions. Read endpoints for position history and details.
+- orders. Read and write endpoints for order history/details plus open/cancel/close actions.
+- positions. Read endpoints plus live reconciliation status exposure.
 - backtests. Backtest run/trade/report read-write basics.
 - logs. Audit/event log read endpoints.
 - exchange. CCXT connector and retrying live-order adapter services.
 - market-data. OHLCV ingest/cache service abstractions.
+- market-stream. Binance WebSocket ingest worker with normalized ticker/candle payloads.
+- execution-orchestrator. Runtime signal -> order -> position orchestration service.
 - upload, middleware, pagination, isolation. Supporting infrastructure.
 
 ## Backend Modules (Planned for MVP Completion)
-- market-stream. Real-time stream ingestion from exchange WebSockets.
-- execution-orchestrator. End-to-end signal -> order -> position lifecycle runtime.
-- orders-write. Create/cancel order APIs with risk checks and mode guards.
-- positions-live. Live position update loop and reconciliation.
-- reports. Finalized performance metrics across backtest/paper/live.
+- market-stream fan-out gateway. Server-owned SSE broadcast path from worker events to dashboard clients.
+- runtime automation bridge. Continuous stream -> signal evaluation loop in worker runtime.
+- reports. Unified performance metrics parity across backtest/paper/live runtime datasets.
 
 ## Frontend Areas (Current)
 - public. Landing and public pages.
@@ -29,18 +29,17 @@
 - dashboard/strategies. Strategy list and editor.
 - dashboard/markets. Market universe management.
 - dashboard/bots. Bot management and mode controls.
-- dashboard/orders. Read-only order history views.
-- dashboard/positions. Read-only position views.
-- dashboard/backtest. Backtest pages (MVP in progress).
+- dashboard/orders. Order history and risk-first write-side actions.
+- dashboard/positions. Position views with live-status support.
+- dashboard/backtest. Backtest pages with overlays and report summary.
 - dashboard/logs. Audit/log pages.
 - dashboard/exchanges. API key connection pages.
-- dashboard/reports. Placeholder/partial reporting area.
+- dashboard/reports. Performance reporting views.
+- dashboard home live market bar with SSE client state.
 
 ## Frontend Areas (Planned for MVP Completion)
-- dashboard live market bar with streaming ticker/candle status.
-- dashboard order-action flows (open/close/cancel with confirmations).
 - dashboard richer paper/live runtime controls and state transitions.
-- dashboard backtest overlays and full report visualizations.
+- dashboard manual trade ticket UX beyond API-first actions.
 
 ## Dashboard IA Order (MVP)
 - dashboard. Control Center with risk and operations priority.

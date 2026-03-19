@@ -14,11 +14,9 @@
 - Backtest and execution runtime wiring.
 
 ## Immediate Gaps to Close (Before MVP Freeze)
-- Implement end-to-end exchange WebSocket market stream ingestion.
-- Surface live ticker/candle status in dashboard control center.
-- Add write-side order actions (open/cancel/close) with risk-first confirmations.
-- Wire exchange adapter into execution orchestration for paper/live paths.
-- Finalize backtest reports and overlays.
+- Wire server-owned SSE fan-out endpoint from market-stream worker to dashboard clients.
+- Complete continuous stream -> signal evaluation loop in runtime worker flow.
+- Re-run release checklist after freeze-gap closure and capture final evidence.
 
 ## MVP Targets
 - Strategy builder for advanced strategies.

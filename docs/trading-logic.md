@@ -2,9 +2,10 @@
 
 ## Current State
 - Strategy and market/bot configuration layers are available.
-- Orders and positions are currently exposed as read-focused dashboard views.
-- Exchange connector services exist, but full live execution orchestration is not fully wired in runtime.
-- No end-to-end WebSocket-driven market stream in dashboard yet.
+- Orders include read and write-side lifecycle actions (`open`/`cancel`/`close`) with risk guards.
+- Exchange connector services and runtime execution orchestrator are available with smoke-tested signal -> order -> position flow.
+- Dashboard has a live market bar UI ready for SSE market stream events.
+- Remaining runtime gap is continuous stream-driven automation and server SSE broadcast fan-out wiring.
 
 ## Strategy Builder Requirements (MVP)
 - Rule-based builder (list of conditions).
@@ -60,8 +61,6 @@
 - DCA: add to position on positive or negative conditions.
 
 ## Risk Management (Planned)
-- Max daily loss, max drawdown, max consecutive losses.
-- Cooldown after loss.
 - Trailing based on volatility or ATR.
 
 ## Data Sources
