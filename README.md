@@ -102,3 +102,4 @@ Useful overrides:
 - Added localization QA checklist: `docs/localization-qa.md`.
 - Added optional dashboard isometric visual mode toggle.
 - Added logs decision-trace explorer (metadata drill-down in dashboard logs).
+- Added risk-first LIVE confirmation prompts in bots management flow.

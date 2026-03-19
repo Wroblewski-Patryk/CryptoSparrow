@@ -228,3 +228,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Improved dashboard accessibility controls with stronger menu semantics and heartbeat status live-region announcements.
 - 2026-03-19: Synced module map docs with strategy import/export support and explicit `strategy.v1` package contract.
 - 2026-03-19: Added logs decision-trace explorer UX with per-event metadata drill-down and trace visibility for audit workflows.
+- 2026-03-19: Added risk-first confirmation prompts for LIVE bot transitions (mode/opt-in/activation) to reduce accidental live exposure.

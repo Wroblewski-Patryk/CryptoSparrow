@@ -114,3 +114,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Improved accessibility in dashboard controls by hardening theme/account switcher semantics and adding screen-reader heartbeat live-region updates.
 - 2026-03-19: Updated module-map documentation to include strategy import/export API contract (`strategy.v1`) for operator/dev reference.
 - 2026-03-19: Added decision-trace explorer in logs dashboard with metadata drill-down panel and trace-focused filtering flow.
+- 2026-03-19: Added risk-first LIVE confirmation prompts in bot create/save flows before mode/opt-in/activation changes that can enable live trading.

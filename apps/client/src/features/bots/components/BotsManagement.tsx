@@ -30,6 +30,7 @@ const toRiskBadge = (bot: Bot) => {
 
 export default function BotsManagement() {
   const [bots, setBots] = useState<Bot[]>([]);
+  const [serverSnapshot, setServerSnapshot] = useState<Record<string, Bot>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -46,6 +47,7 @@ export default function BotsManagement() {
     try {
       const data = await listBots();
       setBots(data);
+      setServerSnapshot(Object.fromEntries(data.map((bot) => [bot.id, bot])));
     } catch (err: unknown) {
       setError(getAxiosMessage(err) ?? "Nie udalo sie pobrac botow.");
     } finally {
@@ -59,12 +61,21 @@ export default function BotsManagement() {
 
   const canCreate = useMemo(() => name.trim().length > 0 && !creating, [creating, name]);
 
+  const confirmLiveRisk = (message: string) => window.confirm(message);
+
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canCreate) return;
 
     setCreating(true);
     try {
+      if (mode === "LIVE") {
+        const accepted = confirmLiveRisk(
+          "Potwierdzenie LIVE: ten bot bedzie tworzony w trybie LIVE. Kontynuowac?"
+        );
+        if (!accepted) return;
+      }
+
       const created = await createBot({
         name: name.trim(),
         mode,
@@ -74,6 +85,7 @@ export default function BotsManagement() {
         maxOpenPositions,
       });
       setBots((prev) => [created, ...prev]);
+      setServerSnapshot((prev) => ({ ...prev, [created.id]: created }));
       setName("");
       setMode("PAPER");
       setMaxOpenPositions(1);
@@ -90,6 +102,22 @@ export default function BotsManagement() {
   };
 
   const handleSave = async (bot: Bot) => {
+    const previous = serverSnapshot[bot.id];
+    const enteringLiveMode = !!previous && previous.mode !== "LIVE" && bot.mode === "LIVE";
+    const enablingLiveOptIn = !!previous && !previous.liveOptIn && bot.liveOptIn;
+    const activatingLiveBot =
+      !!previous && !previous.isActive && bot.isActive && (bot.mode === "LIVE" || bot.liveOptIn);
+
+    if (enteringLiveMode || enablingLiveOptIn || activatingLiveBot) {
+      const accepted = confirmLiveRisk(
+        "Potwierdzenie LIVE: zapis aktywuje ryzyko handlu na zywo. Kontynuowac?"
+      );
+      if (!accepted) {
+        patchBot(bot.id, previous);
+        return;
+      }
+    }
+
     setSavingId(bot.id);
     try {
       const updated = await updateBot(bot.id, {
@@ -101,6 +129,7 @@ export default function BotsManagement() {
         maxOpenPositions: bot.maxOpenPositions,
       });
       patchBot(bot.id, updated);
+      setServerSnapshot((prev) => ({ ...prev, [bot.id]: updated }));
       toast.success("Bot zaktualizowany");
     } catch (err: unknown) {
       toast.error("Nie udalo sie zapisac zmian", { description: getAxiosMessage(err) });
