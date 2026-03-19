@@ -1,7 +1,12 @@
-# UI/UX Foundation (MVP Baseline)
+﻿# UI/UX Foundation (MVP Baseline)
 
 ## Purpose
 This document defines the baseline UX and UI assumptions for CryptoSparrow dashboard pages. It is the shared foundation for implementation and future task breakdown.
+
+## Benchmark Direction
+- UX benchmark should match top automation platforms (for example CryptoHopper-level operator clarity).
+- The goal is not visual imitation, but best-in-class operational clarity, speed, and trust.
+- Every critical trading action should be possible in a few clicks, with explicit risk context.
 
 ## Product UX North Star
 - The post-login experience is an operator control center, not a generic landing page.
@@ -40,13 +45,16 @@ Provide a fast, actionable overview of risk, exposure, and bot execution health.
    - open orders
    - risk alerts
    - bots running
-3. Main operational grid:
+3. Live market strip:
+   - selected symbols (for example BTC/USDT, ETH/USDT)
+   - last price, 24h delta, stream health indicator
+4. Main operational grid:
    - positions snapshot (primary panel)
    - bot status and quick actions (secondary panel)
-4. Secondary grid:
+5. Secondary grid:
    - orders snapshot with failure context
    - recent activity/audit feed
-5. Risk notice footer:
+6. Risk notice footer:
    - user responsibility reminder and logs shortcut
 
 ### Interaction constraints
@@ -82,7 +90,7 @@ Provide a fast, actionable overview of risk, exposure, and bot execution health.
 ### Core reusable components
 - Layout: `AppHeader`, `DashboardNav`, `PageHeader`, `Breadcrumbs`.
 - Status: `ModeBadge`, `ConnectionBadge`, `SeverityBadge`, `HeartbeatBadge`.
-- Data: `KpiCard`, `StatusCard`, `SnapshotTable`, `AuditFeed`, `MetricTile`.
+- Data: `KpiCard`, `StatusCard`, `SnapshotTable`, `AuditFeed`, `MetricTile`, `MarketTickerStrip`.
 - Actions: `ActionBar`, `QuickActionGroup`, `ConfirmModal`, `DangerActionModal`.
 - States: `SkeletonState`, `EmptyState`, `ErrorState`, `RetryState`, `DegradedState`.
 

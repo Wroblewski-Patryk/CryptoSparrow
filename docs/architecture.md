@@ -37,6 +37,17 @@
 - API: validation, persistence, business rules.
 - Engine: trading pipeline, queues, and execution.
 
+## Current Runtime Reality (As of 2026-03-19)
+- Dashboard widgets are populated via REST reads (orders/positions snapshots).
+- Heartbeat/health signaling exists, but not a full market stream UI pipeline.
+- Exchange connector and live-order adapter exist at service level.
+- WebSocket ingestion from Binance Futures/Spot is not wired end-to-end yet.
+
+## Market Data Transport Strategy
+- MVP target: exchange prices and live candles via WebSocket streams.
+- REST should be fallback and historical fetch path, not primary live ticker source.
+- Client should consume server-owned stream fan-out (SSE or WebSocket gateway), not direct exchange sockets from browser.
+
 ## Scalability Approach
 - Modular monolith: clear module boundaries inside one codebase.
 - Multi-tenant from day one (many users on one cluster).

@@ -1,42 +1,46 @@
-# Module Map
+﻿# Module Map
 
 ## Backend Modules (Current)
 - auth. Registration, login, JWT handling.
-- profile. User profile management.
-- strategies. CRUD for strategies/configuration + import/export (`strategy.v1` package format).
-- indicators. Indicator metadata endpoints.
-- upload. File upload services.
-- middleware. Auth and error handling.
+- profile. User profile management and API keys.
+- strategies. Strategy CRUD and indicator metadata.
+- markets. Market universe CRUD (base, whitelist, blacklist).
+- bots. Bot CRUD with LIVE opt-in consent validation.
+- orders. Read endpoints for order history and details.
+- positions. Read endpoints for position history and details.
+- backtests. Backtest run/trade/report read-write basics.
+- logs. Audit/event log read endpoints.
+- exchange. CCXT connector and retrying live-order adapter services.
+- market-data. OHLCV ingest/cache service abstractions.
+- upload, middleware, pagination, isolation. Supporting infrastructure.
 
-## Backend Modules (Planned for MVP)
-- markets. Universe selection, symbol groups, whitelists and blacklists.
-- bots. Lifecycle of live and paper bots.
-- market-data. OHLCV ingestion and caching.
-- signals. Signal generation and storage.
-- orders. Order placement and simulation.
-- positions. Position tracking and risk management.
-- backtests. Historical simulation and reports.
-- reports. Performance metrics from backtests.
-- logs. System and trading audit logs.
+## Backend Modules (Planned for MVP Completion)
+- market-stream. Real-time stream ingestion from exchange WebSockets.
+- execution-orchestrator. End-to-end signal -> order -> position lifecycle runtime.
+- orders-write. Create/cancel order APIs with risk checks and mode guards.
+- positions-live. Live position update loop and reconciliation.
+- reports. Finalized performance metrics across backtest/paper/live.
 
 ## Frontend Areas (Current)
 - public. Landing and public pages.
 - public/auth. Login and registration.
-- dashboard. User panel.
+- dashboard. Control Center shell with snapshots.
 - dashboard/profile. User settings.
 - dashboard/strategies. Strategy list and editor.
-- dashboard/backtest. Placeholder for future backtesting.
+- dashboard/markets. Market universe management.
+- dashboard/bots. Bot management and mode controls.
+- dashboard/orders. Read-only order history views.
+- dashboard/positions. Read-only position views.
+- dashboard/backtest. Backtest pages (MVP in progress).
+- dashboard/logs. Audit/log pages.
+- dashboard/exchanges. API key connection pages.
+- dashboard/reports. Placeholder/partial reporting area.
 
-## Frontend Areas (Planned for MVP)
-- dashboard/markets. Symbol universe configuration (groups, whitelist, blacklist).
-- dashboard/builder. Advanced strategy builder with presets.
-- dashboard/bots. Bot management and live status.
-- dashboard/positions. Open and closed positions.
-- dashboard/orders. Order history and details.
-- dashboard/backtest. Full backtest UX and reports.
-- dashboard/reports. Performance summaries.
-- dashboard/logs. Audit trail and explanations.
-- dashboard/exchanges. API key connections and permissions.
+## Frontend Areas (Planned for MVP Completion)
+- dashboard live market bar with streaming ticker/candle status.
+- dashboard order-action flows (open/close/cancel with confirmations).
+- dashboard richer paper/live runtime controls and state transitions.
+- dashboard backtest overlays and full report visualizations.
 
 ## Dashboard IA Order (MVP)
 - dashboard. Control Center with risk and operations priority.

@@ -97,6 +97,10 @@ This file tracks intentionally unresolved architecture choices so implementation
 - Open: exact threshold for splitting API and workers into separate processes.
 - Current assumption: split when queue lag or API latency exceeds acceptable limits.
 
+## Stream Transport to Frontend
+- Open: server-to-client transport for market stream (`SSE` vs app-level `WebSocket`).
+- Current assumption: start with SSE for simplicity and observability, keep upgrade path to WebSocket gateway.
+
 ## Accessibility Scope
 - Open: full accessibility pass timeline.
 - Current assumption: baseline accessibility in MVP, full pass after MVP.

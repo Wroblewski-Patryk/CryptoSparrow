@@ -1,4 +1,4 @@
-# Product Vision (Technical Spec)
+﻿# Product Vision (Technical Spec)
 
 ## Mission
 Build a safe, transparent, and configurable platform for automated crypto trading.
@@ -15,8 +15,16 @@ Primary target is advanced users who already understand trading concepts and can
 ## Current Scope (Implemented)
 - User authentication and profile basics.
 - Strategy CRUD and indicator metadata.
-- Web dashboard structure and auth screens.
-- API structure with validation.
+- Markets/Bots/Orders/Positions/Backtests/Logs dashboard pages and API modules.
+- Bot management with explicit LIVE opt-in consent guardrails.
+- Dashboard snapshots for orders and positions (REST-based reads).
+- API structure with validation, ownership checks, and rate limiting.
+
+## Current Limitations (As of 2026-03-19)
+- No live market ticker bar from exchange streams in dashboard yet.
+- No user-facing "open position now" flow from dashboard yet.
+- No end-to-end Binance WebSocket ingestion pipeline in runtime.
+- Exchange order connector exists, but full runtime orchestration is still in progress.
 
 ## MVP Scope (Target for First Release)
 - Strategy builder capable of expressing advanced strategies (indicators, logical conditions, risk rules).

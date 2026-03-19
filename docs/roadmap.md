@@ -1,16 +1,24 @@
-# Roadmap
+﻿# Roadmap
 
 ## Completed
 - Monorepo setup with pnpm.
 - Client with Next.js and React.
 - Server with Express and Prisma.
 - JWT-based authentication.
-- Strategy and indicator modules.
+- Core modules scaffolded: strategies, markets, bots, orders, positions, backtests, logs.
+- Live opt-in safety guardrails for bots.
 
 ## In Progress
-- Refining data model for bots and positions.
 - Hardening validation and error handling.
 - Stabilizing dashboard workflows.
+- Backtest and execution runtime wiring.
+
+## Immediate Gaps to Close (Before MVP Freeze)
+- Implement end-to-end exchange WebSocket market stream ingestion.
+- Surface live ticker/candle status in dashboard control center.
+- Add write-side order actions (open/cancel/close) with risk-first confirmations.
+- Wire exchange adapter into execution orchestration for paper/live paths.
+- Finalize backtest reports and overlays.
 
 ## MVP Targets
 - Strategy builder for advanced strategies.

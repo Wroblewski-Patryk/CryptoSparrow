@@ -1,7 +1,10 @@
 ﻿# Trading Logic
 
 ## Current State
-The system does not execute trades yet. Strategies are stored and managed, and indicator metadata is exposed via API.
+- Strategy and market/bot configuration layers are available.
+- Orders and positions are currently exposed as read-focused dashboard views.
+- Exchange connector services exist, but full live execution orchestration is not fully wired in runtime.
+- No end-to-end WebSocket-driven market stream in dashboard yet.
 
 ## Strategy Builder Requirements (MVP)
 - Rule-based builder (list of conditions).
@@ -62,7 +65,8 @@ The system does not execute trades yet. Strategies are stored and managed, and i
 - Trailing based on volatility or ATR.
 
 ## Data Sources
-- MVP: OHLCV only.
+- MVP live path target: WebSocket stream for live prices/candles.
+- MVP historical/fallback path: REST OHLCV ingestion.
 - Planned: order book, funding, open interest.
 
 ## Target Flow
