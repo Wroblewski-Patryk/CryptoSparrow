@@ -59,7 +59,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 ## Phase F - Go-Live Program
 - [x] `chore(release): release candidate checklist`
 - [x] `chore(release): stabilization freeze window and bug bash`
-- [ ] `test(e2e): full go-live smoke pack (live-safe)`
+- [x] `test(e2e): full go-live smoke pack (live-safe)`
 - [x] `chore(release): v1.0 tag + changelog + migration notes`
 - [x] `chore(release): post-release monitoring and hotfix protocol`
 - [x] `chore(release): 7-day launch review and v1.1 backlog cut`
@@ -146,3 +146,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Added advanced pre-trade risk limits for daily loss, drawdown, and consecutive losses with deterministic risk-evaluator test coverage.
 - 2026-03-19: Added pre-trade cooldown policy support after losses with configurable cooldown window (`lastLossAtEpochMs` + `cooldownAfterLossMinutes`) and regression tests.
 - 2026-03-19: Added market-data service support for additional sources (`order book`, `funding rate`, `open interest`) with optional provider contract and explicit availability errors.
+- 2026-03-19: Completed full go-live smoke pack in live-safe mode via orchestrator (infra up, migrations deploy, server smoke, client smoke, infra down) with all suites green.

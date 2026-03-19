@@ -30,6 +30,11 @@ try {
   }
   infraStarted = true;
 
+  exitCode = run('pnpm', ['--filter', 'server', 'exec', 'prisma', 'migrate', 'deploy']);
+  if (exitCode !== 0) {
+    process.exit(exitCode);
+  }
+
   exitCode = run('pnpm', ['run', 'test:go-live:server']);
   if (exitCode !== 0) {
     process.exit(exitCode);

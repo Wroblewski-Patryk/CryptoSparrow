@@ -11,7 +11,6 @@ Operational queue for one-task execution runs.
 ## NEXT
 
 ## BLOCKED
-- [ ] 2026-03-19 `test(e2e): full go-live smoke pack (live-safe)` blocked locally until Docker Desktop engine is running
 - [ ] 2026-03-19 `exit-gates(production): SLO/incident/security/load/public-docs/launch-review criteria require production evidence and launch-cycle checkpoints`
 
 ## DONE
@@ -174,6 +173,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `feat(risk): add advanced pre-trade limits for daily loss/drawdown/consecutive losses`
 - [x] 2026-03-19 `feat(risk): add post-loss cooldown policy in pre-trade guardrails`
 - [x] 2026-03-19 `feat(data): add market-data sources for order book/funding/open interest`
+- [x] 2026-03-19 `test(e2e): pass full go-live smoke pack with auto infra+migrations orchestration`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

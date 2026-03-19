@@ -14,11 +14,11 @@ Run a focused pre-release smoke suite for the most critical V1 paths.
   - `pnpm go-live:infra:down`
 - Full smoke pack:
   - `pnpm test:go-live:smoke`
-  - Auto flow: infra up -> server smoke -> client smoke -> infra down
+  - Auto flow: infra up -> `prisma migrate deploy` -> server smoke -> client smoke -> infra down
 - Server smoke only:
   - `pnpm test:go-live:server`
   - `pnpm test:go-live:server:with-infra`
-  - Auto flow: infra up -> server smoke -> infra down
+  - Auto flow: infra up -> `prisma migrate deploy` -> server smoke -> infra down
 - Client smoke only:
   - `pnpm test:go-live:client`
 

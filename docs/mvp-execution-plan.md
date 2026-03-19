@@ -260,3 +260,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Added advanced pre-trade risk limit evaluation for daily loss, drawdown, and consecutive losses with regression tests.
 - 2026-03-19: Added post-loss cooldown guardrail evaluation in pre-trade risk checks with deterministic unit tests for active/elapsed cooldown windows.
 - 2026-03-19: Added optional market-data adapters for order book, funding rate, and open interest snapshots with validated request contracts and tests.
+- 2026-03-19: Validated full go-live smoke flow end-to-end (Docker infra lifecycle + Prisma migrate deploy + server/client smoke suites) with green result.
