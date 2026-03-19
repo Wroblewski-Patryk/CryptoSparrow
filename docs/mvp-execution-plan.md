@@ -122,7 +122,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(orders-write): add open/cancel/close order actions with risk-first confirmations`
 - [x] `feat(execution-orchestrator): wire signal -> order -> position lifecycle for paper/live runtime paths`
 - [x] `feat(positions-live): add live position reconciliation/update loop`
-- [ ] `feat(backtest): finalize chart overlays and report visualizations to MVP-complete state`
+- [x] `feat(backtest): finalize chart overlays and report visualizations to MVP-complete state`
 - [ ] `test(e2e): add runtime orchestration smoke path covering stream -> signal -> order -> position updates`
 
 ## MVP Exit Criteria
@@ -280,3 +280,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Added orders write-side API (`open`/`cancel`/`close`) with LIVE risk acknowledgments, bot eligibility guards, and contract e2e coverage.
 - 2026-03-19: Wired runtime execution orchestrator service for signal -> order -> position lifecycle (LONG/SHORT/EXIT) with paper/live-compatible flow contracts.
 - 2026-03-19: Added live position reconciliation loop with heartbeat/status exposure (`/dashboard/positions/live-status`) and execution-worker startup integration.
+- 2026-03-19: Finalized backtest overlay/report visuals with equity-curve rendering in summary and modal report views, plus passing backtest component tests and client production build.

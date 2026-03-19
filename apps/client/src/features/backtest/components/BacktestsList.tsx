@@ -36,6 +36,34 @@ const pnlClass = (value: number | null) => {
   return "";
 };
 
+const buildEquityCurve = (items: BacktestTrade[]) => {
+  const sorted = [...items].sort((a, b) => (a.closedAt < b.closedAt ? -1 : 1));
+  const points: number[] = [];
+  let cumulative = 0;
+  for (const trade of sorted) {
+    cumulative += trade.pnl;
+    points.push(cumulative);
+  }
+  return points;
+};
+
+const toSparklinePoints = (series: number[]) => {
+  if (series.length === 0) return "";
+  const width = 280;
+  const height = 70;
+  const min = Math.min(...series);
+  const max = Math.max(...series);
+  const range = max - min || 1;
+
+  return series
+    .map((value, index) => {
+      const x = (index / Math.max(series.length - 1, 1)) * width;
+      const y = height - ((value - min) / range) * height;
+      return `${x},${y}`;
+    })
+    .join(" ");
+};
+
 export function BacktestsList() {
   const { formatCurrency, formatDateTime, formatNumber, formatPercent } = useLocaleFormatting();
   const [runs, setRuns] = useState<BacktestRun[]>([]);
@@ -61,6 +89,17 @@ export function BacktestsList() {
     () => runs.find((run) => run.id === selectedRunId) ?? null,
     [runs, selectedRunId]
   );
+
+  const equityCurve = useMemo(() => buildEquityCurve(trades), [trades]);
+  const equityCurvePoints = useMemo(() => toSparklinePoints(equityCurve), [equityCurve]);
+  const overlayQuality = useMemo(() => {
+    const winRate = report?.winRate ?? 0;
+    const maxDrawdown = report?.maxDrawdown ?? 100;
+    const sharpe = report?.sharpe ?? 0;
+    if ((report?.netPnl ?? 0) > 0 && winRate >= 55 && maxDrawdown <= 20 && sharpe >= 1) return "Strong";
+    if ((report?.netPnl ?? 0) > 0 && winRate >= 45) return "Stable";
+    return "Risky";
+  }, [report]);
 
   const loadRuns = useCallback(async () => {
     setLoading(true);
@@ -354,8 +393,45 @@ export function BacktestsList() {
                           <div className="stat-title">Max Drawdown</div>
                           <div className="stat-value text-xl">{formatPercent(report.maxDrawdown)}</div>
                         </div>
+                        <div className="stat bg-base-100 rounded-lg p-3 col-span-2">
+                          <div className="stat-title">Overlay Quality</div>
+                          <div className="stat-value text-xl">{overlayQuality}</div>
+                          <div className="stat-desc">
+                            WinRate {formatPercent(report.winRate)} / MaxDD {formatPercent(report.maxDrawdown)} / Sharpe{" "}
+                            {formatNumber(report.sharpe, { maximumFractionDigits: 2 })}
+                          </div>
+                        </div>
                       </div>
                     )}
+
+                    <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                      <p className="text-sm font-medium">Equity Overlay</p>
+                      {equityCurvePoints ? (
+                        <svg
+                          role="img"
+                          aria-label="Backtest equity overlay"
+                          className="mt-2 h-[76px] w-full"
+                          viewBox="0 0 280 70"
+                          preserveAspectRatio="none"
+                        >
+                          <polyline
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            className={(report?.netPnl ?? 0) >= 0 ? "text-success" : "text-error"}
+                            points={equityCurvePoints}
+                          />
+                        </svg>
+                      ) : (
+                        <p className="mt-2 text-xs opacity-70">Brak danych trades do narysowania overlayu equity.</p>
+                      )}
+                      {report && (
+                        <p className="mt-2 text-xs opacity-70">
+                          Net PnL {formatCurrency(report.netPnl)} | Gross Profit {formatCurrency(report.grossProfit)} | Gross
+                          Loss {formatCurrency(report.grossLoss)}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -419,6 +495,29 @@ export function BacktestsList() {
                 <p>Win rate: <strong>{formatPercent(report.winRate)}</strong></p>
                 <p>Sharpe: <strong>{formatNumber(report.sharpe, { maximumFractionDigits: 2 })}</strong></p>
                 <p>Total trades: <strong>{formatNumber(report.totalTrades)}</strong></p>
+                <p>Overlay quality: <strong>{overlayQuality}</strong></p>
+                <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                  <p className="text-xs font-medium">Equity Overlay</p>
+                  {equityCurvePoints ? (
+                    <svg
+                      role="img"
+                      aria-label="Backtest equity overlay modal"
+                      className="mt-2 h-[76px] w-full"
+                      viewBox="0 0 280 70"
+                      preserveAspectRatio="none"
+                    >
+                      <polyline
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className={(report.netPnl ?? 0) >= 0 ? "text-success" : "text-error"}
+                        points={equityCurvePoints}
+                      />
+                    </svg>
+                  ) : (
+                    <p className="mt-2 text-xs opacity-70">Brak trades do overlayu.</p>
+                  )}
+                </div>
               </div>
             )}
             <div className="modal-action">
