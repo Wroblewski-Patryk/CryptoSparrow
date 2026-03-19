@@ -107,3 +107,4 @@ Useful overrides:
 - Added dashboard accessibility audit checklist and active-nav accessibility semantics.
 - Added V1 release candidate checklist: `docs/v1-release-candidate-checklist.md`.
 - Added V1 stabilization freeze and bug bash plan: `docs/v1-stabilization-freeze.md`.
+- Added V1 post-release monitoring and hotfix protocol: `docs/v1-post-release-monitoring.md`.

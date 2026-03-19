@@ -61,7 +61,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [x] `chore(release): stabilization freeze window and bug bash`
 - [ ] `test(e2e): full go-live smoke pack (live-safe)`
 - [ ] `chore(release): v1.0 tag + changelog + migration notes`
-- [ ] `chore(release): post-release monitoring and hotfix protocol`
+- [x] `chore(release): post-release monitoring and hotfix protocol`
 - [ ] `chore(release): 7-day launch review and v1.1 backlog cut`
 
 ## V1.0 Exit Criteria
@@ -119,3 +119,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Completed dashboard accessibility pass with active-nav semantics (`aria-current`), updated control labels, live regions, and a dedicated audit checklist.
 - 2026-03-19: Added V1 release-candidate checklist with build/runtime/security/data/docs gates and explicit cross-team sign-off criteria.
 - 2026-03-19: Added stabilization freeze-window and bug-bash execution plan with severity SLAs, role ownership, and release exit gates.
+- 2026-03-19: Added post-release monitoring and hotfix protocol with 7-day watch window, severity matrix, and accelerated mitigation flow.
