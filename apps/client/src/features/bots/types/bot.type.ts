@@ -1,11 +1,13 @@
 export type BotMode = "PAPER" | "LIVE" | "LOCAL";
 export type TradeMarket = "FUTURES" | "SPOT";
+export type PositionMode = "ONE_WAY" | "HEDGE";
 
 export type Bot = {
   id: string;
   name: string;
   mode: BotMode;
   marketType: TradeMarket;
+  positionMode: PositionMode;
   isActive: boolean;
   liveOptIn: boolean;
   consentTextVersion?: string | null;
@@ -18,6 +20,7 @@ export type CreateBotInput = {
   name: string;
   mode: BotMode;
   marketType: TradeMarket;
+  positionMode: PositionMode;
   isActive: boolean;
   liveOptIn: boolean;
   consentTextVersion?: string | null;

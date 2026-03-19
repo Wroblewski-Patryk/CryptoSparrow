@@ -166,6 +166,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `feat(ui): wire bots market filter to API marketType query`
 - [x] 2026-03-19 `chore(ops): add go-live infra up/down scripts and with-infra server smoke command`
 - [x] 2026-03-19 `feat(trading): add bot positionMode (ONE_WAY/HEDGE) schema groundwork`
+- [x] 2026-03-19 `feat(ui): expose bot positionMode in dashboard bots create/edit flow`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

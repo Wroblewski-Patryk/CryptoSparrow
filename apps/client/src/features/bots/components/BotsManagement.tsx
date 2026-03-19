@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import StatusBadge from "../../../ui/components/StatusBadge";
 import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
 import { createBot, deleteBot, listBots, updateBot } from "../services/bots.service";
-import { Bot, BotMode, TradeMarket } from "../types/bot.type";
+import { Bot, BotMode, PositionMode, TradeMarket } from "../types/bot.type";
 
 const LIVE_CONSENT_TEXT_VERSION = "mvp-v1";
 
@@ -40,6 +40,7 @@ export default function BotsManagement() {
   const [name, setName] = useState("");
   const [mode, setMode] = useState<BotMode>("PAPER");
   const [marketType, setMarketType] = useState<TradeMarket>("FUTURES");
+  const [positionMode, setPositionMode] = useState<PositionMode>("ONE_WAY");
   const [marketFilter, setMarketFilter] = useState<"ALL" | TradeMarket>("ALL");
   const [maxOpenPositions, setMaxOpenPositions] = useState(1);
 
@@ -82,6 +83,7 @@ export default function BotsManagement() {
         name: name.trim(),
         mode,
         marketType,
+        positionMode,
         isActive: false,
         liveOptIn: false,
         consentTextVersion: null,
@@ -92,6 +94,7 @@ export default function BotsManagement() {
       setName("");
       setMode("PAPER");
       setMarketType("FUTURES");
+      setPositionMode("ONE_WAY");
       setMaxOpenPositions(1);
       toast.success("Bot utworzony");
       await loadBots(marketFilter);
@@ -129,6 +132,7 @@ export default function BotsManagement() {
         name: bot.name,
         mode: bot.mode,
         marketType: bot.marketType,
+        positionMode: bot.positionMode,
         isActive: bot.isActive,
         liveOptIn: bot.liveOptIn,
         consentTextVersion: bot.liveOptIn ? LIVE_CONSENT_TEXT_VERSION : null,
@@ -172,7 +176,7 @@ export default function BotsManagement() {
         <p className="text-sm opacity-70">
           Dodaj bota i ustaw tryb uruchomienia. LIVE wymaga opt-in.
         </p>
-        <div className="mt-4 grid gap-3 md:grid-cols-4">
+        <div className="mt-4 grid gap-3 md:grid-cols-5">
           <label className="form-control">
             <span className="label-text">Nazwa</span>
             <input
@@ -206,6 +210,18 @@ export default function BotsManagement() {
             >
               <option value="FUTURES">FUTURES</option>
               <option value="SPOT">SPOT</option>
+            </select>
+          </label>
+          <label className="form-control">
+            <span className="label-text">Pozycja</span>
+            <select
+              className="select select-bordered"
+              aria-label="Tryb pozycji bota"
+              value={positionMode}
+              onChange={(event) => setPositionMode(event.target.value as PositionMode)}
+            >
+              <option value="ONE_WAY">ONE_WAY</option>
+              <option value="HEDGE">HEDGE</option>
             </select>
           </label>
           <label className="form-control">
@@ -271,6 +287,7 @@ export default function BotsManagement() {
                 <tr>
                   <th>Nazwa</th>
                   <th>Rynek</th>
+                  <th>Pozycja</th>
                   <th>Status</th>
                   <th>Tryb</th>
                   <th>Max positions</th>
@@ -301,6 +318,18 @@ export default function BotsManagement() {
                         >
                           <option value="FUTURES">FUTURES</option>
                           <option value="SPOT">SPOT</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select
+                          className="select select-bordered select-xs w-full"
+                          value={bot.positionMode}
+                          onChange={(event) =>
+                            patchBot(bot.id, { positionMode: event.target.value as PositionMode })
+                          }
+                        >
+                          <option value="ONE_WAY">ONE_WAY</option>
+                          <option value="HEDGE">HEDGE</option>
                         </select>
                       </td>
                       <td>
@@ -373,7 +402,7 @@ export default function BotsManagement() {
                 })}
                 {bots.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="text-center text-sm opacity-70">
+                    <td colSpan={9} className="text-center text-sm opacity-70">
                       Brak botow dla wybranego rynku.
                     </td>
                   </tr>
