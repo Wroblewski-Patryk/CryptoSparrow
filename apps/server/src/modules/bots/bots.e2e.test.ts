@@ -54,6 +54,7 @@ describe('Bots module contract', () => {
     expect(createRes.status).toBe(201);
     expect(createRes.body.id).toBeDefined();
     expect(createRes.body.name).toBe('Momentum Runner');
+    expect(createRes.body.positionMode).toBe('ONE_WAY');
     const botId = createRes.body.id as string;
     const futuresBotId = botId;
 
@@ -89,6 +90,7 @@ describe('Bots module contract', () => {
     const updateRes = await agent.put(`/dashboard/bots/${botId}`).send({
       mode: 'LIVE',
       marketType: 'SPOT',
+      positionMode: 'HEDGE',
       liveOptIn: true,
       consentTextVersion: 'mvp-v1',
       maxOpenPositions: 5,
@@ -96,6 +98,7 @@ describe('Bots module contract', () => {
     expect(updateRes.status).toBe(200);
     expect(updateRes.body.mode).toBe('LIVE');
     expect(updateRes.body.marketType).toBe('SPOT');
+    expect(updateRes.body.positionMode).toBe('HEDGE');
     expect(updateRes.body.liveOptIn).toBe(true);
     expect(updateRes.body.consentTextVersion).toBe('mvp-v1');
     expect(updateRes.body.maxOpenPositions).toBe(5);

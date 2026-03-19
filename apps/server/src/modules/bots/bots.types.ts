@@ -2,11 +2,13 @@ import { z } from 'zod';
 
 export const BotModeSchema = z.enum(['PAPER', 'LIVE', 'LOCAL']);
 export const TradeMarketSchema = z.enum(['FUTURES', 'SPOT']);
+export const PositionModeSchema = z.enum(['ONE_WAY', 'HEDGE']);
 
 export const CreateBotSchema = z.object({
   name: z.string().trim().min(1),
   mode: BotModeSchema.default('PAPER'),
   marketType: TradeMarketSchema.default('FUTURES'),
+  positionMode: PositionModeSchema.default('ONE_WAY'),
   isActive: z.boolean().default(false),
   liveOptIn: z.boolean().default(false),
   consentTextVersion: z.string().trim().min(1).max(64).optional().nullable(),

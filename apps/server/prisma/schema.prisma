@@ -138,6 +138,7 @@ model Bot {
   name              String
   mode              BotMode         @default(PAPER)
   marketType        TradeMarket     @default(FUTURES)
+  positionMode      PositionMode    @default(ONE_WAY)
   isActive          Boolean         @default(false)
   liveOptIn         Boolean         @default(false)
   consentTextVersion String?
@@ -160,6 +161,11 @@ model Bot {
 enum TradeMarket {
   FUTURES
   SPOT
+}
+
+enum PositionMode {
+  ONE_WAY
+  HEDGE
 }
 
 model BotStrategy {
