@@ -134,3 +134,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Improved frontend production hygiene by migrating shared header logos to `next/image` and reducing remaining lint warnings.
 - 2026-03-19: Finalized client build-warning cleanup by migrating profile avatar preview to `next/image` with dynamic-source-safe loader settings.
 - 2026-03-19: Completed risk-first live-action confirmations by adding explicit API-key deletion risk acknowledgment and bot-deletion live guards with client regression coverage.
+- 2026-03-19: Aligned public-facing app metadata and landing copy with spot+futures scope to avoid futures-only messaging during V1 rollout.

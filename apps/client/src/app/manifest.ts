@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "CryptoSparrow",
     short_name: "CryptoSparrow",
-    description: "AI bot do handlu na Binance Futures",
+    description: "AI bot do handlu spot i futures",
     start_url: "/dashboard",
     scope: "/",
     display: "standalone",

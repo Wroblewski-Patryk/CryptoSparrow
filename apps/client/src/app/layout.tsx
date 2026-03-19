@@ -8,7 +8,7 @@ import ServiceWorkerRegistration from '../ui/pwa/ServiceWorkerRegistration';
 
 export const metadata: Metadata = {
   title: 'CryptoSparrow',
-  description: 'Twoj AI bot do handlu na Binance Futures',
+  description: 'Twoj AI bot do handlu spot i futures',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
