@@ -231,3 +231,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Added risk-first confirmation prompts for LIVE bot transitions (mode/opt-in/activation) to reduce accidental live exposure.
 - 2026-03-19: Added shared dashboard design-system documentation covering reusable UI primitives, semantic tokens, and conformance gates.
 - 2026-03-19: Completed dashboard accessibility pass with active navigation semantics, improved control labels/live regions, and audit checklist documentation.
+- 2026-03-19: Added V1 release-candidate checklist to formalize go-live quality/security/ops gates and sign-off flow.

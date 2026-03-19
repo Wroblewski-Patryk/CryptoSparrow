@@ -105,3 +105,4 @@ Useful overrides:
 - Added risk-first LIVE confirmation prompts in bots management flow.
 - Added dashboard design-system documentation for shared UI standards.
 - Added dashboard accessibility audit checklist and active-nav accessibility semantics.
+- Added V1 release candidate checklist: `docs/v1-release-candidate-checklist.md`.
