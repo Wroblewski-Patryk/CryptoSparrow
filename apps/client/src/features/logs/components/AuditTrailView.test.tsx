@@ -36,6 +36,10 @@ describe("AuditTrailView", () => {
         category: "TRADING_DECISION",
         actor: "bot-runner",
         occurredAt: "2026-03-16T10:00:00.000Z",
+        metadata: {
+          reason: "risk_passed",
+          riskScore: 0.22,
+        },
       },
     ]);
 
@@ -47,7 +51,7 @@ describe("AuditTrailView", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Audit trail loaded")).toBeInTheDocument();
-      expect(screen.getByText(/trade.precheck.allowed/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/trade.precheck.allowed/i).length).toBeGreaterThan(0);
     });
 
     fireEvent.change(screen.getByLabelText("Severity filter"), {
@@ -56,6 +60,12 @@ describe("AuditTrailView", () => {
 
     await waitFor(() => {
       expect(listLogsMock).toHaveBeenCalledWith(expect.objectContaining({ severity: "WARN" }));
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "View trace" }));
+    await waitFor(() => {
+      expect(screen.getByText("Decision trace")).toBeInTheDocument();
+      expect(screen.getByText(/risk_passed/i)).toBeInTheDocument();
     });
   });
 });

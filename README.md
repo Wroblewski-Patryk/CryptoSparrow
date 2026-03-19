@@ -101,3 +101,4 @@ Useful overrides:
 - Added V1 user guide (onboarding/safety/FAQ): `docs/user-guide.md`.
 - Added localization QA checklist: `docs/localization-qa.md`.
 - Added optional dashboard isometric visual mode toggle.
+- Added logs decision-trace explorer (metadata drill-down in dashboard logs).

@@ -140,6 +140,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `feat(ui-theme): add optional dashboard isometric mode toggle`
 - [x] 2026-03-19 `feat(accessibility): improve dashboard control semantics and live regions`
 - [x] 2026-03-19 `docs(modules): document strategy import/export contract in module map`
+- [x] 2026-03-19 `feat(ui): add logs decision-trace explorer with metadata panel`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

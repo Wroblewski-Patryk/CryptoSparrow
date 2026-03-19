@@ -46,7 +46,12 @@ type TranslationSchema = {
       tableAction: string;
       tableActor: string;
       tableDetails: string;
+      tableTrace: string;
       actorFallback: string;
+      traceButton: string;
+      traceTitle: string;
+      traceDescription: string;
+      traceNoMetadata: string;
     };
   };
 };
@@ -98,7 +103,12 @@ export const translations: Record<Locale, TranslationSchema> = {
         tableAction: "Action",
         tableActor: "Actor",
         tableDetails: "Details",
+        tableTrace: "Trace",
         actorFallback: "-",
+        traceButton: "View trace",
+        traceTitle: "Decision trace",
+        traceDescription: "Selected event metadata and decision context.",
+        traceNoMetadata: "No metadata available for this event.",
       },
     },
   },
@@ -148,7 +158,12 @@ export const translations: Record<Locale, TranslationSchema> = {
         tableAction: "Akcja",
         tableActor: "Aktor",
         tableDetails: "Szczegoly",
+        tableTrace: "Trace",
         actorFallback: "-",
+        traceButton: "Pokaz trace",
+        traceTitle: "Decision trace",
+        traceDescription: "Metadane wybranego zdarzenia i kontekst decyzji.",
+        traceNoMetadata: "Brak metadanych dla tego zdarzenia.",
       },
     },
   },

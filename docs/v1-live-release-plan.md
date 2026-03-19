@@ -48,7 +48,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 
 ## Phase E - UX, Trust, and Public Readiness
 - [ ] `feat(ui): risk-first confirmations for all live actions`
-- [ ] `feat(ui): audit/log explorer with decision trace`
+- [x] `feat(ui): audit/log explorer with decision trace`
 - [ ] `feat(ui-system): harden shared dashboard design system and component documentation`
 - [x] `feat(i18n): complete EN/PL parity and localization QA`
 - [ ] `feat(accessibility): full accessibility pass for core dashboard`
@@ -113,3 +113,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Added optional dashboard isometric visual mode toggle with persisted preference and dedicated UI regression coverage.
 - 2026-03-19: Improved accessibility in dashboard controls by hardening theme/account switcher semantics and adding screen-reader heartbeat live-region updates.
 - 2026-03-19: Updated module-map documentation to include strategy import/export API contract (`strategy.v1`) for operator/dev reference.
+- 2026-03-19: Added decision-trace explorer in logs dashboard with metadata drill-down panel and trace-focused filtering flow.

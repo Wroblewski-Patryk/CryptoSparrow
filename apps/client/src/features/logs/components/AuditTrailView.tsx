@@ -22,6 +22,7 @@ type AuditItem = {
   action: string;
   details: string;
   actor?: string | null;
+  metadata?: unknown;
 };
 
 const getAxiosMessage = (err: unknown) => {
@@ -37,6 +38,7 @@ const toAuditItem = (entry: AuditLogEntry): AuditItem => ({
   action: entry.action,
   details: entry.message,
   actor: entry.actor,
+  metadata: entry.metadata,
 });
 
 export default function AuditTrailView() {
@@ -49,6 +51,7 @@ export default function AuditTrailView() {
   const [severityFilter, setSeverityFilter] = useState<"all" | "DEBUG" | "INFO" | "WARN" | "ERROR">(
     "all"
   );
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -59,13 +62,32 @@ export default function AuditTrailView() {
         ...(sourceFilter !== "all" ? { source: sourceFilter } : {}),
         ...(severityFilter !== "all" ? { severity: severityFilter } : {}),
       });
-      setItems(logs.map(toAuditItem));
+      const nextItems = logs.map(toAuditItem);
+      setItems(nextItems);
+      if (!nextItems.some((item) => item.id === selectedItemId)) {
+        setSelectedItemId(nextItems[0]?.id ?? null);
+      }
     } catch (err: unknown) {
       setError(getAxiosMessage(err) ?? "Nie udalo sie pobrac logow audit trail.");
     } finally {
       setLoading(false);
     }
-  }, [severityFilter, sourceFilter]);
+  }, [selectedItemId, severityFilter, sourceFilter]);
+
+  const selectedItem = useMemo(
+    () => items.find((item) => item.id === selectedItemId) ?? null,
+    [items, selectedItemId]
+  );
+
+  const selectedMetadata = useMemo(() => {
+    if (!selectedItem?.metadata) return null;
+    if (typeof selectedItem.metadata === "string") return selectedItem.metadata;
+    try {
+      return JSON.stringify(selectedItem.metadata, null, 2);
+    } catch {
+      return String(selectedItem.metadata);
+    }
+  }, [selectedItem]);
 
   useEffect(() => {
     void load();
@@ -148,6 +170,7 @@ export default function AuditTrailView() {
                 <th>{t("dashboard.logs.tableAction")}</th>
                 <th>{t("dashboard.logs.tableActor")}</th>
                 <th>{t("dashboard.logs.tableDetails")}</th>
+                <th>{t("dashboard.logs.tableTrace")}</th>
               </tr>
             </thead>
             <tbody>
@@ -173,11 +196,44 @@ export default function AuditTrailView() {
                   <td>{item.action}</td>
                   <td>{item.actor ?? t("dashboard.logs.actorFallback")}</td>
                   <td>{item.details}</td>
+                  <td>
+                    <button
+                      type="button"
+                      className={`btn btn-xs ${
+                        selectedItemId === item.id ? "btn-primary" : "btn-outline"
+                      }`}
+                      onClick={() => setSelectedItemId(item.id)}
+                    >
+                      {t("dashboard.logs.traceButton")}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="rounded-xl border border-base-300 bg-base-200 p-4">
+        <h3 className="text-sm font-semibold uppercase tracking-wide opacity-70">
+          {t("dashboard.logs.traceTitle")}
+        </h3>
+        <p className="mt-1 text-sm opacity-80">{t("dashboard.logs.traceDescription")}</p>
+
+        {selectedItem ? (
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className="badge badge-outline">{selectedItem.source}</span>
+              <span className="badge badge-outline">{selectedItem.action}</span>
+              <span className="badge badge-outline">{formatDateTime(selectedItem.at)}</span>
+            </div>
+            <pre className="max-h-72 overflow-auto rounded-lg bg-base-300 p-3 text-xs">
+              {selectedMetadata ?? t("dashboard.logs.traceNoMetadata")}
+            </pre>
+          </div>
+        ) : (
+          <p className="mt-3 text-sm opacity-75">{t("dashboard.logs.traceNoMetadata")}</p>
+        )}
       </div>
     </div>
   );
