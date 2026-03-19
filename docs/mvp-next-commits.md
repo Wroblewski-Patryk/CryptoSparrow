@@ -164,6 +164,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `docs(ui-copy): update app metadata and landing copy to spot+futures wording`
 - [x] 2026-03-19 `feat(api): add bots list marketType filter query for spot/futures operations`
 - [x] 2026-03-19 `feat(ui): wire bots market filter to API marketType query`
+- [x] 2026-03-19 `chore(ops): add go-live infra up/down scripts and with-infra server smoke command`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

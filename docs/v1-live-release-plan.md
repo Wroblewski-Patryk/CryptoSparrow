@@ -137,3 +137,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Aligned public-facing app metadata and landing copy with spot+futures scope to avoid futures-only messaging during V1 rollout.
 - 2026-03-19: Extended bots API with optional `marketType` list filter to support spot/futures operational split in dashboard and automation workflows.
 - 2026-03-19: Wired dashboard bot filter controls to backend `marketType` query for server-sourced SPOT/FUTURES segmentation.
+- 2026-03-19: Added go-live infra helper scripts (`go-live:infra:up/down`, `test:go-live:server:with-infra`) and documented them in smoke-pack instructions.

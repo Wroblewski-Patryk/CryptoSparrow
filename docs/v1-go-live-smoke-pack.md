@@ -9,10 +9,14 @@ Run a focused pre-release smoke suite for the most critical V1 paths.
 - Server/client env files configured.
 
 ## Commands
+- Infra (Docker) up/down:
+  - `pnpm go-live:infra:up`
+  - `pnpm go-live:infra:down`
 - Full smoke pack:
   - `pnpm test:go-live:smoke`
 - Server smoke only:
   - `pnpm test:go-live:server`
+  - `pnpm test:go-live:server:with-infra`
 - Client smoke only:
   - `pnpm test:go-live:client`
 
