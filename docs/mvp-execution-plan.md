@@ -232,3 +232,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Added shared dashboard design-system documentation covering reusable UI primitives, semantic tokens, and conformance gates.
 - 2026-03-19: Completed dashboard accessibility pass with active navigation semantics, improved control labels/live regions, and audit checklist documentation.
 - 2026-03-19: Added V1 release-candidate checklist to formalize go-live quality/security/ops gates and sign-off flow.
+- 2026-03-19: Added V1 stabilization freeze and bug-bash plan to control pre-release change scope and defect triage SLAs.
