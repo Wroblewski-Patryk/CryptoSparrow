@@ -250,3 +250,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Added risk-acknowledgment guard for API-key deletion in profile/exchange flows and covered it with dedicated UI test.
 - 2026-03-19: Updated metadata/landing copy from futures-only wording to spot+futures messaging to match ongoing product expansion.
 - 2026-03-19: Added optional bots-list `marketType` query filtering (`FUTURES`/`SPOT`) for API-side segmentation in spot rollout workflows.
+- 2026-03-19: Connected dashboard bot market filter to API query (`marketType`) so SPOT/FUTURES views are served directly from backend.

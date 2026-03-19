@@ -136,3 +136,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Completed risk-first live-action confirmations by adding explicit API-key deletion risk acknowledgment and bot-deletion live guards with client regression coverage.
 - 2026-03-19: Aligned public-facing app metadata and landing copy with spot+futures scope to avoid futures-only messaging during V1 rollout.
 - 2026-03-19: Extended bots API with optional `marketType` list filter to support spot/futures operational split in dashboard and automation workflows.
+- 2026-03-19: Wired dashboard bot filter controls to backend `marketType` query for server-sourced SPOT/FUTURES segmentation.

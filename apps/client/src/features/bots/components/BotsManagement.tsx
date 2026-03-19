@@ -43,11 +43,11 @@ export default function BotsManagement() {
   const [marketFilter, setMarketFilter] = useState<"ALL" | TradeMarket>("ALL");
   const [maxOpenPositions, setMaxOpenPositions] = useState(1);
 
-  const loadBots = useCallback(async () => {
+  const loadBots = useCallback(async (filter: "ALL" | TradeMarket) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await listBots();
+      const data = await listBots(filter === "ALL" ? undefined : filter);
       setBots(data);
       setServerSnapshot(Object.fromEntries(data.map((bot) => [bot.id, bot])));
     } catch (err: unknown) {
@@ -58,14 +58,10 @@ export default function BotsManagement() {
   }, []);
 
   useEffect(() => {
-    void loadBots();
-  }, [loadBots]);
+    void loadBots(marketFilter);
+  }, [loadBots, marketFilter]);
 
   const canCreate = useMemo(() => name.trim().length > 0 && !creating, [creating, name]);
-  const visibleBots = useMemo(
-    () => (marketFilter === "ALL" ? bots : bots.filter((bot) => bot.marketType === marketFilter)),
-    [bots, marketFilter]
-  );
 
   const confirmLiveRisk = (message: string) => window.confirm(message);
 
@@ -98,6 +94,7 @@ export default function BotsManagement() {
       setMarketType("FUTURES");
       setMaxOpenPositions(1);
       toast.success("Bot utworzony");
+      await loadBots(marketFilter);
     } catch (err: unknown) {
       toast.error("Nie udalo sie utworzyc bota", { description: getAxiosMessage(err) });
     } finally {
@@ -142,7 +139,7 @@ export default function BotsManagement() {
       toast.success("Bot zaktualizowany");
     } catch (err: unknown) {
       toast.error("Nie udalo sie zapisac zmian", { description: getAxiosMessage(err) });
-      void loadBots();
+      void loadBots(marketFilter);
     } finally {
       setSavingId(null);
     }
@@ -159,7 +156,7 @@ export default function BotsManagement() {
     setDeletingId(bot.id);
     try {
       await deleteBot(bot.id);
-      setBots((prev) => prev.filter((item) => item.id !== bot.id));
+      await loadBots(marketFilter);
       toast.success("Bot usuniety");
     } catch (err: unknown) {
       toast.error("Nie udalo sie usunac bota", { description: getAxiosMessage(err) });
@@ -237,7 +234,7 @@ export default function BotsManagement() {
           title="Nie udalo sie pobrac botow"
           description={error}
           retryLabel="Sprobuj ponownie"
-          onRetry={() => void loadBots()}
+          onRetry={() => void loadBots(marketFilter)}
         />
       )}
       {!loading && !error && bots.length === 0 && (
@@ -283,7 +280,7 @@ export default function BotsManagement() {
                 </tr>
               </thead>
               <tbody>
-                {visibleBots.map((bot) => {
+                {bots.map((bot) => {
                   const risk = toRiskBadge(bot);
                   return (
                     <tr key={bot.id}>
@@ -374,7 +371,7 @@ export default function BotsManagement() {
                     </tr>
                   );
                 })}
-                {visibleBots.length === 0 && (
+                {bots.length === 0 && (
                   <tr>
                     <td colSpan={8} className="text-center text-sm opacity-70">
                       Brak botow dla wybranego rynku.

@@ -97,26 +97,38 @@ describe("BotsManagement", () => {
   });
 
   it("filters bots by market type", async () => {
-    listMock.mockResolvedValue([
-      {
-        id: "b-futures",
-        name: "Futures Bot",
-        mode: "PAPER",
-        marketType: "FUTURES",
-        isActive: false,
-        liveOptIn: false,
-        maxOpenPositions: 1,
-      },
-      {
-        id: "b-spot",
-        name: "Spot Bot",
-        mode: "PAPER",
-        marketType: "SPOT",
-        isActive: false,
-        liveOptIn: false,
-        maxOpenPositions: 1,
-      },
-    ]);
+    listMock
+      .mockResolvedValueOnce([
+        {
+          id: "b-futures",
+          name: "Futures Bot",
+          mode: "PAPER",
+          marketType: "FUTURES",
+          isActive: false,
+          liveOptIn: false,
+          maxOpenPositions: 1,
+        },
+        {
+          id: "b-spot",
+          name: "Spot Bot",
+          mode: "PAPER",
+          marketType: "SPOT",
+          isActive: false,
+          liveOptIn: false,
+          maxOpenPositions: 1,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: "b-spot",
+          name: "Spot Bot",
+          mode: "PAPER",
+          marketType: "SPOT",
+          isActive: false,
+          liveOptIn: false,
+          maxOpenPositions: 1,
+        },
+      ]);
 
     render(<BotsManagement />);
 
@@ -129,8 +141,11 @@ describe("BotsManagement", () => {
       target: { value: "SPOT" },
     });
 
-    expect(screen.queryByDisplayValue("Futures Bot")).not.toBeInTheDocument();
-    expect(screen.getByDisplayValue("Spot Bot")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(listMock).toHaveBeenLastCalledWith("SPOT");
+      expect(screen.queryByDisplayValue("Futures Bot")).not.toBeInTheDocument();
+      expect(screen.getByDisplayValue("Spot Bot")).toBeInTheDocument();
+    });
   });
 
   it("requires confirmation before deleting active LIVE bot", async () => {
