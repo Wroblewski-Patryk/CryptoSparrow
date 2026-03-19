@@ -85,5 +85,17 @@ export const evaluatePreTradeRiskReasons = (input: EvaluatePreTradeRiskInput) =>
     reasons.push('consecutive_losses_limit_reached');
   }
 
+  if (
+    typeof parsed.cooldownAfterLossMinutes === 'number' &&
+    typeof parsed.lastLossAtEpochMs === 'number' &&
+    typeof parsed.nowEpochMs === 'number'
+  ) {
+    const cooldownMs = parsed.cooldownAfterLossMinutes * 60_000;
+    const elapsedMs = parsed.nowEpochMs - parsed.lastLossAtEpochMs;
+    if (elapsedMs >= 0 && elapsedMs < cooldownMs) {
+      reasons.push('loss_cooldown_active');
+    }
+  }
+
   return reasons;
 };

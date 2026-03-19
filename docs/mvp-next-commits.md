@@ -171,6 +171,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `feat(trading): finalize spot connector order contract and guardrails`
 - [x] 2026-03-19 `chore(ops): add robust go-live smoke orchestrator with infra auto-cleanup`
 - [x] 2026-03-19 `feat(risk): add advanced pre-trade limits for daily loss/drawdown/consecutive losses`
+- [x] 2026-03-19 `feat(risk): add post-loss cooldown policy in pre-trade guardrails`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

@@ -43,7 +43,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [x] `feat(strategy): strategy import/export with format versioning`
 - [x] `feat(trading): hedge mode support`
 - [x] `feat(risk): advanced limits (daily loss/drawdown/consecutive losses)`
-- [ ] `feat(risk): cooldown policies after losses`
+- [x] `feat(risk): cooldown policies after losses`
 - [ ] `feat(data): additional sources (order book/funding/open interest)`
 
 ## Phase E - UX, Trust, and Public Readiness
@@ -144,3 +144,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Completed spot trading support in live connector contract by validating SPOT order payloads and rejecting futures-only params (`reduceOnly`, hedge `positionSide`) with regression tests.
 - 2026-03-19: Added robust smoke-pack orchestrator (`scripts/goLiveSmoke.mjs`) with auto infra up/down lifecycle; full smoke remains blocked locally until Docker Desktop engine is running.
 - 2026-03-19: Added advanced pre-trade risk limits for daily loss, drawdown, and consecutive losses with deterministic risk-evaluator test coverage.
+- 2026-03-19: Added pre-trade cooldown policy support after losses with configurable cooldown window (`lastLossAtEpochMs` + `cooldownAfterLossMinutes`) and regression tests.

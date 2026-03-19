@@ -109,4 +109,40 @@ describe('evaluatePreTradeRiskReasons', () => {
 
     expect(reasons).toContain('consecutive_losses_limit_reached');
   });
+
+  it('returns cooldown reason while post-loss cooldown window is active', () => {
+    const nowEpochMs = 1_700_000_000_000;
+    const reasons = evaluatePreTradeRiskReasons({
+      parsed: parseInput({
+        mode: 'PAPER',
+        cooldownAfterLossMinutes: 15,
+        lastLossAtEpochMs: nowEpochMs - 5 * 60_000,
+        nowEpochMs,
+      }),
+      userOpenPositions: 0,
+      botOpenPositions: 0,
+      hasOpenPositionOnSymbol: false,
+      botLiveConfig: null,
+    });
+
+    expect(reasons).toContain('loss_cooldown_active');
+  });
+
+  it('does not return cooldown reason when cooldown window has elapsed', () => {
+    const nowEpochMs = 1_700_000_000_000;
+    const reasons = evaluatePreTradeRiskReasons({
+      parsed: parseInput({
+        mode: 'PAPER',
+        cooldownAfterLossMinutes: 15,
+        lastLossAtEpochMs: nowEpochMs - 20 * 60_000,
+        nowEpochMs,
+      }),
+      userOpenPositions: 0,
+      botOpenPositions: 0,
+      hasOpenPositionOnSymbol: false,
+      botLiveConfig: null,
+    });
+
+    expect(reasons).not.toContain('loss_cooldown_active');
+  });
 });

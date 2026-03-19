@@ -20,6 +20,9 @@ export const PreTradeAnalysisInputSchema = z.object({
   peakEquityUsd: z.number().positive().optional(),
   currentEquityUsd: z.number().nonnegative().optional(),
   consecutiveLosses: z.number().int().min(0).optional(),
+  cooldownAfterLossMinutes: z.number().int().min(1).optional(),
+  lastLossAtEpochMs: z.number().int().positive().optional(),
+  nowEpochMs: z.number().int().positive().optional(),
 });
 
 export type PreTradeAnalysisInput = z.input<typeof PreTradeAnalysisInputSchema>;
