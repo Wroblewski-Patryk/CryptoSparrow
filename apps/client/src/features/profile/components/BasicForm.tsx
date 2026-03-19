@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useUser } from "../hooks/useUser";
 import { toast } from "sonner";
 import api from "../../../lib/api";
@@ -59,10 +60,15 @@ export default function ProfileForm() {
       <div className="flex items-center gap-4 py-2">
         <div className="flex-shrink-0 pr-8">
           {avatarUrl ? (
-            <img 
-              src={avatarUrl} 
-              alt="Avatar" 
-              className="w-48 h-48 rounded-full object-cover mb-4" />
+            <Image
+              src={avatarUrl}
+              alt="Avatar"
+              width={192}
+              height={192}
+              loader={({ src }) => src}
+              unoptimized
+              className="w-48 h-48 rounded-full object-cover mb-4"
+            />
           ) : (
             <div className="w-48 h-48 rounded-full bg-primary flex mb-4"></div>
           )}

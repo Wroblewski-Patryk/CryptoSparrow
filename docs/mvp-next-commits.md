@@ -159,6 +159,7 @@ Operational queue for one-task execution runs.
 - [x] 2026-03-19 `fix(client): resolve missing router useEffect deps in auth/dashboard pages`
 - [x] 2026-03-19 `fix(client): clean up profile/backtest lint warnings and form typing`
 - [x] 2026-03-19 `fix(client): replace header logo img tags with next/image`
+- [x] 2026-03-19 `fix(client): migrate profile avatar preview to next/image and clear build warnings`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
