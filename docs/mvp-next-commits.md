@@ -11,7 +11,8 @@ Operational queue for one-task execution runs.
 ## NEXT
 
 ## BLOCKED
-- [ ] (empty)
+- [ ] 2026-03-19 `test(e2e): full go-live smoke pack (live-safe)` blocked locally until Docker Desktop engine is running
+- [ ] 2026-03-19 `exit-gates(production): SLO/incident/security/load/public-docs/launch-review criteria require production evidence and launch-cycle checkpoints`
 
 ## DONE
 - [ ] 2026-03-15 `chore(planning): initialize MVP/V1 execution plans and agent blueprint`
