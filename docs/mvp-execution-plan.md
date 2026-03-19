@@ -120,7 +120,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `decision(stream): close SSE vs WebSocket fan-out decision and lock MVP transport contract`
 - [x] `feat(ui): add dashboard live market bar with stream status, last price, and candle freshness`
 - [x] `feat(orders-write): add open/cancel/close order actions with risk-first confirmations`
-- [ ] `feat(execution-orchestrator): wire signal -> order -> position lifecycle for paper/live runtime paths`
+- [x] `feat(execution-orchestrator): wire signal -> order -> position lifecycle for paper/live runtime paths`
 - [ ] `feat(positions-live): add live position reconciliation/update loop`
 - [ ] `feat(backtest): finalize chart overlays and report visualizations to MVP-complete state`
 - [ ] `test(e2e): add runtime orchestration smoke path covering stream -> signal -> order -> position updates`
@@ -278,3 +278,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Closed stream transport decision for MVP (SSE fan-out) and documented event contract plus reliability rules for frontend/backend integration.
 - 2026-03-19: Implemented dashboard live market bar component with SSE listener and UI indicators for price, 24h delta, candle freshness, and stream health state.
 - 2026-03-19: Added orders write-side API (`open`/`cancel`/`close`) with LIVE risk acknowledgments, bot eligibility guards, and contract e2e coverage.
+- 2026-03-19: Wired runtime execution orchestrator service for signal -> order -> position lifecycle (LONG/SHORT/EXIT) with paper/live-compatible flow contracts.
