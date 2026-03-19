@@ -104,4 +104,64 @@ describe('MarketDataService cache behavior', () => {
     expect(refreshed[0].close).toBe(107);
     expect(provider.fetchOHLCV).toHaveBeenCalledTimes(2);
   });
+
+  it('fetches order book snapshot from optional provider', async () => {
+    const provider: MarketDataProvider = {
+      fetchOHLCV: vi.fn().mockResolvedValue(baseCandles),
+      fetchOrderBook: vi.fn().mockResolvedValue({
+        symbol: 'BTCUSDT',
+        timestamp: 1_700_000_000_000,
+        bids: [[100, 1.2]],
+        asks: [[101, 1.4]],
+      }),
+    };
+    const service = new MarketDataService(provider, { cacheTtlMs: 60_000 });
+
+    const orderBook = await service.getOrderBook({ symbol: 'BTCUSDT', limit: 20 });
+
+    expect(orderBook.bids[0][0]).toBe(100);
+    expect(provider.fetchOrderBook).toHaveBeenCalledWith({ symbol: 'BTCUSDT', limit: 20 });
+  });
+
+  it('fetches funding rate and open interest snapshots from optional provider', async () => {
+    const provider: MarketDataProvider = {
+      fetchOHLCV: vi.fn().mockResolvedValue(baseCandles),
+      fetchFundingRate: vi.fn().mockResolvedValue({
+        symbol: 'BTCUSDT',
+        timestamp: 1_700_000_000_000,
+        fundingRate: 0.0005,
+      }),
+      fetchOpenInterest: vi.fn().mockResolvedValue({
+        symbol: 'BTCUSDT',
+        timestamp: 1_700_000_000_000,
+        openInterest: 12_500_000,
+      }),
+    };
+    const service = new MarketDataService(provider, { cacheTtlMs: 60_000 });
+
+    const funding = await service.getFundingRate({ symbol: 'BTCUSDT' });
+    const openInterest = await service.getOpenInterest({ symbol: 'BTCUSDT' });
+
+    expect(funding.fundingRate).toBe(0.0005);
+    expect(openInterest.openInterest).toBe(12_500_000);
+    expect(provider.fetchFundingRate).toHaveBeenCalledWith({ symbol: 'BTCUSDT' });
+    expect(provider.fetchOpenInterest).toHaveBeenCalledWith({ symbol: 'BTCUSDT' });
+  });
+
+  it('returns explicit errors when optional data providers are not configured', async () => {
+    const provider: MarketDataProvider = {
+      fetchOHLCV: vi.fn().mockResolvedValue(baseCandles),
+    };
+    const service = new MarketDataService(provider, { cacheTtlMs: 60_000 });
+
+    await expect(service.getOrderBook({ symbol: 'BTCUSDT', limit: 10 })).rejects.toThrow(
+      'ORDER_BOOK_PROVIDER_UNAVAILABLE'
+    );
+    await expect(service.getFundingRate({ symbol: 'BTCUSDT' })).rejects.toThrow(
+      'FUNDING_RATE_PROVIDER_UNAVAILABLE'
+    );
+    await expect(service.getOpenInterest({ symbol: 'BTCUSDT' })).rejects.toThrow(
+      'OPEN_INTEREST_PROVIDER_UNAVAILABLE'
+    );
+  });
 });

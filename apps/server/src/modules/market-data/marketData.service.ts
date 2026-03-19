@@ -1,8 +1,22 @@
-import { OhlcvCandle, OhlcvRequest, OhlcvRequestSchema } from './marketData.types';
+import {
+  FundingRateSnapshot,
+  MarketSnapshotRequest,
+  MarketSnapshotRequestSchema,
+  OhlcvCandle,
+  OhlcvRequest,
+  OhlcvRequestSchema,
+  OpenInterestSnapshot,
+  OrderBookRequest,
+  OrderBookRequestSchema,
+  OrderBookSnapshot,
+} from './marketData.types';
 import { createClient } from 'redis';
 
 export interface MarketDataProvider {
   fetchOHLCV(input: OhlcvRequest): Promise<OhlcvCandle[]>;
+  fetchOrderBook?(input: OrderBookRequest): Promise<OrderBookSnapshot>;
+  fetchFundingRate?(input: MarketSnapshotRequest): Promise<FundingRateSnapshot>;
+  fetchOpenInterest?(input: MarketSnapshotRequest): Promise<OpenInterestSnapshot>;
 }
 
 type CacheEntry = {
@@ -102,6 +116,30 @@ export class MarketDataService {
 
   clearCache() {
     this.cache.clear();
+  }
+
+  async getOrderBook(input: OrderBookRequest): Promise<OrderBookSnapshot> {
+    const parsed = OrderBookRequestSchema.parse(input);
+    if (!this.provider.fetchOrderBook) {
+      throw new Error('ORDER_BOOK_PROVIDER_UNAVAILABLE');
+    }
+    return this.provider.fetchOrderBook(parsed);
+  }
+
+  async getFundingRate(input: MarketSnapshotRequest): Promise<FundingRateSnapshot> {
+    const parsed = MarketSnapshotRequestSchema.parse(input);
+    if (!this.provider.fetchFundingRate) {
+      throw new Error('FUNDING_RATE_PROVIDER_UNAVAILABLE');
+    }
+    return this.provider.fetchFundingRate(parsed);
+  }
+
+  async getOpenInterest(input: MarketSnapshotRequest): Promise<OpenInterestSnapshot> {
+    const parsed = MarketSnapshotRequestSchema.parse(input);
+    if (!this.provider.fetchOpenInterest) {
+      throw new Error('OPEN_INTEREST_PROVIDER_UNAVAILABLE');
+    }
+    return this.provider.fetchOpenInterest(parsed);
   }
 
   private toCacheKey(input: OhlcvRequest) {
