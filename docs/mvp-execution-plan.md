@@ -115,14 +115,26 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `docs(release): known limits and post-MVP boundaries`
 - [x] `chore(release): MVP release checklist and changelog`
 
+## Phase 6 - MVP Freeze Gap Closure (As of 2026-03-19)
+- [ ] `feat(market-stream): implement end-to-end Binance WebSocket ingest for ticker/candle runtime feed`
+- [ ] `decision(stream): close SSE vs WebSocket fan-out decision and lock MVP transport contract`
+- [ ] `feat(ui): add dashboard live market bar with stream status, last price, and candle freshness`
+- [ ] `feat(orders-write): add open/cancel/close order actions with risk-first confirmations`
+- [ ] `feat(execution-orchestrator): wire signal -> order -> position lifecycle for paper/live runtime paths`
+- [ ] `feat(positions-live): add live position reconciliation/update loop`
+- [ ] `feat(backtest): finalize chart overlays and report visualizations to MVP-complete state`
+- [ ] `test(e2e): add runtime orchestration smoke path covering stream -> signal -> order -> position updates`
+
 ## MVP Exit Criteria
 - [x] Phase 0 fully complete.
-- [x] End-to-end flow works: strategy -> backtest -> paper -> live opt-in.
+- [ ] End-to-end flow works: strategy -> backtest -> paper -> live opt-in.
 - [x] Security guardrails active: encryption, ownership checks, rate limits, audit logs.
-- [x] Core tests passing for auth, strategy CRUD, market/bot isolation, and trading critical paths.
-- [x] UI scope complete for markets, builder, bots, orders, positions, backtest, reports, logs, exchanges.
+- [ ] Core tests passing for auth, strategy CRUD, market/bot isolation, and trading critical paths.
+- [ ] UI scope complete for markets, builder, bots, orders, positions, backtest, reports, logs, exchanges.
 - [x] EN/PL and responsive/PWA baseline complete for core flows.
 - [x] Shared app shell and view-state model are consistent across core dashboard modules.
+- [ ] Real-time market stream is visible in dashboard control center via server-owned transport.
+- [ ] Write-side order actions (open/cancel/close) are available with risk-first confirmations.
 
 ## Progress Log
 - 2026-03-15: Initialized MVP execution file and commit rules.
@@ -261,3 +273,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Added post-loss cooldown guardrail evaluation in pre-trade risk checks with deterministic unit tests for active/elapsed cooldown windows.
 - 2026-03-19: Added optional market-data adapters for order book, funding rate, and open interest snapshots with validated request contracts and tests.
 - 2026-03-19: Validated full go-live smoke flow end-to-end (Docker infra lifecycle + Prisma migrate deploy + server/client smoke suites) with green result.
+- 2026-03-19: Added MVP freeze-gap closure phase (stream transport, live market bar, write-side orders, orchestrator wiring) from updated roadmap/product limits.

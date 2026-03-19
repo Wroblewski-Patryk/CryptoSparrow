@@ -7,6 +7,10 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - New requirements: update product/architecture/security docs first, then this plan.
 - Keep tiny commits and explicit progress notes.
 
+## Current Status (2026-03-19)
+- Implementation track is largely complete across Phases A-F.
+- Remaining work is evidence-based exit validation in production (SLOs, drills, audits, launch review artifacts).
+
 ## V1.0 Definition
 - Stable public live trading with explicit risk controls and auditability.
 - Operational reliability with monitoring, alerts, and incident response.

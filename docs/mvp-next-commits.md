@@ -7,15 +7,26 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [ ] `feat(market-stream): add Binance WebSocket ingestion worker and normalize ticker/candle events`
+- [ ] `decision(stream): choose SSE vs WebSocket fan-out for client transport and document contract`
+- [ ] `feat(ui): implement dashboard live market bar (price, 24h delta, candle freshness, stream health)`
+- [ ] `feat(orders-write): add open/cancel/close order API endpoints with mode/risk guards`
+- [ ] `feat(execution-orchestrator): wire runtime signal -> order -> position flow for paper/live`
 
 ## NEXT
+- [ ] `feat(positions-live): add live position reconciliation loop and heartbeat/status exposure`
+- [ ] `feat(backtest): finalize overlays/report visuals for MVP completeness`
+- [ ] `test(e2e): add stream-to-order orchestration smoke test path`
+- [ ] `docs(mvp): sync Current Scope and Current Limitations after freeze-gap delivery`
+- [ ] `chore(release): re-run MVP release checklist after freeze-gap closure`
 
 ## BLOCKED
-- [ ] 2026-03-19 `exit-gates(production): SLO/incident/security/load/public-docs/launch-review criteria require production evidence and launch-cycle checkpoints`
+- [ ] 2026-03-19 `exit-gates(v1-production): SLO/incident/security/load/public-docs/launch-review criteria require production evidence and launch-cycle checkpoints`
 
 ## DONE
 - [ ] 2026-03-15 `chore(planning): initialize MVP/V1 execution plans and agent blueprint`
 - [ ] 2026-03-15 `chore(planning): align trigger intent to generic one-task nudge`
+- [x] 2026-03-19 `chore(planning): refill NOW/NEXT from updated roadmap immediate freeze gaps`
 - [x] 2026-03-15 `chore(repo): add root workspace scripts for lint/typecheck/test/build`
 - [x] 2026-03-15 `chore(ci): add minimal CI checks for client and server`
 - [x] 2026-03-15 `docs(decisions): freeze MVP strategy schema shape in open-decisions/product docs`
