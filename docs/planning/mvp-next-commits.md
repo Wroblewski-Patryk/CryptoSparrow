@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `qa(auth-smoke): run manual auth smoke (fail login, success login, logout redirect, protected route redirect) and capture evidence`
 
 ## NEXT
 - [ ] `fix(ui-api-key-test): replace random result in ApiKeyForm with real request state machine (idle/loading/success/error)`
@@ -42,6 +41,7 @@ Operational queue for one-task execution runs.
 - [x] `fix(auth-ux): validate and harden failed-login error UX (inline + toast) without false positive success styling`
 - [x] `fix(auth-session-warning): remove false session-expired warnings on public routes and keep warning only for protected/session-expired contexts`
 - [x] `test(auth-client): add/adjust regression tests for failed login, successful login, and post-login redirect behavior`
+- [x] `qa(auth-smoke): run manual auth smoke (fail login, success login, logout redirect, protected route redirect) and capture evidence`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

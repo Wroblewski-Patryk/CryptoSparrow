@@ -167,7 +167,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `fix(auth-ux): harden failed-login UX so success feedback appears only after confirmed session refresh`
 - [x] `fix(auth-session-warning): show session-expired warning only for protected or explicit expired-session contexts`
 - [x] `test(auth-client): add regression tests for login fail/success/session-refresh redirect behavior`
-- [ ] `P1 auth-ux-regression: confirm failed/success login UX and redirect/session-warning behavior with regression tests + manual smoke evidence`
+- [x] `P1 auth-ux-regression: confirm failed/success login UX and redirect/session-warning behavior with regression tests + manual smoke evidence`
 - [ ] `fix(ui-api-key-test): replace random "Testuj polaczenie" result with real backend API call and deterministic status states`
 - [ ] `feat(api-key-test-api): add authenticated endpoint to validate provided exchange credentials against Binance permissions`
 - [ ] `security(api-key-test): ensure test endpoint never persists raw secrets, enforces auth/rate limits, and logs audit-safe metadata only`
@@ -361,6 +361,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Hardened failed-login UX by requiring confirmed `refetchUser()` session before success toast/redirect in login flow; verified with green `pnpm --filter client build`.
 - 2026-03-21: Hardened session-expiry warning logic to avoid false public-route warnings by requiring protected-route context or explicit `session=expired` hint.
 - 2026-03-21: Added client auth regression tests in `useLoginForm.test.tsx` covering failed login, successful login with redirect, and session-refresh failure handling.
+- 2026-03-21: Captured auth smoke evidence in `docs/operations/auth-smoke-2026-03-21.md` (`_artifacts-auth-smoke-2026-03-21.json`), covering failed login, successful login, logout cookie clear, and protected-route redirect.
 
 
 
