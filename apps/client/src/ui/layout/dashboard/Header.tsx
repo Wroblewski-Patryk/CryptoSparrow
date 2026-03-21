@@ -62,7 +62,8 @@ export default function Header() {
           analyticsGroup: 'Analityka',
           marketList: 'Lista grup',
           marketCreate: 'Dodaj grupe',
-          strategyBuilder: 'Builder strategii',
+          strategyList: 'Lista strategii',
+          strategyCreate: 'Dodaj strategie',
           mobileMenu: 'Menu',
         }
       : {
@@ -73,7 +74,8 @@ export default function Header() {
           analyticsGroup: 'Analytics',
           marketList: 'Groups list',
           marketCreate: 'Create group',
-          strategyBuilder: 'Strategy builder',
+          strategyList: 'Strategies list',
+          strategyCreate: 'Create strategy',
           mobileMenu: 'Menu',
         };
 
@@ -88,8 +90,8 @@ export default function Header() {
   ];
 
   const strategyLinks: NavItem[] = [
-    { href: '/dashboard/strategies', label: t('dashboard.nav.strategies') },
-    { href: '/dashboard/builder', label: labels.strategyBuilder },
+    { href: '/dashboard/strategies/list', label: labels.strategyList },
+    { href: '/dashboard/strategies/create', label: labels.strategyCreate },
     { href: '/dashboard/backtest', label: t('dashboard.nav.backtest') },
   ];
 

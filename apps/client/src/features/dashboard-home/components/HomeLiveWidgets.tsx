@@ -173,7 +173,7 @@ export default function HomeLiveWidgets() {
           <div className="card-body p-5">
             <h2 className="card-title">Quick Actions</h2>
             <div className="flex flex-col gap-2">
-              <Link href="/dashboard/strategies" className="btn btn-primary btn-sm">
+              <Link href="/dashboard/strategies/list" className="btn btn-primary btn-sm">
                 Review Strategies
               </Link>
               <Link href="/dashboard/orders" className="btn btn-outline btn-sm">

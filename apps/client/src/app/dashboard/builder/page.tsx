@@ -32,7 +32,7 @@ export default function BuilderPage() {
     try {
       const created = await createStrategy(form);
       toast.success("Strategia utworzona");
-      router.push(`/dashboard/strategies/${created.id}`);
+      router.push(`/dashboard/strategies/${created.id}/edit`);
     } catch (err: unknown) {
       toast.error("Nie udalo sie utworzyc strategii", {
         description: getErrorMessage(err),
@@ -65,4 +65,3 @@ export default function BuilderPage() {
     </section>
   );
 }
-

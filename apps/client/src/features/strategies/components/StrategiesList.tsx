@@ -101,7 +101,7 @@ export default function StrategiesList() {
         <div className="flex items-center justify-center gap-2">
           <button
             className="btn btn-sm btn-info"
-            onClick={() => router.push(`/dashboard/strategies/${row.id}`)}
+            onClick={() => router.push(`/dashboard/strategies/${row.id}/edit`)}
             title="Edytuj"
             type="button"
           >
@@ -136,7 +136,7 @@ export default function StrategiesList() {
           title="Brak strategii"
           description="Dodaj pierwsza strategie, aby uruchomic backtest i bota."
           actionLabel="Nowa strategia"
-          onAction={() => router.push("/dashboard/strategies/add")}
+          onAction={() => router.push("/dashboard/strategies/create")}
         />
       )}
 
