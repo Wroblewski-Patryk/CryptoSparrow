@@ -168,7 +168,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `fix(auth-session-warning): show session-expired warning only for protected or explicit expired-session contexts`
 - [x] `test(auth-client): add regression tests for login fail/success/session-refresh redirect behavior`
 - [x] `P1 auth-ux-regression: confirm failed/success login UX and redirect/session-warning behavior with regression tests + manual smoke evidence`
-- [ ] `fix(ui-api-key-test): replace random "Testuj polaczenie" result with real backend API call and deterministic status states`
+- [x] `fix(ui-api-key-test): replace random "Testuj polaczenie" result with real backend API call and deterministic status states`
 - [ ] `feat(api-key-test-api): add authenticated endpoint to validate provided exchange credentials against Binance permissions`
 - [ ] `security(api-key-test): ensure test endpoint never persists raw secrets, enforces auth/rate limits, and logs audit-safe metadata only`
 - [ ] `feat(exchange-validation): map Binance auth/permission errors into stable API contract (invalid key, invalid secret, ip restricted, missing futures/spot scope, network timeout)`
@@ -362,6 +362,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Hardened session-expiry warning logic to avoid false public-route warnings by requiring protected-route context or explicit `session=expired` hint.
 - 2026-03-21: Added client auth regression tests in `useLoginForm.test.tsx` covering failed login, successful login with redirect, and session-refresh failure handling.
 - 2026-03-21: Captured auth smoke evidence in `docs/operations/auth-smoke-2026-03-21.md` (`_artifacts-auth-smoke-2026-03-21.json`), covering failed login, successful login, logout cookie clear, and protected-route redirect.
+- 2026-03-21: Replaced random API-key connection test result in profile form with real `POST /dashboard/profile/apiKeys/test` request state flow (`idle/loading/success/error`) and added deterministic UI regression tests.
 
 
 

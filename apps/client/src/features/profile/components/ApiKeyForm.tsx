@@ -2,7 +2,9 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { ZodError } from "zod";
+import { isAxiosError } from "axios";
 import { apiKeySchema } from "../types/apiKeyForm.type";
+import { testApiKeyConnection } from "../services/apiKeys.service";
 
 const EXCHANGES = ["BINANCE"];
 
@@ -28,16 +30,36 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
   const [exchange, setExchange] = useState(defaultValues?.exchange || EXCHANGES[0]);
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
-  const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<null | "ok" | "fail">(null);
+  const [testStatus, setTestStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [testMessage, setTestMessage] = useState<string | null>(null);
 
   const handleTest = async () => {
-    setTesting(true);
-    setTestResult(null);
-    setTimeout(() => {
-      setTestResult(Math.random() > 0.5 ? "ok" : "fail");
-      setTesting(false);
-    }, 800);
+    if (!apiKey || !apiSecret) {
+      setTestStatus("error");
+      setTestMessage("Uzupelnij API Key i API Secret przed testem.");
+      return;
+    }
+
+    setTestStatus("loading");
+    setTestMessage(null);
+
+    try {
+      const result = await testApiKeyConnection({ exchange, apiKey, apiSecret });
+      if (result.ok) {
+        setTestStatus("success");
+        setTestMessage(result.message ?? "Polaczenie dziala poprawnie.");
+        return;
+      }
+
+      setTestStatus("error");
+      setTestMessage(result.message ?? "Nie udalo sie zweryfikowac polaczenia.");
+    } catch (err: unknown) {
+      const message = isAxiosError<{ message?: string }>(err)
+        ? (err.response?.data?.message ?? "Nie udalo sie zweryfikowac polaczenia.")
+        : "Nie udalo sie zweryfikowac polaczenia.";
+      setTestStatus("error");
+      setTestMessage(message);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -71,6 +93,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
         <input
           className="input input-bordered w-full"
           type="text"
+          aria-label="Nazwa klucza"
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           required
@@ -82,6 +105,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
         </label>
         <select
           className="select select-bordered w-full"
+          aria-label="Gielda"
           value={exchange}
           onChange={(e) => setExchange(e.target.value)}
         >
@@ -99,6 +123,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
         <input
           className="input input-bordered w-full font-mono"
           type="text"
+          aria-label="API Key"
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
           placeholder={isEdit ? "Podaj nowy API Key (opcjonalnie)" : ""}
@@ -112,6 +137,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
         <input
           className="input input-bordered w-full font-mono"
           type="password"
+          aria-label="API Secret"
           value={apiSecret}
           onChange={(e) => setApiSecret(e.target.value)}
           placeholder={isEdit ? "Podaj nowy API Secret (opcjonalnie)" : ""}
@@ -120,16 +146,19 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
       </div>
       <div className="flex items-center gap-4 mt-2">
         <button
-          className={`btn btn-outline btn-info ${testing ? "loading" : ""}`}
+          className={`btn btn-outline btn-info ${testStatus === "loading" ? "loading" : ""}`}
           type="button"
           onClick={handleTest}
-          disabled={testing}
+          disabled={testStatus === "loading"}
         >
-          Testuj polaczenie
+          {testStatus === "loading" ? "Testowanie..." : "Testuj polaczenie"}
         </button>
-        {testResult === "ok" && <span className="text-success">OK</span>}
-        {testResult === "fail" && <span className="text-error">Blad</span>}
+        {testStatus === "success" && <span className="text-success">OK</span>}
+        {testStatus === "error" && <span className="text-error">Blad</span>}
       </div>
+      {testMessage && (
+        <p className={`text-sm ${testStatus === "error" ? "text-error" : "text-success"}`}>{testMessage}</p>
+      )}
       <div className="flex gap-2 mt-4">
         <button className="btn btn-primary" type="submit">
           Zapisz
