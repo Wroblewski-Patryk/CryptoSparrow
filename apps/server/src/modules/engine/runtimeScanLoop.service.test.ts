@@ -7,9 +7,9 @@ describe('RuntimeScanLoop', () => {
       listScanSymbols: vi.fn(async () => ['BTCUSDT', 'ETHUSDT']),
       getTickerSnapshot: vi.fn(async (symbol: string) => {
         if (symbol === 'BTCUSDT') {
-          return { symbol: 'BTCUSDT', lastPrice: 60300, priceChangePercent24h: 0.5 };
+          return { symbol: 'BTCUSDT', marketType: 'FUTURES' as const, lastPrice: 60300, priceChangePercent24h: 0.5 };
         }
-        return { symbol: 'ETHUSDT', lastPrice: 2970, priceChangePercent24h: -1 };
+        return { symbol: 'ETHUSDT', marketType: 'FUTURES' as const, lastPrice: 2970, priceChangePercent24h: -1 };
       }),
       processTicker: vi.fn(async () => undefined),
       nowMs: vi.fn(() => 123_456),

@@ -15,6 +15,7 @@ const registerAndLogin = async (email: string) => {
 
 const createPayload = () => ({
   name: 'Top USDT Futures',
+  marketType: 'FUTURES',
   baseCurrency: 'USDT',
   filterRules: { minVolume24h: 1_000_000 },
   whitelist: ['BTCUSDT', 'ETHUSDT'],
@@ -54,6 +55,7 @@ describe('Markets module contract', () => {
     expect(createRes.status).toBe(201);
     expect(createRes.body.id).toBeDefined();
     expect(createRes.body.name).toBe('Top USDT Futures');
+    expect(createRes.body.marketType).toBe('FUTURES');
     expect(createRes.body.whitelist).toEqual(['BTCUSDT', 'ETHUSDT']);
     const universeId = createRes.body.id as string;
 
@@ -67,6 +69,7 @@ describe('Markets module contract', () => {
     expect(getRes.status).toBe(200);
     expect(getRes.body.id).toBe(universeId);
     expect(getRes.body.baseCurrency).toBe('USDT');
+    expect(getRes.body.marketType).toBe('FUTURES');
 
     const updateRes = await agent.put(`/dashboard/markets/universes/${universeId}`).send({
       name: 'Top Liquid Futures',
@@ -82,6 +85,24 @@ describe('Markets module contract', () => {
     const getDeletedRes = await agent.get(`/dashboard/markets/universes/${universeId}`);
     expect(getDeletedRes.status).toBe(404);
     expect(getDeletedRes.body.error.message).toBe('Not found');
+  });
+
+  it('returns public market catalog filtered by base currency and market type', async () => {
+    const agent = await registerAndLogin('markets-catalog@example.com');
+
+    const res = await agent.get('/dashboard/markets/catalog').query({ baseCurrency: 'USDT', marketType: 'FUTURES' });
+    expect(res.status).toBe(200);
+    expect(res.body.source).toBe('BINANCE_PUBLIC');
+    expect(res.body.marketType).toBe('FUTURES');
+    expect(res.body.baseCurrency).toBe('USDT');
+    expect(Array.isArray(res.body.baseCurrencies)).toBe(true);
+    expect(res.body.baseCurrencies).toContain('USDT');
+    expect(Array.isArray(res.body.markets)).toBe(true);
+    expect(res.body.markets.length).toBeGreaterThan(0);
+    expect(res.body.markets[0]).toHaveProperty('symbol');
+    expect(res.body.markets[0]).toHaveProperty('displaySymbol');
+    expect(res.body.markets[0]).toHaveProperty('baseAsset');
+    expect(res.body.markets[0]).toHaveProperty('quoteAsset', 'USDT');
   });
 
   it('enforces ownership isolation for get/update/delete', async () => {

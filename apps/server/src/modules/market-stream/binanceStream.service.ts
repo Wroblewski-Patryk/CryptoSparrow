@@ -1,4 +1,4 @@
-import { MarketStreamEvent, StreamLogger } from './binanceStream.types';
+import { MarketStreamEvent, StreamLogger, TradeMarketType } from './binanceStream.types';
 
 type WebSocketMessage = { data: string };
 
@@ -66,7 +66,10 @@ const toCombinedData = (payload: unknown) => {
   return data ?? root;
 };
 
-export const normalizeBinanceStreamEvent = (payload: unknown): MarketStreamEvent | null => {
+export const normalizeBinanceStreamEvent = (
+  payload: unknown,
+  marketType: TradeMarketType = 'FUTURES'
+): MarketStreamEvent | null => {
   const data = toCombinedData(payload);
   if (!data) return null;
 
@@ -82,6 +85,7 @@ export const normalizeBinanceStreamEvent = (payload: unknown): MarketStreamEvent
 
     return {
       type: 'ticker',
+      marketType,
       symbol,
       eventTime,
       lastPrice,
@@ -119,6 +123,7 @@ export const normalizeBinanceStreamEvent = (payload: unknown): MarketStreamEvent
 
     return {
       type: 'candle',
+      marketType,
       symbol,
       interval,
       eventTime,
@@ -138,6 +143,7 @@ export const normalizeBinanceStreamEvent = (payload: unknown): MarketStreamEvent
 
 type BinanceMarketStreamConfig = {
   streamUrl?: string;
+  marketType?: TradeMarketType;
   symbols: string[];
   candleIntervals: string[];
   onEvent?: (event: MarketStreamEvent) => void | Promise<void>;
@@ -146,6 +152,7 @@ type BinanceMarketStreamConfig = {
 export class BinanceMarketStreamWorker {
   private socket: WebSocketLike | null = null;
   private readonly streamUrl: string;
+  private readonly marketType: TradeMarketType;
 
   constructor(
     private readonly config: BinanceMarketStreamConfig,
@@ -153,6 +160,7 @@ export class BinanceMarketStreamWorker {
     private readonly logger: StreamLogger = defaultLogger
   ) {
     this.streamUrl = config.streamUrl ?? 'wss://stream.binance.com:9443/ws';
+    this.marketType = config.marketType ?? 'FUTURES';
   }
 
   start() {
@@ -185,7 +193,7 @@ export class BinanceMarketStreamWorker {
     this.socket.onmessage = (message) => {
       try {
         const parsed = JSON.parse(message.data) as unknown;
-        const normalized = normalizeBinanceStreamEvent(parsed);
+        const normalized = normalizeBinanceStreamEvent(parsed, this.marketType);
         if (!normalized) return;
         this.logger.info({
           event: `market_stream.${normalized.type}`,

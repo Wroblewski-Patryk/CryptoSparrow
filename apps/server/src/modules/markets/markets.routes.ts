@@ -4,6 +4,7 @@ import {
   createMarketUniverse,
   deleteMarketUniverse,
   getMarketUniverse,
+  listMarketCatalog,
   listMarketUniverses,
   updateMarketUniverse,
 } from './markets.controller';
@@ -14,6 +15,7 @@ const marketWriteLimiter = createRateLimiter({ windowMs: 60_000, max: 40 });
 
 marketsRouter.get('/universes', marketReadLimiter, listMarketUniverses);
 marketsRouter.get('/universes/:id', marketReadLimiter, getMarketUniverse);
+marketsRouter.get('/catalog', marketReadLimiter, listMarketCatalog);
 marketsRouter.post('/universes', marketWriteLimiter, createMarketUniverse);
 marketsRouter.put('/universes/:id', marketWriteLimiter, updateMarketUniverse);
 marketsRouter.delete('/universes/:id', marketWriteLimiter, deleteMarketUniverse);

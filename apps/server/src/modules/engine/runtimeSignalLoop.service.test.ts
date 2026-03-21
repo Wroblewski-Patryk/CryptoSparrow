@@ -15,6 +15,7 @@ const createDeps = () => {
         id: 'bot-1',
         userId: 'user-1',
         mode: 'PAPER' as const,
+        marketType: 'FUTURES' as const,
       },
     ]),
     listManualManagedPositions: vi.fn(async () => []),
@@ -50,6 +51,7 @@ describe('RuntimeSignalLoop', () => {
 
     await emit({
       type: 'ticker',
+      marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: 1_000,
       lastPrice: 64000,
@@ -88,6 +90,7 @@ describe('RuntimeSignalLoop', () => {
 
     await emit({
       type: 'ticker',
+      marketType: 'FUTURES',
       symbol: 'ETHUSDT',
       eventTime: 2_000,
       lastPrice: 3000,
@@ -105,6 +108,7 @@ describe('RuntimeSignalLoop', () => {
 
     await emit({
       type: 'ticker',
+      marketType: 'FUTURES',
       symbol: 'SOLUSDT',
       eventTime: 3_000,
       lastPrice: 150,
@@ -112,6 +116,7 @@ describe('RuntimeSignalLoop', () => {
     });
     await emit({
       type: 'ticker',
+      marketType: 'FUTURES',
       symbol: 'SOLUSDT',
       eventTime: 4_000,
       lastPrice: 151,
@@ -136,6 +141,7 @@ describe('RuntimeSignalLoop', () => {
 
     await emit({
       type: 'ticker',
+      marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: 6_000,
       lastPrice: 63500,
@@ -157,5 +163,32 @@ describe('RuntimeSignalLoop', () => {
         symbol: 'BTCUSDT',
       })
     );
+  });
+
+  it('ignores ticker events when bot marketType does not match stream marketType', async () => {
+    const { deps, emit } = createDeps();
+    deps.listActiveBots = vi.fn(async () => [
+      {
+        id: 'bot-spot',
+        userId: 'user-1',
+        mode: 'PAPER' as const,
+        marketType: 'SPOT' as const,
+      },
+    ]);
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    await emit({
+      type: 'ticker',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      eventTime: 8_000,
+      lastPrice: 64500,
+      priceChangePercent24h: 1.4,
+    });
+
+    expect(deps.analyzePreTradeFn).not.toHaveBeenCalled();
+    expect(deps.createSignal).not.toHaveBeenCalled();
+    expect(deps.orchestrateFn).not.toHaveBeenCalled();
   });
 });

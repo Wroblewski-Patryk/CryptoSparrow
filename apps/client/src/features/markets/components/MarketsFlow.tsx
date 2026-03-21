@@ -5,22 +5,33 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { EmptyState, ErrorState, LoadingState, SuccessState } from '../../../ui/components/ViewState';
 import { useLocaleFormatting } from '../../../i18n/useLocaleFormatting';
+import { FieldWrapper, SelectField, TextInputField } from './FieldControls';
+import SearchableMultiSelect, { MultiSelectOption } from './SearchableMultiSelect';
 import {
   createMarketUniverse,
   deleteMarketUniverse,
+  fetchMarketCatalog,
   listMarketUniverses,
 } from '../services/markets.service';
-import { MarketUniverse } from '../types/marketUniverse.type';
+import { MarketCatalogEntry, MarketUniverse } from '../types/marketUniverse.type';
 
-const parseSymbolsInput = (value: string) =>
-  value
-    .split(',')
-    .map((symbol) => symbol.trim().toUpperCase())
-    .filter(Boolean);
+const MARKET_TYPES: Array<'SPOT' | 'FUTURES'> = ['SPOT', 'FUTURES'];
+
+const uniqueSorted = (values: string[]) =>
+  [...new Set(values.map((item) => item.trim().toUpperCase()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
-  return (err.response?.data as { message?: string } | undefined)?.message;
+  const response = err.response?.data as { error?: { message?: string }; message?: string } | undefined;
+  return response?.error?.message ?? response?.message;
+};
+
+const formatVolumeLabel = (value: number) => {
+  if (!Number.isFinite(value) || value <= 0) return 'vol 24h: 0';
+  if (value >= 1_000_000_000) return `vol 24h: ${(value / 1_000_000_000).toFixed(2)}B`;
+  if (value >= 1_000_000) return `vol 24h: ${(value / 1_000_000).toFixed(2)}M`;
+  if (value >= 1_000) return `vol 24h: ${(value / 1_000).toFixed(2)}K`;
+  return `vol 24h: ${value.toFixed(0)}`;
 };
 
 export default function MarketsFlow() {
@@ -31,10 +42,19 @@ export default function MarketsFlow() {
   const [creating, setCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const [name, setName] = useState('');
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [marketType, setMarketType] = useState<'SPOT' | 'FUTURES'>('FUTURES');
   const [baseCurrency, setBaseCurrency] = useState('USDT');
-  const [whitelistInput, setWhitelistInput] = useState('');
-  const [blacklistInput, setBlacklistInput] = useState('');
+  const [baseCurrencies, setBaseCurrencies] = useState<string[]>([]);
+  const [catalogMarkets, setCatalogMarkets] = useState<MarketCatalogEntry[]>([]);
+
+  const [name, setName] = useState('');
+  const [selectedMarketSymbols, setSelectedMarketSymbols] = useState<string[]>([]);
+  const [whitelistSymbols, setWhitelistSymbols] = useState<string[]>([]);
+  const [blacklistSymbols, setBlacklistSymbols] = useState<string[]>([]);
+  const [previewQuery, setPreviewQuery] = useState('');
+  const [minQuoteVolumeMillions, setMinQuoteVolumeMillions] = useState(0);
 
   const loadUniverses = useCallback(async () => {
     setLoading(true);
@@ -50,11 +70,103 @@ export default function MarketsFlow() {
     }
   }, []);
 
+  const loadCatalog = useCallback(async (params?: { requestedBaseCurrency?: string; requestedMarketType?: 'SPOT' | 'FUTURES' }) => {
+    setCatalogLoading(true);
+    setCatalogError(null);
+    try {
+      const catalog = await fetchMarketCatalog({
+        baseCurrency: params?.requestedBaseCurrency,
+        marketType: params?.requestedMarketType ?? marketType,
+      });
+
+      setMarketType(catalog.marketType);
+      setBaseCurrency(catalog.baseCurrency);
+      setBaseCurrencies(catalog.baseCurrencies);
+      setCatalogMarkets(catalog.markets.sort((a, b) => a.symbol.localeCompare(b.symbol)));
+    } catch (err: unknown) {
+      const message = getAxiosMessage(err) ?? 'Nie udalo sie pobrac katalogu rynkow z gieldy.';
+      setCatalogError(message);
+    } finally {
+      setCatalogLoading(false);
+    }
+  }, [marketType]);
+
   useEffect(() => {
     void loadUniverses();
-  }, [loadUniverses]);
+    void loadCatalog();
+  }, [loadCatalog, loadUniverses]);
 
-  const canSubmit = useMemo(() => name.trim().length > 0 && !creating, [creating, name]);
+  const maxQuoteVolumeMillions = useMemo(() => {
+    const maxVolume = Math.max(...catalogMarkets.map((market) => market.quoteVolume24h ?? 0), 0);
+    return Math.max(1, Math.ceil(maxVolume / 1_000_000));
+  }, [catalogMarkets]);
+
+  const minQuoteVolume = minQuoteVolumeMillions * 1_000_000;
+
+  const filteredCatalogMarkets = useMemo(
+    () => catalogMarkets.filter((market) => (market.quoteVolume24h ?? 0) >= minQuoteVolume),
+    [catalogMarkets, minQuoteVolume]
+  );
+
+  const marketOptions = useMemo<MultiSelectOption[]>(
+    () =>
+      filteredCatalogMarkets.map((market) => ({
+        value: market.symbol,
+        label: market.displaySymbol,
+        description: formatVolumeLabel(market.quoteVolume24h),
+      })),
+    [filteredCatalogMarkets]
+  );
+
+  useEffect(() => {
+    const valid = new Set(marketOptions.map((item) => item.value));
+    setSelectedMarketSymbols((prev) => prev.filter((item) => valid.has(item)));
+    setWhitelistSymbols((prev) => prev.filter((item) => valid.has(item)));
+    setBlacklistSymbols((prev) => prev.filter((item) => valid.has(item)));
+  }, [marketOptions]);
+
+  const availableSymbols = useMemo(() => marketOptions.map((option) => option.value), [marketOptions]);
+
+  const previewSymbols = useMemo(() => {
+    const includeBase = selectedMarketSymbols.length > 0 ? selectedMarketSymbols : whitelistSymbols;
+    const include = includeBase.length > 0 ? includeBase : availableSymbols;
+    const blacklistSet = new Set(blacklistSymbols);
+
+    return uniqueSorted(include).filter((symbol) => !blacklistSet.has(symbol));
+  }, [availableSymbols, blacklistSymbols, selectedMarketSymbols, whitelistSymbols]);
+
+  const previewFiltered = useMemo(() => {
+    const q = previewQuery.trim().toUpperCase();
+    if (!q) return previewSymbols;
+    return previewSymbols.filter((symbol) => symbol.includes(q));
+  }, [previewQuery, previewSymbols]);
+
+  const canSubmit = useMemo(
+    () => name.trim().length > 0 && !creating && previewSymbols.length > 0,
+    [creating, name, previewSymbols.length]
+  );
+
+  const handleBaseCurrencyChange = async (nextBaseCurrency: string) => {
+    setBaseCurrency(nextBaseCurrency);
+    await loadCatalog({ requestedBaseCurrency: nextBaseCurrency, requestedMarketType: marketType });
+  };
+
+  const handleMarketTypeChange = async (nextMarketType: string) => {
+    const parsed = nextMarketType === 'SPOT' ? 'SPOT' : 'FUTURES';
+    setMarketType(parsed);
+    setMinQuoteVolumeMillions(0);
+    await loadCatalog({ requestedBaseCurrency: baseCurrency, requestedMarketType: parsed });
+  };
+
+  const selectAllFromBaseCurrency = () => {
+    setSelectedMarketSymbols(availableSymbols);
+  };
+
+  const clearAllSelections = () => {
+    setSelectedMarketSymbols([]);
+    setWhitelistSymbols([]);
+    setBlacklistSymbols([]);
+  };
 
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -62,17 +174,23 @@ export default function MarketsFlow() {
 
     setCreating(true);
     try {
+      const mergedWhitelist = uniqueSorted([...selectedMarketSymbols, ...whitelistSymbols]);
+      const mergedBlacklistSet = new Set(uniqueSorted(blacklistSymbols));
+      const payloadWhitelist = mergedWhitelist.filter((symbol) => !mergedBlacklistSet.has(symbol));
+      const payloadBlacklist = [...mergedBlacklistSet].sort((a, b) => a.localeCompare(b));
+
       const created = await createMarketUniverse({
         name: name.trim(),
+        marketType,
         baseCurrency: baseCurrency.trim().toUpperCase(),
-        whitelist: parseSymbolsInput(whitelistInput),
-        blacklist: parseSymbolsInput(blacklistInput),
+        whitelist: payloadWhitelist,
+        blacklist: payloadBlacklist,
       });
 
       setUniverses((prev) => [created, ...prev]);
       setName('');
-      setWhitelistInput('');
-      setBlacklistInput('');
+      clearAllSelections();
+      setPreviewQuery('');
       toast.success('Market universe utworzony');
     } catch (err: unknown) {
       toast.error('Nie udalo sie utworzyc market universe', {
@@ -101,49 +219,129 @@ export default function MarketsFlow() {
   return (
     <div className='space-y-5'>
       <form onSubmit={handleCreate} className='rounded-xl border border-base-300 bg-base-200 p-4'>
-        <h2 className='text-lg font-semibold'>Nowy market universe</h2>
-        <p className='text-sm opacity-70'>Whitelist i blacklist podaj jako symbole oddzielone przecinkami.</p>
+        <h2 className='text-lg font-semibold'>Kreator grup rynkow dla bota</h2>
+        <p className='text-sm opacity-70'>Wybierz market type, base currency i zbuduj grupe symboli pod bota.</p>
 
-        <div className='mt-4 grid gap-3 md:grid-cols-2'>
-          <label className='form-control'>
-            <span className='label-text'>Nazwa</span>
-            <input
-              className='input input-bordered'
-              placeholder='Top Futures'
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-          </label>
+        <div className='mt-4 grid gap-3 md:grid-cols-3'>
+          <TextInputField label='Nazwa universe' placeholder='Top Futures' value={name} onChange={setName} />
 
-          <label className='form-control'>
-            <span className='label-text'>Base currency</span>
-            <input
-              className='input input-bordered'
-              placeholder='USDT'
-              value={baseCurrency}
-              onChange={(event) => setBaseCurrency(event.target.value)}
-            />
-          </label>
+          <SelectField
+            label='Market type'
+            value={marketType}
+            options={MARKET_TYPES}
+            onChange={(next) => void handleMarketTypeChange(next)}
+            disabled={catalogLoading}
+          />
 
-          <label className='form-control md:col-span-2'>
-            <span className='label-text'>Whitelist</span>
-            <input
-              className='input input-bordered'
-              placeholder='BTCUSDT, ETHUSDT'
-              value={whitelistInput}
-              onChange={(event) => setWhitelistInput(event.target.value)}
-            />
-          </label>
+          <SelectField
+            label='Base currency'
+            value={baseCurrency}
+            options={baseCurrencies}
+            onChange={(next) => void handleBaseCurrencyChange(next)}
+            disabled={catalogLoading || baseCurrencies.length === 0}
+          />
+        </div>
 
-          <label className='form-control md:col-span-2'>
-            <span className='label-text'>Blacklist</span>
+        <div className='mt-3 rounded-xl border border-base-300 bg-base-100 p-3'>
+          <div className='grid gap-3 lg:grid-cols-2'>
+            <FieldWrapper label='Filtr: minimalny wolumen quote 24h'>
+              <input
+                type='range'
+                min={0}
+                max={maxQuoteVolumeMillions}
+                step={1}
+                className='range range-primary range-sm'
+                value={minQuoteVolumeMillions}
+                onChange={(event) => setMinQuoteVolumeMillions(Number.parseInt(event.target.value, 10) || 0)}
+              />
+            </FieldWrapper>
+            <div className='rounded-box border border-base-300 bg-base-200 px-3 py-2 text-sm'>
+              <p>
+                Min wolumen: <span className='font-mono'>{minQuoteVolumeMillions}M</span>
+              </p>
+              <p className='opacity-70'>Dostepnych po filtrze: {marketOptions.length}</p>
+            </div>
+          </div>
+
+          <div className='mt-3 flex flex-wrap items-center justify-between gap-2'>
+            <p className='text-sm font-medium'>Szybki wybor wszystkich z aktualnego filtra (base + volume)</p>
+            <div className='flex gap-2'>
+              <button
+                type='button'
+                className='btn btn-xs btn-outline'
+                onClick={selectAllFromBaseCurrency}
+                disabled={availableSymbols.length === 0}
+              >
+                Wybierz wszystkie rynki
+              </button>
+              <button type='button' className='btn btn-xs btn-outline' onClick={clearAllSelections}>
+                Wyczysc wybor
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className='mt-3 grid gap-3 xl:grid-cols-3'>
+          <SearchableMultiSelect
+            label='Wybrane rynki (kreator)'
+            options={marketOptions}
+            selectedValues={selectedMarketSymbols}
+            onChange={setSelectedMarketSymbols}
+            emptyText='Brak rynkow dla wybranego filtra.'
+            maxListHeightClassName='max-h-80'
+          />
+          <SearchableMultiSelect
+            label='Whitelist'
+            options={marketOptions}
+            selectedValues={whitelistSymbols}
+            onChange={setWhitelistSymbols}
+            emptyText='Brak whitelist.'
+            maxListHeightClassName='max-h-80'
+          />
+          <SearchableMultiSelect
+            label='Blacklist'
+            options={marketOptions}
+            selectedValues={blacklistSymbols}
+            onChange={setBlacklistSymbols}
+            emptyText='Brak blacklist.'
+            maxListHeightClassName='max-h-80'
+          />
+        </div>
+
+        {catalogLoading && <p className='mt-3 text-sm opacity-70'>Ladowanie katalogu rynkow z gieldy...</p>}
+        {!catalogLoading && catalogError && <p className='mt-3 text-sm text-error'>{catalogError}</p>}
+
+        <div className='mt-4 rounded-xl border border-base-300 bg-base-100 p-3'>
+          <div className='flex flex-wrap items-center justify-between gap-2'>
+            <h3 className='font-semibold'>Podglad listy po filtrach</h3>
+            <span className='text-sm opacity-70'>Liczba rynkow: {previewSymbols.length}</span>
+          </div>
+          <p className='mt-1 text-xs opacity-70'>
+            Kolejnosc: alfabetyczna. Zastosowano: market type + base currency + min volume + wybrane/whitelist - blacklist.
+          </p>
+
+          <div className='mt-3'>
             <input
-              className='input input-bordered'
-              placeholder='1000BONKUSDT, XRPUSDT'
-              value={blacklistInput}
-              onChange={(event) => setBlacklistInput(event.target.value)}
+              className='input input-bordered input-sm w-full'
+              placeholder='Szukaj w przefiltrowanej liscie...'
+              value={previewQuery}
+              onChange={(event) => setPreviewQuery(event.target.value)}
             />
-          </label>
+          </div>
+
+          <div className='mt-3 max-h-72 overflow-y-auto overflow-x-hidden rounded-box border border-base-300 bg-base-200 p-2'>
+            {previewFiltered.length === 0 ? (
+              <p className='text-sm opacity-70'>Brak rynkow po zastosowaniu filtrow.</p>
+            ) : (
+              <div className='flex flex-wrap gap-2'>
+                {previewFiltered.map((symbol) => (
+                  <span key={symbol} className='badge badge-outline font-mono'>
+                    {symbol}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className='mt-4 flex justify-end'>
@@ -180,6 +378,7 @@ export default function MarketsFlow() {
               <thead>
                 <tr>
                   <th>Nazwa</th>
+                  <th>Rynek</th>
                   <th>Base</th>
                   <th>Whitelist</th>
                   <th>Blacklist</th>
@@ -191,6 +390,7 @@ export default function MarketsFlow() {
                 {universes.map((item) => (
                   <tr key={item.id}>
                     <td className='font-medium'>{item.name}</td>
+                    <td>{item.marketType}</td>
                     <td>{item.baseCurrency}</td>
                     <td>{item.whitelist.join(', ') || '-'}</td>
                     <td>{item.blacklist.join(', ') || '-'}</td>

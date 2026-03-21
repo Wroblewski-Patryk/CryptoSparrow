@@ -2,7 +2,21 @@ import { Request, Response } from 'express';
 import { sendError } from '../../utils/apiError';
 import { sendValidationError } from '../../utils/formatZodError';
 import * as marketsService from './markets.service';
-import { MarketUniverseCreateSchema, MarketUniverseUpdateSchema } from './markets.types';
+import {
+  MarketCatalogQuerySchema,
+  MarketUniverseCreateSchema,
+  MarketUniverseUpdateSchema,
+} from './markets.types';
+
+export const listMarketCatalog = async (req: Request, res: Response) => {
+  try {
+    const query = MarketCatalogQuerySchema.parse(req.query);
+    const catalog = await marketsService.getMarketCatalog(query.baseCurrency, query.marketType);
+    return res.json(catalog);
+  } catch (error) {
+    return sendValidationError(res, error);
+  }
+};
 
 export const listMarketUniverses = async (req: Request, res: Response) => {
   const userId = req.user?.id;

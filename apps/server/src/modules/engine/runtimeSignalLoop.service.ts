@@ -11,6 +11,7 @@ type ActiveBot = {
   id: string;
   userId: string;
   mode: 'PAPER' | 'LIVE';
+  marketType: 'FUTURES' | 'SPOT';
 };
 
 type RuntimeSignalLoopDeps = {
@@ -52,12 +53,14 @@ const defaultDeps: RuntimeSignalLoopDeps = {
         id: true,
         userId: true,
         mode: true,
+        marketType: true,
       },
     });
     return bots.map((bot) => ({
       id: bot.id,
       userId: bot.userId,
       mode: bot.mode as 'PAPER' | 'LIVE',
+      marketType: bot.marketType,
     }));
   },
   listManualManagedPositions: async () => {
@@ -144,6 +147,8 @@ export class RuntimeSignalLoop {
     const bots = await this.deps.listActiveBots();
     await Promise.all(
       bots.map(async (bot) => {
+        if (bot.marketType !== event.marketType) return;
+
         const dedupeKey = `${bot.id}|${event.symbol}`;
         const now = this.deps.nowMs();
         const previous = this.recentlyProcessed.get(dedupeKey);
@@ -162,6 +167,7 @@ export class RuntimeSignalLoop {
             botId: bot.id,
             symbol: event.symbol,
             mode: bot.mode,
+            marketType: event.marketType,
           });
           if (!preTradeDecision.allowed) {
             return;

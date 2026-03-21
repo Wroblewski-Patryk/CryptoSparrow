@@ -1,5 +1,8 @@
+export type TradeMarketType = 'FUTURES' | 'SPOT';
+
 export type StreamTickerEvent = {
   type: 'ticker';
+  marketType: TradeMarketType;
   symbol: string;
   eventTime: number;
   lastPrice: number;
@@ -8,6 +11,7 @@ export type StreamTickerEvent = {
 
 export type StreamCandleEvent = {
   type: 'candle';
+  marketType: TradeMarketType;
   symbol: string;
   interval: string;
   eventTime: number;

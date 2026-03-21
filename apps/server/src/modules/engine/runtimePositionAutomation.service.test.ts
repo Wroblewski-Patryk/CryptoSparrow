@@ -24,6 +24,7 @@ describe('RuntimePositionAutomationService', () => {
     const service = new RuntimePositionAutomationService(deps);
     await service.handleTickerEvent({
       type: 'ticker',
+      marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: 1_000,
       lastPrice: 61_500,
@@ -67,6 +68,7 @@ describe('RuntimePositionAutomationService', () => {
     const service = new RuntimePositionAutomationService(deps);
     await service.handleTickerEvent({
       type: 'ticker',
+      marketType: 'FUTURES',
       symbol: 'ETHUSDT',
       eventTime: 2_000,
       lastPrice: 2950,

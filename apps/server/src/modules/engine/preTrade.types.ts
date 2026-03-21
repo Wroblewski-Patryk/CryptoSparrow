@@ -6,6 +6,7 @@ export const PreTradeAnalysisInputSchema = z.object({
   userId: z.string().trim().min(1),
   botId: z.string().trim().min(1).optional(),
   symbol: z.string().trim().min(1),
+  marketType: z.enum(['FUTURES', 'SPOT']).optional(),
   mode: ExecutionModeSchema,
   liveOptIn: z.boolean().default(false),
   globalKillSwitch: z.boolean().default(false),

@@ -39,6 +39,15 @@ export const evaluatePreTradeRiskReasons = (input: EvaluatePreTradeRiskInput) =>
   }
 
   if (
+    parsed.botId &&
+    parsed.marketType &&
+    botLiveConfig &&
+    parsed.marketType !== botLiveConfig.marketType
+  ) {
+    reasons.push('bot_market_type_mismatch');
+  }
+
+  if (
     typeof parsed.maxOpenPositionsPerUser === 'number' &&
     userOpenPositions >= parsed.maxOpenPositionsPerUser
   ) {

@@ -309,10 +309,37 @@ describe('preTrade analysis', () => {
     expect(auditLogWriter.write).toHaveBeenCalledWith(
       expect.objectContaining({
         metadata: expect.objectContaining({
+          requestedMarketType: null,
           marketType: 'SPOT',
           positionMode: 'HEDGE',
         }),
       })
     );
+  });
+
+  it('blocks when requested marketType differs from bot marketType', async () => {
+    const store = createStore({
+      getBotLiveConfig: vi.fn().mockResolvedValue({
+        mode: 'LIVE',
+        marketType: 'FUTURES',
+        positionMode: 'ONE_WAY',
+        liveOptIn: true,
+        consentTextVersion: 'mvp-v1',
+      }),
+    });
+
+    const decision = await analyzePreTrade(
+      {
+        userId: 'u1',
+        botId: 'b1',
+        symbol: 'BTCUSDT',
+        mode: 'LIVE',
+        marketType: 'SPOT',
+      },
+      store
+    );
+
+    expect(decision.allowed).toBe(false);
+    expect(decision.reasons).toContain('bot_market_type_mismatch');
   });
 });

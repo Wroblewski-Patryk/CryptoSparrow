@@ -29,6 +29,7 @@ describe('normalizeBinanceStreamEvent', () => {
 
     expect(event).toEqual({
       type: 'ticker',
+      marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: 1700000000000,
       lastPrice: 43210.5,
@@ -59,6 +60,7 @@ describe('normalizeBinanceStreamEvent', () => {
 
     expect(event).toEqual({
       type: 'candle',
+      marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       interval: '1m',
       eventTime: 1700000000100,
@@ -71,6 +73,26 @@ describe('normalizeBinanceStreamEvent', () => {
       volume: 100.25,
       isFinal: true,
     });
+  });
+
+  it('supports explicit SPOT marketType override', () => {
+    const event = normalizeBinanceStreamEvent(
+      {
+        e: '24hrTicker',
+        E: 1700000000000,
+        s: 'BTCUSDT',
+        c: '43210.5',
+        P: '2.45',
+      },
+      'SPOT'
+    );
+
+    expect(event).toEqual(
+      expect.objectContaining({
+        type: 'ticker',
+        marketType: 'SPOT',
+      })
+    );
   });
 });
 

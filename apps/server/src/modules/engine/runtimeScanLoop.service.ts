@@ -1,21 +1,17 @@
 import { prisma } from '../../prisma/client';
 import { runtimeSignalLoop } from './runtimeSignalLoop.service';
 import { getRuntimeTicker } from './runtimeTickerStore';
+import { StreamTickerEvent } from '../market-stream/binanceStream.types';
 
 type RuntimeScanDeps = {
   listScanSymbols: () => Promise<string[]>;
   getTickerSnapshot: (symbol: string) => Promise<{
     symbol: string;
+    marketType: 'FUTURES' | 'SPOT';
     lastPrice: number;
     priceChangePercent24h: number;
   } | null>;
-  processTicker: (event: {
-    type: 'ticker';
-    symbol: string;
-    eventTime: number;
-    lastPrice: number;
-    priceChangePercent24h: number;
-  }) => Promise<void>;
+  processTicker: (event: StreamTickerEvent) => Promise<void>;
   nowMs: () => number;
 };
 
@@ -42,6 +38,7 @@ const defaultDeps: RuntimeScanDeps = {
     if (!ticker) return null;
     return {
       symbol: ticker.symbol,
+      marketType: ticker.marketType,
       lastPrice: ticker.lastPrice,
       priceChangePercent24h: ticker.priceChangePercent24h,
     };
@@ -88,6 +85,7 @@ export class RuntimeScanLoop {
           if (!ticker) return;
           await this.deps.processTicker({
             type: 'ticker',
+            marketType: ticker.marketType,
             symbol: ticker.symbol,
             eventTime: this.deps.nowMs(),
             lastPrice: ticker.lastPrice,

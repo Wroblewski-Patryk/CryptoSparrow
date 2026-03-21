@@ -148,6 +148,7 @@ export const analyzePreTrade = async (
         metadata: {
           symbol: parsed.symbol,
           mode: parsed.mode,
+          requestedMarketType: parsed.marketType ?? null,
           marketType: botLiveConfig?.marketType ?? null,
           positionMode: botLiveConfig?.positionMode ?? null,
           reasons: decision.reasons,

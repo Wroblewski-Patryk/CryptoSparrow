@@ -97,6 +97,7 @@ model MarketUniverse {
   userId            String
 
   name              String
+  marketType        TradeMarket @default(FUTURES)
   baseCurrency      String   @default("USDT")
   filterRules       Json?
   whitelist         String[] @default([])

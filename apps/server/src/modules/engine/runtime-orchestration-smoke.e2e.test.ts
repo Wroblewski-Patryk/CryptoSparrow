@@ -40,6 +40,7 @@ describe('runtime orchestration smoke (stream -> signal -> order -> position)', 
 
     expect(normalizedTicker).not.toBeNull();
     expect(normalizedTicker?.type).toBe('ticker');
+    expect(normalizedTicker?.marketType).toBe('FUTURES');
     if (!normalizedTicker || normalizedTicker.type !== 'ticker') return;
 
     await prisma.signal.create({

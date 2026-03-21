@@ -16,6 +16,7 @@ bootstrapWorker({
 
 const worker = new BinanceMarketStreamWorker({
   streamUrl: process.env.BINANCE_STREAM_URL,
+  marketType: process.env.MARKET_STREAM_MARKET_TYPE === 'SPOT' ? 'SPOT' : 'FUTURES',
   symbols: parseCsv(process.env.MARKET_STREAM_SYMBOLS, ['BTCUSDT', 'ETHUSDT']),
   candleIntervals: parseCsv(process.env.MARKET_STREAM_INTERVALS, ['1m']),
   onEvent: publishMarketStreamEvent,

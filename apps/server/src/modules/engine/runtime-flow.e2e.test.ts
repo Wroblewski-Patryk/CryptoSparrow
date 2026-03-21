@@ -72,6 +72,7 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
 
     await runtimeSignalLoop.processTickerEvent({
       type: 'ticker',
+      marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: Date.now(),
       lastPrice: 64000,
@@ -107,6 +108,7 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
 
     await runtimeSignalLoop.processTickerEvent({
       type: 'ticker',
+      marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: Date.now() + 60_000,
       lastPrice: 64100,
