@@ -9,7 +9,6 @@ Operational queue for one-task execution runs.
 ## NOW
 
 ## NEXT
-- [ ] `test(e2e): expand end-to-end strategy -> backtest -> paper -> live opt-in runtime assertions`
 - [ ] `docs(sync): update current limitations/scope after SSE fan-out and runtime-loop completion`
 
 ## BLOCKED
@@ -28,6 +27,7 @@ Operational queue for one-task execution runs.
 - [x] `feat(runtime-management): support managed lifecycle for manually opened Binance Spot/Futures positions`
 - [x] `feat(runtime-management): ensure DCA/SL/TP/TSL automation until close in runtime loop`
 - [x] `feat(runtime-scans): add configurable interval + market filters for periodic market/position scans`
+- [x] `test(e2e): expand end-to-end strategy -> backtest -> paper -> live opt-in runtime assertions`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

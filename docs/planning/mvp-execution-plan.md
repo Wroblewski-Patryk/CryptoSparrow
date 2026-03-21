@@ -132,10 +132,11 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(runtime-management): manage manually opened Binance Spot/Futures positions through runtime lifecycle`
 - [x] `feat(runtime-management): guarantee DCA/SL/TP/TSL automation until position close`
 - [x] `feat(runtime-scans): periodic market/position scans with configurable interval and market filters`
+- [x] `test(e2e): expand strategy -> backtest -> paper -> live opt-in flow with runtime assertions`
 - [x] `chore(release): re-run MVP checklist with evidence after runtime replacement gate`
 ## MVP Exit Criteria
 - [x] Phase 0 fully complete.
-- [ ] End-to-end flow works: strategy -> backtest -> paper -> live opt-in.
+- [x] End-to-end flow works: strategy -> backtest -> paper -> live opt-in.
 - [x] Security guardrails active: encryption, ownership checks, rate limits, audit logs.
 - [x] Core tests passing for auth, strategy CRUD, market/bot isolation, and trading critical paths.
 - [x] UI scope complete for markets, builder, bots, orders, positions, backtest, reports, logs, exchanges.
@@ -143,7 +144,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] Shared app shell and view-state model are consistent across core dashboard modules.
 - [x] Real-time market stream is visible in dashboard control center via server-owned transport.
 - [x] Write-side order actions (open/cancel/close) are available with risk-first confirmations.
-- [ ] Runtime replacement gate for legacy local-only bot flow is validated with evidence.
+- [x] Runtime replacement gate for legacy local-only bot flow is validated with evidence.
 
 ## Progress Log
 - 2026-03-15: Initialized MVP execution file and commit rules.
@@ -304,3 +305,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Extended runtime loop to include manual open-position lifecycle handling by processing `EXIT` signals for `botId=null` positions (signal persistence + orchestrated close path).
 - 2026-03-21: Added runtime position automation manager for open-position SL/TP/trailing/DCA handling on stream ticker updates, including DCA persistence and auto-close orchestration paths.
 - 2026-03-21: Added runtime scan loop with configurable interval/symbol cap/env-filter to periodically reprocess latest ticker snapshots for open-position and signal automation flows.
+- 2026-03-21: Expanded runtime flow e2e coverage for strategy -> backtest -> LIVE bot runtime path (ticker LONG open + EXIT close) and aligned test contracts with current strategies/backtests API routes.
