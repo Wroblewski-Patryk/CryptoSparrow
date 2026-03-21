@@ -13,12 +13,12 @@ const AuthContext = createContext<{
   user: User | null;
   logout: () => void;
   loading: boolean;
-  refetchUser: () => Promise<void>;
+  refetchUser: () => Promise<boolean>;
 }>({
   user: null,
   logout: () => {},
   loading: true,
-  refetchUser: async () => {},
+  refetchUser: async () => false,
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -32,6 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const res = await api.get("/auth/me");
       const data = res.data;
       setUser({ email: data.email, userId: data.id });
+      return true;
     } catch (error) {
       setUser(null);
 
@@ -47,6 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (notifyOnUnauthorized && status === 401 && onProtectedRoute) {
         toast.warning("Sesja wygasla. Zaloguj sie ponownie.");
       }
+      return false;
     } finally {
       setLoading(false);
     }

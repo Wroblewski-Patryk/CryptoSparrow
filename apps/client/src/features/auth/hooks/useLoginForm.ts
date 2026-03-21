@@ -27,7 +27,10 @@ export const useLoginForm = () => {
     setServerError(null);
     try {
       await loginUser(data);
-      await refetchUser();
+      const hasActiveSession = await refetchUser();
+      if (!hasActiveSession) {
+        throw new Error('Nie udalo sie potwierdzic sesji. Sprobuj zalogowac sie ponownie.');
+      }
 
       toast.success('Zalogowano pomyslnie. Przekierowanie za chwile.');
 
@@ -35,7 +38,8 @@ export const useLoginForm = () => {
         router.push('/dashboard');
       }, 1000);
     } catch (err) {
-      const message = handleError(err);
+      const fallbackMessage = 'Logowanie nieudane. Sprawdz dane i sprobuj ponownie.';
+      const message = handleError(err) || fallbackMessage;
       setServerError(message);
       toast.error(`Logowanie nieudane: ${message}`);
     }
