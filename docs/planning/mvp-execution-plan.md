@@ -159,7 +159,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `release(review): complete 7-day launch review and V1.1 backlog cut`
 - [x] `docs(sync): normalize planning files so roadmap/mvp/v1 statuses are fully consistent`
 - [x] `post-mvp(admin): plan owner admin panel milestones for pricing/subscriptions/settings`
-- [ ] `post-mvp(billing): plan monthly/annual + fiat/crypto billing rollout milestones`
+- [x] `post-mvp(billing): plan monthly/annual + fiat/crypto billing rollout milestones`
 - [ ] `post-mvp(exchange): plan adapter rollout for exchanges beyond Binance`
 
 ## Progress Log
@@ -336,6 +336,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Completed launch retrospective and V1.1 backlog cut in `docs/operations/v1-launch-review-2026-03-21.md` (pre-launch evidence window, prioritized follow-ups).
 - 2026-03-21: Normalized planning consistency across roadmap/MVP/V1 files; aligned blocked exit-gate wording to remaining production-only dependencies.
 - 2026-03-21: Added post-MVP admin-panel milestone plan (`docs/planning/post-mvp-admin-panel-milestones.md`) covering entitlements, grants/overrides, security controls, visibility, and rollout hardening.
+- 2026-03-21: Added post-MVP billing rollout milestones (`docs/planning/post-mvp-billing-milestones.md`) for annual cycle support and phased fiat/crypto rail integration.
 
 
 
