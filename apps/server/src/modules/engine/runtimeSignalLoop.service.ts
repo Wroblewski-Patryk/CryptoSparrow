@@ -4,6 +4,7 @@ import { MarketStreamEvent, StreamTickerEvent } from '../market-stream/binanceSt
 import { subscribeMarketStreamEvents } from '../market-stream/marketStreamFanout';
 import { analyzePreTrade } from './preTrade.service';
 import { orchestrateRuntimeSignal } from './executionOrchestrator.service';
+import { runtimePositionAutomationService } from './runtimePositionAutomation.service';
 
 type ActiveBot = {
   id: string;
@@ -27,6 +28,7 @@ type RuntimeSignalLoopDeps = {
   }) => Promise<void>;
   analyzePreTradeFn: typeof analyzePreTrade;
   orchestrateFn: typeof orchestrateRuntimeSignal;
+  processPositionAutomation: (event: StreamTickerEvent) => Promise<void>;
   nowMs: () => number;
 };
 
@@ -89,6 +91,7 @@ const defaultDeps: RuntimeSignalLoopDeps = {
   },
   analyzePreTradeFn: analyzePreTrade,
   orchestrateFn: orchestrateRuntimeSignal,
+  processPositionAutomation: (event) => runtimePositionAutomationService.handleTickerEvent(event),
   nowMs: () => Date.now(),
 };
 
@@ -124,6 +127,7 @@ export class RuntimeSignalLoop {
 
   private async handleEvent(event: MarketStreamEvent) {
     if (event.type !== 'ticker') return;
+    await this.deps.processPositionAutomation(event);
     const direction = toDirection(event);
     if (!direction) return;
 

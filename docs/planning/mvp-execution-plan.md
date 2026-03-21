@@ -130,7 +130,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(stream-fanout): expose SSE stream endpoint and connect dashboard live market bar to server-owned stream`
 - [x] `feat(runtime-loop): complete continuous stream -> signal evaluation loop in worker runtime`
 - [x] `feat(runtime-management): manage manually opened Binance Spot/Futures positions through runtime lifecycle`
-- [ ] `feat(runtime-management): guarantee DCA/SL/TP/TSL automation until position close`
+- [x] `feat(runtime-management): guarantee DCA/SL/TP/TSL automation until position close`
 - [ ] `feat(runtime-scans): periodic market/position scans with configurable interval and market filters`
 - [x] `chore(release): re-run MVP checklist with evidence after runtime replacement gate`
 ## MVP Exit Criteria
@@ -302,3 +302,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Re-ran MVP release checklist after runtime-replacement updates; confirmed server/client build+test green and Prisma migrations up-to-date, and refreshed release evidence counts.
 - 2026-03-21: Re-validated P0/P1 audit findings with focused regression suite (`upload`, `bots consent`, `logs`, `crypto`) and refreshed remediation evidence log.
 - 2026-03-21: Extended runtime loop to include manual open-position lifecycle handling by processing `EXIT` signals for `botId=null` positions (signal persistence + orchestrated close path).
+- 2026-03-21: Added runtime position automation manager for open-position SL/TP/trailing/DCA handling on stream ticker updates, including DCA persistence and auto-close orchestration paths.

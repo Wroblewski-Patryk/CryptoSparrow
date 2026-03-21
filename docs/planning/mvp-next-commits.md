@@ -9,7 +9,6 @@ Operational queue for one-task execution runs.
 ## NOW
 
 ## NEXT
-- [ ] `feat(runtime-management): ensure DCA/SL/TP/TSL automation until close in runtime loop`
 - [ ] `feat(runtime-scans): add configurable interval + market filters for periodic market/position scans`
 - [ ] `test(e2e): expand end-to-end strategy -> backtest -> paper -> live opt-in runtime assertions`
 - [ ] `docs(sync): update current limitations/scope after SSE fan-out and runtime-loop completion`
@@ -28,6 +27,7 @@ Operational queue for one-task execution runs.
 - [x] `chore(release): re-run MVP release checklist and store evidence after freeze-gap closure`
 - [x] `audit(reverify): re-validate P0/P1 audit findings in code and tests before further expansion`
 - [x] `feat(runtime-management): support managed lifecycle for manually opened Binance Spot/Futures positions`
+- [x] `feat(runtime-management): ensure DCA/SL/TP/TSL automation until close in runtime loop`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

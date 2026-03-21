@@ -29,6 +29,7 @@ const createDeps = () => {
       },
     })),
     orchestrateFn: vi.fn(async () => ({ status: 'opened', orderId: 'o1', positionId: 'p1' })),
+    processPositionAutomation: vi.fn(async () => undefined),
     nowMs: vi.fn(() => 1_000),
   };
 
