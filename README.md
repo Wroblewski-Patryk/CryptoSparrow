@@ -95,21 +95,21 @@ Useful overrides:
 - Added root workspace scripts in `package.json`: `lint`, `typecheck`, `test`, `build`.
 - Added CI workflow: `.github/workflows/ci.yml`.
 - Fixed server build runtime path by compiling server to CommonJS (`apps/server/tsconfig.json`).
-- Added local runbook: `docs/local-development.md`.
-- Added MVP ops runbook (deployment + recovery): `docs/mvp-ops-runbook.md`.
-- Added V1 operator handbook: `docs/operator-handbook.md`.
-- Added V1 user guide (onboarding/safety/FAQ): `docs/user-guide.md`.
-- Added localization QA checklist: `docs/localization-qa.md`.
+- Added local runbook: `docs/engineering/local-development.md`.
+- Added MVP ops runbook (deployment + recovery): `docs/operations/mvp-ops-runbook.md`.
+- Added V1 operator handbook: `docs/operations/operator-handbook.md`.
+- Added V1 user guide (onboarding/safety/FAQ): `docs/operations/user-guide.md`.
+- Added localization QA checklist: `docs/ux/localization-qa.md`.
 - Added optional dashboard isometric visual mode toggle.
 - Added logs decision-trace explorer (metadata drill-down in dashboard logs).
 - Added risk-first LIVE confirmation prompts in bots management flow.
 - Added dashboard design-system documentation for shared UI standards.
 - Added dashboard accessibility audit checklist and active-nav accessibility semantics.
-- Added V1 release candidate checklist: `docs/v1-release-candidate-checklist.md`.
-- Added V1 stabilization freeze and bug bash plan: `docs/v1-stabilization-freeze.md`.
-- Added V1 post-release monitoring and hotfix protocol: `docs/v1-post-release-monitoring.md`.
-- Added V1 7-day launch review template and V1.1 backlog cut framework: `docs/v1-launch-review-template.md`.
-- Added V1 changelog and migration notes: `docs/v1-changelog.md`, `docs/v1-migration-notes.md`.
-- Added V1 go-live smoke pack commands and scope: `docs/v1-go-live-smoke-pack.md`.
+- Added V1 release candidate checklist: `docs/operations/v1-release-candidate-checklist.md`.
+- Added V1 stabilization freeze and bug bash plan: `docs/operations/v1-stabilization-freeze.md`.
+- Added V1 post-release monitoring and hotfix protocol: `docs/operations/v1-post-release-monitoring.md`.
+- Added V1 7-day launch review template and V1.1 backlog cut framework: `docs/operations/v1-launch-review-template.md`.
+- Added V1 changelog and migration notes: `docs/operations/v1-changelog.md`, `docs/operations/v1-migration-notes.md`.
+- Added V1 go-live smoke pack commands and scope: `docs/operations/v1-go-live-smoke-pack.md`.
 - Added spot-support groundwork on bots via `marketType` (`FUTURES`/`SPOT`) schema/API field.
 - Added `marketType` selection in dashboard bots create/edit flow.

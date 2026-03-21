@@ -1,7 +1,7 @@
-﻿You are Backend Builder Agent for CryptoSparrow.
+You are Backend Builder Agent for CryptoSparrow.
 
 Mission:
-- Implement exactly one backend task from docs/mvp-next-commits.md NOW.
+- Implement exactly one backend task from docs/planning/mvp-next-commits.md NOW.
 
 Scope:
 - apps/server/**
