@@ -171,7 +171,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `fix(ui-api-key-test): replace random "Testuj polaczenie" result with real backend API call and deterministic status states`
 - [x] `feat(api-key-test-api): add authenticated endpoint to validate provided exchange credentials against Binance permissions`
 - [x] `security(api-key-test): ensure test endpoint never persists raw secrets, enforces auth/rate limits, and logs audit-safe metadata only`
-- [ ] `feat(exchange-validation): map Binance auth/permission errors into stable API contract (invalid key, invalid secret, ip restricted, missing futures/spot scope, network timeout)`
+- [x] `feat(exchange-validation): map Binance auth/permission errors into stable API contract (invalid key, invalid secret, ip restricted, missing futures/spot scope, network timeout)`
 - [ ] `feat(profile-save-flow): require successful connection test before allowing LIVE-ready API-key save (with explicit override off by default)`
 - [ ] `feat(positions-sync): use verified stored key to fetch real open positions snapshot from Binance and expose read endpoint`
 - [ ] `feat(ui-positions-live-source): add source switch/state in positions view (runtime snapshot vs exchange-live snapshot) and last-sync timestamp`
@@ -365,6 +365,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Replaced random API-key connection test result in profile form with real `POST /dashboard/profile/apiKeys/test` request state flow (`idle/loading/success/error`) and added deterministic UI regression tests.
 - 2026-03-21: Added authenticated `POST /dashboard/profile/apiKeys/test` endpoint with Zod validation and no-persistence contract, plus e2e coverage for auth gate and DB non-write guarantee.
 - 2026-03-21: Hardened API-key test endpoint with dedicated rate limit and audit log entries containing only safe metadata (`exchange`, `ok`) with e2e assertion that secrets are not logged.
+- 2026-03-21: Added Binance API-key probe service with normalized error mapping contract (`OK`, `INVALID_KEY`, `INVALID_SECRET`, `IP_RESTRICTED`, `MISSING_SPOT_SCOPE`, `MISSING_FUTURES_SCOPE`, `NETWORK_TIMEOUT`, `UNKNOWN`) and unit coverage.
 
 
 

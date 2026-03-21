@@ -151,7 +151,12 @@ describe("API Keys security contract", () => {
     expect(testRes.status).toBe(200);
     expect(testRes.body).toEqual({
       ok: true,
-      message: "Connection test request accepted.",
+      code: "OK",
+      message: "Binance API key permissions validated.",
+      permissions: {
+        spot: true,
+        futures: true,
+      },
     });
 
     const dbKeys = await prisma.apiKey.findMany();
@@ -173,6 +178,11 @@ describe("API Keys security contract", () => {
     expect(log?.metadata).toEqual({
       exchange: "BINANCE",
       ok: true,
+      code: "OK",
+      permissions: {
+        spot: true,
+        futures: true,
+      },
     });
     expect(JSON.stringify(log?.metadata)).not.toContain(testPayload.apiKey);
     expect(JSON.stringify(log?.metadata)).not.toContain(testPayload.apiSecret);

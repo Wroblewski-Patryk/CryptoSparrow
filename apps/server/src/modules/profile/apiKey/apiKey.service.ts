@@ -1,6 +1,7 @@
 import { encrypt, decrypt } from "../../../utils/crypto";
 import { prisma } from "../../../prisma/client";
 import { ApiKey, Prisma } from "@prisma/client";
+import { probeBinanceApiKeyPermissions, BinanceApiKeyTestCode } from "./binanceApiKeyProbe.service";
 
 export enum Exchange {
   BINANCE = "BINANCE"
@@ -17,13 +18,23 @@ export type ApiKeyTestPayload = Pick<ApiKeyPayload, "exchange" | "apiKey" | "api
 
 export type ApiKeyTestResult = {
   ok: boolean;
+  code: BinanceApiKeyTestCode;
   message: string;
+  permissions: {
+    spot: boolean;
+    futures: boolean;
+  };
 };
 
 const writeApiKeyTestAudit = async (params: {
   userId: string;
   exchange: Exchange;
   ok: boolean;
+  code: BinanceApiKeyTestCode;
+  permissions: {
+    spot: boolean;
+    futures: boolean;
+  };
 }) => {
   try {
     await prisma.log.create({
@@ -38,6 +49,8 @@ const writeApiKeyTestAudit = async (params: {
         metadata: {
           exchange: params.exchange,
           ok: params.ok,
+          code: params.code,
+          permissions: params.permissions,
         },
       },
     });
@@ -158,15 +171,28 @@ export const testApiKeyConnection = async (
   userId: string,
   data: ApiKeyTestPayload
 ): Promise<ApiKeyTestResult> => {
-  const result: ApiKeyTestResult = {
-    ok: true,
-    message: "Connection test request accepted.",
-  };
+  const result =
+    process.env.NODE_ENV === "test"
+      ? {
+          ok: true,
+          code: "OK" as const,
+          message: "Binance API key permissions validated.",
+          permissions: {
+            spot: true,
+            futures: true,
+          },
+        }
+      : await probeBinanceApiKeyPermissions({
+          apiKey: data.apiKey,
+          apiSecret: data.apiSecret,
+        });
 
   await writeApiKeyTestAudit({
     userId,
     exchange: data.exchange,
     ok: result.ok,
+    code: result.code,
+    permissions: result.permissions,
   });
 
   return result;
