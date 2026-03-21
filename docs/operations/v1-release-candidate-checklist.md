@@ -64,3 +64,9 @@
 - [ ] Product sign-off.
 - [ ] Operations sign-off.
 - [ ] RC owner assigned with rollback authority.
+
+## Outstanding External Gates (2026-03-21)
+- Backup snapshot + restore-path validation on target release environment.
+- Queue-lag baseline review from live telemetry window (`/metrics` + worker lag gauges).
+- Incident contacts/escalation chain confirmation for release shift.
+- Formal sign-offs (Engineering/Product/Operations) and RC owner assignment.
