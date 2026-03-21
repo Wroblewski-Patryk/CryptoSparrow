@@ -1,9 +1,13 @@
-'use client';
+﻿'use client';
 import { createContext, useContext, useEffect, useState } from 'react';
 import api from '../lib/api';
 import { toast } from 'sonner';
 
 type User = { email: string; userId: string };
+
+type FetchUserOptions = {
+  notifyOnUnauthorized?: boolean;
+};
 
 const AuthContext = createContext<{
   user: User | null;
@@ -12,9 +16,9 @@ const AuthContext = createContext<{
   refetchUser: () => Promise<void>;
 }>({
   user: null,
-  logout: () => { },
+  logout: () => {},
   loading: true,
-  refetchUser: async () => { },
+  refetchUser: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -22,24 +26,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchUser();
+    void fetchUser({ notifyOnUnauthorized: false });
   }, []);
-  
-  const fetchUser = async () => {
+
+  const fetchUser = async (options: FetchUserOptions = {}) => {
+    const { notifyOnUnauthorized = true } = options;
+
     try {
       const res = await api.get('/auth/me');
       const data = res.data;
       setUser({ email: data.email, userId: data.id });
-    } catch {
+    } catch (error) {
       setUser(null);
-      toast.warning("Sesja wygasła. Zaloguj się ponownie.");
+
+      const status =
+        typeof error === 'object' && error !== null && 'response' in error
+          ? (error as { response?: { status?: number } }).response?.status
+          : undefined;
+
+      const onProtectedRoute =
+        typeof window !== 'undefined' &&
+        (window.location.pathname.startsWith('/dashboard') || window.location.pathname.startsWith('/admin'));
+
+      if (notifyOnUnauthorized && status === 401 && (onProtectedRoute || user)) {
+        toast.warning('Sesja wygasla. Zaloguj sie ponownie.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const logout = async () => {
-    toast.success("Wylogowano");
+    toast.success('Wylogowano');
 
     await api.post('/auth/logout');
     setUser(null);
@@ -47,7 +65,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, logout, loading, refetchUser : fetchUser }}>
+    <AuthContext.Provider value={{ user, logout, loading, refetchUser: () => fetchUser({ notifyOnUnauthorized: true }) }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,4 +1,5 @@
-'use client';
+﻿'use client';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginFormData, loginSchema } from '../types/form.types';
@@ -11,6 +12,7 @@ import { useAuth } from '../../../context/AuthContext';
 export const useLoginForm = () => {
   const router = useRouter();
   const { refetchUser } = useAuth();
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const {
     register,
@@ -22,19 +24,23 @@ export const useLoginForm = () => {
   });
 
   const submitHandler = async (data: LoginFormData) => {
+    setServerError(null);
     try {
       await loginUser(data);
-      await refetchUser(); 
+      await refetchUser();
 
-      toast.success("Zalogowano pomyślnie 🚀 Zostaniesz automatycznie przekierowany za sekundę.");
+      toast.success('Zalogowano pomyslnie. Przekierowanie za chwile.');
 
       setTimeout(() => {
         router.push('/dashboard');
       }, 1000);
     } catch (err) {
-      toast.error(`Coś poszło nie tak 😢  ${handleError(err)}`);
+      const message = handleError(err);
+      setServerError(message);
+      toast.error(`Logowanie nieudane: ${message}`);
     }
   };
+
   const onFormSubmit = handleSubmit(submitHandler);
-  return { register, onFormSubmit, errors, isSubmitting };
+  return { register, onFormSubmit, errors, isSubmitting, serverError };
 };
