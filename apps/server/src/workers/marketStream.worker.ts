@@ -1,4 +1,5 @@
 import { BinanceMarketStreamWorker } from '../modules/market-stream/binanceStream.service';
+import { publishMarketStreamEvent } from '../modules/market-stream/marketStreamFanout';
 import { bootstrapWorker } from './workerBootstrap';
 
 const parseCsv = (value: string | undefined, fallback: string[]) => {
@@ -17,6 +18,7 @@ const worker = new BinanceMarketStreamWorker({
   streamUrl: process.env.BINANCE_STREAM_URL,
   symbols: parseCsv(process.env.MARKET_STREAM_SYMBOLS, ['BTCUSDT', 'ETHUSDT']),
   candleIntervals: parseCsv(process.env.MARKET_STREAM_INTERVALS, ['1m']),
+  onEvent: publishMarketStreamEvent,
 });
 
 worker.start();

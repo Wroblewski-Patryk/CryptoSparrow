@@ -127,7 +127,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 
 ## Phase 7 - Runtime Replacement Gate (As of 2026-03-21)
 - [ ] `audit(reverify): re-validate P0/P1 audit findings in code and tests before further expansion`
-- [ ] `feat(stream-fanout): expose SSE stream endpoint and connect dashboard live market bar to server-owned stream`
+- [x] `feat(stream-fanout): expose SSE stream endpoint and connect dashboard live market bar to server-owned stream`
 - [ ] `feat(runtime-loop): complete continuous stream -> signal evaluation loop in worker runtime`
 - [ ] `feat(runtime-management): manage manually opened Binance Spot/Futures positions through runtime lifecycle`
 - [ ] `feat(runtime-management): guarantee DCA/SL/TP/TSL automation until position close`
@@ -141,7 +141,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] UI scope complete for markets, builder, bots, orders, positions, backtest, reports, logs, exchanges.
 - [x] EN/PL and responsive/PWA baseline complete for core flows.
 - [x] Shared app shell and view-state model are consistent across core dashboard modules.
-- [ ] Real-time market stream is visible in dashboard control center via server-owned transport.
+- [x] Real-time market stream is visible in dashboard control center via server-owned transport.
 - [x] Write-side order actions (open/cancel/close) are available with risk-first confirmations.
 - [ ] Runtime replacement gate for legacy local-only bot flow is validated with evidence.
 
@@ -297,3 +297,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Replanned queue around runtime-replacement gate and immediate roadmap gaps (stream fan-out, runtime loop, managed position lifecycle).
 - 2026-03-21: Re-verified upload endpoint security contract by adding explicit >2MB avatar regression test and confirming auth/MIME/size guard responses in upload e2e suite.
 - 2026-03-21: Re-verified LIVE `consentTextVersion` flow with regression coverage across DTO validation, API responses, DB persistence, and audit-log metadata on create/update bot paths.
+- 2026-03-21: Implemented Redis-backed market-stream fan-out (`/dashboard/market-stream/events` SSE), connected worker event publishing, and added regression coverage for stream route auth contract.

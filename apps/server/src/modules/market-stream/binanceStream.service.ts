@@ -140,6 +140,7 @@ type BinanceMarketStreamConfig = {
   streamUrl?: string;
   symbols: string[];
   candleIntervals: string[];
+  onEvent?: (event: MarketStreamEvent) => void | Promise<void>;
 };
 
 export class BinanceMarketStreamWorker {
@@ -190,6 +191,7 @@ export class BinanceMarketStreamWorker {
           event: `market_stream.${normalized.type}`,
           ...normalized,
         });
+        void this.config.onEvent?.(normalized);
       } catch (error) {
         this.logger.warn({
           event: 'market_stream.parse_failed',
