@@ -140,12 +140,13 @@ describe("API Keys security contract", () => {
 
   it("tests key connection without persisting secrets", async () => {
     const agent = await registerAndLogin("apikey-test-connection@example.com");
-
-    const testRes = await agent.post("/dashboard/profile/apiKeys/test").send({
+    const testPayload = {
       exchange: "BINANCE",
       apiKey: "TESTCONNECTIONKEY123",
       apiSecret: "TESTCONNECTIONSECRET123",
-    });
+    };
+
+    const testRes = await agent.post("/dashboard/profile/apiKeys/test").send(testPayload);
 
     expect(testRes.status).toBe(200);
     expect(testRes.body).toEqual({
@@ -155,6 +156,26 @@ describe("API Keys security contract", () => {
 
     const dbKeys = await prisma.apiKey.findMany();
     expect(dbKeys).toHaveLength(0);
+
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { email: "apikey-test-connection@example.com" },
+    });
+    const log = await prisma.log.findFirst({
+      where: {
+        userId: user.id,
+        action: "profile.api_key.test_connection",
+      },
+      orderBy: { occurredAt: "desc" },
+    });
+
+    expect(log).toBeTruthy();
+    expect(log?.message).toBe("API key connection test accepted.");
+    expect(log?.metadata).toEqual({
+      exchange: "BINANCE",
+      ok: true,
+    });
+    expect(JSON.stringify(log?.metadata)).not.toContain(testPayload.apiKey);
+    expect(JSON.stringify(log?.metadata)).not.toContain(testPayload.apiSecret);
   });
 
   it("enforces ownership on rotate and revoke actions", async () => {

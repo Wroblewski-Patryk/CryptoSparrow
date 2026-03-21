@@ -20,6 +20,32 @@ export type ApiKeyTestResult = {
   message: string;
 };
 
+const writeApiKeyTestAudit = async (params: {
+  userId: string;
+  exchange: Exchange;
+  ok: boolean;
+}) => {
+  try {
+    await prisma.log.create({
+      data: {
+        userId: params.userId,
+        action: "profile.api_key.test_connection",
+        level: params.ok ? "INFO" : "WARN",
+        source: "profile.apiKey.service",
+        message: params.ok ? "API key connection test accepted." : "API key connection test failed.",
+        category: "SECURITY",
+        entityType: "API_KEY",
+        metadata: {
+          exchange: params.exchange,
+          ok: params.ok,
+        },
+      },
+    });
+  } catch {
+    // Audit failures should not block user-triggered test calls.
+  }
+};
+
 const maskValue = (value: string) => {
   if (!value) return "";
   if (value.length <= 4) return "*".repeat(value.length);
@@ -129,11 +155,19 @@ export const revokeApiKey = async (userId: string, id: string) => {
 };
 
 export const testApiKeyConnection = async (
-  _userId: string,
-  _data: ApiKeyTestPayload
+  userId: string,
+  data: ApiKeyTestPayload
 ): Promise<ApiKeyTestResult> => {
-  return {
+  const result: ApiKeyTestResult = {
     ok: true,
     message: "Connection test request accepted.",
   };
+
+  await writeApiKeyTestAudit({
+    userId,
+    exchange: data.exchange,
+    ok: result.ok,
+  });
+
+  return result;
 };
