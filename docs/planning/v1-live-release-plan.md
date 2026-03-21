@@ -7,9 +7,9 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - New requirements: update product/architecture/security docs first, then this plan.
 - Keep tiny commits and explicit progress notes.
 
-## Current Status (2026-03-19)
+## Current Status (2026-03-21)
 - Implementation track is largely complete across Phases A-F.
-- Remaining work is evidence-based exit validation in production (SLOs, drills, audits, launch review artifacts).
+- Remaining work is production-environment exit validation (SLO observation window + external release gates/sign-offs).
 
 ## V1.0 Definition
 - Stable public live trading with explicit risk controls and auditability.
@@ -70,18 +70,18 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 
 ## Exit Evidence Workpack (Open)
 - [ ] `ops(slo): define SLO targets and collect production observation window evidence`
-- [ ] `test(drill): execute incident drills in production-like environment and publish outcomes`
+- [x] `test(drill): execute incident drills in production-like environment and publish outcomes`
 - [x] `security(audit): complete final auth/ownership/key audit sign-off`
 - [x] `test(load): publish load/performance evidence against target thresholds`
 - [x] `docs(public): finalize user/operator public documentation set for launch`
 - [x] `release(review): complete launch retrospective and produce V1.1 prioritized backlog`
 ## V1.0 Exit Criteria
 - [ ] SLOs defined and observed in production.
-- [ ] Incident response process tested with drills.
-- [ ] Security controls audited for auth, keys, and ownership.
-- [ ] Load/perf baselines met for planned public usage.
-- [ ] Public docs complete for users and operators.
-- [ ] Launch retrospective completed with actionable v1.1 plan.
+- [x] Incident response process tested with drills.
+- [x] Security controls audited for auth, keys, and ownership.
+- [x] Load/perf baselines met for planned public usage.
+- [x] Public docs complete for users and operators.
+- [x] Launch retrospective completed with actionable v1.1 plan.
 
 ## Progress Log
 - 2026-03-15: Initialized V1.0 live release plan.

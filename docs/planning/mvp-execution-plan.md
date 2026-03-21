@@ -157,6 +157,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `security(audit): produce final ownership/auth/key-flow verification report`
 - [x] `release(evidence): finalize launch evidence pack (public docs + operator docs + checklists)`
 - [x] `release(review): complete 7-day launch review and V1.1 backlog cut`
+- [x] `docs(sync): normalize planning files so roadmap/mvp/v1 statuses are fully consistent`
 - [ ] `post-mvp(admin): plan owner admin panel milestones for pricing/subscriptions/settings`
 - [ ] `post-mvp(billing): plan monthly/annual + fiat/crypto billing rollout milestones`
 - [ ] `post-mvp(exchange): plan adapter rollout for exchanges beyond Binance`
@@ -333,6 +334,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Added local rollback checklist (`docs/operations/v1-local-rollback-checklist.md`) to safely return execution ownership to legacy runtime on cutover failure.
 - 2026-03-21: Executed local replacement dry-run and published evidence (`docs/operations/v1-local-cutover-dry-run-2026-03-21.md`) with green server/client cutover-critical suites.
 - 2026-03-21: Completed launch retrospective and V1.1 backlog cut in `docs/operations/v1-launch-review-2026-03-21.md` (pre-launch evidence window, prioritized follow-ups).
+- 2026-03-21: Normalized planning consistency across roadmap/MVP/V1 files; aligned blocked exit-gate wording to remaining production-only dependencies.
 
 
 

@@ -9,10 +9,9 @@ Operational queue for one-task execution runs.
 ## NOW
 
 ## NEXT
-- [ ] `docs(sync): normalize planning files so roadmap/mvp/v1 statuses are fully consistent`
 
 ## BLOCKED
-- [ ] `exit-gates(v1-production): SLO/incident/security/load/public-docs/launch-review criteria require production evidence and launch-cycle checkpoints`
+- [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
 - [x] `chore(planning): initialize MVP/V1 execution plans and agent blueprint`
@@ -27,6 +26,7 @@ Operational queue for one-task execution runs.
 - [x] `ops(cutover): define rollback checklist to legacy runtime`
 - [x] `test(cutover): execute local replacement dry-run with realistic bot scenario`
 - [x] `release(review): run 7-day launch retrospective and cut V1.1 backlog`
+- [x] `docs(sync): normalize planning files so roadmap/mvp/v1 statuses are fully consistent`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
