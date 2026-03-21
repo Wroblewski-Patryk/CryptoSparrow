@@ -16,9 +16,10 @@ type RuntimeSignalLoopDeps = {
     handler: (event: MarketStreamEvent) => void | Promise<void>
   ) => Promise<() => Promise<void>>;
   listActiveBots: () => Promise<ActiveBot[]>;
+  listManualManagedPositions: () => Promise<Array<{ userId: string; symbol: string }>>;
   createSignal: (params: {
     userId: string;
-    botId: string;
+    botId?: string;
     symbol: string;
     direction: SignalDirection;
     confidence: number;
@@ -34,6 +35,7 @@ const runtimeShortThreshold = Number.parseFloat(process.env.RUNTIME_SIGNAL_SHORT
 const runtimeExitBand = Number.parseFloat(process.env.RUNTIME_SIGNAL_EXIT_BAND ?? '0.2');
 const runtimeSignalQuantity = Number.parseFloat(process.env.RUNTIME_SIGNAL_QUANTITY ?? '0.01');
 const runtimeDirectionCooldownMs = Number.parseInt(process.env.RUNTIME_SIGNAL_COOLDOWN_MS ?? '30000', 10);
+const runtimeManualPositionMode = (process.env.RUNTIME_MANUAL_POSITION_MODE ?? 'LIVE') as 'PAPER' | 'LIVE';
 
 const defaultDeps: RuntimeSignalLoopDeps = {
   subscribe: subscribeMarketStreamEvents,
@@ -53,6 +55,23 @@ const defaultDeps: RuntimeSignalLoopDeps = {
       id: bot.id,
       userId: bot.userId,
       mode: bot.mode as 'PAPER' | 'LIVE',
+    }));
+  },
+  listManualManagedPositions: async () => {
+    const positions = await prisma.position.findMany({
+      where: {
+        status: 'OPEN',
+        botId: null,
+      },
+      select: {
+        userId: true,
+        symbol: true,
+      },
+      distinct: ['userId', 'symbol'],
+    });
+    return positions.map((position) => ({
+      userId: position.userId,
+      symbol: position.symbol,
     }));
   },
   createSignal: async (params) => {
@@ -159,6 +178,51 @@ export class RuntimeSignalLoop {
           mode: bot.mode,
         });
       })
+    );
+
+    if (direction !== 'EXIT') return;
+
+    const manualPositions = await this.deps.listManualManagedPositions();
+    await Promise.all(
+      manualPositions
+        .filter((manualPosition) => manualPosition.symbol === event.symbol)
+        .map(async (manualPosition) => {
+          const dedupeKey = `manual|${manualPosition.userId}|${manualPosition.symbol}`;
+          const now = this.deps.nowMs();
+          const previous = this.recentlyProcessed.get(dedupeKey);
+          if (
+            previous &&
+            previous.direction === direction &&
+            now - previous.at < runtimeDirectionCooldownMs
+          ) {
+            return;
+          }
+          this.recentlyProcessed.set(dedupeKey, { direction, at: now });
+
+          await this.deps.createSignal({
+            userId: manualPosition.userId,
+            botId: undefined,
+            symbol: manualPosition.symbol,
+            direction,
+            confidence: Math.min(1, Math.abs(event.priceChangePercent24h) / 100),
+            payload: {
+              source: 'market_stream.ticker',
+              managedManualPosition: true,
+              eventTime: event.eventTime,
+              lastPrice: event.lastPrice,
+              priceChangePercent24h: event.priceChangePercent24h,
+            },
+          });
+
+          await this.deps.orchestrateFn({
+            userId: manualPosition.userId,
+            symbol: manualPosition.symbol,
+            direction: 'EXIT',
+            quantity: runtimeSignalQuantity,
+            markPrice: event.lastPrice,
+            mode: runtimeManualPositionMode,
+          });
+        })
     );
   }
 }

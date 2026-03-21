@@ -17,6 +17,7 @@ const createDeps = () => {
         mode: 'PAPER' as const,
       },
     ]),
+    listManualManagedPositions: vi.fn(async () => []),
     createSignal: vi.fn(async () => undefined),
     analyzePreTradeFn: vi.fn(async () => ({
       allowed: true,
@@ -118,5 +119,42 @@ describe('RuntimeSignalLoop', () => {
 
     expect(deps.createSignal).toHaveBeenCalledTimes(1);
     expect(deps.orchestrateFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('handles EXIT signal for manual managed position without botId', async () => {
+    const { deps, emit } = createDeps();
+    deps.listActiveBots = vi.fn(async () => []);
+    deps.listManualManagedPositions = vi.fn(async () => [
+      {
+        userId: 'manual-user-1',
+        symbol: 'BTCUSDT',
+      },
+    ]);
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    await emit({
+      type: 'ticker',
+      symbol: 'BTCUSDT',
+      eventTime: 6_000,
+      lastPrice: 63500,
+      priceChangePercent24h: 0.05,
+    });
+
+    expect(deps.createSignal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'manual-user-1',
+        botId: undefined,
+        direction: 'EXIT',
+        symbol: 'BTCUSDT',
+      })
+    );
+    expect(deps.orchestrateFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'manual-user-1',
+        direction: 'EXIT',
+        symbol: 'BTCUSDT',
+      })
+    );
   });
 });

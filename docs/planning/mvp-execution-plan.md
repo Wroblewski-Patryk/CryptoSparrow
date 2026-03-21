@@ -129,7 +129,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `audit(reverify): re-validate P0/P1 audit findings in code and tests before further expansion`
 - [x] `feat(stream-fanout): expose SSE stream endpoint and connect dashboard live market bar to server-owned stream`
 - [x] `feat(runtime-loop): complete continuous stream -> signal evaluation loop in worker runtime`
-- [ ] `feat(runtime-management): manage manually opened Binance Spot/Futures positions through runtime lifecycle`
+- [x] `feat(runtime-management): manage manually opened Binance Spot/Futures positions through runtime lifecycle`
 - [ ] `feat(runtime-management): guarantee DCA/SL/TP/TSL automation until position close`
 - [ ] `feat(runtime-scans): periodic market/position scans with configurable interval and market filters`
 - [x] `chore(release): re-run MVP checklist with evidence after runtime replacement gate`
@@ -301,3 +301,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Added runtime signal loop in execution worker (`stream ticker -> signal creation -> pre-trade guard -> execution orchestrator`) with deterministic unit coverage and worker startup integration.
 - 2026-03-21: Re-ran MVP release checklist after runtime-replacement updates; confirmed server/client build+test green and Prisma migrations up-to-date, and refreshed release evidence counts.
 - 2026-03-21: Re-validated P0/P1 audit findings with focused regression suite (`upload`, `bots consent`, `logs`, `crypto`) and refreshed remediation evidence log.
+- 2026-03-21: Extended runtime loop to include manual open-position lifecycle handling by processing `EXIT` signals for `botId=null` positions (signal persistence + orchestrated close path).
