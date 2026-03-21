@@ -73,4 +73,24 @@ describe("Positions exchange snapshot API", () => {
     });
     expect(dbKey.lastUsed).not.toBeNull();
   });
+
+  it("returns 502 when exchange snapshot fetch fails", async () => {
+    const agent = await registerAndLogin("positions-key-error@example.com");
+    const createRes = await agent.post("/dashboard/profile/apiKeys").send({
+      label: "main",
+      exchange: "BINANCE",
+      apiKey: "EXCHANGEKEY12345",
+      apiSecret: "EXCHANGESECRET12345",
+    });
+    expect(createRes.status).toBe(201);
+
+    process.env.POSITIONS_SNAPSHOT_FORCE_ERROR = "1";
+    try {
+      const snapshotRes = await agent.get("/dashboard/positions/exchange-snapshot");
+      expect(snapshotRes.status).toBe(502);
+      expect(snapshotRes.body.error.message).toBe("Unable to fetch exchange positions snapshot.");
+    } finally {
+      process.env.POSITIONS_SNAPSHOT_FORCE_ERROR = "";
+    }
+  });
 });

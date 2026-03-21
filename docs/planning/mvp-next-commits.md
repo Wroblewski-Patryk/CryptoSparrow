@@ -9,7 +9,6 @@ Operational queue for one-task execution runs.
 ## NOW
 
 ## NEXT
-- [ ] `test(positions-live-source): add e2e/ui coverage for snapshot fetch and failure handling`
 - [ ] `docs(runbook): add API-key onboarding + Binance permission troubleshooting guide`
 
 ## BLOCKED
@@ -42,6 +41,7 @@ Operational queue for one-task execution runs.
 - [x] `feat(profile-save-flow): block LIVE-ready key save until connection test success in current form session`
 - [x] `feat(positions-sync-api): add endpoint to fetch current open positions from Binance using verified stored credentials`
 - [x] `feat(ui-positions-live-source): add live-exchange snapshot mode with last-sync + error state`
+- [x] `test(positions-live-source): add e2e/ui coverage for snapshot fetch and failure handling`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

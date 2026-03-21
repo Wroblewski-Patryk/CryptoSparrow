@@ -370,6 +370,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Enforced profile API-key save gate requiring successful connection test for current credentials within form session and added UI regression tests for blocked/allowed save paths.
 - 2026-03-21: Added `GET /dashboard/positions/exchange-snapshot` with Binance open-positions fetch via decrypted stored key, normalized response contract, and e2e coverage for auth/no-key/success paths.
 - 2026-03-21: Extended positions dashboard UI with source switch (`runtime` vs `exchange live snapshot`), exchange snapshot mapping, symbol filtering, and last-sync timestamp rendering.
+- 2026-03-21: Added positions live-source regression coverage: UI tests for source switch + snapshot failure state and server e2e for exchange snapshot failure contract (`502`).
 
 
 

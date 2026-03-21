@@ -110,6 +110,10 @@ export const fetchExchangePositionsSnapshot = async (userId: string): Promise<Ex
   }
 
   if (process.env.NODE_ENV === 'test') {
+    if (process.env.POSITIONS_SNAPSHOT_FORCE_ERROR === '1') {
+      throw new ExchangeSnapshotError('EXCHANGE_FETCH_FAILED', 'Unable to fetch exchange positions snapshot.');
+    }
+
     await prisma.apiKey.update({
       where: { id: apiKey.id },
       data: { lastUsed: new Date() },
