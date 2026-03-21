@@ -153,7 +153,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `docs(sync): reconcile roadmap immediate gaps with actual runtime status and evidence links`
 - [x] `ops(slo): define MVP/V1 SLO set and map measurable targets to existing source metrics`
 - [ ] `ops(slo): define SLOs and attach live metrics evidence`
-- [ ] `ops(evidence): execute production-like load baseline and document pass/fail thresholds`
+- [x] `ops(evidence): execute production-like load baseline and document pass/fail thresholds`
 - [ ] `security(audit): produce final ownership/auth/key-flow verification report`
 - [ ] `release(evidence): finalize launch evidence pack (public docs + operator docs + checklists)`
 - [ ] `release(review): complete 7-day launch review and V1.1 backlog cut`
@@ -326,6 +326,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Added Phase 8 for operational evidence, launch-readiness proof, and post-MVP expansion planning milestones.
 - 2026-03-21: Reconciled `docs/planning/roadmap.md` with delivered runtime-stream state (SSE fan-out + runtime loop + management automation) and linked current V1 evidence artifacts/runbooks.
 - 2026-03-21: Added MVP/V1 SLO catalog (`docs/operations/v1-slo-catalog.md`) with measurable objectives and direct mapping to live source metrics (`/metrics`, `/alerts`, health/readiness probes).
+- 2026-03-21: Ran production-like API load baseline and documented thresholds/evidence in `docs/operations/v1-load-baseline-2026-03-21.md` with raw artifact export.
 
 
 
