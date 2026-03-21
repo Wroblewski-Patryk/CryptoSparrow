@@ -163,6 +163,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `post-mvp(exchange): plan adapter rollout for exchanges beyond Binance`
 
 ## Phase 9 - Exchange API-Key Verification and Live Position Trust Gate (As of 2026-03-21)
+- [x] `P0 auth-stabilization-gate: ensure client build is green for auth/login scope before exchange api-key trust work`
+- [ ] `P1 auth-ux-regression: confirm failed/success login UX and redirect/session-warning behavior with regression tests + manual smoke evidence`
 - [ ] `fix(ui-api-key-test): replace random "Testuj polaczenie" result with real backend API call and deterministic status states`
 - [ ] `feat(api-key-test-api): add authenticated endpoint to validate provided exchange credentials against Binance permissions`
 - [ ] `security(api-key-test): ensure test endpoint never persists raw secrets, enforces auth/rate limits, and logs audit-safe metadata only`
@@ -351,6 +353,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Added post-MVP exchange rollout milestones (`docs/planning/post-mvp-exchange-rollout-milestones.md`) for adapter hardening, staged enablement, and multi-exchange guardrails.
 - 2026-03-21: Attached live-source metrics evidence to SLO baseline via `docs/operations/v1-slo-catalog.md` and `docs/operations/v1-load-baseline-2026-03-21.md`; remaining SLO blocker is production observation window.
 - 2026-03-21: Added Phase 9 trust gate for real Binance API-key verification flow and exchange-live positions snapshot path (UI + API + security + tests + runbook).
+- 2026-03-21: Re-prioritized Phase 9 with auth stabilization gate (client build green + login UX/session-warning regression evidence) before exchange API-key trust implementation.
+- 2026-03-21: Closed Phase 9 auth build gate by fixing AuthContext hook deps and LoginForm lint issue; verified with green `pnpm --filter client build` and targeted auth suites.
 
 
 

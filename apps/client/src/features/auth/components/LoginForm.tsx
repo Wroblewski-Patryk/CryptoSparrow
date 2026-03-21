@@ -51,7 +51,7 @@ export default function LoginForm() {
         </button>
 
         <p className='text-center'>
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href='/auth/register' className='link link-hover'>
             Sign up
           </Link>

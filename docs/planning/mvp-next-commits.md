@@ -7,13 +7,17 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [ ] `fix(auth-ux): validate and harden failed-login error UX (inline + toast) without false positive success styling`
+- [ ] `fix(auth-session-warning): remove false session-expired warnings on public routes and keep warning only for protected/session-expired contexts`
+- [ ] `test(auth-client): add/adjust regression tests for failed login, successful login, and post-login redirect behavior`
+- [ ] `qa(auth-smoke): run manual auth smoke (fail login, success login, logout redirect, protected route redirect) and capture evidence`
+
+## NEXT
 - [ ] `fix(ui-api-key-test): replace random result in ApiKeyForm with real request state machine (idle/loading/success/error)`
 - [ ] `feat(api-key-test-api): add POST /dashboard/profile/apiKeys/test route (auth + validation + no persistence)`
 - [ ] `security(api-key-test): add rate-limit + audit-safe logging for test endpoint`
 - [ ] `feat(api-key-test-binance): implement Binance permission probe and normalized error mapping contract`
 - [ ] `test(api-key-test): add server e2e for invalid credentials, permission mismatch, and success path`
-
-## NEXT
 - [ ] `feat(profile-save-flow): block LIVE-ready key save until connection test success in current form session`
 - [ ] `feat(positions-sync-api): add endpoint to fetch current open positions from Binance using verified stored credentials`
 - [ ] `feat(ui-positions-live-source): add live-exchange snapshot mode with last-sync + error state`
@@ -37,6 +41,7 @@ Operational queue for one-task execution runs.
 - [x] `test(cutover): execute local replacement dry-run with realistic bot scenario`
 - [x] `release(review): run 7-day launch retrospective and cut V1.1 backlog`
 - [x] `docs(sync): normalize planning files so roadmap/mvp/v1 statuses are fully consistent`
+- [x] `fix(auth-build): resolve client build blockers in login/auth files (eslint apostrophe + hooks deps) so pnpm --filter client build is green`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
