@@ -146,6 +146,20 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] Write-side order actions (open/cancel/close) are available with risk-first confirmations.
 - [x] Runtime replacement gate for legacy local-only bot flow is validated with evidence.
 
+## Phase 8 - Operational Evidence and Full-App Readiness
+- [ ] `ops(cutover): define local cutover checklist from legacy bot to new runtime`
+- [ ] `ops(cutover): define rollback checklist to legacy runtime`
+- [ ] `test(cutover): execute local replacement dry-run with realistic bot scenario`
+- [ ] `docs(sync): reconcile roadmap immediate gaps with actual runtime status and evidence links`
+- [ ] `ops(slo): define SLOs and attach live metrics evidence`
+- [ ] `ops(evidence): execute production-like load baseline and document pass/fail thresholds`
+- [ ] `security(audit): produce final ownership/auth/key-flow verification report`
+- [ ] `release(evidence): finalize launch evidence pack (public docs + operator docs + checklists)`
+- [ ] `release(review): complete 7-day launch review and V1.1 backlog cut`
+- [ ] `post-mvp(admin): plan owner admin panel milestones for pricing/subscriptions/settings`
+- [ ] `post-mvp(billing): plan monthly/annual + fiat/crypto billing rollout milestones`
+- [ ] `post-mvp(exchange): plan adapter rollout for exchanges beyond Binance`
+
 ## Progress Log
 - 2026-03-15: Initialized MVP execution file and commit rules.
 - 2026-03-15: Added generic trigger-based one-task execution workflow.
@@ -307,3 +321,9 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Added runtime scan loop with configurable interval/symbol cap/env-filter to periodically reprocess latest ticker snapshots for open-position and signal automation flows.
 - 2026-03-21: Expanded runtime flow e2e coverage for strategy -> backtest -> LIVE bot runtime path (ticker LONG open + EXIT close) and aligned test contracts with current strategies/backtests API routes.
 - 2026-03-21: Synced product/architecture/modules/trading docs to runtime replacement reality (server SSE fan-out + runtime signal loop + position automation), and removed stale staged-gap wording from current limitations.
+
+- 2026-03-21: Added Phase 8 for operational evidence, launch-readiness proof, and post-MVP expansion planning milestones.
+
+
+
+

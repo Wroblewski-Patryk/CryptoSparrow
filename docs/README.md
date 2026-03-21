@@ -23,6 +23,7 @@ This folder contains canonical project documentation grouped by domain.
 6. `planning/mvp-execution-plan.md`
 7. `planning/mvp-next-commits.md`
 8. `planning/v1-live-release-plan.md`
+9. `planning/full-commit-roadmap.md`
 
 ## Governance and Source of Truth
 - Repository structure policy: `governance/repository-structure-policy.md`

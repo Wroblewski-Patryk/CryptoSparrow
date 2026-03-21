@@ -7,8 +7,18 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [ ] `docs(sync): reconcile roadmap immediate gaps with implemented runtime-stream status and evidence links`
+- [ ] `ops(slo): define MVP/V1 SLO set and add measurable targets + source metrics`
+- [ ] `ops(evidence): run production-like load baseline and attach results to v1 exit criteria`
+- [ ] `security(audit): run ownership/auth/key-flow verification pass and publish evidence summary`
+- [ ] `release(evidence): compile public docs pack and launch-readiness evidence checklist`
 
 ## NEXT
+- [ ] `ops(cutover): define local cutover checklist from legacy bot to new runtime`
+- [ ] `ops(cutover): define rollback checklist to legacy runtime`
+- [ ] `test(cutover): execute local replacement dry-run with realistic bot scenario`
+- [ ] `release(review): run 7-day launch retrospective and cut V1.1 backlog`
+- [ ] `docs(sync): normalize planning files so roadmap/mvp/v1 statuses are fully consistent`
 
 ## BLOCKED
 - [ ] `exit-gates(v1-production): SLO/incident/security/load/public-docs/launch-review criteria require production evidence and launch-cycle checkpoints`
@@ -17,17 +27,6 @@ Operational queue for one-task execution runs.
 - [x] `chore(planning): initialize MVP/V1 execution plans and agent blueprint`
 - [x] `chore(planning): align trigger intent to generic one-task nudge`
 - [x] `chore(planning): historical done backlog archived in git history; queue reset for current delivery focus`
-- [x] `audit(reverify): confirm upload endpoint auth + MIME/size limits with regression test coverage`
-- [x] `audit(reverify): confirm LIVE consentTextVersion persistence across schema/DTO/API/audit flow`
-- [x] `feat(stream-fanout): wire server-owned SSE fan-out endpoint from market-stream worker to dashboard`
-- [x] `feat(runtime-loop): complete continuous stream -> signal evaluation loop in worker runtime`
-- [x] `chore(release): re-run MVP release checklist and store evidence after freeze-gap closure`
-- [x] `audit(reverify): re-validate P0/P1 audit findings in code and tests before further expansion`
-- [x] `feat(runtime-management): support managed lifecycle for manually opened Binance Spot/Futures positions`
-- [x] `feat(runtime-management): ensure DCA/SL/TP/TSL automation until close in runtime loop`
-- [x] `feat(runtime-scans): add configurable interval + market filters for periodic market/position scans`
-- [x] `test(e2e): expand end-to-end strategy -> backtest -> paper -> live opt-in runtime assertions`
-- [x] `docs(sync): update current limitations/scope after SSE fan-out and runtime-loop completion`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

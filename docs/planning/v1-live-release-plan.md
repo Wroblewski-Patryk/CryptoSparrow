@@ -68,6 +68,13 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [x] `chore(release): post-release monitoring and hotfix protocol`
 - [x] `chore(release): 7-day launch review and v1.1 backlog cut`
 
+## Exit Evidence Workpack (Open)
+- [ ] `ops(slo): define SLO targets and collect production observation window evidence`
+- [ ] `test(drill): execute incident drills in production-like environment and publish outcomes`
+- [ ] `security(audit): complete final auth/ownership/key audit sign-off`
+- [ ] `test(load): publish load/performance evidence against target thresholds`
+- [ ] `docs(public): finalize user/operator public documentation set for launch`
+- [ ] `release(review): complete launch retrospective and produce V1.1 prioritized backlog`
 ## V1.0 Exit Criteria
 - [ ] SLOs defined and observed in production.
 - [ ] Incident response process tested with drills.
@@ -159,3 +166,5 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-21: Added explicit "Outstanding External Gates" list in RC checklist to track remaining production-only evidence and release sign-off dependencies.
 - 2026-03-21: Added `v1-rc-external-gates-runbook.md` with step-by-step evidence templates for backup/restore, queue-lag baseline review, incident-contact confirmation, and formal RC sign-offs.
 - 2026-03-21: Added `v1-rc-signoff-record.md` template and linked it from RC checklist to standardize Engineering/Product/Operations approvals and RC-owner assignment evidence.
+
+- 2026-03-21: Added explicit Exit Evidence Workpack to operationalize remaining V1 production criteria.
