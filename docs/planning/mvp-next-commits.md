@@ -7,8 +7,18 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [ ] `fix(ui-api-key-test): replace random result in ApiKeyForm with real request state machine (idle/loading/success/error)`
+- [ ] `feat(api-key-test-api): add POST /dashboard/profile/apiKeys/test route (auth + validation + no persistence)`
+- [ ] `security(api-key-test): add rate-limit + audit-safe logging for test endpoint`
+- [ ] `feat(api-key-test-binance): implement Binance permission probe and normalized error mapping contract`
+- [ ] `test(api-key-test): add server e2e for invalid credentials, permission mismatch, and success path`
 
 ## NEXT
+- [ ] `feat(profile-save-flow): block LIVE-ready key save until connection test success in current form session`
+- [ ] `feat(positions-sync-api): add endpoint to fetch current open positions from Binance using verified stored credentials`
+- [ ] `feat(ui-positions-live-source): add live-exchange snapshot mode with last-sync + error state`
+- [ ] `test(positions-live-source): add e2e/ui coverage for snapshot fetch and failure handling`
+- [ ] `docs(runbook): add API-key onboarding + Binance permission troubleshooting guide`
 
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`

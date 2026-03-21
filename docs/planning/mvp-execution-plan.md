@@ -162,6 +162,17 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `post-mvp(billing): plan monthly/annual + fiat/crypto billing rollout milestones`
 - [x] `post-mvp(exchange): plan adapter rollout for exchanges beyond Binance`
 
+## Phase 9 - Exchange API-Key Verification and Live Position Trust Gate (As of 2026-03-21)
+- [ ] `fix(ui-api-key-test): replace random "Testuj polaczenie" result with real backend API call and deterministic status states`
+- [ ] `feat(api-key-test-api): add authenticated endpoint to validate provided exchange credentials against Binance permissions`
+- [ ] `security(api-key-test): ensure test endpoint never persists raw secrets, enforces auth/rate limits, and logs audit-safe metadata only`
+- [ ] `feat(exchange-validation): map Binance auth/permission errors into stable API contract (invalid key, invalid secret, ip restricted, missing futures/spot scope, network timeout)`
+- [ ] `feat(profile-save-flow): require successful connection test before allowing LIVE-ready API-key save (with explicit override off by default)`
+- [ ] `feat(positions-sync): use verified stored key to fetch real open positions snapshot from Binance and expose read endpoint`
+- [ ] `feat(ui-positions-live-source): add source switch/state in positions view (runtime snapshot vs exchange-live snapshot) and last-sync timestamp`
+- [ ] `test(e2e): add profile/api-key and positions contract tests covering invalid credentials, permission mismatch, and successful live fetch`
+- [ ] `docs(runbook): document secure API-key onboarding and troubleshooting flow for Binance connection/permissions failures`
+
 ## Progress Log
 - 2026-03-15: Initialized MVP execution file and commit rules.
 - 2026-03-15: Added generic trigger-based one-task execution workflow.
@@ -339,6 +350,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Added post-MVP billing rollout milestones (`docs/planning/post-mvp-billing-milestones.md`) for annual cycle support and phased fiat/crypto rail integration.
 - 2026-03-21: Added post-MVP exchange rollout milestones (`docs/planning/post-mvp-exchange-rollout-milestones.md`) for adapter hardening, staged enablement, and multi-exchange guardrails.
 - 2026-03-21: Attached live-source metrics evidence to SLO baseline via `docs/operations/v1-slo-catalog.md` and `docs/operations/v1-load-baseline-2026-03-21.md`; remaining SLO blocker is production observation window.
+- 2026-03-21: Added Phase 9 trust gate for real Binance API-key verification flow and exchange-live positions snapshot path (UI + API + security + tests + runbook).
 
 
 
