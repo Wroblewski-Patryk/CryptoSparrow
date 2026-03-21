@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `chore(release): re-run MVP release checklist and store evidence after freeze-gap closure`
 
 ## NEXT
 - [ ] `feat(runtime-management): support managed lifecycle for manually opened Binance Spot/Futures positions`
@@ -27,6 +26,7 @@ Operational queue for one-task execution runs.
 - [x] `audit(reverify): confirm LIVE consentTextVersion persistence across schema/DTO/API/audit flow`
 - [x] `feat(stream-fanout): wire server-owned SSE fan-out endpoint from market-stream worker to dashboard`
 - [x] `feat(runtime-loop): complete continuous stream -> signal evaluation loop in worker runtime`
+- [x] `chore(release): re-run MVP release checklist and store evidence after freeze-gap closure`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

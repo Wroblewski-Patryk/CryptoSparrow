@@ -132,7 +132,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `feat(runtime-management): manage manually opened Binance Spot/Futures positions through runtime lifecycle`
 - [ ] `feat(runtime-management): guarantee DCA/SL/TP/TSL automation until position close`
 - [ ] `feat(runtime-scans): periodic market/position scans with configurable interval and market filters`
-- [ ] `chore(release): re-run MVP checklist with evidence after runtime replacement gate`
+- [x] `chore(release): re-run MVP checklist with evidence after runtime replacement gate`
 ## MVP Exit Criteria
 - [x] Phase 0 fully complete.
 - [ ] End-to-end flow works: strategy -> backtest -> paper -> live opt-in.
@@ -299,3 +299,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Re-verified LIVE `consentTextVersion` flow with regression coverage across DTO validation, API responses, DB persistence, and audit-log metadata on create/update bot paths.
 - 2026-03-21: Implemented Redis-backed market-stream fan-out (`/dashboard/market-stream/events` SSE), connected worker event publishing, and added regression coverage for stream route auth contract.
 - 2026-03-21: Added runtime signal loop in execution worker (`stream ticker -> signal creation -> pre-trade guard -> execution orchestrator`) with deterministic unit coverage and worker startup integration.
+- 2026-03-21: Re-ran MVP release checklist after runtime-replacement updates; confirmed server/client build+test green and Prisma migrations up-to-date, and refreshed release evidence counts.

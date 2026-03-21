@@ -37,9 +37,9 @@
 - [ ] Product sign-off.
 - [ ] Go-live owner assigned.
 
-## Re-Run Evidence (2026-03-19)
+## Re-Run Evidence (2026-03-21)
 - `pnpm --filter server build` passed.
 - `pnpm --filter client build` passed.
-- `pnpm --filter server test` passed (`39 files`, `151 tests`).
+- `pnpm --filter server test` passed (`41 files`, `157 tests`).
 - `pnpm --filter client test` passed (`24 files`, `45 tests`).
 - `pnpm --filter server exec prisma migrate deploy` reported `No pending migrations to apply`.
