@@ -1,6 +1,7 @@
 import { bootstrapWorker } from './workerBootstrap';
 import { getQueueTuning } from '../queue/queueTuning';
 import { livePositionReconciliationLoop } from '../modules/positions/livePositionReconciliation.service';
+import { runtimeSignalLoop } from '../modules/engine/runtimeSignalLoop.service';
 
 bootstrapWorker({
   workerName: 'execution',
@@ -9,3 +10,4 @@ bootstrapWorker({
 });
 
 livePositionReconciliationLoop.start();
+void runtimeSignalLoop.start();

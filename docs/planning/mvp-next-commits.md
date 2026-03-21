@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `feat(runtime-loop): complete continuous stream -> signal evaluation loop in worker runtime`
 - [ ] `chore(release): re-run MVP release checklist and store evidence after freeze-gap closure`
 
 ## NEXT
@@ -27,6 +26,7 @@ Operational queue for one-task execution runs.
 - [x] `audit(reverify): confirm upload endpoint auth + MIME/size limits with regression test coverage`
 - [x] `audit(reverify): confirm LIVE consentTextVersion persistence across schema/DTO/API/audit flow`
 - [x] `feat(stream-fanout): wire server-owned SSE fan-out endpoint from market-stream worker to dashboard`
+- [x] `feat(runtime-loop): complete continuous stream -> signal evaluation loop in worker runtime`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

@@ -128,7 +128,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 ## Phase 7 - Runtime Replacement Gate (As of 2026-03-21)
 - [ ] `audit(reverify): re-validate P0/P1 audit findings in code and tests before further expansion`
 - [x] `feat(stream-fanout): expose SSE stream endpoint and connect dashboard live market bar to server-owned stream`
-- [ ] `feat(runtime-loop): complete continuous stream -> signal evaluation loop in worker runtime`
+- [x] `feat(runtime-loop): complete continuous stream -> signal evaluation loop in worker runtime`
 - [ ] `feat(runtime-management): manage manually opened Binance Spot/Futures positions through runtime lifecycle`
 - [ ] `feat(runtime-management): guarantee DCA/SL/TP/TSL automation until position close`
 - [ ] `feat(runtime-scans): periodic market/position scans with configurable interval and market filters`
@@ -298,3 +298,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Re-verified upload endpoint security contract by adding explicit >2MB avatar regression test and confirming auth/MIME/size guard responses in upload e2e suite.
 - 2026-03-21: Re-verified LIVE `consentTextVersion` flow with regression coverage across DTO validation, API responses, DB persistence, and audit-log metadata on create/update bot paths.
 - 2026-03-21: Implemented Redis-backed market-stream fan-out (`/dashboard/market-stream/events` SSE), connected worker event publishing, and added regression coverage for stream route auth contract.
+- 2026-03-21: Added runtime signal loop in execution worker (`stream ticker -> signal creation -> pre-trade guard -> execution orchestrator`) with deterministic unit coverage and worker startup integration.
