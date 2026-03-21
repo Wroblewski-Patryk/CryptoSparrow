@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { PageTitle } from 'apps/client/src/ui/layout/dashboard/PageTitle';
@@ -16,6 +16,7 @@ const getAxiosMessage = (err: unknown) => {
 };
 
 export default function MarketsListPage() {
+  const router = useRouter();
   const [rows, setRows] = useState<MarketUniverse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,13 +47,9 @@ export default function MarketsListPage() {
           { label: 'Markets', href: '/dashboard/markets/list' },
           { label: 'List' },
         ]}
+        onAdd={() => router.push('/dashboard/markets/create')}
+        addLabel='Dodaj grupe rynkow'
       />
-
-      <div className='flex justify-end'>
-        <Link href='/dashboard/markets/create' className='btn btn-primary btn-sm'>
-          Dodaj grupe rynkow
-        </Link>
-      </div>
 
       {loading ? <LoadingState title='Ladowanie grup rynkow' /> : null}
       {!loading && error ? (

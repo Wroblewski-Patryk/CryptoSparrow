@@ -1,9 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { LuPencilLine, LuTrash2 } from 'react-icons/lu';
 import { useLocaleFormatting } from '../../../i18n/useLocaleFormatting';
 import DataTable, { DataTableColumn } from '../../../ui/components/DataTable';
 import ConfirmModal from '../../../ui/components/ConfirmModal';
@@ -48,6 +49,7 @@ const resolveMinVolumeRules = (row: MarketUniverse) => {
 };
 
 export default function MarketUniversesTable({ rows, onDeleted }: MarketUniversesTableProps) {
+  const router = useRouter();
   const { formatDate } = useLocaleFormatting();
   const [deleteTarget, setDeleteTarget] = useState<MarketUniverse | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -169,19 +171,30 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
       {
         key: 'actions',
         label: 'Akcje',
+        className: 'w-32 text-center',
         render: (row) => (
-          <div className='flex gap-2'>
-            <Link href={`/dashboard/markets/${row.id}/edit`} className='btn btn-xs btn-outline'>
-              Edytuj
-            </Link>
-            <button type='button' className='btn btn-xs btn-error' onClick={() => setDeleteTarget(row)}>
-              Usun
+          <div className='flex items-center justify-center gap-2'>
+            <button
+              className='btn btn-sm btn-info'
+              onClick={() => router.push(`/dashboard/markets/${row.id}/edit`)}
+              title='Edytuj'
+              type='button'
+            >
+              <LuPencilLine className='h-4 w-4' />
+            </button>
+            <button
+              type='button'
+              className='btn btn-sm btn-error'
+              onClick={() => setDeleteTarget(row)}
+              title='Usun'
+            >
+              <LuTrash2 className='h-4 w-4' />
             </button>
           </div>
         ),
       },
     ],
-    [expandedRows, formatDate, resolvedTickersMap]
+    [expandedRows, formatDate, resolvedTickersMap, router]
   );
 
   const handleConfirmDelete = async () => {
