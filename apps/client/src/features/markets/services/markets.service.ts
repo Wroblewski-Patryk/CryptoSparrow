@@ -13,6 +13,19 @@ export const createMarketUniverse = async (
   return res.data;
 };
 
+export const getMarketUniverse = async (id: string): Promise<MarketUniverse> => {
+  const res = await api.get<MarketUniverse>(`/dashboard/markets/universes/${id}`);
+  return res.data;
+};
+
+export const updateMarketUniverse = async (
+  id: string,
+  payload: Partial<CreateMarketUniverseInput>
+): Promise<MarketUniverse> => {
+  const res = await api.put<MarketUniverse>(`/dashboard/markets/universes/${id}`, payload);
+  return res.data;
+};
+
 export const deleteMarketUniverse = async (id: string): Promise<void> => {
   await api.delete(`/dashboard/markets/universes/${id}`);
 };

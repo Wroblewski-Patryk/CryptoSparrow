@@ -60,7 +60,8 @@ export default function Header() {
           strategyGroup: 'Strategie',
           executionGroup: 'Wykonanie',
           analyticsGroup: 'Analityka',
-          marketBuilder: 'Builder rynkow',
+          marketList: 'Lista grup',
+          marketCreate: 'Dodaj grupe',
           strategyBuilder: 'Builder strategii',
           mobileMenu: 'Menu',
         }
@@ -70,7 +71,8 @@ export default function Header() {
           strategyGroup: 'Strategies',
           executionGroup: 'Execution',
           analyticsGroup: 'Analytics',
-          marketBuilder: 'Markets builder',
+          marketList: 'Groups list',
+          marketCreate: 'Create group',
           strategyBuilder: 'Strategy builder',
           mobileMenu: 'Menu',
         };
@@ -81,8 +83,8 @@ export default function Header() {
   };
 
   const marketsLinks: NavItem[] = [
-    { href: '/dashboard/markets', label: t('dashboard.nav.markets') },
-    { href: '/dashboard/markets#builder', label: labels.marketBuilder },
+    { href: '/dashboard/markets/list', label: labels.marketList },
+    { href: '/dashboard/markets/create', label: labels.marketCreate },
   ];
 
   const strategyLinks: NavItem[] = [

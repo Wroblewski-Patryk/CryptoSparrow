@@ -85,6 +85,13 @@ If you only test CRUD/UI, you can skip workers.
   - `pnpm run frontend/dev`
   - `pnpm run workers/dev`
 
+## Markets module structure
+- `/dashboard/markets/list`: table of market groups with filter, sortable columns, edit/delete actions
+- `/dashboard/markets/create`: market group creator for bot/backtest/other modules
+- `/dashboard/markets/:id/edit`: same creator in edit mode for an existing group
+- Delete action uses reusable confirmation modal component.
+- Markets table uses reusable data table component (can be reused in bots/strategies modules).
+
 ## Troubleshooting (Windows + Prisma)
 - If you see `EPERM ... query_engine-windows.dll.node`, close all running Node processes (server/workers/frontend) and run:
 ```bash

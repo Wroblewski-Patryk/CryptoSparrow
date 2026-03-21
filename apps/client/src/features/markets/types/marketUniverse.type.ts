@@ -17,6 +17,8 @@ export type CreateMarketUniverseInput = {
   blacklist: string[];
 };
 
+export type UpdateMarketUniverseInput = Partial<CreateMarketUniverseInput>;
+
 export type MarketCatalogEntry = {
   symbol: string;
   displaySymbol: string;
