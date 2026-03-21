@@ -32,6 +32,7 @@ Purpose: single reference index for launch-readiness documentation and evidence 
 ## 5) External Gates (Production-Dependent)
 - External-gates runbook: `docs/operations/v1-rc-external-gates-runbook.md`
 - RC sign-off record template: `docs/operations/v1-rc-signoff-record.md`
+- Launch review + V1.1 backlog cut: `docs/operations/v1-launch-review-2026-03-21.md`
 
 Open production-dependent items are tracked in:
 - `docs/operations/v1-release-candidate-checklist.md` -> `Outstanding External Gates`

@@ -9,7 +9,6 @@ Operational queue for one-task execution runs.
 ## NOW
 
 ## NEXT
-- [ ] `release(review): run 7-day launch retrospective and cut V1.1 backlog`
 - [ ] `docs(sync): normalize planning files so roadmap/mvp/v1 statuses are fully consistent`
 
 ## BLOCKED
@@ -27,6 +26,7 @@ Operational queue for one-task execution runs.
 - [x] `ops(cutover): define local cutover checklist from legacy bot to new runtime`
 - [x] `ops(cutover): define rollback checklist to legacy runtime`
 - [x] `test(cutover): execute local replacement dry-run with realistic bot scenario`
+- [x] `release(review): run 7-day launch retrospective and cut V1.1 backlog`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

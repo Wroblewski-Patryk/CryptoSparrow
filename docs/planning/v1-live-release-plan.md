@@ -74,7 +74,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [x] `security(audit): complete final auth/ownership/key audit sign-off`
 - [x] `test(load): publish load/performance evidence against target thresholds`
 - [x] `docs(public): finalize user/operator public documentation set for launch`
-- [ ] `release(review): complete launch retrospective and produce V1.1 prioritized backlog`
+- [x] `release(review): complete launch retrospective and produce V1.1 prioritized backlog`
 ## V1.0 Exit Criteria
 - [ ] SLOs defined and observed in production.
 - [ ] Incident response process tested with drills.
@@ -173,5 +173,6 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-21: Added local cutover checklist (`docs/operations/v1-local-cutover-checklist.md`) for controlled migration from legacy bot runtime to new runtime stack.
 - 2026-03-21: Added local rollback checklist (`docs/operations/v1-local-rollback-checklist.md`) for controlled recovery back to legacy runtime during cutover incidents.
 - 2026-03-21: Executed local replacement dry-run (`docs/operations/v1-local-cutover-dry-run-2026-03-21.md`) covering strategy/backtest/bot/live-guardrail/runtime-flow scenarios with all selected suites green.
+- 2026-03-21: Completed launch review and V1.1 backlog cut in `docs/operations/v1-launch-review-2026-03-21.md` using compiled launch evidence and current external-gate status.
 
 - 2026-03-21: Added explicit Exit Evidence Workpack to operationalize remaining V1 production criteria.
