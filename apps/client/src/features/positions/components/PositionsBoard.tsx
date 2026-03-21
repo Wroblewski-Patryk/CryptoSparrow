@@ -5,10 +5,16 @@ import axios from "axios";
 
 import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
-import { listPositions } from "../services/positions.service";
+import { fetchExchangePositionsSnapshot, listPositions } from "../services/positions.service";
 import { Position, PositionStatus } from "../types/position.type";
 
 const statuses: Array<PositionStatus | "ALL"> = ["ALL", "OPEN", "CLOSED", "LIQUIDATED"];
+const positionSources = [
+  { value: "runtime", label: "Runtime snapshot" },
+  { value: "exchange", label: "Exchange live snapshot" },
+] as const;
+
+type PositionSource = (typeof positionSources)[number]["value"];
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -25,8 +31,10 @@ const pnlClass = (value: number | null) => {
 export default function PositionsBoard() {
   const { formatDateTime, formatNumber } = useLocaleFormatting();
   const [positions, setPositions] = useState<Position[]>([]);
+  const [source, setSource] = useState<PositionSource>("runtime");
   const [status, setStatus] = useState<PositionStatus | "ALL">("ALL");
   const [symbol, setSymbol] = useState("");
+  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,18 +42,41 @@ export default function PositionsBoard() {
     setLoading(true);
     setError(null);
     try {
-      const data = await listPositions({
-        status: status === "ALL" ? undefined : status,
-        symbol: symbol.trim() ? symbol.trim().toUpperCase() : undefined,
-        limit: 100,
-      });
-      setPositions(data);
+      if (source === "runtime") {
+        const data = await listPositions({
+          status: status === "ALL" ? undefined : status,
+          symbol: symbol.trim() ? symbol.trim().toUpperCase() : undefined,
+          limit: 100,
+        });
+        setPositions(data);
+        setLastSyncAt(null);
+      } else {
+        const snapshot = await fetchExchangePositionsSnapshot();
+        const normalized = snapshot.positions.map((item, index) => ({
+          id: `exchange-${index}-${item.symbol}`,
+          symbol: item.symbol,
+          side: item.side?.toUpperCase() ?? "UNKNOWN",
+          status: "OPEN" as const,
+          entryPrice: item.entryPrice ?? 0,
+          quantity: item.contracts,
+          leverage: item.leverage ?? 1,
+          unrealizedPnl: item.unrealizedPnl,
+          realizedPnl: null,
+          openedAt: item.timestamp ?? undefined,
+        }));
+        const symbolFilter = symbol.trim().toUpperCase();
+        const filtered = symbolFilter
+          ? normalized.filter((position) => position.symbol.toUpperCase().includes(symbolFilter))
+          : normalized;
+        setPositions(filtered);
+        setLastSyncAt(snapshot.syncedAt);
+      }
     } catch (err: unknown) {
       setError(getAxiosMessage(err) ?? "Nie udalo sie pobrac listy positions.");
     } finally {
       setLoading(false);
     }
-  }, [status, symbol]);
+  }, [source, status, symbol]);
 
   useEffect(() => {
     void loadPositions();
@@ -57,10 +88,25 @@ export default function PositionsBoard() {
         <h2 className="text-lg font-semibold">Filtry positions</h2>
         <div className="mt-3 grid gap-3 md:grid-cols-3">
           <label className="form-control">
+            <span className="label-text">Zrodlo</span>
+            <select
+              className="select select-bordered"
+              value={source}
+              onChange={(event) => setSource(event.target.value as PositionSource)}
+            >
+              {positionSources.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="form-control">
             <span className="label-text">Status</span>
             <select
               className="select select-bordered"
               value={status}
+              disabled={source === "exchange"}
               onChange={(event) => setStatus(event.target.value as PositionStatus | "ALL")}
             >
               {statuses.map((item) => (
@@ -89,6 +135,11 @@ export default function PositionsBoard() {
             </button>
           </div>
         </div>
+        {source === "exchange" && lastSyncAt && (
+          <p className="mt-3 text-xs text-base-content/70">
+            Ostatnia synchronizacja: {formatDateTime(lastSyncAt)}
+          </p>
+        )}
       </div>
 
       {loading && <LoadingState title="Ladowanie positions" />}
@@ -108,7 +159,7 @@ export default function PositionsBoard() {
         <div className="space-y-3">
           <SuccessState
             title="Positions loaded"
-            description={`Pobrano ${positions.length} ${positions.length === 1 ? "position" : "positions"}.`}
+            description={`${source === "exchange" ? "Exchange snapshot" : "Runtime snapshot"}: pobrano ${positions.length} ${positions.length === 1 ? "position" : "positions"}.`}
           />
           <div className="overflow-x-auto">
             <table className="table table-zebra">
