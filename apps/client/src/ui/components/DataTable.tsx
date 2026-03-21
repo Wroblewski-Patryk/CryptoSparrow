@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { Fragment, useMemo, useState, type ReactNode } from 'react';
 
 export type DataTableColumn<T> = {
   key: string;
@@ -20,6 +20,8 @@ type DataTableProps<T> = {
   filterPlaceholder?: string;
   filterFn?: (row: T, query: string) => boolean;
   emptyText?: string;
+  isRowExpanded?: (row: T) => boolean;
+  renderExpandedRow?: (row: T) => ReactNode;
 };
 
 type SortDirection = 'asc' | 'desc';
@@ -41,6 +43,8 @@ export default function DataTable<T>({
   filterPlaceholder = 'Filter...',
   filterFn,
   emptyText = 'No rows',
+  isRowExpanded,
+  renderExpandedRow,
 }: DataTableProps<T>) {
   const [query, setQuery] = useState('');
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -116,13 +120,20 @@ export default function DataTable<T>({
           </thead>
           <tbody>
             {sortedRows.map((row) => (
-              <tr key={getRowId(row)}>
-                {columns.map((column) => (
-                  <td key={`${getRowId(row)}-${column.key}`} className={column.className}>
-                    {column.render ? column.render(row) : column.accessor?.(row) ?? '-'}
-                  </td>
-                ))}
-              </tr>
+              <Fragment key={getRowId(row)}>
+                <tr>
+                  {columns.map((column) => (
+                    <td key={`${getRowId(row)}-${column.key}`} className={column.className}>
+                      {column.render ? column.render(row) : column.accessor?.(row) ?? '-'}
+                    </td>
+                  ))}
+                </tr>
+                {isRowExpanded?.(row) && renderExpandedRow ? (
+                  <tr>
+                    <td colSpan={columns.length}>{renderExpandedRow(row)}</td>
+                  </tr>
+                ) : null}
+              </Fragment>
             ))}
           </tbody>
         </table>
