@@ -30,3 +30,13 @@ This document captures high-priority audit findings and defines mandatory remedi
 - Do not mark a task complete in `mvp-execution-plan.md` unless verified by tests or explicit implementation evidence.
 - Keep `mvp-next-commits.md` focused on the remediation gate until P0/P1 are closed.
 - If implementation differs from docs, docs must be corrected in the same planning update.
+
+## Revalidation Evidence (2026-03-21)
+- Runtime and security regression subset re-run with infra:
+  - `pnpm --filter server test -- src/modules/upload/upload.e2e.test.ts src/modules/bots/bots.e2e.test.ts src/modules/logs/logs.e2e.test.ts src/utils/crypto.test.ts`
+  - Result: `4` files passed, `14` tests passed.
+- Revalidated controls:
+  - Upload auth + MIME + size guardrails (P0).
+  - LIVE consent `consentTextVersion` validation/persistence/audit flow (P0).
+  - Logs API filtering contract (P1).
+  - AEAD encryption + versioned key handling regression coverage (P1).

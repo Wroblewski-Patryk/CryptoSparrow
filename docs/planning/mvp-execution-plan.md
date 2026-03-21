@@ -126,7 +126,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `test(e2e): add runtime orchestration smoke path covering stream -> signal -> order -> position updates`
 
 ## Phase 7 - Runtime Replacement Gate (As of 2026-03-21)
-- [ ] `audit(reverify): re-validate P0/P1 audit findings in code and tests before further expansion`
+- [x] `audit(reverify): re-validate P0/P1 audit findings in code and tests before further expansion`
 - [x] `feat(stream-fanout): expose SSE stream endpoint and connect dashboard live market bar to server-owned stream`
 - [x] `feat(runtime-loop): complete continuous stream -> signal evaluation loop in worker runtime`
 - [ ] `feat(runtime-management): manage manually opened Binance Spot/Futures positions through runtime lifecycle`
@@ -300,3 +300,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Implemented Redis-backed market-stream fan-out (`/dashboard/market-stream/events` SSE), connected worker event publishing, and added regression coverage for stream route auth contract.
 - 2026-03-21: Added runtime signal loop in execution worker (`stream ticker -> signal creation -> pre-trade guard -> execution orchestrator`) with deterministic unit coverage and worker startup integration.
 - 2026-03-21: Re-ran MVP release checklist after runtime-replacement updates; confirmed server/client build+test green and Prisma migrations up-to-date, and refreshed release evidence counts.
+- 2026-03-21: Re-validated P0/P1 audit findings with focused regression suite (`upload`, `bots consent`, `logs`, `crypto`) and refreshed remediation evidence log.

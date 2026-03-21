@@ -27,6 +27,7 @@ Operational queue for one-task execution runs.
 - [x] `feat(stream-fanout): wire server-owned SSE fan-out endpoint from market-stream worker to dashboard`
 - [x] `feat(runtime-loop): complete continuous stream -> signal evaluation loop in worker runtime`
 - [x] `chore(release): re-run MVP release checklist and store evidence after freeze-gap closure`
+- [x] `audit(reverify): re-validate P0/P1 audit findings in code and tests before further expansion`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
