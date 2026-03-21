@@ -1,42 +1,88 @@
 'use client';
-import { useAuth } from '../../context/AuthContext'; 
-import { LuKey, LuLogOut, LuSettings, LuSubscript, LuUser } from 'react-icons/lu';
+
+import Link from 'next/link';
+import { useRef } from 'react';
+import { LuBot, LuKey, LuLogOut, LuSettings, LuSubscript, LuUser } from 'react-icons/lu';
+import { useAuth } from '../../context/AuthContext';
+import { useDetailsDropdown } from '../hooks/useDetailsDropdown';
+import IsometricModeToggle from '../layout/dashboard/IsometricModeToggle';
 
 export default function ProfileButton() {
-  const { loading, logout } = useAuth();
-  const href = "/dashboard/profile";
-  const profileMenu = [
-    { label: "Podstawowe", icon: <LuUser className="float-left" />, hash: "basic" },
-    { label: "Klucze API", icon: <LuKey className="float-left" />, hash: "api" },
-    { label: "Subskrypcja", icon: <LuSubscript className="float-left" />, hash: "subscription" },
-    { label: "Bezpieczeństwo", icon: <LuSettings className="float-left" />, hash: "security" },
-  ];  
+  const { loading, logout, user } = useAuth();
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+  useDetailsDropdown(detailsRef);
 
-  if (loading) return <span className="mt-2 loading loading-dots loading-xs text-secondary"></span>;
-  return (  
-    <details>
-      <summary aria-label="Open account menu"><LuUser className="float-left" />Moje konto</summary>
-      <ul className="bg-base-100 rounded-t-none"> 
-        {profileMenu.map(item => (
-        <li key={item.hash}>
-            <a
-            href={`${href}#${item.hash}`}
-            className=""
-            onClick={e => {
-              e.preventDefault();
-              if (window.location.href !== href)
-                window.location.replace(`${href}#${item.hash}`);   
-              window.location.hash = item.hash;
-            }}
-          >{item.icon}{item.label}</a>
+  if (loading) {
+    return <span className="mt-2 loading loading-dots loading-xs text-secondary" />;
+  }
+
+  return (
+    <details ref={detailsRef} className="dropdown dropdown-end">
+      <summary className="btn btn-sm btn-ghost text-primary-content" aria-label="Open account menu">
+        <LuUser className="h-4 w-4" aria-hidden />
+        <span className="hidden sm:inline">Moje konto</span>
+      </summary>
+      <ul className="menu dropdown-content z-[60] mt-2 w-72 rounded-box bg-base-100 p-2 text-base-content shadow">
+        {user?.email && (
+          <li className="menu-title">
+            <span className="truncate normal-case">{user.email}</span>
+          </li>
+        )}
+        <li className="menu-title">
+          <span>Profil</span>
         </li>
-        ))}
         <li>
-          <button 
-            onClick={logout} 
-            className="cursor-pointer"
-            aria-label="Wyloguj"
-            ><LuLogOut className='float-left'/> Wyloguj
+          <Link href="/dashboard/profile#basic">
+            <LuUser className="h-4 w-4" aria-hidden />
+            Dane podstawowe
+          </Link>
+        </li>
+        <li>
+          <Link href="/dashboard/profile#subscription">
+            <LuSubscript className="h-4 w-4" aria-hidden />
+            Subskrypcja
+          </Link>
+        </li>
+        <li>
+          <Link href="/dashboard/profile#security">
+            <LuSettings className="h-4 w-4" aria-hidden />
+            Bezpieczenstwo
+          </Link>
+        </li>
+
+        <li className="menu-title mt-1">
+          <span>Integracje</span>
+        </li>
+        <li>
+          <Link href="/dashboard/profile#api">
+            <LuKey className="h-4 w-4" aria-hidden />
+            Klucze API
+          </Link>
+        </li>
+        <li>
+          <Link href="/dashboard/exchanges">
+            <LuSettings className="h-4 w-4" aria-hidden />
+            Polaczenia gield
+          </Link>
+        </li>
+
+        <li className="menu-title mt-1">
+          <span>Preferencje</span>
+        </li>
+        <li>
+          <div className="flex items-center justify-between gap-2 px-2 py-1.5">
+            <span className="inline-flex items-center gap-2 text-sm">
+              <LuBot className="h-4 w-4" aria-hidden />
+              Tryb izometryczny
+            </span>
+            <IsometricModeToggle compact />
+          </div>
+        </li>
+
+        <li className="mt-1">
+          <button onClick={logout} className="text-error">
+            <LuLogOut className="h-4 w-4" aria-hidden />
+            Wyloguj
           </button>
         </li>
       </ul>

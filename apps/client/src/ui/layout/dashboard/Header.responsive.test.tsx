@@ -12,7 +12,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("Header responsive smoke", () => {
-  it("renders navigation landmark and horizontal overflow container", () => {
+  it("renders navigation landmark with compact menu structure", () => {
     render(
       <I18nProvider>
         <Header />
@@ -20,10 +20,10 @@ describe("Header responsive smoke", () => {
     );
 
     expect(screen.getByRole("navigation", { name: "Dashboard navigation" })).toBeInTheDocument();
-    expect(screen.getByText("Markets")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Markets" })).toHaveAttribute("aria-current", "page");
-
-    const scroller = document.querySelector("ul.overflow-x-auto");
-    expect(scroller).toBeTruthy();
+    expect(screen.getAllByText("Markets").length).toBeGreaterThan(0);
+    expect(screen.getByText("Execution")).toBeInTheDocument();
+    expect(screen.getByText("Analytics")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByText("Dashboard")).toBeInTheDocument();
   });
 });

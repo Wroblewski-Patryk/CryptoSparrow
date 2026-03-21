@@ -2,9 +2,16 @@ import './globals.css';
 
 import type { Metadata, Viewport } from "next";
 import { ReactNode } from 'react';
+import { Titillium_Web } from 'next/font/google';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '../context/AuthContext';
 import ServiceWorkerRegistration from '../ui/pwa/ServiceWorkerRegistration';
+
+const titilliumWeb = Titillium_Web({
+  subsets: ['latin'],
+  weight: ['300', '400', '600', '700'],
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'CryptoSparrow',
@@ -40,7 +47,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <head>
         <meta charSet="UTF-8" />
       </head>
-      <body>
+      <body className={titilliumWeb.className}>
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>

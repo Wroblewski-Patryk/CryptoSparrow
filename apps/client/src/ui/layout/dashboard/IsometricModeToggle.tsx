@@ -2,10 +2,14 @@
 
 import { useEffect, useState } from 'react';
 
+type IsometricModeToggleProps = {
+  compact?: boolean;
+};
+
 const STORAGE_KEY = 'cryptosparrow-isometric-mode';
 const CLASS_NAME = 'isometric-mode';
 
-export default function IsometricModeToggle() {
+export default function IsometricModeToggle({ compact = false }: IsometricModeToggleProps) {
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
@@ -23,6 +27,20 @@ export default function IsometricModeToggle() {
       return next;
     });
   };
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        className={`btn btn-xs ${enabled ? 'btn-secondary' : 'btn-outline'}`}
+        aria-pressed={enabled}
+        onClick={handleToggle}
+        title={enabled ? 'Disable isometric mode' : 'Enable isometric mode'}
+      >
+        {enabled ? 'ON' : 'OFF'}
+      </button>
+    );
+  }
 
   return (
     <button
