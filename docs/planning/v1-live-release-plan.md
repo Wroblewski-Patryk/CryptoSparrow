@@ -154,3 +154,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-21: Re-verified V1 RC build/test gates (server build, client build, critical server auth+exchange+health+metrics/alerts tests, and critical client logs+bots+shell tests) and recorded fresh checklist evidence.
 - 2026-03-21: Marked RC runtime endpoint gates as verified from current automated coverage (`/health`, `/ready`, `/metrics`, `/alerts`, `/workers/health`, `/workers/ready`).
 - 2026-03-21: Verified RC security/risk gates with focused suites (JWT rotation, API-key lifecycle, pre-trade kill-switch/emergency controls, LIVE confirmations) and refreshed ownership-audit reference.
+- 2026-03-21: Verified RC data/migration gates for current environment (`prisma migrate deploy` no pending migrations; orders/logs/pagination representative tests green). Backup snapshot/restore validation remains pending for target production environment.
