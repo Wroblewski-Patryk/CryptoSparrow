@@ -166,5 +166,6 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-21: Added explicit "Outstanding External Gates" list in RC checklist to track remaining production-only evidence and release sign-off dependencies.
 - 2026-03-21: Added `v1-rc-external-gates-runbook.md` with step-by-step evidence templates for backup/restore, queue-lag baseline review, incident-contact confirmation, and formal RC sign-offs.
 - 2026-03-21: Added `v1-rc-signoff-record.md` template and linked it from RC checklist to standardize Engineering/Product/Operations approvals and RC-owner assignment evidence.
+- 2026-03-21: Added `v1-slo-catalog.md` defining MVP/V1 SLO targets and exact source metrics for availability, error budget, latency, worker readiness, queue lag, and live order stability.
 
 - 2026-03-21: Added explicit Exit Evidence Workpack to operationalize remaining V1 production criteria.

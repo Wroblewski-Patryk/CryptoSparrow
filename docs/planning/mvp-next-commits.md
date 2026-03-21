@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `ops(slo): define MVP/V1 SLO set and add measurable targets + source metrics`
 - [ ] `ops(evidence): run production-like load baseline and attach results to v1 exit criteria`
 - [ ] `security(audit): run ownership/auth/key-flow verification pass and publish evidence summary`
 - [ ] `release(evidence): compile public docs pack and launch-readiness evidence checklist`
@@ -27,6 +26,7 @@ Operational queue for one-task execution runs.
 - [x] `chore(planning): align trigger intent to generic one-task nudge`
 - [x] `chore(planning): historical done backlog archived in git history; queue reset for current delivery focus`
 - [x] `docs(sync): reconcile roadmap immediate gaps with implemented runtime-stream status and evidence links`
+- [x] `ops(slo): define MVP/V1 SLO set and add measurable targets + source metrics`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
