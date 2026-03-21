@@ -172,5 +172,6 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-21: Compiled V1 launch evidence pack (`docs/operations/v1-launch-evidence-pack.md`) linking public docs, operator docs, security artifacts, runtime/load evidence, and remaining production-dependent gates.
 - 2026-03-21: Added local cutover checklist (`docs/operations/v1-local-cutover-checklist.md`) for controlled migration from legacy bot runtime to new runtime stack.
 - 2026-03-21: Added local rollback checklist (`docs/operations/v1-local-rollback-checklist.md`) for controlled recovery back to legacy runtime during cutover incidents.
+- 2026-03-21: Executed local replacement dry-run (`docs/operations/v1-local-cutover-dry-run-2026-03-21.md`) covering strategy/backtest/bot/live-guardrail/runtime-flow scenarios with all selected suites green.
 
 - 2026-03-21: Added explicit Exit Evidence Workpack to operationalize remaining V1 production criteria.
