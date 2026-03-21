@@ -37,9 +37,9 @@ export default function MarketsEditPage() {
   const handleUpdate = async (payload: CreateMarketUniverseInput) => {
     setSubmitting(true);
     try {
-      await updateMarketUniverse(id, payload);
+      const updated = await updateMarketUniverse(id, payload);
+      setInitial(updated);
       toast.success('Grupa rynkow zaktualizowana');
-      router.push('/dashboard/markets/list');
     } catch (err: unknown) {
       toast.error('Nie udalo sie zapisac zmian', { description: handleError(err) });
     } finally {
