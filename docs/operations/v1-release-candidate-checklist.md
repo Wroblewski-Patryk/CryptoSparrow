@@ -18,14 +18,16 @@
 - `pnpm --filter client build` passed.
 - `pnpm --filter server test -- src/modules/auth/auth.e2e.test.ts src/modules/exchange/liveOrderAdapter.service.test.ts src/router/health-readiness.test.ts src/router/workers-health-readiness.test.ts src/router/metrics.test.ts src/router/alerts.test.ts` passed (`6` files, `20` tests).
 - `pnpm --filter client exec vitest run src/features/logs/components/AuditTrailView.test.tsx src/features/bots/components/BotsManagement.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx` passed (`3` files, `8` tests).
+- API runtime endpoint coverage confirmed via `health-readiness`, `metrics`, and `alerts` test suites.
+- Worker runtime endpoint coverage confirmed via `workers-health-readiness` test suite.
 
 ## Runtime and Operations Gates
-- [ ] API endpoints healthy:
+- [x] API endpoints healthy:
   - `/health`,
   - `/ready`,
   - `/metrics`,
   - `/alerts`.
-- [ ] Worker endpoints healthy:
+- [x] Worker endpoints healthy:
   - `/workers/health`,
   - `/workers/ready`.
 - [ ] Queue lag metrics reviewed and within baseline.

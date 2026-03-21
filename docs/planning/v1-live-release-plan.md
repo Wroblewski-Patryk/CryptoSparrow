@@ -152,3 +152,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-19: Added market-data service support for additional sources (`order book`, `funding rate`, `open interest`) with optional provider contract and explicit availability errors.
 - 2026-03-19: Completed full go-live smoke pack in live-safe mode via orchestrator (infra up, migrations deploy, server smoke, client smoke, infra down) with all suites green.
 - 2026-03-21: Re-verified V1 RC build/test gates (server build, client build, critical server auth+exchange+health+metrics/alerts tests, and critical client logs+bots+shell tests) and recorded fresh checklist evidence.
+- 2026-03-21: Marked RC runtime endpoint gates as verified from current automated coverage (`/health`, `/ready`, `/metrics`, `/alerts`, `/workers/health`, `/workers/ready`).
