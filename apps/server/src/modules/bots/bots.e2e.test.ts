@@ -165,4 +165,49 @@ describe('Bots module contract', () => {
     expect(consentLog).toBeTruthy();
     expect(consentLog?.category).toBe('RISK_CONSENT');
   });
+
+  it('persists and audits normalized consentTextVersion across create/update flow', async () => {
+    const agent = await registerAndLogin('bots-consent-persist@example.com');
+
+    const createLiveRes = await agent.post('/dashboard/bots').send({
+      ...createPayload(),
+      mode: 'LIVE',
+      liveOptIn: true,
+      consentTextVersion: '  mvp-v1  ',
+    });
+    expect(createLiveRes.status).toBe(201);
+    expect(createLiveRes.body.consentTextVersion).toBe('mvp-v1');
+    const botId = createLiveRes.body.id as string;
+
+    const storedAfterCreate = await prisma.bot.findUniqueOrThrow({ where: { id: botId } });
+    expect(storedAfterCreate.consentTextVersion).toBe('mvp-v1');
+
+    const acceptedLog = await prisma.log.findFirstOrThrow({
+      where: {
+        botId,
+        action: 'bot.live_consent.accepted',
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect((acceptedLog.metadata as { consentTextVersion?: string } | null)?.consentTextVersion).toBe('mvp-v1');
+
+    const updateLiveRes = await agent.put(`/dashboard/bots/${botId}`).send({
+      consentTextVersion: 'mvp-v2',
+      liveOptIn: true,
+    });
+    expect(updateLiveRes.status).toBe(200);
+    expect(updateLiveRes.body.consentTextVersion).toBe('mvp-v2');
+
+    const storedAfterUpdate = await prisma.bot.findUniqueOrThrow({ where: { id: botId } });
+    expect(storedAfterUpdate.consentTextVersion).toBe('mvp-v2');
+
+    const updatedLog = await prisma.log.findFirstOrThrow({
+      where: {
+        botId,
+        action: 'bot.live_consent.updated',
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect((updatedLog.metadata as { consentTextVersion?: string } | null)?.consentTextVersion).toBe('mvp-v2');
+  });
 });
