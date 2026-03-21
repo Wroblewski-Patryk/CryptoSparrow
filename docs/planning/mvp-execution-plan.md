@@ -148,7 +148,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 
 ## Phase 8 - Operational Evidence and Full-App Readiness
 - [x] `ops(cutover): define local cutover checklist from legacy bot to new runtime`
-- [ ] `ops(cutover): define rollback checklist to legacy runtime`
+- [x] `ops(cutover): define rollback checklist to legacy runtime`
 - [ ] `test(cutover): execute local replacement dry-run with realistic bot scenario`
 - [x] `docs(sync): reconcile roadmap immediate gaps with actual runtime status and evidence links`
 - [x] `ops(slo): define MVP/V1 SLO set and map measurable targets to existing source metrics`
@@ -330,6 +330,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Published final security verification report (`docs/security/security-audit-verification-2026-03-21.md`) after focused auth/ownership/api-key/guardrail regression run (`9` files, `34` tests).
 - 2026-03-21: Compiled launch evidence pack (`docs/operations/v1-launch-evidence-pack.md`) aggregating public/operator/security/load/RC artifacts and current external-gate blockers.
 - 2026-03-21: Added local legacy-to-new-runtime cutover checklist (`docs/operations/v1-local-cutover-checklist.md`) with prechecks, safe enable order, validation, and abort criteria.
+- 2026-03-21: Added local rollback checklist (`docs/operations/v1-local-rollback-checklist.md`) to safely return execution ownership to legacy runtime on cutover failure.
 
 
 
