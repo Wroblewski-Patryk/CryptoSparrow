@@ -152,7 +152,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `test(cutover): execute local replacement dry-run with realistic bot scenario`
 - [x] `docs(sync): reconcile roadmap immediate gaps with actual runtime status and evidence links`
 - [x] `ops(slo): define MVP/V1 SLO set and map measurable targets to existing source metrics`
-- [ ] `ops(slo): define SLOs and attach live metrics evidence`
+- [x] `ops(slo): define SLOs and attach live metrics evidence`
 - [x] `ops(evidence): execute production-like load baseline and document pass/fail thresholds`
 - [x] `security(audit): produce final ownership/auth/key-flow verification report`
 - [x] `release(evidence): finalize launch evidence pack (public docs + operator docs + checklists)`
@@ -338,6 +338,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Added post-MVP admin-panel milestone plan (`docs/planning/post-mvp-admin-panel-milestones.md`) covering entitlements, grants/overrides, security controls, visibility, and rollout hardening.
 - 2026-03-21: Added post-MVP billing rollout milestones (`docs/planning/post-mvp-billing-milestones.md`) for annual cycle support and phased fiat/crypto rail integration.
 - 2026-03-21: Added post-MVP exchange rollout milestones (`docs/planning/post-mvp-exchange-rollout-milestones.md`) for adapter hardening, staged enablement, and multi-exchange guardrails.
+- 2026-03-21: Attached live-source metrics evidence to SLO baseline via `docs/operations/v1-slo-catalog.md` and `docs/operations/v1-load-baseline-2026-03-21.md`; remaining SLO blocker is production observation window.
 
 
 
