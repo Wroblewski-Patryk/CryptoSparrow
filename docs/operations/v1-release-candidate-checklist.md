@@ -20,6 +20,9 @@
 - `pnpm --filter client exec vitest run src/features/logs/components/AuditTrailView.test.tsx src/features/bots/components/BotsManagement.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx` passed (`3` files, `8` tests).
 - API runtime endpoint coverage confirmed via `health-readiness`, `metrics`, and `alerts` test suites.
 - Worker runtime endpoint coverage confirmed via `workers-health-readiness` test suite.
+- `pnpm --filter server test -- src/modules/auth/auth.jwt.test.ts src/modules/profile/apiKey/apiKey.e2e.test.ts src/modules/engine/preTrade.e2e.test.ts` passed (`3` files, `11` tests).
+- `pnpm --filter client exec vitest run src/features/bots/components/BotsManagement.test.tsx` passed (`1` file, `5` tests).
+- Ownership audit reviewed: `docs/security/security-ownership-audit.md` (baseline review date `2026-03-16`).
 
 ## Runtime and Operations Gates
 - [x] API endpoints healthy:
@@ -34,11 +37,11 @@
 - [ ] Incident contacts and escalation chain confirmed.
 
 ## Security and Risk Gates
-- [ ] JWT rotation window policy verified.
-- [ ] API-key lifecycle policy verified (create/rotate/revoke).
-- [ ] Ownership enforcement audit reviewed.
-- [ ] LIVE mode requires explicit user confirmations.
-- [ ] Kill-switch and emergency stop paths verified.
+- [x] JWT rotation window policy verified.
+- [x] API-key lifecycle policy verified (create/rotate/revoke).
+- [x] Ownership enforcement audit reviewed.
+- [x] LIVE mode requires explicit user confirmations.
+- [x] Kill-switch and emergency stop paths verified.
 
 ## Data and Migration Gates
 - [ ] Prisma migrations applied to target environment.
