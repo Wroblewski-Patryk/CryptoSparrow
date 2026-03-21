@@ -5,6 +5,7 @@ import { subscribeMarketStreamEvents } from '../market-stream/marketStreamFanout
 import { analyzePreTrade } from './preTrade.service';
 import { orchestrateRuntimeSignal } from './executionOrchestrator.service';
 import { runtimePositionAutomationService } from './runtimePositionAutomation.service';
+import { upsertRuntimeTicker } from './runtimeTickerStore';
 
 type ActiveBot = {
   id: string;
@@ -125,8 +126,17 @@ export class RuntimeSignalLoop {
     this.unsubscribe = null;
   }
 
+  async processTickerEvent(event: StreamTickerEvent) {
+    await this.handleTickerEvent(event);
+  }
+
   private async handleEvent(event: MarketStreamEvent) {
     if (event.type !== 'ticker') return;
+    await this.handleTickerEvent(event);
+  }
+
+  private async handleTickerEvent(event: StreamTickerEvent) {
+    upsertRuntimeTicker(event);
     await this.deps.processPositionAutomation(event);
     const direction = toDirection(event);
     if (!direction) return;
