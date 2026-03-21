@@ -23,6 +23,7 @@
 - `pnpm --filter server test -- src/modules/auth/auth.jwt.test.ts src/modules/profile/apiKey/apiKey.e2e.test.ts src/modules/engine/preTrade.e2e.test.ts` passed (`3` files, `11` tests).
 - `pnpm --filter client exec vitest run src/features/bots/components/BotsManagement.test.tsx` passed (`1` file, `5` tests).
 - Ownership audit reviewed: `docs/security/security-ownership-audit.md` (baseline review date `2026-03-16`).
+- Final security verification: `docs/security/security-audit-verification-2026-03-21.md` (`9` files, `34` tests, all green).
 - `pnpm --filter server exec prisma migrate deploy` passed (`16` migrations found, no pending migrations).
 - `pnpm --filter server test -- src/modules/orders/orders-positions.e2e.test.ts src/modules/logs/logs.e2e.test.ts src/modules/pagination/pagination-query.test.ts` passed (`3` files, `8` tests).
 - Documentation reviewed: `docs/operations/user-guide.md`, `docs/operations/operator-handbook.md`.
