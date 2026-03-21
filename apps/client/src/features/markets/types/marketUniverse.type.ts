@@ -1,8 +1,14 @@
+export type MarketFilterRules = {
+  minQuoteVolumeEnabled: boolean;
+  minQuoteVolume24h?: number;
+};
+
 export type MarketUniverse = {
   id: string;
   name: string;
   marketType: 'FUTURES' | 'SPOT';
   baseCurrency: string;
+  filterRules?: MarketFilterRules | null;
   whitelist: string[];
   blacklist: string[];
   createdAt?: string;
@@ -13,6 +19,7 @@ export type CreateMarketUniverseInput = {
   name: string;
   marketType: 'FUTURES' | 'SPOT';
   baseCurrency: string;
+  filterRules?: MarketFilterRules;
   whitelist: string[];
   blacklist: string[];
 };

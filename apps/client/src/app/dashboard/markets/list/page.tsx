@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { PageTitle } from 'apps/client/src/ui/layout/dashboard/PageTitle';
-import { EmptyState, ErrorState, LoadingState, SuccessState } from 'apps/client/src/ui/components/ViewState';
+import { EmptyState, ErrorState, LoadingState } from 'apps/client/src/ui/components/ViewState';
 import MarketUniversesTable from 'apps/client/src/features/markets/components/MarketUniversesTable';
 import { listMarketUniverses } from 'apps/client/src/features/markets/services/markets.service';
 import { MarketUniverse } from 'apps/client/src/features/markets/types/marketUniverse.type';
@@ -62,13 +62,7 @@ export default function MarketsListPage() {
         <EmptyState title='Brak grup rynkow' description='Dodaj pierwsza grupe, aby wykorzystac ja w botach i backtestach.' />
       ) : null}
       {!loading && !error && rows.length > 0 ? (
-        <div className='space-y-3'>
-          <SuccessState
-            title='Grupy rynkow aktywne'
-            description={`Skonfigurowano ${rows.length} ${rows.length === 1 ? 'grupe' : 'grup'} rynkow.`}
-          />
-          <MarketUniversesTable rows={rows} onDeleted={(id) => setRows((prev) => prev.filter((item) => item.id !== id))} />
-        </div>
+        <MarketUniversesTable rows={rows} onDeleted={(id) => setRows((prev) => prev.filter((item) => item.id !== id))} />
       ) : null}
     </section>
   );

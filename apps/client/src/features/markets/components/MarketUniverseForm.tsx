@@ -30,6 +30,25 @@ const formatVolumeLabel = (value: number) => {
   return `vol 24h: ${value.toFixed(0)}`;
 };
 
+const resolveSavedMinVolume = (initial?: MarketUniverse | null) => {
+  const rules = (initial?.filterRules ?? null) as
+    | { minQuoteVolume24h?: number; minVolume24h?: number }
+    | null;
+  if (!rules) return 0;
+  if (typeof rules.minQuoteVolume24h === 'number') return rules.minQuoteVolume24h;
+  if (typeof rules.minVolume24h === 'number') return rules.minVolume24h;
+  return 0;
+};
+
+const resolveSavedVolumeEnabled = (initial?: MarketUniverse | null) => {
+  const rules = (initial?.filterRules ?? null) as
+    | { minQuoteVolumeEnabled?: boolean; minVolume24h?: number; minQuoteVolume24h?: number }
+    | null;
+  if (!rules) return false;
+  if (typeof rules.minQuoteVolumeEnabled === 'boolean') return rules.minQuoteVolumeEnabled;
+  return typeof rules.minQuoteVolume24h === 'number' || typeof rules.minVolume24h === 'number';
+};
+
 type MarketUniverseFormProps = {
   mode: 'create' | 'edit';
   initial?: MarketUniverse | null;
@@ -58,7 +77,8 @@ export default function MarketUniverseForm({
   const [whitelistSymbols, setWhitelistSymbols] = useState<string[]>(initial?.whitelist ?? []);
   const [blacklistSymbols, setBlacklistSymbols] = useState<string[]>(initial?.blacklist ?? []);
   const [previewQuery, setPreviewQuery] = useState('');
-  const [minQuoteVolume, setMinQuoteVolume] = useState(0);
+  const [minQuoteVolumeEnabled, setMinQuoteVolumeEnabled] = useState(resolveSavedVolumeEnabled(initial));
+  const [minQuoteVolume, setMinQuoteVolume] = useState(resolveSavedMinVolume(initial));
 
   useEffect(() => {
     if (!initial) return;
@@ -68,6 +88,8 @@ export default function MarketUniverseForm({
     setSelectedMarketSymbols(initial.whitelist);
     setWhitelistSymbols(initial.whitelist);
     setBlacklistSymbols(initial.blacklist);
+    setMinQuoteVolumeEnabled(resolveSavedVolumeEnabled(initial));
+    setMinQuoteVolume(resolveSavedMinVolume(initial));
   }, [initial]);
 
   const loadCatalog = useCallback(
@@ -113,8 +135,11 @@ export default function MarketUniverseForm({
   }, [maxQuoteVolume, minQuoteVolume]);
 
   const filteredCatalogMarkets = useMemo(
-    () => catalogMarkets.filter((market) => (market.quoteVolume24h ?? 0) >= minQuoteVolume),
-    [catalogMarkets, minQuoteVolume]
+    () =>
+      catalogMarkets.filter((market) =>
+        minQuoteVolumeEnabled ? (market.quoteVolume24h ?? 0) >= minQuoteVolume : true
+      ),
+    [catalogMarkets, minQuoteVolume, minQuoteVolumeEnabled]
   );
 
   const marketOptions = useMemo<MultiSelectOption[]>(
@@ -190,6 +215,10 @@ export default function MarketUniverseForm({
       name: name.trim(),
       marketType,
       baseCurrency: baseCurrency.trim().toUpperCase(),
+      filterRules: {
+        minQuoteVolumeEnabled,
+        ...(minQuoteVolumeEnabled ? { minQuoteVolume24h: minQuoteVolume } : {}),
+      },
       whitelist: payloadWhitelist,
       blacklist: payloadBlacklist,
     });
@@ -256,19 +285,36 @@ export default function MarketUniverseForm({
             <div className='mt-4 rounded-xl border border-base-300 bg-base-200 p-3'>
               <div className='grid gap-3 lg:grid-cols-2'>
                 <FieldWrapper label='Filtr: minimalny wolumen quote 24h'>
-                  <input
-                    type='range'
-                    min={0}
-                    max={maxQuoteVolume}
-                    step={sliderStep}
-                    className='range range-primary range-sm'
-                    value={minQuoteVolume}
-                    onChange={(event) => setMinQuoteVolume(Number.parseInt(event.target.value, 10) || 0)}
-                  />
+                  <div className='space-y-2'>
+                    <label className='label cursor-pointer justify-start gap-3 p-0'>
+                      <input
+                        type='checkbox'
+                        className='toggle toggle-primary toggle-sm'
+                        checked={minQuoteVolumeEnabled}
+                        onChange={(event) => setMinQuoteVolumeEnabled(event.target.checked)}
+                      />
+                      <span className='label-text'>
+                        {minQuoteVolumeEnabled ? 'Filtr wlaczony' : 'Filtr wylaczony'}
+                      </span>
+                    </label>
+                    <input
+                      type='range'
+                      min={0}
+                      max={maxQuoteVolume}
+                      step={sliderStep}
+                      className='range range-primary range-sm'
+                      value={minQuoteVolume}
+                      onChange={(event) => setMinQuoteVolume(Number.parseInt(event.target.value, 10) || 0)}
+                      disabled={!minQuoteVolumeEnabled}
+                    />
+                  </div>
                 </FieldWrapper>
                 <div className='rounded-box border border-base-300 bg-base-100 px-3 py-2 text-sm'>
                   <p>
-                    Min wolumen: <span className='font-mono'>{formatVolumeLabel(minQuoteVolume)}</span>
+                    Min wolumen:{' '}
+                    <span className='font-mono'>
+                      {minQuoteVolumeEnabled ? formatVolumeLabel(minQuoteVolume) : 'OFF'}
+                    </span>
                   </p>
                   <p>
                     Max wolumen: <span className='font-mono'>{formatVolumeLabel(maxQuoteVolume)}</span>
