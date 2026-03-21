@@ -7,6 +7,7 @@ const apiKeyRouter = Router();
 apiKeyRouter.route('/')
   .get(controller.list)
   .post(controller.create);
+apiKeyRouter.post('/test', controller.testConnection);
 
 apiKeyRouter.route('/:id')
   .patch(controller.update) 

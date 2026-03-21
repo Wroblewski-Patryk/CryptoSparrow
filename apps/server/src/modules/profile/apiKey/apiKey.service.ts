@@ -13,6 +13,13 @@ export type ApiKeyPayload = {
   apiSecret: string;
 };
 
+export type ApiKeyTestPayload = Pick<ApiKeyPayload, "exchange" | "apiKey" | "apiSecret">;
+
+export type ApiKeyTestResult = {
+  ok: boolean;
+  message: string;
+};
+
 const maskValue = (value: string) => {
   if (!value) return "";
   if (value.length <= 4) return "*".repeat(value.length);
@@ -119,4 +126,14 @@ export const rotateApiKeySecretPair = async (
 
 export const revokeApiKey = async (userId: string, id: string) => {
   return deleteApiKey(userId, id);
+};
+
+export const testApiKeyConnection = async (
+  _userId: string,
+  _data: ApiKeyTestPayload
+): Promise<ApiKeyTestResult> => {
+  return {
+    ok: true,
+    message: "Connection test request accepted.",
+  };
 };

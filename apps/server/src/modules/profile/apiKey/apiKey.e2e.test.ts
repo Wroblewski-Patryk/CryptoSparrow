@@ -38,6 +38,17 @@ describe("API Keys security contract", () => {
     expect(res.body.error.message).toBe("Missing token");
   });
 
+  it("requires auth for api key connection test endpoint", async () => {
+    const res = await request(app).post("/dashboard/profile/apiKeys/test").send({
+      exchange: "BINANCE",
+      apiKey: "PUBLICKEY12345",
+      apiSecret: "SECRETKEY12345",
+    });
+
+    expect(res.status).toBe(401);
+    expect(res.body.error.message).toBe("Missing token");
+  });
+
   it("stores encrypted-only values and returns masked apiKey", async () => {
     const agent = await registerAndLogin("apikey-security@example.com");
     const payload = {
@@ -125,6 +136,25 @@ describe("API Keys security contract", () => {
     const listRes = await agent.get("/dashboard/profile/apiKeys");
     expect(listRes.status).toBe(200);
     expect(listRes.body).toHaveLength(0);
+  });
+
+  it("tests key connection without persisting secrets", async () => {
+    const agent = await registerAndLogin("apikey-test-connection@example.com");
+
+    const testRes = await agent.post("/dashboard/profile/apiKeys/test").send({
+      exchange: "BINANCE",
+      apiKey: "TESTCONNECTIONKEY123",
+      apiSecret: "TESTCONNECTIONSECRET123",
+    });
+
+    expect(testRes.status).toBe(200);
+    expect(testRes.body).toEqual({
+      ok: true,
+      message: "Connection test request accepted.",
+    });
+
+    const dbKeys = await prisma.apiKey.findMany();
+    expect(dbKeys).toHaveLength(0);
   });
 
   it("enforces ownership on rotate and revoke actions", async () => {

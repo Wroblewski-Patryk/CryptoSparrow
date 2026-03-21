@@ -9,7 +9,6 @@ Operational queue for one-task execution runs.
 ## NOW
 
 ## NEXT
-- [ ] `feat(api-key-test-api): add POST /dashboard/profile/apiKeys/test route (auth + validation + no persistence)`
 - [ ] `security(api-key-test): add rate-limit + audit-safe logging for test endpoint`
 - [ ] `feat(api-key-test-binance): implement Binance permission probe and normalized error mapping contract`
 - [ ] `test(api-key-test): add server e2e for invalid credentials, permission mismatch, and success path`
@@ -42,6 +41,7 @@ Operational queue for one-task execution runs.
 - [x] `test(auth-client): add/adjust regression tests for failed login, successful login, and post-login redirect behavior`
 - [x] `qa(auth-smoke): run manual auth smoke (fail login, success login, logout redirect, protected route redirect) and capture evidence`
 - [x] `fix(ui-api-key-test): replace random result in ApiKeyForm with real request state machine (idle/loading/success/error)`
+- [x] `feat(api-key-test-api): add POST /dashboard/profile/apiKeys/test route (auth + validation + no persistence)`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

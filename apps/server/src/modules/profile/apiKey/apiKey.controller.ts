@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import * as apiKeyService from './apiKey.service';
-import { apiKeyRotateSchema, apiKeySchema } from './apiKey.types';
+import { apiKeyRotateSchema, apiKeySchema, apiKeyTestSchema } from './apiKey.types';
 import { sendValidationError } from '../../../utils/formatZodError';
 import { sendError } from '../../../utils/apiError';
 
@@ -74,4 +74,18 @@ export const revoke = async (req: Request, res: Response) => {
   if (!revoked) return sendError(res, 404, 'Not found');
 
   return res.status(204).end();
+};
+
+export const testConnection = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    apiKeyTestSchema.parse(req.body);
+  } catch (error) {
+    return sendValidationError(res, error);
+  }
+
+  const result = await apiKeyService.testApiKeyConnection(userId, req.body);
+  return res.status(200).json(result);
 };
