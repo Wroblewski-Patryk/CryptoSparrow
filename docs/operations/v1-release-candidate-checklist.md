@@ -1,17 +1,23 @@
 # V1 Release Candidate Checklist
 
 ## Build and Test Gates
-- [ ] `pnpm --filter server build` passes.
-- [ ] `pnpm --filter client build` passes.
-- [ ] Critical server tests pass:
+- [x] `pnpm --filter server build` passes.
+- [x] `pnpm --filter client build` passes.
+- [x] Critical server tests pass:
   - auth regression,
   - exchange retry path,
   - health/readiness,
   - metrics/alerts.
-- [ ] Critical client tests pass:
+- [x] Critical client tests pass:
   - logs decision trace,
   - bots LIVE confirmations,
   - shell/accessibility smoke.
+
+### Latest Verification (2026-03-21)
+- `pnpm --filter server build` passed.
+- `pnpm --filter client build` passed.
+- `pnpm --filter server test -- src/modules/auth/auth.e2e.test.ts src/modules/exchange/liveOrderAdapter.service.test.ts src/router/health-readiness.test.ts src/router/workers-health-readiness.test.ts src/router/metrics.test.ts src/router/alerts.test.ts` passed (`6` files, `20` tests).
+- `pnpm --filter client exec vitest run src/features/logs/components/AuditTrailView.test.tsx src/features/bots/components/BotsManagement.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx` passed (`3` files, `8` tests).
 
 ## Runtime and Operations Gates
 - [ ] API endpoints healthy:
