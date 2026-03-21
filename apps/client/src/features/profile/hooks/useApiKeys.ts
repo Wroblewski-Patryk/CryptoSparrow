@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { fetchApiKeys, addApiKey, editApiKey, deleteApiKey } from "../services/apiKeys.service";
 import { ApiKey } from "../types/apiKey.type";
+import { handleError } from "../../../lib/handleError";
 
 const getErrorMessage = (err: unknown, fallback: string) => {
-  if (err instanceof Error) return err.message;
-  return fallback;
+  const parsed = handleError(err);
+  return parsed && parsed !== "Wystapil blad" ? parsed : fallback;
 };
 
 export function useApiKeys() {
@@ -34,8 +35,8 @@ export function useApiKeys() {
       await addApiKey(payload);
       await refresh();
       toast.success("Klucz zostal dodany!");
-    } catch {
-      toast.error("Nie udalo sie dodac klucza.");
+    } catch (err: unknown) {
+      toast.error("Nie udalo sie dodac klucza.", { description: getErrorMessage(err, "Blad zapisu klucza API.") });
     }
   };
 
@@ -44,8 +45,10 @@ export function useApiKeys() {
       await editApiKey(id, payload);
       await refresh();
       toast.success("Klucz zostal zaktualizowany!");
-    } catch {
-      toast.error("Nie udalo sie zaktualizowac klucza.");
+    } catch (err: unknown) {
+      toast.error("Nie udalo sie zaktualizowac klucza.", {
+        description: getErrorMessage(err, "Blad aktualizacji klucza API."),
+      });
     }
   };
 
@@ -54,8 +57,10 @@ export function useApiKeys() {
       await deleteApiKey(id);
       await refresh();
       toast.success("Klucz zostal usuniety!");
-    } catch {
-      toast.error("Nie udalo sie usunac klucza.");
+    } catch (err: unknown) {
+      toast.error("Nie udalo sie usunac klucza.", {
+        description: getErrorMessage(err, "Blad usuwania klucza API."),
+      });
     }
   };
 

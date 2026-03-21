@@ -1,4 +1,7 @@
 import crypto from "crypto";
+import { loadEnv } from "../config/loadEnv";
+
+loadEnv();
 
 const CIPHER_VERSION_PREFIX = "v";
 const CIPHER_ALGORITHM = "gcm";

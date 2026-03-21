@@ -1,3 +1,7 @@
+import { loadEnv } from "./loadEnv";
+
+loadEnv();
+
 const defaultServerPort = 3001;
 const defaultClientPort = 3002;
 

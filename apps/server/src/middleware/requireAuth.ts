@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { sendError } from '../utils/apiError';
 import { verifyAuthToken } from '../modules/auth/auth.jwt';
+import { prisma } from '../prisma/client';
 
-export function requireAuth(req: Request, res: Response, next: NextFunction) {
+export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   const token = req.cookies.token;
   if (!token) return sendError(res, 401, 'Missing token');
 
@@ -18,6 +19,15 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
       email: payload.email,
       role: payload.role,
     };
+
+    const userExists = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true },
+    });
+
+    if (!userExists) {
+      return sendError(res, 401, 'Session expired. Please sign in again.');
+    }
 
     next();
   } catch {
