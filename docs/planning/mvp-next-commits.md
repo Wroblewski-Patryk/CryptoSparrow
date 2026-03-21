@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `test(auth-client): add/adjust regression tests for failed login, successful login, and post-login redirect behavior`
 - [ ] `qa(auth-smoke): run manual auth smoke (fail login, success login, logout redirect, protected route redirect) and capture evidence`
 
 ## NEXT
@@ -42,6 +41,7 @@ Operational queue for one-task execution runs.
 - [x] `fix(auth-build): resolve client build blockers in login/auth files (eslint apostrophe + hooks deps) so pnpm --filter client build is green`
 - [x] `fix(auth-ux): validate and harden failed-login error UX (inline + toast) without false positive success styling`
 - [x] `fix(auth-session-warning): remove false session-expired warnings on public routes and keep warning only for protected/session-expired contexts`
+- [x] `test(auth-client): add/adjust regression tests for failed login, successful login, and post-login redirect behavior`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
