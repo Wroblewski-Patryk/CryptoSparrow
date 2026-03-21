@@ -73,7 +73,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [ ] `test(drill): execute incident drills in production-like environment and publish outcomes`
 - [x] `security(audit): complete final auth/ownership/key audit sign-off`
 - [x] `test(load): publish load/performance evidence against target thresholds`
-- [ ] `docs(public): finalize user/operator public documentation set for launch`
+- [x] `docs(public): finalize user/operator public documentation set for launch`
 - [ ] `release(review): complete launch retrospective and produce V1.1 prioritized backlog`
 ## V1.0 Exit Criteria
 - [ ] SLOs defined and observed in production.
@@ -169,5 +169,6 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-21: Added `v1-slo-catalog.md` defining MVP/V1 SLO targets and exact source metrics for availability, error budget, latency, worker readiness, queue lag, and live order stability.
 - 2026-03-21: Executed production-like load baseline and published threshold evidence in `docs/operations/v1-load-baseline-2026-03-21.md` (error rate `0`, throughput `1345.57 req/s`, p95 `37ms`, p99 `72ms`).
 - 2026-03-21: Published final auth/ownership/key-flow verification report in `docs/security/security-audit-verification-2026-03-21.md` (focused regression suite `9` files, `34` tests, all green).
+- 2026-03-21: Compiled V1 launch evidence pack (`docs/operations/v1-launch-evidence-pack.md`) linking public docs, operator docs, security artifacts, runtime/load evidence, and remaining production-dependent gates.
 
 - 2026-03-21: Added explicit Exit Evidence Workpack to operationalize remaining V1 production criteria.

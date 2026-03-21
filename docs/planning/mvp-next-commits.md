@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `release(evidence): compile public docs pack and launch-readiness evidence checklist`
 
 ## NEXT
 - [ ] `ops(cutover): define local cutover checklist from legacy bot to new runtime`
@@ -27,6 +26,7 @@ Operational queue for one-task execution runs.
 - [x] `ops(slo): define MVP/V1 SLO set and add measurable targets + source metrics`
 - [x] `ops(evidence): run production-like load baseline and attach results to v1 exit criteria`
 - [x] `security(audit): run ownership/auth/key-flow verification pass and publish evidence summary`
+- [x] `release(evidence): compile public docs pack and launch-readiness evidence checklist`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

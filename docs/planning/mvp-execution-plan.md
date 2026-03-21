@@ -155,7 +155,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `ops(slo): define SLOs and attach live metrics evidence`
 - [x] `ops(evidence): execute production-like load baseline and document pass/fail thresholds`
 - [x] `security(audit): produce final ownership/auth/key-flow verification report`
-- [ ] `release(evidence): finalize launch evidence pack (public docs + operator docs + checklists)`
+- [x] `release(evidence): finalize launch evidence pack (public docs + operator docs + checklists)`
 - [ ] `release(review): complete 7-day launch review and V1.1 backlog cut`
 - [ ] `post-mvp(admin): plan owner admin panel milestones for pricing/subscriptions/settings`
 - [ ] `post-mvp(billing): plan monthly/annual + fiat/crypto billing rollout milestones`
@@ -328,6 +328,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Added MVP/V1 SLO catalog (`docs/operations/v1-slo-catalog.md`) with measurable objectives and direct mapping to live source metrics (`/metrics`, `/alerts`, health/readiness probes).
 - 2026-03-21: Ran production-like API load baseline and documented thresholds/evidence in `docs/operations/v1-load-baseline-2026-03-21.md` with raw artifact export.
 - 2026-03-21: Published final security verification report (`docs/security/security-audit-verification-2026-03-21.md`) after focused auth/ownership/api-key/guardrail regression run (`9` files, `34` tests).
+- 2026-03-21: Compiled launch evidence pack (`docs/operations/v1-launch-evidence-pack.md`) aggregating public/operator/security/load/RC artifacts and current external-gate blockers.
 
 
 

@@ -60,6 +60,7 @@
 - [x] Operator handbook reviewed (`docs/operations/operator-handbook.md`).
 - [x] Design/accessibility/localization QA docs reviewed.
 - [x] Release notes and migration notes drafted.
+- [x] Launch evidence pack compiled (`docs/operations/v1-launch-evidence-pack.md`).
 
 ## RC Sign-Off
 - [ ] Engineering sign-off.
