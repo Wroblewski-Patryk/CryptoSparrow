@@ -41,21 +41,59 @@ Expected:
 Run in project root:
 
 ```bash
-pnpm --filter server dev
+pnpm run backend/dev
 ```
 
 Backend URL:
 - `http://localhost:3001`
 
+What this command does:
+- checks Postgres/Redis availability
+- if needed, tries `docker compose up -d postgres redis`
+- runs `prisma generate` and `prisma migrate deploy`
+- starts server watch mode
+
 ### 5) Start frontend (terminal C)
 Run in project root:
 
 ```bash
-pnpm --filter client dev
+pnpm run frontend/dev
 ```
 
 Frontend URL:
 - `http://localhost:3002`
+
+### 6) Start runtime workers (optional but needed for auto-trading flows)
+Run in project root:
+
+```bash
+pnpm run workers/dev
+```
+
+This starts:
+- execution worker
+- market-stream worker
+
+If you only test CRUD/UI, you can skip workers.
+
+## Minimal number of terminals (VS Code)
+- API + UI only: 2 terminals
+  - `pnpm run backend/dev`
+  - `pnpm run frontend/dev`
+- Full runtime (signals/orders from stream): 3 terminals
+  - `pnpm run backend/dev`
+  - `pnpm run frontend/dev`
+  - `pnpm run workers/dev`
+
+## Troubleshooting (Windows + Prisma)
+- If you see `EPERM ... query_engine-windows.dll.node`, close all running Node processes (server/workers/frontend) and run:
+```bash
+pnpm run backend/dev
+```
+- If you need seed after that:
+```bash
+pnpm --dir apps/server exec prisma db seed
+```
 
 ## Browser vs Terminal
 - In terminal you run services (`docker`, `server`, `client`).
