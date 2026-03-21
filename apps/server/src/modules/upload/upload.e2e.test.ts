@@ -66,6 +66,21 @@ describe('Avatar upload security contract', () => {
     expect(res.body.error.message).toBe('Unsupported file type');
   });
 
+  it('rejects oversized avatar payload above 2MB', async () => {
+    const agent = await registerAndLogin('upload-user-too-large@example.com');
+    const oversizedBuffer = Buffer.alloc(2 * 1024 * 1024 + 1, 1);
+
+    const res = await agent
+      .post('/upload/avatar')
+      .attach('avatar', oversizedBuffer, {
+        filename: 'avatar.png',
+        contentType: 'image/png',
+      });
+
+    expect(res.status).toBe(413);
+    expect(res.body.error.message).toBe('Avatar file too large (max 2MB)');
+  });
+
   it('uploads supported image when authenticated', async () => {
     const agent = await registerAndLogin('upload-user-ok@example.com');
     const pngBuffer = await sharp({

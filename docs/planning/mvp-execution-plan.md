@@ -295,3 +295,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Re-ran MVP release checklist with fresh build/test/migration evidence (server/client builds green, full server/client tests green, migrations verified as up-to-date).
 
 - 2026-03-21: Replanned queue around runtime-replacement gate and immediate roadmap gaps (stream fan-out, runtime loop, managed position lifecycle).
+- 2026-03-21: Re-verified upload endpoint security contract by adding explicit >2MB avatar regression test and confirming auth/MIME/size guard responses in upload e2e suite.
