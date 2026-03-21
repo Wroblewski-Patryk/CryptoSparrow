@@ -129,10 +129,12 @@ export default function MarketUniverseForm({
   );
 
   useEffect(() => {
+    if (catalogLoading) return;
+    if (maxQuoteVolume <= 0) return;
     if (minQuoteVolume > maxQuoteVolume) {
       setMinQuoteVolume(maxQuoteVolume);
     }
-  }, [maxQuoteVolume, minQuoteVolume]);
+  }, [catalogLoading, maxQuoteVolume, minQuoteVolume]);
 
   const filteredCatalogMarkets = useMemo(
     () =>
