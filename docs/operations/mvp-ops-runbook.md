@@ -152,3 +152,6 @@ Capture every deploy/recovery incident using:
 - Commit(s) involved
 - Preventive follow-up task
 
+## 8. Exchange API-Key Diagnostics
+For API-key onboarding and Binance permission troubleshooting, use:
+- `docs/operations/binance-api-key-onboarding-runbook.md`

@@ -176,7 +176,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(positions-sync): use verified stored key to fetch real open positions snapshot from Binance and expose read endpoint`
 - [x] `feat(ui-positions-live-source): add source switch/state in positions view (runtime snapshot vs exchange-live snapshot) and last-sync timestamp`
 - [x] `test(e2e): add profile/api-key and positions contract tests covering invalid credentials, permission mismatch, and successful live fetch`
-- [ ] `docs(runbook): document secure API-key onboarding and troubleshooting flow for Binance connection/permissions failures`
+- [x] `docs(runbook): document secure API-key onboarding and troubleshooting flow for Binance connection/permissions failures`
 
 ## Progress Log
 - 2026-03-15: Initialized MVP execution file and commit rules.
@@ -371,6 +371,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Added `GET /dashboard/positions/exchange-snapshot` with Binance open-positions fetch via decrypted stored key, normalized response contract, and e2e coverage for auth/no-key/success paths.
 - 2026-03-21: Extended positions dashboard UI with source switch (`runtime` vs `exchange live snapshot`), exchange snapshot mapping, symbol filtering, and last-sync timestamp rendering.
 - 2026-03-21: Added positions live-source regression coverage: UI tests for source switch + snapshot failure state and server e2e for exchange snapshot failure contract (`502`).
+- 2026-03-21: Added Binance API-key onboarding/troubleshooting runbook with permission/code mapping and linked it from README and MVP ops runbook.
 
 
 

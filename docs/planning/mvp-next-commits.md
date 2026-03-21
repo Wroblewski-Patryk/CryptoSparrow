@@ -9,7 +9,6 @@ Operational queue for one-task execution runs.
 ## NOW
 
 ## NEXT
-- [ ] `docs(runbook): add API-key onboarding + Binance permission troubleshooting guide`
 
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
@@ -42,6 +41,7 @@ Operational queue for one-task execution runs.
 - [x] `feat(positions-sync-api): add endpoint to fetch current open positions from Binance using verified stored credentials`
 - [x] `feat(ui-positions-live-source): add live-exchange snapshot mode with last-sync + error state`
 - [x] `test(positions-live-source): add e2e/ui coverage for snapshot fetch and failure handling`
+- [x] `docs(runbook): add API-key onboarding + Binance permission troubleshooting guide`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

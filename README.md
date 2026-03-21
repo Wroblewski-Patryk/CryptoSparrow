@@ -113,3 +113,4 @@ Useful overrides:
 - Added V1 go-live smoke pack commands and scope: `docs/operations/v1-go-live-smoke-pack.md`.
 - Added spot-support groundwork on bots via `marketType` (`FUTURES`/`SPOT`) schema/API field.
 - Added `marketType` selection in dashboard bots create/edit flow.
+- Added Binance API-key onboarding and troubleshooting runbook: `docs/operations/binance-api-key-onboarding-runbook.md`.
