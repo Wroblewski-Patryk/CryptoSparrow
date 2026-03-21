@@ -147,7 +147,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] Runtime replacement gate for legacy local-only bot flow is validated with evidence.
 
 ## Phase 8 - Operational Evidence and Full-App Readiness
-- [ ] `ops(cutover): define local cutover checklist from legacy bot to new runtime`
+- [x] `ops(cutover): define local cutover checklist from legacy bot to new runtime`
 - [ ] `ops(cutover): define rollback checklist to legacy runtime`
 - [ ] `test(cutover): execute local replacement dry-run with realistic bot scenario`
 - [x] `docs(sync): reconcile roadmap immediate gaps with actual runtime status and evidence links`
@@ -329,6 +329,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Ran production-like API load baseline and documented thresholds/evidence in `docs/operations/v1-load-baseline-2026-03-21.md` with raw artifact export.
 - 2026-03-21: Published final security verification report (`docs/security/security-audit-verification-2026-03-21.md`) after focused auth/ownership/api-key/guardrail regression run (`9` files, `34` tests).
 - 2026-03-21: Compiled launch evidence pack (`docs/operations/v1-launch-evidence-pack.md`) aggregating public/operator/security/load/RC artifacts and current external-gate blockers.
+- 2026-03-21: Added local legacy-to-new-runtime cutover checklist (`docs/operations/v1-local-cutover-checklist.md`) with prechecks, safe enable order, validation, and abort criteria.
 
 
 
