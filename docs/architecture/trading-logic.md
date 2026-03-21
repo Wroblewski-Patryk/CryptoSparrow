@@ -5,7 +5,8 @@
 - Orders include read and write-side lifecycle actions (`open`/`cancel`/`close`) with risk guards.
 - Exchange connector services and runtime execution orchestrator are available with smoke-tested signal -> order -> position flow.
 - Dashboard has a live market bar UI ready for SSE market stream events.
-- Remaining runtime gap is continuous stream-driven automation and server SSE broadcast fan-out wiring.
+- Server-owned SSE fan-out is wired and runtime signal automation is active in worker execution flow.
+- Runtime management covers SL/TP/trailing/DCA automation and periodic market/position scan re-evaluation.
 
 ## Strategy Builder Requirements (MVP)
 - Rule-based builder (list of conditions).

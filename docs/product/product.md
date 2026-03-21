@@ -47,15 +47,16 @@ Primary target is advanced users who already understand trading concepts and can
 - Orders API with read and write-side actions (`open`/`cancel`/`close`) protected by risk acknowledgments.
 - Runtime execution orchestrator for `LONG`/`SHORT`/`EXIT` lifecycle (signal -> order -> position).
 - Binance market-stream worker with normalized ticker/candle events and MVP SSE transport contract.
+- Server-owned market-stream SSE fan-out endpoint (`/dashboard/market-stream/events`) wired from runtime worker events.
+- Continuous runtime signal loop (stream ticker -> pre-trade -> signal -> execution orchestration).
+- Runtime position automation for SL/TP/trailing/DCA with periodic scan loop support.
 - Dashboard live market bar UI (SSE client) with stream health, price delta, and candle freshness indicators.
 - Backtest report visuals with equity overlays in summary and modal views.
 - API structure with validation, ownership checks, and rate limiting.
 
-## Current Limitations (As of 2026-03-19)
-- Dashboard market stream fan-out is contract-defined (SSE) and UI-ready, but server-side SSE broadcast endpoint still needs full runtime wiring.
+## Current Limitations (As of 2026-03-21)
 - No full user-facing manual trade panel in dashboard for rich order ticket workflows (current write actions are API-first).
-- Binance WebSocket ingest currently normalizes and logs events; direct stream-to-signal runtime automation remains staged.
-- Runtime orchestration is smoke-tested end-to-end at service level, but production evidence for full worker/queue-driven live loop is still pending.
+- Production launch evidence for full 24/7 SLO/incident/load gates remains tracked in V1 release tasks (post-MVP launch validation).
 
 ## MVP Scope (Target for First Release)
 - Strategy builder capable of expressing advanced strategies (indicators, logical conditions, risk rules).

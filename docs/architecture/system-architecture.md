@@ -37,12 +37,14 @@
 - API: REST endpoints for command/query flows + SSE for server-to-client live stream fan-out.
 - Engine: trading pipeline, queues, and execution.
 
-## Current Runtime Reality (As of 2026-03-19)
+## Current Runtime Reality (As of 2026-03-21)
 - Dashboard widgets are populated via REST reads (orders/positions snapshots).
 - Dashboard includes live market bar UI wired for SSE consumption and stream-health signaling.
 - Exchange connector and live-order adapter exist at service level.
 - Binance Futures/Spot WebSocket ingest worker exists with normalized events.
-- Full server-owned SSE fan-out and stream-to-signal runtime automation are still staged.
+- Server-owned SSE fan-out is active via `/dashboard/market-stream/events`.
+- Runtime signal automation is active in worker flow (stream ticker -> signal -> order -> position).
+- Runtime position management automation (SL/TP/trailing/DCA) runs with periodic scan support.
 
 ## Market Data Transport Strategy
 - MVP target: exchange prices and live candles via WebSocket streams.

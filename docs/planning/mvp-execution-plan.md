@@ -306,3 +306,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Added runtime position automation manager for open-position SL/TP/trailing/DCA handling on stream ticker updates, including DCA persistence and auto-close orchestration paths.
 - 2026-03-21: Added runtime scan loop with configurable interval/symbol cap/env-filter to periodically reprocess latest ticker snapshots for open-position and signal automation flows.
 - 2026-03-21: Expanded runtime flow e2e coverage for strategy -> backtest -> LIVE bot runtime path (ticker LONG open + EXIT close) and aligned test contracts with current strategies/backtests API routes.
+- 2026-03-21: Synced product/architecture/modules/trading docs to runtime replacement reality (server SSE fan-out + runtime signal loop + position automation), and removed stale staged-gap wording from current limitations.

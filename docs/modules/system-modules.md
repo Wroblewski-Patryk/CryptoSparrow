@@ -13,12 +13,12 @@
 - exchange. CCXT connector and retrying live-order adapter services.
 - market-data. OHLCV ingest/cache service abstractions.
 - market-stream. Binance WebSocket ingest worker with normalized ticker/candle payloads.
+- market-stream fan-out gateway. Server-owned SSE broadcast path from worker events to dashboard clients.
 - execution-orchestrator. Runtime signal -> order -> position orchestration service.
+- runtime automation bridge. Continuous stream -> signal evaluation loop with periodic scan support.
 - upload, middleware, pagination, isolation. Supporting infrastructure.
 
 ## Backend Modules (Planned for MVP Completion)
-- market-stream fan-out gateway. Server-owned SSE broadcast path from worker events to dashboard clients.
-- runtime automation bridge. Continuous stream -> signal evaluation loop in worker runtime.
 - reports. Unified performance metrics parity across backtest/paper/live runtime datasets.
 
 ## Frontend Areas (Current)
