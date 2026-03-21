@@ -4,6 +4,7 @@ import net from 'node:net';
 import path from 'node:path';
 
 const rootDir = process.cwd();
+const serverDir = path.join(rootDir, 'apps', 'server');
 const serverEnvPath = path.join(rootDir, 'apps', 'server', '.env');
 
 const readEnvValue = (key) => {
@@ -32,9 +33,10 @@ const run = (command, args, options = {}) => {
   }
 };
 
-const runPrisma = (args) => {
-  const result = spawnSync('pnpm', ['--dir', 'apps/server', 'exec', 'prisma', ...args], {
-    cwd: rootDir,
+const runPrisma = (args, options = {}) => {
+  const { allowEngineLockFallback = false } = options;
+  const result = spawnSync('pnpm', ['exec', 'prisma', ...args], {
+    cwd: serverDir,
     shell: process.platform === 'win32',
     encoding: 'utf8',
     stdio: 'pipe',
@@ -45,7 +47,22 @@ const runPrisma = (args) => {
 
   if ((result.status ?? 1) !== 0) {
     const combined = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
+    if (combined.includes('Command "prisma" not found')) {
+      console.error(
+        '[backend/dev] Prisma CLI not found in apps/server.\n' +
+          'Run `pnpm install` in repository root and retry.'
+      );
+      process.exit(result.status ?? 1);
+    }
+
     if (combined.includes('EPERM') && combined.includes('query_engine-windows.dll.node')) {
+      if (allowEngineLockFallback) {
+        console.warn(
+          '[backend/dev] Prisma engine file is locked on Windows.\n' +
+            'Skipping hard regenerate and continuing with existing Prisma client.'
+        );
+        return;
+      }
       console.error(
         '[backend/dev] Prisma engine file is locked on Windows.\n' +
           'Close running Node/server processes and retry this command.'
@@ -139,7 +156,7 @@ const main = async () => {
   }
 
   console.log('[backend/dev] Running Prisma generate...');
-  runPrisma(['generate']);
+  runPrisma(['generate'], { allowEngineLockFallback: true });
   console.log('[backend/dev] Running Prisma migrations...');
   runPrisma(['migrate', 'deploy']);
 
