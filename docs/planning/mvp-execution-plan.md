@@ -1,4 +1,4 @@
-# MVP Execution Plan (Agent-Ready)
+﻿# MVP Execution Plan (Agent-Ready)
 
 Goal: deliver a stable MVP in tiny, safe commits.
 Rule: fix/cleanup/update first, then feature delivery.
@@ -125,6 +125,14 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(backtest): finalize chart overlays and report visualizations to MVP-complete state`
 - [x] `test(e2e): add runtime orchestration smoke path covering stream -> signal -> order -> position updates`
 
+## Phase 7 - Runtime Replacement Gate (As of 2026-03-21)
+- [ ] `audit(reverify): re-validate P0/P1 audit findings in code and tests before further expansion`
+- [ ] `feat(stream-fanout): expose SSE stream endpoint and connect dashboard live market bar to server-owned stream`
+- [ ] `feat(runtime-loop): complete continuous stream -> signal evaluation loop in worker runtime`
+- [ ] `feat(runtime-management): manage manually opened Binance Spot/Futures positions through runtime lifecycle`
+- [ ] `feat(runtime-management): guarantee DCA/SL/TP/TSL automation until position close`
+- [ ] `feat(runtime-scans): periodic market/position scans with configurable interval and market filters`
+- [ ] `chore(release): re-run MVP checklist with evidence after runtime replacement gate`
 ## MVP Exit Criteria
 - [x] Phase 0 fully complete.
 - [ ] End-to-end flow works: strategy -> backtest -> paper -> live opt-in.
@@ -135,6 +143,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] Shared app shell and view-state model are consistent across core dashboard modules.
 - [ ] Real-time market stream is visible in dashboard control center via server-owned transport.
 - [x] Write-side order actions (open/cancel/close) are available with risk-first confirmations.
+- [ ] Runtime replacement gate for legacy local-only bot flow is validated with evidence.
 
 ## Progress Log
 - 2026-03-15: Initialized MVP execution file and commit rules.
@@ -284,3 +293,5 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Added runtime smoke e2e flow for normalized stream signal ingestion through orchestrator order/position lifecycle (LONG open + EXIT close) and hardened EXIT handling for already-filled market orders.
 - 2026-03-19: Synced MVP docs to freeze-gap delivery state (scope/limitations/modules/runtime notes), including explicit distinction between delivered ingest/orchestration pieces and remaining SSE fan-out automation gap.
 - 2026-03-19: Re-ran MVP release checklist with fresh build/test/migration evidence (server/client builds green, full server/client tests green, migrations verified as up-to-date).
+
+- 2026-03-21: Replanned queue around runtime-replacement gate and immediate roadmap gaps (stream fan-out, runtime loop, managed position lifecycle).
