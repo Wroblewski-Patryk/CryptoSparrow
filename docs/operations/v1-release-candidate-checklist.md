@@ -64,6 +64,7 @@
 - [ ] Product sign-off.
 - [ ] Operations sign-off.
 - [ ] RC owner assigned with rollback authority.
+- Sign-off record template: `docs/operations/v1-rc-signoff-record.md`.
 
 ## Outstanding External Gates (2026-03-21)
 - Backup snapshot + restore-path validation on target release environment.
