@@ -39,3 +39,21 @@ export const getLiveReconciliationStatus = async (req: Request, res: Response) =
     workerHeartbeatAt: process.env.WORKER_LAST_HEARTBEAT_AT ?? null,
   });
 };
+
+export const getExchangeSnapshot = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const snapshot = await positionsService.fetchExchangePositionsSnapshot(userId);
+    return res.json(snapshot);
+  } catch (error) {
+    if (error instanceof positionsService.ExchangeSnapshotError) {
+      if (error.code === 'API_KEY_NOT_FOUND') {
+        return sendError(res, 400, error.message);
+      }
+      return sendError(res, 502, error.message);
+    }
+    return sendError(res, 500, 'Internal server error');
+  }
+};
