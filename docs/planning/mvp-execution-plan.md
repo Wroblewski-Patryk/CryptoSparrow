@@ -165,6 +165,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 ## Phase 9 - Exchange API-Key Verification and Live Position Trust Gate (As of 2026-03-21)
 - [x] `P0 auth-stabilization-gate: ensure client build is green for auth/login scope before exchange api-key trust work`
 - [x] `fix(auth-ux): harden failed-login UX so success feedback appears only after confirmed session refresh`
+- [x] `fix(auth-session-warning): show session-expired warning only for protected or explicit expired-session contexts`
 - [ ] `P1 auth-ux-regression: confirm failed/success login UX and redirect/session-warning behavior with regression tests + manual smoke evidence`
 - [ ] `fix(ui-api-key-test): replace random "Testuj polaczenie" result with real backend API call and deterministic status states`
 - [ ] `feat(api-key-test-api): add authenticated endpoint to validate provided exchange credentials against Binance permissions`
@@ -357,6 +358,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Re-prioritized Phase 9 with auth stabilization gate (client build green + login UX/session-warning regression evidence) before exchange API-key trust implementation.
 - 2026-03-21: Closed Phase 9 auth build gate by fixing AuthContext hook deps and LoginForm lint issue; verified with green `pnpm --filter client build` and targeted auth suites.
 - 2026-03-21: Hardened failed-login UX by requiring confirmed `refetchUser()` session before success toast/redirect in login flow; verified with green `pnpm --filter client build`.
+- 2026-03-21: Hardened session-expiry warning logic to avoid false public-route warnings by requiring protected-route context or explicit `session=expired` hint.
 
 
 

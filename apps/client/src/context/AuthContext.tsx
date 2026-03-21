@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import api from "../lib/api";
 import { toast } from "sonner";
 
@@ -24,6 +24,7 @@ const AuthContext = createContext<{
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const hadAuthenticatedSessionRef = useRef(false);
 
   const fetchUser = useCallback(async (options: FetchUserOptions = {}) => {
     const { notifyOnUnauthorized = true } = options;
@@ -32,6 +33,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const res = await api.get("/auth/me");
       const data = res.data;
       setUser({ email: data.email, userId: data.id });
+      hadAuthenticatedSessionRef.current = true;
       return true;
     } catch (error) {
       setUser(null);
@@ -44,10 +46,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const onProtectedRoute =
         typeof window !== "undefined" &&
         (window.location.pathname.startsWith("/dashboard") || window.location.pathname.startsWith("/admin"));
+      const sessionExpiredHint =
+        typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("session") === "expired";
+      const shouldWarnAboutExpiredSession =
+        status === 401 &&
+        (onProtectedRoute || sessionExpiredHint) &&
+        (hadAuthenticatedSessionRef.current || sessionExpiredHint);
 
-      if (notifyOnUnauthorized && status === 401 && onProtectedRoute) {
+      if (notifyOnUnauthorized && shouldWarnAboutExpiredSession) {
         toast.warning("Sesja wygasla. Zaloguj sie ponownie.");
+        if (sessionExpiredHint && typeof window !== "undefined") {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("session");
+          window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+        }
       }
+      hadAuthenticatedSessionRef.current = false;
       return false;
     } finally {
       setLoading(false);
