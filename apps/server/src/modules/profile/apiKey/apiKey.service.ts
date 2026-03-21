@@ -26,6 +26,87 @@ export type ApiKeyTestResult = {
   };
 };
 
+const API_KEY_TEST_CODES: BinanceApiKeyTestCode[] = [
+  "OK",
+  "INVALID_KEY",
+  "INVALID_SECRET",
+  "IP_RESTRICTED",
+  "MISSING_SPOT_SCOPE",
+  "MISSING_FUTURES_SCOPE",
+  "NETWORK_TIMEOUT",
+  "UNKNOWN",
+];
+
+const getForcedApiKeyTestCode = (): BinanceApiKeyTestCode | null => {
+  if (process.env.NODE_ENV !== "test") return null;
+  const value = process.env.API_KEY_TEST_FORCE_CODE;
+  if (!value) return null;
+  return API_KEY_TEST_CODES.includes(value as BinanceApiKeyTestCode)
+    ? (value as BinanceApiKeyTestCode)
+    : null;
+};
+
+const buildApiKeyTestResultForCode = (code: BinanceApiKeyTestCode): ApiKeyTestResult => {
+  switch (code) {
+    case "OK":
+      return {
+        ok: true,
+        code,
+        message: "Binance API key permissions validated.",
+        permissions: { spot: true, futures: true },
+      };
+    case "MISSING_FUTURES_SCOPE":
+      return {
+        ok: false,
+        code,
+        message: "Binance key has no Futures permission.",
+        permissions: { spot: true, futures: false },
+      };
+    case "MISSING_SPOT_SCOPE":
+      return {
+        ok: false,
+        code,
+        message: "Binance key has no Spot permission.",
+        permissions: { spot: false, futures: true },
+      };
+    case "INVALID_KEY":
+      return {
+        ok: false,
+        code,
+        message: "Binance rejected API key format or value.",
+        permissions: { spot: false, futures: false },
+      };
+    case "INVALID_SECRET":
+      return {
+        ok: false,
+        code,
+        message: "Binance rejected API secret/signature.",
+        permissions: { spot: false, futures: false },
+      };
+    case "IP_RESTRICTED":
+      return {
+        ok: false,
+        code,
+        message: "Binance rejected request due to IP restriction.",
+        permissions: { spot: false, futures: false },
+      };
+    case "NETWORK_TIMEOUT":
+      return {
+        ok: false,
+        code,
+        message: "Binance connection timed out.",
+        permissions: { spot: false, futures: false },
+      };
+    default:
+      return {
+        ok: false,
+        code: "UNKNOWN",
+        message: "Binance validation failed.",
+        permissions: { spot: false, futures: false },
+      };
+  }
+};
+
 const writeApiKeyTestAudit = async (params: {
   userId: string;
   exchange: Exchange;
@@ -171,17 +252,11 @@ export const testApiKeyConnection = async (
   userId: string,
   data: ApiKeyTestPayload
 ): Promise<ApiKeyTestResult> => {
-  const result =
-    process.env.NODE_ENV === "test"
-      ? {
-          ok: true,
-          code: "OK" as const,
-          message: "Binance API key permissions validated.",
-          permissions: {
-            spot: true,
-            futures: true,
-          },
-        }
+  const forcedCode = getForcedApiKeyTestCode();
+  const result = forcedCode
+    ? buildApiKeyTestResultForCode(forcedCode)
+    : process.env.NODE_ENV === "test"
+      ? buildApiKeyTestResultForCode("OK")
       : await probeBinanceApiKeyPermissions({
           apiKey: data.apiKey,
           apiSecret: data.apiSecret,

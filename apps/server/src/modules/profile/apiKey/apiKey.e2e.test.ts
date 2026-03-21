@@ -188,6 +188,56 @@ describe("API Keys security contract", () => {
     expect(JSON.stringify(log?.metadata)).not.toContain(testPayload.apiSecret);
   });
 
+  it("returns invalid-key contract for failed credentials", async () => {
+    const agent = await registerAndLogin("apikey-test-invalid-key@example.com");
+    process.env.API_KEY_TEST_FORCE_CODE = "INVALID_KEY";
+    try {
+      const testRes = await agent.post("/dashboard/profile/apiKeys/test").send({
+        exchange: "BINANCE",
+        apiKey: "BADKEY12345678",
+        apiSecret: "BADSECRET12345678",
+      });
+
+      expect(testRes.status).toBe(200);
+      expect(testRes.body).toEqual({
+        ok: false,
+        code: "INVALID_KEY",
+        message: "Binance rejected API key format or value.",
+        permissions: {
+          spot: false,
+          futures: false,
+        },
+      });
+    } finally {
+      process.env.API_KEY_TEST_FORCE_CODE = "";
+    }
+  });
+
+  it("returns futures-permission mismatch contract", async () => {
+    const agent = await registerAndLogin("apikey-test-futures-permission@example.com");
+    process.env.API_KEY_TEST_FORCE_CODE = "MISSING_FUTURES_SCOPE";
+    try {
+      const testRes = await agent.post("/dashboard/profile/apiKeys/test").send({
+        exchange: "BINANCE",
+        apiKey: "SPOTONLYKEY123456",
+        apiSecret: "SPOTONLYSECRET123456",
+      });
+
+      expect(testRes.status).toBe(200);
+      expect(testRes.body).toEqual({
+        ok: false,
+        code: "MISSING_FUTURES_SCOPE",
+        message: "Binance key has no Futures permission.",
+        permissions: {
+          spot: true,
+          futures: false,
+        },
+      });
+    } finally {
+      process.env.API_KEY_TEST_FORCE_CODE = "";
+    }
+  });
+
   it("enforces ownership on rotate and revoke actions", async () => {
     const owner = await registerAndLogin("apikey-rotate-owner-2@example.com");
     const other = await registerAndLogin("apikey-rotate-other@example.com");

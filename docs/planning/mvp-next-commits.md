@@ -9,7 +9,6 @@ Operational queue for one-task execution runs.
 ## NOW
 
 ## NEXT
-- [ ] `test(api-key-test): add server e2e for invalid credentials, permission mismatch, and success path`
 - [ ] `feat(profile-save-flow): block LIVE-ready key save until connection test success in current form session`
 - [ ] `feat(positions-sync-api): add endpoint to fetch current open positions from Binance using verified stored credentials`
 - [ ] `feat(ui-positions-live-source): add live-exchange snapshot mode with last-sync + error state`
@@ -42,6 +41,7 @@ Operational queue for one-task execution runs.
 - [x] `feat(api-key-test-api): add POST /dashboard/profile/apiKeys/test route (auth + validation + no persistence)`
 - [x] `security(api-key-test): add rate-limit + audit-safe logging for test endpoint`
 - [x] `feat(api-key-test-binance): implement Binance permission probe and normalized error mapping contract`
+- [x] `test(api-key-test): add server e2e for invalid credentials, permission mismatch, and success path`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

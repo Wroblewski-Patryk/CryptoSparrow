@@ -175,7 +175,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `feat(profile-save-flow): require successful connection test before allowing LIVE-ready API-key save (with explicit override off by default)`
 - [ ] `feat(positions-sync): use verified stored key to fetch real open positions snapshot from Binance and expose read endpoint`
 - [ ] `feat(ui-positions-live-source): add source switch/state in positions view (runtime snapshot vs exchange-live snapshot) and last-sync timestamp`
-- [ ] `test(e2e): add profile/api-key and positions contract tests covering invalid credentials, permission mismatch, and successful live fetch`
+- [x] `test(e2e): add profile/api-key and positions contract tests covering invalid credentials, permission mismatch, and successful live fetch`
 - [ ] `docs(runbook): document secure API-key onboarding and troubleshooting flow for Binance connection/permissions failures`
 
 ## Progress Log
@@ -366,6 +366,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Added authenticated `POST /dashboard/profile/apiKeys/test` endpoint with Zod validation and no-persistence contract, plus e2e coverage for auth gate and DB non-write guarantee.
 - 2026-03-21: Hardened API-key test endpoint with dedicated rate limit and audit log entries containing only safe metadata (`exchange`, `ok`) with e2e assertion that secrets are not logged.
 - 2026-03-21: Added Binance API-key probe service with normalized error mapping contract (`OK`, `INVALID_KEY`, `INVALID_SECRET`, `IP_RESTRICTED`, `MISSING_SPOT_SCOPE`, `MISSING_FUTURES_SCOPE`, `NETWORK_TIMEOUT`, `UNKNOWN`) and unit coverage.
+- 2026-03-21: Added API-key test e2e scenarios for success, invalid credentials (`INVALID_KEY`), and futures permission mismatch (`MISSING_FUTURES_SCOPE`) with stable contract assertions.
 
 
 
