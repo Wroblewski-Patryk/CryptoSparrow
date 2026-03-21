@@ -25,6 +25,9 @@
 - Ownership audit reviewed: `docs/security/security-ownership-audit.md` (baseline review date `2026-03-16`).
 - `pnpm --filter server exec prisma migrate deploy` passed (`16` migrations found, no pending migrations).
 - `pnpm --filter server test -- src/modules/orders/orders-positions.e2e.test.ts src/modules/logs/logs.e2e.test.ts src/modules/pagination/pagination-query.test.ts` passed (`3` files, `8` tests).
+- Documentation reviewed: `docs/operations/user-guide.md`, `docs/operations/operator-handbook.md`.
+- QA docs reviewed: `docs/ux/localization-qa.md`, `docs/ux/accessibility-dashboard-audit.md`.
+- Release docs drafted: `docs/operations/v1-changelog.md`, `docs/operations/v1-migration-notes.md`.
 
 ## Runtime and Operations Gates
 - [x] API endpoints healthy:
@@ -51,10 +54,10 @@
 - [x] Index and pagination changes validated on representative datasets.
 
 ## Documentation and Communication Gates
-- [ ] User guide reviewed (`docs/operations/user-guide.md`).
-- [ ] Operator handbook reviewed (`docs/operations/operator-handbook.md`).
-- [ ] Design/accessibility/localization QA docs reviewed.
-- [ ] Release notes and migration notes drafted.
+- [x] User guide reviewed (`docs/operations/user-guide.md`).
+- [x] Operator handbook reviewed (`docs/operations/operator-handbook.md`).
+- [x] Design/accessibility/localization QA docs reviewed.
+- [x] Release notes and migration notes drafted.
 
 ## RC Sign-Off
 - [ ] Engineering sign-off.
