@@ -7,23 +7,27 @@
 - JWT-based authentication.
 - Core modules scaffolded: strategies, markets, bots, orders, positions, backtests, logs.
 - Live opt-in safety guardrails for bots.
+- Server-owned SSE fan-out endpoint for market stream (`/dashboard/market-stream/events`).
+- Continuous runtime stream -> signal -> execution loop in worker flow.
+- Runtime management of manual Binance Spot/Futures positions with SL/TP/trailing/DCA automation.
+- Periodic market/position scan loop with configurable interval and filter controls.
+- Runtime replacement gate validated with e2e evidence and release-checklist refresh.
 
 ## In Progress
-- V1 runtime replacement objective: make new app stable for 24/7 server usage as successor to legacy local-only bot flow.
-- Hardening validation and error handling.
-- Stabilizing dashboard workflows.
-- Backtest and execution runtime wiring.
+- V1 production exit evidence workpack (SLO window, incident drill evidence, load/perf publication, final launch sign-offs).
 
-## Immediate Gaps to Close (Before MVP Freeze)
-- Wire server-owned SSE fan-out endpoint from market-stream worker to dashboard clients.
-- Complete continuous stream -> signal evaluation loop in runtime worker flow.
-- Re-run release checklist after freeze-gap closure and capture final evidence.
-- Reach legacy-replacement minimum gate:
-  - stable strategy configurator with JSON settings.
-  - backtester usable for go/no-go validation.
-  - runtime management of manually opened Binance Futures and Binance Spot positions.
-  - DCA/SL/TP/TSL lifecycle automation until close.
-  - periodic market/position scans with configurable interval and market filters.
+## Immediate Evidence Gaps (Pre-Launch)
+- Capture backup snapshot + restore validation in target release environment.
+- Review queue-lag baseline from production-like telemetry window.
+- Confirm incident contacts/escalation chain for release shift.
+- Collect formal Engineering/Product/Operations sign-offs with RC owner assignment.
+- Publish production observation evidence for open V1 exit workpack items.
+
+Evidence links:
+- `docs/operations/v1-release-candidate-checklist.md`
+- `docs/operations/v1-rc-external-gates-runbook.md`
+- `docs/operations/v1-rc-signoff-record.md`
+- `docs/planning/v1-live-release-plan.md`
 
 ## MVP Targets
 - Strategy builder for advanced strategies.

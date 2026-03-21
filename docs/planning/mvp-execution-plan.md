@@ -150,7 +150,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `ops(cutover): define local cutover checklist from legacy bot to new runtime`
 - [ ] `ops(cutover): define rollback checklist to legacy runtime`
 - [ ] `test(cutover): execute local replacement dry-run with realistic bot scenario`
-- [ ] `docs(sync): reconcile roadmap immediate gaps with actual runtime status and evidence links`
+- [x] `docs(sync): reconcile roadmap immediate gaps with actual runtime status and evidence links`
 - [ ] `ops(slo): define SLOs and attach live metrics evidence`
 - [ ] `ops(evidence): execute production-like load baseline and document pass/fail thresholds`
 - [ ] `security(audit): produce final ownership/auth/key-flow verification report`
@@ -323,6 +323,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Synced product/architecture/modules/trading docs to runtime replacement reality (server SSE fan-out + runtime signal loop + position automation), and removed stale staged-gap wording from current limitations.
 
 - 2026-03-21: Added Phase 8 for operational evidence, launch-readiness proof, and post-MVP expansion planning milestones.
+- 2026-03-21: Reconciled `docs/planning/roadmap.md` with delivered runtime-stream state (SSE fan-out + runtime loop + management automation) and linked current V1 evidence artifacts/runbooks.
 
 
 
