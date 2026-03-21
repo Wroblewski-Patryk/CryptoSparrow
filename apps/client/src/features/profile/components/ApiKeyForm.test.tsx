@@ -73,4 +73,55 @@ describe("ApiKeyForm", () => {
       screen.getByText("Nie udalo sie zweryfikowac polaczenia.")
     ).toBeInTheDocument();
   });
+
+  it("blocks save when connection test has not succeeded in current session", async () => {
+    const onSave = vi.fn();
+    render(<ApiKeyForm onSave={onSave} onCancel={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText("Nazwa klucza"), {
+      target: { value: "Binance main" },
+    });
+    fireEvent.change(screen.getByLabelText("API Key"), {
+      target: { value: "test-api-key" },
+    });
+    fireEvent.change(screen.getByLabelText("API Secret"), {
+      target: { value: "test-api-secret" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Zapisz" }));
+
+    expect(onSave).not.toHaveBeenCalled();
+    expect(testApiKeyConnectionMock).not.toHaveBeenCalled();
+  });
+
+  it("allows save after successful test for current credentials", async () => {
+    const onSave = vi.fn();
+    testApiKeyConnectionMock.mockResolvedValueOnce({
+      ok: true,
+      message: "Binance connection OK",
+    });
+    render(<ApiKeyForm onSave={onSave} onCancel={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText("Nazwa klucza"), {
+      target: { value: "Binance main" },
+    });
+    fireEvent.change(screen.getByLabelText("API Key"), {
+      target: { value: "test-api-key" },
+    });
+    fireEvent.change(screen.getByLabelText("API Secret"), {
+      target: { value: "test-api-secret" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Testuj polaczenie" }));
+    await screen.findByText("OK");
+
+    fireEvent.click(screen.getByRole("button", { name: "Zapisz" }));
+
+    expect(onSave).toHaveBeenCalledWith({
+      label: "Binance main",
+      exchange: "BINANCE",
+      apiKey: "test-api-key",
+      apiSecret: "test-api-secret",
+    });
+  });
 });

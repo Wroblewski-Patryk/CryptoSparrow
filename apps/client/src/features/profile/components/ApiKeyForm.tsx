@@ -32,11 +32,17 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
   const [apiSecret, setApiSecret] = useState("");
   const [testStatus, setTestStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [testMessage, setTestMessage] = useState<string | null>(null);
+  const [testedFingerprint, setTestedFingerprint] = useState<string | null>(null);
+
+  const currentFingerprint = `${exchange}::${apiKey}::${apiSecret}`;
+
+  const requiresConnectionTest = !isEdit || Boolean(apiKey) || Boolean(apiSecret);
 
   const handleTest = async () => {
     if (!apiKey || !apiSecret) {
       setTestStatus("error");
       setTestMessage("Uzupelnij API Key i API Secret przed testem.");
+      setTestedFingerprint(null);
       return;
     }
 
@@ -48,17 +54,20 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
       if (result.ok) {
         setTestStatus("success");
         setTestMessage(result.message ?? "Polaczenie dziala poprawnie.");
+        setTestedFingerprint(currentFingerprint);
         return;
       }
 
       setTestStatus("error");
       setTestMessage(result.message ?? "Nie udalo sie zweryfikowac polaczenia.");
+      setTestedFingerprint(null);
     } catch (err: unknown) {
       const message = isAxiosError<{ message?: string }>(err)
         ? (err.response?.data?.message ?? "Nie udalo sie zweryfikowac polaczenia.")
         : "Nie udalo sie zweryfikowac polaczenia.";
       setTestStatus("error");
       setTestMessage(message);
+      setTestedFingerprint(null);
     }
   };
 
@@ -67,8 +76,20 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
     try {
       if (isEdit) {
         apiKeySchema.pick({ label: true, exchange: true }).parse({ label, exchange });
+        if ((apiKey && !apiSecret) || (!apiKey && apiSecret)) {
+          toast.error("Podaj API Key i API Secret, aby zaktualizowac polaczenie.");
+          return;
+        }
       } else {
         apiKeySchema.parse({ label, exchange, apiKey, apiSecret });
+      }
+
+      if (requiresConnectionTest) {
+        const hasMatchingSuccess = testStatus === "success" && testedFingerprint === currentFingerprint;
+        if (!hasMatchingSuccess) {
+          toast.error("Przetestuj polaczenie i uzyskaj status OK przed zapisem.");
+          return;
+        }
       }
 
       const payload: ApiKeyFormSavePayload = { label, exchange };
