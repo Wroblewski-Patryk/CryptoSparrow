@@ -70,3 +70,4 @@
 - Queue-lag baseline review from live telemetry window (`/metrics` + worker lag gauges).
 - Incident contacts/escalation chain confirmation for release shift.
 - Formal sign-offs (Engineering/Product/Operations) and RC owner assignment.
+- Execution guide: `docs/operations/v1-rc-external-gates-runbook.md`.
