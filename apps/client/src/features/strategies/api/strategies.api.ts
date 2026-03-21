@@ -24,6 +24,10 @@ export const updateStrategy = async (id: string, form: StrategyFormState) => {
     return data;
 };
 
+export const deleteStrategy = async (id: string) => {
+    await api.delete(`/dashboard/strategies/${id}`);
+};
+
 export const listStrategyIndicators = async () => {
     const { data } = await api.get<IndicatorMeta[]>("/dashboard/strategies/indicators");
     return data;

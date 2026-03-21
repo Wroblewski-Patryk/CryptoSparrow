@@ -3,12 +3,13 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LuTrash2, LuPencilLine } from "react-icons/lu";
 import axios from "axios";
-import api from "apps/client/src/lib/api";
 import { toast } from "sonner";
-import { listStrategies } from "../api/strategies.api";
+import { deleteStrategy, listStrategies } from "../api/strategies.api";
 import { StrategyDto } from "../types/StrategyForm.type";
 import { EmptyState, ErrorState, LoadingState } from "apps/client/src/ui/components/ViewState";
 import { useLocaleFormatting } from "apps/client/src/i18n/useLocaleFormatting";
+import DataTable, { DataTableColumn } from "apps/client/src/ui/components/DataTable";
+import ConfirmModal from "apps/client/src/ui/components/ConfirmModal";
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -20,8 +21,8 @@ export default function StrategiesList() {
   const [strategies, setStrategies] = useState<StrategyDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedStrategy, setSelectedStrategy] = useState<StrategyDto | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const router = useRouter();
 
   const loadStrategies = useCallback(async () => {
@@ -47,18 +48,77 @@ export default function StrategiesList() {
   }, [loadStrategies]);
 
   const handleDelete = async () => {
-    if (!selectedId) return;
+    if (!selectedStrategy) return;
+    setDeleting(true);
     try {
-      await api.delete(`/dashboard/strategies/${selectedId}`);
-      setStrategies((prev) => prev.filter((s) => s.id !== selectedId));
+      await deleteStrategy(selectedStrategy.id);
+      setStrategies((prev) => prev.filter((s) => s.id !== selectedStrategy.id));
       toast.success("Strategia usunieta");
     } catch (err: unknown) {
       toast.error(getAxiosMessage(err) ?? "Blad usuwania strategii");
     } finally {
-      setShowModal(false);
-      setSelectedId(null);
+      setDeleting(false);
+      setSelectedStrategy(null);
     }
   };
+
+  const columns: DataTableColumn<StrategyDto>[] = [
+    {
+      key: "name",
+      label: "Nazwa",
+      sortable: true,
+      accessor: (row) => row.name,
+      className: "font-medium",
+    },
+    {
+      key: "leverage",
+      label: "Dzwignia",
+      sortable: true,
+      accessor: (row) => row.leverage,
+      render: (row) => `${row.leverage}x`,
+      className: "w-32",
+    },
+    {
+      key: "interval",
+      label: "Interwal",
+      sortable: true,
+      accessor: (row) => row.interval,
+      className: "w-32",
+    },
+    {
+      key: "createdAt",
+      label: "Data utworzenia",
+      sortable: true,
+      accessor: (row) => row.createdAt ?? "",
+      render: (row) => formatDate(row.createdAt),
+      className: "w-44",
+    },
+    {
+      key: "actions",
+      label: "Akcje",
+      className: "w-32 text-center",
+      render: (row) => (
+        <div className="flex items-center justify-center gap-2">
+          <button
+            className="btn btn-sm btn-info"
+            onClick={() => router.push(`/dashboard/strategies/${row.id}`)}
+            title="Edytuj"
+            type="button"
+          >
+            <LuPencilLine className="w-4 h-4" />
+          </button>
+          <button
+            className="btn btn-sm btn-error"
+            onClick={() => setSelectedStrategy(row)}
+            title="Usun"
+            type="button"
+          >
+            <LuTrash2 className="w-4 h-4" />
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div>
@@ -81,66 +141,42 @@ export default function StrategiesList() {
       )}
 
       {!loading && !loadError && strategies.length > 0 && (
-      <div className="overflow-x-auto">
-        <table className="table table-zebra w-full">
-          <thead>
-            <tr>
-              <th>Nazwa</th>
-              <th className="w-32">Dzwignia</th>
-              <th className="w-32">Interwal</th>
-              <th className="w-32">Data utworzenia</th>
-              <th className="text-center w-32">Akcje</th>
-            </tr>
-          </thead>
-          <tbody>
-            {strategies.map((strategy) => (
-              <tr key={strategy.id}>
-                <td>{strategy.name}</td>
-                <td>{strategy.leverage}x</td>
-                <td>{strategy.interval}</td>
-                <td>{formatDate(strategy.createdAt)}</td>
-                <td className="text-center">
-                  <button
-                    className="btn btn-sm btn-info mr-2"
-                    onClick={() => router.push(`/dashboard/strategies/${strategy.id}`)}
-                    title="Edytuj"
-                  >
-                    <LuPencilLine className="w-4 h-4" />
-                  </button>
-                  <button
-                    className="btn btn-sm btn-error"
-                    onClick={() => {
-                      setSelectedId(strategy.id);
-                      setShowModal(true);
-                    }}
-                    title="Usun"
-                  >
-                    <LuTrash2 className="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+        <DataTable
+          rows={strategies}
+          columns={columns}
+          getRowId={(row) => row.id}
+          title="Lista strategii"
+          description="Sortowanie i filtrowanie pomaga szybko znalezc strategie pod backtest i boty."
+          filterPlaceholder="Filtruj strategie..."
+          filterFn={(row, query) => {
+            const normalized = query.trim().toLowerCase();
+            return (
+              row.name.toLowerCase().includes(normalized) ||
+              row.interval.toLowerCase().includes(normalized)
+            );
+          }}
+          emptyText="Brak strategii."
+        />
       )}
 
-      {showModal && (
-        <dialog className="modal modal-open">
-          <form method="dialog" className="modal-box">
-            <h3 className="font-bold text-lg mb-2">Potwierdz usuniecie</h3>
-            <p className="mb-4">Czy na pewno chcesz usunac te strategie?</p>
-            <div className="modal-action">
-              <button className="btn" onClick={() => setShowModal(false)}>
-                Anuluj
-              </button>
-              <button className="btn btn-error" onClick={handleDelete}>
-                Usun
-              </button>
-            </div>
-          </form>
-        </dialog>
-      )}
+      <ConfirmModal
+        open={Boolean(selectedStrategy)}
+        title="Potwierdz usuniecie"
+        description={
+          selectedStrategy
+            ? `Czy na pewno chcesz usunac strategie "${selectedStrategy.name}"?`
+            : "Czy na pewno chcesz usunac te strategie?"
+        }
+        confirmLabel="Usun"
+        cancelLabel="Anuluj"
+        confirmVariant="error"
+        pending={deleting}
+        onCancel={() => {
+          if (deleting) return;
+          setSelectedStrategy(null);
+        }}
+        onConfirm={() => void handleDelete()}
+      />
     </div>
   );
 }

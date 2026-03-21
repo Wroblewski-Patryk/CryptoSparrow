@@ -28,15 +28,15 @@ export default function ConfirmModal({
   return (
     <dialog className='modal modal-open' aria-modal='true' role='dialog'>
       <div className='modal-box'>
-        <h3 className='text-lg font-semibold'>{title}</h3>
-        {description ? <p className='mt-2 text-sm opacity-80'>{description}</p> : null}
+        <h3 className='font-bold text-lg mb-2'>{title}</h3>
+        {description ? <p className='mb-4 text-sm opacity-80'>{description}</p> : null}
         <div className='modal-action'>
-          <button type='button' className='btn btn-ghost btn-sm' onClick={onCancel} disabled={pending}>
+          <button type='button' className='btn' onClick={onCancel} disabled={pending}>
             {cancelLabel}
           </button>
           <button
             type='button'
-            className={`btn btn-sm ${confirmVariant === 'error' ? 'btn-error' : 'btn-primary'}`}
+            className={`btn ${confirmVariant === 'error' ? 'btn-error' : 'btn-primary'}`}
             onClick={onConfirm}
             disabled={pending}
           >

@@ -101,7 +101,7 @@ export default function DataTable<T>({
       />
 
       <div className='overflow-x-auto'>
-        <table className='table table-zebra'>
+        <table className='table table-zebra w-full'>
           <thead>
             <tr>
               {columns.map((column) => (
@@ -109,7 +109,7 @@ export default function DataTable<T>({
                   {column.sortable ? (
                     <button type='button' className='btn btn-ghost btn-xs px-1' onClick={() => handleSort(column)}>
                       {column.label}
-                      {sortKey === column.key ? (direction === 'asc' ? '↑' : '↓') : ''}
+                      {sortKey === column.key ? (direction === 'asc' ? '^' : '�') : ''}
                     </button>
                   ) : (
                     column.label
