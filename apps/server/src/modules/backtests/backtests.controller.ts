@@ -3,6 +3,7 @@ import { sendError } from '../../utils/apiError';
 import { sendValidationError } from '../../utils/formatZodError';
 import {
   CreateBacktestRunSchema,
+  GetBacktestTimelineQuerySchema,
   ListBacktestRunsQuerySchema,
   ListBacktestTradesQuerySchema,
 } from './backtests.types';
@@ -69,4 +70,18 @@ export const getBacktestRunReport = async (req: Request, res: Response) => {
   if (!report) return sendError(res, 404, 'Report not found');
 
   return res.json(report);
+};
+
+export const getBacktestRunTimeline = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const query = GetBacktestTimelineQuerySchema.parse(req.query);
+    const timeline = await backtestsService.getRunTimeline(userId, req.params.id, query);
+    if (!timeline) return sendError(res, 404, 'Not found');
+    return res.json(timeline);
+  } catch (error) {
+    return sendValidationError(res, error);
+  }
 };

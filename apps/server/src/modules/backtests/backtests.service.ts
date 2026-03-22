@@ -3,6 +3,7 @@ import { prisma } from '../../prisma/client';
 import { getMarketCatalog } from '../markets/markets.service';
 import {
   CreateBacktestRunDto,
+  GetBacktestTimelineQuery,
   ListBacktestRunsQuery,
   ListBacktestTradesQuery,
 } from './backtests.types';
@@ -13,7 +14,11 @@ type MarginMode = 'CROSSED' | 'ISOLATED';
 type KlineCandle = {
   openTime: number;
   closeTime: number;
+  open: number;
+  high: number;
+  low: number;
   close: number;
+  volume: number;
 };
 
 type TradeDraft = {
@@ -49,9 +54,19 @@ type ProgressState = {
   grossLoss: number;
   maxDrawdown: number;
   maxCandlesPerSymbol: number;
+  totalCandlesForSymbol?: number;
+  currentCandleIndex?: number;
+  currentCandleTime?: string | null;
   startedAt: string;
   updatedAt: string;
   lastUpdate: string;
+};
+
+type IndicatorSpec = {
+  key: string;
+  name: string;
+  period: number;
+  panel: 'price' | 'oscillator';
 };
 
 const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
@@ -85,6 +100,15 @@ const timeframeDefaultCandles: Record<string, number> = {
   '12h': 150,
   '1d': 60,
 };
+
+const CANDLE_CACHE_TTL_MS = 20 * 60 * 1000;
+const candleCache = new Map<
+  string,
+  {
+    cachedAt: number;
+    candles: KlineCandle[];
+  }
+>();
 
 const normalizeTimeframe = (value: string) => {
   const raw = value.trim().toLowerCase();
@@ -143,6 +167,16 @@ const maxDrawdownFromPnlSeries = (pnls: number[]) => {
   return maxDrawdown;
 };
 
+const cacheKeyForCandles = (symbol: string, timeframe: string, marketType: MarketType, maxCandles: number) =>
+  `${marketType}:${symbol}:${normalizeTimeframe(timeframe)}:${maxCandles}`;
+
+const pruneCandleCache = () => {
+  const now = Date.now();
+  for (const [key, value] of candleCache.entries()) {
+    if (now - value.cachedAt > CANDLE_CACHE_TTL_MS) candleCache.delete(key);
+  }
+};
+
 const isMissingRunUpdateError = (error: unknown) =>
   error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025';
 
@@ -165,6 +199,13 @@ const fetchKlines = async (
   marketType: MarketType,
   maxCandles: number,
 ): Promise<KlineCandle[]> => {
+  pruneCandleCache();
+  const key = cacheKeyForCandles(symbol, timeframe, marketType, maxCandles);
+  const cached = candleCache.get(key);
+  if (cached && Date.now() - cached.cachedAt <= CANDLE_CACHE_TTL_MS) {
+    return cached.candles;
+  }
+
   const normalizedTimeframe = normalizeTimeframe(timeframe);
   const endpoint =
     marketType === 'FUTURES'
@@ -200,13 +241,21 @@ const fetchKlines = async (
       .map((row) => {
         if (!Array.isArray(row) || row.length < 7) return null;
         const openTime = safeFloat(row[0]);
+        const open = safeFloat(row[1]);
+        const high = safeFloat(row[2]);
+        const low = safeFloat(row[3]);
         const closePrice = safeFloat(row[4]);
+        const volume = safeFloat(row[5]);
         const closeTime = safeFloat(row[6]);
-        if (openTime <= 0 || closeTime <= 0 || closePrice <= 0) return null;
+        if (openTime <= 0 || closeTime <= 0 || closePrice <= 0 || open <= 0 || high <= 0 || low <= 0) return null;
         return {
           openTime,
           closeTime,
+          open,
+          high,
+          low,
           close: closePrice,
+          volume,
         } satisfies KlineCandle;
       })
       .filter((row): row is KlineCandle => Boolean(row));
@@ -221,9 +270,11 @@ const fetchKlines = async (
     if (nextStartTime >= now) break;
   }
 
-  return candles
+  const result = candles
     .sort((a, b) => a.openTime - b.openTime)
     .slice(-maxCandles);
+  candleCache.set(key, { cachedAt: Date.now(), candles: result });
+  return result;
 };
 
 const simulateTradesForSymbol = (
@@ -237,10 +288,14 @@ const simulateTradesForSymbol = (
 
   const trades: TradeDraft[] = [];
   let liquidations = 0;
-  for (let index = 25; index < candles.length - 6; index += 18) {
+  for (let index = 25; index < candles.length - 12; ) {
     const anchor = candles[index];
     const lookback = candles[index - 5];
-    const exit = candles[index + 5];
+    const momentumRatio = Math.abs(anchor.close - lookback.close) / Math.max(anchor.close, 1e-8);
+    const volatilityRatio = Math.abs(anchor.high - anchor.low) / Math.max(anchor.close, 1e-8);
+    const holdCandles = clamp(4 + Math.floor(momentumRatio * 220 + volatilityRatio * 120), 4, 22);
+    const exitIndex = Math.min(candles.length - 1, index + holdCandles);
+    const exit = candles[exitIndex];
 
     const side: PositionSide = anchor.close >= lookback.close ? 'LONG' : 'SHORT';
     const quantity = 1;
@@ -279,6 +334,9 @@ const simulateTradesForSymbol = (
       pnl,
       fee,
     });
+
+    const nextStep = clamp(Math.floor(holdCandles * 0.8), 8, 24);
+    index += nextStep;
   }
 
   return { trades, liquidations };
@@ -297,6 +355,174 @@ const updateRunProgress = async (
   });
 };
 
+const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
+  if (!strategyConfig || typeof strategyConfig !== 'object') return [];
+
+  const config = strategyConfig as {
+    open?: {
+      long?: unknown[];
+      short?: unknown[];
+      indicatorsLong?: unknown[];
+      indicatorsShort?: unknown[];
+    };
+    openConditions?: {
+      indicatorsLong?: unknown[];
+      indicatorsShort?: unknown[];
+    };
+  };
+
+  const flatten = [
+    ...(config.open?.long ?? []),
+    ...(config.open?.short ?? []),
+    ...(config.open?.indicatorsLong ?? []),
+    ...(config.open?.indicatorsShort ?? []),
+    ...(config.openConditions?.indicatorsLong ?? []),
+    ...(config.openConditions?.indicatorsShort ?? []),
+  ];
+
+  const specs = flatten.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const rawName = (item as { name?: unknown }).name;
+    const params = (item as { params?: Record<string, unknown> }).params;
+    if (typeof rawName !== 'string') return [];
+    const name = rawName.trim().toUpperCase();
+
+    const asPeriod = (value: unknown, fallback: number) => {
+      const candidate = Number(value);
+      return clamp(Number.isFinite(candidate) ? Math.floor(candidate) : fallback, 2, 300);
+    };
+
+    if (name.includes('EMA') && params) {
+      const fast = asPeriod(params.fast, 9);
+      const slow = asPeriod(params.slow, 21);
+      return [
+        {
+          key: `${name}_FAST_${fast}`,
+          name: `${name} FAST`,
+          period: fast,
+          panel: 'price' as const,
+        },
+        {
+          key: `${name}_SLOW_${slow}`,
+          name: `${name} SLOW`,
+          period: slow,
+          panel: 'price' as const,
+        },
+      ];
+    }
+
+    const periodCandidate = params && typeof params.period !== 'undefined'
+      ? Number(params.period)
+      : params && typeof params.length !== 'undefined'
+        ? Number(params.length)
+        : 14;
+    const period = clamp(Number.isFinite(periodCandidate) ? Math.floor(periodCandidate) : 14, 2, 300);
+    const panel: 'price' | 'oscillator' = name.includes('EMA') || name.includes('SMA') ? 'price' : 'oscillator';
+    return [{
+      key: `${name}_${period}`,
+      name,
+      period,
+      panel,
+    } satisfies IndicatorSpec];
+  });
+
+  const unique = new Map<string, IndicatorSpec>();
+  for (const spec of specs) {
+    if (!unique.has(spec.key)) unique.set(spec.key, spec);
+  }
+  return [...unique.values()];
+};
+
+const buildEmaSeries = (candles: KlineCandle[], period: number) => {
+  const alpha = 2 / (period + 1);
+  const series: Array<number | null> = [];
+  let ema: number | null = null;
+  for (let index = 0; index < candles.length; index += 1) {
+    const price = candles[index].close;
+    if (ema === null) ema = price;
+    else ema = alpha * price + (1 - alpha) * ema;
+    series.push(index + 1 >= period ? ema : null);
+  }
+  return series;
+};
+
+const buildRsiSeries = (candles: KlineCandle[], period: number) => {
+  const series: Array<number | null> = Array.from({ length: candles.length }, () => null);
+  if (candles.length <= period) return series;
+
+  let gains = 0;
+  let losses = 0;
+  for (let index = 1; index <= period; index += 1) {
+    const diff = candles[index].close - candles[index - 1].close;
+    if (diff >= 0) gains += diff;
+    else losses += Math.abs(diff);
+  }
+
+  let avgGain = gains / period;
+  let avgLoss = losses / period;
+  series[period] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+
+  for (let index = period + 1; index < candles.length; index += 1) {
+    const diff = candles[index].close - candles[index - 1].close;
+    const gain = diff > 0 ? diff : 0;
+    const loss = diff < 0 ? Math.abs(diff) : 0;
+    avgGain = (avgGain * (period - 1) + gain) / period;
+    avgLoss = (avgLoss * (period - 1) + loss) / period;
+    series[index] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+  }
+
+  return series;
+};
+
+const buildMomentumSeries = (candles: KlineCandle[], period: number) => {
+  const series: Array<number | null> = [];
+  for (let index = 0; index < candles.length; index += 1) {
+    if (index < period) {
+      series.push(null);
+      continue;
+    }
+    series.push(candles[index].close - candles[index - period].close);
+  }
+  return series;
+};
+
+const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) => {
+  return specs.map((spec) => {
+    const values =
+      spec.name.includes('EMA')
+        ? buildEmaSeries(candles, spec.period)
+        : spec.name.includes('RSI')
+          ? buildRsiSeries(candles, spec.period)
+          : buildMomentumSeries(candles, spec.period);
+    return {
+      key: spec.key,
+      name: spec.name,
+      period: spec.period,
+      panel: spec.panel,
+      values,
+    };
+  });
+};
+
+const findNearestCandleIndex = (candles: KlineCandle[], timestamp: number) => {
+  if (candles.length === 0) return -1;
+  let left = 0;
+  let right = candles.length - 1;
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    const value = candles[mid].openTime;
+    if (value === timestamp) return mid;
+    if (value < timestamp) left = mid + 1;
+    else right = mid - 1;
+  }
+
+  const candidateA = Math.max(0, right);
+  const candidateB = Math.min(candles.length - 1, left);
+  const distanceA = Math.abs(candles[candidateA].openTime - timestamp);
+  const distanceB = Math.abs(candles[candidateB].openTime - timestamp);
+  return distanceA <= distanceB ? candidateA : candidateB;
+};
+
 const runBacktestAsync = async (runId: string) => {
   const run = await prisma.backtestRun.findUnique({ where: { id: runId } });
   if (!run) return;
@@ -308,6 +534,8 @@ const runBacktestAsync = async (runId: string) => {
   const leverageCandidate = Number((seed as { leverage?: unknown }).leverage);
   const leverage = Number.isFinite(leverageCandidate) ? leverageCandidate : 1;
   const marginMode = seed.marginMode === 'ISOLATED' ? 'ISOLATED' : (seed.marginMode === 'CROSSED' ? 'CROSSED' : 'NONE');
+  const initialBalanceCandidate = Number((seed as { initialBalance?: unknown }).initialBalance);
+  const initialBalance = Number.isFinite(initialBalanceCandidate) ? Math.max(0, initialBalanceCandidate) : 10_000;
   const maxCandlesPerSymbol = computeAdaptiveMaxCandles(
     run.timeframe,
     symbols.length,
@@ -330,6 +558,9 @@ const runBacktestAsync = async (runId: string) => {
     grossLoss: 0,
     maxDrawdown: 0,
     maxCandlesPerSymbol,
+    totalCandlesForSymbol: 0,
+    currentCandleIndex: 0,
+    currentCandleTime: null,
     startedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     lastUpdate: 'starting',
@@ -355,6 +586,11 @@ const runBacktestAsync = async (runId: string) => {
 
       try {
         const candles = await fetchKlines(symbol, run.timeframe, marketType, maxCandlesPerSymbol);
+        progress.totalCandlesForSymbol = candles.length;
+        progress.currentCandleIndex = candles.length > 0 ? candles.length - 1 : 0;
+        progress.currentCandleTime = candles.length > 0 ? new Date(candles[candles.length - 1].openTime).toISOString() : null;
+        progress.updatedAt = new Date().toISOString();
+        await updateRunProgress(runId, seed, progress);
         const simulation = simulateTradesForSymbol(symbol, candles, marketType, progress.leverage, progress.marginMode);
         const trades = simulation.trades;
 
@@ -428,6 +664,8 @@ const runBacktestAsync = async (runId: string) => {
           leverage: progress.leverage,
           marginMode: progress.marginMode,
           liquidations: progress.liquidations,
+          initialBalance,
+          endBalance: initialBalance + progress.netPnl,
         },
       },
       update: {
@@ -446,6 +684,8 @@ const runBacktestAsync = async (runId: string) => {
           leverage: progress.leverage,
           marginMode: progress.marginMode,
           liquidations: progress.liquidations,
+          initialBalance,
+          endBalance: initialBalance + progress.netPnl,
         },
       },
     });
@@ -578,6 +818,12 @@ export const createRun = async (userId: string, data: CreateBacktestRunDto) => {
       strategyId: data.strategyId,
       seedConfig: {
         ...(typeof data.seedConfig === 'object' && data.seedConfig ? data.seedConfig : {}),
+        initialBalance:
+          typeof data.seedConfig === 'object' &&
+          data.seedConfig &&
+          typeof (data.seedConfig as { initialBalance?: unknown }).initialBalance === 'number'
+            ? (data.seedConfig as { initialBalance: number }).initialBalance
+            : 10_000,
         symbols: resolved.symbols,
         marketType: resolved.marketType,
         marketUniverseId: resolved.marketUniverseId,
@@ -628,4 +874,131 @@ export const getRunReport = async (userId: string, runId: string) => {
   });
 
   return report ?? null;
+};
+
+export const getRunTimeline = async (
+  userId: string,
+  runId: string,
+  query: GetBacktestTimelineQuery,
+) => {
+  const run = await prisma.backtestRun.findFirst({
+    where: { id: runId, userId },
+    select: {
+      id: true,
+      strategyId: true,
+      timeframe: true,
+      symbol: true,
+      seedConfig: true,
+      status: true,
+    },
+  });
+  if (!run) return null;
+
+  const seed = ((run.seedConfig ?? {}) as Record<string, unknown>) ?? {};
+  const marketType = (seed.marketType === 'SPOT' ? 'SPOT' : 'FUTURES') as MarketType;
+  const maxCandles = typeof seed.maxCandles === 'number'
+    ? clamp(Math.floor(seed.maxCandles), 100, 2500)
+    : computeAdaptiveMaxCandles(run.timeframe, 1, undefined);
+
+  const symbol = query.symbol.trim().toUpperCase();
+  const candles = await fetchKlines(symbol, run.timeframe, marketType, maxCandles);
+  const total = candles.length;
+  const start = clamp(query.cursor, 0, total);
+  const end = clamp(start + query.chunkSize, 0, total);
+  const chunk = candles.slice(start, end);
+
+  const trades = await prisma.backtestTrade.findMany({
+    where: {
+      userId,
+      backtestRunId: runId,
+      symbol,
+    },
+    orderBy: { openedAt: 'asc' },
+  });
+
+  const strategy = run.strategyId
+    ? await prisma.strategy.findFirst({
+      where: { id: run.strategyId, userId },
+      select: { config: true },
+    })
+    : null;
+
+  const indicatorSpecs = parseStrategyIndicators(strategy?.config);
+  const indicatorSeries = buildIndicatorSeries(candles, indicatorSpecs).map((series) => ({
+    key: series.key,
+    name: series.name,
+    period: series.period,
+    panel: series.panel,
+    points: series.values
+      .slice(start, end)
+      .map((value, index) => ({
+        candleIndex: start + index,
+        value,
+      })),
+  }));
+
+  const events = trades.flatMap((trade) => {
+    const entryTs = trade.openedAt.getTime();
+    const exitTs = trade.closedAt.getTime();
+    const entryIndex = findNearestCandleIndex(candles, entryTs);
+    const exitIndex = findNearestCandleIndex(candles, exitTs);
+
+    return [
+      {
+        id: `${trade.id}_entry`,
+        tradeId: trade.id,
+        type: 'ENTRY',
+        side: trade.side,
+        timestamp: trade.openedAt.toISOString(),
+        price: trade.entryPrice,
+        pnl: null as number | null,
+        candleIndex: entryIndex,
+      },
+      {
+        id: `${trade.id}_exit`,
+        tradeId: trade.id,
+        type: 'EXIT',
+        side: trade.side,
+        timestamp: trade.closedAt.toISOString(),
+        price: trade.exitPrice,
+        pnl: trade.pnl,
+        candleIndex: exitIndex,
+      },
+    ];
+  }).filter((event) => event.candleIndex >= start && event.candleIndex < end);
+
+  const liveProgress = (seed.liveProgress ?? {}) as {
+    currentSymbol?: string | null;
+    currentCandleIndex?: number;
+    totalCandlesForSymbol?: number;
+  };
+
+  return {
+    runId,
+    symbol,
+    timeframe: run.timeframe,
+    marketType,
+    status: run.status,
+    cursor: start,
+    nextCursor: end < total ? end : null,
+    totalCandles: total,
+    candles: chunk.map((candle, index) => ({
+      candleIndex: start + index,
+      openTime: new Date(candle.openTime).toISOString(),
+      closeTime: new Date(candle.closeTime).toISOString(),
+      open: candle.open,
+      high: candle.high,
+      low: candle.low,
+      close: candle.close,
+      volume: candle.volume,
+    })),
+    events,
+    indicatorSeries,
+    supportedEventTypes: ['ENTRY', 'EXIT'],
+    unsupportedEventTypes: ['DCA', 'TP', 'SL'],
+    playbackCursor:
+      liveProgress.currentSymbol === symbol && typeof liveProgress.currentCandleIndex === 'number'
+        ? liveProgress.currentCandleIndex
+        : null,
+  };
 };

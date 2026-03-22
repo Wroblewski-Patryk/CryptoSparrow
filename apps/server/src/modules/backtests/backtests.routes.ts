@@ -4,6 +4,7 @@ import {
   createBacktestRun,
   getBacktestRun,
   getBacktestRunReport,
+  getBacktestRunTimeline,
   listBacktestRuns,
   listBacktestRunTrades,
 } from './backtests.controller';
@@ -16,6 +17,7 @@ backtestsRouter.get('/runs', tradingReadLimiter, listBacktestRuns);
 backtestsRouter.get('/runs/:id', tradingReadLimiter, getBacktestRun);
 backtestsRouter.get('/runs/:id/trades', tradingReadLimiter, listBacktestRunTrades);
 backtestsRouter.get('/runs/:id/report', tradingReadLimiter, getBacktestRunReport);
+backtestsRouter.get('/runs/:id/timeline', tradingReadLimiter, getBacktestRunTimeline);
 backtestsRouter.post('/runs', tradingWriteLimiter, createBacktestRun);
 
 export default backtestsRouter;

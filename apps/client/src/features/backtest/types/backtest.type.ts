@@ -39,7 +39,11 @@ export type BacktestReport = {
   grossLoss: number | null;
   maxDrawdown: number | null;
   sharpe: number | null;
-  metrics: Record<string, unknown> | null;
+  metrics: {
+    initialBalance?: number;
+    endBalance?: number;
+    [key: string]: unknown;
+  } | null;
 };
 
 export type CreateBacktestRunInput = {
@@ -50,4 +54,62 @@ export type CreateBacktestRunInput = {
   marketUniverseId?: string;
   seedConfig?: Record<string, unknown>;
   notes?: string;
+};
+
+export type BacktestTimelineQuery = {
+  symbol: string;
+  cursor?: number;
+  chunkSize?: number;
+};
+
+export type BacktestTimelineEvent = {
+  id: string;
+  tradeId: string;
+  type: 'ENTRY' | 'EXIT' | 'DCA' | 'TP' | 'SL';
+  side: 'LONG' | 'SHORT';
+  timestamp: string;
+  price: number;
+  pnl: number | null;
+  candleIndex: number;
+};
+
+export type BacktestTimelineCandle = {
+  candleIndex: number;
+  openTime: string;
+  closeTime: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+};
+
+export type BacktestTimelineIndicatorPoint = {
+  candleIndex: number;
+  value: number | null;
+};
+
+export type BacktestTimelineIndicatorSeries = {
+  key: string;
+  name: string;
+  period: number;
+  panel: 'price' | 'oscillator';
+  points: BacktestTimelineIndicatorPoint[];
+};
+
+export type BacktestTimeline = {
+  runId: string;
+  symbol: string;
+  timeframe: string;
+  marketType: 'SPOT' | 'FUTURES';
+  status: BacktestStatus;
+  cursor: number;
+  nextCursor: number | null;
+  totalCandles: number;
+  candles: BacktestTimelineCandle[];
+  events: BacktestTimelineEvent[];
+  indicatorSeries: BacktestTimelineIndicatorSeries[];
+  supportedEventTypes: string[];
+  unsupportedEventTypes: string[];
+  playbackCursor: number | null;
 };
