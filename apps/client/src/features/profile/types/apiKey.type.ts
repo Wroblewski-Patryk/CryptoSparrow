@@ -4,6 +4,8 @@ export type ApiKey = {
   exchange: string;
   apiKey: string;
   apiSecret: string;
+  syncExternalPositions: boolean;
+  manageExternalPositions: boolean;
   createdAt: string;
   lastUsed?: string;
   maskedKey?: string;

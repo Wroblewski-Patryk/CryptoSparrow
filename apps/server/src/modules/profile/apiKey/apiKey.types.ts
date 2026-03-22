@@ -5,6 +5,8 @@ export const apiKeySchema = z.object({
   exchange: z.enum(["BINANCE"]),
   apiKey: z.string().min(8).max(100),
   apiSecret: z.string().min(8).max(100),
+  syncExternalPositions: z.boolean().optional().default(true),
+  manageExternalPositions: z.boolean().optional().default(false),
 });
 
 export const apiKeyRotateSchema = z.object({

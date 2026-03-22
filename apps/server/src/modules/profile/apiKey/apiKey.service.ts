@@ -12,6 +12,8 @@ export type ApiKeyPayload = {
   exchange: Exchange;
   apiKey: string;
   apiSecret: string;
+  syncExternalPositions?: boolean;
+  manageExternalPositions?: boolean;
 };
 
 export type ApiKeyTestPayload = Pick<ApiKeyPayload, "exchange" | "apiKey" | "apiSecret">;
@@ -160,6 +162,8 @@ const toPublicApiKey = (record: ApiKey) => ({
   label: record.label,
   exchange: record.exchange,
   apiKey: safeMaskStoredApiKey(record.apiKey),
+  syncExternalPositions: record.syncExternalPositions,
+  manageExternalPositions: record.manageExternalPositions,
   createdAt: record.createdAt,
   updatedAt: record.updatedAt,
   lastUsed: record.lastUsed,
@@ -179,6 +183,8 @@ export const createApiKey = async (userId: string, data: ApiKeyPayload) => {
         ...data,
         apiKey: encrypt(data.apiKey),
         apiSecret: encrypt(data.apiSecret),
+        syncExternalPositions: data.syncExternalPositions ?? true,
+        manageExternalPositions: data.manageExternalPositions ?? false,
         userId
     }
   });
@@ -192,10 +198,16 @@ export const updateApiKey = async (
   data: Partial<ApiKeyPayload>
 ) => {
   const updateData: Prisma.ApiKeyUpdateManyMutationInput = {
-    ...(data.label && { label: data.label }),
-    ...(data.exchange && { exchange: data.exchange }),
-    ...(data.apiKey && { apiKey: encrypt(data.apiKey) }),
-    ...(data.apiSecret && { apiSecret: encrypt(data.apiSecret) }),
+    ...(data.label !== undefined ? { label: data.label } : {}),
+    ...(data.exchange !== undefined ? { exchange: data.exchange } : {}),
+    ...(data.apiKey !== undefined ? { apiKey: encrypt(data.apiKey) } : {}),
+    ...(data.apiSecret !== undefined ? { apiSecret: encrypt(data.apiSecret) } : {}),
+    ...(data.syncExternalPositions !== undefined
+      ? { syncExternalPositions: data.syncExternalPositions }
+      : {}),
+    ...(data.manageExternalPositions !== undefined
+      ? { manageExternalPositions: data.manageExternalPositions }
+      : {}),
   };
 
   const result = await prisma.apiKey.updateMany({

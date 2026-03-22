@@ -54,6 +54,8 @@ model ApiKey {
   exchange   Exchange @default(BINANCE)
   apiKey     String
   apiSecret  String
+  syncExternalPositions   Boolean @default(true)
+  manageExternalPositions Boolean @default(false)
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

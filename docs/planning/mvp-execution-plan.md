@@ -174,6 +174,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `security(api-key-test): ensure test endpoint never persists raw secrets, enforces auth/rate limits, and logs audit-safe metadata only`
 - [x] `feat(exchange-validation): map Binance auth/permission errors into stable API contract (invalid key, invalid secret, ip restricted, missing futures/spot scope, network timeout)`
 - [x] `feat(profile-save-flow): require successful connection test before allowing LIVE-ready API-key save (with explicit override off by default)`
+- [x] `feat(api-key-onboarding): add sync_external_positions and manage_external_positions options`
 - [x] `feat(positions-sync): use verified stored key to fetch real open positions snapshot from Binance and expose read endpoint`
 - [x] `feat(ui-positions-live-source): add source switch/state in positions view (runtime snapshot vs exchange-live snapshot) and last-sync timestamp`
 - [x] `test(e2e): add profile/api-key and positions contract tests covering invalid credentials, permission mismatch, and successful live fetch`
@@ -320,6 +321,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Added MVP freeze-gap closure phase (stream transport, live market bar, write-side orders, orchestrator wiring) from updated roadmap/product limits.
 - 2026-03-19: Added Binance market-stream worker scaffold with normalized ticker/kline event parsing for upcoming live dashboard stream fan-out.
 - 2026-03-22: Added origin/management/sync metadata baseline in Position/Order/Trade models with migration and indexes for runtime ownership and reconciliation flows.
+- 2026-03-22: Added API-key onboarding options (`syncExternalPositions`, `manageExternalPositions`) across Prisma, profile API contracts, form switches, and regression tests.
 - 2026-03-19: Closed stream transport decision for MVP (SSE fan-out) and documented event contract plus reliability rules for frontend/backend integration.
 - 2026-03-19: Implemented dashboard live market bar component with SSE listener and UI indicators for price, 24h delta, candle freshness, and stream health state.
 - 2026-03-19: Added orders write-side API (`open`/`cancel`/`close`) with LIVE risk acknowledgments, bot eligibility guards, and contract e2e coverage.

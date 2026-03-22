@@ -122,6 +122,43 @@ describe("ApiKeyForm", () => {
       exchange: "BINANCE",
       apiKey: "test-api-key",
       apiSecret: "test-api-secret",
+      syncExternalPositions: true,
+      manageExternalPositions: false,
+    });
+  });
+
+  it("includes onboarding toggles in save payload", async () => {
+    const onSave = vi.fn();
+    testApiKeyConnectionMock.mockResolvedValueOnce({
+      ok: true,
+      message: "Binance connection OK",
+    });
+    render(<ApiKeyForm onSave={onSave} onCancel={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText("Nazwa klucza"), {
+      target: { value: "Binance managed" },
+    });
+    fireEvent.change(screen.getByLabelText("API Key"), {
+      target: { value: "toggle-api-key" },
+    });
+    fireEvent.change(screen.getByLabelText("API Secret"), {
+      target: { value: "toggle-api-secret" },
+    });
+
+    fireEvent.click(screen.getByLabelText("Synchronizuj zewnetrzne pozycje z gieldy"));
+    fireEvent.click(screen.getByLabelText("Zarzadzaj zewnetrznymi pozycjami przez bota"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Testuj polaczenie" }));
+    await screen.findByText("OK");
+    fireEvent.click(screen.getByRole("button", { name: "Zapisz" }));
+
+    expect(onSave).toHaveBeenCalledWith({
+      label: "Binance managed",
+      exchange: "BINANCE",
+      apiKey: "toggle-api-key",
+      apiSecret: "toggle-api-secret",
+      syncExternalPositions: false,
+      manageExternalPositions: true,
     });
   });
 });

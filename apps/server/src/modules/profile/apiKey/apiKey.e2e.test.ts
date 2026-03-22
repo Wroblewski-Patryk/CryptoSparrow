@@ -56,6 +56,8 @@ describe("API Keys security contract", () => {
       exchange: "BINANCE",
       apiKey: "ABCD1234EFGH5678",
       apiSecret: "SECRET1234VALUE5678",
+      syncExternalPositions: true,
+      manageExternalPositions: false,
     };
 
     const createRes = await agent.post("/dashboard/profile/apiKeys").send(payload);
@@ -63,6 +65,8 @@ describe("API Keys security contract", () => {
     expect(createRes.body.apiSecret).toBeUndefined();
     expect(createRes.body.apiKey).toContain("********");
     expect(createRes.body.apiKey).not.toBe(payload.apiKey);
+    expect(createRes.body.syncExternalPositions).toBe(true);
+    expect(createRes.body.manageExternalPositions).toBe(false);
 
     const user = await prisma.user.findUniqueOrThrow({
       where: { email: "apikey-security@example.com" },
@@ -75,6 +79,8 @@ describe("API Keys security contract", () => {
     expect(dbRecord.apiSecret).not.toBe(payload.apiSecret);
     expect(dbRecord.apiKey).toContain("gcm");
     expect(dbRecord.apiSecret).toContain("gcm");
+    expect(dbRecord.syncExternalPositions).toBe(true);
+    expect(dbRecord.manageExternalPositions).toBe(false);
 
     const listRes = await agent.get("/dashboard/profile/apiKeys");
     expect(listRes.status).toBe(200);
@@ -83,6 +89,34 @@ describe("API Keys security contract", () => {
     expect(listRes.body[0].apiSecret).toBeUndefined();
     expect(listRes.body[0].apiKey).toContain("********");
     expect(listRes.body[0].apiKey).not.toBe(payload.apiKey);
+    expect(listRes.body[0].syncExternalPositions).toBe(true);
+    expect(listRes.body[0].manageExternalPositions).toBe(false);
+  });
+
+  it("updates external-position onboarding options", async () => {
+    const agent = await registerAndLogin("apikey-onboarding-options@example.com");
+
+    const createRes = await agent.post("/dashboard/profile/apiKeys").send({
+      label: "sync-off",
+      exchange: "BINANCE",
+      apiKey: "SYNCOFFKEY12345",
+      apiSecret: "SYNCOFFSECRET12345",
+      syncExternalPositions: false,
+      manageExternalPositions: false,
+    });
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.syncExternalPositions).toBe(false);
+    expect(createRes.body.manageExternalPositions).toBe(false);
+
+    const keyId = createRes.body.id as string;
+    const updateRes = await agent.patch(`/dashboard/profile/apiKeys/${keyId}`).send({
+      syncExternalPositions: true,
+      manageExternalPositions: true,
+    });
+
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.syncExternalPositions).toBe(true);
+    expect(updateRes.body.manageExternalPositions).toBe(true);
   });
 
   it("enforces ownership on update and delete", async () => {

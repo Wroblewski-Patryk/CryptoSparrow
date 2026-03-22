@@ -13,12 +13,16 @@ export type ApiKeyFormSavePayload = {
   exchange: string;
   apiKey?: string;
   apiSecret?: string;
+  syncExternalPositions: boolean;
+  manageExternalPositions: boolean;
 };
 
 export type ApiKeyFormProps = {
   defaultValues?: {
     label: string;
     exchange: string;
+    syncExternalPositions: boolean;
+    manageExternalPositions: boolean;
   };
   isEdit?: boolean;
   onSave: (data: ApiKeyFormSavePayload) => void;
@@ -30,6 +34,8 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
   const [exchange, setExchange] = useState(defaultValues?.exchange || EXCHANGES[0]);
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
+  const [syncExternalPositions, setSyncExternalPositions] = useState(defaultValues?.syncExternalPositions ?? true);
+  const [manageExternalPositions, setManageExternalPositions] = useState(defaultValues?.manageExternalPositions ?? false);
   const [testStatus, setTestStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [testMessage, setTestMessage] = useState<string | null>(null);
   const [testedFingerprint, setTestedFingerprint] = useState<string | null>(null);
@@ -92,7 +98,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
         }
       }
 
-      const payload: ApiKeyFormSavePayload = { label, exchange };
+      const payload: ApiKeyFormSavePayload = { label, exchange, syncExternalPositions, manageExternalPositions };
       if (apiKey) payload.apiKey = apiKey;
       if (apiSecret) payload.apiSecret = apiSecret;
       onSave(payload);
@@ -164,6 +170,28 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           placeholder={isEdit ? "Podaj nowy API Secret (opcjonalnie)" : ""}
           required={!isEdit}
         />
+      </div>
+      <div className="form-control">
+        <label className="label cursor-pointer justify-start gap-3">
+          <input
+            type="checkbox"
+            className="toggle toggle-primary"
+            checked={syncExternalPositions}
+            onChange={(e) => setSyncExternalPositions(e.target.checked)}
+          />
+          <span className="label-text">Synchronizuj zewnetrzne pozycje z gieldy</span>
+        </label>
+      </div>
+      <div className="form-control">
+        <label className="label cursor-pointer justify-start gap-3">
+          <input
+            type="checkbox"
+            className="toggle toggle-secondary"
+            checked={manageExternalPositions}
+            onChange={(e) => setManageExternalPositions(e.target.checked)}
+          />
+          <span className="label-text">Zarzadzaj zewnetrznymi pozycjami przez bota</span>
+        </label>
       </div>
       <div className="flex items-center gap-4 mt-2">
         <button
