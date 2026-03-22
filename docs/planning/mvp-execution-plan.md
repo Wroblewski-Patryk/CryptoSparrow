@@ -139,7 +139,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] Phase 0 fully complete.
 - [x] End-to-end flow works: strategy -> backtest -> paper -> live opt-in.
 - [x] Security guardrails active: encryption, ownership checks, rate limits, audit logs.
-- [x] Core tests passing for auth, strategy CRUD, market/bot isolation, and trading critical paths.
+- [ ] Core tests passing for auth, strategy CRUD, market/bot isolation, and trading critical paths.
 - [x] UI scope complete for markets, builder, bots, orders, positions, backtest, reports, logs, exchanges.
 - [x] EN/PL and responsive/PWA baseline complete for core flows.
 - [x] Shared app shell and view-state model are consistent across core dashboard modules.
@@ -185,16 +185,26 @@ Rule: fix/cleanup/update first, then feature delivery.
 
 ## Phase 10 - Navigation, IA, Routing, and Auth Session Hardening (As of 2026-03-22)
 - [ ] `fix(ui-header-nav): center desktop nav list, remove legacy visual utility clutter, and unify header hover/active/focus styles`
-- [x] `fix(ui-header-nav): center desktop nav list, remove legacy visual utility clutter, and unify header hover/active/focus styles`
-- [x] `fix(ui-language-switcher): correct EN/PL flag visuals and lock language-switcher visual contract with regression tests`
-- [x] `audit(routing): create canonical route map and remove dashboard path inconsistencies (including legacy aliases)`
-- [x] `refactor(ia-profile): merge API keys and exchange connections under one settings domain model`
-- [x] `fix(ui-profile): remove isometric mode toggle from current dashboard account menu (defer to V2 gamification)`
+- [ ] `fix(ui-language-switcher): correct EN/PL flag visuals and lock language-switcher visual contract with regression tests`
+- [ ] `audit(routing): create canonical route map and remove dashboard path inconsistencies (including legacy aliases)`
+- [ ] `refactor(ia-profile): merge API keys and exchange connections under one settings domain model`
+- [ ] `fix(ui-profile): remove isometric mode toggle from current dashboard account menu (defer to V2 gamification)`
 - [ ] `fix(auth-session): force deterministic auto-logout on invalid auth/session or deleted-user state`
 - [ ] `fix(auth-resilience): handle API/DB-unavailable startup in auth context without stale logged-in UI state`
 - [ ] `feat(auth-ui): add password visibility toggle to login/register with keyboard and screen-reader support`
 - [ ] `docs(repo-structure): define staged migration from apps/client+apps/server to apps/web+apps/api and add apps/mobile bootstrap plan`
 - [ ] `docs(parity): define mobile parity contract versus web dashboard scope for MVP/V1`
+
+## Phase 11 - Audit Closure and Scope Realignment (As of 2026-03-22)
+- [ ] `docs(sync): remove contradictory done/pending states across MVP/V1 plans and align all status claims to repository evidence`
+- [ ] `test(quality-gate): restore and verify green core test suites before reopening feature expansion`
+- [ ] `docs(scope): move admin+billing implementation promises to post-MVP/V1.1 and keep V1 docs aligned with current deliverables`
+- [ ] `feat(stream-contract): deliver stream transport contract requirements (event id, ping heartbeat, max symbols guard)`
+- [ ] `fix(routing-hard-cut): hard-canonize dashboard URLs and remove legacy alias ambiguity`
+- [ ] `fix(i18n-contract): remove hardcoded copy and align locale default contract (EN default vs runtime html lang)`
+- [ ] `security(ops-endpoints): protect /metrics, /alerts, /workers/* with explicit access control`
+- [ ] `fix(live-contract): enforce LIVE real-exchange side effects; keep simulation strictly in PAPER/BACKTEST`
+- [ ] `refactor(rate-limit): evolve limiter model toward user/exchange-key aware enforcement`
 
 ## Progress Log
 - 2026-03-15: Initialized MVP execution file and commit rules.
@@ -339,6 +349,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Added API-key onboarding options (`syncExternalPositions`, `manageExternalPositions`) across Prisma, profile API contracts, form switches, and regression tests.
 - 2026-03-22: Added runtime execution guards for no-flip behavior and manual-managed symbol ignore rules in signal loop/orchestrator flow with regression tests.
 - 2026-03-22: Extended positions module UX with source/management badges plus management-mode toggle action and ownership-safe API endpoint coverage.
+- 2026-03-22: Replanned with audit-first closure queue (truthful docs status, green tests gate, stream contract completion, routing hard-cut, live-contract alignment, and admin/billing scope realignment to post-MVP).
 - 2026-03-19: Closed stream transport decision for MVP (SSE fan-out) and documented event contract plus reliability rules for frontend/backend integration.
 - 2026-03-19: Implemented dashboard live market bar component with SSE listener and UI indicators for price, 24h delta, candle freshness, and stream health state.
 - 2026-03-19: Added orders write-side API (`open`/`cancel`/`close`) with LIVE risk acknowledgments, bot eligibility guards, and contract e2e coverage.

@@ -334,3 +334,25 @@ This file tracks intentionally unresolved architecture choices so implementation
 - Current assumption:
   - migration is staged and non-breaking (aliases/scripts/CI updated first, folder rename second).
   - mobile app starts as separate project with shared API contract and incremental parity against web dashboard.
+
+## Admin/Billing Scope for V1
+- Decision state: resolved on 2026-03-22.
+- Product decision:
+  - admin + billing are not part of mandatory V1 implementation closure.
+  - any unfinished admin/billing promises move to post-MVP / V1.1 track.
+  - V1 docs must reflect real delivered scope, without forward-looking features marked as current.
+
+## Routing Canonicalization Policy
+- Decision state: resolved on 2026-03-22.
+- Product decision:
+  - hard-cut policy for dashboard routes: one canonical URL per page, no permanent alias strategy.
+  - remove/retire ambiguous route variants (for example `backtest` vs `backtests`) during normalization.
+  - docs and menu contracts must reference only canonical routes.
+
+## LIVE Side-Effects Contract
+- Decision state: resolved on 2026-03-22.
+- Product decision:
+  - all three modes are required: `BACKTEST`, `PAPER`, `LIVE`.
+  - `BACKTEST` and `PAPER` remain simulation domains and are required quality gates.
+  - `LIVE` must execute real exchange side effects (real orders/position state changes on exchange), not local-only simulation.
+  - shared decision/risk lifecycle should be reused across modes via adapter separation.

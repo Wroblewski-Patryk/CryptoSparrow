@@ -10,6 +10,7 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 ## Current Status (2026-03-21)
 - Implementation track is largely complete across Phases A-F.
 - Remaining work is production-environment exit validation (SLO observation window + external release gates/sign-offs).
+- Scope note (2026-03-22): unresolved admin+billing implementation items are explicitly moved to post-MVP/V1.1; V1 focuses on runtime/live-trading integrity and truthful release evidence.
 
 ## V1.0 Definition
 - Stable public live trading with explicit risk controls and auditability.
@@ -86,6 +87,11 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 ## Phase G - Unified Runtime and Bot-Control Program (Post-V1.0 Hardening Track)
 Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and `LIVE`, plus explicit control over manually opened exchange positions.
 
+### G0 - Audit-Driven Truth and Quality Gate
+- [ ] `docs(sync): remove contradictory done/pending markers and align plan claims with repository evidence`
+- [ ] `test(core): restore green core tests before declaring stability gates complete`
+- [ ] `docs(scope): keep admin/billing in post-MVP/V1.1 and remove implied V1 delivery claims`
+
 ### G1 - Navigation and Domain Surface Alignment
 - [ ] `feat(ui-nav): rename Execution group to Bots and move Orders/Positions under Exchanges in main dashboard IA`
 - [ ] `fix(ui-header): center desktop nav list and unify header interaction styling (hover/active/focus) across menu/account/language/theme controls`
@@ -128,6 +134,12 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [ ] `feat(auth-ui): add password visibility toggles on login/register with accessibility semantics`
 - [ ] `fix(ui-theme): remove isometric toggle from active V1 account menu (defer to V2 gamification path)`
 - [ ] `docs(repo): finalize migration plan from apps/client+apps/server to apps/web+apps/api and bootstrap apps/mobile`
+
+### G9 - Live Semantics and Ops Security Completion
+- [ ] `fix(live-contract): enforce LIVE real-exchange side effects with no local-only simulation on execution path`
+- [ ] `feat(stream-contract): complete stream contract with event id, heartbeat/ping, and symbol-limit safeguards`
+- [ ] `security(ops): restrict /metrics, /alerts, /workers/* to authorized operational contexts`
+- [ ] `refactor(rate-limit): migrate throttling model from mostly IP-centric to user/exchange-key aware controls`
 
 ## Progress Log
 - 2026-03-15: Initialized V1.0 live release plan.
@@ -223,3 +235,4 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 
 - 2026-03-21: Added explicit Exit Evidence Workpack to operationalize remaining V1 production criteria.
 - 2026-03-22: Expanded post-V1 Phase G with header/routing normalization, auth session hardening, temporary isometric-toggle removal, and `web/api/mobile` repo-structure planning tasks.
+- 2026-03-22: Added audit-closure gates (truthful docs status, core test green gate, LIVE side-effects contract, stream-contract completion, and ops endpoint access control) and locked admin/billing scope to post-MVP/V1.1.
