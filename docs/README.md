@@ -20,13 +20,14 @@ This folder contains canonical project documentation grouped by domain.
 3. `product/product.md`
 4. `architecture/system-architecture.md`
 5. `architecture/database.md`
-6. `modules/system-modules.md`
-7. `planning/mvp-execution-plan.md`
-8. `planning/mvp-next-commits.md`
-9. `planning/v1-live-release-plan.md`
-10. `planning/full-commit-roadmap.md`
-11. `planning/repo-migration-plan.md`
-12. `planning/mobile-parity-contract.md`
+6. `architecture/runtime-signal-merge-contract.md`
+7. `modules/system-modules.md`
+8. `planning/mvp-execution-plan.md`
+9. `planning/mvp-next-commits.md`
+10. `planning/v1-live-release-plan.md`
+11. `planning/full-commit-roadmap.md`
+12. `planning/repo-migration-plan.md`
+13. `planning/mobile-parity-contract.md`
 
 ## Governance and Source of Truth
 - Repository structure policy: `governance/repository-structure-policy.md`

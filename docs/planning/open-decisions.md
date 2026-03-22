@@ -213,6 +213,38 @@ This file tracks intentionally unresolved architecture choices so implementation
   - runtime target topology is one main assistant with up to four subagents per bot context.
   - assistant outputs are advisory/execution-scoped only inside explicit mandate and risk policy constraints.
 
+## Canonical Multi-Bot Runtime Model (User -> Bot -> Market Group -> Strategy)
+- Decision state: resolved on 2026-03-23.
+- Canonical model for Phase 12 (`MBA-02`):
+  - one user can own many bots.
+  - one bot can own many bot-scoped market groups.
+  - one bot market-group can reference many strategies.
+  - one strategy can be reused in many bot market-groups (by links).
+- Runtime entity hierarchy:
+  - `User (1) -> Bot (N) -> BotMarketGroup (N) -> MarketGroupStrategyLink (N) -> Strategy (1)`.
+- Invariants:
+  - ownership isolation: every child entity must belong to the same user as parent bot.
+  - deterministic execution ordering at group level (`executionOrder`).
+  - deterministic strategy ordering in group (`priority`, `weight`, stable tie-break).
+  - one symbol, one active direction at a time (no-flip).
+  - external/manual positions are ignored unless explicitly delegated to bot management.
+- Assistant topology binding:
+  - assistant stack is bot-scoped: `1 main + up to 4 subagents` per bot.
+  - assistant stack influences decisions only inside bot mandate and risk policy.
+  - fail-closed rule: assistant timeout/error degrades to strategy-only path (no unsafe action escalation).
+
+## Deterministic Signal Merge Policy
+- Decision state: resolved on 2026-03-23.
+- Merge contract:
+  - strategy outputs are merged per `(bot, market-group, symbol, interval-window)`.
+  - action domain: `LONG | SHORT | EXIT | NO_TRADE`.
+  - guardrails run first (kill switch, manual-managed ignore, no-flip, risk caps).
+  - `EXIT` has highest priority when at least one enabled strategy emits it.
+  - directional votes use weighted score (`priority` + `weight`) with deterministic tie-break.
+  - unresolved/tie/weak-consensus result is always `NO_TRADE`.
+- Canonical technical spec:
+  - `docs/architecture/runtime-signal-merge-contract.md`
+
 ## Subscription and Admin Controls (V1 -> V2)
 - Decision state: resolved on 2026-03-20.
 - V1 decision:

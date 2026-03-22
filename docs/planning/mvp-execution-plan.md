@@ -208,8 +208,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 
 ## Phase 12 - Multi-Bot Runtime Domain (MVP Extension: Data + API + Runtime)
 - [x] `MBA-01 audit(domain): map current Bot/SymbolGroup/BotStrategy contracts and define non-breaking migration path`
-- [ ] `MBA-02 docs(decisions): lock canonical model user->bot->market-group->strategy and assistant topology (1 main + max 4 subagents)`
-- [ ] `MBA-03 docs(contract): define deterministic signal merge policy for multi-strategy per market-group (priority, tie-break, no-trade)`
+- [x] `MBA-02 docs(decisions): lock canonical model user->bot->market-group->strategy and assistant topology (1 main + max 4 subagents)`
+- [x] `MBA-03 docs(contract): define deterministic signal merge policy for multi-strategy per market-group (priority, tie-break, no-trade)`
 - [ ] `MBA-04 feat(db): add BotMarketGroup model with ownership, lifecycle status, and execution ordering`
 - [ ] `MBA-05 feat(db): add MarketGroupStrategyLink model (many-strategies per market-group) with priority/weight fields`
 - [ ] `MBA-06 feat(db-migration): backfill existing bot strategies into default market-group for zero-downtime compatibility`
@@ -243,6 +243,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `MBA-30 release(v1-gate): collect evidence pack and close V1 exit criteria for multi-entity assistant runtime`
 ## Progress Log
 - 2026-03-22: Domain audit completed for multi-bot runtime (`MBA-01`), including current Bot/SymbolGroup/BotStrategy contract mapping and non-breaking migration path in `docs/planning/mba-01-domain-audit-2026-03-22.md`.
+- 2026-03-23: Locked canonical runtime hierarchy and assistant topology (`MBA-02`) plus deterministic multi-strategy merge policy contract (`MBA-03`) in `docs/planning/open-decisions.md` and `docs/architecture/runtime-signal-merge-contract.md`.
 - 2026-03-15: Initialized MVP execution file and commit rules.
 - 2026-03-15: Added generic trigger-based one-task execution workflow.
 - 2026-03-15: Expanded MVP plan to fully align with product, modules, database, trading, testing, and security docs.
