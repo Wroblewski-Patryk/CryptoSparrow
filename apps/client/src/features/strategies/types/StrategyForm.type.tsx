@@ -87,6 +87,7 @@ export type CloseProps = {
 export type TimeUnit = "min" | "h" | "d" | "w";
 export type DcaMode = "basic" | "advanced";
 export type DcaLevel = { percent: number; multiplier: number };
+export type MarginMode = "CROSSED" | "ISOLATED";
 
 export type AdditionalState = {
     // DCA
@@ -105,6 +106,7 @@ export type AdditionalState = {
     positionUnit: TimeUnit;
     orderLifetime: number;
     orderUnit: TimeUnit;
+    marginMode: MarginMode;
 };
 
 export type AdditionalProps = {

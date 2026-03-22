@@ -1,8 +1,8 @@
-import { BasicProps } from "../../types/StrategyForm.type";
+﻿import { BasicProps } from "../../types/StrategyForm.type";
+
 export function Basic({ data, setData }: BasicProps) {
   return (
     <div className="flex flex-col md:flex-row gap-8">
-      {/* Lewa kolumna */}
       <div className="w-full md:w-1/2 space-y-6">
         <div className="form-control w-full">
           <label className="label" htmlFor="name">
@@ -14,11 +14,10 @@ export function Basic({ data, setData }: BasicProps) {
             className="input input-bordered w-full"
             placeholder="np. RSI+MACD 5m"
             value={data.name}
-            onChange={e =>
-              setData(prev => ({ ...prev, name: e.target.value }))
-            }
+            onChange={(e) => setData((prev) => ({ ...prev, name: e.target.value }))}
           />
         </div>
+
         <div className="form-control w-full">
           <label className="label" htmlFor="description">
             <span className="label-text">Opis</span>
@@ -29,36 +28,35 @@ export function Basic({ data, setData }: BasicProps) {
             placeholder="Opis strategii..."
             rows={3}
             value={data.description}
-            onChange={e =>
-              setData(prev => ({ ...prev, description: e.target.value }))
-            }
+            onChange={(e) => setData((prev) => ({ ...prev, description: e.target.value }))}
           />
         </div>
       </div>
-      {/* Prawa kolumna */}
+
       <div className="w-full md:w-1/2 space-y-6">
         <div className="form-control w-full">
           <label className="label">
-            <span className="label-text">Interwał</span>
+            <span className="label-text">Interwal</span>
           </label>
           <select
             value={data.interval}
-            onChange={e =>
-              setData(prev => ({ ...prev, interval: e.target.value }))
-            }
+            onChange={(e) => setData((prev) => ({ ...prev, interval: e.target.value }))}
             className="select select-bordered w-full"
           >
-            <option value="">Wybierz interwał</option>
-            <option value="1 min">1 min</option>
-            <option value="5 min">5 min</option>
-            <option value="10 min">10 min</option>
-            <option value="15 min">15 min</option>
+            <option value="">Wybierz interwal</option>
+            <option value="1m">1m</option>
+            <option value="5m">5m</option>
+            <option value="10m">10m</option>
+            <option value="15m">15m</option>
+            <option value="30m">30m</option>
             <option value="1h">1h</option>
             <option value="4h">4h</option>
+            <option value="1d">1d</option>
           </select>
         </div>
+
         <div className="form-control w-full">
-          <label className="label">Dźwignia</label>
+          <label className="label">Dzwignia</label>
           <div className="flex items-center w-full gap-4">
             <input
               type="range"
@@ -67,12 +65,7 @@ export function Basic({ data, setData }: BasicProps) {
               step={1}
               value={data.leverage}
               className="range w-full"
-              onChange={e =>
-                setData(prev => ({
-                  ...prev,
-                  leverage: Number(e.target.value),
-                }))
-              }
+              onChange={(e) => setData((prev) => ({ ...prev, leverage: Number(e.target.value) }))}
             />
             <input
               type="number"
@@ -80,20 +73,17 @@ export function Basic({ data, setData }: BasicProps) {
               max={75}
               value={data.leverage}
               className="input input-bordered w-20"
-              onChange={e => {
+              onChange={(e) => {
                 let val = Number(e.target.value);
                 if (val < 1) val = 1;
                 if (val > 75) val = 75;
-                setData(prev => ({
-                  ...prev,
-                  leverage: val,
-                }));
+                setData((prev) => ({ ...prev, leverage: val }));
               }}
             />
             <span className="opacity-60">x</span>
           </div>
         </div>
-        {/* Wallet risk */}
+
         <div className="form-control w-full">
           <label className="label">Ryzyko portfela (%)</label>
           <div className="flex items-center w-full gap-4 ">
@@ -104,12 +94,7 @@ export function Basic({ data, setData }: BasicProps) {
               step={0.1}
               value={data.walletRisk}
               className="range w-full"
-              onChange={e =>
-                setData(prev => ({
-                  ...prev,
-                  walletRisk: Number(e.target.value),
-                }))
-              }
+              onChange={(e) => setData((prev) => ({ ...prev, walletRisk: Number(e.target.value) }))}
             />
             <input
               type="number"
@@ -118,15 +103,32 @@ export function Basic({ data, setData }: BasicProps) {
               step={0.1}
               className="input input-bordered w-20"
               value={data.walletRisk}
-              onChange={e =>
-                setData(prev => ({
-                  ...prev,
-                  walletRisk: Number(e.target.value),
-                }))
-              }
+              onChange={(e) => setData((prev) => ({ ...prev, walletRisk: Number(e.target.value) }))}
             />
             <span className="opacity-60">%</span>
           </div>
+        </div>
+
+        <div className="form-control w-full">
+          <label className="label">
+            <span className="label-text">Margin mode (Futures)</span>
+          </label>
+          <select
+            value={data.additional.marginMode}
+            onChange={(e) =>
+              setData((prev) => ({
+                ...prev,
+                additional: {
+                  ...prev.additional,
+                  marginMode: e.target.value as "CROSSED" | "ISOLATED",
+                },
+              }))
+            }
+            className="select select-bordered w-full"
+          >
+            <option value="CROSSED">CROSSED</option>
+            <option value="ISOLATED">ISOLATED</option>
+          </select>
         </div>
       </div>
     </div>

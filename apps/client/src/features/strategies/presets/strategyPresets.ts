@@ -11,7 +11,7 @@ export type StrategyPreset = {
 const baseForm: StrategyFormState = {
   name: "New strategy",
   description: "Preset strategy template",
-  interval: "5 min",
+  interval: "5m",
   leverage: 5,
   walletRisk: 1,
   openConditions: {
@@ -38,6 +38,7 @@ const baseForm: StrategyFormState = {
     positionUnit: "d",
     orderLifetime: 6,
     orderUnit: "h",
+    marginMode: "CROSSED",
   },
 };
 
@@ -141,7 +142,7 @@ export const strategyPresets: StrategyPreset[] = [
       ...baseForm,
       name: "Breakout Candle",
       description: "Breakout setup using candle pattern trigger.",
-      interval: "15 min",
+      interval: "15m",
       leverage: 10,
       openConditions: {
         direction: "long",
@@ -174,4 +175,3 @@ export const strategyPresets: StrategyPreset[] = [
     },
   },
 ];
-

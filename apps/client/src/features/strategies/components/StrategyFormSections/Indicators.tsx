@@ -2,7 +2,9 @@ import { LuChevronDown, LuChevronRight, LuChevronUp, LuTrash2, LuTrendingDown, L
 import { IndicatorsProps } from "../../types/StrategyForm.type";
 
 export default function Indicators({ side, indicators, value, setValue }: IndicatorsProps) {
-    const indicatorGroups = Array.from(new Set(indicators.map(i => i.group)));
+    const indicatorGroups = Array.from(
+        new Set([...indicators.map(i => i.group), ...value.map(i => i.group)])
+    );
 
     // Dodaj nowy wskaźnik
     const addIndicator = () => {
@@ -28,6 +30,10 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
     const updateGroup = (idx: number, group: string) => {
         const indicatorsInGroup = indicators.filter(i => i.group === group);
         const meta = indicatorsInGroup[0];
+        if (!meta) {
+            setValue(value.map((el, i) => (i === idx ? { ...el, group } : el)));
+            return;
+        }
         setValue(value.map((el, i) =>
             i === idx
                 ? { ...el, group, name: meta.name, params: Object.fromEntries(meta.params.map(p => [p.name, p.default])) }
@@ -94,6 +100,10 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
             {value.map((indicator, idx) => {
                 const indicatorsInGroup = indicators.filter(i => i.group === indicator.group);
                 const meta = indicators.find(i => i.name === indicator.name);
+                const indicatorOptions =
+                    indicatorsInGroup.length > 0
+                        ? indicatorsInGroup
+                        : [{ name: indicator.name, group: indicator.group, type: "custom", params: [] }];
 
                 return (
                     <div key={idx} className="card bg-base-200 shadow-md mb-6">
@@ -173,7 +183,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                                             value={indicator.name}
                                             onChange={e => updateIndicatorType(idx, e.target.value)}
                                         >
-                                            {indicatorsInGroup.map(i => (
+                                            {indicatorOptions.map(i => (
                                                 <option key={i.name} value={i.name}>{i.name}</option>
                                             ))}
                                         </select>

@@ -1,5 +1,24 @@
 export const indicators = [
   {
+    name: "EMA",
+    group: "Analiza techniczna",
+    type: "trend",
+    params: [
+      {
+        name: "fast",
+        default: 9,
+        min: 2,
+        max: 255
+      },
+      {
+        name: "slow",
+        default: 21,
+        min: 2,
+        max: 255
+      }
+    ]
+  },
+  {
     name: "RSI",
     group: "Analiza techniczna",
     type: "oscillator",

@@ -33,6 +33,7 @@ const defaultState: StrategyFormState = {
         positionUnit: "d",
         orderLifetime: 10,
         orderUnit: "min",
+        marginMode: "CROSSED",
     },
 };
 
