@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `refactor(rate-limit): move from IP-centric throttling toward user/exchange-key aware limits`
 - [ ] `fix(auth-session-recovery): enforce automatic logout on invalid session/user-deleted scenarios and add graceful no-db fallback behavior`
 - [ ] `feat(auth-password-visibility): add password visibility toggle in login/register forms with a11y labels and tests`
 
@@ -67,6 +66,7 @@ Operational queue for one-task execution runs.
 - [x] `fix(i18n-contract): remove remaining hardcoded copy and align default locale contract (docs vs SSR html lang)`
 - [x] `fix(live-execution-contract): align LIVE path to real exchange side effects; keep simulation strictly in PAPER/BACKTEST`
 - [x] `security(ops-endpoints): restrict /metrics, /alerts, /workers/* access with auth/role/network guardrails`
+- [x] `refactor(rate-limit): move from IP-centric throttling toward user/exchange-key aware limits`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

@@ -4,7 +4,7 @@ import * as controller from './apiKey.controller';
 import { createRateLimiter } from '../../../middleware/rateLimit';
 
 const apiKeyRouter = Router();
-const apiKeyTestLimiter = createRateLimiter({ windowMs: 60_000, max: 5 });
+const apiKeyTestLimiter = createRateLimiter({ windowMs: 60_000, max: 5, keyScope: 'user_exchange' });
 
 apiKeyRouter.route('/')
   .get(controller.list)

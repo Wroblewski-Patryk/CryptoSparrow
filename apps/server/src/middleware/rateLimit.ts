@@ -1,10 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { createClient } from 'redis';
+import { createHash } from 'crypto';
 import { sendError } from '../utils/apiError';
 
 type RateLimitOptions = {
   windowMs: number;
   max: number;
+  keyScope?: 'ip' | 'auth' | 'user' | 'user_exchange';
 };
 
 type Bucket = {
@@ -12,8 +14,56 @@ type Bucket = {
   resetAt: number;
 };
 
-const ipKey = (req: Request) => req.ip || req.socket.remoteAddress || 'unknown';
-const rateLimitKey = (req: Request) => `${req.method}:${req.baseUrl}${req.path}:${ipKey(req)}`;
+const normalizeToken = (value: unknown) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
+
+const getRequestIp = (req: Request) => {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') {
+    const first = forwarded.split(',')[0]?.trim();
+    if (first) return first;
+  }
+  return req.ip || req.socket.remoteAddress || 'unknown';
+};
+
+const apiKeyFingerprint = (raw: unknown) => {
+  if (typeof raw !== 'string' || raw.trim() === '') return null;
+  return createHash('sha256').update(raw.trim()).digest('hex').slice(0, 12);
+};
+
+const resolveRateLimitSubject = (
+  req: Request,
+  keyScope: NonNullable<RateLimitOptions['keyScope']>
+) => {
+  const ip = getRequestIp(req);
+  const userId = normalizeToken(req.user?.id);
+  const body = (req.body as Record<string, unknown> | undefined) ?? {};
+  const query = (req.query as Record<string, unknown> | undefined) ?? {};
+
+  if (keyScope === 'ip') {
+    return `ip:${ip}`;
+  }
+
+  if (keyScope === 'auth') {
+    const email = normalizeToken(body.email);
+    return email ? `auth:${email}` : `ip:${ip}`;
+  }
+
+  if (keyScope === 'user') {
+    return userId ? `user:${userId}` : `ip:${ip}`;
+  }
+
+  const exchange = normalizeToken(body.exchange) || normalizeToken(query.exchange) || 'unknown';
+  const apiKeyHash = apiKeyFingerprint(body.apiKey);
+  const savedKeyId = normalizeToken(req.params?.id);
+  const keyPart = apiKeyHash ? `hash:${apiKeyHash}` : savedKeyId ? `saved:${savedKeyId}` : 'none';
+  const actor = userId ? `user:${userId}` : `ip:${ip}`;
+  return `${actor}:exchange:${exchange}:key:${keyPart}`;
+};
+
+const rateLimitKey = (
+  req: Request,
+  keyScope: NonNullable<RateLimitOptions['keyScope']>
+) => `${req.method}:${req.baseUrl}${req.path}:${resolveRateLimitSubject(req, keyScope)}`;
 
 type RedisClient = ReturnType<typeof createClient>;
 let redisClientPromise: Promise<RedisClient | null> | null = null;
@@ -40,7 +90,7 @@ const getRedisClient = async () => {
   return redisClientPromise;
 };
 
-export const createRateLimiter = ({ windowMs, max }: RateLimitOptions) => {
+export const createRateLimiter = ({ windowMs, max, keyScope = 'user' }: RateLimitOptions) => {
   const buckets = new Map<string, Bucket>();
 
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -49,7 +99,7 @@ export const createRateLimiter = ({ windowMs, max }: RateLimitOptions) => {
     }
 
     const redis = await getRedisClient();
-    const key = `rate_limit:${rateLimitKey(req)}`;
+    const key = `rate_limit:${rateLimitKey(req, keyScope)}`;
 
     if (redis) {
       const result = (await redis.eval(
@@ -109,4 +159,8 @@ export const createRateLimiter = ({ windowMs, max }: RateLimitOptions) => {
 
     return next();
   };
+};
+
+export const __rateLimitInternals = {
+  resolveRateLimitSubject,
 };
