@@ -22,20 +22,31 @@ type NavGroupProps = {
   pathname: string;
 };
 
+const headerControlBaseClass =
+  'rounded-md text-primary-content/85 hover:text-primary-content hover:bg-base-100/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-content/50 transition-colors';
+const headerControlActiveClass = 'bg-base-100/20 text-primary-content font-semibold';
+
 function NavGroup({ active, label, links, pathname }: NavGroupProps) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
   useDetailsDropdown(detailsRef);
+  const summaryClass = active
+    ? `${headerControlBaseClass} ${headerControlActiveClass}`
+    : headerControlBaseClass;
 
   return (
     <li>
       <details ref={detailsRef}>
-        <summary className={active ? 'active font-medium' : undefined}>{label}</summary>
-        <ul className="bg-base-100 text-base-content rounded-box min-w-64 p-2 z-[80]">
+        <summary className={summaryClass}>{label}</summary>
+        <ul className="bg-base-100 text-base-content rounded-box min-w-64 p-2 z-[80] shadow-xl border border-base-300/60">
           {links.map((item, index) => {
             const current = pathname === item.href;
             return (
               <li key={`${label}-${item.href}-${index}`}>
-                <Link href={item.href} aria-current={current ? 'page' : undefined} className={current ? 'active font-medium' : undefined}>
+                <Link
+                  href={item.href}
+                  aria-current={current ? 'page' : undefined}
+                  className={current ? 'active font-medium' : undefined}
+                >
                   {item.label}
                 </Link>
               </li>
@@ -137,6 +148,9 @@ export default function Header() {
 
   const isActive = (href: string) => pathname === href;
   const isGroupActive = (links: NavItem[]) => links.some((item) => isActive(item.href));
+  const homeLinkClass = isActive(homeLink.href)
+    ? `${headerControlBaseClass} ${headerControlActiveClass}`
+    : headerControlBaseClass;
 
   return (
     <header className="bg-primary sticky top-0 z-50 shadow-sm">
@@ -152,13 +166,13 @@ export default function Header() {
             </Link>
           </div>
 
-          <nav aria-label="Dashboard navigation" className="hidden xl:block flex-1 min-w-0 px-2 xl:px-4 overflow-visible">
-            <ul className="menu menu-horizontal rounded-box bg-base-100/10 p-1 gap-1 flex-nowrap whitespace-nowrap overflow-visible">
+          <nav aria-label="Dashboard navigation" className="hidden xl:flex flex-1 min-w-0 overflow-visible justify-center">
+            <ul className="menu menu-horizontal rounded-box bg-base-100/10 p-1 gap-1.5 flex-nowrap whitespace-nowrap overflow-visible items-center justify-center">
               <li>
                 <Link
                   href={homeLink.href}
                   aria-current={isActive(homeLink.href) ? 'page' : undefined}
-                  className={isActive(homeLink.href) ? 'active font-medium' : undefined}
+                  className={homeLinkClass}
                 >
                   {homeLink.label}
                 </Link>

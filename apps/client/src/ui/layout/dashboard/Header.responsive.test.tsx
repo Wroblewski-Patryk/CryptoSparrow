@@ -25,6 +25,11 @@ describe("Header responsive smoke", () => {
     expect(screen.getAllByText("Bots").length).toBeGreaterThan(0);
     expect(screen.getByText("Analytics")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "false");
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    const dashboardLinks = screen.getAllByRole("link", { name: "Dashboard" });
+    const desktopDashboardLink = dashboardLinks.find((item) => item.getAttribute("href") === "/dashboard");
+    expect(desktopDashboardLink).toBeTruthy();
+    expect(desktopDashboardLink?.className).toContain("focus-visible:outline");
+    const nav = screen.getByRole("navigation", { name: "Dashboard navigation" });
+    expect(nav.className).toContain("justify-center");
   });
 });
