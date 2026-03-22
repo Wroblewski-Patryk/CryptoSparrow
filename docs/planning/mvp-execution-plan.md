@@ -183,6 +183,18 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `docs(runbook): document secure API-key onboarding and troubleshooting flow for Binance connection/permissions failures`
 - [x] `feat(db): add position/order/trade origin + management mode fields with migration baseline`
 
+## Phase 10 - Navigation, IA, Routing, and Auth Session Hardening (As of 2026-03-22)
+- [ ] `fix(ui-header-nav): center desktop nav list, remove legacy visual utility clutter, and unify header hover/active/focus styles`
+- [ ] `fix(ui-language-switcher): correct EN/PL flag visuals and lock language-switcher visual contract with regression tests`
+- [ ] `audit(routing): create canonical route map and remove dashboard path inconsistencies (including legacy aliases)`
+- [ ] `refactor(ia-profile): merge API keys and exchange connections under one settings domain model`
+- [ ] `fix(ui-profile): remove isometric mode toggle from current dashboard account menu (defer to V2 gamification)`
+- [ ] `fix(auth-session): force deterministic auto-logout on invalid auth/session or deleted-user state`
+- [ ] `fix(auth-resilience): handle API/DB-unavailable startup in auth context without stale logged-in UI state`
+- [ ] `feat(auth-ui): add password visibility toggle to login/register with keyboard and screen-reader support`
+- [ ] `docs(repo-structure): define staged migration from apps/client+apps/server to apps/web+apps/api and add apps/mobile bootstrap plan`
+- [ ] `docs(parity): define mobile parity contract versus web dashboard scope for MVP/V1`
+
 ## Progress Log
 - 2026-03-15: Initialized MVP execution file and commit rules.
 - 2026-03-15: Added generic trigger-based one-task execution workflow.
@@ -382,6 +394,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Added positions live-source regression coverage: UI tests for source switch + snapshot failure state and server e2e for exchange snapshot failure contract (`502`).
 - 2026-03-21: Added Binance API-key onboarding/troubleshooting runbook with permission/code mapping and linked it from README and MVP ops runbook.
 - 2026-03-22: Updated dashboard IA navigation: `Execution` renamed to `Bots`; `Orders` and `Positions` moved under `Exchanges` dropdown placed between `Dashboard` and `Markets`, with header responsive test updates.
+- 2026-03-22: Added Phase 10 planning queue for header/nav consistency, routing normalization, profile IA cleanup, auth session resilience, and repo `web/api/mobile` migration documentation.
 
 
 

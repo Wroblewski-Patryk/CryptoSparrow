@@ -7,8 +7,18 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [ ] `fix(ui-header-nav): center desktop nav list, simplify menu utility classes, and unify hover/active/focus color states across header controls`
+- [ ] `fix(ui-language-switcher): replace incorrect EN flag styling and add visual regression coverage for locale switcher`
+- [ ] `audit(routing-dashboard): produce canonical route map and remove dashboard path inconsistencies (backtest/backtests, list/create aliases, menu contracts)`
+- [ ] `refactor(profile-ia): merge API keys + exchange connections into one user-settings information architecture`
+- [ ] `fix(profile-menu): remove isometric toggle from account menu (deferred to V2 gamification track)`
 
 ## NEXT
+- [ ] `fix(auth-session-recovery): enforce automatic logout on invalid session/user-deleted scenarios and add graceful no-db fallback behavior`
+- [ ] `feat(auth-password-visibility): add password visibility toggle in login/register forms with a11y labels and tests`
+- [ ] `docs(repo-structure): define target monorepo apps naming (`apps/web`, `apps/api`, `apps/mobile`) and migration rollout sequence`
+- [ ] `chore(repo-migration-plan): prepare non-breaking rename plan from client/server to web/api (scripts, CI, env, docs)`
+- [ ] `docs(mobile-bootstrap): define mobile app bootstrap plan (React Native/Expo), API parity scope, and auth/session contract`
 
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`

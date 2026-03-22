@@ -296,3 +296,41 @@ This file tracks intentionally unresolved architecture choices so implementation
 ## Accessibility Scope
 - Open: full accessibility pass timeline.
 - Current assumption: baseline accessibility in MVP, full pass after MVP.
+
+## Runtime Position Governance (BACKTEST/PAPER/LIVE)
+- Decision state: resolved on 2026-03-22.
+- V1 decision:
+  - one-way behavior per symbol: only one active direction at a time (`LONG` or `SHORT`), no automatic flip.
+  - if position on symbol is already open, opposite-side entry signal is ignored until current position is closed.
+  - live exchange state is runtime source-of-truth; DB is synchronized operational projection and analytics source.
+  - manually opened exchange positions are synchronized only when API-key sync option is enabled.
+  - synchronized external positions default to `MANUAL_MANAGED` (not controlled by bot rules).
+  - user can manually switch position management mode to `BOT_MANAGED`.
+  - when symbol is occupied by manually managed position, bot entry signal for that symbol is ignored.
+
+## Execution and Backtest Parity Policy
+- Decision state: resolved on 2026-03-22.
+- V1 direction:
+  - backtest, paper, and live must converge to one shared execution core (decision/risk/order lifecycle), with mode-specific adapters.
+  - paper mode must be realistic and behaviorally equivalent to live execution path, except for exchange side effects.
+  - paper simulation target includes:
+    - partial fills,
+    - latency model,
+    - fee/slippage/funding application,
+    - order lifecycle parity with live modes.
+  - backtest must simulate the same order and position lifecycle options used by bot runtime (no reduced-rule backtest path).
+  - historical market data should be cached in DB and incrementally extended to avoid repeated full refetch from exchange.
+
+## Dashboard Isometric Mode Placement
+- Decision state: resolved on 2026-03-22.
+- V1 decision:
+  - remove isometric mode control from active dashboard account menu.
+  - treat isometric mode as out-of-scope for current operational UX hardening.
+- V2 direction:
+  - reintroduce isometric mode as optional gamification layer with explicit UX entry point and feature flag.
+
+## Monorepo App Naming and Mobile Track
+- Open: exact migration window for renaming app folders from `apps/client` + `apps/server` to `apps/web` + `apps/api`, while adding `apps/mobile`.
+- Current assumption:
+  - migration is staged and non-breaking (aliases/scripts/CI updated first, folder rename second).
+  - mobile app starts as separate project with shared API contract and incremental parity against web dashboard.

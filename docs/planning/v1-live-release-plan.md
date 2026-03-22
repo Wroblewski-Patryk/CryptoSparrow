@@ -83,6 +83,52 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [x] Public docs complete for users and operators.
 - [x] Launch retrospective completed with actionable v1.1 plan.
 
+## Phase G - Unified Runtime and Bot-Control Program (Post-V1.0 Hardening Track)
+Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and `LIVE`, plus explicit control over manually opened exchange positions.
+
+### G1 - Navigation and Domain Surface Alignment
+- [ ] `feat(ui-nav): rename Execution group to Bots and move Orders/Positions under Exchanges in main dashboard IA`
+- [ ] `fix(ui-header): center desktop nav list and unify header interaction styling (hover/active/focus) across menu/account/language/theme controls`
+- [ ] `fix(ui-language): correct EN/PL flag visuals and protect with regression tests`
+- [ ] `audit(routing): canonicalize dashboard URL contract and remove duplicate/legacy route variants`
+- [ ] `docs(ia): update module map and user guide navigation references for Bots/Exchanges grouping`
+
+### G2 - Position/Order Origin and Management Semantics
+- [ ] `feat(db): add origin/management metadata to positions/orders/trades (bot/manual/exchange-sync/backtest)`
+- [ ] `feat(api): expose management mode in positions endpoints and allow explicit toggle manual<->bot managed`
+- [ ] `feat(profile): add API-key onboarding options for external sync and external position management defaults`
+
+### G3 - Live Reconciliation and Safety Rules
+- [ ] `feat(runtime): implement live reconciliation loop with exchange as source-of-truth and DB upsert projection`
+- [ ] `feat(runtime): enforce no-flip rule on per-symbol position lifecycle and ignore opposite entries while position is open`
+- [ ] `feat(runtime): ignore bot entry signals on symbols occupied by manual-managed positions`
+
+### G4 - Shared Execution Core (Parity Foundation)
+- [ ] `refactor(engine): extract shared execution core used by backtest/paper/live adapters`
+- [ ] `refactor(engine): route runtime signal and position automation flows through shared execution core`
+- [ ] `test(engine): add deterministic parity tests for shared core against mode adapters`
+
+### G5 - Paper 1:1 Live-Semantics Simulation
+- [ ] `feat(paper): implement realistic fill model (partial fills, latency, fee/slippage/funding)`
+- [ ] `feat(paper): persist runtime-equivalent order/position/trade events for performance analytics`
+- [ ] `test(paper): add scenario tests proving paper/live decision equivalence with adapter-specific execution differences only`
+
+### G6 - Backtest 1:1 Runtime Replay
+- [ ] `feat(backtest): replace reduced simulation path with shared execution core replay over historical candles`
+- [ ] `feat(backtest): ensure all runtime lifecycle actions are represented in events/timeline/report (entry/exit/dca/tp/sl/trailing)`
+- [ ] `perf(backtest): implement historical candle DB cache with incremental backfill and deterministic chunk replay`
+
+### G7 - Performance and Analytics Closure
+- [ ] `feat(metrics): add cross-mode performance comparison views (backtest vs paper vs live)`
+- [ ] `feat(positions): show position source and management mode in Positions table and details`
+- [ ] `test(e2e): strategy->bot->backtest/paper/live parity path with runtime assertions and reconciliation checks`
+
+### G8 - Auth and Platform Surface Cleanup
+- [ ] `fix(auth-session): auto-logout user on invalid token/deleted-user/no-db startup and keep public-route UX clean`
+- [ ] `feat(auth-ui): add password visibility toggles on login/register with accessibility semantics`
+- [ ] `fix(ui-theme): remove isometric toggle from active V1 account menu (defer to V2 gamification path)`
+- [ ] `docs(repo): finalize migration plan from apps/client+apps/server to apps/web+apps/api and bootstrap apps/mobile`
+
 ## Progress Log
 - 2026-03-15: Initialized V1.0 live release plan.
 - 2026-03-15: Aligned V1.0 structure with architecture, security, testing, and release-readiness docs.
@@ -176,3 +222,4 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - 2026-03-21: Completed launch review and V1.1 backlog cut in `docs/operations/v1-launch-review-2026-03-21.md` using compiled launch evidence and current external-gate status.
 
 - 2026-03-21: Added explicit Exit Evidence Workpack to operationalize remaining V1 production criteria.
+- 2026-03-22: Expanded post-V1 Phase G with header/routing normalization, auth session hardening, temporary isometric-toggle removal, and `web/api/mobile` repo-structure planning tasks.
