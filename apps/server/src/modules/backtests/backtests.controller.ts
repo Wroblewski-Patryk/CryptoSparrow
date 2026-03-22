@@ -39,7 +39,7 @@ export const createBacktestRun = async (req: Request, res: Response) => {
   try {
     const payload = CreateBacktestRunSchema.parse(req.body);
     const created = await backtestsService.createRun(userId, payload);
-    if (!created) return sendError(res, 404, 'Strategy not found');
+    if (!created) return sendError(res, 404, 'Strategy or market universe not found');
     return res.status(201).json(created);
   } catch (error) {
     return sendValidationError(res, error);

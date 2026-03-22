@@ -170,7 +170,7 @@ describe('Backtests runs contract', () => {
       strategyId: ownerStrategy.id,
     });
     expect(otherCreateWithForeignStrategy.status).toBe(404);
-    expect(otherCreateWithForeignStrategy.body.error.message).toBe('Strategy not found');
+    expect(otherCreateWithForeignStrategy.body.error.message).toBe('Strategy or market universe not found');
   });
 
   it('returns 404 when report does not exist for owned run', async () => {
