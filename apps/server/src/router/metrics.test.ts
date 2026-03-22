@@ -2,6 +2,7 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { app } from '../index';
 import { metricsStore } from '../observability/metrics';
+import { prisma } from '../prisma/client';
 
 type MetricsPayload = {
   http: {
@@ -27,12 +28,69 @@ type MetricsPayload = {
 };
 
 const getMetrics = async () => {
-  const res = await request(app).get('/metrics');
+  const adminAgent = await createAdminAgent();
+  const res = await adminAgent.get('/metrics');
   expect(res.status).toBe(200);
   return res.body as MetricsPayload;
 };
 
+const createAdminAgent = async () => {
+  const email = `metrics-admin-${Date.now()}-${Math.random()}@example.com`;
+  const agent = request.agent(app);
+  const registerRes = await agent.post('/auth/register').send({
+    email,
+    password: 'Admin12#$',
+  });
+  expect(registerRes.status).toBe(201);
+
+  await prisma.user.update({
+    where: { email },
+    data: { role: 'ADMIN' },
+  });
+
+  const loginRes = await agent.post('/auth/login').send({
+    email,
+    password: 'Admin12#$',
+  });
+  expect(loginRes.status).toBe(200);
+
+  return agent;
+};
+
+const createUserAgent = async () => {
+  const email = `metrics-user-${Date.now()}-${Math.random()}@example.com`;
+  const agent = request.agent(app);
+  const registerRes = await agent.post('/auth/register').send({
+    email,
+    password: 'Admin12#$',
+  });
+  expect(registerRes.status).toBe(201);
+  const loginRes = await agent.post('/auth/login').send({
+    email,
+    password: 'Admin12#$',
+  });
+  expect(loginRes.status).toBe(200);
+  return agent;
+};
+
 describe('metrics endpoint', () => {
+  it('rejects unauthenticated access', async () => {
+    const res = await request(app).get('/metrics');
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects non-admin access', async () => {
+    const userAgent = await createUserAgent();
+    const res = await userAgent.get('/metrics');
+    expect(res.status).toBe(403);
+  });
+
+  it('rejects requests from disallowed network', async () => {
+    const adminAgent = await createAdminAgent();
+    const res = await adminAgent.get('/metrics').set('x-forwarded-for', '8.8.8.8');
+    expect(res.status).toBe(403);
+  });
+
   it('exposes cumulative http request counters and duration aggregates', async () => {
     const before = await getMetrics();
 

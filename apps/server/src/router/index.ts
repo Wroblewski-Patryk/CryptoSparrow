@@ -5,6 +5,9 @@ import adminRoutes from './admin.routes';
 import uploadRouter from '../modules/upload/upload.routes';
 import { metricsStore } from '../observability/metrics';
 import { evaluateRuntimeAlerts } from '../observability/alerts';
+import { requireAuth } from '../middleware/requireAuth';
+import { requireRole } from '../middleware/requireRole';
+import { requireOpsNetwork } from '../middleware/requireOpsNetwork';
 
 const router = Router();
 
@@ -40,11 +43,13 @@ router.get('/ready', (_req, res) => {
   });
 });
 
-router.get('/metrics', (_req, res) => {
+const requireOpsAccess = [requireAuth, requireRole('ADMIN'), requireOpsNetwork] as const;
+
+router.get('/metrics', ...requireOpsAccess, (_req, res) => {
   return res.status(200).json(metricsStore.snapshot());
 });
 
-router.get('/alerts', (_req, res) => {
+router.get('/alerts', ...requireOpsAccess, (_req, res) => {
   const nowMs = Date.now();
   const marketDataLastAtRaw = process.env.WORKER_LAST_MARKET_DATA_AT ?? '';
   const workerHeartbeatLastAtRaw = process.env.WORKER_LAST_HEARTBEAT_AT ?? '';
@@ -64,7 +69,7 @@ router.get('/alerts', (_req, res) => {
   return res.status(200).json({ alerts });
 });
 
-router.get('/workers/health', (_req, res) => {
+router.get('/workers/health', ...requireOpsAccess, (_req, res) => {
   const mode = process.env.WORKER_MODE?.trim() || 'inline';
   return res.status(200).json({
     status: 'ok',
@@ -74,7 +79,7 @@ router.get('/workers/health', (_req, res) => {
   });
 });
 
-router.get('/workers/ready', (_req, res) => {
+router.get('/workers/ready', ...requireOpsAccess, (_req, res) => {
   const mode = process.env.WORKER_MODE?.trim() || 'inline';
   const marketDataLag = Number.parseInt(process.env.WORKER_MARKET_DATA_QUEUE_LAG ?? '0', 10);
   const backtestLag = Number.parseInt(process.env.WORKER_BACKTEST_QUEUE_LAG ?? '0', 10);

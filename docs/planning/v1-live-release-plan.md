@@ -138,7 +138,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 ### G9 - Live Semantics and Ops Security Completion
 - [ ] `fix(live-contract): enforce LIVE real-exchange side effects with no local-only simulation on execution path`
 - [x] `feat(stream-contract): complete stream contract with event id, heartbeat/ping, and symbol-limit safeguards`
-- [ ] `security(ops): restrict /metrics, /alerts, /workers/* to authorized operational contexts`
+- [x] `security(ops): restrict /metrics, /alerts, /workers/* to authorized operational contexts`
 - [ ] `refactor(rate-limit): migrate throttling model from mostly IP-centric to user/exchange-key aware controls`
 
 ## Progress Log
@@ -241,3 +241,4 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-22: Completed stream SSE contract hardening in API route (monotonic event ids, ping heartbeat comments, periodic health events, and symbol-limit query guard) with dedicated tests.
 - 2026-03-22: Applied routing hard-cut by removing legacy dashboard alias pages and keeping canonical route map/menu active-state behavior aligned to canonical URLs only.
 - 2026-03-22: Closed i18n contract gap by enforcing EN SSR default lang and migrating dashboard-home live widget copy into translation dictionaries.
+- 2026-03-22: Secured ops surface by enforcing auth + ADMIN role + private-network guardrails on `/metrics`, `/alerts`, and `/workers/*`, with updated endpoint contract tests.

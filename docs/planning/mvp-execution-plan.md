@@ -202,7 +202,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(stream-contract): deliver stream transport contract requirements (event id, ping heartbeat, max symbols guard)`
 - [x] `fix(routing-hard-cut): hard-canonize dashboard URLs and remove legacy alias ambiguity`
 - [x] `fix(i18n-contract): remove hardcoded copy and align locale default contract (EN default vs runtime html lang)`
-- [ ] `security(ops-endpoints): protect /metrics, /alerts, /workers/* with explicit access control`
+- [x] `security(ops-endpoints): protect /metrics, /alerts, /workers/* with explicit access control`
 - [x] `fix(live-contract): enforce LIVE real-exchange side effects; keep simulation strictly in PAPER/BACKTEST`
 - [ ] `refactor(rate-limit): evolve limiter model toward user/exchange-key aware enforcement`
 
@@ -419,6 +419,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Enforced hard-cut canonical dashboard routing by removing legacy alias pages (`backtest`, `builder`, `strategies/add`, index redirects) and aligning header route state/tests to canonical paths only.
 - 2026-03-22: Aligned i18n contract by setting SSR default `html lang` to `en` (with early localStorage locale restore) and moving remaining dashboard-home hardcoded copy into translation keys.
 - 2026-03-22: Enforced LIVE order contract to use real exchange execution side effects (non-test), persisted `exchangeOrderId`/status mapping, added controller error mapping, and covered LIVE/PAPER behavior with orders service tests.
+- 2026-03-22: Secured operational endpoints (`/metrics`, `/alerts`, `/workers/*`) with combined auth + ADMIN role + network guardrail middleware, and updated router contract tests for 401/403 and allowed admin-access paths.
 
 
 
