@@ -284,4 +284,95 @@ describe('RuntimeSignalLoop', () => {
       })
     );
   });
+
+  it('merges multi-strategy votes with EXIT priority and deterministic strategy selection', async () => {
+    const { deps, emit } = createDeps();
+    deps.listActiveBots = vi.fn(async () => [
+      {
+        id: 'bot-merge',
+        userId: 'user-1',
+        mode: 'PAPER' as const,
+        marketType: 'FUTURES' as const,
+        marketGroups: [
+          {
+            id: 'group-merge-1',
+            symbolGroupId: 'symbol-group-merge-1',
+            executionOrder: 1,
+            symbols: ['BTCUSDT'],
+            strategies: [
+              {
+                strategyId: 'strategy-exit',
+                strategyInterval: '1m',
+                strategyConfig: {
+                  open: {
+                    indicatorsLong: [],
+                    indicatorsShort: [],
+                  },
+                },
+                priority: 5,
+                weight: 1,
+              },
+              {
+                strategyId: 'strategy-long',
+                strategyInterval: '1m',
+                strategyConfig: {
+                  open: {
+                    indicatorsLong: [{ name: 'EMA', condition: '!=' }],
+                    indicatorsShort: [],
+                  },
+                },
+                priority: 10,
+                weight: 2,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    for (let index = 0; index < 8; index += 1) {
+      await emit({
+        type: 'candle',
+        marketType: 'FUTURES',
+        symbol: 'BTCUSDT',
+        interval: '1m',
+        eventTime: 10_000 + index * 60_000,
+        openTime: index * 60_000,
+        closeTime: index * 60_000 + 59_000,
+        open: 100 + index,
+        high: 101 + index,
+        low: 99 + index,
+        close: 100 + index,
+        volume: 1000,
+        isFinal: true,
+      });
+    }
+
+    await emit({
+      type: 'ticker',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      eventTime: 30_000,
+      lastPrice: 108,
+      priceChangePercent24h: 0.05,
+    });
+
+    expect(deps.createSignal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        botId: 'bot-merge',
+        strategyId: 'strategy-exit',
+        direction: 'EXIT',
+      })
+    );
+    expect(deps.orchestrateFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        botId: 'bot-merge',
+        strategyId: 'strategy-exit',
+        direction: 'EXIT',
+      })
+    );
+  });
 });

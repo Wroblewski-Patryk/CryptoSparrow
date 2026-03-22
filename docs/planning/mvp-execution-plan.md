@@ -217,7 +217,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `MBA-08 feat(api): add attach/detach/reorder strategy endpoints per market-group`
 - [x] `MBA-09 feat(api): expose bot runtime graph read endpoint (bot->groups->strategies) for UI/runtime parity`
 - [x] `MBA-10 refactor(runtime): change evaluation loop from bot-level flat strategies to bot->market-group partitions`
-- [ ] `MBA-11 feat(runtime): execute multi-strategy per market-group with locked merge policy and no-flip guarantees`
+- [x] `MBA-11 feat(runtime): execute multi-strategy per market-group with locked merge policy and no-flip guarantees`
 - [ ] `MBA-12 feat(risk): enforce per-market-group risk budget while preserving bot/global hard caps`
 - [ ] `MBA-13 test(e2e): add full flow for one user with 2 bots, each with multiple market-groups and strategies`
 
@@ -250,6 +250,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-23: Added strategy-link management API (`MBA-08`) for bot market-group scope (list/attach/update/reorder/detach) with deterministic priority ordering and ownership checks.
 - 2026-03-23: Added runtime graph read endpoint (`MBA-09`) exposing canonical bot->marketGroups->strategyLinks model plus legacy `BotStrategy` view for compatibility.
 - 2026-03-23: Refactored runtime signal loop (`MBA-10`) to process bot market-group partitions with symbol filtering and partition-aware signal metadata while preserving legacy fallback.
+- 2026-03-23: Implemented deterministic multi-strategy merge (`MBA-11`) in runtime partition evaluation with EXIT priority, weighted votes, and explicit no-trade outcomes for tie/weak consensus.
 - 2026-03-15: Initialized MVP execution file and commit rules.
 - 2026-03-15: Added generic trigger-based one-task execution workflow.
 - 2026-03-15: Expanded MVP plan to fully align with product, modules, database, trading, testing, and security docs.

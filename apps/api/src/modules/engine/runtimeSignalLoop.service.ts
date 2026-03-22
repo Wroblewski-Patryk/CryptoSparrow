@@ -63,6 +63,7 @@ const runtimeSignalQuantity = Number.parseFloat(process.env.RUNTIME_SIGNAL_QUANT
 const runtimeDirectionCooldownMs = Number.parseInt(process.env.RUNTIME_SIGNAL_COOLDOWN_MS ?? '30000', 10);
 const runtimeManualPositionMode = (process.env.RUNTIME_MANUAL_POSITION_MODE ?? 'LIVE') as 'PAPER' | 'LIVE';
 const maxCandlesPerSeries = Number.parseInt(process.env.RUNTIME_SIGNAL_CANDLE_BUFFER ?? '500', 10);
+const minDirectionalScore = Number.parseFloat(process.env.RUNTIME_SIGNAL_MIN_DIRECTIONAL_SCORE ?? '1');
 
 type RuntimeCandle = {
   openTime: number;
@@ -74,6 +75,19 @@ type StrategyIndicator = {
   condition?: '>' | '<' | '>=' | '<=' | '==' | '!=';
   value?: number;
   params?: Record<string, unknown>;
+};
+
+type StrategyVote = {
+  strategyId: string;
+  direction: SignalDirection;
+  priority: number;
+  weight: number;
+};
+
+type MergedStrategyDecision = {
+  direction: SignalDirection | null;
+  strategyId?: string;
+  metadata: Record<string, unknown>;
 };
 
 const defaultDeps: RuntimeSignalLoopDeps = {
@@ -431,6 +445,124 @@ export class RuntimeSignalLoop {
     return indicators.every((indicator) => this.evaluateIndicator(indicator, candles));
   }
 
+  private mergeStrategyVotes(strategies: ActiveBotStrategy[], votes: StrategyVote[]): MergedStrategyDecision {
+    if (votes.length === 0) {
+      return {
+        direction: null,
+        metadata: {
+          mergePolicy: 'weighted_exit_priority',
+          reason: 'no_votes',
+        },
+      };
+    }
+
+    const exitVotes = votes
+      .filter((vote) => vote.direction === 'EXIT')
+      .sort((left, right) => {
+        if (left.priority !== right.priority) return left.priority - right.priority;
+        return left.strategyId.localeCompare(right.strategyId);
+      });
+
+    if (exitVotes.length > 0) {
+      const winner = exitVotes[0];
+      return {
+        direction: 'EXIT',
+        strategyId: winner.strategyId,
+        metadata: {
+          mergePolicy: 'weighted_exit_priority',
+          reason: 'exit_priority',
+          votes: votes.map((vote) => ({
+            strategyId: vote.strategyId,
+            direction: vote.direction,
+            priority: vote.priority,
+            weight: vote.weight,
+          })),
+          winner: {
+            strategyId: winner.strategyId,
+            priority: winner.priority,
+            weight: winner.weight,
+          },
+        },
+      };
+    }
+
+    const longScore = votes
+      .filter((vote) => vote.direction === 'LONG')
+      .reduce((accumulator, vote) => accumulator + vote.weight, 0);
+    const shortScore = votes
+      .filter((vote) => vote.direction === 'SHORT')
+      .reduce((accumulator, vote) => accumulator + vote.weight, 0);
+
+    if (longScore === shortScore) {
+      return {
+        direction: null,
+        metadata: {
+          mergePolicy: 'weighted_exit_priority',
+          reason: 'tie',
+          scores: { longScore, shortScore, minDirectionalScore },
+          votes: votes.map((vote) => ({
+            strategyId: vote.strategyId,
+            direction: vote.direction,
+            priority: vote.priority,
+            weight: vote.weight,
+          })),
+        },
+      };
+    }
+
+    const winnerDirection: SignalDirection = longScore > shortScore ? 'LONG' : 'SHORT';
+    const winnerScore = winnerDirection === 'LONG' ? longScore : shortScore;
+    if (winnerScore < minDirectionalScore) {
+      return {
+        direction: null,
+        metadata: {
+          mergePolicy: 'weighted_exit_priority',
+          reason: 'weak_consensus',
+          scores: { longScore, shortScore, minDirectionalScore },
+          votes: votes.map((vote) => ({
+            strategyId: vote.strategyId,
+            direction: vote.direction,
+            priority: vote.priority,
+            weight: vote.weight,
+          })),
+        },
+      };
+    }
+
+    const winnerVotes = votes
+      .filter((vote) => vote.direction === winnerDirection)
+      .sort((left, right) => {
+        if (left.priority !== right.priority) return left.priority - right.priority;
+        if (left.weight !== right.weight) return right.weight - left.weight;
+        return left.strategyId.localeCompare(right.strategyId);
+      });
+
+    const winner = winnerVotes[0];
+    return {
+      direction: winnerDirection,
+      strategyId: winner?.strategyId ?? strategies[0]?.strategyId,
+      metadata: {
+        mergePolicy: 'weighted_exit_priority',
+        reason: 'weighted_winner',
+        scores: { longScore, shortScore, minDirectionalScore },
+        votes: votes.map((vote) => ({
+          strategyId: vote.strategyId,
+          direction: vote.direction,
+          priority: vote.priority,
+          weight: vote.weight,
+        })),
+        winner: winner
+          ? {
+              strategyId: winner.strategyId,
+              direction: winner.direction,
+              priority: winner.priority,
+              weight: winner.weight,
+            }
+          : null,
+      },
+    };
+  }
+
   private directionFromStrategy(
     event: StreamTickerEvent,
     marketType: 'FUTURES' | 'SPOT',
@@ -495,10 +627,31 @@ export class RuntimeSignalLoop {
 
         await Promise.all(
           eligibleGroups.map(async (group) => {
-            const primaryStrategy = group.strategies[0] ?? null;
-            const direction = primaryStrategy
-              ? this.directionFromStrategy(event, bot.marketType, primaryStrategy)
-              : toDirection(event);
+            const strategyVotes: StrategyVote[] = group.strategies
+              .map((strategy) => {
+                const direction = this.directionFromStrategy(event, bot.marketType, strategy);
+                if (!direction) return null;
+                return {
+                  strategyId: strategy.strategyId,
+                  direction,
+                  priority: strategy.priority,
+                  weight: strategy.weight,
+                } satisfies StrategyVote;
+              })
+              .filter((vote): vote is StrategyVote => Boolean(vote));
+
+            const merged = group.strategies.length > 0
+              ? this.mergeStrategyVotes(group.strategies, strategyVotes)
+              : {
+                  direction: toDirection(event),
+                  strategyId: undefined,
+                  metadata: {
+                    mergePolicy: 'fallback_ticker',
+                    reason: 'no_strategies_attached',
+                  },
+                };
+
+            const direction = merged.direction;
             if (!direction) return;
 
             const dedupeKey = `${bot.id}|${group.id}|${event.symbol}`;
@@ -529,7 +682,7 @@ export class RuntimeSignalLoop {
             await this.deps.createSignal({
               userId: bot.userId,
               botId: bot.id,
-              strategyId: primaryStrategy?.strategyId ?? undefined,
+              strategyId: merged.strategyId,
               symbol: event.symbol,
               direction,
               confidence: Math.min(1, Math.abs(event.priceChangePercent24h) / 100),
@@ -537,8 +690,9 @@ export class RuntimeSignalLoop {
                 source: 'market_stream.ticker',
                 botMarketGroupId: group.id,
                 symbolGroupId: group.symbolGroupId,
-                strategyDriven: Boolean(primaryStrategy?.strategyId),
-                strategyInterval: primaryStrategy?.strategyInterval ?? null,
+                strategyDriven: group.strategies.length > 0,
+                strategyInterval: group.strategies[0]?.strategyInterval ?? null,
+                merge: merged.metadata,
                 eventTime: event.eventTime,
                 lastPrice: event.lastPrice,
                 priceChangePercent24h: event.priceChangePercent24h,
@@ -550,7 +704,7 @@ export class RuntimeSignalLoop {
               botId: bot.id,
               symbol: event.symbol,
               direction,
-              strategyId: primaryStrategy?.strategyId ?? undefined,
+              strategyId: merged.strategyId,
               quantity: runtimeSignalQuantity,
               markPrice: event.lastPrice,
               mode: bot.mode,

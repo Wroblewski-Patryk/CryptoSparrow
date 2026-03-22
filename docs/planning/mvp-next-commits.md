@@ -17,9 +17,9 @@ Operational queue for one-task execution runs.
 - [x] `MBA-08 feat(api): add attach/detach/reorder strategy endpoints per market-group`
 - [x] `MBA-09 feat(api): expose bot runtime graph read endpoint (bot->groups->strategies) for UI/runtime parity`
 - [x] `MBA-10 refactor(runtime): change evaluation loop from bot-level flat strategies to bot->market-group partitions`
+- [x] `MBA-11 feat(runtime): execute multi-strategy per market-group with locked merge policy and no-flip guarantees`
 
 ## NEXT
-- [ ] `MBA-11 feat(runtime): execute multi-strategy per market-group with locked merge policy and no-flip guarantees`
 - [ ] `MBA-12 feat(risk): enforce per-market-group risk budget while preserving bot/global hard caps`
 - [ ] `MBA-13 test(e2e): add full flow for one user with 2 bots, each with multiple market-groups and strategies`
 - [ ] `MBA-14 docs(ai-contract): define assistant responsibilities, I/O schema, timeout policy, and fail-closed behavior`
@@ -53,6 +53,7 @@ Operational queue for one-task execution runs.
 - [x] `MBA-08 feat(api): added strategy-link endpoints under bot market-group (list/attach/update/reorder/detach) with ownership validation and deterministic priority ordering`
 - [x] `MBA-09 feat(api): added `/dashboard/bots/:id/runtime-graph` endpoint returning bot->marketGroups->strategyLinks read model with ownership isolation and legacy BotStrategy fallback view`
 - [x] `MBA-10 refactor(runtime): refactored runtime signal loop to evaluate bot market-group partitions (symbol-scoped groups, legacy fallback, partition-level signal payload metadata)`
+- [x] `MBA-11 feat(runtime): implemented deterministic multi-strategy merge per market-group (EXIT priority, weighted LONG/SHORT votes, tie/weak-consensus => no-trade) with no-flip preserved by pre-trade guardrails`
 - [x] `chore(planning): initialize MVP/V1 execution plans and agent blueprint`
 - [x] `chore(planning): align trigger intent to generic one-task nudge`
 - [x] `chore(planning): historical done backlog archived in git history; queue reset for current delivery focus`
