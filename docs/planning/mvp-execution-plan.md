@@ -186,7 +186,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 ## Phase 10 - Navigation, IA, Routing, and Auth Session Hardening (As of 2026-03-22)
 - [ ] `fix(ui-header-nav): center desktop nav list, remove legacy visual utility clutter, and unify header hover/active/focus styles`
 - [x] `fix(ui-header-nav): center desktop nav list, remove legacy visual utility clutter, and unify header hover/active/focus styles`
-- [ ] `fix(ui-language-switcher): correct EN/PL flag visuals and lock language-switcher visual contract with regression tests`
+- [x] `fix(ui-language-switcher): correct EN/PL flag visuals and lock language-switcher visual contract with regression tests`
 - [ ] `audit(routing): create canonical route map and remove dashboard path inconsistencies (including legacy aliases)`
 - [ ] `refactor(ia-profile): merge API keys and exchange connections under one settings domain model`
 - [ ] `fix(ui-profile): remove isometric mode toggle from current dashboard account menu (defer to V2 gamification)`
@@ -397,6 +397,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Updated dashboard IA navigation: `Execution` renamed to `Bots`; `Orders` and `Positions` moved under `Exchanges` dropdown placed between `Dashboard` and `Markets`, with header responsive test updates.
 - 2026-03-22: Added Phase 10 planning queue for header/nav consistency, routing normalization, profile IA cleanup, auth session resilience, and repo `web/api/mobile` migration documentation.
 - 2026-03-22: Updated dashboard header desktop navigation alignment and unified nav control interaction states (hover/active/focus), with responsive regression coverage.
+- 2026-03-22: Replaced incorrect EN locale flag styling in dashboard language switcher with explicit SVG flag icons and added visual-contract regression test coverage.
 
 
 

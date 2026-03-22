@@ -5,9 +5,40 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useDetailsDropdown } from '../../hooks/useDetailsDropdown';
 
 const LANGUAGES = {
-  en: { label: 'English', short: 'EN', flagClass: 'bg-[linear-gradient(90deg,#1d4ed8_0_33%,#ffffff_33%_66%,#dc2626_66%)]' },
-  pl: { label: 'Polski', short: 'PL', flagClass: 'bg-[linear-gradient(180deg,#ffffff_0_50%,#dc2626_50%_100%)]' },
+  en: { label: 'English', short: 'EN' },
+  pl: { label: 'Polski', short: 'PL' },
 } as const;
+
+function FlagIcon({ locale }: { locale: 'en' | 'pl' }) {
+  if (locale === 'pl') {
+    return (
+      <svg
+        aria-hidden
+        viewBox="0 0 20 14"
+        className="inline-block h-3 w-5 rounded-sm border border-base-300"
+        data-testid="flag-pl"
+      >
+        <rect x="0" y="0" width="20" height="7" fill="#ffffff" />
+        <rect x="0" y="7" width="20" height="7" fill="#dc2626" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 20 14"
+      className="inline-block h-3 w-5 rounded-sm border border-base-300"
+      data-testid="flag-en"
+    >
+      <rect x="0" y="0" width="20" height="14" fill="#1d4ed8" />
+      <rect x="8" y="0" width="4" height="14" fill="#ffffff" />
+      <rect x="0" y="5" width="20" height="4" fill="#ffffff" />
+      <rect x="9" y="0" width="2" height="14" fill="#dc2626" />
+      <rect x="0" y="6" width="20" height="2" fill="#dc2626" />
+    </svg>
+  );
+}
 
 export default function LanguageSwitcher() {
   const { locale, setLocale, t } = useI18n();
@@ -23,19 +54,19 @@ export default function LanguageSwitcher() {
   return (
     <details ref={detailsRef} className="dropdown dropdown-end">
       <summary className="btn btn-sm btn-ghost text-primary-content" aria-label={t('dashboard.common.language')}>
-        <span aria-hidden className={`inline-block h-3 w-5 rounded-sm border border-base-300 ${active.flagClass}`} />
+        <FlagIcon locale={locale} />
         <span>{active.short}</span>
       </summary>
       <ul className="menu dropdown-content z-[60] mt-2 w-44 rounded-box bg-base-100 p-2 text-base-content shadow">
         <li>
           <button type="button" onClick={() => handleSelect('en')} className={locale === 'en' ? 'active' : ''}>
-            <span aria-hidden className={`inline-block h-3 w-5 rounded-sm border border-base-300 ${LANGUAGES.en.flagClass}`} />
+            <FlagIcon locale="en" />
             {LANGUAGES.en.label}
           </button>
         </li>
         <li>
           <button type="button" onClick={() => handleSelect('pl')} className={locale === 'pl' ? 'active' : ''}>
-            <span aria-hidden className={`inline-block h-3 w-5 rounded-sm border border-base-300 ${LANGUAGES.pl.flagClass}`} />
+            <FlagIcon locale="pl" />
             {LANGUAGES.pl.label}
           </button>
         </li>
