@@ -30,6 +30,8 @@ model User {
   bots      Bot[]
   botMarketGroups BotMarketGroup[]
   marketGroupStrategyLinks MarketGroupStrategyLink[]
+  botAssistantConfigs BotAssistantConfig[]
+  botSubagentConfigs  BotSubagentConfig[]
   positions Position[]
   orders    Order[]
   trades    Trade[]
@@ -158,6 +160,8 @@ model Bot {
   botStrategies     BotStrategy[]
   botMarketGroups   BotMarketGroup[]
   marketGroupStrategyLinks MarketGroupStrategyLink[]
+  assistantConfig   BotAssistantConfig?
+  subagentConfigs   BotSubagentConfig[]
   positions         Position[]
   orders            Order[]
   trades            Trade[]
@@ -256,6 +260,56 @@ model MarketGroupStrategyLink {
   @@index([botMarketGroupId])
   @@index([strategyId])
   @@index([botMarketGroupId, isEnabled, priority])
+}
+
+model BotAssistantConfig {
+  id                  String               @id @default(uuid())
+  userId              String
+  botId               String               @unique
+
+  mainAgentEnabled    Boolean              @default(false)
+  mandate             String?
+  modelProfile        String               @default("balanced")
+  safetyMode          AssistantSafetyMode  @default(STRICT)
+  maxDecisionLatencyMs Int                 @default(2500)
+
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  user                User                 @relation(fields: [userId], references: [id])
+  bot                 Bot                  @relation(fields: [botId], references: [id])
+
+  @@index([userId])
+  @@index([botId, mainAgentEnabled])
+}
+
+enum AssistantSafetyMode {
+  STRICT
+  BALANCED
+  EXPERIMENTAL
+}
+
+model BotSubagentConfig {
+  id                String               @id @default(uuid())
+  userId            String
+  botId             String
+  slotIndex         Int
+
+  role              String
+  enabled           Boolean              @default(false)
+  modelProfile      String               @default("balanced")
+  timeoutMs         Int                  @default(1200)
+  safetyMode        AssistantSafetyMode  @default(STRICT)
+
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  user              User                 @relation(fields: [userId], references: [id])
+  bot               Bot                  @relation(fields: [botId], references: [id])
+
+  @@unique([botId, slotIndex])
+  @@index([userId])
+  @@index([botId, enabled, slotIndex])
 }
 
 enum BotMode {
