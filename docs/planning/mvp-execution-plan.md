@@ -201,7 +201,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `docs(scope): move admin+billing implementation promises to post-MVP/V1.1 and keep V1 docs aligned with current deliverables`
 - [x] `feat(stream-contract): deliver stream transport contract requirements (event id, ping heartbeat, max symbols guard)`
 - [x] `fix(routing-hard-cut): hard-canonize dashboard URLs and remove legacy alias ambiguity`
-- [ ] `fix(i18n-contract): remove hardcoded copy and align locale default contract (EN default vs runtime html lang)`
+- [x] `fix(i18n-contract): remove hardcoded copy and align locale default contract (EN default vs runtime html lang)`
 - [ ] `security(ops-endpoints): protect /metrics, /alerts, /workers/* with explicit access control`
 - [ ] `fix(live-contract): enforce LIVE real-exchange side effects; keep simulation strictly in PAPER/BACKTEST`
 - [ ] `refactor(rate-limit): evolve limiter model toward user/exchange-key aware enforcement`
@@ -417,6 +417,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Realigned docs scope so admin+billing capabilities are explicitly tracked as post-MVP/V1.1 (roadmap/product/user-guide + V1 plan G0), removing implied V1 delivery claims.
 - 2026-03-22: Completed stream transport contract gaps by adding SSE event ids, heartbeat ping comments, 15s health events, and max-symbol query guard with route contract tests.
 - 2026-03-22: Enforced hard-cut canonical dashboard routing by removing legacy alias pages (`backtest`, `builder`, `strategies/add`, index redirects) and aligning header route state/tests to canonical paths only.
+- 2026-03-22: Aligned i18n contract by setting SSR default `html lang` to `en` (with early localStorage locale restore) and moving remaining dashboard-home hardcoded copy into translation keys.
 
 
 

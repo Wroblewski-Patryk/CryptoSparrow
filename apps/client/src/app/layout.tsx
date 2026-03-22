@@ -51,7 +51,7 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="pl" data-theme="cryptosparrow" suppressHydrationWarning>
+    <html lang="en" data-theme="cryptosparrow" suppressHydrationWarning>
       <head>
         <meta charSet="UTF-8" />
         <script
@@ -69,6 +69,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
                   : preference;
                 document.documentElement.setAttribute('data-theme', resolved);
+                const locale = localStorage.getItem('cryptosparrow-locale');
+                if (locale === 'pl' || locale === 'en') {
+                  document.documentElement.lang = locale;
+                }
               })();
             `,
           }}

@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from "react";
+import { useI18n } from "../../../i18n/I18nProvider";
+import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 
 type TickerEventPayload = {
   symbol: string;
@@ -33,26 +35,9 @@ type LiveMarketBarProps = {
   interval: string;
 };
 
-const formatPrice = (value: number | null) => {
-  if (value == null) return "--";
-  return new Intl.NumberFormat("pl-PL", { maximumFractionDigits: 6 }).format(value);
-};
-
-const formatPercent = (value: number | null) => {
-  if (value == null) return "--";
-  const prefix = value > 0 ? "+" : "";
-  return `${prefix}${value.toFixed(2)}%`;
-};
-
-const getFreshnessLabel = (timestamp: number | null) => {
-  if (!timestamp) return "no candle";
-  const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
-  if (seconds < 30) return "fresh";
-  if (seconds < 120) return `${seconds}s ago`;
-  return `${Math.floor(seconds / 60)}m ago`;
-};
-
 export default function LiveMarketBar({ symbols, interval }: LiveMarketBarProps) {
+  const { t } = useI18n();
+  const { formatNumber } = useLocaleFormatting();
   const [rows, setRows] = useState<MarketRow[]>(
     symbols.map((symbol) => ({
       symbol,
@@ -124,16 +109,40 @@ export default function LiveMarketBar({ symbols, interval }: LiveMarketBarProps)
   }, [interval, symbols]);
 
   const healthText = useMemo(() => {
-    if (!isConnected) return "stream disconnected";
-    if (streamLagMs == null) return "stream connected";
-    return `stream connected (${streamLagMs}ms lag)`;
-  }, [isConnected, streamLagMs]);
+    if (!isConnected) return t("dashboard.liveMarket.streamDisconnected");
+    if (streamLagMs == null) return t("dashboard.liveMarket.streamConnected");
+    return t("dashboard.liveMarket.streamConnectedLag").replace("{lag}", String(streamLagMs));
+  }, [isConnected, streamLagMs, t]);
+
+  const formatPrice = (value: number | null) => {
+    if (value == null) return t("dashboard.liveMarket.valueUnknown");
+    return formatNumber(value, { maximumFractionDigits: 6 });
+  };
+
+  const formatPercent = (value: number | null) => {
+    if (value == null) return t("dashboard.liveMarket.valueUnknown");
+    const prefix = value > 0 ? "+" : "";
+    return `${prefix}${formatNumber(value, { maximumFractionDigits: 2 })}%`;
+  };
+
+  const getFreshnessLabel = (timestamp: number | null) => {
+    if (!timestamp) return t("dashboard.liveMarket.noCandle");
+    const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+    if (seconds < 30) return t("dashboard.liveMarket.candleFresh");
+    if (seconds < 120) {
+      return t("dashboard.liveMarket.candleAgoSeconds").replace("{seconds}", String(seconds));
+    }
+    return t("dashboard.liveMarket.candleAgoMinutes").replace(
+      "{minutes}",
+      String(Math.floor(seconds / 60))
+    );
+  };
 
   return (
     <div className="card bg-base-200 shadow-sm">
       <div className="card-body p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="card-title text-base">Live Market Bar</h2>
+          <h2 className="card-title text-base">{t("dashboard.liveMarket.title")}</h2>
           <span
             className={`badge badge-sm ${isConnected ? "badge-success" : "badge-warning"}`}
             aria-live="polite"
@@ -154,7 +163,7 @@ export default function LiveMarketBar({ symbols, interval }: LiveMarketBarProps)
                   row.delta24h == null ? "opacity-70" : row.delta24h >= 0 ? "text-success" : "text-error"
                 }`}
               >
-                24h: {formatPercent(row.delta24h)}
+                {t("dashboard.liveMarket.delta24hLabel")}: {formatPercent(row.delta24h)}
               </div>
             </div>
           ))}

@@ -53,6 +53,50 @@ type TranslationSchema = {
       traceDescription: string;
       traceNoMetadata: string;
     };
+    liveMarket: {
+      title: string;
+      streamDisconnected: string;
+      streamConnected: string;
+      streamConnectedLag: string;
+      noCandle: string;
+      candleFresh: string;
+      candleAgoSeconds: string;
+      candleAgoMinutes: string;
+      delta24hLabel: string;
+      valueUnknown: string;
+    };
+    home: {
+      loadWidgets: string;
+      loadWidgetsErrorTitle: string;
+      loadWidgetsErrorDescription: string;
+      noTradingDataTitle: string;
+      noTradingDataDescription: string;
+      openPositions: string;
+      openOrders: string;
+      filledOrders: string;
+      rejectedOrders: string;
+      positionsSnapshot: string;
+      noOpenPositionsTitle: string;
+      noOpenPositionsDescription: string;
+      positionsAction: string;
+      quickActions: string;
+      reviewStrategies: string;
+      openOrdersAction: string;
+      runBacktest: string;
+      ordersSnapshot: string;
+      pending: string;
+      recentActivity: string;
+      noActivityTitle: string;
+      noActivityDescription: string;
+      liveSnapshotSyncedTitle: string;
+      liveSnapshotSyncedDescription: string;
+      activityPositionOpened: string;
+      activityOrder: string;
+      side: string;
+      quantity: string;
+      leverage: string;
+      unrealizedPnl: string;
+    };
   };
 };
 
@@ -110,6 +154,50 @@ export const translations: Record<Locale, TranslationSchema> = {
         traceDescription: "Selected event metadata and decision context.",
         traceNoMetadata: "No metadata available for this event.",
       },
+      liveMarket: {
+        title: "Live Market Bar",
+        streamDisconnected: "stream disconnected",
+        streamConnected: "stream connected",
+        streamConnectedLag: "stream connected ({lag}ms lag)",
+        noCandle: "no candle",
+        candleFresh: "fresh",
+        candleAgoSeconds: "{seconds}s ago",
+        candleAgoMinutes: "{minutes}m ago",
+        delta24hLabel: "24h",
+        valueUnknown: "--",
+      },
+      home: {
+        loadWidgets: "Loading live snapshot widgets",
+        loadWidgetsErrorTitle: "Could not load dashboard widgets",
+        loadWidgetsErrorDescription: "Could not fetch dashboard widgets.",
+        noTradingDataTitle: "No trading data",
+        noTradingDataDescription: "When orders or positions appear, live snapshot and activity feed will be visible here.",
+        openPositions: "Open Positions",
+        openOrders: "Open Orders",
+        filledOrders: "Filled Orders",
+        rejectedOrders: "Rejected Orders",
+        positionsSnapshot: "Positions Snapshot",
+        noOpenPositionsTitle: "No open positions",
+        noOpenPositionsDescription: "There are no active positions at the moment.",
+        positionsAction: "Open Positions",
+        quickActions: "Quick Actions",
+        reviewStrategies: "Review Strategies",
+        openOrdersAction: "Open Orders",
+        runBacktest: "Run Backtest",
+        ordersSnapshot: "Orders Snapshot",
+        pending: "Pending",
+        recentActivity: "Recent Activity",
+        noActivityTitle: "No activity",
+        noActivityDescription: "Feed will appear after first orders/positions.",
+        liveSnapshotSyncedTitle: "Live snapshot synced",
+        liveSnapshotSyncedDescription: "Open positions: {positions}, open orders: {orders}.",
+        activityPositionOpened: "{side} {symbol} opened (x{leverage}).",
+        activityOrder: "{type} {symbol} {side} ({status}).",
+        side: "Side",
+        quantity: "Qty",
+        leverage: "Leverage",
+        unrealizedPnl: "Unrealized PnL",
+      },
     },
   },
   pl: {
@@ -164,6 +252,50 @@ export const translations: Record<Locale, TranslationSchema> = {
         traceTitle: "Decision trace",
         traceDescription: "Metadane wybranego zdarzenia i kontekst decyzji.",
         traceNoMetadata: "Brak metadanych dla tego zdarzenia.",
+      },
+      liveMarket: {
+        title: "Pasek rynku live",
+        streamDisconnected: "strumien rozlaczony",
+        streamConnected: "strumien polaczony",
+        streamConnectedLag: "strumien polaczony (lag {lag}ms)",
+        noCandle: "brak swiecy",
+        candleFresh: "swieza",
+        candleAgoSeconds: "{seconds}s temu",
+        candleAgoMinutes: "{minutes}m temu",
+        delta24hLabel: "24h",
+        valueUnknown: "--",
+      },
+      home: {
+        loadWidgets: "Ladowanie widgetow live snapshot",
+        loadWidgetsErrorTitle: "Nie udalo sie zaladowac widgetow dashboard",
+        loadWidgetsErrorDescription: "Nie udalo sie pobrac widgetow dashboard.",
+        noTradingDataTitle: "Brak danych tradingowych",
+        noTradingDataDescription: "Gdy pojawia sie orders lub positions, zobaczysz tu live snapshot i feed aktywnosci.",
+        openPositions: "Otwarte pozycje",
+        openOrders: "Otwarte zlecenia",
+        filledOrders: "Zrealizowane zlecenia",
+        rejectedOrders: "Odrzucone zlecenia",
+        positionsSnapshot: "Podglad pozycji",
+        noOpenPositionsTitle: "Brak otwartych pozycji",
+        noOpenPositionsDescription: "W tej chwili nie ma aktywnych positions.",
+        positionsAction: "Przejdz do pozycji",
+        quickActions: "Szybkie akcje",
+        reviewStrategies: "Przejrzyj strategie",
+        openOrdersAction: "Przejdz do zlecen",
+        runBacktest: "Uruchom backtest",
+        ordersSnapshot: "Podglad zlecen",
+        pending: "Oczekujace",
+        recentActivity: "Ostatnia aktywnosc",
+        noActivityTitle: "Brak aktywnosci",
+        noActivityDescription: "Feed pojawi sie po pierwszych orders/positions.",
+        liveSnapshotSyncedTitle: "Live snapshot zsynchronizowany",
+        liveSnapshotSyncedDescription: "Otwarte pozycje: {positions}, otwarte zlecenia: {orders}.",
+        activityPositionOpened: "{side} {symbol} otwarte (x{leverage}).",
+        activityOrder: "{type} {symbol} {side} ({status}).",
+        side: "Kierunek",
+        quantity: "Ilosc",
+        leverage: "Dzwignia",
+        unrealizedPnl: "Niezrealizowany PnL",
       },
     },
   },

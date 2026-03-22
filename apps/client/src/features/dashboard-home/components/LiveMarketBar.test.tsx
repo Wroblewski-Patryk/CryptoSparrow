@@ -2,6 +2,7 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import LiveMarketBar from "./LiveMarketBar";
+import { I18nProvider } from "../../../i18n/I18nProvider";
 
 type Handler = (event: { data: string }) => void;
 
@@ -34,7 +35,11 @@ afterEach(() => {
 
 describe("LiveMarketBar", () => {
   it("renders disconnected state when EventSource is unavailable", () => {
-    render(<LiveMarketBar symbols={["BTCUSDT"]} interval="1m" />);
+    render(
+      <I18nProvider>
+        <LiveMarketBar symbols={["BTCUSDT"]} interval="1m" />
+      </I18nProvider>
+    );
 
     expect(screen.getByText("Live Market Bar")).toBeInTheDocument();
     expect(screen.getByText(/stream disconnected/i)).toBeInTheDocument();
@@ -43,7 +48,11 @@ describe("LiveMarketBar", () => {
   it("updates ticker/candle values from SSE events", async () => {
     vi.stubGlobal("EventSource", EventSourceMock as unknown as typeof EventSource);
 
-    render(<LiveMarketBar symbols={["BTCUSDT"]} interval="1m" />);
+    render(
+      <I18nProvider>
+        <LiveMarketBar symbols={["BTCUSDT"]} interval="1m" />
+      </I18nProvider>
+    );
 
     const source = EventSourceMock.instances[0];
     expect(source.url).toContain("/dashboard/market-stream/events");

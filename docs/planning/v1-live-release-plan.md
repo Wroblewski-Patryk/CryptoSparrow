@@ -240,3 +240,4 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-22: Realigned roadmap/product/user-guide wording to remove implied V1 admin+billing delivery claims and keep those capabilities explicitly in post-MVP/V1.1 planning scope.
 - 2026-03-22: Completed stream SSE contract hardening in API route (monotonic event ids, ping heartbeat comments, periodic health events, and symbol-limit query guard) with dedicated tests.
 - 2026-03-22: Applied routing hard-cut by removing legacy dashboard alias pages and keeping canonical route map/menu active-state behavior aligned to canonical URLs only.
+- 2026-03-22: Closed i18n contract gap by enforcing EN SSR default lang and migrating dashboard-home live widget copy into translation dictionaries.
