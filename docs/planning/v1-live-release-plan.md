@@ -100,14 +100,14 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [ ] `docs(ia): update module map and user guide navigation references for Bots/Exchanges grouping`
 
 ### G2 - Position/Order Origin and Management Semantics
-- [ ] `feat(db): add origin/management metadata to positions/orders/trades (bot/manual/exchange-sync/backtest)`
-- [ ] `feat(api): expose management mode in positions endpoints and allow explicit toggle manual<->bot managed`
-- [ ] `feat(profile): add API-key onboarding options for external sync and external position management defaults`
+- [x] `feat(db): add origin/management metadata to positions/orders/trades (bot/manual/exchange-sync/backtest)`
+- [x] `feat(api): expose management mode in positions endpoints and allow explicit toggle manual<->bot managed`
+- [x] `feat(profile): add API-key onboarding options for external sync and external position management defaults`
 
 ### G3 - Live Reconciliation and Safety Rules
 - [ ] `feat(runtime): implement live reconciliation loop with exchange as source-of-truth and DB upsert projection`
-- [ ] `feat(runtime): enforce no-flip rule on per-symbol position lifecycle and ignore opposite entries while position is open`
-- [ ] `feat(runtime): ignore bot entry signals on symbols occupied by manual-managed positions`
+- [x] `feat(runtime): enforce no-flip rule on per-symbol position lifecycle and ignore opposite entries while position is open`
+- [x] `feat(runtime): ignore bot entry signals on symbols occupied by manual-managed positions`
 
 ### G4 - Shared Execution Core (Parity Foundation)
 - [ ] `refactor(engine): extract shared execution core used by backtest/paper/live adapters`
@@ -136,7 +136,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [ ] `docs(repo): finalize migration plan from apps/client+apps/server to apps/web+apps/api and bootstrap apps/mobile`
 
 ### G9 - Live Semantics and Ops Security Completion
-- [ ] `fix(live-contract): enforce LIVE real-exchange side effects with no local-only simulation on execution path`
+- [x] `fix(live-contract): enforce LIVE real-exchange side effects with no local-only simulation on execution path`
 - [x] `feat(stream-contract): complete stream contract with event id, heartbeat/ping, and symbol-limit safeguards`
 - [x] `security(ops): restrict /metrics, /alerts, /workers/* to authorized operational contexts`
 - [x] `refactor(rate-limit): migrate throttling model from mostly IP-centric to user/exchange-key aware controls`

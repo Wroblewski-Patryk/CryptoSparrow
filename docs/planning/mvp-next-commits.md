@@ -7,12 +7,12 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-
-## NEXT
-- [ ] `fix(ui-profile): remove isometric toggle from account menu and defer feature to V2 gamification`
+- [ ] `docs(ia): update module map and user guide navigation references for Bots/Exchanges grouping`
 - [ ] `docs(repo-structure): define target monorepo apps naming (`apps/web`, `apps/api`, `apps/mobile`) and migration rollout sequence`
 - [ ] `chore(repo-migration-plan): prepare non-breaking rename plan from client/server to web/api (scripts, CI, env, docs)`
-- [ ] `docs(mobile-bootstrap): define mobile app bootstrap plan (React Native/Expo), API parity scope, and auth/session contract`
+- [ ] `docs(parity): define mobile parity contract versus web dashboard scope for MVP/V1`
+
+## NEXT
 
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
