@@ -137,7 +137,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 
 ### G9 - Live Semantics and Ops Security Completion
 - [ ] `fix(live-contract): enforce LIVE real-exchange side effects with no local-only simulation on execution path`
-- [ ] `feat(stream-contract): complete stream contract with event id, heartbeat/ping, and symbol-limit safeguards`
+- [x] `feat(stream-contract): complete stream contract with event id, heartbeat/ping, and symbol-limit safeguards`
 - [ ] `security(ops): restrict /metrics, /alerts, /workers/* to authorized operational contexts`
 - [ ] `refactor(rate-limit): migrate throttling model from mostly IP-centric to user/exchange-key aware controls`
 
@@ -238,3 +238,4 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-22: Synced Phase G completion state for delivered nav/header/language/routing/isometric-menu cleanup tasks with repository commits and MVP planning queue.
 - 2026-03-22: Added audit-closure gates (truthful docs status, core test green gate, LIVE side-effects contract, stream-contract completion, and ops endpoint access control) and locked admin/billing scope to post-MVP/V1.1.
 - 2026-03-22: Realigned roadmap/product/user-guide wording to remove implied V1 admin+billing delivery claims and keep those capabilities explicitly in post-MVP/V1.1 planning scope.
+- 2026-03-22: Completed stream SSE contract hardening in API route (monotonic event ids, ping heartbeat comments, periodic health events, and symbol-limit query guard) with dedicated tests.
