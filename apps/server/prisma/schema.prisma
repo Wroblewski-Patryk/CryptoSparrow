@@ -201,6 +201,10 @@ model Position {
   userId            String
   botId             String?
   strategyId        String?
+  externalId        String?
+  origin            TradingRecordOrigin   @default(BOT)
+  managementMode    PositionManagementMode @default(BOT_MANAGED)
+  syncState         SyncState      @default(IN_SYNC)
 
   symbol            String
   side              PositionSide
@@ -228,8 +232,11 @@ model Position {
   @@index([userId, openedAt])
   @@index([userId, status, openedAt])
   @@index([userId, symbol, openedAt])
+  @@index([userId, origin, openedAt])
+  @@index([userId, managementMode, openedAt])
   @@index([botId])
   @@index([strategyId])
+  @@index([externalId])
   @@index([symbol])
   @@index([status])
 }
@@ -240,6 +247,9 @@ model Order {
   botId             String?
   strategyId        String?
   positionId        String?
+  origin            TradingRecordOrigin    @default(BOT)
+  managementMode    PositionManagementMode @default(BOT_MANAGED)
+  syncState         SyncState      @default(IN_SYNC)
 
   symbol            String
   side              OrderSide
@@ -269,6 +279,8 @@ model Order {
   @@index([userId, createdAt])
   @@index([userId, status, createdAt])
   @@index([userId, symbol, createdAt])
+  @@index([userId, origin, createdAt])
+  @@index([userId, managementMode, createdAt])
   @@index([botId])
   @@index([strategyId])
   @@index([positionId])
@@ -283,6 +295,8 @@ model Trade {
   strategyId        String?
   orderId           String?
   positionId        String?
+  origin            TradingRecordOrigin    @default(BOT)
+  managementMode    PositionManagementMode @default(BOT_MANAGED)
 
   symbol            String
   side              OrderSide
@@ -306,6 +320,8 @@ model Trade {
   @@index([strategyId])
   @@index([orderId])
   @@index([positionId])
+  @@index([userId, origin, executedAt])
+  @@index([userId, managementMode, executedAt])
   @@index([symbol])
 }
 
@@ -375,6 +391,25 @@ enum SignalDirection {
   LONG
   SHORT
   EXIT
+}
+
+enum TradingRecordOrigin {
+  BOT
+  USER
+  EXCHANGE_SYNC
+  BACKTEST
+}
+
+enum PositionManagementMode {
+  BOT_MANAGED
+  MANUAL_MANAGED
+}
+
+enum SyncState {
+  IN_SYNC
+  DRIFT
+  ORPHAN_LOCAL
+  ORPHAN_EXCHANGE
 }
 
 model BacktestRun {

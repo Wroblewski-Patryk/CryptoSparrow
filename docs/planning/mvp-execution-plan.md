@@ -178,6 +178,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(ui-positions-live-source): add source switch/state in positions view (runtime snapshot vs exchange-live snapshot) and last-sync timestamp`
 - [x] `test(e2e): add profile/api-key and positions contract tests covering invalid credentials, permission mismatch, and successful live fetch`
 - [x] `docs(runbook): document secure API-key onboarding and troubleshooting flow for Binance connection/permissions failures`
+- [x] `feat(db): add position/order/trade origin + management mode fields with migration baseline`
 
 ## Progress Log
 - 2026-03-15: Initialized MVP execution file and commit rules.
@@ -318,6 +319,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-19: Validated full go-live smoke flow end-to-end (Docker infra lifecycle + Prisma migrate deploy + server/client smoke suites) with green result.
 - 2026-03-19: Added MVP freeze-gap closure phase (stream transport, live market bar, write-side orders, orchestrator wiring) from updated roadmap/product limits.
 - 2026-03-19: Added Binance market-stream worker scaffold with normalized ticker/kline event parsing for upcoming live dashboard stream fan-out.
+- 2026-03-22: Added origin/management/sync metadata baseline in Position/Order/Trade models with migration and indexes for runtime ownership and reconciliation flows.
 - 2026-03-19: Closed stream transport decision for MVP (SSE fan-out) and documented event contract plus reliability rules for frontend/backend integration.
 - 2026-03-19: Implemented dashboard live market bar component with SSE listener and UI indicators for price, 24h delta, candle freshness, and stream health state.
 - 2026-03-19: Added orders write-side API (`open`/`cancel`/`close`) with LIVE risk acknowledgments, bot eligibility guards, and contract e2e coverage.

@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `feat(db): add position/order/trade origin + management mode fields with migration baseline`
 - [ ] `feat(api-key-onboarding): add sync_external_positions and manage_external_positions options`
 - [ ] `feat(runtime-guard): enforce no-flip and manual-managed symbol ignore rules in runtime execution flow`
 - [ ] `feat(positions-ui): show position source and management mode badges plus explicit toggle action`
@@ -47,6 +46,7 @@ Operational queue for one-task execution runs.
 - [x] `test(positions-live-source): add e2e/ui coverage for snapshot fetch and failure handling`
 - [x] `docs(runbook): add API-key onboarding + Binance permission troubleshooting guide`
 - [x] `feat(ui-nav): rename Execution to Bots and move Orders/Positions into Exchanges dropdown between Dashboard and Markets`
+- [x] `feat(db): add position/order/trade origin + management mode fields with migration baseline`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
