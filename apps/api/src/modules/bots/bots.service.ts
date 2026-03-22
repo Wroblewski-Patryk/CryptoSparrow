@@ -594,3 +594,111 @@ export const reorderMarketGroupStrategies = async (
     orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
   });
 };
+
+export const getBotRuntimeGraph = async (userId: string, botId: string) => {
+  const bot = await prisma.bot.findFirst({
+    where: { id: botId, userId },
+    select: {
+      id: true,
+      userId: true,
+      name: true,
+      mode: true,
+      marketType: true,
+      positionMode: true,
+      isActive: true,
+      liveOptIn: true,
+      maxOpenPositions: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  if (!bot) return null;
+
+  const marketGroups = await prisma.botMarketGroup.findMany({
+    where: {
+      userId,
+      botId,
+    },
+    include: {
+      symbolGroup: {
+        select: {
+          id: true,
+          name: true,
+          symbols: true,
+          marketUniverseId: true,
+        },
+      },
+      strategyLinks: {
+        include: {
+          strategy: {
+            select: {
+              id: true,
+              name: true,
+              interval: true,
+            },
+          },
+        },
+        orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
+      },
+    },
+    orderBy: [{ executionOrder: 'asc' }, { createdAt: 'asc' }],
+  });
+
+  const legacyBotStrategies = await prisma.botStrategy.findMany({
+    where: { botId, bot: { userId } },
+    include: {
+      symbolGroup: {
+        select: {
+          id: true,
+          name: true,
+          symbols: true,
+          marketUniverseId: true,
+        },
+      },
+      strategy: {
+        select: {
+          id: true,
+          name: true,
+          interval: true,
+        },
+      },
+    },
+    orderBy: [{ createdAt: 'asc' }],
+  });
+
+  return {
+    bot,
+    marketGroups: marketGroups.map((group) => ({
+      id: group.id,
+      botId: group.botId,
+      symbolGroupId: group.symbolGroupId,
+      lifecycleStatus: group.lifecycleStatus,
+      executionOrder: group.executionOrder,
+      isEnabled: group.isEnabled,
+      createdAt: group.createdAt,
+      updatedAt: group.updatedAt,
+      symbolGroup: group.symbolGroup,
+      strategies: group.strategyLinks.map((link) => ({
+        id: link.id,
+        strategyId: link.strategyId,
+        priority: link.priority,
+        weight: link.weight,
+        isEnabled: link.isEnabled,
+        createdAt: link.createdAt,
+        updatedAt: link.updatedAt,
+        strategy: link.strategy,
+      })),
+    })),
+    legacyBotStrategies: legacyBotStrategies.map((item) => ({
+      id: item.id,
+      strategyId: item.strategyId,
+      symbolGroupId: item.symbolGroupId,
+      isEnabled: item.isEnabled,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      strategy: item.strategy,
+      symbolGroup: item.symbolGroup,
+    })),
+  };
+};

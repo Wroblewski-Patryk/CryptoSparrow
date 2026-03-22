@@ -8,6 +8,7 @@ import {
   deleteBotMarketGroup,
   detachMarketGroupStrategy,
   getBot,
+  getBotRuntimeGraph,
   getBotMarketGroup,
   listBotMarketGroups,
   listMarketGroupStrategies,
@@ -24,6 +25,7 @@ const tradingWriteLimiter = createRateLimiter({ windowMs: 60_000, max: 40 });
 
 botsRouter.get('/', tradingReadLimiter, listBots);
 botsRouter.get('/:id', tradingReadLimiter, getBot);
+botsRouter.get('/:id/runtime-graph', tradingReadLimiter, getBotRuntimeGraph);
 botsRouter.post('/', tradingWriteLimiter, createBot);
 botsRouter.put('/:id', tradingWriteLimiter, updateBot);
 botsRouter.delete('/:id', tradingWriteLimiter, deleteBot);

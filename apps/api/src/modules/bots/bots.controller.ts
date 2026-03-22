@@ -37,6 +37,17 @@ export const getBot = async (req: Request, res: Response) => {
   return res.json(bot);
 };
 
+export const getBotRuntimeGraph = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  const { id } = req.params;
+  const graph = await botsService.getBotRuntimeGraph(userId, id);
+  if (!graph) return sendError(res, 404, 'Not found');
+
+  return res.json(graph);
+};
+
 export const createBot = async (req: Request, res: Response) => {
   const userId = req.user?.id;
   if (!userId) return sendError(res, 401, 'Unauthorized');

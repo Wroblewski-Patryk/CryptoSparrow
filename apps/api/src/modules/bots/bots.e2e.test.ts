@@ -412,4 +412,71 @@ describe('Bots module contract', () => {
     );
     expect(detachRes.status).toBe(204);
   });
+
+  it('exposes runtime graph for bot with ownership isolation', async () => {
+    const ownerEmail = 'bot-runtime-graph-owner@example.com';
+    const owner = await registerAndLogin(ownerEmail);
+    const other = await registerAndLogin('bot-runtime-graph-other@example.com');
+    const ownerUser = await prisma.user.findUniqueOrThrow({ where: { email: ownerEmail } });
+
+    const strategyRes = await owner.post('/dashboard/strategies').send({
+      name: 'Runtime Graph Strategy',
+      interval: '5m',
+      leverage: 2,
+      walletRisk: 1,
+      config: { open: { indicatorsLong: [], indicatorsShort: [] }, close: { mode: 'basic', tp: 2, sl: 1 } },
+    });
+    expect(strategyRes.status).toBe(201);
+
+    const botRes = await owner.post('/dashboard/bots').send({
+      ...createPayload(),
+      strategyId: strategyRes.body.id,
+    });
+    expect(botRes.status).toBe(201);
+    const botId = botRes.body.id as string;
+
+    const marketUniverse = await prisma.marketUniverse.create({
+      data: {
+        userId: ownerUser.id,
+        name: 'Runtime Graph Universe',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        whitelist: [],
+        blacklist: [],
+      },
+    });
+    const symbolGroup = await prisma.symbolGroup.create({
+      data: {
+        userId: ownerUser.id,
+        marketUniverseId: marketUniverse.id,
+        name: 'Runtime Graph Group',
+        symbols: ['BTCUSDT'],
+      },
+    });
+
+    const createGroupRes = await owner.post(`/dashboard/bots/${botId}/market-groups`).send({
+      symbolGroupId: symbolGroup.id,
+      executionOrder: 1,
+    });
+    expect(createGroupRes.status).toBe(201);
+    const groupId = createGroupRes.body.id as string;
+
+    const attachRes = await owner.post(`/dashboard/bots/${botId}/market-groups/${groupId}/strategies`).send({
+      strategyId: strategyRes.body.id,
+      priority: 15,
+      weight: 1,
+    });
+    expect(attachRes.status).toBe(201);
+
+    const graphRes = await owner.get(`/dashboard/bots/${botId}/runtime-graph`);
+    expect(graphRes.status).toBe(200);
+    expect(graphRes.body.bot.id).toBe(botId);
+    expect(Array.isArray(graphRes.body.marketGroups)).toBe(true);
+    expect(graphRes.body.marketGroups.length).toBeGreaterThan(0);
+    expect(graphRes.body.marketGroups[0].strategies.length).toBeGreaterThan(0);
+    expect(Array.isArray(graphRes.body.legacyBotStrategies)).toBe(true);
+
+    const otherGraphRes = await other.get(`/dashboard/bots/${botId}/runtime-graph`);
+    expect(otherGraphRes.status).toBe(404);
+  });
 });
