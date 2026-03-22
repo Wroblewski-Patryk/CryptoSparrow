@@ -3,12 +3,12 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { PageTitle } from 'apps/client/src/ui/layout/dashboard/PageTitle';
-import { ErrorState, LoadingState } from 'apps/client/src/ui/components/ViewState';
-import MarketUniverseForm from 'apps/client/src/features/markets/components/MarketUniverseForm';
-import { getMarketUniverse, updateMarketUniverse } from 'apps/client/src/features/markets/services/markets.service';
-import { CreateMarketUniverseInput, MarketUniverse } from 'apps/client/src/features/markets/types/marketUniverse.type';
-import { handleError } from 'apps/client/src/lib/handleError';
+import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
+import { ErrorState, LoadingState } from '@/ui/components/ViewState';
+import MarketUniverseForm from '@/features/markets/components/MarketUniverseForm';
+import { getMarketUniverse, updateMarketUniverse } from '@/features/markets/services/markets.service';
+import { CreateMarketUniverseInput, MarketUniverse } from '@/features/markets/types/marketUniverse.type';
+import { handleError } from '@/lib/handleError';
 
 export default function MarketsEditPage() {
   const { id } = useParams<{ id: string }>();
@@ -79,3 +79,4 @@ export default function MarketsEditPage() {
     </section>
   );
 }
+

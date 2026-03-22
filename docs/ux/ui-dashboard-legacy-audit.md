@@ -5,13 +5,13 @@ This audit maps current dashboard patterns and defines IA inputs for the next ta
 - `feat(ui): post-login control-center dashboard with positions/orders snapshot widgets`
 
 ## Sources Reviewed
-- `apps/client/src/app/dashboard/layout.tsx`
-- `apps/client/src/app/dashboard/page.tsx`
-- `apps/client/src/ui/layout/dashboard/Header.tsx`
-- `apps/client/src/ui/layout/dashboard/PageTitle.tsx`
-- `apps/client/src/features/strategies/components/StrategiesList.tsx`
-- `apps/client/src/app/dashboard/backtest/page.tsx`
-- `apps/client/src/features/profile/pages/ProfilePage.tsx`
+- `apps/web/src/app/dashboard/layout.tsx`
+- `apps/web/src/app/dashboard/page.tsx`
+- `apps/web/src/ui/layout/dashboard/Header.tsx`
+- `apps/web/src/ui/layout/dashboard/PageTitle.tsx`
+- `apps/web/src/features/strategies/components/StrategiesList.tsx`
+- `apps/web/src/app/dashboard/backtest/page.tsx`
+- `apps/web/src/features/profile/pages/ProfilePage.tsx`
 - `docs/modules/system-modules.md`
 
 ## Current Dashboard Patterns
@@ -56,3 +56,4 @@ Top-level dashboard sections should be ordered as:
 - Add lightweight widget components first, then wire live data in later tasks.
 - Replace broken `/dashboard/automation` link when bots section is introduced.
 - Keep widget text keys ready for future EN/PL i18n extraction.
+

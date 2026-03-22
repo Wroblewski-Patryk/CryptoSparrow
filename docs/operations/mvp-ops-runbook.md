@@ -1,8 +1,8 @@
 # MVP Ops Runbook (Deployment and Recovery)
 
 Scope: CryptoSparrow MVP on a single environment with:
-- `apps/server` (API, port `3001`)
-- `apps/client` (Next.js app, port `3002`)
+- `apps/api` (API, port `3001`)
+- `apps/web` (Next.js app, port `3002`)
 - Postgres (`5432`) and Redis (`6379`) from `docker-compose.yml`
 
 Use this runbook for repeatable deploys, quick rollback, and service recovery.
@@ -10,15 +10,15 @@ Use this runbook for repeatable deploys, quick rollback, and service recovery.
 ## 1. Pre-Deployment Checklist
 - Pull latest code and confirm target commit hash.
 - Verify env values exist and are correct:
-  - `apps/server/.env`
-  - `apps/client/.env.local`
+  - `apps/api/.env`
+  - `apps/web/.env.local`
 - Ensure Docker is running (`docker compose ps`).
 - Ensure DB connectivity from host:
   - `postgresql://postgres:password@localhost:5432/cryptosparrow?schema=public`
 - Run baseline quality checks from repo root:
-  - `pnpm --filter server test -- --run`
-  - `pnpm --filter client test -- --run`
-  - `pnpm --filter client build`
+  - `pnpm --filter api test -- --run`
+  - `pnpm --filter web test -- --run`
+  - `pnpm --filter web build`
 
 ## 2. Deployment Procedure (MVP)
 Run from repo root.
@@ -31,22 +31,22 @@ docker compose ps
 
 2. Build backend:
 ```bash
-pnpm --filter server build
+pnpm --filter api build
 ```
 
 3. Build frontend:
 ```bash
-pnpm --filter client build
+pnpm --filter web build
 ```
 
 4. Start backend:
 ```bash
-pnpm --filter server start
+pnpm --filter api start
 ```
 
 5. Start frontend (new terminal):
 ```bash
-pnpm --filter client start
+pnpm --filter web start
 ```
 
 6. Smoke verify:
@@ -90,10 +90,10 @@ git checkout <good_commit_sha>
 
 3. Rebuild and restart app layers:
 ```bash
-pnpm --filter server build
-pnpm --filter client build
-pnpm --filter server start
-pnpm --filter client start
+pnpm --filter api build
+pnpm --filter web build
+pnpm --filter api start
+pnpm --filter web start
 ```
 
 4. Repeat Section 3 health checks.
@@ -110,14 +110,14 @@ pnpm --filter client start
 1. Confirm process is running.
 2. Restart backend:
 ```bash
-pnpm --filter server start
+pnpm --filter api start
 ```
 3. Recheck `/auth/me`.
 
 ### 5.2 Client Not Responding (`3002`)
 1. Restart frontend:
 ```bash
-pnpm --filter client start
+pnpm --filter web start
 ```
 2. Hard refresh browser and retry `/dashboard`.
 
@@ -155,3 +155,4 @@ Capture every deploy/recovery incident using:
 ## 8. Exchange API-Key Diagnostics
 For API-key onboarding and Binance permission troubleshooting, use:
 - `docs/operations/binance-api-key-onboarding-runbook.md`
+

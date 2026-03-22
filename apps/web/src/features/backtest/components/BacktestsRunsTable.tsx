@@ -1,10 +1,10 @@
-﻿'use client';
+'use client';
 
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { LuPencilLine } from 'react-icons/lu';
-import DataTable, { DataTableColumn } from 'apps/client/src/ui/components/DataTable';
-import { useLocaleFormatting } from 'apps/client/src/i18n/useLocaleFormatting';
+import DataTable, { DataTableColumn } from '@/ui/components/DataTable';
+import { useLocaleFormatting } from '@/i18n/useLocaleFormatting';
 import { BacktestRun, BacktestStatus } from '../types/backtest.type';
 
 type BacktestsRunsTableProps = {
@@ -126,3 +126,4 @@ export default function BacktestsRunsTable({ rows, selectedStatus, onStatusChang
     </div>
   );
 }
+

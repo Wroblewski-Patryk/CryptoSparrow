@@ -1,5 +1,5 @@
-import { PageTitle } from "apps/client/src/ui/layout/dashboard/PageTitle";
-import PerformanceReportsView from "apps/client/src/features/reports/components/PerformanceReportsView";
+import { PageTitle } from "@/ui/layout/dashboard/PageTitle";
+import PerformanceReportsView from "@/features/reports/components/PerformanceReportsView";
 
 export default function ReportsPage() {
   return (
@@ -15,4 +15,5 @@ export default function ReportsPage() {
     </section>
   );
 }
+
 

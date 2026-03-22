@@ -3,11 +3,11 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { PageTitle } from 'apps/client/src/ui/layout/dashboard/PageTitle';
-import MarketUniverseForm from 'apps/client/src/features/markets/components/MarketUniverseForm';
-import { createMarketUniverse } from 'apps/client/src/features/markets/services/markets.service';
-import { CreateMarketUniverseInput } from 'apps/client/src/features/markets/types/marketUniverse.type';
-import { handleError } from 'apps/client/src/lib/handleError';
+import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
+import MarketUniverseForm from '@/features/markets/components/MarketUniverseForm';
+import { createMarketUniverse } from '@/features/markets/services/markets.service';
+import { CreateMarketUniverseInput } from '@/features/markets/types/marketUniverse.type';
+import { handleError } from '@/lib/handleError';
 
 export default function MarketsCreatePage() {
   const router = useRouter();
@@ -41,3 +41,4 @@ export default function MarketsCreatePage() {
     </section>
   );
 }
+

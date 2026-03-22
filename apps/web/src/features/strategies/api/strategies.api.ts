@@ -1,4 +1,4 @@
-import api from "apps/client/src/lib/api";
+import api from "@/lib/api";
 import { IndicatorMeta, StrategyDto, StrategyFormState } from "../types/StrategyForm.type";
 import { formToPayload } from "../utils/StrategyForm.map";
 
@@ -32,3 +32,4 @@ export const listStrategyIndicators = async () => {
     const { data } = await api.get<IndicatorMeta[]>("/dashboard/strategies/indicators");
     return data;
 }
+

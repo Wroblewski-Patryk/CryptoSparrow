@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
@@ -10,8 +10,8 @@ import {
   listBacktestRunTrades,
 } from '../services/backtests.service';
 import { BacktestReport, BacktestRun, BacktestTimeline, BacktestTrade } from '../types/backtest.type';
-import { EmptyState, ErrorState, LoadingState } from 'apps/client/src/ui/components/ViewState';
-import { useLocaleFormatting } from 'apps/client/src/i18n/useLocaleFormatting';
+import { EmptyState, ErrorState, LoadingState } from '@/ui/components/ViewState';
+import { useLocaleFormatting } from '@/i18n/useLocaleFormatting';
 import { getStrategy } from '../../strategies/api/strategies.api';
 import { StrategyDto } from '../../strategies/types/StrategyForm.type';
 
@@ -1264,3 +1264,4 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
     </div>
   );
 }
+

@@ -1,13 +1,13 @@
-﻿'use client';
+'use client';
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { PageTitle } from 'apps/client/src/ui/layout/dashboard/PageTitle';
-import BacktestCreateForm from 'apps/client/src/features/backtest/components/BacktestCreateForm';
-import { createBacktestRun } from 'apps/client/src/features/backtest/services/backtests.service';
-import { CreateBacktestRunInput } from 'apps/client/src/features/backtest/types/backtest.type';
-import { handleError } from 'apps/client/src/lib/handleError';
+import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
+import BacktestCreateForm from '@/features/backtest/components/BacktestCreateForm';
+import { createBacktestRun } from '@/features/backtest/services/backtests.service';
+import { CreateBacktestRunInput } from '@/features/backtest/types/backtest.type';
+import { handleError } from '@/lib/handleError';
 
 export default function BacktestsCreatePage() {
   const router = useRouter();
@@ -41,3 +41,4 @@ export default function BacktestsCreatePage() {
     </section>
   );
 }
+

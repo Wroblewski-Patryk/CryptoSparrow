@@ -1,8 +1,8 @@
 'use client';
 
-import { PageTitle } from "apps/client/src/ui/layout/dashboard/PageTitle";
-import AuditTrailView from "apps/client/src/features/logs/components/AuditTrailView";
-import { useI18n } from "apps/client/src/i18n/I18nProvider";
+import { PageTitle } from "@/ui/layout/dashboard/PageTitle";
+import AuditTrailView from "@/features/logs/components/AuditTrailView";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export default function LogsPage() {
   const { t } = useI18n();
@@ -20,3 +20,4 @@ export default function LogsPage() {
     </section>
   );
 }
+

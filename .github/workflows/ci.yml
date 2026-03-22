@@ -7,8 +7,8 @@ on:
       - main
 
 jobs:
-  client-checks:
-    name: Client checks
+  web-checks:
+    name: Web checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,14 +26,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint client
-        run: pnpm --filter client run lint
+      - name: Lint web
+        run: pnpm --filter web run lint
 
-      - name: Test client
-        run: pnpm --filter client run test -- --run
+      - name: Test web
+        run: pnpm --filter web run test -- --run
 
-  server-checks:
-    name: Server checks
+  api-checks:
+    name: API checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -51,8 +51,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build server
-        run: pnpm --filter server run build
+      - name: Build api
+        run: pnpm --filter api run build
 
-      - name: Test server
-        run: pnpm --filter server run test -- --run
+      - name: Test api
+        run: pnpm --filter api run test -- --run
+

@@ -5,9 +5,11 @@
   "main": "index.js",
   "scripts": {
     "backend/dev": "node scripts/dev-backend.mjs",
+    "api/dev": "pnpm run backend/dev",
     "server/dev": "pnpm run backend/dev",
     "backend:dev": "pnpm run backend/dev",
     "frontend/dev": "node scripts/dev-frontend.mjs",
+    "web/dev": "pnpm run frontend/dev",
     "client/dev": "pnpm run frontend/dev",
     "frontend:dev": "pnpm run frontend/dev",
     "workers/dev": "node scripts/dev-workers.mjs",
@@ -18,9 +20,12 @@
     "build": "pnpm -r --if-present run build",
     "go-live:infra:up": "docker compose up -d postgres redis",
     "go-live:infra:down": "docker compose down",
-    "test:go-live:server": "pnpm --filter server test -- src/modules/auth/auth.e2e.test.ts src/modules/strategies/strategies.e2e.test.ts src/modules/backtests/backtests.e2e.test.ts src/modules/engine/preTrade.e2e.test.ts",
-    "test:go-live:server:with-infra": "node scripts/goLiveSmoke.mjs --target=server",
-    "test:go-live:client": "pnpm --filter client exec vitest run src/features/bots/components/BotsManagement.test.tsx src/features/logs/components/AuditTrailView.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx",
+    "test:go-live:api": "pnpm --filter api test -- src/modules/auth/auth.e2e.test.ts src/modules/strategies/strategies.e2e.test.ts src/modules/backtests/backtests.e2e.test.ts src/modules/engine/preTrade.e2e.test.ts",
+    "test:go-live:server": "pnpm run test:go-live:api",
+    "test:go-live:api:with-infra": "node scripts/goLiveSmoke.mjs --target=api",
+    "test:go-live:server:with-infra": "pnpm run test:go-live:api:with-infra",
+    "test:go-live:web": "pnpm --filter web exec vitest run src/features/bots/components/BotsManagement.test.tsx src/features/logs/components/AuditTrailView.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx",
+    "test:go-live:client": "pnpm run test:go-live:web",
     "test:go-live:smoke": "node scripts/goLiveSmoke.mjs --target=full"
   },
   "keywords": [],
@@ -34,3 +39,4 @@
     "typescript": "^5.8.3"
   }
 }
+

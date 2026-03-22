@@ -2,9 +2,9 @@ import { spawn } from 'node:child_process';
 
 const rootDir = process.cwd();
 
-console.log('[frontend/dev] Starting client in watch mode...');
+console.log('[frontend/dev] Starting web app in watch mode...');
 
-const child = spawn('pnpm', ['--filter', 'client', 'dev'], {
+const child = spawn('pnpm', ['--filter', 'web', 'dev'], {
   stdio: 'inherit',
   cwd: rootDir,
   shell: process.platform === 'win32',

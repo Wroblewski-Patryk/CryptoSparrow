@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 
 import { useRouter } from 'next/navigation';
-import { PageTitle } from 'apps/client/src/ui/layout/dashboard/PageTitle';
-import BacktestsListView from 'apps/client/src/features/backtest/components/BacktestsListView';
+import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
+import BacktestsListView from '@/features/backtest/components/BacktestsListView';
 
 export default function BacktestsListPage() {
   const router = useRouter();
@@ -24,3 +24,4 @@ export default function BacktestsListPage() {
     </section>
   );
 }
+

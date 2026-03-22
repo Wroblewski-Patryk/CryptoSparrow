@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
-import { EmptyState, ErrorState, LoadingState } from 'apps/client/src/ui/components/ViewState';
+import { EmptyState, ErrorState, LoadingState } from '@/ui/components/ViewState';
 import BacktestsRunsTable from './BacktestsRunsTable';
 import { listBacktestRuns } from '../services/backtests.service';
 import { BacktestRun, BacktestStatus } from '../types/backtest.type';
@@ -59,3 +59,4 @@ export default function BacktestsListView() {
     />
   );
 }
+

@@ -11,8 +11,8 @@ Operational baseline for production deployment, rollback, and incident response 
    - `JWT_SECRET_PREVIOUS_UNTIL` (optional, ISO datetime)
    - database and redis connection settings
 3. Run CI-equivalent checks:
-   - `pnpm --filter server build`
-   - `pnpm --filter client build`
+   - `pnpm --filter api build`
+   - `pnpm --filter web build`
 4. Apply DB migrations.
 5. Deploy API and client artifacts.
 6. Validate post-deploy probes:
@@ -60,3 +60,4 @@ Operational baseline for production deployment, rollback, and incident response 
 - Incident commander: backend on-call owner.
 - Deployment owner: release engineer.
 - Communication owner: product/operator lead.
+

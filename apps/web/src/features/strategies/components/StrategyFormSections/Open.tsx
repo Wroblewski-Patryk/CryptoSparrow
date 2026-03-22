@@ -3,7 +3,7 @@ import Indicators from "./Indicators";
 import { IndicatorMeta, OpenProps, UserIndicator } from "../../types/StrategyForm.type";
 import { listStrategyIndicators } from "../../api/strategies.api";
 import { toast } from "sonner";
-import { handleError } from "apps/client/src/lib/handleError";
+import { handleError } from "@/lib/handleError";
 
 export function Open({ data, setData }: OpenProps) {
 	const [availableIndicators, setAvailableIndicators] = useState<IndicatorMeta[]>([]);
@@ -99,4 +99,5 @@ export function Open({ data, setData }: OpenProps) {
 		</div >
 	);
 }
+
 

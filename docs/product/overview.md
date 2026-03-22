@@ -5,6 +5,7 @@ Language policy: documentation stays in English.
 
 ## How to Use This Doc Set
 - Start here to understand scope and navigation.
+- Use `autonomous-agent-vision.md` first for long-range product direction ("north star").
 - Use `product.md` for goals and non-goals.
 - Use `architecture.md`, `modules.md`, and `database.md` to implement features.
 - Use `trading-logic.md` and `ai.md` for the future engine.
@@ -24,3 +25,4 @@ Language policy: documentation stays in English.
 - Files use UTF-8 encoding and avoid mixed/mojibake characters.
 - Risks and security implications are noted.
 - Open architectural questions are tracked in `open-decisions.md`.
+- Changes remain aligned with `autonomous-agent-vision.md` and do not promise guaranteed returns.

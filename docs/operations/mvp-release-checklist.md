@@ -1,10 +1,10 @@
 # MVP Release Checklist
 
 ## Code and Build
-- [x] `pnpm --filter server build` passes.
-- [x] `pnpm --filter client build` passes.
-- [x] `pnpm --filter server test` passes.
-- [x] `pnpm --filter client test` passes.
+- [x] `pnpm --filter api build` passes.
+- [x] `pnpm --filter web build` passes.
+- [x] `pnpm --filter api test` passes.
+- [x] `pnpm --filter web test` passes.
 - [ ] Working tree is clean except intended release artifacts.
 
 ## Runtime Verification
@@ -38,8 +38,9 @@
 - [ ] Go-live owner assigned.
 
 ## Re-Run Evidence (2026-03-21)
-- `pnpm --filter server build` passed.
-- `pnpm --filter client build` passed.
-- `pnpm --filter server test` passed (`41 files`, `157 tests`).
-- `pnpm --filter client test` passed (`24 files`, `45 tests`).
-- `pnpm --filter server exec prisma migrate deploy` reported `No pending migrations to apply`.
+- `pnpm --filter api build` passed.
+- `pnpm --filter web build` passed.
+- `pnpm --filter api test` passed (`41 files`, `157 tests`).
+- `pnpm --filter web test` passed (`24 files`, `45 tests`).
+- `pnpm --filter api exec prisma migrate deploy` reported `No pending migrations to apply`.
+

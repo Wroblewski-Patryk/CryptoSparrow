@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 
 import { useRouter } from 'next/navigation';
-import { PageTitle } from 'apps/client/src/ui/layout/dashboard/PageTitle';
-import StrategiesList from 'apps/client/src/features/strategies/components/StrategiesList';
+import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
+import StrategiesList from '@/features/strategies/components/StrategiesList';
 
 export default function StrategiesListPage() {
   const router = useRouter();
@@ -24,3 +24,4 @@ export default function StrategiesListPage() {
     </section>
   );
 }
+

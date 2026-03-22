@@ -4,12 +4,12 @@ import net from 'node:net';
 import path from 'node:path';
 
 const rootDir = process.cwd();
-const serverDir = path.join(rootDir, 'apps', 'server');
-const serverEnvPath = path.join(rootDir, 'apps', 'server', '.env');
+const apiDir = path.join(rootDir, 'apps', 'api');
+const apiEnvPath = path.join(rootDir, 'apps', 'api', '.env');
 
 const readEnvValue = (key) => {
   try {
-    const content = readFileSync(serverEnvPath, 'utf8');
+    const content = readFileSync(apiEnvPath, 'utf8');
     const line = content
       .split(/\r?\n/)
       .find((item) => item.trim().startsWith(`${key}=`));
@@ -34,9 +34,9 @@ const run = (command, args, options = {}) => {
 };
 
 const runPrisma = (args, options = {}) => {
-  const { allowEngineLockFallback = false } = options;
+    const { allowEngineLockFallback = false } = options;
   const result = spawnSync('pnpm', ['exec', 'prisma', ...args], {
-    cwd: serverDir,
+    cwd: apiDir,
     shell: process.platform === 'win32',
     encoding: 'utf8',
     stdio: 'pipe',
@@ -49,7 +49,7 @@ const runPrisma = (args, options = {}) => {
     const combined = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
     if (combined.includes('Command "prisma" not found')) {
       console.error(
-        '[backend/dev] Prisma CLI not found in apps/server.\n' +
+        '[backend/dev] Prisma CLI not found in apps/api.\n' +
           'Run `pnpm install` in repository root and retry.'
       );
       process.exit(result.status ?? 1);
@@ -65,7 +65,7 @@ const runPrisma = (args, options = {}) => {
       }
       console.error(
         '[backend/dev] Prisma engine file is locked on Windows.\n' +
-          'Close running Node/server processes and retry this command.'
+          'Close running Node/api processes and retry this command.'
       );
     }
     process.exit(result.status ?? 1);
@@ -160,8 +160,8 @@ const main = async () => {
   console.log('[backend/dev] Running Prisma migrations...');
   runPrisma(['migrate', 'deploy']);
 
-  console.log('[backend/dev] Starting server in watch mode...');
-  const child = spawn('pnpm', ['--filter', 'server', 'dev'], {
+  console.log('[backend/dev] Starting api in watch mode...');
+  const child = spawn('pnpm', ['--filter', 'api', 'dev'], {
     stdio: 'inherit',
     cwd: rootDir,
     shell: process.platform === 'win32',
@@ -170,3 +170,4 @@ const main = async () => {
 };
 
 void main();
+

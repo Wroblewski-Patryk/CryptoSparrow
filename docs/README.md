@@ -15,17 +15,18 @@ This folder contains canonical project documentation grouped by domain.
 - `modules/` module map and module deep dives.
 
 ## Recommended Reading Order
-1. `product/overview.md`
-2. `product/product.md`
-3. `architecture/system-architecture.md`
-4. `architecture/database.md`
-5. `modules/system-modules.md`
-6. `planning/mvp-execution-plan.md`
-7. `planning/mvp-next-commits.md`
-8. `planning/v1-live-release-plan.md`
-9. `planning/full-commit-roadmap.md`
-10. `planning/repo-migration-plan.md`
-11. `planning/mobile-parity-contract.md`
+1. `product/autonomous-agent-vision.md`
+2. `product/overview.md`
+3. `product/product.md`
+4. `architecture/system-architecture.md`
+5. `architecture/database.md`
+6. `modules/system-modules.md`
+7. `planning/mvp-execution-plan.md`
+8. `planning/mvp-next-commits.md`
+9. `planning/v1-live-release-plan.md`
+10. `planning/full-commit-roadmap.md`
+11. `planning/repo-migration-plan.md`
+12. `planning/mobile-parity-contract.md`
 
 ## Governance and Source of Truth
 - Repository structure policy: `governance/repository-structure-policy.md`

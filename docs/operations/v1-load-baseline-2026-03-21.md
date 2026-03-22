@@ -2,7 +2,7 @@
 
 ## Run Context
 - Mode: `baseline`
-- Command: `pnpm --filter server test:load:baseline`
+- Command: `pnpm --filter api test:load:baseline`
 - Target URL: `http://localhost:3001`
 - Duration: `30000ms`
 - Concurrency: `20`
@@ -32,3 +32,4 @@
 
 ## Raw Artifact
 - `docs/operations/_artifacts-load-baseline-2026-03-21.txt`
+

@@ -3,11 +3,11 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
-import { PageTitle } from 'apps/client/src/ui/layout/dashboard/PageTitle';
-import { EmptyState, ErrorState, LoadingState } from 'apps/client/src/ui/components/ViewState';
-import MarketUniversesTable from 'apps/client/src/features/markets/components/MarketUniversesTable';
-import { listMarketUniverses } from 'apps/client/src/features/markets/services/markets.service';
-import { MarketUniverse } from 'apps/client/src/features/markets/types/marketUniverse.type';
+import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
+import { EmptyState, ErrorState, LoadingState } from '@/ui/components/ViewState';
+import MarketUniversesTable from '@/features/markets/components/MarketUniversesTable';
+import { listMarketUniverses } from '@/features/markets/services/markets.service';
+import { MarketUniverse } from '@/features/markets/types/marketUniverse.type';
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -64,3 +64,4 @@ export default function MarketsListPage() {
     </section>
   );
 }
+

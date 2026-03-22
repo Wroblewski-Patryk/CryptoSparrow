@@ -28,7 +28,7 @@ Expected:
 Open terminal #1 in repo root and run:
 
 ```bash
-pnpm --filter server dev
+pnpm --filter api dev
 ```
 
 Expected:
@@ -38,7 +38,7 @@ Expected:
 Open terminal #2 in repo root and run:
 
 ```bash
-pnpm --filter client dev
+pnpm --filter web dev
 ```
 
 Expected:
@@ -58,7 +58,7 @@ docker compose down
 - Build server:
 
 ```bash
-pnpm --filter server build
+pnpm --filter api build
 ```
 
 - Run root workspace checks:
@@ -72,3 +72,4 @@ pnpm run build
 
 ## Notes
 - Current client lint/type issues can fail `build`/`lint`, but `client dev` still starts for local development.
+

@@ -2,10 +2,11 @@ import { spawnSync } from 'node:child_process';
 
 const args = process.argv.slice(2);
 const targetArg = args.find((arg) => arg.startsWith('--target='));
-const target = targetArg?.split('=')[1] ?? 'full';
+const rawTarget = targetArg?.split('=')[1] ?? 'full';
+const target = rawTarget === 'server' ? 'api' : rawTarget;
 
-if (!['server', 'full'].includes(target)) {
-  console.error(`Unsupported target "${target}". Use --target=server or --target=full.`);
+if (!['api', 'full'].includes(target)) {
+  console.error(`Unsupported target "${rawTarget}". Use --target=api or --target=full.`);
   process.exit(1);
 }
 
@@ -30,12 +31,12 @@ try {
   }
   infraStarted = true;
 
-  exitCode = run('pnpm', ['--filter', 'server', 'exec', 'prisma', 'migrate', 'deploy']);
+  exitCode = run('pnpm', ['--filter', 'api', 'exec', 'prisma', 'migrate', 'deploy']);
   if (exitCode !== 0) {
     process.exit(exitCode);
   }
 
-  exitCode = run('pnpm', ['run', 'test:go-live:server']);
+  exitCode = run('pnpm', ['run', 'test:go-live:api']);
   if (exitCode !== 0) {
     process.exit(exitCode);
   }

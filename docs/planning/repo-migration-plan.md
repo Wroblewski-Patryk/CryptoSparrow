@@ -1,9 +1,9 @@
-# Repo Migration Plan (`apps/client|server` -> `apps/web|api`)
+# Repo Migration Plan (`apps/web|server` -> `apps/web|api`)
 
 ## Goal
 Prepare a non-breaking staged migration from:
-- `apps/client` -> `apps/web`
-- `apps/server` -> `apps/api`
+- `apps/web` -> `apps/web`
+- `apps/api` -> `apps/api`
 
 and keep `apps/mobile` as bootstrap-only until web+api reach stability target.
 
@@ -25,8 +25,8 @@ and keep `apps/mobile` as bootstrap-only until web+api reach stability target.
 
 3. **Stage C: Folder Rename**
    - Rename folders in one dedicated change:
-     - `apps/client` -> `apps/web`
-     - `apps/server` -> `apps/api`
+     - `apps/web` -> `apps/web`
+     - `apps/api` -> `apps/api`
    - Immediately patch imports/docs/scripts/CI paths.
    - Run focused smoke suite for auth/dashboard/runtime critical path.
 
@@ -38,4 +38,5 @@ and keep `apps/mobile` as bootstrap-only until web+api reach stability target.
 - Root scripts, CI, and docs point to target naming.
 - No broken relative links/path references.
 - `mvp-next-commits` and execution plans no longer track rename as pending.
+
 

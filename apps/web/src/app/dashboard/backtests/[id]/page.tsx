@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { PageTitle } from 'apps/client/src/ui/layout/dashboard/PageTitle';
-import BacktestRunDetails from 'apps/client/src/features/backtest/components/BacktestRunDetails';
+import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
+import BacktestRunDetails from '@/features/backtest/components/BacktestRunDetails';
 
 export default function BacktestsDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -25,3 +25,4 @@ export default function BacktestsDetailsPage() {
     </section>
   );
 }
+

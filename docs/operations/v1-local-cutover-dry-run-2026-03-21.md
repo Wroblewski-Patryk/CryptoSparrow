@@ -9,7 +9,7 @@ Validate local replacement flow from legacy-style runtime assumptions to current
 
 ## Server Dry-Run Suite
 - Command:
-  - `pnpm --filter server test -- src/modules/engine/runtime-flow.e2e.test.ts src/modules/backtests/backtests.e2e.test.ts src/modules/engine/preTrade.e2e.test.ts src/modules/bots/bots.e2e.test.ts`
+  - `pnpm --filter api test -- src/modules/engine/runtime-flow.e2e.test.ts src/modules/backtests/backtests.e2e.test.ts src/modules/engine/preTrade.e2e.test.ts src/modules/bots/bots.e2e.test.ts`
 - Result:
   - files: `4`
   - tests: `14`
@@ -17,7 +17,7 @@ Validate local replacement flow from legacy-style runtime assumptions to current
 
 ## Client Dry-Run Validation
 - Command:
-  - `pnpm --filter client exec vitest run src/features/bots/components/BotsManagement.test.tsx src/features/logs/components/AuditTrailView.test.tsx`
+  - `pnpm --filter web exec vitest run src/features/bots/components/BotsManagement.test.tsx src/features/logs/components/AuditTrailView.test.tsx`
 - Result:
   - files: `2`
   - tests: `7`
@@ -33,3 +33,4 @@ Validate local replacement flow from legacy-style runtime assumptions to current
 ## Outcome
 - Local replacement dry-run passed.
 - No blocking regressions detected in selected realistic cutover-critical path suite.
+

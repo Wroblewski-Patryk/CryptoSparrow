@@ -1,4 +1,4 @@
-﻿# Audit Remediation Plan (2026-03-16)
+# Audit Remediation Plan (2026-03-16)
 
 This document captures high-priority audit findings and defines mandatory remediation before further feature expansion.
 
@@ -33,10 +33,11 @@ This document captures high-priority audit findings and defines mandatory remedi
 
 ## Revalidation Evidence (2026-03-21)
 - Runtime and security regression subset re-run with infra:
-  - `pnpm --filter server test -- src/modules/upload/upload.e2e.test.ts src/modules/bots/bots.e2e.test.ts src/modules/logs/logs.e2e.test.ts src/utils/crypto.test.ts`
+  - `pnpm --filter api test -- src/modules/upload/upload.e2e.test.ts src/modules/bots/bots.e2e.test.ts src/modules/logs/logs.e2e.test.ts src/utils/crypto.test.ts`
   - Result: `4` files passed, `14` tests passed.
 - Revalidated controls:
   - Upload auth + MIME + size guardrails (P0).
   - LIVE consent `consentTextVersion` validation/persistence/audit flow (P0).
   - Logs API filtering contract (P1).
   - AEAD encryption + versioned key handling regression coverage (P1).
+

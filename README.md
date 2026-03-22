@@ -1,8 +1,8 @@
 # CryptoSparrow
 
 Monorepo with:
-- `apps/server` (Express API)
-- `apps/client` (Next.js app)
+- `apps/api` (Express API)
+- `apps/web` (Next.js app)
 
 ## Quick Start (Local)
 
@@ -19,8 +19,8 @@ pnpm install
 ```
 
 ### 2.1) Environment config
-- Server: `apps/server/.env` (`SERVER_URL`, `SERVER_PORT`, `CLIENT_URL`, `CLIENT_PORT`).
-- Client: `apps/client/.env.local` with `NEXT_PUBLIC_API_BASE_URL` (for example `http://localhost:3001`).
+- Server: `apps/api/.env` (`SERVER_URL`, `SERVER_PORT`, `CLIENT_URL`, `CLIENT_PORT`).
+- Client: `apps/web/.env.local` with `NEXT_PUBLIC_API_BASE_URL` (for example `http://localhost:3001`).
 - Optional: set `CORS_ORIGINS` (comma-separated) in server env to allow multiple frontend origins.
 - Rate limiter Redis: set `REDIS_URL` in server env (default fallback: `redis://localhost:6379`).
 - API-key crypto (server): use `API_KEY_ENCRYPTION_KEYS` (for example `v1:old-key,v2:new-key`) and `API_KEY_ENCRYPTION_ACTIVE_VERSION` (for example `v2`). Legacy `API_KEY_ENCRYPTION` remains as backward-compatible fallback.
@@ -99,7 +99,7 @@ pnpm run backend/dev
 ```
 - If you need seed after that:
 ```bash
-pnpm --dir apps/server exec prisma db seed
+pnpm --dir apps/api exec prisma db seed
 ```
 
 ## Browser vs Terminal
@@ -111,23 +111,23 @@ pnpm --dir apps/server exec prisma db seed
 Server:
 
 ```bash
-pnpm --filter server build
-pnpm --filter server start
+pnpm --filter api build
+pnpm --filter api start
 ```
 
 Client:
 
 ```bash
-pnpm --filter client build
-pnpm --filter client start
+pnpm --filter web build
+pnpm --filter web start
 ```
 
 ## Load Testing (Server)
 With backend running on `http://localhost:3001`:
 
 ```bash
-pnpm --filter server test:load:baseline
-pnpm --filter server test:load:stress
+pnpm --filter api test:load:baseline
+pnpm --filter api test:load:stress
 ```
 
 Useful overrides:
@@ -139,7 +139,7 @@ Useful overrides:
 ## Recent changes in this setup
 - Added root workspace scripts in `package.json`: `lint`, `typecheck`, `test`, `build`.
 - Added CI workflow: `.github/workflows/ci.yml`.
-- Fixed server build runtime path by compiling server to CommonJS (`apps/server/tsconfig.json`).
+- Fixed server build runtime path by compiling server to CommonJS (`apps/api/tsconfig.json`).
 - Added local runbook: `docs/engineering/local-development.md`.
 - Added MVP ops runbook (deployment + recovery): `docs/operations/mvp-ops-runbook.md`.
 - Added V1 operator handbook: `docs/operations/operator-handbook.md`.
@@ -159,3 +159,4 @@ Useful overrides:
 - Added spot-support groundwork on bots via `marketType` (`FUTURES`/`SPOT`) schema/API field.
 - Added `marketType` selection in dashboard bots create/edit flow.
 - Added Binance API-key onboarding and troubleshooting runbook: `docs/operations/binance-api-key-onboarding-runbook.md`.
+

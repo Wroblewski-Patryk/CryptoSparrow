@@ -1,15 +1,15 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { PageTitle } from 'apps/client/src/ui/layout/dashboard/PageTitle';
-import StrategiesForm from 'apps/client/src/features/strategies/components/StrategyForm';
-import { getStrategy, updateStrategy } from 'apps/client/src/features/strategies/api/strategies.api';
-import { StrategyFormState } from 'apps/client/src/features/strategies/types/StrategyForm.type';
-import { dtoToForm } from 'apps/client/src/features/strategies/utils/StrategyForm.map';
-import { handleError } from 'apps/client/src/lib/handleError';
-import { ErrorState, LoadingState } from 'apps/client/src/ui/components/ViewState';
+import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
+import StrategiesForm from '@/features/strategies/components/StrategyForm';
+import { getStrategy, updateStrategy } from '@/features/strategies/api/strategies.api';
+import { StrategyFormState } from '@/features/strategies/types/StrategyForm.type';
+import { dtoToForm } from '@/features/strategies/utils/StrategyForm.map';
+import { handleError } from '@/lib/handleError';
+import { ErrorState, LoadingState } from '@/ui/components/ViewState';
 
 export default function StrategiesEditPage() {
   const { id } = useParams<{ id: string }>();
@@ -70,3 +70,4 @@ export default function StrategiesEditPage() {
     </section>
   );
 }
+

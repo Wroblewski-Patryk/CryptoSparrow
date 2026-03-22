@@ -5,8 +5,8 @@ Scope: `test(quality-gate)` core regression gate from Phase 11.
 ## Commands
 
 ```bash
-pnpm --filter client test -- src/i18n/I18nProvider.test.tsx src/i18n/useLocaleFormatting.test.tsx
-pnpm --filter server test -- src/modules/auth/auth.jwt.test.ts src/middleware/requireAuth.test.ts src/modules/auth/auth.e2e.test.ts src/modules/strategies/strategies.e2e.test.ts src/modules/isolation/data-isolation.e2e.test.ts src/modules/engine/preTrade.e2e.test.ts
+pnpm --filter web test -- src/i18n/I18nProvider.test.tsx src/i18n/useLocaleFormatting.test.tsx
+pnpm --filter api test -- src/modules/auth/auth.jwt.test.ts src/middleware/requireAuth.test.ts src/modules/auth/auth.e2e.test.ts src/modules/strategies/strategies.e2e.test.ts src/modules/isolation/data-isolation.e2e.test.ts src/modules/engine/preTrade.e2e.test.ts
 ```
 
 ## Result
@@ -19,3 +19,4 @@ pnpm --filter server test -- src/modules/auth/auth.jwt.test.ts src/middleware/re
 
 - Updated i18n provider test assertions to match current language switcher contract (`Language/Jezyk` label, `EN/PL` active summary behavior).
 - Updated auth rotation middleware test to create a real user record before requesting protected dashboard route.
+

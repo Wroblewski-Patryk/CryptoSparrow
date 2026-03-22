@@ -2,7 +2,7 @@
 
 ## Monorepo
 - pnpm workspaces
-- apps/client and apps/server
+- apps/web and apps/api
 
 ## Backend
 - Node.js 20+ with Express 5
@@ -35,3 +35,4 @@
 - CCXT for exchange APIs (V1 production scope: Binance Spot + Binance Futures only)
 - WebSocket for market streaming
 - AI module as optional advisor
+

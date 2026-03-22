@@ -1,5 +1,5 @@
-import { PageTitle } from "apps/client/src/ui/layout/dashboard/PageTitle";
-import BotsManagement from "apps/client/src/features/bots/components/BotsManagement";
+import { PageTitle } from "@/ui/layout/dashboard/PageTitle";
+import BotsManagement from "@/features/bots/components/BotsManagement";
 
 export default function BotsPage() {
   return (
@@ -15,4 +15,5 @@ export default function BotsPage() {
     </section>
   );
 }
+
 

@@ -1,5 +1,18 @@
 # Roadmap
 
+## North-Star Evolution
+Reference: `docs/product/autonomous-agent-vision.md`
+
+Product evolution path:
+1. Analytics platform (strategy + backtest + validation).
+2. Intelligent assistant (AI recommendations with rationale).
+3. Semi-autonomous executor (guarded execution with user mandate).
+4. Autonomous trading agent (risk-bounded full execution).
+5. Network intelligence layer (aggregated cross-user learning patterns).
+
+Important constraint:
+- optimize risk-adjusted decision quality and execution consistency, not "profit at any cost".
+
 ## Completed
 - Monorepo setup with pnpm.
 - Client with Next.js and React.

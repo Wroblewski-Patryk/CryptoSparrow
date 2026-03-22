@@ -33,7 +33,8 @@
 - Accessibility audit checklist:
   - `docs/ux/accessibility-dashboard-audit.md`
 - Load tests for API and worker monitoring endpoints:
-  - baseline: `pnpm --filter server test:load:baseline`
-  - stress: `pnpm --filter server test:load:stress`
+  - baseline: `pnpm --filter api test:load:baseline`
+  - stress: `pnpm --filter api test:load:stress`
   - defaults target: `/health`, `/ready`, `/metrics`, `/workers/health`
   - configurable with env: `LOAD_TEST_TARGET_URL`, `LOAD_TEST_DURATION_MS`, `LOAD_TEST_CONCURRENCY`, `LOAD_TEST_PATHS`
+

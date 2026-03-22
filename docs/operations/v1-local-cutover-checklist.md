@@ -6,8 +6,8 @@ Purpose: execute a controlled local migration from legacy bot runtime to CryptoS
 1. Confirm Docker services are healthy:
    - `pnpm go-live:infra:up`
 2. Confirm app baseline:
-   - `pnpm --filter server build`
-   - `pnpm --filter client build`
+   - `pnpm --filter api build`
+   - `pnpm --filter web build`
 3. Confirm critical smoke checks:
    - `pnpm test:go-live:server`
    - `pnpm test:go-live:client`
@@ -50,3 +50,4 @@ Purpose: execute a controlled local migration from legacy bot runtime to CryptoS
 - New runtime readiness checks:
 - Post-cutover validation outcome:
 - Rollback required: `yes/no`
+

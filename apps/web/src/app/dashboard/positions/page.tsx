@@ -1,5 +1,5 @@
-import { PageTitle } from "apps/client/src/ui/layout/dashboard/PageTitle";
-import PositionsBoard from "apps/client/src/features/positions/components/PositionsBoard";
+import { PageTitle } from "@/ui/layout/dashboard/PageTitle";
+import PositionsBoard from "@/features/positions/components/PositionsBoard";
 
 export default function PositionsPage() {
   return (
@@ -15,4 +15,5 @@ export default function PositionsPage() {
     </section>
   );
 }
+
 

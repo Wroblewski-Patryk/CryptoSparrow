@@ -1,5 +1,5 @@
-import { PageTitle } from "apps/client/src/ui/layout/dashboard/PageTitle";
-import OrdersBoard from "apps/client/src/features/orders/components/OrdersBoard";
+import { PageTitle } from "@/ui/layout/dashboard/PageTitle";
+import OrdersBoard from "@/features/orders/components/OrdersBoard";
 
 export default function OrdersPage() {
   return (
@@ -15,4 +15,5 @@ export default function OrdersPage() {
     </section>
   );
 }
+
 

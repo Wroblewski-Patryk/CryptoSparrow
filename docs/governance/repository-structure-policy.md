@@ -1,4 +1,4 @@
-﻿# Repository Structure Policy
+# Repository Structure Policy
 
 ## Purpose
 Define how files are placed in this repository to keep navigation predictable and avoid documentation drift.
@@ -54,7 +54,7 @@ When a non-repo markdown file appears in root:
 - `docs/planning/mobile-parity-contract.md`
 
 ## App Folder Naming Policy
-- Current runtime naming in repository: `apps/client`, `apps/server`.
+- Current runtime naming in repository: `apps/web`, `apps/api`.
 - Target naming after staged migration: `apps/web`, `apps/api`, `apps/mobile`.
 - Migration must follow non-breaking staged rollout from `docs/planning/repo-migration-plan.md`.
 
@@ -62,4 +62,5 @@ When a non-repo markdown file appears in root:
 - `apps/mobile` may exist as scaffold before implementation starts.
 - Bootstrap-only mobile folders must not claim production readiness.
 - Full mobile delivery starts only after parity gates defined in `docs/planning/mobile-parity-contract.md`.
+
 

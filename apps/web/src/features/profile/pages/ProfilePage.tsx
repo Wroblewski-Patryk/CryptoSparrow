@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import BasicForm from "../components/BasicForm";
 import Subscription from "../components/Subscription";
 import Security from "../components/Security";
-import { PageTitle } from "apps/client/src/ui/layout/dashboard/PageTitle";
+import { PageTitle } from "@/ui/layout/dashboard/PageTitle";
 import ExchangeConnectionsView from "../../exchanges/components/ExchangeConnectionsView";
 
 const tabs = [
@@ -74,3 +74,4 @@ export default function ProfilePage() {
     </section>
   );
 }
+

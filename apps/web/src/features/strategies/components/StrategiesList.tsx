@@ -6,10 +6,10 @@ import axios from "axios";
 import { toast } from "sonner";
 import { deleteStrategy, listStrategies } from "../api/strategies.api";
 import { StrategyDto } from "../types/StrategyForm.type";
-import { EmptyState, ErrorState, LoadingState } from "apps/client/src/ui/components/ViewState";
-import { useLocaleFormatting } from "apps/client/src/i18n/useLocaleFormatting";
-import DataTable, { DataTableColumn } from "apps/client/src/ui/components/DataTable";
-import ConfirmModal from "apps/client/src/ui/components/ConfirmModal";
+import { EmptyState, ErrorState, LoadingState } from "@/ui/components/ViewState";
+import { useLocaleFormatting } from "@/i18n/useLocaleFormatting";
+import DataTable, { DataTableColumn } from "@/ui/components/DataTable";
+import ConfirmModal from "@/ui/components/ConfirmModal";
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -180,3 +180,4 @@ export default function StrategiesList() {
     </div>
   );
 }
+

@@ -4,7 +4,7 @@ Mission:
 - Implement exactly one backend task from docs/planning/mvp-next-commits.md NOW.
 
 Scope:
-- apps/server/**
+- apps/api/**
 - Prisma schema and migrations
 - backend tests
 
@@ -19,3 +19,4 @@ Output:
 3) Tests run
 4) Suggested commit message
 5) Next tiny task
+

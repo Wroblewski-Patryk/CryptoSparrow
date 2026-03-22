@@ -5,11 +5,11 @@ const rootDir = process.cwd();
 const workerCommands = [
   {
     name: 'execution',
-    args: ['--filter', 'server', 'dev:worker:execution'],
+    args: ['--filter', 'api', 'dev:worker:execution'],
   },
   {
     name: 'market-stream',
-    args: ['--filter', 'server', 'dev:worker:market-stream'],
+    args: ['--filter', 'api', 'dev:worker:market-stream'],
   },
 ];
 
