@@ -19,7 +19,7 @@ type RuntimeSignalLoopDeps = {
     handler: (event: MarketStreamEvent) => void | Promise<void>
   ) => Promise<() => Promise<void>>;
   listActiveBots: () => Promise<ActiveBot[]>;
-  listManualManagedPositions: () => Promise<Array<{ userId: string; symbol: string }>>;
+  listRuntimeManagedExternalPositions: () => Promise<Array<{ userId: string; symbol: string }>>;
   createSignal: (params: {
     userId: string;
     botId?: string;
@@ -63,11 +63,12 @@ const defaultDeps: RuntimeSignalLoopDeps = {
       marketType: bot.marketType,
     }));
   },
-  listManualManagedPositions: async () => {
+  listRuntimeManagedExternalPositions: async () => {
     const positions = await prisma.position.findMany({
       where: {
         status: 'OPEN',
         botId: null,
+        managementMode: 'BOT_MANAGED',
       },
       select: {
         userId: true,
@@ -202,12 +203,12 @@ export class RuntimeSignalLoop {
 
     if (direction !== 'EXIT') return;
 
-    const manualPositions = await this.deps.listManualManagedPositions();
+    const runtimeManagedExternalPositions = await this.deps.listRuntimeManagedExternalPositions();
     await Promise.all(
-      manualPositions
-        .filter((manualPosition) => manualPosition.symbol === event.symbol)
-        .map(async (manualPosition) => {
-          const dedupeKey = `manual|${manualPosition.userId}|${manualPosition.symbol}`;
+      runtimeManagedExternalPositions
+        .filter((position) => position.symbol === event.symbol)
+        .map(async (position) => {
+          const dedupeKey = `manual|${position.userId}|${position.symbol}`;
           const now = this.deps.nowMs();
           const previous = this.recentlyProcessed.get(dedupeKey);
           if (
@@ -220,9 +221,9 @@ export class RuntimeSignalLoop {
           this.recentlyProcessed.set(dedupeKey, { direction, at: now });
 
           await this.deps.createSignal({
-            userId: manualPosition.userId,
+            userId: position.userId,
             botId: undefined,
-            symbol: manualPosition.symbol,
+            symbol: position.symbol,
             direction,
             confidence: Math.min(1, Math.abs(event.priceChangePercent24h) / 100),
             payload: {
@@ -235,8 +236,8 @@ export class RuntimeSignalLoop {
           });
 
           await this.deps.orchestrateFn({
-            userId: manualPosition.userId,
-            symbol: manualPosition.symbol,
+            userId: position.userId,
+            symbol: position.symbol,
             direction: 'EXIT',
             quantity: runtimeSignalQuantity,
             markPrice: event.lastPrice,

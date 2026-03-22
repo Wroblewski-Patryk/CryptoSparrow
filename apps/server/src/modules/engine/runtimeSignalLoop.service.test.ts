@@ -18,7 +18,7 @@ const createDeps = () => {
         marketType: 'FUTURES' as const,
       },
     ]),
-    listManualManagedPositions: vi.fn(async () => []),
+    listRuntimeManagedExternalPositions: vi.fn(async () => []),
     createSignal: vi.fn(async () => undefined),
     analyzePreTradeFn: vi.fn(async () => ({
       allowed: true,
@@ -127,10 +127,10 @@ describe('RuntimeSignalLoop', () => {
     expect(deps.orchestrateFn).toHaveBeenCalledTimes(1);
   });
 
-  it('handles EXIT signal for manual managed position without botId', async () => {
+  it('handles EXIT signal for runtime-managed external position without botId', async () => {
     const { deps, emit } = createDeps();
     deps.listActiveBots = vi.fn(async () => []);
-    deps.listManualManagedPositions = vi.fn(async () => [
+    deps.listRuntimeManagedExternalPositions = vi.fn(async () => [
       {
         userId: 'manual-user-1',
         symbol: 'BTCUSDT',

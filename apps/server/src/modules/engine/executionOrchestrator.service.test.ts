@@ -38,6 +38,10 @@ const createPositionGateway = (): PositionFlowGateway => ({
   createPosition: vi.fn().mockResolvedValue({
     id: 'position-1',
     userId: 'u1',
+    externalId: null,
+    origin: 'BOT',
+    managementMode: 'BOT_MANAGED',
+    syncState: 'IN_SYNC',
     symbol: 'BTCUSDT',
     side: 'LONG',
     status: 'OPEN',
@@ -116,6 +120,10 @@ describe('orchestrateRuntimeSignal', () => {
     (positionGateway.getOpenPositionBySymbol as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: 'position-open',
       userId: 'u1',
+      externalId: null,
+      origin: 'BOT',
+      managementMode: 'BOT_MANAGED',
+      syncState: 'IN_SYNC',
       symbol: 'BTCUSDT',
       side: 'LONG',
       status: 'OPEN',
@@ -181,5 +189,97 @@ describe('orchestrateRuntimeSignal', () => {
     );
     expect(positionGateway.closePosition).toHaveBeenCalledWith('position-open', 'u1');
     expect(orderGateway.closeOrder).not.toHaveBeenCalled();
+  });
+
+  it('ignores opposite direction when open position already exists (no-flip)', async () => {
+    const orderGateway = createOrderGateway();
+    const positionGateway = createPositionGateway();
+    (positionGateway.getOpenPositionBySymbol as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: 'position-open',
+      userId: 'u1',
+      externalId: null,
+      origin: 'BOT',
+      managementMode: 'BOT_MANAGED',
+      syncState: 'IN_SYNC',
+      symbol: 'BTCUSDT',
+      side: 'LONG',
+      status: 'OPEN',
+      entryPrice: 43000,
+      quantity: 0.2,
+      leverage: 1,
+      openedAt: new Date(),
+      closedAt: null,
+      realizedPnl: null,
+      unrealizedPnl: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      botId: null,
+      strategyId: null,
+      stopLoss: null,
+      takeProfit: null,
+    });
+
+    const result = await orchestrateRuntimeSignal(
+      {
+        userId: 'u1',
+        symbol: 'BTCUSDT',
+        direction: 'SHORT',
+        quantity: 0.1,
+        markPrice: 42900,
+        mode: 'PAPER',
+      },
+      orderGateway,
+      positionGateway
+    );
+
+    expect(result).toEqual({ status: 'ignored', reason: 'no_flip_with_open_position' });
+    expect(orderGateway.openOrder).not.toHaveBeenCalled();
+    expect(positionGateway.createPosition).not.toHaveBeenCalled();
+  });
+
+  it('ignores runtime action for manual-managed symbol', async () => {
+    const orderGateway = createOrderGateway();
+    const positionGateway = createPositionGateway();
+    (positionGateway.getOpenPositionBySymbol as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: 'position-open',
+      userId: 'u1',
+      externalId: null,
+      origin: 'EXCHANGE_SYNC',
+      managementMode: 'MANUAL_MANAGED',
+      syncState: 'IN_SYNC',
+      symbol: 'BTCUSDT',
+      side: 'LONG',
+      status: 'OPEN',
+      entryPrice: 43000,
+      quantity: 0.2,
+      leverage: 1,
+      openedAt: new Date(),
+      closedAt: null,
+      realizedPnl: null,
+      unrealizedPnl: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      botId: null,
+      strategyId: null,
+      stopLoss: null,
+      takeProfit: null,
+    });
+
+    const result = await orchestrateRuntimeSignal(
+      {
+        userId: 'u1',
+        symbol: 'BTCUSDT',
+        direction: 'EXIT',
+        quantity: 0.1,
+        markPrice: 42900,
+        mode: 'LIVE',
+      },
+      orderGateway,
+      positionGateway
+    );
+
+    expect(result).toEqual({ status: 'ignored', reason: 'manual_managed_symbol' });
+    expect(orderGateway.openOrder).not.toHaveBeenCalled();
+    expect(positionGateway.closePosition).not.toHaveBeenCalled();
   });
 });

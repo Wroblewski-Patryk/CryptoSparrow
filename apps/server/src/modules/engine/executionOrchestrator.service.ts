@@ -18,7 +18,14 @@ export type RuntimeSignalInput = {
 type OrchestrationResult =
   | { status: 'opened'; orderId: string; positionId: string }
   | { status: 'closed'; orderId: string; positionId: string }
-  | { status: 'ignored'; reason: 'no_open_position' };
+  | {
+      status: 'ignored';
+      reason:
+        | 'no_open_position'
+        | 'no_flip_with_open_position'
+        | 'already_open_same_side'
+        | 'manual_managed_symbol';
+    };
 
 export interface OrderFlowGateway {
   openOrder(userId: string, input: {
@@ -81,10 +88,14 @@ export const orchestrateRuntimeSignal = async (
   orderGateway: OrderFlowGateway = defaultOrderGateway,
   positionGateway: PositionFlowGateway = defaultPositionGateway
 ): Promise<OrchestrationResult> => {
+  const openPosition = await positionGateway.getOpenPositionBySymbol(input.userId, input.symbol);
+
   if (input.direction === 'EXIT') {
-    const openPosition = await positionGateway.getOpenPositionBySymbol(input.userId, input.symbol);
     if (!openPosition) {
       return { status: 'ignored', reason: 'no_open_position' };
+    }
+    if (openPosition.managementMode === 'MANUAL_MANAGED') {
+      return { status: 'ignored', reason: 'manual_managed_symbol' };
     }
 
     const closeSide = openPosition.side === 'LONG' ? 'SELL' : 'BUY';
@@ -108,6 +119,16 @@ export const orchestrateRuntimeSignal = async (
       orderId: closeOrder.id,
       positionId: openPosition.id,
     };
+  }
+
+  if (openPosition) {
+    if (openPosition.managementMode === 'MANUAL_MANAGED') {
+      return { status: 'ignored', reason: 'manual_managed_symbol' };
+    }
+    if (openPosition.side !== directionToPositionSide(input.direction)) {
+      return { status: 'ignored', reason: 'no_flip_with_open_position' };
+    }
+    return { status: 'ignored', reason: 'already_open_same_side' };
   }
 
   const openOrder = await orderGateway.openOrder(input.userId, {
