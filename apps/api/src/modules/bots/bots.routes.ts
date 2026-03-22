@@ -15,6 +15,7 @@ import {
   listBotMarketGroups,
   listMarketGroupStrategies,
   listBots,
+  runAssistantDryRun,
   reorderMarketGroupStrategies,
   upsertBotAssistantConfig,
   upsertBotSubagentConfig,
@@ -47,5 +48,6 @@ botsRouter.get('/:id/assistant-config', tradingReadLimiter, getBotAssistantConfi
 botsRouter.put('/:id/assistant-config', tradingWriteLimiter, upsertBotAssistantConfig);
 botsRouter.put('/:id/assistant-config/subagents/:slotIndex', tradingWriteLimiter, upsertBotSubagentConfig);
 botsRouter.delete('/:id/assistant-config/subagents/:slotIndex', tradingWriteLimiter, deleteBotSubagentConfig);
+botsRouter.post('/:id/assistant-config/dry-run', tradingWriteLimiter, runAssistantDryRun);
 
 export default botsRouter;

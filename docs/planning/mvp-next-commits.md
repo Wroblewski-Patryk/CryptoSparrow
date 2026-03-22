@@ -28,9 +28,9 @@ Operational queue for one-task execution runs.
 - [x] `MBA-19 feat(runtime-ai): implement subagent dispatcher with per-slot timeout, partial-failure tolerance, and deterministic merge`
 - [x] `MBA-20 security(ai): add prompt/response sanitization and audit-safe logging for assistant traces`
 - [x] `MBA-21 feat(ui): add bot Assistant tab (main agent panel + 4 subagent slots with enable/disable and role)`
+- [x] `MBA-22 test(e2e): configure assistant stack and verify explainable runtime decision trace (including no-trade output)`
 
 ## NEXT
-- [ ] `MBA-22 test(e2e): configure assistant stack and verify explainable runtime decision trace (including no-trade output)`
 - [ ] `MBA-23 feat(obs): add metrics for group-evaluation latency, subagent timeout rate, merge outcomes, and no-trade frequency`
 - [ ] `MBA-24 feat(ops): add circuit-breaker and graceful degradation (assistant off -> strategy-only runtime)`
 - [ ] `MBA-25 feat(ai-policy): enforce mandate boundaries and forbidden-action policy before execution approval`
@@ -64,6 +64,7 @@ Operational queue for one-task execution runs.
 - [x] `MBA-19 feat(runtime-ai): implemented per-slot timeout dispatcher, partial-failure handling, deterministic output ordering and merge`
 - [x] `MBA-20 security(ai): added rationale/error sanitization and safe trace writing contract in assistant orchestration flow`
 - [x] `MBA-21 feat(ui): added `Assistant` tab in Bots module with main-agent config panel and 4 editable subagent slots (save/delete per slot)`
+- [x] `MBA-22 test(e2e): added assistant dry-run endpoint and e2e contract validating configured assistant stack returns explainable trace payload`
 - [x] `chore(planning): initialize MVP/V1 execution plans and agent blueprint`
 - [x] `chore(planning): align trigger intent to generic one-task nudge`
 - [x] `chore(planning): historical done backlog archived in git history; queue reset for current delivery focus`

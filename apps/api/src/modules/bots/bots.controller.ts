@@ -3,6 +3,7 @@ import { sendError } from '../../utils/apiError';
 import { sendValidationError } from '../../utils/formatZodError';
 import * as botsService from './bots.service';
 import {
+  AssistantDryRunSchema,
   AttachMarketGroupStrategySchema,
   CreateBotMarketGroupSchema,
   CreateBotSchema,
@@ -320,6 +321,21 @@ export const deleteBotSubagentConfig = async (req: Request, res: Response) => {
     if (error instanceof Error && error.message === 'SUBAGENT_SLOT_OUT_OF_RANGE') {
       return sendError(res, 400, 'slotIndex must be between 1 and 4');
     }
+    return sendValidationError(res, error);
+  }
+};
+
+export const runAssistantDryRun = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const payload = AssistantDryRunSchema.parse(req.body);
+    const { id } = req.params;
+    const trace = await botsService.runAssistantDryRun(userId, id, payload);
+    if (!trace) return sendError(res, 404, 'Not found');
+    return res.json(trace);
+  } catch (error) {
     return sendValidationError(res, error);
   }
 };

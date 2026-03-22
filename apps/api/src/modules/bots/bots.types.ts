@@ -83,6 +83,12 @@ export const UpsertBotSubagentConfigSchema = z.object({
   safetyMode: AssistantSafetyModeSchema.default('STRICT'),
 });
 
+export const AssistantDryRunSchema = z.object({
+  symbol: z.string().trim().min(1).max(40),
+  intervalWindow: z.string().trim().min(1).max(20).default('5m'),
+  mode: z.enum(['BACKTEST', 'PAPER', 'LIVE']).default('PAPER'),
+});
+
 export type CreateBotDto = z.infer<typeof CreateBotSchema>;
 export type UpdateBotDto = z.infer<typeof UpdateBotSchema>;
 export type ListBotsQueryDto = z.infer<typeof ListBotsQuerySchema>;
@@ -93,3 +99,4 @@ export type UpdateMarketGroupStrategyDto = z.infer<typeof UpdateMarketGroupStrat
 export type ReorderMarketGroupStrategiesDto = z.infer<typeof ReorderMarketGroupStrategiesSchema>;
 export type UpsertBotAssistantConfigDto = z.infer<typeof UpsertBotAssistantConfigSchema>;
 export type UpsertBotSubagentConfigDto = z.infer<typeof UpsertBotSubagentConfigSchema>;
+export type AssistantDryRunDto = z.infer<typeof AssistantDryRunSchema>;

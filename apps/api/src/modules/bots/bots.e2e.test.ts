@@ -686,4 +686,43 @@ describe('Bots module contract', () => {
     const deleteSlot1Res = await owner.delete(`/dashboard/bots/${botId}/assistant-config/subagents/1`);
     expect(deleteSlot1Res.status).toBe(204);
   });
+
+  it('returns explainable assistant dry-run trace including NO_TRADE output', async () => {
+    const owner = await registerAndLogin('assistant-dryrun-owner@example.com');
+
+    const botRes = await owner.post('/dashboard/bots').send({ ...createPayload(), name: 'Assistant Dry Run Bot' });
+    expect(botRes.status).toBe(201);
+    const botId = botRes.body.id as string;
+
+    const upsertMainRes = await owner.put(`/dashboard/bots/${botId}/assistant-config`).send({
+      mainAgentEnabled: true,
+      mandate: 'Dry-run mandate',
+      modelProfile: 'balanced',
+      safetyMode: 'STRICT',
+      maxDecisionLatencyMs: 2500,
+    });
+    expect(upsertMainRes.status).toBe(200);
+
+    const upsertSlotRes = await owner.put(`/dashboard/bots/${botId}/assistant-config/subagents/1`).send({
+      role: 'TREND',
+      enabled: true,
+      modelProfile: 'balanced',
+      timeoutMs: 800,
+      safetyMode: 'STRICT',
+    });
+    expect(upsertSlotRes.status).toBe(200);
+
+    const dryRunRes = await owner.post(`/dashboard/bots/${botId}/assistant-config/dry-run`).send({
+      symbol: 'BTCUSDT',
+      intervalWindow: '5m',
+      mode: 'PAPER',
+    });
+    expect(dryRunRes.status).toBe(200);
+    expect(dryRunRes.body.requestId).toBeDefined();
+    expect(dryRunRes.body.mode).toBeDefined();
+    expect(Array.isArray(dryRunRes.body.statuses)).toBe(true);
+    expect(Array.isArray(dryRunRes.body.outputs)).toBe(true);
+    expect(dryRunRes.body.finalDecision).toBeDefined();
+    expect(typeof dryRunRes.body.finalReason).toBe('string');
+  });
 });

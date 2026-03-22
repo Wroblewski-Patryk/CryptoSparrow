@@ -1,5 +1,7 @@
 import { prisma } from '../../prisma/client';
+import { orchestrateAssistantDecision } from '../engine/assistantOrchestrator.service';
 import {
+  AssistantDryRunDto,
   CreateBotDto,
   CreateBotMarketGroupDto,
   ListBotsQueryDto,
@@ -814,4 +816,30 @@ export const deleteBotSubagentConfig = async (userId: string, botId: string, slo
   });
 
   return true;
+};
+
+export const runAssistantDryRun = async (userId: string, botId: string, input: AssistantDryRunDto) => {
+  const bot = await getOwnedBot(userId, botId);
+  if (!bot) return null;
+
+  const subagents = await prisma.botSubagentConfig.findMany({
+    where: { userId, botId },
+    orderBy: { slotIndex: 'asc' },
+  });
+
+  return orchestrateAssistantDecision({
+    requestId: `dryrun:${Date.now()}:${botId}`,
+    userId,
+    botId,
+    botMarketGroupId: 'dry-run',
+    symbol: input.symbol.toUpperCase(),
+    intervalWindow: input.intervalWindow,
+    mode: input.mode,
+    subagents: subagents.map((slot) => ({
+      slotIndex: slot.slotIndex,
+      role: slot.role,
+      enabled: slot.enabled,
+      timeoutMs: slot.timeoutMs,
+    })),
+  });
 };
