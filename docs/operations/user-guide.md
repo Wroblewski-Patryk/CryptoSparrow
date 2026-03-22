@@ -5,7 +5,7 @@ This guide explains how to start safely with CryptoSparrow V1.
 ## 1. Onboarding
 1. Create account and verify login.
 2. Connect exchange API key in `Dashboard -> Exchanges`.
-3. Build or import a strategy in `Dashboard -> Builder`.
+3. Build or import a strategy in `Dashboard -> Strategies`.
 4. If possible, run a backtest before live activity.
 5. New bots start in `PAPER` by default; optionally switch to `LIVE` after accepting risk consent.
 

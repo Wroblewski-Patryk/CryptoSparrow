@@ -192,8 +192,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `fix(auth-session): force deterministic auto-logout on invalid auth/session or deleted-user state`
 - [x] `fix(auth-resilience): handle API/DB-unavailable startup in auth context without stale logged-in UI state`
 - [x] `feat(auth-ui): add password visibility toggle to login/register with keyboard and screen-reader support`
-- [ ] `docs(repo-structure): define staged migration from apps/client+apps/server to apps/web+apps/api and add apps/mobile bootstrap plan`
-- [ ] `docs(parity): define mobile parity contract versus web dashboard scope for MVP/V1`
+- [x] `docs(repo-structure): define staged migration from apps/client+apps/server to apps/web+apps/api and add apps/mobile bootstrap plan`
+- [x] `docs(parity): define mobile parity contract versus web dashboard scope for MVP/V1`
 
 ## Phase 11 - Audit Closure and Scope Realignment (As of 2026-03-22)
 - [x] `docs(sync): remove contradictory done/pending states across MVP/V1 plans and align all status claims to repository evidence`
@@ -423,6 +423,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Refactored rate-limit keying from IP-centric to identity-aware scopes (`auth`, `user`, `user_exchange`), updated auth/api-key limiter bindings, and added middleware identity-resolution tests.
 - 2026-03-22: Hardened auth session recovery by validating `/auth/me` against DB existence, clearing stale token cookies on invalid/deleted sessions, and returning 503 for temporary auth DB lookup failures.
 - 2026-03-22: Added accessible password visibility toggles (`Show/Hide`) in login/register forms and covered toggle behavior with component regression tests.
+- 2026-03-22: Synced IA docs for `Bots/Exchanges`, added staged repo migration plan + mobile parity contract docs, and scaffolded `apps/mobile` as bootstrap-only package.
 
 
 

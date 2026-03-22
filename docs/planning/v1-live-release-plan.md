@@ -97,7 +97,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `fix(ui-header): center desktop nav list and unify header interaction styling (hover/active/focus) across menu/account/language/theme controls`
 - [x] `fix(ui-language): correct EN/PL flag visuals and protect with regression tests`
 - [x] `audit(routing): canonicalize dashboard URL contract and remove duplicate/legacy route variants`
-- [ ] `docs(ia): update module map and user guide navigation references for Bots/Exchanges grouping`
+- [x] `docs(ia): update module map and user guide navigation references for Bots/Exchanges grouping`
 
 ### G2 - Position/Order Origin and Management Semantics
 - [x] `feat(db): add origin/management metadata to positions/orders/trades (bot/manual/exchange-sync/backtest)`
@@ -133,7 +133,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `fix(auth-session): auto-logout user on invalid token/deleted-user/no-db startup and keep public-route UX clean`
 - [x] `feat(auth-ui): add password visibility toggles on login/register with accessibility semantics`
 - [x] `fix(ui-theme): remove isometric toggle from active V1 account menu (defer to V2 gamification path)`
-- [ ] `docs(repo): finalize migration plan from apps/client+apps/server to apps/web+apps/api and bootstrap apps/mobile`
+- [x] `docs(repo): finalize migration plan from apps/client+apps/server to apps/web+apps/api and bootstrap apps/mobile`
 
 ### G9 - Live Semantics and Ops Security Completion
 - [x] `fix(live-contract): enforce LIVE real-exchange side effects with no local-only simulation on execution path`
@@ -245,3 +245,4 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-22: Migrated rate-limit identity strategy to user/exchange-aware scopes and bound auth/api-key routes to scoped keys, reducing shared-IP cross-user throttling collisions.
 - 2026-03-22: Hardened auth session recovery (`/auth/me` + `requireAuth`) to clear invalid/deleted-user cookies deterministically and return 503 on temporary auth DB unavailability.
 - 2026-03-22: Added login/register password visibility controls with explicit screen-reader labels and regression tests for show/hide toggle behavior.
+- 2026-03-22: Completed docs/navigation cleanup for `Bots/Exchanges`, defined staged `client/server -> web/api` migration plan, and added bootstrap-only `apps/mobile` scaffold contract.

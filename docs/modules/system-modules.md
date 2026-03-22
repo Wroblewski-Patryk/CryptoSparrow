@@ -25,15 +25,13 @@
 - public. Landing and public pages.
 - public/auth. Login and registration.
 - dashboard. Control Center shell with snapshots.
+- dashboard/exchanges. Exchange connections domain entry with nested orders/positions views.
 - dashboard/profile. User settings.
 - dashboard/strategies. Strategy list and editor.
 - dashboard/markets. Market universe management.
 - dashboard/bots. Bot management and mode controls.
-- dashboard/orders. Order history and risk-first write-side actions.
-- dashboard/positions. Position views with live-status support.
 - dashboard/backtest. Backtest pages with report summary, per-market timeline charts, and progressive chunk loading.
 - dashboard/logs. Audit/log pages.
-- dashboard/exchanges. API key connection pages.
 - dashboard/reports. Performance reporting views.
 - dashboard home live market bar with SSE client state.
 
@@ -43,15 +41,13 @@
 
 ## Dashboard IA Order (MVP)
 - dashboard. Control Center with risk and operations priority.
+- dashboard/exchanges.
 - dashboard/strategies.
 - dashboard/markets.
 - dashboard/bots.
-- dashboard/orders.
-- dashboard/positions.
 - dashboard/backtest.
 - dashboard/reports.
 - dashboard/logs.
-- dashboard/exchanges.
 - dashboard/profile.
 
 ## UX Expectations Per Frontend Module (MVP)
@@ -59,10 +55,8 @@
 - dashboard/strategies. List-first workflow with clear preset/source metadata and safe edit/delete controls.
 - dashboard/markets. Universe builder with filter explainability and explicit whitelist/blacklist outcomes.
 - dashboard/bots. Lifecycle controls with explicit paper/live mode, heartbeat visibility, and emergency controls.
-- dashboard/orders. Searchable and filterable order history with rejection reason visibility.
-- dashboard/positions. Open and closed positions with risk parameters and PnL context.
+- dashboard/exchanges. Connection health, permission checks, secure API key UX, plus nested order/position operational views.
 - dashboard/backtest. Run management, daily PnL + balance summary view, market-by-market timeline overlays (candles, indicators, entry/exit), and trade-level result inspection.
 - dashboard/reports. Performance summaries focused on PnL, drawdown, fees, and funding costs.
 - dashboard/logs. High-signal audit trail with severity, source, and actor filtering.
-- dashboard/exchanges. Connection health, permission checks, and secure API key UX.
 - dashboard/profile. Account and user preferences, including locale selection.

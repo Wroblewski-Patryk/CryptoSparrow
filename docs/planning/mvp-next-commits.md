@@ -7,10 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `docs(ia): update module map and user guide navigation references for Bots/Exchanges grouping`
-- [ ] `docs(repo-structure): define target monorepo apps naming (`apps/web`, `apps/api`, `apps/mobile`) and migration rollout sequence`
-- [ ] `chore(repo-migration-plan): prepare non-breaking rename plan from client/server to web/api (scripts, CI, env, docs)`
-- [ ] `docs(parity): define mobile parity contract versus web dashboard scope for MVP/V1`
 
 ## NEXT
 
@@ -67,6 +63,10 @@ Operational queue for one-task execution runs.
 - [x] `refactor(rate-limit): move from IP-centric throttling toward user/exchange-key aware limits`
 - [x] `fix(auth-session-recovery): enforce automatic logout on invalid session/user-deleted scenarios and add graceful no-db fallback behavior`
 - [x] `feat(auth-password-visibility): add password visibility toggle in login/register forms with a11y labels and tests`
+- [x] `docs(ia): update module map and user guide navigation references for Bots/Exchanges grouping`
+- [x] `docs(repo-structure): define target monorepo apps naming (`apps/web`, `apps/api`, `apps/mobile`) and migration rollout sequence`
+- [x] `chore(repo-migration-plan): prepare non-breaking rename plan from client/server to web/api (scripts, CI, env, docs)`
+- [x] `docs(parity): define mobile parity contract versus web dashboard scope for MVP/V1`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
