@@ -1,3 +1,5 @@
+import { metricsStore } from '../../observability/metrics';
+
 export type AssistantDecision = 'LONG' | 'SHORT' | 'EXIT' | 'NO_TRADE';
 
 export type AssistantMode = 'off' | 'strategy_only' | 'assistant';
@@ -255,6 +257,9 @@ export const orchestrateAssistantDecision = async (
       } catch (error) {
         const latencyMs = Math.max(0, deps.nowMs() - startedAt);
         const message = error instanceof Error ? error.message : 'UNKNOWN_ERROR';
+        if (message === 'SUBAGENT_TIMEOUT') {
+          metricsStore.recordAssistantSubagentTimeout();
+        }
         statuses.push({
           slotIndex: slot.slotIndex,
           role: slot.role,
@@ -270,6 +275,7 @@ export const orchestrateAssistantDecision = async (
   outputs.sort((left, right) => left.slotIndex - right.slotIndex);
 
   const merged = mergeAssistantOutputs(outputs);
+  metricsStore.recordRuntimeMergeOutcome(merged.decision);
   const trace: AssistantOrchestrationTrace = {
     requestId: input.requestId,
     botId: input.botId,

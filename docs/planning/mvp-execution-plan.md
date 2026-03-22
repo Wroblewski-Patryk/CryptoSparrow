@@ -233,7 +233,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `MBA-22 test(e2e): configure assistant stack and verify explainable runtime decision trace (including no-trade output)`
 
 ## Phase 14 - V1 Hardening for Multi-Entity + AI Runtime
-- [ ] `MBA-23 feat(obs): add metrics for group-evaluation latency, subagent timeout rate, merge outcomes, and no-trade frequency`
+- [x] `MBA-23 feat(obs): add metrics for group-evaluation latency, subagent timeout rate, merge outcomes, and no-trade frequency`
 - [ ] `MBA-24 feat(ops): add circuit-breaker and graceful degradation (assistant off -> strategy-only runtime)`
 - [ ] `MBA-25 feat(ai-policy): enforce mandate boundaries and forbidden-action policy before execution approval`
 - [ ] `MBA-26 feat(ui-explainability): add decision timeline by bot/group/strategy/main-agent/subagent with rationale payloads`
@@ -259,6 +259,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-23: Added assistant runtime scaffold (`MBA-18/19/20`) with main-plan orchestration, slot timeout dispatcher, deterministic merge, and sanitized trace contract.
 - 2026-03-23: Added assistant UI surface (`MBA-21`) in Bots module with tabbed main/subagent configuration for 1 main + 4 slot topology.
 - 2026-03-23: Added assistant dry-run e2e path (`MBA-22`) to validate configured stack and explainable decision trace payload contract.
+- 2026-03-23: Added assistant/runtime observability metrics (`MBA-23`) for group latency, merge outcomes, no-trade counts, and subagent timeouts.
 - 2026-03-15: Initialized MVP execution file and commit rules.
 - 2026-03-15: Added generic trigger-based one-task execution workflow.
 - 2026-03-15: Expanded MVP plan to fully align with product, modules, database, trading, testing, and security docs.

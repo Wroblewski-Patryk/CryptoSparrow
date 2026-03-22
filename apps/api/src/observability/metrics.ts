@@ -19,6 +19,22 @@ type MetricsSnapshot = {
       execution: number;
     };
   };
+  runtime: {
+    groupEvaluation: {
+      total: number;
+      totalDurationMs: number;
+      avgDurationMs: number;
+    };
+    mergeOutcomes: {
+      long: number;
+      short: number;
+      exit: number;
+      noTrade: number;
+    };
+  };
+  assistant: {
+    subagentTimeouts: number;
+  };
 };
 
 type HttpMetricInput = {
@@ -38,6 +54,13 @@ class InMemoryMetricsStore {
   private marketDataQueueLag = 0;
   private backtestQueueLag = 0;
   private executionQueueLag = 0;
+  private runtimeGroupEvaluations = 0;
+  private runtimeGroupTotalDurationMs = 0;
+  private runtimeMergeLong = 0;
+  private runtimeMergeShort = 0;
+  private runtimeMergeExit = 0;
+  private runtimeMergeNoTrade = 0;
+  private assistantSubagentTimeouts = 0;
 
   recordHttp(input: HttpMetricInput) {
     this.requestsTotal += 1;
@@ -75,8 +98,28 @@ class InMemoryMetricsStore {
     if (kind === 'execution') this.executionQueueLag = value;
   }
 
+  recordRuntimeGroupEvaluation(durationMs: number) {
+    this.runtimeGroupEvaluations += 1;
+    this.runtimeGroupTotalDurationMs += Math.max(0, durationMs);
+  }
+
+  recordRuntimeMergeOutcome(outcome: 'LONG' | 'SHORT' | 'EXIT' | 'NO_TRADE') {
+    if (outcome === 'LONG') this.runtimeMergeLong += 1;
+    if (outcome === 'SHORT') this.runtimeMergeShort += 1;
+    if (outcome === 'EXIT') this.runtimeMergeExit += 1;
+    if (outcome === 'NO_TRADE') this.runtimeMergeNoTrade += 1;
+  }
+
+  recordAssistantSubagentTimeout() {
+    this.assistantSubagentTimeouts += 1;
+  }
+
   snapshot(): MetricsSnapshot {
     const avgDurationMs = this.requestsTotal > 0 ? this.totalDurationMs / this.requestsTotal : 0;
+    const runtimeAvgDurationMs =
+      this.runtimeGroupEvaluations > 0
+        ? this.runtimeGroupTotalDurationMs / this.runtimeGroupEvaluations
+        : 0;
     return {
       http: {
         requestsTotal: this.requestsTotal,
@@ -97,6 +140,22 @@ class InMemoryMetricsStore {
           backtest: this.backtestQueueLag,
           execution: this.executionQueueLag,
         },
+      },
+      runtime: {
+        groupEvaluation: {
+          total: this.runtimeGroupEvaluations,
+          totalDurationMs: this.runtimeGroupTotalDurationMs,
+          avgDurationMs: runtimeAvgDurationMs,
+        },
+        mergeOutcomes: {
+          long: this.runtimeMergeLong,
+          short: this.runtimeMergeShort,
+          exit: this.runtimeMergeExit,
+          noTrade: this.runtimeMergeNoTrade,
+        },
+      },
+      assistant: {
+        subagentTimeouts: this.assistantSubagentTimeouts,
       },
     };
   }

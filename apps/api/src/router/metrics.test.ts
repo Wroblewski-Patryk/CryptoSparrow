@@ -25,6 +25,22 @@ type MetricsPayload = {
       execution: number;
     };
   };
+  runtime: {
+    groupEvaluation: {
+      total: number;
+      totalDurationMs: number;
+      avgDurationMs: number;
+    };
+    mergeOutcomes: {
+      long: number;
+      short: number;
+      exit: number;
+      noTrade: number;
+    };
+  };
+  assistant: {
+    subagentTimeouts: number;
+  };
 };
 
 const getMetrics = async () => {
@@ -115,6 +131,9 @@ describe('metrics endpoint', () => {
     metricsStore.setWorkerQueueLag('marketData', 5);
     metricsStore.setWorkerQueueLag('backtest', 2);
     metricsStore.setWorkerQueueLag('execution', 1);
+    metricsStore.recordRuntimeGroupEvaluation(12);
+    metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
+    metricsStore.recordAssistantSubagentTimeout();
 
     const after = await getMetrics();
 
@@ -124,5 +143,14 @@ describe('metrics endpoint', () => {
     expect(after.worker.queueLag.marketData).toBe(5);
     expect(after.worker.queueLag.backtest).toBe(2);
     expect(after.worker.queueLag.execution).toBe(1);
+    expect(after.runtime.groupEvaluation.total).toBeGreaterThanOrEqual(
+      before.runtime.groupEvaluation.total + 1
+    );
+    expect(after.runtime.mergeOutcomes.noTrade).toBeGreaterThanOrEqual(
+      before.runtime.mergeOutcomes.noTrade + 1
+    );
+    expect(after.assistant.subagentTimeouts).toBeGreaterThanOrEqual(
+      before.assistant.subagentTimeouts + 1
+    );
   });
 });

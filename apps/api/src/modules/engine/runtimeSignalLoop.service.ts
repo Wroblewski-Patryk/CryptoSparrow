@@ -1,5 +1,6 @@
 import { Prisma, SignalDirection } from '@prisma/client';
 import { prisma } from '../../prisma/client';
+import { metricsStore } from '../../observability/metrics';
 import {
   MarketStreamEvent,
   StreamCandleEvent,
@@ -650,6 +651,7 @@ export class RuntimeSignalLoop {
 
         await Promise.all(
           eligibleGroups.map(async (group) => {
+            const groupEvalStartedAt = this.deps.nowMs();
             const strategyVotes: StrategyVote[] = group.strategies
               .map((strategy) => {
                 const direction = this.directionFromStrategy(event, bot.marketType, strategy);
@@ -675,7 +677,11 @@ export class RuntimeSignalLoop {
                 };
 
             const direction = merged.direction;
-            if (!direction) return;
+            if (!direction) {
+              metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
+              metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
+              return;
+            }
 
             const dedupeKey = `${bot.id}|${group.id}|${event.symbol}`;
             const now = this.deps.nowMs();
@@ -685,6 +691,7 @@ export class RuntimeSignalLoop {
               previous.direction === direction &&
               now - previous.at < runtimeDirectionCooldownMs
             ) {
+              metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
               return;
             }
             this.recentlyProcessed.set(dedupeKey, { direction, at: now });
@@ -707,6 +714,8 @@ export class RuntimeSignalLoop {
                 marketType: event.marketType,
               });
               if (!preTradeDecision.allowed) {
+                metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
+                metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
                 return;
               }
             }
@@ -744,6 +753,8 @@ export class RuntimeSignalLoop {
               markPrice: event.lastPrice,
               mode: bot.mode,
             });
+            metricsStore.recordRuntimeMergeOutcome(direction);
+            metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
           })
         );
       })
