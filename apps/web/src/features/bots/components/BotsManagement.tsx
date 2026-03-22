@@ -6,8 +6,23 @@ import { toast } from "sonner";
 
 import StatusBadge from "../../../ui/components/StatusBadge";
 import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
-import { createBot, deleteBot, listBots, updateBot } from "../services/bots.service";
-import { Bot, BotMode, PositionMode, TradeMarket } from "../types/bot.type";
+import {
+  createBot,
+  deleteBot,
+  deleteBotSubagentConfig,
+  getBotAssistantConfig,
+  listBots,
+  updateBot,
+  upsertBotAssistantConfig,
+  upsertBotSubagentConfig,
+} from "../services/bots.service";
+import {
+  Bot,
+  BotMode,
+  BotSubagentConfig,
+  PositionMode,
+  TradeMarket,
+} from "../types/bot.type";
 import { listStrategies } from "../../strategies/api/strategies.api";
 import { StrategyDto } from "../../strategies/types/StrategyForm.type";
 
@@ -31,6 +46,7 @@ const toRiskBadge = (bot: Bot) => {
 };
 
 export default function BotsManagement() {
+  const [activeTab, setActiveTab] = useState<"bots" | "assistant">("bots");
   const [bots, setBots] = useState<Bot[]>([]);
   const [serverSnapshot, setServerSnapshot] = useState<Record<string, Bot>>({});
   const [loading, setLoading] = useState(true);
@@ -47,6 +63,15 @@ export default function BotsManagement() {
   const [marketFilter, setMarketFilter] = useState<"ALL" | TradeMarket>("ALL");
   const [maxOpenPositions, setMaxOpenPositions] = useState(1);
   const [strategyId, setStrategyId] = useState<string>("");
+  const [assistantBotId, setAssistantBotId] = useState<string>("");
+  const [assistantLoading, setAssistantLoading] = useState(false);
+  const [assistantSaving, setAssistantSaving] = useState(false);
+  const [assistantMainEnabled, setAssistantMainEnabled] = useState(false);
+  const [assistantMandate, setAssistantMandate] = useState("");
+  const [assistantModelProfile, setAssistantModelProfile] = useState("balanced");
+  const [assistantSafetyMode, setAssistantSafetyMode] = useState<"STRICT" | "BALANCED" | "EXPERIMENTAL">("STRICT");
+  const [assistantLatencyMs, setAssistantLatencyMs] = useState(2500);
+  const [assistantSubagents, setAssistantSubagents] = useState<BotSubagentConfig[]>([]);
 
   const loadBots = useCallback(async (filter: "ALL" | TradeMarket) => {
     setLoading(true);
@@ -84,7 +109,46 @@ export default function BotsManagement() {
 
   const canCreate = useMemo(() => name.trim().length > 0 && !creating, [creating, name]);
 
+  const assistantSlots = useMemo(
+    () =>
+      [1, 2, 3, 4].map((slotIndex) => {
+        const existing = assistantSubagents.find((slot) => slot.slotIndex === slotIndex);
+        return (
+          existing ?? {
+            id: `slot-${slotIndex}`,
+            userId: "",
+            botId: assistantBotId,
+            slotIndex,
+            role: "GENERAL",
+            enabled: false,
+            modelProfile: "balanced",
+            timeoutMs: 1200,
+            safetyMode: "STRICT" as const,
+          }
+        );
+      }),
+    [assistantBotId, assistantSubagents]
+  );
+
   const confirmLiveRisk = (message: string) => window.confirm(message);
+
+  const loadAssistant = useCallback(async (botId: string) => {
+    setAssistantLoading(true);
+    try {
+      const config = await getBotAssistantConfig(botId);
+      setAssistantMainEnabled(config.assistant?.mainAgentEnabled ?? false);
+      setAssistantMandate(config.assistant?.mandate ?? "");
+      setAssistantModelProfile(config.assistant?.modelProfile ?? "balanced");
+      setAssistantSafetyMode(config.assistant?.safetyMode ?? "STRICT");
+      setAssistantLatencyMs(config.assistant?.maxDecisionLatencyMs ?? 2500);
+      setAssistantSubagents(config.subagents ?? []);
+    } catch (err: unknown) {
+      toast.error("Nie udalo sie pobrac konfiguracji asystenta", { description: getAxiosMessage(err) });
+      setAssistantSubagents([]);
+    } finally {
+      setAssistantLoading(false);
+    }
+  }, []);
 
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -192,8 +256,98 @@ export default function BotsManagement() {
     }
   };
 
+  const handleSaveAssistantMain = async () => {
+    if (!assistantBotId) return;
+    setAssistantSaving(true);
+    try {
+      await upsertBotAssistantConfig(assistantBotId, {
+        mainAgentEnabled: assistantMainEnabled,
+        mandate: assistantMandate || null,
+        modelProfile: assistantModelProfile,
+        safetyMode: assistantSafetyMode,
+        maxDecisionLatencyMs: assistantLatencyMs,
+      });
+      toast.success("Konfiguracja main asystenta zapisana");
+      await loadAssistant(assistantBotId);
+    } catch (err: unknown) {
+      toast.error("Nie udalo sie zapisac konfiguracji asystenta", { description: getAxiosMessage(err) });
+    } finally {
+      setAssistantSaving(false);
+    }
+  };
+
+  const handleSaveSubagent = async (slot: BotSubagentConfig) => {
+    if (!assistantBotId) return;
+    setAssistantSaving(true);
+    try {
+      await upsertBotSubagentConfig(assistantBotId, slot.slotIndex, {
+        role: slot.role,
+        enabled: slot.enabled,
+        modelProfile: slot.modelProfile,
+        timeoutMs: slot.timeoutMs,
+        safetyMode: slot.safetyMode,
+      });
+      toast.success(`Slot ${slot.slotIndex} zapisany`);
+      await loadAssistant(assistantBotId);
+    } catch (err: unknown) {
+      toast.error("Nie udalo sie zapisac slotu subagenta", { description: getAxiosMessage(err) });
+    } finally {
+      setAssistantSaving(false);
+    }
+  };
+
+  const handleClearSubagent = async (slotIndex: number) => {
+    if (!assistantBotId) return;
+    setAssistantSaving(true);
+    try {
+      await deleteBotSubagentConfig(assistantBotId, slotIndex);
+      toast.success(`Slot ${slotIndex} usuniety`);
+      await loadAssistant(assistantBotId);
+    } catch (err: unknown) {
+      toast.error("Nie udalo sie usunac slotu subagenta", { description: getAxiosMessage(err) });
+    } finally {
+      setAssistantSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    if (bots.length === 0) return;
+    if (!assistantBotId) {
+      setAssistantBotId(bots[0].id);
+      return;
+    }
+    const exists = bots.some((bot) => bot.id === assistantBotId);
+    if (!exists) setAssistantBotId(bots[0].id);
+  }, [bots, assistantBotId]);
+
+  useEffect(() => {
+    if (!assistantBotId || activeTab !== "assistant") return;
+    void loadAssistant(assistantBotId);
+  }, [assistantBotId, activeTab, loadAssistant]);
+
   return (
     <div className="space-y-5">
+      <div role="tablist" className="tabs tabs-boxed inline-flex gap-1">
+        <button
+          type="button"
+          role="tab"
+          className={`tab ${activeTab === "bots" ? "tab-active" : ""}`}
+          onClick={() => setActiveTab("bots")}
+        >
+          Bots
+        </button>
+        <button
+          type="button"
+          role="tab"
+          className={`tab ${activeTab === "assistant" ? "tab-active" : ""}`}
+          onClick={() => setActiveTab("assistant")}
+        >
+          Assistant
+        </button>
+      </div>
+
+      {activeTab === "bots" && (
+        <>
       <form onSubmit={handleCreate} className="rounded-xl border border-base-300 bg-base-200 p-4">
         <h2 className="text-lg font-semibold">Nowy bot</h2>
         <p className="text-sm opacity-70">
@@ -466,6 +620,235 @@ export default function BotsManagement() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+        </>
+      )}
+
+      {activeTab === "assistant" && (
+        <div className="space-y-4 rounded-xl border border-base-300 bg-base-200 p-4">
+          <h2 className="text-lg font-semibold">Assistant Config</h2>
+          <p className="text-sm opacity-70">
+            Konfiguracja glownego asystenta i 4 slotow subagentow per bot.
+          </p>
+
+          {bots.length === 0 ? (
+            <EmptyState
+              title="Brak botow"
+              description="Utworz najpierw bota, aby skonfigurowac Assistant."
+            />
+          ) : (
+            <>
+              <label className="form-control max-w-sm">
+                <span className="label-text">Bot</span>
+                <select
+                  className="select select-bordered"
+                  value={assistantBotId}
+                  onChange={(event) => setAssistantBotId(event.target.value)}
+                >
+                  {bots.map((bot) => (
+                    <option key={bot.id} value={bot.id}>
+                      {bot.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {assistantLoading ? (
+                <LoadingState title="Ladowanie konfiguracji asystenta" />
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid gap-3 md:grid-cols-5">
+                    <label className="form-control">
+                      <span className="label-text">Main enabled</span>
+                      <input
+                        type="checkbox"
+                        className="toggle toggle-success"
+                        checked={assistantMainEnabled}
+                        onChange={(event) => setAssistantMainEnabled(event.target.checked)}
+                      />
+                    </label>
+                    <label className="form-control md:col-span-2">
+                      <span className="label-text">Mandate</span>
+                      <input
+                        className="input input-bordered"
+                        value={assistantMandate}
+                        onChange={(event) => setAssistantMandate(event.target.value)}
+                        placeholder="Trade only with clear risk-adjusted edge"
+                      />
+                    </label>
+                    <label className="form-control">
+                      <span className="label-text">Model profile</span>
+                      <input
+                        className="input input-bordered"
+                        value={assistantModelProfile}
+                        onChange={(event) => setAssistantModelProfile(event.target.value)}
+                      />
+                    </label>
+                    <label className="form-control">
+                      <span className="label-text">Safety mode</span>
+                      <select
+                        className="select select-bordered"
+                        value={assistantSafetyMode}
+                        onChange={(event) =>
+                          setAssistantSafetyMode(event.target.value as "STRICT" | "BALANCED" | "EXPERIMENTAL")
+                        }
+                      >
+                        <option value="STRICT">STRICT</option>
+                        <option value="BALANCED">BALANCED</option>
+                        <option value="EXPERIMENTAL">EXPERIMENTAL</option>
+                      </select>
+                    </label>
+                  </div>
+                  <label className="form-control max-w-xs">
+                    <span className="label-text">Main latency (ms)</span>
+                    <input
+                      type="number"
+                      className="input input-bordered"
+                      min={200}
+                      max={30000}
+                      value={assistantLatencyMs}
+                      onChange={(event) => setAssistantLatencyMs(Number(event.target.value))}
+                    />
+                  </label>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      disabled={assistantSaving || !assistantBotId}
+                      onClick={() => void handleSaveAssistantMain()}
+                    >
+                      {assistantSaving ? "Zapisywanie..." : "Zapisz main config"}
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {assistantSlots.map((slot) => (
+                      <div key={slot.slotIndex} className="rounded-lg border border-base-300 p-3">
+                        <div className="mb-2 font-medium">Subagent slot {slot.slotIndex}</div>
+                        <div className="grid gap-3 md:grid-cols-5">
+                          <label className="form-control">
+                            <span className="label-text">Enabled</span>
+                            <input
+                              type="checkbox"
+                              className="toggle toggle-sm"
+                              checked={slot.enabled}
+                              onChange={(event) =>
+                                setAssistantSubagents((prev) => {
+                                  const next = [...prev];
+                                  const idx = next.findIndex((item) => item.slotIndex === slot.slotIndex);
+                                  const updated = { ...slot, enabled: event.target.checked };
+                                  if (idx >= 0) next[idx] = updated;
+                                  else next.push(updated);
+                                  return next;
+                                })
+                              }
+                            />
+                          </label>
+                          <label className="form-control">
+                            <span className="label-text">Role</span>
+                            <input
+                              className="input input-bordered input-sm"
+                              value={slot.role}
+                              onChange={(event) =>
+                                setAssistantSubagents((prev) => {
+                                  const next = [...prev];
+                                  const idx = next.findIndex((item) => item.slotIndex === slot.slotIndex);
+                                  const updated = { ...slot, role: event.target.value };
+                                  if (idx >= 0) next[idx] = updated;
+                                  else next.push(updated);
+                                  return next;
+                                })
+                              }
+                            />
+                          </label>
+                          <label className="form-control">
+                            <span className="label-text">Profile</span>
+                            <input
+                              className="input input-bordered input-sm"
+                              value={slot.modelProfile}
+                              onChange={(event) =>
+                                setAssistantSubagents((prev) => {
+                                  const next = [...prev];
+                                  const idx = next.findIndex((item) => item.slotIndex === slot.slotIndex);
+                                  const updated = { ...slot, modelProfile: event.target.value };
+                                  if (idx >= 0) next[idx] = updated;
+                                  else next.push(updated);
+                                  return next;
+                                })
+                              }
+                            />
+                          </label>
+                          <label className="form-control">
+                            <span className="label-text">Timeout (ms)</span>
+                            <input
+                              type="number"
+                              min={100}
+                              max={15000}
+                              className="input input-bordered input-sm"
+                              value={slot.timeoutMs}
+                              onChange={(event) =>
+                                setAssistantSubagents((prev) => {
+                                  const next = [...prev];
+                                  const idx = next.findIndex((item) => item.slotIndex === slot.slotIndex);
+                                  const updated = { ...slot, timeoutMs: Number(event.target.value) };
+                                  if (idx >= 0) next[idx] = updated;
+                                  else next.push(updated);
+                                  return next;
+                                })
+                              }
+                            />
+                          </label>
+                          <label className="form-control">
+                            <span className="label-text">Safety</span>
+                            <select
+                              className="select select-bordered select-sm"
+                              value={slot.safetyMode}
+                              onChange={(event) =>
+                                setAssistantSubagents((prev) => {
+                                  const next = [...prev];
+                                  const idx = next.findIndex((item) => item.slotIndex === slot.slotIndex);
+                                  const updated = {
+                                    ...slot,
+                                    safetyMode: event.target.value as "STRICT" | "BALANCED" | "EXPERIMENTAL",
+                                  };
+                                  if (idx >= 0) next[idx] = updated;
+                                  else next.push(updated);
+                                  return next;
+                                })
+                              }
+                            >
+                              <option value="STRICT">STRICT</option>
+                              <option value="BALANCED">BALANCED</option>
+                              <option value="EXPERIMENTAL">EXPERIMENTAL</option>
+                            </select>
+                          </label>
+                        </div>
+                        <div className="mt-3 flex gap-2">
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-xs"
+                            disabled={assistantSaving || !assistantBotId}
+                            onClick={() => void handleSaveSubagent(slot)}
+                          >
+                            Zapisz slot
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-xs"
+                            disabled={assistantSaving || !assistantBotId}
+                            onClick={() => void handleClearSubagent(slot.slotIndex)}
+                          >
+                            Usun slot
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>

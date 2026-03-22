@@ -30,3 +30,37 @@ export type CreateBotInput = {
 };
 
 export type UpdateBotInput = Partial<CreateBotInput>;
+
+export type AssistantSafetyMode = "STRICT" | "BALANCED" | "EXPERIMENTAL";
+
+export type BotAssistantConfig = {
+  id: string;
+  userId: string;
+  botId: string;
+  mainAgentEnabled: boolean;
+  mandate?: string | null;
+  modelProfile: string;
+  safetyMode: AssistantSafetyMode;
+  maxDecisionLatencyMs: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type BotSubagentConfig = {
+  id: string;
+  userId: string;
+  botId: string;
+  slotIndex: number;
+  role: string;
+  enabled: boolean;
+  modelProfile: string;
+  timeoutMs: number;
+  safetyMode: AssistantSafetyMode;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type BotAssistantConfigResponse = {
+  assistant: BotAssistantConfig | null;
+  subagents: BotSubagentConfig[];
+};

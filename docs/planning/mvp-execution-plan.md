@@ -229,7 +229,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `MBA-18 feat(runtime-ai): implement main-agent orchestrator scaffold (request plan -> subagent fan-out -> merge)`
 - [x] `MBA-19 feat(runtime-ai): implement subagent dispatcher with per-slot timeout, partial-failure tolerance, and deterministic merge`
 - [x] `MBA-20 security(ai): add prompt/response sanitization and audit-safe logging for assistant traces`
-- [ ] `MBA-21 feat(ui): add bot Assistant tab (main agent panel + 4 subagent slots with enable/disable and role)`
+- [x] `MBA-21 feat(ui): add bot Assistant tab (main agent panel + 4 subagent slots with enable/disable and role)`
 - [ ] `MBA-22 test(e2e): configure assistant stack and verify explainable runtime decision trace (including no-trade output)`
 
 ## Phase 14 - V1 Hardening for Multi-Entity + AI Runtime
@@ -257,6 +257,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-23: Added assistant DB foundation (`MBA-15`, `MBA-16`) with `BotAssistantConfig` and `BotSubagentConfig` models, safety enum, and unique bot slot indexing.
 - 2026-03-23: Added assistant config API layer (`MBA-17`) with ownership-safe CRUD and hard slot validation (`1..4`) for subagents.
 - 2026-03-23: Added assistant runtime scaffold (`MBA-18/19/20`) with main-plan orchestration, slot timeout dispatcher, deterministic merge, and sanitized trace contract.
+- 2026-03-23: Added assistant UI surface (`MBA-21`) in Bots module with tabbed main/subagent configuration for 1 main + 4 slot topology.
 - 2026-03-15: Initialized MVP execution file and commit rules.
 - 2026-03-15: Added generic trigger-based one-task execution workflow.
 - 2026-03-15: Expanded MVP plan to fully align with product, modules, database, trading, testing, and security docs.
