@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { I18nProvider } from "./I18nProvider";
 import LanguageSwitcher from "../ui/layout/dashboard/LanguageSwitcher";
@@ -13,13 +13,17 @@ describe("I18nProvider", () => {
       </I18nProvider>
     );
 
-    expect(screen.getByRole("button", { name: "English" })).toHaveClass("btn-primary");
+    const toggle = screen.getByLabelText("Language");
+    expect(toggle).toHaveTextContent("EN");
     expect(document.documentElement.lang).toBe("en");
 
-    fireEvent.click(screen.getByRole("button", { name: "Polish" }));
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole("button", { name: "Polski" }));
 
-    expect(screen.getByRole("button", { name: "Polski" })).toHaveClass("btn-primary");
-    expect(document.documentElement.lang).toBe("pl");
-    expect(window.localStorage.getItem("cryptosparrow-locale")).toBe("pl");
+    await waitFor(() => {
+      expect(document.documentElement.lang).toBe("pl");
+      expect(window.localStorage.getItem("cryptosparrow-locale")).toBe("pl");
+      expect(screen.getByLabelText(/language|jezyk/i)).toHaveTextContent("PL");
+    });
   });
 });

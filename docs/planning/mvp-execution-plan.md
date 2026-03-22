@@ -139,7 +139,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] Phase 0 fully complete.
 - [x] End-to-end flow works: strategy -> backtest -> paper -> live opt-in.
 - [x] Security guardrails active: encryption, ownership checks, rate limits, audit logs.
-- [ ] Core tests passing for auth, strategy CRUD, market/bot isolation, and trading critical paths.
+- [x] Core tests passing for auth, strategy CRUD, market/bot isolation, and trading critical paths.
 - [x] UI scope complete for markets, builder, bots, orders, positions, backtest, reports, logs, exchanges.
 - [x] EN/PL and responsive/PWA baseline complete for core flows.
 - [x] Shared app shell and view-state model are consistent across core dashboard modules.
@@ -197,7 +197,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 
 ## Phase 11 - Audit Closure and Scope Realignment (As of 2026-03-22)
 - [x] `docs(sync): remove contradictory done/pending states across MVP/V1 plans and align all status claims to repository evidence`
-- [ ] `test(quality-gate): restore and verify green core test suites before reopening feature expansion`
+- [x] `test(quality-gate): restore and verify green core test suites before reopening feature expansion`
 - [ ] `docs(scope): move admin+billing implementation promises to post-MVP/V1.1 and keep V1 docs aligned with current deliverables`
 - [ ] `feat(stream-contract): deliver stream transport contract requirements (event id, ping heartbeat, max symbols guard)`
 - [ ] `fix(routing-hard-cut): hard-canonize dashboard URLs and remove legacy alias ambiguity`
@@ -413,6 +413,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Merged exchange connections and API key management into one profile settings domain (`#api`) and routed `/dashboard/exchanges` to unified settings entrypoint.
 - 2026-03-22: Removed isometric mode toggle from dashboard account menu and kept profile dropdown focused on account/security/integration actions only.
 - 2026-03-22: Synced audit planning truthfulness by reconciling Phase 10 statuses with implemented commits and removing contradictory pending states across queue and execution plans.
+- 2026-03-22: Restored quality-gate green status by aligning i18n provider test with current language switcher contract and seeding requireAuth rotation test with a real DB user; reran core client/server suites with full pass.
 
 
 
