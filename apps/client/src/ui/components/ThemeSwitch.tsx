@@ -5,6 +5,7 @@ import { HiOutlineColorSwatch } from 'react-icons/hi';
 import { HiOutlineMoon, HiOutlineSun } from 'react-icons/hi2';
 import { LuCheck } from 'react-icons/lu';
 import { useDetailsDropdown } from '../hooks/useDetailsDropdown';
+import { headerMenuItemClass } from '../layout/dashboard/headerControlStyles';
 
 const themes = [
   { value: 'cryptosparrow', label: 'CryptoSparrow', swatches: ['bg-violet-600', 'bg-yellow-400', 'bg-indigo-400'] },
@@ -64,8 +65,8 @@ export default function ThemeSwitcher() {
   }, [activeTheme]);
 
   return (
-    <details ref={detailsRef} className="dropdown dropdown-end">
-      <summary className="btn btn-sm btn-ghost text-primary-content" aria-label="Theme selector">
+    <details ref={detailsRef} className="dropdown dropdown-end group">
+      <summary className={`${headerMenuItemClass} font-normal`} aria-label="Theme selector">
         {activeTheme === 'system' ? (
           resolvedTheme === 'dark' ? (
             <HiOutlineMoon aria-hidden className="h-4 w-4" />

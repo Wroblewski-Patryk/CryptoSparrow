@@ -11,12 +11,12 @@ export default function Header() {
     <header className="sticky top-0 z-50 border-b border-base-300/60 bg-base-100/80 backdrop-blur">
       <div className="navbar max-w-7xl mx-auto px-4 min-h-16">
         <div className="flex-1">
-          <Link href="/" className="flex items-center gap-2 font-heading text-lg tracking-wide text-base-content">
+          <Link href="/" className="flex items-center gap-2 text-lg text-base-content">
             <span
               aria-hidden
               className="h-8 w-8 bg-current [mask-image:url('/logo.svg')] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]"
             />
-            <span>CryptoSparrow</span>
+            <span className="brand-wordmark">CryptoSparrow</span>
           </Link>
         </div>
         <div className="flex-none">

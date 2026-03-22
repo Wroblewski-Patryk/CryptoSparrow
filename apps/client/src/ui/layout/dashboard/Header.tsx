@@ -10,6 +10,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useDetailsDropdown } from '../../hooks/useDetailsDropdown';
 import LanguageSwitcher from './LanguageSwitcher';
 import { dashboardLegacyAliases, dashboardRoutes, pathStartsWithAny } from './dashboardRoutes';
+import { getHeaderMenuItemClass } from './headerControlStyles';
 
 type NavItem = {
   href: string;
@@ -23,16 +24,10 @@ type NavGroupProps = {
   pathname: string;
 };
 
-const headerControlBaseClass =
-  'rounded-md text-primary-content/85 hover:text-primary-content hover:bg-base-100/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-content/50 transition-colors';
-const headerControlActiveClass = 'bg-base-100/20 text-primary-content font-semibold';
-
 function NavGroup({ active, label, links, pathname }: NavGroupProps) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
   useDetailsDropdown(detailsRef);
-  const summaryClass = active
-    ? `${headerControlBaseClass} ${headerControlActiveClass}`
-    : headerControlBaseClass;
+  const summaryClass = getHeaderMenuItemClass(active);
 
   return (
     <li>
@@ -183,26 +178,24 @@ export default function Header() {
 
   const isActive = (href: string) => pathname === href;
   const isGroupActive = (prefixes: readonly string[]) => pathStartsWithAny(pathname, prefixes);
-  const homeLinkClass = isActive(homeLink.href)
-    ? `${headerControlBaseClass} ${headerControlActiveClass}`
-    : headerControlBaseClass;
+  const homeLinkClass = getHeaderMenuItemClass(isActive(homeLink.href));
 
   return (
     <header className="bg-primary sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 py-2">
         <div className="navbar min-h-0 px-0 flex-nowrap justify-between gap-4">
           <div className="flex-none min-w-0 pr-2 xl:pr-4">
-            <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-primary-content whitespace-nowrap">
+            <Link href="/dashboard" className="flex items-center gap-2 font-normal text-primary-content whitespace-nowrap">
               <span
                 aria-hidden
                 className="h-8 w-8 bg-current [mask-image:url('/logo.svg')] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]"
               />
-              <span className="truncate tracking-wide">CryptoSparrow</span>
+              <span className="brand-wordmark truncate">CryptoSparrow</span>
             </Link>
           </div>
 
           <nav aria-label="Dashboard navigation" className="hidden xl:flex flex-1 min-w-0 overflow-visible justify-center">
-            <ul className="menu menu-horizontal rounded-box bg-base-100/10 p-1 gap-1.5 flex-nowrap whitespace-nowrap overflow-visible items-center justify-center">
+            <ul className="menu menu-horizontal p-1 gap-1.5 flex-nowrap whitespace-nowrap overflow-visible items-center justify-center">
               <li>
                 <Link
                   href={homeLink.href}
@@ -225,11 +218,13 @@ export default function Header() {
           </nav>
 
           <div className="flex-none flex items-center gap-1 pl-2 xl:pl-4">
-            <div className="hidden lg:flex items-center gap-1">
-              <ProfileButton />
-              <LanguageSwitcher />
-              <ThemeSwitcher />
-            </div>
+            <nav aria-label="Dashboard utility navigation" className="hidden lg:block">
+              <ul className="menu menu-horizontal p-0 gap-1 items-center">
+                <li><ProfileButton /></li>
+                <li><LanguageSwitcher /></li>
+                <li><ThemeSwitcher /></li>
+              </ul>
+            </nav>
             <button
               type="button"
               className="btn btn-sm btn-ghost text-base-100 xl:hidden"

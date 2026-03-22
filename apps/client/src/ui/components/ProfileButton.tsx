@@ -5,6 +5,7 @@ import { useRef } from 'react';
 import { LuKey, LuLogOut, LuSettings, LuSubscript, LuUser } from 'react-icons/lu';
 import { useAuth } from '../../context/AuthContext';
 import { useDetailsDropdown } from '../hooks/useDetailsDropdown';
+import { headerMenuItemClass } from '../layout/dashboard/headerControlStyles';
 
 export default function ProfileButton() {
   const { loading, logout, user } = useAuth();
@@ -16,8 +17,8 @@ export default function ProfileButton() {
   }
 
   return (
-    <details ref={detailsRef} className="dropdown dropdown-end">
-      <summary className="btn btn-sm btn-ghost text-primary-content" aria-label="Open account menu">
+    <details ref={detailsRef} className="dropdown dropdown-end group">
+      <summary className={`${headerMenuItemClass} font-normal`} aria-label="Open account menu">
         <LuUser className="h-4 w-4" aria-hidden />
         <span className="hidden sm:inline">Moje konto</span>
       </summary>

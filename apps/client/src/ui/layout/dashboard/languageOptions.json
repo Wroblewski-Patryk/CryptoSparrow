@@ -1,0 +1,17 @@
+[
+  {
+    "locale": "en",
+    "label": "English",
+    "short": "EN",
+    "countryCode": "gb",
+    "icon": "🇬🇧"
+  },
+  {
+    "locale": "pl",
+    "label": "Polski",
+    "short": "PL",
+    "countryCode": "pl",
+    "icon": "🇵🇱"
+  }
+]
+
