@@ -17,7 +17,6 @@ export default function PublicPage() {
 
         <div className="relative mx-auto flex min-h-[100svh] max-w-7xl items-center px-4 py-20">
           <div className="max-w-3xl space-y-7">
-            <p className="badge badge-secondary badge-outline font-semibold tracking-wide">ALPINE FUTURE</p>
             <h1 className="font-heading text-5xl leading-tight md:text-6xl">
               Bot tradingowy, który łączy rynki, strategie i AI w jednym miejscu.
             </h1>

@@ -9,8 +9,10 @@ describe('ThemeSwitcher', () => {
     expect(screen.getByLabelText('Theme selector')).toBeInTheDocument();
     expect(screen.getByLabelText('CryptoSparrow')).toBeInTheDocument();
     expect(screen.getByLabelText('System')).toBeInTheDocument();
-    expect(screen.getByLabelText('Cyberpunk')).toBeInTheDocument();
-    expect(screen.getByLabelText('Emerald')).toBeInTheDocument();
-    expect(screen.getByLabelText('Night')).toBeInTheDocument();
+    expect(screen.getByLabelText('Cupcake')).toBeInTheDocument();
+    expect(screen.getByLabelText('Dracula')).toBeInTheDocument();
+    expect(screen.getByLabelText('Forest')).toBeInTheDocument();
+    expect(screen.getByLabelText('Valentine')).toBeInTheDocument();
+    expect(screen.getByLabelText('Luxury')).toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 @plugin "daisyui" {
-    themes: cryptosparrow --default, light, night --prefersdark, cyberpunk, emerald;
+    themes: cryptosparrow --default, light, dark --prefersdark, cupcake, dracula, forest, valentine, luxury;
 };
 @plugin "daisyui/theme" {
   name: "cryptosparrow";

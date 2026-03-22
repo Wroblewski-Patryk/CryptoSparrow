@@ -2,32 +2,36 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { HiOutlineColorSwatch } from 'react-icons/hi';
+import { HiOutlineMoon, HiOutlineSun } from 'react-icons/hi2';
+import { LuCheck } from 'react-icons/lu';
 import { useDetailsDropdown } from '../hooks/useDetailsDropdown';
 
 const themes = [
-  { value: 'cryptosparrow', label: 'CryptoSparrow', swatch: 'bg-violet-600' },
-  { value: 'system', label: 'System', swatch: 'bg-slate-400' },
-  { value: 'cyberpunk', label: 'Cyberpunk', swatch: 'bg-yellow-400' },
-  { value: 'emerald', label: 'Emerald', swatch: 'bg-emerald-500' },
-  { value: 'night', label: 'Night', swatch: 'bg-slate-900' },
+  { value: 'cryptosparrow', label: 'CryptoSparrow', swatches: ['bg-violet-600', 'bg-yellow-400', 'bg-indigo-400'] },
+  { value: 'system', label: 'System', swatches: ['bg-slate-300', 'bg-slate-500', 'bg-slate-800'] },
+  { value: 'cupcake', label: 'Cupcake', swatches: ['bg-pink-300', 'bg-rose-300', 'bg-orange-200'] },
+  { value: 'dracula', label: 'Dracula', swatches: ['bg-violet-800', 'bg-fuchsia-700', 'bg-slate-900'] },
+  { value: 'forest', label: 'Forest', swatches: ['bg-green-700', 'bg-lime-500', 'bg-emerald-800'] },
+  { value: 'valentine', label: 'Valentine', swatches: ['bg-rose-400', 'bg-pink-400', 'bg-red-300'] },
+  { value: 'luxury', label: 'Luxury', swatches: ['bg-amber-700', 'bg-yellow-500', 'bg-stone-900'] },
 ] as const;
 
 type ThemePreference = (typeof themes)[number]['value'];
 
 const normalizeThemePreference = (value: string | null): ThemePreference => {
   if (!value || value === 'default') return 'cryptosparrow';
-  if (value === 'luxury') return 'night';
   if (themes.some((item) => item.value === value)) return value as ThemePreference;
   return 'cryptosparrow';
 };
 
 const resolveTheme = (preference: ThemePreference): string => {
   if (preference !== 'system') return preference;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 };
 
 export default function ThemeSwitcher() {
   const [activeTheme, setActiveTheme] = useState<ThemePreference>('cryptosparrow');
+  const [resolvedTheme, setResolvedTheme] = useState<string>('cryptosparrow');
   const detailsRef = useRef<HTMLDetailsElement>(null);
   useDetailsDropdown(detailsRef);
 
@@ -36,6 +40,7 @@ export default function ThemeSwitcher() {
     const resolved = resolveTheme(normalized);
     document.documentElement.setAttribute('data-theme', resolved);
     setActiveTheme(normalized);
+    setResolvedTheme(resolved);
     if (persist) {
       window.localStorage.setItem('themePreference', normalized);
       window.localStorage.setItem('theme', normalized);
@@ -61,7 +66,15 @@ export default function ThemeSwitcher() {
   return (
     <details ref={detailsRef} className="dropdown dropdown-end">
       <summary className="btn btn-sm btn-ghost text-primary-content" aria-label="Theme selector">
-        <HiOutlineColorSwatch aria-hidden className="h-4 w-4" />
+        {activeTheme === 'system' ? (
+          resolvedTheme === 'dark' ? (
+            <HiOutlineMoon aria-hidden className="h-4 w-4" />
+          ) : (
+            <HiOutlineSun aria-hidden className="h-4 w-4" />
+          )
+        ) : (
+          <HiOutlineColorSwatch aria-hidden className="h-4 w-4" />
+        )}
         <span>Theme</span>
       </summary>
       <ul className="menu dropdown-content z-[60] mt-2 w-48 rounded-box bg-base-100 p-2 text-base-content shadow" aria-label="Theme options">
@@ -70,11 +83,27 @@ export default function ThemeSwitcher() {
             <button
               type="button"
               aria-label={theme.label}
-              className={activeTheme === theme.value ? 'active' : ''}
+              className={`flex items-center justify-between gap-2 ${activeTheme === theme.value ? 'active' : ''}`}
               onClick={() => applyTheme(theme.value)}
             >
-              <span className={`inline-block h-2.5 w-2.5 rounded-full ${theme.swatch}`} aria-hidden />
-              {theme.label}
+              <span className="inline-flex items-center gap-2">
+                <span className="inline-flex items-center gap-1" aria-hidden>
+                  {theme.swatches.map((swatch) => (
+                    <span key={`${theme.value}-${swatch}`} className={`inline-block h-2 w-2 rounded-full ${swatch}`} />
+                  ))}
+                </span>
+                <span>{theme.label}</span>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                {theme.value === 'system' ? (
+                  <span className="swap swap-rotate pointer-events-none text-base-content/70">
+                    <input type="checkbox" checked={resolvedTheme === 'dark'} readOnly />
+                    <HiOutlineSun className="swap-off h-3.5 w-3.5" aria-hidden />
+                    <HiOutlineMoon className="swap-on h-3.5 w-3.5" aria-hidden />
+                  </span>
+                ) : null}
+                {activeTheme === theme.value ? <LuCheck className="h-3.5 w-3.5 text-success" aria-hidden /> : null}
+              </span>
             </button>
           </li>
         ))}

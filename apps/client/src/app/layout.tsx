@@ -61,13 +61,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 const fallback = 'cryptosparrow';
                 const normalize = (value) => {
                   if (!value || value === 'default') return fallback;
-                  if (value === 'luxury') return 'night';
                   return value;
                 };
                 const stored = normalize(localStorage.getItem('themePreference') || localStorage.getItem('theme'));
                 const preference = stored || fallback;
                 const resolved = preference === 'system'
-                  ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'light')
+                  ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
                   : preference;
                 document.documentElement.setAttribute('data-theme', resolved);
               })();
