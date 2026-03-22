@@ -12,12 +12,14 @@ import {
   deleteBotSubagentConfig,
   getBotAssistantConfig,
   listBots,
+  runBotAssistantDryRun,
   updateBot,
   upsertBotAssistantConfig,
   upsertBotSubagentConfig,
 } from "../services/bots.service";
 import {
   Bot,
+  AssistantDecisionTrace,
   BotMode,
   BotSubagentConfig,
   PositionMode,
@@ -72,6 +74,10 @@ export default function BotsManagement() {
   const [assistantSafetyMode, setAssistantSafetyMode] = useState<"STRICT" | "BALANCED" | "EXPERIMENTAL">("STRICT");
   const [assistantLatencyMs, setAssistantLatencyMs] = useState(2500);
   const [assistantSubagents, setAssistantSubagents] = useState<BotSubagentConfig[]>([]);
+  const [assistantTrace, setAssistantTrace] = useState<AssistantDecisionTrace | null>(null);
+  const [assistantDryRunSymbol, setAssistantDryRunSymbol] = useState("BTCUSDT");
+  const [assistantDryRunInterval, setAssistantDryRunInterval] = useState("5m");
+  const [assistantDryRunRunning, setAssistantDryRunRunning] = useState(false);
 
   const loadBots = useCallback(async (filter: "ALL" | TradeMarket) => {
     setLoading(true);
@@ -307,6 +313,24 @@ export default function BotsManagement() {
       toast.error("Nie udalo sie usunac slotu subagenta", { description: getAxiosMessage(err) });
     } finally {
       setAssistantSaving(false);
+    }
+  };
+
+  const handleRunAssistantDryRun = async () => {
+    if (!assistantBotId) return;
+    setAssistantDryRunRunning(true);
+    try {
+      const trace = await runBotAssistantDryRun(assistantBotId, {
+        symbol: assistantDryRunSymbol,
+        intervalWindow: assistantDryRunInterval,
+        mode: "PAPER",
+      });
+      setAssistantTrace(trace);
+      toast.success("Assistant dry-run gotowy");
+    } catch (err: unknown) {
+      toast.error("Nie udalo sie wykonac dry-run asystenta", { description: getAxiosMessage(err) });
+    } finally {
+      setAssistantDryRunRunning(false);
     }
   };
 
@@ -844,6 +868,73 @@ export default function BotsManagement() {
                         </div>
                       </div>
                     ))}
+                  </div>
+
+                  <div className="rounded-lg border border-base-300 p-3">
+                    <div className="mb-2 font-medium">Decision Timeline (dry-run)</div>
+                    <div className="grid gap-3 md:grid-cols-4">
+                      <label className="form-control">
+                        <span className="label-text">Symbol</span>
+                        <input
+                          className="input input-bordered input-sm"
+                          value={assistantDryRunSymbol}
+                          onChange={(event) => setAssistantDryRunSymbol(event.target.value.toUpperCase())}
+                        />
+                      </label>
+                      <label className="form-control">
+                        <span className="label-text">Interval</span>
+                        <input
+                          className="input input-bordered input-sm"
+                          value={assistantDryRunInterval}
+                          onChange={(event) => setAssistantDryRunInterval(event.target.value)}
+                        />
+                      </label>
+                      <div className="flex items-end">
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          disabled={assistantDryRunRunning || !assistantBotId}
+                          onClick={() => void handleRunAssistantDryRun()}
+                        >
+                          {assistantDryRunRunning ? "Uruchamianie..." : "Uruchom dry-run"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {assistantTrace && (
+                      <div className="mt-4 space-y-3">
+                        <div className="rounded-md border border-base-300 p-2 text-sm">
+                          <div>Request: {assistantTrace.requestId}</div>
+                          <div>Mode: {assistantTrace.mode}</div>
+                          <div>Final decision: {assistantTrace.finalDecision}</div>
+                          <div>Reason: {assistantTrace.finalReason}</div>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="table table-xs">
+                            <thead>
+                              <tr>
+                                <th>Slot</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Latency (ms)</th>
+                                <th>Msg</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {assistantTrace.statuses.map((status) => (
+                                <tr key={`${status.slotIndex}-${status.role}`}>
+                                  <td>{status.slotIndex}</td>
+                                  <td>{status.role}</td>
+                                  <td>{status.status}</td>
+                                  <td>{status.latencyMs}</td>
+                                  <td>{status.message ?? "-"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

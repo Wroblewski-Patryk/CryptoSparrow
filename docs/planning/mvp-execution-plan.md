@@ -236,7 +236,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `MBA-23 feat(obs): add metrics for group-evaluation latency, subagent timeout rate, merge outcomes, and no-trade frequency`
 - [x] `MBA-24 feat(ops): add circuit-breaker and graceful degradation (assistant off -> strategy-only runtime)`
 - [x] `MBA-25 feat(ai-policy): enforce mandate boundaries and forbidden-action policy before execution approval`
-- [ ] `MBA-26 feat(ui-explainability): add decision timeline by bot/group/strategy/main-agent/subagent with rationale payloads`
+- [x] `MBA-26 feat(ui-explainability): add decision timeline by bot/group/strategy/main-agent/subagent with rationale payloads`
 - [ ] `MBA-27 test(parity): validate backtest/paper/live decision parity with shared assistant orchestration inputs`
 - [ ] `MBA-28 perf(load): benchmark target profile (3 bots x 4 groups x 4 strategies x 5 agents) and set SLO thresholds`
 - [ ] `MBA-29 docs(runbook): publish operator runbook for assistant incidents, fallback modes, and safe recovery`
@@ -262,6 +262,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-23: Added assistant/runtime observability metrics (`MBA-23`) for group latency, merge outcomes, no-trade counts, and subagent timeouts.
 - 2026-03-23: Added assistant circuit-breaker (`MBA-24`) to degrade deterministically into `strategy_only` after repeated planner failures.
 - 2026-03-23: Added assistant policy/mandate enforcement (`MBA-25`) to force `NO_TRADE` on forbidden outputs before execution approval.
+- 2026-03-23: Added assistant explainability UI (`MBA-26`) with dry-run decision timeline and per-slot execution status for operator traceability.
 - 2026-03-15: Initialized MVP execution file and commit rules.
 - 2026-03-15: Added generic trigger-based one-task execution workflow.
 - 2026-03-15: Expanded MVP plan to fully align with product, modules, database, trading, testing, and security docs.

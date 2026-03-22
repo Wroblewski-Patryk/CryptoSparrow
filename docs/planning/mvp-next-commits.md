@@ -32,9 +32,9 @@ Operational queue for one-task execution runs.
 - [x] `MBA-23 feat(obs): add metrics for group-evaluation latency, subagent timeout rate, merge outcomes, and no-trade frequency`
 - [x] `MBA-24 feat(ops): add circuit-breaker and graceful degradation (assistant off -> strategy-only runtime)`
 - [x] `MBA-25 feat(ai-policy): enforce mandate boundaries and forbidden-action policy before execution approval`
+- [x] `MBA-26 feat(ui-explainability): add decision timeline by bot/group/strategy/main-agent/subagent with rationale payloads`
 
 ## NEXT
-- [ ] `MBA-26 feat(ui-explainability): add decision timeline by bot/group/strategy/main-agent/subagent with rationale payloads`
 - [ ] `MBA-27 test(parity): validate backtest/paper/live decision parity with shared assistant orchestration inputs`
 - [ ] `MBA-28 perf(load): benchmark target profile (3 bots x 4 groups x 4 strategies x 5 agents) and set SLO thresholds`
 - [ ] `MBA-29 docs(runbook): publish operator runbook for assistant incidents, fallback modes, and safe recovery`
@@ -68,6 +68,7 @@ Operational queue for one-task execution runs.
 - [x] `MBA-23 feat(obs): extended metrics store with runtime group latency, merge outcome counters, and assistant timeout metrics, plus metrics contract assertions`
 - [x] `MBA-24 feat(ops): added assistant circuit-breaker with failure threshold and reset window, returning deterministic `strategy_only` degradation when open`
 - [x] `MBA-25 feat(ai-policy): added mandate and forbidden-action policy gate in assistant orchestrator so disallowed outputs degrade to `NO_TRADE` before approval`
+- [x] `MBA-26 feat(ui-explainability): added Assistant dry-run decision timeline in Bots UI (final decision/reason + per-slot status/latency table)`
 - [x] `chore(planning): initialize MVP/V1 execution plans and agent blueprint`
 - [x] `chore(planning): align trigger intent to generic one-task nudge`
 - [x] `chore(planning): historical done backlog archived in git history; queue reset for current delivery focus`

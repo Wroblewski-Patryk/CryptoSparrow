@@ -64,3 +64,28 @@ export type BotAssistantConfigResponse = {
   assistant: BotAssistantConfig | null;
   subagents: BotSubagentConfig[];
 };
+
+export type AssistantDecisionTrace = {
+  requestId: string;
+  botId: string;
+  botMarketGroupId: string;
+  symbol: string;
+  mode: "off" | "strategy_only" | "assistant";
+  statuses: Array<{
+    slotIndex: number;
+    role: string;
+    status: "ok" | "timeout" | "error" | "skipped";
+    latencyMs: number;
+    message?: string;
+  }>;
+  outputs: Array<{
+    slotIndex: number;
+    role: string;
+    proposal: "LONG" | "SHORT" | "EXIT" | "NO_TRADE";
+    confidence: number;
+    rationale: string;
+    latencyMs: number;
+  }>;
+  finalDecision: "LONG" | "SHORT" | "EXIT" | "NO_TRADE";
+  finalReason: string;
+};

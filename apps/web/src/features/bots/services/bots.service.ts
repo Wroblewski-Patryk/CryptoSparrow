@@ -3,6 +3,7 @@ import {
   Bot,
   BotAssistantConfig,
   BotAssistantConfigResponse,
+  AssistantDecisionTrace,
   BotSubagentConfig,
   CreateBotInput,
   TradeMarket,
@@ -69,4 +70,16 @@ export const upsertBotSubagentConfig = async (
 
 export const deleteBotSubagentConfig = async (botId: string, slotIndex: number): Promise<void> => {
   await api.delete(`/dashboard/bots/${botId}/assistant-config/subagents/${slotIndex}`);
+};
+
+export const runBotAssistantDryRun = async (
+  botId: string,
+  payload: {
+    symbol: string;
+    intervalWindow: string;
+    mode: "BACKTEST" | "PAPER" | "LIVE";
+  }
+): Promise<AssistantDecisionTrace> => {
+  const res = await api.post<AssistantDecisionTrace>(`/dashboard/bots/${botId}/assistant-config/dry-run`, payload);
+  return res.data;
 };
