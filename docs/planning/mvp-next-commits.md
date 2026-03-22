@@ -24,11 +24,11 @@ Operational queue for one-task execution runs.
 - [x] `MBA-15 feat(db): add BotAssistantConfig (main agent mandate, model profile, safety mode)`
 - [x] `MBA-16 feat(db): add BotSubagentConfig with slotIndex(1..4), role, enabled flag, and unique(botId,slotIndex)`
 - [x] `MBA-17 feat(api): add assistant config CRUD endpoints with hard max-4 subagent validation`
+- [x] `MBA-18 feat(runtime-ai): implement main-agent orchestrator scaffold (request plan -> subagent fan-out -> merge)`
+- [x] `MBA-19 feat(runtime-ai): implement subagent dispatcher with per-slot timeout, partial-failure tolerance, and deterministic merge`
+- [x] `MBA-20 security(ai): add prompt/response sanitization and audit-safe logging for assistant traces`
 
 ## NEXT
-- [ ] `MBA-18 feat(runtime-ai): implement main-agent orchestrator scaffold (request plan -> subagent fan-out -> merge)`
-- [ ] `MBA-19 feat(runtime-ai): implement subagent dispatcher with per-slot timeout, partial-failure tolerance, and deterministic merge`
-- [ ] `MBA-20 security(ai): add prompt/response sanitization and audit-safe logging for assistant traces`
 - [ ] `MBA-21 feat(ui): add bot Assistant tab (main agent panel + 4 subagent slots with enable/disable and role)`
 - [ ] `MBA-22 test(e2e): configure assistant stack and verify explainable runtime decision trace (including no-trade output)`
 - [ ] `MBA-23 feat(obs): add metrics for group-evaluation latency, subagent timeout rate, merge outcomes, and no-trade frequency`
@@ -60,6 +60,9 @@ Operational queue for one-task execution runs.
 - [x] `MBA-15 feat(db): added `BotAssistantConfig` model for bot-scoped main agent mandate/profile/safety configuration`
 - [x] `MBA-16 feat(db): added `BotSubagentConfig` model with unique `(botId, slotIndex)` and assistant safety profile defaults`
 - [x] `MBA-17 feat(api): added assistant config endpoints (`GET/PUT assistant-config`, `PUT/DELETE subagents/:slotIndex`) with slot range 1..4 validation and ownership isolation`
+- [x] `MBA-18 feat(runtime-ai): added assistant orchestration scaffold service with planner stage -> slot fan-out -> merge output`
+- [x] `MBA-19 feat(runtime-ai): implemented per-slot timeout dispatcher, partial-failure handling, deterministic output ordering and merge`
+- [x] `MBA-20 security(ai): added rationale/error sanitization and safe trace writing contract in assistant orchestration flow`
 - [x] `chore(planning): initialize MVP/V1 execution plans and agent blueprint`
 - [x] `chore(planning): align trigger intent to generic one-task nudge`
 - [x] `chore(planning): historical done backlog archived in git history; queue reset for current delivery focus`
