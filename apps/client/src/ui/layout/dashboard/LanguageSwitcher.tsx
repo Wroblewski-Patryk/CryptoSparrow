@@ -32,10 +32,14 @@ function FlagIcon({ locale }: { locale: 'en' | 'pl' }) {
       data-testid="flag-en"
     >
       <rect x="0" y="0" width="20" height="14" fill="#1d4ed8" />
+      <line x1="0" y1="0" x2="20" y2="14" stroke="#ffffff" strokeWidth="4" />
+      <line x1="20" y1="0" x2="0" y2="14" stroke="#ffffff" strokeWidth="4" />
+      <line x1="0" y1="0" x2="20" y2="14" stroke="#dc2626" strokeWidth="2" />
+      <line x1="20" y1="0" x2="0" y2="14" stroke="#dc2626" strokeWidth="2" />
       <rect x="8" y="0" width="4" height="14" fill="#ffffff" />
       <rect x="0" y="5" width="20" height="4" fill="#ffffff" />
-      <rect x="9" y="0" width="2" height="14" fill="#dc2626" />
-      <rect x="0" y="6" width="20" height="2" fill="#dc2626" />
+      <rect x="8.8" y="0" width="2.4" height="14" fill="#dc2626" />
+      <rect x="0" y="5.8" width="20" height="2.4" fill="#dc2626" />
     </svg>
   );
 }
