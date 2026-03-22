@@ -2,10 +2,9 @@
 
 import Link from 'next/link';
 import { useRef } from 'react';
-import { LuBot, LuKey, LuLogOut, LuSettings, LuSubscript, LuUser } from 'react-icons/lu';
+import { LuKey, LuLogOut, LuSettings, LuSubscript, LuUser } from 'react-icons/lu';
 import { useAuth } from '../../context/AuthContext';
 import { useDetailsDropdown } from '../hooks/useDetailsDropdown';
-import IsometricModeToggle from '../layout/dashboard/IsometricModeToggle';
 
 export default function ProfileButton() {
   const { loading, logout, user } = useAuth();
@@ -59,20 +58,6 @@ export default function ProfileButton() {
             Integracje i API keys
           </Link>
         </li>
-
-        <li className="menu-title mt-1">
-          <span>Preferencje</span>
-        </li>
-        <li>
-          <div className="flex items-center justify-between gap-2 px-2 py-1.5">
-            <span className="inline-flex items-center gap-2 text-sm">
-              <LuBot className="h-4 w-4" aria-hidden />
-              Tryb izometryczny
-            </span>
-            <IsometricModeToggle compact />
-          </div>
-        </li>
-
         <li className="mt-1">
           <button onClick={logout} className="text-error">
             <LuLogOut className="h-4 w-4" aria-hidden />

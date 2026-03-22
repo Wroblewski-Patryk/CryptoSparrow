@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `fix(profile-menu): remove isometric toggle from account menu (deferred to V2 gamification track)`
 
 ## NEXT
 - [ ] `fix(auth-session-recovery): enforce automatic logout on invalid session/user-deleted scenarios and add graceful no-db fallback behavior`
@@ -57,6 +56,7 @@ Operational queue for one-task execution runs.
 - [x] `fix(ui-language-switcher): replace incorrect EN flag styling and add visual regression coverage for locale switcher`
 - [x] `audit(routing-dashboard): produce canonical route map and remove dashboard path inconsistencies (backtest/backtests, list/create aliases, menu contracts)`
 - [x] `refactor(profile-ia): merge API keys + exchange connections into one user-settings information architecture`
+- [x] `fix(profile-menu): remove isometric toggle from account menu (deferred to V2 gamification track)`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
