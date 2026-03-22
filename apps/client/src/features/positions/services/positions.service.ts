@@ -10,3 +10,11 @@ export const fetchExchangePositionsSnapshot = async (): Promise<ExchangePosition
   const res = await api.get<ExchangePositionsSnapshot>("/dashboard/positions/exchange-snapshot");
   return res.data;
 };
+
+export const updatePositionManagementMode = async (
+  id: string,
+  managementMode: "BOT_MANAGED" | "MANUAL_MANAGED"
+): Promise<Position> => {
+  const res = await api.patch<Position>(`/dashboard/positions/${id}/management-mode`, { managementMode });
+  return res.data;
+};

@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `feat(positions-ui): show position source and management mode badges plus explicit toggle action`
 
 ## NEXT
 
@@ -47,6 +46,7 @@ Operational queue for one-task execution runs.
 - [x] `feat(db): add position/order/trade origin + management mode fields with migration baseline`
 - [x] `feat(api-key-onboarding): add sync_external_positions and manage_external_positions options`
 - [x] `feat(runtime-guard): enforce no-flip and manual-managed symbol ignore rules in runtime execution flow`
+- [x] `feat(positions-ui): show position source and management mode badges plus explicit toggle action`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

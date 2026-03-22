@@ -6,6 +6,9 @@ export type Position = {
   symbol: string;
   side: PositionSide;
   status: PositionStatus;
+  origin?: "BOT" | "USER" | "EXCHANGE_SYNC" | "BACKTEST";
+  managementMode?: "BOT_MANAGED" | "MANUAL_MANAGED";
+  syncState?: "IN_SYNC" | "DRIFT" | "ORPHAN_LOCAL" | "ORPHAN_EXCHANGE";
   entryPrice: number;
   quantity: number;
   leverage: number;

@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { sendError } from '../../utils/apiError';
 import { sendValidationError } from '../../utils/formatZodError';
 import { livePositionReconciliationLoop } from './livePositionReconciliation.service';
-import { ListPositionsQuerySchema } from './positions.types';
+import { ListPositionsQuerySchema, UpdatePositionManagementModeSchema } from './positions.types';
 import * as positionsService from './positions.service';
 
 export const listPositions = async (req: Request, res: Response) => {
@@ -55,5 +55,24 @@ export const getExchangeSnapshot = async (req: Request, res: Response) => {
       return sendError(res, 502, error.message);
     }
     return sendError(res, 500, 'Internal server error');
+  }
+};
+
+export const updatePositionManagementMode = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const body = UpdatePositionManagementModeSchema.parse(req.body);
+    const updated = await positionsService.updatePositionManagementMode(
+      userId,
+      req.params.id,
+      body.managementMode
+    );
+
+    if (!updated) return sendError(res, 404, 'Not found');
+    return res.json(updated);
+  } catch (error) {
+    return sendValidationError(res, error);
   }
 };

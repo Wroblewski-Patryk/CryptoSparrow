@@ -99,6 +99,23 @@ export const getPosition = async (userId: string, id: string) => {
   });
 };
 
+export const updatePositionManagementMode = async (
+  userId: string,
+  id: string,
+  managementMode: 'BOT_MANAGED' | 'MANUAL_MANAGED'
+) => {
+  const updated = await prisma.position.updateMany({
+    where: { id, userId },
+    data: { managementMode },
+  });
+
+  if (updated.count === 0) return null;
+
+  return prisma.position.findFirst({
+    where: { id, userId },
+  });
+};
+
 export const fetchExchangePositionsSnapshot = async (userId: string): Promise<ExchangePositionSnapshot> => {
   const apiKey = await prisma.apiKey.findFirst({
     where: { userId, exchange: 'BINANCE' },

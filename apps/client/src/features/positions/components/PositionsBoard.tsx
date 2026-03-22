@@ -5,7 +5,11 @@ import axios from "axios";
 
 import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
-import { fetchExchangePositionsSnapshot, listPositions } from "../services/positions.service";
+import {
+  fetchExchangePositionsSnapshot,
+  listPositions,
+  updatePositionManagementMode,
+} from "../services/positions.service";
 import { Position, PositionStatus } from "../types/position.type";
 
 const statuses: Array<PositionStatus | "ALL"> = ["ALL", "OPEN", "CLOSED", "LIQUIDATED"];
@@ -28,6 +32,18 @@ const pnlClass = (value: number | null) => {
   return "";
 };
 
+const sourceBadgeClass: Record<string, string> = {
+  BOT: "badge-primary",
+  USER: "badge-info",
+  EXCHANGE_SYNC: "badge-secondary",
+  BACKTEST: "badge-accent",
+};
+
+const managementBadgeClass: Record<string, string> = {
+  BOT_MANAGED: "badge-success",
+  MANUAL_MANAGED: "badge-warning",
+};
+
 export default function PositionsBoard() {
   const { formatDateTime, formatNumber } = useLocaleFormatting();
   const [positions, setPositions] = useState<Position[]>([]);
@@ -35,6 +51,7 @@ export default function PositionsBoard() {
   const [status, setStatus] = useState<PositionStatus | "ALL">("ALL");
   const [symbol, setSymbol] = useState("");
   const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
+  const [pendingManagementId, setPendingManagementId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,6 +98,21 @@ export default function PositionsBoard() {
   useEffect(() => {
     void loadPositions();
   }, [loadPositions]);
+
+  const handleToggleManagementMode = async (position: Position) => {
+    if (!position.managementMode) return;
+    const nextMode = position.managementMode === "BOT_MANAGED" ? "MANUAL_MANAGED" : "BOT_MANAGED";
+
+    setPendingManagementId(position.id);
+    try {
+      await updatePositionManagementMode(position.id, nextMode);
+      await loadPositions();
+    } catch (err: unknown) {
+      setError(getAxiosMessage(err) ?? "Nie udalo sie zaktualizowac trybu zarzadzania pozycja.");
+    } finally {
+      setPendingManagementId(null);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -174,6 +206,9 @@ export default function PositionsBoard() {
                   <th>Unrealized PnL</th>
                   <th>Realized PnL</th>
                   <th>Opened</th>
+                  <th>Source</th>
+                  <th>Management</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -190,6 +225,38 @@ export default function PositionsBoard() {
                     <td className={pnlClass(position.unrealizedPnl)}>{formatNumber(position.unrealizedPnl)}</td>
                     <td className={pnlClass(position.realizedPnl)}>{formatNumber(position.realizedPnl)}</td>
                     <td>{formatDateTime(position.openedAt)}</td>
+                    <td>
+                      <span
+                        className={`badge badge-outline ${sourceBadgeClass[position.origin ?? "EXCHANGE_SYNC"] ?? "badge-outline"}`}
+                      >
+                        {position.origin ?? (source === "exchange" ? "EXCHANGE_SYNC" : "BOT")}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className={`badge badge-outline ${managementBadgeClass[position.managementMode ?? "MANUAL_MANAGED"] ?? "badge-outline"}`}
+                      >
+                        {position.managementMode ?? (source === "exchange" ? "MANUAL_MANAGED" : "BOT_MANAGED")}
+                      </span>
+                    </td>
+                    <td>
+                      {source === "runtime" ? (
+                        <button
+                          type="button"
+                          className={`btn btn-xs ${position.managementMode === "BOT_MANAGED" ? "btn-warning" : "btn-success"}`}
+                          onClick={() => void handleToggleManagementMode(position)}
+                          disabled={pendingManagementId === position.id}
+                        >
+                          {pendingManagementId === position.id
+                            ? "Aktualizacja..."
+                            : position.managementMode === "BOT_MANAGED"
+                              ? "Ustaw manual"
+                              : "Ustaw bot"}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-base-content/70">Readonly</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

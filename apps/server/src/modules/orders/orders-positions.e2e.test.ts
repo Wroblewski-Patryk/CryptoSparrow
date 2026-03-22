@@ -248,4 +248,40 @@ describe('Orders and positions read contract', () => {
     });
     expect(closedPosition.status).toBe('CLOSED');
   });
+
+  it('updates position management mode for owner and enforces ownership', async () => {
+    const ownerAgent = await registerAndLogin('positions-mode-owner@example.com');
+    const otherAgent = await registerAndLogin('positions-mode-other@example.com');
+    const ownerId = await getUserId('positions-mode-owner@example.com');
+
+    const position = await prisma.position.create({
+      data: {
+        userId: ownerId,
+        symbol: 'BTCUSDT',
+        side: 'LONG',
+        status: 'OPEN',
+        entryPrice: 63000,
+        quantity: 0.05,
+        managementMode: 'BOT_MANAGED',
+        origin: 'BOT',
+      },
+    });
+
+    const forbiddenRes = await otherAgent
+      .patch(`/dashboard/positions/${position.id}/management-mode`)
+      .send({ managementMode: 'MANUAL_MANAGED' });
+    expect(forbiddenRes.status).toBe(404);
+    expect(forbiddenRes.body.error.message).toBe('Not found');
+
+    const updateRes = await ownerAgent
+      .patch(`/dashboard/positions/${position.id}/management-mode`)
+      .send({ managementMode: 'MANUAL_MANAGED' });
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.managementMode).toBe('MANUAL_MANAGED');
+
+    const updated = await prisma.position.findUniqueOrThrow({
+      where: { id: position.id },
+    });
+    expect(updated.managementMode).toBe('MANUAL_MANAGED');
+  });
 });

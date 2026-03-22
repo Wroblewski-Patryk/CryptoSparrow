@@ -178,6 +178,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(runtime-guard): enforce no-flip and manual-managed symbol ignore rules in runtime execution flow`
 - [x] `feat(positions-sync): use verified stored key to fetch real open positions snapshot from Binance and expose read endpoint`
 - [x] `feat(ui-positions-live-source): add source switch/state in positions view (runtime snapshot vs exchange-live snapshot) and last-sync timestamp`
+- [x] `feat(positions-ui): show position source and management mode badges plus explicit toggle action`
 - [x] `test(e2e): add profile/api-key and positions contract tests covering invalid credentials, permission mismatch, and successful live fetch`
 - [x] `docs(runbook): document secure API-key onboarding and troubleshooting flow for Binance connection/permissions failures`
 - [x] `feat(db): add position/order/trade origin + management mode fields with migration baseline`
@@ -324,6 +325,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Added origin/management/sync metadata baseline in Position/Order/Trade models with migration and indexes for runtime ownership and reconciliation flows.
 - 2026-03-22: Added API-key onboarding options (`syncExternalPositions`, `manageExternalPositions`) across Prisma, profile API contracts, form switches, and regression tests.
 - 2026-03-22: Added runtime execution guards for no-flip behavior and manual-managed symbol ignore rules in signal loop/orchestrator flow with regression tests.
+- 2026-03-22: Extended positions module UX with source/management badges plus management-mode toggle action and ownership-safe API endpoint coverage.
 - 2026-03-19: Closed stream transport decision for MVP (SSE fan-out) and documented event contract plus reliability rules for frontend/backend integration.
 - 2026-03-19: Implemented dashboard live market bar component with SSE listener and UI indicators for price, 24h delta, candle freshness, and stream health state.
 - 2026-03-19: Added orders write-side API (`open`/`cancel`/`close`) with LIVE risk acknowledgments, bot eligibility guards, and contract e2e coverage.

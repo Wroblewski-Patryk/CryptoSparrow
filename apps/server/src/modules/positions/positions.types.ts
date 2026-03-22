@@ -9,3 +9,9 @@ export const ListPositionsQuerySchema = z.object({
 });
 
 export type ListPositionsQuery = z.infer<typeof ListPositionsQuerySchema>;
+
+export const UpdatePositionManagementModeSchema = z.object({
+  managementMode: z.enum(['BOT_MANAGED', 'MANUAL_MANAGED']),
+});
+
+export type UpdatePositionManagementModeInput = z.infer<typeof UpdatePositionManagementModeSchema>;
