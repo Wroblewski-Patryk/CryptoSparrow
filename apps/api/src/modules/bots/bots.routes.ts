@@ -6,14 +6,18 @@ import {
   attachMarketGroupStrategy,
   deleteBot,
   deleteBotMarketGroup,
+  deleteBotSubagentConfig,
   detachMarketGroupStrategy,
   getBot,
+  getBotAssistantConfig,
   getBotRuntimeGraph,
   getBotMarketGroup,
   listBotMarketGroups,
   listMarketGroupStrategies,
   listBots,
   reorderMarketGroupStrategies,
+  upsertBotAssistantConfig,
+  upsertBotSubagentConfig,
   updateBot,
   updateMarketGroupStrategy,
   updateBotMarketGroup,
@@ -39,5 +43,9 @@ botsRouter.post('/:id/market-groups/:groupId/strategies', tradingWriteLimiter, a
 botsRouter.put('/:id/market-groups/:groupId/strategies/:linkId', tradingWriteLimiter, updateMarketGroupStrategy);
 botsRouter.delete('/:id/market-groups/:groupId/strategies/:linkId', tradingWriteLimiter, detachMarketGroupStrategy);
 botsRouter.put('/:id/market-groups/:groupId/strategies/reorder', tradingWriteLimiter, reorderMarketGroupStrategies);
+botsRouter.get('/:id/assistant-config', tradingReadLimiter, getBotAssistantConfig);
+botsRouter.put('/:id/assistant-config', tradingWriteLimiter, upsertBotAssistantConfig);
+botsRouter.put('/:id/assistant-config/subagents/:slotIndex', tradingWriteLimiter, upsertBotSubagentConfig);
+botsRouter.delete('/:id/assistant-config/subagents/:slotIndex', tradingWriteLimiter, deleteBotSubagentConfig);
 
 export default botsRouter;

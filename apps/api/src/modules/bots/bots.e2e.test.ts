@@ -32,6 +32,8 @@ describe('Bots module contract', () => {
     await prisma.order.deleteMany();
     await prisma.position.deleteMany();
     await prisma.signal.deleteMany();
+    await prisma.botSubagentConfig.deleteMany();
+    await prisma.botAssistantConfig.deleteMany();
     await prisma.marketGroupStrategyLink.deleteMany();
     await prisma.botMarketGroup.deleteMany();
     await prisma.botStrategy.deleteMany();
@@ -617,5 +619,71 @@ describe('Bots module contract', () => {
     expect(graphOneRes.body.marketGroups[1].strategies.length).toBeGreaterThanOrEqual(1);
     expect(graphTwoRes.body.marketGroups).toHaveLength(1);
     expect(graphTwoRes.body.marketGroups[0].strategies.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('supports assistant config CRUD with subagent slot hard limit', async () => {
+    const owner = await registerAndLogin('assistant-config-owner@example.com');
+    const other = await registerAndLogin('assistant-config-other@example.com');
+
+    const botRes = await owner.post('/dashboard/bots').send({ ...createPayload(), name: 'Assistant Bot' });
+    expect(botRes.status).toBe(201);
+    const botId = botRes.body.id as string;
+
+    const upsertMainRes = await owner.put(`/dashboard/bots/${botId}/assistant-config`).send({
+      mainAgentEnabled: true,
+      mandate: 'Trade only when risk-adjusted edge is present.',
+      modelProfile: 'balanced',
+      safetyMode: 'STRICT',
+      maxDecisionLatencyMs: 2200,
+    });
+    expect(upsertMainRes.status).toBe(200);
+    expect(upsertMainRes.body.mainAgentEnabled).toBe(true);
+
+    const upsertSlot1Res = await owner
+      .put(`/dashboard/bots/${botId}/assistant-config/subagents/1`)
+      .send({
+        role: 'TREND',
+        enabled: true,
+        modelProfile: 'balanced',
+        timeoutMs: 1000,
+        safetyMode: 'STRICT',
+      });
+    expect(upsertSlot1Res.status).toBe(200);
+    expect(upsertSlot1Res.body.slotIndex).toBe(1);
+
+    const upsertSlot4Res = await owner
+      .put(`/dashboard/bots/${botId}/assistant-config/subagents/4`)
+      .send({
+        role: 'RISK',
+        enabled: true,
+        modelProfile: 'balanced',
+        timeoutMs: 1200,
+        safetyMode: 'BALANCED',
+      });
+    expect(upsertSlot4Res.status).toBe(200);
+    expect(upsertSlot4Res.body.slotIndex).toBe(4);
+
+    const invalidSlotRes = await owner
+      .put(`/dashboard/bots/${botId}/assistant-config/subagents/5`)
+      .send({
+        role: 'GENERAL',
+        enabled: true,
+        modelProfile: 'balanced',
+        timeoutMs: 1200,
+        safetyMode: 'STRICT',
+      });
+    expect(invalidSlotRes.status).toBe(400);
+    expect(invalidSlotRes.body.error.message).toBe('slotIndex must be between 1 and 4');
+
+    const getConfigRes = await owner.get(`/dashboard/bots/${botId}/assistant-config`);
+    expect(getConfigRes.status).toBe(200);
+    expect(getConfigRes.body.assistant).toBeTruthy();
+    expect(getConfigRes.body.subagents).toHaveLength(2);
+
+    const otherReadRes = await other.get(`/dashboard/bots/${botId}/assistant-config`);
+    expect(otherReadRes.status).toBe(404);
+
+    const deleteSlot1Res = await owner.delete(`/dashboard/bots/${botId}/assistant-config/subagents/1`);
+    expect(deleteSlot1Res.status).toBe(204);
   });
 });

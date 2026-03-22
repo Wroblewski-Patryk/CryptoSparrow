@@ -8,6 +8,8 @@ import {
   CreateBotSchema,
   ListBotsQuerySchema,
   ReorderMarketGroupStrategiesSchema,
+  UpsertBotAssistantConfigSchema,
+  UpsertBotSubagentConfigSchema,
   UpdateMarketGroupStrategySchema,
   UpdateBotMarketGroupSchema,
   UpdateBotSchema,
@@ -250,6 +252,73 @@ export const reorderMarketGroupStrategies = async (req: Request, res: Response) 
   } catch (error) {
     if (error instanceof Error && error.message === 'MARKET_GROUP_STRATEGY_LINK_NOT_FOUND') {
       return sendError(res, 400, 'all strategy link ids must belong to current bot market group');
+    }
+    return sendValidationError(res, error);
+  }
+};
+
+export const getBotAssistantConfig = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  const { id } = req.params;
+  const result = await botsService.getBotAssistantConfig(userId, id);
+  if (!result) return sendError(res, 404, 'Not found');
+
+  return res.json(result);
+};
+
+export const upsertBotAssistantConfig = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const payload = UpsertBotAssistantConfigSchema.parse(req.body);
+    const { id } = req.params;
+    const updated = await botsService.upsertBotAssistantConfig(userId, id, payload);
+    if (!updated) return sendError(res, 404, 'Not found');
+    return res.json(updated);
+  } catch (error) {
+    return sendValidationError(res, error);
+  }
+};
+
+export const upsertBotSubagentConfig = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  const slotIndex = Number(req.params.slotIndex);
+  if (!Number.isInteger(slotIndex)) return sendError(res, 400, 'slotIndex must be an integer');
+
+  try {
+    const payload = UpsertBotSubagentConfigSchema.parse(req.body);
+    const { id } = req.params;
+    const updated = await botsService.upsertBotSubagentConfig(userId, id, slotIndex, payload);
+    if (!updated) return sendError(res, 404, 'Not found');
+    return res.json(updated);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'SUBAGENT_SLOT_OUT_OF_RANGE') {
+      return sendError(res, 400, 'slotIndex must be between 1 and 4');
+    }
+    return sendValidationError(res, error);
+  }
+};
+
+export const deleteBotSubagentConfig = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  const slotIndex = Number(req.params.slotIndex);
+  if (!Number.isInteger(slotIndex)) return sendError(res, 400, 'slotIndex must be an integer');
+
+  try {
+    const { id } = req.params;
+    const deleted = await botsService.deleteBotSubagentConfig(userId, id, slotIndex);
+    if (!deleted) return sendError(res, 404, 'Not found');
+    return res.status(204).end();
+  } catch (error) {
+    if (error instanceof Error && error.message === 'SUBAGENT_SLOT_OUT_OF_RANGE') {
+      return sendError(res, 400, 'slotIndex must be between 1 and 4');
     }
     return sendValidationError(res, error);
   }

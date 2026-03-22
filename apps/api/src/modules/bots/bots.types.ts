@@ -4,6 +4,7 @@ export const BotModeSchema = z.enum(['PAPER', 'LIVE', 'LOCAL']);
 export const TradeMarketSchema = z.enum(['FUTURES', 'SPOT']);
 export const PositionModeSchema = z.enum(['ONE_WAY', 'HEDGE']);
 export const BotMarketGroupStatusSchema = z.enum(['DRAFT', 'ACTIVE', 'PAUSED', 'ARCHIVED']);
+export const AssistantSafetyModeSchema = z.enum(['STRICT', 'BALANCED', 'EXPERIMENTAL']);
 
 export const CreateBotSchema = z.object({
   name: z.string().trim().min(1),
@@ -66,6 +67,22 @@ export const ReorderMarketGroupStrategiesSchema = z.object({
   })).min(1),
 });
 
+export const UpsertBotAssistantConfigSchema = z.object({
+  mainAgentEnabled: z.boolean().default(false),
+  mandate: z.string().trim().min(1).max(500).optional().nullable(),
+  modelProfile: z.string().trim().min(1).max(64).default('balanced'),
+  safetyMode: AssistantSafetyModeSchema.default('STRICT'),
+  maxDecisionLatencyMs: z.number().int().min(200).max(30_000).default(2500),
+});
+
+export const UpsertBotSubagentConfigSchema = z.object({
+  role: z.string().trim().min(1).max(64),
+  enabled: z.boolean().default(false),
+  modelProfile: z.string().trim().min(1).max(64).default('balanced'),
+  timeoutMs: z.number().int().min(100).max(15_000).default(1200),
+  safetyMode: AssistantSafetyModeSchema.default('STRICT'),
+});
+
 export type CreateBotDto = z.infer<typeof CreateBotSchema>;
 export type UpdateBotDto = z.infer<typeof UpdateBotSchema>;
 export type ListBotsQueryDto = z.infer<typeof ListBotsQuerySchema>;
@@ -74,3 +91,5 @@ export type UpdateBotMarketGroupDto = z.infer<typeof UpdateBotMarketGroupSchema>
 export type AttachMarketGroupStrategyDto = z.infer<typeof AttachMarketGroupStrategySchema>;
 export type UpdateMarketGroupStrategyDto = z.infer<typeof UpdateMarketGroupStrategySchema>;
 export type ReorderMarketGroupStrategiesDto = z.infer<typeof ReorderMarketGroupStrategiesSchema>;
+export type UpsertBotAssistantConfigDto = z.infer<typeof UpsertBotAssistantConfigSchema>;
+export type UpsertBotSubagentConfigDto = z.infer<typeof UpsertBotSubagentConfigSchema>;

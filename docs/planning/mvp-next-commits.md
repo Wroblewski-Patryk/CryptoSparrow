@@ -23,9 +23,9 @@ Operational queue for one-task execution runs.
 - [x] `MBA-14 docs(ai-contract): define assistant responsibilities, I/O schema, timeout policy, and fail-closed behavior`
 - [x] `MBA-15 feat(db): add BotAssistantConfig (main agent mandate, model profile, safety mode)`
 - [x] `MBA-16 feat(db): add BotSubagentConfig with slotIndex(1..4), role, enabled flag, and unique(botId,slotIndex)`
+- [x] `MBA-17 feat(api): add assistant config CRUD endpoints with hard max-4 subagent validation`
 
 ## NEXT
-- [ ] `MBA-17 feat(api): add assistant config CRUD endpoints with hard max-4 subagent validation`
 - [ ] `MBA-18 feat(runtime-ai): implement main-agent orchestrator scaffold (request plan -> subagent fan-out -> merge)`
 - [ ] `MBA-19 feat(runtime-ai): implement subagent dispatcher with per-slot timeout, partial-failure tolerance, and deterministic merge`
 - [ ] `MBA-20 security(ai): add prompt/response sanitization and audit-safe logging for assistant traces`
@@ -59,6 +59,7 @@ Operational queue for one-task execution runs.
 - [x] `MBA-14 docs(ai-contract): published canonical assistant runtime contract (`docs/architecture/assistant-runtime-contract.md`) with responsibilities, I/O, timeout, determinism, and fail-closed behavior`
 - [x] `MBA-15 feat(db): added `BotAssistantConfig` model for bot-scoped main agent mandate/profile/safety configuration`
 - [x] `MBA-16 feat(db): added `BotSubagentConfig` model with unique `(botId, slotIndex)` and assistant safety profile defaults`
+- [x] `MBA-17 feat(api): added assistant config endpoints (`GET/PUT assistant-config`, `PUT/DELETE subagents/:slotIndex`) with slot range 1..4 validation and ownership isolation`
 - [x] `chore(planning): initialize MVP/V1 execution plans and agent blueprint`
 - [x] `chore(planning): align trigger intent to generic one-task nudge`
 - [x] `chore(planning): historical done backlog archived in git history; queue reset for current delivery focus`
