@@ -239,3 +239,4 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-22: Added audit-closure gates (truthful docs status, core test green gate, LIVE side-effects contract, stream-contract completion, and ops endpoint access control) and locked admin/billing scope to post-MVP/V1.1.
 - 2026-03-22: Realigned roadmap/product/user-guide wording to remove implied V1 admin+billing delivery claims and keep those capabilities explicitly in post-MVP/V1.1 planning scope.
 - 2026-03-22: Completed stream SSE contract hardening in API route (monotonic event ids, ping heartbeat comments, periodic health events, and symbol-limit query guard) with dedicated tests.
+- 2026-03-22: Applied routing hard-cut by removing legacy dashboard alias pages and keeping canonical route map/menu active-state behavior aligned to canonical URLs only.

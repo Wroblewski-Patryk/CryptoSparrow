@@ -21,14 +21,7 @@ Updated: 2026-03-22
 - `/dashboard/logs`
 - `/dashboard/profile`
 
-## Legacy Aliases (Redirect-Only)
-- `/dashboard/backtest` -> `/dashboard/backtests/list`
-- `/dashboard/backtest/add` -> `/dashboard/backtests/create`
-- `/dashboard/strategies/add` -> `/dashboard/strategies/create`
-- `/dashboard/builder` -> `/dashboard/strategies/create` (legacy builder entrypoint)
-
 ## Menu Contract
 - Header and dashboard nav should only render canonical routes.
-- Alias routes remain supported as compatibility redirects, but must not be used as new links.
-- Active menu state must treat alias paths as belonging to their canonical group (`backtests`, `strategies`).
-
+- Legacy aliases are hard-cut (removed) to avoid `backtest/backtests` and `builder/create` ambiguity.
+- Active menu state is computed from canonical route groups only.

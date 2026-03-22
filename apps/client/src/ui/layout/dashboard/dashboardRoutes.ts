@@ -29,11 +29,5 @@ export const dashboardRoutes = {
   },
 } as const;
 
-export const dashboardLegacyAliases = {
-  backtests: ["/dashboard/backtest", "/dashboard/backtest/add"],
-  strategies: ["/dashboard/strategies/add", "/dashboard/builder"],
-} as const;
-
 export const pathStartsWithAny = (pathname: string, prefixes: readonly string[]) =>
   prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-

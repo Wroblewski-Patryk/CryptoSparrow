@@ -9,7 +9,7 @@ import ThemeSwitcher from '../../components/ThemeSwitch';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useDetailsDropdown } from '../../hooks/useDetailsDropdown';
 import LanguageSwitcher from './LanguageSwitcher';
-import { dashboardLegacyAliases, dashboardRoutes, pathStartsWithAny } from './dashboardRoutes';
+import { dashboardRoutes, pathStartsWithAny } from './dashboardRoutes';
 import { getHeaderMenuItemClass } from './headerControlStyles';
 
 type NavItem = {
@@ -152,13 +152,13 @@ export default function Header() {
       id: 'strategies',
       label: labels.strategyGroup,
       links: strategyLinks,
-      activePrefixes: [dashboardRoutes.strategies.root, ...dashboardLegacyAliases.strategies],
+      activePrefixes: [dashboardRoutes.strategies.root],
     },
     {
       id: 'backtests',
       label: labels.backtestGroup,
       links: backtestLinks,
-      activePrefixes: [dashboardRoutes.backtests.root, ...dashboardLegacyAliases.backtests],
+      activePrefixes: [dashboardRoutes.backtests.root],
     },
     {
       id: 'bots',

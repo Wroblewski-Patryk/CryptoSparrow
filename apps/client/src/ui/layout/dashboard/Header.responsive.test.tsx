@@ -8,7 +8,7 @@ vi.mock("../../components/ProfileButton", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/dashboard/markets",
+  usePathname: () => "/dashboard/markets/list",
 }));
 
 describe("Header responsive smoke", () => {
