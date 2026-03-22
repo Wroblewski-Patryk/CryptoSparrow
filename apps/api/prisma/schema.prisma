@@ -28,6 +28,8 @@ model User {
   marketUniverses MarketUniverse[]
   symbolGroups SymbolGroup[]
   bots      Bot[]
+  botMarketGroups BotMarketGroup[]
+  marketGroupStrategyLinks MarketGroupStrategyLink[]
   positions Position[]
   orders    Order[]
   trades    Trade[]
@@ -85,6 +87,7 @@ model Strategy {
 
   user         User     @relation(fields: [userId], references: [id])
   botStrategies BotStrategy[]
+  marketGroupStrategyLinks MarketGroupStrategyLink[]
   positions     Position[]
   orders        Order[]
   trades        Trade[]
@@ -129,6 +132,7 @@ model SymbolGroup {
   user              User           @relation(fields: [userId], references: [id])
   marketUniverse    MarketUniverse @relation(fields: [marketUniverseId], references: [id])
   botStrategies     BotStrategy[]
+  botMarketGroups   BotMarketGroup[]
 
   @@index([userId])
   @@index([marketUniverseId])
@@ -152,6 +156,8 @@ model Bot {
 
   user              User            @relation(fields: [userId], references: [id])
   botStrategies     BotStrategy[]
+  botMarketGroups   BotMarketGroup[]
+  marketGroupStrategyLinks MarketGroupStrategyLink[]
   positions         Position[]
   orders            Order[]
   trades            Trade[]
@@ -190,6 +196,65 @@ model BotStrategy {
   @@index([botId])
   @@index([strategyId])
   @@index([symbolGroupId])
+}
+
+model BotMarketGroup {
+  id                String                  @id @default(uuid())
+  userId            String
+  botId             String
+  symbolGroupId     String
+
+  lifecycleStatus   BotMarketGroupStatus    @default(ACTIVE)
+  executionOrder    Int                     @default(100)
+  isEnabled         Boolean                 @default(true)
+
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  user              User                    @relation(fields: [userId], references: [id])
+  bot               Bot                     @relation(fields: [botId], references: [id])
+  symbolGroup       SymbolGroup             @relation(fields: [symbolGroupId], references: [id])
+  strategyLinks     MarketGroupStrategyLink[]
+
+  @@unique([botId, symbolGroupId])
+  @@index([userId])
+  @@index([botId])
+  @@index([symbolGroupId])
+  @@index([botId, lifecycleStatus, executionOrder])
+}
+
+enum BotMarketGroupStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+model MarketGroupStrategyLink {
+  id                String         @id @default(uuid())
+  userId            String
+  botId             String
+  botMarketGroupId  String
+  strategyId        String
+
+  priority          Int            @default(100)
+  weight            Float          @default(1)
+  isEnabled         Boolean        @default(true)
+
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  user              User           @relation(fields: [userId], references: [id])
+  bot               Bot            @relation(fields: [botId], references: [id])
+  botMarketGroup    BotMarketGroup @relation(fields: [botMarketGroupId], references: [id])
+  strategy          Strategy       @relation(fields: [strategyId], references: [id])
+
+  @@unique([botMarketGroupId, strategyId])
+  @@index([userId])
+  @@index([botId])
+  @@index([botMarketGroupId])
+  @@index([strategyId])
+  @@index([botMarketGroupId, isEnabled, priority])
 }
 
 enum BotMode {
