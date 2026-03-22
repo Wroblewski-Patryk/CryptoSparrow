@@ -203,7 +203,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `fix(routing-hard-cut): hard-canonize dashboard URLs and remove legacy alias ambiguity`
 - [x] `fix(i18n-contract): remove hardcoded copy and align locale default contract (EN default vs runtime html lang)`
 - [ ] `security(ops-endpoints): protect /metrics, /alerts, /workers/* with explicit access control`
-- [ ] `fix(live-contract): enforce LIVE real-exchange side effects; keep simulation strictly in PAPER/BACKTEST`
+- [x] `fix(live-contract): enforce LIVE real-exchange side effects; keep simulation strictly in PAPER/BACKTEST`
 - [ ] `refactor(rate-limit): evolve limiter model toward user/exchange-key aware enforcement`
 
 ## Progress Log
@@ -418,6 +418,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Completed stream transport contract gaps by adding SSE event ids, heartbeat ping comments, 15s health events, and max-symbol query guard with route contract tests.
 - 2026-03-22: Enforced hard-cut canonical dashboard routing by removing legacy alias pages (`backtest`, `builder`, `strategies/add`, index redirects) and aligning header route state/tests to canonical paths only.
 - 2026-03-22: Aligned i18n contract by setting SSR default `html lang` to `en` (with early localStorage locale restore) and moving remaining dashboard-home hardcoded copy into translation keys.
+- 2026-03-22: Enforced LIVE order contract to use real exchange execution side effects (non-test), persisted `exchangeOrderId`/status mapping, added controller error mapping, and covered LIVE/PAPER behavior with orders service tests.
 
 
 

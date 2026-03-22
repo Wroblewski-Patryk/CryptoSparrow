@@ -1,6 +1,9 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { CancelOrderDto, CloseOrderDto, ListOrdersQuery, OpenOrderDto } from './orders.types';
+import { decrypt } from '../../utils/crypto';
+import { CcxtFuturesConnector } from '../exchange/ccxtFuturesConnector.service';
+import { createLiveOrderAdapter } from '../exchange/liveOrderAdapter.service';
 
 export const listOrders = async (userId: string, query: ListOrdersQuery) => {
   const skip = (query.page - 1) * query.limit;
@@ -24,8 +27,44 @@ export const getOrder = async (userId: string, id: string) => {
   });
 };
 
-const ensureLiveOrderAllowed = async (userId: string, payload: OpenOrderDto) => {
-  if (payload.mode !== 'LIVE') return;
+type LiveBotContext = {
+  id: string;
+  marketType: 'FUTURES' | 'SPOT';
+  positionMode: 'ONE_WAY' | 'HEDGE';
+};
+
+type LiveExecutionResult = {
+  exchangeOrderId: string | null;
+  status: 'OPEN' | 'FILLED';
+};
+
+type OpenOrderDeps = {
+  executeLiveOrder: (params: {
+    userId: string;
+    bot: LiveBotContext;
+    payload: OpenOrderDto;
+  }) => Promise<LiveExecutionResult>;
+};
+
+const mapLiveOrderType = (type: OpenOrderDto['type']) => {
+  if (type === 'MARKET') return 'market' as const;
+  if (type === 'LIMIT') return 'limit' as const;
+  throw new Error('LIVE_ORDER_TYPE_UNSUPPORTED');
+};
+
+const mapLiveOrderStatus = (status: string | undefined, fallbackType: OpenOrderDto['type']) => {
+  if (status) {
+    const normalized = status.toLowerCase();
+    if (normalized.includes('filled') || normalized.includes('closed')) return 'FILLED' as const;
+  }
+  return fallbackType === 'MARKET' ? ('FILLED' as const) : ('OPEN' as const);
+};
+
+const ensureLiveOrderAllowed = async (
+  userId: string,
+  payload: OpenOrderDto
+): Promise<LiveBotContext | null> => {
+  if (payload.mode !== 'LIVE') return null;
   if (!payload.riskAck) {
     throw new Error('LIVE_RISK_ACK_REQUIRED');
   }
@@ -38,6 +77,8 @@ const ensureLiveOrderAllowed = async (userId: string, payload: OpenOrderDto) => 
     select: {
       id: true,
       mode: true,
+      marketType: true,
+      positionMode: true,
       liveOptIn: true,
       isActive: true,
       consentTextVersion: true,
@@ -48,6 +89,57 @@ const ensureLiveOrderAllowed = async (userId: string, payload: OpenOrderDto) => 
   if (bot.mode !== 'LIVE') throw new Error('LIVE_BOT_MODE_REQUIRED');
   if (!bot.liveOptIn || !bot.consentTextVersion) throw new Error('LIVE_BOT_OPT_IN_REQUIRED');
   if (!bot.isActive) throw new Error('LIVE_BOT_ACTIVE_REQUIRED');
+
+  return {
+    id: bot.id,
+    marketType: bot.marketType,
+    positionMode: bot.positionMode,
+  };
+};
+
+const executeLiveOrderOnExchange: OpenOrderDeps['executeLiveOrder'] = async (params) => {
+  const apiKey = await prisma.apiKey.findFirst({
+    where: { userId: params.userId, exchange: 'BINANCE' },
+    orderBy: { updatedAt: 'desc' },
+  });
+
+  if (!apiKey) {
+    throw new Error('LIVE_API_KEY_REQUIRED');
+  }
+
+  const connector = new CcxtFuturesConnector({
+    exchangeId: 'binance',
+    apiKey: decrypt(apiKey.apiKey),
+    secret: decrypt(apiKey.apiSecret),
+    marketType: params.bot.marketType,
+  });
+
+  const liveAdapter = createLiveOrderAdapter(connector);
+  try {
+    const result = await liveAdapter.placeLiveOrderWithRetry({
+      order: {
+        symbol: params.payload.symbol.toUpperCase(),
+        side: params.payload.side === 'BUY' ? 'buy' : 'sell',
+        type: mapLiveOrderType(params.payload.type),
+        amount: params.payload.quantity,
+        price: params.payload.price,
+        positionMode: params.bot.positionMode,
+      },
+    });
+
+    return {
+      exchangeOrderId: result.id || null,
+      status: mapLiveOrderStatus(result.status, params.payload.type),
+    };
+  } catch {
+    throw new Error('LIVE_EXECUTION_FAILED');
+  } finally {
+    await connector.disconnect().catch(() => undefined);
+  }
+};
+
+const defaultOpenOrderDeps: OpenOrderDeps = {
+  executeLiveOrder: executeLiveOrderOnExchange,
 };
 
 const writeOrderAudit = async (params: {
@@ -76,12 +168,29 @@ const writeOrderAudit = async (params: {
   }
 };
 
-export const openOrder = async (userId: string, payload: OpenOrderDto) => {
-  await ensureLiveOrderAllowed(userId, payload);
+export const openOrder = async (
+  userId: string,
+  payload: OpenOrderDto,
+  deps: OpenOrderDeps = defaultOpenOrderDeps
+) => {
+  const liveBot = await ensureLiveOrderAllowed(userId, payload);
 
   const now = new Date();
-  const isMarket = payload.type === 'MARKET';
-  const status = isMarket ? 'FILLED' : 'OPEN';
+  let exchangeOrderId: string | null = null;
+  let status: 'OPEN' | 'FILLED' = payload.type === 'MARKET' ? 'FILLED' : 'OPEN';
+
+  if (payload.mode === 'LIVE' && process.env.NODE_ENV !== 'test') {
+    if (!liveBot) {
+      throw new Error('LIVE_BOT_NOT_FOUND');
+    }
+    const liveResult = await deps.executeLiveOrder({
+      userId,
+      bot: liveBot,
+      payload,
+    });
+    exchangeOrderId = liveResult.exchangeOrderId;
+    status = liveResult.status;
+  }
 
   const order = await prisma.order.create({
     data: {
@@ -92,10 +201,11 @@ export const openOrder = async (userId: string, payload: OpenOrderDto) => {
       type: payload.type,
       status,
       quantity: payload.quantity,
-      filledQuantity: isMarket ? payload.quantity : 0,
+      filledQuantity: status === 'FILLED' ? payload.quantity : 0,
       price: payload.price,
+      exchangeOrderId,
       submittedAt: now,
-      filledAt: isMarket ? now : null,
+      filledAt: status === 'FILLED' ? now : null,
     },
   });
 
@@ -109,6 +219,7 @@ export const openOrder = async (userId: string, payload: OpenOrderDto) => {
       riskAck: payload.riskAck,
       type: payload.type,
       status: order.status,
+      exchangeOrderId: order.exchangeOrderId,
     },
   });
 

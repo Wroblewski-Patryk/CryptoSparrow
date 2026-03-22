@@ -56,6 +56,15 @@ export const openOrder = async (req: Request, res: Response) => {
       if (error.message === 'LIVE_BOT_ACTIVE_REQUIRED') {
         return sendError(res, 400, 'bot must be active for LIVE order open');
       }
+      if (error.message === 'LIVE_API_KEY_REQUIRED') {
+        return sendError(res, 400, 'BINANCE API key is required for LIVE order open');
+      }
+      if (error.message === 'LIVE_ORDER_TYPE_UNSUPPORTED') {
+        return sendError(res, 400, 'LIVE supports MARKET and LIMIT order types only');
+      }
+      if (error.message === 'LIVE_EXECUTION_FAILED') {
+        return sendError(res, 502, 'LIVE exchange order placement failed');
+      }
     }
     return sendValidationError(res, error);
   }

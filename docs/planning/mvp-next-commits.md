@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `fix(live-execution-contract): align LIVE path to real exchange side effects; keep simulation strictly in PAPER/BACKTEST`
 - [ ] `security(ops-endpoints): restrict /metrics, /alerts, /workers/* access with auth/role/network guardrails`
 - [ ] `refactor(rate-limit): move from IP-centric throttling toward user/exchange-key aware limits`
 - [ ] `fix(auth-session-recovery): enforce automatic logout on invalid session/user-deleted scenarios and add graceful no-db fallback behavior`
@@ -67,6 +66,7 @@ Operational queue for one-task execution runs.
 - [x] `feat(stream-contract): implement transport contract gaps (event id, heartbeat/ping, symbol-limit guard) for dashboard market stream`
 - [x] `fix(routing-hard-cut): enforce canonical dashboard routes with hard-cut policy (remove backtest/backtests ambiguity and update menu links/tests)`
 - [x] `fix(i18n-contract): remove remaining hardcoded copy and align default locale contract (docs vs SSR html lang)`
+- [x] `fix(live-execution-contract): align LIVE path to real exchange side effects; keep simulation strictly in PAPER/BACKTEST`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
