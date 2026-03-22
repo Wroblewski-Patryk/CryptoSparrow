@@ -49,6 +49,7 @@
 - Stable-to-stable pairs (for example USDT/USDC) should be auto-excluded by default.
 - Manual overrides must always be possible for exclusions and inclusions.
 - Each bot can trade multiple symbols and multiple strategies mapped to symbol groups.
+- Binding model: BotStrategy binds one strategy to one symbol group for a given bot; multiple bindings per bot are supported.
 
 ## Position Rules
 - At most one open position per symbol at a time.

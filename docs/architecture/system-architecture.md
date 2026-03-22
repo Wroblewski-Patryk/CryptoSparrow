@@ -1,7 +1,7 @@
-﻿# Architecture
+# Architecture
 
 ## Current Architecture
-- Monorepo with `apps/server` and `apps/client`.
+- Monorepo with `apps/api` and `apps/web`.
 - Server is an Express API with Prisma + PostgreSQL.
 - Client is a Next.js App Router frontend.
 
@@ -13,11 +13,28 @@
 5. Execution layer places orders and manages positions.
 6. Logs record every decision for audit and debugging.
 
+## North-Star Architecture (Agentic Target)
+Reference: `docs/product/autonomous-agent-vision.md`
+
+Long-range target is a layered agent system:
+- Data layer: market and contextual data ingestion.
+- Analysis layer: indicators, features, regime recognition.
+- Strategy layer: reusable strategy families and templates.
+- Decision layer: meta-agent action selection under constraints.
+- Risk layer: hard guardrails and exposure controls.
+- Learning layer: outcome attribution and policy improvement loop.
+
+Design rule:
+- keep current modules extraction-ready so this layered model can evolve without breaking runtime safety.
+
 ## Execution Modes
 - Backtest. Historical simulation using the same logic as live.
 - Paper. Live data, simulated execution with fees and slippage.
 - Live. Real execution through exchange API.
 - Local-only. Optional self-hosted execution for a single owner.
+
+Parity rule:
+- Backtest and Paper should converge toward the same shared execution core as Live (mode-specific adapters only).
 
 ## Platform Strategy
 - Web app is primary (desktop, tablet, mobile responsive).
@@ -36,6 +53,11 @@
 - Client: UX, configuration, dashboards.
 - API: REST endpoints for command/query flows + SSE for server-to-client live stream fan-out.
 - Engine: trading pipeline, queues, and execution.
+
+## Runtime Topology (V1)
+- Runtime hierarchy: `User -> Bots -> BotStrategy bindings -> execution events`.
+- Symbol groups are reusable market scopes attached through BotStrategy bindings.
+- User scope supports many bots; bot scope supports many market-group bindings and many strategy bindings.
 
 ## Current Runtime Reality (As of 2026-03-21)
 - Dashboard widgets are populated via REST reads (orders/positions snapshots).
@@ -80,3 +102,4 @@
 ## Runtime and Availability
 - Backend is expected to run 24/7 for paper/live bot execution.
 - Deployments should minimize downtime and preserve running bot state.
+

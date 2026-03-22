@@ -20,6 +20,7 @@
 
 ## Backend Modules (Planned for MVP Completion)
 - reports. Unified performance metrics parity across backtest/paper/live runtime datasets.
+- ai-assistants. Assistant profiles, mandate/risk config, and scope assignment to bots/bindings.
 
 ## Frontend Areas (Current)
 - public. Landing and public pages.

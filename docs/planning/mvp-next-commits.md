@@ -7,9 +7,38 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [ ] `MBA-01 audit(domain): map current Bot/SymbolGroup/BotStrategy contracts and define non-breaking migration path`
+- [ ] `MBA-02 docs(decisions): lock canonical model user->bot->market-group->strategy and assistant topology (1 main + max 4 subagents)`
+- [ ] `MBA-03 docs(contract): define deterministic signal merge policy for multi-strategy per market-group (priority, tie-break, no-trade)`
+- [ ] `MBA-04 feat(db): add BotMarketGroup model with ownership, lifecycle status, and execution ordering`
+- [ ] `MBA-05 feat(db): add MarketGroupStrategyLink model (many-strategies per market-group) with priority/weight fields`
 
 ## NEXT
-
+- [ ] `MBA-06 feat(db-migration): backfill existing bot strategies into default market-group for zero-downtime compatibility`
+- [ ] `MBA-07 feat(api): add market-group CRUD under bots with strict ownership isolation`
+- [ ] `MBA-08 feat(api): add attach/detach/reorder strategy endpoints per market-group`
+- [ ] `MBA-09 feat(api): expose bot runtime graph read endpoint (bot->groups->strategies) for UI/runtime parity`
+- [ ] `MBA-10 refactor(runtime): change evaluation loop from bot-level flat strategies to bot->market-group partitions`
+- [ ] `MBA-11 feat(runtime): execute multi-strategy per market-group with locked merge policy and no-flip guarantees`
+- [ ] `MBA-12 feat(risk): enforce per-market-group risk budget while preserving bot/global hard caps`
+- [ ] `MBA-13 test(e2e): add full flow for one user with 2 bots, each with multiple market-groups and strategies`
+- [ ] `MBA-14 docs(ai-contract): define assistant responsibilities, I/O schema, timeout policy, and fail-closed behavior`
+- [ ] `MBA-15 feat(db): add BotAssistantConfig (main agent mandate, model profile, safety mode)`
+- [ ] `MBA-16 feat(db): add BotSubagentConfig with slotIndex(1..4), role, enabled flag, and unique(botId,slotIndex)`
+- [ ] `MBA-17 feat(api): add assistant config CRUD endpoints with hard max-4 subagent validation`
+- [ ] `MBA-18 feat(runtime-ai): implement main-agent orchestrator scaffold (request plan -> subagent fan-out -> merge)`
+- [ ] `MBA-19 feat(runtime-ai): implement subagent dispatcher with per-slot timeout, partial-failure tolerance, and deterministic merge`
+- [ ] `MBA-20 security(ai): add prompt/response sanitization and audit-safe logging for assistant traces`
+- [ ] `MBA-21 feat(ui): add bot Assistant tab (main agent panel + 4 subagent slots with enable/disable and role)`
+- [ ] `MBA-22 test(e2e): configure assistant stack and verify explainable runtime decision trace (including no-trade output)`
+- [ ] `MBA-23 feat(obs): add metrics for group-evaluation latency, subagent timeout rate, merge outcomes, and no-trade frequency`
+- [ ] `MBA-24 feat(ops): add circuit-breaker and graceful degradation (assistant off -> strategy-only runtime)`
+- [ ] `MBA-25 feat(ai-policy): enforce mandate boundaries and forbidden-action policy before execution approval`
+- [ ] `MBA-26 feat(ui-explainability): add decision timeline by bot/group/strategy/main-agent/subagent with rationale payloads`
+- [ ] `MBA-27 test(parity): validate backtest/paper/live decision parity with shared assistant orchestration inputs`
+- [ ] `MBA-28 perf(load): benchmark target profile (3 bots x 4 groups x 4 strategies x 5 agents) and set SLO thresholds`
+- [ ] `MBA-29 docs(runbook): publish operator runbook for assistant incidents, fallback modes, and safe recovery`
+- [ ] `MBA-30 release(v1-gate): collect evidence pack and close V1 exit criteria for multi-entity assistant runtime`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
@@ -27,7 +56,7 @@ Operational queue for one-task execution runs.
 - [x] `test(cutover): execute local replacement dry-run with realistic bot scenario`
 - [x] `release(review): run 7-day launch retrospective and cut V1.1 backlog`
 - [x] `docs(sync): normalize planning files so roadmap/mvp/v1 statuses are fully consistent`
-- [x] `fix(auth-build): resolve client build blockers in login/auth files (eslint apostrophe + hooks deps) so pnpm --filter client build is green`
+- [x] `fix(auth-build): resolve client build blockers in login/auth files (eslint apostrophe + hooks deps) so pnpm --filter web build is green`
 - [x] `fix(auth-ux): validate and harden failed-login error UX (inline + toast) without false positive success styling`
 - [x] `fix(auth-session-warning): remove false session-expired warnings on public routes and keep warning only for protected/session-expired contexts`
 - [x] `test(auth-client): add/adjust regression tests for failed login, successful login, and post-login redirect behavior`
@@ -73,3 +102,5 @@ Operational queue for one-task execution runs.
 - Keep one logical change per task.
 - If task grows, split before coding.
 - After completion, update this file and `docs/planning/mvp-execution-plan.md`.
+
+

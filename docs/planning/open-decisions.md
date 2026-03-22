@@ -34,6 +34,18 @@ This file tracks intentionally unresolved architecture choices so implementation
       - `advanced`: enabled full global interval catalog (with `1m` default).
     - these are default plan baselines and may be tuned from admin controls if production load data requires adjustment.
 
+## Product North Star (Autonomous Agent Trajectory)
+- Decision state: resolved on 2026-03-22.
+- Product direction:
+  - evolve from strategy tooling into autonomous trading-agent platform in phased manner.
+  - target optimization is risk-adjusted decision quality and execution consistency, not guaranteed returns.
+  - autonomy grows in stages: analytics -> assistant -> semi-auto -> autonomous mandate -> network intelligence.
+  - system should combine global aggregated intelligence with per-user private execution profile.
+  - aggregate learning must use statistical effectiveness patterns, never direct user behavior copying.
+  - "do not trade" must remain valid output when no edge is detected.
+- Canonical reference:
+  - `docs/product/autonomous-agent-vision.md`
+
 ## Strategy Schema (MVP)
 - Decision state: resolved on 2026-03-15.
 - MVP schema is frozen as:
@@ -183,6 +195,8 @@ This file tracks intentionally unresolved architecture choices so implementation
 - V1 decision:
   - keep `Bot` as the primary runtime entity (execution lifecycle, mode, exchange/account binding, runtime state).
   - allow multiple strategies per bot.
+  - cardinality clarification: bot-to-symbol-group mapping is many-to-many through BotStrategy; symbol-group-to-BotStrategy is one-to-many.
+  - BotStrategy is the runtime binding unit (`bot + symbolGroup + strategy`) and should be treated as first-class execution scope.
   - do not enforce a per-bot strategy count limit in V1.
   - allow multiple bots per user.
 - Limits policy:
@@ -191,6 +205,13 @@ This file tracks intentionally unresolved architecture choices so implementation
   - global account-level safety limits remain enforced (for example max open positions).
 - Architecture direction:
   - do not hide bot as only an internal implementation detail in V1; keep it explicit across API, UI, and operations.
+
+## AI Assistant Topology
+- Decision state: resolved on 2026-03-22.
+- V1 direction:
+  - user can own multiple AI assistants with isolated configuration and audit trail.
+  - runtime target topology is one main assistant with up to four subagents per bot context.
+  - assistant outputs are advisory/execution-scoped only inside explicit mandate and risk policy constraints.
 
 ## Subscription and Admin Controls (V1 -> V2)
 - Decision state: resolved on 2026-03-20.
@@ -330,7 +351,7 @@ This file tracks intentionally unresolved architecture choices so implementation
   - reintroduce isometric mode as optional gamification layer with explicit UX entry point and feature flag.
 
 ## Monorepo App Naming and Mobile Track
-- Open: exact migration window for renaming app folders from `apps/client` + `apps/server` to `apps/web` + `apps/api`, while adding `apps/mobile`.
+- Open: exact migration window for renaming app folders from legacy `apps/client` + `apps/server` to `apps/web` + `apps/api`, while adding `apps/mobile`.
 - Current assumption:
   - migration is staged and non-breaking (aliases/scripts/CI updated first, folder rename second).
   - mobile app starts as separate project with shared API contract and incremental parity against web dashboard.
@@ -356,3 +377,4 @@ This file tracks intentionally unresolved architecture choices so implementation
   - `BACKTEST` and `PAPER` remain simulation domains and are required quality gates.
   - `LIVE` must execute real exchange side effects (real orders/position state changes on exchange), not local-only simulation.
   - shared decision/risk lifecycle should be reused across modes via adapter separation.
+

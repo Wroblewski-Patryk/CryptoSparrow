@@ -22,6 +22,7 @@ This guide explains how to start safely with CryptoSparrow V1.
 3. Enable bot in `PAPER` mode only.
 4. Observe at least one full market cycle.
 5. Move to `LIVE` only after stable paper behavior.
+- This is a starter flow; production setups can use multiple symbol groups and multiple BotStrategy bindings per bot.
 
 ## 3a. Backtest Report Reading (Markets Tab)
 - `Summary` shows daily result bars (green/red) and portfolio balance trend from start to end balance.
@@ -51,9 +52,9 @@ Yes. Use strategy import/export package format `strategy.v1`.
 
 ## 5. Troubleshooting
 - App does not open:
-  - verify client dev server is running (`pnpm --filter client dev`).
+  - verify client dev server is running (`pnpm --filter web dev`).
 - API errors in dashboard:
-  - verify backend (`pnpm --filter server dev`) and `NEXT_PUBLIC_API_BASE_URL`.
+  - verify backend (`pnpm --filter api dev`) and `NEXT_PUBLIC_API_BASE_URL`.
 - `EADDRINUSE` on startup:
   - another process already uses the port; stop it or change port.
 - Exchange order issues:
@@ -151,3 +152,4 @@ Yes. Use strategy import/export package format `strategy.v1`.
   - `simple`: up to last 6 months.
   - `advanced`: up to last 12 months.
 - CSV export in both active and `PAST_DUE` states follows the same rate limit: max 1 export per 10 minutes per user.
+

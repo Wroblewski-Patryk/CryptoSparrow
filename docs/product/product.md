@@ -78,11 +78,19 @@ Primary target is advanced users who already understand trading concepts and can
 ## Runtime Ownership Model (V1)
 - `Bot` is the explicit runtime unit (mode, lifecycle, exchange/account execution context).
 - A bot can run multiple strategies.
+- A bot can be attached to multiple symbol groups through BotStrategy bindings.
+- A symbol group can host multiple strategy bindings for the same bot (distinct BotStrategy rows).
+- BotStrategy is the explicit runtime execution scope (`bot + symbol group + strategy`).
 - No per-bot strategy cap is enforced in V1.
 - A user can run multiple bots.
 - Bot-count entitlement is defined by subscription plan.
 - Bot-count entitlement is enforced with separate pools for `PAPER` and `LIVE` modes.
 - Global account-level risk limits remain enforced independently from per-bot settings.
+
+## AI Assistant Ownership Model (Planned)
+- A user can create and operate multiple AI assistants.
+- Each assistant has independent mandate, risk profile, and activation scope.
+- Assistant scope can target selected bots, symbol groups, or BotStrategy bindings.
 
 ## Frontend and Admin Surfaces (Post-MVP / V1.1 Planned)
 - Scope note: `admin` and `billing` surfaces below are planning-only and are not part of current V1 implementation closure.

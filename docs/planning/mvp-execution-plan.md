@@ -192,7 +192,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `fix(auth-session): force deterministic auto-logout on invalid auth/session or deleted-user state`
 - [x] `fix(auth-resilience): handle API/DB-unavailable startup in auth context without stale logged-in UI state`
 - [x] `feat(auth-ui): add password visibility toggle to login/register with keyboard and screen-reader support`
-- [x] `docs(repo-structure): define staged migration from apps/client+apps/server to apps/web+apps/api and add apps/mobile bootstrap plan`
+- [x] `docs(repo-structure): define staged migration from apps/web+apps/api to apps/web+apps/api and add apps/mobile bootstrap plan`
 - [x] `docs(parity): define mobile parity contract versus web dashboard scope for MVP/V1`
 
 ## Phase 11 - Audit Closure and Scope Realignment (As of 2026-03-22)
@@ -206,6 +206,41 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `fix(live-contract): enforce LIVE real-exchange side effects; keep simulation strictly in PAPER/BACKTEST`
 - [x] `refactor(rate-limit): evolve limiter model toward user/exchange-key aware enforcement`
 
+## Phase 12 - Multi-Bot Runtime Domain (MVP Extension: Data + API + Runtime)
+- [ ] `MBA-01 audit(domain): map current Bot/SymbolGroup/BotStrategy contracts and define non-breaking migration path`
+- [ ] `MBA-02 docs(decisions): lock canonical model user->bot->market-group->strategy and assistant topology (1 main + max 4 subagents)`
+- [ ] `MBA-03 docs(contract): define deterministic signal merge policy for multi-strategy per market-group (priority, tie-break, no-trade)`
+- [ ] `MBA-04 feat(db): add BotMarketGroup model with ownership, lifecycle status, and execution ordering`
+- [ ] `MBA-05 feat(db): add MarketGroupStrategyLink model (many-strategies per market-group) with priority/weight fields`
+- [ ] `MBA-06 feat(db-migration): backfill existing bot strategies into default market-group for zero-downtime compatibility`
+- [ ] `MBA-07 feat(api): add market-group CRUD under bots with strict ownership isolation`
+- [ ] `MBA-08 feat(api): add attach/detach/reorder strategy endpoints per market-group`
+- [ ] `MBA-09 feat(api): expose bot runtime graph read endpoint (bot->groups->strategies) for UI/runtime parity`
+- [ ] `MBA-10 refactor(runtime): change evaluation loop from bot-level flat strategies to bot->market-group partitions`
+- [ ] `MBA-11 feat(runtime): execute multi-strategy per market-group with locked merge policy and no-flip guarantees`
+- [ ] `MBA-12 feat(risk): enforce per-market-group risk budget while preserving bot/global hard caps`
+- [ ] `MBA-13 test(e2e): add full flow for one user with 2 bots, each with multiple market-groups and strategies`
+
+## Phase 13 - AI Assistant Layer (MVP Foundation: 1 Main + Up to 4 Subagents)
+- [ ] `MBA-14 docs(ai-contract): define assistant responsibilities, I/O schema, timeout policy, and fail-closed behavior`
+- [ ] `MBA-15 feat(db): add BotAssistantConfig (main agent mandate, model profile, safety mode)`
+- [ ] `MBA-16 feat(db): add BotSubagentConfig with slotIndex(1..4), role, enabled flag, and unique(botId,slotIndex)`
+- [ ] `MBA-17 feat(api): add assistant config CRUD endpoints with hard max-4 subagent validation`
+- [ ] `MBA-18 feat(runtime-ai): implement main-agent orchestrator scaffold (request plan -> subagent fan-out -> merge)`
+- [ ] `MBA-19 feat(runtime-ai): implement subagent dispatcher with per-slot timeout, partial-failure tolerance, and deterministic merge`
+- [ ] `MBA-20 security(ai): add prompt/response sanitization and audit-safe logging for assistant traces`
+- [ ] `MBA-21 feat(ui): add bot Assistant tab (main agent panel + 4 subagent slots with enable/disable and role)`
+- [ ] `MBA-22 test(e2e): configure assistant stack and verify explainable runtime decision trace (including no-trade output)`
+
+## Phase 14 - V1 Hardening for Multi-Entity + AI Runtime
+- [ ] `MBA-23 feat(obs): add metrics for group-evaluation latency, subagent timeout rate, merge outcomes, and no-trade frequency`
+- [ ] `MBA-24 feat(ops): add circuit-breaker and graceful degradation (assistant off -> strategy-only runtime)`
+- [ ] `MBA-25 feat(ai-policy): enforce mandate boundaries and forbidden-action policy before execution approval`
+- [ ] `MBA-26 feat(ui-explainability): add decision timeline by bot/group/strategy/main-agent/subagent with rationale payloads`
+- [ ] `MBA-27 test(parity): validate backtest/paper/live decision parity with shared assistant orchestration inputs`
+- [ ] `MBA-28 perf(load): benchmark target profile (3 bots x 4 groups x 4 strategies x 5 agents) and set SLO thresholds`
+- [ ] `MBA-29 docs(runbook): publish operator runbook for assistant incidents, fallback modes, and safe recovery`
+- [ ] `MBA-30 release(v1-gate): collect evidence pack and close V1 exit criteria for multi-entity assistant runtime`
 ## Progress Log
 - 2026-03-15: Initialized MVP execution file and commit rules.
 - 2026-03-15: Added generic trigger-based one-task execution workflow.
@@ -390,8 +425,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Attached live-source metrics evidence to SLO baseline via `docs/operations/v1-slo-catalog.md` and `docs/operations/v1-load-baseline-2026-03-21.md`; remaining SLO blocker is production observation window.
 - 2026-03-21: Added Phase 9 trust gate for real Binance API-key verification flow and exchange-live positions snapshot path (UI + API + security + tests + runbook).
 - 2026-03-21: Re-prioritized Phase 9 with auth stabilization gate (client build green + login UX/session-warning regression evidence) before exchange API-key trust implementation.
-- 2026-03-21: Closed Phase 9 auth build gate by fixing AuthContext hook deps and LoginForm lint issue; verified with green `pnpm --filter client build` and targeted auth suites.
-- 2026-03-21: Hardened failed-login UX by requiring confirmed `refetchUser()` session before success toast/redirect in login flow; verified with green `pnpm --filter client build`.
+- 2026-03-21: Closed Phase 9 auth build gate by fixing AuthContext hook deps and LoginForm lint issue; verified with green `pnpm --filter web build` and targeted auth suites.
+- 2026-03-21: Hardened failed-login UX by requiring confirmed `refetchUser()` session before success toast/redirect in login flow; verified with green `pnpm --filter web build`.
 - 2026-03-21: Hardened session-expiry warning logic to avoid false public-route warnings by requiring protected-route context or explicit `session=expired` hint.
 - 2026-03-21: Added client auth regression tests in `useLoginForm.test.tsx` covering failed login, successful login with redirect, and session-refresh failure handling.
 - 2026-03-21: Captured auth smoke evidence in `docs/operations/auth-smoke-2026-03-21.md` (`_artifacts-auth-smoke-2026-03-21.json`), covering failed login, successful login, logout cookie clear, and protected-route redirect.
@@ -424,6 +459,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Hardened auth session recovery by validating `/auth/me` against DB existence, clearing stale token cookies on invalid/deleted sessions, and returning 503 for temporary auth DB lookup failures.
 - 2026-03-22: Added accessible password visibility toggles (`Show/Hide`) in login/register forms and covered toggle behavior with component regression tests.
 - 2026-03-22: Synced IA docs for `Bots/Exchanges`, added staged repo migration plan + mobile parity contract docs, and scaffolded `apps/mobile` as bootstrap-only package.
+
+
 
 
 

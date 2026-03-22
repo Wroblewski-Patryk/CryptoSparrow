@@ -30,6 +30,13 @@
 - Strategy configuration is stored as JSON for fast iteration.
 - Strategy-to-symbol mapping is explicit through bot-to-group relations.
 
+## Runtime Cardinality Contract (V1)
+- User `1 -> N` Bot.
+- Bot `N <-> N` SymbolGroup via BotStrategy rows.
+- SymbolGroup `1 -> N` BotStrategy rows.
+- BotStrategy is the runtime binding unit: one row binds exactly one bot, one symbol group, and one strategy.
+- AI assistant entities are user-scoped and support User `1 -> N` Assistant (planned extension).
+
 ## Planned Extensions (After MVP)
 - Strategy format versioning for import/export.
 - Soft deletes for user-owned entities.
