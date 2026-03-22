@@ -131,7 +131,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 
 ### G8 - Auth and Platform Surface Cleanup
 - [x] `fix(auth-session): auto-logout user on invalid token/deleted-user/no-db startup and keep public-route UX clean`
-- [ ] `feat(auth-ui): add password visibility toggles on login/register with accessibility semantics`
+- [x] `feat(auth-ui): add password visibility toggles on login/register with accessibility semantics`
 - [x] `fix(ui-theme): remove isometric toggle from active V1 account menu (defer to V2 gamification path)`
 - [ ] `docs(repo): finalize migration plan from apps/client+apps/server to apps/web+apps/api and bootstrap apps/mobile`
 
@@ -244,3 +244,4 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-22: Secured ops surface by enforcing auth + ADMIN role + private-network guardrails on `/metrics`, `/alerts`, and `/workers/*`, with updated endpoint contract tests.
 - 2026-03-22: Migrated rate-limit identity strategy to user/exchange-aware scopes and bound auth/api-key routes to scoped keys, reducing shared-IP cross-user throttling collisions.
 - 2026-03-22: Hardened auth session recovery (`/auth/me` + `requireAuth`) to clear invalid/deleted-user cookies deterministically and return 503 on temporary auth DB unavailability.
+- 2026-03-22: Added login/register password visibility controls with explicit screen-reader labels and regression tests for show/hide toggle behavior.

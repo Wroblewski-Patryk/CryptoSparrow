@@ -191,7 +191,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `fix(ui-profile): remove isometric mode toggle from current dashboard account menu (defer to V2 gamification)`
 - [x] `fix(auth-session): force deterministic auto-logout on invalid auth/session or deleted-user state`
 - [x] `fix(auth-resilience): handle API/DB-unavailable startup in auth context without stale logged-in UI state`
-- [ ] `feat(auth-ui): add password visibility toggle to login/register with keyboard and screen-reader support`
+- [x] `feat(auth-ui): add password visibility toggle to login/register with keyboard and screen-reader support`
 - [ ] `docs(repo-structure): define staged migration from apps/client+apps/server to apps/web+apps/api and add apps/mobile bootstrap plan`
 - [ ] `docs(parity): define mobile parity contract versus web dashboard scope for MVP/V1`
 
@@ -422,6 +422,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Secured operational endpoints (`/metrics`, `/alerts`, `/workers/*`) with combined auth + ADMIN role + network guardrail middleware, and updated router contract tests for 401/403 and allowed admin-access paths.
 - 2026-03-22: Refactored rate-limit keying from IP-centric to identity-aware scopes (`auth`, `user`, `user_exchange`), updated auth/api-key limiter bindings, and added middleware identity-resolution tests.
 - 2026-03-22: Hardened auth session recovery by validating `/auth/me` against DB existence, clearing stale token cookies on invalid/deleted sessions, and returning 503 for temporary auth DB lookup failures.
+- 2026-03-22: Added accessible password visibility toggles (`Show/Hide`) in login/register forms and covered toggle behavior with component regression tests.
 
 
 

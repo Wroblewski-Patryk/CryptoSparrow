@@ -1,31 +1,46 @@
-import { render, screen } from "@testing-library/react";
-import RegisterForm from "./RegisterForm";
-import { describe, expect, it, vi } from "vitest";
-import { UseFormRegister } from "react-hook-form";
-import { RegisterFormData } from "../types/form.types";
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import RegisterForm from './RegisterForm';
 
-const mockRegister: UseFormRegister<RegisterFormData> = (name) => ({
-  name,
-  onChange: async () => {},
-  onBlur: async () => {},
-  ref: () => {},
-});
+const mockUseRegisterForm = vi.fn();
 
-describe("RegisterForm", () => {
-  it("renders email and password fields", () => {
-    render(
-      <RegisterForm
-        onSubmit={vi.fn()}
-        register={mockRegister}
-        errors={{}}
-        isSubmitting={false}
-        status=""
-        message=""
-      />
-    );
+vi.mock('../hooks/useRegisterForm', () => ({
+  useRegisterForm: () => mockUseRegisterForm(),
+}));
+
+describe('RegisterForm', () => {
+  it('renders email and password fields', () => {
+    mockUseRegisterForm.mockReturnValue({
+      register: () => ({ name: 'field', onChange: vi.fn(), onBlur: vi.fn(), ref: vi.fn() }),
+      onFormSubmit: vi.fn(),
+      errors: {},
+      isSubmitting: false,
+    });
+
+    render(<RegisterForm />);
 
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Password$/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /show password/i })).toBeInTheDocument();
+  });
+
+  it('toggles password visibility', () => {
+    mockUseRegisterForm.mockReturnValue({
+      register: () => ({ name: 'field', onChange: vi.fn(), onBlur: vi.fn(), ref: vi.fn() }),
+      onFormSubmit: vi.fn(),
+      errors: {},
+      isSubmitting: false,
+    });
+
+    render(<RegisterForm />);
+
+    const passwordInput = screen.getByLabelText(/^Password$/i);
+    expect(passwordInput).toHaveAttribute('type', 'password');
+
+    fireEvent.click(screen.getByRole('button', { name: /show password/i }));
+    expect(passwordInput).toHaveAttribute('type', 'text');
+
+    fireEvent.click(screen.getByRole('button', { name: /hide password/i }));
+    expect(passwordInput).toHaveAttribute('type', 'password');
   });
 });
-

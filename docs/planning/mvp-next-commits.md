@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `feat(auth-password-visibility): add password visibility toggle in login/register forms with a11y labels and tests`
 
 ## NEXT
 - [ ] `fix(ui-profile): remove isometric toggle from account menu and defer feature to V2 gamification`
@@ -67,6 +66,7 @@ Operational queue for one-task execution runs.
 - [x] `security(ops-endpoints): restrict /metrics, /alerts, /workers/* access with auth/role/network guardrails`
 - [x] `refactor(rate-limit): move from IP-centric throttling toward user/exchange-key aware limits`
 - [x] `fix(auth-session-recovery): enforce automatic logout on invalid session/user-deleted scenarios and add graceful no-db fallback behavior`
+- [x] `feat(auth-password-visibility): add password visibility toggle in login/register forms with a11y labels and tests`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

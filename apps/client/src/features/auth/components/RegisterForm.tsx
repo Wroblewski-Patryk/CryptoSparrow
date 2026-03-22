@@ -1,8 +1,10 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
+import { useState } from 'react';
 import { useRegisterForm } from '../hooks/useRegisterForm';
 
 export default function RegisterForm() {
   const { register, onFormSubmit, errors, isSubmitting } = useRegisterForm();
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <form onSubmit={onFormSubmit} className='form'>
@@ -23,14 +25,25 @@ export default function RegisterForm() {
         <label className='label' htmlFor='password'>
           Password
         </label>
-        <input
-          id='password'
-          type='password'
-          className={`input input-bordered ${errors.password ? 'input-error' : ''}`}
-          placeholder='********'
-          disabled={isSubmitting}
-          {...register('password')}
-        />
+        <div className='join w-full'>
+          <input
+            id='password'
+            type={showPassword ? 'text' : 'password'}
+            className={`input input-bordered join-item w-full ${errors.password ? 'input-error' : ''}`}
+            placeholder='********'
+            disabled={isSubmitting}
+            {...register('password')}
+          />
+          <button
+            type='button'
+            className='btn btn-outline join-item'
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            onClick={() => setShowPassword((prev) => !prev)}
+            disabled={isSubmitting}
+          >
+            {showPassword ? 'Hide' : 'Show'}
+          </button>
+        </div>
         {errors.password && <div className='text-error text-sm mt-1'>{errors.password.message}</div>}
 
         <label htmlFor='terms' className='label'>
