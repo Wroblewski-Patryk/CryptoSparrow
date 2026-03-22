@@ -1,5 +1,11 @@
 import { prisma } from '../../prisma/client';
-import { CreateBotDto, ListBotsQueryDto, UpdateBotDto } from './bots.types';
+import {
+  CreateBotDto,
+  CreateBotMarketGroupDto,
+  ListBotsQueryDto,
+  UpdateBotDto,
+  UpdateBotMarketGroupDto,
+} from './bots.types';
 
 type BotConsentState = {
   mode: 'PAPER' | 'LIVE' | 'LOCAL';
@@ -140,6 +146,39 @@ const writeLiveConsentAudit = async (params: {
     });
   } catch {
     // Audit failures should not block core bot updates.
+  }
+};
+
+const getOwnedBot = async (userId: string, botId: string) =>
+  prisma.bot.findFirst({
+    where: { id: botId, userId },
+    select: { id: true, marketType: true },
+  });
+
+const getOwnedSymbolGroup = async (userId: string, symbolGroupId: string) =>
+  prisma.symbolGroup.findFirst({
+    where: { id: symbolGroupId, userId },
+    select: {
+      id: true,
+      marketUniverse: {
+        select: { marketType: true },
+      },
+    },
+  });
+
+const validateSymbolGroupForBot = async (params: {
+  userId: string;
+  botId: string;
+  symbolGroupId: string;
+}) => {
+  const bot = await getOwnedBot(params.userId, params.botId);
+  if (!bot) throw new Error('BOT_NOT_FOUND');
+
+  const symbolGroup = await getOwnedSymbolGroup(params.userId, params.symbolGroupId);
+  if (!symbolGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
+
+  if (symbolGroup.marketUniverse.marketType !== bot.marketType) {
+    throw new Error('BOT_MARKET_GROUP_MARKET_TYPE_MISMATCH');
   }
 };
 
@@ -316,6 +355,83 @@ export const deleteBot = async (userId: string, id: string) => {
   if (!existing) return false;
 
   await prisma.bot.delete({
+    where: { id: existing.id },
+  });
+
+  return true;
+};
+
+export const listBotMarketGroups = async (userId: string, botId: string) => {
+  const bot = await getOwnedBot(userId, botId);
+  if (!bot) return null;
+
+  return prisma.botMarketGroup.findMany({
+    where: {
+      userId,
+      botId,
+    },
+    orderBy: [{ executionOrder: 'asc' }, { createdAt: 'asc' }],
+  });
+};
+
+export const getBotMarketGroup = async (userId: string, botId: string, marketGroupId: string) => {
+  return prisma.botMarketGroup.findFirst({
+    where: {
+      id: marketGroupId,
+      userId,
+      botId,
+    },
+  });
+};
+
+export const createBotMarketGroup = async (
+  userId: string,
+  botId: string,
+  data: CreateBotMarketGroupDto
+) => {
+  await validateSymbolGroupForBot({ userId, botId, symbolGroupId: data.symbolGroupId });
+
+  return prisma.botMarketGroup.create({
+    data: {
+      userId,
+      botId,
+      symbolGroupId: data.symbolGroupId,
+      lifecycleStatus: data.lifecycleStatus,
+      executionOrder: data.executionOrder,
+      isEnabled: data.isEnabled,
+    },
+  });
+};
+
+export const updateBotMarketGroup = async (
+  userId: string,
+  botId: string,
+  marketGroupId: string,
+  data: UpdateBotMarketGroupDto
+) => {
+  const existing = await getBotMarketGroup(userId, botId, marketGroupId);
+  if (!existing) return null;
+
+  if (data.symbolGroupId) {
+    await validateSymbolGroupForBot({ userId, botId, symbolGroupId: data.symbolGroupId });
+  }
+
+  return prisma.botMarketGroup.update({
+    where: { id: existing.id },
+    data: {
+      ...(data.symbolGroupId ? { symbolGroupId: data.symbolGroupId } : {}),
+      ...(data.lifecycleStatus ? { lifecycleStatus: data.lifecycleStatus } : {}),
+      ...(data.executionOrder !== undefined ? { executionOrder: data.executionOrder } : {}),
+      ...(data.isEnabled !== undefined ? { isEnabled: data.isEnabled } : {}),
+    },
+  });
+};
+
+export const deleteBotMarketGroup = async (userId: string, botId: string, marketGroupId: string) => {
+  const existing = await getBotMarketGroup(userId, botId, marketGroupId);
+  if (!existing) return false;
+
+  await prisma.botMarketGroup.delete({
     where: { id: existing.id },
   });
 

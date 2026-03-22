@@ -32,6 +32,8 @@ describe('Bots module contract', () => {
     await prisma.order.deleteMany();
     await prisma.position.deleteMany();
     await prisma.signal.deleteMany();
+    await prisma.marketGroupStrategyLink.deleteMany();
+    await prisma.botMarketGroup.deleteMany();
     await prisma.botStrategy.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
@@ -239,5 +241,73 @@ describe('Bots module contract', () => {
       orderBy: { createdAt: 'desc' },
     });
     expect((updatedLog.metadata as { consentTextVersion?: string } | null)?.consentTextVersion).toBe('mvp-v2');
+  });
+
+  it('supports market-group CRUD under bot with ownership isolation', async () => {
+    const owner = await registerAndLogin('bot-groups-owner@example.com');
+    const other = await registerAndLogin('bot-groups-other@example.com');
+
+    const botRes = await owner.post('/dashboard/bots').send(createPayload());
+    expect(botRes.status).toBe(201);
+    const botId = botRes.body.id as string;
+
+    const marketUniverse = await prisma.marketUniverse.create({
+      data: {
+        userId: botRes.body.userId as string,
+        name: 'Owner Futures Universe',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        whitelist: [],
+        blacklist: [],
+      },
+    });
+    const symbolGroup = await prisma.symbolGroup.create({
+      data: {
+        userId: botRes.body.userId as string,
+        marketUniverseId: marketUniverse.id,
+        name: 'Owner Futures Group',
+        symbols: ['BTCUSDT', 'ETHUSDT'],
+      },
+    });
+
+    const createGroupRes = await owner.post(`/dashboard/bots/${botId}/market-groups`).send({
+      symbolGroupId: symbolGroup.id,
+      lifecycleStatus: 'ACTIVE',
+      executionOrder: 10,
+      isEnabled: true,
+    });
+    expect(createGroupRes.status).toBe(201);
+    expect(createGroupRes.body.botId).toBe(botId);
+    expect(createGroupRes.body.symbolGroupId).toBe(symbolGroup.id);
+    const groupId = createGroupRes.body.id as string;
+
+    const listRes = await owner.get(`/dashboard/bots/${botId}/market-groups`);
+    expect(listRes.status).toBe(200);
+    expect(Array.isArray(listRes.body)).toBe(true);
+    expect(listRes.body).toHaveLength(1);
+    expect(listRes.body[0].id).toBe(groupId);
+
+    const getRes = await owner.get(`/dashboard/bots/${botId}/market-groups/${groupId}`);
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.id).toBe(groupId);
+
+    const updateRes = await owner.put(`/dashboard/bots/${botId}/market-groups/${groupId}`).send({
+      lifecycleStatus: 'PAUSED',
+      executionOrder: 20,
+      isEnabled: false,
+    });
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.lifecycleStatus).toBe('PAUSED');
+    expect(updateRes.body.executionOrder).toBe(20);
+    expect(updateRes.body.isEnabled).toBe(false);
+
+    const otherGetRes = await other.get(`/dashboard/bots/${botId}/market-groups/${groupId}`);
+    expect(otherGetRes.status).toBe(404);
+
+    const otherDeleteRes = await other.delete(`/dashboard/bots/${botId}/market-groups/${groupId}`);
+    expect(otherDeleteRes.status).toBe(404);
+
+    const deleteRes = await owner.delete(`/dashboard/bots/${botId}/market-groups/${groupId}`);
+    expect(deleteRes.status).toBe(204);
   });
 });
