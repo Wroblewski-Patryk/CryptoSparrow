@@ -11,14 +11,28 @@ import { orchestrateRuntimeSignal } from './executionOrchestrator.service';
 import { runtimePositionAutomationService } from './runtimePositionAutomation.service';
 import { upsertRuntimeTicker } from './runtimeTickerStore';
 
+type ActiveBotStrategy = {
+  strategyId: string;
+  strategyInterval: string | null;
+  strategyConfig: Record<string, unknown> | null;
+  priority: number;
+  weight: number;
+};
+
+type ActiveBotMarketGroup = {
+  id: string;
+  symbolGroupId: string;
+  executionOrder: number;
+  symbols: string[];
+  strategies: ActiveBotStrategy[];
+};
+
 type ActiveBot = {
   id: string;
   userId: string;
   mode: 'PAPER' | 'LIVE';
   marketType: 'FUTURES' | 'SPOT';
-  strategyId: string | null;
-  strategyInterval: string | null;
-  strategyConfig: Record<string, unknown> | null;
+  marketGroups: ActiveBotMarketGroup[];
 };
 
 type RuntimeSignalLoopDeps = {
@@ -75,12 +89,44 @@ const defaultDeps: RuntimeSignalLoopDeps = {
         userId: true,
         mode: true,
         marketType: true,
+        botMarketGroups: {
+          where: {
+            isEnabled: true,
+            lifecycleStatus: { in: ['ACTIVE', 'PAUSED'] },
+          },
+          include: {
+            symbolGroup: {
+              select: {
+                id: true,
+                symbols: true,
+              },
+            },
+            strategyLinks: {
+              where: { isEnabled: true },
+              orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
+              include: {
+                strategy: {
+                  select: {
+                    interval: true,
+                    config: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: [{ executionOrder: 'asc' }, { createdAt: 'asc' }],
+        },
         botStrategies: {
           where: { isEnabled: true },
           orderBy: { createdAt: 'desc' },
-          take: 1,
           select: {
+            symbolGroupId: true,
             strategyId: true,
+            symbolGroup: {
+              select: {
+                symbols: true,
+              },
+            },
             strategy: {
               select: {
                 interval: true,
@@ -91,15 +137,54 @@ const defaultDeps: RuntimeSignalLoopDeps = {
         },
       },
     });
-    return bots.map((bot) => ({
-      id: bot.id,
-      userId: bot.userId,
-      mode: bot.mode as 'PAPER' | 'LIVE',
-      marketType: bot.marketType,
-      strategyId: bot.botStrategies[0]?.strategyId ?? null,
-      strategyInterval: bot.botStrategies[0]?.strategy.interval ?? null,
-      strategyConfig: (bot.botStrategies[0]?.strategy.config as Record<string, unknown> | undefined) ?? null,
-    }));
+    return bots.map((bot) => {
+      const marketGroupsFromNewModel: ActiveBotMarketGroup[] = bot.botMarketGroups.map((group) => ({
+        id: group.id,
+        symbolGroupId: group.symbolGroupId,
+        executionOrder: group.executionOrder,
+        symbols: group.symbolGroup.symbols ?? [],
+        strategies: group.strategyLinks.map((link) => ({
+          strategyId: link.strategyId,
+          strategyInterval: link.strategy.interval,
+          strategyConfig: (link.strategy.config as Record<string, unknown> | undefined) ?? null,
+          priority: link.priority,
+          weight: link.weight,
+        })),
+      }));
+
+      const marketGroupsFromLegacyModel: ActiveBotMarketGroup[] = bot.botStrategies.map((item) => ({
+        id: `legacy:${item.symbolGroupId}`,
+        symbolGroupId: item.symbolGroupId,
+        executionOrder: 10_000,
+        symbols: item.symbolGroup.symbols ?? [],
+        strategies: [
+          {
+            strategyId: item.strategyId,
+            strategyInterval: item.strategy.interval,
+            strategyConfig: (item.strategy.config as Record<string, unknown> | undefined) ?? null,
+            priority: 100,
+            weight: 1,
+          },
+        ],
+      }));
+
+      const dedupBySymbolGroup = new Map<string, ActiveBotMarketGroup>();
+      for (const group of [...marketGroupsFromNewModel, ...marketGroupsFromLegacyModel]) {
+        if (!dedupBySymbolGroup.has(group.symbolGroupId)) {
+          dedupBySymbolGroup.set(group.symbolGroupId, group);
+        }
+      }
+
+      return {
+        id: bot.id,
+        userId: bot.userId,
+        mode: bot.mode as 'PAPER' | 'LIVE',
+        marketType: bot.marketType,
+        marketGroups: [...dedupBySymbolGroup.values()].sort(
+          (left, right) => left.executionOrder - right.executionOrder
+        ),
+      };
+    });
   },
   listRuntimeManagedExternalPositions: async () => {
     const positions = await prisma.position.findMany({
@@ -348,11 +433,12 @@ export class RuntimeSignalLoop {
 
   private directionFromStrategy(
     event: StreamTickerEvent,
-    bot: ActiveBot
+    marketType: 'FUTURES' | 'SPOT',
+    strategy: ActiveBotStrategy
   ): SignalDirection | null {
-    if (!bot.strategyConfig) return null;
+    if (!strategy.strategyConfig) return null;
 
-    const config = bot.strategyConfig as {
+    const config = strategy.strategyConfig as {
       open?: {
         indicatorsLong?: unknown[];
         indicatorsShort?: unknown[];
@@ -381,7 +467,7 @@ export class RuntimeSignalLoop {
       .map(toIndicator)
       .filter((item): item is StrategyIndicator => Boolean(item));
 
-    const candles = this.getSeries(event.marketType, event.symbol, bot.strategyInterval);
+    const candles = this.getSeries(marketType, event.symbol, strategy.strategyInterval);
     if (!candles || candles.length === 0) return null;
 
     const longSignal = this.evaluateIndicators(longIndicators, candles);
@@ -401,64 +487,76 @@ export class RuntimeSignalLoop {
     await Promise.all(
       bots.map(async (bot) => {
         if (bot.marketType !== event.marketType) return;
-        const direction =
-          bot.strategyId && bot.strategyConfig
-            ? this.directionFromStrategy(event, bot)
-            : toDirection(event);
-        if (!direction) return;
 
-        const dedupeKey = `${bot.id}|${event.symbol}`;
-        const now = this.deps.nowMs();
-        const previous = this.recentlyProcessed.get(dedupeKey);
-        if (
-          previous &&
-          previous.direction === direction &&
-          now - previous.at < runtimeDirectionCooldownMs
-        ) {
-          return;
-        }
-        this.recentlyProcessed.set(dedupeKey, { direction, at: now });
-
-        if (direction === 'LONG' || direction === 'SHORT') {
-          const preTradeDecision = await this.deps.analyzePreTradeFn({
-            userId: bot.userId,
-            botId: bot.id,
-            symbol: event.symbol,
-            mode: bot.mode,
-            marketType: event.marketType,
-          });
-          if (!preTradeDecision.allowed) {
-            return;
-          }
-        }
-
-        await this.deps.createSignal({
-          userId: bot.userId,
-          botId: bot.id,
-          strategyId: bot.strategyId ?? undefined,
-          symbol: event.symbol,
-          direction,
-          confidence: Math.min(1, Math.abs(event.priceChangePercent24h) / 100),
-          payload: {
-            source: 'market_stream.ticker',
-            strategyDriven: Boolean(bot.strategyId),
-            strategyInterval: bot.strategyInterval,
-            eventTime: event.eventTime,
-            lastPrice: event.lastPrice,
-            priceChangePercent24h: event.priceChangePercent24h,
-          },
+        const eligibleGroups = bot.marketGroups.filter((group) => {
+          if (group.symbols.length === 0) return true;
+          return group.symbols.some((symbol) => symbol.toUpperCase() === event.symbol.toUpperCase());
         });
 
-        await this.deps.orchestrateFn({
-          userId: bot.userId,
-          botId: bot.id,
-          symbol: event.symbol,
-          direction,
-          strategyId: bot.strategyId ?? undefined,
-          quantity: runtimeSignalQuantity,
-          markPrice: event.lastPrice,
-          mode: bot.mode,
-        });
+        await Promise.all(
+          eligibleGroups.map(async (group) => {
+            const primaryStrategy = group.strategies[0] ?? null;
+            const direction = primaryStrategy
+              ? this.directionFromStrategy(event, bot.marketType, primaryStrategy)
+              : toDirection(event);
+            if (!direction) return;
+
+            const dedupeKey = `${bot.id}|${group.id}|${event.symbol}`;
+            const now = this.deps.nowMs();
+            const previous = this.recentlyProcessed.get(dedupeKey);
+            if (
+              previous &&
+              previous.direction === direction &&
+              now - previous.at < runtimeDirectionCooldownMs
+            ) {
+              return;
+            }
+            this.recentlyProcessed.set(dedupeKey, { direction, at: now });
+
+            if (direction === 'LONG' || direction === 'SHORT') {
+              const preTradeDecision = await this.deps.analyzePreTradeFn({
+                userId: bot.userId,
+                botId: bot.id,
+                symbol: event.symbol,
+                mode: bot.mode,
+                marketType: event.marketType,
+              });
+              if (!preTradeDecision.allowed) {
+                return;
+              }
+            }
+
+            await this.deps.createSignal({
+              userId: bot.userId,
+              botId: bot.id,
+              strategyId: primaryStrategy?.strategyId ?? undefined,
+              symbol: event.symbol,
+              direction,
+              confidence: Math.min(1, Math.abs(event.priceChangePercent24h) / 100),
+              payload: {
+                source: 'market_stream.ticker',
+                botMarketGroupId: group.id,
+                symbolGroupId: group.symbolGroupId,
+                strategyDriven: Boolean(primaryStrategy?.strategyId),
+                strategyInterval: primaryStrategy?.strategyInterval ?? null,
+                eventTime: event.eventTime,
+                lastPrice: event.lastPrice,
+                priceChangePercent24h: event.priceChangePercent24h,
+              },
+            });
+
+            await this.deps.orchestrateFn({
+              userId: bot.userId,
+              botId: bot.id,
+              symbol: event.symbol,
+              direction,
+              strategyId: primaryStrategy?.strategyId ?? undefined,
+              quantity: runtimeSignalQuantity,
+              markPrice: event.lastPrice,
+              mode: bot.mode,
+            });
+          })
+        );
       })
     );
 

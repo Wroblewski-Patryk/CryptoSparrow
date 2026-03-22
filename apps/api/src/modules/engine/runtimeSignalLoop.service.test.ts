@@ -16,9 +16,15 @@ const createDeps = () => {
         userId: 'user-1',
         mode: 'PAPER' as const,
         marketType: 'FUTURES' as const,
-        strategyId: null,
-        strategyInterval: null,
-        strategyConfig: null,
+        marketGroups: [
+          {
+            id: 'group-1',
+            symbolGroupId: 'symbol-group-1',
+            executionOrder: 1,
+            symbols: [],
+            strategies: [],
+          },
+        ],
       },
     ]),
     listRuntimeManagedExternalPositions: vi.fn(async () => []),
@@ -176,9 +182,15 @@ describe('RuntimeSignalLoop', () => {
         userId: 'user-1',
         mode: 'PAPER' as const,
         marketType: 'SPOT' as const,
-        strategyId: null,
-        strategyInterval: null,
-        strategyConfig: null,
+        marketGroups: [
+          {
+            id: 'group-spot-1',
+            symbolGroupId: 'symbol-group-spot-1',
+            executionOrder: 1,
+            symbols: [],
+            strategies: [],
+          },
+        ],
       },
     ]);
     const loop = new RuntimeSignalLoop(deps);
@@ -206,17 +218,31 @@ describe('RuntimeSignalLoop', () => {
         userId: 'user-1',
         mode: 'PAPER' as const,
         marketType: 'FUTURES' as const,
-        strategyId: 'strategy-1',
-        strategyInterval: '1m',
-        strategyConfig: {
-          open: {
-            indicatorsLong: [
-              { name: 'EMA', params: { fast: 3, slow: 5 }, condition: '>' },
-              { name: 'RSI', params: { period: 3 }, condition: '>', value: 50 },
+        marketGroups: [
+          {
+            id: 'group-strategy-1',
+            symbolGroupId: 'symbol-group-strategy-1',
+            executionOrder: 1,
+            symbols: ['BTCUSDT'],
+            strategies: [
+              {
+                strategyId: 'strategy-1',
+                strategyInterval: '1m',
+                strategyConfig: {
+                  open: {
+                    indicatorsLong: [
+                      { name: 'EMA', params: { fast: 3, slow: 5 }, condition: '>' },
+                      { name: 'RSI', params: { period: 3 }, condition: '>', value: 50 },
+                    ],
+                    indicatorsShort: [],
+                  },
+                },
+                priority: 10,
+                weight: 1,
+              },
             ],
-            indicatorsShort: [],
           },
-        },
+        ],
       },
     ]);
 
