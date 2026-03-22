@@ -21,6 +21,7 @@ const createDeps = () => {
             id: 'group-1',
             symbolGroupId: 'symbol-group-1',
             executionOrder: 1,
+            maxOpenPositions: 1,
             symbols: [],
             strategies: [],
           },
@@ -28,6 +29,7 @@ const createDeps = () => {
       },
     ]),
     listRuntimeManagedExternalPositions: vi.fn(async () => []),
+    countOpenPositionsForBotAndSymbols: vi.fn(async () => 0),
     createSignal: vi.fn(async () => undefined),
     analyzePreTradeFn: vi.fn(async () => ({
       allowed: true,
@@ -110,6 +112,26 @@ describe('RuntimeSignalLoop', () => {
     expect(deps.orchestrateFn).not.toHaveBeenCalled();
   });
 
+  it('skips signal/orchestration when market-group maxOpenPositions is reached', async () => {
+    const { deps, emit } = createDeps();
+    deps.countOpenPositionsForBotAndSymbols = vi.fn(async () => 1);
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    await emit({
+      type: 'ticker',
+      marketType: 'FUTURES',
+      symbol: 'ETHUSDT',
+      eventTime: 2_500,
+      lastPrice: 3000,
+      priceChangePercent24h: 1.2,
+    });
+
+    expect(deps.analyzePreTradeFn).not.toHaveBeenCalled();
+    expect(deps.createSignal).not.toHaveBeenCalled();
+    expect(deps.orchestrateFn).not.toHaveBeenCalled();
+  });
+
   it('deduplicates repeated direction in cooldown window', async () => {
     const { deps, emit } = createDeps();
     const loop = new RuntimeSignalLoop(deps);
@@ -187,6 +209,7 @@ describe('RuntimeSignalLoop', () => {
             id: 'group-spot-1',
             symbolGroupId: 'symbol-group-spot-1',
             executionOrder: 1,
+            maxOpenPositions: 1,
             symbols: [],
             strategies: [],
           },
@@ -223,6 +246,7 @@ describe('RuntimeSignalLoop', () => {
             id: 'group-strategy-1',
             symbolGroupId: 'symbol-group-strategy-1',
             executionOrder: 1,
+            maxOpenPositions: 1,
             symbols: ['BTCUSDT'],
             strategies: [
               {
@@ -298,6 +322,7 @@ describe('RuntimeSignalLoop', () => {
             id: 'group-merge-1',
             symbolGroupId: 'symbol-group-merge-1',
             executionOrder: 1,
+            maxOpenPositions: 1,
             symbols: ['BTCUSDT'],
             strategies: [
               {

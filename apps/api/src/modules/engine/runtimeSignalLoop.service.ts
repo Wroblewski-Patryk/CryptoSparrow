@@ -23,6 +23,7 @@ type ActiveBotMarketGroup = {
   id: string;
   symbolGroupId: string;
   executionOrder: number;
+  maxOpenPositions: number;
   symbols: string[];
   strategies: ActiveBotStrategy[];
 };
@@ -41,6 +42,11 @@ type RuntimeSignalLoopDeps = {
   ) => Promise<() => Promise<void>>;
   listActiveBots: () => Promise<ActiveBot[]>;
   listRuntimeManagedExternalPositions: () => Promise<Array<{ userId: string; symbol: string }>>;
+  countOpenPositionsForBotAndSymbols: (params: {
+    userId: string;
+    botId: string;
+    symbols: string[];
+  }) => Promise<number>;
   createSignal: (params: {
     userId: string;
     botId?: string;
@@ -64,6 +70,10 @@ const runtimeDirectionCooldownMs = Number.parseInt(process.env.RUNTIME_SIGNAL_CO
 const runtimeManualPositionMode = (process.env.RUNTIME_MANUAL_POSITION_MODE ?? 'LIVE') as 'PAPER' | 'LIVE';
 const maxCandlesPerSeries = Number.parseInt(process.env.RUNTIME_SIGNAL_CANDLE_BUFFER ?? '500', 10);
 const minDirectionalScore = Number.parseFloat(process.env.RUNTIME_SIGNAL_MIN_DIRECTIONAL_SCORE ?? '1');
+const defaultGroupMaxOpenPositions = Number.parseInt(
+  process.env.RUNTIME_GROUP_MAX_OPEN_POSITIONS_DEFAULT ?? '1',
+  10
+);
 
 type RuntimeCandle = {
   openTime: number;
@@ -156,6 +166,7 @@ const defaultDeps: RuntimeSignalLoopDeps = {
         id: group.id,
         symbolGroupId: group.symbolGroupId,
         executionOrder: group.executionOrder,
+        maxOpenPositions: group.maxOpenPositions,
         symbols: group.symbolGroup.symbols ?? [],
         strategies: group.strategyLinks.map((link) => ({
           strategyId: link.strategyId,
@@ -170,6 +181,7 @@ const defaultDeps: RuntimeSignalLoopDeps = {
         id: `legacy:${item.symbolGroupId}`,
         symbolGroupId: item.symbolGroupId,
         executionOrder: 10_000,
+        maxOpenPositions: defaultGroupMaxOpenPositions,
         symbols: item.symbolGroup.symbols ?? [],
         strategies: [
           {
@@ -217,6 +229,17 @@ const defaultDeps: RuntimeSignalLoopDeps = {
       userId: position.userId,
       symbol: position.symbol,
     }));
+  },
+  countOpenPositionsForBotAndSymbols: async ({ userId, botId, symbols }) => {
+    const normalizedSymbols = [...new Set(symbols.map((symbol) => symbol.toUpperCase()))];
+    return prisma.position.count({
+      where: {
+        userId,
+        botId,
+        status: 'OPEN',
+        ...(normalizedSymbols.length > 0 ? { symbol: { in: normalizedSymbols } } : {}),
+      },
+    });
   },
   createSignal: async (params) => {
     await prisma.signal.create({
@@ -667,6 +690,15 @@ export class RuntimeSignalLoop {
             this.recentlyProcessed.set(dedupeKey, { direction, at: now });
 
             if (direction === 'LONG' || direction === 'SHORT') {
+              const openPositionsInGroup = await this.deps.countOpenPositionsForBotAndSymbols({
+                userId: bot.userId,
+                botId: bot.id,
+                symbols: group.symbols,
+              });
+              if (openPositionsInGroup >= group.maxOpenPositions) {
+                return;
+              }
+
               const preTradeDecision = await this.deps.analyzePreTradeFn({
                 userId: bot.userId,
                 botId: bot.id,
@@ -693,6 +725,9 @@ export class RuntimeSignalLoop {
                 strategyDriven: group.strategies.length > 0,
                 strategyInterval: group.strategies[0]?.strategyInterval ?? null,
                 merge: merged.metadata,
+                groupRisk: {
+                  maxOpenPositions: group.maxOpenPositions,
+                },
                 eventTime: event.eventTime,
                 lastPrice: event.lastPrice,
                 priceChangePercent24h: event.priceChangePercent24h,

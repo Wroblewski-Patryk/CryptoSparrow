@@ -206,6 +206,7 @@ model BotMarketGroup {
 
   lifecycleStatus   BotMarketGroupStatus    @default(ACTIVE)
   executionOrder    Int                     @default(100)
+  maxOpenPositions  Int                     @default(1)
   isEnabled         Boolean                 @default(true)
 
   createdAt         DateTime                @default(now())

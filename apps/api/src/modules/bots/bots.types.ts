@@ -34,6 +34,7 @@ export const CreateBotMarketGroupSchema = z.object({
   symbolGroupId: z.string().uuid(),
   lifecycleStatus: BotMarketGroupStatusSchema.default('ACTIVE'),
   executionOrder: z.number().int().min(0).max(10_000).default(100),
+  maxOpenPositions: z.number().int().min(1).max(1000).default(1),
   isEnabled: z.boolean().default(true),
 });
 
@@ -41,6 +42,7 @@ export const UpdateBotMarketGroupSchema = z.object({
   symbolGroupId: z.string().uuid().optional(),
   lifecycleStatus: BotMarketGroupStatusSchema.optional(),
   executionOrder: z.number().int().min(0).max(10_000).optional(),
+  maxOpenPositions: z.number().int().min(1).max(1000).optional(),
   isEnabled: z.boolean().optional(),
 });
 

@@ -407,6 +407,7 @@ export const createBotMarketGroup = async (
       symbolGroupId: data.symbolGroupId,
       lifecycleStatus: data.lifecycleStatus,
       executionOrder: data.executionOrder,
+      maxOpenPositions: data.maxOpenPositions,
       isEnabled: data.isEnabled,
     },
   });
@@ -431,6 +432,7 @@ export const updateBotMarketGroup = async (
       ...(data.symbolGroupId ? { symbolGroupId: data.symbolGroupId } : {}),
       ...(data.lifecycleStatus ? { lifecycleStatus: data.lifecycleStatus } : {}),
       ...(data.executionOrder !== undefined ? { executionOrder: data.executionOrder } : {}),
+      ...(data.maxOpenPositions !== undefined ? { maxOpenPositions: data.maxOpenPositions } : {}),
       ...(data.isEnabled !== undefined ? { isEnabled: data.isEnabled } : {}),
     },
   });
