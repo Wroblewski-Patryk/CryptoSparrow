@@ -103,4 +103,22 @@ describe('POST /auth/register', () => {
     const setCookie = res.headers['set-cookie']?.[0] ?? '';
     expect(setCookie).toContain(`Max-Age=${Math.floor(REMEMBER_ME_TTL_MS / 1000)}`);
   });
+
+  it('clears session and returns 401 on /auth/me when user was deleted', async () => {
+    const agent = request.agent(app);
+    const email = 'deleted-session@example.com';
+    const password = 'test1234';
+
+    const registerRes = await agent.post('/auth/register').send({ email, password });
+    expect(registerRes.status).toBe(201);
+
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+    await prisma.user.delete({ where: { id: user.id } });
+
+    const meRes = await agent.get('/auth/me');
+    expect(meRes.status).toBe(401);
+    expect(meRes.body.error.message).toBe('Session expired. Please sign in again.');
+    const clearedCookie = meRes.headers['set-cookie']?.[0] ?? '';
+    expect(clearedCookie).toContain('token=');
+  });
 });

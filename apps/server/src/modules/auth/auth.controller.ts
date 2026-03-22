@@ -3,6 +3,7 @@ import { registerUser, loginUser } from './auth.service';
 import { RegisterSchema, LoginSchema } from './auth.types';
 import { sendValidationError } from '../../utils/formatZodError';
 import { sendError } from '../../utils/apiError';
+import { prisma } from '../../prisma/client';
 import {
   getSessionJwtExpiresIn,
   getSessionTtlMs,
@@ -75,17 +76,39 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const me = async (req: Request, res: Response) => {
+  const clearSession = () => {
+    res.clearCookie('token', { path: '/' });
+  };
+
   try {
     const token = req.cookies.token;
-    if (!token) return sendError(res, 401, 'Missing token');
+    if (!token) {
+      clearSession();
+      return sendError(res, 401, 'Missing token');
+    }
 
     const payload = verifyAuthToken(token);
+    let user: { id: string; email: string } | null = null;
+    try {
+      user = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        select: { id: true, email: true },
+      });
+    } catch {
+      return sendError(res, 503, 'Auth service temporarily unavailable');
+    }
+
+    if (!user) {
+      clearSession();
+      return sendError(res, 401, 'Session expired. Please sign in again.');
+    }
 
     return res.status(200).json({
-      id: payload.userId,
-      email: payload.email,
+      id: user.id,
+      email: user.email,
     });
   } catch {
+    clearSession();
     return sendError(res, 401, 'Invalid token');
   }
 };

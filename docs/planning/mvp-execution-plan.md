@@ -189,8 +189,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `audit(routing): create canonical route map and remove dashboard path inconsistencies (including legacy aliases)`
 - [x] `refactor(ia-profile): merge API keys and exchange connections under one settings domain model`
 - [x] `fix(ui-profile): remove isometric mode toggle from current dashboard account menu (defer to V2 gamification)`
-- [ ] `fix(auth-session): force deterministic auto-logout on invalid auth/session or deleted-user state`
-- [ ] `fix(auth-resilience): handle API/DB-unavailable startup in auth context without stale logged-in UI state`
+- [x] `fix(auth-session): force deterministic auto-logout on invalid auth/session or deleted-user state`
+- [x] `fix(auth-resilience): handle API/DB-unavailable startup in auth context without stale logged-in UI state`
 - [ ] `feat(auth-ui): add password visibility toggle to login/register with keyboard and screen-reader support`
 - [ ] `docs(repo-structure): define staged migration from apps/client+apps/server to apps/web+apps/api and add apps/mobile bootstrap plan`
 - [ ] `docs(parity): define mobile parity contract versus web dashboard scope for MVP/V1`
@@ -421,6 +421,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Enforced LIVE order contract to use real exchange execution side effects (non-test), persisted `exchangeOrderId`/status mapping, added controller error mapping, and covered LIVE/PAPER behavior with orders service tests.
 - 2026-03-22: Secured operational endpoints (`/metrics`, `/alerts`, `/workers/*`) with combined auth + ADMIN role + network guardrail middleware, and updated router contract tests for 401/403 and allowed admin-access paths.
 - 2026-03-22: Refactored rate-limit keying from IP-centric to identity-aware scopes (`auth`, `user`, `user_exchange`), updated auth/api-key limiter bindings, and added middleware identity-resolution tests.
+- 2026-03-22: Hardened auth session recovery by validating `/auth/me` against DB existence, clearing stale token cookies on invalid/deleted sessions, and returning 503 for temporary auth DB lookup failures.
 
 
 

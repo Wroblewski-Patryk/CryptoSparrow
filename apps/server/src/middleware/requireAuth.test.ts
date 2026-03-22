@@ -1,8 +1,9 @@
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { app } from '../index';
 import { prisma } from '../prisma/client';
+import * as authJwt from '../modules/auth/auth.jwt';
 
 const originalJwtSecret = process.env.JWT_SECRET;
 const originalJwtSecretPrevious = process.env.JWT_SECRET_PREVIOUS;
@@ -70,5 +71,23 @@ describe('requireAuth middleware', () => {
     const res = await request(app).get('/dashboard').set('Cookie', [`token=${token}`]);
     expect(res.status).toBe(401);
     expect(res.body.error.message).toBe('Invalid token');
+  });
+
+  it('returns 503 when auth user lookup is temporarily unavailable', async () => {
+    const verifySpy = vi.spyOn(authJwt, 'verifyAuthToken').mockReturnValue({
+      userId: 'db-down-user',
+      email: 'db-down@example.com',
+      role: 'USER',
+      iat: 0,
+      exp: 0,
+      aud: 'cryptosparrow-app',
+      iss: 'cryptosparrow',
+    });
+    const findUniqueSpy = vi.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('db unavailable'));
+    const res = await request(app).get('/dashboard').set('Cookie', ['token=test-token']);
+    expect(res.status).toBe(503);
+    expect(res.body.error.message).toBe('Auth service temporarily unavailable');
+    findUniqueSpy.mockRestore();
+    verifySpy.mockRestore();
   });
 });
