@@ -87,6 +87,21 @@ const clampConfidence = (value: number) => {
   return value;
 };
 
+type CircuitState = {
+  failures: number;
+  openedAt: number | null;
+};
+
+const assistantCircuitByBot = new Map<string, CircuitState>();
+const assistantCircuitFailureThreshold = Number.parseInt(
+  process.env.ASSISTANT_CIRCUIT_FAILURE_THRESHOLD ?? '3',
+  10
+);
+const assistantCircuitResetMs = Number.parseInt(
+  process.env.ASSISTANT_CIRCUIT_RESET_MS ?? '60000',
+  10
+);
+
 const defaultMainPlanner: AssistantMainPlannerGateway = {
   async createPlan(input) {
     return {
@@ -173,6 +188,27 @@ export const orchestrateAssistantDecision = async (
     nowMs: () => Date.now(),
   }
 ) => {
+  const circuit = assistantCircuitByBot.get(input.botId) ?? { failures: 0, openedAt: null };
+  if (circuit.openedAt && deps.nowMs() - circuit.openedAt < assistantCircuitResetMs) {
+    const trace: AssistantOrchestrationTrace = {
+      requestId: input.requestId,
+      botId: input.botId,
+      botMarketGroupId: input.botMarketGroupId,
+      symbol: input.symbol,
+      mode: 'strategy_only',
+      statuses: [],
+      outputs: [],
+      finalDecision: 'NO_TRADE',
+      finalReason: 'assistant_circuit_open',
+    };
+    await deps.traceWriter.write(trace);
+    return trace;
+  }
+
+  if (circuit.openedAt && deps.nowMs() - circuit.openedAt >= assistantCircuitResetMs) {
+    assistantCircuitByBot.set(input.botId, { failures: 0, openedAt: null });
+  }
+
   const enabledSubagents = input.subagents.filter((slot) => slot.enabled);
   if (enabledSubagents.length === 0) {
     const trace: AssistantOrchestrationTrace = {
@@ -194,6 +230,12 @@ export const orchestrateAssistantDecision = async (
   try {
     plan = await deps.planner.createPlan(input);
   } catch {
+    const failed = assistantCircuitByBot.get(input.botId) ?? { failures: 0, openedAt: null };
+    const nextFailures = failed.failures + 1;
+    assistantCircuitByBot.set(input.botId, {
+      failures: nextFailures,
+      openedAt: nextFailures >= assistantCircuitFailureThreshold ? deps.nowMs() : null,
+    });
     const trace: AssistantOrchestrationTrace = {
       requestId: input.requestId,
       botId: input.botId,
@@ -288,6 +330,7 @@ export const orchestrateAssistantDecision = async (
     finalReason: merged.reason,
   };
 
+  assistantCircuitByBot.set(input.botId, { failures: 0, openedAt: null });
   await deps.traceWriter.write(trace);
   return trace;
 };

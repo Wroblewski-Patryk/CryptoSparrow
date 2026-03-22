@@ -121,4 +121,91 @@ describe('orchestrateAssistantDecision', () => {
     expect(JSON.stringify(captured[0])).not.toContain('\u0000');
     expect(JSON.stringify(captured[0])).toContain('exit now');
   });
+
+  it('opens circuit breaker after repeated planner failures and degrades to strategy_only', async () => {
+    const input = {
+      ...baseInput,
+      requestId: 'req-cb-1',
+      botId: 'bot-circuit-1',
+    };
+    const planner = {
+      createPlan: vi.fn(async () => {
+        throw new Error('planner_down');
+      }),
+    };
+    const traceWriter = { write: vi.fn(async () => undefined) };
+
+    let now = 0;
+    const nowMs = () => {
+      now += 100;
+      return now;
+    };
+
+    const first = await orchestrateAssistantDecision(input, {
+      planner,
+      subagentGateway: {
+        runStep: vi.fn(async () => ({
+          proposal: 'LONG',
+          confidence: 1,
+          rationale: 'n/a',
+        })),
+      },
+      traceWriter,
+      nowMs,
+    });
+
+    const second = await orchestrateAssistantDecision(
+      { ...input, requestId: 'req-cb-2' },
+      {
+        planner,
+        subagentGateway: {
+          runStep: vi.fn(async () => ({
+            proposal: 'LONG',
+            confidence: 1,
+            rationale: 'n/a',
+          })),
+        },
+        traceWriter,
+        nowMs,
+      }
+    );
+
+    const third = await orchestrateAssistantDecision(
+      { ...input, requestId: 'req-cb-3' },
+      {
+        planner,
+        subagentGateway: {
+          runStep: vi.fn(async () => ({
+            proposal: 'LONG',
+            confidence: 1,
+            rationale: 'n/a',
+          })),
+        },
+        traceWriter,
+        nowMs,
+      }
+    );
+
+    const fourth = await orchestrateAssistantDecision(
+      { ...input, requestId: 'req-cb-4' },
+      {
+        planner,
+        subagentGateway: {
+          runStep: vi.fn(async () => ({
+            proposal: 'LONG',
+            confidence: 1,
+            rationale: 'n/a',
+          })),
+        },
+        traceWriter,
+        nowMs,
+      }
+    );
+
+    expect(first.finalReason).toBe('main_planner_failed_fail_closed');
+    expect(second.finalReason).toBe('main_planner_failed_fail_closed');
+    expect(third.finalReason).toBe('main_planner_failed_fail_closed');
+    expect(fourth.finalReason).toBe('assistant_circuit_open');
+    expect(fourth.mode).toBe('strategy_only');
+  });
 });
