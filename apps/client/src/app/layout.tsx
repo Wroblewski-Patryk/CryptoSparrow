@@ -2,7 +2,7 @@ import './globals.css';
 
 import type { Metadata, Viewport } from "next";
 import { ReactNode } from 'react';
-import { Titillium_Web } from 'next/font/google';
+import { Lato, Titillium_Web } from 'next/font/google';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '../context/AuthContext';
 import ServiceWorkerRegistration from '../ui/pwa/ServiceWorkerRegistration';
@@ -11,6 +11,14 @@ const titilliumWeb = Titillium_Web({
   subsets: ['latin'],
   weight: ['300', '400', '600', '700'],
   display: 'swap',
+  variable: '--font-heading',
+});
+
+const lato = Lato({
+  subsets: ['latin'],
+  weight: ['300', '400', '700'],
+  display: 'swap',
+  variable: '--font-body',
 });
 
 export const metadata: Metadata = {
@@ -43,11 +51,31 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en">
+    <html lang="pl" data-theme="cryptosparrow" suppressHydrationWarning>
       <head>
         <meta charSet="UTF-8" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (() => {
+                const fallback = 'cryptosparrow';
+                const normalize = (value) => {
+                  if (!value || value === 'default') return fallback;
+                  if (value === 'luxury') return 'night';
+                  return value;
+                };
+                const stored = normalize(localStorage.getItem('themePreference') || localStorage.getItem('theme'));
+                const preference = stored || fallback;
+                const resolved = preference === 'system'
+                  ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'light')
+                  : preference;
+                document.documentElement.setAttribute('data-theme', resolved);
+              })();
+            `,
+          }}
+        />
       </head>
-      <body className={titilliumWeb.className}>
+      <body className={`${lato.variable} ${titilliumWeb.variable} font-body`}>
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>

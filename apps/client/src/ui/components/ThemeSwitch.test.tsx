@@ -7,8 +7,10 @@ describe('ThemeSwitcher', () => {
     render(<ThemeSwitcher />);
 
     expect(screen.getByLabelText('Theme selector')).toBeInTheDocument();
-    expect(screen.getByLabelText('Default')).toBeInTheDocument();
+    expect(screen.getByLabelText('CryptoSparrow')).toBeInTheDocument();
+    expect(screen.getByLabelText('System')).toBeInTheDocument();
     expect(screen.getByLabelText('Cyberpunk')).toBeInTheDocument();
-    expect(screen.getByLabelText('Luxury')).toBeInTheDocument();
+    expect(screen.getByLabelText('Emerald')).toBeInTheDocument();
+    expect(screen.getByLabelText('Night')).toBeInTheDocument();
   });
 });

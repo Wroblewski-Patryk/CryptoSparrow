@@ -1,0 +1,46 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1920" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E8EBFF"/>
+      <stop offset="0.48" stop-color="#F4F5FF"/>
+      <stop offset="1" stop-color="#F5EEFF"/>
+    </linearGradient>
+    <radialGradient id="violetPulse" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(430 220) rotate(40) scale(460 360)">
+      <stop stop-color="#6D4BFF" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#6D4BFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="yellowPulse" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1480 320) rotate(14) scale(410 350)">
+      <stop stop-color="#FFD84D" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#FFD84D" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#5D43FF" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#FACC15" stop-opacity="0.08"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <rect width="1920" height="1080" fill="url(#violetPulse)"/>
+  <rect width="1920" height="1080" fill="url(#yellowPulse)"/>
+
+  <g opacity="0.45">
+    <path d="M0 760L340 640L690 740L980 590L1270 670L1610 520L1920 610" stroke="url(#line)" stroke-width="3"/>
+    <path d="M0 860L250 780L610 870L950 730L1270 820L1520 690L1920 790" stroke="url(#line)" stroke-width="2"/>
+    <path d="M0 530L300 430L620 520L900 390L1220 470L1490 330L1920 420" stroke="url(#line)" stroke-width="2"/>
+  </g>
+
+  <g opacity="0.24" stroke="#6A4EFF" stroke-width="1">
+    <path d="M0 180H1920"/>
+    <path d="M0 360H1920"/>
+    <path d="M0 540H1920"/>
+    <path d="M0 720H1920"/>
+    <path d="M0 900H1920"/>
+    <path d="M240 0V1080"/>
+    <path d="M480 0V1080"/>
+    <path d="M720 0V1080"/>
+    <path d="M960 0V1080"/>
+    <path d="M1200 0V1080"/>
+    <path d="M1440 0V1080"/>
+    <path d="M1680 0V1080"/>
+  </g>
+</svg>

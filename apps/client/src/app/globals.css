@@ -1,8 +1,58 @@
 @import 'tailwindcss';
 @plugin "daisyui" {
-    themes: light --default, dark --prefersdark, cyberpunk, luxury;
+    themes: cryptosparrow --default, light, night --prefersdark, cyberpunk, emerald;
 };
+@plugin "daisyui/theme" {
+  name: "cryptosparrow";
+  default: true;
+  prefersdark: false;
+  color-scheme: "light";
+  --color-base-100: #f4f5ff;
+  --color-base-200: #e8ebff;
+  --color-base-300: #d7dcff;
+  --color-base-content: #131625;
+  --color-primary: #4f39f6;
+  --color-primary-content: #fefeff;
+  --color-secondary: #facc15;
+  --color-secondary-content: #28220c;
+  --color-accent: #7c3aed;
+  --color-accent-content: #fdfbff;
+  --color-neutral: #1f2436;
+  --color-neutral-content: #f5f7ff;
+  --color-info: #3b82f6;
+  --color-info-content: #f3f7ff;
+  --color-success: #22c55e;
+  --color-success-content: #f3fff8;
+  --color-warning: #f59e0b;
+  --color-warning-content: #251804;
+  --color-error: #ef4444;
+  --color-error-content: #fff5f5;
+  --radius-selector: 0.75rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
 @import './_variables.css';
+
+body {
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-heading {
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-body {
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+}
 
 .status-badge {
   display: inline-flex;
