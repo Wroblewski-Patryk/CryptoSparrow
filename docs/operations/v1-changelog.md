@@ -9,7 +9,9 @@
 - Added write-side order endpoints (`open`/`cancel`/`close`) with risk acknowledgment guards.
 - Wired runtime execution orchestrator (`LONG`/`SHORT`/`EXIT`) for order/position lifecycle.
 - Added runtime smoke e2e for stream-normalized signal -> order -> position flow.
-- Finalized backtest overlay/report visuals (equity curve in summary and modal views).
+- Finalized backtest overlay/report visuals with daily PnL bars + balance line in summary and market-by-market timeline overlays.
+- Added backtest timeline API (`/dashboard/backtests/runs/:id/timeline`) for chunked candles/events/indicators loading.
+- Improved backtest market overlays with position-range highlighting (profit/loss tint), RSI threshold lines, and synchronized playback cursor across panels.
 
 ### Reliability and Operations
 - Structured logging across API, workers, and exchange layers.

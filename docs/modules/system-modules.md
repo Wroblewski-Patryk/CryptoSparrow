@@ -8,7 +8,7 @@
 - bots. Bot CRUD with LIVE opt-in consent validation.
 - orders. Read and write endpoints for order history/details plus open/cancel/close actions.
 - positions. Read endpoints plus live reconciliation status exposure.
-- backtests. Backtest run/trade/report read-write basics.
+- backtests. Backtest run/trade/report plus timeline endpoint (`/dashboard/backtests/runs/:id/timeline`) with chunked candles, event overlays, and indicator series.
 - logs. Audit/event log read endpoints.
 - exchange. CCXT connector and retrying live-order adapter services.
 - market-data. OHLCV ingest/cache service abstractions.
@@ -31,7 +31,7 @@
 - dashboard/bots. Bot management and mode controls.
 - dashboard/orders. Order history and risk-first write-side actions.
 - dashboard/positions. Position views with live-status support.
-- dashboard/backtest. Backtest pages with overlays and report summary.
+- dashboard/backtest. Backtest pages with report summary, per-market timeline charts, and progressive chunk loading.
 - dashboard/logs. Audit/log pages.
 - dashboard/exchanges. API key connection pages.
 - dashboard/reports. Performance reporting views.
@@ -61,7 +61,7 @@
 - dashboard/bots. Lifecycle controls with explicit paper/live mode, heartbeat visibility, and emergency controls.
 - dashboard/orders. Searchable and filterable order history with rejection reason visibility.
 - dashboard/positions. Open and closed positions with risk parameters and PnL context.
-- dashboard/backtest. Run management, chart overlays, and trade-level result inspection.
+- dashboard/backtest. Run management, daily PnL + balance summary view, market-by-market timeline overlays (candles, indicators, entry/exit), and trade-level result inspection.
 - dashboard/reports. Performance summaries focused on PnL, drawdown, fees, and funding costs.
 - dashboard/logs. High-signal audit trail with severity, source, and actor filtering.
 - dashboard/exchanges. Connection health, permission checks, and secure API key UX.

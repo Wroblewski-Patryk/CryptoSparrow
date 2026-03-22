@@ -23,6 +23,14 @@ This guide explains how to start safely with CryptoSparrow V1.
 4. Observe at least one full market cycle.
 5. Move to `LIVE` only after stable paper behavior.
 
+## 3a. Backtest Report Reading (Markets Tab)
+- `Summary` shows daily result bars (green/red) and portfolio balance trend from start to end balance.
+- `Markets` shows per-pair charts with:
+  - candles + strategy indicators,
+  - entry/exit overlays,
+  - per-pair statistics card.
+- For large runs, market charts load timeline data progressively in chunks.
+
 ## 4. FAQ
 ### Why do I need Docker locally?
 The default local stack uses Docker for Postgres and Redis required by backend services.
