@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `audit(routing-dashboard): produce canonical route map and remove dashboard path inconsistencies (backtest/backtests, list/create aliases, menu contracts)`
 - [ ] `refactor(profile-ia): merge API keys + exchange connections into one user-settings information architecture`
 - [ ] `fix(profile-menu): remove isometric toggle from account menu (deferred to V2 gamification track)`
 
@@ -57,6 +56,7 @@ Operational queue for one-task execution runs.
 - [x] `feat(positions-ui): show position source and management mode badges plus explicit toggle action`
 - [x] `fix(ui-header-nav): center desktop nav list, simplify menu utility classes, and unify hover/active/focus color states across header controls`
 - [x] `fix(ui-language-switcher): replace incorrect EN flag styling and add visual regression coverage for locale switcher`
+- [x] `audit(routing-dashboard): produce canonical route map and remove dashboard path inconsistencies (backtest/backtests, list/create aliases, menu contracts)`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

@@ -9,6 +9,7 @@ import ThemeSwitcher from '../../components/ThemeSwitch';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useDetailsDropdown } from '../../hooks/useDetailsDropdown';
 import LanguageSwitcher from './LanguageSwitcher';
+import { dashboardLegacyAliases, dashboardRoutes, pathStartsWithAny } from './dashboardRoutes';
 
 type NavItem = {
   href: string;
@@ -101,53 +102,87 @@ export default function Header() {
         };
 
   const homeLink: NavItem = {
-    href: '/dashboard',
+    href: dashboardRoutes.home,
     label: labels.home,
   };
 
   const exchangesLinks: NavItem[] = [
-    { href: '/dashboard/exchanges', label: labels.exchangesConnections },
-    { href: '/dashboard/orders', label: t('dashboard.nav.orders') },
-    { href: '/dashboard/positions', label: t('dashboard.nav.positions') },
+    { href: dashboardRoutes.exchanges.root, label: labels.exchangesConnections },
+    { href: dashboardRoutes.exchanges.orders, label: t('dashboard.nav.orders') },
+    { href: dashboardRoutes.exchanges.positions, label: t('dashboard.nav.positions') },
   ];
 
   const marketsLinks: NavItem[] = [
-    { href: '/dashboard/markets/list', label: labels.marketList },
-    { href: '/dashboard/markets/create', label: labels.marketCreate },
+    { href: dashboardRoutes.markets.list, label: labels.marketList },
+    { href: dashboardRoutes.markets.create, label: labels.marketCreate },
   ];
 
   const strategyLinks: NavItem[] = [
-    { href: '/dashboard/strategies/list', label: labels.strategyList },
-    { href: '/dashboard/strategies/create', label: labels.strategyCreate },
+    { href: dashboardRoutes.strategies.list, label: labels.strategyList },
+    { href: dashboardRoutes.strategies.create, label: labels.strategyCreate },
   ];
 
   const backtestLinks: NavItem[] = [
-    { href: '/dashboard/backtests/list', label: labels.backtestList },
-    { href: '/dashboard/backtests/create', label: labels.backtestCreate },
+    { href: dashboardRoutes.backtests.list, label: labels.backtestList },
+    { href: dashboardRoutes.backtests.create, label: labels.backtestCreate },
   ];
 
   const botsLinks: NavItem[] = [
-    { href: '/dashboard/bots', label: t('dashboard.nav.bots') },
+    { href: dashboardRoutes.bots.root, label: t('dashboard.nav.bots') },
   ];
 
   const analyticsLinks: NavItem[] = [
-    { href: '/dashboard/reports', label: t('dashboard.nav.reports') },
-    { href: '/dashboard/logs', label: t('dashboard.nav.logs') },
+    { href: dashboardRoutes.analytics.reports, label: t('dashboard.nav.reports') },
+    { href: dashboardRoutes.analytics.logs, label: t('dashboard.nav.logs') },
   ];
 
   const groups = [
-    { id: 'exchanges', label: labels.exchangesGroup, links: exchangesLinks },
-    { id: 'markets', label: labels.marketsGroup, links: marketsLinks },
-    { id: 'strategies', label: labels.strategyGroup, links: strategyLinks },
-    { id: 'backtests', label: labels.backtestGroup, links: backtestLinks },
-    { id: 'bots', label: labels.botsGroup, links: botsLinks },
-    { id: 'analytics', label: labels.analyticsGroup, links: analyticsLinks },
+    {
+      id: 'exchanges',
+      label: labels.exchangesGroup,
+      links: exchangesLinks,
+      activePrefixes: [
+        dashboardRoutes.exchanges.root,
+        dashboardRoutes.exchanges.orders,
+        dashboardRoutes.exchanges.positions,
+      ],
+    },
+    {
+      id: 'markets',
+      label: labels.marketsGroup,
+      links: marketsLinks,
+      activePrefixes: [dashboardRoutes.markets.root],
+    },
+    {
+      id: 'strategies',
+      label: labels.strategyGroup,
+      links: strategyLinks,
+      activePrefixes: [dashboardRoutes.strategies.root, ...dashboardLegacyAliases.strategies],
+    },
+    {
+      id: 'backtests',
+      label: labels.backtestGroup,
+      links: backtestLinks,
+      activePrefixes: [dashboardRoutes.backtests.root, ...dashboardLegacyAliases.backtests],
+    },
+    {
+      id: 'bots',
+      label: labels.botsGroup,
+      links: botsLinks,
+      activePrefixes: [dashboardRoutes.bots.root],
+    },
+    {
+      id: 'analytics',
+      label: labels.analyticsGroup,
+      links: analyticsLinks,
+      activePrefixes: [dashboardRoutes.analytics.reports, dashboardRoutes.analytics.logs],
+    },
   ];
 
   const allLinks = [homeLink, ...exchangesLinks, ...marketsLinks, ...strategyLinks, ...backtestLinks, ...botsLinks, ...analyticsLinks];
 
   const isActive = (href: string) => pathname === href;
-  const isGroupActive = (links: NavItem[]) => links.some((item) => isActive(item.href));
+  const isGroupActive = (prefixes: readonly string[]) => pathStartsWithAny(pathname, prefixes);
   const homeLinkClass = isActive(homeLink.href)
     ? `${headerControlBaseClass} ${headerControlActiveClass}`
     : headerControlBaseClass;
@@ -180,7 +215,7 @@ export default function Header() {
               {groups.map((group) => (
                 <NavGroup
                   key={group.id}
-                  active={isGroupActive(group.links)}
+                  active={isGroupActive(group.activePrefixes)}
                   label={group.label}
                   links={group.links}
                   pathname={pathname}
