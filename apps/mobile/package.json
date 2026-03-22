@@ -1,0 +1,12 @@
+{
+  "name": "@cryptosparrow/mobile",
+  "version": "0.0.1",
+  "private": true,
+  "description": "CryptoSparrow mobile bootstrap scaffold (implementation deferred).",
+  "scripts": {
+    "dev": "echo \"Mobile scaffold only. Implementation deferred until web+api parity gates.\"",
+    "build": "echo \"Mobile scaffold only. Build not enabled yet.\"",
+    "test": "echo \"Mobile scaffold only. Tests not enabled yet.\""
+  }
+}
+
