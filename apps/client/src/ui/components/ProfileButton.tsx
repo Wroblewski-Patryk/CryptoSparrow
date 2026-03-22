@@ -56,13 +56,7 @@ export default function ProfileButton() {
         <li>
           <Link href="/dashboard/profile#api">
             <LuKey className="h-4 w-4" aria-hidden />
-            Klucze API
-          </Link>
-        </li>
-        <li>
-          <Link href="/dashboard/exchanges">
-            <LuSettings className="h-4 w-4" aria-hidden />
-            Polaczenia gield
+            Integracje i API keys
           </Link>
         </li>
 

@@ -2,72 +2,75 @@
 import { useEffect, useState } from "react";
 
 import BasicForm from "../components/BasicForm";
-import ApiKeysList from "../components/ApiKeysList";
 import Subscription from "../components/Subscription";
 import Security from "../components/Security";
 import { PageTitle } from "apps/client/src/ui/layout/dashboard/PageTitle";
+import ExchangeConnectionsView from "../../exchanges/components/ExchangeConnectionsView";
 
 const tabs = [
-    { label: "Profil użytkownika", key: "basic" },
-    { label: "Klucze API do giełd", key: "api" },
-    { label: "Subskrypcja", key: "subscription" },
-    { label: "Bezpieczeństwo", key: "security" },
+  { label: "Profil uzytkownika", key: "basic" },
+  { label: "Integracje i API keys", key: "api" },
+  { label: "Subskrypcja", key: "subscription" },
+  { label: "Bezpieczenstwo", key: "security" },
 ];
 
 export default function ProfilePage() {
-    const [activeTab, setActiveTab] = useState("basic");
-    useEffect(() => {
-        if (window.location.hash) {
-            const hash = window.location.hash.replace("#", "");
-            if (tabs.some(tab => tab.key === hash)) setActiveTab(hash);
-        }
+  const [activeTab, setActiveTab] = useState("basic");
 
-        const onHashChange = () => {
-            const hash = window.location.hash.replace("#", "");
-            if (tabs.some(tab => tab.key === hash)) setActiveTab(hash);
-        };
-        window.addEventListener("hashchange", onHashChange);
-        return () => window.removeEventListener("hashchange", onHashChange);
-    }, []);
-    if (!activeTab) return null;
+  useEffect(() => {
+    if (window.location.hash) {
+      const hash = window.location.hash.replace("#", "");
+      if (tabs.some((tab) => tab.key === hash)) setActiveTab(hash);
+    }
 
-    const handleTab = (key: string) => {
-        setActiveTab(key);
-        window.location.hash = key;
+    const onHashChange = () => {
+      const hash = window.location.hash.replace("#", "");
+      if (tabs.some((tab) => tab.key === hash)) setActiveTab(hash);
     };
-    return (
-        <section className="w-full">  
-            <div className="py-1">
-                <PageTitle
-                    title="Profil"
-                    breadcrumb={[
-                        { label: "Dashboard", href: "/dashboard" },
-                        { label: "Profil" },
-                    ]}
-                />
 
-                <div role="tablist" className="tabs tabs-border mb-4">
-                    {tabs.map((tab) => (
-                    <button
-                        key={tab.key}
-                        role="tab"
-                        className={`tab tab-bordered ${activeTab === tab.key ? "tab-active" : ""}`}
-                        onClick={() => handleTab(tab.key)}
-                        type="button"
-                        >
-                        {tab.label}
-                    </button>
-                    ))}
-                </div>
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
 
-                <div className="bg-base-200 rounded-xl shadow p-4">
-                    {activeTab === "basic" && <BasicForm />}
-                    {activeTab === "api" && <ApiKeysList />}
-                    {activeTab === "subscription" && <Subscription />}
-                    {activeTab === "security" && <Security />}
-                </div>
-            </div>
-        </section>
-    );
+  if (!activeTab) return null;
+
+  const handleTab = (key: string) => {
+    setActiveTab(key);
+    window.location.hash = key;
+  };
+
+  return (
+    <section className="w-full">
+      <div className="py-1">
+        <PageTitle
+          title="Profil"
+          breadcrumb={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Profil" },
+          ]}
+        />
+
+        <div role="tablist" className="tabs tabs-border mb-4">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              role="tab"
+              className={`tab tab-bordered ${activeTab === tab.key ? "tab-active" : ""}`}
+              onClick={() => handleTab(tab.key)}
+              type="button"
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="bg-base-200 rounded-xl shadow p-4">
+          {activeTab === "basic" && <BasicForm />}
+          {activeTab === "api" && <ExchangeConnectionsView />}
+          {activeTab === "subscription" && <Subscription />}
+          {activeTab === "security" && <Security />}
+        </div>
+      </div>
+    </section>
+  );
 }
-    

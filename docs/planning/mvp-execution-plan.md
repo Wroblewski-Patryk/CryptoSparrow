@@ -188,7 +188,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `fix(ui-header-nav): center desktop nav list, remove legacy visual utility clutter, and unify header hover/active/focus styles`
 - [x] `fix(ui-language-switcher): correct EN/PL flag visuals and lock language-switcher visual contract with regression tests`
 - [x] `audit(routing): create canonical route map and remove dashboard path inconsistencies (including legacy aliases)`
-- [ ] `refactor(ia-profile): merge API keys and exchange connections under one settings domain model`
+- [x] `refactor(ia-profile): merge API keys and exchange connections under one settings domain model`
 - [ ] `fix(ui-profile): remove isometric mode toggle from current dashboard account menu (defer to V2 gamification)`
 - [ ] `fix(auth-session): force deterministic auto-logout on invalid auth/session or deleted-user state`
 - [ ] `fix(auth-resilience): handle API/DB-unavailable startup in auth context without stale logged-in UI state`
@@ -399,6 +399,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Updated dashboard header desktop navigation alignment and unified nav control interaction states (hover/active/focus), with responsive regression coverage.
 - 2026-03-22: Replaced incorrect EN locale flag styling in dashboard language switcher with explicit SVG flag icons and added visual-contract regression test coverage.
 - 2026-03-22: Added canonical dashboard route map and normalized header route contracts to canonical paths while preserving alias-aware active state behavior.
+- 2026-03-22: Merged exchange connections and API key management into one profile settings domain (`#api`) and routed `/dashboard/exchanges` to unified settings entrypoint.
 
 
 
