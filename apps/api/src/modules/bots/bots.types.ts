@@ -44,8 +44,31 @@ export const UpdateBotMarketGroupSchema = z.object({
   isEnabled: z.boolean().optional(),
 });
 
+export const AttachMarketGroupStrategySchema = z.object({
+  strategyId: z.string().uuid(),
+  priority: z.number().int().min(0).max(10_000).default(100),
+  weight: z.number().min(0).max(1000).default(1),
+  isEnabled: z.boolean().default(true),
+});
+
+export const UpdateMarketGroupStrategySchema = z.object({
+  priority: z.number().int().min(0).max(10_000).optional(),
+  weight: z.number().min(0).max(1000).optional(),
+  isEnabled: z.boolean().optional(),
+});
+
+export const ReorderMarketGroupStrategiesSchema = z.object({
+  items: z.array(z.object({
+    id: z.string().uuid(),
+    priority: z.number().int().min(0).max(10_000),
+  })).min(1),
+});
+
 export type CreateBotDto = z.infer<typeof CreateBotSchema>;
 export type UpdateBotDto = z.infer<typeof UpdateBotSchema>;
 export type ListBotsQueryDto = z.infer<typeof ListBotsQuerySchema>;
 export type CreateBotMarketGroupDto = z.infer<typeof CreateBotMarketGroupSchema>;
 export type UpdateBotMarketGroupDto = z.infer<typeof UpdateBotMarketGroupSchema>;
+export type AttachMarketGroupStrategyDto = z.infer<typeof AttachMarketGroupStrategySchema>;
+export type UpdateMarketGroupStrategyDto = z.infer<typeof UpdateMarketGroupStrategySchema>;
+export type ReorderMarketGroupStrategiesDto = z.infer<typeof ReorderMarketGroupStrategiesSchema>;

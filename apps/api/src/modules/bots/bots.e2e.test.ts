@@ -310,4 +310,106 @@ describe('Bots module contract', () => {
     const deleteRes = await owner.delete(`/dashboard/bots/${botId}/market-groups/${groupId}`);
     expect(deleteRes.status).toBe(204);
   });
+
+  it('supports attach/reorder/update/detach strategy links for bot market-group', async () => {
+    const ownerEmail = 'bot-group-links-owner@example.com';
+    const owner = await registerAndLogin(ownerEmail);
+    const other = await registerAndLogin('bot-group-links-other@example.com');
+    const ownerUser = await prisma.user.findUniqueOrThrow({ where: { email: ownerEmail } });
+
+    const strategyOneRes = await owner.post('/dashboard/strategies').send({
+      name: 'Group Strategy 1',
+      interval: '5m',
+      leverage: 2,
+      walletRisk: 1,
+      config: { open: { indicatorsLong: [], indicatorsShort: [] }, close: { mode: 'basic', tp: 2, sl: 1 } },
+    });
+    expect(strategyOneRes.status).toBe(201);
+    const strategyTwoRes = await owner.post('/dashboard/strategies').send({
+      name: 'Group Strategy 2',
+      interval: '15m',
+      leverage: 2,
+      walletRisk: 1,
+      config: { open: { indicatorsLong: [], indicatorsShort: [] }, close: { mode: 'basic', tp: 2, sl: 1 } },
+    });
+    expect(strategyTwoRes.status).toBe(201);
+
+    const botRes = await owner.post('/dashboard/bots').send(createPayload());
+    expect(botRes.status).toBe(201);
+    const botId = botRes.body.id as string;
+
+    const marketUniverse = await prisma.marketUniverse.create({
+      data: {
+        userId: ownerUser.id,
+        name: 'Owner Group Links Universe',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        whitelist: [],
+        blacklist: [],
+      },
+    });
+    const symbolGroup = await prisma.symbolGroup.create({
+      data: {
+        userId: ownerUser.id,
+        marketUniverseId: marketUniverse.id,
+        name: 'Owner Group Links Symbol Group',
+        symbols: ['BTCUSDT', 'ETHUSDT'],
+      },
+    });
+
+    const createGroupRes = await owner.post(`/dashboard/bots/${botId}/market-groups`).send({
+      symbolGroupId: symbolGroup.id,
+    });
+    expect(createGroupRes.status).toBe(201);
+    const groupId = createGroupRes.body.id as string;
+
+    const attachOneRes = await owner.post(`/dashboard/bots/${botId}/market-groups/${groupId}/strategies`).send({
+      strategyId: strategyOneRes.body.id,
+      priority: 10,
+      weight: 1.5,
+      isEnabled: true,
+    });
+    expect(attachOneRes.status).toBe(201);
+    const linkOneId = attachOneRes.body.id as string;
+
+    const attachTwoRes = await owner.post(`/dashboard/bots/${botId}/market-groups/${groupId}/strategies`).send({
+      strategyId: strategyTwoRes.body.id,
+      priority: 20,
+      weight: 1,
+      isEnabled: true,
+    });
+    expect(attachTwoRes.status).toBe(201);
+    const linkTwoId = attachTwoRes.body.id as string;
+
+    const listRes = await owner.get(`/dashboard/bots/${botId}/market-groups/${groupId}/strategies`);
+    expect(listRes.status).toBe(200);
+    expect(listRes.body).toHaveLength(2);
+    expect(listRes.body[0].id).toBe(linkOneId);
+
+    const reorderRes = await owner.put(`/dashboard/bots/${botId}/market-groups/${groupId}/strategies/reorder`).send({
+      items: [
+        { id: linkOneId, priority: 40 },
+        { id: linkTwoId, priority: 5 },
+      ],
+    });
+    expect(reorderRes.status).toBe(200);
+    expect(reorderRes.body[0].id).toBe(linkTwoId);
+
+    const updateRes = await owner
+      .put(`/dashboard/bots/${botId}/market-groups/${groupId}/strategies/${linkTwoId}`)
+      .send({ weight: 2.25, isEnabled: false });
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.weight).toBe(2.25);
+    expect(updateRes.body.isEnabled).toBe(false);
+
+    const otherAttachRes = await other
+      .post(`/dashboard/bots/${botId}/market-groups/${groupId}/strategies`)
+      .send({ strategyId: strategyTwoRes.body.id });
+    expect(otherAttachRes.status).toBe(404);
+
+    const detachRes = await owner.delete(
+      `/dashboard/bots/${botId}/market-groups/${groupId}/strategies/${linkOneId}`
+    );
+    expect(detachRes.status).toBe(204);
+  });
 });

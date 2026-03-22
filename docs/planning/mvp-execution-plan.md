@@ -214,7 +214,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `MBA-05 feat(db): add MarketGroupStrategyLink model (many-strategies per market-group) with priority/weight fields`
 - [x] `MBA-06 feat(db-migration): backfill existing bot strategies into default market-group for zero-downtime compatibility`
 - [x] `MBA-07 feat(api): add market-group CRUD under bots with strict ownership isolation`
-- [ ] `MBA-08 feat(api): add attach/detach/reorder strategy endpoints per market-group`
+- [x] `MBA-08 feat(api): add attach/detach/reorder strategy endpoints per market-group`
 - [ ] `MBA-09 feat(api): expose bot runtime graph read endpoint (bot->groups->strategies) for UI/runtime parity`
 - [ ] `MBA-10 refactor(runtime): change evaluation loop from bot-level flat strategies to bot->market-group partitions`
 - [ ] `MBA-11 feat(runtime): execute multi-strategy per market-group with locked merge policy and no-flip guarantees`
@@ -247,6 +247,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-23: Added additive Prisma schema + migration for `BotMarketGroup` and `MarketGroupStrategyLink` (`MBA-04`, `MBA-05`) with lifecycle/execution order and priority/weight fields.
 - 2026-03-23: Added idempotent backfill migration (`MBA-06`) from legacy `BotStrategy` bindings into `BotMarketGroup` and `MarketGroupStrategyLink` default graph records.
 - 2026-03-23: Added bot market-group CRUD API (`MBA-07`) with ownership isolation, marketType compatibility validation, and e2e contract coverage.
+- 2026-03-23: Added strategy-link management API (`MBA-08`) for bot market-group scope (list/attach/update/reorder/detach) with deterministic priority ordering and ownership checks.
 - 2026-03-15: Initialized MVP execution file and commit rules.
 - 2026-03-15: Added generic trigger-based one-task execution workflow.
 - 2026-03-15: Expanded MVP plan to fully align with product, modules, database, trading, testing, and security docs.

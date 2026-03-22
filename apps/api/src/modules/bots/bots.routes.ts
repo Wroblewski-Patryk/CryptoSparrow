@@ -3,13 +3,18 @@ import { createRateLimiter } from '../../middleware/rateLimit';
 import {
   createBot,
   createBotMarketGroup,
+  attachMarketGroupStrategy,
   deleteBot,
   deleteBotMarketGroup,
+  detachMarketGroupStrategy,
   getBot,
   getBotMarketGroup,
   listBotMarketGroups,
+  listMarketGroupStrategies,
   listBots,
+  reorderMarketGroupStrategies,
   updateBot,
+  updateMarketGroupStrategy,
   updateBotMarketGroup,
 } from './bots.controller';
 
@@ -27,5 +32,10 @@ botsRouter.get('/:id/market-groups/:groupId', tradingReadLimiter, getBotMarketGr
 botsRouter.post('/:id/market-groups', tradingWriteLimiter, createBotMarketGroup);
 botsRouter.put('/:id/market-groups/:groupId', tradingWriteLimiter, updateBotMarketGroup);
 botsRouter.delete('/:id/market-groups/:groupId', tradingWriteLimiter, deleteBotMarketGroup);
+botsRouter.get('/:id/market-groups/:groupId/strategies', tradingReadLimiter, listMarketGroupStrategies);
+botsRouter.post('/:id/market-groups/:groupId/strategies', tradingWriteLimiter, attachMarketGroupStrategy);
+botsRouter.put('/:id/market-groups/:groupId/strategies/:linkId', tradingWriteLimiter, updateMarketGroupStrategy);
+botsRouter.delete('/:id/market-groups/:groupId/strategies/:linkId', tradingWriteLimiter, detachMarketGroupStrategy);
+botsRouter.put('/:id/market-groups/:groupId/strategies/reorder', tradingWriteLimiter, reorderMarketGroupStrategies);
 
 export default botsRouter;

@@ -14,9 +14,9 @@ Operational queue for one-task execution runs.
 - [x] `MBA-05 feat(db): add MarketGroupStrategyLink model (many-strategies per market-group) with priority/weight fields`
 - [x] `MBA-06 feat(db-migration): backfill existing bot strategies into default market-group for zero-downtime compatibility`
 - [x] `MBA-07 feat(api): add market-group CRUD under bots with strict ownership isolation`
+- [x] `MBA-08 feat(api): add attach/detach/reorder strategy endpoints per market-group`
 
 ## NEXT
-- [ ] `MBA-08 feat(api): add attach/detach/reorder strategy endpoints per market-group`
 - [ ] `MBA-09 feat(api): expose bot runtime graph read endpoint (bot->groups->strategies) for UI/runtime parity`
 - [ ] `MBA-10 refactor(runtime): change evaluation loop from bot-level flat strategies to bot->market-group partitions`
 - [ ] `MBA-11 feat(runtime): execute multi-strategy per market-group with locked merge policy and no-flip guarantees`
@@ -50,6 +50,7 @@ Operational queue for one-task execution runs.
 - [x] `MBA-05 feat(db): added `MarketGroupStrategyLink` model (priority, weight, deterministic ordering indexes) in Prisma schema + SQL migration`
 - [x] `MBA-06 feat(db-migration): added idempotent data backfill from `BotStrategy` into `BotMarketGroup` and `MarketGroupStrategyLink` for zero-downtime rollout`
 - [x] `MBA-07 feat(api): added bot market-group CRUD endpoints with zod validation, marketType compatibility checks, and ownership isolation (+ e2e contract case)`
+- [x] `MBA-08 feat(api): added strategy-link endpoints under bot market-group (list/attach/update/reorder/detach) with ownership validation and deterministic priority ordering`
 - [x] `chore(planning): initialize MVP/V1 execution plans and agent blueprint`
 - [x] `chore(planning): align trigger intent to generic one-task nudge`
 - [x] `chore(planning): historical done backlog archived in git history; queue reset for current delivery focus`

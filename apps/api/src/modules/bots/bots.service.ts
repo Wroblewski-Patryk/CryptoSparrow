@@ -3,8 +3,11 @@ import {
   CreateBotDto,
   CreateBotMarketGroupDto,
   ListBotsQueryDto,
+  ReorderMarketGroupStrategiesDto,
+  AttachMarketGroupStrategyDto,
   UpdateBotDto,
   UpdateBotMarketGroupDto,
+  UpdateMarketGroupStrategyDto,
 } from './bots.types';
 
 type BotConsentState = {
@@ -164,6 +167,12 @@ const getOwnedSymbolGroup = async (userId: string, symbolGroupId: string) =>
         select: { marketType: true },
       },
     },
+  });
+
+const getOwnedStrategy = async (userId: string, strategyId: string) =>
+  prisma.strategy.findFirst({
+    where: { id: strategyId, userId },
+    select: { id: true },
   });
 
 const validateSymbolGroupForBot = async (params: {
@@ -436,4 +445,152 @@ export const deleteBotMarketGroup = async (userId: string, botId: string, market
   });
 
   return true;
+};
+
+export const listMarketGroupStrategyLinks = async (userId: string, botId: string, marketGroupId: string) => {
+  const group = await getBotMarketGroup(userId, botId, marketGroupId);
+  if (!group) return null;
+
+  return prisma.marketGroupStrategyLink.findMany({
+    where: {
+      userId,
+      botId,
+      botMarketGroupId: marketGroupId,
+    },
+    orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
+  });
+};
+
+export const attachMarketGroupStrategy = async (
+  userId: string,
+  botId: string,
+  marketGroupId: string,
+  data: AttachMarketGroupStrategyDto
+) => {
+  const group = await getBotMarketGroup(userId, botId, marketGroupId);
+  if (!group) throw new Error('BOT_MARKET_GROUP_NOT_FOUND');
+
+  const strategy = await getOwnedStrategy(userId, data.strategyId);
+  if (!strategy) throw new Error('BOT_STRATEGY_NOT_FOUND');
+
+  try {
+    return prisma.marketGroupStrategyLink.create({
+      data: {
+        userId,
+        botId,
+        botMarketGroupId: marketGroupId,
+        strategyId: data.strategyId,
+        priority: data.priority,
+        weight: data.weight,
+        isEnabled: data.isEnabled,
+      },
+    });
+  } catch (error) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: string }).code === 'P2002'
+    ) {
+      throw new Error('MARKET_GROUP_STRATEGY_ALREADY_ATTACHED');
+    }
+    throw error;
+  }
+};
+
+export const updateMarketGroupStrategy = async (
+  userId: string,
+  botId: string,
+  marketGroupId: string,
+  linkId: string,
+  data: UpdateMarketGroupStrategyDto
+) => {
+  const existing = await prisma.marketGroupStrategyLink.findFirst({
+    where: {
+      id: linkId,
+      userId,
+      botId,
+      botMarketGroupId: marketGroupId,
+    },
+    select: { id: true },
+  });
+
+  if (!existing) return null;
+
+  return prisma.marketGroupStrategyLink.update({
+    where: { id: existing.id },
+    data: {
+      ...(data.priority !== undefined ? { priority: data.priority } : {}),
+      ...(data.weight !== undefined ? { weight: data.weight } : {}),
+      ...(data.isEnabled !== undefined ? { isEnabled: data.isEnabled } : {}),
+    },
+  });
+};
+
+export const detachMarketGroupStrategy = async (
+  userId: string,
+  botId: string,
+  marketGroupId: string,
+  linkId: string
+) => {
+  const existing = await prisma.marketGroupStrategyLink.findFirst({
+    where: {
+      id: linkId,
+      userId,
+      botId,
+      botMarketGroupId: marketGroupId,
+    },
+    select: { id: true },
+  });
+
+  if (!existing) return false;
+
+  await prisma.marketGroupStrategyLink.delete({
+    where: { id: existing.id },
+  });
+
+  return true;
+};
+
+export const reorderMarketGroupStrategies = async (
+  userId: string,
+  botId: string,
+  marketGroupId: string,
+  data: ReorderMarketGroupStrategiesDto
+) => {
+  const group = await getBotMarketGroup(userId, botId, marketGroupId);
+  if (!group) return null;
+
+  const ids = data.items.map((item) => item.id);
+  const existing = await prisma.marketGroupStrategyLink.findMany({
+    where: {
+      id: { in: ids },
+      userId,
+      botId,
+      botMarketGroupId: marketGroupId,
+    },
+    select: { id: true },
+  });
+
+  if (existing.length !== ids.length) {
+    throw new Error('MARKET_GROUP_STRATEGY_LINK_NOT_FOUND');
+  }
+
+  await prisma.$transaction(
+    data.items.map((item) =>
+      prisma.marketGroupStrategyLink.update({
+        where: { id: item.id },
+        data: { priority: item.priority },
+      })
+    )
+  );
+
+  return prisma.marketGroupStrategyLink.findMany({
+    where: {
+      userId,
+      botId,
+      botMarketGroupId: marketGroupId,
+    },
+    orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
+  });
 };

@@ -3,9 +3,12 @@ import { sendError } from '../../utils/apiError';
 import { sendValidationError } from '../../utils/formatZodError';
 import * as botsService from './bots.service';
 import {
+  AttachMarketGroupStrategySchema,
   CreateBotMarketGroupSchema,
   CreateBotSchema,
   ListBotsQuerySchema,
+  ReorderMarketGroupStrategiesSchema,
+  UpdateMarketGroupStrategySchema,
   UpdateBotMarketGroupSchema,
   UpdateBotSchema,
 } from './bots.types';
@@ -161,4 +164,82 @@ export const deleteBotMarketGroup = async (req: Request, res: Response) => {
   if (!deleted) return sendError(res, 404, 'Not found');
 
   return res.status(204).end();
+};
+
+export const listMarketGroupStrategies = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  const { id, groupId } = req.params;
+  const links = await botsService.listMarketGroupStrategyLinks(userId, id, groupId);
+  if (!links) return sendError(res, 404, 'Not found');
+
+  return res.json(links);
+};
+
+export const attachMarketGroupStrategy = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const payload = AttachMarketGroupStrategySchema.parse(req.body);
+    const { id, groupId } = req.params;
+    const created = await botsService.attachMarketGroupStrategy(userId, id, groupId, payload);
+    return res.status(201).json(created);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'BOT_MARKET_GROUP_NOT_FOUND') {
+      return sendError(res, 404, 'Not found');
+    }
+    if (error instanceof Error && error.message === 'BOT_STRATEGY_NOT_FOUND') {
+      return sendError(res, 400, 'strategyId is invalid for current user');
+    }
+    if (error instanceof Error && error.message === 'MARKET_GROUP_STRATEGY_ALREADY_ATTACHED') {
+      return sendError(res, 409, 'strategy already attached to this market group');
+    }
+    return sendValidationError(res, error);
+  }
+};
+
+export const updateMarketGroupStrategy = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const payload = UpdateMarketGroupStrategySchema.parse(req.body);
+    const { id, groupId, linkId } = req.params;
+    const updated = await botsService.updateMarketGroupStrategy(userId, id, groupId, linkId, payload);
+    if (!updated) return sendError(res, 404, 'Not found');
+    return res.json(updated);
+  } catch (error) {
+    return sendValidationError(res, error);
+  }
+};
+
+export const detachMarketGroupStrategy = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  const { id, groupId, linkId } = req.params;
+  const deleted = await botsService.detachMarketGroupStrategy(userId, id, groupId, linkId);
+  if (!deleted) return sendError(res, 404, 'Not found');
+
+  return res.status(204).end();
+};
+
+export const reorderMarketGroupStrategies = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const payload = ReorderMarketGroupStrategiesSchema.parse(req.body);
+    const { id, groupId } = req.params;
+    const reordered = await botsService.reorderMarketGroupStrategies(userId, id, groupId, payload);
+    if (!reordered) return sendError(res, 404, 'Not found');
+    return res.json(reordered);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'MARKET_GROUP_STRATEGY_LINK_NOT_FOUND') {
+      return sendError(res, 400, 'all strategy link ids must belong to current bot market group');
+    }
+    return sendValidationError(res, error);
+  }
 };
