@@ -179,7 +179,7 @@ export default function HomeLiveWidgets() {
               <Link href="/dashboard/orders" className="btn btn-outline btn-sm">
                 Open Orders
               </Link>
-              <Link href="/dashboard/backtest" className="btn btn-outline btn-sm">
+              <Link href="/dashboard/backtests/list" className="btn btn-outline btn-sm">
                 Run Backtest
               </Link>
             </div>

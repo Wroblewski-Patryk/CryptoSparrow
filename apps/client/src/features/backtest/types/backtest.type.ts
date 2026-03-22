@@ -7,6 +7,7 @@ export type BacktestRun = {
   symbol: string;
   timeframe: string;
   status: BacktestStatus;
+  seedConfig?: Record<string, unknown> | null;
   startedAt: string;
   finishedAt: string | null;
   notes: string | null;
@@ -43,9 +44,10 @@ export type BacktestReport = {
 
 export type CreateBacktestRunInput = {
   name: string;
-  symbol: string;
+  symbol?: string;
   timeframe: string;
   strategyId?: string;
+  marketUniverseId?: string;
+  seedConfig?: Record<string, unknown>;
   notes?: string;
 };
-

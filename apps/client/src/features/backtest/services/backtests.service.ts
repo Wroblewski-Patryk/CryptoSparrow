@@ -23,6 +23,11 @@ export const createBacktestRun = async (payload: CreateBacktestRunInput): Promis
   return res.data;
 };
 
+export const getBacktestRun = async (runId: string): Promise<BacktestRun> => {
+  const res = await api.get<BacktestRun>(`/dashboard/backtests/runs/${runId}`);
+  return res.data;
+};
+
 export const listBacktestRunTrades = async (runId: string): Promise<BacktestTrade[]> => {
   const res = await api.get<BacktestTrade[]>(`/dashboard/backtests/runs/${runId}/trades`, {
     params: {
@@ -43,4 +48,3 @@ export const getBacktestRunReport = async (runId: string): Promise<BacktestRepor
     throw error;
   }
 };
-

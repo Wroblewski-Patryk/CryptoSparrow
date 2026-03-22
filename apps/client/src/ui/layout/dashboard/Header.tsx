@@ -58,24 +58,30 @@ export default function Header() {
           home: 'Pulpit',
           marketsGroup: 'Rynki',
           strategyGroup: 'Strategie',
+          backtestGroup: 'Backtest',
           executionGroup: 'Wykonanie',
           analyticsGroup: 'Analityka',
           marketList: 'Lista grup',
           marketCreate: 'Dodaj grupe',
           strategyList: 'Lista strategii',
           strategyCreate: 'Dodaj strategie',
+          backtestList: 'Lista backtestow',
+          backtestCreate: 'Nowy backtest',
           mobileMenu: 'Menu',
         }
       : {
           home: 'Dashboard',
           marketsGroup: 'Markets',
           strategyGroup: 'Strategies',
+          backtestGroup: 'Backtests',
           executionGroup: 'Execution',
           analyticsGroup: 'Analytics',
           marketList: 'Groups list',
           marketCreate: 'Create group',
           strategyList: 'Strategies list',
           strategyCreate: 'Create strategy',
+          backtestList: 'Backtests list',
+          backtestCreate: 'Create backtest',
           mobileMenu: 'Menu',
         };
 
@@ -92,7 +98,11 @@ export default function Header() {
   const strategyLinks: NavItem[] = [
     { href: '/dashboard/strategies/list', label: labels.strategyList },
     { href: '/dashboard/strategies/create', label: labels.strategyCreate },
-    { href: '/dashboard/backtest', label: t('dashboard.nav.backtest') },
+  ];
+
+  const backtestLinks: NavItem[] = [
+    { href: '/dashboard/backtests/list', label: labels.backtestList },
+    { href: '/dashboard/backtests/create', label: labels.backtestCreate },
   ];
 
   const executionLinks: NavItem[] = [
@@ -109,11 +119,12 @@ export default function Header() {
   const groups = [
     { id: 'markets', label: labels.marketsGroup, links: marketsLinks },
     { id: 'strategies', label: labels.strategyGroup, links: strategyLinks },
+    { id: 'backtests', label: labels.backtestGroup, links: backtestLinks },
     { id: 'execution', label: labels.executionGroup, links: executionLinks },
     { id: 'analytics', label: labels.analyticsGroup, links: analyticsLinks },
   ];
 
-  const allLinks = [homeLink, ...marketsLinks, ...strategyLinks, ...executionLinks, ...analyticsLinks];
+  const allLinks = [homeLink, ...marketsLinks, ...strategyLinks, ...backtestLinks, ...executionLinks, ...analyticsLinks];
 
   const isActive = (href: string) => pathname === href;
   const isGroupActive = (links: NavItem[]) => links.some((item) => isActive(item.href));
