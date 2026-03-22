@@ -42,9 +42,9 @@ Evidence links:
 - Responsive UI for desktop/tablet/mobile.
 - EN default + PL language support.
 - Redis and BullMQ for queues and caching.
-- Admin panel for owner-managed pricing, subscription entitlements, and critical app settings.
 
 ## After MVP
+- Admin panel for owner-managed pricing, subscription entitlements, and critical app settings.
 - Additional exchange support beyond Binance (adapter-based rollout).
 - Expanded billing UX: monthly + annual pricing presentation and fiat/crypto payment methods.
 - Strategy export/import with format versioning.

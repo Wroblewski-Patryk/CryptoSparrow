@@ -83,7 +83,8 @@ Yes. Use strategy import/export package format `strategy.v1`.
 - `simple` can choose: `1m`, `5m`, `15m`, `30m`, `1h`.
 - `advanced` can choose: full global interval list.
 
-## 7. Subscription and Renewal Safety
+## 7. Subscription and Renewal Safety (Post-MVP / V1.1 Planned)
+- Scope note: this section describes planned admin/billing behavior and is not enabled in the current V1 runtime release.
 - Monthly subscription auto-renews by default (you can disable auto-renew in account settings).
 - Subscription checkout is available only for logged-in users in their own account (no guest checkout in V1).
 - One account can hold one active subscription at a time.

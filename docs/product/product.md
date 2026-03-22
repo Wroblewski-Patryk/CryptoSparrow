@@ -37,7 +37,7 @@ Primary target is advanced users who already understand trading concepts and can
 - In `free`, enabled options are exactly `5m` and `15m`; faster values remain visible but disabled.
 - `simple` enabled options: `1m`, `5m`, `15m`, `30m`, `1h`.
 - `advanced` enabled options: full global interval catalog.
-- Baseline values can be tuned from admin controls based on observed production load.
+- Baseline values can be tuned from post-MVP admin controls based on observed production load.
 
 ## Current Scope (Implemented)
 - User authentication and profile basics.
@@ -84,7 +84,8 @@ Primary target is advanced users who already understand trading concepts and can
 - Bot-count entitlement is enforced with separate pools for `PAPER` and `LIVE` modes.
 - Global account-level risk limits remain enforced independently from per-bot settings.
 
-## Frontend and Admin Surfaces (V1)
+## Frontend and Admin Surfaces (Post-MVP / V1.1 Planned)
+- Scope note: `admin` and `billing` surfaces below are planning-only and are not part of current V1 implementation closure.
 - `public`: informational pages, onboarding, auth entry.
 - `client/dashboard`: full user product experience after login.
 - `admin`: owner-only business control panel (pricing, plan limits, mode entitlements, critical settings).
@@ -92,7 +93,7 @@ Primary target is advanced users who already understand trading concepts and can
 - Bot creation is also entitlement-gated: when mode pool limit is reached, new bot creation (including draft/non-active bot) is blocked.
 - At bot cap, `Create bot` remains visible but disabled, with tooltip/helper copy and one-plan `Upgrade to ...` CTA.
 
-## Launch Subscription Presets (V1 Defaults)
+## Launch Subscription Presets (Post-MVP / V1.1 Planned Defaults)
 - `free`: 1 bot, PAPER only, max 1 strategy per bot, backtest range limited to last 30 days, max 1 concurrent backtest.
 - `free`: seed limits `LIVE=0`, `PAPER=1`; both pools are independently configurable from admin panel.
 - `free`: no LIVE access and no time-limited LIVE trial in V1.
@@ -100,7 +101,7 @@ Primary target is advanced users who already understand trading concepts and can
 - `advanced`: seed limits `LIVE=3`, `PAPER=3`; both pools are independently configurable from admin panel (all 3 seed LIVE can run concurrently, subject to consent and safety limits), max 10 concurrent backtests.
 - Presets are editable from admin panel and are not hardcoded forever.
 
-## History Export Policy (V1)
+## History Export Policy (Post-MVP / V1.1 Planned)
 - CSV export is available for active and `PAST_DUE` accounts.
 - Plan-based max export range:
   - `free`: last 3 months.
@@ -109,7 +110,7 @@ Primary target is advanced users who already understand trading concepts and can
 - Export throttling: max 1 CSV export per user per 10 minutes by default.
 - Cooldown is configurable from admin controls based on average generation time and platform load.
 
-## Plan Change Policy (V1)
+## Plan Change Policy (Post-MVP / V1.1 Planned)
 - Upgrade to a higher plan is immediate after charging only the difference between plans for the current billing period.
 - After successful upgrade payment, entitlement changes become effective immediately in the active user session (no re-login required).
 - If upgrade payment fails, the current plan and entitlements remain unchanged.

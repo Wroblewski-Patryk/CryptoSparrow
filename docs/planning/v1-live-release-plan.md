@@ -88,9 +88,9 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and `LIVE`, plus explicit control over manually opened exchange positions.
 
 ### G0 - Audit-Driven Truth and Quality Gate
-- [ ] `docs(sync): remove contradictory done/pending markers and align plan claims with repository evidence`
-- [ ] `test(core): restore green core tests before declaring stability gates complete`
-- [ ] `docs(scope): keep admin/billing in post-MVP/V1.1 and remove implied V1 delivery claims`
+- [x] `docs(sync): remove contradictory done/pending markers and align plan claims with repository evidence`
+- [x] `test(core): restore green core tests before declaring stability gates complete`
+- [x] `docs(scope): keep admin/billing in post-MVP/V1.1 and remove implied V1 delivery claims`
 
 ### G1 - Navigation and Domain Surface Alignment
 - [x] `feat(ui-nav): rename Execution group to Bots and move Orders/Positions under Exchanges in main dashboard IA`
@@ -237,3 +237,4 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-22: Expanded post-V1 Phase G with header/routing normalization, auth session hardening, temporary isometric-toggle removal, and `web/api/mobile` repo-structure planning tasks.
 - 2026-03-22: Synced Phase G completion state for delivered nav/header/language/routing/isometric-menu cleanup tasks with repository commits and MVP planning queue.
 - 2026-03-22: Added audit-closure gates (truthful docs status, core test green gate, LIVE side-effects contract, stream-contract completion, and ops endpoint access control) and locked admin/billing scope to post-MVP/V1.1.
+- 2026-03-22: Realigned roadmap/product/user-guide wording to remove implied V1 admin+billing delivery claims and keep those capabilities explicitly in post-MVP/V1.1 planning scope.

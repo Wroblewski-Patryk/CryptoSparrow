@@ -198,7 +198,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 ## Phase 11 - Audit Closure and Scope Realignment (As of 2026-03-22)
 - [x] `docs(sync): remove contradictory done/pending states across MVP/V1 plans and align all status claims to repository evidence`
 - [x] `test(quality-gate): restore and verify green core test suites before reopening feature expansion`
-- [ ] `docs(scope): move admin+billing implementation promises to post-MVP/V1.1 and keep V1 docs aligned with current deliverables`
+- [x] `docs(scope): move admin+billing implementation promises to post-MVP/V1.1 and keep V1 docs aligned with current deliverables`
 - [ ] `feat(stream-contract): deliver stream transport contract requirements (event id, ping heartbeat, max symbols guard)`
 - [ ] `fix(routing-hard-cut): hard-canonize dashboard URLs and remove legacy alias ambiguity`
 - [ ] `fix(i18n-contract): remove hardcoded copy and align locale default contract (EN default vs runtime html lang)`
@@ -414,6 +414,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Removed isometric mode toggle from dashboard account menu and kept profile dropdown focused on account/security/integration actions only.
 - 2026-03-22: Synced audit planning truthfulness by reconciling Phase 10 statuses with implemented commits and removing contradictory pending states across queue and execution plans.
 - 2026-03-22: Restored quality-gate green status by aligning i18n provider test with current language switcher contract and seeding requireAuth rotation test with a real DB user; reran core client/server suites with full pass.
+- 2026-03-22: Realigned docs scope so admin+billing capabilities are explicitly tracked as post-MVP/V1.1 (roadmap/product/user-guide + V1 plan G0), removing implied V1 delivery claims.
 
 
 
