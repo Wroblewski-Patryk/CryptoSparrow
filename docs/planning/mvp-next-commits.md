@@ -7,7 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `MBA-01 audit(domain): map current Bot/SymbolGroup/BotStrategy contracts and define non-breaking migration path`
+- [x] `MBA-01 audit(domain): map current Bot/SymbolGroup/BotStrategy contracts and define non-breaking migration path`
 - [ ] `MBA-02 docs(decisions): lock canonical model user->bot->market-group->strategy and assistant topology (1 main + max 4 subagents)`
 - [ ] `MBA-03 docs(contract): define deterministic signal merge policy for multi-strategy per market-group (priority, tie-break, no-trade)`
 - [ ] `MBA-04 feat(db): add BotMarketGroup model with ownership, lifecycle status, and execution ordering`
@@ -43,6 +43,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `MBA-01 audit(domain): mapped current Bot/SymbolGroup/BotStrategy contracts and documented non-breaking migration path (`docs/planning/mba-01-domain-audit-2026-03-22.md`)
 - [x] `chore(planning): initialize MVP/V1 execution plans and agent blueprint`
 - [x] `chore(planning): align trigger intent to generic one-task nudge`
 - [x] `chore(planning): historical done backlog archived in git history; queue reset for current delivery focus`
@@ -102,5 +103,7 @@ Operational queue for one-task execution runs.
 - Keep one logical change per task.
 - If task grows, split before coding.
 - After completion, update this file and `docs/planning/mvp-execution-plan.md`.
+
+
 
 

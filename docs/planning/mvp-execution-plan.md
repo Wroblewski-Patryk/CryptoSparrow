@@ -207,7 +207,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `refactor(rate-limit): evolve limiter model toward user/exchange-key aware enforcement`
 
 ## Phase 12 - Multi-Bot Runtime Domain (MVP Extension: Data + API + Runtime)
-- [ ] `MBA-01 audit(domain): map current Bot/SymbolGroup/BotStrategy contracts and define non-breaking migration path`
+- [x] `MBA-01 audit(domain): map current Bot/SymbolGroup/BotStrategy contracts and define non-breaking migration path`
 - [ ] `MBA-02 docs(decisions): lock canonical model user->bot->market-group->strategy and assistant topology (1 main + max 4 subagents)`
 - [ ] `MBA-03 docs(contract): define deterministic signal merge policy for multi-strategy per market-group (priority, tie-break, no-trade)`
 - [ ] `MBA-04 feat(db): add BotMarketGroup model with ownership, lifecycle status, and execution ordering`
@@ -242,6 +242,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `MBA-29 docs(runbook): publish operator runbook for assistant incidents, fallback modes, and safe recovery`
 - [ ] `MBA-30 release(v1-gate): collect evidence pack and close V1 exit criteria for multi-entity assistant runtime`
 ## Progress Log
+- 2026-03-22: Domain audit completed for multi-bot runtime (`MBA-01`), including current Bot/SymbolGroup/BotStrategy contract mapping and non-breaking migration path in `docs/planning/mba-01-domain-audit-2026-03-22.md`.
 - 2026-03-15: Initialized MVP execution file and commit rules.
 - 2026-03-15: Added generic trigger-based one-task execution workflow.
 - 2026-03-15: Expanded MVP plan to fully align with product, modules, database, trading, testing, and security docs.
@@ -459,6 +460,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Hardened auth session recovery by validating `/auth/me` against DB existence, clearing stale token cookies on invalid/deleted sessions, and returning 503 for temporary auth DB lookup failures.
 - 2026-03-22: Added accessible password visibility toggles (`Show/Hide`) in login/register forms and covered toggle behavior with component regression tests.
 - 2026-03-22: Synced IA docs for `Bots/Exchanges`, added staged repo migration plan + mobile parity contract docs, and scaffolded `apps/mobile` as bootstrap-only package.
+
+
 
 
 
