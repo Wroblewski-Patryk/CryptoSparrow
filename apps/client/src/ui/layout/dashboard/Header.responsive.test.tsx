@@ -21,7 +21,8 @@ describe("Header responsive smoke", () => {
 
     expect(screen.getByRole("navigation", { name: "Dashboard navigation" })).toBeInTheDocument();
     expect(screen.getAllByText("Markets").length).toBeGreaterThan(0);
-    expect(screen.getByText("Execution")).toBeInTheDocument();
+    expect(screen.getByText("Exchanges")).toBeInTheDocument();
+    expect(screen.getAllByText("Bots").length).toBeGreaterThan(0);
     expect(screen.getByText("Analytics")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "false");
     expect(screen.getByText("Dashboard")).toBeInTheDocument();

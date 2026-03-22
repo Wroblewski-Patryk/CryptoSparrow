@@ -99,6 +99,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(ui): dashboard/reports performance views`
 - [x] `feat(ui): dashboard/logs audit trail backed by real logs API`
 - [x] `feat(ui): dashboard/exchanges api-key connections`
+- [x] `feat(ui-nav): rename Execution to Bots and move Orders/Positions under Exchanges dropdown between Dashboard and Markets`
 - [x] `feat(i18n): EN default + PL translation coverage`
 - [x] `feat(i18n): enforce translation-key usage (no hardcoded page copy) and feature-based namespaces`
 - [x] `feat(i18n): locale-aware date/number/currency/percent formatting for dashboard data views`
@@ -372,6 +373,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-21: Extended positions dashboard UI with source switch (`runtime` vs `exchange live snapshot`), exchange snapshot mapping, symbol filtering, and last-sync timestamp rendering.
 - 2026-03-21: Added positions live-source regression coverage: UI tests for source switch + snapshot failure state and server e2e for exchange snapshot failure contract (`502`).
 - 2026-03-21: Added Binance API-key onboarding/troubleshooting runbook with permission/code mapping and linked it from README and MVP ops runbook.
+- 2026-03-22: Updated dashboard IA navigation: `Execution` renamed to `Bots`; `Orders` and `Positions` moved under `Exchanges` dropdown placed between `Dashboard` and `Markets`, with header responsive test updates.
 
 
 

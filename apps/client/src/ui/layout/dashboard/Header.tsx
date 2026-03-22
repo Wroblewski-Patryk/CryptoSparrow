@@ -56,11 +56,13 @@ export default function Header() {
     locale === 'pl'
       ? {
           home: 'Pulpit',
+          exchangesGroup: 'Gieldy',
           marketsGroup: 'Rynki',
           strategyGroup: 'Strategie',
           backtestGroup: 'Backtest',
-          executionGroup: 'Wykonanie',
+          botsGroup: 'Boty',
           analyticsGroup: 'Analityka',
+          exchangesConnections: 'Integracje',
           marketList: 'Lista grup',
           marketCreate: 'Dodaj grupe',
           strategyList: 'Lista strategii',
@@ -71,11 +73,13 @@ export default function Header() {
         }
       : {
           home: 'Dashboard',
+          exchangesGroup: 'Exchanges',
           marketsGroup: 'Markets',
           strategyGroup: 'Strategies',
           backtestGroup: 'Backtests',
-          executionGroup: 'Execution',
+          botsGroup: 'Bots',
           analyticsGroup: 'Analytics',
+          exchangesConnections: 'Connections',
           marketList: 'Groups list',
           marketCreate: 'Create group',
           strategyList: 'Strategies list',
@@ -89,6 +93,12 @@ export default function Header() {
     href: '/dashboard',
     label: labels.home,
   };
+
+  const exchangesLinks: NavItem[] = [
+    { href: '/dashboard/exchanges', label: labels.exchangesConnections },
+    { href: '/dashboard/orders', label: t('dashboard.nav.orders') },
+    { href: '/dashboard/positions', label: t('dashboard.nav.positions') },
+  ];
 
   const marketsLinks: NavItem[] = [
     { href: '/dashboard/markets/list', label: labels.marketList },
@@ -105,10 +115,8 @@ export default function Header() {
     { href: '/dashboard/backtests/create', label: labels.backtestCreate },
   ];
 
-  const executionLinks: NavItem[] = [
+  const botsLinks: NavItem[] = [
     { href: '/dashboard/bots', label: t('dashboard.nav.bots') },
-    { href: '/dashboard/orders', label: t('dashboard.nav.orders') },
-    { href: '/dashboard/positions', label: t('dashboard.nav.positions') },
   ];
 
   const analyticsLinks: NavItem[] = [
@@ -117,14 +125,15 @@ export default function Header() {
   ];
 
   const groups = [
+    { id: 'exchanges', label: labels.exchangesGroup, links: exchangesLinks },
     { id: 'markets', label: labels.marketsGroup, links: marketsLinks },
     { id: 'strategies', label: labels.strategyGroup, links: strategyLinks },
     { id: 'backtests', label: labels.backtestGroup, links: backtestLinks },
-    { id: 'execution', label: labels.executionGroup, links: executionLinks },
+    { id: 'bots', label: labels.botsGroup, links: botsLinks },
     { id: 'analytics', label: labels.analyticsGroup, links: analyticsLinks },
   ];
 
-  const allLinks = [homeLink, ...marketsLinks, ...strategyLinks, ...backtestLinks, ...executionLinks, ...analyticsLinks];
+  const allLinks = [homeLink, ...exchangesLinks, ...marketsLinks, ...strategyLinks, ...backtestLinks, ...botsLinks, ...analyticsLinks];
 
   const isActive = (href: string) => pathname === href;
   const isGroupActive = (links: NavItem[]) => links.some((item) => isActive(item.href));
