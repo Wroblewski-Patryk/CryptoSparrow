@@ -479,4 +479,143 @@ describe('Bots module contract', () => {
     const otherGraphRes = await other.get(`/dashboard/bots/${botId}/runtime-graph`);
     expect(otherGraphRes.status).toBe(404);
   });
+
+  it('covers one-user multi-bot multi-group multi-strategy flow', async () => {
+    const ownerEmail = 'bot-multi-flow-owner@example.com';
+    const owner = await registerAndLogin(ownerEmail);
+    const ownerUser = await prisma.user.findUniqueOrThrow({ where: { email: ownerEmail } });
+
+    const strategyAlphaRes = await owner.post('/dashboard/strategies').send({
+      name: 'Strategy Alpha',
+      interval: '5m',
+      leverage: 2,
+      walletRisk: 1,
+      config: { open: { indicatorsLong: [], indicatorsShort: [] }, close: { mode: 'basic', tp: 2, sl: 1 } },
+    });
+    const strategyBetaRes = await owner.post('/dashboard/strategies').send({
+      name: 'Strategy Beta',
+      interval: '15m',
+      leverage: 2,
+      walletRisk: 1,
+      config: { open: { indicatorsLong: [], indicatorsShort: [] }, close: { mode: 'basic', tp: 2, sl: 1 } },
+    });
+    const strategyGammaRes = await owner.post('/dashboard/strategies').send({
+      name: 'Strategy Gamma',
+      interval: '1h',
+      leverage: 2,
+      walletRisk: 1,
+      config: { open: { indicatorsLong: [], indicatorsShort: [] }, close: { mode: 'basic', tp: 2, sl: 1 } },
+    });
+
+    expect(strategyAlphaRes.status).toBe(201);
+    expect(strategyBetaRes.status).toBe(201);
+    expect(strategyGammaRes.status).toBe(201);
+
+    const universe = await prisma.marketUniverse.create({
+      data: {
+        userId: ownerUser.id,
+        name: 'Multi Flow Universe',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        whitelist: [],
+        blacklist: [],
+      },
+    });
+    const groupOne = await prisma.symbolGroup.create({
+      data: {
+        userId: ownerUser.id,
+        marketUniverseId: universe.id,
+        name: 'Group One',
+        symbols: ['BTCUSDT', 'ETHUSDT'],
+      },
+    });
+    const groupTwo = await prisma.symbolGroup.create({
+      data: {
+        userId: ownerUser.id,
+        marketUniverseId: universe.id,
+        name: 'Group Two',
+        symbols: ['SOLUSDT', 'ADAUSDT'],
+      },
+    });
+    const groupThree = await prisma.symbolGroup.create({
+      data: {
+        userId: ownerUser.id,
+        marketUniverseId: universe.id,
+        name: 'Group Three',
+        symbols: ['XRPUSDT', 'BNBUSDT'],
+      },
+    });
+
+    const botOneRes = await owner.post('/dashboard/bots').send({ ...createPayload(), name: 'Bot One' });
+    const botTwoRes = await owner.post('/dashboard/bots').send({ ...createPayload(), name: 'Bot Two' });
+    expect(botOneRes.status).toBe(201);
+    expect(botTwoRes.status).toBe(201);
+    const botOneId = botOneRes.body.id as string;
+    const botTwoId = botTwoRes.body.id as string;
+
+    const botOneGroupA = await owner.post(`/dashboard/bots/${botOneId}/market-groups`).send({
+      symbolGroupId: groupOne.id,
+      executionOrder: 1,
+      maxOpenPositions: 2,
+    });
+    const botOneGroupB = await owner.post(`/dashboard/bots/${botOneId}/market-groups`).send({
+      symbolGroupId: groupTwo.id,
+      executionOrder: 2,
+      maxOpenPositions: 1,
+    });
+    const botTwoGroupA = await owner.post(`/dashboard/bots/${botTwoId}/market-groups`).send({
+      symbolGroupId: groupThree.id,
+      executionOrder: 1,
+      maxOpenPositions: 3,
+    });
+    expect(botOneGroupA.status).toBe(201);
+    expect(botOneGroupB.status).toBe(201);
+    expect(botTwoGroupA.status).toBe(201);
+
+    const botOneGroupAId = botOneGroupA.body.id as string;
+    const botOneGroupBId = botOneGroupB.body.id as string;
+    const botTwoGroupAId = botTwoGroupA.body.id as string;
+
+    const attachResults = await Promise.all([
+      owner.post(`/dashboard/bots/${botOneId}/market-groups/${botOneGroupAId}/strategies`).send({
+        strategyId: strategyAlphaRes.body.id,
+        priority: 10,
+        weight: 1.5,
+      }),
+      owner.post(`/dashboard/bots/${botOneId}/market-groups/${botOneGroupAId}/strategies`).send({
+        strategyId: strategyBetaRes.body.id,
+        priority: 20,
+        weight: 1,
+      }),
+      owner.post(`/dashboard/bots/${botOneId}/market-groups/${botOneGroupBId}/strategies`).send({
+        strategyId: strategyGammaRes.body.id,
+        priority: 5,
+        weight: 2,
+      }),
+      owner.post(`/dashboard/bots/${botTwoId}/market-groups/${botTwoGroupAId}/strategies`).send({
+        strategyId: strategyBetaRes.body.id,
+        priority: 15,
+        weight: 1,
+      }),
+      owner.post(`/dashboard/bots/${botTwoId}/market-groups/${botTwoGroupAId}/strategies`).send({
+        strategyId: strategyGammaRes.body.id,
+        priority: 25,
+        weight: 0.8,
+      }),
+    ]);
+    for (const response of attachResults) {
+      expect(response.status).toBe(201);
+    }
+
+    const graphOneRes = await owner.get(`/dashboard/bots/${botOneId}/runtime-graph`);
+    const graphTwoRes = await owner.get(`/dashboard/bots/${botTwoId}/runtime-graph`);
+    expect(graphOneRes.status).toBe(200);
+    expect(graphTwoRes.status).toBe(200);
+
+    expect(graphOneRes.body.marketGroups).toHaveLength(2);
+    expect(graphOneRes.body.marketGroups[0].strategies.length).toBeGreaterThanOrEqual(2);
+    expect(graphOneRes.body.marketGroups[1].strategies.length).toBeGreaterThanOrEqual(1);
+    expect(graphTwoRes.body.marketGroups).toHaveLength(1);
+    expect(graphTwoRes.body.marketGroups[0].strategies.length).toBeGreaterThanOrEqual(2);
+  });
 });
