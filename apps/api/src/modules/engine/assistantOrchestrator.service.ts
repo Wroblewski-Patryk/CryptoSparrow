@@ -12,6 +12,8 @@ export type AssistantRuntimeInput = {
   symbol: string;
   intervalWindow: string;
   mode: 'BACKTEST' | 'PAPER' | 'LIVE';
+  mandate?: string | null;
+  forbiddenActions?: AssistantDecision[];
   subagents: Array<{
     slotIndex: number;
     role: string;
@@ -174,6 +176,31 @@ const mergeAssistantOutputs = (outputs: AssistantSubagentOutput[]): {
     : { decision: 'SHORT', reason: 'weighted_short' };
 };
 
+const applyDecisionPolicy = (
+  input: AssistantRuntimeInput,
+  merged: { decision: AssistantDecision; reason: string }
+): { decision: AssistantDecision; reason: string } => {
+  const forbidden = new Set(input.forbiddenActions ?? []);
+  if (forbidden.has(merged.decision)) {
+    return {
+      decision: 'NO_TRADE',
+      reason: `forbidden_action_${merged.decision.toLowerCase()}`,
+    };
+  }
+
+  const normalizedMandate = (input.mandate ?? '').toLowerCase();
+  if (normalizedMandate.includes('long-only') && merged.decision === 'SHORT') {
+    return { decision: 'NO_TRADE', reason: 'mandate_long_only' };
+  }
+  if (normalizedMandate.includes('short-only') && merged.decision === 'LONG') {
+    return { decision: 'NO_TRADE', reason: 'mandate_short_only' };
+  }
+  if (normalizedMandate.includes('no-exit') && merged.decision === 'EXIT') {
+    return { decision: 'NO_TRADE', reason: 'mandate_no_exit' };
+  }
+  return merged;
+};
+
 export const orchestrateAssistantDecision = async (
   input: AssistantRuntimeInput,
   deps: {
@@ -316,7 +343,7 @@ export const orchestrateAssistantDecision = async (
   statuses.sort((left, right) => left.slotIndex - right.slotIndex);
   outputs.sort((left, right) => left.slotIndex - right.slotIndex);
 
-  const merged = mergeAssistantOutputs(outputs);
+  const merged = applyDecisionPolicy(input, mergeAssistantOutputs(outputs));
   metricsStore.recordRuntimeMergeOutcome(merged.decision);
   const trace: AssistantOrchestrationTrace = {
     requestId: input.requestId,

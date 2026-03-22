@@ -208,4 +208,46 @@ describe('orchestrateAssistantDecision', () => {
     expect(fourth.finalReason).toBe('assistant_circuit_open');
     expect(fourth.mode).toBe('strategy_only');
   });
+
+  it('enforces mandate and forbidden action policy before final approval', async () => {
+    const result = await orchestrateAssistantDecision(
+      {
+        ...baseInput,
+        requestId: 'req-policy-1',
+        botId: 'bot-policy-1',
+        mandate: 'long-only',
+        forbiddenActions: ['EXIT'],
+      },
+      {
+        planner: {
+          createPlan: vi.fn(async () => ({
+            planId: 'plan-1',
+            steps: [
+              { slotIndex: 1, role: 'TREND', task: 'analyze trend' },
+              { slotIndex: 2, role: 'RISK', task: 'analyze risk' },
+            ],
+          })),
+        },
+        subagentGateway: {
+          runStep: vi
+            .fn()
+            .mockResolvedValueOnce({
+              proposal: 'SHORT',
+              confidence: 0.8,
+              rationale: 'short bias',
+            })
+            .mockResolvedValueOnce({
+              proposal: 'SHORT',
+              confidence: 0.6,
+              rationale: 'confirm short',
+            }),
+        },
+        traceWriter: { write: vi.fn(async () => undefined) },
+        nowMs: () => 1000,
+      }
+    );
+
+    expect(result.finalDecision).toBe('NO_TRADE');
+    expect(result.finalReason).toBe('mandate_long_only');
+  });
 });

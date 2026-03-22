@@ -822,6 +822,14 @@ export const runAssistantDryRun = async (userId: string, botId: string, input: A
   const bot = await getOwnedBot(userId, botId);
   if (!bot) return null;
 
+  const assistantConfig = await prisma.botAssistantConfig.findUnique({
+    where: { botId },
+    select: {
+      mandate: true,
+      safetyMode: true,
+    },
+  });
+
   const subagents = await prisma.botSubagentConfig.findMany({
     where: { userId, botId },
     orderBy: { slotIndex: 'asc' },
@@ -835,6 +843,9 @@ export const runAssistantDryRun = async (userId: string, botId: string, input: A
     symbol: input.symbol.toUpperCase(),
     intervalWindow: input.intervalWindow,
     mode: input.mode,
+    mandate: assistantConfig?.mandate ?? null,
+    forbiddenActions:
+      assistantConfig?.safetyMode === 'STRICT' ? ['SHORT'] : undefined,
     subagents: subagents.map((slot) => ({
       slotIndex: slot.slotIndex,
       role: slot.role,
