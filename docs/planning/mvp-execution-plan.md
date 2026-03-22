@@ -184,11 +184,11 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `feat(db): add position/order/trade origin + management mode fields with migration baseline`
 
 ## Phase 10 - Navigation, IA, Routing, and Auth Session Hardening (As of 2026-03-22)
-- [ ] `fix(ui-header-nav): center desktop nav list, remove legacy visual utility clutter, and unify header hover/active/focus styles`
-- [ ] `fix(ui-language-switcher): correct EN/PL flag visuals and lock language-switcher visual contract with regression tests`
-- [ ] `audit(routing): create canonical route map and remove dashboard path inconsistencies (including legacy aliases)`
-- [ ] `refactor(ia-profile): merge API keys and exchange connections under one settings domain model`
-- [ ] `fix(ui-profile): remove isometric mode toggle from current dashboard account menu (defer to V2 gamification)`
+- [x] `fix(ui-header-nav): center desktop nav list, remove legacy visual utility clutter, and unify header hover/active/focus styles`
+- [x] `fix(ui-language-switcher): correct EN/PL flag visuals and lock language-switcher visual contract with regression tests`
+- [x] `audit(routing): create canonical route map and remove dashboard path inconsistencies (including legacy aliases)`
+- [x] `refactor(ia-profile): merge API keys and exchange connections under one settings domain model`
+- [x] `fix(ui-profile): remove isometric mode toggle from current dashboard account menu (defer to V2 gamification)`
 - [ ] `fix(auth-session): force deterministic auto-logout on invalid auth/session or deleted-user state`
 - [ ] `fix(auth-resilience): handle API/DB-unavailable startup in auth context without stale logged-in UI state`
 - [ ] `feat(auth-ui): add password visibility toggle to login/register with keyboard and screen-reader support`
@@ -196,7 +196,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `docs(parity): define mobile parity contract versus web dashboard scope for MVP/V1`
 
 ## Phase 11 - Audit Closure and Scope Realignment (As of 2026-03-22)
-- [ ] `docs(sync): remove contradictory done/pending states across MVP/V1 plans and align all status claims to repository evidence`
+- [x] `docs(sync): remove contradictory done/pending states across MVP/V1 plans and align all status claims to repository evidence`
 - [ ] `test(quality-gate): restore and verify green core test suites before reopening feature expansion`
 - [ ] `docs(scope): move admin+billing implementation promises to post-MVP/V1.1 and keep V1 docs aligned with current deliverables`
 - [ ] `feat(stream-contract): deliver stream transport contract requirements (event id, ping heartbeat, max symbols guard)`
@@ -412,6 +412,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Added canonical dashboard route map and normalized header route contracts to canonical paths while preserving alias-aware active state behavior.
 - 2026-03-22: Merged exchange connections and API key management into one profile settings domain (`#api`) and routed `/dashboard/exchanges` to unified settings entrypoint.
 - 2026-03-22: Removed isometric mode toggle from dashboard account menu and kept profile dropdown focused on account/security/integration actions only.
+- 2026-03-22: Synced audit planning truthfulness by reconciling Phase 10 statuses with implemented commits and removing contradictory pending states across queue and execution plans.
 
 
 

@@ -93,10 +93,10 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [ ] `docs(scope): keep admin/billing in post-MVP/V1.1 and remove implied V1 delivery claims`
 
 ### G1 - Navigation and Domain Surface Alignment
-- [ ] `feat(ui-nav): rename Execution group to Bots and move Orders/Positions under Exchanges in main dashboard IA`
-- [ ] `fix(ui-header): center desktop nav list and unify header interaction styling (hover/active/focus) across menu/account/language/theme controls`
-- [ ] `fix(ui-language): correct EN/PL flag visuals and protect with regression tests`
-- [ ] `audit(routing): canonicalize dashboard URL contract and remove duplicate/legacy route variants`
+- [x] `feat(ui-nav): rename Execution group to Bots and move Orders/Positions under Exchanges in main dashboard IA`
+- [x] `fix(ui-header): center desktop nav list and unify header interaction styling (hover/active/focus) across menu/account/language/theme controls`
+- [x] `fix(ui-language): correct EN/PL flag visuals and protect with regression tests`
+- [x] `audit(routing): canonicalize dashboard URL contract and remove duplicate/legacy route variants`
 - [ ] `docs(ia): update module map and user guide navigation references for Bots/Exchanges grouping`
 
 ### G2 - Position/Order Origin and Management Semantics
@@ -132,7 +132,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 ### G8 - Auth and Platform Surface Cleanup
 - [ ] `fix(auth-session): auto-logout user on invalid token/deleted-user/no-db startup and keep public-route UX clean`
 - [ ] `feat(auth-ui): add password visibility toggles on login/register with accessibility semantics`
-- [ ] `fix(ui-theme): remove isometric toggle from active V1 account menu (defer to V2 gamification path)`
+- [x] `fix(ui-theme): remove isometric toggle from active V1 account menu (defer to V2 gamification path)`
 - [ ] `docs(repo): finalize migration plan from apps/client+apps/server to apps/web+apps/api and bootstrap apps/mobile`
 
 ### G9 - Live Semantics and Ops Security Completion
@@ -235,4 +235,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 
 - 2026-03-21: Added explicit Exit Evidence Workpack to operationalize remaining V1 production criteria.
 - 2026-03-22: Expanded post-V1 Phase G with header/routing normalization, auth session hardening, temporary isometric-toggle removal, and `web/api/mobile` repo-structure planning tasks.
+- 2026-03-22: Synced Phase G completion state for delivered nav/header/language/routing/isometric-menu cleanup tasks with repository commits and MVP planning queue.
 - 2026-03-22: Added audit-closure gates (truthful docs status, core test green gate, LIVE side-effects contract, stream-contract completion, and ops endpoint access control) and locked admin/billing scope to post-MVP/V1.1.

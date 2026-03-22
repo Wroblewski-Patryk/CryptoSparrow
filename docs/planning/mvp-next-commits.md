@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `docs(sync-audit): correct plan truthfulness (core-tests status, done/pending mismatches, duplicate checkbox states) against current repo state`
 - [ ] `test(quality-gate): restore green core suites (including i18n provider and auth/requireAuth rotation regressions) and attach evidence`
 - [ ] `docs(scope): realign admin+billing from V1 implementation scope to post-MVP/V1.1 delivery track`
 - [ ] `feat(stream-contract): implement transport contract gaps (event id, heartbeat/ping, symbol-limit guard) for dashboard market stream`
@@ -67,6 +66,7 @@ Operational queue for one-task execution runs.
 - [x] `audit(routing-dashboard): produce canonical route map and remove dashboard path inconsistencies (backtest/backtests, list/create aliases, menu contracts)`
 - [x] `refactor(profile-ia): merge API keys + exchange connections into one user-settings information architecture`
 - [x] `fix(profile-menu): remove isometric toggle from account menu (deferred to V2 gamification track)`
+- [x] `docs(sync-audit): correct plan truthfulness (core-tests status, done/pending mismatches, duplicate checkbox states) against current repo state`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
