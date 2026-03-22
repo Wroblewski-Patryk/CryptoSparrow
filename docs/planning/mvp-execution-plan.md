@@ -212,7 +212,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `MBA-03 docs(contract): define deterministic signal merge policy for multi-strategy per market-group (priority, tie-break, no-trade)`
 - [x] `MBA-04 feat(db): add BotMarketGroup model with ownership, lifecycle status, and execution ordering`
 - [x] `MBA-05 feat(db): add MarketGroupStrategyLink model (many-strategies per market-group) with priority/weight fields`
-- [ ] `MBA-06 feat(db-migration): backfill existing bot strategies into default market-group for zero-downtime compatibility`
+- [x] `MBA-06 feat(db-migration): backfill existing bot strategies into default market-group for zero-downtime compatibility`
 - [ ] `MBA-07 feat(api): add market-group CRUD under bots with strict ownership isolation`
 - [ ] `MBA-08 feat(api): add attach/detach/reorder strategy endpoints per market-group`
 - [ ] `MBA-09 feat(api): expose bot runtime graph read endpoint (bot->groups->strategies) for UI/runtime parity`
@@ -245,6 +245,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Domain audit completed for multi-bot runtime (`MBA-01`), including current Bot/SymbolGroup/BotStrategy contract mapping and non-breaking migration path in `docs/planning/mba-01-domain-audit-2026-03-22.md`.
 - 2026-03-23: Locked canonical runtime hierarchy and assistant topology (`MBA-02`) plus deterministic multi-strategy merge policy contract (`MBA-03`) in `docs/planning/open-decisions.md` and `docs/architecture/runtime-signal-merge-contract.md`.
 - 2026-03-23: Added additive Prisma schema + migration for `BotMarketGroup` and `MarketGroupStrategyLink` (`MBA-04`, `MBA-05`) with lifecycle/execution order and priority/weight fields.
+- 2026-03-23: Added idempotent backfill migration (`MBA-06`) from legacy `BotStrategy` bindings into `BotMarketGroup` and `MarketGroupStrategyLink` default graph records.
 - 2026-03-15: Initialized MVP execution file and commit rules.
 - 2026-03-15: Added generic trigger-based one-task execution workflow.
 - 2026-03-15: Expanded MVP plan to fully align with product, modules, database, trading, testing, and security docs.

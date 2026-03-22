@@ -12,9 +12,9 @@ Operational queue for one-task execution runs.
 - [x] `MBA-03 docs(contract): define deterministic signal merge policy for multi-strategy per market-group (priority, tie-break, no-trade)`
 - [x] `MBA-04 feat(db): add BotMarketGroup model with ownership, lifecycle status, and execution ordering`
 - [x] `MBA-05 feat(db): add MarketGroupStrategyLink model (many-strategies per market-group) with priority/weight fields`
+- [x] `MBA-06 feat(db-migration): backfill existing bot strategies into default market-group for zero-downtime compatibility`
 
 ## NEXT
-- [ ] `MBA-06 feat(db-migration): backfill existing bot strategies into default market-group for zero-downtime compatibility`
 - [ ] `MBA-07 feat(api): add market-group CRUD under bots with strict ownership isolation`
 - [ ] `MBA-08 feat(api): add attach/detach/reorder strategy endpoints per market-group`
 - [ ] `MBA-09 feat(api): expose bot runtime graph read endpoint (bot->groups->strategies) for UI/runtime parity`
@@ -48,6 +48,7 @@ Operational queue for one-task execution runs.
 - [x] `MBA-03 docs(contract): published deterministic merge contract in `docs/architecture/runtime-signal-merge-contract.md` and linked canonical decision entry in `docs/planning/open-decisions.md``
 - [x] `MBA-04 feat(db): added `BotMarketGroup` model (ownership, lifecycleStatus, executionOrder, indexes) in Prisma schema + SQL migration`
 - [x] `MBA-05 feat(db): added `MarketGroupStrategyLink` model (priority, weight, deterministic ordering indexes) in Prisma schema + SQL migration`
+- [x] `MBA-06 feat(db-migration): added idempotent data backfill from `BotStrategy` into `BotMarketGroup` and `MarketGroupStrategyLink` for zero-downtime rollout`
 - [x] `chore(planning): initialize MVP/V1 execution plans and agent blueprint`
 - [x] `chore(planning): align trigger intent to generic one-task nudge`
 - [x] `chore(planning): historical done backlog archived in git history; queue reset for current delivery focus`
