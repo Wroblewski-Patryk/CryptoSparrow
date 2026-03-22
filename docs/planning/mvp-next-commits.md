@@ -20,9 +20,9 @@ Operational queue for one-task execution runs.
 - [x] `MBA-11 feat(runtime): execute multi-strategy per market-group with locked merge policy and no-flip guarantees`
 - [x] `MBA-12 feat(risk): enforce per-market-group risk budget while preserving bot/global hard caps`
 - [x] `MBA-13 test(e2e): add full flow for one user with 2 bots, each with multiple market-groups and strategies`
+- [x] `MBA-14 docs(ai-contract): define assistant responsibilities, I/O schema, timeout policy, and fail-closed behavior`
 
 ## NEXT
-- [ ] `MBA-14 docs(ai-contract): define assistant responsibilities, I/O schema, timeout policy, and fail-closed behavior`
 - [ ] `MBA-15 feat(db): add BotAssistantConfig (main agent mandate, model profile, safety mode)`
 - [ ] `MBA-16 feat(db): add BotSubagentConfig with slotIndex(1..4), role, enabled flag, and unique(botId,slotIndex)`
 - [ ] `MBA-17 feat(api): add assistant config CRUD endpoints with hard max-4 subagent validation`
@@ -56,6 +56,7 @@ Operational queue for one-task execution runs.
 - [x] `MBA-11 feat(runtime): implemented deterministic multi-strategy merge per market-group (EXIT priority, weighted LONG/SHORT votes, tie/weak-consensus => no-trade) with no-flip preserved by pre-trade guardrails`
 - [x] `MBA-12 feat(risk): added per-market-group `maxOpenPositions` budget in schema/API/runtime and enforced group cap before pre-trade global/bot checks`
 - [x] `MBA-13 test(e2e): added multi-entity e2e contract for one user operating two bots with multiple market-groups and strategy links verified via runtime-graph`
+- [x] `MBA-14 docs(ai-contract): published canonical assistant runtime contract (`docs/architecture/assistant-runtime-contract.md`) with responsibilities, I/O, timeout, determinism, and fail-closed behavior`
 - [x] `chore(planning): initialize MVP/V1 execution plans and agent blueprint`
 - [x] `chore(planning): align trigger intent to generic one-task nudge`
 - [x] `chore(planning): historical done backlog archived in git history; queue reset for current delivery focus`

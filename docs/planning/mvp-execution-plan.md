@@ -222,7 +222,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `MBA-13 test(e2e): add full flow for one user with 2 bots, each with multiple market-groups and strategies`
 
 ## Phase 13 - AI Assistant Layer (MVP Foundation: 1 Main + Up to 4 Subagents)
-- [ ] `MBA-14 docs(ai-contract): define assistant responsibilities, I/O schema, timeout policy, and fail-closed behavior`
+- [x] `MBA-14 docs(ai-contract): define assistant responsibilities, I/O schema, timeout policy, and fail-closed behavior`
 - [ ] `MBA-15 feat(db): add BotAssistantConfig (main agent mandate, model profile, safety mode)`
 - [ ] `MBA-16 feat(db): add BotSubagentConfig with slotIndex(1..4), role, enabled flag, and unique(botId,slotIndex)`
 - [ ] `MBA-17 feat(api): add assistant config CRUD endpoints with hard max-4 subagent validation`
@@ -253,6 +253,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-23: Implemented deterministic multi-strategy merge (`MBA-11`) in runtime partition evaluation with EXIT priority, weighted votes, and explicit no-trade outcomes for tie/weak consensus.
 - 2026-03-23: Added per-market-group risk budget enforcement (`MBA-12`) via `BotMarketGroup.maxOpenPositions` and runtime group-cap guard before global/bot pre-trade checks.
 - 2026-03-23: Added full multi-entity e2e scenario (`MBA-13`) validating one-user/two-bot runtime graph with multiple market-groups and strategy links per bot.
+- 2026-03-23: Published assistant runtime contract (`MBA-14`) with canonical roles, I/O envelope, timeout behavior, and fail-closed safety rules.
 - 2026-03-15: Initialized MVP execution file and commit rules.
 - 2026-03-15: Added generic trigger-based one-task execution workflow.
 - 2026-03-15: Expanded MVP plan to fully align with product, modules, database, trading, testing, and security docs.
