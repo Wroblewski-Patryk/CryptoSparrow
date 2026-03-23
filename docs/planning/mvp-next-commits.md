@@ -35,7 +35,7 @@ Operational queue for one-task execution runs.
 - [x] `MBA-26 feat(ui-explainability): add decision timeline by bot/group/strategy/main-agent/subagent with rationale payloads`
 
 ## NEXT
-- [ ] `MBA-27 test(parity): validate backtest/paper/live decision parity with shared assistant orchestration inputs`
+- [x] `MBA-27 test(parity): validate backtest/paper/live decision parity with shared assistant orchestration inputs`
 - [ ] `MBA-28 perf(load): benchmark target profile (3 bots x 4 groups x 4 strategies x 5 agents) and set SLO thresholds`
 - [ ] `MBA-29 docs(runbook): publish operator runbook for assistant incidents, fallback modes, and safe recovery`
 - [ ] `MBA-30 release(v1-gate): collect evidence pack and close V1 exit criteria for multi-entity assistant runtime`
@@ -69,6 +69,7 @@ Operational queue for one-task execution runs.
 - [x] `MBA-24 feat(ops): added assistant circuit-breaker with failure threshold and reset window, returning deterministic `strategy_only` degradation when open`
 - [x] `MBA-25 feat(ai-policy): added mandate and forbidden-action policy gate in assistant orchestrator so disallowed outputs degrade to `NO_TRADE` before approval`
 - [x] `MBA-26 feat(ui-explainability): added Assistant dry-run decision timeline in Bots UI (final decision/reason + per-slot status/latency table)`
+- [x] `MBA-27 test(parity): added deterministic parity test ensuring identical assistant orchestration decision contract for BACKTEST/PAPER/LIVE modes`
 - [x] `chore(planning): initialize MVP/V1 execution plans and agent blueprint`
 - [x] `chore(planning): align trigger intent to generic one-task nudge`
 - [x] `chore(planning): historical done backlog archived in git history; queue reset for current delivery focus`
