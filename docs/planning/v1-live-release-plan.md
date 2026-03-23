@@ -117,7 +117,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 ### G5 - Paper 1:1 Live-Semantics Simulation
 - [x] `feat(paper): implement realistic fill model (partial fills, latency, fee/slippage/funding)`
 - [ ] `feat(paper): persist runtime-equivalent order/position/trade events for performance analytics`
-- [ ] `test(paper): add scenario tests proving paper/live decision equivalence with adapter-specific execution differences only`
+- [x] `test(paper): add scenario tests proving paper/live decision equivalence with adapter-specific execution differences only`
 
 ### G6 - Backtest 1:1 Runtime Replay
 - [ ] `feat(backtest): replace reduced simulation path with shared execution core replay over historical candles`
@@ -251,4 +251,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-23: Completed shared-core routing/parity (`G4` step 2/3) by running runtime signal + position automation through orchestrator/shared decision core and adding adapter parity tests for PAPER/LIVE + paper entry-side mapping.
 - 2026-03-23: Upgraded paper fill semantics (`G5` step 1) with entry latency ticks + partial fills per tick in lifecycle flow while preserving fee/slippage/funding trade simulation outputs.
 - 2026-03-23: Added persistent runtime execution event logging (`opened`/`closed`/`ignored`) in orchestrator for PAPER/LIVE analytics traceability as first delivery slice toward `G5` event persistence.
+- 2026-03-23: Added paper/live decision-equivalence scenario tests (`G5` step 3) validating identical runtime outcomes for shared signal sequences with adapter-specific execution differences abstracted.
 
