@@ -140,6 +140,27 @@ model SymbolGroup {
   @@index([marketUniverseId])
 }
 
+model MarketCandleCache {
+  id          String      @id @default(uuid())
+  marketType  TradeMarket
+  symbol      String
+  timeframe   String
+  openTime    BigInt
+  closeTime   BigInt
+  open        Float
+  high        Float
+  low         Float
+  close       Float
+  volume      Float
+  source      String      @default("BINANCE")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([marketType, symbol, timeframe, openTime])
+  @@index([marketType, symbol, timeframe, openTime])
+  @@index([marketType, symbol, timeframe, closeTime])
+}
+
 model Bot {
   id                String          @id @default(uuid())
   userId            String

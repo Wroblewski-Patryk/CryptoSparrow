@@ -105,6 +105,7 @@ const timeframeDefaultCandles: Record<string, number> = {
 };
 
 const CANDLE_CACHE_TTL_MS = 20 * 60 * 1000;
+const useDbCandleCache = (process.env.BACKTEST_USE_DB_CANDLE_CACHE ?? 'true').toLowerCase() !== 'false';
 const candleCache = new Map<
   string,
   {
@@ -112,6 +113,24 @@ const candleCache = new Map<
     candles: KlineCandle[];
   }
 >();
+
+const getDbCandleDelegate = () =>
+  (prisma as unknown as {
+    marketCandleCache?: {
+      findMany: (args: unknown) => Promise<
+        Array<{
+          openTime: bigint;
+          closeTime: bigint;
+          open: number;
+          high: number;
+          low: number;
+          close: number;
+          volume: number;
+        }>
+      >;
+      createMany: (args: unknown) => Promise<unknown>;
+    };
+  }).marketCandleCache;
 
 const normalizeTimeframe = (value: string) => {
   const raw = value.trim().toLowerCase();
@@ -170,6 +189,24 @@ const maxDrawdownFromPnlSeries = (pnls: number[]) => {
   return maxDrawdown;
 };
 
+const toKlineFromDb = (row: {
+  openTime: bigint;
+  closeTime: bigint;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}): KlineCandle => ({
+  openTime: Number(row.openTime),
+  closeTime: Number(row.closeTime),
+  open: row.open,
+  high: row.high,
+  low: row.low,
+  close: row.close,
+  volume: row.volume,
+});
+
 const cacheKeyForCandles = (symbol: string, timeframe: string, marketType: MarketType, maxCandles: number) =>
   `${marketType}:${symbol}:${normalizeTimeframe(timeframe)}:${maxCandles}`;
 
@@ -210,14 +247,39 @@ const fetchKlines = async (
   }
 
   const normalizedTimeframe = normalizeTimeframe(timeframe);
+  const now = Date.now();
+  const startTimeByRange = now - TWO_WEEKS_MS;
+  const dbDelegate = useDbCandleCache ? getDbCandleDelegate() : undefined;
+  if (dbDelegate) {
+    try {
+      const dbCandlesRaw = await dbDelegate.findMany({
+        where: {
+          marketType,
+          symbol,
+          timeframe: normalizedTimeframe,
+          openTime: {
+            gte: BigInt(startTimeByRange),
+          },
+        },
+        orderBy: { openTime: 'asc' },
+        take: maxCandles,
+      });
+      if (dbCandlesRaw.length >= Math.min(50, maxCandles)) {
+        const dbCandles = dbCandlesRaw.map(toKlineFromDb).slice(-maxCandles);
+        candleCache.set(key, { cachedAt: Date.now(), candles: dbCandles });
+        return dbCandles;
+      }
+    } catch {
+      // DB candle cache is a performance optimization; network fetch remains source of truth fallback.
+    }
+  }
+
   const endpoint =
     marketType === 'FUTURES'
       ? 'https://fapi.binance.com/fapi/v1/klines'
       : 'https://api.binance.com/api/v3/klines';
 
   const intervalMs = getIntervalMs(timeframe);
-  const now = Date.now();
-  const startTimeByRange = now - TWO_WEEKS_MS;
 
   const candles: KlineCandle[] = [];
   let nextStartTime = startTimeByRange;
@@ -276,6 +338,30 @@ const fetchKlines = async (
   const result = candles
     .sort((a, b) => a.openTime - b.openTime)
     .slice(-maxCandles);
+
+  if (dbDelegate && result.length > 0) {
+    try {
+      await dbDelegate.createMany({
+        data: result.map((item) => ({
+          marketType,
+          symbol,
+          timeframe: normalizedTimeframe,
+          openTime: BigInt(item.openTime),
+          closeTime: BigInt(item.closeTime),
+          open: item.open,
+          high: item.high,
+          low: item.low,
+          close: item.close,
+          volume: item.volume,
+          source: 'BINANCE',
+        })),
+        skipDuplicates: true,
+      });
+    } catch {
+      // ignore cache write errors; fetch already succeeded
+    }
+  }
+
   candleCache.set(key, { cachedAt: Date.now(), candles: result });
   return result;
 };
