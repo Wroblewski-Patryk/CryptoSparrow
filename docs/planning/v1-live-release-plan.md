@@ -111,8 +111,8 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 
 ### G4 - Shared Execution Core (Parity Foundation)
 - [x] `refactor(engine): extract shared execution core used by backtest/paper/live adapters`
-- [ ] `refactor(engine): route runtime signal and position automation flows through shared execution core`
-- [ ] `test(engine): add deterministic parity tests for shared core against mode adapters`
+- [x] `refactor(engine): route runtime signal and position automation flows through shared execution core`
+- [x] `test(engine): add deterministic parity tests for shared core against mode adapters`
 
 ### G5 - Paper 1:1 Live-Semantics Simulation
 - [ ] `feat(paper): implement realistic fill model (partial fills, latency, fee/slippage/funding)`
@@ -248,4 +248,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-22: Completed docs/navigation cleanup for `Bots/Exchanges`, defined staged `client/server -> web/api` migration plan, and added bootstrap-only `apps/mobile` scaffold contract.
 - 2026-03-23: Implemented live exchange reconciliation loop (`G3`) using `syncExternalPositions/manageExternalPositions` API-key flags with exchange-source upsert/close projection for `EXCHANGE_SYNC` positions.
 - 2026-03-23: Extracted shared execution core helpers/decision model (`G4` step 1) and wired runtime orchestrator + paper lifecycle to reuse deterministic side/action mapping.
+- 2026-03-23: Completed shared-core routing/parity (`G4` step 2/3) by running runtime signal + position automation through orchestrator/shared decision core and adding adapter parity tests for PAPER/LIVE + paper entry-side mapping.
 
