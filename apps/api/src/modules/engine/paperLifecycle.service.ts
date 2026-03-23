@@ -4,6 +4,7 @@ import { evaluatePositionManagement } from './positionManagement.service';
 import { PositionManagementInput } from './positionManagement.types';
 import { simulateTrade } from './simulator.service';
 import { SimulatorResult } from './simulator.types';
+import { orderSideToPositionSide } from './sharedExecutionCore';
 
 export type PaperPositionState = {
   side: 'LONG' | 'SHORT';
@@ -35,9 +36,6 @@ export type PaperLifecycleTickResult = {
   closeReason?: 'take_profit' | 'stop_loss' | 'trailing_stop';
   tradeResult?: SimulatorResult;
 };
-
-const toPositionSide = (orderSide: 'BUY' | 'SELL'): 'LONG' | 'SHORT' =>
-  orderSide === 'BUY' ? 'LONG' : 'SHORT';
 
 const validateLifecycleInput = (input: PaperLifecycleInput) => {
   if (!Number.isFinite(input.markPrice) || input.markPrice <= 0) {
@@ -72,7 +70,7 @@ export const processPaperLifecycleTick = (
       };
     }
 
-    const side = toPositionSide(input.entryOrder.side);
+    const side = orderSideToPositionSide(input.entryOrder.side);
     return {
       nextState: {
         orderState: {},

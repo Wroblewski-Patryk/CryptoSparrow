@@ -110,7 +110,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `feat(runtime): ignore bot entry signals on symbols occupied by manual-managed positions`
 
 ### G4 - Shared Execution Core (Parity Foundation)
-- [ ] `refactor(engine): extract shared execution core used by backtest/paper/live adapters`
+- [x] `refactor(engine): extract shared execution core used by backtest/paper/live adapters`
 - [ ] `refactor(engine): route runtime signal and position automation flows through shared execution core`
 - [ ] `test(engine): add deterministic parity tests for shared core against mode adapters`
 
@@ -247,4 +247,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-22: Added login/register password visibility controls with explicit screen-reader labels and regression tests for show/hide toggle behavior.
 - 2026-03-22: Completed docs/navigation cleanup for `Bots/Exchanges`, defined staged `client/server -> web/api` migration plan, and added bootstrap-only `apps/mobile` scaffold contract.
 - 2026-03-23: Implemented live exchange reconciliation loop (`G3`) using `syncExternalPositions/manageExternalPositions` API-key flags with exchange-source upsert/close projection for `EXCHANGE_SYNC` positions.
+- 2026-03-23: Extracted shared execution core helpers/decision model (`G4` step 1) and wired runtime orchestrator + paper lifecycle to reuse deterministic side/action mapping.
 

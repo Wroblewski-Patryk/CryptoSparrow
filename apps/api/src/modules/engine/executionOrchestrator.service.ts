@@ -1,6 +1,7 @@
 import { Order, Position, PositionSide, Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { closeOrder as closeOrderLifecycle, openOrder as openOrderLifecycle } from '../orders/orders.service';
+import { decideExecutionAction } from './sharedExecutionCore';
 
 export type RuntimeSignalDirection = 'LONG' | 'SHORT' | 'EXIT';
 export type RuntimeExecutionMode = 'PAPER' | 'LIVE';
@@ -79,33 +80,36 @@ const defaultPositionGateway: PositionFlowGateway = {
   },
 };
 
-const directionToOrderSide = (direction: 'LONG' | 'SHORT'): 'BUY' | 'SELL' =>
-  direction === 'LONG' ? 'BUY' : 'SELL';
-
-const directionToPositionSide = (direction: 'LONG' | 'SHORT'): PositionSide =>
-  direction === 'LONG' ? 'LONG' : 'SHORT';
-
 export const orchestrateRuntimeSignal = async (
   input: RuntimeSignalInput,
   orderGateway: OrderFlowGateway = defaultOrderGateway,
   positionGateway: PositionFlowGateway = defaultPositionGateway
 ): Promise<OrchestrationResult> => {
   const openPosition = await positionGateway.getOpenPositionBySymbol(input.userId, input.symbol);
+  const decision = decideExecutionAction(
+    input.direction,
+    openPosition
+      ? {
+          side: openPosition.side as 'LONG' | 'SHORT',
+          quantity: openPosition.quantity,
+          managementMode: openPosition.managementMode as 'BOT_MANAGED' | 'MANUAL_MANAGED',
+        }
+      : null
+  );
 
-  if (input.direction === 'EXIT') {
+  if (decision.kind === 'ignore') {
+    return { status: 'ignored', reason: decision.reason };
+  }
+
+  if (decision.kind === 'close') {
     if (!openPosition) {
       return { status: 'ignored', reason: 'no_open_position' };
     }
-    if (openPosition.managementMode === 'MANUAL_MANAGED') {
-      return { status: 'ignored', reason: 'manual_managed_symbol' };
-    }
-
-    const closeSide = openPosition.side === 'LONG' ? 'SELL' : 'BUY';
     const closeOrder = await orderGateway.openOrder(input.userId, {
       botId: input.botId,
       strategyId: input.strategyId,
       symbol: input.symbol,
-      side: closeSide,
+      side: decision.orderSide,
       type: 'MARKET',
       quantity: openPosition.quantity,
       mode: input.mode,
@@ -124,21 +128,11 @@ export const orchestrateRuntimeSignal = async (
     };
   }
 
-  if (openPosition) {
-    if (openPosition.managementMode === 'MANUAL_MANAGED') {
-      return { status: 'ignored', reason: 'manual_managed_symbol' };
-    }
-    if (openPosition.side !== directionToPositionSide(input.direction)) {
-      return { status: 'ignored', reason: 'no_flip_with_open_position' };
-    }
-    return { status: 'ignored', reason: 'already_open_same_side' };
-  }
-
   const openOrder = await orderGateway.openOrder(input.userId, {
     botId: input.botId,
     strategyId: input.strategyId,
     symbol: input.symbol,
-    side: directionToOrderSide(input.direction),
+    side: decision.orderSide,
     type: 'MARKET',
     quantity: input.quantity,
     mode: input.mode,
@@ -150,7 +144,7 @@ export const orchestrateRuntimeSignal = async (
     botId: input.botId,
     strategyId: input.strategyId,
     symbol: input.symbol,
-    side: directionToPositionSide(input.direction),
+    side: decision.positionSide as PositionSide,
     status: 'OPEN',
     entryPrice: input.markPrice,
     quantity: input.quantity,
