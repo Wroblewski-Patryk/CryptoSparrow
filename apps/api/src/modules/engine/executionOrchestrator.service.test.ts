@@ -3,6 +3,7 @@ import {
   orchestrateRuntimeSignal,
   OrderFlowGateway,
   PositionFlowGateway,
+  RuntimeExecutionEventGateway,
 } from './executionOrchestrator.service';
 
 const createOrderGateway = (): OrderFlowGateway => ({
@@ -62,10 +63,15 @@ const createPositionGateway = (): PositionFlowGateway => ({
   closePosition: vi.fn().mockResolvedValue(undefined),
 });
 
+const createEventGateway = (): RuntimeExecutionEventGateway => ({
+  writeEvent: vi.fn().mockResolvedValue(undefined),
+});
+
 describe('orchestrateRuntimeSignal', () => {
   it('opens order and position for LONG signal', async () => {
     const orderGateway = createOrderGateway();
     const positionGateway = createPositionGateway();
+    const eventGateway = createEventGateway();
 
     const result = await orchestrateRuntimeSignal(
       {
@@ -77,7 +83,8 @@ describe('orchestrateRuntimeSignal', () => {
         mode: 'PAPER',
       },
       orderGateway,
-      positionGateway
+      positionGateway,
+      eventGateway
     );
 
     expect(result).toEqual({
@@ -91,11 +98,18 @@ describe('orchestrateRuntimeSignal', () => {
     );
     expect(positionGateway.createPosition).toHaveBeenCalled();
     expect(orderGateway.linkOrderToPosition).toHaveBeenCalledWith('order-1', 'position-1');
+    expect(eventGateway.writeEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'opened',
+        symbol: 'BTCUSDT',
+      })
+    );
   });
 
   it('returns ignored when EXIT arrives without open position', async () => {
     const orderGateway = createOrderGateway();
     const positionGateway = createPositionGateway();
+    const eventGateway = createEventGateway();
 
     const result = await orchestrateRuntimeSignal(
       {
@@ -107,16 +121,24 @@ describe('orchestrateRuntimeSignal', () => {
         mode: 'PAPER',
       },
       orderGateway,
-      positionGateway
+      positionGateway,
+      eventGateway
     );
 
     expect(result).toEqual({ status: 'ignored', reason: 'no_open_position' });
     expect(orderGateway.openOrder).not.toHaveBeenCalled();
+    expect(eventGateway.writeEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'ignored',
+        reason: 'no_open_position',
+      })
+    );
   });
 
   it('closes open position on EXIT signal', async () => {
     const orderGateway = createOrderGateway();
     const positionGateway = createPositionGateway();
+    const eventGateway = createEventGateway();
     (positionGateway.getOpenPositionBySymbol as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: 'position-open',
       userId: 'u1',
@@ -175,7 +197,8 @@ describe('orchestrateRuntimeSignal', () => {
         mode: 'LIVE',
       },
       orderGateway,
-      positionGateway
+      positionGateway,
+      eventGateway
     );
 
     expect(result).toEqual({
@@ -189,11 +212,18 @@ describe('orchestrateRuntimeSignal', () => {
     );
     expect(positionGateway.closePosition).toHaveBeenCalledWith('position-open', 'u1');
     expect(orderGateway.closeOrder).not.toHaveBeenCalled();
+    expect(eventGateway.writeEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'closed',
+        positionId: 'position-open',
+      })
+    );
   });
 
   it('ignores opposite direction when open position already exists (no-flip)', async () => {
     const orderGateway = createOrderGateway();
     const positionGateway = createPositionGateway();
+    const eventGateway = createEventGateway();
     (positionGateway.getOpenPositionBySymbol as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: 'position-open',
       userId: 'u1',
@@ -229,17 +259,25 @@ describe('orchestrateRuntimeSignal', () => {
         mode: 'PAPER',
       },
       orderGateway,
-      positionGateway
+      positionGateway,
+      eventGateway
     );
 
     expect(result).toEqual({ status: 'ignored', reason: 'no_flip_with_open_position' });
     expect(orderGateway.openOrder).not.toHaveBeenCalled();
     expect(positionGateway.createPosition).not.toHaveBeenCalled();
+    expect(eventGateway.writeEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'ignored',
+        reason: 'no_flip_with_open_position',
+      })
+    );
   });
 
   it('ignores runtime action for manual-managed symbol', async () => {
     const orderGateway = createOrderGateway();
     const positionGateway = createPositionGateway();
+    const eventGateway = createEventGateway();
     (positionGateway.getOpenPositionBySymbol as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: 'position-open',
       userId: 'u1',
@@ -275,11 +313,18 @@ describe('orchestrateRuntimeSignal', () => {
         mode: 'LIVE',
       },
       orderGateway,
-      positionGateway
+      positionGateway,
+      eventGateway
     );
 
     expect(result).toEqual({ status: 'ignored', reason: 'manual_managed_symbol' });
     expect(orderGateway.openOrder).not.toHaveBeenCalled();
     expect(positionGateway.closePosition).not.toHaveBeenCalled();
+    expect(eventGateway.writeEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'ignored',
+        reason: 'manual_managed_symbol',
+      })
+    );
   });
 });

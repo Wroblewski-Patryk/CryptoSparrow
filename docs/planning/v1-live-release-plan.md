@@ -250,4 +250,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-23: Extracted shared execution core helpers/decision model (`G4` step 1) and wired runtime orchestrator + paper lifecycle to reuse deterministic side/action mapping.
 - 2026-03-23: Completed shared-core routing/parity (`G4` step 2/3) by running runtime signal + position automation through orchestrator/shared decision core and adding adapter parity tests for PAPER/LIVE + paper entry-side mapping.
 - 2026-03-23: Upgraded paper fill semantics (`G5` step 1) with entry latency ticks + partial fills per tick in lifecycle flow while preserving fee/slippage/funding trade simulation outputs.
+- 2026-03-23: Added persistent runtime execution event logging (`opened`/`closed`/`ignored`) in orchestrator for PAPER/LIVE analytics traceability as first delivery slice toward `G5` event persistence.
 

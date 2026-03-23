@@ -50,6 +50,21 @@ export interface PositionFlowGateway {
   closePosition(positionId: string, userId: string): Promise<void>;
 }
 
+export interface RuntimeExecutionEventGateway {
+  writeEvent(input: {
+    userId: string;
+    botId?: string;
+    strategyId?: string;
+    symbol: string;
+    direction: RuntimeSignalDirection;
+    mode: RuntimeExecutionMode;
+    status: 'ignored' | 'opened' | 'closed';
+    reason?: string;
+    orderId?: string;
+    positionId?: string;
+  }): Promise<void>;
+}
+
 const defaultOrderGateway: OrderFlowGateway = {
   openOrder: (userId, input) =>
     openOrderLifecycle(userId, {
@@ -80,10 +95,40 @@ const defaultPositionGateway: PositionFlowGateway = {
   },
 };
 
+const defaultRuntimeEventGateway: RuntimeExecutionEventGateway = {
+  writeEvent: async (input) => {
+    await prisma.log.create({
+      data: {
+        userId: input.userId,
+        botId: input.botId,
+        strategyId: input.strategyId,
+        action: 'runtime.execution',
+        level: 'INFO',
+        source: 'engine.executionOrchestrator',
+        message: `Runtime execution ${input.status} for ${input.symbol} (${input.direction})`,
+        category: 'runtime',
+        entityType: 'position',
+        entityId: input.positionId,
+        actor: 'runtime',
+        metadata: {
+          symbol: input.symbol,
+          direction: input.direction,
+          mode: input.mode,
+          status: input.status,
+          reason: input.reason ?? null,
+          orderId: input.orderId ?? null,
+          positionId: input.positionId ?? null,
+        } as Prisma.InputJsonValue,
+      },
+    });
+  },
+};
+
 export const orchestrateRuntimeSignal = async (
   input: RuntimeSignalInput,
   orderGateway: OrderFlowGateway = defaultOrderGateway,
-  positionGateway: PositionFlowGateway = defaultPositionGateway
+  positionGateway: PositionFlowGateway = defaultPositionGateway,
+  runtimeEventGateway: RuntimeExecutionEventGateway = defaultRuntimeEventGateway
 ): Promise<OrchestrationResult> => {
   const openPosition = await positionGateway.getOpenPositionBySymbol(input.userId, input.symbol);
   const decision = decideExecutionAction(
@@ -98,11 +143,31 @@ export const orchestrateRuntimeSignal = async (
   );
 
   if (decision.kind === 'ignore') {
+    await runtimeEventGateway.writeEvent({
+      userId: input.userId,
+      botId: input.botId,
+      strategyId: input.strategyId,
+      symbol: input.symbol,
+      direction: input.direction,
+      mode: input.mode,
+      status: 'ignored',
+      reason: decision.reason,
+    });
     return { status: 'ignored', reason: decision.reason };
   }
 
   if (decision.kind === 'close') {
     if (!openPosition) {
+      await runtimeEventGateway.writeEvent({
+        userId: input.userId,
+        botId: input.botId,
+        strategyId: input.strategyId,
+        symbol: input.symbol,
+        direction: input.direction,
+        mode: input.mode,
+        status: 'ignored',
+        reason: 'no_open_position',
+      });
       return { status: 'ignored', reason: 'no_open_position' };
     }
     const closeOrder = await orderGateway.openOrder(input.userId, {
@@ -120,6 +185,18 @@ export const orchestrateRuntimeSignal = async (
     if (closeOrder.status === 'OPEN' || closeOrder.status === 'PARTIALLY_FILLED') {
       await orderGateway.closeOrder(input.userId, closeOrder.id, { riskAck: true });
     }
+
+    await runtimeEventGateway.writeEvent({
+      userId: input.userId,
+      botId: input.botId,
+      strategyId: input.strategyId,
+      symbol: input.symbol,
+      direction: input.direction,
+      mode: input.mode,
+      status: 'closed',
+      orderId: closeOrder.id,
+      positionId: openPosition.id,
+    });
 
     return {
       status: 'closed',
@@ -152,6 +229,17 @@ export const orchestrateRuntimeSignal = async (
   });
 
   await orderGateway.linkOrderToPosition(openOrder.id, position.id);
+  await runtimeEventGateway.writeEvent({
+    userId: input.userId,
+    botId: input.botId,
+    strategyId: input.strategyId,
+    symbol: input.symbol,
+    direction: input.direction,
+    mode: input.mode,
+    status: 'opened',
+    orderId: openOrder.id,
+    positionId: position.id,
+  });
 
   return {
     status: 'opened',

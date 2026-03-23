@@ -3,6 +3,7 @@ import {
   orchestrateRuntimeSignal,
   OrderFlowGateway,
   PositionFlowGateway,
+  RuntimeExecutionEventGateway,
 } from './executionOrchestrator.service';
 import { processPaperLifecycleTick } from './paperLifecycle.service';
 import { orderSideToPositionSide } from './sharedExecutionCore';
@@ -64,12 +65,18 @@ const createPositionGateway = (): PositionFlowGateway => ({
   closePosition: vi.fn().mockResolvedValue(undefined),
 });
 
+const createEventGateway = (): RuntimeExecutionEventGateway => ({
+  writeEvent: vi.fn().mockResolvedValue(undefined),
+});
+
 describe('execution adapter parity', () => {
   it('returns same action contract for PAPER and LIVE when context is identical', async () => {
     const paperOrderGateway = createOrderGateway();
     const paperPositionGateway = createPositionGateway();
+    const paperEventGateway = createEventGateway();
     const liveOrderGateway = createOrderGateway();
     const livePositionGateway = createPositionGateway();
+    const liveEventGateway = createEventGateway();
 
     const paper = await orchestrateRuntimeSignal(
       {
@@ -81,7 +88,8 @@ describe('execution adapter parity', () => {
         mode: 'PAPER',
       },
       paperOrderGateway,
-      paperPositionGateway
+      paperPositionGateway,
+      paperEventGateway
     );
 
     const live = await orchestrateRuntimeSignal(
@@ -94,7 +102,8 @@ describe('execution adapter parity', () => {
         mode: 'LIVE',
       },
       liveOrderGateway,
-      livePositionGateway
+      livePositionGateway,
+      liveEventGateway
     );
 
     expect(paper.status).toBe('opened');
@@ -129,12 +138,14 @@ describe('execution adapter parity', () => {
 
     const paperOrderGateway = createOrderGateway();
     const paperPositionGateway = createPositionGateway();
+    const paperEventGateway = createEventGateway();
     (paperPositionGateway.getOpenPositionBySymbol as ReturnType<typeof vi.fn>).mockResolvedValue(
       existingOpen
     );
 
     const liveOrderGateway = createOrderGateway();
     const livePositionGateway = createPositionGateway();
+    const liveEventGateway = createEventGateway();
     (livePositionGateway.getOpenPositionBySymbol as ReturnType<typeof vi.fn>).mockResolvedValue(
       existingOpen
     );
@@ -149,7 +160,8 @@ describe('execution adapter parity', () => {
         mode: 'PAPER',
       },
       paperOrderGateway,
-      paperPositionGateway
+      paperPositionGateway,
+      paperEventGateway
     );
 
     const live = await orchestrateRuntimeSignal(
@@ -162,7 +174,8 @@ describe('execution adapter parity', () => {
         mode: 'LIVE',
       },
       liveOrderGateway,
-      livePositionGateway
+      livePositionGateway,
+      liveEventGateway
     );
 
     expect(paper).toEqual({ status: 'ignored', reason: 'no_flip_with_open_position' });
