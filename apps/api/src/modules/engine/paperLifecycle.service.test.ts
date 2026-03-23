@@ -154,4 +154,58 @@ describe('paper lifecycle', () => {
       })
     ).toThrow('Paper lifecycle requires a positive entry order quantity');
   });
+
+  it('supports entry latency and partial fills before position opens', () => {
+    const first = processPaperLifecycleTick(emptyState(), {
+      markPrice: 100,
+      entryOrder: {
+        type: 'MARKET',
+        side: 'BUY',
+        quantity: 10,
+      },
+      management: {},
+      entryLatencyTicks: 1,
+      maxEntryFillFractionPerTick: 0.5,
+    });
+
+    expect(first.openedPosition).toBe(false);
+    expect(first.partialEntryFill).toEqual({
+      filledQuantity: 5,
+      targetQuantity: 10,
+      remainingQuantity: 5,
+    });
+    expect(first.nextState.pendingEntry).toBeTruthy();
+
+    const second = processPaperLifecycleTick(first.nextState, {
+      markPrice: 101,
+      entryOrder: {
+        type: 'MARKET',
+        side: 'BUY',
+        quantity: 10,
+      },
+      management: {},
+      entryLatencyTicks: 1,
+      maxEntryFillFractionPerTick: 0.5,
+    });
+
+    expect(second.openedPosition).toBe(false);
+    expect(second.nextState.pendingEntry?.remainingLatencyTicks).toBe(0);
+
+    const third = processPaperLifecycleTick(second.nextState, {
+      markPrice: 102,
+      entryOrder: {
+        type: 'MARKET',
+        side: 'BUY',
+        quantity: 10,
+      },
+      management: {},
+      entryLatencyTicks: 1,
+      maxEntryFillFractionPerTick: 0.5,
+    });
+
+    expect(third.openedPosition).toBe(true);
+    expect(third.nextState.pendingEntry).toBeNull();
+    expect(third.nextState.position?.quantity).toBe(10);
+    expect(third.nextState.position?.averageEntryPrice).toBeGreaterThan(100);
+  });
 });

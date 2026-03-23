@@ -115,7 +115,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `test(engine): add deterministic parity tests for shared core against mode adapters`
 
 ### G5 - Paper 1:1 Live-Semantics Simulation
-- [ ] `feat(paper): implement realistic fill model (partial fills, latency, fee/slippage/funding)`
+- [x] `feat(paper): implement realistic fill model (partial fills, latency, fee/slippage/funding)`
 - [ ] `feat(paper): persist runtime-equivalent order/position/trade events for performance analytics`
 - [ ] `test(paper): add scenario tests proving paper/live decision equivalence with adapter-specific execution differences only`
 
@@ -249,4 +249,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-23: Implemented live exchange reconciliation loop (`G3`) using `syncExternalPositions/manageExternalPositions` API-key flags with exchange-source upsert/close projection for `EXCHANGE_SYNC` positions.
 - 2026-03-23: Extracted shared execution core helpers/decision model (`G4` step 1) and wired runtime orchestrator + paper lifecycle to reuse deterministic side/action mapping.
 - 2026-03-23: Completed shared-core routing/parity (`G4` step 2/3) by running runtime signal + position automation through orchestrator/shared decision core and adding adapter parity tests for PAPER/LIVE + paper entry-side mapping.
+- 2026-03-23: Upgraded paper fill semantics (`G5` step 1) with entry latency ticks + partial fills per tick in lifecycle flow while preserving fee/slippage/funding trade simulation outputs.
 

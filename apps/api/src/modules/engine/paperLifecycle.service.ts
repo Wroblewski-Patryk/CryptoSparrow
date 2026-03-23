@@ -18,12 +18,21 @@ export type PaperPositionState = {
 export type PaperLifecycleState = {
   position: PaperPositionState | null;
   orderState: OrderEvaluationState;
+  pendingEntry?: {
+    side: 'LONG' | 'SHORT';
+    targetQuantity: number;
+    filledQuantity: number;
+    averageEntryPrice: number;
+    remainingLatencyTicks: number;
+  } | null;
 };
 
 export type PaperLifecycleInput = {
   markPrice: number;
   entryOrder: Omit<OrderEvaluationInput, 'markPrice'>;
   management: Omit<PositionManagementInput, 'side' | 'currentPrice'>;
+  entryLatencyTicks?: number;
+  maxEntryFillFractionPerTick?: number;
   feeRate?: number;
   slippageRate?: number;
   fundingRate?: number;
@@ -33,6 +42,11 @@ export type PaperLifecycleTickResult = {
   nextState: PaperLifecycleState;
   openedPosition: boolean;
   closedPosition: boolean;
+  partialEntryFill?: {
+    filledQuantity: number;
+    targetQuantity: number;
+    remainingQuantity: number;
+  };
   closeReason?: 'take_profit' | 'stop_loss' | 'trailing_stop';
   tradeResult?: SimulatorResult;
 };
@@ -47,13 +61,104 @@ const validateLifecycleInput = (input: PaperLifecycleInput) => {
   }
 };
 
+const clampFillFraction = (value: number | undefined) => {
+  if (value == null) return 1;
+  if (!Number.isFinite(value)) return 1;
+  if (value <= 0) return 1;
+  if (value > 1) return 1;
+  return value;
+};
+
+const normalizeLatencyTicks = (value: number | undefined) => {
+  if (value == null || !Number.isFinite(value)) return 0;
+  return Math.max(0, Math.floor(value));
+};
+
+const nextAverageEntryPrice = (
+  currentAverage: number,
+  currentQuantity: number,
+  newFillPrice: number,
+  newFillQuantity: number
+) => {
+  const totalQuantity = currentQuantity + newFillQuantity;
+  if (totalQuantity <= 0) return currentAverage;
+  return (currentAverage * currentQuantity + newFillPrice * newFillQuantity) / totalQuantity;
+};
+
 export const processPaperLifecycleTick = (
   state: PaperLifecycleState,
   input: PaperLifecycleInput
 ): PaperLifecycleTickResult => {
   validateLifecycleInput(input);
+  const pendingEntry = state.pendingEntry ?? null;
+  const fillFraction = clampFillFraction(input.maxEntryFillFractionPerTick);
 
   if (!state.position) {
+    if (pendingEntry) {
+      if (pendingEntry.remainingLatencyTicks > 0) {
+        return {
+          nextState: {
+            position: null,
+            orderState: state.orderState,
+            pendingEntry: {
+              ...pendingEntry,
+              remainingLatencyTicks: pendingEntry.remainingLatencyTicks - 1,
+            },
+          },
+          openedPosition: false,
+          closedPosition: false,
+        };
+      }
+
+      const fillQuantity = Math.min(
+        pendingEntry.targetQuantity - pendingEntry.filledQuantity,
+        pendingEntry.targetQuantity * fillFraction
+      );
+      const filledQuantity = pendingEntry.filledQuantity + fillQuantity;
+      const averageEntryPrice = nextAverageEntryPrice(
+        pendingEntry.averageEntryPrice,
+        pendingEntry.filledQuantity,
+        input.markPrice,
+        fillQuantity
+      );
+
+      if (filledQuantity >= pendingEntry.targetQuantity) {
+        return {
+          nextState: {
+            orderState: {},
+            pendingEntry: null,
+            position: {
+              side: pendingEntry.side,
+              averageEntryPrice,
+              quantity: pendingEntry.targetQuantity,
+              currentAdds: 0,
+            },
+          },
+          openedPosition: true,
+          closedPosition: false,
+        };
+      }
+
+      return {
+        nextState: {
+          position: null,
+          orderState: state.orderState,
+          pendingEntry: {
+            ...pendingEntry,
+            filledQuantity,
+            averageEntryPrice,
+          },
+        },
+        openedPosition: false,
+        closedPosition: false,
+        partialEntryFill: {
+          filledQuantity,
+          targetQuantity: pendingEntry.targetQuantity,
+          remainingQuantity: pendingEntry.targetQuantity - filledQuantity,
+        },
+      };
+    }
+
     const entryEval = evaluateOrderExecution(
       {
         ...input.entryOrder,
@@ -64,16 +169,44 @@ export const processPaperLifecycleTick = (
 
     if (!entryEval.shouldExecute) {
       return {
-        nextState: { position: null, orderState: entryEval.nextState },
+        nextState: { position: null, orderState: entryEval.nextState, pendingEntry: null },
         openedPosition: false,
         closedPosition: false,
       };
     }
 
     const side = orderSideToPositionSide(input.entryOrder.side);
+    const latencyTicks = normalizeLatencyTicks(input.entryLatencyTicks);
+    const initialFillQuantity = Math.min(input.entryOrder.quantity, input.entryOrder.quantity * fillFraction);
+    const pending = {
+      side,
+      targetQuantity: input.entryOrder.quantity,
+      filledQuantity: initialFillQuantity,
+      averageEntryPrice: input.markPrice,
+      remainingLatencyTicks: latencyTicks,
+    };
+
+    if (pending.filledQuantity < pending.targetQuantity || pending.remainingLatencyTicks > 0) {
+      return {
+        nextState: {
+          orderState: entryEval.nextState,
+          position: null,
+          pendingEntry: pending,
+        },
+        openedPosition: false,
+        closedPosition: false,
+        partialEntryFill: {
+          filledQuantity: pending.filledQuantity,
+          targetQuantity: pending.targetQuantity,
+          remainingQuantity: pending.targetQuantity - pending.filledQuantity,
+        },
+      };
+    }
+
     return {
       nextState: {
         orderState: {},
+        pendingEntry: null,
         position: {
           side,
           averageEntryPrice: input.markPrice,
@@ -105,6 +238,7 @@ export const processPaperLifecycleTick = (
     return {
       nextState: {
         orderState: state.orderState,
+        pendingEntry: null,
         position: {
           side: state.position.side,
           averageEntryPrice: managementEval.nextState.averageEntryPrice,
@@ -133,6 +267,7 @@ export const processPaperLifecycleTick = (
     nextState: {
       position: null,
       orderState: state.orderState,
+      pendingEntry: null,
     },
     openedPosition: false,
     closedPosition: true,
