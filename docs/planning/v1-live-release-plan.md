@@ -105,7 +105,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `feat(profile): add API-key onboarding options for external sync and external position management defaults`
 
 ### G3 - Live Reconciliation and Safety Rules
-- [ ] `feat(runtime): implement live reconciliation loop with exchange as source-of-truth and DB upsert projection`
+- [x] `feat(runtime): implement live reconciliation loop with exchange as source-of-truth and DB upsert projection`
 - [x] `feat(runtime): enforce no-flip rule on per-symbol position lifecycle and ignore opposite entries while position is open`
 - [x] `feat(runtime): ignore bot entry signals on symbols occupied by manual-managed positions`
 
@@ -246,4 +246,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-22: Hardened auth session recovery (`/auth/me` + `requireAuth`) to clear invalid/deleted-user cookies deterministically and return 503 on temporary auth DB unavailability.
 - 2026-03-22: Added login/register password visibility controls with explicit screen-reader labels and regression tests for show/hide toggle behavior.
 - 2026-03-22: Completed docs/navigation cleanup for `Bots/Exchanges`, defined staged `client/server -> web/api` migration plan, and added bootstrap-only `apps/mobile` scaffold contract.
+- 2026-03-23: Implemented live exchange reconciliation loop (`G3`) using `syncExternalPositions/manageExternalPositions` API-key flags with exchange-source upsert/close projection for `EXCHANGE_SYNC` positions.
 

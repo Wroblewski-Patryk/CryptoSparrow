@@ -39,6 +39,12 @@ type BinanceClientLike = {
   close?: () => Promise<void>;
 };
 
+type ApiKeyRecordForSnapshot = {
+  id: string;
+  apiKey: string;
+  apiSecret: string;
+};
+
 export class ExchangeSnapshotError extends Error {
   constructor(public readonly code: 'API_KEY_NOT_FOUND' | 'EXCHANGE_FETCH_FAILED', message: string) {
     super(message);
@@ -77,55 +83,7 @@ const normalizeExchangePosition = (position: ExchangePositionLike): ExchangePosi
   timestamp: typeof position.timestamp === 'number' ? new Date(position.timestamp).toISOString() : null,
 });
 
-export const listPositions = async (userId: string, query: ListPositionsQuery) => {
-  const skip = (query.page - 1) * query.limit;
-  const where = {
-    userId,
-    ...(query.status ? { status: query.status } : {}),
-    ...(query.symbol ? { symbol: query.symbol } : {}),
-  };
-
-  return prisma.position.findMany({
-    where,
-    skip,
-    take: query.limit,
-    orderBy: { openedAt: 'desc' },
-  });
-};
-
-export const getPosition = async (userId: string, id: string) => {
-  return prisma.position.findFirst({
-    where: { id, userId },
-  });
-};
-
-export const updatePositionManagementMode = async (
-  userId: string,
-  id: string,
-  managementMode: 'BOT_MANAGED' | 'MANUAL_MANAGED'
-) => {
-  const updated = await prisma.position.updateMany({
-    where: { id, userId },
-    data: { managementMode },
-  });
-
-  if (updated.count === 0) return null;
-
-  return prisma.position.findFirst({
-    where: { id, userId },
-  });
-};
-
-export const fetchExchangePositionsSnapshot = async (userId: string): Promise<ExchangePositionSnapshot> => {
-  const apiKey = await prisma.apiKey.findFirst({
-    where: { userId, exchange: 'BINANCE' },
-    orderBy: { updatedAt: 'desc' },
-  });
-
-  if (!apiKey) {
-    throw new ExchangeSnapshotError('API_KEY_NOT_FOUND', 'No Binance API key configured.');
-  }
-
+const buildSnapshotForApiKey = async (apiKey: ApiKeyRecordForSnapshot): Promise<ExchangePositionSnapshot> => {
   if (process.env.NODE_ENV === 'test') {
     if (process.env.POSITIONS_SNAPSHOT_FORCE_ERROR === '1') {
       throw new ExchangeSnapshotError('EXCHANGE_FETCH_FAILED', 'Unable to fetch exchange positions snapshot.');
@@ -184,4 +142,80 @@ export const fetchExchangePositionsSnapshot = async (userId: string): Promise<Ex
       await client.close();
     }
   }
+};
+
+export const listPositions = async (userId: string, query: ListPositionsQuery) => {
+  const skip = (query.page - 1) * query.limit;
+  const where = {
+    userId,
+    ...(query.status ? { status: query.status } : {}),
+    ...(query.symbol ? { symbol: query.symbol } : {}),
+  };
+
+  return prisma.position.findMany({
+    where,
+    skip,
+    take: query.limit,
+    orderBy: { openedAt: 'desc' },
+  });
+};
+
+export const getPosition = async (userId: string, id: string) => {
+  return prisma.position.findFirst({
+    where: { id, userId },
+  });
+};
+
+export const updatePositionManagementMode = async (
+  userId: string,
+  id: string,
+  managementMode: 'BOT_MANAGED' | 'MANUAL_MANAGED'
+) => {
+  const updated = await prisma.position.updateMany({
+    where: { id, userId },
+    data: { managementMode },
+  });
+
+  if (updated.count === 0) return null;
+
+  return prisma.position.findFirst({
+    where: { id, userId },
+  });
+};
+
+export const fetchExchangePositionsSnapshot = async (userId: string): Promise<ExchangePositionSnapshot> => {
+  const apiKey = await prisma.apiKey.findFirst({
+    where: { userId, exchange: 'BINANCE' },
+    orderBy: { updatedAt: 'desc' },
+  });
+
+  if (!apiKey) {
+    throw new ExchangeSnapshotError('API_KEY_NOT_FOUND', 'No Binance API key configured.');
+  }
+
+  return buildSnapshotForApiKey(apiKey);
+};
+
+export const fetchExchangePositionsSnapshotByApiKeyId = async (
+  userId: string,
+  apiKeyId: string
+): Promise<ExchangePositionSnapshot> => {
+  const apiKey = await prisma.apiKey.findFirst({
+    where: {
+      id: apiKeyId,
+      userId,
+      exchange: 'BINANCE',
+    },
+    select: {
+      id: true,
+      apiKey: true,
+      apiSecret: true,
+    },
+  });
+
+  if (!apiKey) {
+    throw new ExchangeSnapshotError('API_KEY_NOT_FOUND', 'No Binance API key configured.');
+  }
+
+  return buildSnapshotForApiKey(apiKey);
 };
