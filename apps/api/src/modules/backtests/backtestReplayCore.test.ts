@@ -34,6 +34,7 @@ describe('simulateTradesForSymbolReplay', () => {
     expect(result.trades[0].entryPrice).toBe(102);
     expect(result.trades[1].side).toBe('SHORT');
     expect(result.liquidations).toBe(0);
+    expect(result.eventCounts.ENTRY).toBeGreaterThanOrEqual(2);
   });
 
   it('counts isolated liquidation when adverse move exceeds leverage threshold', () => {
@@ -48,10 +49,92 @@ describe('simulateTradesForSymbolReplay', () => {
       symbol: 'BTCUSDT',
       candles,
       marketType: 'FUTURES',
-      leverage: 5,
+      leverage: 10,
       marginMode: 'ISOLATED',
     });
 
     expect(result.liquidations).toBeGreaterThanOrEqual(1);
+    expect(result.eventCounts.LIQUIDATION).toBeGreaterThanOrEqual(1);
+  });
+
+  it('emits lifecycle actions (DCA/TRAILING/EXIT) for timeline/reporting', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 101.5), // open LONG
+      candle(2, 100.2), // DCA
+      candle(3, 102.4), // favorable move
+      candle(4, 102.35), // neutral -> EXIT from signal band
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'ADAUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 3,
+      marginMode: 'CROSSED',
+    });
+
+    expect(result.eventCounts.ENTRY).toBeGreaterThan(0);
+    expect(result.eventCounts.DCA).toBeGreaterThanOrEqual(1);
+    expect(result.eventCounts.TRAILING).toBeGreaterThanOrEqual(1);
+    expect(result.eventCounts.EXIT + result.eventCounts.TP + result.eventCounts.SL + result.eventCounts.TRAILING + result.eventCounts.LIQUIDATION).toBe(result.trades.length);
+  });
+
+  it('emits take-profit lifecycle event when favorable move crosses TP threshold', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 101.5), // open LONG
+      candle(2, 102.9), // TP
+      candle(3, 102.88),
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 3,
+      marginMode: 'CROSSED',
+    });
+
+    expect(result.eventCounts.TP).toBeGreaterThanOrEqual(1);
+  });
+
+  it('emits stop-loss lifecycle event when adverse move breaches SL threshold', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 101.4), // open LONG
+      candle(2, 98), // SL (still below threshold after one DCA reprice)
+      candle(3, 97.98),
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'SOLUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 2,
+      marginMode: 'CROSSED',
+    });
+
+    expect(result.eventCounts.SL).toBeGreaterThanOrEqual(1);
+  });
+
+  it('emits trailing exit lifecycle event once pullback crosses trailing threshold', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 101.5), // open LONG
+      candle(2, 100.2), // DCA
+      candle(3, 102.4), // favorable move
+      candle(4, 102.35), // trailing exit
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'XRPUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 2,
+      marginMode: 'CROSSED',
+    });
+
+    expect(result.eventCounts.TRAILING).toBeGreaterThanOrEqual(1);
   });
 });

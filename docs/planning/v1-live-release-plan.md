@@ -121,7 +121,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 
 ### G6 - Backtest 1:1 Runtime Replay
 - [x] `feat(backtest): replace reduced simulation path with shared execution core replay over historical candles`
-- [ ] `feat(backtest): ensure all runtime lifecycle actions are represented in events/timeline/report (entry/exit/dca/tp/sl/trailing)`
+- [x] `feat(backtest): ensure all runtime lifecycle actions are represented in events/timeline/report (entry/exit/dca/tp/sl/trailing)`
 - [x] `perf(backtest): implement historical candle DB cache with incremental backfill and deterministic chunk replay`
 
 ### G7 - Performance and Analytics Closure
@@ -255,4 +255,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-23: Replaced heuristic backtest trade generator with shared-core replay simulation (`G6` step 1) and added dedicated replay-core tests for no-flip/liquidation behavior.
 - 2026-03-23: Extended backtest lifecycle trace toward `G6` step 2 by persisting trade exit metadata (`exitReason`, `liquidated`) and exposing `LIQUIDATION` events in timeline payloads.
 - 2026-03-23: Added historical candle DB cache with incremental write-back (`G6` step 3) using `MarketCandleCache` and safe fallback to direct Binance fetch for deterministic backtest replay windows.
+- 2026-03-23: Completed `G6` step 2 by extending replay lifecycle events (`ENTRY/EXIT/DCA/TP/SL/TRAILING/LIQUIDATION`), wiring timeline to replay events, and persisting lifecycle event counters into report metrics.
 

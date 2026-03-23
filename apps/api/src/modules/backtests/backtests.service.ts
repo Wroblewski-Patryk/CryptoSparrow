@@ -1,7 +1,11 @@
 import { PositionSide, Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { getMarketCatalog } from '../markets/markets.service';
-import { simulateTradesForSymbolReplay } from './backtestReplayCore';
+import {
+  type ReplayEventDraft,
+  type ReplayEventType,
+  simulateTradesForSymbolReplay,
+} from './backtestReplayCore';
 import {
   CreateBacktestRunDto,
   GetBacktestTimelineQuery,
@@ -39,6 +43,8 @@ type TradeDraft = {
 type SymbolSimulationResult = {
   trades: TradeDraft[];
   liquidations: number;
+  events: ReplayEventDraft[];
+  eventCounts: Record<ReplayEventType, number>;
 };
 
 type ProgressState = {
@@ -63,6 +69,16 @@ type ProgressState = {
   startedAt: string;
   updatedAt: string;
   lastUpdate: string;
+};
+
+type LifecycleEventCounts = {
+  ENTRY: number;
+  EXIT: number;
+  DCA: number;
+  TP: number;
+  SL: number;
+  TRAILING: number;
+  LIQUIDATION: number;
 };
 
 type IndicatorSpec = {
@@ -396,6 +412,8 @@ const simulateTradesForSymbol = (
       liquidated: trade.liquidated,
     })),
     liquidations: replay.liquidations,
+    events: replay.events,
+    eventCounts: replay.eventCounts,
   };
 };
 
@@ -561,24 +579,15 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
   });
 };
 
-const findNearestCandleIndex = (candles: KlineCandle[], timestamp: number) => {
-  if (candles.length === 0) return -1;
-  let left = 0;
-  let right = candles.length - 1;
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    const value = candles[mid].openTime;
-    if (value === timestamp) return mid;
-    if (value < timestamp) left = mid + 1;
-    else right = mid - 1;
-  }
-
-  const candidateA = Math.max(0, right);
-  const candidateB = Math.min(candles.length - 1, left);
-  const distanceA = Math.abs(candles[candidateA].openTime - timestamp);
-  const distanceB = Math.abs(candles[candidateB].openTime - timestamp);
-  return distanceA <= distanceB ? candidateA : candidateB;
-};
+const emptyLifecycleEventCounts = (): LifecycleEventCounts => ({
+  ENTRY: 0,
+  EXIT: 0,
+  DCA: 0,
+  TP: 0,
+  SL: 0,
+  TRAILING: 0,
+  LIQUIDATION: 0,
+});
 
 const runBacktestAsync = async (runId: string) => {
   const run = await prisma.backtestRun.findUnique({ where: { id: runId } });
@@ -633,6 +642,7 @@ const runBacktestAsync = async (runId: string) => {
   if (!runExists) return;
 
   const pnlSeries: number[] = [];
+  const lifecycleEventCounts = emptyLifecycleEventCounts();
 
   try {
     for (const [index, symbol] of symbols.entries()) {
@@ -650,6 +660,9 @@ const runBacktestAsync = async (runId: string) => {
         await updateRunProgress(runId, seed, progress);
         const simulation = simulateTradesForSymbol(symbol, candles, marketType, progress.leverage, progress.marginMode);
         const trades = simulation.trades;
+        for (const [key, value] of Object.entries(simulation.eventCounts)) {
+          lifecycleEventCounts[key as keyof LifecycleEventCounts] += value;
+        }
 
         if (trades.length > 0) {
           await prisma.backtestTrade.createMany({
@@ -723,6 +736,7 @@ const runBacktestAsync = async (runId: string) => {
           leverage: progress.leverage,
           marginMode: progress.marginMode,
           liquidations: progress.liquidations,
+          lifecycleEventCounts,
           initialBalance,
           endBalance: initialBalance + progress.netPnl,
         },
@@ -743,6 +757,7 @@ const runBacktestAsync = async (runId: string) => {
           leverage: progress.leverage,
           marginMode: progress.marginMode,
           liquidations: progress.liquidations,
+          lifecycleEventCounts,
           initialBalance,
           endBalance: initialBalance + progress.netPnl,
         },
@@ -966,15 +981,6 @@ export const getRunTimeline = async (
   const end = clamp(start + query.chunkSize, 0, total);
   const chunk = candles.slice(start, end);
 
-  const trades = await prisma.backtestTrade.findMany({
-    where: {
-      userId,
-      backtestRunId: runId,
-      symbol,
-    },
-    orderBy: { openedAt: 'asc' },
-  });
-
   const strategy = run.strategyId
     ? await prisma.strategy.findFirst({
       where: { id: run.strategyId, userId },
@@ -996,36 +1002,27 @@ export const getRunTimeline = async (
       })),
   }));
 
-  const events = trades.flatMap((trade) => {
-    const entryTs = trade.openedAt.getTime();
-    const exitTs = trade.closedAt.getTime();
-    const entryIndex = findNearestCandleIndex(candles, entryTs);
-    const exitIndex = findNearestCandleIndex(candles, exitTs);
-
-    return [
-      {
-        id: `${trade.id}_entry`,
-        tradeId: trade.id,
-        type: 'ENTRY',
-        side: trade.side,
-        timestamp: trade.openedAt.toISOString(),
-        price: trade.entryPrice,
-        pnl: null as number | null,
-        candleIndex: entryIndex,
-      },
-      {
-        id: `${trade.id}_exit`,
-        tradeId: trade.id,
-        type: trade.liquidated ? 'LIQUIDATION' : 'EXIT',
-        side: trade.side,
-        timestamp: trade.closedAt.toISOString(),
-        price: trade.exitPrice,
-        pnl: trade.pnl,
-        candleIndex: exitIndex,
-        reason: trade.exitReason,
-      },
-    ];
-  }).filter((event) => event.candleIndex >= start && event.candleIndex < end);
+  const leverageCandidate = Number((seed as { leverage?: unknown }).leverage);
+  const leverage = Number.isFinite(leverageCandidate) ? leverageCandidate : 1;
+  const marginMode = seed.marginMode === 'ISOLATED' ? 'ISOLATED' : (seed.marginMode === 'CROSSED' ? 'CROSSED' : 'NONE');
+  const replay = simulateTradesForSymbol(symbol, candles, marketType, marketType === 'SPOT' ? 1 : leverage, marginMode);
+  const events = replay.events
+    .filter((event) => event.candleIndex >= start && event.candleIndex < end)
+    .map((event) => {
+      const eventId = `${runId}_${symbol}_${event.tradeSequence}_${event.type}_${event.candleIndex}`;
+      const isCloseLike = event.type !== 'ENTRY' && event.type !== 'DCA';
+      return {
+        id: eventId,
+        tradeId: `${runId}_${symbol}_${event.tradeSequence}`,
+        type: event.type,
+        side: event.side,
+        timestamp: event.timestamp.toISOString(),
+        price: event.price,
+        pnl: event.pnl,
+        candleIndex: event.candleIndex,
+        reason: isCloseLike ? event.type : null,
+      };
+    });
 
   const liveProgress = (seed.liveProgress ?? {}) as {
     currentSymbol?: string | null;
@@ -1054,8 +1051,8 @@ export const getRunTimeline = async (
     })),
     events,
     indicatorSeries,
-    supportedEventTypes: ['ENTRY', 'EXIT', 'LIQUIDATION'],
-    unsupportedEventTypes: ['DCA', 'TP', 'SL', 'TRAILING'],
+    supportedEventTypes: ['ENTRY', 'EXIT', 'DCA', 'TP', 'SL', 'TRAILING', 'LIQUIDATION'],
+    unsupportedEventTypes: [],
     playbackCursor:
       liveProgress.currentSymbol === symbol && typeof liveProgress.currentCandleIndex === 'number'
         ? liveProgress.currentCandleIndex
