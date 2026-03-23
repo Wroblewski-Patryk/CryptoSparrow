@@ -13,6 +13,7 @@ Purpose: single reference index for launch-readiness documentation and evidence 
 ## 2) Operator and Incident Documentation
 - Operator handbook: `docs/operations/operator-handbook.md`
 - V1 ops runbook: `docs/operations/v1-ops-runbook.md`
+- Assistant incident runbook: `docs/operations/v1-assistant-incident-runbook.md`
 - Alert rules: `docs/operations/v1-alert-rules.md`
 - Incident drills: `docs/operations/v1-incident-drills.md`
 - Post-release monitoring protocol: `docs/operations/v1-post-release-monitoring.md`
