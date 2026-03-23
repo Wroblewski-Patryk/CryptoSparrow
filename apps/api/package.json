@@ -12,6 +12,7 @@
     "dev:worker:backtest": "tsx watch src/workers/backtest.worker.ts",
     "dev:worker:execution": "tsx watch src/workers/execution.worker.ts",
     "test:load:baseline": "node scripts/load-test.mjs baseline",
+    "test:load:assistant-profile": "tsx scripts/assistant-load-benchmark.ts",
     "test:load:stress": "node scripts/load-test.mjs stress",
     "build": "tsc",
     "start": "node dist/index.js"

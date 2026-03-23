@@ -68,6 +68,21 @@ Purpose: define measurable service objectives for MVP/V1 runtime and bind each o
 - Source metrics:
   - `GET /metrics` -> `exchange.orderAttempts`, `exchange.orderFailures`, `exchange.orderRetries`.
 
+## SLO-7: Assistant Orchestration Reliability
+- Objective (V1): for target profile `3x4x4x5`, keep assistant decision latency and reliability within:
+  - p95 decision latency <= 120ms
+  - p99 decision latency <= 220ms
+  - subagent timeout rate <= 1.0%
+  - orchestration failures = 0 in benchmark gate run
+- SLI:
+  - decision latency distribution from assistant load benchmark artifact
+  - timeout ratio = timed-out subagent statuses / total subagent statuses
+  - failure count = orchestrator invocation failures
+- Source evidence:
+  - benchmark command: `pnpm --filter api run test:load:assistant-profile`
+  - artifact: `docs/operations/_artifacts-assistant-load-2026-03-23.json`
+  - report: `docs/operations/v1-assistant-load-profile-2026-03-23.md`
+
 ## Alert-to-SLO Mapping
 - `exchange_live_order_failures_spike` maps to SLO-6 burn risk.
 - `market_data_staleness` maps to SLO-5 and runtime reliability risk.

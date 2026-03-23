@@ -1,0 +1,44 @@
+{
+  "summary": {
+    "startedAt": "2026-03-23T00:04:34.552Z",
+    "finishedAt": "2026-03-23T00:04:34.581Z",
+    "runtimeMs": 28.3,
+    "profile": {
+      "bots": 3,
+      "marketGroupsPerBot": 4,
+      "strategiesPerGroup": 4,
+      "agentsPerDecision": 5
+    },
+    "runConfig": {
+      "cycles": 25,
+      "concurrency": 8
+    },
+    "totals": {
+      "decisions": 1200,
+      "statuses": 4800,
+      "failures": 0,
+      "timeoutStatuses": 0
+    },
+    "throughputDecisionsPerSecond": 1200,
+    "latencyMs": {
+      "min": 0.082,
+      "p50": 0.153,
+      "p95": 0.478,
+      "p99": 0.947,
+      "max": 1.621
+    },
+    "timeoutRate": 0,
+    "thresholds": {
+      "p95MaxMs": 120,
+      "p99MaxMs": 220,
+      "timeoutRateMax": 0.01,
+      "failuresMax": 0
+    }
+  },
+  "gates": {
+    "p95": true,
+    "p99": true,
+    "timeoutRate": true,
+    "failures": true
+  }
+}
