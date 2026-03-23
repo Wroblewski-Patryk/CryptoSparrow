@@ -1,6 +1,7 @@
-﻿import { PositionSide, Prisma } from '@prisma/client';
+import { PositionSide, Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { getMarketCatalog } from '../markets/markets.service';
+import { simulateTradesForSymbolReplay } from './backtestReplayCore';
 import {
   CreateBacktestRunDto,
   GetBacktestTimelineQuery,
@@ -284,62 +285,28 @@ const simulateTradesForSymbol = (
   leverage: number,
   marginMode: MarginMode | 'NONE',
 ): SymbolSimulationResult => {
-  if (candles.length < 40) return { trades: [], liquidations: 0 };
+  const replay = simulateTradesForSymbolReplay({
+    symbol,
+    candles,
+    marketType,
+    leverage,
+    marginMode,
+  });
 
-  const trades: TradeDraft[] = [];
-  let liquidations = 0;
-  for (let index = 25; index < candles.length - 12; ) {
-    const anchor = candles[index];
-    const lookback = candles[index - 5];
-    const momentumRatio = Math.abs(anchor.close - lookback.close) / Math.max(anchor.close, 1e-8);
-    const volatilityRatio = Math.abs(anchor.high - anchor.low) / Math.max(anchor.close, 1e-8);
-    const holdCandles = clamp(4 + Math.floor(momentumRatio * 220 + volatilityRatio * 120), 4, 22);
-    const exitIndex = Math.min(candles.length - 1, index + holdCandles);
-    const exit = candles[exitIndex];
-
-    const side: PositionSide = anchor.close >= lookback.close ? 'LONG' : 'SHORT';
-    const quantity = 1;
-    const effectiveLeverage = marketType === 'SPOT' ? 1 : Math.max(1, leverage);
-    const fee = (anchor.close + exit.close) * 0.0004 * effectiveLeverage;
-    const priceDiff = side === 'LONG' ? exit.close - anchor.close : anchor.close - exit.close;
-    const rawPnl = priceDiff * quantity * effectiveLeverage;
-
-    const adverseMoveRatio =
-      side === 'LONG'
-        ? (anchor.close - exit.close) / anchor.close
-        : (exit.close - anchor.close) / anchor.close;
-
-    const isolatedLiquidationThreshold = 1 / Math.max(1, effectiveLeverage);
-    const isIsolatedLiquidated =
-      marketType === 'FUTURES' &&
-      marginMode === 'ISOLATED' &&
-      adverseMoveRatio >= isolatedLiquidationThreshold;
-
-    if (isIsolatedLiquidated) {
-      liquidations += 1;
-    }
-
-    const pnl = isIsolatedLiquidated
-      ? -(anchor.close * quantity) / Math.max(1, effectiveLeverage)
-      : rawPnl - fee;
-
-    trades.push({
-      symbol,
-      side,
-      entryPrice: anchor.close,
-      exitPrice: exit.close,
-      quantity,
-      openedAt: new Date(anchor.openTime),
-      closedAt: new Date(exit.closeTime),
-      pnl,
-      fee,
-    });
-
-    const nextStep = clamp(Math.floor(holdCandles * 0.8), 8, 24);
-    index += nextStep;
-  }
-
-  return { trades, liquidations };
+  return {
+    trades: replay.trades.map((trade) => ({
+      symbol: trade.symbol,
+      side: trade.side as PositionSide,
+      entryPrice: trade.entryPrice,
+      exitPrice: trade.exitPrice,
+      quantity: trade.quantity,
+      openedAt: trade.openedAt,
+      closedAt: trade.closedAt,
+      pnl: trade.pnl,
+      fee: trade.fee,
+    })),
+    liquidations: replay.liquidations,
+  };
 };
 
 const updateRunProgress = async (
@@ -1002,3 +969,4 @@ export const getRunTimeline = async (
         : null,
   };
 };
+

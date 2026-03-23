@@ -120,7 +120,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `test(paper): add scenario tests proving paper/live decision equivalence with adapter-specific execution differences only`
 
 ### G6 - Backtest 1:1 Runtime Replay
-- [ ] `feat(backtest): replace reduced simulation path with shared execution core replay over historical candles`
+- [x] `feat(backtest): replace reduced simulation path with shared execution core replay over historical candles`
 - [ ] `feat(backtest): ensure all runtime lifecycle actions are represented in events/timeline/report (entry/exit/dca/tp/sl/trailing)`
 - [ ] `perf(backtest): implement historical candle DB cache with incremental backfill and deterministic chunk replay`
 
@@ -252,4 +252,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-23: Upgraded paper fill semantics (`G5` step 1) with entry latency ticks + partial fills per tick in lifecycle flow while preserving fee/slippage/funding trade simulation outputs.
 - 2026-03-23: Completed runtime analytics persistence (`G5` step 2) by recording runtime execution events and creating trade records on open/close orchestration paths for PAPER/LIVE parity traces.
 - 2026-03-23: Added paper/live decision-equivalence scenario tests (`G5` step 3) validating identical runtime outcomes for shared signal sequences with adapter-specific execution differences abstracted.
+- 2026-03-23: Replaced heuristic backtest trade generator with shared-core replay simulation (`G6` step 1) and added dedicated replay-core tests for no-flip/liquidation behavior.
 
