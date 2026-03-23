@@ -65,6 +65,22 @@ export interface RuntimeExecutionEventGateway {
   }): Promise<void>;
 }
 
+export interface RuntimeTradeGateway {
+  createTrade(input: {
+    userId: string;
+    botId?: string;
+    strategyId?: string;
+    orderId: string;
+    positionId: string;
+    symbol: string;
+    side: 'BUY' | 'SELL';
+    price: number;
+    quantity: number;
+    origin?: 'BOT';
+    managementMode?: 'BOT_MANAGED' | 'MANUAL_MANAGED';
+  }): Promise<void>;
+}
+
 const defaultOrderGateway: OrderFlowGateway = {
   openOrder: (userId, input) =>
     openOrderLifecycle(userId, {
@@ -124,11 +140,32 @@ const defaultRuntimeEventGateway: RuntimeExecutionEventGateway = {
   },
 };
 
+const defaultRuntimeTradeGateway: RuntimeTradeGateway = {
+  createTrade: async (input) => {
+    await prisma.trade.create({
+      data: {
+        userId: input.userId,
+        botId: input.botId,
+        strategyId: input.strategyId,
+        orderId: input.orderId,
+        positionId: input.positionId,
+        symbol: input.symbol,
+        side: input.side,
+        price: input.price,
+        quantity: input.quantity,
+        origin: input.origin ?? 'BOT',
+        managementMode: input.managementMode ?? 'BOT_MANAGED',
+      },
+    });
+  },
+};
+
 export const orchestrateRuntimeSignal = async (
   input: RuntimeSignalInput,
   orderGateway: OrderFlowGateway = defaultOrderGateway,
   positionGateway: PositionFlowGateway = defaultPositionGateway,
-  runtimeEventGateway: RuntimeExecutionEventGateway = defaultRuntimeEventGateway
+  runtimeEventGateway: RuntimeExecutionEventGateway = defaultRuntimeEventGateway,
+  runtimeTradeGateway: RuntimeTradeGateway = defaultRuntimeTradeGateway
 ): Promise<OrchestrationResult> => {
   const openPosition = await positionGateway.getOpenPositionBySymbol(input.userId, input.symbol);
   const decision = decideExecutionAction(
@@ -185,6 +222,18 @@ export const orchestrateRuntimeSignal = async (
     if (closeOrder.status === 'OPEN' || closeOrder.status === 'PARTIALLY_FILLED') {
       await orderGateway.closeOrder(input.userId, closeOrder.id, { riskAck: true });
     }
+    await runtimeTradeGateway.createTrade({
+      userId: input.userId,
+      botId: input.botId,
+      strategyId: input.strategyId,
+      orderId: closeOrder.id,
+      positionId: openPosition.id,
+      symbol: input.symbol,
+      side: decision.orderSide,
+      price: input.markPrice,
+      quantity: openPosition.quantity,
+      managementMode: openPosition.managementMode as 'BOT_MANAGED' | 'MANUAL_MANAGED',
+    });
 
     await runtimeEventGateway.writeEvent({
       userId: input.userId,
@@ -229,6 +278,18 @@ export const orchestrateRuntimeSignal = async (
   });
 
   await orderGateway.linkOrderToPosition(openOrder.id, position.id);
+  await runtimeTradeGateway.createTrade({
+    userId: input.userId,
+    botId: input.botId,
+    strategyId: input.strategyId,
+    orderId: openOrder.id,
+    positionId: position.id,
+    symbol: input.symbol,
+    side: decision.orderSide,
+    price: input.markPrice,
+    quantity: input.quantity,
+    managementMode: 'BOT_MANAGED',
+  });
   await runtimeEventGateway.writeEvent({
     userId: input.userId,
     botId: input.botId,

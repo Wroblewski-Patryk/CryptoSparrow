@@ -5,6 +5,7 @@ import {
   RuntimeExecutionEventGateway,
   RuntimeExecutionMode,
   RuntimeSignalDirection,
+  RuntimeTradeGateway,
   orchestrateRuntimeSignal,
 } from './executionOrchestrator.service';
 
@@ -130,7 +131,11 @@ const createInMemoryGateways = (mode: RuntimeExecutionMode) => {
     writeEvent: async () => undefined,
   };
 
-  return { orderGateway, positionGateway, eventGateway };
+  const tradeGateway: RuntimeTradeGateway = {
+    createTrade: async () => undefined,
+  };
+
+  return { orderGateway, positionGateway, eventGateway, tradeGateway };
 };
 
 const runScenario = async (mode: RuntimeExecutionMode) => {
@@ -150,7 +155,8 @@ const runScenario = async (mode: RuntimeExecutionMode) => {
       },
       gateways.orderGateway,
       gateways.positionGateway,
-      gateways.eventGateway
+      gateways.eventGateway,
+      gateways.tradeGateway
     );
 
     outcomes.push(
