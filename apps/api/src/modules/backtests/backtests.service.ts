@@ -32,6 +32,8 @@ type TradeDraft = {
   closedAt: Date;
   pnl: number;
   fee: number;
+  exitReason: 'SIGNAL_EXIT' | 'FINAL_CANDLE' | 'LIQUIDATION';
+  liquidated: boolean;
 };
 
 type SymbolSimulationResult = {
@@ -304,6 +306,8 @@ const simulateTradesForSymbol = (
       closedAt: trade.closedAt,
       pnl: trade.pnl,
       fee: trade.fee,
+      exitReason: trade.exitReason,
+      liquidated: trade.liquidated,
     })),
     liquidations: replay.liquidations,
   };
@@ -576,6 +580,8 @@ const runBacktestAsync = async (runId: string) => {
               closedAt: trade.closedAt,
               pnl: trade.pnl,
               fee: trade.fee,
+              exitReason: trade.exitReason,
+              liquidated: trade.liquidated,
             })),
           });
 
@@ -924,12 +930,13 @@ export const getRunTimeline = async (
       {
         id: `${trade.id}_exit`,
         tradeId: trade.id,
-        type: 'EXIT',
+        type: trade.liquidated ? 'LIQUIDATION' : 'EXIT',
         side: trade.side,
         timestamp: trade.closedAt.toISOString(),
         price: trade.exitPrice,
         pnl: trade.pnl,
         candleIndex: exitIndex,
+        reason: trade.exitReason,
       },
     ];
   }).filter((event) => event.candleIndex >= start && event.candleIndex < end);
@@ -961,8 +968,8 @@ export const getRunTimeline = async (
     })),
     events,
     indicatorSeries,
-    supportedEventTypes: ['ENTRY', 'EXIT'],
-    unsupportedEventTypes: ['DCA', 'TP', 'SL'],
+    supportedEventTypes: ['ENTRY', 'EXIT', 'LIQUIDATION'],
+    unsupportedEventTypes: ['DCA', 'TP', 'SL', 'TRAILING'],
     playbackCursor:
       liveProgress.currentSymbol === symbol && typeof liveProgress.currentCandleIndex === 'number'
         ? liveProgress.currentCandleIndex

@@ -253,4 +253,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-23: Completed runtime analytics persistence (`G5` step 2) by recording runtime execution events and creating trade records on open/close orchestration paths for PAPER/LIVE parity traces.
 - 2026-03-23: Added paper/live decision-equivalence scenario tests (`G5` step 3) validating identical runtime outcomes for shared signal sequences with adapter-specific execution differences abstracted.
 - 2026-03-23: Replaced heuristic backtest trade generator with shared-core replay simulation (`G6` step 1) and added dedicated replay-core tests for no-flip/liquidation behavior.
+- 2026-03-23: Extended backtest lifecycle trace toward `G6` step 2 by persisting trade exit metadata (`exitReason`, `liquidated`) and exposing `LIQUIDATION` events in timeline payloads.
 
