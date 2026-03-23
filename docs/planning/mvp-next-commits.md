@@ -38,7 +38,7 @@ Operational queue for one-task execution runs.
 - [x] `MBA-27 test(parity): validate backtest/paper/live decision parity with shared assistant orchestration inputs`
 - [x] `MBA-28 perf(load): benchmark target profile (3 bots x 4 groups x 4 strategies x 5 agents) and set SLO thresholds`
 - [x] `MBA-29 docs(runbook): publish operator runbook for assistant incidents, fallback modes, and safe recovery`
-- [ ] `MBA-30 release(v1-gate): collect evidence pack and close V1 exit criteria for multi-entity assistant runtime`
+- [x] `MBA-30 release(v1-gate): collect evidence pack and close V1 exit criteria for multi-entity assistant runtime`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
@@ -72,6 +72,7 @@ Operational queue for one-task execution runs.
 - [x] `MBA-27 test(parity): added deterministic parity test ensuring identical assistant orchestration decision contract for BACKTEST/PAPER/LIVE modes`
 - [x] `MBA-28 perf(load): added assistant orchestration load benchmark for target 3x4x4x5 profile with thresholds and evidence artifacts (`docs/operations/v1-assistant-load-profile-2026-03-23.md`)`
 - [x] `MBA-29 docs(runbook): published assistant incident runbook with fallback/recovery flow and linked it into ops evidence pack`
+- [x] `MBA-30 release(v1-gate): published assistant runtime evidence pack and marked assistant-specific V1 gate as pass (with remaining global external gates explicitly tracked)`
 - [x] `chore(planning): initialize MVP/V1 execution plans and agent blueprint`
 - [x] `chore(planning): align trigger intent to generic one-task nudge`
 - [x] `chore(planning): historical done backlog archived in git history; queue reset for current delivery focus`

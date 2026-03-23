@@ -240,7 +240,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `MBA-27 test(parity): validate backtest/paper/live decision parity with shared assistant orchestration inputs`
 - [x] `MBA-28 perf(load): benchmark target profile (3 bots x 4 groups x 4 strategies x 5 agents) and set SLO thresholds`
 - [x] `MBA-29 docs(runbook): publish operator runbook for assistant incidents, fallback modes, and safe recovery`
-- [ ] `MBA-30 release(v1-gate): collect evidence pack and close V1 exit criteria for multi-entity assistant runtime`
+- [x] `MBA-30 release(v1-gate): collect evidence pack and close V1 exit criteria for multi-entity assistant runtime`
 ## Progress Log
 - 2026-03-22: Domain audit completed for multi-bot runtime (`MBA-01`), including current Bot/SymbolGroup/BotStrategy contract mapping and non-breaking migration path in `docs/planning/mba-01-domain-audit-2026-03-22.md`.
 - 2026-03-23: Locked canonical runtime hierarchy and assistant topology (`MBA-02`) plus deterministic multi-strategy merge policy contract (`MBA-03`) in `docs/planning/open-decisions.md` and `docs/architecture/runtime-signal-merge-contract.md`.
@@ -266,6 +266,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-23: Added assistant parity validation (`MBA-27`) confirming deterministic final decision/reason parity across BACKTEST/PAPER/LIVE for shared orchestration input.
 - 2026-03-23: Added assistant load benchmark + SLO thresholds (`MBA-28`) for target `3x4x4x5` profile with artifact/report evidence and SLO catalog update.
 - 2026-03-23: Published assistant incident runbook (`MBA-29`) covering timeout/planner/policy/drift incidents, deterministic fallback modes, and safe recovery checklist.
+- 2026-03-23: Published multi-entity assistant runtime evidence pack (`MBA-30`) and closed assistant-specific V1 gate with explicit references to remaining global release gates.
 - 2026-03-15: Initialized MVP execution file and commit rules.
 - 2026-03-15: Added generic trigger-based one-task execution workflow.
 - 2026-03-15: Expanded MVP plan to fully align with product, modules, database, trading, testing, and security docs.

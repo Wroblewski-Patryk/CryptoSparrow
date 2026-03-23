@@ -29,6 +29,9 @@ Purpose: single reference index for launch-readiness documentation and evidence 
 - SLO catalog: `docs/operations/v1-slo-catalog.md`
 - Load baseline report: `docs/operations/v1-load-baseline-2026-03-21.md`
 - Raw load baseline artifact: `docs/operations/_artifacts-load-baseline-2026-03-21.txt`
+- Assistant runtime evidence pack: `docs/operations/v1-assistant-runtime-evidence-pack-2026-03-23.md`
+- Assistant load profile report: `docs/operations/v1-assistant-load-profile-2026-03-23.md`
+- Assistant load raw artifact: `docs/operations/_artifacts-assistant-load-2026-03-23.json`
 
 ## 5) External Gates (Production-Dependent)
 - External-gates runbook: `docs/operations/v1-rc-external-gates-runbook.md`
