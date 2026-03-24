@@ -77,3 +77,13 @@
 - Execution guide: `docs/operations/v1-rc-external-gates-runbook.md`.
 - SLO definitions and metric mapping: `docs/operations/v1-slo-catalog.md`.
 
+### External Gates Quick Commands
+- Collect SLO observation evidence:
+  - `pnpm run ops:slo:collect -- --base-url https://<target-api> --duration-minutes 30 --interval-seconds 30 --auth-token <ADMIN_JWT>`
+- Build RC external-gates status snapshot from latest SLO artifact:
+  - `pnpm run ops:rc:gates:status`
+- Expected outputs:
+  - `docs/operations/_artifacts-slo-window-*.json`
+  - `docs/operations/v1-slo-observation-*.md`
+  - `docs/operations/v1-rc-external-gates-status.md`
+

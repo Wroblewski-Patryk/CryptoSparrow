@@ -261,4 +261,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-24: Added and executed `G7 test(e2e)` parity+reconciliation scenario in `backtests.e2e.test.ts` (strategy -> backtest -> reconcile exchange positions -> paper/live parity assertions); suite passes with local Docker PostgreSQL runtime.
 - 2026-03-24: Added `ops:slo:collect` evidence collector script (`scripts/collectSloEvidence.mjs`) with JSON+Markdown artifacts to accelerate production SLO observation window and queue-lag gate closure.
 - 2026-03-24: Added `ops:rc:gates:status` helper (`scripts/buildRcExternalGateStatus.mjs`) to convert latest SLO artifact into RC external-gates status snapshot (queue-lag/probe/reliability derived PASS/OPEN hints plus manual follow-up checklist).
+- 2026-03-24: Added external-gates quick commands section to RC checklist with canonical collector/status-builder commands and artifact output paths for faster release sign-off execution.
 
