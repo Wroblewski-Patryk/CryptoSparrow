@@ -10,6 +10,7 @@ const parseArgs = () => {
   const options = {
     input: '',
     output: path.join(operationsDir, 'v1-rc-external-gates-status.md'),
+    templateOnly: false,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -20,6 +21,7 @@ const parseArgs = () => {
     }
     if (arg === '--input') options.input = args[index + 1] ?? options.input;
     if (arg === '--output') options.output = args[index + 1] ?? options.output;
+    if (arg === '--template-only') options.templateOnly = true;
   }
 
   return options;
@@ -113,10 +115,45 @@ Observation window:
   return output;
 };
 
+const renderTemplateOnly = () => {
+  const generatedAt = new Date().toISOString();
+  return `# V1 RC External Gates Status
+
+Generated at (UTC): ${generatedAt}
+
+Source artifact: not provided (template-only mode)
+
+## Gate Status Snapshot
+- Gate 1 (Backup snapshot + restore validation): OPEN
+- Gate 2 (Queue-lag baseline review): OPEN
+- Gate 3 (Incident contacts + escalation confirmation): OPEN
+- Gate 4 (Formal RC sign-offs): OPEN
+
+## Required Inputs
+1. Run SLO collector:
+   - \`pnpm run ops:slo:collect -- --base-url https://<target-api> --duration-minutes 30 --interval-seconds 30 --auth-token <ADMIN_JWT>\`
+2. Rebuild status from latest artifact:
+   - \`pnpm run ops:rc:gates:status\`
+
+## Manual Follow-ups (Required)
+1. Fill backup/restore evidence in \`docs/operations/v1-rc-external-gates-runbook.md\`.
+2. Fill on-call/escalation confirmation in runbook.
+3. Complete sign-offs in \`docs/operations/v1-rc-signoff-record.md\`.
+4. Reflect final gate states in \`docs/operations/v1-release-candidate-checklist.md\`.
+`;
+};
+
 const main = async () => {
   const options = parseArgs();
   if (options.help) {
-    console.log('Usage: node scripts/buildRcExternalGateStatus.mjs [--input <artifact.json>] [--output <status.md>]');
+    console.log('Usage: node scripts/buildRcExternalGateStatus.mjs [--input <artifact.json>] [--output <status.md>] [--template-only]');
+    process.exit(0);
+  }
+
+  if (options.templateOnly) {
+    const outputPath = path.resolve(process.cwd(), options.output);
+    await writeFile(outputPath, renderTemplateOnly());
+    console.log(`RC external gates template written to: ${path.relative(process.cwd(), outputPath)}`);
     process.exit(0);
   }
 
@@ -142,4 +179,3 @@ main().catch((error) => {
   console.error('[ops:rc:gates:status] failed:', error instanceof Error ? error.message : String(error));
   process.exit(1);
 });
-

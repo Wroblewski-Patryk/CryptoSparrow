@@ -72,3 +72,5 @@ Evidence to record:
 - Optional helper summary:
   - Generate gate snapshot from latest SLO artifact:
     - `pnpm run ops:rc:gates:status`
+  - Generate empty status template before telemetry is available:
+    - `pnpm run ops:rc:gates:status -- --template-only`

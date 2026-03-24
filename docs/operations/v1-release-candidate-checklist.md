@@ -82,6 +82,8 @@
   - `pnpm run ops:slo:collect -- --base-url https://<target-api> --duration-minutes 30 --interval-seconds 30 --auth-token <ADMIN_JWT>`
 - Build RC external-gates status snapshot from latest SLO artifact:
   - `pnpm run ops:rc:gates:status`
+- Build template-only snapshot before SLO artifact exists:
+  - `pnpm run ops:rc:gates:status -- --template-only`
 - Expected outputs:
   - `docs/operations/_artifacts-slo-window-*.json`
   - `docs/operations/v1-slo-observation-*.md`
