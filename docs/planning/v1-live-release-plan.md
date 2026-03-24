@@ -263,4 +263,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-24: Added `ops:rc:gates:status` helper (`scripts/buildRcExternalGateStatus.mjs`) to convert latest SLO artifact into RC external-gates status snapshot (queue-lag/probe/reliability derived PASS/OPEN hints plus manual follow-up checklist).
 - 2026-03-24: Added external-gates quick commands section to RC checklist with canonical collector/status-builder commands and artifact output paths for faster release sign-off execution.
 - 2026-03-24: Enhanced `ops:rc:gates:status` with `--template-only` bootstrap mode to generate RC external-gates status file even before first telemetry artifact is collected.
+- 2026-03-24: Bootstrapped baseline `docs/operations/v1-rc-external-gates-status.md` from template mode to provide a canonical handoff file for manual gate evidence and sign-off updates.
 
