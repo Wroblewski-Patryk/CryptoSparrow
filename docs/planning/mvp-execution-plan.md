@@ -488,6 +488,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-24: Added rolling SLO summary generator (`ops:slo:window-report`) for 7d/30d windows with queue-lag breach timeline export to support recurring RC external-gate reviews.
 - 2026-03-24: Archived stale `full-commit-roadmap.md` checklist and redirected it to canonical planning files to remove misleading pending markers already delivered elsewhere.
 - 2026-03-24: Added RC sign-off artifact builder (`ops:rc:signoff:build`) to generate `v1-rc-signoff-record.md` from gate snapshot plus provided approvers/owner metadata.
+- 2026-03-24: Added one-command cutover dry-run orchestrator (`ops:cutover:dry-run`) that runs cutover-critical suites and stores structured JSON+Markdown evidence artifacts.
 
 
 

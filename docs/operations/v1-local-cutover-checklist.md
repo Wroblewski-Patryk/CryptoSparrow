@@ -2,6 +2,10 @@
 
 Purpose: execute a controlled local migration from legacy bot runtime to CryptoSparrow runtime with minimal risk.
 
+One-command dry-run helper (with artifact output):
+- `pnpm run ops:cutover:dry-run`
+- Optional flags: `--skip-infra`, `--skip-client`
+
 ## Pre-Cutover
 1. Confirm Docker services are healthy:
    - `pnpm go-live:infra:up`
@@ -50,4 +54,5 @@ Purpose: execute a controlled local migration from legacy bot runtime to CryptoS
 - New runtime readiness checks:
 - Post-cutover validation outcome:
 - Rollback required: `yes/no`
+- Dry-run artifact references:
 

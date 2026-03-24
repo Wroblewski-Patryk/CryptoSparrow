@@ -94,6 +94,8 @@
 - Run local end-to-end helper pipeline:
   - `pnpm run ops:rc:gates:local-pipeline -- --base-url http://localhost:4001 --duration-minutes 5 --interval-seconds 15`
   - Offline fallback: `pnpm run ops:rc:gates:local-pipeline -- --allow-offline`
+- Run local cutover dry-run with structured artifact output:
+  - `pnpm run ops:cutover:dry-run`
 - Expected outputs:
   - `docs/operations/_artifacts-slo-window-*.json`
   - `docs/operations/v1-slo-observation-*.md`
@@ -101,4 +103,6 @@
   - `docs/operations/v1-slo-window-report-30d-*.md`
   - `docs/operations/v1-rc-external-gates-status.md`
   - `docs/operations/v1-rc-signoff-record.md`
+  - `docs/operations/_artifacts-cutover-dry-run-*.json`
+  - `docs/operations/v1-local-cutover-dry-run-*.md`
 

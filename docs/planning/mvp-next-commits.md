@@ -130,6 +130,7 @@ Operational queue for one-task execution runs.
 - [x] `ops(slo-reporting): add rolling SLO window report builder (`ops:slo:window-report`) with queue-lag breach timeline for 7d/30d gate reviews`
 - [x] `docs(sync-roadmap): archive stale `full-commit-roadmap.md` checklist and point to canonical planning files to remove false pending states`
 - [x] `ops(signoff-automation): add scripted RC sign-off builder (`ops:rc:signoff:build`) generating approval artifact from current gate snapshot`
+- [x] `ops(cutover-automation): add one-command cutover dry-run orchestrator (`ops:cutover:dry-run`) with structured JSON+Markdown evidence output`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
