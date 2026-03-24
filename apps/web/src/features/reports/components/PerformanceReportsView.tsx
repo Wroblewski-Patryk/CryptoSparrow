@@ -7,6 +7,7 @@ import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { getBacktestRunReport, listBacktestRuns } from "../../backtest/services/backtests.service";
 import { BacktestReport, BacktestRun } from "../../backtest/types/backtest.type";
+import { CrossModePerformanceRow, getCrossModePerformance } from "../services/reports.service";
 
 type RunReportRow = {
   run: BacktestRun;
@@ -26,6 +27,7 @@ const avg = (values: number[]) => {
 export default function PerformanceReportsView() {
   const { formatCurrency, formatNumber, formatPercent } = useLocaleFormatting();
   const [rows, setRows] = useState<RunReportRow[]>([]);
+  const [modeRows, setModeRows] = useState<CrossModePerformanceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,6 +36,7 @@ export default function PerformanceReportsView() {
     setError(null);
     try {
       const runs = await listBacktestRuns("COMPLETED");
+      const modePerformance = await getCrossModePerformance();
       const withReports = await Promise.all(
         runs.slice(0, 40).map(async (run) => {
           const report = await getBacktestRunReport(run.id);
@@ -41,6 +44,7 @@ export default function PerformanceReportsView() {
           return { run, report };
         })
       );
+      setModeRows(modePerformance.rows);
       setRows(withReports.filter((item): item is RunReportRow => item != null));
     } catch (err: unknown) {
       setError(getAxiosMessage(err) ?? "Nie udalo sie pobrac raportow performance.");
@@ -126,6 +130,41 @@ export default function PerformanceReportsView() {
             <p className="text-sm font-semibold truncate">{metrics.bestRunName}</p>
             <p className="text-xl font-bold text-success">{formatCurrency(metrics.bestNetPnl)}</p>
           </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-base-300 bg-base-200 p-4">
+        <h2 className="text-lg font-semibold">Cross-mode performance</h2>
+        <p className="mt-1 text-sm text-base-content/70">
+          Porownanie skutecznosci BACKTEST vs PAPER vs LIVE.
+        </p>
+        <div className="mt-3 overflow-x-auto">
+          <table className="table table-zebra">
+            <thead>
+              <tr>
+                <th>Mode</th>
+                <th>Trades</th>
+                <th>Win Rate</th>
+                <th>Net PnL</th>
+                <th>Gross Profit</th>
+                <th>Gross Loss</th>
+              </tr>
+            </thead>
+            <tbody>
+              {modeRows.map((row) => (
+                <tr key={row.mode}>
+                  <td className="font-medium">{row.mode}</td>
+                  <td>{formatNumber(row.totalTrades)}</td>
+                  <td>{formatPercent(row.winRate)}</td>
+                  <td className={row.netPnl >= 0 ? "text-success" : "text-error"}>
+                    {formatCurrency(row.netPnl)}
+                  </td>
+                  <td className="text-success">{formatCurrency(row.grossProfit)}</td>
+                  <td className="text-error">{formatCurrency(-Math.abs(row.grossLoss))}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 

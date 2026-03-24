@@ -125,7 +125,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `perf(backtest): implement historical candle DB cache with incremental backfill and deterministic chunk replay`
 
 ### G7 - Performance and Analytics Closure
-- [ ] `feat(metrics): add cross-mode performance comparison views (backtest vs paper vs live)`
+- [x] `feat(metrics): add cross-mode performance comparison views (backtest vs paper vs live)`
 - [x] `feat(positions): show position source and management mode in Positions table and details`
 - [ ] `test(e2e): strategy->bot->backtest/paper/live parity path with runtime assertions and reconciliation checks`
 
@@ -257,4 +257,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-23: Added historical candle DB cache with incremental write-back (`G6` step 3) using `MarketCandleCache` and safe fallback to direct Binance fetch for deterministic backtest replay windows.
 - 2026-03-23: Completed `G6` step 2 by extending replay lifecycle events (`ENTRY/EXIT/DCA/TP/SL/TRAILING/LIQUIDATION`), wiring timeline to replay events, and persisting lifecycle event counters into report metrics.
 - 2026-03-24: Closed `G7 feat(positions)` as delivered in dashboard Positions board (source + management badges and management toggle action), re-verified via `PositionsBoard` component test suite.
+- 2026-03-24: Delivered `G7 feat(metrics)` cross-mode comparison (`BACKTEST/PAPER/LIVE`) via new API endpoint `/dashboard/reports/cross-mode-performance` and dashboard Reports section with dedicated regression tests.
 
