@@ -268,4 +268,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-24: Added `ops:rc:gates:local-pipeline` orchestrator (`scripts/runLocalExternalGatesPipeline.mjs`) to execute local external-gates flow in one command (DB check + SLO collection + status snapshot).
 - 2026-03-24: Hardened local external-gates pipeline with API health preflight and `--allow-offline` fallback that produces template status output when runtime telemetry endpoint is unavailable.
 - 2026-03-24: Added rolling SLO summary command (`ops:slo:window-report`) generating 7d/30d aggregate snapshots and queue-lag breach timelines from collected SLO artifacts.
+- 2026-03-24: Added RC sign-off automation command (`ops:rc:signoff:build`) that generates `v1-rc-signoff-record.md` from gate status and named approver inputs.
 

@@ -89,6 +89,8 @@
   - `pnpm run ops:slo:window-report -- --window-days 30`
 - Build template-only snapshot before SLO artifact exists:
   - `pnpm run ops:rc:gates:status -- --template-only`
+- Build RC sign-off artifact from current gate status + approvers:
+  - `pnpm run ops:rc:signoff:build -- --engineering-name "<name>" --product-name "<name>" --operations-name "<name>" --owner-name "<name>" --owner-contact "<email/slack>"`
 - Run local end-to-end helper pipeline:
   - `pnpm run ops:rc:gates:local-pipeline -- --base-url http://localhost:4001 --duration-minutes 5 --interval-seconds 15`
   - Offline fallback: `pnpm run ops:rc:gates:local-pipeline -- --allow-offline`
@@ -98,4 +100,5 @@
   - `docs/operations/v1-slo-window-report-7d-*.md`
   - `docs/operations/v1-slo-window-report-30d-*.md`
   - `docs/operations/v1-rc-external-gates-status.md`
+  - `docs/operations/v1-rc-signoff-record.md`
 

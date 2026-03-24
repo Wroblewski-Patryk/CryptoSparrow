@@ -65,6 +65,8 @@ Evidence to record:
 3. Operations sign-off after runbook and incident readiness confirmation.
 4. Assign RC owner with rollback authority.
 5. Record all names + UTC timestamps in release note.
+6. Optional automation helper (builds sign-off record from gate snapshot + provided approvers):
+   - `pnpm run ops:rc:signoff:build -- --engineering-name "<name>" --product-name "<name>" --operations-name "<name>" --owner-name "<name>" --owner-contact "<email/slack>"`
 
 Evidence to record:
 - Engineering sign-off (name + UTC):
