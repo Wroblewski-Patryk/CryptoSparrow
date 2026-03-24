@@ -127,7 +127,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 ### G7 - Performance and Analytics Closure
 - [x] `feat(metrics): add cross-mode performance comparison views (backtest vs paper vs live)`
 - [x] `feat(positions): show position source and management mode in Positions table and details`
-- [ ] `test(e2e): strategy->bot->backtest/paper/live parity path with runtime assertions and reconciliation checks`
+- [x] `test(e2e): strategy->bot->backtest/paper/live parity path with runtime assertions and reconciliation checks`
 
 ### G8 - Auth and Platform Surface Cleanup
 - [x] `fix(auth-session): auto-logout user on invalid token/deleted-user/no-db startup and keep public-route UX clean`
@@ -258,4 +258,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-23: Completed `G6` step 2 by extending replay lifecycle events (`ENTRY/EXIT/DCA/TP/SL/TRAILING/LIQUIDATION`), wiring timeline to replay events, and persisting lifecycle event counters into report metrics.
 - 2026-03-24: Closed `G7 feat(positions)` as delivered in dashboard Positions board (source + management badges and management toggle action), re-verified via `PositionsBoard` component test suite.
 - 2026-03-24: Delivered `G7 feat(metrics)` cross-mode comparison (`BACKTEST/PAPER/LIVE`) via new API endpoint `/dashboard/reports/cross-mode-performance` and dashboard Reports section with dedicated regression tests.
+- 2026-03-24: Added `G7 test(e2e)` parity+reconciliation scenario in `backtests.e2e.test.ts` (strategy -> backtest -> reconcile exchange positions -> paper/live parity assertions); local execution currently blocked by missing PostgreSQL (`localhost:5432`) because Docker engine is stopped.
 

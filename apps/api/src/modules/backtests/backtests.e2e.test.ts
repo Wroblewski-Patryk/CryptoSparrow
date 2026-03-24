@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { app } from '../../index';
 import { analyzePreTrade } from '../engine/preTrade.service';
 import { prisma } from '../../prisma/client';
+import { reconcileExternalPositionsFromExchange } from '../positions/livePositionReconciliation.service';
 
 const registerAndLogin = async (email: string) => {
   const agent = request.agent(app);
@@ -255,5 +256,124 @@ describe('Backtests runs contract', () => {
       mode: 'LIVE',
     });
     expect(liveAllowedDecision.allowed).toBe(true);
+  });
+
+  it('covers strategy -> backtest -> paper/live parity with reconciliation checks', async () => {
+    const ownerEmail = 'backtests-parity-reconcile@example.com';
+    const agent = await registerAndLogin(ownerEmail);
+
+    const strategyRes = await agent.post('/dashboard/strategies').send({
+      name: 'Parity strategy',
+      description: 'Parity and reconciliation flow',
+      interval: '1h',
+      leverage: 3,
+      walletRisk: 1,
+      config: {
+        open: { logic: 'AND', rules: [] },
+        close: { logic: 'OR', rules: [] },
+      },
+    });
+    expect(strategyRes.status).toBe(201);
+    const strategyId = strategyRes.body.id as string;
+
+    const runRes = await agent.post('/dashboard/backtests/runs').send({
+      ...createPayload(),
+      strategyId,
+      symbol: 'ETHUSDT',
+    });
+    expect(runRes.status).toBe(201);
+    expect(runRes.body.strategyId).toBe(strategyId);
+
+    const userId = await getUserIdByEmail(ownerEmail);
+    const bot = await prisma.bot.create({
+      data: {
+        userId,
+        name: 'Parity live bot',
+        mode: 'LIVE',
+        liveOptIn: true,
+        consentTextVersion: 'mvp-v1',
+        isActive: true,
+      },
+    });
+
+    const createKeyRes = await agent.post('/dashboard/profile/apiKeys').send({
+      label: 'parity-main',
+      exchange: 'BINANCE',
+      apiKey: 'EXCHANGEKEY12345',
+      apiSecret: 'EXCHANGESECRET12345',
+      syncExternalPositions: true,
+      manageExternalPositions: false,
+    });
+    expect(createKeyRes.status).toBe(201);
+    const apiKeyId = createKeyRes.body.id as string;
+
+    const firstReconcile = await reconcileExternalPositionsFromExchange();
+    expect(firstReconcile.openPositionsSeen).toBeGreaterThan(0);
+
+    const syncedManual = await prisma.position.findFirstOrThrow({
+      where: {
+        userId,
+        symbol: 'BTCUSDT',
+        status: 'OPEN',
+        origin: 'EXCHANGE_SYNC',
+      },
+      orderBy: { openedAt: 'desc' },
+    });
+    expect(syncedManual.managementMode).toBe('MANUAL_MANAGED');
+    expect(syncedManual.syncState).toBe('IN_SYNC');
+
+    const listRes = await agent.get('/dashboard/positions?symbol=BTCUSDT&status=OPEN&limit=20');
+    expect(listRes.status).toBe(200);
+    expect(listRes.body).toHaveLength(1);
+    expect(listRes.body[0].origin).toBe('EXCHANGE_SYNC');
+    expect(listRes.body[0].managementMode).toBe('MANUAL_MANAGED');
+
+    await prisma.apiKey.update({
+      where: { id: apiKeyId },
+      data: { manageExternalPositions: true },
+    });
+
+    const secondReconcile = await reconcileExternalPositionsFromExchange();
+    expect(secondReconcile.openPositionsSeen).toBeGreaterThan(0);
+
+    const syncedBotManaged = await prisma.position.findUniqueOrThrow({
+      where: { id: syncedManual.id },
+    });
+    expect(syncedBotManaged.managementMode).toBe('BOT_MANAGED');
+
+    const paperBlockedOnSyncedSymbol = await analyzePreTrade({
+      userId,
+      botId: bot.id,
+      symbol: 'BTCUSDT',
+      mode: 'PAPER',
+    });
+    expect(paperBlockedOnSyncedSymbol.allowed).toBe(false);
+    expect(paperBlockedOnSyncedSymbol.reasons).toContain('open_position_on_symbol_exists');
+
+    const liveBlockedOnSyncedSymbol = await analyzePreTrade({
+      userId,
+      botId: bot.id,
+      symbol: 'BTCUSDT',
+      mode: 'LIVE',
+    });
+    expect(liveBlockedOnSyncedSymbol.allowed).toBe(false);
+    expect(liveBlockedOnSyncedSymbol.reasons).toContain('open_position_on_symbol_exists');
+    expect(liveBlockedOnSyncedSymbol.reasons).not.toContain('live_opt_in_required');
+    expect(liveBlockedOnSyncedSymbol.reasons).not.toContain('live_consent_version_required');
+
+    const paperAllowedOnFreeSymbol = await analyzePreTrade({
+      userId,
+      botId: bot.id,
+      symbol: 'ETHUSDT',
+      mode: 'PAPER',
+    });
+    const liveAllowedOnFreeSymbol = await analyzePreTrade({
+      userId,
+      botId: bot.id,
+      symbol: 'ETHUSDT',
+      mode: 'LIVE',
+    });
+    expect(paperAllowedOnFreeSymbol.allowed).toBe(true);
+    expect(liveAllowedOnFreeSymbol.allowed).toBe(true);
   });
 });
