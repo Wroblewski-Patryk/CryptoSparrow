@@ -486,6 +486,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Synced IA docs for `Bots/Exchanges`, added staged repo migration plan + mobile parity contract docs, and scaffolded `apps/mobile` as bootstrap-only package.
 - 2026-03-24: Added scripted SLO evidence collector (`ops:slo:collect`) generating timestamped JSON+Markdown artifacts for production observation window, and linked it in RC external gates runbook.
 - 2026-03-24: Added rolling SLO summary generator (`ops:slo:window-report`) for 7d/30d windows with queue-lag breach timeline export to support recurring RC external-gate reviews.
+- 2026-03-24: Archived stale `full-commit-roadmap.md` checklist and redirected it to canonical planning files to remove misleading pending markers already delivered elsewhere.
 
 
 
