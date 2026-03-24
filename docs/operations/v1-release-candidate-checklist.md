@@ -86,6 +86,8 @@
   - `pnpm run ops:rc:gates:status`
 - Build template-only snapshot before SLO artifact exists:
   - `pnpm run ops:rc:gates:status -- --template-only`
+- Run local end-to-end helper pipeline:
+  - `pnpm run ops:rc:gates:local-pipeline -- --base-url http://localhost:4001 --duration-minutes 5 --interval-seconds 15`
 - Expected outputs:
   - `docs/operations/_artifacts-slo-window-*.json`
   - `docs/operations/v1-slo-observation-*.md`

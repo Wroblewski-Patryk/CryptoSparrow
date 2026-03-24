@@ -265,4 +265,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-24: Enhanced `ops:rc:gates:status` with `--template-only` bootstrap mode to generate RC external-gates status file even before first telemetry artifact is collected.
 - 2026-03-24: Bootstrapped baseline `docs/operations/v1-rc-external-gates-status.md` from template mode to provide a canonical handoff file for manual gate evidence and sign-off updates.
 - 2026-03-24: Added `ops:db:backup-restore:check-local` helper (`scripts/verifyLocalBackupRestore.mjs`) for Gate 1 dry-run validation (pg_dump -> isolated restore DB -> key table count checks -> cleanup), verified on local Docker Postgres runtime.
+- 2026-03-24: Added `ops:rc:gates:local-pipeline` orchestrator (`scripts/runLocalExternalGatesPipeline.mjs`) to execute local external-gates flow in one command (DB check + SLO collection + status snapshot).
 
