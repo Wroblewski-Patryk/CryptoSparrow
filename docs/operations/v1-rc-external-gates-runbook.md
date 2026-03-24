@@ -4,6 +4,8 @@ Purpose: close the remaining release-candidate gates that require target-environ
 
 ## Gate 1: Backup Snapshot and Restore Validation
 1. Take fresh database snapshot in target release environment.
+   - Local dry-run helper (Docker postgres):
+     - `pnpm run ops:db:backup-restore:check-local`
 2. Record snapshot id, timestamp (UTC), and operator.
 3. Restore snapshot into isolated restore target (never production primary).
 4. Run minimum restore checks:
