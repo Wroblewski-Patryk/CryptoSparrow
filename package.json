@@ -28,6 +28,7 @@
     "test:go-live:client": "pnpm run test:go-live:web",
     "test:go-live:smoke": "node scripts/goLiveSmoke.mjs --target=full",
     "ops:slo:collect": "node scripts/collectSloEvidence.mjs",
+    "ops:slo:window-report": "node scripts/buildSloWindowReport.mjs",
     "ops:rc:gates:status": "node scripts/buildRcExternalGateStatus.mjs",
     "ops:db:backup-restore:check-local": "node scripts/verifyLocalBackupRestore.mjs",
     "ops:rc:gates:local-pipeline": "node scripts/runLocalExternalGatesPipeline.mjs"

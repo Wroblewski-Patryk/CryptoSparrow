@@ -38,8 +38,8 @@ Scope note: this review is based on pre-launch and local production-like evidenc
 
 ## V1.1 Backlog Cut (Prioritized)
 - [ ] P0: automate backup snapshot + restore verification pipeline with auditable logs.
-- [ ] P0: add scheduled SLO reporting job (7d/30d snapshots from metrics + alerts).
-- [ ] P1: add queue-lag trend export and threshold breach timeline view for ops.
+- [x] P0: add schedule-ready SLO reporting job (`ops:slo:window-report`) for 7d/30d snapshots from collected metrics/alerts artifacts.
+- [x] P1: add queue-lag trend export with threshold breach timeline in generated SLO window report output.
 - [ ] P1: build sign-off workflow artifact automation (Engineering/Product/Ops approvals + owner assignment).
 - [ ] P2: expand cutover dry-run suite into one command orchestration script with structured report output.
 

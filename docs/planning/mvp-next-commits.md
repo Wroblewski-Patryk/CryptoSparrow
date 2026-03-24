@@ -127,6 +127,7 @@ Operational queue for one-task execution runs.
 - [x] `chore(repo-migration-plan): prepare non-breaking rename plan from client/server to web/api (scripts, CI, env, docs)`
 - [x] `docs(parity): define mobile parity contract versus web dashboard scope for MVP/V1`
 - [x] `ops(slo-tooling): add scripted SLO observation collector (`ops:slo:collect`) producing JSON+Markdown evidence artifacts for external production exit gates`
+- [x] `ops(slo-reporting): add rolling SLO window report builder (`ops:slo:window-report`) with queue-lag breach timeline for 7d/30d gate reviews`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

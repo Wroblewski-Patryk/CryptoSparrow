@@ -25,6 +25,9 @@ Evidence to record:
 1. Observe production-like telemetry window (minimum 30 minutes under normal load).
    - Recommended collector command:
      - `pnpm run ops:slo:collect -- --base-url https://<target-api> --duration-minutes 30 --interval-seconds 30 --auth-token <ADMIN_JWT>`
+   - Build rolling SLO window summary (for 7d/30d review cadence):
+     - `pnpm run ops:slo:window-report -- --window-days 7`
+     - `pnpm run ops:slo:window-report -- --window-days 30`
 2. Capture queue lag from `/metrics` and worker gauges:
    - market-data queue lag
    - execution queue lag
@@ -74,6 +77,9 @@ Evidence to record:
 - Optional helper summary:
   - Generate gate snapshot from latest SLO artifact:
     - `pnpm run ops:rc:gates:status`
+  - Generate rolling SLO summary from collected artifacts:
+    - `pnpm run ops:slo:window-report -- --window-days 7`
+    - `pnpm run ops:slo:window-report -- --window-days 30`
   - Generate empty status template before telemetry is available:
     - `pnpm run ops:rc:gates:status -- --template-only`
   - Run local full helper pipeline (DB dry-run + SLO collect + status snapshot):

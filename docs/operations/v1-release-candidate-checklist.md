@@ -84,6 +84,9 @@
   - `pnpm run ops:db:backup-restore:check-local`
 - Build RC external-gates status snapshot from latest SLO artifact:
   - `pnpm run ops:rc:gates:status`
+- Build rolling SLO summaries (for recurring 7d/30d review cadence):
+  - `pnpm run ops:slo:window-report -- --window-days 7`
+  - `pnpm run ops:slo:window-report -- --window-days 30`
 - Build template-only snapshot before SLO artifact exists:
   - `pnpm run ops:rc:gates:status -- --template-only`
 - Run local end-to-end helper pipeline:
@@ -92,5 +95,7 @@
 - Expected outputs:
   - `docs/operations/_artifacts-slo-window-*.json`
   - `docs/operations/v1-slo-observation-*.md`
+  - `docs/operations/v1-slo-window-report-7d-*.md`
+  - `docs/operations/v1-slo-window-report-30d-*.md`
   - `docs/operations/v1-rc-external-gates-status.md`
 
