@@ -69,3 +69,6 @@ Evidence to record:
 
 ## Completion Rule
 - Update `docs/operations/v1-release-candidate-checklist.md` checkboxes only when each gate has evidence filled above.
+- Optional helper summary:
+  - Generate gate snapshot from latest SLO artifact:
+    - `pnpm run ops:rc:gates:status`
