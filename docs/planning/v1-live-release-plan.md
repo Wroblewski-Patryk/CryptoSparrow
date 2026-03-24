@@ -259,4 +259,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-24: Closed `G7 feat(positions)` as delivered in dashboard Positions board (source + management badges and management toggle action), re-verified via `PositionsBoard` component test suite.
 - 2026-03-24: Delivered `G7 feat(metrics)` cross-mode comparison (`BACKTEST/PAPER/LIVE`) via new API endpoint `/dashboard/reports/cross-mode-performance` and dashboard Reports section with dedicated regression tests.
 - 2026-03-24: Added and executed `G7 test(e2e)` parity+reconciliation scenario in `backtests.e2e.test.ts` (strategy -> backtest -> reconcile exchange positions -> paper/live parity assertions); suite passes with local Docker PostgreSQL runtime.
+- 2026-03-24: Added `ops:slo:collect` evidence collector script (`scripts/collectSloEvidence.mjs`) with JSON+Markdown artifacts to accelerate production SLO observation window and queue-lag gate closure.
 

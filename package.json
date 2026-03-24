@@ -26,7 +26,8 @@
     "test:go-live:server:with-infra": "pnpm run test:go-live:api:with-infra",
     "test:go-live:web": "pnpm --filter web exec vitest run src/features/bots/components/BotsManagement.test.tsx src/features/logs/components/AuditTrailView.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx",
     "test:go-live:client": "pnpm run test:go-live:web",
-    "test:go-live:smoke": "node scripts/goLiveSmoke.mjs --target=full"
+    "test:go-live:smoke": "node scripts/goLiveSmoke.mjs --target=full",
+    "ops:slo:collect": "node scripts/collectSloEvidence.mjs"
   },
   "keywords": [],
   "author": "",

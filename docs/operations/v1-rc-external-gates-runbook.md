@@ -21,6 +21,8 @@ Evidence to record:
 
 ## Gate 2: Queue-Lag Baseline Review
 1. Observe production-like telemetry window (minimum 30 minutes under normal load).
+   - Recommended collector command:
+     - `pnpm run ops:slo:collect -- --base-url https://<target-api> --duration-minutes 30 --interval-seconds 30 --auth-token <ADMIN_JWT>`
 2. Capture queue lag from `/metrics` and worker gauges:
    - market-data queue lag
    - execution queue lag

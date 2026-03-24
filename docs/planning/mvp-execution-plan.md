@@ -484,6 +484,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-22: Hardened auth session recovery by validating `/auth/me` against DB existence, clearing stale token cookies on invalid/deleted sessions, and returning 503 for temporary auth DB lookup failures.
 - 2026-03-22: Added accessible password visibility toggles (`Show/Hide`) in login/register forms and covered toggle behavior with component regression tests.
 - 2026-03-22: Synced IA docs for `Bots/Exchanges`, added staged repo migration plan + mobile parity contract docs, and scaffolded `apps/mobile` as bootstrap-only package.
+- 2026-03-24: Added scripted SLO evidence collector (`ops:slo:collect`) generating timestamped JSON+Markdown artifacts for production observation window, and linked it in RC external gates runbook.
 
 
 
