@@ -10,6 +10,8 @@ const parseArgs = () => {
     intervalSeconds: process.env.SLO_INTERVAL_SECONDS ?? '15',
     authToken: process.env.SLO_AUTH_TOKEN ?? '',
     skipDbCheck: false,
+    allowOffline: false,
+    skipSloCollect: false,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -23,6 +25,8 @@ const parseArgs = () => {
     if (arg === '--interval-seconds') options.intervalSeconds = args[index + 1] ?? options.intervalSeconds;
     if (arg === '--auth-token') options.authToken = args[index + 1] ?? options.authToken;
     if (arg === '--skip-db-check') options.skipDbCheck = true;
+    if (arg === '--allow-offline') options.allowOffline = true;
+    if (arg === '--skip-slo-collect') options.skipSloCollect = true;
   }
 
   return options;
@@ -40,43 +44,76 @@ const run = (label, command, args, env = {}) => {
   }
 };
 
+const canReachApi = async (baseUrl, authToken) => {
+  try {
+    const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+    const res = await fetch(`${baseUrl}/health`, { headers });
+    return res.ok;
+  } catch {
+    return false;
+  }
+};
+
 const main = () => {
   const options = parseArgs();
   if (options.help) {
     console.log(
-      'Usage: node scripts/runLocalExternalGatesPipeline.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--skip-db-check]'
+      'Usage: node scripts/runLocalExternalGatesPipeline.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--skip-db-check] [--skip-slo-collect] [--allow-offline]'
     );
     process.exit(0);
   }
 
-  if (!options.skipDbCheck) {
-    run('backup/restore local check', 'pnpm', ['run', 'ops:db:backup-restore:check-local']);
-  }
+  Promise.resolve()
+    .then(async () => {
+      if (!options.skipDbCheck) {
+        run('backup/restore local check', 'pnpm', ['run', 'ops:db:backup-restore:check-local']);
+      }
 
-  const sloArgs = [
-    'run',
-    'ops:slo:collect',
-    '--',
-    '--base-url',
-    options.baseUrl,
-    '--duration-minutes',
-    String(options.durationMinutes),
-    '--interval-seconds',
-    String(options.intervalSeconds),
-  ];
-  if (options.authToken) {
-    sloArgs.push('--auth-token', options.authToken);
-  }
-  run('SLO observation collector', 'pnpm', sloArgs);
+      if (!options.skipSloCollect) {
+        const reachable = await canReachApi(options.baseUrl, options.authToken);
+        if (!reachable) {
+          if (!options.allowOffline) {
+            throw new Error(
+              `API health check failed for ${options.baseUrl}. Start API or rerun with --allow-offline to generate template-only status.`
+            );
+          }
+          console.warn(
+            `[ops:rc:gates:local] API unavailable at ${options.baseUrl}; using template-only RC status output.`
+          );
+          run('build RC external gates status (template-only)', 'pnpm', [
+            'run',
+            'ops:rc:gates:status',
+            '--',
+            '--template-only',
+          ]);
+          console.log('[ops:rc:gates:local] done (offline mode)');
+          return;
+        }
 
-  run('build RC external gates status', 'pnpm', ['run', 'ops:rc:gates:status']);
-  console.log('[ops:rc:gates:local] done');
+        const sloArgs = [
+          'run',
+          'ops:slo:collect',
+          '--',
+          '--base-url',
+          options.baseUrl,
+          '--duration-minutes',
+          String(options.durationMinutes),
+          '--interval-seconds',
+          String(options.intervalSeconds),
+        ];
+        if (options.authToken) {
+          sloArgs.push('--auth-token', options.authToken);
+        }
+        run('SLO observation collector', 'pnpm', sloArgs);
+      }
+
+      run('build RC external gates status', 'pnpm', ['run', 'ops:rc:gates:status']);
+      console.log('[ops:rc:gates:local] done');
+    })
+    .catch((error) => {
+      console.error('[ops:rc:gates:local] failed:', error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    });
 };
 
-try {
-  main();
-} catch (error) {
-  console.error('[ops:rc:gates:local] failed:', error instanceof Error ? error.message : String(error));
-  process.exit(1);
-}
-
+main();

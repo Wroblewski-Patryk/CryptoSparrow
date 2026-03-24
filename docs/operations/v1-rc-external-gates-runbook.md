@@ -78,3 +78,5 @@ Evidence to record:
     - `pnpm run ops:rc:gates:status -- --template-only`
   - Run local full helper pipeline (DB dry-run + SLO collect + status snapshot):
     - `pnpm run ops:rc:gates:local-pipeline -- --base-url http://localhost:4001 --duration-minutes 5 --interval-seconds 15`
+  - Offline fallback when API is unavailable (template status only):
+    - `pnpm run ops:rc:gates:local-pipeline -- --allow-offline`
