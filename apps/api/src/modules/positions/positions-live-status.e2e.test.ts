@@ -24,6 +24,8 @@ describe('Positions live status contract', () => {
     await prisma.position.deleteMany();
     await prisma.signal.deleteMany();
     await prisma.botStrategy.deleteMany();
+    await prisma.botSubagentConfig.deleteMany();
+    await prisma.botAssistantConfig.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
@@ -47,3 +49,4 @@ describe('Positions live status contract', () => {
     expect(res.body).toHaveProperty('workerHeartbeatAt');
   });
 });
+

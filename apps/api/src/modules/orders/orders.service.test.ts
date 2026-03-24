@@ -12,7 +12,9 @@ const cleanupDb = async () => {
   await prisma.position.deleteMany();
   await prisma.signal.deleteMany();
   await prisma.botStrategy.deleteMany();
-  await prisma.bot.deleteMany();
+  await prisma.botSubagentConfig.deleteMany();
+    await prisma.botAssistantConfig.deleteMany();
+    await prisma.bot.deleteMany();
   await prisma.symbolGroup.deleteMany();
   await prisma.marketUniverse.deleteMany();
   await prisma.strategy.deleteMany();
@@ -149,3 +151,4 @@ describe('openOrder live execution contract', () => {
     }
   });
 });
+

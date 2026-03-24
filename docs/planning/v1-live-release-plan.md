@@ -270,4 +270,5 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-24: Added rolling SLO summary command (`ops:slo:window-report`) generating 7d/30d aggregate snapshots and queue-lag breach timelines from collected SLO artifacts.
 - 2026-03-24: Added RC sign-off automation command (`ops:rc:signoff:build`) that generates `v1-rc-signoff-record.md` from gate status and named approver inputs.
 - 2026-03-24: Added one-command cutover dry-run command (`ops:cutover:dry-run`) with structured JSON+Markdown artifacts for repeatable local migration evidence.
+- 2026-03-24: Fixed cross-suite API test cleanup order for new assistant config relations (`BotSubagentConfig`/`BotAssistantConfig`), eliminating FK cleanup regressions during e2e verification runs.
 

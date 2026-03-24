@@ -13,6 +13,8 @@ describe('preTrade e2e smoke (paper/live critical paths)', () => {
     await prisma.position.deleteMany();
     await prisma.signal.deleteMany();
     await prisma.botStrategy.deleteMany();
+    await prisma.botSubagentConfig.deleteMany();
+    await prisma.botAssistantConfig.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
@@ -128,3 +130,4 @@ describe('preTrade e2e smoke (paper/live critical paths)', () => {
     expect(log.level).toBe('WARN');
   });
 });
+

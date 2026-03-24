@@ -38,6 +38,8 @@ describe('Strategies CRUD contract', () => {
     await prisma.backtestRun.deleteMany();
     await prisma.log.deleteMany();
     await prisma.botStrategy.deleteMany();
+    await prisma.botSubagentConfig.deleteMany();
+    await prisma.botAssistantConfig.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
@@ -144,3 +146,4 @@ describe('Strategies CRUD contract', () => {
     expect(deleteRes.body.error.message).toBe('Not found');
   });
 });
+

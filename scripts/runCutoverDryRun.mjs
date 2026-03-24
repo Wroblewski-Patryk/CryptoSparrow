@@ -118,9 +118,9 @@ const main = async () => {
         [
           '--filter',
           'api',
-          'exec',
-          'vitest',
           'run',
+          'test',
+          '--',
           'src/modules/engine/runtime-flow.e2e.test.ts',
           'src/modules/backtests/backtests.e2e.test.ts',
           'src/modules/engine/preTrade.e2e.test.ts',
