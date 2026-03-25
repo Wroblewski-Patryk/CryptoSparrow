@@ -86,6 +86,9 @@ Evidence to record:
     - `pnpm run ops:rc:gates:evidence:check`
     - strict mode (exit code 1 when evidence is incomplete): `pnpm run ops:rc:gates:evidence:check -- --strict`
     - command also verifies Gate2 status (`PASS` required) from `v1-rc-external-gates-status.md`.
+    - machine-readable output:
+      - `pnpm run ops:rc:gates:evidence:check -- --json`
+      - `pnpm run ops:rc:gates:evidence:check -- --json --output docs/operations/_artifacts-rc-evidence-check.json`
   - Generate rolling SLO summary from collected artifacts:
     - `pnpm run ops:slo:window-report -- --window-days 7`
     - `pnpm run ops:slo:window-report -- --window-days 30`

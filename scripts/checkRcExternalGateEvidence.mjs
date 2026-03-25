@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const operationsDir = path.resolve(process.cwd(), 'docs', 'operations');
@@ -12,6 +12,8 @@ const parseArgs = () => {
     runbookPath: path.join(operationsDir, 'v1-rc-external-gates-runbook.md'),
     signoffPath: path.join(operationsDir, 'v1-rc-signoff-record.md'),
     strict: false,
+    json: false,
+    output: '',
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -24,11 +26,16 @@ const parseArgs = () => {
     if (arg === '--runbook-path') options.runbookPath = args[index + 1] ?? options.runbookPath;
     if (arg === '--signoff-path') options.signoffPath = args[index + 1] ?? options.signoffPath;
     if (arg === '--strict') options.strict = true;
+    if (arg === '--json') options.json = true;
+    if (arg === '--output') options.output = args[index + 1] ?? options.output;
   }
 
   options.statusPath = path.resolve(process.cwd(), options.statusPath);
   options.runbookPath = path.resolve(process.cwd(), options.runbookPath);
   options.signoffPath = path.resolve(process.cwd(), options.signoffPath);
+  if (options.output) {
+    options.output = path.resolve(process.cwd(), options.output);
+  }
   return options;
 };
 
@@ -73,7 +80,7 @@ const main = async () => {
   const options = parseArgs();
   if (options.help) {
     console.log(
-      'Usage: node scripts/checkRcExternalGateEvidence.mjs [--status-path <file>] [--runbook-path <file>] [--signoff-path <file>] [--strict]'
+      'Usage: node scripts/checkRcExternalGateEvidence.mjs [--status-path <file>] [--runbook-path <file>] [--signoff-path <file>] [--json] [--output <file>] [--strict]'
     );
     process.exit(0);
   }
@@ -107,15 +114,38 @@ const main = async () => {
   if (!signoff.owner) missing.push('Gate4 sign-off missing: RC owner name');
   if (signoff.rcStatus.toUpperCase() !== 'APPROVED') missing.push(`Gate4 final status is not APPROVED (current: ${signoff.rcStatus || 'n/a'})`);
 
-  console.log('# RC External Gates Evidence Check');
-  console.log(`- Gate labels: G1=${gateLabels.gate1} | G2=${gateLabels.gate2} | G3=${gateLabels.gate3} | G4=${gateLabels.gate4}`);
-  console.log(`- Gate1 evidence fields: ${gate1Evidence.length}`);
-  console.log(`- Gate3 evidence fields: ${gate3Evidence.length}`);
-  if (missing.length === 0) {
-    console.log('- Missing evidence: none');
+  const result = {
+    generatedAt: new Date().toISOString(),
+    gateLabels,
+    counts: {
+      gate1EvidenceFields: gate1Evidence.length,
+      gate3EvidenceFields: gate3Evidence.length,
+      missing: missing.length,
+    },
+    missing,
+    strictPassed: missing.length === 0,
+  };
+
+  if (options.output) {
+    await writeFile(options.output, JSON.stringify(result, null, 2));
+  }
+
+  if (options.json) {
+    console.log(JSON.stringify(result, null, 2));
   } else {
-    console.log(`- Missing evidence count: ${missing.length}`);
-    for (const item of missing) console.log(`  - ${item}`);
+    console.log('# RC External Gates Evidence Check');
+    console.log(`- Gate labels: G1=${gateLabels.gate1} | G2=${gateLabels.gate2} | G3=${gateLabels.gate3} | G4=${gateLabels.gate4}`);
+    console.log(`- Gate1 evidence fields: ${gate1Evidence.length}`);
+    console.log(`- Gate3 evidence fields: ${gate3Evidence.length}`);
+    if (missing.length === 0) {
+      console.log('- Missing evidence: none');
+    } else {
+      console.log(`- Missing evidence count: ${missing.length}`);
+      for (const item of missing) console.log(`  - ${item}`);
+    }
+    if (options.output) {
+      console.log(`- JSON output: ${path.relative(process.cwd(), options.output)}`);
+    }
   }
 
   if (options.strict && missing.length > 0) {

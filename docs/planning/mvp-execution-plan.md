@@ -507,6 +507,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-25: Extended local external-gates pipeline to run evidence diagnostics by default after checklist sync, with `--skip-evidence-check` and `--strict-evidence-check` controls.
 - 2026-03-25: Extended external evidence diagnostics to validate Gate2 status (`PASS` required) so strict mode now enforces all four external gates.
 - 2026-03-25: Added strict pipeline alias (`ops:rc:gates:local-pipeline:strict`) for one-command hard evidence enforcement in local gate rehearsal runs.
+- 2026-03-25: Extended external evidence diagnostics with machine-readable `--json` mode and optional `--output` file to support AI/automation workflows.
 
 
 
