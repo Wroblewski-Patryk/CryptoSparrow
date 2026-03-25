@@ -1,0 +1,58 @@
+{
+  "generatedAt": "2026-03-25T18:15:33.215Z",
+  "status": "PASS",
+  "options": {
+    "skipInfra": false,
+    "skipClient": false
+  },
+  "steps": [
+    {
+      "label": "infra-up",
+      "command": "pnpm run go-live:infra:up",
+      "startedAt": "2026-03-25T18:15:13.147Z",
+      "endedAt": "2026-03-25T18:15:14.270Z",
+      "durationMs": 1123,
+      "exitCode": 0
+    },
+    {
+      "label": "api-prisma-generate",
+      "command": "pnpm --filter api exec prisma generate",
+      "startedAt": "2026-03-25T18:15:14.270Z",
+      "endedAt": "2026-03-25T18:15:16.462Z",
+      "durationMs": 2192,
+      "exitCode": 0
+    },
+    {
+      "label": "api-migrate-deploy",
+      "command": "pnpm --filter api exec prisma migrate deploy",
+      "startedAt": "2026-03-25T18:15:16.462Z",
+      "endedAt": "2026-03-25T18:15:18.349Z",
+      "durationMs": 1888,
+      "exitCode": 0
+    },
+    {
+      "label": "api-cutover-suite",
+      "command": "pnpm --filter api run test src/modules/engine/runtime-flow.e2e.test.ts src/modules/backtests/backtests.e2e.test.ts src/modules/engine/preTrade.e2e.test.ts src/modules/bots/bots.e2e.test.ts",
+      "startedAt": "2026-03-25T18:15:18.350Z",
+      "endedAt": "2026-03-25T18:15:27.988Z",
+      "durationMs": 9638,
+      "exitCode": 0
+    },
+    {
+      "label": "web-cutover-suite",
+      "command": "pnpm --filter web exec vitest run src/features/bots/components/BotsManagement.test.tsx src/features/logs/components/AuditTrailView.test.tsx",
+      "startedAt": "2026-03-25T18:15:27.988Z",
+      "endedAt": "2026-03-25T18:15:31.664Z",
+      "durationMs": 3677,
+      "exitCode": 0
+    },
+    {
+      "label": "infra-down",
+      "command": "pnpm run go-live:infra:down",
+      "startedAt": "2026-03-25T18:15:31.665Z",
+      "endedAt": "2026-03-25T18:15:33.215Z",
+      "durationMs": 1550,
+      "exitCode": 0
+    }
+  ]
+}
