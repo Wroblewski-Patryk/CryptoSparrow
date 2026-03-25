@@ -44,8 +44,13 @@ const main = async () => {
   }
 
   const rawStatus = await readFile(options.statusPath, 'utf8');
-  const rawEvidence = await readFile(options.evidencePath, 'utf8');
-  const evidence = JSON.parse(rawEvidence);
+  let evidence = null;
+  try {
+    const rawEvidence = await readFile(options.evidencePath, 'utf8');
+    evidence = JSON.parse(rawEvidence);
+  } catch {
+    evidence = null;
+  }
 
   const gates = {
     gate1: parseGateLabel(rawStatus, 1),
@@ -81,4 +86,3 @@ main().catch((error) => {
   console.error('[ops:rc:gates:summary] failed:', error instanceof Error ? error.message : String(error));
   process.exit(1);
 });
-

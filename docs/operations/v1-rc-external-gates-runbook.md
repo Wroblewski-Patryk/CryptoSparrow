@@ -92,6 +92,7 @@ Evidence to record:
   - Quick summary (gate labels + missing evidence count):
     - `pnpm run ops:rc:gates:summary`
     - JSON: `pnpm run ops:rc:gates:summary -- --json`
+    - when evidence JSON artifact is missing, summary still works (missing count reported as `null`).
   - Generate rolling SLO summary from collected artifacts:
     - `pnpm run ops:slo:window-report -- --window-days 7`
     - `pnpm run ops:slo:window-report -- --window-days 30`

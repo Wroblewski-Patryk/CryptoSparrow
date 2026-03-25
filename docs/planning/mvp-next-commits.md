@@ -155,6 +155,7 @@ Operational queue for one-task execution runs.
 - [x] `ops(pipeline-noise): pre-check SLO artifacts before status build in offline refresh flow to avoid expected error noise and keep logs clean`
 - [x] `ops(refresh-strict-shortcut): add `ops:rc:gates:refresh:strict` alias for no-DB/no-SLO quick refresh with strict evidence enforcement`
 - [x] `ops(gates-summary): add `ops:rc:gates:summary` command for compact gate/evidence snapshot (text + JSON)`
+- [x] `ops(gates-summary-hardening): make gate summary resilient when evidence JSON artifact is missing (graceful nulls instead of failure)`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
