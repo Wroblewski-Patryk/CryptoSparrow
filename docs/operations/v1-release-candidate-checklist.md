@@ -94,6 +94,8 @@
   - `pnpm run ops:rc:signoff:build -- --engineering-name "<name>" --product-name "<name>" --operations-name "<name>" --owner-name "<name>" --owner-contact "<email/slack>"`
 - Sync RC checklist gate/sign-off checkboxes from current status artifacts:
   - `pnpm run ops:rc:checklist:sync`
+- Check missing evidence fields before formal sign-off:
+  - `pnpm run ops:rc:gates:evidence:check`
 - Run local end-to-end helper pipeline:
   - `pnpm run ops:rc:gates:local-pipeline -- --base-url http://localhost:4001 --duration-minutes 5 --interval-seconds 15`
   - Includes status rebuild + checklist sync by default (use `--skip-checklist-sync` to disable).

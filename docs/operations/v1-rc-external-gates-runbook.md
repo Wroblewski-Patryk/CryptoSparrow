@@ -82,6 +82,9 @@ Evidence to record:
     - gate snapshot prefers latest `v1-slo-window-report-*.json` (rolling review) and falls back to latest `_artifacts-slo-window-*.json`.
   - Sync RC checklist checkboxes from current gate snapshot + sign-off record:
     - `pnpm run ops:rc:checklist:sync`
+  - Check missing external evidence fields (Gate1/Gate3/Gate4):
+    - `pnpm run ops:rc:gates:evidence:check`
+    - strict mode (exit code 1 when evidence is incomplete): `pnpm run ops:rc:gates:evidence:check -- --strict`
   - Generate rolling SLO summary from collected artifacts:
     - `pnpm run ops:slo:window-report -- --window-days 7`
     - `pnpm run ops:slo:window-report -- --window-days 30`
