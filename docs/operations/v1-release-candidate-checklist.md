@@ -108,6 +108,7 @@
   - Offline fallback: `pnpm run ops:rc:gates:local-pipeline -- --allow-offline`
   - Quick refresh (no DB/SLO collection): `pnpm run ops:rc:gates:refresh`
   - Quick refresh strict mode: `pnpm run ops:rc:gates:refresh:strict`
+  - Quick refresh with summary output: `pnpm run ops:rc:gates:refresh:summary`
 - Run local cutover dry-run with structured artifact output:
   - `pnpm run ops:cutover:dry-run`
 - Expected outputs:

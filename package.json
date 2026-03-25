@@ -39,7 +39,8 @@
     "ops:rc:gates:local-pipeline": "node scripts/runLocalExternalGatesPipeline.mjs",
     "ops:rc:gates:local-pipeline:strict": "node scripts/runLocalExternalGatesPipeline.mjs --strict-evidence-check",
     "ops:rc:gates:refresh": "node scripts/runLocalExternalGatesPipeline.mjs --skip-db-check --skip-slo-collect --skip-window-report --allow-offline",
-    "ops:rc:gates:refresh:strict": "node scripts/runLocalExternalGatesPipeline.mjs --skip-db-check --skip-slo-collect --skip-window-report --allow-offline --strict-evidence-check"
+    "ops:rc:gates:refresh:strict": "node scripts/runLocalExternalGatesPipeline.mjs --skip-db-check --skip-slo-collect --skip-window-report --allow-offline --strict-evidence-check",
+    "ops:rc:gates:refresh:summary": "pnpm run ops:rc:gates:refresh && pnpm run ops:rc:gates:summary"
   },
   "keywords": [],
   "author": "",

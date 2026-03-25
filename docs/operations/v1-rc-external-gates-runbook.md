@@ -118,3 +118,4 @@ Evidence to record:
   - Quick refresh (status + checklist + evidence check, no DB/SLO collection):
     - `pnpm run ops:rc:gates:refresh`
     - strict quick refresh: `pnpm run ops:rc:gates:refresh:strict`
+    - refresh + instant summary: `pnpm run ops:rc:gates:refresh:summary`

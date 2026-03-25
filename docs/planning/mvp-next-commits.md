@@ -156,6 +156,7 @@ Operational queue for one-task execution runs.
 - [x] `ops(refresh-strict-shortcut): add `ops:rc:gates:refresh:strict` alias for no-DB/no-SLO quick refresh with strict evidence enforcement`
 - [x] `ops(gates-summary): add `ops:rc:gates:summary` command for compact gate/evidence snapshot (text + JSON)`
 - [x] `ops(gates-summary-hardening): make gate summary resilient when evidence JSON artifact is missing (graceful nulls instead of failure)`
+- [x] `ops(refresh-summary-shortcut): add one-command `ops:rc:gates:refresh:summary` flow for quick refresh plus immediate human summary`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
