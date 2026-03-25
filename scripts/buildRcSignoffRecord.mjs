@@ -40,7 +40,7 @@ const parseArgs = () => {
 };
 
 const parseGateLine = (line) => {
-  const match = line.match(/-\s+Gate\s+\d+\s+\(.+?\):\s+(PASS|OPEN)/i);
+  const match = line.match(/-\s+Gate\s+\d+\s+\(.+?\):\s+([A-Z_]+)/i);
   return match?.[1]?.toUpperCase() ?? null;
 };
 
@@ -50,7 +50,7 @@ const loadGateStatuses = async (statusPath) => {
   const statuses = lines.map(parseGateLine).filter(Boolean);
   return {
     statuses,
-    allPass: statuses.length > 0 && statuses.every((status) => status === 'PASS'),
+    allPass: statuses.length === 4 && statuses.every((status) => status === 'PASS'),
   };
 };
 
@@ -96,6 +96,7 @@ ${ownerBlock(options.ownerName, options.ownerContact)}
 
 ## Gate Snapshot at Sign-Off Build
 - Gate statuses found: ${gates.statuses.length}
+- Gate values: ${gates.statuses.length > 0 ? gates.statuses.join(', ') : 'n/a'}
 - All gates pass: ${gates.allPass ? 'yes' : 'no'}
 
 ## Final Decision

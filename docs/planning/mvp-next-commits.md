@@ -137,6 +137,7 @@ Operational queue for one-task execution runs.
 - [x] `fix(cutover-dry-run): stabilize ops cutover suite by fixing pnpm test argument forwarding and replacing brittle backtest totalTrades assertion; verified with green `ops:cutover:dry-run``
 - [x] `ops(rc-gates): enrich RC external gate status builder with latest DB restore artifact parsing (local PASS visibility) and regenerate canonical status template`
 - [x] `docs(decision-close): resolve open monorepo naming decision to canonical `apps/web` + `apps/api` + `apps/mobile` with legacy naming retired from canonical docs`
+- [x] `fix(ops-signoff-parser): support non-binary gate labels (e.g. LOCAL_PASS) in RC sign-off builder and enforce exact four-gate parsing before APPROVED`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
