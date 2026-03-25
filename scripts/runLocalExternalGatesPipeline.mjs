@@ -62,6 +62,25 @@ const run = (label, command, args, env = {}) => {
   }
 };
 
+const buildStatusWithOfflineFallback = (allowOffline) => {
+  try {
+    run('build RC external gates status', 'pnpm', ['run', 'ops:rc:gates:status']);
+  } catch (error) {
+    if (!allowOffline) {
+      throw error;
+    }
+    console.warn(
+      '[ops:rc:gates:local] unable to build status from SLO artifacts; falling back to template-only snapshot.'
+    );
+    run('build RC external gates status (template-only)', 'pnpm', [
+      'run',
+      'ops:rc:gates:status',
+      '--',
+      '--template-only',
+    ]);
+  }
+};
+
 const canReachApi = async (baseUrl, authToken) => {
   try {
     const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
@@ -154,7 +173,7 @@ const main = () => {
         }
       }
 
-      run('build RC external gates status', 'pnpm', ['run', 'ops:rc:gates:status']);
+      buildStatusWithOfflineFallback(options.allowOffline);
       if (!options.skipChecklistSync) {
         run('sync RC checklist from gate status', 'pnpm', ['run', 'ops:rc:checklist:sync']);
       }

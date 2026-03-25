@@ -151,6 +151,7 @@ Operational queue for one-task execution runs.
 - [x] `ops(pipeline-strict-shortcut): add `ops:rc:gates:local-pipeline:strict` command alias for hard evidence enforcement run`
 - [x] `ops(evidence-check-json): add machine-readable JSON mode/output for external evidence diagnostics to support agent/automation consumption`
 - [x] `ops(pipeline-evidence-artifact): persist default JSON evidence artifact in local pipeline and ignore rotating `latest` output in git tracking`
+- [x] `ops(pipeline-refresh-shortcut): add quick `ops:rc:gates:refresh` alias and fallback to template status when SLO artifacts are absent but offline mode is allowed`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

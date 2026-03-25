@@ -111,3 +111,5 @@ Evidence to record:
       - `pnpm run ops:rc:gates:local-pipeline:strict`
   - Offline fallback when API is unavailable (template status only):
     - `pnpm run ops:rc:gates:local-pipeline -- --allow-offline`
+  - Quick refresh (status + checklist + evidence check, no DB/SLO collection):
+    - `pnpm run ops:rc:gates:refresh`

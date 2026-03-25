@@ -104,6 +104,7 @@
   - Use `--evidence-output <file>` to override JSON evidence artifact path.
   - Shortcut strict mode: `pnpm run ops:rc:gates:local-pipeline:strict`
   - Offline fallback: `pnpm run ops:rc:gates:local-pipeline -- --allow-offline`
+  - Quick refresh (no DB/SLO collection): `pnpm run ops:rc:gates:refresh`
 - Run local cutover dry-run with structured artifact output:
   - `pnpm run ops:cutover:dry-run`
 - Expected outputs:
