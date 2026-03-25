@@ -506,6 +506,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-25: Added external evidence diagnostics command (`ops:rc:gates:evidence:check`) that reports missing Gate1/Gate3/Gate4 runbook/sign-off fields and supports strict non-zero exit mode for enforcement.
 - 2026-03-25: Extended local external-gates pipeline to run evidence diagnostics by default after checklist sync, with `--skip-evidence-check` and `--strict-evidence-check` controls.
 - 2026-03-25: Extended external evidence diagnostics to validate Gate2 status (`PASS` required) so strict mode now enforces all four external gates.
+- 2026-03-25: Added strict pipeline alias (`ops:rc:gates:local-pipeline:strict`) for one-command hard evidence enforcement in local gate rehearsal runs.
 
 
 

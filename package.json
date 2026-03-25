@@ -35,7 +35,8 @@
     "ops:rc:gates:evidence:check": "node scripts/checkRcExternalGateEvidence.mjs",
     "ops:cutover:dry-run": "node scripts/runCutoverDryRun.mjs",
     "ops:db:backup-restore:check-local": "node scripts/verifyLocalBackupRestore.mjs",
-    "ops:rc:gates:local-pipeline": "node scripts/runLocalExternalGatesPipeline.mjs"
+    "ops:rc:gates:local-pipeline": "node scripts/runLocalExternalGatesPipeline.mjs",
+    "ops:rc:gates:local-pipeline:strict": "node scripts/runLocalExternalGatesPipeline.mjs --strict-evidence-check"
   },
   "keywords": [],
   "author": "",

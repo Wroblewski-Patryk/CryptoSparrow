@@ -148,6 +148,7 @@ Operational queue for one-task execution runs.
 - [x] `ops(evidence-check): add `ops:rc:gates:evidence:check` command to list missing Gate1/Gate3/Gate4 evidence and optional strict failure mode`
 - [x] `ops(pipeline-evidence): include evidence diagnostics in local external-gates pipeline with optional skip/strict switches`
 - [x] `ops(evidence-check-gate2): include Gate2 PASS validation in evidence diagnostics so strict mode enforces all external gates`
+- [x] `ops(pipeline-strict-shortcut): add `ops:rc:gates:local-pipeline:strict` command alias for hard evidence enforcement run`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

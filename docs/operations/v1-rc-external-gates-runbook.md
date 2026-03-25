@@ -102,5 +102,7 @@ Evidence to record:
       - `pnpm run ops:rc:gates:local-pipeline -- --skip-checklist-sync`
       - `pnpm run ops:rc:gates:local-pipeline -- --skip-evidence-check`
       - `pnpm run ops:rc:gates:local-pipeline -- --strict-evidence-check`
+    - strict shortcut:
+      - `pnpm run ops:rc:gates:local-pipeline:strict`
   - Offline fallback when API is unavailable (template status only):
     - `pnpm run ops:rc:gates:local-pipeline -- --allow-offline`
