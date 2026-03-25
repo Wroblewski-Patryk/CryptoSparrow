@@ -1,6 +1,6 @@
 # V1 RC External Gates Status
 
-Generated at (UTC): 2026-03-25T18:24:21.228Z
+Generated at (UTC): 2026-03-25T19:14:54.524Z
 
 Source artifact: not provided (template-only mode)
 
@@ -13,6 +13,8 @@ Source artifact: not provided (template-only mode)
 ## Backup/Restore Evidence
 - Latest local artifact: `docs\operations\_artifacts-db-restore-check-2026-03-25T18-10-26-980Z.txt`
 - Latest local result: PASS
+- Runbook source: `docs\operations\v1-rc-external-gates-runbook.md`
+- Gate 1 runbook evidence complete: no
 - Production validation: pending (manual gate)
 
 ## Incident Readiness Evidence

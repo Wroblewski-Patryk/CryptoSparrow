@@ -141,6 +141,7 @@ Operational queue for one-task execution runs.
 - [x] `ops(gate3-automation): infer Gate 3 status from runbook incident-readiness evidence fields and expose completion flag in RC external gate status output`
 - [x] `ops(gate4-automation): infer Gate 4 status from RC sign-off record (`RC status: APPROVED`) and expose approval flag in RC external gate status output`
 - [x] `ops(gate2-pipeline): extend local external-gates pipeline to auto-generate SLO rolling reports (7d/30d default) with configurable window list`
+- [x] `ops(gate1-automation): infer Gate 1 PASS from runbook backup/restore evidence completeness while preserving local dry-run signal as LOCAL_PASS fallback`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

@@ -82,37 +82,28 @@ const evaluateBackupRestoreGate = async () => {
   };
 };
 
-const evaluateGate3FromRunbook = async (runbookPathInput) => {
+const readRunbookRaw = async (runbookPathInput) => {
   const runbookPath = path.resolve(process.cwd(), runbookPathInput);
-  let raw = '';
   try {
-    raw = await readFile(runbookPath, 'utf8');
+    return {
+      runbookPath,
+      raw: await readFile(runbookPath, 'utf8'),
+    };
   } catch {
     return {
-      label: 'OPEN (manual evidence required)',
-      evidenceComplete: false,
       runbookPath,
+      raw: '',
     };
   }
+};
 
+const extractEvidenceValues = (raw, heading) => {
+  if (!raw) return [];
   const lines = raw.split(/\r?\n/);
-  const gate3Start = lines.findIndex((line) => line.trim() === '## Gate 3: Incident Contacts and Escalation Confirmation');
-  if (gate3Start === -1) {
-    return {
-      label: 'OPEN (manual evidence required)',
-      evidenceComplete: false,
-      runbookPath,
-    };
-  }
-
-  const evidenceStart = lines.findIndex((line, index) => index > gate3Start && line.trim() === 'Evidence to record:');
-  if (evidenceStart === -1) {
-    return {
-      label: 'OPEN (manual evidence required)',
-      evidenceComplete: false,
-      runbookPath,
-    };
-  }
+  const sectionStart = lines.findIndex((line) => line.trim() === heading);
+  if (sectionStart === -1) return [];
+  const evidenceStart = lines.findIndex((line, index) => index > sectionStart && line.trim() === 'Evidence to record:');
+  if (evidenceStart === -1) return [];
 
   const evidenceValues = [];
   for (let index = evidenceStart + 1; index < lines.length; index += 1) {
@@ -124,7 +115,23 @@ const evaluateGate3FromRunbook = async (runbookPathInput) => {
     const value = line.slice(separatorIndex + 1).trim();
     evidenceValues.push(value);
   }
+  return evidenceValues;
+};
 
+const evaluateGate1FromRunbook = async (runbookPathInput) => {
+  const { runbookPath, raw } = await readRunbookRaw(runbookPathInput);
+  const evidenceValues = extractEvidenceValues(raw, '## Gate 1: Backup Snapshot and Restore Validation');
+  const evidenceComplete = evidenceValues.length > 0 && evidenceValues.every((value) => value.length > 0);
+  return {
+    label: evidenceComplete ? 'PASS' : 'OPEN',
+    evidenceComplete,
+    runbookPath,
+  };
+};
+
+const evaluateGate3FromRunbook = async (runbookPathInput) => {
+  const { runbookPath, raw } = await readRunbookRaw(runbookPathInput);
+  const evidenceValues = extractEvidenceValues(raw, '## Gate 3: Incident Contacts and Escalation Confirmation');
   const evidenceComplete = evidenceValues.length > 0 && evidenceValues.every((value) => value.length > 0);
   return {
     label: evidenceComplete ? 'PASS' : 'OPEN',
@@ -184,7 +191,15 @@ const buildGateRows = (summary) => {
   };
 };
 
-const renderReport = ({ artifactPath, artifact, evaluation, backupGate, gate3Runbook, gate4Signoff }) => {
+const renderReport = ({
+  artifactPath,
+  artifact,
+  evaluation,
+  backupGate,
+  gate1Runbook,
+  gate3Runbook,
+  gate4Signoff,
+}) => {
   const generatedAt = new Date().toISOString();
   const artifactRel = path.relative(process.cwd(), artifactPath);
   const backupArtifactRel = backupGate.artifactPath
@@ -192,6 +207,7 @@ const renderReport = ({ artifactPath, artifact, evaluation, backupGate, gate3Run
     : 'n/a';
   const runbookRel = path.relative(process.cwd(), gate3Runbook.runbookPath);
   const signoffRel = path.relative(process.cwd(), gate4Signoff.signoffPath);
+  const gate1Label = gate1Runbook.evidenceComplete ? 'PASS' : backupGate.label;
   const output = `# V1 RC External Gates Status
 
 Generated at (UTC): ${generatedAt}
@@ -202,7 +218,7 @@ Observation window:
 - ended: ${artifact.endedAt ?? 'n/a'}
 
 ## Gate Status Snapshot
-- Gate 1 (Backup snapshot + restore validation): ${backupGate.label}
+- Gate 1 (Backup snapshot + restore validation): ${gate1Label}
 - Gate 2 (Queue-lag baseline review): ${statusLabel(evaluation.queueLagPass)}
 - Gate 3 (Incident contacts + escalation confirmation): ${gate3Runbook.label}
 - Gate 4 (Formal RC sign-offs): ${gate4Signoff.label}
@@ -210,7 +226,9 @@ Observation window:
 ## Backup/Restore Evidence
 - Latest local artifact: \`${backupArtifactRel}\`
 - Latest local result: ${backupGate.result}
-- Production validation: pending (manual gate)
+- Runbook source: \`${runbookRel}\`
+- Gate 1 runbook evidence complete: ${gate1Runbook.evidenceComplete ? 'yes' : 'no'}
+- Production validation: ${gate1Runbook.evidenceComplete ? 'recorded' : 'pending (manual gate)'}
 
 ## Incident Readiness Evidence
 - Runbook source: \`${runbookRel}\`
@@ -247,13 +265,14 @@ Observation window:
   return output;
 };
 
-const renderTemplateOnly = (backupGate, gate3Runbook, gate4Signoff) => {
+const renderTemplateOnly = (backupGate, gate1Runbook, gate3Runbook, gate4Signoff) => {
   const generatedAt = new Date().toISOString();
   const backupArtifactRel = backupGate.artifactPath
     ? path.relative(process.cwd(), backupGate.artifactPath)
     : 'n/a';
   const runbookRel = path.relative(process.cwd(), gate3Runbook.runbookPath);
   const signoffRel = path.relative(process.cwd(), gate4Signoff.signoffPath);
+  const gate1Label = gate1Runbook.evidenceComplete ? 'PASS' : backupGate.label;
   return `# V1 RC External Gates Status
 
 Generated at (UTC): ${generatedAt}
@@ -261,7 +280,7 @@ Generated at (UTC): ${generatedAt}
 Source artifact: not provided (template-only mode)
 
 ## Gate Status Snapshot
-- Gate 1 (Backup snapshot + restore validation): ${backupGate.label}
+- Gate 1 (Backup snapshot + restore validation): ${gate1Label}
 - Gate 2 (Queue-lag baseline review): OPEN
 - Gate 3 (Incident contacts + escalation confirmation): ${gate3Runbook.label}
 - Gate 4 (Formal RC sign-offs): ${gate4Signoff.label}
@@ -269,7 +288,9 @@ Source artifact: not provided (template-only mode)
 ## Backup/Restore Evidence
 - Latest local artifact: \`${backupArtifactRel}\`
 - Latest local result: ${backupGate.result}
-- Production validation: pending (manual gate)
+- Runbook source: \`${runbookRel}\`
+- Gate 1 runbook evidence complete: ${gate1Runbook.evidenceComplete ? 'yes' : 'no'}
+- Production validation: ${gate1Runbook.evidenceComplete ? 'recorded' : 'pending (manual gate)'}
 
 ## Incident Readiness Evidence
 - Runbook source: \`${runbookRel}\`
@@ -301,12 +322,13 @@ const main = async () => {
   }
 
   const backupGate = await evaluateBackupRestoreGate();
+  const gate1Runbook = await evaluateGate1FromRunbook(options.runbookPath);
   const gate3Runbook = await evaluateGate3FromRunbook(options.runbookPath);
   const gate4Signoff = await evaluateGate4FromSignoffRecord(options.signoffPath);
 
   if (options.templateOnly) {
     const outputPath = path.resolve(process.cwd(), options.output);
-    await writeFile(outputPath, renderTemplateOnly(backupGate, gate3Runbook, gate4Signoff));
+    await writeFile(outputPath, renderTemplateOnly(backupGate, gate1Runbook, gate3Runbook, gate4Signoff));
     console.log(`RC external gates template written to: ${path.relative(process.cwd(), outputPath)}`);
     process.exit(0);
   }
@@ -327,6 +349,7 @@ const main = async () => {
     artifact,
     evaluation,
     backupGate,
+    gate1Runbook,
     gate3Runbook,
     gate4Signoff,
   });
