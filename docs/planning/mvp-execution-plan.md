@@ -501,6 +501,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-25: Extended local external-gates pipeline (`ops:rc:gates:local-pipeline`) to generate SLO rolling window evidence (`7d/30d` by default) after observation collection, with configurable `--window-days` and `--skip-window-report` flags.
 - 2026-03-25: Added Gate 1 automation in RC status builder by parsing backup/restore evidence completeness from runbook (target-env PASS) and keeping local DB check result as `LOCAL_PASS` fallback signal.
 - 2026-03-25: Updated RC gate-status builder to prefer rolling SLO window-report artifacts (`v1-slo-window-report-*.json`) for Gate 2 evaluation, with fallback to raw observation artifacts when window reports are unavailable.
+- 2026-03-25: Added RC checklist sync automation (`ops:rc:checklist:sync`) to keep checklist gate/sign-off checkboxes aligned with current external-gates status and sign-off record artifacts.
 
 
 

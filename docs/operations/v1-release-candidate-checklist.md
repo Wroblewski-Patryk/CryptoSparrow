@@ -92,6 +92,8 @@
   - `pnpm run ops:rc:gates:status -- --template-only`
 - Build RC sign-off artifact from current gate status + approvers:
   - `pnpm run ops:rc:signoff:build -- --engineering-name "<name>" --product-name "<name>" --operations-name "<name>" --owner-name "<name>" --owner-contact "<email/slack>"`
+- Sync RC checklist gate/sign-off checkboxes from current status artifacts:
+  - `pnpm run ops:rc:checklist:sync`
 - Run local end-to-end helper pipeline:
   - `pnpm run ops:rc:gates:local-pipeline -- --base-url http://localhost:4001 --duration-minutes 5 --interval-seconds 15`
   - Offline fallback: `pnpm run ops:rc:gates:local-pipeline -- --allow-offline`
