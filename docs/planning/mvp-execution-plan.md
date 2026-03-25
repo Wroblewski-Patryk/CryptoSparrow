@@ -496,6 +496,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-25: Extended RC external-gates status automation to parse latest DB restore artifact and surface Gate 1 as `LOCAL_PASS (target-env pending)` in `v1-rc-external-gates-status.md` template output.
 - 2026-03-25: Closed open monorepo naming decision in planning docs; canonical app structure is now explicitly locked to `apps/web`, `apps/api`, and bootstrap `apps/mobile`.
 - 2026-03-25: Hardened RC sign-off automation by parsing extended gate labels (including `LOCAL_PASS`) and requiring exactly four parsed gate states before `APPROVED`; regenerated sign-off snapshot.
+- 2026-03-25: Added Gate 3 automation in RC status builder by parsing incident-readiness evidence completeness from external-gates runbook and exposing structured completion state in status output.
 
 
 

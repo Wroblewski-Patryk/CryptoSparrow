@@ -1,6 +1,6 @@
 # V1 RC External Gates Status
 
-Generated at (UTC): 2026-03-25T18:18:18.864Z
+Generated at (UTC): 2026-03-25T18:23:03.975Z
 
 Source artifact: not provided (template-only mode)
 
@@ -14,6 +14,10 @@ Source artifact: not provided (template-only mode)
 - Latest local artifact: `docs\operations\_artifacts-db-restore-check-2026-03-25T18-10-26-980Z.txt`
 - Latest local result: PASS
 - Production validation: pending (manual gate)
+
+## Incident Readiness Evidence
+- Runbook source: `docs\operations\v1-rc-external-gates-runbook.md`
+- Gate 3 evidence complete: no
 
 ## Required Inputs
 1. Run SLO collector:
