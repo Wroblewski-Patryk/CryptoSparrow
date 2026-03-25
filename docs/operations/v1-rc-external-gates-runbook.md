@@ -89,6 +89,9 @@ Evidence to record:
     - machine-readable output:
       - `pnpm run ops:rc:gates:evidence:check -- --json`
       - `pnpm run ops:rc:gates:evidence:check -- --json --output docs/operations/_artifacts-rc-evidence-check.json`
+  - Quick summary (gate labels + missing evidence count):
+    - `pnpm run ops:rc:gates:summary`
+    - JSON: `pnpm run ops:rc:gates:summary -- --json`
   - Generate rolling SLO summary from collected artifacts:
     - `pnpm run ops:slo:window-report -- --window-days 7`
     - `pnpm run ops:slo:window-report -- --window-days 30`

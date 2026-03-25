@@ -96,6 +96,8 @@
   - `pnpm run ops:rc:checklist:sync`
 - Check missing evidence fields before formal sign-off:
   - `pnpm run ops:rc:gates:evidence:check`
+- Quick gate summary:
+  - `pnpm run ops:rc:gates:summary`
 - Run local end-to-end helper pipeline:
   - `pnpm run ops:rc:gates:local-pipeline -- --base-url http://localhost:4001 --duration-minutes 5 --interval-seconds 15`
   - Includes status rebuild + checklist sync + evidence diagnostics by default.

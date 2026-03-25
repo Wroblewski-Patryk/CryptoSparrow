@@ -33,6 +33,7 @@
     "ops:rc:signoff:build": "node scripts/buildRcSignoffRecord.mjs",
     "ops:rc:checklist:sync": "node scripts/syncRcChecklistFromGateStatus.mjs",
     "ops:rc:gates:evidence:check": "node scripts/checkRcExternalGateEvidence.mjs",
+    "ops:rc:gates:summary": "node scripts/summarizeRcGates.mjs",
     "ops:cutover:dry-run": "node scripts/runCutoverDryRun.mjs",
     "ops:db:backup-restore:check-local": "node scripts/verifyLocalBackupRestore.mjs",
     "ops:rc:gates:local-pipeline": "node scripts/runLocalExternalGatesPipeline.mjs",
