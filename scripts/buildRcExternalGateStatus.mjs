@@ -11,6 +11,7 @@ const parseArgs = () => {
     input: '',
     output: path.join(operationsDir, 'v1-rc-external-gates-status.md'),
     runbookPath: path.join(operationsDir, 'v1-rc-external-gates-runbook.md'),
+    signoffPath: path.join(operationsDir, 'v1-rc-signoff-record.md'),
     templateOnly: false,
   };
 
@@ -23,6 +24,7 @@ const parseArgs = () => {
     if (arg === '--input') options.input = args[index + 1] ?? options.input;
     if (arg === '--output') options.output = args[index + 1] ?? options.output;
     if (arg === '--runbook-path') options.runbookPath = args[index + 1] ?? options.runbookPath;
+    if (arg === '--signoff-path') options.signoffPath = args[index + 1] ?? options.signoffPath;
     if (arg === '--template-only') options.templateOnly = true;
   }
 
@@ -131,6 +133,27 @@ const evaluateGate3FromRunbook = async (runbookPathInput) => {
   };
 };
 
+const evaluateGate4FromSignoffRecord = async (signoffPathInput) => {
+  const signoffPath = path.resolve(process.cwd(), signoffPathInput);
+  let raw = '';
+  try {
+    raw = await readFile(signoffPath, 'utf8');
+  } catch {
+    return {
+      label: 'OPEN',
+      approved: false,
+      signoffPath,
+    };
+  }
+
+  const approved = /RC status:\s*`APPROVED`/i.test(raw);
+  return {
+    label: approved ? 'PASS' : 'OPEN',
+    approved,
+    signoffPath,
+  };
+};
+
 const statusLabel = (passed) => (passed ? 'PASS' : 'OPEN');
 
 const buildGateRows = (summary) => {
@@ -161,13 +184,14 @@ const buildGateRows = (summary) => {
   };
 };
 
-const renderReport = ({ artifactPath, artifact, evaluation, backupGate, gate3Runbook }) => {
+const renderReport = ({ artifactPath, artifact, evaluation, backupGate, gate3Runbook, gate4Signoff }) => {
   const generatedAt = new Date().toISOString();
   const artifactRel = path.relative(process.cwd(), artifactPath);
   const backupArtifactRel = backupGate.artifactPath
     ? path.relative(process.cwd(), backupGate.artifactPath)
     : 'n/a';
   const runbookRel = path.relative(process.cwd(), gate3Runbook.runbookPath);
+  const signoffRel = path.relative(process.cwd(), gate4Signoff.signoffPath);
   const output = `# V1 RC External Gates Status
 
 Generated at (UTC): ${generatedAt}
@@ -181,7 +205,7 @@ Observation window:
 - Gate 1 (Backup snapshot + restore validation): ${backupGate.label}
 - Gate 2 (Queue-lag baseline review): ${statusLabel(evaluation.queueLagPass)}
 - Gate 3 (Incident contacts + escalation confirmation): ${gate3Runbook.label}
-- Gate 4 (Formal RC sign-offs): ${statusLabel(false)} (manual evidence required)
+- Gate 4 (Formal RC sign-offs): ${gate4Signoff.label}
 
 ## Backup/Restore Evidence
 - Latest local artifact: \`${backupArtifactRel}\`
@@ -191,6 +215,10 @@ Observation window:
 ## Incident Readiness Evidence
 - Runbook source: \`${runbookRel}\`
 - Gate 3 evidence complete: ${gate3Runbook.evidenceComplete ? 'yes' : 'no'}
+
+## Formal Sign-Off Evidence
+- Sign-off source: \`${signoffRel}\`
+- Gate 4 approved status found: ${gate4Signoff.approved ? 'yes' : 'no'}
 
 ## Derived Metrics (from SLO artifact)
 - /ready availability: ${pct(evaluation.details.ready)}
@@ -219,12 +247,13 @@ Observation window:
   return output;
 };
 
-const renderTemplateOnly = (backupGate, gate3Runbook) => {
+const renderTemplateOnly = (backupGate, gate3Runbook, gate4Signoff) => {
   const generatedAt = new Date().toISOString();
   const backupArtifactRel = backupGate.artifactPath
     ? path.relative(process.cwd(), backupGate.artifactPath)
     : 'n/a';
   const runbookRel = path.relative(process.cwd(), gate3Runbook.runbookPath);
+  const signoffRel = path.relative(process.cwd(), gate4Signoff.signoffPath);
   return `# V1 RC External Gates Status
 
 Generated at (UTC): ${generatedAt}
@@ -235,7 +264,7 @@ Source artifact: not provided (template-only mode)
 - Gate 1 (Backup snapshot + restore validation): ${backupGate.label}
 - Gate 2 (Queue-lag baseline review): OPEN
 - Gate 3 (Incident contacts + escalation confirmation): ${gate3Runbook.label}
-- Gate 4 (Formal RC sign-offs): OPEN
+- Gate 4 (Formal RC sign-offs): ${gate4Signoff.label}
 
 ## Backup/Restore Evidence
 - Latest local artifact: \`${backupArtifactRel}\`
@@ -245,6 +274,10 @@ Source artifact: not provided (template-only mode)
 ## Incident Readiness Evidence
 - Runbook source: \`${runbookRel}\`
 - Gate 3 evidence complete: ${gate3Runbook.evidenceComplete ? 'yes' : 'no'}
+
+## Formal Sign-Off Evidence
+- Sign-off source: \`${signoffRel}\`
+- Gate 4 approved status found: ${gate4Signoff.approved ? 'yes' : 'no'}
 
 ## Required Inputs
 1. Run SLO collector:
@@ -269,10 +302,11 @@ const main = async () => {
 
   const backupGate = await evaluateBackupRestoreGate();
   const gate3Runbook = await evaluateGate3FromRunbook(options.runbookPath);
+  const gate4Signoff = await evaluateGate4FromSignoffRecord(options.signoffPath);
 
   if (options.templateOnly) {
     const outputPath = path.resolve(process.cwd(), options.output);
-    await writeFile(outputPath, renderTemplateOnly(backupGate, gate3Runbook));
+    await writeFile(outputPath, renderTemplateOnly(backupGate, gate3Runbook, gate4Signoff));
     console.log(`RC external gates template written to: ${path.relative(process.cwd(), outputPath)}`);
     process.exit(0);
   }
@@ -288,7 +322,14 @@ const main = async () => {
   const raw = await readFile(inputPath, 'utf8');
   const artifact = JSON.parse(raw);
   const evaluation = buildGateRows(artifact.summary ?? {});
-  const report = renderReport({ artifactPath: inputPath, artifact, evaluation, backupGate, gate3Runbook });
+  const report = renderReport({
+    artifactPath: inputPath,
+    artifact,
+    evaluation,
+    backupGate,
+    gate3Runbook,
+    gate4Signoff,
+  });
 
   const outputPath = path.resolve(process.cwd(), options.output);
   await writeFile(outputPath, report);

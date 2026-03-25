@@ -139,6 +139,7 @@ Operational queue for one-task execution runs.
 - [x] `docs(decision-close): resolve open monorepo naming decision to canonical `apps/web` + `apps/api` + `apps/mobile` with legacy naming retired from canonical docs`
 - [x] `fix(ops-signoff-parser): support non-binary gate labels (e.g. LOCAL_PASS) in RC sign-off builder and enforce exact four-gate parsing before APPROVED`
 - [x] `ops(gate3-automation): infer Gate 3 status from runbook incident-readiness evidence fields and expose completion flag in RC external gate status output`
+- [x] `ops(gate4-automation): infer Gate 4 status from RC sign-off record (`RC status: APPROVED`) and expose approval flag in RC external gate status output`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

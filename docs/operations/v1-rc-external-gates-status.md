@@ -1,6 +1,6 @@
 # V1 RC External Gates Status
 
-Generated at (UTC): 2026-03-25T18:23:03.975Z
+Generated at (UTC): 2026-03-25T18:24:21.228Z
 
 Source artifact: not provided (template-only mode)
 
@@ -18,6 +18,10 @@ Source artifact: not provided (template-only mode)
 ## Incident Readiness Evidence
 - Runbook source: `docs\operations\v1-rc-external-gates-runbook.md`
 - Gate 3 evidence complete: no
+
+## Formal Sign-Off Evidence
+- Sign-off source: `docs\operations\v1-rc-signoff-record.md`
+- Gate 4 approved status found: no
 
 ## Required Inputs
 1. Run SLO collector:
