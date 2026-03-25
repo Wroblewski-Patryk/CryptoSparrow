@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
+import { readdir } from 'node:fs/promises';
+import path from 'node:path';
 
 const parseArgs = () => {
   const args = process.argv.slice(2);
@@ -62,7 +64,37 @@ const run = (label, command, args, env = {}) => {
   }
 };
 
-const buildStatusWithOfflineFallback = (allowOffline) => {
+const hasSloInputs = async () => {
+  const operationsDir = path.resolve(process.cwd(), 'docs', 'operations');
+  try {
+    const entries = await readdir(operationsDir);
+    return entries.some(
+      (name) =>
+        (name.startsWith('_artifacts-slo-window-') && name.endsWith('.json')) ||
+        (name.startsWith('v1-slo-window-report-') && name.endsWith('.json'))
+    );
+  } catch {
+    return false;
+  }
+};
+
+const buildStatusWithOfflineFallback = async (allowOffline) => {
+  if (allowOffline) {
+    const hasInputs = await hasSloInputs();
+    if (!hasInputs) {
+      console.warn(
+        '[ops:rc:gates:local] no SLO artifacts found; using template-only status snapshot (offline mode).'
+      );
+      run('build RC external gates status (template-only)', 'pnpm', [
+        'run',
+        'ops:rc:gates:status',
+        '--',
+        '--template-only',
+      ]);
+      return;
+    }
+  }
+
   try {
     run('build RC external gates status', 'pnpm', ['run', 'ops:rc:gates:status']);
   } catch (error) {
@@ -173,7 +205,7 @@ const main = () => {
         }
       }
 
-      buildStatusWithOfflineFallback(options.allowOffline);
+      await buildStatusWithOfflineFallback(options.allowOffline);
       if (!options.skipChecklistSync) {
         run('sync RC checklist from gate status', 'pnpm', ['run', 'ops:rc:checklist:sync']);
       }

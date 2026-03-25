@@ -152,6 +152,7 @@ Operational queue for one-task execution runs.
 - [x] `ops(evidence-check-json): add machine-readable JSON mode/output for external evidence diagnostics to support agent/automation consumption`
 - [x] `ops(pipeline-evidence-artifact): persist default JSON evidence artifact in local pipeline and ignore rotating `latest` output in git tracking`
 - [x] `ops(pipeline-refresh-shortcut): add quick `ops:rc:gates:refresh` alias and fallback to template status when SLO artifacts are absent but offline mode is allowed`
+- [x] `ops(pipeline-noise): pre-check SLO artifacts before status build in offline refresh flow to avoid expected error noise and keep logs clean`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
