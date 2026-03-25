@@ -40,6 +40,44 @@ const findLatestSloArtifact = async () => {
   return path.join(operationsDir, candidates[0]);
 };
 
+const findLatestDbRestoreArtifact = async () => {
+  const entries = await readdir(operationsDir);
+  const candidates = entries
+    .filter((name) => name.startsWith('_artifacts-db-restore-check-') && name.endsWith('.txt'))
+    .sort((a, b) => b.localeCompare(a));
+  if (candidates.length === 0) return null;
+  return path.join(operationsDir, candidates[0]);
+};
+
+const evaluateBackupRestoreGate = async () => {
+  const artifactPath = await findLatestDbRestoreArtifact();
+  if (!artifactPath) {
+    return {
+      label: 'OPEN (manual evidence required)',
+      result: 'MISSING',
+      artifactPath: null,
+    };
+  }
+
+  const raw = await readFile(artifactPath, 'utf8');
+  const resultMatch = raw.match(/RESULT:\s*(PASS|FAIL)/i);
+  const result = resultMatch?.[1]?.toUpperCase() ?? 'UNKNOWN';
+
+  if (result === 'PASS') {
+    return {
+      label: 'LOCAL_PASS (target-env pending)',
+      result,
+      artifactPath,
+    };
+  }
+
+  return {
+    label: `OPEN (latest local result: ${result})`,
+    result,
+    artifactPath,
+  };
+};
+
 const statusLabel = (passed) => (passed ? 'PASS' : 'OPEN');
 
 const buildGateRows = (summary) => {
@@ -70,9 +108,12 @@ const buildGateRows = (summary) => {
   };
 };
 
-const renderReport = ({ artifactPath, artifact, evaluation }) => {
+const renderReport = ({ artifactPath, artifact, evaluation, backupGate }) => {
   const generatedAt = new Date().toISOString();
   const artifactRel = path.relative(process.cwd(), artifactPath);
+  const backupArtifactRel = backupGate.artifactPath
+    ? path.relative(process.cwd(), backupGate.artifactPath)
+    : 'n/a';
   const output = `# V1 RC External Gates Status
 
 Generated at (UTC): ${generatedAt}
@@ -83,10 +124,15 @@ Observation window:
 - ended: ${artifact.endedAt ?? 'n/a'}
 
 ## Gate Status Snapshot
-- Gate 1 (Backup snapshot + restore validation): ${statusLabel(false)} (manual evidence required)
+- Gate 1 (Backup snapshot + restore validation): ${backupGate.label}
 - Gate 2 (Queue-lag baseline review): ${statusLabel(evaluation.queueLagPass)}
 - Gate 3 (Incident contacts + escalation confirmation): ${statusLabel(false)} (manual evidence required)
 - Gate 4 (Formal RC sign-offs): ${statusLabel(false)} (manual evidence required)
+
+## Backup/Restore Evidence
+- Latest local artifact: \`${backupArtifactRel}\`
+- Latest local result: ${backupGate.result}
+- Production validation: pending (manual gate)
 
 ## Derived Metrics (from SLO artifact)
 - /ready availability: ${pct(evaluation.details.ready)}
@@ -115,8 +161,11 @@ Observation window:
   return output;
 };
 
-const renderTemplateOnly = () => {
+const renderTemplateOnly = (backupGate) => {
   const generatedAt = new Date().toISOString();
+  const backupArtifactRel = backupGate.artifactPath
+    ? path.relative(process.cwd(), backupGate.artifactPath)
+    : 'n/a';
   return `# V1 RC External Gates Status
 
 Generated at (UTC): ${generatedAt}
@@ -124,10 +173,15 @@ Generated at (UTC): ${generatedAt}
 Source artifact: not provided (template-only mode)
 
 ## Gate Status Snapshot
-- Gate 1 (Backup snapshot + restore validation): OPEN
+- Gate 1 (Backup snapshot + restore validation): ${backupGate.label}
 - Gate 2 (Queue-lag baseline review): OPEN
 - Gate 3 (Incident contacts + escalation confirmation): OPEN
 - Gate 4 (Formal RC sign-offs): OPEN
+
+## Backup/Restore Evidence
+- Latest local artifact: \`${backupArtifactRel}\`
+- Latest local result: ${backupGate.result}
+- Production validation: pending (manual gate)
 
 ## Required Inputs
 1. Run SLO collector:
@@ -150,9 +204,11 @@ const main = async () => {
     process.exit(0);
   }
 
+  const backupGate = await evaluateBackupRestoreGate();
+
   if (options.templateOnly) {
     const outputPath = path.resolve(process.cwd(), options.output);
-    await writeFile(outputPath, renderTemplateOnly());
+    await writeFile(outputPath, renderTemplateOnly(backupGate));
     console.log(`RC external gates template written to: ${path.relative(process.cwd(), outputPath)}`);
     process.exit(0);
   }
@@ -168,7 +224,7 @@ const main = async () => {
   const raw = await readFile(inputPath, 'utf8');
   const artifact = JSON.parse(raw);
   const evaluation = buildGateRows(artifact.summary ?? {});
-  const report = renderReport({ artifactPath: inputPath, artifact, evaluation });
+  const report = renderReport({ artifactPath: inputPath, artifact, evaluation, backupGate });
 
   const outputPath = path.resolve(process.cwd(), options.output);
   await writeFile(outputPath, report);

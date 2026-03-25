@@ -135,6 +135,7 @@ Operational queue for one-task execution runs.
 - [x] `fix(runtime-e2e): resolve cutover blockers by fixing strategy-reorder route precedence and runtime-flow e2e setup/cleanup for bot market-group model`
 - [x] `ops(backup-evidence-local): execute backup/restore automation (`ops:db:backup-restore:check-local`) and attach fresh artifact references in RC docs`
 - [x] `fix(cutover-dry-run): stabilize ops cutover suite by fixing pnpm test argument forwarding and replacing brittle backtest totalTrades assertion; verified with green `ops:cutover:dry-run``
+- [x] `ops(rc-gates): enrich RC external gate status builder with latest DB restore artifact parsing (local PASS visibility) and regenerate canonical status template`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

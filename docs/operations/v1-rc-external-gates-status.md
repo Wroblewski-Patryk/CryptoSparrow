@@ -1,14 +1,19 @@
 # V1 RC External Gates Status
 
-Generated at (UTC): 2026-03-24T02:35:22.179Z
+Generated at (UTC): 2026-03-25T18:18:18.864Z
 
 Source artifact: not provided (template-only mode)
 
 ## Gate Status Snapshot
-- Gate 1 (Backup snapshot + restore validation): OPEN
+- Gate 1 (Backup snapshot + restore validation): LOCAL_PASS (target-env pending)
 - Gate 2 (Queue-lag baseline review): OPEN
 - Gate 3 (Incident contacts + escalation confirmation): OPEN
 - Gate 4 (Formal RC sign-offs): OPEN
+
+## Backup/Restore Evidence
+- Latest local artifact: `docs\operations\_artifacts-db-restore-check-2026-03-25T18-10-26-980Z.txt`
+- Latest local result: PASS
+- Production validation: pending (manual gate)
 
 ## Required Inputs
 1. Run SLO collector:
