@@ -6,4 +6,5 @@ apps/api/public/avatars/*
 .vscode/settings.json
 .playwright-cli/
 playwright-*.log
+docs/operations/_artifacts-rc-evidence-check-latest.json
 

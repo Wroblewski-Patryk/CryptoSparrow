@@ -101,6 +101,7 @@
   - Includes status rebuild + checklist sync + evidence diagnostics by default.
   - Use `--skip-checklist-sync` / `--skip-evidence-check` to disable selected steps.
   - Use `--strict-evidence-check` to fail pipeline when evidence is incomplete.
+  - Use `--evidence-output <file>` to override JSON evidence artifact path.
   - Shortcut strict mode: `pnpm run ops:rc:gates:local-pipeline:strict`
   - Offline fallback: `pnpm run ops:rc:gates:local-pipeline -- --allow-offline`
 - Run local cutover dry-run with structured artifact output:
@@ -112,6 +113,7 @@
   - `docs/operations/v1-slo-window-report-30d-*.md`
   - `docs/operations/v1-rc-external-gates-status.md`
   - `docs/operations/v1-rc-signoff-record.md`
+  - `docs/operations/_artifacts-rc-evidence-check-latest.json`
   - `docs/operations/_artifacts-cutover-dry-run-*.json`
   - `docs/operations/v1-local-cutover-dry-run-*.md`
 

@@ -508,6 +508,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-25: Extended external evidence diagnostics to validate Gate2 status (`PASS` required) so strict mode now enforces all four external gates.
 - 2026-03-25: Added strict pipeline alias (`ops:rc:gates:local-pipeline:strict`) for one-command hard evidence enforcement in local gate rehearsal runs.
 - 2026-03-25: Extended external evidence diagnostics with machine-readable `--json` mode and optional `--output` file to support AI/automation workflows.
+- 2026-03-25: Wired local external-gates pipeline to persist JSON diagnostics artifact (`_artifacts-rc-evidence-check-latest.json`) and excluded rotating `latest` file from git tracking to keep worktree clean.
 
 
 

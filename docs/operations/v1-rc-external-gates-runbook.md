@@ -99,12 +99,14 @@ Evidence to record:
     - by default this pipeline also generates SLO rolling reports for `7d` and `30d`.
     - by default this pipeline also syncs `v1-release-candidate-checklist.md` checkbox states from status/sign-off artifacts.
     - by default this pipeline also prints missing evidence diagnostics (`ops:rc:gates:evidence:check`).
+    - by default diagnostics are saved to `docs/operations/_artifacts-rc-evidence-check-latest.json`.
     - customize window outputs:
       - `pnpm run ops:rc:gates:local-pipeline -- --window-days 7,30`
       - `pnpm run ops:rc:gates:local-pipeline -- --skip-window-report`
       - `pnpm run ops:rc:gates:local-pipeline -- --skip-checklist-sync`
       - `pnpm run ops:rc:gates:local-pipeline -- --skip-evidence-check`
       - `pnpm run ops:rc:gates:local-pipeline -- --strict-evidence-check`
+      - `pnpm run ops:rc:gates:local-pipeline -- --evidence-output docs/operations/_artifacts-rc-evidence-check-custom.json`
     - strict shortcut:
       - `pnpm run ops:rc:gates:local-pipeline:strict`
   - Offline fallback when API is unavailable (template status only):
