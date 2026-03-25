@@ -98,7 +98,9 @@
   - `pnpm run ops:rc:gates:evidence:check`
 - Run local end-to-end helper pipeline:
   - `pnpm run ops:rc:gates:local-pipeline -- --base-url http://localhost:4001 --duration-minutes 5 --interval-seconds 15`
-  - Includes status rebuild + checklist sync by default (use `--skip-checklist-sync` to disable).
+  - Includes status rebuild + checklist sync + evidence diagnostics by default.
+  - Use `--skip-checklist-sync` / `--skip-evidence-check` to disable selected steps.
+  - Use `--strict-evidence-check` to fail pipeline when evidence is incomplete.
   - Offline fallback: `pnpm run ops:rc:gates:local-pipeline -- --allow-offline`
 - Run local cutover dry-run with structured artifact output:
   - `pnpm run ops:cutover:dry-run`

@@ -14,6 +14,8 @@ const parseArgs = () => {
     skipSloCollect: false,
     skipWindowReport: false,
     skipChecklistSync: false,
+    skipEvidenceCheck: false,
+    strictEvidenceCheck: false,
     windowDays: [7, 30],
   };
 
@@ -32,6 +34,8 @@ const parseArgs = () => {
     if (arg === '--skip-slo-collect') options.skipSloCollect = true;
     if (arg === '--skip-window-report') options.skipWindowReport = true;
     if (arg === '--skip-checklist-sync') options.skipChecklistSync = true;
+    if (arg === '--skip-evidence-check') options.skipEvidenceCheck = true;
+    if (arg === '--strict-evidence-check') options.strictEvidenceCheck = true;
     if (arg === '--window-days') {
       const raw = args[index + 1] ?? '';
       options.windowDays = raw
@@ -70,7 +74,7 @@ const main = () => {
   const options = parseArgs();
   if (options.help) {
     console.log(
-      'Usage: node scripts/runLocalExternalGatesPipeline.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--skip-db-check] [--skip-slo-collect] [--skip-window-report] [--skip-checklist-sync] [--window-days <csv>] [--allow-offline]'
+      'Usage: node scripts/runLocalExternalGatesPipeline.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--skip-db-check] [--skip-slo-collect] [--skip-window-report] [--skip-checklist-sync] [--skip-evidence-check] [--strict-evidence-check] [--window-days <csv>] [--allow-offline]'
     );
     process.exit(0);
   }
@@ -100,6 +104,13 @@ const main = () => {
           ]);
           if (!options.skipChecklistSync) {
             run('sync RC checklist from gate status', 'pnpm', ['run', 'ops:rc:checklist:sync']);
+          }
+          if (!options.skipEvidenceCheck) {
+            const evidenceArgs = ['run', 'ops:rc:gates:evidence:check'];
+            if (options.strictEvidenceCheck) {
+              evidenceArgs.push('--', '--strict');
+            }
+            run('check missing external evidence', 'pnpm', evidenceArgs);
           }
           console.log('[ops:rc:gates:local] done (offline mode)');
           return;
@@ -137,6 +148,13 @@ const main = () => {
       run('build RC external gates status', 'pnpm', ['run', 'ops:rc:gates:status']);
       if (!options.skipChecklistSync) {
         run('sync RC checklist from gate status', 'pnpm', ['run', 'ops:rc:checklist:sync']);
+      }
+      if (!options.skipEvidenceCheck) {
+        const evidenceArgs = ['run', 'ops:rc:gates:evidence:check'];
+        if (options.strictEvidenceCheck) {
+          evidenceArgs.push('--', '--strict');
+        }
+        run('check missing external evidence', 'pnpm', evidenceArgs);
       }
       console.log('[ops:rc:gates:local] done');
     })

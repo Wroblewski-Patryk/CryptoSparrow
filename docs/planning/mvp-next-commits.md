@@ -146,6 +146,7 @@ Operational queue for one-task execution runs.
 - [x] `ops(checklist-sync): add `ops:rc:checklist:sync` automation to align RC checklist gate/sign-off checkboxes with current status + signoff artifacts`
 - [x] `ops(pipeline-sync): include checklist synchronization in local external-gates pipeline with optional `--skip-checklist-sync` switch`
 - [x] `ops(evidence-check): add `ops:rc:gates:evidence:check` command to list missing Gate1/Gate3/Gate4 evidence and optional strict failure mode`
+- [x] `ops(pipeline-evidence): include evidence diagnostics in local external-gates pipeline with optional skip/strict switches`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
