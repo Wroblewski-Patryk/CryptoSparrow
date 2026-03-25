@@ -25,6 +25,8 @@ describe('Market stream SSE route contract', () => {
     await prisma.botStrategy.deleteMany();
     await prisma.botSubagentConfig.deleteMany();
     await prisma.botAssistantConfig.deleteMany();
+    await prisma.marketGroupStrategyLink.deleteMany();
+    await prisma.botMarketGroup.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
@@ -55,4 +57,5 @@ describe('Market stream SSE route contract', () => {
     });
   });
 });
+
 

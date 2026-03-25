@@ -26,6 +26,8 @@ describe("Logs API contract", () => {
     await prisma.botStrategy.deleteMany();
     await prisma.botSubagentConfig.deleteMany();
     await prisma.botAssistantConfig.deleteMany();
+    await prisma.marketGroupStrategyLink.deleteMany();
+    await prisma.botMarketGroup.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
@@ -111,4 +113,5 @@ describe("Logs API contract", () => {
     expect(severityRes.body[0].level).toBe("WARN");
   });
 });
+
 

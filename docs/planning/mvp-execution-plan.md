@@ -490,6 +490,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-24: Added RC sign-off artifact builder (`ops:rc:signoff:build`) to generate `v1-rc-signoff-record.md` from gate snapshot plus provided approvers/owner metadata.
 - 2026-03-24: Added one-command cutover dry-run orchestrator (`ops:cutover:dry-run`) that runs cutover-critical suites and stores structured JSON+Markdown evidence artifacts.
 - 2026-03-24: Fixed API test cleanup ordering by deleting `BotSubagentConfig`/`BotAssistantConfig` before `Bot`, removing FK cleanup failures across auth/strategies/orders/profile/backtests and related e2e suites.
+- 2026-03-25: Fixed remaining cutover e2e blockers by correcting `strategies/reorder` route precedence and aligning runtime-flow test setup/cleanup with `BotMarketGroup` + `MarketGroupStrategyLink` relations.
 
 
 

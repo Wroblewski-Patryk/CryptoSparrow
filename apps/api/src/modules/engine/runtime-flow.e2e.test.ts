@@ -27,6 +27,8 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
     await prisma.botStrategy.deleteMany();
     await prisma.botSubagentConfig.deleteMany();
     await prisma.botAssistantConfig.deleteMany();
+    await prisma.marketGroupStrategyLink.deleteMany();
+    await prisma.botMarketGroup.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
@@ -71,6 +73,35 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
     });
     expect(botRes.status).toBe(201);
     const botId = botRes.body.id as string;
+    const userId = botRes.body.userId as string;
+
+    const marketUniverse = await prisma.marketUniverse.create({
+      data: {
+        userId,
+        name: 'Runtime Flow Universe',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        whitelist: [],
+        blacklist: [],
+      },
+    });
+
+    const symbolGroup = await prisma.symbolGroup.create({
+      data: {
+        userId,
+        marketUniverseId: marketUniverse.id,
+        name: 'Runtime Flow Group',
+        symbols: ['BTCUSDT'],
+      },
+    });
+
+    const marketGroupRes = await agent.post(`/dashboard/bots/${botId}/market-groups`).send({
+      symbolGroupId: symbolGroup.id,
+      lifecycleStatus: 'ACTIVE',
+      executionOrder: 1,
+      isEnabled: true,
+    });
+    expect(marketGroupRes.status).toBe(201);
 
     await runtimeSignalLoop.processTickerEvent({
       type: 'ticker',
@@ -127,4 +158,5 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
     expect(closedPosition?.status).toBe('CLOSED');
   });
 });
+
 

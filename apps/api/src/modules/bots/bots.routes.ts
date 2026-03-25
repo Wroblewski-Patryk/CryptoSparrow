@@ -41,9 +41,9 @@ botsRouter.put('/:id/market-groups/:groupId', tradingWriteLimiter, updateBotMark
 botsRouter.delete('/:id/market-groups/:groupId', tradingWriteLimiter, deleteBotMarketGroup);
 botsRouter.get('/:id/market-groups/:groupId/strategies', tradingReadLimiter, listMarketGroupStrategies);
 botsRouter.post('/:id/market-groups/:groupId/strategies', tradingWriteLimiter, attachMarketGroupStrategy);
+botsRouter.put('/:id/market-groups/:groupId/strategies/reorder', tradingWriteLimiter, reorderMarketGroupStrategies);
 botsRouter.put('/:id/market-groups/:groupId/strategies/:linkId', tradingWriteLimiter, updateMarketGroupStrategy);
 botsRouter.delete('/:id/market-groups/:groupId/strategies/:linkId', tradingWriteLimiter, detachMarketGroupStrategy);
-botsRouter.put('/:id/market-groups/:groupId/strategies/reorder', tradingWriteLimiter, reorderMarketGroupStrategies);
 botsRouter.get('/:id/assistant-config', tradingReadLimiter, getBotAssistantConfig);
 botsRouter.put('/:id/assistant-config', tradingWriteLimiter, upsertBotAssistantConfig);
 botsRouter.put('/:id/assistant-config/subagents/:slotIndex', tradingWriteLimiter, upsertBotSubagentConfig);

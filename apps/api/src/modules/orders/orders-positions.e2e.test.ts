@@ -31,6 +31,8 @@ describe('Orders and positions read contract', () => {
     await prisma.botStrategy.deleteMany();
     await prisma.botSubagentConfig.deleteMany();
     await prisma.botAssistantConfig.deleteMany();
+    await prisma.marketGroupStrategyLink.deleteMany();
+    await prisma.botMarketGroup.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
@@ -287,4 +289,5 @@ describe('Orders and positions read contract', () => {
     expect(updated.managementMode).toBe('MANUAL_MANAGED');
   });
 });
+
 

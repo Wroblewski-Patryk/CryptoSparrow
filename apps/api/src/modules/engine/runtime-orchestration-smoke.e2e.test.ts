@@ -16,6 +16,8 @@ describe('runtime orchestration smoke (stream -> signal -> order -> position)', 
     await prisma.botStrategy.deleteMany();
     await prisma.botSubagentConfig.deleteMany();
     await prisma.botAssistantConfig.deleteMany();
+    await prisma.marketGroupStrategyLink.deleteMany();
+    await prisma.botMarketGroup.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
@@ -130,4 +132,5 @@ describe('runtime orchestration smoke (stream -> signal -> order -> position)', 
     expect(exitOrder.side).toBe('SELL');
   });
 });
+
 
