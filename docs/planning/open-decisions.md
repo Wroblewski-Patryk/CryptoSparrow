@@ -383,10 +383,11 @@ This file tracks intentionally unresolved architecture choices so implementation
   - reintroduce isometric mode as optional gamification layer with explicit UX entry point and feature flag.
 
 ## Monorepo App Naming and Mobile Track
-- Open: exact migration window for renaming app folders from legacy `apps/client` + `apps/server` to `apps/web` + `apps/api`, while adding `apps/mobile`.
-- Current assumption:
-  - migration is staged and non-breaking (aliases/scripts/CI updated first, folder rename second).
-  - mobile app starts as separate project with shared API contract and incremental parity against web dashboard.
+- Decision state: resolved on 2026-03-25.
+- Product decision:
+  - canonical app folders are `apps/web`, `apps/api`, and `apps/mobile`.
+  - `apps/mobile` remains bootstrap-only in MVP/V1 and follows incremental parity against web contracts.
+  - docs, scripts, and CI references must use `web/api/mobile` naming only (no legacy `client/server` aliases in canonical docs).
 
 ## Admin/Billing Scope for V1
 - Decision state: resolved on 2026-03-22.

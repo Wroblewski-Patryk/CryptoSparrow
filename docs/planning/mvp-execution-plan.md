@@ -494,6 +494,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-25: Executed local backup/restore automation check (`ops:db:backup-restore:check-local`) and attached fresh evidence artifacts to RC checklist references.
 - 2026-03-25: Stabilized cutover dry-run automation by fixing `pnpm` test argument forwarding in `ops:cutover:dry-run`, relaxing brittle `backtests.e2e` total-trades assertion, and re-running full API+web dry-run with PASS artifacts.
 - 2026-03-25: Extended RC external-gates status automation to parse latest DB restore artifact and surface Gate 1 as `LOCAL_PASS (target-env pending)` in `v1-rc-external-gates-status.md` template output.
+- 2026-03-25: Closed open monorepo naming decision in planning docs; canonical app structure is now explicitly locked to `apps/web`, `apps/api`, and bootstrap `apps/mobile`.
 
 
 
