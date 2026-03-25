@@ -85,6 +85,7 @@ Evidence to record:
   - Check missing external evidence fields (Gate1/Gate3/Gate4):
     - `pnpm run ops:rc:gates:evidence:check`
     - strict mode (exit code 1 when evidence is incomplete): `pnpm run ops:rc:gates:evidence:check -- --strict`
+    - command also verifies Gate2 status (`PASS` required) from `v1-rc-external-gates-status.md`.
   - Generate rolling SLO summary from collected artifacts:
     - `pnpm run ops:slo:window-report -- --window-days 7`
     - `pnpm run ops:slo:window-report -- --window-days 30`

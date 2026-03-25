@@ -96,6 +96,9 @@ const main = async () => {
   const signoff = parseSignoffFields(rawSignoff);
 
   const missing = [];
+  if (gateLabels.gate2.toUpperCase() !== 'PASS') {
+    missing.push(`Gate2 status is not PASS (current: ${gateLabels.gate2})`);
+  }
   for (const item of gate1Evidence) if (!item.filled) missing.push(`Gate1 evidence missing: ${item.label}`);
   for (const item of gate3Evidence) if (!item.filled) missing.push(`Gate3 evidence missing: ${item.label}`);
   if (!signoff.engineering) missing.push('Gate4 sign-off missing: Engineering name');
@@ -124,4 +127,3 @@ main().catch((error) => {
   console.error('[ops:rc:gates:evidence:check] failed:', error instanceof Error ? error.message : String(error));
   process.exit(1);
 });
-
