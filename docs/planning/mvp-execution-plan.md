@@ -515,6 +515,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-25: Added `ops:rc:gates:summary` command returning compact gate/evidence snapshot (human-readable and JSON forms) for quick operator/AI status checks.
 - 2026-03-25: Hardened `ops:rc:gates:summary` to work without evidence artifact file by returning graceful null fields instead of failing the command.
 - 2026-03-25: Added `ops:rc:gates:refresh:summary` shortcut chaining quick refresh with immediate gate summary output for fast operator handoff.
+- 2026-03-25: Added `ops:rc:gates:refresh:summary:strict` helper to guarantee summary output even on strict failure, while returning strict exit code for automation gates.
 
 
 

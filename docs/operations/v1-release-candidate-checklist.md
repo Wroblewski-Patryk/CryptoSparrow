@@ -109,6 +109,7 @@
   - Quick refresh (no DB/SLO collection): `pnpm run ops:rc:gates:refresh`
   - Quick refresh strict mode: `pnpm run ops:rc:gates:refresh:strict`
   - Quick refresh with summary output: `pnpm run ops:rc:gates:refresh:summary`
+  - Quick refresh strict with guaranteed summary output: `pnpm run ops:rc:gates:refresh:summary:strict`
 - Run local cutover dry-run with structured artifact output:
   - `pnpm run ops:cutover:dry-run`
 - Expected outputs:

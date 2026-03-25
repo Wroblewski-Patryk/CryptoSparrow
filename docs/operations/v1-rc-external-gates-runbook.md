@@ -119,3 +119,4 @@ Evidence to record:
     - `pnpm run ops:rc:gates:refresh`
     - strict quick refresh: `pnpm run ops:rc:gates:refresh:strict`
     - refresh + instant summary: `pnpm run ops:rc:gates:refresh:summary`
+    - strict refresh + always-print summary (returns strict exit code): `pnpm run ops:rc:gates:refresh:summary:strict`

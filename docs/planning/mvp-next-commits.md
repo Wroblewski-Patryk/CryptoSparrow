@@ -157,6 +157,7 @@ Operational queue for one-task execution runs.
 - [x] `ops(gates-summary): add `ops:rc:gates:summary` command for compact gate/evidence snapshot (text + JSON)`
 - [x] `ops(gates-summary-hardening): make gate summary resilient when evidence JSON artifact is missing (graceful nulls instead of failure)`
 - [x] `ops(refresh-summary-shortcut): add one-command `ops:rc:gates:refresh:summary` flow for quick refresh plus immediate human summary`
+- [x] `ops(refresh-summary-strict): add `ops:rc:gates:refresh:summary:strict` flow that always prints summary while preserving strict failure exit code`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
