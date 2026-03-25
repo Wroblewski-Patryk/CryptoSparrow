@@ -44,6 +44,15 @@ const findLatestSloArtifact = async () => {
   return path.join(operationsDir, candidates[0]);
 };
 
+const findLatestSloWindowReportArtifact = async () => {
+  const entries = await readdir(operationsDir);
+  const candidates = entries
+    .filter((name) => name.startsWith('v1-slo-window-report-') && name.endsWith('.json'))
+    .sort((a, b) => b.localeCompare(a));
+  if (candidates.length === 0) return null;
+  return path.join(operationsDir, candidates[0]);
+};
+
 const findLatestDbRestoreArtifact = async () => {
   const entries = await readdir(operationsDir);
   const candidates = entries
@@ -163,7 +172,7 @@ const evaluateGate4FromSignoffRecord = async (signoffPathInput) => {
 
 const statusLabel = (passed) => (passed ? 'PASS' : 'OPEN');
 
-const buildGateRows = (summary) => {
+const buildGateRowsFromObservation = (summary) => {
   const ready = asNumber(summary?.probes?.readyAvailabilityPct);
   const workersReady = asNumber(summary?.probes?.workersReadyAvailabilityPct);
   const errorRatio = asNumber(summary?.http?.errorRatioPct);
@@ -178,6 +187,7 @@ const buildGateRows = (summary) => {
     probePass,
     reliabilityPass,
     queueLagPass,
+    sourceKind: 'slo_observation',
     details: {
       ready,
       workersReady,
@@ -188,6 +198,55 @@ const buildGateRows = (summary) => {
       orderFailures: asNumber(summary?.liveOrderPath?.orderFailuresDelta),
       orderFailureRatio: asNumber(summary?.liveOrderPath?.failureRatioPct),
     },
+  };
+};
+
+const buildGateRowsFromWindowReport = (report) => {
+  const ready = asNumber(report?.aggregates?.probes?.readyAvgPct);
+  const workersReady = asNumber(report?.aggregates?.probes?.workersReadyAvgPct);
+  const errorRatio = asNumber(report?.aggregates?.api?.errorRatioAvgPct);
+  const executionP95 = asNumber(report?.aggregates?.queueLagExecution?.p95Max);
+  const executionMax = asNumber(report?.aggregates?.queueLagExecution?.maxPeak);
+  const p95Threshold = asNumber(report?.thresholds?.queueLagP95Threshold) ?? 10;
+  const maxThreshold = asNumber(report?.thresholds?.queueLagMaxThreshold) ?? 20;
+
+  const queueLagPass = executionP95 != null && executionP95 <= p95Threshold && executionMax != null && executionMax <= maxThreshold;
+  const probePass = ready != null && ready >= 99.9 && workersReady != null && workersReady >= 99.5;
+  const reliabilityPass = errorRatio != null && errorRatio <= 0.5;
+
+  return {
+    probePass,
+    reliabilityPass,
+    queueLagPass,
+    sourceKind: 'slo_window_report',
+    details: {
+      ready,
+      workersReady,
+      errorRatio,
+      executionP95,
+      executionMax,
+      orderAttempts: null,
+      orderFailures: null,
+      orderFailureRatio: asNumber(report?.aggregates?.liveOrderPath?.failureRatioAvgPct),
+      queueLagP95Threshold: p95Threshold,
+      queueLagMaxThreshold: maxThreshold,
+    },
+  };
+};
+
+const loadGate2Evaluation = async (inputPath) => {
+  const raw = await readFile(inputPath, 'utf8');
+  const artifact = JSON.parse(raw);
+  if (artifact?.summary) {
+    return {
+      artifact,
+      evaluation: buildGateRowsFromObservation(artifact.summary ?? {}),
+    };
+  }
+
+  return {
+    artifact,
+    evaluation: buildGateRowsFromWindowReport(artifact),
   };
 };
 
@@ -239,11 +298,13 @@ Observation window:
 - Gate 4 approved status found: ${gate4Signoff.approved ? 'yes' : 'no'}
 
 ## Derived Metrics (from SLO artifact)
+- source type: ${evaluation.sourceKind}
 - /ready availability: ${pct(evaluation.details.ready)}
 - /workers/ready availability: ${pct(evaluation.details.workersReady)}
 - API 5xx ratio: ${pct(evaluation.details.errorRatio)}
 - execution queue lag p95: ${evaluation.details.executionP95 ?? 'n/a'}
 - execution queue lag max: ${evaluation.details.executionMax ?? 'n/a'}
+- execution queue lag thresholds (p95/max): ${evaluation.details.queueLagP95Threshold ?? 'n/a'}/${evaluation.details.queueLagMaxThreshold ?? 'n/a'}
 - exchange order attempts delta: ${evaluation.details.orderAttempts ?? 'n/a'}
 - exchange order failures delta: ${evaluation.details.orderFailures ?? 'n/a'}
 - exchange order failure ratio: ${pct(evaluation.details.orderFailureRatio)}
@@ -335,15 +396,13 @@ const main = async () => {
 
   const inputPath = options.input
     ? path.resolve(process.cwd(), options.input)
-    : await findLatestSloArtifact();
+    : (await findLatestSloWindowReportArtifact()) ?? (await findLatestSloArtifact());
 
   if (!inputPath) {
     throw new Error('No SLO artifact found. Run `pnpm run ops:slo:collect` first.');
   }
 
-  const raw = await readFile(inputPath, 'utf8');
-  const artifact = JSON.parse(raw);
-  const evaluation = buildGateRows(artifact.summary ?? {});
+  const { artifact, evaluation } = await loadGate2Evaluation(inputPath);
   const report = renderReport({
     artifactPath: inputPath,
     artifact,

@@ -79,6 +79,7 @@ Evidence to record:
 - Optional helper summary:
   - Generate gate snapshot from latest SLO artifact:
     - `pnpm run ops:rc:gates:status`
+    - gate snapshot prefers latest `v1-slo-window-report-*.json` (rolling review) and falls back to latest `_artifacts-slo-window-*.json`.
   - Generate rolling SLO summary from collected artifacts:
     - `pnpm run ops:slo:window-report -- --window-days 7`
     - `pnpm run ops:slo:window-report -- --window-days 30`
