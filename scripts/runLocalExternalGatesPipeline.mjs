@@ -13,6 +13,7 @@ const parseArgs = () => {
     allowOffline: false,
     skipSloCollect: false,
     skipWindowReport: false,
+    skipChecklistSync: false,
     windowDays: [7, 30],
   };
 
@@ -30,6 +31,7 @@ const parseArgs = () => {
     if (arg === '--allow-offline') options.allowOffline = true;
     if (arg === '--skip-slo-collect') options.skipSloCollect = true;
     if (arg === '--skip-window-report') options.skipWindowReport = true;
+    if (arg === '--skip-checklist-sync') options.skipChecklistSync = true;
     if (arg === '--window-days') {
       const raw = args[index + 1] ?? '';
       options.windowDays = raw
@@ -68,7 +70,7 @@ const main = () => {
   const options = parseArgs();
   if (options.help) {
     console.log(
-      'Usage: node scripts/runLocalExternalGatesPipeline.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--skip-db-check] [--skip-slo-collect] [--skip-window-report] [--window-days <csv>] [--allow-offline]'
+      'Usage: node scripts/runLocalExternalGatesPipeline.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--skip-db-check] [--skip-slo-collect] [--skip-window-report] [--skip-checklist-sync] [--window-days <csv>] [--allow-offline]'
     );
     process.exit(0);
   }
@@ -96,6 +98,9 @@ const main = () => {
             '--',
             '--template-only',
           ]);
+          if (!options.skipChecklistSync) {
+            run('sync RC checklist from gate status', 'pnpm', ['run', 'ops:rc:checklist:sync']);
+          }
           console.log('[ops:rc:gates:local] done (offline mode)');
           return;
         }
@@ -130,6 +135,9 @@ const main = () => {
       }
 
       run('build RC external gates status', 'pnpm', ['run', 'ops:rc:gates:status']);
+      if (!options.skipChecklistSync) {
+        run('sync RC checklist from gate status', 'pnpm', ['run', 'ops:rc:checklist:sync']);
+      }
       console.log('[ops:rc:gates:local] done');
     })
     .catch((error) => {

@@ -90,8 +90,10 @@ Evidence to record:
   - Run local full helper pipeline (DB dry-run + SLO collect + status snapshot):
     - `pnpm run ops:rc:gates:local-pipeline -- --base-url http://localhost:4001 --duration-minutes 5 --interval-seconds 15`
     - by default this pipeline also generates SLO rolling reports for `7d` and `30d`.
+    - by default this pipeline also syncs `v1-release-candidate-checklist.md` checkbox states from status/sign-off artifacts.
     - customize window outputs:
       - `pnpm run ops:rc:gates:local-pipeline -- --window-days 7,30`
       - `pnpm run ops:rc:gates:local-pipeline -- --skip-window-report`
+      - `pnpm run ops:rc:gates:local-pipeline -- --skip-checklist-sync`
   - Offline fallback when API is unavailable (template status only):
     - `pnpm run ops:rc:gates:local-pipeline -- --allow-offline`

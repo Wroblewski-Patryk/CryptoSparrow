@@ -144,6 +144,7 @@ Operational queue for one-task execution runs.
 - [x] `ops(gate1-automation): infer Gate 1 PASS from runbook backup/restore evidence completeness while preserving local dry-run signal as LOCAL_PASS fallback`
 - [x] `ops(gate2-source): make RC gate-status builder prefer rolling SLO window-report artifacts and fallback to raw observation artifacts`
 - [x] `ops(checklist-sync): add `ops:rc:checklist:sync` automation to align RC checklist gate/sign-off checkboxes with current status + signoff artifacts`
+- [x] `ops(pipeline-sync): include checklist synchronization in local external-gates pipeline with optional `--skip-checklist-sync` switch`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
