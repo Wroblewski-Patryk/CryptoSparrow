@@ -511,6 +511,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-25: Wired local external-gates pipeline to persist JSON diagnostics artifact (`_artifacts-rc-evidence-check-latest.json`) and excluded rotating `latest` file from git tracking to keep worktree clean.
 - 2026-03-25: Added `ops:rc:gates:refresh` quick alias and hardened local pipeline status step with offline fallback to template snapshot when SLO artifacts are missing.
 - 2026-03-25: Added SLO-artifact precheck in offline refresh/status flow so pipeline uses template snapshot directly when inputs are absent (cleaner operator logs, no expected status command failure noise).
+- 2026-03-25: Added `ops:rc:gates:refresh:strict` alias for fast no-DB/no-SLO refresh runs that still enforce strict evidence completeness checks.
 
 
 

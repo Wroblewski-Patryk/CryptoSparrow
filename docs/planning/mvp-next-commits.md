@@ -153,6 +153,7 @@ Operational queue for one-task execution runs.
 - [x] `ops(pipeline-evidence-artifact): persist default JSON evidence artifact in local pipeline and ignore rotating `latest` output in git tracking`
 - [x] `ops(pipeline-refresh-shortcut): add quick `ops:rc:gates:refresh` alias and fallback to template status when SLO artifacts are absent but offline mode is allowed`
 - [x] `ops(pipeline-noise): pre-check SLO artifacts before status build in offline refresh flow to avoid expected error noise and keep logs clean`
+- [x] `ops(refresh-strict-shortcut): add `ops:rc:gates:refresh:strict` alias for no-DB/no-SLO quick refresh with strict evidence enforcement`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

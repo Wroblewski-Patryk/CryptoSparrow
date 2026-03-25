@@ -113,3 +113,4 @@ Evidence to record:
     - `pnpm run ops:rc:gates:local-pipeline -- --allow-offline`
   - Quick refresh (status + checklist + evidence check, no DB/SLO collection):
     - `pnpm run ops:rc:gates:refresh`
+    - strict quick refresh: `pnpm run ops:rc:gates:refresh:strict`
