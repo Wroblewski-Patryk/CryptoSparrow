@@ -30,6 +30,7 @@
 - QA docs reviewed: `docs/ux/localization-qa.md`, `docs/ux/accessibility-dashboard-audit.md`.
 - Release docs drafted: `docs/operations/v1-changelog.md`, `docs/operations/v1-migration-notes.md`.
 - Load baseline evidence: `docs/operations/v1-load-baseline-2026-03-21.md` (error rate `0`, p95 `37ms`, p99 `72ms`, threshold gate `PASS`).
+- 2026-03-25 local backup/restore dry-run passed via `pnpm run ops:db:backup-restore:check-local` (artifacts: `docs/operations/_artifacts-db-restore-check-2026-03-25T18-10-26-980Z.txt`, `docs/operations/v1-db-restore-check-2026-03-25T18-10-26-980Z.md`).
 
 ## Runtime and Operations Gates
 - [x] API endpoints healthy:

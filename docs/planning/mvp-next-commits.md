@@ -133,6 +133,7 @@ Operational queue for one-task execution runs.
 - [x] `ops(cutover-automation): add one-command cutover dry-run orchestrator (`ops:cutover:dry-run`) with structured JSON+Markdown evidence output`
 - [x] `fix(test-cleanup): include assistant config tables in API test cleanup order before bot deletion to prevent FK failures in e2e suites`
 - [x] `fix(runtime-e2e): resolve cutover blockers by fixing strategy-reorder route precedence and runtime-flow e2e setup/cleanup for bot market-group model`
+- [x] `ops(backup-evidence-local): execute backup/restore automation (`ops:db:backup-restore:check-local`) and attach fresh artifact references in RC docs`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

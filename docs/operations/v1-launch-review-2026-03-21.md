@@ -37,7 +37,7 @@ Scope note: this review is based on pre-launch and local production-like evidenc
 - Explicit runbooks and evidence artifacts reduce launch ambiguity and should be mandatory before final sign-off.
 
 ## V1.1 Backlog Cut (Prioritized)
-- [ ] P0: automate backup snapshot + restore verification pipeline with auditable logs.
+- [x] P0: automate backup snapshot + restore verification pipeline with auditable logs (`ops:db:backup-restore:check-local` + timestamped txt/md artifacts).
 - [x] P0: add schedule-ready SLO reporting job (`ops:slo:window-report`) for 7d/30d snapshots from collected metrics/alerts artifacts.
 - [x] P1: add queue-lag trend export with threshold breach timeline in generated SLO window report output.
 - [x] P1: build sign-off workflow artifact automation (`ops:rc:signoff:build`) for Engineering/Product/Ops approvals and RC owner assignment record.
