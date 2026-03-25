@@ -12,6 +12,8 @@ const parseArgs = () => {
     skipDbCheck: false,
     allowOffline: false,
     skipSloCollect: false,
+    skipWindowReport: false,
+    windowDays: [7, 30],
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -27,6 +29,14 @@ const parseArgs = () => {
     if (arg === '--skip-db-check') options.skipDbCheck = true;
     if (arg === '--allow-offline') options.allowOffline = true;
     if (arg === '--skip-slo-collect') options.skipSloCollect = true;
+    if (arg === '--skip-window-report') options.skipWindowReport = true;
+    if (arg === '--window-days') {
+      const raw = args[index + 1] ?? '';
+      options.windowDays = raw
+        .split(',')
+        .map((value) => Number.parseInt(value.trim(), 10))
+        .filter((value) => Number.isFinite(value) && value > 0);
+    }
   }
 
   return options;
@@ -58,7 +68,7 @@ const main = () => {
   const options = parseArgs();
   if (options.help) {
     console.log(
-      'Usage: node scripts/runLocalExternalGatesPipeline.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--skip-db-check] [--skip-slo-collect] [--allow-offline]'
+      'Usage: node scripts/runLocalExternalGatesPipeline.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--skip-db-check] [--skip-slo-collect] [--skip-window-report] [--window-days <csv>] [--allow-offline]'
     );
     process.exit(0);
   }
@@ -105,6 +115,18 @@ const main = () => {
           sloArgs.push('--auth-token', options.authToken);
         }
         run('SLO observation collector', 'pnpm', sloArgs);
+
+        if (!options.skipWindowReport) {
+          for (const days of options.windowDays) {
+            run(`SLO rolling window report (${days}d)`, 'pnpm', [
+              'run',
+              'ops:slo:window-report',
+              '--',
+              '--window-days',
+              String(days),
+            ]);
+          }
+        }
       }
 
       run('build RC external gates status', 'pnpm', ['run', 'ops:rc:gates:status']);

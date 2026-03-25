@@ -498,6 +498,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-25: Hardened RC sign-off automation by parsing extended gate labels (including `LOCAL_PASS`) and requiring exactly four parsed gate states before `APPROVED`; regenerated sign-off snapshot.
 - 2026-03-25: Added Gate 3 automation in RC status builder by parsing incident-readiness evidence completeness from external-gates runbook and exposing structured completion state in status output.
 - 2026-03-25: Added Gate 4 automation in RC status builder by parsing `v1-rc-signoff-record.md` for `RC status: APPROVED` and exposing sign-off completion in external-gates status snapshot.
+- 2026-03-25: Extended local external-gates pipeline (`ops:rc:gates:local-pipeline`) to generate SLO rolling window evidence (`7d/30d` by default) after observation collection, with configurable `--window-days` and `--skip-window-report` flags.
 
 
 
