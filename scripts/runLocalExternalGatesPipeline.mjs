@@ -82,7 +82,7 @@ const buildStatusWithOfflineFallback = async (allowOffline) => {
   if (allowOffline) {
     const hasInputs = await hasSloInputs();
     if (!hasInputs) {
-      console.warn(
+      console.log(
         '[ops:rc:gates:local] no SLO artifacts found; using template-only status snapshot (offline mode).'
       );
       run('build RC external gates status (template-only)', 'pnpm', [
@@ -101,7 +101,7 @@ const buildStatusWithOfflineFallback = async (allowOffline) => {
     if (!allowOffline) {
       throw error;
     }
-    console.warn(
+    console.log(
       '[ops:rc:gates:local] unable to build status from SLO artifacts; falling back to template-only snapshot.'
     );
     run('build RC external gates status (template-only)', 'pnpm', [
@@ -146,7 +146,7 @@ const main = () => {
               `API health check failed for ${options.baseUrl}. Start API or rerun with --allow-offline to generate template-only status.`
             );
           }
-          console.warn(
+          console.log(
             `[ops:rc:gates:local] API unavailable at ${options.baseUrl}; using template-only RC status output.`
           );
           run('build RC external gates status (template-only)', 'pnpm', [

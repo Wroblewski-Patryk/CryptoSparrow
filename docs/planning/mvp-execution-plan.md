@@ -516,6 +516,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-25: Hardened `ops:rc:gates:summary` to work without evidence artifact file by returning graceful null fields instead of failing the command.
 - 2026-03-25: Added `ops:rc:gates:refresh:summary` shortcut chaining quick refresh with immediate gate summary output for fast operator handoff.
 - 2026-03-25: Added `ops:rc:gates:refresh:summary:strict` helper to guarantee summary output even on strict failure, while returning strict exit code for automation gates.
+- 2026-03-26: Normalized local refresh fallback logs to `stdout` to keep operator output order stable and avoid confusing delayed warning lines during offline runs.
 
 
 
