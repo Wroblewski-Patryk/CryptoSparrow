@@ -252,7 +252,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `PAR-07 qa(manual): publish Binance side-by-side verification protocol for 3 symbols + same interval/indicators`
 - [x] `PAR-08 test(e2e): add strategy -> market-group(3 symbols) -> backtest -> paper trace consistency contract`
 - [x] `PAR-09 perf(backtest): profile/reduce memory for multi-symbol timeline rendering without hiding charts`
-- [ ] `PAR-10 docs(runbook): operator protocol for interpreting mismatch reasons and safe corrective actions`
+- [x] `PAR-10 docs(runbook): operator protocol for interpreting mismatch reasons and safe corrective actions`
 ## Progress Log
 - 2026-03-28: Completed `PAR-01` by publishing canonical strategy-evaluation parity contract and linking it in open decisions.
 - 2026-03-28: Completed `PAR-02` by disabling strategy-mode fallback to percent-threshold signals and forcing shared evaluator semantics in backtest replay.
@@ -263,6 +263,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-28: Completed `PAR-07` by publishing Binance side-by-side parity checklist for 3 symbols in `docs/operations/binance-side-by-side-parity-checklist.md`.
 - 2026-03-28: Completed `PAR-08` by adding e2e contract for strategy + market-group(3 symbols) + backtest report parity checks and paper pre-trade consistency baseline.
 - 2026-03-28: Completed `PAR-09` by reducing markets-tab timeline memory pressure (smaller chunk size, no auto-fetch of full history per symbol, on-demand continuation only).
+- 2026-03-28: Completed `PAR-10` by publishing parity mismatch operator runbook with reason interpretation, safe corrective actions, and escalation protocol.
 - 2026-03-28: Added Phase 15 parity-closure track to lock final path toward deterministic backtest/paper/live behavior and explicit Binance side-by-side verification.
 - 2026-03-22: Domain audit completed for multi-bot runtime (`MBA-01`), including current Bot/SymbolGroup/BotStrategy contract mapping and non-breaking migration path in `docs/planning/mba-01-domain-audit-2026-03-22.md`.
 - 2026-03-23: Locked canonical runtime hierarchy and assistant topology (`MBA-02`) plus deterministic multi-strategy merge policy contract (`MBA-03`) in `docs/planning/open-decisions.md` and `docs/architecture/runtime-signal-merge-contract.md`.
