@@ -192,6 +192,7 @@ describe('simulateTradesForSymbolReplay', () => {
           indicatorsShort: [],
         },
         close: {
+          mode: 'advanced',
           tp: 10,
           sl: 10,
           ttp: [{ arm: 1.5, percent: 0.5 }],
@@ -255,6 +256,7 @@ describe('simulateTradesForSymbolReplay', () => {
           dcaTimes: 0,
         },
         close: {
+          mode: 'advanced',
           tp: 4,
           tsl: [{ percent: 0.5 }],
         },
@@ -340,6 +342,53 @@ describe('simulateTradesForSymbolReplay', () => {
     expect(result.eventCounts.DCA).toBe(2);
     expect(result.trades.length).toBeGreaterThan(0);
     expect(result.trades[0].quantity).toBeCloseTo(4, 5);
+  });
+
+  it('uses advanced DCA levels even when dcaTimes is set to 0', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 101), // open LONG
+      {
+        ...candle(2, 100.4),
+        low: 99.5, // DCA #1
+      },
+      {
+        ...candle(3, 99.2),
+        low: 98.2, // DCA #2
+      },
+      candle(4, 120), // close
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 5,
+      marginMode: 'CROSSED',
+      strategyConfig: {
+        openConditions: {
+          direction: 'long',
+          indicatorsLong: [
+            { name: 'MOMENTUM', condition: '>', value: -999, params: { period: 1 } },
+          ],
+          indicatorsShort: [],
+        },
+        close: {
+          tp: 99,
+          sl: 99,
+        },
+        additional: {
+          dcaEnabled: true,
+          dcaMode: 'advanced',
+          dcaTimes: 0,
+          dcaLevels: [
+            { percent: -1, multiplier: 1 },
+          ],
+        },
+      },
+    });
+
+    expect(result.eventCounts.DCA).toBeGreaterThanOrEqual(1);
   });
 
   it('uses strategy rules to suppress fallback threshold signals when indicators do not match', () => {
@@ -514,6 +563,76 @@ describe('simulateTradesForSymbolReplay', () => {
     expect(lowRisk.trades.length).toBeGreaterThan(0);
     expect(highRisk.trades.length).toBeGreaterThan(0);
     expect(highRisk.trades[0].quantity).toBeGreaterThan(lowRisk.trades[0].quantity);
+  });
+
+  it('respects close.mode=basic and ignores trailing thresholds from config', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 101.5), // open LONG
+      candle(2, 103), // move up
+      candle(3, 102.2), // pullback - could trigger trailing if enabled
+      candle(4, 102.1),
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 3,
+      marginMode: 'CROSSED',
+      strategyConfig: {
+        openConditions: {
+          direction: 'long',
+          indicatorsLong: [{ name: 'MOMENTUM', condition: '>', value: -999, params: { period: 1 } }],
+          indicatorsShort: [],
+        },
+        close: {
+          mode: 'basic',
+          tp: 99,
+          sl: 99,
+          ttp: [{ arm: 1, percent: 0.2 }],
+          tsl: [{ arm: 1, percent: 0.2 }],
+        },
+      },
+    });
+
+    expect(result.eventCounts.TTP).toBe(0);
+    expect(result.eventCounts.TRAILING).toBe(0);
+  });
+
+  it('respects close.mode=advanced and ignores TP/SL from config', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 101.5), // open LONG
+      candle(2, 103), // would quickly trigger TP in basic
+      candle(3, 102.7),
+      candle(4, 102.6),
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 5,
+      marginMode: 'CROSSED',
+      strategyConfig: {
+        openConditions: {
+          direction: 'long',
+          indicatorsLong: [{ name: 'MOMENTUM', condition: '>', value: -999, params: { period: 1 } }],
+          indicatorsShort: [],
+        },
+        close: {
+          mode: 'advanced',
+          tp: 0.2,
+          sl: 0.2,
+          ttp: [],
+          tsl: [],
+        },
+      },
+    });
+
+    expect(result.eventCounts.TP).toBe(0);
+    expect(result.eventCounts.SL).toBe(0);
   });
 
   it('emits parity decision-trace mismatch diagnostics with timestamp/side/trigger/reason', () => {

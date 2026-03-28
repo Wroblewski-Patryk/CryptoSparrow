@@ -138,4 +138,164 @@ describe('position management', () => {
     expect(result.nextState.currentAdds).toBe(1);
     expect(result.nextState.lastDcaPrice).toBe(94);
   });
+
+  it('applies DCA before TP in the same cycle (legacy order contract)', () => {
+    const result = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 110,
+        takeProfitPrice: 108,
+        dca: {
+          enabled: true,
+          maxAdds: 1,
+          levelPercents: [0.05],
+          addSizeFractions: [0.5],
+          stepPercent: 0.05,
+          addSizeFraction: 0.5,
+        },
+      },
+      {
+        averageEntryPrice: 100,
+        quantity: 2,
+        currentAdds: 0,
+      }
+    );
+
+    expect(result.dcaExecuted).toBe(true);
+    expect(result.dcaAddedQuantity).toBe(1);
+    expect(result.nextState.currentAdds).toBe(1);
+    expect(result.shouldClose).toBe(true);
+    expect(result.closeReason).toBe('take_profit');
+  });
+
+  it('triggers trailing take-profit even before DCA sequence is completed', () => {
+    const armed = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 120,
+        leverage: 10,
+        trailingTakeProfit: {
+          enabled: true,
+          armPercent: 0.05,
+          trailPercent: 0.1,
+        },
+        dca: {
+          enabled: true,
+          maxAdds: 2,
+          levelPercents: [-0.2, -0.2],
+          addSizeFractions: [1, 1],
+          stepPercent: 0.2,
+          addSizeFraction: 1,
+        },
+      },
+      {
+        averageEntryPrice: 100,
+        quantity: 1,
+        currentAdds: 0,
+      }
+    );
+
+    const closed = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 115,
+        leverage: 10,
+        trailingTakeProfit: {
+          enabled: true,
+          armPercent: 0.05,
+          trailPercent: 0.1,
+        },
+        dca: {
+          enabled: true,
+          maxAdds: 2,
+          levelPercents: [-0.2, -0.2],
+          addSizeFractions: [1, 1],
+          stepPercent: 0.2,
+          addSizeFraction: 1,
+        },
+      },
+      armed.nextState
+    );
+
+    expect(armed.shouldClose).toBe(false);
+    expect(closed.shouldClose).toBe(true);
+    expect(closed.closeReason).toBe('trailing_take_profit');
+  });
+
+  it('applies legacy trailing-loss on profit percent after DCA completion', () => {
+    const activated = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 90,
+        leverage: 10,
+        trailingLoss: {
+          enabled: true,
+          startPercent: -0.25,
+          stepPercent: 0.1,
+        },
+      },
+      {
+        averageEntryPrice: 100,
+        quantity: 1,
+        currentAdds: 1,
+      }
+    );
+
+    const movedUp = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 96,
+        leverage: 10,
+        trailingLoss: {
+          enabled: true,
+          startPercent: -0.25,
+          stepPercent: 0.1,
+        },
+      },
+      activated.nextState
+    );
+
+    const closed = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 92,
+        leverage: 10,
+        trailingLoss: {
+          enabled: true,
+          startPercent: -0.25,
+          stepPercent: 0.1,
+        },
+      },
+      movedUp.nextState
+    );
+
+    expect(activated.nextState.trailingLossLimitPercent).toBeDefined();
+    expect(closed.shouldClose).toBe(true);
+    expect(closed.closeReason).toBe('trailing_stop');
+  });
+
+  it('clears trailing-loss tracker when TTP becomes active (legacy TTP/TSL exclusivity)', () => {
+    const result = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 106,
+        trailingTakeProfitLevels: [
+          {
+            armPercent: 0.05,
+            trailPercent: 0.02,
+          },
+        ],
+      },
+      {
+        averageEntryPrice: 100,
+        quantity: 1,
+        currentAdds: 0,
+        trailingAnchorPrice: 106,
+        trailingLossLimitPercent: -0.1,
+      }
+    );
+
+    expect(result.shouldClose).toBe(false);
+    expect(result.nextState.trailingLossLimitPercent).toBeUndefined();
+  });
 });

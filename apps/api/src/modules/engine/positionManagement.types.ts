@@ -26,6 +26,12 @@ export const TrailingStopLevelSchema = z.object({
   value: z.number().positive(),
 });
 
+export const TrailingLossConfigSchema = z.object({
+  enabled: z.boolean().default(false),
+  startPercent: z.number(),
+  stepPercent: z.number().positive().max(10),
+});
+
 export const DcaConfigSchema = z.object({
   enabled: z.boolean().default(false),
   maxAdds: z.number().int().min(0).default(0),
@@ -45,6 +51,7 @@ export const PositionManagementInputSchema = z.object({
   trailingTakeProfit: TrailingTakeProfitConfigSchema.optional(),
   trailingTakeProfitLevels: z.array(TrailingTakeProfitLevelSchema).optional(),
   trailingStopLevels: z.array(TrailingStopLevelSchema).optional(),
+  trailingLoss: TrailingLossConfigSchema.optional(),
   dca: DcaConfigSchema.optional(),
 });
 
@@ -53,6 +60,7 @@ export const PositionManagementStateSchema = z.object({
   quantity: z.number().positive(),
   currentAdds: z.number().int().min(0).default(0),
   trailingAnchorPrice: z.number().positive().optional(),
+  trailingLossLimitPercent: z.number().optional(),
   lastDcaPrice: z.number().positive().optional(),
 });
 

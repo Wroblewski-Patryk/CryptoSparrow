@@ -2,6 +2,8 @@ import { PositionSide, Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { getMarketCatalog } from '../markets/markets.service';
 import { decideExecutionAction } from '../engine/sharedExecutionCore';
+import { evaluatePositionManagement } from '../engine/positionManagement.service';
+import { PositionManagementInput } from '../engine/positionManagement.types';
 import {
   evaluateStrategySignalAtIndex,
   parseStrategySignalRules,
@@ -583,9 +585,95 @@ type StrategyRiskConfig = {
   trailingTakeProfitLevels: Array<{ arm: number; percent: number }>;
   stopLossPct: number;
   trailingStopLevels: Array<{ arm: number; percent: number }>;
+  trailingLoss: { start: number; step: number } | null;
   maxDcaPerTrade: number;
   dcaLevels: number[];
   dcaMultipliers: number[];
+};
+
+const computeRiskPriceFromPercent = (
+  side: 'LONG' | 'SHORT',
+  entryPrice: number,
+  percent: number,
+  kind: 'tp' | 'sl',
+  leverage = 1
+) => {
+  if (!Number.isFinite(entryPrice) || entryPrice <= 0 || !Number.isFinite(percent) || percent <= 0) return undefined;
+  const adjusted = percent / Math.max(1, leverage);
+  if (kind === 'tp') {
+    return side === 'LONG' ? entryPrice * (1 + adjusted) : entryPrice * (1 - adjusted);
+  }
+  return side === 'LONG' ? entryPrice * (1 - adjusted) : entryPrice * (1 + adjusted);
+};
+
+const closeReasonToEventType = (reason?: 'take_profit' | 'trailing_take_profit' | 'stop_loss' | 'trailing_stop'): ReplayEventType => {
+  switch (reason) {
+    case 'take_profit':
+      return 'TP';
+    case 'trailing_take_profit':
+      return 'TTP';
+    case 'stop_loss':
+      return 'SL';
+    case 'trailing_stop':
+      return 'TRAILING';
+    default:
+      return 'EXIT';
+  }
+};
+
+const buildReplayPositionManagementInput = (args: {
+  side: 'LONG' | 'SHORT';
+  currentPrice: number;
+  entryPrice: number;
+  leverage: number;
+  riskConfig: StrategyRiskConfig;
+}): PositionManagementInput => {
+  const { side, currentPrice, entryPrice, leverage, riskConfig } = args;
+
+  return {
+    side,
+    currentPrice,
+    leverage,
+    takeProfitPrice: Number.isFinite(riskConfig.takeProfitPct)
+      ? computeRiskPriceFromPercent(side, entryPrice, riskConfig.takeProfitPct, 'tp', leverage)
+      : undefined,
+    stopLossPrice: Number.isFinite(riskConfig.stopLossPct)
+      ? computeRiskPriceFromPercent(side, entryPrice, riskConfig.stopLossPct, 'sl', leverage)
+      : undefined,
+    trailingTakeProfitLevels:
+      riskConfig.trailingTakeProfitLevels.length > 0
+        ? riskConfig.trailingTakeProfitLevels.map((level) => ({
+            armPercent: level.arm,
+            trailPercent: level.percent,
+          }))
+        : undefined,
+    trailingStopLevels:
+      riskConfig.trailingStopLevels.length > 0
+        ? riskConfig.trailingStopLevels.map((level) => ({
+            armPercent: level.arm,
+            type: 'percent' as const,
+            value: level.percent,
+          }))
+        : undefined,
+    trailingLoss: riskConfig.trailingLoss
+      ? {
+          enabled: true,
+          startPercent: riskConfig.trailingLoss.start,
+          stepPercent: riskConfig.trailingLoss.step,
+        }
+      : undefined,
+    dca:
+      riskConfig.maxDcaPerTrade > 0
+        ? {
+            enabled: true,
+            maxAdds: riskConfig.maxDcaPerTrade,
+            stepPercent: Math.max(0.0001, Math.abs(riskConfig.dcaLevels[0] ?? 0.01)),
+            addSizeFraction: Math.max(0.01, riskConfig.dcaMultipliers[0] ?? 1),
+            levelPercents: riskConfig.dcaLevels,
+            addSizeFractions: riskConfig.dcaMultipliers,
+          }
+        : undefined,
+  };
 };
 
 type InterleavedPortfolioSimulationResult = {
@@ -599,6 +687,7 @@ const parseReplayRiskConfig = (strategyConfig?: Record<string, unknown> | null):
     trailingTakeProfitLevels: [],
     stopLossPct: 0.01,
     trailingStopLevels: [{ arm: 0.006, percent: 0.0075 }],
+    trailingLoss: null,
     maxDcaPerTrade: 1,
     dcaLevels: [-0.008],
     dcaMultipliers: [1],
@@ -617,6 +706,7 @@ const parseReplayRiskConfig = (strategyConfig?: Record<string, unknown> | null):
   };
 
   const close = (strategyConfig.close as {
+    mode?: unknown;
     tp?: unknown;
     ttp?: Array<{ percent?: unknown; arm?: unknown }>;
     sl?: unknown;
@@ -624,10 +714,12 @@ const parseReplayRiskConfig = (strategyConfig?: Record<string, unknown> | null):
   } | undefined) ?? {};
   const additional = (strategyConfig.additional as {
     dcaEnabled?: unknown;
+    dcaMode?: unknown;
     dcaTimes?: unknown;
     dcaLevels?: Array<{ percent?: unknown; multiplier?: unknown }>;
   } | undefined) ?? {};
 
+  const closeMode = close.mode === 'advanced' ? 'advanced' : 'basic';
   const takeProfitPct = Math.max(0.0001, asPercent(close.tp, fallback.takeProfitPct * 100));
   const stopLossPct = Math.max(0.0001, asPercent(close.sl, fallback.stopLossPct * 100));
   const trailingTakeProfitLevels = (Array.isArray(close.ttp) ? close.ttp : [])
@@ -645,44 +737,66 @@ const parseReplayRiskConfig = (strategyConfig?: Record<string, unknown> | null):
     .filter((level) => Number.isFinite(level.percent) && level.percent > 0)
     .sort((left, right) => left.arm - right.arm);
   const trailingStopLevels = parsedTrailingStopLevels.length > 0 ? parsedTrailingStopLevels : fallback.trailingStopLevels;
+  const trailingLossRawPercent = Number((Array.isArray(close.tsl) ? close.tsl : [])[0]?.percent);
+  const trailingLossRawStep = Number((Array.isArray(close.tsl) ? close.tsl : [])[0]?.arm);
+  const trailingLoss =
+    Number.isFinite(trailingLossRawPercent) &&
+    Number.isFinite(trailingLossRawStep) &&
+    trailingLossRawPercent < 0 &&
+    trailingLossRawStep > 0
+      ? { start: trailingLossRawPercent / 100, step: Math.abs(trailingLossRawStep) / 100 }
+      : null;
 
+  const dcaMode = additional.dcaMode === 'advanced' ? 'advanced' : 'basic';
   const dcaEnabled = Boolean(additional.dcaEnabled ?? true);
   const maxDcaRaw = Number(additional.dcaTimes);
-  const maxDcaPerTrade = dcaEnabled
+  const configuredMaxDcaPerTrade = dcaEnabled
     ? Number.isFinite(maxDcaRaw)
       ? Math.max(0, Math.floor(maxDcaRaw))
       : fallback.maxDcaPerTrade
     : 0;
   const rawDcaLevels = Array.isArray(additional.dcaLevels) ? additional.dcaLevels : [];
-  const dcaLevels = maxDcaPerTrade === 0
-    ? []
-    : rawDcaLevels
-      .map((level) => asSignedPercent(level?.percent, Number.NaN))
-      .filter((value) => Number.isFinite(value) && value !== 0)
-      .slice(0, maxDcaPerTrade);
-  const dcaMultipliers = maxDcaPerTrade === 0
-    ? []
-    : rawDcaLevels
-      .map((level) => Number(level?.multiplier))
-      .filter((value) => Number.isFinite(value) && value > 0)
-      .slice(0, maxDcaPerTrade);
+  const configuredDcaLevels = rawDcaLevels
+    .map((level) => asSignedPercent(level?.percent, Number.NaN))
+    .filter((value) => Number.isFinite(value) && value !== 0);
+  const configuredDcaMultipliers = rawDcaLevels
+    .map((level) => Number(level?.multiplier))
+    .filter((value) => Number.isFinite(value) && value > 0);
   const normalizedDcaLevels =
-    maxDcaPerTrade === 0
+    !dcaEnabled
       ? []
-      : (dcaLevels.length > 0 ? dcaLevels : Array.from({ length: Math.max(1, maxDcaPerTrade) }, () => fallback.dcaLevels[0]));
+      : dcaMode === 'advanced'
+        ? (configuredDcaLevels.length > 0
+          ? configuredDcaLevels
+          : Array.from(
+              { length: Math.max(1, configuredMaxDcaPerTrade || fallback.maxDcaPerTrade) },
+              () => fallback.dcaLevels[0],
+            ))
+        : configuredMaxDcaPerTrade > 0
+          ? Array.from(
+              { length: Math.max(1, configuredMaxDcaPerTrade) },
+              () => configuredDcaLevels[0] ?? fallback.dcaLevels[0],
+            )
+          : [];
   const normalizedDcaMultipliers =
     normalizedDcaLevels.length === 0
       ? []
-      : (dcaMultipliers.length > 0
-        ? dcaMultipliers
-        : Array.from({ length: normalizedDcaLevels.length }, () => fallback.dcaMultipliers[0]));
+      : dcaMode === 'advanced'
+        ? (configuredDcaMultipliers.length > 0
+          ? configuredDcaMultipliers.slice(0, normalizedDcaLevels.length)
+          : Array.from({ length: normalizedDcaLevels.length }, () => fallback.dcaMultipliers[0]))
+        : Array.from(
+            { length: normalizedDcaLevels.length },
+            () => configuredDcaMultipliers[0] ?? fallback.dcaMultipliers[0],
+          );
 
   return {
-    takeProfitPct,
-    trailingTakeProfitLevels,
-    stopLossPct,
-    trailingStopLevels,
-    maxDcaPerTrade,
+    takeProfitPct: closeMode === 'basic' ? takeProfitPct : Number.POSITIVE_INFINITY,
+    trailingTakeProfitLevels: closeMode === 'advanced' ? trailingTakeProfitLevels : [],
+    stopLossPct: closeMode === 'basic' ? stopLossPct : Number.POSITIVE_INFINITY,
+    trailingStopLevels: closeMode === 'advanced' ? trailingStopLevels : [],
+    trailingLoss: closeMode === 'advanced' ? trailingLoss : null,
+    maxDcaPerTrade: normalizedDcaLevels.length,
     dcaLevels: normalizedDcaLevels,
     dcaMultipliers: normalizedDcaMultipliers,
   };
@@ -741,6 +855,7 @@ const simulateInterleavedPortfolio = (input: {
     lastDcaPrice: number;
     bestPrice: number;
     marginUsed: number;
+    trailingLossLimit?: number;
   }>();
 
   let cashBalance = Math.max(0, input.initialBalance);
@@ -877,99 +992,102 @@ const simulateInterleavedPortfolio = (input: {
     if (position.side === 'LONG') position.bestPrice = Math.max(position.bestPrice, current.high);
     else position.bestPrice = Math.min(position.bestPrice, current.low);
 
-    const dcaTriggerPrice = position.side === 'LONG' ? current.low : current.high;
-    while (position.dcaCount < riskConfig.maxDcaPerTrade) {
-      const dcaReference = Math.max(position.lastDcaPrice, 1e-8);
-      const rawMove =
-        position.side === 'LONG'
-          ? (dcaTriggerPrice - dcaReference) / dcaReference
-          : (dcaReference - dcaTriggerPrice) / dcaReference;
-      const leveragedMove = rawMove * effectiveLeverage;
-      const triggerLevel = riskConfig.dcaLevels[position.dcaCount] ?? riskConfig.dcaLevels[riskConfig.dcaLevels.length - 1] ?? -0.01;
-      const shouldTrigger = triggerLevel >= 0 ? leveragedMove >= triggerLevel : leveragedMove <= triggerLevel;
-      if (!shouldTrigger) break;
+    const baseState = {
+      averageEntryPrice: position.entryPrice,
+      quantity: position.quantity,
+      currentAdds: position.dcaCount,
+      trailingAnchorPrice: position.bestPrice,
+      trailingLossLimitPercent: position.trailingLossLimit,
+      lastDcaPrice: position.lastDcaPrice,
+    };
 
-      const multiplier =
-        riskConfig.dcaMultipliers[position.dcaCount] ??
-        riskConfig.dcaMultipliers[riskConfig.dcaMultipliers.length - 1] ??
-        1;
-      const addedQty = Math.max(0.000001, position.quantity * multiplier);
-      const dcaPrice = fillModel.entryPrice(dcaTriggerPrice, position.side as PositionSide);
-      const addMargin = (dcaPrice * addedQty) / Math.max(1, effectiveLeverage);
-      if (addMargin > cashBalance) break;
+    const dcaProbeInput: PositionManagementInput = {
+      ...buildReplayPositionManagementInput({
+        side: position.side,
+        currentPrice: position.side === 'LONG' ? current.low : current.high,
+        entryPrice: position.entryPrice,
+        leverage: effectiveLeverage,
+        riskConfig,
+      }),
+      takeProfitPrice: undefined,
+      stopLossPrice: undefined,
+      trailingTakeProfit: undefined,
+      trailingTakeProfitLevels: undefined,
+      trailingStop: undefined,
+      trailingStopLevels: undefined,
+      trailingLoss: undefined,
+    };
+    const dcaProbeResult = evaluatePositionManagement(dcaProbeInput, baseState);
 
-      const prevQty = position.quantity;
-      cashBalance -= addMargin;
-      position.marginUsed += addMargin;
-      position.quantity = prevQty + addedQty;
-      position.entryPrice = (position.entryPrice * prevQty + dcaPrice * addedQty) / position.quantity;
-      position.dcaCount += 1;
-      position.lastDcaPrice = dcaPrice;
-      pushEvent(
-        symbol,
-        'DCA',
-        position.side as PositionSide,
-        new Date(current.openTime),
-        dcaPrice,
-        null,
-        index,
-        tradeSequenceBySymbol.get(symbol) ?? 1,
-      );
+    if (dcaProbeResult.dcaExecuted) {
+      const addedQty = Math.max(0, dcaProbeResult.nextState.quantity - position.quantity);
+      const addMargin = (current.close * addedQty) / Math.max(1, effectiveLeverage);
+      if (addMargin > cashBalance) {
+        // Legacy parity: no DCA add when wallet cannot cover extra margin.
+        const managementWithoutDca: PositionManagementInput = {
+          ...dcaProbeInput,
+          dca: undefined,
+        };
+        const noDcaProbe = evaluatePositionManagement(managementWithoutDca, baseState);
+        position.trailingLossLimit = noDcaProbe.nextState.trailingLossLimitPercent;
+        position.bestPrice = noDcaProbe.nextState.trailingAnchorPrice ?? position.bestPrice;
+      } else {
+        cashBalance -= addMargin;
+        position.marginUsed += addMargin;
+        position.quantity = dcaProbeResult.nextState.quantity;
+        position.entryPrice = dcaProbeResult.nextState.averageEntryPrice;
+        position.dcaCount = dcaProbeResult.nextState.currentAdds;
+        position.lastDcaPrice = current.close;
+        pushEvent(
+          symbol,
+          'DCA',
+          position.side as PositionSide,
+          new Date(current.openTime),
+          current.close,
+          null,
+          index,
+          tradeSequenceBySymbol.get(symbol) ?? 1,
+        );
+      }
     }
 
-    const favorableMove =
-      position.side === 'LONG'
-        ? (current.close - position.entryPrice) / Math.max(position.entryPrice, 1e-8)
-        : (position.entryPrice - current.close) / Math.max(position.entryPrice, 1e-8);
-    const peakFavorableMove =
-      position.side === 'LONG'
-        ? (position.bestPrice - position.entryPrice) / Math.max(position.entryPrice, 1e-8)
-        : (position.entryPrice - position.bestPrice) / Math.max(position.entryPrice, 1e-8);
+    const managementInput = {
+      ...buildReplayPositionManagementInput({
+        side: position.side,
+        currentPrice: current.close,
+        entryPrice: position.entryPrice,
+        leverage: effectiveLeverage,
+        riskConfig,
+      }),
+      dca: undefined,
+    } satisfies PositionManagementInput;
+    const managementResult = evaluatePositionManagement(managementInput, {
+      averageEntryPrice: position.entryPrice,
+      quantity: position.quantity,
+      currentAdds: position.dcaCount,
+      trailingAnchorPrice: dcaProbeResult.nextState.trailingAnchorPrice ?? position.bestPrice,
+      trailingLossLimitPercent: dcaProbeResult.nextState.trailingLossLimitPercent,
+      lastDcaPrice: position.lastDcaPrice,
+    });
+
+    position.trailingLossLimit = managementResult.nextState.trailingLossLimitPercent;
+    position.bestPrice = managementResult.nextState.trailingAnchorPrice ?? position.bestPrice;
+
     const adverseMove =
       position.side === 'LONG'
         ? (position.entryPrice - current.low) / Math.max(position.entryPrice, 1e-8)
         : (current.high - position.entryPrice) / Math.max(position.entryPrice, 1e-8);
-
-    const leveragedFavorableMove = favorableMove * effectiveLeverage;
-    const leveragedPeakFavorableMove = peakFavorableMove * effectiveLeverage;
-    const leveragedAdverseMove = adverseMove * effectiveLeverage;
-    const dcaCompleted = position.dcaCount >= riskConfig.maxDcaPerTrade;
 
     const isolatedThreshold = 1 / Math.max(1, effectiveLeverage);
     const isIsolatedLiquidated =
       input.marketType === 'FUTURES' &&
       input.marginMode === 'ISOLATED' &&
       adverseMove >= isolatedThreshold;
-    const isTakeProfit = leveragedFavorableMove >= riskConfig.takeProfitPct;
-    const activeTtp = [...riskConfig.trailingTakeProfitLevels]
-      .sort((left, right) => left.arm - right.arm)
-      .filter((level) => leveragedPeakFavorableMove >= level.arm)
-      .at(-1);
-    const isTrailingTakeProfit = activeTtp
-      ? position.side === 'LONG'
-        ? current.close <= position.bestPrice * (1 - activeTtp.percent)
-        : current.close >= position.bestPrice * (1 + activeTtp.percent)
-      : false;
-    const isStopLoss = dcaCompleted && leveragedAdverseMove >= riskConfig.stopLossPct;
-    const activeTsl = dcaCompleted
-      ? [...riskConfig.trailingStopLevels]
-        .sort((left, right) => left.arm - right.arm)
-        .filter((level) => leveragedPeakFavorableMove >= level.arm)
-        .at(-1)
-      : null;
-    const isTrailingExit = activeTsl
-      ? position.side === 'LONG'
-        ? current.close <= position.bestPrice * (1 - activeTsl.percent)
-        : current.close >= position.bestPrice * (1 + activeTsl.percent)
-      : false;
     const shouldSignalExit = decision?.kind === 'close';
 
     if (
       !isIsolatedLiquidated &&
-      !isTakeProfit &&
-      !isTrailingTakeProfit &&
-      !isStopLoss &&
-      !isTrailingExit &&
+      !managementResult.shouldClose &&
       !shouldSignalExit
     ) {
       cursorBySymbol.set(symbol, index + 1);
@@ -998,15 +1116,9 @@ const simulateInterleavedPortfolio = (input: {
 
     const closeType: ReplayEventType = isIsolatedLiquidated
       ? 'LIQUIDATION'
-      : isTakeProfit
-        ? 'TP'
-        : isTrailingTakeProfit
-          ? 'TTP'
-          : isStopLoss
-            ? 'SL'
-            : isTrailingExit
-              ? 'TRAILING'
-              : 'EXIT';
+      : managementResult.shouldClose
+        ? closeReasonToEventType(managementResult.closeReason)
+        : 'EXIT';
     if (isIsolatedLiquidated) {
       bucket.liquidations += 1;
     }
@@ -1947,6 +2059,11 @@ export const getRunTimeline = async (
         })),
       fundingPoints: supplemental.fundingRates.length,
       openInterestPoints: supplemental.openInterest.length,
+    },
+    positionStats: {
+      closedOnFinalCandleCount: replay.trades.filter((trade) => trade.exitReason === 'FINAL_CANDLE').length,
+      liquidationsCount: replay.trades.filter((trade) => trade.exitReason === 'LIQUIDATION' || trade.liquidated).length,
+      tradeCount: replay.trades.length,
     },
     marketInputs: {
       fundingRates: supplemental.fundingRates

@@ -122,6 +122,12 @@ const toPercent = (value: unknown, fallback = 0) => {
   return Math.abs(num) / 100;
 };
 
+const toSignedPercent = (value: unknown, fallback = 0) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return fallback;
+  return num / 100;
+};
+
 const toPositive = (value: unknown, fallback = 0) => {
   const num = Number(value);
   if (!Number.isFinite(num)) return fallback;
@@ -156,6 +162,7 @@ const buildPositionManagementInput = (
     strategyConfig && typeof strategyConfig === 'object'
       ? ((strategyConfig.close as Record<string, unknown> | undefined) ?? undefined)
       : undefined;
+  const closeMode = closeConfig?.mode === 'advanced' ? 'advanced' : 'basic';
   const additionalConfig =
     strategyConfig && typeof strategyConfig === 'object'
       ? ((strategyConfig.additional as Record<string, unknown> | undefined) ?? undefined)
@@ -168,25 +175,28 @@ const buildPositionManagementInput = (
   const dcaLevels = Array.isArray(additionalConfig?.dcaLevels)
     ? (additionalConfig?.dcaLevels as Array<Record<string, unknown>>)
     : [];
-  const dcaLevelPercents = dcaLevels
+  const dcaMode = additionalConfig?.dcaMode === 'advanced' ? 'advanced' : 'basic';
+  const configuredDcaLevelPercents = dcaLevels
     .map((level) => Number(level.percent))
     .filter((value) => Number.isFinite(value))
     .map((value) => value / 100);
-  const dcaLevelFractions = dcaLevels
+  const configuredDcaLevelFractions = dcaLevels
     .map((level) => Number(level.multiplier))
     .filter((value) => Number.isFinite(value) && value > 0);
 
-  const trailingTakeProfitPercent = toPercent(ttpConfig[0]?.percent);
-  const trailingTakeProfitArmPercent = toPercent(ttpConfig[0]?.arm);
-  const trailingStopPercent = toPercent(tslConfig[0]?.percent);
-  const trailingTakeProfitLevels = ttpConfig
+  const trailingTakeProfitPercent = closeMode === 'advanced' ? toPercent(ttpConfig[0]?.percent) : 0;
+  const trailingTakeProfitArmPercent = closeMode === 'advanced' ? toPercent(ttpConfig[0]?.arm) : 0;
+  const trailingStopPercent = closeMode === 'advanced' ? toPercent(tslConfig[0]?.percent) : 0;
+  const trailingLossStartPercent = closeMode === 'advanced' ? toSignedPercent(tslConfig[0]?.percent, Number.NaN) : Number.NaN;
+  const trailingLossStepPercent = closeMode === 'advanced' ? toPercent(tslConfig[0]?.arm) : 0;
+  const trailingTakeProfitLevels = (closeMode === 'advanced' ? ttpConfig : [])
     .map((level) => ({
       armPercent: toPercent(level.arm),
       trailPercent: toPercent(level.percent),
     }))
     .filter((level) => level.armPercent > 0 && level.trailPercent > 0)
     .sort((left, right) => left.armPercent - right.armPercent);
-  const trailingStopLevels = tslConfig
+  const trailingStopLevels = (closeMode === 'advanced' ? tslConfig : [])
     .map((level) => ({
       armPercent: toPercent(level.arm),
       type: 'percent' as const,
@@ -195,20 +205,43 @@ const buildPositionManagementInput = (
     .filter((level) => level.value > 0)
     .sort((left, right) => left.armPercent - right.armPercent);
   const dcaEnabled = Boolean(additionalConfig?.dcaEnabled ?? fallback.dcaEnabled);
-  const dcaMaxAdds = Math.floor(toPositive(additionalConfig?.dcaTimes, fallback.dcaMaxAdds));
-  const dcaStepPercent = toPercent(dcaLevels[0]?.percent, fallback.dcaStepPercent * 100);
-  const dcaMultiplier = toPositive(
-    dcaLevels[0]?.multiplier ?? additionalConfig?.dcaMultiplier,
-    1 + fallback.dcaAddSizeFraction
-  );
-  const dcaAddSizeFraction = Math.max(0.01, Math.min(2, dcaMultiplier - 1));
+  const configuredMaxAdds = Math.floor(toPositive(additionalConfig?.dcaTimes, fallback.dcaMaxAdds));
+  const dcaMaxAdds =
+    dcaMode === 'advanced'
+      ? (configuredDcaLevelPercents.length > 0 ? configuredDcaLevelPercents.length : configuredMaxAdds)
+      : configuredMaxAdds;
+  const dcaStepPercent = Math.abs(toSignedPercent(dcaLevels[0]?.percent, -(fallback.dcaStepPercent)));
+  const dcaMultiplier = toPositive(dcaLevels[0]?.multiplier ?? additionalConfig?.dcaMultiplier, 1 + fallback.dcaAddSizeFraction);
+  const dcaAddSizeFraction = Math.max(0.01, Math.min(10, dcaMultiplier));
+  const dcaLevelPercents =
+    dcaMode === 'advanced'
+      ? configuredDcaLevelPercents
+      : dcaMaxAdds > 0
+        ? Array.from(
+            { length: dcaMaxAdds },
+            () => configuredDcaLevelPercents[0] ?? -dcaStepPercent,
+          )
+        : [];
+  const dcaLevelFractions =
+    dcaMode === 'advanced'
+      ? configuredDcaLevelFractions
+      : dcaMaxAdds > 0
+        ? Array.from(
+            { length: dcaMaxAdds },
+            () => configuredDcaLevelFractions[0] ?? dcaAddSizeFraction,
+          )
+        : [];
 
   const takeProfitPrice =
-    position.takeProfit ??
-    computePriceFromPercent(position.side, position.entryPrice, tpPercent, 'tp', position.leverage || 1);
+    closeMode === 'basic'
+      ? (position.takeProfit ??
+        computePriceFromPercent(position.side, position.entryPrice, tpPercent, 'tp', position.leverage || 1))
+      : undefined;
   const stopLossPrice =
-    position.stopLoss ??
-    computePriceFromPercent(position.side, position.entryPrice, slPercent, 'sl', position.leverage || 1);
+    closeMode === 'basic'
+      ? (position.stopLoss ??
+        computePriceFromPercent(position.side, position.entryPrice, slPercent, 'sl', position.leverage || 1))
+      : undefined;
 
   return {
     side: position.side,
@@ -234,7 +267,7 @@ const buildPositionManagementInput = (
             value: trailingStopPercent,
             armPercent: toPercent(tslConfig[0]?.arm),
           }
-        : fallback.trailingEnabled
+        : closeMode === 'advanced' && fallback.trailingEnabled
           ? {
               enabled: true,
               type: fallback.trailingType,
@@ -243,6 +276,16 @@ const buildPositionManagementInput = (
           : undefined,
     trailingStopLevels:
       trailingStopLevels.length > 0 ? trailingStopLevels : undefined,
+    trailingLoss:
+      Number.isFinite(trailingLossStartPercent) &&
+      trailingLossStartPercent < 0 &&
+      trailingLossStepPercent > 0
+        ? {
+            enabled: true,
+            startPercent: trailingLossStartPercent,
+            stepPercent: trailingLossStepPercent,
+          }
+        : undefined,
     dca:
       dcaEnabled && dcaMaxAdds > 0
         ? {

@@ -125,4 +125,162 @@ describe('RuntimePositionAutomationService', () => {
     expect(deps.getStrategyConfigById).toHaveBeenCalledWith('strat-3');
     expect(deps.updatePositionAfterDca).toHaveBeenCalledTimes(1);
   });
+
+  it('respects advanced DCA levels even when dcaTimes is lower than levels length', async () => {
+    process.env.RUNTIME_TRAILING_ENABLED = 'false';
+    process.env.RUNTIME_DCA_ENABLED = 'false';
+
+    const deps: any = {
+      listOpenPositionsBySymbol: vi.fn(async () => [
+        {
+          id: 'pos-4',
+          userId: 'user-4',
+          botId: 'bot-4',
+          strategyId: 'strat-4',
+          symbol: 'BTCUSDT',
+          side: 'LONG' as const,
+          entryPrice: 100,
+          quantity: 1,
+          leverage: 5,
+          stopLoss: null,
+          takeProfit: null,
+        },
+      ]),
+      getStrategyConfigById: vi.fn(async () => ({
+        close: { tp: 99, sl: 99, ttp: [], tsl: [] },
+        additional: {
+          dcaEnabled: true,
+          dcaMode: 'advanced',
+          dcaTimes: 1,
+          dcaLevels: [
+            { percent: -1, multiplier: 1 },
+            { percent: -2, multiplier: 1 },
+          ],
+        },
+      })),
+      updatePositionAfterDca: vi.fn(async () => undefined),
+      closeByExitSignal: vi.fn(async () => undefined),
+    };
+
+    const service = new RuntimePositionAutomationService(deps);
+    await service.handleTickerEvent({
+      type: 'ticker',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      eventTime: 3_000,
+      lastPrice: 98.5,
+      priceChangePercent24h: -0.6,
+    });
+    await service.handleTickerEvent({
+      type: 'ticker',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      eventTime: 3_500,
+      lastPrice: 97.5,
+      priceChangePercent24h: -1.2,
+    });
+
+    expect(deps.updatePositionAfterDca).toHaveBeenCalledTimes(2);
+    expect(deps.closeByExitSignal).not.toHaveBeenCalled();
+  });
+
+  it('respects close.mode=basic and ignores trailing close config', async () => {
+    process.env.RUNTIME_TRAILING_ENABLED = 'false';
+    process.env.RUNTIME_DCA_ENABLED = 'false';
+
+    const deps: any = {
+      listOpenPositionsBySymbol: vi.fn(async () => [
+        {
+          id: 'pos-5',
+          userId: 'user-5',
+          botId: 'bot-5',
+          strategyId: 'strat-5',
+          symbol: 'ETHUSDT',
+          side: 'LONG' as const,
+          entryPrice: 100,
+          quantity: 1,
+          leverage: 3,
+          stopLoss: null,
+          takeProfit: null,
+        },
+      ]),
+      getStrategyConfigById: vi.fn(async () => ({
+        close: {
+          mode: 'basic',
+          tp: 99,
+          sl: 99,
+          ttp: [{ arm: 1, percent: 0.2 }],
+          tsl: [{ arm: 1, percent: 0.2 }],
+        },
+      })),
+      updatePositionAfterDca: vi.fn(async () => undefined),
+      closeByExitSignal: vi.fn(async () => undefined),
+    };
+
+    const service = new RuntimePositionAutomationService(deps);
+    await service.handleTickerEvent({
+      type: 'ticker',
+      marketType: 'FUTURES',
+      symbol: 'ETHUSDT',
+      eventTime: 4_000,
+      lastPrice: 103,
+      priceChangePercent24h: 1.1,
+    });
+    await service.handleTickerEvent({
+      type: 'ticker',
+      marketType: 'FUTURES',
+      symbol: 'ETHUSDT',
+      eventTime: 4_500,
+      lastPrice: 102.2,
+      priceChangePercent24h: 0.8,
+    });
+
+    expect(deps.closeByExitSignal).not.toHaveBeenCalled();
+  });
+
+  it('respects close.mode=advanced and ignores TP/SL thresholds', async () => {
+    process.env.RUNTIME_TRAILING_ENABLED = 'false';
+    process.env.RUNTIME_DCA_ENABLED = 'false';
+
+    const deps: any = {
+      listOpenPositionsBySymbol: vi.fn(async () => [
+        {
+          id: 'pos-6',
+          userId: 'user-6',
+          botId: 'bot-6',
+          strategyId: 'strat-6',
+          symbol: 'SOLUSDT',
+          side: 'LONG' as const,
+          entryPrice: 100,
+          quantity: 1,
+          leverage: 5,
+          stopLoss: null,
+          takeProfit: null,
+        },
+      ]),
+      getStrategyConfigById: vi.fn(async () => ({
+        close: {
+          mode: 'advanced',
+          tp: 0.2,
+          sl: 0.2,
+          ttp: [],
+          tsl: [],
+        },
+      })),
+      updatePositionAfterDca: vi.fn(async () => undefined),
+      closeByExitSignal: vi.fn(async () => undefined),
+    };
+
+    const service = new RuntimePositionAutomationService(deps);
+    await service.handleTickerEvent({
+      type: 'ticker',
+      marketType: 'FUTURES',
+      symbol: 'SOLUSDT',
+      eventTime: 5_000,
+      lastPrice: 103,
+      priceChangePercent24h: 1.1,
+    });
+
+    expect(deps.closeByExitSignal).not.toHaveBeenCalled();
+  });
 });

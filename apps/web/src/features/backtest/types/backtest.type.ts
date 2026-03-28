@@ -129,6 +129,11 @@ export type BacktestTimeline = {
     fundingPoints: number;
     openInterestPoints: number;
   };
+  positionStats?: {
+    closedOnFinalCandleCount: number;
+    liquidationsCount: number;
+    tradeCount: number;
+  };
   marketInputs?: {
     fundingRates: Array<{
       candleIndex: number;

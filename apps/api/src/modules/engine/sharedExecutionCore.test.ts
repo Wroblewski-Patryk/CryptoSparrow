@@ -45,6 +45,16 @@ describe('sharedExecutionCore', () => {
     ).toEqual({ kind: 'ignore', reason: 'manual_managed_symbol' });
   });
 
+  it('blocks opening another position on the same symbol when same-side position is already open', () => {
+    expect(
+      decideExecutionAction('LONG', {
+        side: 'LONG',
+        quantity: 1.5,
+        managementMode: 'BOT_MANAGED',
+      })
+    ).toEqual({ kind: 'ignore', reason: 'already_open_same_side' });
+  });
+
   it('returns close decision for EXIT on bot-managed position', () => {
     expect(
       decideExecutionAction('EXIT', {

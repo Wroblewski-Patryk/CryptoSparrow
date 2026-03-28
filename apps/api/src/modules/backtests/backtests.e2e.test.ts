@@ -549,6 +549,38 @@ describe('Backtests runs contract', () => {
       }
     }
 
+    const processedSymbol = (metrics.parityDiagnostics ?? []).find((entry) => entry.status === 'PROCESSED')?.symbol;
+    if (processedSymbol) {
+      const timelineRes = await agent
+        .get(`/dashboard/backtests/runs/${runId}/timeline`)
+        .query({ symbol: processedSymbol, chunkSize: 10000, cursor: 0 });
+      expect(timelineRes.status).toBe(200);
+
+      const parity = timelineRes.body.parityDiagnostics as {
+        eventCounts: Record<string, number>;
+      };
+      const events = timelineRes.body.events as Array<{ type: string }>;
+      const countsFromEvents = events.reduce<Record<string, number>>((acc, event) => {
+        acc[event.type] = (acc[event.type] ?? 0) + 1;
+        return acc;
+      }, {});
+      expect(parity.eventCounts.ENTRY ?? 0).toBe(countsFromEvents.ENTRY ?? 0);
+      expect(parity.eventCounts.DCA ?? 0).toBe(countsFromEvents.DCA ?? 0);
+      expect((parity.eventCounts.EXIT ?? 0) + (parity.eventCounts.TP ?? 0) + (parity.eventCounts.TTP ?? 0) + (parity.eventCounts.SL ?? 0) + (parity.eventCounts.TRAILING ?? 0) + (parity.eventCounts.LIQUIDATION ?? 0)).toBe(
+        (countsFromEvents.EXIT ?? 0) + (countsFromEvents.TP ?? 0) + (countsFromEvents.TTP ?? 0) + (countsFromEvents.SL ?? 0) + (countsFromEvents.TRAILING ?? 0) + (countsFromEvents.LIQUIDATION ?? 0),
+      );
+
+      const positionStats = timelineRes.body.positionStats as {
+        closedOnFinalCandleCount: number;
+        liquidationsCount: number;
+        tradeCount: number;
+      };
+      expect(typeof positionStats.closedOnFinalCandleCount).toBe('number');
+      expect(typeof positionStats.liquidationsCount).toBe('number');
+      expect(typeof positionStats.tradeCount).toBe('number');
+      expect(positionStats.tradeCount).toBeGreaterThanOrEqual(positionStats.closedOnFinalCandleCount);
+    }
+
     const paperDecision = await analyzePreTrade({
       userId: await getUserIdByEmail(ownerEmail),
       symbol: 'BTCUSDT',
