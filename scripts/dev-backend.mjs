@@ -155,6 +155,8 @@ const main = async () => {
     }
   }
 
+  console.log('[backend/dev] Resetting database (prisma migrate reset --force)...');
+  runPrisma(['migrate', 'reset', '--force']);
   console.log('[backend/dev] Running Prisma generate...');
   runPrisma(['generate'], { allowEngineLockFallback: true });
   console.log('[backend/dev] Running Prisma migrations...');
