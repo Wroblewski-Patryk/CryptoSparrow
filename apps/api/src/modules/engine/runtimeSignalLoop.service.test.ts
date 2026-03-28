@@ -330,8 +330,8 @@ describe('RuntimeSignalLoop', () => {
                 strategyInterval: '1m',
                 strategyConfig: {
                   open: {
-                    indicatorsLong: [],
-                    indicatorsShort: [],
+                    indicatorsLong: [{ name: 'RSI', params: { period: 3 }, condition: '>', value: 150 }],
+                    indicatorsShort: [{ name: 'RSI', params: { period: 3 }, condition: '<', value: -1 }],
                   },
                 },
                 priority: 5,
@@ -342,7 +342,7 @@ describe('RuntimeSignalLoop', () => {
                 strategyInterval: '1m',
                 strategyConfig: {
                   open: {
-                    indicatorsLong: [{ name: 'EMA', condition: '!=' }],
+                    indicatorsLong: [{ name: 'EMA', params: { fast: 3, slow: 5 }, condition: '>', value: 1 }],
                     indicatorsShort: [],
                   },
                 },

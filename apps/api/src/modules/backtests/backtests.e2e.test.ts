@@ -31,9 +31,17 @@ const getUserIdByEmail = async (email: string) => {
 describe('Backtests runs contract', () => {
   beforeEach(async () => {
     await prisma.log.deleteMany();
-    await prisma.backtestReport.deleteMany();
-    await prisma.backtestTrade.deleteMany();
-    await prisma.backtestRun.deleteMany();
+    // Backtest worker updates run/report asynchronously, so cleanup is retried to avoid FK races in tests.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await prisma.backtestReport.deleteMany();
+      await prisma.backtestTrade.deleteMany();
+      try {
+        await prisma.backtestRun.deleteMany();
+        break;
+      } catch (error) {
+        if (attempt === 2) throw error;
+      }
+    }
     await prisma.trade.deleteMany();
     await prisma.order.deleteMany();
     await prisma.position.deleteMany();
