@@ -14,6 +14,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/ui/components/ViewState'
 import { useLocaleFormatting } from '@/i18n/useLocaleFormatting';
 import { getStrategy } from '../../strategies/api/strategies.api';
 import { StrategyDto } from '../../strategies/types/StrategyForm.type';
+import { buildNonOverlappingTradeSegments } from '../utils/nonOverlappingTradeSegments';
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -501,76 +502,7 @@ function TimelineCandlesChart({
   const timelineIndicatorSeries = Array.isArray(timeline.indicatorSeries) ? timeline.indicatorSeries : [];
   const priceIndicators = timelineIndicatorSeries.filter((series) => series.panel === 'price');
   const oscillatorIndicators = timelineIndicatorSeries.filter((series) => series.panel === 'oscillator');
-  const candleRanges = candles.map((candle) => {
-    const open = Date.parse(candle.openTime);
-    const close = Date.parse(candle.closeTime);
-    return {
-      open: Number.isFinite(open) ? open : 0,
-      close: Number.isFinite(close) ? close : 0,
-    };
-  });
-
-  const mapTimestampToCandleIndex = (timestampMs: number, mode: 'entry' | 'exit') => {
-    if (candles.length === 0 || !Number.isFinite(timestampMs)) return -1;
-
-    for (let index = 0; index < candleRanges.length; index += 1) {
-      const range = candleRanges[index];
-      if (timestampMs >= range.open && timestampMs <= range.close) return index;
-    }
-
-    const firstOpen = candleRanges[0]?.open ?? 0;
-    const lastClose = candleRanges[candleRanges.length - 1]?.close ?? 0;
-    if (timestampMs < firstOpen) return 0;
-    if (timestampMs > lastClose) return candleRanges.length - 1;
-
-    if (mode === 'entry') {
-      for (let index = 0; index < candleRanges.length; index += 1) {
-        if (timestampMs <= candleRanges[index].open) return index;
-      }
-      return candleRanges.length - 1;
-    }
-
-    for (let index = candleRanges.length - 1; index >= 0; index -= 1) {
-      if (timestampMs >= candleRanges[index].close) return index;
-    }
-    return 0;
-  };
-
-  const rawTradeSegments = trades
-    .map((trade) => {
-      const entryTs = Date.parse(trade.openedAt);
-      const exitTs = Date.parse(trade.closedAt);
-      if (!Number.isFinite(entryTs) || !Number.isFinite(exitTs)) return null;
-      const startIdx = mapTimestampToCandleIndex(entryTs, 'entry');
-      const endIdx = mapTimestampToCandleIndex(exitTs, 'exit');
-      if (startIdx < 0 || endIdx < 0) return null;
-      const start = Math.min(startIdx, endIdx);
-      const end = Math.max(startIdx, endIdx);
-      return {
-        tradeId: trade.id,
-        start,
-        end,
-        side: trade.side,
-        entryPrice: trade.entryPrice,
-        exitPrice: trade.exitPrice,
-        profit: trade.pnl >= 0,
-      };
-    })
-    .filter((segment): segment is NonNullable<typeof segment> => Boolean(segment));
-
-  const tradeSegments = rawTradeSegments
-    .sort((left, right) => left.start - right.start || left.end - right.end)
-    .map((segment, index, array) => {
-      if (index === 0) return segment;
-      const previous = array[index - 1];
-      if (segment.start >= previous.end) return segment;
-      const adjustedStart = previous.end;
-      return {
-        ...segment,
-        start: adjustedStart,
-        end: Math.max(adjustedStart, segment.end),
-      };
-    });
+  const tradeSegments = buildNonOverlappingTradeSegments(trades, candles);
 
   const lifecycleEvents = timelineEvents.filter((event) =>
     ['DCA', 'TP', 'TTP', 'SL', 'TRAILING', 'LIQUIDATION'].includes(event.type),
