@@ -807,7 +807,10 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
 
   const mergeByKey = <T, K extends string | number>(current: T[], incoming: T[], getKey: (value: T) => K) => {
     const map = new Map<K, T>();
-    for (const item of [...current, ...incoming]) {
+    for (const item of current) {
+      map.set(getKey(item), item);
+    }
+    for (const item of incoming) {
       map.set(getKey(item), item);
     }
     return [...map.values()];
@@ -832,7 +835,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
         const data = await getBacktestRunTimeline(runId, {
           symbol,
           cursor,
-          chunkSize: 320,
+          chunkSize: 220,
         });
 
         setTimelines((prev) => {
@@ -904,19 +907,14 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
           symbolSectionRefs.current[symbol]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        let current = timelineState?.data ?? null;
-        if (!current && !timelineState?.loading) {
+        if (!timelineState?.data && !timelineState?.loading) {
           const firstChunk = await loadSymbolTimeline(symbol, 0, false);
           if (cancelled) return;
           if (!firstChunk) continue;
-          current = firstChunk;
         }
 
-        while (current?.nextCursor != null && !cancelled) {
-          const nextChunk = await loadSymbolTimeline(symbol, current.nextCursor, true);
-          if (!nextChunk) break;
-          current = nextChunk;
-        }
+        // PERF: keep only first chunk auto-loaded per symbol to avoid loading
+        // full history for every market card at once; users can load more on demand.
       }
     };
 
