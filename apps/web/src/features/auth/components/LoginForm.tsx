@@ -1,13 +1,14 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useLoginForm } from '../hooks/useLoginForm';
+import PasswordVisibilityToggle from './PasswordVisibilityToggle';
 
 export default function LoginForm() {
   const { register, onFormSubmit, errors, isSubmitting, serverError } = useLoginForm();
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <form onSubmit={onFormSubmit} className='form'>
+    <form onSubmit={onFormSubmit} className='form' noValidate>
       <fieldset className='fieldset'>
         <label className='label' htmlFor='email'>
           Email
@@ -15,7 +16,7 @@ export default function LoginForm() {
         <input
           id='email'
           type='email'
-          className={`input input-bordered ${errors.email ? 'input-error' : ''}`}
+          className={`input input-bordered w-full ${errors.email ? 'input-error' : ''}`}
           placeholder='name@example.com'
           disabled={isSubmitting}
           {...register('email')}
@@ -34,15 +35,11 @@ export default function LoginForm() {
             disabled={isSubmitting}
             {...register('password')}
           />
-          <button
-            type='button'
-            className='btn btn-outline join-item'
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
-            onClick={() => setShowPassword((prev) => !prev)}
+          <PasswordVisibilityToggle
+            show={showPassword}
             disabled={isSubmitting}
-          >
-            {showPassword ? 'Hide' : 'Show'}
-          </button>
+            onToggle={() => setShowPassword((prev) => !prev)}
+          />
         </div>
         {errors.password && <div className='text-error text-sm mt-1'>{errors.password.message}</div>}
 
