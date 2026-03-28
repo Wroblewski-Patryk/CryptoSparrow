@@ -487,6 +487,21 @@ function TimelineCandlesChart({
     })
     .filter((segment): segment is NonNullable<typeof segment> => Boolean(segment));
 
+  const lifecycleEvents = timeline.events.filter((event) =>
+    ['DCA', 'TP', 'SL', 'TRAILING', 'LIQUIDATION'].includes(event.type),
+  );
+  const lifecycleEventCounts = lifecycleEvents.reduce(
+    (acc, event) => {
+      if (event.type === 'DCA') acc.DCA += 1;
+      if (event.type === 'TP') acc.TP += 1;
+      if (event.type === 'SL') acc.SL += 1;
+      if (event.type === 'TRAILING') acc.TRAILING += 1;
+      if (event.type === 'LIQUIDATION') acc.LIQUIDATION += 1;
+      return acc;
+    },
+    { DCA: 0, TP: 0, SL: 0, TRAILING: 0, LIQUIDATION: 0 },
+  );
+
   return (
     <div className='space-y-2'>
       <svg className='h-[320px] w-full rounded-lg bg-base-200/60' viewBox={`0 0 ${width} ${height}`} preserveAspectRatio='none'>
@@ -536,6 +551,33 @@ function TimelineCandlesChart({
               width={Math.max(1, xEnd - xStart)}
               height={innerHeight}
               className={segment.profit ? 'fill-success/10' : 'fill-error/10'}
+            />
+          );
+        })}
+
+        {lifecycleEvents.map((event) => {
+          const localIndex = event.candleIndex - timeline.cursor;
+          if (localIndex < 0 || localIndex >= candles.length) return null;
+          const x = xAt(localIndex);
+          const y = yAt(event.price);
+          const colorClass =
+            event.type === 'DCA'
+              ? 'text-info'
+              : event.type === 'TP'
+                ? 'text-success'
+                : event.type === 'SL'
+                  ? 'text-error'
+                  : event.type === 'TRAILING'
+                    ? 'text-warning'
+                    : 'text-secondary';
+          return (
+            <circle
+              key={event.id}
+              cx={x}
+              cy={y}
+              r={2.4}
+              fill='currentColor'
+              className={colorClass}
             />
           );
         })}
@@ -1224,7 +1266,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                                   Exit z PnL
                                 </span>
                                 <span className='inline-flex items-center gap-1'>
-                                  DCA/TP/SL beda widoczne po rozszerzeniu eventow engine
+                                  DCA {timeline?.parityDiagnostics?.eventCounts?.DCA ?? 0} | TP {timeline?.parityDiagnostics?.eventCounts?.TP ?? 0} | SL {timeline?.parityDiagnostics?.eventCounts?.SL ?? 0} | TSL {timeline?.parityDiagnostics?.eventCounts?.TRAILING ?? 0} | LIQ {timeline?.parityDiagnostics?.eventCounts?.LIQUIDATION ?? 0}
                                 </span>
                               </div>
                             </div>

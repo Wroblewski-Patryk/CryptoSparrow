@@ -156,6 +156,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `G10-12 parity-ui-quality: fix reports module api import contract to keep web typecheck/build gate clean`
 - [x] `G10-13 parity-api-contract: enforce run-scoped timeline symbol access and return 404 for out-of-scope symbols`
 - [x] `G10-14 repo-hygiene: ignore local agent-generated skills artifacts to keep operational worktree signal clean`
+- [x] `G10-15 parity-ui-events: render lifecycle event markers and real event counters in markets chart legend`
 
 ## Progress Log
 - 2026-03-28: Added Phase G10 parity-closure workstream to finish deterministic strategy behavior across BACKTEST/PAPER/LIVE and support Binance side-by-side verification.
@@ -174,6 +175,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-28: Completed `G10-12` by fixing reports service API import contract and re-running web TypeScript gate successfully.
 - 2026-03-28: Completed `G10-13` by hardening timeline API contract to run-scoped symbols only, with `404` e2e coverage for out-of-scope symbol requests.
 - 2026-03-28: Completed `G10-14` by adding `.gitignore` coverage for local generated `.agents/skills/*` folders to keep release worktree checks noise-free.
+- 2026-03-28: Completed `G10-15` by wiring lifecycle event markers (DCA/TP/SL/TSL/LIQ) and live event counters into backtest Markets chart UI.
 - 2026-03-15: Initialized V1.0 live release plan.
 - 2026-03-15: Aligned V1.0 structure with architecture, security, testing, and release-readiness docs.
 - 2026-03-15: Added optional isometric dashboard visual mode as late-stage V1 polish item.
