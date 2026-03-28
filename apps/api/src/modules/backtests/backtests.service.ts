@@ -388,6 +388,7 @@ const simulateTradesForSymbol = (
   marketType: MarketType,
   leverage: number,
   marginMode: MarginMode | 'NONE',
+  strategyConfig?: Record<string, unknown> | null,
 ): SymbolSimulationResult => {
   const replay = simulateTradesForSymbolReplay({
     symbol,
@@ -395,6 +396,7 @@ const simulateTradesForSymbol = (
     marketType,
     leverage,
     marginMode,
+    strategyConfig,
   });
 
   return {
@@ -643,6 +645,13 @@ const runBacktestAsync = async (runId: string) => {
 
   const pnlSeries: number[] = [];
   const lifecycleEventCounts = emptyLifecycleEventCounts();
+  const strategy = run.strategyId
+    ? await prisma.strategy.findFirst({
+      where: { id: run.strategyId, userId: run.userId },
+      select: { config: true },
+    })
+    : null;
+  const strategyConfig = (strategy?.config as Record<string, unknown> | undefined) ?? null;
 
   try {
     for (const [index, symbol] of symbols.entries()) {
@@ -658,7 +667,14 @@ const runBacktestAsync = async (runId: string) => {
         progress.currentCandleTime = candles.length > 0 ? new Date(candles[candles.length - 1].openTime).toISOString() : null;
         progress.updatedAt = new Date().toISOString();
         await updateRunProgress(runId, seed, progress);
-        const simulation = simulateTradesForSymbol(symbol, candles, marketType, progress.leverage, progress.marginMode);
+        const simulation = simulateTradesForSymbol(
+          symbol,
+          candles,
+          marketType,
+          progress.leverage,
+          progress.marginMode,
+          strategyConfig,
+        );
         const trades = simulation.trades;
         for (const [key, value] of Object.entries(simulation.eventCounts)) {
           lifecycleEventCounts[key as keyof LifecycleEventCounts] += value;
@@ -1005,7 +1021,14 @@ export const getRunTimeline = async (
   const leverageCandidate = Number((seed as { leverage?: unknown }).leverage);
   const leverage = Number.isFinite(leverageCandidate) ? leverageCandidate : 1;
   const marginMode = seed.marginMode === 'ISOLATED' ? 'ISOLATED' : (seed.marginMode === 'CROSSED' ? 'CROSSED' : 'NONE');
-  const replay = simulateTradesForSymbol(symbol, candles, marketType, marketType === 'SPOT' ? 1 : leverage, marginMode);
+  const replay = simulateTradesForSymbol(
+    symbol,
+    candles,
+    marketType,
+    marketType === 'SPOT' ? 1 : leverage,
+    marginMode,
+    (strategy?.config as Record<string, unknown> | undefined) ?? null,
+  );
   const events = replay.events
     .filter((event) => event.candleIndex >= start && event.candleIndex < end)
     .map((event) => {

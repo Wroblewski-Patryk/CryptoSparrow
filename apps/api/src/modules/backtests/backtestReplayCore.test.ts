@@ -137,4 +137,91 @@ describe('simulateTradesForSymbolReplay', () => {
 
     expect(result.eventCounts.TRAILING).toBeGreaterThanOrEqual(1);
   });
+
+  it('uses strategy rules to suppress fallback threshold signals when indicators do not match', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 104),
+      candle(2, 98),
+      candle(3, 105),
+      candle(4, 97),
+      candle(5, 106),
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 2,
+      marginMode: 'CROSSED',
+      strategyConfig: {
+        openConditions: {
+          direction: 'long',
+          indicatorsLong: [
+            {
+              name: 'RSI',
+              condition: '>',
+              value: 99,
+              params: { period: 14 },
+            },
+          ],
+          indicatorsShort: [],
+        },
+      },
+    });
+
+    expect(result.eventCounts.ENTRY).toBe(0);
+    expect(result.trades).toHaveLength(0);
+  });
+
+  it('evaluates strategy EMA rules per candle and can generate directional trades', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 101),
+      candle(2, 102),
+      candle(3, 103),
+      candle(4, 104),
+      candle(5, 103),
+      candle(6, 102),
+      candle(7, 101),
+      candle(8, 100),
+      candle(9, 99),
+      candle(10, 98),
+      candle(11, 99),
+      candle(12, 100),
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'ETHUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 3,
+      marginMode: 'CROSSED',
+      strategyConfig: {
+        openConditions: {
+          direction: 'both',
+          indicatorsLong: [
+            {
+              name: 'EMA',
+              condition: '>',
+              value: 1,
+              params: { fast: 2, slow: 4 },
+            },
+          ],
+          indicatorsShort: [
+            {
+              name: 'EMA',
+              condition: '<',
+              value: 1,
+              params: { fast: 2, slow: 4 },
+            },
+          ],
+        },
+      },
+    });
+
+    expect(result.eventCounts.ENTRY).toBeGreaterThan(0);
+    expect(result.trades.length).toBeGreaterThan(0);
+    expect(new Set(result.trades.map((trade) => trade.side))).toContain('LONG');
+  });
 });

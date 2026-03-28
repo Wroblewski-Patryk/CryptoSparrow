@@ -107,10 +107,23 @@ describe('Backtests runs contract', () => {
         },
       ],
     });
-    await prisma.backtestReport.create({
-      data: {
+    await prisma.backtestReport.upsert({
+      where: { backtestRunId: runId },
+      create: {
         userId,
         backtestRunId: runId,
+        totalTrades: 2,
+        winningTrades: 2,
+        losingTrades: 0,
+        winRate: 1,
+        netPnl: 20,
+        grossProfit: 20,
+        grossLoss: 0,
+        maxDrawdown: 0.05,
+        sharpe: 1.2,
+        metrics: { expectancy: 10 },
+      },
+      update: {
         totalTrades: 2,
         winningTrades: 2,
         losingTrades: 0,
