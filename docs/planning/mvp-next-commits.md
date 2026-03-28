@@ -14,6 +14,7 @@ Operational queue for one-task execution runs.
 - [x] `PAR-12 feat(ui): show parity diagnostics status/error per symbol in backtest markets tab`
 - [x] `PAR-13 fix(web-typecheck): resolve reports service api import contract so web typecheck is green`
 - [x] `PAR-14 fix(api-contract): return 404 for timeline symbol outside run scope`
+- [x] `PAR-15 chore(repo-hygiene): ignore local agent-generated skills folders to keep git status clean`
 
 ## NEXT
 - [x] `PAR-06 feat(report): expose parity-delta diagnostics in backtest report and raw event payload`
@@ -147,6 +148,7 @@ Operational queue for one-task execution runs.
 - [x] `PAR-12 feat(ui): display parity diagnostics status badges in markets-tab symbol cards`
 - [x] `PAR-13 fix(web-typecheck): fixed reports service import to default api export and restored web tsc pass`
 - [x] `PAR-14 fix(api-contract): added run-symbol scope guard in timeline endpoint with e2e assertion`
+- [x] `PAR-15 chore(repo-hygiene): added .gitignore rules for local `.agents/skills/*` generated work folders`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

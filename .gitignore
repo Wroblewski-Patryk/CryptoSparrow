@@ -7,4 +7,9 @@ apps/api/public/avatars/*
 .playwright-cli/
 playwright-*.log
 docs/operations/_artifacts-rc-evidence-check-latest.json
+.agents/skills/build_worker_job_pipeline/
+.agents/skills/implement_exchange_api_key_flow/
+.agents/skills/run_release_gate_checks/
+.agents/skills/scaffold_api_module/
+.agents/skills/ship_dashboard_feature_slice/
 
