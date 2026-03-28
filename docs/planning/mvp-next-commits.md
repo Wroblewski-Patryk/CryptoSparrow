@@ -11,7 +11,7 @@ Operational queue for one-task execution runs.
 - [x] `PAR-02 refactor(backtest): remove remaining mode-specific signal divergence and route through shared evaluator only`
 - [x] `PAR-03 feat(backtest): move lifecycle replay to shared execution adapters with mode-specific fill model interfaces`
 - [x] `PAR-04 feat(data): align historical runtime inputs (ohlcv + funding/open-interest where available) with deterministic cache windows`
-- [ ] `PAR-05 test(parity): add deterministic 3-symbol parity suite (same candles, same strategy, backtest vs paper/live)`
+- [x] `PAR-05 test(parity): add deterministic 3-symbol parity suite (same candles, same strategy, backtest vs paper/live)`
 
 ## NEXT
 - [ ] `PAR-06 feat(report): expose parity-delta diagnostics in backtest report and raw event payload`
@@ -143,6 +143,7 @@ Operational queue for one-task execution runs.
 - [x] `PAR-02 refactor(backtest): disabled strategy-mode threshold fallback so replay uses shared evaluator semantics only`
 - [x] `PAR-03 feat(backtest): wired replay settlement to shared simulator accounting via historical fill-model adapter`
 - [x] `PAR-04 feat(data): added futures funding/open-interest historical inputs with deterministic cache window for replay timeline/report`
+- [x] `PAR-05 test(parity): added deterministic 3-symbol parity harness test for replay decision trace alignment`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
