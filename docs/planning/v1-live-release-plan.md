@@ -163,6 +163,8 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `G10-19 parity-build-quality: clear remaining web lint warnings and validate clean production build`
 - [x] `G10-20 parity-create-ux: enforce maxCandles bounds and market-group context in backtest creation flow`
 - [x] `G10-21 parity-create-tests: add regression tests for create-form validation and payload contract`
+- [x] `G10-22 parity-runtime-guard: protect markets-tab timeline processing from undefined arrays`
+- [x] `G10-23 web-build-stability: provide favicon asset required by Next.js production build pipeline`
 
 ## Progress Log
 - 2026-03-28: Added Phase G10 parity-closure workstream to finish deterministic strategy behavior across BACKTEST/PAPER/LIVE and support Binance side-by-side verification.
@@ -188,6 +190,8 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-28: Completed `G10-19` by removing residual web lint warnings and re-running clean production build for dashboard modules.
 - 2026-03-28: Completed `G10-20` by adding maxCandles range validation and market-group size summary hints in backtest create UX.
 - 2026-03-28: Completed `G10-21` by adding backtest create-form component tests covering maxCandles validation guardrails and submit payload mapping.
+- 2026-03-28: Completed `G10-22` by guarding timeline event/indicator arrays in markets-tab rendering and merge flow to prevent runtime `undefined.filter` crashes.
+- 2026-03-28: Completed `G10-23` by adding missing favicon asset and restoring reliable Next.js production build completion.
 - 2026-03-15: Initialized V1.0 live release plan.
 - 2026-03-15: Aligned V1.0 structure with architecture, security, testing, and release-readiness docs.
 - 2026-03-15: Added optional isometric dashboard visual mode as late-stage V1 polish item.

@@ -447,8 +447,10 @@ function TimelineCandlesChart({
       ? xAt(timeline.playbackCursor - timeline.cursor)
       : null;
 
-  const priceIndicators = timeline.indicatorSeries.filter((series) => series.panel === 'price');
-  const oscillatorIndicators = timeline.indicatorSeries.filter((series) => series.panel === 'oscillator');
+  const timelineEvents = Array.isArray(timeline.events) ? timeline.events : [];
+  const timelineIndicatorSeries = Array.isArray(timeline.indicatorSeries) ? timeline.indicatorSeries : [];
+  const priceIndicators = timelineIndicatorSeries.filter((series) => series.panel === 'price');
+  const oscillatorIndicators = timelineIndicatorSeries.filter((series) => series.panel === 'oscillator');
   const nearestCandleIndex = (timestampMs: number) => {
     if (candles.length === 0) return -1;
     let bestIndex = 0;
@@ -487,7 +489,7 @@ function TimelineCandlesChart({
     })
     .filter((segment): segment is NonNullable<typeof segment> => Boolean(segment));
 
-  const lifecycleEvents = timeline.events.filter((event) =>
+  const lifecycleEvents = timelineEvents.filter((event) =>
     ['DCA', 'TP', 'SL', 'TRAILING', 'LIQUIDATION'].includes(event.type),
   );
 
@@ -913,15 +915,21 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
           cursor,
           chunkSize: 220,
         });
+        const normalizedData: BacktestTimeline = {
+          ...data,
+          candles: Array.isArray(data.candles) ? data.candles : [],
+          events: Array.isArray(data.events) ? data.events : [],
+          indicatorSeries: Array.isArray(data.indicatorSeries) ? data.indicatorSeries : [],
+        };
 
         setTimelines((prev) => {
           const existing = prev[symbol]?.data;
           const merged = append && existing
             ? {
-                ...data,
-                candles: mergeByKey(existing.candles, data.candles, (candle) => candle.candleIndex),
-                events: mergeByKey(existing.events, data.events, (event) => event.id),
-                indicatorSeries: data.indicatorSeries.map((series) => {
+                ...normalizedData,
+                candles: mergeByKey(existing.candles, normalizedData.candles, (candle) => candle.candleIndex),
+                events: mergeByKey(existing.events, normalizedData.events, (event) => event.id),
+                indicatorSeries: normalizedData.indicatorSeries.map((series) => {
                   const existingSeries = existing.indicatorSeries.find((item) => item.key === series.key);
                   return {
                     ...series,
@@ -930,7 +938,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                 }),
                 cursor: 0,
               }
-            : data;
+            : normalizedData;
 
           return {
             ...prev,
@@ -949,7 +957,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
             },
           };
         });
-        return data;
+        return normalizedData;
       } catch (err: unknown) {
         setTimelines((prev) => ({
           ...prev,
