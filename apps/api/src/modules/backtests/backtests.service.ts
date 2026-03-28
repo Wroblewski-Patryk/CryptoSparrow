@@ -800,6 +800,7 @@ const runBacktestAsync = async (runId: string) => {
   }> = [];
   const parityDiagnostics: Array<{
     symbol: string;
+    status: 'PROCESSED' | 'FAILED';
     strategyRulesActive: boolean;
     entryEvents: number;
     closeEvents: number;
@@ -817,6 +818,7 @@ const runBacktestAsync = async (runId: string) => {
     }>;
     fundingPoints: number;
     openInterestPoints: number;
+    error: string | null;
   }> = [];
 
   try {
@@ -855,6 +857,7 @@ const runBacktestAsync = async (runId: string) => {
         }
         parityDiagnostics.push({
           symbol,
+          status: 'PROCESSED',
           strategyRulesActive,
           entryEvents: simulation.eventCounts.ENTRY,
           closeEvents:
@@ -879,6 +882,7 @@ const runBacktestAsync = async (runId: string) => {
             })),
           fundingPoints: supplemental.fundingRates.length,
           openInterestPoints: supplemental.openInterest.length,
+          error: null,
         });
 
         if (trades.length > 0) {
@@ -912,8 +916,21 @@ const runBacktestAsync = async (runId: string) => {
 
           progress.maxDrawdown = maxDrawdownFromPnlSeries(pnlSeries);
         }
-      } catch {
+      } catch (error) {
         progress.failedSymbols.push(symbol);
+        parityDiagnostics.push({
+          symbol,
+          status: 'FAILED',
+          strategyRulesActive,
+          entryEvents: 0,
+          closeEvents: 0,
+          liquidationEvents: 0,
+          mismatchCount: 0,
+          mismatchSamples: [],
+          fundingPoints: 0,
+          openInterestPoints: 0,
+          error: error instanceof Error ? error.message : 'UNKNOWN_SYMBOL_PROCESSING_ERROR',
+        });
       }
 
       progress.processedSymbols = index + 1;

@@ -513,27 +513,36 @@ describe('Backtests runs contract', () => {
     const metrics = reportRes.body.metrics as {
       parityDiagnostics?: Array<{
         symbol: string;
+        status: 'PROCESSED' | 'FAILED';
         strategyRulesActive: boolean;
         mismatchSamples: Array<{ trigger: string; mismatchReason: string }>;
+        error: string | null;
       }>;
     };
     expect(Array.isArray(metrics.parityDiagnostics)).toBe(true);
+    expect(metrics.parityDiagnostics).toHaveLength(3);
     const diagnosticsBySymbol = new Map(
       (metrics.parityDiagnostics ?? []).map((entry) => [entry.symbol.toUpperCase(), entry] as const),
     );
     for (const symbol of selectedSymbols) {
       const entry = diagnosticsBySymbol.get(symbol);
+      expect(entry).toBeDefined();
       if (!entry) continue;
       expect(entry.strategyRulesActive).toBe(true);
-      expect(
-        entry.mismatchSamples.every(
-          (sample) =>
-            sample.trigger !== 'THRESHOLD' &&
-            ['no_open_position', 'no_flip_with_open_position', 'already_open_same_side', 'manual_managed_symbol'].includes(
-              sample.mismatchReason,
-            ),
-        ),
-      ).toBe(true);
+      if (entry.status === 'PROCESSED') {
+        expect(entry.error).toBeNull();
+        expect(
+          entry.mismatchSamples.every(
+            (sample) =>
+              sample.trigger !== 'THRESHOLD' &&
+              ['no_open_position', 'no_flip_with_open_position', 'already_open_same_side', 'manual_managed_symbol'].includes(
+                sample.mismatchReason,
+              ),
+          ),
+        ).toBe(true);
+      } else {
+        expect(typeof entry.error).toBe('string');
+      }
     }
 
     const paperDecision = await analyzePreTrade({
