@@ -12,9 +12,9 @@ describe('createHistoricalBacktestFillModel', () => {
     expect(model.exitPrice(100, 'SHORT')).toBeCloseTo(101);
   });
 
-  it('calculates fee using configured fee rate and leverage', () => {
+  it('calculates fee from traded notional without leverage multiplier', () => {
     const model = createHistoricalBacktestFillModel({ feeRate: 0.001, slippageRate: 0 });
-    expect(model.fee(100, 110, 1, 5)).toBeCloseTo(1.05);
+    expect(model.fee(100, 110, 1, 5)).toBeCloseTo(0.21);
   });
 
   it('settles trade via shared simulator accounting (fees + funding)', () => {
@@ -32,9 +32,9 @@ describe('createHistoricalBacktestFillModel', () => {
       leverage: 3,
     });
 
-    expect(result.grossPnl).toBeCloseTo(30, 4);
-    expect(result.fees).toBeCloseTo(0.63, 4);
-    expect(result.fundingCost).toBeCloseTo(0.15, 4);
-    expect(result.netPnl).toBeCloseTo(29.22, 4);
+    expect(result.grossPnl).toBeCloseTo(10, 4);
+    expect(result.fees).toBeCloseTo(0.21, 4);
+    expect(result.fundingCost).toBeCloseTo(0.05, 4);
+    expect(result.netPnl).toBeCloseTo(9.74, 4);
   });
 });

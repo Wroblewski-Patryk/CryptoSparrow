@@ -26,7 +26,7 @@ describe('orchestrateAssistantDecision', () => {
       },
       subagentGateway: {
         runStep: vi.fn(async () => ({
-          proposal: 'LONG',
+          proposal: 'LONG' as const,
           confidence: 0.9,
           rationale: 'ignored',
         })),
@@ -46,7 +46,7 @@ describe('orchestrateAssistantDecision', () => {
     const runStep = vi
       .fn()
       .mockImplementationOnce(async () => ({
-        proposal: 'LONG',
+        proposal: 'LONG' as const,
         confidence: 0.8,
         rationale: 'trend says long',
       }))
@@ -56,7 +56,7 @@ describe('orchestrateAssistantDecision', () => {
             setTimeout(
               () =>
                 resolve({
-                  proposal: 'SHORT',
+                  proposal: 'SHORT' as const,
                   confidence: 0.7,
                   rationale: 'risk says short',
                 }),
@@ -104,7 +104,7 @@ describe('orchestrateAssistantDecision', () => {
       },
       subagentGateway: {
         runStep: vi.fn(async () => ({
-          proposal: 'EXIT',
+          proposal: 'EXIT' as const,
           confidence: 1,
           rationale: 'exit now\u0000\u0001<script>alert(1)</script>',
         })),
@@ -145,7 +145,7 @@ describe('orchestrateAssistantDecision', () => {
       planner,
       subagentGateway: {
         runStep: vi.fn(async () => ({
-          proposal: 'LONG',
+          proposal: 'LONG' as const,
           confidence: 1,
           rationale: 'n/a',
         })),
@@ -160,7 +160,7 @@ describe('orchestrateAssistantDecision', () => {
         planner,
         subagentGateway: {
           runStep: vi.fn(async () => ({
-            proposal: 'LONG',
+            proposal: 'LONG' as const,
             confidence: 1,
             rationale: 'n/a',
           })),
@@ -176,7 +176,7 @@ describe('orchestrateAssistantDecision', () => {
         planner,
         subagentGateway: {
           runStep: vi.fn(async () => ({
-            proposal: 'LONG',
+            proposal: 'LONG' as const,
             confidence: 1,
             rationale: 'n/a',
           })),
@@ -192,7 +192,7 @@ describe('orchestrateAssistantDecision', () => {
         planner,
         subagentGateway: {
           runStep: vi.fn(async () => ({
-            proposal: 'LONG',
+            proposal: 'LONG' as const,
             confidence: 1,
             rationale: 'n/a',
           })),
@@ -232,12 +232,12 @@ describe('orchestrateAssistantDecision', () => {
           runStep: vi
             .fn()
             .mockResolvedValueOnce({
-              proposal: 'SHORT',
+              proposal: 'SHORT' as const,
               confidence: 0.8,
               rationale: 'short bias',
             })
             .mockResolvedValueOnce({
-              proposal: 'SHORT',
+              proposal: 'SHORT' as const,
               confidence: 0.6,
               rationale: 'confirm short',
             }),

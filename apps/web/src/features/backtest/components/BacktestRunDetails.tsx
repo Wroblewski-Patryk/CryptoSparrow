@@ -463,6 +463,7 @@ function TimelineCandlesChart({
 }) {
   const zoomSteps = [1, 1.25, 1.5, 2, 3, 4, 6, 8, 10];
   const [zoomIndex, setZoomIndex] = useState(0);
+  const sharedScrollRef = useRef<HTMLDivElement | null>(null);
   const zoom = zoomSteps[zoomIndex] ?? 1;
   const candles = timeline.candles;
   if (candles.length === 0) {
@@ -499,19 +500,13 @@ function TimelineCandlesChart({
       : null;
 
   const timelineEvents = Array.isArray(timeline.events) ? timeline.events : [];
+  const lifecycleEvents = timelineEvents.filter((event) =>
+    ['DCA', 'TP', 'TTP', 'SL', 'TRAILING', 'LIQUIDATION'].includes(event.type),
+  );
   const timelineIndicatorSeries = Array.isArray(timeline.indicatorSeries) ? timeline.indicatorSeries : [];
   const priceIndicators = timelineIndicatorSeries.filter((series) => series.panel === 'price');
   const oscillatorIndicators = timelineIndicatorSeries.filter((series) => series.panel === 'oscillator');
   const tradeSegments = buildNonOverlappingTradeSegments(trades, candles);
-
-  const lifecycleEvents = timelineEvents.filter((event) =>
-    ['DCA', 'TP', 'TTP', 'SL', 'TRAILING', 'LIQUIDATION'].includes(event.type),
-  );
-  const visibleLifecycleCounts = lifecycleEvents.reduce<Record<string, number>>((acc, event) => {
-    acc[event.type] = (acc[event.type] ?? 0) + 1;
-    return acc;
-  }, {});
-  const sharedScrollRef = useRef<HTMLDivElement | null>(null);
 
   return (
     <div className='space-y-2'>
@@ -997,7 +992,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
             cursor,
             chunkSize: 10000,
           });
-        } catch (error) {
+        } catch {
           // Backward-compat fallback for older backend validators.
           data = await getBacktestRunTimeline(runId, {
             symbol,

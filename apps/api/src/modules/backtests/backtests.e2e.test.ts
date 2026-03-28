@@ -29,7 +29,7 @@ const getUserIdByEmail = async (email: string) => {
 };
 
 const waitForBacktestReport = async (
-  agent: request.SuperAgentTest,
+  agent: ReturnType<typeof request.agent>,
   runId: string,
   attempts = 20,
   delayMs = 250,

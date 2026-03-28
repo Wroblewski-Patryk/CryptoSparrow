@@ -30,6 +30,9 @@ const createInMemoryGateways = (mode: RuntimeExecutionMode) => {
       return {
         id: `order-${mode}-${orderCounter}`,
         userId: 'u1',
+        origin: 'BOT',
+        managementMode: 'BOT_MANAGED',
+        syncState: 'IN_SYNC',
         symbol: input.symbol,
         side: input.side,
         type: input.type,

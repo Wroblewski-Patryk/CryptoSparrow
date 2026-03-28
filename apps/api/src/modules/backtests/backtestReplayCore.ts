@@ -231,7 +231,7 @@ const parseStrategyRiskConfig = (strategyConfig?: Record<string, unknown> | null
     tp?: unknown;
     ttp?: Array<{ percent?: unknown; arm?: unknown }>;
     sl?: unknown;
-    tsl?: Array<{ percent?: unknown }>;
+    tsl?: Array<{ percent?: unknown; arm?: unknown }>;
   } | undefined) ?? { };
   const additional = (strategyConfig.additional as {
     dcaEnabled?: unknown;
