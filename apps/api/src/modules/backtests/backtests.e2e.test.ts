@@ -557,6 +557,38 @@ describe('Backtests runs contract', () => {
       .query({ symbol: 'NOT_IN_RUN_SYMBOL' });
     expect(outOfScopeTimelineRes.status).toBe(404);
   });
+
+  it('reports FAILED parity diagnostics when symbol processing fails', async () => {
+    const ownerEmail = 'backtests-failed-symbol@example.com';
+    const agent = await registerAndLogin(ownerEmail);
+
+    const createRes = await agent.post('/dashboard/backtests/runs').send({
+      name: 'Invalid symbol diagnostics run',
+      symbol: 'INVALIDPAIRXYZ',
+      timeframe: '5m',
+      seedConfig: { initialBalance: 1000 },
+    });
+    expect(createRes.status).toBe(201);
+    const runId = createRes.body.id as string;
+
+    const reportRes = await waitForBacktestReport(agent, runId, 25, 250);
+    expect(reportRes.status).toBe(200);
+
+    const metrics = reportRes.body.metrics as {
+      symbolsFailed?: string[];
+      parityDiagnostics?: Array<{
+        symbol: string;
+        status: 'PROCESSED' | 'FAILED';
+        error: string | null;
+      }>;
+    };
+
+    expect(metrics.symbolsFailed).toContain('INVALIDPAIRXYZ');
+    expect(metrics.parityDiagnostics).toHaveLength(1);
+    expect(metrics.parityDiagnostics?.[0].symbol).toBe('INVALIDPAIRXYZ');
+    expect(metrics.parityDiagnostics?.[0].status).toBe('FAILED');
+    expect(typeof metrics.parityDiagnostics?.[0].error).toBe('string');
+  });
 });
 
 
