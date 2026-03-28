@@ -148,6 +148,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `G10-04 parity-tests: add deterministic 3-symbol parity harness comparing decision traces across BACKTEST/PAPER/LIVE`
 - [x] `G10-05 parity-reporting: publish mismatch diagnostics (timestamp, side, trigger, reason) in operator-visible report`
 - [x] `G10-06 qa-manual: define Binance side-by-side verification playbook for same interval/indicators/symbol set`
+- [x] `G10-07 parity-e2e: add strategy + market-group(3 symbols) + backtest report + paper pre-trade consistency contract`
 
 ## Progress Log
 - 2026-03-28: Added Phase G10 parity-closure workstream to finish deterministic strategy behavior across BACKTEST/PAPER/LIVE and support Binance side-by-side verification.
@@ -158,6 +159,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-28: Completed `G10-04` by adding deterministic 3-symbol parity harness validating replay decision trace against shared execution core outcomes.
 - 2026-03-28: Completed `G10-05` by adding operator-visible parity mismatch diagnostics (`timestamp`, `side`, `trigger`, `mismatchReason`) in backtest report and timeline payloads.
 - 2026-03-28: Completed `G10-06` by publishing manual Binance side-by-side parity playbook (`docs/operations/binance-side-by-side-parity-checklist.md`) for 3 symbols and aligned interval/indicator setup.
+- 2026-03-28: Completed `G10-07` by adding backtests e2e contract for strategy + 3-symbol market-group + report parity diagnostics + paper pre-trade consistency baseline.
 - 2026-03-15: Initialized V1.0 live release plan.
 - 2026-03-15: Aligned V1.0 structure with architecture, security, testing, and release-readiness docs.
 - 2026-03-15: Added optional isometric dashboard visual mode as late-stage V1 polish item.

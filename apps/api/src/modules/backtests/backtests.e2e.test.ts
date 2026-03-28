@@ -28,6 +28,21 @@ const getUserIdByEmail = async (email: string) => {
   return user.id;
 };
 
+const waitForBacktestReport = async (
+  agent: request.SuperAgentTest,
+  runId: string,
+  attempts = 20,
+  delayMs = 250,
+) => {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const response = await agent.get(`/dashboard/backtests/runs/${runId}/report`);
+    if (response.status === 200) return response;
+    if (response.status !== 404) return response;
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+  return agent.get(`/dashboard/backtests/runs/${runId}/report`);
+};
+
 describe('Backtests runs contract', () => {
   beforeEach(async () => {
     await prisma.log.deleteMany();
@@ -422,6 +437,111 @@ describe('Backtests runs contract', () => {
     });
     expect(paperAllowedOnFreeSymbol.allowed).toBe(true);
     expect(liveAllowedOnFreeSymbol.allowed).toBe(true);
+  });
+
+  it('keeps strategy + 3-symbol market-group backtest trace aligned with paper decision contract', async () => {
+    const ownerEmail = 'backtests-parity-3symbols@example.com';
+    const agent = await registerAndLogin(ownerEmail);
+
+    const strategyRes = await agent.post('/dashboard/strategies').send({
+      name: 'Parity 3 symbols strategy',
+      description: 'Backtest/paper trace contract',
+      interval: '5m',
+      leverage: 2,
+      walletRisk: 1,
+      config: {
+        open: {
+          direction: 'both',
+          indicatorsLong: [{ name: 'EMA', params: { fast: 9, slow: 21 }, condition: '>', value: 1 }],
+          indicatorsShort: [{ name: 'EMA', params: { fast: 9, slow: 21 }, condition: '<', value: 1 }],
+        },
+        close: {
+          tp: 2,
+          sl: 1,
+        },
+      },
+    });
+    expect(strategyRes.status).toBe(201);
+    const strategyId = strategyRes.body.id as string;
+
+    const catalogRes = await agent
+      .get('/dashboard/markets/catalog')
+      .query({ baseCurrency: 'USDT', marketType: 'FUTURES' });
+    expect(catalogRes.status).toBe(200);
+    const selectedSymbols = (catalogRes.body.markets as Array<{ symbol: string }>)
+      .slice(0, 3)
+      .map((item) => item.symbol.toUpperCase())
+      .sort();
+    expect(selectedSymbols).toHaveLength(3);
+
+    const universeRes = await agent.post('/dashboard/markets/universes').send({
+      name: 'Parity 3 symbols group',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+      whitelist: selectedSymbols,
+      blacklist: [],
+      filterRules: {},
+      autoExcludeRules: {},
+    });
+    expect(universeRes.status).toBe(201);
+    const marketUniverseId = universeRes.body.id as string;
+
+    const runRes = await agent.post('/dashboard/backtests/runs').send({
+      name: 'Parity 3 symbols run',
+      timeframe: '5m',
+      strategyId,
+      marketUniverseId,
+      seedConfig: {
+        initialBalance: 1000,
+      },
+    });
+    expect(runRes.status).toBe(201);
+    const runId = runRes.body.id as string;
+
+    const reportRes = await waitForBacktestReport(agent, runId);
+    expect(reportRes.status).toBe(200);
+
+    const runDetailRes = await agent.get(`/dashboard/backtests/runs/${runId}`);
+    expect(runDetailRes.status).toBe(200);
+    const runSymbols = (
+      ((runDetailRes.body.seedConfig as { symbols?: unknown }).symbols as string[] | undefined) ?? []
+    )
+      .map((symbol) => symbol.toUpperCase())
+      .sort();
+    expect(runSymbols).toEqual(selectedSymbols);
+
+    const metrics = reportRes.body.metrics as {
+      parityDiagnostics?: Array<{
+        symbol: string;
+        strategyRulesActive: boolean;
+        mismatchSamples: Array<{ trigger: string; mismatchReason: string }>;
+      }>;
+    };
+    expect(Array.isArray(metrics.parityDiagnostics)).toBe(true);
+    const diagnosticsBySymbol = new Map(
+      (metrics.parityDiagnostics ?? []).map((entry) => [entry.symbol.toUpperCase(), entry] as const),
+    );
+    for (const symbol of selectedSymbols) {
+      const entry = diagnosticsBySymbol.get(symbol);
+      if (!entry) continue;
+      expect(entry.strategyRulesActive).toBe(true);
+      expect(
+        entry.mismatchSamples.every(
+          (sample) =>
+            sample.trigger !== 'THRESHOLD' &&
+            ['no_open_position', 'no_flip_with_open_position', 'already_open_same_side', 'manual_managed_symbol'].includes(
+              sample.mismatchReason,
+            ),
+        ),
+      ).toBe(true);
+    }
+
+    const paperDecision = await analyzePreTrade({
+      userId: await getUserIdByEmail(ownerEmail),
+      symbol: 'BTCUSDT',
+      mode: 'PAPER',
+    });
+    expect(paperDecision.allowed).toBe(true);
   });
 });
 

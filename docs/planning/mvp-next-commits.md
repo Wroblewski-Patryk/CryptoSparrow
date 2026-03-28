@@ -7,7 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `PAR-08 test(e2e): strategy -> market-group(3 symbols) -> backtest -> paper trace consistency contract`
+- [x] `PAR-08 test(e2e): strategy -> market-group(3 symbols) -> backtest -> paper trace consistency contract`
 - [ ] `PAR-09 perf(backtest): profile/reduce memory for multi-symbol timeline rendering without hiding charts`
 - [ ] `PAR-10 docs(runbook): operator protocol for interpreting mismatch reasons and safe corrective actions`
 
