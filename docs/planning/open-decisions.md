@@ -373,6 +373,10 @@ This file tracks intentionally unresolved architecture choices so implementation
     - order lifecycle parity with live modes.
   - backtest must simulate the same order and position lifecycle options used by bot runtime (no reduced-rule backtest path).
   - historical market data should be cached in DB and incrementally extended to avoid repeated full refetch from exchange.
+  - strategy signal semantics are frozen by one shared contract for all modes.
+- Canonical references:
+  - `docs/architecture/strategy-evaluation-parity-contract.md`
+  - `docs/architecture/runtime-signal-merge-contract.md`
 
 ## Dashboard Isometric Mode Placement
 - Decision state: resolved on 2026-03-22.
