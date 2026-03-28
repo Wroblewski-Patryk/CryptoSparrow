@@ -152,6 +152,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `G10-08 parity-perf: reduce multi-symbol markets-tab memory pressure without hiding chart cards`
 - [x] `G10-09 parity-runbook: publish operator protocol for mismatch interpretation and safe corrective actions`
 - [x] `G10-10 parity-report-hardening: include per-symbol processed/failed status + error diagnostics for operator triage`
+- [x] `G10-11 parity-ui: display per-symbol parity processing status/error in Markets tab for operator visibility`
 
 ## Progress Log
 - 2026-03-28: Added Phase G10 parity-closure workstream to finish deterministic strategy behavior across BACKTEST/PAPER/LIVE and support Binance side-by-side verification.
@@ -166,6 +167,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-28: Completed `G10-08` by optimizing markets-tab timeline loading to keep all chart cards visible while preventing eager full-history hydration for every symbol.
 - 2026-03-28: Completed `G10-09` by publishing parity mismatch operator runbook (`docs/operations/backtest-parity-mismatch-runbook.md`) with triage and escalation flow.
 - 2026-03-28: Completed `G10-10` by hardening parity diagnostics with per-symbol status/error output so failed symbol processing is explicit instead of silent.
+- 2026-03-28: Completed `G10-11` by adding parity status/error UI badges per symbol in Markets tab and rendering symbols with no trades for full run transparency.
 - 2026-03-15: Initialized V1.0 live release plan.
 - 2026-03-15: Aligned V1.0 structure with architecture, security, testing, and release-readiness docs.
 - 2026-03-15: Added optional isometric dashboard visual mode as late-stage V1 polish item.

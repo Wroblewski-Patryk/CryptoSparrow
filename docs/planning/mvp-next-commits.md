@@ -11,6 +11,7 @@ Operational queue for one-task execution runs.
 - [x] `PAR-09 perf(backtest): profile/reduce memory for multi-symbol timeline rendering without hiding charts`
 - [x] `PAR-10 docs(runbook): operator protocol for interpreting mismatch reasons and safe corrective actions`
 - [x] `PAR-11 feat(report): include per-symbol processed/failed parity diagnostics status for multi-symbol runs`
+- [x] `PAR-12 feat(ui): show parity diagnostics status/error per symbol in backtest markets tab`
 
 ## NEXT
 - [x] `PAR-06 feat(report): expose parity-delta diagnostics in backtest report and raw event payload`
@@ -141,6 +142,7 @@ Operational queue for one-task execution runs.
 - [x] `PAR-04 feat(data): added futures funding/open-interest historical inputs with deterministic cache window for replay timeline/report`
 - [x] `PAR-05 test(parity): added deterministic 3-symbol parity harness test for replay decision trace alignment`
 - [x] `PAR-11 feat(report): added explicit PROCESSED/FAILED status and error field in per-symbol parity diagnostics`
+- [x] `PAR-12 feat(ui): display parity diagnostics status badges in markets-tab symbol cards`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

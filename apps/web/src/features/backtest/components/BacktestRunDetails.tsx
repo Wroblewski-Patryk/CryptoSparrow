@@ -177,7 +177,7 @@ const extractStrategyIndicatorMeta = (strategy: StrategyDto | null): StrategyInd
   };
 };
 
-const buildSymbolStats = (items: BacktestTrade[]): SymbolStats[] => {
+const buildSymbolStats = (items: BacktestTrade[], configuredSymbols: string[] = []): SymbolStats[] => {
   const grouped = new Map<string, BacktestTrade[]>();
   for (const trade of items) {
     if (!grouped.has(trade.symbol)) grouped.set(trade.symbol, []);
@@ -234,7 +234,26 @@ const buildSymbolStats = (items: BacktestTrade[]): SymbolStats[] => {
     };
   });
 
-  return stats.sort((a, b) => a.symbol.localeCompare(b.symbol));
+  const withMissing = [...stats];
+  for (const symbol of configuredSymbols) {
+    if (withMissing.some((item) => item.symbol === symbol)) continue;
+    withMissing.push({
+      symbol,
+      tradesCount: 0,
+      wins: 0,
+      losses: 0,
+      winRate: null,
+      netPnl: 0,
+      avgEntry: 0,
+      avgExit: 0,
+      avgHoldMinutes: 0,
+      points: [],
+      firstAt: null,
+      lastAt: null,
+    });
+  }
+
+  return withMissing.sort((a, b) => a.symbol.localeCompare(b.symbol));
 };
 
 const buildDailyPerformance = (items: BacktestTrade[], initialBalance: number): DailyPerformancePoint[] => {
@@ -785,7 +804,14 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
 
   const liveProgress = ((run?.seedConfig as { liveProgress?: LiveProgress } | null)?.liveProgress ?? null) as LiveProgress | null;
   const indicatorMeta = useMemo(() => extractStrategyIndicatorMeta(strategy), [strategy]);
-  const symbolStats = useMemo(() => buildSymbolStats(trades), [trades]);
+  const configuredRunSymbols = useMemo(() => {
+    const symbols = ((run?.seedConfig as { symbols?: unknown } | null)?.symbols ?? null) as string[] | null;
+    if (!Array.isArray(symbols)) return [];
+    return [...new Set(symbols.map((symbol) => symbol.trim().toUpperCase()).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b),
+    );
+  }, [run?.seedConfig]);
+  const symbolStats = useMemo(() => buildSymbolStats(trades, configuredRunSymbols), [configuredRunSymbols, trades]);
   const tradesBySymbol = useMemo(() => {
     const grouped = new Map<string, BacktestTrade[]>();
     for (const trade of trades) {
@@ -801,7 +827,26 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
     }
     return grouped;
   }, [trades]);
-  const summaryMetrics = ((report?.metrics ?? null) as { initialBalance?: number; endBalance?: number } | null) ?? null;
+  const summaryMetrics = ((report?.metrics ?? null) as {
+    initialBalance?: number;
+    endBalance?: number;
+    parityDiagnostics?: Array<{
+      symbol?: string;
+      status?: 'PROCESSED' | 'FAILED';
+      error?: string | null;
+    }>;
+  } | null) ?? null;
+  const parityDiagnosticsBySymbol = useMemo(() => {
+    const map = new Map<string, { status: 'PROCESSED' | 'FAILED'; error: string | null }>();
+    for (const item of summaryMetrics?.parityDiagnostics ?? []) {
+      if (!item?.symbol || !item?.status) continue;
+      map.set(item.symbol.toUpperCase(), {
+        status: item.status,
+        error: item.error ?? null,
+      });
+    }
+    return map;
+  }, [summaryMetrics?.parityDiagnostics]);
   const initialBalance = summaryMetrics?.initialBalance ?? 0;
   const dailyPerformance = useMemo(() => buildDailyPerformance(trades, initialBalance), [initialBalance, trades]);
 
@@ -1186,6 +1231,18 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
 
                             <aside className='rounded-lg border border-base-300 bg-base-200 p-3 text-sm'>
                               <h4 className='mb-2 font-semibold'>Statystyki pary</h4>
+                              {(() => {
+                                const parity = parityDiagnosticsBySymbol.get(stats.symbol.toUpperCase());
+                                if (!parity) return null;
+                                return (
+                                  <div className='mb-2'>
+                                    <span className={`badge badge-sm ${parity.status === 'PROCESSED' ? 'badge-success' : 'badge-error'}`}>
+                                      {parity.status === 'PROCESSED' ? 'Parity: PROCESSED' : 'Parity: FAILED'}
+                                    </span>
+                                    {parity.error ? <p className='mt-1 text-xs text-error'>{parity.error}</p> : null}
+                                  </div>
+                                );
+                              })()}
                               <div className='space-y-1'>
                                 <p>Transakcji: <span className='font-medium'>{formatNumber(stats.tradesCount)}</span></p>
                                 <p>Win rate: <span className='font-medium'>{formatPercent(stats.winRate)}</span></p>
