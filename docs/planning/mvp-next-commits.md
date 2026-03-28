@@ -7,18 +7,13 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `PAR-01 docs(contract): freeze canonical strategy-evaluation contract shared across backtest/paper/live`
-- [x] `PAR-02 refactor(backtest): remove remaining mode-specific signal divergence and route through shared evaluator only`
-- [x] `PAR-03 feat(backtest): move lifecycle replay to shared execution adapters with mode-specific fill model interfaces`
-- [x] `PAR-04 feat(data): align historical runtime inputs (ohlcv + funding/open-interest where available) with deterministic cache windows`
-- [x] `PAR-05 test(parity): add deterministic 3-symbol parity suite (same candles, same strategy, backtest vs paper/live)`
-
-## NEXT
-- [x] `PAR-06 feat(report): expose parity-delta diagnostics in backtest report and raw event payload`
-- [ ] `PAR-07 qa(manual): publish Binance side-by-side verification checklist for 3 symbols and same indicator setup`
 - [ ] `PAR-08 test(e2e): strategy -> market-group(3 symbols) -> backtest -> paper trace consistency contract`
 - [ ] `PAR-09 perf(backtest): profile/reduce memory for multi-symbol timeline rendering without hiding charts`
 - [ ] `PAR-10 docs(runbook): operator protocol for interpreting mismatch reasons and safe corrective actions`
+
+## NEXT
+- [x] `PAR-06 feat(report): expose parity-delta diagnostics in backtest report and raw event payload`
+- [x] `PAR-07 qa(manual): publish Binance side-by-side verification checklist for 3 symbols and same indicator setup`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
