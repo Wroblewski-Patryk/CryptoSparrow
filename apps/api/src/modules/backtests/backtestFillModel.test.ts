@@ -16,4 +16,25 @@ describe('createHistoricalBacktestFillModel', () => {
     const model = createHistoricalBacktestFillModel({ feeRate: 0.001, slippageRate: 0 });
     expect(model.fee(100, 110, 1, 5)).toBeCloseTo(1.05);
   });
+
+  it('settles trade via shared simulator accounting (fees + funding)', () => {
+    const model = createHistoricalBacktestFillModel({
+      feeRate: 0.001,
+      slippageRate: 0,
+      fundingRate: 0.0005,
+    });
+
+    const result = model.settle({
+      side: 'LONG',
+      entryPrice: 100,
+      exitPrice: 110,
+      quantity: 1,
+      leverage: 3,
+    });
+
+    expect(result.grossPnl).toBeCloseTo(30, 4);
+    expect(result.fees).toBeCloseTo(0.63, 4);
+    expect(result.fundingCost).toBeCloseTo(0.15, 4);
+    expect(result.netPnl).toBeCloseTo(29.22, 4);
+  });
 });

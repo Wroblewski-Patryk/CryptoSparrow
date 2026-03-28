@@ -664,6 +664,10 @@ const runBacktestAsync = async (runId: string) => {
       typeof (seed as { slippageRate?: unknown }).slippageRate === 'number'
         ? Number((seed as { slippageRate?: unknown }).slippageRate)
         : undefined,
+    fundingRate:
+      typeof (seed as { fundingRate?: unknown }).fundingRate === 'number'
+        ? Number((seed as { fundingRate?: unknown }).fundingRate)
+        : undefined,
   };
 
   try {
@@ -1050,6 +1054,10 @@ export const getRunTimeline = async (
       slippageRate:
         typeof (seed as { slippageRate?: unknown }).slippageRate === 'number'
           ? Number((seed as { slippageRate?: unknown }).slippageRate)
+          : undefined,
+      fundingRate:
+        typeof (seed as { fundingRate?: unknown }).fundingRate === 'number'
+          ? Number((seed as { fundingRate?: unknown }).fundingRate)
           : undefined,
     },
   );

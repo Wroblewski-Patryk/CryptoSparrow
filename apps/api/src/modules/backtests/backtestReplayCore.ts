@@ -273,11 +273,15 @@ export const simulateTradesForSymbolReplay = (input: {
         : (openPosition.entryPrice - openPosition.bestPrice) / Math.max(openPosition.entryPrice, 1e-8);
 
     const effectiveExitPrice = fillModel.exitPrice(current.close, openPosition.side as PositionSide);
-    const fee = fillModel.fee(openPosition.entryPrice, effectiveExitPrice, openPosition.quantity, effectiveLeverage);
-    const rawPnl =
-      openPosition.side === 'LONG'
-        ? (effectiveExitPrice - openPosition.entryPrice) * openPosition.quantity * effectiveLeverage
-        : (openPosition.entryPrice - effectiveExitPrice) * openPosition.quantity * effectiveLeverage;
+    const settlement = fillModel.settle({
+      side: openPosition.side as PositionSide,
+      entryPrice: openPosition.entryPrice,
+      exitPrice: effectiveExitPrice,
+      quantity: openPosition.quantity,
+      leverage: effectiveLeverage,
+    });
+    const fee = settlement.fees;
+    const rawPnl = settlement.grossPnl;
 
     const adverseMoveRatio =
       openPosition.side === 'LONG'
@@ -351,11 +355,15 @@ export const simulateTradesForSymbolReplay = (input: {
   if (openPosition) {
     const last = candles[candles.length - 1];
     const effectiveExitPrice = fillModel.exitPrice(last.close, openPosition.side as PositionSide);
-    const fee = fillModel.fee(openPosition.entryPrice, effectiveExitPrice, openPosition.quantity, effectiveLeverage);
-    const rawPnl =
-      openPosition.side === 'LONG'
-        ? (effectiveExitPrice - openPosition.entryPrice) * openPosition.quantity * effectiveLeverage
-        : (openPosition.entryPrice - effectiveExitPrice) * openPosition.quantity * effectiveLeverage;
+    const settlement = fillModel.settle({
+      side: openPosition.side as PositionSide,
+      entryPrice: openPosition.entryPrice,
+      exitPrice: effectiveExitPrice,
+      quantity: openPosition.quantity,
+      leverage: effectiveLeverage,
+    });
+    const fee = settlement.fees;
+    const rawPnl = settlement.grossPnl;
     trades.push({
       symbol,
       side: openPosition.side as PositionSide,
