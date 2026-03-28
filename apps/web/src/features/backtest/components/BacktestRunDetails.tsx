@@ -490,17 +490,6 @@ function TimelineCandlesChart({
   const lifecycleEvents = timeline.events.filter((event) =>
     ['DCA', 'TP', 'SL', 'TRAILING', 'LIQUIDATION'].includes(event.type),
   );
-  const lifecycleEventCounts = lifecycleEvents.reduce(
-    (acc, event) => {
-      if (event.type === 'DCA') acc.DCA += 1;
-      if (event.type === 'TP') acc.TP += 1;
-      if (event.type === 'SL') acc.SL += 1;
-      if (event.type === 'TRAILING') acc.TRAILING += 1;
-      if (event.type === 'LIQUIDATION') acc.LIQUIDATION += 1;
-      return acc;
-    },
-    { DCA: 0, TP: 0, SL: 0, TRAILING: 0, LIQUIDATION: 0 },
-  );
 
   return (
     <div className='space-y-2'>
