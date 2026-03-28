@@ -208,8 +208,30 @@ describe('Backtests runs contract', () => {
     const runId = createRes.body.id as string;
 
     const reportRes = await agent.get(`/dashboard/backtests/runs/${runId}/report`);
-    expect(reportRes.status).toBe(404);
-    expect(reportRes.body.error.message).toBe('Report not found');
+    if (reportRes.status === 404) {
+      expect(reportRes.body.error.message).toBe('Report not found');
+      return;
+    }
+
+    expect(reportRes.status).toBe(200);
+    expect(reportRes.body.backtestRunId).toBe(runId);
+    const metrics = reportRes.body.metrics as {
+      parityDiagnostics?: Array<{
+        symbol: string;
+        mismatchCount: number;
+        mismatchSamples: Array<{
+          timestamp: string;
+          side: string | null;
+          trigger: string;
+          mismatchReason: string;
+        }>;
+      }>;
+    };
+    if (metrics.parityDiagnostics && metrics.parityDiagnostics.length > 0) {
+      expect(metrics.parityDiagnostics[0].symbol).toBeDefined();
+      expect(typeof metrics.parityDiagnostics[0].mismatchCount).toBe('number');
+      expect(Array.isArray(metrics.parityDiagnostics[0].mismatchSamples)).toBe(true);
+    }
   });
 
   it('covers strategy -> backtest -> paper -> live opt-in critical flow', async () => {

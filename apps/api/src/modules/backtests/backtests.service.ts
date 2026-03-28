@@ -1,6 +1,7 @@
 import { PositionSide, Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { getMarketCatalog } from '../markets/markets.service';
+import { parseStrategySignalRules } from '../engine/strategySignalEvaluator';
 import {
   type ReplayEventDraft,
   type ReplayEventType,
@@ -776,6 +777,7 @@ const runBacktestAsync = async (runId: string) => {
     })
     : null;
   const strategyConfig = (strategy?.config as Record<string, unknown> | undefined) ?? null;
+  const strategyRulesActive = Boolean(parseStrategySignalRules(strategyConfig));
   const fillModelConfig: BacktestFillModelConfig = {
     feeRate:
       typeof (seed as { feeRate?: unknown }).feeRate === 'number'
@@ -793,6 +795,26 @@ const runBacktestAsync = async (runId: string) => {
   const symbolInputCoverage: Array<{
     symbol: string;
     candles: number;
+    fundingPoints: number;
+    openInterestPoints: number;
+  }> = [];
+  const parityDiagnostics: Array<{
+    symbol: string;
+    strategyRulesActive: boolean;
+    entryEvents: number;
+    closeEvents: number;
+    liquidationEvents: number;
+    mismatchCount: number;
+    mismatchSamples: Array<{
+      timestamp: string;
+      side: PositionSide | null;
+      trigger: 'STRATEGY' | 'THRESHOLD' | 'FINAL_CANDLE';
+      mismatchReason:
+        | 'no_open_position'
+        | 'no_flip_with_open_position'
+        | 'already_open_same_side'
+        | 'manual_managed_symbol';
+    }>;
     fundingPoints: number;
     openInterestPoints: number;
   }> = [];
@@ -831,6 +853,33 @@ const runBacktestAsync = async (runId: string) => {
         for (const [key, value] of Object.entries(simulation.eventCounts)) {
           lifecycleEventCounts[key as keyof LifecycleEventCounts] += value;
         }
+        parityDiagnostics.push({
+          symbol,
+          strategyRulesActive,
+          entryEvents: simulation.eventCounts.ENTRY,
+          closeEvents:
+            simulation.eventCounts.EXIT +
+            simulation.eventCounts.TP +
+            simulation.eventCounts.SL +
+            simulation.eventCounts.TRAILING,
+          liquidationEvents: simulation.eventCounts.LIQUIDATION,
+          mismatchCount: simulation.decisionTrace.filter((entry) => entry.mismatchReason !== null).length,
+          mismatchSamples: simulation.decisionTrace
+            .filter((entry) => entry.mismatchReason !== null)
+            .slice(0, 25)
+            .map((entry) => ({
+              timestamp: entry.timestamp.toISOString(),
+              side: entry.side,
+              trigger: entry.trigger,
+              mismatchReason: entry.mismatchReason as
+                | 'no_open_position'
+                | 'no_flip_with_open_position'
+                | 'already_open_same_side'
+                | 'manual_managed_symbol',
+            })),
+          fundingPoints: supplemental.fundingRates.length,
+          openInterestPoints: supplemental.openInterest.length,
+        });
 
         if (trades.length > 0) {
           await prisma.backtestTrade.createMany({
@@ -905,6 +954,7 @@ const runBacktestAsync = async (runId: string) => {
             sourceWindowDays: 14,
             symbolCoverage: symbolInputCoverage,
           },
+          parityDiagnostics,
           leverage: progress.leverage,
           marginMode: progress.marginMode,
           liquidations: progress.liquidations,
@@ -930,6 +980,7 @@ const runBacktestAsync = async (runId: string) => {
             sourceWindowDays: 14,
             symbolCoverage: symbolInputCoverage,
           },
+          parityDiagnostics,
           leverage: progress.leverage,
           marginMode: progress.marginMode,
           liquidations: progress.liquidations,
@@ -1249,6 +1300,27 @@ export const getRunTimeline = async (
     })),
     events,
     indicatorSeries,
+    parityDiagnostics: {
+      strategyRulesActive: Boolean(
+        parseStrategySignalRules((strategy?.config as Record<string, unknown> | undefined) ?? null),
+      ),
+      eventCounts: replay.eventCounts,
+      mismatchCount: replay.decisionTrace.filter((entry) => entry.mismatchReason !== null).length,
+      mismatchSamples: replay.decisionTrace
+        .filter(
+          (entry) =>
+            entry.mismatchReason !== null && entry.candleIndex >= start && entry.candleIndex < end,
+        )
+        .slice(0, 50)
+        .map((entry) => ({
+          timestamp: entry.timestamp.toISOString(),
+          side: entry.side,
+          trigger: entry.trigger,
+          mismatchReason: entry.mismatchReason,
+        })),
+      fundingPoints: supplemental.fundingRates.length,
+      openInterestPoints: supplemental.openInterest.length,
+    },
     marketInputs: {
       fundingRates: supplemental.fundingRates
         .map((point) => {

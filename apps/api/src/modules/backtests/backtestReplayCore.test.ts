@@ -253,4 +253,29 @@ describe('simulateTradesForSymbolReplay', () => {
     expect(result.trades.length).toBeGreaterThan(0);
     expect(new Set(result.trades.map((trade) => trade.side))).toContain('LONG');
   });
+
+  it('emits parity decision-trace mismatch diagnostics with timestamp/side/trigger/reason', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 102), // LONG open
+      candle(2, 99), // SHORT signal while LONG open => no_flip_with_open_position
+      candle(3, 99.1),
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 2,
+      marginMode: 'CROSSED',
+    });
+
+    const mismatch = result.decisionTrace.find(
+      (entry) => entry.mismatchReason === 'no_flip_with_open_position',
+    );
+    expect(mismatch).toBeDefined();
+    expect(mismatch?.side).toBe('LONG');
+    expect(mismatch?.trigger).toBe('THRESHOLD');
+    expect(mismatch?.timestamp).toBeInstanceOf(Date);
+  });
 });

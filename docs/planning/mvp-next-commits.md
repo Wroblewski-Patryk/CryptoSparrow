@@ -14,7 +14,7 @@ Operational queue for one-task execution runs.
 - [x] `PAR-05 test(parity): add deterministic 3-symbol parity suite (same candles, same strategy, backtest vs paper/live)`
 
 ## NEXT
-- [ ] `PAR-06 feat(report): expose parity-delta diagnostics in backtest report and raw event payload`
+- [x] `PAR-06 feat(report): expose parity-delta diagnostics in backtest report and raw event payload`
 - [ ] `PAR-07 qa(manual): publish Binance side-by-side verification checklist for 3 symbols and same indicator setup`
 - [ ] `PAR-08 test(e2e): strategy -> market-group(3 symbols) -> backtest -> paper trace consistency contract`
 - [ ] `PAR-09 perf(backtest): profile/reduce memory for multi-symbol timeline rendering without hiding charts`

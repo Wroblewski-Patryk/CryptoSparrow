@@ -146,7 +146,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `G10-02 engine: remove remaining backtest-only signal shortcuts and keep single shared evaluator as source of truth`
 - [x] `G10-03 replay: align backtest replay inputs with runtime inputs (ohlcv + funding/open-interest where available)`
 - [x] `G10-04 parity-tests: add deterministic 3-symbol parity harness comparing decision traces across BACKTEST/PAPER/LIVE`
-- [ ] `G10-05 parity-reporting: publish mismatch diagnostics (timestamp, side, trigger, reason) in operator-visible report`
+- [x] `G10-05 parity-reporting: publish mismatch diagnostics (timestamp, side, trigger, reason) in operator-visible report`
 - [ ] `G10-06 qa-manual: define Binance side-by-side verification playbook for same interval/indicators/symbol set`
 
 ## Progress Log
@@ -156,6 +156,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-28: Completed `G10-03` by routing replay settlement through shared simulator accounting and historical fill-model adapter with fee/slippage/funding inputs.
 - 2026-03-28: Extended `G10-03` data parity by adding futures historical funding/open-interest ingestion and exposing supplemental market inputs in replay timeline/report payload.
 - 2026-03-28: Completed `G10-04` by adding deterministic 3-symbol parity harness validating replay decision trace against shared execution core outcomes.
+- 2026-03-28: Completed `G10-05` by adding operator-visible parity mismatch diagnostics (`timestamp`, `side`, `trigger`, `mismatchReason`) in backtest report and timeline payloads.
 - 2026-03-15: Initialized V1.0 live release plan.
 - 2026-03-15: Aligned V1.0 structure with architecture, security, testing, and release-readiness docs.
 - 2026-03-15: Added optional isometric dashboard visual mode as late-stage V1 polish item.

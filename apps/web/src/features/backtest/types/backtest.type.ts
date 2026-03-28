@@ -109,6 +109,23 @@ export type BacktestTimeline = {
   candles: BacktestTimelineCandle[];
   events: BacktestTimelineEvent[];
   indicatorSeries: BacktestTimelineIndicatorSeries[];
+  parityDiagnostics?: {
+    strategyRulesActive: boolean;
+    eventCounts: Record<string, number>;
+    mismatchCount: number;
+    mismatchSamples: Array<{
+      timestamp: string;
+      side: 'LONG' | 'SHORT' | null;
+      trigger: 'STRATEGY' | 'THRESHOLD' | 'FINAL_CANDLE';
+      mismatchReason:
+        | 'no_open_position'
+        | 'no_flip_with_open_position'
+        | 'already_open_same_side'
+        | 'manual_managed_symbol';
+    }>;
+    fundingPoints: number;
+    openInterestPoints: number;
+  };
   marketInputs?: {
     fundingRates: Array<{
       candleIndex: number;

@@ -46,11 +46,27 @@ export type ReplayEventDraft = {
   candleIndex: number;
 };
 
+export type ReplayParityDecisionTrace = {
+  symbol: string;
+  timestamp: Date;
+  candleIndex: number;
+  signal: 'LONG' | 'SHORT' | 'EXIT';
+  side: PositionSide | null;
+  trigger: 'STRATEGY' | 'THRESHOLD' | 'FINAL_CANDLE';
+  mismatchReason:
+    | 'no_open_position'
+    | 'no_flip_with_open_position'
+    | 'already_open_same_side'
+    | 'manual_managed_symbol'
+    | null;
+};
+
 export type ReplaySymbolSimulationResult = {
   trades: ReplayTradeDraft[];
   liquidations: number;
   events: ReplayEventDraft[];
   eventCounts: Record<ReplayEventType, number>;
+  decisionTrace: ReplayParityDecisionTrace[];
 };
 
 type ReplayRuntimeConfig = {
@@ -149,7 +165,9 @@ export const simulateTradesForSymbolReplay = (input: {
     TRAILING: 0,
     LIQUIDATION: 0,
   };
-  if (candles.length < 3) return { trades: [], liquidations: 0, events: [], eventCounts: initialEventCounts };
+  if (candles.length < 3) {
+    return { trades: [], liquidations: 0, events: [], eventCounts: initialEventCounts, decisionTrace: [] };
+  }
 
   const config: ReplayRuntimeConfig = {
     longThresholdPct: input.config?.longThresholdPct ?? defaultConfig.longThresholdPct,
@@ -166,6 +184,7 @@ export const simulateTradesForSymbolReplay = (input: {
   const trades: ReplayTradeDraft[] = [];
   const events: ReplayEventDraft[] = [];
   const eventCounts: Record<ReplayEventType, number> = { ...initialEventCounts };
+  const decisionTrace: ReplayParityDecisionTrace[] = [];
   let liquidations = 0;
   let tradeSequence = 0;
   let openPosition:
@@ -221,6 +240,24 @@ export const simulateTradesForSymbolReplay = (input: {
           }
         : null
     );
+
+    const traceSide: PositionSide | null =
+      decision.kind === 'open'
+        ? (decision.positionSide as PositionSide)
+        : openPosition
+          ? (openPosition.side as PositionSide)
+          : direction === 'LONG' || direction === 'SHORT'
+            ? (direction as PositionSide)
+            : null;
+    decisionTrace.push({
+      symbol,
+      timestamp: new Date(current.openTime),
+      candleIndex: index,
+      signal: direction,
+      side: traceSide,
+      trigger: strategyModeEnabled ? 'STRATEGY' : 'THRESHOLD',
+      mismatchReason: decision.kind === 'ignore' ? decision.reason : null,
+    });
 
     if (decision.kind === 'open') {
       tradeSequence += 1;
@@ -386,7 +423,16 @@ export const simulateTradesForSymbolReplay = (input: {
       candles.length - 1,
       tradeSequence
     );
+    decisionTrace.push({
+      symbol,
+      timestamp: new Date(last.closeTime),
+      candleIndex: candles.length - 1,
+      signal: 'EXIT',
+      side: openPosition.side as PositionSide,
+      trigger: 'FINAL_CANDLE',
+      mismatchReason: null,
+    });
   }
 
-  return { trades, liquidations, events, eventCounts };
+  return { trades, liquidations, events, eventCounts, decisionTrace };
 };
