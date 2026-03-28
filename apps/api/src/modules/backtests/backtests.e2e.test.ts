@@ -551,6 +551,11 @@ describe('Backtests runs contract', () => {
       mode: 'PAPER',
     });
     expect(paperDecision.allowed).toBe(true);
+
+    const outOfScopeTimelineRes = await agent
+      .get(`/dashboard/backtests/runs/${runId}/timeline`)
+      .query({ symbol: 'NOT_IN_RUN_SYMBOL' });
+    expect(outOfScopeTimelineRes.status).toBe(404);
   });
 });
 

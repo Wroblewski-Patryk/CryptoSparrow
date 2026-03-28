@@ -1213,12 +1213,18 @@ export const getRunTimeline = async (
   if (!run) return null;
 
   const seed = ((run.seedConfig ?? {}) as Record<string, unknown>) ?? {};
+  const runSymbols = Array.isArray(seed.symbols)
+    ? uniqueSorted((seed.symbols as string[]).map((item) => item.trim().toUpperCase()))
+    : [];
   const marketType = (seed.marketType === 'SPOT' ? 'SPOT' : 'FUTURES') as MarketType;
   const maxCandles = typeof seed.maxCandles === 'number'
     ? clamp(Math.floor(seed.maxCandles), 100, 2500)
     : computeAdaptiveMaxCandles(run.timeframe, 1, undefined);
 
   const symbol = query.symbol.trim().toUpperCase();
+  if (runSymbols.length > 0 && !runSymbols.includes(symbol)) {
+    return null;
+  }
   const candles = await fetchKlines(symbol, run.timeframe, marketType, maxCandles);
   const supplemental = await fetchSupplementalSeries(symbol, run.timeframe, marketType, maxCandles);
   const total = candles.length;

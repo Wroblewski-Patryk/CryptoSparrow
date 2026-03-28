@@ -154,6 +154,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `G10-10 parity-report-hardening: include per-symbol processed/failed status + error diagnostics for operator triage`
 - [x] `G10-11 parity-ui: display per-symbol parity processing status/error in Markets tab for operator visibility`
 - [x] `G10-12 parity-ui-quality: fix reports module api import contract to keep web typecheck/build gate clean`
+- [x] `G10-13 parity-api-contract: enforce run-scoped timeline symbol access and return 404 for out-of-scope symbols`
 
 ## Progress Log
 - 2026-03-28: Added Phase G10 parity-closure workstream to finish deterministic strategy behavior across BACKTEST/PAPER/LIVE and support Binance side-by-side verification.
@@ -170,6 +171,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-28: Completed `G10-10` by hardening parity diagnostics with per-symbol status/error output so failed symbol processing is explicit instead of silent.
 - 2026-03-28: Completed `G10-11` by adding parity status/error UI badges per symbol in Markets tab and rendering symbols with no trades for full run transparency.
 - 2026-03-28: Completed `G10-12` by fixing reports service API import contract and re-running web TypeScript gate successfully.
+- 2026-03-28: Completed `G10-13` by hardening timeline API contract to run-scoped symbols only, with `404` e2e coverage for out-of-scope symbol requests.
 - 2026-03-15: Initialized V1.0 live release plan.
 - 2026-03-15: Aligned V1.0 structure with architecture, security, testing, and release-readiness docs.
 - 2026-03-15: Added optional isometric dashboard visual mode as late-stage V1 polish item.
