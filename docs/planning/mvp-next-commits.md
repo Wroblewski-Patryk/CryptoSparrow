@@ -7,38 +7,18 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `MBA-01 audit(domain): map current Bot/SymbolGroup/BotStrategy contracts and define non-breaking migration path`
-- [x] `MBA-02 docs(decisions): lock canonical model user->bot->market-group->strategy and assistant topology (1 main + max 4 subagents)`
-- [x] `MBA-03 docs(contract): define deterministic signal merge policy for multi-strategy per market-group (priority, tie-break, no-trade)`
-- [x] `MBA-04 feat(db): add BotMarketGroup model with ownership, lifecycle status, and execution ordering`
-- [x] `MBA-05 feat(db): add MarketGroupStrategyLink model (many-strategies per market-group) with priority/weight fields`
-- [x] `MBA-06 feat(db-migration): backfill existing bot strategies into default market-group for zero-downtime compatibility`
-- [x] `MBA-07 feat(api): add market-group CRUD under bots with strict ownership isolation`
-- [x] `MBA-08 feat(api): add attach/detach/reorder strategy endpoints per market-group`
-- [x] `MBA-09 feat(api): expose bot runtime graph read endpoint (bot->groups->strategies) for UI/runtime parity`
-- [x] `MBA-10 refactor(runtime): change evaluation loop from bot-level flat strategies to bot->market-group partitions`
-- [x] `MBA-11 feat(runtime): execute multi-strategy per market-group with locked merge policy and no-flip guarantees`
-- [x] `MBA-12 feat(risk): enforce per-market-group risk budget while preserving bot/global hard caps`
-- [x] `MBA-13 test(e2e): add full flow for one user with 2 bots, each with multiple market-groups and strategies`
-- [x] `MBA-14 docs(ai-contract): define assistant responsibilities, I/O schema, timeout policy, and fail-closed behavior`
-- [x] `MBA-15 feat(db): add BotAssistantConfig (main agent mandate, model profile, safety mode)`
-- [x] `MBA-16 feat(db): add BotSubagentConfig with slotIndex(1..4), role, enabled flag, and unique(botId,slotIndex)`
-- [x] `MBA-17 feat(api): add assistant config CRUD endpoints with hard max-4 subagent validation`
-- [x] `MBA-18 feat(runtime-ai): implement main-agent orchestrator scaffold (request plan -> subagent fan-out -> merge)`
-- [x] `MBA-19 feat(runtime-ai): implement subagent dispatcher with per-slot timeout, partial-failure tolerance, and deterministic merge`
-- [x] `MBA-20 security(ai): add prompt/response sanitization and audit-safe logging for assistant traces`
-- [x] `MBA-21 feat(ui): add bot Assistant tab (main agent panel + 4 subagent slots with enable/disable and role)`
-- [x] `MBA-22 test(e2e): configure assistant stack and verify explainable runtime decision trace (including no-trade output)`
-- [x] `MBA-23 feat(obs): add metrics for group-evaluation latency, subagent timeout rate, merge outcomes, and no-trade frequency`
-- [x] `MBA-24 feat(ops): add circuit-breaker and graceful degradation (assistant off -> strategy-only runtime)`
-- [x] `MBA-25 feat(ai-policy): enforce mandate boundaries and forbidden-action policy before execution approval`
-- [x] `MBA-26 feat(ui-explainability): add decision timeline by bot/group/strategy/main-agent/subagent with rationale payloads`
+- [ ] `PAR-01 docs(contract): freeze canonical strategy-evaluation contract shared across backtest/paper/live`
+- [ ] `PAR-02 refactor(backtest): remove remaining mode-specific signal divergence and route through shared evaluator only`
+- [ ] `PAR-03 feat(backtest): move lifecycle replay to shared execution adapters with mode-specific fill model interfaces`
+- [ ] `PAR-04 feat(data): align historical runtime inputs (ohlcv + funding/open-interest where available) with deterministic cache windows`
+- [ ] `PAR-05 test(parity): add deterministic 3-symbol parity suite (same candles, same strategy, backtest vs paper/live)`
 
 ## NEXT
-- [x] `MBA-27 test(parity): validate backtest/paper/live decision parity with shared assistant orchestration inputs`
-- [x] `MBA-28 perf(load): benchmark target profile (3 bots x 4 groups x 4 strategies x 5 agents) and set SLO thresholds`
-- [x] `MBA-29 docs(runbook): publish operator runbook for assistant incidents, fallback modes, and safe recovery`
-- [x] `MBA-30 release(v1-gate): collect evidence pack and close V1 exit criteria for multi-entity assistant runtime`
+- [ ] `PAR-06 feat(report): expose parity-delta diagnostics in backtest report and raw event payload`
+- [ ] `PAR-07 qa(manual): publish Binance side-by-side verification checklist for 3 symbols and same indicator setup`
+- [ ] `PAR-08 test(e2e): strategy -> market-group(3 symbols) -> backtest -> paper trace consistency contract`
+- [ ] `PAR-09 perf(backtest): profile/reduce memory for multi-symbol timeline rendering without hiding charts`
+- [ ] `PAR-10 docs(runbook): operator protocol for interpreting mismatch reasons and safe corrective actions`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 

@@ -241,7 +241,17 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `MBA-28 perf(load): benchmark target profile (3 bots x 4 groups x 4 strategies x 5 agents) and set SLO thresholds`
 - [x] `MBA-29 docs(runbook): publish operator runbook for assistant incidents, fallback modes, and safe recovery`
 - [x] `MBA-30 release(v1-gate): collect evidence pack and close V1 exit criteria for multi-entity assistant runtime`
+
+## Phase 15 - Runtime Parity Closure (Backtest = Paper = Live)
+- [ ] `PAR-01 docs(contract): freeze canonical strategy-evaluation contract (open/close/additional) shared across runtime modes`
+- [ ] `PAR-02 refactor(engine): route backtest signal generation through shared strategy evaluator only (remove mode-specific divergence paths)`
+- [ ] `PAR-03 feat(backtest): replay lifecycle with shared execution adapters and mode-specific fill models (historical source only)`
+- [ ] `PAR-04 feat(data): align historical source set with runtime inputs (ohlcv + funding/open-interest where available) and deterministic cache windows`
+- [ ] `PAR-05 test(parity): add deterministic 3-symbol parity suite comparing backtest decisions with paper/live decision trace on same candles`
+- [ ] `PAR-06 feat(report): expose parity-delta diagnostics in backtest report (decision time, side, trigger, mismatch reason)`
+- [ ] `PAR-07 qa(manual): publish Binance side-by-side verification protocol for 3 symbols + same interval/indicators`
 ## Progress Log
+- 2026-03-28: Added Phase 15 parity-closure track to lock final path toward deterministic backtest/paper/live behavior and explicit Binance side-by-side verification.
 - 2026-03-22: Domain audit completed for multi-bot runtime (`MBA-01`), including current Bot/SymbolGroup/BotStrategy contract mapping and non-breaking migration path in `docs/planning/mba-01-domain-audit-2026-03-22.md`.
 - 2026-03-23: Locked canonical runtime hierarchy and assistant topology (`MBA-02`) plus deterministic multi-strategy merge policy contract (`MBA-03`) in `docs/planning/open-decisions.md` and `docs/architecture/runtime-signal-merge-contract.md`.
 - 2026-03-23: Added additive Prisma schema + migration for `BotMarketGroup` and `MarketGroupStrategyLink` (`MBA-04`, `MBA-05`) with lifecycle/execution order and priority/weight fields.
