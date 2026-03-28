@@ -109,6 +109,18 @@ export type BacktestTimeline = {
   candles: BacktestTimelineCandle[];
   events: BacktestTimelineEvent[];
   indicatorSeries: BacktestTimelineIndicatorSeries[];
+  marketInputs?: {
+    fundingRates: Array<{
+      candleIndex: number;
+      timestamp: string;
+      value: number;
+    }>;
+    openInterest: Array<{
+      candleIndex: number;
+      timestamp: string;
+      value: number;
+    }>;
+  };
   supportedEventTypes: string[];
   unsupportedEventTypes: string[];
   playbackCursor: number | null;

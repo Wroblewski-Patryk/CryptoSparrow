@@ -27,6 +27,21 @@ type KlineCandle = {
   volume: number;
 };
 
+type FundingRatePoint = {
+  timestamp: number;
+  fundingRate: number;
+};
+
+type OpenInterestPoint = {
+  timestamp: number;
+  openInterest: number;
+};
+
+type SupplementalSeries = {
+  fundingRates: FundingRatePoint[];
+  openInterest: OpenInterestPoint[];
+};
+
 type TradeDraft = {
   symbol: string;
   side: PositionSide;
@@ -130,6 +145,13 @@ const candleCache = new Map<
     candles: KlineCandle[];
   }
 >();
+const supplementalCache = new Map<
+  string,
+  {
+    cachedAt: number;
+    data: SupplementalSeries;
+  }
+>();
 
 const getDbCandleDelegate = () =>
   (prisma as unknown as {
@@ -226,11 +248,16 @@ const toKlineFromDb = (row: {
 
 const cacheKeyForCandles = (symbol: string, timeframe: string, marketType: MarketType, maxCandles: number) =>
   `${marketType}:${symbol}:${normalizeTimeframe(timeframe)}:${maxCandles}`;
+const cacheKeyForSupplemental = (symbol: string, timeframe: string, marketType: MarketType, maxCandles: number) =>
+  `supp:${marketType}:${symbol}:${normalizeTimeframe(timeframe)}:${maxCandles}`;
 
 const pruneCandleCache = () => {
   const now = Date.now();
   for (const [key, value] of candleCache.entries()) {
     if (now - value.cachedAt > CANDLE_CACHE_TTL_MS) candleCache.delete(key);
+  }
+  for (const [key, value] of supplementalCache.entries()) {
+    if (now - value.cachedAt > CANDLE_CACHE_TTL_MS) supplementalCache.delete(key);
   }
 };
 
@@ -380,6 +407,100 @@ const fetchKlines = async (
   }
 
   candleCache.set(key, { cachedAt: Date.now(), candles: result });
+  return result;
+};
+
+const openInterestPeriodForTimeframe = (timeframe: string) => {
+  const normalized = normalizeTimeframe(timeframe);
+  const supported = new Set(['5m', '15m', '30m', '1h', '2h', '4h', '6h', '12h', '1d']);
+  if (supported.has(normalized)) return normalized;
+  return '5m';
+};
+
+const fetchSupplementalSeries = async (
+  symbol: string,
+  timeframe: string,
+  marketType: MarketType,
+  maxCandles: number,
+): Promise<SupplementalSeries> => {
+  if (marketType !== 'FUTURES') {
+    return { fundingRates: [], openInterest: [] };
+  }
+
+  pruneCandleCache();
+  const key = cacheKeyForSupplemental(symbol, timeframe, marketType, maxCandles);
+  const cached = supplementalCache.get(key);
+  if (cached && Date.now() - cached.cachedAt <= CANDLE_CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  const now = Date.now();
+  const startTime = now - TWO_WEEKS_MS;
+  const limit = clamp(maxCandles, 50, 1000);
+
+  const fundingQuery = new URLSearchParams({
+    symbol,
+    startTime: String(startTime),
+    endTime: String(now),
+    limit: String(limit),
+  });
+  const oiQuery = new URLSearchParams({
+    symbol,
+    period: openInterestPeriodForTimeframe(timeframe),
+    startTime: String(startTime),
+    endTime: String(now),
+    limit: String(limit),
+  });
+
+  let fundingResponse: Response | null = null;
+  let openInterestResponse: Response | null = null;
+  try {
+    [fundingResponse, openInterestResponse] = await Promise.all([
+      fetch(`https://fapi.binance.com/fapi/v1/fundingRate?${fundingQuery.toString()}`),
+      fetch(`https://fapi.binance.com/futures/data/openInterestHist?${oiQuery.toString()}`),
+    ]);
+  } catch {
+    const empty = { fundingRates: [], openInterest: [] };
+    supplementalCache.set(key, { cachedAt: Date.now(), data: empty });
+    return empty;
+  }
+
+  const fundingRates: FundingRatePoint[] = fundingResponse?.ok
+    ? (((await fundingResponse.json()) as unknown[]) ?? [])
+      .map((item) => {
+        if (!item || typeof item !== 'object') return null;
+        const row = item as { fundingTime?: unknown; fundingRate?: unknown };
+        const timestamp = safeFloat(row.fundingTime);
+        const fundingRate = safeFloat(row.fundingRate);
+        if (timestamp <= 0 || !Number.isFinite(fundingRate)) return null;
+        return { timestamp, fundingRate } satisfies FundingRatePoint;
+      })
+      .filter((item): item is FundingRatePoint => Boolean(item))
+      .sort((a, b) => a.timestamp - b.timestamp)
+    : [];
+
+  const openInterest: OpenInterestPoint[] = openInterestResponse?.ok
+    ? (((await openInterestResponse.json()) as unknown[]) ?? [])
+      .map((item) => {
+        if (!item || typeof item !== 'object') return null;
+        const row = item as { timestamp?: unknown; sumOpenInterest?: unknown };
+        const timestamp = safeFloat(row.timestamp);
+        const oi = safeFloat(row.sumOpenInterest);
+        if (timestamp <= 0 || !Number.isFinite(oi)) return null;
+        return { timestamp, openInterest: oi } satisfies OpenInterestPoint;
+      })
+      .filter((item): item is OpenInterestPoint => Boolean(item))
+      .sort((a, b) => a.timestamp - b.timestamp)
+    : [];
+
+  const result: SupplementalSeries = {
+    fundingRates,
+    openInterest,
+  };
+  supplementalCache.set(key, {
+    cachedAt: Date.now(),
+    data: result,
+  });
   return result;
 };
 
@@ -679,6 +800,13 @@ const runBacktestAsync = async (runId: string) => {
 
       try {
         const candles = await fetchKlines(symbol, run.timeframe, marketType, maxCandlesPerSymbol);
+        const supplemental = await fetchSupplementalSeries(symbol, run.timeframe, marketType, maxCandlesPerSymbol);
+        symbolInputCoverage.push({
+          symbol,
+          candles: candles.length,
+          fundingPoints: supplemental.fundingRates.length,
+          openInterestPoints: supplemental.openInterest.length,
+        });
         progress.totalCandlesForSymbol = candles.length;
         progress.currentCandleIndex = candles.length > 0 ? candles.length - 1 : 0;
         progress.currentCandleTime = candles.length > 0 ? new Date(candles[candles.length - 1].openTime).toISOString() : null;
@@ -767,6 +895,10 @@ const runBacktestAsync = async (runId: string) => {
           symbolsProcessed: progress.processedSymbols,
           symbolsFailed: progress.failedSymbols,
           maxCandlesPerSymbol,
+          historicalInputs: {
+            sourceWindowDays: 14,
+            symbolCoverage: symbolInputCoverage,
+          },
           leverage: progress.leverage,
           marginMode: progress.marginMode,
           liquidations: progress.liquidations,
@@ -788,6 +920,10 @@ const runBacktestAsync = async (runId: string) => {
           symbolsProcessed: progress.processedSymbols,
           symbolsFailed: progress.failedSymbols,
           maxCandlesPerSymbol,
+          historicalInputs: {
+            sourceWindowDays: 14,
+            symbolCoverage: symbolInputCoverage,
+          },
           leverage: progress.leverage,
           marginMode: progress.marginMode,
           liquidations: progress.liquidations,
@@ -1010,6 +1146,7 @@ export const getRunTimeline = async (
 
   const symbol = query.symbol.trim().toUpperCase();
   const candles = await fetchKlines(symbol, run.timeframe, marketType, maxCandles);
+  const supplemental = await fetchSupplementalSeries(symbol, run.timeframe, marketType, maxCandles);
   const total = candles.length;
   const start = clamp(query.cursor, 0, total);
   const end = clamp(start + query.chunkSize, 0, total);
@@ -1106,6 +1243,30 @@ export const getRunTimeline = async (
     })),
     events,
     indicatorSeries,
+    marketInputs: {
+      fundingRates: supplemental.fundingRates
+        .map((point) => {
+          const candleIndex = candles.findIndex((candle) => candle.openTime >= point.timestamp);
+          if (candleIndex < start || candleIndex >= end || candleIndex < 0) return null;
+          return {
+            candleIndex,
+            timestamp: new Date(point.timestamp).toISOString(),
+            value: point.fundingRate,
+          };
+        })
+        .filter((point): point is { candleIndex: number; timestamp: string; value: number } => Boolean(point)),
+      openInterest: supplemental.openInterest
+        .map((point) => {
+          const candleIndex = candles.findIndex((candle) => candle.openTime >= point.timestamp);
+          if (candleIndex < start || candleIndex >= end || candleIndex < 0) return null;
+          return {
+            candleIndex,
+            timestamp: new Date(point.timestamp).toISOString(),
+            value: point.openInterest,
+          };
+        })
+        .filter((point): point is { candleIndex: number; timestamp: string; value: number } => Boolean(point)),
+    },
     supportedEventTypes: ['ENTRY', 'EXIT', 'DCA', 'TP', 'SL', 'TRAILING', 'LIQUIDATION'],
     unsupportedEventTypes: [],
     playbackCursor:
@@ -1115,3 +1276,9 @@ export const getRunTimeline = async (
   };
 };
 
+  const symbolInputCoverage: Array<{
+    symbol: string;
+    candles: number;
+    fundingPoints: number;
+    openInterestPoints: number;
+  }> = [];
