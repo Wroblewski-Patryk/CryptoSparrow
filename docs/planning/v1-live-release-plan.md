@@ -142,8 +142,8 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `refactor(rate-limit): migrate throttling model from mostly IP-centric to user/exchange-key aware controls`
 
 ### G10 - Deterministic Cross-Mode Strategy Parity (Active)
-- [ ] `G10-01 contract: freeze shared strategy-evaluation contract used by runtime and backtests (open/close/additional semantics)`
-- [ ] `G10-02 engine: remove remaining backtest-only signal shortcuts and keep single shared evaluator as source of truth`
+- [x] `G10-01 contract: freeze shared strategy-evaluation contract used by runtime and backtests (open/close/additional semantics)`
+- [x] `G10-02 engine: remove remaining backtest-only signal shortcuts and keep single shared evaluator as source of truth`
 - [ ] `G10-03 replay: align backtest replay inputs with runtime inputs (ohlcv + funding/open-interest where available)`
 - [ ] `G10-04 parity-tests: add deterministic 3-symbol parity harness comparing decision traces across BACKTEST/PAPER/LIVE`
 - [ ] `G10-05 parity-reporting: publish mismatch diagnostics (timestamp, side, trigger, reason) in operator-visible report`
@@ -151,6 +151,8 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 
 ## Progress Log
 - 2026-03-28: Added Phase G10 parity-closure workstream to finish deterministic strategy behavior across BACKTEST/PAPER/LIVE and support Binance side-by-side verification.
+- 2026-03-28: Completed `G10-01` by publishing `strategy-evaluation-parity-contract.md` and referencing it from open decisions.
+- 2026-03-28: Completed `G10-02` by removing strategy-mode threshold fallback in backtest replay and enforcing shared evaluator semantics for strategy runs.
 - 2026-03-15: Initialized V1.0 live release plan.
 - 2026-03-15: Aligned V1.0 structure with architecture, security, testing, and release-readiness docs.
 - 2026-03-15: Added optional isometric dashboard visual mode as late-stage V1 polish item.

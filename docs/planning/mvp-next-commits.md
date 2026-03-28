@@ -8,7 +8,7 @@ Operational queue for one-task execution runs.
 
 ## NOW
 - [x] `PAR-01 docs(contract): freeze canonical strategy-evaluation contract shared across backtest/paper/live`
-- [ ] `PAR-02 refactor(backtest): remove remaining mode-specific signal divergence and route through shared evaluator only`
+- [x] `PAR-02 refactor(backtest): remove remaining mode-specific signal divergence and route through shared evaluator only`
 - [ ] `PAR-03 feat(backtest): move lifecycle replay to shared execution adapters with mode-specific fill model interfaces`
 - [ ] `PAR-04 feat(data): align historical runtime inputs (ohlcv + funding/open-interest where available) with deterministic cache windows`
 - [ ] `PAR-05 test(parity): add deterministic 3-symbol parity suite (same candles, same strategy, backtest vs paper/live)`
@@ -140,6 +140,7 @@ Operational queue for one-task execution runs.
 - [x] `ops(refresh-summary-strict): add `ops:rc:gates:refresh:summary:strict` flow that always prints summary while preserving strict failure exit code`
 - [x] `ops(pipeline-log-order): normalize refresh pipeline fallback messages to standard output for consistent chronological log ordering`
 - [x] `PAR-01 docs(contract): froze canonical strategy-evaluation parity contract and linked it from open decisions`
+- [x] `PAR-02 refactor(backtest): disabled strategy-mode threshold fallback so replay uses shared evaluator semantics only`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
