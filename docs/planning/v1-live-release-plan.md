@@ -161,6 +161,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `G10-17 parity-ui-cleanup: remove unused mock backtest form to reduce maintenance noise`
 - [x] `G10-18 parity-test-hardening: validate FAILED parity diagnostics contract for invalid symbol processing`
 - [x] `G10-19 parity-build-quality: clear remaining web lint warnings and validate clean production build`
+- [x] `G10-20 parity-create-ux: enforce maxCandles bounds and market-group context in backtest creation flow`
 
 ## Progress Log
 - 2026-03-28: Added Phase G10 parity-closure workstream to finish deterministic strategy behavior across BACKTEST/PAPER/LIVE and support Binance side-by-side verification.
@@ -184,6 +185,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - 2026-03-28: Completed `G10-17` by removing unused mock `BacktestForm` component from web backtest module and preserving green type/test gates.
 - 2026-03-28: Completed `G10-18` by adding e2e coverage for invalid symbol runs to enforce parity diagnostics failed-state contract and operator error visibility.
 - 2026-03-28: Completed `G10-19` by removing residual web lint warnings and re-running clean production build for dashboard modules.
+- 2026-03-28: Completed `G10-20` by adding maxCandles range validation and market-group size summary hints in backtest create UX.
 - 2026-03-15: Initialized V1.0 live release plan.
 - 2026-03-15: Aligned V1.0 structure with architecture, security, testing, and release-readiness docs.
 - 2026-03-15: Added optional isometric dashboard visual mode as late-stage V1 polish item.

@@ -20,6 +20,7 @@ Operational queue for one-task execution runs.
 - [x] `PAR-18 cleanup(ui-backtest): remove unused mock-based BacktestForm component`
 - [x] `PAR-19 test(backtests): verify FAILED parity diagnostics contract for invalid symbol runs`
 - [x] `PAR-20 fix(web-build): clear remaining web lint warnings and keep production build clean`
+- [x] `PAR-21 feat(ui-backtest-create): enforce maxCandles range validation and surface market-group size context`
 
 ## NEXT
 - [x] `PAR-06 feat(report): expose parity-delta diagnostics in backtest report and raw event payload`
@@ -159,6 +160,7 @@ Operational queue for one-task execution runs.
 - [x] `PAR-18 cleanup(ui-backtest): removed dead BacktestForm mock component and kept web typecheck/tests green`
 - [x] `PAR-19 test(backtests): added e2e coverage for invalid-symbol run emitting parity status FAILED with error details`
 - [x] `PAR-20 fix(web-build): removed unused imports/vars in backtest+markets and validated clean `pnpm --filter web build``
+- [x] `PAR-21 feat(ui-backtest-create): added client-side maxCandles bounds check (100-2500) and whitelist/blacklist summary context`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

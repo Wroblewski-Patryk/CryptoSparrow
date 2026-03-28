@@ -21,6 +21,9 @@ type BacktestCreateFormProps = {
   onSubmit: (payload: CreateBacktestRunInput) => Promise<void>;
 };
 
+const MAX_CANDLES_MIN = 100;
+const MAX_CANDLES_MAX = 2500;
+
 export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }: BacktestCreateFormProps) {
   const [name, setName] = useState('MVP Backtest Run');
   const [strategyId, setStrategyId] = useState('');
@@ -87,11 +90,17 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
     const config = (selectedStrategy?.config ?? null) as { additional?: { marginMode?: unknown } } | null;
     return config?.additional?.marginMode === 'ISOLATED' ? 'ISOLATED' : 'CROSSED';
   }, [selectedStrategy]);
+  const parsedMaxCandles = Number.parseInt(maxCandles, 10);
+  const hasValidMaxCandles =
+    Number.isFinite(parsedMaxCandles) &&
+    parsedMaxCandles >= MAX_CANDLES_MIN &&
+    parsedMaxCandles <= MAX_CANDLES_MAX;
 
   const canSubmit =
     name.trim().length > 0 &&
     strategyId.trim().length > 0 &&
     marketUniverseId.trim().length > 0 &&
+    hasValidMaxCandles &&
     !submitting &&
     !universesLoading &&
     !strategiesLoading;
@@ -106,7 +115,7 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
       strategyId,
       marketUniverseId,
       seedConfig: {
-        maxCandles: Number.parseInt(maxCandles, 10) || undefined,
+        maxCandles: parsedMaxCandles,
       },
       notes: notes.trim() || undefined,
     });
@@ -172,8 +181,15 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
               value={maxCandles}
               onChange={(event) => setMaxCandles(event.target.value)}
               inputMode='numeric'
+              min={MAX_CANDLES_MIN}
+              max={MAX_CANDLES_MAX}
               placeholder='1200'
             />
+            {!hasValidMaxCandles ? (
+              <p className='mt-1 text-xs text-error'>
+                Podaj liczbe z zakresu {MAX_CANDLES_MIN} - {MAX_CANDLES_MAX}.
+              </p>
+            ) : null}
           </FieldWrapper>
 
           <FieldWrapper label='Notatki (opcjonalnie)'>
@@ -201,6 +217,12 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
           </p>
           <p>
             <span className='opacity-70'>Grupa rynkow:</span> <span className='font-medium'>{selectedUniverse?.name ?? '-'}</span>
+          </p>
+          <p>
+            <span className='opacity-70'>Whitelist/Blacklist:</span>{' '}
+            <span className='font-medium'>
+              {(selectedUniverse?.whitelist?.length ?? 0)}/{selectedUniverse?.blacklist?.length ?? 0}
+            </span>
           </p>
           <p>
             <span className='opacity-70'>Tryb:</span> <span className='font-medium'>symbol po symbolu</span>
