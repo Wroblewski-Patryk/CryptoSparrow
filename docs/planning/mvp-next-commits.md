@@ -16,6 +16,7 @@ Operational queue for one-task execution runs.
 - [x] `PAR-14 fix(api-contract): return 404 for timeline symbol outside run scope`
 - [x] `PAR-15 chore(repo-hygiene): ignore local agent-generated skills folders to keep git status clean`
 - [x] `PAR-16 feat(ui-backtest): render lifecycle event markers and real event counters in markets chart legend`
+- [x] `PAR-17 perf(ui-backtest): skip timeline fetch for symbols marked as FAILED in parity diagnostics`
 
 ## NEXT
 - [x] `PAR-06 feat(report): expose parity-delta diagnostics in backtest report and raw event payload`
@@ -151,6 +152,7 @@ Operational queue for one-task execution runs.
 - [x] `PAR-14 fix(api-contract): added run-symbol scope guard in timeline endpoint with e2e assertion`
 - [x] `PAR-15 chore(repo-hygiene): added .gitignore rules for local `.agents/skills/*` generated work folders`
 - [x] `PAR-16 feat(ui-backtest): updated markets chart legend to real DCA/TP/SL/TSL/LIQ counts and plotted lifecycle event markers`
+- [x] `PAR-17 perf(ui-backtest): stopped eager timeline requests for FAILED symbols and surfaced parity error directly in card`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

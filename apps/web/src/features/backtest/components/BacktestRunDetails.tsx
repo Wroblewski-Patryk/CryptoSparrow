@@ -987,6 +987,18 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
       for (const [index, stats] of symbolStats.entries()) {
         if (cancelled) return;
         const symbol = stats.symbol;
+        const parity = parityDiagnosticsBySymbol.get(symbol.toUpperCase());
+        if (parity?.status === 'FAILED') {
+          setTimelines((prev) => ({
+            ...prev,
+            [symbol]: {
+              data: prev[symbol]?.data ?? null,
+              loading: false,
+              error: parity.error ?? 'Symbol processing failed during backtest run.',
+            },
+          }));
+          continue;
+        }
         const timelineState = timelinesRef.current[symbol];
 
         const shouldScroll = index === 0 || liveProgress?.currentSymbol === symbol;
@@ -1009,7 +1021,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, liveProgress?.currentSymbol, loadSymbolTimeline, symbolStats]);
+  }, [activeTab, liveProgress?.currentSymbol, loadSymbolTimeline, parityDiagnosticsBySymbol, symbolStats]);
 
   const progress = useMemo(() => {
     if (!run) return 0;
