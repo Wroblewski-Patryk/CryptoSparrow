@@ -69,17 +69,26 @@ type StrategySignalRules = {
   shortRules: StrategyIndicatorRule[];
 };
 
+type StrategyRiskConfig = {
+  takeProfitPct: number;
+  stopLossPct: number;
+  trailingStopPct: number;
+  dcaStepPct: number;
+  maxDcaPerTrade: number;
+};
+
 const defaultConfig: ReplayRuntimeConfig = {
   longThresholdPct: 1,
   shortThresholdPct: -1,
   exitBandPct: 0.2,
 };
-
-const takeProfitPct = 0.012;
-const stopLossPct = 0.01;
-const trailingStopPct = 0.0075;
-const dcaStepPct = 0.008;
-const maxDcaPerTrade = 1;
+const defaultRiskConfig: StrategyRiskConfig = {
+  takeProfitPct: 0.012,
+  stopLossPct: 0.01,
+  trailingStopPct: 0.0075,
+  dcaStepPct: 0.008,
+  maxDcaPerTrade: 1,
+};
 
 const toSignalDirection = (
   current: ReplayCandle,
@@ -176,6 +185,41 @@ const parseStrategySignalRules = (strategyConfig?: Record<string, unknown> | nul
     direction,
     longRules,
     shortRules,
+  };
+};
+
+const asPercent = (value: unknown, fallback: number) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.abs(parsed) / 100;
+};
+
+const parseStrategyRiskConfig = (strategyConfig?: Record<string, unknown> | null): StrategyRiskConfig => {
+  if (!strategyConfig || typeof strategyConfig !== 'object') return defaultRiskConfig;
+
+  const close = (strategyConfig.close as {
+    tp?: unknown;
+    sl?: unknown;
+    tsl?: Array<{ percent?: unknown }>;
+  } | undefined) ?? { };
+  const additional = (strategyConfig.additional as {
+    dcaTimes?: unknown;
+    dcaLevels?: Array<{ percent?: unknown }>;
+  } | undefined) ?? { };
+
+  const takeProfitPct = asPercent(close.tp, defaultRiskConfig.takeProfitPct * 100);
+  const stopLossPct = asPercent(close.sl, defaultRiskConfig.stopLossPct * 100);
+  const trailingStopPct = asPercent(close.tsl?.[0]?.percent, defaultRiskConfig.trailingStopPct * 100);
+  const dcaStepPct = asPercent(additional.dcaLevels?.[0]?.percent, defaultRiskConfig.dcaStepPct * 100);
+  const maxDcaRaw = Number(additional.dcaTimes);
+  const maxDcaPerTrade = Number.isFinite(maxDcaRaw) ? Math.max(0, Math.floor(maxDcaRaw)) : defaultRiskConfig.maxDcaPerTrade;
+
+  return {
+    takeProfitPct: Math.max(0.0001, takeProfitPct),
+    stopLossPct: Math.max(0.0001, stopLossPct),
+    trailingStopPct: Math.max(0.0001, trailingStopPct),
+    dcaStepPct: Math.max(0.0001, dcaStepPct),
+    maxDcaPerTrade,
   };
 };
 
@@ -328,6 +372,7 @@ export const simulateTradesForSymbolReplay = (input: {
     exitBandPct: input.config?.exitBandPct ?? defaultConfig.exitBandPct,
   };
   const strategyRules = parseStrategySignalRules(input.strategyConfig);
+  const riskConfig = parseStrategyRiskConfig(input.strategyConfig);
   const indicatorSeriesCache = new Map<string, Array<number | null>>();
 
   const effectiveLeverage = marketType === 'SPOT' ? 1 : Math.max(1, input.leverage);
@@ -417,7 +462,7 @@ export const simulateTradesForSymbolReplay = (input: {
         ? (openPosition.entryPrice - current.close) / Math.max(openPosition.entryPrice, 1e-8)
         : (current.close - openPosition.entryPrice) / Math.max(openPosition.entryPrice, 1e-8);
 
-    if (openPosition.dcaCount < maxDcaPerTrade && adverseMoveRatioForDca >= dcaStepPct) {
+    if (openPosition.dcaCount < riskConfig.maxDcaPerTrade && adverseMoveRatioForDca >= riskConfig.dcaStepPct) {
       const previousQty = openPosition.quantity;
       const addedQty = 1;
       openPosition.quantity = previousQty + addedQty;
@@ -453,13 +498,13 @@ export const simulateTradesForSymbolReplay = (input: {
       marginMode === 'ISOLATED' &&
       adverseMoveRatio >= isolatedLiquidationThreshold;
 
-    const isTakeProfit = favorableMoveRatio >= takeProfitPct;
-    const isStopLoss = adverseMoveRatio >= stopLossPct;
-    const trailingActive = peakFavorableMoveRatio >= takeProfitPct * 0.5;
+    const isTakeProfit = favorableMoveRatio >= riskConfig.takeProfitPct;
+    const isStopLoss = adverseMoveRatio >= riskConfig.stopLossPct;
+    const trailingActive = peakFavorableMoveRatio >= riskConfig.takeProfitPct * 0.5;
     const isTrailingExit = trailingActive
       ? openPosition.side === 'LONG'
-        ? current.close <= openPosition.bestPrice * (1 - trailingStopPct)
-        : current.close >= openPosition.bestPrice * (1 + trailingStopPct)
+        ? current.close <= openPosition.bestPrice * (1 - riskConfig.trailingStopPct)
+        : current.close >= openPosition.bestPrice * (1 + riskConfig.trailingStopPct)
       : false;
 
     const shouldSignalExit = decision.kind === 'close';
