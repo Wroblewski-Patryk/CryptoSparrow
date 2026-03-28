@@ -6,6 +6,7 @@ import {
   type ReplayEventType,
   simulateTradesForSymbolReplay,
 } from './backtestReplayCore';
+import { BacktestFillModelConfig } from './backtestFillModel';
 import {
   CreateBacktestRunDto,
   GetBacktestTimelineQuery,
@@ -389,6 +390,7 @@ const simulateTradesForSymbol = (
   leverage: number,
   marginMode: MarginMode | 'NONE',
   strategyConfig?: Record<string, unknown> | null,
+  fillModelConfig?: BacktestFillModelConfig,
 ): SymbolSimulationResult => {
   const replay = simulateTradesForSymbolReplay({
     symbol,
@@ -397,6 +399,7 @@ const simulateTradesForSymbol = (
     leverage,
     marginMode,
     strategyConfig,
+    fillModelConfig,
   });
 
   return {
@@ -652,6 +655,16 @@ const runBacktestAsync = async (runId: string) => {
     })
     : null;
   const strategyConfig = (strategy?.config as Record<string, unknown> | undefined) ?? null;
+  const fillModelConfig: BacktestFillModelConfig = {
+    feeRate:
+      typeof (seed as { feeRate?: unknown }).feeRate === 'number'
+        ? Number((seed as { feeRate?: unknown }).feeRate)
+        : undefined,
+    slippageRate:
+      typeof (seed as { slippageRate?: unknown }).slippageRate === 'number'
+        ? Number((seed as { slippageRate?: unknown }).slippageRate)
+        : undefined,
+  };
 
   try {
     for (const [index, symbol] of symbols.entries()) {
@@ -674,6 +687,7 @@ const runBacktestAsync = async (runId: string) => {
           progress.leverage,
           progress.marginMode,
           strategyConfig,
+          fillModelConfig,
         );
         const trades = simulation.trades;
         for (const [key, value] of Object.entries(simulation.eventCounts)) {
@@ -1028,6 +1042,16 @@ export const getRunTimeline = async (
     marketType === 'SPOT' ? 1 : leverage,
     marginMode,
     (strategy?.config as Record<string, unknown> | undefined) ?? null,
+    {
+      feeRate:
+        typeof (seed as { feeRate?: unknown }).feeRate === 'number'
+          ? Number((seed as { feeRate?: unknown }).feeRate)
+          : undefined,
+      slippageRate:
+        typeof (seed as { slippageRate?: unknown }).slippageRate === 'number'
+          ? Number((seed as { slippageRate?: unknown }).slippageRate)
+          : undefined,
+    },
   );
   const events = replay.events
     .filter((event) => event.candleIndex >= start && event.candleIndex < end)

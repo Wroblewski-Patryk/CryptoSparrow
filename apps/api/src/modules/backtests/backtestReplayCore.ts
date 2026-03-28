@@ -4,6 +4,7 @@ import {
   evaluateStrategySignalAtIndex,
   parseStrategySignalRules,
 } from '../engine/strategySignalEvaluator';
+import { BacktestFillModelConfig, createHistoricalBacktestFillModel } from './backtestFillModel';
 
 export type ReplayMarketType = 'SPOT' | 'FUTURES';
 export type ReplayMarginMode = 'CROSSED' | 'ISOLATED' | 'NONE';
@@ -136,6 +137,7 @@ export const simulateTradesForSymbolReplay = (input: {
   marginMode: ReplayMarginMode;
   config?: Partial<ReplayRuntimeConfig>;
   strategyConfig?: Record<string, unknown> | null;
+  fillModelConfig?: BacktestFillModelConfig;
 }): ReplaySymbolSimulationResult => {
   const { symbol, candles, marketType, marginMode } = input;
   const initialEventCounts: Record<ReplayEventType, number> = {
@@ -158,6 +160,7 @@ export const simulateTradesForSymbolReplay = (input: {
   const strategyModeEnabled = Boolean(input.strategyConfig && typeof input.strategyConfig === 'object');
   const riskConfig = parseStrategyRiskConfig(input.strategyConfig);
   const indicatorSeriesCache = new Map<string, Array<number | null>>();
+  const fillModel = createHistoricalBacktestFillModel(input.fillModelConfig);
 
   const effectiveLeverage = marketType === 'SPOT' ? 1 : Math.max(1, input.leverage);
   const trades: ReplayTradeDraft[] = [];
@@ -221,15 +224,16 @@ export const simulateTradesForSymbolReplay = (input: {
 
     if (decision.kind === 'open') {
       tradeSequence += 1;
+      const effectiveEntryPrice = fillModel.entryPrice(current.close, decision.positionSide as PositionSide);
       openPosition = {
         side: decision.positionSide,
-        entryPrice: current.close,
+        entryPrice: effectiveEntryPrice,
         quantity: 1,
         openedAt: new Date(current.openTime),
         dcaCount: 0,
-        bestPrice: current.close,
+        bestPrice: effectiveEntryPrice,
       };
-      pushEvent('ENTRY', decision.positionSide as PositionSide, new Date(current.openTime), current.close, null, index, tradeSequence);
+      pushEvent('ENTRY', decision.positionSide as PositionSide, new Date(current.openTime), effectiveEntryPrice, null, index, tradeSequence);
       continue;
     }
 
@@ -251,11 +255,12 @@ export const simulateTradesForSymbolReplay = (input: {
     if (openPosition.dcaCount < riskConfig.maxDcaPerTrade && adverseMoveRatioForDca >= riskConfig.dcaStepPct) {
       const previousQty = openPosition.quantity;
       const addedQty = 1;
+      const dcaEntryPrice = fillModel.entryPrice(current.close, openPosition.side as PositionSide);
       openPosition.quantity = previousQty + addedQty;
       openPosition.entryPrice =
-        (openPosition.entryPrice * previousQty + current.close * addedQty) / openPosition.quantity;
+        (openPosition.entryPrice * previousQty + dcaEntryPrice * addedQty) / openPosition.quantity;
       openPosition.dcaCount += 1;
-      pushEvent('DCA', openPosition.side as PositionSide, new Date(current.openTime), current.close, null, index, tradeSequence);
+      pushEvent('DCA', openPosition.side as PositionSide, new Date(current.openTime), dcaEntryPrice, null, index, tradeSequence);
     }
 
     const favorableMoveRatio =
@@ -267,11 +272,12 @@ export const simulateTradesForSymbolReplay = (input: {
         ? (openPosition.bestPrice - openPosition.entryPrice) / Math.max(openPosition.entryPrice, 1e-8)
         : (openPosition.entryPrice - openPosition.bestPrice) / Math.max(openPosition.entryPrice, 1e-8);
 
-    const fee = (openPosition.entryPrice + current.close) * 0.0004 * effectiveLeverage;
+    const effectiveExitPrice = fillModel.exitPrice(current.close, openPosition.side as PositionSide);
+    const fee = fillModel.fee(openPosition.entryPrice, effectiveExitPrice, openPosition.quantity, effectiveLeverage);
     const rawPnl =
       openPosition.side === 'LONG'
-        ? (current.close - openPosition.entryPrice) * openPosition.quantity * effectiveLeverage
-        : (openPosition.entryPrice - current.close) * openPosition.quantity * effectiveLeverage;
+        ? (effectiveExitPrice - openPosition.entryPrice) * openPosition.quantity * effectiveLeverage
+        : (openPosition.entryPrice - effectiveExitPrice) * openPosition.quantity * effectiveLeverage;
 
     const adverseMoveRatio =
       openPosition.side === 'LONG'
@@ -321,7 +327,7 @@ export const simulateTradesForSymbolReplay = (input: {
       symbol,
       side: openPosition.side as PositionSide,
       entryPrice: openPosition.entryPrice,
-      exitPrice: current.close,
+      exitPrice: effectiveExitPrice,
       quantity: openPosition.quantity,
       openedAt: openPosition.openedAt,
       closedAt: new Date(current.closeTime),
@@ -334,7 +340,7 @@ export const simulateTradesForSymbolReplay = (input: {
       closeType,
       openPosition.side as PositionSide,
       new Date(current.closeTime),
-      current.close,
+      effectiveExitPrice,
       pnl,
       index,
       tradeSequence
@@ -344,16 +350,17 @@ export const simulateTradesForSymbolReplay = (input: {
 
   if (openPosition) {
     const last = candles[candles.length - 1];
-    const fee = (openPosition.entryPrice + last.close) * 0.0004 * effectiveLeverage;
+    const effectiveExitPrice = fillModel.exitPrice(last.close, openPosition.side as PositionSide);
+    const fee = fillModel.fee(openPosition.entryPrice, effectiveExitPrice, openPosition.quantity, effectiveLeverage);
     const rawPnl =
       openPosition.side === 'LONG'
-        ? (last.close - openPosition.entryPrice) * openPosition.quantity * effectiveLeverage
-        : (openPosition.entryPrice - last.close) * openPosition.quantity * effectiveLeverage;
+        ? (effectiveExitPrice - openPosition.entryPrice) * openPosition.quantity * effectiveLeverage
+        : (openPosition.entryPrice - effectiveExitPrice) * openPosition.quantity * effectiveLeverage;
     trades.push({
       symbol,
       side: openPosition.side as PositionSide,
       entryPrice: openPosition.entryPrice,
-      exitPrice: last.close,
+      exitPrice: effectiveExitPrice,
       quantity: openPosition.quantity,
       openedAt: openPosition.openedAt,
       closedAt: new Date(last.closeTime),
@@ -366,7 +373,7 @@ export const simulateTradesForSymbolReplay = (input: {
       'EXIT',
       openPosition.side as PositionSide,
       new Date(last.closeTime),
-      last.close,
+      effectiveExitPrice,
       rawPnl - fee,
       candles.length - 1,
       tradeSequence
