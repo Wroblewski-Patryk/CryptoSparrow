@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import api from '@/lib/api';
 
 export type CrossModePerformanceMode = "BACKTEST" | "PAPER" | "LIVE";
 
@@ -23,4 +23,3 @@ export const getCrossModePerformance = async () => {
   const response = await api.get<CrossModePerformanceResponse>("/dashboard/reports/cross-mode-performance");
   return response.data;
 };
-

@@ -12,6 +12,7 @@ Operational queue for one-task execution runs.
 - [x] `PAR-10 docs(runbook): operator protocol for interpreting mismatch reasons and safe corrective actions`
 - [x] `PAR-11 feat(report): include per-symbol processed/failed parity diagnostics status for multi-symbol runs`
 - [x] `PAR-12 feat(ui): show parity diagnostics status/error per symbol in backtest markets tab`
+- [x] `PAR-13 fix(web-typecheck): resolve reports service api import contract so web typecheck is green`
 
 ## NEXT
 - [x] `PAR-06 feat(report): expose parity-delta diagnostics in backtest report and raw event payload`
@@ -143,6 +144,7 @@ Operational queue for one-task execution runs.
 - [x] `PAR-05 test(parity): added deterministic 3-symbol parity harness test for replay decision trace alignment`
 - [x] `PAR-11 feat(report): added explicit PROCESSED/FAILED status and error field in per-symbol parity diagnostics`
 - [x] `PAR-12 feat(ui): display parity diagnostics status badges in markets-tab symbol cards`
+- [x] `PAR-13 fix(web-typecheck): fixed reports service import to default api export and restored web tsc pass`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

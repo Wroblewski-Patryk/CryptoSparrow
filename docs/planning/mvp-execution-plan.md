@@ -255,6 +255,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `PAR-10 docs(runbook): operator protocol for interpreting mismatch reasons and safe corrective actions`
 - [x] `PAR-11 feat(report): include explicit per-symbol processed/failed status and error diagnostics in parity report`
 - [x] `PAR-12 feat(ui): surface parity diagnostics status/error per symbol in markets-tab cards`
+- [x] `PAR-13 fix(web-typecheck): align reports service api import with default export contract`
 ## Progress Log
 - 2026-03-28: Completed `PAR-01` by publishing canonical strategy-evaluation parity contract and linking it in open decisions.
 - 2026-03-28: Completed `PAR-02` by disabling strategy-mode fallback to percent-threshold signals and forcing shared evaluator semantics in backtest replay.
@@ -268,6 +269,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-28: Completed `PAR-10` by publishing parity mismatch operator runbook with reason interpretation, safe corrective actions, and escalation protocol.
 - 2026-03-28: Completed `PAR-11` by persisting per-symbol parity diagnostics status (`PROCESSED`/`FAILED`) and operator-facing error details for multi-symbol backtest visibility.
 - 2026-03-28: Completed `PAR-12` by exposing parity status badges and error messages per symbol in backtest Markets tab (including symbols with zero trades).
+- 2026-03-28: Completed `PAR-13` by fixing `reports.service.ts` API import contract and restoring clean `pnpm --filter web exec tsc --noEmit`.
 - 2026-03-28: Added Phase 15 parity-closure track to lock final path toward deterministic backtest/paper/live behavior and explicit Binance side-by-side verification.
 - 2026-03-22: Domain audit completed for multi-bot runtime (`MBA-01`), including current Bot/SymbolGroup/BotStrategy contract mapping and non-breaking migration path in `docs/planning/mba-01-domain-audit-2026-03-22.md`.
 - 2026-03-23: Locked canonical runtime hierarchy and assistant topology (`MBA-02`) plus deterministic multi-strategy merge policy contract (`MBA-03`) in `docs/planning/open-decisions.md` and `docs/architecture/runtime-signal-merge-contract.md`.
