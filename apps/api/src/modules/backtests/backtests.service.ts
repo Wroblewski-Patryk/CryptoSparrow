@@ -1,13 +1,25 @@
 import { PositionSide, Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { getMarketCatalog } from '../markets/markets.service';
-import { parseStrategySignalRules } from '../engine/strategySignalEvaluator';
+import { decideExecutionAction } from '../engine/sharedExecutionCore';
+import {
+  evaluateStrategySignalAtIndex,
+  parseStrategySignalRules,
+} from '../engine/strategySignalEvaluator';
+import {
+  computeRiskBasedOrderQuantity,
+  normalizeWalletRiskPercent,
+} from '../engine/positionSizing';
 import {
   type ReplayEventDraft,
+  type ReplayParityDecisionTrace,
   type ReplayEventType,
   simulateTradesForSymbolReplay,
 } from './backtestReplayCore';
-import { BacktestFillModelConfig } from './backtestFillModel';
+import {
+  BacktestFillModelConfig,
+  createHistoricalBacktestFillModel,
+} from './backtestFillModel';
 import {
   CreateBacktestRunDto,
   GetBacktestTimelineQuery,
@@ -62,6 +74,7 @@ type SymbolSimulationResult = {
   liquidations: number;
   events: ReplayEventDraft[];
   eventCounts: Record<ReplayEventType, number>;
+  decisionTrace: ReplayParityDecisionTrace[];
 };
 
 type ProgressState = {
@@ -93,6 +106,7 @@ type LifecycleEventCounts = {
   EXIT: number;
   DCA: number;
   TP: number;
+  TTP: number;
   SL: number;
   TRAILING: number;
   LIQUIDATION: number;
@@ -196,12 +210,19 @@ const uniqueSorted = (values: string[]) =>
 
 const getIntervalMs = (timeframe: string) => timeframeIntervalMs[normalizeTimeframe(timeframe)] ?? timeframeIntervalMs['5m'];
 
+const computeSourceWindowMs = (timeframe: string, maxCandles: number) => {
+  const intervalMs = getIntervalMs(timeframe);
+  const requestedWindowMs = intervalMs * Math.max(1, maxCandles);
+  const bufferedWindowMs = Math.ceil(requestedWindowMs * 1.15);
+  return Math.max(TWO_WEEKS_MS, bufferedWindowMs);
+};
+
 const getDefaultCandlesForTimeframe = (timeframe: string) =>
   timeframeDefaultCandles[normalizeTimeframe(timeframe)] ?? 1000;
 
 const computeAdaptiveMaxCandles = (timeframe: string, symbolCount: number, requested?: number) => {
   const base = requested && Number.isFinite(requested) ? requested : getDefaultCandlesForTimeframe(timeframe);
-  const safeBase = clamp(Math.floor(base), 100, 2500);
+  const safeBase = clamp(Math.floor(base), 100, 10_000);
 
   if (symbolCount <= 25) return safeBase;
   if (symbolCount <= 100) return clamp(Math.floor(safeBase * 0.65), 100, safeBase);
@@ -293,7 +314,8 @@ const fetchKlines = async (
 
   const normalizedTimeframe = normalizeTimeframe(timeframe);
   const now = Date.now();
-  const startTimeByRange = now - TWO_WEEKS_MS;
+  const sourceWindowMs = computeSourceWindowMs(timeframe, maxCandles);
+  const startTimeByRange = now - sourceWindowMs;
   const dbDelegate = useDbCandleCache ? getDbCandleDelegate() : undefined;
   if (dbDelegate) {
     try {
@@ -306,11 +328,14 @@ const fetchKlines = async (
             gte: BigInt(startTimeByRange),
           },
         },
-        orderBy: { openTime: 'asc' },
+        orderBy: { openTime: 'desc' },
         take: maxCandles,
       });
-      if (dbCandlesRaw.length >= Math.min(50, maxCandles)) {
-        const dbCandles = dbCandlesRaw.map(toKlineFromDb).slice(-maxCandles);
+      if (dbCandlesRaw.length >= maxCandles) {
+        const dbCandles = dbCandlesRaw
+          .map(toKlineFromDb)
+          .sort((a, b) => a.openTime - b.openTime)
+          .slice(-maxCandles);
         candleCache.set(key, { cachedAt: Date.now(), candles: dbCandles });
         return dbCandles;
       }
@@ -328,10 +353,11 @@ const fetchKlines = async (
 
   const candles: KlineCandle[] = [];
   let nextStartTime = startTimeByRange;
-  let remaining = clamp(maxCandles, 1, 2500);
+  let remaining = clamp(maxCandles, 1, 10_000);
   let guard = 0;
+  const maxIterations = Math.ceil(remaining / 1000) + 2;
 
-  while (remaining > 0 && guard < 8) {
+  while (remaining > 0 && guard < maxIterations) {
     guard += 1;
     const chunkLimit = Math.min(1000, remaining);
     const query = new URLSearchParams({
@@ -436,7 +462,8 @@ const fetchSupplementalSeries = async (
   }
 
   const now = Date.now();
-  const startTime = now - TWO_WEEKS_MS;
+  const sourceWindowMs = computeSourceWindowMs(timeframe, maxCandles);
+  const startTime = now - sourceWindowMs;
   const limit = clamp(maxCandles, 50, 1000);
 
   const fundingQuery = new URLSearchParams({
@@ -513,6 +540,11 @@ const simulateTradesForSymbol = (
   marginMode: MarginMode | 'NONE',
   strategyConfig?: Record<string, unknown> | null,
   fillModelConfig?: BacktestFillModelConfig,
+  positionSizing?: {
+    mode: 'fixed' | 'wallet_risk';
+    walletRiskPercent?: number;
+    referenceBalance?: number;
+  },
 ): SymbolSimulationResult => {
   const replay = simulateTradesForSymbolReplay({
     symbol,
@@ -522,6 +554,7 @@ const simulateTradesForSymbol = (
     marginMode,
     strategyConfig,
     fillModelConfig,
+    positionSizing,
   });
 
   return {
@@ -541,6 +574,529 @@ const simulateTradesForSymbol = (
     liquidations: replay.liquidations,
     events: replay.events,
     eventCounts: replay.eventCounts,
+    decisionTrace: replay.decisionTrace,
+  };
+};
+
+type StrategyRiskConfig = {
+  takeProfitPct: number;
+  trailingTakeProfitLevels: Array<{ arm: number; percent: number }>;
+  stopLossPct: number;
+  trailingStopLevels: Array<{ arm: number; percent: number }>;
+  maxDcaPerTrade: number;
+  dcaLevels: number[];
+  dcaMultipliers: number[];
+};
+
+type InterleavedPortfolioSimulationResult = {
+  perSymbol: Record<string, SymbolSimulationResult>;
+  finalBalance: number;
+};
+
+const parseReplayRiskConfig = (strategyConfig?: Record<string, unknown> | null): StrategyRiskConfig => {
+  const fallback: StrategyRiskConfig = {
+    takeProfitPct: 0.012,
+    trailingTakeProfitLevels: [],
+    stopLossPct: 0.01,
+    trailingStopLevels: [{ arm: 0.006, percent: 0.0075 }],
+    maxDcaPerTrade: 1,
+    dcaLevels: [-0.008],
+    dcaMultipliers: [1],
+  };
+  if (!strategyConfig || typeof strategyConfig !== 'object') return fallback;
+
+  const asPercent = (value: unknown, fallbackPercent: number) => {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return fallbackPercent;
+    return Math.abs(parsed) / 100;
+  };
+  const asSignedPercent = (value: unknown, fallbackPercent: number) => {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return fallbackPercent;
+    return parsed / 100;
+  };
+
+  const close = (strategyConfig.close as {
+    tp?: unknown;
+    ttp?: Array<{ percent?: unknown; arm?: unknown }>;
+    sl?: unknown;
+    tsl?: Array<{ percent?: unknown; arm?: unknown }>;
+  } | undefined) ?? {};
+  const additional = (strategyConfig.additional as {
+    dcaEnabled?: unknown;
+    dcaTimes?: unknown;
+    dcaLevels?: Array<{ percent?: unknown; multiplier?: unknown }>;
+  } | undefined) ?? {};
+
+  const takeProfitPct = Math.max(0.0001, asPercent(close.tp, fallback.takeProfitPct * 100));
+  const stopLossPct = Math.max(0.0001, asPercent(close.sl, fallback.stopLossPct * 100));
+  const trailingTakeProfitLevels = (Array.isArray(close.ttp) ? close.ttp : [])
+    .map((level) => ({
+      arm: asPercent(level?.arm, Number.NaN),
+      percent: asPercent(level?.percent, Number.NaN),
+    }))
+    .filter((level) => Number.isFinite(level.arm) && Number.isFinite(level.percent) && level.arm > 0 && level.percent > 0)
+    .sort((left, right) => left.arm - right.arm);
+  const parsedTrailingStopLevels = (Array.isArray(close.tsl) ? close.tsl : [])
+    .map((level) => ({
+      arm: asPercent(level?.arm, 0),
+      percent: asPercent(level?.percent, Number.NaN),
+    }))
+    .filter((level) => Number.isFinite(level.percent) && level.percent > 0)
+    .sort((left, right) => left.arm - right.arm);
+  const trailingStopLevels = parsedTrailingStopLevels.length > 0 ? parsedTrailingStopLevels : fallback.trailingStopLevels;
+
+  const dcaEnabled = Boolean(additional.dcaEnabled ?? true);
+  const maxDcaRaw = Number(additional.dcaTimes);
+  const maxDcaPerTrade = dcaEnabled
+    ? Number.isFinite(maxDcaRaw)
+      ? Math.max(0, Math.floor(maxDcaRaw))
+      : fallback.maxDcaPerTrade
+    : 0;
+  const rawDcaLevels = Array.isArray(additional.dcaLevels) ? additional.dcaLevels : [];
+  const dcaLevels = maxDcaPerTrade === 0
+    ? []
+    : rawDcaLevels
+      .map((level) => asSignedPercent(level?.percent, Number.NaN))
+      .filter((value) => Number.isFinite(value) && value !== 0)
+      .slice(0, maxDcaPerTrade);
+  const dcaMultipliers = maxDcaPerTrade === 0
+    ? []
+    : rawDcaLevels
+      .map((level) => Number(level?.multiplier))
+      .filter((value) => Number.isFinite(value) && value > 0)
+      .slice(0, maxDcaPerTrade);
+  const normalizedDcaLevels =
+    maxDcaPerTrade === 0
+      ? []
+      : (dcaLevels.length > 0 ? dcaLevels : Array.from({ length: Math.max(1, maxDcaPerTrade) }, () => fallback.dcaLevels[0]));
+  const normalizedDcaMultipliers =
+    normalizedDcaLevels.length === 0
+      ? []
+      : (dcaMultipliers.length > 0
+        ? dcaMultipliers
+        : Array.from({ length: normalizedDcaLevels.length }, () => fallback.dcaMultipliers[0]));
+
+  return {
+    takeProfitPct,
+    trailingTakeProfitLevels,
+    stopLossPct,
+    trailingStopLevels,
+    maxDcaPerTrade,
+    dcaLevels: normalizedDcaLevels,
+    dcaMultipliers: normalizedDcaMultipliers,
+  };
+};
+
+const simulateInterleavedPortfolio = (input: {
+  symbols: string[];
+  candlesBySymbol: Map<string, KlineCandle[]>;
+  marketType: MarketType;
+  leverage: number;
+  marginMode: MarginMode | 'NONE';
+  strategyConfig?: Record<string, unknown> | null;
+  fillModelConfig?: BacktestFillModelConfig;
+  walletRiskPercent: number;
+  initialBalance: number;
+}): InterleavedPortfolioSimulationResult => {
+  const effectiveLeverage = input.marketType === 'SPOT' ? 1 : Math.max(1, input.leverage);
+  const rules = parseStrategySignalRules(input.strategyConfig);
+  const strategyModeEnabled = Boolean(input.strategyConfig && typeof input.strategyConfig === 'object');
+  const riskConfig = parseReplayRiskConfig(input.strategyConfig);
+  const fillModel = createHistoricalBacktestFillModel(input.fillModelConfig);
+
+  const perSymbol: Record<string, SymbolSimulationResult> = Object.fromEntries(
+    input.symbols.map((symbol) => [
+      symbol,
+      {
+        trades: [],
+        liquidations: 0,
+        events: [],
+        eventCounts: {
+          ENTRY: 0,
+          EXIT: 0,
+          DCA: 0,
+          TP: 0,
+          TTP: 0,
+          SL: 0,
+          TRAILING: 0,
+          LIQUIDATION: 0,
+        },
+        decisionTrace: [],
+      } satisfies SymbolSimulationResult,
+    ]),
+  );
+
+  const indicatorCacheBySymbol = new Map<string, Map<string, Array<number | null>>>();
+  const tradeSequenceBySymbol = new Map<string, number>(input.symbols.map((symbol) => [symbol, 0]));
+  const cursorBySymbol = new Map<string, number>(
+    input.symbols.map((symbol) => [symbol, 1]),
+  );
+  const openPositions = new Map<string, {
+    side: 'LONG' | 'SHORT';
+    entryPrice: number;
+    quantity: number;
+    openedAt: Date;
+    dcaCount: number;
+    lastDcaPrice: number;
+    bestPrice: number;
+    marginUsed: number;
+  }>();
+
+  let cashBalance = Math.max(0, input.initialBalance);
+  const calcReservedMargin = () =>
+    [...openPositions.values()].reduce((sum, position) => sum + position.marginUsed, 0);
+  const calcReferenceBalance = () => Math.max(0, cashBalance + calcReservedMargin());
+
+  const pickNextSymbol = () => {
+    let selected: { symbol: string; openTime: number } | null = null;
+    for (const symbol of input.symbols) {
+      const candles = input.candlesBySymbol.get(symbol) ?? [];
+      const cursor = cursorBySymbol.get(symbol) ?? 1;
+      if (cursor >= candles.length) continue;
+      const openTime = candles[cursor].openTime;
+      if (!selected || openTime < selected.openTime || (openTime === selected.openTime && symbol.localeCompare(selected.symbol) < 0)) {
+        selected = { symbol, openTime };
+      }
+    }
+    return selected?.symbol ?? null;
+  };
+
+  const pushEvent = (
+    symbol: string,
+    type: ReplayEventType,
+    side: PositionSide,
+    timestamp: Date,
+    price: number,
+    pnl: number | null,
+    candleIndex: number,
+    tradeSequence: number,
+  ) => {
+    const bucket = perSymbol[symbol];
+    bucket.events.push({
+      symbol,
+      type,
+      side,
+      timestamp,
+      price,
+      pnl,
+      candleIndex,
+      tradeSequence,
+    });
+    bucket.eventCounts[type] += 1;
+  };
+
+  while (true) {
+    const symbol = pickNextSymbol();
+    if (!symbol) break;
+    const candles = input.candlesBySymbol.get(symbol) ?? [];
+    const index = cursorBySymbol.get(symbol) ?? 1;
+    const current = candles[index];
+    const previous = candles[index - 1];
+    const bucket = perSymbol[symbol];
+    const indicatorCache = indicatorCacheBySymbol.get(symbol) ?? new Map<string, Array<number | null>>();
+    indicatorCacheBySymbol.set(symbol, indicatorCache);
+    const direction = strategyModeEnabled
+      ? rules
+        ? evaluateStrategySignalAtIndex(rules, candles, index, indicatorCache)
+        : null
+      : (() => {
+        const base = previous.close > 0 ? previous.close : 1;
+        const changePct = ((current.close - previous.close) / base) * 100;
+        if (changePct >= 1) return 'LONG';
+        if (changePct <= -1) return 'SHORT';
+        if (Math.abs(changePct) <= 0.2) return 'EXIT';
+        return null;
+      })();
+    const open = openPositions.get(symbol);
+    const decision = direction
+      ? decideExecutionAction(
+        direction,
+        open
+          ? { side: open.side, quantity: open.quantity, managementMode: 'BOT_MANAGED' }
+          : null,
+      )
+      : null;
+
+    if (direction && decision) {
+      const traceSide: PositionSide | null =
+        decision.kind === 'open'
+          ? (decision.positionSide as PositionSide)
+          : open
+            ? (open.side as PositionSide)
+            : direction === 'LONG' || direction === 'SHORT'
+              ? (direction as PositionSide)
+              : null;
+      bucket.decisionTrace.push({
+        symbol,
+        timestamp: new Date(current.openTime),
+        candleIndex: index,
+        signal: direction,
+        side: traceSide,
+        trigger: strategyModeEnabled ? 'STRATEGY' : 'THRESHOLD',
+        mismatchReason: decision.kind === 'ignore' ? decision.reason : null,
+      });
+    }
+
+    if (decision?.kind === 'open') {
+      const entryPrice = fillModel.entryPrice(current.close, decision.positionSide as PositionSide);
+      const quantity = computeRiskBasedOrderQuantity({
+        price: entryPrice,
+        walletRiskPercent: input.walletRiskPercent,
+        referenceBalance: calcReferenceBalance(),
+        leverage: effectiveLeverage,
+        minQuantity: 0.000001,
+      });
+      const marginRequired = (entryPrice * quantity) / Math.max(1, effectiveLeverage);
+      if (marginRequired <= cashBalance && quantity > 0) {
+        cashBalance -= marginRequired;
+        const sequence = (tradeSequenceBySymbol.get(symbol) ?? 0) + 1;
+        tradeSequenceBySymbol.set(symbol, sequence);
+        openPositions.set(symbol, {
+          side: decision.positionSide,
+          entryPrice,
+          quantity,
+          openedAt: new Date(current.openTime),
+          dcaCount: 0,
+          lastDcaPrice: entryPrice,
+          bestPrice: entryPrice,
+          marginUsed: marginRequired,
+        });
+        pushEvent(symbol, 'ENTRY', decision.positionSide as PositionSide, new Date(current.openTime), entryPrice, null, index, sequence);
+      }
+      cursorBySymbol.set(symbol, index + 1);
+      continue;
+    }
+
+    if (!open) {
+      cursorBySymbol.set(symbol, index + 1);
+      continue;
+    }
+
+    const position = open;
+    if (position.side === 'LONG') position.bestPrice = Math.max(position.bestPrice, current.high);
+    else position.bestPrice = Math.min(position.bestPrice, current.low);
+
+    const dcaTriggerPrice = position.side === 'LONG' ? current.low : current.high;
+    while (position.dcaCount < riskConfig.maxDcaPerTrade) {
+      const dcaReference = Math.max(position.lastDcaPrice, 1e-8);
+      const rawMove =
+        position.side === 'LONG'
+          ? (dcaTriggerPrice - dcaReference) / dcaReference
+          : (dcaReference - dcaTriggerPrice) / dcaReference;
+      const leveragedMove = rawMove * effectiveLeverage;
+      const triggerLevel = riskConfig.dcaLevels[position.dcaCount] ?? riskConfig.dcaLevels[riskConfig.dcaLevels.length - 1] ?? -0.01;
+      const shouldTrigger = triggerLevel >= 0 ? leveragedMove >= triggerLevel : leveragedMove <= triggerLevel;
+      if (!shouldTrigger) break;
+
+      const multiplier =
+        riskConfig.dcaMultipliers[position.dcaCount] ??
+        riskConfig.dcaMultipliers[riskConfig.dcaMultipliers.length - 1] ??
+        1;
+      const addedQty = Math.max(0.000001, position.quantity * multiplier);
+      const dcaPrice = fillModel.entryPrice(dcaTriggerPrice, position.side as PositionSide);
+      const addMargin = (dcaPrice * addedQty) / Math.max(1, effectiveLeverage);
+      if (addMargin > cashBalance) break;
+
+      const prevQty = position.quantity;
+      cashBalance -= addMargin;
+      position.marginUsed += addMargin;
+      position.quantity = prevQty + addedQty;
+      position.entryPrice = (position.entryPrice * prevQty + dcaPrice * addedQty) / position.quantity;
+      position.dcaCount += 1;
+      position.lastDcaPrice = dcaPrice;
+      pushEvent(
+        symbol,
+        'DCA',
+        position.side as PositionSide,
+        new Date(current.openTime),
+        dcaPrice,
+        null,
+        index,
+        tradeSequenceBySymbol.get(symbol) ?? 1,
+      );
+    }
+
+    const favorableMove =
+      position.side === 'LONG'
+        ? (current.close - position.entryPrice) / Math.max(position.entryPrice, 1e-8)
+        : (position.entryPrice - current.close) / Math.max(position.entryPrice, 1e-8);
+    const peakFavorableMove =
+      position.side === 'LONG'
+        ? (position.bestPrice - position.entryPrice) / Math.max(position.entryPrice, 1e-8)
+        : (position.entryPrice - position.bestPrice) / Math.max(position.entryPrice, 1e-8);
+    const adverseMove =
+      position.side === 'LONG'
+        ? (position.entryPrice - current.low) / Math.max(position.entryPrice, 1e-8)
+        : (current.high - position.entryPrice) / Math.max(position.entryPrice, 1e-8);
+
+    const leveragedFavorableMove = favorableMove * effectiveLeverage;
+    const leveragedPeakFavorableMove = peakFavorableMove * effectiveLeverage;
+    const leveragedAdverseMove = adverseMove * effectiveLeverage;
+    const dcaCompleted = position.dcaCount >= riskConfig.maxDcaPerTrade;
+
+    const isolatedThreshold = 1 / Math.max(1, effectiveLeverage);
+    const isIsolatedLiquidated =
+      input.marketType === 'FUTURES' &&
+      input.marginMode === 'ISOLATED' &&
+      adverseMove >= isolatedThreshold;
+    const isTakeProfit = leveragedFavorableMove >= riskConfig.takeProfitPct;
+    const activeTtp = [...riskConfig.trailingTakeProfitLevels]
+      .sort((left, right) => left.arm - right.arm)
+      .filter((level) => leveragedPeakFavorableMove >= level.arm)
+      .at(-1);
+    const isTrailingTakeProfit = activeTtp
+      ? position.side === 'LONG'
+        ? current.close <= position.bestPrice * (1 - activeTtp.percent)
+        : current.close >= position.bestPrice * (1 + activeTtp.percent)
+      : false;
+    const isStopLoss = dcaCompleted && leveragedAdverseMove >= riskConfig.stopLossPct;
+    const activeTsl = dcaCompleted
+      ? [...riskConfig.trailingStopLevels]
+        .sort((left, right) => left.arm - right.arm)
+        .filter((level) => leveragedPeakFavorableMove >= level.arm)
+        .at(-1)
+      : null;
+    const isTrailingExit = activeTsl
+      ? position.side === 'LONG'
+        ? current.close <= position.bestPrice * (1 - activeTsl.percent)
+        : current.close >= position.bestPrice * (1 + activeTsl.percent)
+      : false;
+    const shouldSignalExit = decision?.kind === 'close';
+
+    if (
+      !isIsolatedLiquidated &&
+      !isTakeProfit &&
+      !isTrailingTakeProfit &&
+      !isStopLoss &&
+      !isTrailingExit &&
+      !shouldSignalExit
+    ) {
+      cursorBySymbol.set(symbol, index + 1);
+      continue;
+    }
+
+    const exitPrice = fillModel.exitPrice(current.close, position.side as PositionSide);
+    const settlement = fillModel.settle({
+      side: position.side as PositionSide,
+      entryPrice: position.entryPrice,
+      exitPrice,
+      quantity: position.quantity,
+      leverage: effectiveLeverage,
+    });
+    const rawPnl = settlement.grossPnl - settlement.fees;
+    let pnl = isIsolatedLiquidated ? -position.marginUsed : rawPnl;
+    if (input.marginMode === 'ISOLATED') {
+      pnl = Math.max(-position.marginUsed, pnl);
+    }
+    let nextCash = cashBalance + position.marginUsed + pnl;
+    if (nextCash < 0) {
+      pnl = -(cashBalance + position.marginUsed);
+      nextCash = 0;
+    }
+    cashBalance = nextCash;
+
+    const closeType: ReplayEventType = isIsolatedLiquidated
+      ? 'LIQUIDATION'
+      : isTakeProfit
+        ? 'TP'
+        : isTrailingTakeProfit
+          ? 'TTP'
+          : isStopLoss
+            ? 'SL'
+            : isTrailingExit
+              ? 'TRAILING'
+              : 'EXIT';
+    if (isIsolatedLiquidated) {
+      bucket.liquidations += 1;
+    }
+    bucket.trades.push({
+      symbol,
+      side: position.side as PositionSide,
+      entryPrice: position.entryPrice,
+      exitPrice,
+      quantity: position.quantity,
+      openedAt: position.openedAt,
+      closedAt: new Date(current.closeTime),
+      pnl,
+      fee: settlement.fees,
+      exitReason: isIsolatedLiquidated ? 'LIQUIDATION' : 'SIGNAL_EXIT',
+      liquidated: isIsolatedLiquidated,
+    });
+    pushEvent(
+      symbol,
+      closeType,
+      position.side as PositionSide,
+      new Date(current.closeTime),
+      exitPrice,
+      pnl,
+      index,
+      tradeSequenceBySymbol.get(symbol) ?? 1,
+    );
+    openPositions.delete(symbol);
+    cursorBySymbol.set(symbol, index + 1);
+  }
+
+  for (const [symbol, position] of openPositions.entries()) {
+    const candles = input.candlesBySymbol.get(symbol) ?? [];
+    if (candles.length === 0) continue;
+    const last = candles[candles.length - 1];
+    const exitPrice = fillModel.exitPrice(last.close, position.side as PositionSide);
+    const settlement = fillModel.settle({
+      side: position.side as PositionSide,
+      entryPrice: position.entryPrice,
+      exitPrice,
+      quantity: position.quantity,
+      leverage: effectiveLeverage,
+    });
+    let pnl = settlement.grossPnl - settlement.fees;
+    if (input.marginMode === 'ISOLATED') {
+      pnl = Math.max(-position.marginUsed, pnl);
+    }
+    let nextCash = cashBalance + position.marginUsed + pnl;
+    if (nextCash < 0) {
+      pnl = -(cashBalance + position.marginUsed);
+      nextCash = 0;
+    }
+    cashBalance = nextCash;
+    const bucket = perSymbol[symbol];
+    bucket.trades.push({
+      symbol,
+      side: position.side as PositionSide,
+      entryPrice: position.entryPrice,
+      exitPrice,
+      quantity: position.quantity,
+      openedAt: position.openedAt,
+      closedAt: new Date(last.closeTime),
+      pnl,
+      fee: settlement.fees,
+      exitReason: 'FINAL_CANDLE',
+      liquidated: false,
+    });
+    pushEvent(
+      symbol,
+      'EXIT',
+      position.side as PositionSide,
+      new Date(last.closeTime),
+      exitPrice,
+      pnl,
+      candles.length - 1,
+      tradeSequenceBySymbol.get(symbol) ?? 1,
+    );
+    bucket.decisionTrace.push({
+      symbol,
+      timestamp: new Date(last.closeTime),
+      candleIndex: candles.length - 1,
+      signal: 'EXIT',
+      side: position.side as PositionSide,
+      trigger: 'FINAL_CANDLE',
+      mismatchReason: null,
+    });
+  }
+
+  return {
+    perSymbol,
+    finalBalance: cashBalance + calcReservedMargin(),
   };
 };
 
@@ -711,6 +1267,7 @@ const emptyLifecycleEventCounts = (): LifecycleEventCounts => ({
   EXIT: 0,
   DCA: 0,
   TP: 0,
+  TTP: 0,
   SL: 0,
   TRAILING: 0,
   LIQUIDATION: 0,
@@ -773,10 +1330,11 @@ const runBacktestAsync = async (runId: string) => {
   const strategy = run.strategyId
     ? await prisma.strategy.findFirst({
       where: { id: run.strategyId, userId: run.userId },
-      select: { config: true },
+      select: { config: true, walletRisk: true },
     })
     : null;
   const strategyConfig = (strategy?.config as Record<string, unknown> | undefined) ?? null;
+  const strategyWalletRisk = normalizeWalletRiskPercent(strategy?.walletRisk ?? 1, 1);
   const strategyRulesActive = Boolean(parseStrategySignalRules(strategyConfig));
   const fillModelConfig: BacktestFillModelConfig = {
     feeRate:
@@ -822,15 +1380,23 @@ const runBacktestAsync = async (runId: string) => {
   }> = [];
 
   try {
+    const candlesBySymbol = new Map<string, KlineCandle[]>();
+    const supplementalBySymbol = new Map<string, SupplementalSeries>();
+
     for (const [index, symbol] of symbols.entries()) {
       progress.currentSymbol = symbol;
-      progress.lastUpdate = `processing_${symbol}`;
+      progress.lastUpdate = `loading_${symbol}`;
       progress.updatedAt = new Date().toISOString();
       await updateRunProgress(runId, seed, progress);
 
       try {
         const candles = await fetchKlines(symbol, run.timeframe, marketType, maxCandlesPerSymbol);
+        if (candles.length === 0) {
+          throw new Error('NO_CANDLES_AVAILABLE_FOR_SYMBOL');
+        }
         const supplemental = await fetchSupplementalSeries(symbol, run.timeframe, marketType, maxCandlesPerSymbol);
+        candlesBySymbol.set(symbol, candles);
+        supplementalBySymbol.set(symbol, supplemental);
         symbolInputCoverage.push({
           symbol,
           candles: candles.length,
@@ -842,32 +1408,72 @@ const runBacktestAsync = async (runId: string) => {
         progress.currentCandleTime = candles.length > 0 ? new Date(candles[candles.length - 1].openTime).toISOString() : null;
         progress.updatedAt = new Date().toISOString();
         await updateRunProgress(runId, seed, progress);
-        const simulation = simulateTradesForSymbol(
+      } catch (error) {
+        progress.failedSymbols.push(symbol);
+        parityDiagnostics.push({
           symbol,
-          candles,
-          marketType,
-          progress.leverage,
-          progress.marginMode,
-          strategyConfig,
-          fillModelConfig,
-        );
-        const trades = simulation.trades;
-        for (const [key, value] of Object.entries(simulation.eventCounts)) {
+          status: 'FAILED',
+          strategyRulesActive,
+          entryEvents: 0,
+          closeEvents: 0,
+          liquidationEvents: 0,
+          mismatchCount: 0,
+          mismatchSamples: [],
+          fundingPoints: 0,
+          openInterestPoints: 0,
+          error: error instanceof Error ? error.message : 'UNKNOWN_SYMBOL_PROCESSING_ERROR',
+        });
+      }
+
+      progress.processedSymbols = index + 1;
+      progress.lastUpdate = `processed_${symbol}`;
+      progress.updatedAt = new Date().toISOString();
+      await updateRunProgress(runId, seed, progress);
+    }
+
+    const loadedSymbols = symbols.filter((symbol) => candlesBySymbol.has(symbol));
+    if (loadedSymbols.length > 0) {
+      progress.currentSymbol = 'INTERLEAVED_PORTFOLIO_CLOCK';
+      progress.lastUpdate = 'simulating_interleaved_portfolio';
+      progress.updatedAt = new Date().toISOString();
+      await updateRunProgress(runId, seed, progress);
+
+      const simulation = simulateInterleavedPortfolio({
+        symbols: loadedSymbols,
+        candlesBySymbol,
+        marketType,
+        leverage: progress.leverage,
+        marginMode: progress.marginMode,
+        strategyConfig,
+        fillModelConfig,
+        walletRiskPercent: strategyWalletRisk,
+        initialBalance,
+      });
+
+      for (const symbol of loadedSymbols) {
+        const symbolSimulation = simulation.perSymbol[symbol];
+        if (!symbolSimulation) continue;
+        const supplemental = supplementalBySymbol.get(symbol) ?? { fundingRates: [], openInterest: [] };
+        const decisionTrace = Array.isArray(symbolSimulation.decisionTrace)
+          ? symbolSimulation.decisionTrace
+          : [];
+        for (const [key, value] of Object.entries(symbolSimulation.eventCounts)) {
           lifecycleEventCounts[key as keyof LifecycleEventCounts] += value;
         }
         parityDiagnostics.push({
           symbol,
           status: 'PROCESSED',
           strategyRulesActive,
-          entryEvents: simulation.eventCounts.ENTRY,
+          entryEvents: symbolSimulation.eventCounts.ENTRY,
           closeEvents:
-            simulation.eventCounts.EXIT +
-            simulation.eventCounts.TP +
-            simulation.eventCounts.SL +
-            simulation.eventCounts.TRAILING,
-          liquidationEvents: simulation.eventCounts.LIQUIDATION,
-          mismatchCount: simulation.decisionTrace.filter((entry) => entry.mismatchReason !== null).length,
-          mismatchSamples: simulation.decisionTrace
+            symbolSimulation.eventCounts.EXIT +
+            symbolSimulation.eventCounts.TP +
+            symbolSimulation.eventCounts.TTP +
+            symbolSimulation.eventCounts.SL +
+            symbolSimulation.eventCounts.TRAILING,
+          liquidationEvents: symbolSimulation.eventCounts.LIQUIDATION,
+          mismatchCount: decisionTrace.filter((entry) => entry.mismatchReason !== null).length,
+          mismatchSamples: decisionTrace
             .filter((entry) => entry.mismatchReason !== null)
             .slice(0, 25)
             .map((entry) => ({
@@ -885,6 +1491,7 @@ const runBacktestAsync = async (runId: string) => {
           error: null,
         });
 
+        const trades = symbolSimulation.trades;
         if (trades.length > 0) {
           await prisma.backtestTrade.createMany({
             data: trades.map((trade) => ({
@@ -912,31 +1519,10 @@ const runBacktestAsync = async (runId: string) => {
             if (trade.pnl < 0) progress.grossLoss += Math.abs(trade.pnl);
             pnlSeries.push(trade.pnl);
           }
-          progress.liquidations += simulation.liquidations;
-
-          progress.maxDrawdown = maxDrawdownFromPnlSeries(pnlSeries);
         }
-      } catch (error) {
-        progress.failedSymbols.push(symbol);
-        parityDiagnostics.push({
-          symbol,
-          status: 'FAILED',
-          strategyRulesActive,
-          entryEvents: 0,
-          closeEvents: 0,
-          liquidationEvents: 0,
-          mismatchCount: 0,
-          mismatchSamples: [],
-          fundingPoints: 0,
-          openInterestPoints: 0,
-          error: error instanceof Error ? error.message : 'UNKNOWN_SYMBOL_PROCESSING_ERROR',
-        });
+        progress.liquidations += symbolSimulation.liquidations;
       }
-
-      progress.processedSymbols = index + 1;
-      progress.lastUpdate = `processed_${symbol}`;
-      progress.updatedAt = new Date().toISOString();
-      await updateRunProgress(runId, seed, progress);
+      progress.maxDrawdown = maxDrawdownFromPnlSeries(pnlSeries);
     }
 
     const totalTrades = progress.totalTrades;
@@ -948,6 +1534,10 @@ const runBacktestAsync = async (runId: string) => {
     });
 
     const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : null;
+    const sourceWindowDays = Math.max(
+      14,
+      Math.ceil(computeSourceWindowMs(run.timeframe, maxCandlesPerSymbol) / (24 * 60 * 60 * 1000)),
+    );
 
     await prisma.backtestReport.upsert({
       where: { backtestRunId: run.id },
@@ -968,7 +1558,7 @@ const runBacktestAsync = async (runId: string) => {
           symbolsFailed: progress.failedSymbols,
           maxCandlesPerSymbol,
           historicalInputs: {
-            sourceWindowDays: 14,
+            sourceWindowDays,
             symbolCoverage: symbolInputCoverage,
           },
           parityDiagnostics,
@@ -977,7 +1567,7 @@ const runBacktestAsync = async (runId: string) => {
           liquidations: progress.liquidations,
           lifecycleEventCounts,
           initialBalance,
-          endBalance: initialBalance + progress.netPnl,
+          endBalance: Math.max(0, initialBalance + progress.netPnl),
         },
       },
       update: {
@@ -994,7 +1584,7 @@ const runBacktestAsync = async (runId: string) => {
           symbolsFailed: progress.failedSymbols,
           maxCandlesPerSymbol,
           historicalInputs: {
-            sourceWindowDays: 14,
+            sourceWindowDays,
             symbolCoverage: symbolInputCoverage,
           },
           parityDiagnostics,
@@ -1003,7 +1593,7 @@ const runBacktestAsync = async (runId: string) => {
           liquidations: progress.liquidations,
           lifecycleEventCounts,
           initialBalance,
-          endBalance: initialBalance + progress.netPnl,
+          endBalance: Math.max(0, initialBalance + progress.netPnl),
         },
       },
     });
@@ -1148,7 +1738,7 @@ export const createRun = async (userId: string, data: CreateBacktestRunDto) => {
         leverage: resolved.marketType === 'SPOT' ? 1 : (strategyDefaults?.leverage ?? 1),
         marginMode: resolved.marketType === 'SPOT' ? 'NONE' : (strategyDefaults?.marginMode ?? 'CROSSED'),
         maxCandles,
-        executionMode: 'sequential_symbol_by_symbol',
+        executionMode: 'interleaved_multi_market_portfolio_clock',
       },
       notes: data.notes,
       status: 'PENDING',
@@ -1218,7 +1808,7 @@ export const getRunTimeline = async (
     : [];
   const marketType = (seed.marketType === 'SPOT' ? 'SPOT' : 'FUTURES') as MarketType;
   const maxCandles = typeof seed.maxCandles === 'number'
-    ? clamp(Math.floor(seed.maxCandles), 100, 2500)
+    ? clamp(Math.floor(seed.maxCandles), 100, 10_000)
     : computeAdaptiveMaxCandles(run.timeframe, 1, undefined);
 
   const symbol = query.symbol.trim().toUpperCase();
@@ -1228,16 +1818,21 @@ export const getRunTimeline = async (
   const candles = await fetchKlines(symbol, run.timeframe, marketType, maxCandles);
   const supplemental = await fetchSupplementalSeries(symbol, run.timeframe, marketType, maxCandles);
   const total = candles.length;
-  const start = clamp(query.cursor, 0, total);
+  const requestedCursor = clamp(query.cursor, 0, total);
+  const start =
+    requestedCursor >= total && total > 0
+      ? Math.max(0, total - query.chunkSize)
+      : requestedCursor;
   const end = clamp(start + query.chunkSize, 0, total);
   const chunk = candles.slice(start, end);
 
   const strategy = run.strategyId
     ? await prisma.strategy.findFirst({
       where: { id: run.strategyId, userId },
-      select: { config: true },
+      select: { config: true, walletRisk: true },
     })
     : null;
+  const strategyWalletRisk = normalizeWalletRiskPercent(strategy?.walletRisk ?? 1, 1);
 
   const indicatorSpecs = parseStrategyIndicators(strategy?.config);
   const indicatorSeries = buildIndicatorSeries(candles, indicatorSpecs).map((series) => ({
@@ -1277,6 +1872,14 @@ export const getRunTimeline = async (
           ? Number((seed as { fundingRate?: unknown }).fundingRate)
           : undefined,
     },
+    {
+      mode: 'wallet_risk',
+      walletRiskPercent: strategyWalletRisk,
+      referenceBalance:
+        typeof (seed as { initialBalance?: unknown }).initialBalance === 'number'
+          ? Number((seed as { initialBalance?: number }).initialBalance)
+          : 10_000,
+    },
   );
   const events = replay.events
     .filter((event) => event.candleIndex >= start && event.candleIndex < end)
@@ -1309,6 +1912,7 @@ export const getRunTimeline = async (
     marketType,
     status: run.status,
     cursor: start,
+    previousCursor: start > 0 ? Math.max(0, start - query.chunkSize) : null,
     nextCursor: end < total ? end : null,
     totalCandles: total,
     candles: chunk.map((candle, index) => ({
@@ -1368,7 +1972,7 @@ export const getRunTimeline = async (
         })
         .filter((point): point is { candleIndex: number; timestamp: string; value: number } => Boolean(point)),
     },
-    supportedEventTypes: ['ENTRY', 'EXIT', 'DCA', 'TP', 'SL', 'TRAILING', 'LIQUIDATION'],
+        supportedEventTypes: ['ENTRY', 'EXIT', 'DCA', 'TP', 'TTP', 'SL', 'TRAILING', 'LIQUIDATION'],
     unsupportedEventTypes: [],
     playbackCursor:
       liveProgress.currentSymbol === symbol && typeof liveProgress.currentCandleIndex === 'number'

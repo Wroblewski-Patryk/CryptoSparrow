@@ -1,6 +1,7 @@
 import { Prisma, SignalDirection } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { metricsStore } from '../../observability/metrics';
+import { decrypt } from '../../utils/crypto';
 import {
   MarketStreamEvent,
   StreamCandleEvent,
@@ -15,11 +16,14 @@ import {
   evaluateStrategySignalAtIndex,
   parseStrategySignalRules,
 } from './strategySignalEvaluator';
+import { computeRiskBasedOrderQuantity, normalizeWalletRiskPercent } from './positionSizing';
 
 type ActiveBotStrategy = {
   strategyId: string;
   strategyInterval: string | null;
   strategyConfig: Record<string, unknown> | null;
+  strategyLeverage: number;
+  walletRisk: number;
   priority: number;
   weight: number;
 };
@@ -37,6 +41,7 @@ type ActiveBot = {
   id: string;
   userId: string;
   mode: 'PAPER' | 'LIVE';
+  paperStartBalance: number;
   marketType: 'FUTURES' | 'SPOT';
   marketGroups: ActiveBotMarketGroup[];
 };
@@ -71,6 +76,7 @@ const runtimeLongThreshold = Number.parseFloat(process.env.RUNTIME_SIGNAL_LONG_T
 const runtimeShortThreshold = Number.parseFloat(process.env.RUNTIME_SIGNAL_SHORT_THRESHOLD ?? '-1');
 const runtimeExitBand = Number.parseFloat(process.env.RUNTIME_SIGNAL_EXIT_BAND ?? '0.2');
 const runtimeSignalQuantity = Number.parseFloat(process.env.RUNTIME_SIGNAL_QUANTITY ?? '0.01');
+const runtimeRiskReferenceBalance = Number.parseFloat(process.env.RUNTIME_RISK_REFERENCE_BALANCE ?? '1000');
 const runtimeDirectionCooldownMs = Number.parseInt(process.env.RUNTIME_SIGNAL_COOLDOWN_MS ?? '30000', 10);
 const runtimeManualPositionMode = (process.env.RUNTIME_MANUAL_POSITION_MODE ?? 'LIVE') as 'PAPER' | 'LIVE';
 const maxCandlesPerSeries = Number.parseInt(process.env.RUNTIME_SIGNAL_CANDLE_BUFFER ?? '500', 10);
@@ -79,6 +85,8 @@ const defaultGroupMaxOpenPositions = Number.parseInt(
   process.env.RUNTIME_GROUP_MAX_OPEN_POSITIONS_DEFAULT ?? '1',
   10
 );
+const liveBalanceCacheTtlMs = Number.parseInt(process.env.RUNTIME_LIVE_BALANCE_CACHE_TTL_MS ?? '30000', 10);
+const liveBalanceCache = new Map<string, { value: number; fetchedAt: number }>();
 
 type RuntimeCandle = {
   openTime: number;
@@ -110,6 +118,7 @@ const defaultDeps: RuntimeSignalLoopDeps = {
         id: true,
         userId: true,
         mode: true,
+        paperStartBalance: true,
         marketType: true,
         botMarketGroups: {
           where: {
@@ -131,6 +140,8 @@ const defaultDeps: RuntimeSignalLoopDeps = {
                   select: {
                     interval: true,
                     config: true,
+                    leverage: true,
+                    walletRisk: true,
                   },
                 },
               },
@@ -153,6 +164,8 @@ const defaultDeps: RuntimeSignalLoopDeps = {
               select: {
                 interval: true,
                 config: true,
+                leverage: true,
+                walletRisk: true,
               },
             },
           },
@@ -170,6 +183,8 @@ const defaultDeps: RuntimeSignalLoopDeps = {
           strategyId: link.strategyId,
           strategyInterval: link.strategy.interval,
           strategyConfig: (link.strategy.config as Record<string, unknown> | undefined) ?? null,
+          strategyLeverage: link.strategy.leverage,
+          walletRisk: normalizeWalletRiskPercent(link.strategy.walletRisk, 1),
           priority: link.priority,
           weight: link.weight,
         })),
@@ -186,6 +201,8 @@ const defaultDeps: RuntimeSignalLoopDeps = {
             strategyId: item.strategyId,
             strategyInterval: item.strategy.interval,
             strategyConfig: (item.strategy.config as Record<string, unknown> | undefined) ?? null,
+            strategyLeverage: item.strategy.leverage,
+            walletRisk: normalizeWalletRiskPercent(item.strategy.walletRisk, 1),
             priority: 100,
             weight: 1,
           },
@@ -203,6 +220,7 @@ const defaultDeps: RuntimeSignalLoopDeps = {
         id: bot.id,
         userId: bot.userId,
         mode: bot.mode as 'PAPER' | 'LIVE',
+        paperStartBalance: Number.isFinite(bot.paperStartBalance) ? Math.max(0, bot.paperStartBalance) : 10_000,
         marketType: bot.marketType,
         marketGroups: [...dedupBySymbolGroup.values()].sort(
           (left, right) => left.executionOrder - right.executionOrder
@@ -264,6 +282,95 @@ const toDirection = (ticker: StreamTickerEvent): SignalDirection | null => {
   if (ticker.priceChangePercent24h <= runtimeShortThreshold) return 'SHORT';
   if (Math.abs(ticker.priceChangePercent24h) <= runtimeExitBand) return 'EXIT';
   return null;
+};
+
+const resolveRuntimeOrderQuantity = (input: {
+  strategy: ActiveBotStrategy | undefined;
+  price: number;
+  marketType: 'FUTURES' | 'SPOT';
+  referenceBalance: number;
+}) => {
+  const strategy = input.strategy;
+  if (!strategy) return runtimeSignalQuantity;
+  return computeRiskBasedOrderQuantity({
+    price: input.price,
+    walletRiskPercent: strategy.walletRisk,
+    referenceBalance: input.referenceBalance,
+    leverage: input.marketType === 'SPOT' ? 1 : Math.max(1, strategy.strategyLeverage),
+    minQuantity: runtimeSignalQuantity,
+  });
+};
+
+const extractUsdtBalance = (payload: unknown) => {
+  if (!payload || typeof payload !== 'object') return null;
+  const withTotal = payload as { total?: Record<string, unknown>; free?: Record<string, unknown> };
+  const totalUsdt = Number(withTotal.total?.USDT);
+  if (Number.isFinite(totalUsdt) && totalUsdt > 0) return totalUsdt;
+  const freeUsdt = Number(withTotal.free?.USDT);
+  if (Number.isFinite(freeUsdt) && freeUsdt > 0) return freeUsdt;
+  return null;
+};
+
+const resolveReferenceBalanceForMode = async (input: {
+  userId: string;
+  mode: 'PAPER' | 'LIVE';
+  marketType: 'FUTURES' | 'SPOT';
+  paperStartBalance: number;
+  nowMs: number;
+}) => {
+  if (input.mode === 'PAPER') {
+    return Math.max(0, input.paperStartBalance);
+  }
+
+  const cacheKey = `${input.userId}:${input.marketType}`;
+  const cached = liveBalanceCache.get(cacheKey);
+  if (cached && input.nowMs - cached.fetchedAt <= liveBalanceCacheTtlMs) {
+    return cached.value;
+  }
+
+  const apiKey = await prisma.apiKey.findFirst({
+    where: { userId: input.userId, exchange: 'BINANCE' },
+    orderBy: { updatedAt: 'desc' },
+  });
+  if (!apiKey) {
+    return runtimeRiskReferenceBalance;
+  }
+
+  try {
+    const ccxtModule = (await import('ccxt')) as unknown as {
+      binance: new (config: Record<string, unknown>) => {
+        fetchBalance: () => Promise<unknown>;
+        close?: () => Promise<void>;
+      };
+    };
+    const client = new ccxtModule.binance({
+      apiKey: decrypt(apiKey.apiKey),
+      secret: decrypt(apiKey.apiSecret),
+      enableRateLimit: true,
+      options: {
+        defaultType: input.marketType === 'FUTURES' ? 'future' : 'spot',
+      },
+    });
+    try {
+      const balance = await client.fetchBalance();
+      const usdtBalance = extractUsdtBalance(balance);
+      if (Number.isFinite(usdtBalance) && usdtBalance !== null && usdtBalance > 0) {
+        liveBalanceCache.set(cacheKey, {
+          value: usdtBalance,
+          fetchedAt: input.nowMs,
+        });
+        return usdtBalance;
+      }
+    } finally {
+      if (typeof client.close === 'function') {
+        await client.close().catch(() => undefined);
+      }
+    }
+  } catch {
+    // Fallback to runtime env value if exchange balance is temporarily unavailable.
+  }
+
+  return runtimeRiskReferenceBalance;
 };
 
 const normalizeInterval = (value?: string | null) => {
@@ -602,13 +709,31 @@ export class RuntimeSignalLoop {
               },
             });
 
+            const selectedStrategy = group.strategies.find((strategy) => strategy.strategyId === merged.strategyId);
+            const referenceBalance = await resolveReferenceBalanceForMode({
+              userId: bot.userId,
+              mode: bot.mode,
+              marketType: bot.marketType,
+              paperStartBalance: bot.paperStartBalance,
+              nowMs: this.deps.nowMs(),
+            });
+            const orderQuantity =
+              direction === 'EXIT'
+                ? runtimeSignalQuantity
+                : resolveRuntimeOrderQuantity({
+                    strategy: selectedStrategy,
+                    price: event.lastPrice,
+                    marketType: bot.marketType,
+                    referenceBalance,
+                  });
+
             await this.deps.orchestrateFn({
               userId: bot.userId,
               botId: bot.id,
               symbol: event.symbol,
               direction,
               strategyId: merged.strategyId,
-              quantity: runtimeSignalQuantity,
+              quantity: orderQuantity,
               markPrice: event.lastPrice,
               mode: bot.mode,
             });

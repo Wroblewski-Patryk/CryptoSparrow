@@ -43,11 +43,54 @@ const shouldDca = (
   side: 'LONG' | 'SHORT',
   currentPrice: number,
   referencePrice: number,
-  stepPercent: number
+  triggerPercent: number,
+  leverage: number,
 ) => {
-  return side === 'LONG'
-    ? currentPrice <= referencePrice * (1 - stepPercent)
-    : currentPrice >= referencePrice * (1 + stepPercent);
+  const rawMove =
+    side === 'LONG'
+      ? (currentPrice - referencePrice) / Math.max(referencePrice, 1e-8)
+      : (referencePrice - currentPrice) / Math.max(referencePrice, 1e-8);
+  const leveragedMove = rawMove * Math.max(1, leverage);
+  if (triggerPercent >= 0) {
+    return leveragedMove >= triggerPercent;
+  }
+  return leveragedMove <= triggerPercent;
+};
+
+const selectActiveTrailingTakeProfit = (
+  favorableMove: number,
+  levels: Array<{ armPercent: number; trailPercent: number }>
+) => {
+  if (!Array.isArray(levels) || levels.length === 0) return null;
+  const sorted = [...levels]
+    .filter((level) => Number.isFinite(level.armPercent) && Number.isFinite(level.trailPercent))
+    .sort((left, right) => left.armPercent - right.armPercent);
+  let active: { armPercent: number; trailPercent: number } | null = null;
+  for (const level of sorted) {
+    if (favorableMove >= level.armPercent) active = level;
+  }
+  return active;
+};
+
+const selectActiveTrailingStop = (
+  favorableMove: number,
+  levels: Array<{ armPercent: number; type: 'percent' | 'absolute'; value: number }>
+) => {
+  if (!Array.isArray(levels) || levels.length === 0) return null;
+  const sorted = [...levels]
+    .filter(
+      (level) =>
+        Number.isFinite(level.armPercent) &&
+        Number.isFinite(level.value) &&
+        level.value > 0 &&
+        (level.type === 'percent' || level.type === 'absolute')
+    )
+    .sort((left, right) => left.armPercent - right.armPercent);
+  let active: { armPercent: number; type: 'percent' | 'absolute'; value: number } | null = null;
+  for (const level of sorted) {
+    if (favorableMove >= level.armPercent) active = level;
+  }
+  return active;
 };
 
 export const evaluatePositionManagement = (
@@ -57,6 +100,22 @@ export const evaluatePositionManagement = (
   const parsedInput = PositionManagementInputSchema.parse(input);
   const parsedState = PositionManagementStateSchema.parse(state);
   const nextState: PositionManagementState = { ...parsedState };
+  const effectiveLeverage = Math.max(1, parsedInput.leverage);
+  const dcaEnabled = Boolean(parsedInput.dca?.enabled);
+  const dcaLevels =
+    dcaEnabled && Array.isArray(parsedInput.dca?.levelPercents) && parsedInput.dca.levelPercents.length > 0
+      ? parsedInput.dca.levelPercents
+      : dcaEnabled
+        ? Array.from({ length: parsedInput.dca?.maxAdds ?? 0 }, () => -(parsedInput.dca?.stepPercent ?? 0.01))
+        : [];
+  const dcaAddFractions =
+    dcaEnabled && Array.isArray(parsedInput.dca?.addSizeFractions) && parsedInput.dca.addSizeFractions.length > 0
+      ? parsedInput.dca.addSizeFractions
+      : dcaEnabled
+        ? Array.from({ length: parsedInput.dca?.maxAdds ?? 0 }, () => parsedInput.dca?.addSizeFraction ?? 0.5)
+        : [];
+  const dcaLevelsRequired = dcaLevels.length;
+  const dcaSequenceCompleted = !dcaEnabled || dcaLevelsRequired === 0 || nextState.currentAdds >= dcaLevelsRequired;
 
   if (
     typeof parsedInput.takeProfitPrice === 'number' &&
@@ -72,6 +131,7 @@ export const evaluatePositionManagement = (
   }
 
   if (
+    dcaSequenceCompleted &&
     typeof parsedInput.stopLossPrice === 'number' &&
     isStopLossHit(parsedInput.side, parsedInput.currentPrice, parsedInput.stopLossPrice)
   ) {
@@ -84,19 +144,71 @@ export const evaluatePositionManagement = (
     };
   }
 
-  if (parsedInput.trailingStop?.enabled) {
+  if (
+    parsedInput.trailingStop?.enabled ||
+    parsedInput.trailingTakeProfit?.enabled ||
+    (Array.isArray(parsedInput.trailingTakeProfitLevels) && parsedInput.trailingTakeProfitLevels.length > 0) ||
+    (Array.isArray(parsedInput.trailingStopLevels) && parsedInput.trailingStopLevels.length > 0)
+  ) {
     const anchor = updateTrailingAnchor(
       parsedInput.side,
       parsedInput.currentPrice,
       nextState.trailingAnchorPrice ?? nextState.averageEntryPrice
     );
     nextState.trailingAnchorPrice = anchor;
+  }
+
+  if (dcaSequenceCompleted) {
+    const anchor = nextState.trailingAnchorPrice ?? nextState.averageEntryPrice;
+    const favorableMove =
+      parsedInput.side === 'LONG'
+        ? (anchor - nextState.averageEntryPrice) / Math.max(nextState.averageEntryPrice, 1e-8)
+        : (nextState.averageEntryPrice - anchor) / Math.max(nextState.averageEntryPrice, 1e-8);
+    const activeTtpLevel =
+      selectActiveTrailingTakeProfit(
+        favorableMove,
+        parsedInput.trailingTakeProfitLevels ?? []
+      ) ??
+      (parsedInput.trailingTakeProfit?.enabled &&
+      favorableMove >= parsedInput.trailingTakeProfit.armPercent
+        ? parsedInput.trailingTakeProfit
+        : null);
 
     if (
+      activeTtpLevel &&
       trailingStopTriggered(
         parsedInput.side,
-        parsedInput.trailingStop.type,
-        parsedInput.trailingStop.value,
+        'percent',
+        activeTtpLevel.trailPercent,
+        parsedInput.currentPrice,
+        anchor
+      )
+    ) {
+      return {
+        shouldClose: true,
+        closeReason: 'trailing_take_profit',
+        dcaExecuted: false,
+        dcaAddedQuantity: 0,
+        nextState,
+      };
+    }
+
+    const activeTslLevel =
+      selectActiveTrailingStop(
+        favorableMove,
+        parsedInput.trailingStopLevels ?? []
+      ) ??
+      (parsedInput.trailingStop?.enabled &&
+      favorableMove >= (parsedInput.trailingStop.armPercent ?? 0)
+        ? parsedInput.trailingStop
+        : null);
+
+    if (
+      activeTslLevel &&
+      trailingStopTriggered(
+        parsedInput.side,
+        activeTslLevel.type,
+        activeTslLevel.value,
         parsedInput.currentPrice,
         anchor
       )
@@ -111,18 +223,16 @@ export const evaluatePositionManagement = (
     }
   }
 
-  if (parsedInput.dca?.enabled) {
-    const canAdd = nextState.currentAdds < parsedInput.dca.maxAdds;
+  if (dcaEnabled) {
+    const canAdd = nextState.currentAdds < dcaLevelsRequired;
     const referencePrice = nextState.lastDcaPrice ?? nextState.averageEntryPrice;
-    const trigger = shouldDca(
-      parsedInput.side,
-      parsedInput.currentPrice,
-      referencePrice,
-      parsedInput.dca.stepPercent
-    );
+    const nextLevelPercent = dcaLevels[nextState.currentAdds] ?? -(parsedInput.dca?.stepPercent ?? 0.01);
+    const trigger = shouldDca(parsedInput.side, parsedInput.currentPrice, referencePrice, nextLevelPercent, effectiveLeverage);
 
     if (canAdd && trigger) {
-      const addedQuantity = nextState.quantity * parsedInput.dca.addSizeFraction;
+      const nextAddSizeFraction =
+        dcaAddFractions[nextState.currentAdds] ?? parsedInput.dca?.addSizeFraction ?? 0.5;
+      const addedQuantity = nextState.quantity * nextAddSizeFraction;
       const newQuantity = nextState.quantity + addedQuantity;
       const newAverage =
         (nextState.averageEntryPrice * nextState.quantity + parsedInput.currentPrice * addedQuantity) /

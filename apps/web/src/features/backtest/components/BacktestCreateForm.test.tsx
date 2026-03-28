@@ -50,7 +50,7 @@ describe('BacktestCreateForm', () => {
     });
 
     fireEvent.change(screen.getByPlaceholderText('1200'), { target: { value: '10' } });
-    expect(screen.getByText('Podaj liczbe z zakresu 100 - 2500.')).toBeInTheDocument();
+    expect(screen.getByText('Podaj liczbe z zakresu 100 - 10000.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Utworz run' }));
     expect(onSubmit).not.toHaveBeenCalled();
@@ -95,10 +95,9 @@ describe('BacktestCreateForm', () => {
         timeframe: '15m',
         strategyId: 's2',
         marketUniverseId: 'm2',
-        seedConfig: { maxCandles: 800 },
+        seedConfig: { maxCandles: 800, initialBalance: 10000 },
         notes: undefined,
       });
     });
   });
 });
-

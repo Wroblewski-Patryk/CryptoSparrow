@@ -31,7 +31,7 @@ export const ListBacktestTradesQuerySchema = z.object({
 export const GetBacktestTimelineQuerySchema = z.object({
   symbol: z.string().trim().min(1),
   cursor: z.coerce.number().int().min(0).default(0),
-  chunkSize: z.coerce.number().int().min(50).max(800).default(300),
+  chunkSize: z.coerce.number().int().min(50).max(10000).default(300),
 });
 
 export type CreateBacktestRunDto = z.infer<typeof CreateBacktestRunSchema>;

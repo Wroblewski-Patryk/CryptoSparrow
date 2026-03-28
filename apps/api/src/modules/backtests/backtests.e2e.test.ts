@@ -45,6 +45,10 @@ const waitForBacktestReport = async (
 
 describe('Backtests runs contract', () => {
   beforeEach(async () => {
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "Bot" ADD COLUMN IF NOT EXISTS "paperStartBalance" DOUBLE PRECISION NOT NULL DEFAULT 10000',
+    );
+
     await prisma.log.deleteMany();
     // Backtest worker updates run/report asynchronously, so cleanup is retried to avoid FK races in tests.
     for (let attempt = 0; attempt < 3; attempt += 1) {

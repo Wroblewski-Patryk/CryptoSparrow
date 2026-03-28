@@ -265,6 +265,16 @@ export const orchestrateRuntimeSignal = async (
     riskAck: true,
   });
 
+  const strategyLeverage =
+    input.strategyId
+      ? (
+          await prisma.strategy.findFirst({
+            where: { id: input.strategyId, userId: input.userId },
+            select: { leverage: true },
+          })
+        )?.leverage ?? 1
+      : 1;
+
   const position = await positionGateway.createPosition({
     userId: input.userId,
     botId: input.botId,
@@ -274,7 +284,7 @@ export const orchestrateRuntimeSignal = async (
     status: 'OPEN',
     entryPrice: input.markPrice,
     quantity: input.quantity,
-    leverage: 1,
+    leverage: Math.max(1, strategyLeverage),
   });
 
   await orderGateway.linkOrderToPosition(openOrder.id, position.id);

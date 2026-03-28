@@ -9,6 +9,7 @@ export const AssistantSafetyModeSchema = z.enum(['STRICT', 'BALANCED', 'EXPERIME
 export const CreateBotSchema = z.object({
   name: z.string().trim().min(1),
   mode: BotModeSchema.default('PAPER'),
+  paperStartBalance: z.number().min(0).max(100_000_000).default(10_000),
   marketType: TradeMarketSchema.default('FUTURES'),
   positionMode: PositionModeSchema.default('ONE_WAY'),
   strategyId: z.string().uuid().optional().nullable(),

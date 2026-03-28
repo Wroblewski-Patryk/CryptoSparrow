@@ -1,14 +1,32 @@
-import { Position, PositionSide } from '@prisma/client';
+import { Position, PositionSide, Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { StreamTickerEvent } from '../market-stream/binanceStream.types';
 import { orchestrateRuntimeSignal } from './executionOrchestrator.service';
-import {
-  evaluatePositionManagement,
-} from './positionManagement.service';
+import { evaluatePositionManagement } from './positionManagement.service';
 import { PositionManagementInput, PositionManagementState } from './positionManagement.types';
 
 type RuntimePositionAutomationDeps = {
-  listOpenPositionsBySymbol: (symbol: string) => Promise<Array<Pick<Position, 'id' | 'userId' | 'botId' | 'symbol' | 'side' | 'entryPrice' | 'quantity' | 'stopLoss' | 'takeProfit'>>>;
+  listOpenPositionsBySymbol: (
+    symbol: string
+  ) => Promise<
+    Array<
+      Pick<
+        Position,
+        | 'id'
+        | 'userId'
+        | 'botId'
+        | 'strategyId'
+        | 'symbol'
+        | 'side'
+        | 'entryPrice'
+        | 'quantity'
+        | 'leverage'
+        | 'stopLoss'
+        | 'takeProfit'
+      >
+    >
+  >;
+  getStrategyConfigById: (strategyId: string) => Promise<Record<string, unknown> | null>;
   updatePositionAfterDca: (positionId: string, input: { quantity: number; entryPrice: number }) => Promise<void>;
   closeByExitSignal: (input: {
     userId: string;
@@ -20,12 +38,23 @@ type RuntimePositionAutomationDeps = {
   }) => Promise<void>;
 };
 
+type RuntimeFallbackConfig = {
+  dcaEnabled: boolean;
+  dcaMaxAdds: number;
+  dcaStepPercent: number;
+  dcaAddSizeFraction: number;
+  trailingEnabled: boolean;
+  trailingType: 'percent' | 'absolute';
+  trailingValue: number;
+  automationMode: 'PAPER' | 'LIVE';
+};
+
 const envBoolean = (value: string | undefined, fallback: boolean) => {
   if (value == null) return fallback;
   return value.trim().toLowerCase() === 'true';
 };
 
-const getRuntimeConfig = () => ({
+const getRuntimeConfig = (): RuntimeFallbackConfig => ({
   dcaEnabled: envBoolean(process.env.RUNTIME_DCA_ENABLED, false),
   dcaMaxAdds: Number.parseInt(process.env.RUNTIME_DCA_MAX_ADDS ?? '2', 10),
   dcaStepPercent: Number.parseFloat(process.env.RUNTIME_DCA_STEP_PERCENT ?? '0.01'),
@@ -47,14 +76,24 @@ const defaultDeps: RuntimePositionAutomationDeps = {
         id: true,
         userId: true,
         botId: true,
+        strategyId: true,
         symbol: true,
         side: true,
         entryPrice: true,
         quantity: true,
+        leverage: true,
         stopLoss: true,
         takeProfit: true,
       },
     }),
+  getStrategyConfigById: async (strategyId) => {
+    const strategy = await prisma.strategy.findUnique({
+      where: { id: strategyId },
+      select: { config: true },
+    });
+    if (!strategy || typeof strategy.config !== 'object' || strategy.config == null) return null;
+    return strategy.config as Record<string, unknown>;
+  },
   updatePositionAfterDca: async (positionId, input) => {
     await prisma.position.update({
       where: { id: positionId },
@@ -77,8 +116,150 @@ const defaultDeps: RuntimePositionAutomationDeps = {
   },
 };
 
+const toPercent = (value: unknown, fallback = 0) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return fallback;
+  return Math.abs(num) / 100;
+};
+
+const toPositive = (value: unknown, fallback = 0) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return fallback;
+  return Math.max(0, num);
+};
+
+const computePriceFromPercent = (
+  side: PositionSide,
+  entryPrice: number,
+  pct: number,
+  kind: 'tp' | 'sl',
+  leverage = 1
+) => {
+  if (!Number.isFinite(entryPrice) || entryPrice <= 0 || pct <= 0) return undefined;
+  const adjustedPct = pct / Math.max(1, leverage);
+  if (kind === 'tp') {
+    return side === 'LONG' ? entryPrice * (1 + adjustedPct) : entryPrice * (1 - adjustedPct);
+  }
+  return side === 'LONG' ? entryPrice * (1 - adjustedPct) : entryPrice * (1 + adjustedPct);
+};
+
+const buildPositionManagementInput = (
+  position: Pick<
+    Position,
+    'side' | 'entryPrice' | 'leverage' | 'stopLoss' | 'takeProfit'
+  >,
+  markPrice: number,
+  strategyConfig: Record<string, unknown> | null,
+  fallback: RuntimeFallbackConfig
+): PositionManagementInput => {
+  const closeConfig =
+    strategyConfig && typeof strategyConfig === 'object'
+      ? ((strategyConfig.close as Record<string, unknown> | undefined) ?? undefined)
+      : undefined;
+  const additionalConfig =
+    strategyConfig && typeof strategyConfig === 'object'
+      ? ((strategyConfig.additional as Record<string, unknown> | undefined) ?? undefined)
+      : undefined;
+
+  const tpPercent = toPercent(closeConfig?.tp);
+  const slPercent = toPercent(closeConfig?.sl);
+  const ttpConfig = Array.isArray(closeConfig?.ttp) ? (closeConfig?.ttp as Array<Record<string, unknown>>) : [];
+  const tslConfig = Array.isArray(closeConfig?.tsl) ? (closeConfig?.tsl as Array<Record<string, unknown>>) : [];
+  const dcaLevels = Array.isArray(additionalConfig?.dcaLevels)
+    ? (additionalConfig?.dcaLevels as Array<Record<string, unknown>>)
+    : [];
+  const dcaLevelPercents = dcaLevels
+    .map((level) => Number(level.percent))
+    .filter((value) => Number.isFinite(value))
+    .map((value) => value / 100);
+  const dcaLevelFractions = dcaLevels
+    .map((level) => Number(level.multiplier))
+    .filter((value) => Number.isFinite(value) && value > 0);
+
+  const trailingTakeProfitPercent = toPercent(ttpConfig[0]?.percent);
+  const trailingTakeProfitArmPercent = toPercent(ttpConfig[0]?.arm);
+  const trailingStopPercent = toPercent(tslConfig[0]?.percent);
+  const trailingTakeProfitLevels = ttpConfig
+    .map((level) => ({
+      armPercent: toPercent(level.arm),
+      trailPercent: toPercent(level.percent),
+    }))
+    .filter((level) => level.armPercent > 0 && level.trailPercent > 0)
+    .sort((left, right) => left.armPercent - right.armPercent);
+  const trailingStopLevels = tslConfig
+    .map((level) => ({
+      armPercent: toPercent(level.arm),
+      type: 'percent' as const,
+      value: toPercent(level.percent),
+    }))
+    .filter((level) => level.value > 0)
+    .sort((left, right) => left.armPercent - right.armPercent);
+  const dcaEnabled = Boolean(additionalConfig?.dcaEnabled ?? fallback.dcaEnabled);
+  const dcaMaxAdds = Math.floor(toPositive(additionalConfig?.dcaTimes, fallback.dcaMaxAdds));
+  const dcaStepPercent = toPercent(dcaLevels[0]?.percent, fallback.dcaStepPercent * 100);
+  const dcaMultiplier = toPositive(
+    dcaLevels[0]?.multiplier ?? additionalConfig?.dcaMultiplier,
+    1 + fallback.dcaAddSizeFraction
+  );
+  const dcaAddSizeFraction = Math.max(0.01, Math.min(2, dcaMultiplier - 1));
+
+  const takeProfitPrice =
+    position.takeProfit ??
+    computePriceFromPercent(position.side, position.entryPrice, tpPercent, 'tp', position.leverage || 1);
+  const stopLossPrice =
+    position.stopLoss ??
+    computePriceFromPercent(position.side, position.entryPrice, slPercent, 'sl', position.leverage || 1);
+
+  return {
+    side: position.side,
+    currentPrice: markPrice,
+    leverage: Math.max(1, position.leverage || 1),
+    stopLossPrice,
+    takeProfitPrice,
+    trailingTakeProfit:
+      trailingTakeProfitPercent > 0 && trailingTakeProfitArmPercent > 0
+        ? {
+            enabled: true,
+            trailPercent: trailingTakeProfitPercent,
+            armPercent: trailingTakeProfitArmPercent,
+          }
+        : undefined,
+    trailingTakeProfitLevels:
+      trailingTakeProfitLevels.length > 0 ? trailingTakeProfitLevels : undefined,
+    trailingStop:
+      trailingStopPercent > 0
+        ? {
+            enabled: true,
+            type: 'percent',
+            value: trailingStopPercent,
+            armPercent: toPercent(tslConfig[0]?.arm),
+          }
+        : fallback.trailingEnabled
+          ? {
+              enabled: true,
+              type: fallback.trailingType,
+              value: fallback.trailingValue,
+            }
+          : undefined,
+    trailingStopLevels:
+      trailingStopLevels.length > 0 ? trailingStopLevels : undefined,
+    dca:
+      dcaEnabled && dcaMaxAdds > 0
+        ? {
+            enabled: true,
+            maxAdds: dcaMaxAdds,
+            stepPercent: Math.max(0.0001, dcaStepPercent),
+            addSizeFraction: dcaAddSizeFraction,
+            levelPercents: dcaLevelPercents.length > 0 ? dcaLevelPercents : undefined,
+            addSizeFractions: dcaLevelFractions.length > 0 ? dcaLevelFractions : undefined,
+          }
+        : undefined,
+  };
+};
+
 export class RuntimePositionAutomationService {
   private readonly positionStates = new Map<string, PositionManagementState>();
+  private readonly strategyConfigCache = new Map<string, Record<string, unknown> | null>();
 
   constructor(private readonly deps: RuntimePositionAutomationDeps = defaultDeps) {}
 
@@ -87,32 +268,36 @@ export class RuntimePositionAutomationService {
     await Promise.all(openPositions.map((position) => this.processPosition(event, position)));
   }
 
+  private async getStrategyConfig(strategyId: string | null) {
+    if (!strategyId) return null;
+    if (this.strategyConfigCache.has(strategyId)) {
+      return this.strategyConfigCache.get(strategyId) ?? null;
+    }
+    const config = await this.deps.getStrategyConfigById(strategyId);
+    this.strategyConfigCache.set(strategyId, config);
+    return config;
+  }
+
   private async processPosition(
     event: StreamTickerEvent,
-    position: Pick<Position, 'id' | 'userId' | 'botId' | 'symbol' | 'side' | 'entryPrice' | 'quantity' | 'stopLoss' | 'takeProfit'>
+    position: Pick<
+      Position,
+      | 'id'
+      | 'userId'
+      | 'botId'
+      | 'strategyId'
+      | 'symbol'
+      | 'side'
+      | 'entryPrice'
+      | 'quantity'
+      | 'leverage'
+      | 'stopLoss'
+      | 'takeProfit'
+    >
   ) {
     const runtimeConfig = getRuntimeConfig();
-    const input: PositionManagementInput = {
-      side: position.side as PositionSide,
-      currentPrice: event.lastPrice,
-      stopLossPrice: position.stopLoss ?? undefined,
-      takeProfitPrice: position.takeProfit ?? undefined,
-      trailingStop: runtimeConfig.trailingEnabled
-        ? {
-            enabled: true,
-            type: runtimeConfig.trailingType,
-            value: runtimeConfig.trailingValue,
-          }
-        : undefined,
-      dca: runtimeConfig.dcaEnabled
-        ? {
-            enabled: true,
-            maxAdds: runtimeConfig.dcaMaxAdds,
-            stepPercent: runtimeConfig.dcaStepPercent,
-            addSizeFraction: runtimeConfig.dcaAddSizeFraction,
-          }
-        : undefined,
-    };
+    const strategyConfig = await this.getStrategyConfig(position.strategyId ?? null);
+    const input = buildPositionManagementInput(position, event.lastPrice, strategyConfig, runtimeConfig);
 
     const previousState = this.positionStates.get(position.id) ?? {
       quantity: position.quantity,

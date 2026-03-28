@@ -13,6 +13,7 @@ export type StrategySignalRules = {
   direction: 'both' | 'long' | 'short';
   longRules: StrategyIndicatorRule[];
   shortRules: StrategyIndicatorRule[];
+  noMatchAction: 'HOLD' | 'EXIT';
 };
 
 export type SignalCandle = {
@@ -80,6 +81,8 @@ export const parseStrategySignalRules = (
   const openBlock = (strategyConfig.open ?? strategyConfig.openConditions) as
     | {
         direction?: unknown;
+        noMatchAction?: unknown;
+        exitOnNoSignal?: unknown;
         indicatorsLong?: unknown[];
         indicatorsShort?: unknown[];
       }
@@ -99,10 +102,17 @@ export const parseStrategySignalRules = (
     .filter((rule): rule is StrategyIndicatorRule => Boolean(rule));
 
   if (longRules.length === 0 && shortRules.length === 0) return null;
+
+  const noMatchAction =
+    openBlock.noMatchAction === 'EXIT' || openBlock.exitOnNoSignal === true
+      ? 'EXIT'
+      : 'HOLD';
+
   return {
     direction,
     longRules,
     shortRules,
+    noMatchAction,
   };
 };
 
@@ -224,6 +234,6 @@ export const evaluateStrategySignalAtIndex = (
 
   if (longMatched && !shortMatched) return 'LONG';
   if (shortMatched && !longMatched) return 'SHORT';
-  if (!longMatched && !shortMatched) return 'EXIT';
+  if (!longMatched && !shortMatched) return rules.noMatchAction === 'EXIT' ? 'EXIT' : null;
   return null;
 };

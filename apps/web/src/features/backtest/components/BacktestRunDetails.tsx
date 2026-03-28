@@ -99,6 +99,26 @@ const safeDateMs = (value: string) => {
   return Number.isFinite(ms) ? ms : 0;
 };
 
+const filterTradesByTimelineWindow = (items: BacktestTrade[], timeline: BacktestTimeline) => {
+  const candles = Array.isArray(timeline.candles) ? timeline.candles : [];
+  if (candles.length === 0) return [];
+  const windowStartMs = safeDateMs(candles[0].openTime);
+  const windowEndMs = safeDateMs(candles[candles.length - 1].closeTime);
+  if (windowStartMs <= 0 || windowEndMs <= 0) return items;
+
+  return items.filter((trade) => {
+    const openedAt = safeDateMs(trade.openedAt);
+    const closedAt = safeDateMs(trade.closedAt);
+    if (openedAt <= 0 || closedAt <= 0) return false;
+    return closedAt >= windowStartMs && openedAt <= windowEndMs;
+  });
+};
+
+const countTradesVisibleInTimeline = (items: BacktestTrade[], timeline: BacktestTimeline | null) => {
+  if (!timeline) return 0;
+  return filterTradesByTimelineWindow(items, timeline).length;
+};
+
 const extractStrategyIndicatorMeta = (strategy: StrategyDto | null): StrategyIndicatorMeta => {
   if (!strategy?.config || typeof strategy.config !== 'object') {
     return {
@@ -279,7 +299,7 @@ const buildDailyPerformance = (items: BacktestTrade[], initialBalance: number): 
   });
 };
 
-function SummaryDailyChart({
+function SummaryDailyPnlChart({
   points,
   formatCurrency,
 }: {
@@ -301,28 +321,17 @@ function SummaryDailyChart({
   const pnlMax = Math.max(...pnlValues, 0);
   const pnlRange = pnlMax - pnlMin || 1;
 
-  const balanceValues = points.map((point) => point.balance);
-  const balanceMin = Math.min(...balanceValues);
-  const balanceMax = Math.max(...balanceValues);
-  const balanceRange = balanceMax - balanceMin || 1;
-
   const yPnl = (value: number) => padding.top + (1 - (value - pnlMin) / pnlRange) * innerHeight;
-  const yBalance = (value: number) => padding.top + (1 - (value - balanceMin) / balanceRange) * innerHeight;
   const stepX = innerWidth / Math.max(points.length, 1);
   const xAt = (index: number) => padding.left + stepX * index + stepX / 2;
   const zeroY = yPnl(0);
   const barWidth = Math.max(3, stepX * 0.62);
 
-  const balancePolyline = points
-    .map((point, index) => `${xAt(index)},${yBalance(point.balance)}`)
-    .join(' ');
-
   const yTicks = Array.from({ length: 5 }, (_, index) => {
     const ratio = index / 4;
     const pnlValue = pnlMax - ratio * pnlRange;
-    const balanceValue = balanceMax - ratio * balanceRange;
     const y = padding.top + ratio * innerHeight;
-    return { y, pnlValue, balanceValue };
+    return { y, pnlValue };
   });
 
   const xTickIndexes = [0, Math.floor(points.length * 0.33), Math.floor(points.length * 0.66), points.length - 1]
@@ -342,9 +351,6 @@ function SummaryDailyChart({
             />
             <text x={padding.left - 6} y={tick.y + 3} textAnchor='end' className='fill-base-content/65 text-[10px]'>
               {formatCurrency(tick.pnlValue)}
-            </text>
-            <text x={padding.left + innerWidth + 6} y={tick.y + 3} textAnchor='start' className='fill-base-content/65 text-[10px]'>
-              {formatCurrency(tick.balanceValue)}
             </text>
           </g>
         ))}
@@ -374,8 +380,6 @@ function SummaryDailyChart({
           );
         })}
 
-        <polyline fill='none' stroke='currentColor' strokeWidth='2' className='text-primary' points={balancePolyline} />
-
         {xTickIndexes.map((index) => {
           const x = xAt(index);
           return (
@@ -385,17 +389,60 @@ function SummaryDailyChart({
           );
         })}
       </svg>
+    </div>
+  );
+}
 
-      <div className='flex flex-wrap items-center gap-4 text-xs text-base-content/75'>
-        <span className='inline-flex items-center gap-1'>
-          <span className='inline-block h-2.5 w-2.5 rounded-sm bg-success/70' />
-          Dzienny zysk/strata
-        </span>
-        <span className='inline-flex items-center gap-1'>
-          <span className='inline-block h-0.5 w-4 bg-primary' />
-          Saldo portfela (narastajaco)
-        </span>
-      </div>
+function SummaryBalanceChart({
+  points,
+  formatCurrency,
+}: {
+  points: DailyPerformancePoint[];
+  formatCurrency: (value: number) => string;
+}) {
+  if (points.length === 0) {
+    return <p className='mt-2 text-sm opacity-70'>Brak danych salda do narysowania wykresu.</p>;
+  }
+
+  const width = 920;
+  const height = 240;
+  const padding = { top: 14, right: 20, bottom: 24, left: 56 };
+  const innerWidth = width - padding.left - padding.right;
+  const innerHeight = height - padding.top - padding.bottom;
+  const balanceValues = points.map((point) => point.balance);
+  const min = Math.min(...balanceValues);
+  const max = Math.max(...balanceValues);
+  const range = max - min || 1;
+  const xAt = (index: number) => padding.left + (index / Math.max(points.length - 1, 1)) * innerWidth;
+  const yAt = (value: number) => padding.top + (1 - (value - min) / range) * innerHeight;
+  const polyline = points.map((point, index) => `${xAt(index)},${yAt(point.balance)}`).join(' ');
+
+  const yTicks = Array.from({ length: 5 }, (_, index) => {
+    const ratio = index / 4;
+    const value = max - ratio * range;
+    const y = padding.top + ratio * innerHeight;
+    return { y, value };
+  });
+
+  return (
+    <div className='space-y-2'>
+      <svg className='mt-2 h-[240px] w-full' viewBox={`0 0 ${width} ${height}`} preserveAspectRatio='none'>
+        {yTicks.map((tick) => (
+          <g key={`balance-${tick.y}`}>
+            <line
+              x1={padding.left}
+              x2={padding.left + innerWidth}
+              y1={tick.y}
+              y2={tick.y}
+              className='stroke-base-300/35'
+            />
+            <text x={padding.left - 6} y={tick.y + 3} textAnchor='end' className='fill-base-content/65 text-[10px]'>
+              {formatCurrency(tick.value)}
+            </text>
+          </g>
+        ))}
+        <polyline fill='none' stroke='currentColor' strokeWidth='2.2' className='text-primary' points={polyline} />
+      </svg>
     </div>
   );
 }
@@ -413,12 +460,15 @@ function TimelineCandlesChart({
   rsiLongLevel: number | null;
   rsiShortLevel: number | null;
 }) {
+  const zoomSteps = [1, 1.25, 1.5, 2, 3, 4, 6, 8, 10];
+  const [zoomIndex, setZoomIndex] = useState(0);
+  const zoom = zoomSteps[zoomIndex] ?? 1;
   const candles = timeline.candles;
   if (candles.length === 0) {
     return <p className='text-sm opacity-70'>Brak swiec dla wybranego zakresu.</p>;
   }
 
-  const width = 900;
+  const width = Math.round(900 * zoom);
   const height = 320;
   const padding = { top: 12, right: 8, bottom: 20, left: 8 };
   const innerWidth = width - padding.left - padding.right;
@@ -451,30 +501,48 @@ function TimelineCandlesChart({
   const timelineIndicatorSeries = Array.isArray(timeline.indicatorSeries) ? timeline.indicatorSeries : [];
   const priceIndicators = timelineIndicatorSeries.filter((series) => series.panel === 'price');
   const oscillatorIndicators = timelineIndicatorSeries.filter((series) => series.panel === 'oscillator');
-  const nearestCandleIndex = (timestampMs: number) => {
-    if (candles.length === 0) return -1;
-    let bestIndex = 0;
-    let bestDelta = Number.POSITIVE_INFINITY;
-    for (let index = 0; index < candles.length; index += 1) {
-      const openTs = Date.parse(candles[index].openTime);
-      const closeTs = Date.parse(candles[index].closeTime);
-      const anchor = Number.isFinite(openTs) ? openTs : Number.isFinite(closeTs) ? closeTs : 0;
-      const delta = Math.abs(anchor - timestampMs);
-      if (delta < bestDelta) {
-        bestDelta = delta;
-        bestIndex = index;
-      }
+  const candleRanges = candles.map((candle) => {
+    const open = Date.parse(candle.openTime);
+    const close = Date.parse(candle.closeTime);
+    return {
+      open: Number.isFinite(open) ? open : 0,
+      close: Number.isFinite(close) ? close : 0,
+    };
+  });
+
+  const mapTimestampToCandleIndex = (timestampMs: number, mode: 'entry' | 'exit') => {
+    if (candles.length === 0 || !Number.isFinite(timestampMs)) return -1;
+
+    for (let index = 0; index < candleRanges.length; index += 1) {
+      const range = candleRanges[index];
+      if (timestampMs >= range.open && timestampMs <= range.close) return index;
     }
-    return bestIndex;
+
+    const firstOpen = candleRanges[0]?.open ?? 0;
+    const lastClose = candleRanges[candleRanges.length - 1]?.close ?? 0;
+    if (timestampMs < firstOpen) return 0;
+    if (timestampMs > lastClose) return candleRanges.length - 1;
+
+    if (mode === 'entry') {
+      for (let index = 0; index < candleRanges.length; index += 1) {
+        if (timestampMs <= candleRanges[index].open) return index;
+      }
+      return candleRanges.length - 1;
+    }
+
+    for (let index = candleRanges.length - 1; index >= 0; index -= 1) {
+      if (timestampMs >= candleRanges[index].close) return index;
+    }
+    return 0;
   };
 
-  const tradeSegments = trades
+  const rawTradeSegments = trades
     .map((trade) => {
       const entryTs = Date.parse(trade.openedAt);
       const exitTs = Date.parse(trade.closedAt);
       if (!Number.isFinite(entryTs) || !Number.isFinite(exitTs)) return null;
-      const startIdx = nearestCandleIndex(entryTs);
-      const endIdx = nearestCandleIndex(exitTs);
+      const startIdx = mapTimestampToCandleIndex(entryTs, 'entry');
+      const endIdx = mapTimestampToCandleIndex(exitTs, 'exit');
       if (startIdx < 0 || endIdx < 0) return null;
       const start = Math.min(startIdx, endIdx);
       const end = Math.max(startIdx, endIdx);
@@ -482,6 +550,7 @@ function TimelineCandlesChart({
         tradeId: trade.id,
         start,
         end,
+        side: trade.side,
         entryPrice: trade.entryPrice,
         exitPrice: trade.exitPrice,
         profit: trade.pnl >= 0,
@@ -489,187 +558,356 @@ function TimelineCandlesChart({
     })
     .filter((segment): segment is NonNullable<typeof segment> => Boolean(segment));
 
+  const tradeSegments = rawTradeSegments
+    .sort((left, right) => left.start - right.start || left.end - right.end)
+    .map((segment, index, array) => {
+      if (index === 0) return segment;
+      const previous = array[index - 1];
+      if (segment.start >= previous.end) return segment;
+      const adjustedStart = previous.end;
+      return {
+        ...segment,
+        start: adjustedStart,
+        end: Math.max(adjustedStart, segment.end),
+      };
+    });
+
   const lifecycleEvents = timelineEvents.filter((event) =>
-    ['DCA', 'TP', 'SL', 'TRAILING', 'LIQUIDATION'].includes(event.type),
+    ['DCA', 'TP', 'TTP', 'SL', 'TRAILING', 'LIQUIDATION'].includes(event.type),
   );
+  const visibleLifecycleCounts = lifecycleEvents.reduce<Record<string, number>>((acc, event) => {
+    acc[event.type] = (acc[event.type] ?? 0) + 1;
+    return acc;
+  }, {});
+  const sharedScrollRef = useRef<HTMLDivElement | null>(null);
 
   return (
     <div className='space-y-2'>
-      <svg className='h-[320px] w-full rounded-lg bg-base-200/60' viewBox={`0 0 ${width} ${height}`} preserveAspectRatio='none'>
-        <line
-          x1={padding.left}
-          x2={padding.left + innerWidth}
-          y1={padding.top + innerHeight}
-          y2={padding.top + innerHeight}
-          className='stroke-base-300'
-        />
-        {yTicks.map((tick) => (
-          <g key={`y-${tick.y}`}>
+      <div className='flex items-center justify-end gap-2'>
+        <button
+          type='button'
+          className='btn btn-xs btn-outline'
+          onClick={() => setZoomIndex((prev) => Math.max(0, prev - 1))}
+          disabled={zoomIndex === 0}
+          title='Oddal (wiecej swiec)'
+        >
+          -
+        </button>
+        <span className='text-xs opacity-70'>Zoom x{zoom.toFixed(2)}</span>
+        <button
+          type='button'
+          className='btn btn-xs btn-outline'
+          onClick={() => setZoomIndex((prev) => Math.min(zoomSteps.length - 1, prev + 1))}
+          disabled={zoomIndex === zoomSteps.length - 1}
+          title='Przybliz (mniej swiec)'
+        >
+          +
+        </button>
+      </div>
+
+      <div
+        ref={sharedScrollRef}
+        className='overflow-x-auto pb-1'
+      >
+        <div style={{ width: `${width}px` }} className='space-y-2'>
+          <svg className='h-[320px] w-full rounded-lg bg-base-200/60' viewBox={`0 0 ${width} ${height}`} preserveAspectRatio='none'>
             <line
               x1={padding.left}
               x2={padding.left + innerWidth}
-              y1={tick.y}
-              y2={tick.y}
-              className='stroke-base-300/30'
+              y1={padding.top + innerHeight}
+              y2={padding.top + innerHeight}
+              className='stroke-base-300'
             />
-            <text x={padding.left + innerWidth - 2} y={tick.y - 2} textAnchor='end' className='fill-base-content/60 text-[9px]'>
-              {formatNumber(tick.value)}
-            </text>
-          </g>
-        ))}
+            {yTicks.map((tick) => (
+              <g key={`y-${tick.y}`}>
+                <line
+                  x1={padding.left}
+                  x2={padding.left + innerWidth}
+                  y1={tick.y}
+                  y2={tick.y}
+                  className='stroke-base-300/30'
+                />
+                <text x={padding.left + innerWidth - 2} y={tick.y - 2} textAnchor='end' className='fill-base-content/60 text-[9px]'>
+                  {formatNumber(tick.value)}
+                </text>
+              </g>
+            ))}
 
-        {xTickIndexes.map((index) => {
-          const x = xAt(index);
-          const label = new Date(candles[index].openTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          return (
-            <g key={`x-${candles[index].candleIndex}`}>
-              <line x1={x} x2={x} y1={padding.top} y2={padding.top + innerHeight} className='stroke-base-300/20' />
-              <text x={x} y={padding.top + innerHeight + 12} textAnchor='middle' className='fill-base-content/55 text-[9px]'>
-                {label}
-              </text>
-            </g>
-          );
-        })}
+            {xTickIndexes.map((index) => {
+              const x = xAt(index);
+              const label = new Date(candles[index].openTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              return (
+                <g key={`x-${candles[index].candleIndex}`}>
+                  <line x1={x} x2={x} y1={padding.top} y2={padding.top + innerHeight} className='stroke-base-300/20' />
+                  <text x={x} y={padding.top + innerHeight + 12} textAnchor='middle' className='fill-base-content/55 text-[9px]'>
+                    {label}
+                  </text>
+                </g>
+              );
+            })}
 
-        {tradeSegments.map((segment, index) => {
-          const xStart = xAt(segment.start) - barWidth / 2;
-          const xEnd = xAt(segment.end) + barWidth / 2;
-          return (
-            <rect
-              key={`trade-bg-${index}`}
-              x={xStart}
-              y={padding.top}
-              width={Math.max(1, xEnd - xStart)}
-              height={innerHeight}
-              className={segment.profit ? 'fill-success/10' : 'fill-error/10'}
-            />
-          );
-        })}
+            {tradeSegments.map((segment, index) => {
+              const xStart = xAt(segment.start) - barWidth / 2;
+              const xEnd = xAt(segment.end) + barWidth / 2;
+              return (
+                <rect
+                  key={`trade-bg-${index}`}
+                  x={xStart}
+                  y={padding.top}
+                  width={Math.max(1, xEnd - xStart)}
+                  height={innerHeight}
+                  className={segment.profit ? 'fill-success/10' : 'fill-error/10'}
+                />
+              );
+            })}
 
-        {lifecycleEvents.map((event) => {
-          const localIndex = event.candleIndex - timeline.cursor;
-          if (localIndex < 0 || localIndex >= candles.length) return null;
-          const x = xAt(localIndex);
-          const y = yAt(event.price);
-          const colorClass =
-            event.type === 'DCA'
-              ? 'text-info'
-              : event.type === 'TP'
-                ? 'text-success'
-                : event.type === 'SL'
-                  ? 'text-error'
-                  : event.type === 'TRAILING'
-                    ? 'text-warning'
-                    : 'text-secondary';
-          return (
-            <circle
-              key={event.id}
-              cx={x}
-              cy={y}
-              r={2.4}
-              fill='currentColor'
-              className={colorClass}
-            />
-          );
-        })}
+            {candles.map((candle, index) => {
+              const x = xAt(index);
+              const yOpen = yAt(candle.open);
+              const yClose = yAt(candle.close);
+              const yHigh = yAt(candle.high);
+              const yLow = yAt(candle.low);
+              const bodyTop = Math.min(yOpen, yClose);
+              const bodyHeight = Math.max(1, Math.abs(yOpen - yClose));
+              const bullish = candle.close >= candle.open;
+              const bodyWidth = Math.max(1.4, barWidth * 0.55);
 
-        {candles.map((candle, index) => {
-          const x = xAt(index);
-          const yOpen = yAt(candle.open);
-          const yClose = yAt(candle.close);
-          const yHigh = yAt(candle.high);
-          const yLow = yAt(candle.low);
-          const bodyTop = Math.min(yOpen, yClose);
-          const bodyHeight = Math.max(1, Math.abs(yOpen - yClose));
-          const bullish = candle.close >= candle.open;
-          const bodyWidth = Math.max(1.4, barWidth * 0.55);
+              return (
+                <g key={`candle-${candle.candleIndex}`}>
+                  <line x1={x} x2={x} y1={yHigh} y2={yLow} className={bullish ? 'stroke-success/70' : 'stroke-error/70'} />
+                  <rect
+                    x={x - bodyWidth / 2}
+                    y={bodyTop}
+                    width={bodyWidth}
+                    height={bodyHeight}
+                    className={bullish ? 'fill-success/70' : 'fill-error/70'}
+                  />
+                </g>
+              );
+            })}
 
-          return (
-            <g key={`candle-${candle.candleIndex}`}>
-              <line x1={x} x2={x} y1={yHigh} y2={yLow} className={bullish ? 'stroke-success/70' : 'stroke-error/70'} />
-              <rect
-                x={x - bodyWidth / 2}
-                y={bodyTop}
-                width={bodyWidth}
-                height={bodyHeight}
-                className={bullish ? 'fill-success/70' : 'fill-error/70'}
-              />
-            </g>
-          );
-        })}
+            {priceIndicators.map((series, seriesIndex) => {
+              const palette = ['text-info', 'text-warning', 'text-secondary', 'text-accent'];
+              const points = series.points
+                .map((point) => {
+                  if (typeof point.value !== 'number') return null;
+                  const localIndex = point.candleIndex - timeline.cursor;
+                  if (localIndex < 0 || localIndex >= candles.length) return null;
+                  return `${xAt(localIndex)},${yAt(point.value)}`;
+                })
+                .filter((point): point is string => Boolean(point))
+                .join(' ');
 
-        {priceIndicators.map((series, seriesIndex) => {
-          const palette = ['text-info', 'text-warning', 'text-secondary', 'text-accent'];
-          const points = series.points
-            .map((point) => {
-              if (typeof point.value !== 'number') return null;
-              const localIndex = point.candleIndex - timeline.cursor;
+              if (!points) return null;
+              return (
+                <polyline
+                  key={series.key}
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='1.6'
+                  className={palette[seriesIndex % palette.length]}
+                  points={points}
+                />
+              );
+            })}
+
+            {tradeSegments.map((segment, index) => {
+              const x1 = xAt(segment.start);
+              const y1 = yAt(segment.entryPrice);
+              const x2 = xAt(segment.end);
+              const y2 = yAt(segment.exitPrice);
+              return (
+                <line
+                  key={`segment-${index}`}
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  className={segment.profit ? 'stroke-success/70' : 'stroke-error/70'}
+                  strokeDasharray='2 3'
+                />
+              );
+            })}
+
+            {tradeSegments.map((segment, index) => {
+              const xStart = xAt(segment.start);
+              const yStart = yAt(segment.entryPrice);
+              const xEnd = xAt(segment.end);
+              const yEnd = yAt(segment.exitPrice);
+              const exitColor = segment.profit ? 'text-success' : 'text-error';
+              const entryColor = segment.side === 'LONG' ? 'text-success' : 'text-error';
+              return (
+                <g key={`trade-markers-${index}`}>
+                  {segment.side === 'LONG' ? (
+                    <polygon
+                      points={`${xStart},${yStart - 5} ${xStart - 4},${yStart + 3} ${xStart + 4},${yStart + 3}`}
+                      fill='currentColor'
+                      className={entryColor}
+                    />
+                  ) : (
+                    <polygon
+                      points={`${xStart},${yStart + 5} ${xStart - 4},${yStart - 3} ${xStart + 4},${yStart - 3}`}
+                      fill='currentColor'
+                      className={entryColor}
+                    />
+                  )}
+                  <rect x={xEnd - 3.5} y={yEnd - 3.5} width={7} height={7} fill='currentColor' className={exitColor} />
+                </g>
+              );
+            })}
+
+            {lifecycleEvents.map((event) => {
+              const localIndex = event.candleIndex - timeline.cursor;
               if (localIndex < 0 || localIndex >= candles.length) return null;
-              return `${xAt(localIndex)},${yAt(point.value)}`;
-            })
-            .filter((point): point is string => Boolean(point))
-            .join(' ');
+              const x = xAt(localIndex);
+              const y = yAt(event.price);
 
-          if (!points) return null;
-          return (
-            <polyline
-              key={series.key}
-              fill='none'
-              stroke='currentColor'
-              strokeWidth='1.6'
-              className={palette[seriesIndex % palette.length]}
-              points={points}
-            />
-          );
-        })}
+              if (event.type === 'DCA') {
+                return (
+                  <polygon
+                    key={event.id}
+                    points={`${x},${y - 6} ${x - 5},${y + 4} ${x + 5},${y + 4}`}
+                    fill='currentColor'
+                    className='text-info'
+                  />
+                );
+              }
 
-        {tradeSegments.map((segment, index) => {
-          const x1 = xAt(segment.start);
-          const y1 = yAt(segment.entryPrice);
-          const x2 = xAt(segment.end);
-          const y2 = yAt(segment.exitPrice);
-          return (
-            <line
-              key={`segment-${index}`}
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-              className={segment.profit ? 'stroke-success/70' : 'stroke-error/70'}
-              strokeDasharray='2 3'
-            />
-          );
-        })}
+              if (event.type === 'SL' || event.type === 'LIQUIDATION') {
+                return (
+                  <g key={event.id} className='text-error'>
+                    <line x1={x - 4.5} y1={y - 4.5} x2={x + 4.5} y2={y + 4.5} stroke='currentColor' strokeWidth='1.7' />
+                    <line x1={x - 4.5} y1={y + 4.5} x2={x + 4.5} y2={y - 4.5} stroke='currentColor' strokeWidth='1.7' />
+                  </g>
+                );
+              }
 
-        {tradeSegments.map((segment, index) => {
-          const xStart = xAt(segment.start);
-          const yStart = yAt(segment.entryPrice);
-          const xEnd = xAt(segment.end);
-          const yEnd = yAt(segment.exitPrice);
-          const exitColor = segment.profit ? 'text-success' : 'text-error';
-          return (
-            <g key={`trade-markers-${index}`}>
-              <polygon
-                points={`${xStart},${yStart - 5} ${xStart - 4},${yStart + 3} ${xStart + 4},${yStart + 3}`}
-                fill='currentColor'
-                className='text-warning'
+              const colorClass =
+                event.type === 'TP'
+                  ? 'text-success'
+                  : event.type === 'TTP'
+                    ? 'text-accent'
+                    : event.type === 'TRAILING'
+                      ? 'text-warning'
+                      : 'text-secondary';
+
+              return (
+                <circle
+                  key={event.id}
+                  cx={x}
+                  cy={y}
+                  r={3.4}
+                  fill='currentColor'
+                  className={colorClass}
+                  stroke='white'
+                  strokeWidth='0.65'
+                />
+              );
+            })}
+
+            {playbackX != null ? (
+              <line
+                x1={playbackX}
+                x2={playbackX}
+                y1={padding.top}
+                y2={padding.top + innerHeight}
+                className='stroke-primary/80'
+                strokeDasharray='4 4'
               />
-              <rect x={xEnd - 3.5} y={yEnd - 3.5} width={7} height={7} fill='currentColor' className={exitColor} />
-            </g>
-          );
-        })}
+            ) : null}
+          </svg>
+          {oscillatorIndicators.length > 0 ? (
+            <div className='space-y-2'>
+              {oscillatorIndicators.map((series) => {
+                const values = series.points
+                  .map((point) => point.value)
+                  .filter((value): value is number => typeof value === 'number');
+                if (values.length === 0) return null;
+                const localMin = Math.min(...values);
+                const localMax = Math.max(...values);
+                const localRange = localMax - localMin || 1;
+                const levelToY = (value: number) =>
+                  Math.max(0, Math.min(100, 100 - ((value - localMin) / localRange) * 100));
+                const points = series.points
+                  .map((point) => {
+                    if (typeof point.value !== 'number') return null;
+                    const localIndex = point.candleIndex - timeline.cursor;
+                    if (localIndex < 0 || localIndex >= candles.length) return null;
+                    const x = xAt(localIndex);
+                    const y = 100 - ((point.value - localMin) / localRange) * 100;
+                    return `${x},${y}`;
+                  })
+                  .filter((point): point is string => Boolean(point))
+                  .join(' ');
 
-        {playbackX != null ? (
-          <line
-            x1={playbackX}
-            x2={playbackX}
-            y1={padding.top}
-            y2={padding.top + innerHeight}
-            className='stroke-primary/80'
-            strokeDasharray='4 4'
-          />
-        ) : null}
-      </svg>
+                return (
+                  <div key={series.key} className='rounded-lg border border-base-300 bg-base-200 p-2'>
+                    <p className='mb-1 text-xs font-medium'>{series.name}({series.period})</p>
+                    <svg className='h-[100px] w-full' viewBox={`0 0 ${width} 100`} preserveAspectRatio='none'>
+                      {tradeSegments.map((segment, index) => {
+                        const xStart = xAt(segment.start) - barWidth / 2;
+                        const xEnd = xAt(segment.end) + barWidth / 2;
+                        return (
+                          <rect
+                            key={`rsi-bg-${series.key}-${index}`}
+                            x={xStart}
+                            y={0}
+                            width={Math.max(1, xEnd - xStart)}
+                            height={100}
+                            className={segment.profit ? 'fill-success/10' : 'fill-error/10'}
+                          />
+                        );
+                      })}
+                      {series.name.includes('RSI') && rsiLongLevel != null ? (
+                        <>
+                          <line
+                            x1={padding.left}
+                            x2={padding.left + innerWidth}
+                            y1={levelToY(rsiLongLevel)}
+                            y2={levelToY(rsiLongLevel)}
+                            className='stroke-success/70'
+                            strokeDasharray='3 3'
+                          />
+                          <text x={padding.left + innerWidth - 2} y={levelToY(rsiLongLevel) - 2} textAnchor='end' className='fill-success text-[9px]'>
+                            LONG {rsiLongLevel}
+                          </text>
+                        </>
+                      ) : null}
+                      {series.name.includes('RSI') && rsiShortLevel != null ? (
+                        <>
+                          <line
+                            x1={padding.left}
+                            x2={padding.left + innerWidth}
+                            y1={levelToY(rsiShortLevel)}
+                            y2={levelToY(rsiShortLevel)}
+                            className='stroke-error/70'
+                            strokeDasharray='3 3'
+                          />
+                          <text x={padding.left + innerWidth - 2} y={levelToY(rsiShortLevel) - 2} textAnchor='end' className='fill-error text-[9px]'>
+                            SHORT {rsiShortLevel}
+                          </text>
+                        </>
+                      ) : null}
+                      <polyline fill='none' stroke='currentColor' strokeWidth='1.6' className='text-info' points={points} />
+                      {playbackX != null ? (
+                        <line
+                          x1={playbackX}
+                          x2={playbackX}
+                          y1={0}
+                          y2={100}
+                          className='stroke-primary/70'
+                          strokeDasharray='4 4'
+                        />
+                      ) : null}
+                    </svg>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+
+      </div>
 
       <div className='flex flex-wrap items-center justify-between gap-2 text-xs text-base-content/70'>
         <span>Cena min: {formatNumber(min)} | max: {formatNumber(max)}</span>
@@ -678,96 +916,6 @@ function TimelineCandlesChart({
           {candles.length > 0 ? new Date(candles[candles.length - 1].closeTime).toLocaleString() : '-'}
         </span>
       </div>
-
-      {oscillatorIndicators.length > 0 ? (
-        <div className='space-y-2'>
-          {oscillatorIndicators.map((series) => {
-            const values = series.points
-              .map((point) => point.value)
-              .filter((value): value is number => typeof value === 'number');
-            if (values.length === 0) return null;
-            const localMin = Math.min(...values);
-            const localMax = Math.max(...values);
-            const localRange = localMax - localMin || 1;
-            const levelToY = (value: number) =>
-              Math.max(0, Math.min(100, 100 - ((value - localMin) / localRange) * 100));
-            const points = series.points
-              .map((point) => {
-                if (typeof point.value !== 'number') return null;
-                const localIndex = point.candleIndex - timeline.cursor;
-                if (localIndex < 0 || localIndex >= candles.length) return null;
-                const x = xAt(localIndex);
-                const y = 100 - ((point.value - localMin) / localRange) * 100;
-                return `${x},${y}`;
-              })
-              .filter((point): point is string => Boolean(point))
-              .join(' ');
-
-            return (
-              <div key={series.key} className='rounded-lg border border-base-300 bg-base-200 p-2'>
-                <p className='mb-1 text-xs font-medium'>{series.name}({series.period})</p>
-                <svg className='h-[100px] w-full' viewBox={`0 0 ${width} 100`} preserveAspectRatio='none'>
-                  {tradeSegments.map((segment, index) => {
-                    const xStart = xAt(segment.start) - barWidth / 2;
-                    const xEnd = xAt(segment.end) + barWidth / 2;
-                    return (
-                      <rect
-                        key={`rsi-bg-${series.key}-${index}`}
-                        x={xStart}
-                        y={0}
-                        width={Math.max(1, xEnd - xStart)}
-                        height={100}
-                        className={segment.profit ? 'fill-success/10' : 'fill-error/10'}
-                      />
-                    );
-                  })}
-                  {series.name.includes('RSI') && rsiLongLevel != null ? (
-                    <>
-                      <line
-                        x1={padding.left}
-                        x2={padding.left + innerWidth}
-                        y1={levelToY(rsiLongLevel)}
-                        y2={levelToY(rsiLongLevel)}
-                        className='stroke-success/70'
-                        strokeDasharray='3 3'
-                      />
-                      <text x={padding.left + innerWidth - 2} y={levelToY(rsiLongLevel) - 2} textAnchor='end' className='fill-success text-[9px]'>
-                        LONG {rsiLongLevel}
-                      </text>
-                    </>
-                  ) : null}
-                  {series.name.includes('RSI') && rsiShortLevel != null ? (
-                    <>
-                      <line
-                        x1={padding.left}
-                        x2={padding.left + innerWidth}
-                        y1={levelToY(rsiShortLevel)}
-                        y2={levelToY(rsiShortLevel)}
-                        className='stroke-error/70'
-                        strokeDasharray='3 3'
-                      />
-                      <text x={padding.left + innerWidth - 2} y={levelToY(rsiShortLevel) - 2} textAnchor='end' className='fill-error text-[9px]'>
-                        SHORT {rsiShortLevel}
-                      </text>
-                    </>
-                  ) : null}
-                  <polyline fill='none' stroke='currentColor' strokeWidth='1.6' className='text-info' points={points} />
-                  {playbackX != null ? (
-                    <line
-                      x1={playbackX}
-                      x2={playbackX}
-                      y1={0}
-                      y2={100}
-                      className='stroke-primary/70'
-                      strokeDasharray='4 4'
-                    />
-                  ) : null}
-                </svg>
-              </div>
-            );
-          })}
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -910,11 +1058,21 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
       }));
 
       try {
-        const data = await getBacktestRunTimeline(runId, {
-          symbol,
-          cursor,
-          chunkSize: 220,
-        });
+        let data: BacktestTimeline;
+        try {
+          data = await getBacktestRunTimeline(runId, {
+            symbol,
+            cursor,
+            chunkSize: 10000,
+          });
+        } catch (error) {
+          // Backward-compat fallback for older backend validators.
+          data = await getBacktestRunTimeline(runId, {
+            symbol,
+            cursor,
+            chunkSize: 800,
+          });
+        }
         const normalizedData: BacktestTimeline = {
           ...data,
           candles: Array.isArray(data.candles) ? data.candles : [],
@@ -922,6 +1080,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
           indicatorSeries: Array.isArray(data.indicatorSeries) ? data.indicatorSeries : [],
         };
 
+        let mergedForReturn: BacktestTimeline | null = null;
         setTimelines((prev) => {
           const existing = prev[symbol]?.data;
           const merged = append && existing
@@ -940,24 +1099,27 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
               }
             : normalizedData;
 
+          const prepared: BacktestTimeline = {
+            ...merged,
+            candles: [...merged.candles].sort((a, b) => a.candleIndex - b.candleIndex),
+            events: [...merged.events].sort((a, b) => a.candleIndex - b.candleIndex),
+            indicatorSeries: merged.indicatorSeries.map((series) => ({
+              ...series,
+              points: [...series.points].sort((a, b) => a.candleIndex - b.candleIndex),
+            })),
+          };
+          mergedForReturn = prepared;
+
           return {
             ...prev,
             [symbol]: {
-              data: {
-                ...merged,
-                candles: [...merged.candles].sort((a, b) => a.candleIndex - b.candleIndex),
-                events: [...merged.events].sort((a, b) => a.candleIndex - b.candleIndex),
-                indicatorSeries: merged.indicatorSeries.map((series) => ({
-                  ...series,
-                  points: [...series.points].sort((a, b) => a.candleIndex - b.candleIndex),
-                })),
-              },
+              data: prepared,
               loading: false,
               error: null,
             },
           };
         });
-        return normalizedData;
+        return mergedForReturn ?? normalizedData;
       } catch (err: unknown) {
         setTimelines((prev) => ({
           ...prev,
@@ -981,7 +1143,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
     let cancelled = false;
 
     const runQueue = async () => {
-      for (const [index, stats] of symbolStats.entries()) {
+      for (const stats of symbolStats) {
         if (cancelled) return;
         const symbol = stats.symbol;
         const parity = parityDiagnosticsBySymbol.get(symbol.toUpperCase());
@@ -998,15 +1160,24 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
         }
         const timelineState = timelinesRef.current[symbol];
 
-        const shouldScroll = index === 0 || liveProgress?.currentSymbol === symbol;
-        if (shouldScroll) {
-          symbolSectionRefs.current[symbol]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
         if (!timelineState?.data && !timelineState?.loading) {
-          const firstChunk = await loadSymbolTimeline(symbol, 0, false);
+          let currentTimeline = await loadSymbolTimeline(symbol, 0, false);
           if (cancelled) return;
-          if (!firstChunk) continue;
+          if (!currentTimeline) continue;
+
+          const symbolTrades = tradesBySymbol.get(symbol) ?? [];
+          let safety = 0;
+          while (
+            !cancelled &&
+            currentTimeline.nextCursor != null &&
+            countTradesVisibleInTimeline(symbolTrades, currentTimeline) < symbolTrades.length &&
+            safety < 20
+          ) {
+            safety += 1;
+            const mergedTimeline = await loadSymbolTimeline(symbol, currentTimeline.nextCursor, true);
+            if (!mergedTimeline) break;
+            currentTimeline = mergedTimeline;
+          }
         }
 
         // PERF: keep only first chunk auto-loaded per symbol to avoid loading
@@ -1018,7 +1189,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, liveProgress?.currentSymbol, loadSymbolTimeline, parityDiagnosticsBySymbol, symbolStats]);
+  }, [activeTab, loadSymbolTimeline, parityDiagnosticsBySymbol, symbolStats, tradesBySymbol]);
 
   const progress = useMemo(() => {
     if (!run) return 0;
@@ -1172,35 +1343,41 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
             ) : (
               <>
                 <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-6'>
-                  <div className='stat bg-base-200 rounded-lg p-3'>
-                    <div className='stat-title'>Net PnL</div>
-                    <div className={`stat-value text-xl ${pnlClass(report.netPnl)}`}>{formatCurrency(report.netPnl)}</div>
+                  <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                    <p className='text-xs uppercase tracking-wide opacity-70'>Net PnL</p>
+                    <p className={`mt-1 text-2xl font-semibold ${pnlClass(report.netPnl)}`}>{formatCurrency(report.netPnl)}</p>
                   </div>
-                  <div className='stat bg-base-200 rounded-lg p-3'>
-                    <div className='stat-title'>Win Rate</div>
-                    <div className='stat-value text-xl'>{formatPercent(report.winRate)}</div>
+                  <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                    <p className='text-xs uppercase tracking-wide opacity-70'>Win Rate</p>
+                    <p className='mt-1 text-2xl font-semibold'>{formatPercent(report.winRate)}</p>
                   </div>
-                  <div className='stat bg-base-200 rounded-lg p-3'>
-                    <div className='stat-title'>Total Trades</div>
-                    <div className='stat-value text-xl'>{formatNumber(report.totalTrades)}</div>
+                  <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                    <p className='text-xs uppercase tracking-wide opacity-70'>Transakcje</p>
+                    <p className='mt-1 text-2xl font-semibold'>{formatNumber(report.totalTrades)}</p>
                   </div>
-                  <div className='stat bg-base-200 rounded-lg p-3'>
-                    <div className='stat-title'>Max Drawdown</div>
-                    <div className='stat-value text-xl'>{formatPercent(report.maxDrawdown)}</div>
+                  <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                    <p className='text-xs uppercase tracking-wide opacity-70'>Max Drawdown</p>
+                    <p className='mt-1 text-2xl font-semibold'>{formatPercent(report.maxDrawdown)}</p>
                   </div>
-                  <div className='stat bg-base-200 rounded-lg p-3'>
-                    <div className='stat-title'>Start Balance</div>
-                    <div className='stat-value text-xl'>{formatCurrency(summaryMetrics?.initialBalance ?? 0)}</div>
+                  <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                    <p className='text-xs uppercase tracking-wide opacity-70'>Start Balance</p>
+                    <p className='mt-1 text-2xl font-semibold'>{formatCurrency(summaryMetrics?.initialBalance ?? 0)}</p>
                   </div>
-                  <div className='stat bg-base-200 rounded-lg p-3'>
-                    <div className='stat-title'>End Balance</div>
-                    <div className='stat-value text-xl'>{formatCurrency(summaryMetrics?.endBalance ?? 0)}</div>
+                  <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                    <p className='text-xs uppercase tracking-wide opacity-70'>End Balance</p>
+                    <p className='mt-1 text-2xl font-semibold'>{formatCurrency(summaryMetrics?.endBalance ?? 0)}</p>
                   </div>
                 </div>
 
-                <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
-                  <p className='text-sm font-medium'>Dzienny wynik i saldo portfela w czasie</p>
-                  <SummaryDailyChart points={dailyPerformance} formatCurrency={formatCurrency} />
+                <div className='grid gap-3 xl:grid-cols-2'>
+                  <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                    <p className='text-sm font-medium'>Dzienny wynik (zysk/strata)</p>
+                    <SummaryDailyPnlChart points={dailyPerformance} formatCurrency={formatCurrency} />
+                  </div>
+                  <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                    <p className='text-sm font-medium'>Saldo portfela od startu do konca</p>
+                    <SummaryBalanceChart points={dailyPerformance} formatCurrency={formatCurrency} />
+                  </div>
                 </div>
               </>
             )}
@@ -1227,6 +1404,18 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                     {(() => {
                       const timelineState = timelines[stats.symbol] ?? { data: null, loading: false, error: null };
                       const timeline = timelineState.data;
+                      const symbolTrades = tradesBySymbol.get(stats.symbol) ?? [];
+                      const visibleTrades = timeline ? filterTradesByTimelineWindow(symbolTrades, timeline) : symbolTrades;
+                      const visibleStats = buildSymbolStats(visibleTrades, [stats.symbol])[0] ?? stats;
+                      const showVisibleSubset = visibleStats.tradesCount !== stats.tradesCount;
+                      const visibleFinalCandleClosures = visibleTrades.filter((trade) => trade.exitReason === 'FINAL_CANDLE').length;
+                      const visibleLiquidations = visibleTrades.filter(
+                        (trade) => trade.exitReason === 'LIQUIDATION' || trade.liquidated,
+                      ).length;
+                      const visibleLifecycleCounts = (Array.isArray(timeline?.events) ? timeline.events : []).reduce<Record<string, number>>((acc, event) => {
+                        acc[event.type] = (acc[event.type] ?? 0) + 1;
+                        return acc;
+                      }, {});
                       return (
                         <>
                           <div className='mb-3 flex items-center justify-between gap-2'>
@@ -1245,7 +1434,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                               {timeline ? (
                                 <TimelineCandlesChart
                                   timeline={timeline}
-                                  trades={tradesBySymbol.get(stats.symbol) ?? []}
+                                  trades={visibleTrades}
                                   formatNumber={formatNumber}
                                   rsiLongLevel={indicatorMeta.rsiLongLevel}
                                   rsiShortLevel={indicatorMeta.rsiShortLevel}
@@ -1267,15 +1456,31 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
 
                               <div className='flex flex-wrap items-center gap-4 text-xs text-base-content/75'>
                                 <span className='inline-flex items-center gap-1'>
-                                  <LuCircleDot className='h-3.5 w-3.5 text-success' />
-                                  Entry LONG/SHORT
+                                  <span className='inline-block h-0 w-0 border-l-[4px] border-r-[4px] border-b-[6px] border-l-transparent border-r-transparent border-b-success' />
+                                  Entry LONG
+                                </span>
+                                <span className='inline-flex items-center gap-1'>
+                                  <span className='inline-block h-0 w-0 border-l-[4px] border-r-[4px] border-t-[6px] border-l-transparent border-r-transparent border-t-error' />
+                                  Entry SHORT
+                                </span>
+                                <span className='inline-flex items-center gap-1'>
+                                  <LuSquare className='h-3.5 w-3.5 text-success' />
+                                  Exit zysk
                                 </span>
                                 <span className='inline-flex items-center gap-1'>
                                   <LuSquare className='h-3.5 w-3.5 text-error' />
-                                  Exit z PnL
+                                  Exit strata
                                 </span>
                                 <span className='inline-flex items-center gap-1'>
-                                  DCA {timeline?.parityDiagnostics?.eventCounts?.DCA ?? 0} | TP {timeline?.parityDiagnostics?.eventCounts?.TP ?? 0} | SL {timeline?.parityDiagnostics?.eventCounts?.SL ?? 0} | TSL {timeline?.parityDiagnostics?.eventCounts?.TRAILING ?? 0} | LIQ {timeline?.parityDiagnostics?.eventCounts?.LIQUIDATION ?? 0}
+                                  <LuCircleDot className='h-3.5 w-3.5 text-info' />
+                                  DCA
+                                </span>
+                                <span className='inline-flex items-center gap-1'>
+                                  <LuCircleDot className='h-3.5 w-3.5 text-accent' />
+                                  TTP
+                                </span>
+                                <span className='inline-flex items-center gap-1'>
+                                  DCA {visibleLifecycleCounts.DCA ?? 0} | TP {visibleLifecycleCounts.TP ?? 0} | TTP {visibleLifecycleCounts.TTP ?? 0} | SL {visibleLifecycleCounts.SL ?? 0} | TSL {visibleLifecycleCounts.TRAILING ?? 0} | LIQ {visibleLifecycleCounts.LIQUIDATION ?? 0}
                                 </span>
                               </div>
                             </div>
@@ -1295,13 +1500,30 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                                 );
                               })()}
                               <div className='space-y-1'>
-                                <p>Transakcji: <span className='font-medium'>{formatNumber(stats.tradesCount)}</span></p>
-                                <p>Win rate: <span className='font-medium'>{formatPercent(stats.winRate)}</span></p>
-                                <p>Wygrane/Przegrane: <span className='font-medium'>{stats.wins}/{stats.losses}</span></p>
-                                <p>Srednie wejscie: <span className='font-medium'>{formatNumber(stats.avgEntry)}</span></p>
-                                <p>Srednie wyjscie: <span className='font-medium'>{formatNumber(stats.avgExit)}</span></p>
-                                <p>Sredni czas pozycji: <span className='font-medium'>{formatNumber(stats.avgHoldMinutes)} min</span></p>
-                                <p>Zakres: <span className='font-medium'>{stats.firstAt ? formatDateTime(new Date(stats.firstAt).toISOString()) : '-'} - {stats.lastAt ? formatDateTime(new Date(stats.lastAt).toISOString()) : '-'}</span></p>
+                                <p>
+                                  Transakcji:{' '}
+                                  <span className='font-medium'>
+                                    {formatNumber(visibleStats.tradesCount)}
+                                    {showVisibleSubset ? ` / ${formatNumber(stats.tradesCount)}` : ''}
+                                  </span>
+                                </p>
+                                {showVisibleSubset ? (
+                                  <p className='text-xs opacity-70'>w zakresie wykresu / lacznie</p>
+                                ) : null}
+                                <p>Win rate: <span className='font-medium'>{formatPercent(visibleStats.winRate)}</span></p>
+                                <p>Wygrane/Przegrane: <span className='font-medium'>{visibleStats.wins}/{visibleStats.losses}</span></p>
+                                <p>Srednie wejscie: <span className='font-medium'>{formatNumber(visibleStats.avgEntry)}</span></p>
+                                <p>Srednie wyjscie: <span className='font-medium'>{formatNumber(visibleStats.avgExit)}</span></p>
+                                <p>Sredni czas pozycji: <span className='font-medium'>{formatNumber(visibleStats.avgHoldMinutes)} min</span></p>
+                                <p>
+                                  Zakres:{' '}
+                                  <span className='font-medium'>
+                                    {visibleStats.firstAt ? formatDateTime(new Date(visibleStats.firstAt).toISOString()) : '-'} -{' '}
+                                    {visibleStats.lastAt ? formatDateTime(new Date(visibleStats.lastAt).toISOString()) : '-'}
+                                  </span>
+                                </p>
+                                <p>Zamkniete na ostatniej swiecy: <span className='font-medium'>{formatNumber(visibleFinalCandleClosures)}</span></p>
+                                <p>Likwidacje: <span className='font-medium'>{formatNumber(visibleLiquidations)}</span></p>
                               </div>
                               <div className='divider my-2' />
                               <h5 className='font-semibold'>Wskazniki strategii</h5>

@@ -37,6 +37,35 @@ describe('simulateTradesForSymbolReplay', () => {
     expect(result.eventCounts.ENTRY).toBeGreaterThanOrEqual(2);
   });
 
+  it('does not create overlapping trade intervals for one symbol', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 102),
+      candle(2, 101.9),
+      candle(3, 99),
+      candle(4, 99.05),
+      candle(5, 101.5),
+      candle(6, 101.45),
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 2,
+      marginMode: 'CROSSED',
+    });
+
+    const ordered = [...result.trades].sort(
+      (left, right) => new Date(left.openedAt).getTime() - new Date(right.openedAt).getTime(),
+    );
+    for (let index = 1; index < ordered.length; index += 1) {
+      const previousClosedAt = new Date(ordered[index - 1].closedAt).getTime();
+      const currentOpenedAt = new Date(ordered[index].openedAt).getTime();
+      expect(currentOpenedAt).toBeGreaterThanOrEqual(previousClosedAt);
+    }
+  });
+
   it('counts isolated liquidation when adverse move exceeds leverage threshold', () => {
     const candles = [
       candle(0, 100),
@@ -61,9 +90,9 @@ describe('simulateTradesForSymbolReplay', () => {
     const candles = [
       candle(0, 100),
       candle(1, 101.5), // open LONG
-      candle(2, 100.2), // DCA
-      candle(3, 102.4), // favorable move
-      candle(4, 102.35), // neutral -> EXIT from signal band
+      candle(2, 101.2), // small pullback
+      candle(3, 103.0), // favorable move (arms trailing but does not hit TP)
+      candle(4, 102.0), // pullback -> trailing exit
     ];
 
     const result = simulateTradesForSymbolReplay({
@@ -72,12 +101,47 @@ describe('simulateTradesForSymbolReplay', () => {
       marketType: 'FUTURES',
       leverage: 3,
       marginMode: 'CROSSED',
+      strategyConfig: {
+        openConditions: {
+          direction: 'long',
+          indicatorsLong: [
+            {
+              name: 'MOMENTUM',
+              condition: '>',
+              value: -999,
+              params: { period: 1 },
+            },
+          ],
+          indicatorsShort: [],
+        },
+        additional: {
+          dcaEnabled: false,
+          dcaTimes: 0,
+        },
+        close: {
+          tp: 4,
+          tsl: [{ percent: 0.5 }],
+        },
+      },
     });
 
     expect(result.eventCounts.ENTRY).toBeGreaterThan(0);
-    expect(result.eventCounts.DCA).toBeGreaterThanOrEqual(1);
-    expect(result.eventCounts.TRAILING).toBeGreaterThanOrEqual(1);
-    expect(result.eventCounts.EXIT + result.eventCounts.TP + result.eventCounts.SL + result.eventCounts.TRAILING + result.eventCounts.LIQUIDATION).toBe(result.trades.length);
+    expect(result.eventCounts.DCA).toBe(0);
+    expect(
+      result.eventCounts.TRAILING +
+        result.eventCounts.EXIT +
+        result.eventCounts.TP +
+        result.eventCounts.TTP +
+        result.eventCounts.SL
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      result.eventCounts.EXIT +
+        result.eventCounts.TP +
+        result.eventCounts.TTP +
+        result.eventCounts.SL +
+        result.eventCounts.TRAILING +
+        result.eventCounts.LIQUIDATION
+    ).toBe(result.trades.length);
   });
 
   it('emits take-profit lifecycle event when favorable move crosses TP threshold', () => {
@@ -97,6 +161,46 @@ describe('simulateTradesForSymbolReplay', () => {
     });
 
     expect(result.eventCounts.TP).toBeGreaterThanOrEqual(1);
+  });
+
+  it('emits trailing-take-profit event when arm and pullback thresholds are hit', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 100.5),
+      candle(2, 101), // open LONG
+      candle(3, 103), // arm TTP
+      candle(4, 102.4), // pullback => TTP
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 3,
+      marginMode: 'CROSSED',
+      strategyConfig: {
+        openConditions: {
+          direction: 'long',
+          indicatorsLong: [
+            {
+              name: 'MOMENTUM',
+              condition: '>',
+              value: -999,
+              params: { period: 2 },
+            },
+          ],
+          indicatorsShort: [],
+        },
+        close: {
+          tp: 10,
+          sl: 10,
+          ttp: [{ arm: 1.5, percent: 0.5 }],
+          tsl: [],
+        },
+      },
+    });
+
+    expect(result.eventCounts.TTP).toBeGreaterThanOrEqual(1);
   });
 
   it('emits stop-loss lifecycle event when adverse move breaches SL threshold', () => {
@@ -122,9 +226,9 @@ describe('simulateTradesForSymbolReplay', () => {
     const candles = [
       candle(0, 100),
       candle(1, 101.5), // open LONG
-      candle(2, 100.2), // DCA
-      candle(3, 102.4), // favorable move
-      candle(4, 102.35), // trailing exit
+      candle(2, 101.2), // small pullback
+      candle(3, 103.0), // favorable move (arms trailing)
+      candle(4, 102.0), // trailing exit
     ];
 
     const result = simulateTradesForSymbolReplay({
@@ -133,9 +237,109 @@ describe('simulateTradesForSymbolReplay', () => {
       marketType: 'FUTURES',
       leverage: 2,
       marginMode: 'CROSSED',
+      strategyConfig: {
+        openConditions: {
+          direction: 'long',
+          indicatorsLong: [
+            {
+              name: 'MOMENTUM',
+              condition: '>',
+              value: -999,
+              params: { period: 1 },
+            },
+          ],
+          indicatorsShort: [],
+        },
+        additional: {
+          dcaEnabled: false,
+          dcaTimes: 0,
+        },
+        close: {
+          tp: 4,
+          tsl: [{ percent: 0.5 }],
+        },
+      },
     });
 
     expect(result.eventCounts.TRAILING).toBeGreaterThanOrEqual(1);
+  });
+
+  it('triggers DCA on intrabar wick (low/high), not only on candle close', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 101.2), // open LONG
+      {
+        ...candle(2, 100.9), // close not deep enough for DCA by close-only logic
+        low: 99.8, // wick breaches DCA threshold
+        high: 101.1,
+      },
+      candle(3, 101.0),
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'BNBUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 3,
+      marginMode: 'CROSSED',
+    });
+
+    expect(result.eventCounts.DCA).toBeGreaterThanOrEqual(1);
+  });
+
+  it('applies DCA multiplier on current position size (parity with runtime position management)', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 101), // open LONG
+      candle(2, 102), // open LONG (period clamp => 2)
+      {
+        ...candle(3, 100.5),
+        low: 89, // DCA #1
+      },
+      {
+        ...candle(4, 95),
+        low: 70, // DCA #2 (based on last DCA reference)
+      },
+      candle(5, 120), // exit
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 1,
+      marginMode: 'CROSSED',
+      strategyConfig: {
+        openConditions: {
+          direction: 'long',
+          indicatorsLong: [
+            {
+              name: 'MOMENTUM',
+              condition: '>',
+              value: -999,
+              params: { period: 1 },
+            },
+          ],
+          indicatorsShort: [],
+        },
+        close: {
+          tp: 99,
+          sl: 99,
+        },
+        additional: {
+          dcaEnabled: true,
+          dcaTimes: 2,
+          dcaLevels: [
+            { percent: -10, multiplier: 1 },
+            { percent: -10, multiplier: 1 },
+          ],
+        },
+      },
+    });
+
+    expect(result.eventCounts.DCA).toBe(2);
+    expect(result.trades.length).toBeGreaterThan(0);
+    expect(result.trades[0].quantity).toBeCloseTo(4, 5);
   });
 
   it('uses strategy rules to suppress fallback threshold signals when indicators do not match', () => {
@@ -254,6 +458,64 @@ describe('simulateTradesForSymbolReplay', () => {
     expect(new Set(result.trades.map((trade) => trade.side))).toContain('LONG');
   });
 
+  it('uses walletRisk position sizing to scale initial quantity', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 101),
+      candle(2, 102), // open
+      candle(3, 103),
+      candle(4, 104),
+    ];
+
+    const lowRisk = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 2,
+      marginMode: 'CROSSED',
+      strategyConfig: {
+        openConditions: {
+          direction: 'long',
+          indicatorsLong: [
+            { name: 'MOMENTUM', condition: '>', value: -999, params: { period: 1 } },
+          ],
+          indicatorsShort: [],
+        },
+      },
+      positionSizing: {
+        mode: 'wallet_risk',
+        referenceBalance: 10_000,
+        walletRiskPercent: 1,
+      },
+    });
+
+    const highRisk = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 2,
+      marginMode: 'CROSSED',
+      strategyConfig: {
+        openConditions: {
+          direction: 'long',
+          indicatorsLong: [
+            { name: 'MOMENTUM', condition: '>', value: -999, params: { period: 1 } },
+          ],
+          indicatorsShort: [],
+        },
+      },
+      positionSizing: {
+        mode: 'wallet_risk',
+        referenceBalance: 10_000,
+        walletRiskPercent: 10,
+      },
+    });
+
+    expect(lowRisk.trades.length).toBeGreaterThan(0);
+    expect(highRisk.trades.length).toBeGreaterThan(0);
+    expect(highRisk.trades[0].quantity).toBeGreaterThan(lowRisk.trades[0].quantity);
+  });
+
   it('emits parity decision-trace mismatch diagnostics with timestamp/side/trigger/reason', () => {
     const candles = [
       candle(0, 100),
@@ -277,5 +539,61 @@ describe('simulateTradesForSymbolReplay', () => {
     expect(mismatch?.side).toBe('LONG');
     expect(mismatch?.trigger).toBe('THRESHOLD');
     expect(mismatch?.timestamp).toBeInstanceOf(Date);
+  });
+
+  it('tracks wallet-risk sizing on current equity (second trade size drops after realized loss)', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 102), // open LONG
+      candle(2, 100), // loss close
+      candle(3, 103), // next LONG open
+      candle(4, 101), // next loss close
+      candle(5, 101.1),
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 5,
+      marginMode: 'CROSSED',
+      positionSizing: {
+        mode: 'wallet_risk',
+        referenceBalance: 10_000,
+        walletRiskPercent: 10,
+      },
+    });
+
+    expect(result.trades.length).toBeGreaterThanOrEqual(2);
+    expect(result.trades[1].quantity).toBeLessThan(result.trades[0].quantity);
+  });
+
+  it('never realizes losses below account floor (net pnl >= -initial balance)', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 101), // open LONG
+      {
+        ...candle(2, 1), // severe crash -> liquidation region
+        low: 0.1,
+      },
+      candle(3, 1),
+    ];
+
+    const initialBalance = 1_000;
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 10,
+      marginMode: 'ISOLATED',
+      positionSizing: {
+        mode: 'wallet_risk',
+        referenceBalance: initialBalance,
+        walletRiskPercent: 100,
+      },
+    });
+
+    const totalPnl = result.trades.reduce((acc, trade) => acc + trade.pnl, 0);
+    expect(totalPnl).toBeGreaterThanOrEqual(-initialBalance);
   });
 });

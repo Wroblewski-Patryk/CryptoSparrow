@@ -15,6 +15,7 @@ const createDeps = () => {
         id: 'bot-1',
         userId: 'user-1',
         mode: 'PAPER' as const,
+        paperStartBalance: 1000,
         marketType: 'FUTURES' as const,
         marketGroups: [
           {
@@ -203,6 +204,7 @@ describe('RuntimeSignalLoop', () => {
         id: 'bot-spot',
         userId: 'user-1',
         mode: 'PAPER' as const,
+        paperStartBalance: 1000,
         marketType: 'SPOT' as const,
         marketGroups: [
           {
@@ -240,6 +242,7 @@ describe('RuntimeSignalLoop', () => {
         id: 'bot-strategy',
         userId: 'user-1',
         mode: 'PAPER' as const,
+        paperStartBalance: 1000,
         marketType: 'FUTURES' as const,
         marketGroups: [
           {
@@ -252,6 +255,8 @@ describe('RuntimeSignalLoop', () => {
               {
                 strategyId: 'strategy-1',
                 strategyInterval: '1m',
+                strategyLeverage: 5,
+                walletRisk: 10,
                 strategyConfig: {
                   open: {
                     indicatorsLong: [
@@ -307,6 +312,15 @@ describe('RuntimeSignalLoop', () => {
         direction: 'LONG',
       })
     );
+    expect(deps.orchestrateFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        botId: 'bot-strategy',
+        strategyId: 'strategy-1',
+        direction: 'LONG',
+      })
+    );
+    const orchestratePayload = deps.orchestrateFn.mock.calls.at(-1)?.[0];
+    expect(orchestratePayload?.quantity).toBeCloseTo((1000 * 0.1 * 5) / 108, 8);
   });
 
   it('merges multi-strategy votes with EXIT priority and deterministic strategy selection', async () => {
@@ -316,6 +330,7 @@ describe('RuntimeSignalLoop', () => {
         id: 'bot-merge',
         userId: 'user-1',
         mode: 'PAPER' as const,
+        paperStartBalance: 1000,
         marketType: 'FUTURES' as const,
         marketGroups: [
           {
@@ -328,8 +343,11 @@ describe('RuntimeSignalLoop', () => {
               {
                 strategyId: 'strategy-exit',
                 strategyInterval: '1m',
+                strategyLeverage: 3,
+                walletRisk: 5,
                 strategyConfig: {
                   open: {
+                    noMatchAction: 'EXIT',
                     indicatorsLong: [{ name: 'RSI', params: { period: 3 }, condition: '>', value: 150 }],
                     indicatorsShort: [{ name: 'RSI', params: { period: 3 }, condition: '<', value: -1 }],
                   },
@@ -340,6 +358,8 @@ describe('RuntimeSignalLoop', () => {
               {
                 strategyId: 'strategy-long',
                 strategyInterval: '1m',
+                strategyLeverage: 5,
+                walletRisk: 8,
                 strategyConfig: {
                   open: {
                     indicatorsLong: [{ name: 'EMA', params: { fast: 3, slow: 5 }, condition: '>', value: 1 }],

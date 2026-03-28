@@ -60,6 +60,7 @@ export default function BotsManagement() {
 
   const [name, setName] = useState("");
   const [mode, setMode] = useState<BotMode>("PAPER");
+  const [paperStartBalance, setPaperStartBalance] = useState(10_000);
   const [marketType, setMarketType] = useState<TradeMarket>("FUTURES");
   const [positionMode, setPositionMode] = useState<PositionMode>("ONE_WAY");
   const [marketFilter, setMarketFilter] = useState<"ALL" | TradeMarket>("ALL");
@@ -113,7 +114,14 @@ export default function BotsManagement() {
     };
   }, []);
 
-  const canCreate = useMemo(() => name.trim().length > 0 && !creating, [creating, name]);
+  const canCreate = useMemo(
+    () =>
+      name.trim().length > 0 &&
+      Number.isFinite(paperStartBalance) &&
+      paperStartBalance >= 0 &&
+      !creating,
+    [creating, name, paperStartBalance]
+  );
 
   const assistantSlots = useMemo(
     () =>
@@ -172,6 +180,7 @@ export default function BotsManagement() {
       const created = await createBot({
         name: name.trim(),
         mode,
+        paperStartBalance,
         marketType,
         positionMode,
         strategyId: strategyId || null,
@@ -184,6 +193,7 @@ export default function BotsManagement() {
       setServerSnapshot((prev) => ({ ...prev, [created.id]: created }));
       setName("");
       setMode("PAPER");
+      setPaperStartBalance(10_000);
       setMarketType("FUTURES");
       setPositionMode("ONE_WAY");
       setStrategyId("");
@@ -228,6 +238,7 @@ export default function BotsManagement() {
         isActive: bot.isActive,
         liveOptIn: bot.liveOptIn,
         consentTextVersion: bot.liveOptIn ? LIVE_CONSENT_TEXT_VERSION : null,
+        paperStartBalance: bot.paperStartBalance,
         maxOpenPositions: bot.maxOpenPositions,
         strategyId: bot.strategyId ?? null,
       });
@@ -377,7 +388,7 @@ export default function BotsManagement() {
         <p className="text-sm opacity-70">
           Dodaj bota i ustaw tryb uruchomienia. LIVE wymaga opt-in.
         </p>
-        <div className="mt-4 grid gap-3 md:grid-cols-6">
+        <div className="mt-4 grid gap-3 md:grid-cols-7">
           <label className="form-control">
             <span className="label-text">Nazwa</span>
             <input
@@ -412,6 +423,21 @@ export default function BotsManagement() {
               <option value="FUTURES">FUTURES</option>
               <option value="SPOT">SPOT</option>
             </select>
+          </label>
+          <label className="form-control">
+            <span className="label-text">Paper start balance</span>
+            <input
+              type="number"
+              min={0}
+              max={100000000}
+              className="input input-bordered"
+              aria-label="Paper start balance"
+              value={paperStartBalance}
+              onChange={(event) =>
+                setPaperStartBalance(Number.isFinite(Number(event.target.value)) ? Number(event.target.value) : 0)
+              }
+              disabled={mode === "LIVE"}
+            />
           </label>
           <label className="form-control">
             <span className="label-text">Pozycja</span>
@@ -508,6 +534,7 @@ export default function BotsManagement() {
                   <th>Strategia</th>
                   <th>Status</th>
                   <th>Tryb</th>
+                  <th>Paper balance</th>
                   <th>Max positions</th>
                   <th>Live opt-in</th>
                   <th>Aktywny</th>
@@ -586,6 +613,23 @@ export default function BotsManagement() {
                       <td>
                         <input
                           type="number"
+                          min={0}
+                          max={100000000}
+                          className="input input-bordered input-sm w-28"
+                          value={bot.paperStartBalance}
+                          disabled={bot.mode === "LIVE"}
+                          onChange={(event) =>
+                            patchBot(bot.id, {
+                              paperStartBalance: Number.isFinite(Number(event.target.value))
+                                ? Number(event.target.value)
+                                : 0,
+                            })
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
                           min={1}
                           max={100}
                           className="input input-bordered input-sm w-24"
@@ -636,7 +680,7 @@ export default function BotsManagement() {
                 })}
                 {bots.length === 0 && (
                   <tr>
-                    <td colSpan={10} className="text-center text-sm opacity-70">
+                    <td colSpan={11} className="text-center text-sm opacity-70">
                       Brak botow dla wybranego rynku.
                     </td>
                   </tr>

@@ -72,7 +72,6 @@ export default function MarketUniverseForm({
   const [catalogMarkets, setCatalogMarkets] = useState<MarketCatalogEntry[]>([]);
 
   const [name, setName] = useState(initial?.name ?? '');
-  const [selectedMarketSymbols, setSelectedMarketSymbols] = useState<string[]>(initial?.whitelist ?? []);
   const [whitelistSymbols, setWhitelistSymbols] = useState<string[]>(initial?.whitelist ?? []);
   const [blacklistSymbols, setBlacklistSymbols] = useState<string[]>(initial?.blacklist ?? []);
   const [previewQuery, setPreviewQuery] = useState('');
@@ -84,7 +83,6 @@ export default function MarketUniverseForm({
     setName(initial.name);
     setMarketType(initial.marketType);
     setBaseCurrency(initial.baseCurrency);
-    setSelectedMarketSymbols(initial.whitelist);
     setWhitelistSymbols(initial.whitelist);
     setBlacklistSymbols(initial.blacklist);
     setMinQuoteVolumeEnabled(resolveSavedVolumeEnabled(initial));
@@ -155,7 +153,6 @@ export default function MarketUniverseForm({
 
   useEffect(() => {
     const valid = new Set(marketOptions.map((item) => item.value));
-    setSelectedMarketSymbols((prev) => prev.filter((item) => valid.has(item)));
     setWhitelistSymbols((prev) => prev.filter((item) => valid.has(item)));
     setBlacklistSymbols((prev) => prev.filter((item) => valid.has(item)));
   }, [marketOptions]);
@@ -163,12 +160,11 @@ export default function MarketUniverseForm({
   const availableSymbols = useMemo(() => marketOptions.map((option) => option.value), [marketOptions]);
 
   const previewSymbols = useMemo(() => {
-    const includeBase = selectedMarketSymbols.length > 0 ? selectedMarketSymbols : whitelistSymbols;
-    const include = includeBase.length > 0 ? includeBase : availableSymbols;
+    const include = whitelistSymbols.length > 0 ? whitelistSymbols : availableSymbols;
     const blacklistSet = new Set(blacklistSymbols);
 
     return uniqueSorted(include).filter((symbol) => !blacklistSet.has(symbol));
-  }, [availableSymbols, blacklistSymbols, selectedMarketSymbols, whitelistSymbols]);
+  }, [availableSymbols, blacklistSymbols, whitelistSymbols]);
 
   const previewFiltered = useMemo(() => {
     const q = previewQuery.trim().toUpperCase();
@@ -194,11 +190,10 @@ export default function MarketUniverseForm({
   };
 
   const selectAllFromBaseCurrency = () => {
-    setSelectedMarketSymbols(availableSymbols);
+    setWhitelistSymbols(availableSymbols);
   };
 
   const clearAllSelections = () => {
-    setSelectedMarketSymbols([]);
     setWhitelistSymbols([]);
     setBlacklistSymbols([]);
   };
@@ -207,7 +202,7 @@ export default function MarketUniverseForm({
     event.preventDefault();
     if (!canSubmit) return;
 
-    const mergedWhitelist = uniqueSorted([...selectedMarketSymbols, ...whitelistSymbols]);
+    const mergedWhitelist = uniqueSorted(whitelistSymbols);
     const mergedBlacklistSet = new Set(uniqueSorted(blacklistSymbols));
     const payloadWhitelist = mergedWhitelist.filter((symbol) => !mergedBlacklistSet.has(symbol));
     const payloadBlacklist = [...mergedBlacklistSet].sort((a, b) => a.localeCompare(b));
@@ -347,15 +342,7 @@ export default function MarketUniverseForm({
                 </div>
               </div>
 
-              <div className='mt-3 grid gap-3 xl:grid-cols-3'>
-                <SearchableMultiSelect
-                  label='Wybrane'
-                  options={marketOptions}
-                  selectedValues={selectedMarketSymbols}
-                  onChange={setSelectedMarketSymbols}
-                  emptyText='Brak rynkow dla filtra.'
-                  maxListHeightClassName='max-h-80'
-                />
+              <div className='mt-3 grid gap-3 xl:grid-cols-2'>
                 <SearchableMultiSelect
                   label='Whitelist'
                   options={marketOptions}
@@ -387,7 +374,7 @@ export default function MarketUniverseForm({
               <span className='text-sm opacity-70'>Liczba rynkow: {previewSymbols.length}</span>
             </div>
             <p className='mt-1 text-xs opacity-70'>
-              Kolejnosc alfabetyczna. Zastosowano: market type + base currency + volume + wybrane/whitelist - blacklist.
+              Kolejnosc alfabetyczna. Zastosowano: market type + base currency + volume + whitelist - blacklist.
             </p>
 
             <div className='mt-3'>

@@ -75,6 +75,42 @@ describe('position management', () => {
     expect(second.closeReason).toBe('trailing_stop');
   });
 
+  it('closes on trailing take-profit after arm level and pullback', () => {
+    const armed = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 106,
+        trailingTakeProfit: {
+          enabled: true,
+          armPercent: 0.05,
+          trailPercent: 0.02,
+        },
+      },
+      {
+        averageEntryPrice: 100,
+        quantity: 1,
+        currentAdds: 0,
+      }
+    );
+
+    const closed = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 103.8,
+        trailingTakeProfit: {
+          enabled: true,
+          armPercent: 0.05,
+          trailPercent: 0.02,
+        },
+      },
+      armed.nextState
+    );
+
+    expect(armed.shouldClose).toBe(false);
+    expect(closed.shouldClose).toBe(true);
+    expect(closed.closeReason).toBe('trailing_take_profit');
+  });
+
   it('executes DCA and recalculates quantity and average entry', () => {
     const result = evaluatePositionManagement(
       {

@@ -47,7 +47,7 @@ export type PaperLifecycleTickResult = {
     targetQuantity: number;
     remainingQuantity: number;
   };
-  closeReason?: 'take_profit' | 'stop_loss' | 'trailing_stop';
+  closeReason?: 'take_profit' | 'trailing_take_profit' | 'stop_loss' | 'trailing_stop';
   tradeResult?: SimulatorResult;
 };
 

@@ -50,7 +50,6 @@ export default function MarketsFlow() {
   const [catalogMarkets, setCatalogMarkets] = useState<MarketCatalogEntry[]>([]);
 
   const [name, setName] = useState('');
-  const [selectedMarketSymbols, setSelectedMarketSymbols] = useState<string[]>([]);
   const [whitelistSymbols, setWhitelistSymbols] = useState<string[]>([]);
   const [blacklistSymbols, setBlacklistSymbols] = useState<string[]>([]);
   const [previewQuery, setPreviewQuery] = useState('');
@@ -120,7 +119,6 @@ export default function MarketsFlow() {
 
   useEffect(() => {
     const valid = new Set(marketOptions.map((item) => item.value));
-    setSelectedMarketSymbols((prev) => prev.filter((item) => valid.has(item)));
     setWhitelistSymbols((prev) => prev.filter((item) => valid.has(item)));
     setBlacklistSymbols((prev) => prev.filter((item) => valid.has(item)));
   }, [marketOptions]);
@@ -128,12 +126,11 @@ export default function MarketsFlow() {
   const availableSymbols = useMemo(() => marketOptions.map((option) => option.value), [marketOptions]);
 
   const previewSymbols = useMemo(() => {
-    const includeBase = selectedMarketSymbols.length > 0 ? selectedMarketSymbols : whitelistSymbols;
-    const include = includeBase.length > 0 ? includeBase : availableSymbols;
+    const include = whitelistSymbols.length > 0 ? whitelistSymbols : availableSymbols;
     const blacklistSet = new Set(blacklistSymbols);
 
     return uniqueSorted(include).filter((symbol) => !blacklistSet.has(symbol));
-  }, [availableSymbols, blacklistSymbols, selectedMarketSymbols, whitelistSymbols]);
+  }, [availableSymbols, blacklistSymbols, whitelistSymbols]);
 
   const previewFiltered = useMemo(() => {
     const q = previewQuery.trim().toUpperCase();
@@ -159,11 +156,10 @@ export default function MarketsFlow() {
   };
 
   const selectAllFromBaseCurrency = () => {
-    setSelectedMarketSymbols(availableSymbols);
+    setWhitelistSymbols(availableSymbols);
   };
 
   const clearAllSelections = () => {
-    setSelectedMarketSymbols([]);
     setWhitelistSymbols([]);
     setBlacklistSymbols([]);
   };
@@ -174,7 +170,7 @@ export default function MarketsFlow() {
 
     setCreating(true);
     try {
-      const mergedWhitelist = uniqueSorted([...selectedMarketSymbols, ...whitelistSymbols]);
+      const mergedWhitelist = uniqueSorted(whitelistSymbols);
       const mergedBlacklistSet = new Set(uniqueSorted(blacklistSymbols));
       const payloadWhitelist = mergedWhitelist.filter((symbol) => !mergedBlacklistSet.has(symbol));
       const payloadBlacklist = [...mergedBlacklistSet].sort((a, b) => a.localeCompare(b));
@@ -281,15 +277,7 @@ export default function MarketsFlow() {
           </div>
         </div>
 
-        <div className='mt-3 grid gap-3 xl:grid-cols-3'>
-          <SearchableMultiSelect
-            label='Wybrane rynki (kreator)'
-            options={marketOptions}
-            selectedValues={selectedMarketSymbols}
-            onChange={setSelectedMarketSymbols}
-            emptyText='Brak rynkow dla wybranego filtra.'
-            maxListHeightClassName='max-h-80'
-          />
+        <div className='mt-3 grid gap-3 xl:grid-cols-2'>
           <SearchableMultiSelect
             label='Whitelist'
             options={marketOptions}
@@ -317,7 +305,7 @@ export default function MarketsFlow() {
             <span className='text-sm opacity-70'>Liczba rynkow: {previewSymbols.length}</span>
           </div>
           <p className='mt-1 text-xs opacity-70'>
-            Kolejnosc: alfabetyczna. Zastosowano: market type + base currency + min volume + wybrane/whitelist - blacklist.
+            Kolejnosc: alfabetyczna. Zastosowano: market type + base currency + min volume + whitelist - blacklist.
           </p>
 
           <div className='mt-3'>

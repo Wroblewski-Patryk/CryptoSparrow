@@ -46,16 +46,16 @@ export const createHistoricalBacktestFillModel = (
   return {
     entryPrice: (price, side) => applySlippage(price, slippageRate, side, true),
     exitPrice: (price, side) => applySlippage(price, slippageRate, side, false),
-    fee: (entry, exit, _quantity, leverage) => {
-      // Keep V1 compatibility with previous backtest accounting semantics.
-      return (entry + exit) * feeRate * Math.max(1, leverage);
+    fee: (entry, exit, quantity) => {
+      // Futures/spot fee is charged on notional (price * quantity), leverage should not multiply twice.
+      return (entry * quantity + exit * quantity) * feeRate;
     },
-    settle: ({ side, entryPrice, exitPrice, quantity, leverage }) =>
+    settle: ({ side, entryPrice, exitPrice, quantity, leverage: _leverage }) =>
       simulateTrade({
         side,
         entryPrice,
         exitPrice,
-        quantity: quantity * Math.max(1, leverage),
+        quantity,
         feeRate,
         slippageRate: 0,
         fundingRate,

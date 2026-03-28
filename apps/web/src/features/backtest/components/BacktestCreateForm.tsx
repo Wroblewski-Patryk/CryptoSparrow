@@ -22,7 +22,9 @@ type BacktestCreateFormProps = {
 };
 
 const MAX_CANDLES_MIN = 100;
-const MAX_CANDLES_MAX = 2500;
+const MAX_CANDLES_MAX = 10000;
+const INITIAL_BALANCE_MIN = 1;
+const INITIAL_BALANCE_MAX = 1_000_000_000;
 
 export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }: BacktestCreateFormProps) {
   const [name, setName] = useState('MVP Backtest Run');
@@ -30,6 +32,7 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
   const [marketUniverseId, setMarketUniverseId] = useState('');
   const [notes, setNotes] = useState('');
   const [maxCandles, setMaxCandles] = useState('1200');
+  const [initialBalance, setInitialBalance] = useState('10000');
 
   const [strategies, setStrategies] = useState<StrategyDto[]>([]);
   const [marketUniverses, setMarketUniverses] = useState<MarketUniverse[]>([]);
@@ -91,16 +94,22 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
     return config?.additional?.marginMode === 'ISOLATED' ? 'ISOLATED' : 'CROSSED';
   }, [selectedStrategy]);
   const parsedMaxCandles = Number.parseInt(maxCandles, 10);
+  const parsedInitialBalance = Number.parseFloat(initialBalance);
   const hasValidMaxCandles =
     Number.isFinite(parsedMaxCandles) &&
     parsedMaxCandles >= MAX_CANDLES_MIN &&
     parsedMaxCandles <= MAX_CANDLES_MAX;
+  const hasValidInitialBalance =
+    Number.isFinite(parsedInitialBalance) &&
+    parsedInitialBalance >= INITIAL_BALANCE_MIN &&
+    parsedInitialBalance <= INITIAL_BALANCE_MAX;
 
   const canSubmit =
     name.trim().length > 0 &&
     strategyId.trim().length > 0 &&
     marketUniverseId.trim().length > 0 &&
     hasValidMaxCandles &&
+    hasValidInitialBalance &&
     !submitting &&
     !universesLoading &&
     !strategiesLoading;
@@ -116,6 +125,7 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
       marketUniverseId,
       seedConfig: {
         maxCandles: parsedMaxCandles,
+        initialBalance: parsedInitialBalance,
       },
       notes: notes.trim() || undefined,
     });
@@ -192,6 +202,23 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
             ) : null}
           </FieldWrapper>
 
+          <FieldWrapper label='Startowy balans portfela (Backtest/Paper)'>
+            <input
+              className='input input-bordered'
+              value={initialBalance}
+              onChange={(event) => setInitialBalance(event.target.value)}
+              inputMode='decimal'
+              min={INITIAL_BALANCE_MIN}
+              max={INITIAL_BALANCE_MAX}
+              placeholder='10000'
+            />
+            {!hasValidInitialBalance ? (
+              <p className='mt-1 text-xs text-error'>
+                Podaj wartosc z zakresu {INITIAL_BALANCE_MIN} - {INITIAL_BALANCE_MAX}.
+              </p>
+            ) : null}
+          </FieldWrapper>
+
           <FieldWrapper label='Notatki (opcjonalnie)'>
             <textarea
               className='textarea textarea-bordered min-h-24'
@@ -225,7 +252,11 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
             </span>
           </p>
           <p>
-            <span className='opacity-70'>Tryb:</span> <span className='font-medium'>symbol po symbolu</span>
+            <span className='opacity-70'>Tryb:</span> <span className='font-medium'>interleaved (swieca po swiecy, wszystkie rynki)</span>
+          </p>
+          <p>
+            <span className='opacity-70'>Startowy balans:</span>{' '}
+            <span className='font-medium'>{hasValidInitialBalance ? parsedInitialBalance : '-'}</span>
           </p>
         </div>
       </div>

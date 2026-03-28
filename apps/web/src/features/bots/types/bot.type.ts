@@ -6,6 +6,7 @@ export type Bot = {
   id: string;
   name: string;
   mode: BotMode;
+  paperStartBalance: number;
   marketType: TradeMarket;
   positionMode: PositionMode;
   strategyId?: string | null;
@@ -20,6 +21,7 @@ export type Bot = {
 export type CreateBotInput = {
   name: string;
   mode: BotMode;
+  paperStartBalance: number;
   marketType: TradeMarket;
   positionMode: PositionMode;
   strategyId?: string | null;

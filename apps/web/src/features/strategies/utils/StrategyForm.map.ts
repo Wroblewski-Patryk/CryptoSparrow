@@ -57,15 +57,30 @@ export const dtoToForm = (s: StrategyDtoLike): StrategyFormState => ({
 });
 
 // form -> PATCH/POST payload
-export const formToPayload = (f: StrategyFormState) => ({
-  name: f.name,
-  description: f.description,
-  interval: f.interval,
-  leverage: f.leverage,
-  walletRisk: f.walletRisk,
-  config: {
-    open: f.openConditions,
-    close: f.closeConditions,
-    additional: f.additional,
-  },
-});
+export const formToPayload = (f: StrategyFormState) => {
+  const additional =
+    f.additional.dcaEnabled && f.additional.dcaMode === "basic" && f.additional.dcaLevels.length === 0
+      ? {
+          ...f.additional,
+          dcaLevels: [
+            {
+              percent: 1,
+              multiplier: f.additional.dcaMultiplier,
+            },
+          ],
+        }
+      : f.additional;
+
+  return {
+    name: f.name,
+    description: f.description,
+    interval: f.interval,
+    leverage: f.leverage,
+    walletRisk: f.walletRisk,
+    config: {
+      open: f.openConditions,
+      close: f.closeConditions,
+      additional,
+    },
+  };
+};

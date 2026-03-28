@@ -25,6 +25,8 @@ export type BacktestTrade = {
   closedAt: string;
   pnl: number;
   fee: number | null;
+  exitReason?: 'SIGNAL_EXIT' | 'FINAL_CANDLE' | 'LIQUIDATION';
+  liquidated?: boolean;
 };
 
 export type BacktestReport = {
@@ -65,7 +67,7 @@ export type BacktestTimelineQuery = {
 export type BacktestTimelineEvent = {
   id: string;
   tradeId: string;
-  type: 'ENTRY' | 'EXIT' | 'DCA' | 'TP' | 'SL' | 'TRAILING' | 'LIQUIDATION';
+  type: 'ENTRY' | 'EXIT' | 'DCA' | 'TP' | 'TTP' | 'SL' | 'TRAILING' | 'LIQUIDATION';
   side: 'LONG' | 'SHORT';
   timestamp: string;
   price: number;
@@ -104,6 +106,7 @@ export type BacktestTimeline = {
   marketType: 'SPOT' | 'FUTURES';
   status: BacktestStatus;
   cursor: number;
+  previousCursor: number | null;
   nextCursor: number | null;
   totalCandles: number;
   candles: BacktestTimelineCandle[];
