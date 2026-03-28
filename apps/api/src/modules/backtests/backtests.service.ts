@@ -790,6 +790,12 @@ const runBacktestAsync = async (runId: string) => {
         ? Number((seed as { fundingRate?: unknown }).fundingRate)
         : undefined,
   };
+  const symbolInputCoverage: Array<{
+    symbol: string;
+    candles: number;
+    fundingPoints: number;
+    openInterestPoints: number;
+  }> = [];
 
   try {
     for (const [index, symbol] of symbols.entries()) {
@@ -1275,10 +1281,3 @@ export const getRunTimeline = async (
         : null,
   };
 };
-
-  const symbolInputCoverage: Array<{
-    symbol: string;
-    candles: number;
-    fundingPoints: number;
-    openInterestPoints: number;
-  }> = [];
