@@ -7,23 +7,11 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `PAR-08 test(e2e): strategy -> market-group(3 symbols) -> backtest -> paper trace consistency contract`
-- [x] `PAR-09 perf(backtest): profile/reduce memory for multi-symbol timeline rendering without hiding charts`
-- [x] `PAR-10 docs(runbook): operator protocol for interpreting mismatch reasons and safe corrective actions`
-- [x] `PAR-11 feat(report): include per-symbol processed/failed parity diagnostics status for multi-symbol runs`
-- [x] `PAR-12 feat(ui): show parity diagnostics status/error per symbol in backtest markets tab`
-- [x] `PAR-13 fix(web-typecheck): resolve reports service api import contract so web typecheck is green`
-- [x] `PAR-14 fix(api-contract): return 404 for timeline symbol outside run scope`
-- [x] `PAR-15 chore(repo-hygiene): ignore local agent-generated skills folders to keep git status clean`
-- [x] `PAR-16 feat(ui-backtest): render lifecycle event markers and real event counters in markets chart legend`
-- [x] `PAR-17 perf(ui-backtest): skip timeline fetch for symbols marked as FAILED in parity diagnostics`
-- [x] `PAR-18 cleanup(ui-backtest): remove unused mock-based BacktestForm component`
-- [x] `PAR-19 test(backtests): verify FAILED parity diagnostics contract for invalid symbol runs`
-- [x] `PAR-20 fix(web-build): clear remaining web lint warnings and keep production build clean`
-- [x] `PAR-21 feat(ui-backtest-create): enforce maxCandles range validation and surface market-group size context`
-- [x] `PAR-22 test(ui-backtest-create): add regression tests for maxCandles validation and payload mapping`
-- [x] `PAR-23 fix(ui-backtest): guard timeline arrays to prevent 'undefined.filter' runtime crashes`
-- [x] `PAR-24 fix(web-build): add missing favicon.ico to restore stable Next.js production build`
+- [x] `POS-31 parity(audit): map old CryptoBot position lifecycle order and exact trigger semantics into canonical parity matrix doc`
+- [x] `POS-32 refactor(engine): enforce strict one-position-per-symbol lifecycle and no-overlap interval rendering contract in shared manager`
+- [x] `POS-33 fix(engine): implement old-bot-equivalent DCA/TTP/TSL sequencing (including advanced/basic mode gates and post-DCA activation rules)`
+- [x] `POS-34 fix(backtest-runtime): use one shared lifecycle engine for BACKTEST/PAPER/LIVE with identical event emission and closure reasons`
+- [x] `POS-35 test(e2e+ui): add parity fixtures + chart assertion contract (entries/exits/DCA counts + open-position stats) and publish operator checklist`
 
 ## NEXT
 - [x] `PAR-06 feat(report): expose parity-delta diagnostics in backtest report and raw event payload`

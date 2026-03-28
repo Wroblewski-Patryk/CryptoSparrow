@@ -267,7 +267,20 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `PAR-22 test(ui-backtest-create): add UI regression tests for maxCandles validation and submit payload mapping`
 - [x] `PAR-23 fix(ui-backtest): harden timeline handling against missing arrays to prevent runtime filter errors`
 - [x] `PAR-24 fix(web-build): add favicon asset required by Next.js production build`
+
+## Phase 16 - Position Lifecycle Fidelity (Old Bot Parity: DCA/TP/TTP/SL/TSL)
+- [x] `POS-31 parity(audit): map old CryptoBot position lifecycle order and exact trigger semantics into canonical parity matrix doc`
+- [x] `POS-32 refactor(engine): enforce strict one-position-per-symbol lifecycle and no-overlap rendering contract for historical timeline`
+- [x] `POS-33 fix(engine): implement old-bot-equivalent DCA/TTP/TSL sequencing with basic/advanced mode gates and post-DCA activation rules`
+- [x] `POS-34 fix(backtest-runtime): route BACKTEST/PAPER/LIVE position management through one shared lifecycle engine with identical closure reasons`
+- [x] `POS-35 test(e2e+ui): add deterministic parity fixtures and chart event contract assertions (entry/exit/dca/ttp/sl/tsl counts + open-position stats)`
+
 ## Progress Log
+- 2026-03-29: Completed `POS-35` by adding e2e chart parity assertions (eventCounts vs timeline events + positionStats contract) and publishing operator checklist in `docs/operations/backtest-markets-chart-parity-checklist.md`.
+- 2026-03-29: Completed `POS-34` by wiring backtest replay/interleaved runtime to shared `evaluatePositionManagement` lifecycle (shared close reasons/event mapping), including DCA wick-probe compatibility and green replay/e2e contracts.
+- 2026-03-29: Completed `POS-33` by switching engine lifecycle order to legacy parity (`DCA -> TP -> TTP -> SL -> TSL`), adding TTP/TSL tracker exclusivity, and extending engine regression tests.
+- 2026-03-29: Completed `POS-32` by enforcing non-overlap trade interval normalization in backtest Markets chart and adding explicit shared-execution invariant test for same-side re-entry ignore.
+- 2026-03-28: Completed `POS-31` by publishing canonical legacy parity matrix in `docs/architecture/position-lifecycle-parity-matrix.md` (strict lifecycle order, trigger semantics, state-reset contract) and linking it from `open-decisions`.
 - 2026-03-28: Completed `PAR-01` by publishing canonical strategy-evaluation parity contract and linking it in open decisions.
 - 2026-03-28: Completed `PAR-02` by disabling strategy-mode fallback to percent-threshold signals and forcing shared evaluator semantics in backtest replay.
 - 2026-03-28: Completed `PAR-03` by introducing historical fill-model adapter and shared simulator accounting path in backtest replay lifecycle.

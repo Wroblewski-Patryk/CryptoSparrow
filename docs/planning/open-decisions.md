@@ -376,6 +376,7 @@ This file tracks intentionally unresolved architecture choices so implementation
   - strategy signal semantics are frozen by one shared contract for all modes.
 - Canonical references:
   - `docs/architecture/strategy-evaluation-parity-contract.md`
+  - `docs/architecture/position-lifecycle-parity-matrix.md`
   - `docs/architecture/runtime-signal-merge-contract.md`
 
 ## Dashboard Isometric Mode Placement
