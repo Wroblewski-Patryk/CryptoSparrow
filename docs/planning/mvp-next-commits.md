@@ -17,6 +17,7 @@ Operational queue for one-task execution runs.
 - [x] `PAR-15 chore(repo-hygiene): ignore local agent-generated skills folders to keep git status clean`
 - [x] `PAR-16 feat(ui-backtest): render lifecycle event markers and real event counters in markets chart legend`
 - [x] `PAR-17 perf(ui-backtest): skip timeline fetch for symbols marked as FAILED in parity diagnostics`
+- [x] `PAR-18 cleanup(ui-backtest): remove unused mock-based BacktestForm component`
 
 ## NEXT
 - [x] `PAR-06 feat(report): expose parity-delta diagnostics in backtest report and raw event payload`
@@ -153,6 +154,7 @@ Operational queue for one-task execution runs.
 - [x] `PAR-15 chore(repo-hygiene): added .gitignore rules for local `.agents/skills/*` generated work folders`
 - [x] `PAR-16 feat(ui-backtest): updated markets chart legend to real DCA/TP/SL/TSL/LIQ counts and plotted lifecycle event markers`
 - [x] `PAR-17 perf(ui-backtest): stopped eager timeline requests for FAILED symbols and surfaced parity error directly in card`
+- [x] `PAR-18 cleanup(ui-backtest): removed dead BacktestForm mock component and kept web typecheck/tests green`
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.
