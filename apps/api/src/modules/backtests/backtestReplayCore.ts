@@ -155,6 +155,7 @@ export const simulateTradesForSymbolReplay = (input: {
     exitBandPct: input.config?.exitBandPct ?? defaultConfig.exitBandPct,
   };
   const strategyRules = parseStrategySignalRules(input.strategyConfig);
+  const strategyModeEnabled = Boolean(input.strategyConfig && typeof input.strategyConfig === 'object');
   const riskConfig = parseStrategyRiskConfig(input.strategyConfig);
   const indicatorSeriesCache = new Map<string, Array<number | null>>();
 
@@ -200,8 +201,10 @@ export const simulateTradesForSymbolReplay = (input: {
   for (let index = 1; index < candles.length; index += 1) {
     const previous = candles[index - 1];
     const current = candles[index];
-    const direction = strategyRules
-      ? evaluateStrategySignalAtIndex(strategyRules, candles, index, indicatorSeriesCache)
+    const direction = strategyModeEnabled
+      ? strategyRules
+        ? evaluateStrategySignalAtIndex(strategyRules, candles, index, indicatorSeriesCache)
+        : null
       : toSignalDirection(current, previous, config);
     if (!direction) continue;
 

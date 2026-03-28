@@ -174,6 +174,35 @@ describe('simulateTradesForSymbolReplay', () => {
     expect(result.trades).toHaveLength(0);
   });
 
+  it('does not fallback to percent-threshold signals when strategy payload has no valid indicator rules', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 104),
+      candle(2, 99),
+      candle(3, 105),
+      candle(4, 98),
+      candle(5, 106),
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 2,
+      marginMode: 'CROSSED',
+      strategyConfig: {
+        openConditions: {
+          direction: 'both',
+          indicatorsLong: [],
+          indicatorsShort: [],
+        },
+      },
+    });
+
+    expect(result.eventCounts.ENTRY).toBe(0);
+    expect(result.trades).toHaveLength(0);
+  });
+
   it('evaluates strategy EMA rules per candle and can generate directional trades', () => {
     const candles = [
       candle(0, 100),
