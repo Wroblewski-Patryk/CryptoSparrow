@@ -58,18 +58,36 @@ export const dtoToForm = (s: StrategyDtoLike): StrategyFormState => ({
 
 // form -> PATCH/POST payload
 export const formToPayload = (f: StrategyFormState) => {
-  const additional =
-    f.additional.dcaEnabled && f.additional.dcaMode === "basic" && f.additional.dcaLevels.length === 0
+  const normalizedBasicLevel = {
+    percent:
+      Number.isFinite(f.additional.dcaLevels[0]?.percent) && Number(f.additional.dcaLevels[0].percent) !== 0
+        ? Number(f.additional.dcaLevels[0].percent)
+        : -1,
+    multiplier:
+      Number.isFinite(f.additional.dcaMultiplier) && Number(f.additional.dcaMultiplier) > 0
+        ? Number(f.additional.dcaMultiplier)
+        : 1,
+  };
+  const normalizedAdvancedLevels = f.additional.dcaLevels
+    .map((level) => ({
+      percent: Number(level.percent),
+      multiplier: Number(level.multiplier),
+    }))
+    .filter((level) => Number.isFinite(level.percent) && level.percent !== 0 && Number.isFinite(level.multiplier) && level.multiplier > 0);
+
+  const additional = !f.additional.dcaEnabled
+    ? f.additional
+    : f.additional.dcaMode === "basic"
       ? {
           ...f.additional,
-          dcaLevels: [
-            {
-              percent: 1,
-              multiplier: f.additional.dcaMultiplier,
-            },
-          ],
+          dcaTimes: Math.max(1, Math.floor(Number(f.additional.dcaTimes) || 1)),
+          dcaLevels: [normalizedBasicLevel],
         }
-      : f.additional;
+      : {
+          ...f.additional,
+          dcaLevels: normalizedAdvancedLevels,
+          dcaTimes: normalizedAdvancedLevels.length,
+        };
 
   return {
     name: f.name,

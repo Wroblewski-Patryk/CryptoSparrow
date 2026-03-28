@@ -1,7 +1,7 @@
 import { LuTrash2 } from 'react-icons/lu';
 import { AdditionalProps, DcaLevel, TimeUnit } from '../../types/StrategyForm.type';
 
-const getPrimaryDcaLevel = (levels: DcaLevel[]): DcaLevel => levels[0] ?? { percent: 1, multiplier: 2 };
+const getPrimaryDcaLevel = (levels: DcaLevel[]): DcaLevel => levels[0] ?? { percent: -1, multiplier: 2 };
 
 export function Additional({ data, setData }: AdditionalProps) {
   const patch = (changes: Partial<typeof data>) => setData((prev) => ({ ...prev, ...changes }));
@@ -10,6 +10,10 @@ export function Additional({ data, setData }: AdditionalProps) {
     setData((prev) => ({
       ...prev,
       dcaLevels: prev.dcaLevels.map((level, i) => (i === idx ? { ...level, [field]: value } : level)),
+      dcaTimes:
+        prev.dcaMode === 'advanced'
+          ? prev.dcaLevels.map((level, i) => (i === idx ? { ...level, [field]: value } : level)).length
+          : prev.dcaTimes,
     }));
 
   const setPrimaryDcaLevel = (changes: Partial<DcaLevel>) =>
@@ -23,13 +27,15 @@ export function Additional({ data, setData }: AdditionalProps) {
   const addLevel = () =>
     setData((prev) => ({
       ...prev,
-      dcaLevels: [...prev.dcaLevels, { percent: 1, multiplier: 2 }],
+      dcaLevels: [...prev.dcaLevels, { percent: -1, multiplier: 2 }],
+      dcaTimes: prev.dcaMode === 'advanced' ? prev.dcaLevels.length + 1 : prev.dcaTimes,
     }));
 
   const removeLevel = (idx: number) =>
     setData((prev) => ({
       ...prev,
       dcaLevels: prev.dcaLevels.filter((_, i) => i !== idx),
+      dcaTimes: prev.dcaMode === 'advanced' ? Math.max(0, prev.dcaLevels.length - 1) : prev.dcaTimes,
     }));
 
   const primaryLevel = getPrimaryDcaLevel(data.dcaLevels);
@@ -139,7 +145,13 @@ export function Additional({ data, setData }: AdditionalProps) {
                     className='radio radio-primary'
                     name='dcaMode'
                     checked={data.dcaMode === 'basic'}
-                    onChange={() => patch({ dcaMode: 'basic' })}
+                    onChange={() =>
+                      setData((prev) => ({
+                        ...prev,
+                        dcaMode: 'basic',
+                        dcaTimes: Math.max(1, prev.dcaTimes || prev.dcaLevels.length || 1),
+                      }))
+                    }
                   />
                   <span>Podstawowe</span>
                 </label>
@@ -149,7 +161,13 @@ export function Additional({ data, setData }: AdditionalProps) {
                     className='radio radio-primary'
                     name='dcaMode'
                     checked={data.dcaMode === 'advanced'}
-                    onChange={() => patch({ dcaMode: 'advanced' })}
+                    onChange={() =>
+                      setData((prev) => ({
+                        ...prev,
+                        dcaMode: 'advanced',
+                        dcaTimes: prev.dcaLevels.length,
+                      }))
+                    }
                   />
                   <span>Zaawansowane</span>
                 </label>
@@ -185,7 +203,8 @@ export function Additional({ data, setData }: AdditionalProps) {
                     <label className='label p-0 font-semibold'>Poziom triggera (%)</label>
                     <input
                       type='number'
-                      min={0.1}
+                      min={-100}
+                      max={100}
                       step={0.1}
                       className='input input-bordered'
                       value={primaryLevel.percent}
