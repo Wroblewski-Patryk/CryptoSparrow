@@ -11,7 +11,7 @@ Operational queue for one-task execution runs.
 - [x] `POS-37 fix(runtime): align runtime automation mode/context with bot/position mode and enforce BOT_MANAGED-only automation`
 - [x] `POS-38 feat(runtime-capital): add shared runtime capital context (dynamic paper equity + next-DCA affordability -> dcaFundsExhausted)`
 - [x] `POS-39 refactor(runtime-dca): execute DCA via execution adapters (paper/live) instead of DB state mutation-only path`
-- [ ] `POS-40 refactor(backtest): unify on single lifecycle close semantics across interleaved/replay adapters`
+- [x] `POS-40 refactor(backtest): unify on single lifecycle close semantics across interleaved/replay adapters`
 
 ## NEXT
 - [ ] `POS-41 test(parity): add golden fixtures for close-reason sequence parity across backtest/paper/live`

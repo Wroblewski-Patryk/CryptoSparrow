@@ -16,7 +16,11 @@ import {
   type ReplayEventDraft,
   type ReplayParityDecisionTrace,
   type ReplayEventType,
-  simulateTradesForSymbolReplay,
+  type StrategyRiskConfig,
+  buildReplayPositionManagementInput,
+  closeReasonToEventType,
+  computeTrailingTakeProfitTriggerPrice,
+  parseStrategyRiskConfig,
 } from './backtestReplayCore';
 import {
   BacktestFillModelConfig,
@@ -121,11 +125,6 @@ type IndicatorSpec = {
   panel: 'price' | 'oscillator';
 };
 
-type TtpLevel = {
-  arm: number;
-  percent: number;
-};
-
 const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
 
 const timeframeIntervalMs: Record<string, number> = {
@@ -222,38 +221,6 @@ const computeSourceWindowMs = (timeframe: string, maxCandles: number) => {
   const requestedWindowMs = intervalMs * Math.max(1, maxCandles);
   const bufferedWindowMs = Math.ceil(requestedWindowMs * 1.15);
   return Math.max(TWO_WEEKS_MS, bufferedWindowMs);
-};
-
-const computeTrailingTakeProfitTriggerPrice = (input: {
-  side: PositionSide;
-  entryPrice: number;
-  anchorPrice: number;
-  leverage: number;
-  levels: TtpLevel[];
-}): number | null => {
-  const effectiveLeverage = Math.max(1, input.leverage);
-  const peakFavorableMove =
-    input.side === 'LONG'
-      ? ((input.anchorPrice - input.entryPrice) / Math.max(input.entryPrice, 1e-8)) * effectiveLeverage
-      : ((input.entryPrice - input.anchorPrice) / Math.max(input.entryPrice, 1e-8)) * effectiveLeverage;
-  if (!Number.isFinite(peakFavorableMove) || peakFavorableMove <= 0) return null;
-
-  const sorted = [...input.levels]
-    .filter((level) => Number.isFinite(level.arm) && Number.isFinite(level.percent) && level.arm > 0 && level.percent > 0)
-    .sort((left, right) => left.arm - right.arm);
-  let active: TtpLevel | null = null;
-  for (const level of sorted) {
-    if (peakFavorableMove >= level.arm) active = level;
-  }
-  if (!active) return null;
-
-  const floorMove = Math.max(0, peakFavorableMove - active.percent);
-  if (floorMove <= 0) return null;
-  const trigger =
-    input.side === 'LONG'
-      ? input.entryPrice * (1 + floorMove / effectiveLeverage)
-      : input.entryPrice * (1 - floorMove / effectiveLeverage);
-  return Number.isFinite(trigger) ? trigger : null;
 };
 
 const getDefaultCandlesForTimeframe = (timeframe: string) =>
@@ -591,273 +558,9 @@ const fetchSupplementalSeries = async (
   return result;
 };
 
-const simulateTradesForSymbol = (
-  symbol: string,
-  candles: KlineCandle[],
-  marketType: MarketType,
-  leverage: number,
-  marginMode: MarginMode | 'NONE',
-  strategyConfig?: Record<string, unknown> | null,
-  fillModelConfig?: BacktestFillModelConfig,
-  positionSizing?: {
-    mode: 'fixed' | 'wallet_risk';
-    walletRiskPercent?: number;
-    referenceBalance?: number;
-  },
-): SymbolSimulationResult => {
-  const replay = simulateTradesForSymbolReplay({
-    symbol,
-    candles,
-    marketType,
-    leverage,
-    marginMode,
-    strategyConfig,
-    fillModelConfig,
-    positionSizing,
-  });
-
-  return {
-    trades: replay.trades.map((trade) => ({
-      symbol: trade.symbol,
-      side: trade.side as PositionSide,
-      entryPrice: trade.entryPrice,
-      exitPrice: trade.exitPrice,
-      quantity: trade.quantity,
-      openedAt: trade.openedAt,
-      closedAt: trade.closedAt,
-      pnl: trade.pnl,
-      fee: trade.fee,
-      exitReason: trade.exitReason,
-      liquidated: trade.liquidated,
-    })),
-    liquidations: replay.liquidations,
-    events: replay.events,
-    eventCounts: replay.eventCounts,
-    decisionTrace: replay.decisionTrace,
-  };
-};
-
-type StrategyRiskConfig = {
-  takeProfitPct: number;
-  trailingTakeProfitLevels: Array<{ arm: number; percent: number }>;
-  stopLossPct: number;
-  trailingStopLevels: Array<{ arm: number; percent: number }>;
-  trailingLoss: { start: number; step: number } | null;
-  maxDcaPerTrade: number;
-  dcaLevels: number[];
-  dcaMultipliers: number[];
-};
-
-const computeRiskPriceFromPercent = (
-  side: 'LONG' | 'SHORT',
-  entryPrice: number,
-  percent: number,
-  kind: 'tp' | 'sl',
-  leverage = 1
-) => {
-  if (!Number.isFinite(entryPrice) || entryPrice <= 0 || !Number.isFinite(percent) || percent <= 0) return undefined;
-  const adjusted = percent / Math.max(1, leverage);
-  if (kind === 'tp') {
-    return side === 'LONG' ? entryPrice * (1 + adjusted) : entryPrice * (1 - adjusted);
-  }
-  return side === 'LONG' ? entryPrice * (1 - adjusted) : entryPrice * (1 + adjusted);
-};
-
-const closeReasonToEventType = (reason?: 'take_profit' | 'trailing_take_profit' | 'stop_loss' | 'trailing_stop'): ReplayEventType => {
-  switch (reason) {
-    case 'take_profit':
-      return 'TP';
-    case 'trailing_take_profit':
-      return 'TTP';
-    case 'stop_loss':
-      return 'SL';
-    case 'trailing_stop':
-      return 'TRAILING';
-    default:
-      return 'EXIT';
-  }
-};
-
-const buildReplayPositionManagementInput = (args: {
-  side: 'LONG' | 'SHORT';
-  currentPrice: number;
-  entryPrice: number;
-  leverage: number;
-  riskConfig: StrategyRiskConfig;
-}): PositionManagementInput => {
-  const { side, currentPrice, entryPrice, leverage, riskConfig } = args;
-
-  return {
-    side,
-    currentPrice,
-    leverage,
-    takeProfitPrice: Number.isFinite(riskConfig.takeProfitPct)
-      ? computeRiskPriceFromPercent(side, entryPrice, riskConfig.takeProfitPct, 'tp', leverage)
-      : undefined,
-    stopLossPrice: Number.isFinite(riskConfig.stopLossPct)
-      ? computeRiskPriceFromPercent(side, entryPrice, riskConfig.stopLossPct, 'sl', leverage)
-      : undefined,
-    trailingTakeProfitLevels:
-      riskConfig.trailingTakeProfitLevels.length > 0
-        ? riskConfig.trailingTakeProfitLevels.map((level) => ({
-            armPercent: level.arm,
-            trailPercent: level.percent,
-          }))
-        : undefined,
-    trailingStopLevels:
-      riskConfig.trailingStopLevels.length > 0
-        ? riskConfig.trailingStopLevels.map((level) => ({
-            armPercent: level.arm,
-            type: 'percent' as const,
-            value: level.percent,
-          }))
-        : undefined,
-    trailingLoss: riskConfig.trailingLoss
-      ? {
-          enabled: true,
-          startPercent: riskConfig.trailingLoss.start,
-          stepPercent: riskConfig.trailingLoss.step,
-        }
-      : undefined,
-    dca:
-      riskConfig.maxDcaPerTrade > 0
-        ? {
-            enabled: true,
-            maxAdds: riskConfig.maxDcaPerTrade,
-            stepPercent: Math.max(0.0001, Math.abs(riskConfig.dcaLevels[0] ?? 0.01)),
-            addSizeFraction: Math.max(0.01, riskConfig.dcaMultipliers[0] ?? 1),
-            levelPercents: riskConfig.dcaLevels,
-            addSizeFractions: riskConfig.dcaMultipliers,
-          }
-        : undefined,
-  };
-};
-
 type InterleavedPortfolioSimulationResult = {
   perSymbol: Record<string, SymbolSimulationResult>;
   finalBalance: number;
-};
-
-const parseReplayRiskConfig = (strategyConfig?: Record<string, unknown> | null): StrategyRiskConfig => {
-  const fallback: StrategyRiskConfig = {
-    takeProfitPct: 0.012,
-    trailingTakeProfitLevels: [],
-    stopLossPct: 0.01,
-    trailingStopLevels: [{ arm: 0.006, percent: 0.0075 }],
-    trailingLoss: null,
-    maxDcaPerTrade: 1,
-    dcaLevels: [-0.008],
-    dcaMultipliers: [1],
-  };
-  if (!strategyConfig || typeof strategyConfig !== 'object') return fallback;
-
-  const asPercent = (value: unknown, fallbackPercent: number) => {
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return fallbackPercent;
-    return Math.abs(parsed) / 100;
-  };
-  const asSignedPercent = (value: unknown, fallbackPercent: number) => {
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return fallbackPercent;
-    return parsed / 100;
-  };
-
-  const close = (strategyConfig.close as {
-    mode?: unknown;
-    tp?: unknown;
-    ttp?: Array<{ percent?: unknown; arm?: unknown }>;
-    sl?: unknown;
-    tsl?: Array<{ percent?: unknown; arm?: unknown }>;
-  } | undefined) ?? {};
-  const additional = (strategyConfig.additional as {
-    dcaEnabled?: unknown;
-    dcaMode?: unknown;
-    dcaTimes?: unknown;
-    dcaLevels?: Array<{ percent?: unknown; multiplier?: unknown }>;
-  } | undefined) ?? {};
-
-  const closeMode = close.mode === 'advanced' ? 'advanced' : 'basic';
-  const takeProfitPct = Math.max(0.0001, asPercent(close.tp, fallback.takeProfitPct * 100));
-  const stopLossPct = Math.max(0.0001, asPercent(close.sl, fallback.stopLossPct * 100));
-  const trailingTakeProfitLevels = (Array.isArray(close.ttp) ? close.ttp : [])
-    .map((level) => ({
-      // UI contract: `percent` = activation threshold (start), `arm` = trailing step.
-      arm: asPercent(level?.percent, Number.NaN),
-      percent: asPercent(level?.arm, Number.NaN),
-    }))
-    .filter((level) => Number.isFinite(level.arm) && Number.isFinite(level.percent) && level.arm > 0 && level.percent > 0)
-    .sort((left, right) => left.arm - right.arm);
-  const parsedTrailingStopLevels = (Array.isArray(close.tsl) ? close.tsl : [])
-    .map((level) => ({
-      arm: asPercent(level?.arm, 0),
-      percent: asPercent(level?.percent, Number.NaN),
-    }))
-    .filter((level) => Number.isFinite(level.percent) && level.percent > 0)
-    .sort((left, right) => left.arm - right.arm);
-  const trailingStopLevels = parsedTrailingStopLevels.length > 0 ? parsedTrailingStopLevels : fallback.trailingStopLevels;
-  const trailingLossRawPercent = Number((Array.isArray(close.tsl) ? close.tsl : [])[0]?.percent);
-  const trailingLossRawStep = Number((Array.isArray(close.tsl) ? close.tsl : [])[0]?.arm);
-  const trailingLoss =
-    Number.isFinite(trailingLossRawPercent) &&
-    Number.isFinite(trailingLossRawStep) &&
-    trailingLossRawPercent < 0 &&
-    trailingLossRawStep > 0
-      ? { start: trailingLossRawPercent / 100, step: Math.abs(trailingLossRawStep) / 100 }
-      : null;
-
-  const dcaMode = additional.dcaMode === 'advanced' ? 'advanced' : 'basic';
-  const dcaEnabled = Boolean(additional.dcaEnabled ?? true);
-  const maxDcaRaw = Number(additional.dcaTimes);
-  const configuredMaxDcaPerTrade = dcaEnabled
-    ? Number.isFinite(maxDcaRaw)
-      ? Math.max(0, Math.floor(maxDcaRaw))
-      : fallback.maxDcaPerTrade
-    : 0;
-  const rawDcaLevels = Array.isArray(additional.dcaLevels) ? additional.dcaLevels : [];
-  const configuredDcaLevels = rawDcaLevels
-    .map((level) => asSignedPercent(level?.percent, Number.NaN))
-    .filter((value) => Number.isFinite(value) && value !== 0);
-  const configuredDcaMultipliers = rawDcaLevels
-    .map((level) => Number(level?.multiplier))
-    .filter((value) => Number.isFinite(value) && value > 0);
-  const normalizedDcaLevels =
-    !dcaEnabled
-      ? []
-      : dcaMode === 'advanced'
-        ? (configuredDcaLevels.length > 0
-          ? configuredDcaLevels
-          : Array.from(
-              { length: Math.max(1, configuredMaxDcaPerTrade || fallback.maxDcaPerTrade) },
-              () => fallback.dcaLevels[0],
-            ))
-        : configuredMaxDcaPerTrade > 0
-          ? Array.from(
-              { length: Math.max(1, configuredMaxDcaPerTrade) },
-              () => configuredDcaLevels[0] ?? fallback.dcaLevels[0],
-            )
-          : [];
-  const normalizedDcaMultipliers =
-    normalizedDcaLevels.length === 0
-      ? []
-      : dcaMode === 'advanced'
-        ? (configuredDcaMultipliers.length > 0
-          ? configuredDcaMultipliers.slice(0, normalizedDcaLevels.length)
-          : Array.from({ length: normalizedDcaLevels.length }, () => fallback.dcaMultipliers[0]))
-        : Array.from(
-            { length: normalizedDcaLevels.length },
-            () => configuredDcaMultipliers[0] ?? fallback.dcaMultipliers[0],
-          );
-
-  return {
-    takeProfitPct: closeMode === 'basic' ? takeProfitPct : Number.POSITIVE_INFINITY,
-    trailingTakeProfitLevels: closeMode === 'advanced' ? trailingTakeProfitLevels : [],
-    stopLossPct: closeMode === 'basic' ? stopLossPct : Number.POSITIVE_INFINITY,
-    trailingStopLevels: closeMode === 'advanced' ? trailingStopLevels : [],
-    trailingLoss: closeMode === 'advanced' ? trailingLoss : null,
-    maxDcaPerTrade: normalizedDcaLevels.length,
-    dcaLevels: normalizedDcaLevels,
-    dcaMultipliers: normalizedDcaMultipliers,
-  };
 };
 
 const simulateInterleavedPortfolio = (input: {
@@ -874,7 +577,7 @@ const simulateInterleavedPortfolio = (input: {
   const effectiveLeverage = input.marketType === 'SPOT' ? 1 : Math.max(1, input.leverage);
   const rules = parseStrategySignalRules(input.strategyConfig);
   const strategyModeEnabled = Boolean(input.strategyConfig && typeof input.strategyConfig === 'object');
-  const riskConfig = parseReplayRiskConfig(input.strategyConfig);
+  const riskConfig = parseStrategyRiskConfig(input.strategyConfig);
   const fillModel = createHistoricalBacktestFillModel(input.fillModelConfig);
 
   const perSymbol: Record<string, SymbolSimulationResult> = Object.fromEntries(

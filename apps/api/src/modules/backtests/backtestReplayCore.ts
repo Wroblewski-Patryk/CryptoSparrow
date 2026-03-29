@@ -86,7 +86,7 @@ type ReplayRuntimeConfig = {
   exitBandPct: number;
 };
 
-type StrategyRiskConfig = {
+export type StrategyRiskConfig = {
   takeProfitPct: number;
   trailingTakeProfitLevels: Array<{ arm: number; percent: number }>;
   stopLossPct: number;
@@ -117,7 +117,7 @@ const computeRiskPriceFromPercent = (
   return side === 'LONG' ? entryPrice * (1 - adjusted) : entryPrice * (1 + adjusted);
 };
 
-const closeReasonToEventType = (reason?: 'take_profit' | 'trailing_take_profit' | 'stop_loss' | 'trailing_stop'): ReplayEventType => {
+export const closeReasonToEventType = (reason?: 'take_profit' | 'trailing_take_profit' | 'stop_loss' | 'trailing_stop'): ReplayEventType => {
   switch (reason) {
     case 'take_profit':
       return 'TP';
@@ -132,7 +132,7 @@ const closeReasonToEventType = (reason?: 'take_profit' | 'trailing_take_profit' 
   }
 };
 
-const computeTrailingTakeProfitTriggerPrice = (input: {
+export const computeTrailingTakeProfitTriggerPrice = (input: {
   side: PositionSide;
   entryPrice: number;
   anchorPrice: number;
@@ -164,7 +164,7 @@ const computeTrailingTakeProfitTriggerPrice = (input: {
   return Number.isFinite(trigger) ? trigger : null;
 };
 
-const buildReplayPositionManagementInput = (args: {
+export const buildReplayPositionManagementInput = (args: {
   side: 'LONG' | 'SHORT';
   currentPrice: number;
   entryPrice: number;
@@ -260,7 +260,7 @@ const asSignedPercent = (value: unknown, fallback: number) => {
   return parsed / 100;
 };
 
-const parseStrategyRiskConfig = (strategyConfig?: Record<string, unknown> | null): StrategyRiskConfig => {
+export const parseStrategyRiskConfig = (strategyConfig?: Record<string, unknown> | null): StrategyRiskConfig => {
   if (!strategyConfig || typeof strategyConfig !== 'object') return defaultRiskConfig;
 
   const close = (strategyConfig.close as {

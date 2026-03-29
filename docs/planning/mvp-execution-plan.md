@@ -280,11 +280,12 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `POS-37 fix(runtime): align runtime automation mode/context with bot/position mode and enforce BOT_MANAGED-only automation`
 - [x] `POS-38 feat(runtime-capital): add shared runtime capital context (dynamic paper equity + next-DCA affordability -> dcaFundsExhausted)`
 - [x] `POS-39 refactor(runtime-dca): execute DCA via execution adapters (paper/live) instead of DB state mutation-only path`
-- [ ] `POS-40 refactor(backtest): unify on single lifecycle close semantics across interleaved/replay adapters`
+- [x] `POS-40 refactor(backtest): unify on single lifecycle close semantics across interleaved/replay adapters`
 - [ ] `POS-41 test(parity): add golden fixtures for close-reason sequence parity across backtest/paper/live`
 - [ ] `POS-42 qa(manual): publish side-by-side Binance verification protocol for lifecycle reason parity`
 
 ## Progress Log
+- 2026-03-29: Completed `POS-40` by refactoring backtest service to consume shared replay lifecycle helpers (risk parsing + close-reason/event mapping + management input + TTP trigger), removing duplicated divergence-prone close semantics between interleaved and replay paths.
 - 2026-03-29: Completed `POS-39` by replacing runtime DCA mutation-only flow with execution-adapter flow (`openOrder` paper/live + trade/log persistence + position averaging update).
 - 2026-03-29: Completed `POS-38` by introducing shared runtime capital context (dynamic PAPER reference balance + free-cash snapshot) and wiring runtime DCA affordability guard (`dcaFundsExhausted`) into automation/lifecycle evaluation.
 - 2026-03-29: Completed `POS-37` by enforcing `BOT_MANAGED` automation scope in runtime position automation and resolving close execution mode from position/bot context (with manual-mode fallback only when bot mode is unavailable).
