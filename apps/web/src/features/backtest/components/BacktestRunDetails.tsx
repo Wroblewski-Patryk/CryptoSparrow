@@ -500,13 +500,64 @@ function TimelineCandlesChart({
       : null;
 
   const timelineEvents = Array.isArray(timeline.events) ? timeline.events : [];
-  const lifecycleEvents = timelineEvents.filter((event) =>
-    ['DCA', 'TP', 'TTP', 'SL', 'TRAILING', 'LIQUIDATION'].includes(event.type),
-  );
+  const lifecycleEvents = timelineEvents.filter((event) => event.type === 'DCA');
   const timelineIndicatorSeries = Array.isArray(timeline.indicatorSeries) ? timeline.indicatorSeries : [];
   const priceIndicators = timelineIndicatorSeries.filter((series) => series.panel === 'price');
   const oscillatorIndicators = timelineIndicatorSeries.filter((series) => series.panel === 'oscillator');
-  const tradeSegments = buildNonOverlappingTradeSegments(trades, candles);
+  const tradeSegmentsFromEvents = (() => {
+    if (timelineEvents.length === 0) return [] as ReturnType<typeof buildNonOverlappingTradeSegments>;
+    const closeLike = new Set(['EXIT', 'TP', 'TTP', 'SL', 'TRAILING', 'LIQUIDATION']);
+    const grouped = new Map<
+      string,
+      {
+        entry?: (typeof timelineEvents)[number];
+        close?: (typeof timelineEvents)[number];
+      }
+    >();
+
+    for (const event of [...timelineEvents].sort((a, b) => a.candleIndex - b.candleIndex)) {
+      const bucket = grouped.get(event.tradeId) ?? {};
+      if (event.type === 'ENTRY') {
+        bucket.entry = event;
+      } else if (closeLike.has(event.type)) {
+        if (!bucket.close || event.candleIndex >= bucket.close.candleIndex) {
+          bucket.close = event;
+        }
+      }
+      grouped.set(event.tradeId, bucket);
+    }
+
+    const firstCandleIndex = candles[0]?.candleIndex ?? timeline.cursor;
+    const lastLocalIndex = candles.length - 1;
+
+    const segments = [...grouped.entries()]
+      .map(([tradeId, pair]) => {
+        if (!pair.entry || !pair.close) return null;
+        const startLocal = pair.entry.candleIndex - firstCandleIndex;
+        const endLocal = pair.close.candleIndex - firstCandleIndex;
+        if (!Number.isFinite(startLocal) || !Number.isFinite(endLocal)) return null;
+        const start = Math.max(0, Math.min(lastLocalIndex, Math.min(startLocal, endLocal)));
+        const end = Math.max(0, Math.min(lastLocalIndex, Math.max(startLocal, endLocal)));
+        return {
+          tradeId,
+          start,
+          end,
+          side: pair.entry.side,
+          entryPrice: pair.entry.price,
+          exitPrice: pair.close.price,
+          profit: (pair.close.pnl ?? 0) >= 0,
+        };
+      })
+      .filter((segment): segment is NonNullable<typeof segment> => Boolean(segment))
+      .sort((a, b) => a.start - b.start || a.end - b.end);
+
+    return segments;
+  })();
+
+  const tradeSegments =
+    tradeSegmentsFromEvents.length > 0
+      ? tradeSegmentsFromEvents
+      : buildNonOverlappingTradeSegments(trades, candles);
 
   return (
     <div className='space-y-2'>
@@ -700,36 +751,7 @@ function TimelineCandlesChart({
                 );
               }
 
-              if (event.type === 'SL' || event.type === 'LIQUIDATION') {
-                return (
-                  <g key={event.id} className='text-error'>
-                    <line x1={x - 4.5} y1={y - 4.5} x2={x + 4.5} y2={y + 4.5} stroke='currentColor' strokeWidth='1.7' />
-                    <line x1={x - 4.5} y1={y + 4.5} x2={x + 4.5} y2={y - 4.5} stroke='currentColor' strokeWidth='1.7' />
-                  </g>
-                );
-              }
-
-              const colorClass =
-                event.type === 'TP'
-                  ? 'text-success'
-                  : event.type === 'TTP'
-                    ? 'text-accent'
-                    : event.type === 'TRAILING'
-                      ? 'text-warning'
-                      : 'text-secondary';
-
-              return (
-                <circle
-                  key={event.id}
-                  cx={x}
-                  cy={y}
-                  r={3.4}
-                  fill='currentColor'
-                  className={colorClass}
-                  stroke='white'
-                  strokeWidth='0.65'
-                />
-              );
+              return null;
             })}
 
             {playbackX != null ? (
@@ -864,6 +886,14 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
   useEffect(() => {
     timelinesRef.current = timelines;
   }, [timelines]);
+
+  useEffect(() => {
+    // When navigating between runs with the same symbols, clear cached timeline cards
+    // to avoid rendering stale market charts from a previous run.
+    inFlightSymbolsRef.current.clear();
+    timelinesRef.current = {};
+    setTimelines({});
+  }, [runId]);
 
   const loadData = useCallback(async () => {
     try {
@@ -1403,11 +1433,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                                   DCA
                                 </span>
                                 <span className='inline-flex items-center gap-1'>
-                                  <LuCircleDot className='h-3.5 w-3.5 text-accent' />
-                                  TTP
-                                </span>
-                                <span className='inline-flex items-center gap-1'>
-                                  DCA {visibleLifecycleCounts.DCA ?? 0} | TP {visibleLifecycleCounts.TP ?? 0} | TTP {visibleLifecycleCounts.TTP ?? 0} | SL {visibleLifecycleCounts.SL ?? 0} | TSL {visibleLifecycleCounts.TRAILING ?? 0} | LIQ {visibleLifecycleCounts.LIQUIDATION ?? 0}
+                                  DCA {visibleLifecycleCounts.DCA ?? 0}
                                 </span>
                               </div>
                             </div>

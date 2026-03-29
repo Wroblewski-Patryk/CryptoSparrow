@@ -62,6 +62,8 @@ export const PositionManagementStateSchema = z.object({
   currentAdds: z.number().int().min(0).default(0),
   trailingAnchorPrice: z.number().positive().optional(),
   trailingLossLimitPercent: z.number().optional(),
+  trailingTakeProfitHighPercent: z.number().optional(),
+  trailingTakeProfitStepPercent: z.number().optional(),
   lastDcaPrice: z.number().positive().optional(),
 });
 

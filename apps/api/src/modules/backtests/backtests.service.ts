@@ -19,7 +19,6 @@ import {
   type StrategyRiskConfig,
   buildReplayPositionManagementInput,
   closeReasonToEventType,
-  computeTrailingTakeProfitTriggerPrice,
   parseStrategyRiskConfig,
 } from './backtestReplayCore';
 import {
@@ -617,6 +616,8 @@ const simulateInterleavedPortfolio = (input: {
     bestPrice: number;
     marginUsed: number;
     trailingLossLimit?: number;
+    trailingTakeProfitHigh?: number;
+    trailingTakeProfitStep?: number;
   }>();
 
   let cashBalance = Math.max(0, input.initialBalance);
@@ -759,6 +760,8 @@ const simulateInterleavedPortfolio = (input: {
       currentAdds: position.dcaCount,
       trailingAnchorPrice: position.bestPrice,
       trailingLossLimitPercent: position.trailingLossLimit,
+      trailingTakeProfitHighPercent: position.trailingTakeProfitHigh,
+      trailingTakeProfitStepPercent: position.trailingTakeProfitStep,
       lastDcaPrice: position.lastDcaPrice,
     };
 
@@ -803,6 +806,8 @@ const simulateInterleavedPortfolio = (input: {
         };
         const noDcaProbe = evaluatePositionManagement(managementWithoutDca, baseState);
         position.trailingLossLimit = noDcaProbe.nextState.trailingLossLimitPercent;
+        position.trailingTakeProfitHigh = noDcaProbe.nextState.trailingTakeProfitHighPercent;
+        position.trailingTakeProfitStep = noDcaProbe.nextState.trailingTakeProfitStepPercent;
         position.bestPrice = noDcaProbe.nextState.trailingAnchorPrice ?? position.bestPrice;
       } else {
         cashBalance -= addMargin;
@@ -841,16 +846,20 @@ const simulateInterleavedPortfolio = (input: {
       currentAdds: position.dcaCount,
       trailingAnchorPrice: dcaProbeResult.nextState.trailingAnchorPrice ?? position.bestPrice,
       trailingLossLimitPercent: dcaProbeResult.nextState.trailingLossLimitPercent,
+      trailingTakeProfitHighPercent: dcaProbeResult.nextState.trailingTakeProfitHighPercent,
+      trailingTakeProfitStepPercent: dcaProbeResult.nextState.trailingTakeProfitStepPercent,
       lastDcaPrice: position.lastDcaPrice,
     });
 
     position.trailingLossLimit = managementResult.nextState.trailingLossLimitPercent;
+    position.trailingTakeProfitHigh = managementResult.nextState.trailingTakeProfitHighPercent;
+    position.trailingTakeProfitStep = managementResult.nextState.trailingTakeProfitStepPercent;
     position.bestPrice = managementResult.nextState.trailingAnchorPrice ?? position.bestPrice;
 
     if (
       lockTrailingByPendingDca &&
       managementResult.shouldClose &&
-      ['trailing_take_profit', 'trailing_stop', 'stop_loss'].includes(
+      ['trailing_stop', 'stop_loss'].includes(
         managementResult.closeReason ?? '',
       )
     ) {
@@ -861,39 +870,7 @@ const simulateInterleavedPortfolio = (input: {
       };
     }
 
-    let exitMarkPrice = current.close;
-    if (!managementResult.shouldClose && !lockTrailingByPendingDca) {
-      const ttpTriggerPrice = computeTrailingTakeProfitTriggerPrice({
-        side: position.side as PositionSide,
-        entryPrice: position.entryPrice,
-        anchorPrice: position.bestPrice,
-        leverage: effectiveLeverage,
-        levels: riskConfig.trailingTakeProfitLevels,
-      });
-      if (typeof ttpTriggerPrice === 'number') {
-        const crossedIntrabar =
-          position.side === 'LONG' ? current.low <= ttpTriggerPrice : current.high >= ttpTriggerPrice;
-        if (crossedIntrabar) {
-          managementResult = {
-            ...managementResult,
-            shouldClose: true,
-            closeReason: 'trailing_take_profit',
-          };
-          exitMarkPrice = ttpTriggerPrice;
-        }
-      }
-    } else if (managementResult.closeReason === 'trailing_take_profit') {
-      const ttpTriggerPrice = computeTrailingTakeProfitTriggerPrice({
-        side: position.side as PositionSide,
-        entryPrice: position.entryPrice,
-        anchorPrice: position.bestPrice,
-        leverage: effectiveLeverage,
-        levels: riskConfig.trailingTakeProfitLevels,
-      });
-      if (typeof ttpTriggerPrice === 'number') {
-        exitMarkPrice = ttpTriggerPrice;
-      }
-    }
+    const exitMarkPrice = current.close;
 
     const adverseMove =
       position.side === 'LONG'

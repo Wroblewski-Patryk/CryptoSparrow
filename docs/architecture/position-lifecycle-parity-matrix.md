@@ -1,76 +1,96 @@
-# Position Lifecycle Parity Matrix (Legacy CryptoBot -> CryptoSparrow)
+# Position Lifecycle Parity Matrix (CryptoBot -> CryptoSparrow)
 
-Status: canonical parity-audit matrix for `POS-31`, locked on 2026-03-28.
+Status: canonical contract for lifecycle parity and execution order.
 
-## Purpose
-Define one explicit source of truth for position lifecycle semantics that must be identical across:
-- `BACKTEST`,
-- `PAPER`,
-- `LIVE`.
+## Scope
 
-This matrix maps legacy behavior from:
-- `server/modules/positions/positions.service.js`
-- `server/modules/positions/dca.service.js`
-- `server/modules/positions/tp.service.js`
-- `server/modules/positions/ttp.service.js`
-- `server/modules/positions/sl.service.js`
-- `server/modules/positions/tsl.service.js`
+This matrix defines lifecycle behavior that must be identical across:
+- `BACKTEST`
+- `PAPER`
+- `LIVE`
+
+Reference deep-dive:
+- [Legacy CryptoBot Positions Module - Deep Analysis](/C:/Personal/Projekty/Aplikacje/CryptoSparrow/docs/architecture/legacy-cryptobot-positions-analysis.md)
+
+---
 
 ## Global Invariants
-- Per symbol, only one active position direction is allowed at a time (`LONG` or `SHORT`), no flip while open.
-- Position lifecycle checks are evaluated in strict order on each position-management cycle.
-- State buckets (`DCA`, `TTP`, `TSL`) are symbol-scoped and must be reset on open/close as defined below.
-- Profit trigger source is percent PnL over position margin (`profitPercent = profit / margin * 100`).
+
+- One open position per symbol at a time.
+- No direction flip on an already-open symbol.
+- Lifecycle checks run in strict deterministic order.
+- Event stream (`ENTRY`, `DCA`, `EXIT_*`) is produced by lifecycle engine, not by UI inference.
+
+---
 
 ## Canonical Evaluation Order (Per Position, Per Cycle)
-1. `DCA`
-2. `TP`
-3. `TTP`
-4. `SL`
-5. `TSL`
 
-Order is hard contract. Later checks must see state mutated by earlier checks from the same cycle.
+1. `DCA` (including DCA affordability check)
+2. Close logic by mode:
+   - basic mode: `TP -> SL`
+   - advanced mode: `TTP -> TSL`
+3. `LIQUIDATION` / hard account floor protection
+
+Order is hard contract.
+
+---
+
+## DCA-First Guard (Mandatory)
+
+If there are pending DCA levels and next DCA is still financially possible:
+- `TTP`, `TSL`, and `SL` must not close the position yet.
+
+If pending DCA exists but next DCA is not affordable:
+- close protections may execute (`TTP`/`TSL`/`SL`) to avoid uncontrolled loss.
+
+This is required for parity with expected strategy semantics in CryptoSparrow.
+
+---
 
 ## Trigger Matrix
 
 | Step | Activation Gate | Trigger Condition | Side Effect | Reset Rules |
 |---|---|---|---|---|
-| `DCA` | `dca.enabled=true`; `dcaCount < dca.times` | `profitPercent < dca.percents[dcaCount]` | Add order in position direction; increment `dcaCount` by 1 when order succeeds | `clearDCA(symbol)` on open/close |
-| `TP` | `tp.enabled=true` | `profitPercent >= tp.percent` | Close position immediately (`TP_CLOSE`) | On close: clear DCA/TTP/TSL |
-| `TTP` | `ttp.enabled=true` | Dynamic start/step selected from `starts[]/steps[]`; activate when `profitPercent >= selectedStart`; close when retrace `profitPercent <= highProfit - step` | Track `highProfit` and adaptive step; close on retrace (`TTP_CLOSE`) | Clear tracker when profit drops below activation window or on close |
-| `SL` | `sl.enabled=true` AND `dcaCount == dca.times` | Long: `lastPrice <= entry*(1-sl%)`; Short: `lastPrice >= entry*(1+sl%)` | Close position (`SL_CLOSE`) | On close: clear DCA/TTP/TSL |
-| `TSL` | `tsl.enabled=true` AND `dcaCount == dca.times` | Activate when `profitPercent <= tsl.start`; trail `maxLoss`; close when `profitPercent < maxLoss` | Move dynamic loss floor with rebound; close on fallback (`TSL_CLOSE`) | Clear on close; clear if preempted by active TTP |
+| `DCA` | `dca.enabled=true`, `dcaCount < maxAdds` | Current leveraged move crosses next configured DCA level | Increase quantity and recalc average entry; increment DCA count | Clear on open/close |
+| `TP` (basic) | `close.mode=basic`, `tp.enabled` | Profit reaches TP threshold | Close with `TP` reason | Clear DCA/TTP/TSL on close |
+| `SL` (basic) | `close.mode=basic`, `sl.enabled`, DCA-first guard allows close | Price reaches SL threshold | Close with `SL` reason | Clear DCA/TTP/TSL on close |
+| `TTP` (advanced) | `close.mode=advanced`, `ttp levels active`, DCA-first guard allows close | Profit retraces by active trailing step from high watermark | Close with `TTP` reason | Clear DCA/TTP/TSL on close |
+| `TSL` (advanced) | `close.mode=advanced`, `tsl levels active`, DCA-first guard allows close | Trailing-loss condition reached | Close with `TSL` reason | Clear DCA/TTP/TSL on close |
+| `LIQUIDATION` | Futures risk boundary crossed | Mark/price breach of liquidation boundary | Force close with `LIQUIDATION` reason | Clear DCA/TTP/TSL on close |
 
-## Legacy Semantics Notes (Exact Behavior to Preserve)
-- `DCA` uses indexed thresholds (`dca.percents[dcaCount]`) and multiplier sizing.
-- `DCA` fails fast on insufficient wallet funds; no counter increment when order fails.
-- `TP` is absolute percent take-profit; when hit it closes without waiting for TTP/SL/TSL.
-- `TTP` is dynamic:
-  - start and step are selected by current profit regime from arrays,
-  - high watermark updates as profit grows,
-  - close happens on retrace from high watermark by active step.
-- `SL` is intentionally deferred until max DCA usage is reached (`dcaCount == maxDca`).
-- `TSL` is also deferred until max DCA usage is reached.
-- `TSL` and `TTP` interaction:
-  - if `TTP` is active for symbol, legacy flow clears `TSL` tracker to avoid dual trailing conflict.
+---
 
-## Open/Close State Contract
-- On position open:
-  - `clearDCA(symbol)`
-  - `clearTSL(symbol)`
-  - `clearTTP(symbol)`
-- On position close (any reason):
-  - `clearDCA(symbol)`
-  - `clearTSL(symbol)`
-  - `clearTTP(symbol)`
+## State Contract
 
-## Runtime/Backtest Contract Implications
-- `BACKTEST`, `PAPER`, and `LIVE` must execute one shared lifecycle engine with this exact order and trigger semantics.
-- Reporting/chart layers must render events emitted by this engine (no alternate UI-only lifecycle synthesis).
-- Event counts shown in UI must be derived from lifecycle events, not inferred from candles.
+Per-symbol runtime state:
+- DCA progression (`currentAdds`, levels used)
+- trailing anchor (for TTP/TSL)
+- trailing loss limit
 
-## Verification Checklist for Next Tasks
-- `POS-32`: one-position-per-symbol + no-overlap render contract.
-- `POS-33`: DCA/TTP/TSL exact sequencing parity (basic/advanced mode gates).
-- `POS-34`: shared lifecycle engine for all modes.
-- `POS-35`: deterministic parity fixtures and chart-event assertions.
+State reset on:
+- position open,
+- position close (any reason).
+
+---
+
+## Shared Engine Contract
+
+Backtest, paper, and live must call one shared lifecycle decision engine with identical inputs:
+- side,
+- current price context,
+- strategy close config,
+- DCA config,
+- leverage/margin mode,
+- affordability flag for next DCA.
+
+Adapters may differ in price source and execution layer, but decision semantics must be identical.
+
+---
+
+## Required Verification
+
+- Unit tests for DCA-first guard and affordability exception.
+- Parity tests ensuring same close reason for identical candle/price sequence in:
+  - replay/backtest engine,
+  - runtime paper/live engine.
+- UI parity checks: chart markers and counters must reflect lifecycle events only.

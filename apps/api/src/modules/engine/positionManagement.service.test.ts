@@ -216,7 +216,7 @@ describe('position management', () => {
     expect(result.closeReason).toBe('take_profit');
   });
 
-  it('does not trigger trailing take-profit before DCA sequence is completed', () => {
+  it('triggers trailing take-profit regardless of pending DCA levels', () => {
     const armed = evaluatePositionManagement(
       {
         side: 'LONG',
@@ -266,21 +266,20 @@ describe('position management', () => {
     );
 
     expect(armed.shouldClose).toBe(false);
-    expect(closed.shouldClose).toBe(false);
-    expect(closed.closeReason).toBeUndefined();
+    expect(closed.shouldClose).toBe(true);
+    expect(closed.closeReason).toBe('trailing_take_profit');
   });
 
-  it('allows trailing take-profit before DCA completion only when DCA funds are exhausted', () => {
+  it('keeps trailing stop blocked until DCA sequence is completed (or funds exhausted)', () => {
     const armed = evaluatePositionManagement(
       {
         side: 'LONG',
-        currentPrice: 120,
+        currentPrice: 90,
         leverage: 10,
-        dcaFundsExhausted: true,
-        trailingTakeProfit: {
+        trailingLoss: {
           enabled: true,
-          armPercent: 0.05,
-          trailPercent: 0.1,
+          startPercent: -0.25,
+          stepPercent: 0.1,
         },
         dca: {
           enabled: true,
@@ -301,13 +300,12 @@ describe('position management', () => {
     const closed = evaluatePositionManagement(
       {
         side: 'LONG',
-        currentPrice: 115,
+        currentPrice: 92,
         leverage: 10,
-        dcaFundsExhausted: true,
-        trailingTakeProfit: {
+        trailingLoss: {
           enabled: true,
-          armPercent: 0.05,
-          trailPercent: 0.1,
+          startPercent: -0.25,
+          stepPercent: 0.1,
         },
         dca: {
           enabled: true,
@@ -321,8 +319,8 @@ describe('position management', () => {
       armed.nextState
     );
 
-    expect(closed.shouldClose).toBe(true);
-    expect(closed.closeReason).toBe('trailing_take_profit');
+    expect(closed.shouldClose).toBe(false);
+    expect(closed.closeReason).toBeUndefined();
   });
 
   it('applies legacy trailing-loss on profit percent after DCA completion', () => {
@@ -400,5 +398,121 @@ describe('position management', () => {
 
     expect(result.shouldClose).toBe(false);
     expect(result.nextState.trailingLossLimitPercent).toBeUndefined();
+  });
+
+  it('does not close TTP below activation tunnel and rearms only after re-entering start threshold', () => {
+    const armed = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 112,
+        leverage: 1,
+        trailingTakeProfitLevels: [
+          {
+            armPercent: 0.1,
+            trailPercent: 0.05,
+          },
+        ],
+      },
+      {
+        averageEntryPrice: 100,
+        quantity: 1,
+        currentAdds: 0,
+      },
+    );
+
+    const droppedBelowTunnel = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 104,
+        leverage: 1,
+        trailingTakeProfitLevels: [
+          {
+            armPercent: 0.1,
+            trailPercent: 0.05,
+          },
+        ],
+      },
+      armed.nextState,
+    );
+
+    const rearmed = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 111,
+        leverage: 1,
+        trailingTakeProfitLevels: [
+          {
+            armPercent: 0.1,
+            trailPercent: 0.05,
+          },
+        ],
+      },
+      droppedBelowTunnel.nextState,
+    );
+
+    expect(armed.shouldClose).toBe(false);
+    expect(droppedBelowTunnel.shouldClose).toBe(false);
+    expect(droppedBelowTunnel.nextState.trailingTakeProfitHighPercent).toBeUndefined();
+    expect(rearmed.shouldClose).toBe(false);
+    expect(rearmed.nextState.trailingTakeProfitHighPercent).toBeDefined();
+  });
+
+  it('keeps TTP tunnel monotonic when switching to higher threshold with wider step', () => {
+    const levels = [
+      { armPercent: 0.1, trailPercent: 0.05 },
+      { armPercent: 0.2, trailPercent: 0.1 },
+    ];
+
+    const at19 = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 119,
+        leverage: 1,
+        trailingTakeProfitLevels: levels,
+      },
+      {
+        averageEntryPrice: 100,
+        quantity: 1,
+        currentAdds: 0,
+      },
+    );
+
+    const at23 = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 123,
+        leverage: 1,
+        trailingTakeProfitLevels: levels,
+      },
+      at19.nextState,
+    );
+
+    const at25 = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 125,
+        leverage: 1,
+        trailingTakeProfitLevels: levels,
+      },
+      at23.nextState,
+    );
+
+    const closeAt14 = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 114,
+        leverage: 1,
+        trailingTakeProfitLevels: levels,
+      },
+      at25.nextState,
+    );
+
+    expect(at23.shouldClose).toBe(false);
+    expect(at23.nextState.trailingTakeProfitHighPercent).toBeCloseTo(0.19, 5);
+    expect(at23.nextState.trailingTakeProfitStepPercent).toBeCloseTo(0.05, 5);
+    expect(at25.nextState.trailingTakeProfitHighPercent).toBeCloseTo(0.25, 5);
+    expect(at25.nextState.trailingTakeProfitStepPercent).toBeCloseTo(0.1, 5);
+    expect(closeAt14.shouldClose).toBe(true);
+    expect(closeAt14.closeReason).toBe('trailing_take_profit');
   });
 });

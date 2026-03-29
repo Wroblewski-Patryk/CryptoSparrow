@@ -12,6 +12,9 @@ export type PaperPositionState = {
   quantity: number;
   currentAdds: number;
   trailingAnchorPrice?: number;
+  trailingLossLimitPercent?: number;
+  trailingTakeProfitHighPercent?: number;
+  trailingTakeProfitStepPercent?: number;
   lastDcaPrice?: number;
 };
 
@@ -230,6 +233,9 @@ export const processPaperLifecycleTick = (
       quantity: state.position.quantity,
       currentAdds: state.position.currentAdds,
       trailingAnchorPrice: state.position.trailingAnchorPrice,
+      trailingLossLimitPercent: state.position.trailingLossLimitPercent,
+      trailingTakeProfitHighPercent: state.position.trailingTakeProfitHighPercent,
+      trailingTakeProfitStepPercent: state.position.trailingTakeProfitStepPercent,
       lastDcaPrice: state.position.lastDcaPrice,
     }
   );
@@ -245,6 +251,9 @@ export const processPaperLifecycleTick = (
           quantity: managementEval.nextState.quantity,
           currentAdds: managementEval.nextState.currentAdds,
           trailingAnchorPrice: managementEval.nextState.trailingAnchorPrice,
+          trailingLossLimitPercent: managementEval.nextState.trailingLossLimitPercent,
+          trailingTakeProfitHighPercent: managementEval.nextState.trailingTakeProfitHighPercent,
+          trailingTakeProfitStepPercent: managementEval.nextState.trailingTakeProfitStepPercent,
           lastDcaPrice: managementEval.nextState.lastDcaPrice,
         },
       },

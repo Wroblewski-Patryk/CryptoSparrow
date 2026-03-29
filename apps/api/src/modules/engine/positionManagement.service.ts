@@ -57,19 +57,35 @@ const shouldDca = (
   return leveragedMove <= triggerPercent;
 };
 
-const selectActiveTrailingTakeProfit = (
+const normalizeTrailingTakeProfitLevels = (
+  levels: Array<{ armPercent: number; trailPercent: number }>,
+) => {
+  if (!Array.isArray(levels) || levels.length === 0) return [];
+  return [...levels]
+    .filter(
+      (level) =>
+        Number.isFinite(level.armPercent) &&
+        Number.isFinite(level.trailPercent) &&
+        level.armPercent > 0 &&
+        level.trailPercent > 0,
+    )
+    .sort((left, right) => left.armPercent - right.armPercent);
+};
+
+const selectDynamicTrailingTakeProfit = (
   favorableMove: number,
-  levels: Array<{ armPercent: number; trailPercent: number }>
+  levels: Array<{ armPercent: number; trailPercent: number }>,
 ) => {
   if (!Array.isArray(levels) || levels.length === 0) return null;
-  const sorted = [...levels]
-    .filter((level) => Number.isFinite(level.armPercent) && Number.isFinite(level.trailPercent))
-    .sort((left, right) => left.armPercent - right.armPercent);
-  let active: { armPercent: number; trailPercent: number } | null = null;
-  for (const level of sorted) {
-    if (favorableMove >= level.armPercent) active = level;
+  let selected = levels[0];
+  for (const level of levels) {
+    if (favorableMove >= level.armPercent) {
+      selected = level;
+      continue;
+    }
+    break;
   }
-  return active;
+  return selected;
 };
 
 const selectActiveTrailingStop = (
@@ -185,38 +201,76 @@ export const evaluatePositionManagement = (
     parsedInput.side === 'LONG'
       ? ((parsedInput.currentPrice - nextState.averageEntryPrice) / Math.max(nextState.averageEntryPrice, 1e-8)) * effectiveLeverage
       : ((nextState.averageEntryPrice - parsedInput.currentPrice) / Math.max(nextState.averageEntryPrice, 1e-8)) * effectiveLeverage;
-  const peakFavorableMove =
-    parsedInput.side === 'LONG'
-      ? ((anchor - nextState.averageEntryPrice) / Math.max(nextState.averageEntryPrice, 1e-8)) * effectiveLeverage
-      : ((nextState.averageEntryPrice - anchor) / Math.max(nextState.averageEntryPrice, 1e-8)) * effectiveLeverage;
-  const activeTtpLevel =
-    selectActiveTrailingTakeProfit(
-      peakFavorableMove,
-      parsedInput.trailingTakeProfitLevels ?? []
-    ) ??
-    (parsedInput.trailingTakeProfit?.enabled &&
-    peakFavorableMove >= parsedInput.trailingTakeProfit.armPercent
-      ? parsedInput.trailingTakeProfit
-      : null);
+  const trailingTakeProfitLevels = normalizeTrailingTakeProfitLevels(
+    parsedInput.trailingTakeProfitLevels ??
+      (parsedInput.trailingTakeProfit?.enabled
+        ? [
+            {
+              armPercent: parsedInput.trailingTakeProfit.armPercent,
+              trailPercent: parsedInput.trailingTakeProfit.trailPercent,
+            },
+          ]
+        : []),
+  );
+  const ttpConfigured = trailingTakeProfitLevels.length > 0;
+  const dynamicTtpLevel = ttpConfigured
+    ? selectDynamicTrailingTakeProfit(favorableMove, trailingTakeProfitLevels)
+    : null;
 
-  if (activeTtpLevel && typeof nextState.trailingLossLimitPercent === 'number') {
-    nextState.trailingLossLimitPercent = undefined;
+  if (ttpConfigured) {
+    if (!dynamicTtpLevel) {
+      nextState.trailingTakeProfitHighPercent = undefined;
+      nextState.trailingTakeProfitStepPercent = undefined;
+    } else {
+      const ttpActivationFloor = dynamicTtpLevel.armPercent - dynamicTtpLevel.trailPercent;
+      if (favorableMove >= ttpActivationFloor) {
+        if (
+          typeof nextState.trailingTakeProfitHighPercent !== 'number' &&
+          favorableMove >= dynamicTtpLevel.armPercent
+        ) {
+          nextState.trailingTakeProfitHighPercent = favorableMove;
+          nextState.trailingTakeProfitStepPercent = dynamicTtpLevel.trailPercent;
+        }
+
+        const trackedHigh = nextState.trailingTakeProfitHighPercent;
+        const trackedStep = nextState.trailingTakeProfitStepPercent;
+        if (
+          typeof trackedHigh === 'number' &&
+          typeof trackedStep === 'number' &&
+          favorableMove - dynamicTtpLevel.trailPercent > trackedHigh - trackedStep
+        ) {
+          nextState.trailingTakeProfitHighPercent = favorableMove;
+          nextState.trailingTakeProfitStepPercent = dynamicTtpLevel.trailPercent;
+        }
+
+        const finalTrackedHigh = nextState.trailingTakeProfitHighPercent;
+        const finalTrackedStep = nextState.trailingTakeProfitStepPercent;
+        if (
+          typeof finalTrackedHigh === 'number' &&
+          typeof finalTrackedStep === 'number' &&
+          favorableMove <= finalTrackedHigh - finalTrackedStep
+        ) {
+          return {
+            shouldClose: true,
+            closeReason: 'trailing_take_profit',
+            dcaExecuted,
+            dcaAddedQuantity,
+            nextState,
+          };
+        }
+      } else {
+        // Legacy parity: if price falls below activation tunnel (start - step), reset TTP tracking.
+        nextState.trailingTakeProfitHighPercent = undefined;
+        nextState.trailingTakeProfitStepPercent = undefined;
+      }
+    }
   }
 
-  // TTP follows highest reached profit and closes on pullback, but never below breakeven in leveraged terms.
-  // This avoids TTP exits turning into deep losses when trail > arm.
-  if (activeTtpLevel && dcaProtectionSatisfied) {
-    const ttpFloorMove = Math.max(0, peakFavorableMove - activeTtpLevel.trailPercent);
-    // TTP is profit-protection logic; it must not close while move is non-positive.
-    if (favorableMove > 0 && favorableMove <= ttpFloorMove) {
-      return {
-        shouldClose: true,
-        closeReason: 'trailing_take_profit',
-        dcaExecuted,
-        dcaAddedQuantity,
-        nextState,
-      };
-    }
+  const ttpTrackingActive =
+    typeof nextState.trailingTakeProfitHighPercent === 'number' &&
+    typeof nextState.trailingTakeProfitStepPercent === 'number';
+  if (ttpTrackingActive && typeof nextState.trailingLossLimitPercent === 'number') {
+    nextState.trailingLossLimitPercent = undefined;
   }
 
   if (
@@ -233,7 +287,7 @@ export const evaluatePositionManagement = (
     };
   }
 
-  if (dcaProtectionSatisfied) {
+  if (dcaProtectionSatisfied && !ttpTrackingActive) {
     if (parsedInput.trailingLoss?.enabled) {
       const start = parsedInput.trailingLoss.startPercent;
       const step = parsedInput.trailingLoss.stepPercent;
