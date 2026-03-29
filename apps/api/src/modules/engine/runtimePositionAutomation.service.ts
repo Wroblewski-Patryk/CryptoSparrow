@@ -1,31 +1,33 @@
-import { Position, PositionSide, Prisma } from '@prisma/client';
+import { BotMode, Position, PositionSide, Prisma, TradeMarket } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { StreamTickerEvent } from '../market-stream/binanceStream.types';
 import { orchestrateRuntimeSignal } from './executionOrchestrator.service';
 import { evaluatePositionManagement } from './positionManagement.service';
 import { PositionManagementInput, PositionManagementState } from './positionManagement.types';
+import { resolveRuntimeDcaFundsExhausted } from './runtimeCapitalContext.service';
+
+type RuntimeManagedPosition = Pick<
+  Position,
+  | 'id'
+  | 'userId'
+  | 'botId'
+  | 'strategyId'
+  | 'symbol'
+  | 'side'
+  | 'entryPrice'
+  | 'quantity'
+  | 'leverage'
+  | 'stopLoss'
+  | 'takeProfit'
+  | 'managementMode'
+> & {
+  bot: { mode: BotMode; marketType: TradeMarket; paperStartBalance: number } | null;
+};
 
 type RuntimePositionAutomationDeps = {
   listOpenPositionsBySymbol: (
     symbol: string
-  ) => Promise<
-    Array<
-      Pick<
-        Position,
-        | 'id'
-        | 'userId'
-        | 'botId'
-        | 'strategyId'
-        | 'symbol'
-        | 'side'
-        | 'entryPrice'
-        | 'quantity'
-        | 'leverage'
-        | 'stopLoss'
-        | 'takeProfit'
-      >
-    >
-  >;
+  ) => Promise<RuntimeManagedPosition[]>;
   getStrategyConfigById: (strategyId: string) => Promise<Record<string, unknown> | null>;
   updatePositionAfterDca: (positionId: string, input: { quantity: number; entryPrice: number }) => Promise<void>;
   closeByExitSignal: (input: {
@@ -36,6 +38,18 @@ type RuntimePositionAutomationDeps = {
     mode: 'PAPER' | 'LIVE';
     quantity: number;
   }) => Promise<void>;
+  resolveDcaFundsExhausted: (input: {
+    userId: string;
+    botId?: string | null;
+    mode: 'PAPER' | 'LIVE';
+    marketType: TradeMarket;
+    paperStartBalance: number;
+    markPrice: number;
+    addedQuantity: number;
+    leverage: number;
+    nowMs: number;
+  }) => Promise<boolean>;
+  nowMs: () => number;
 };
 
 type RuntimeFallbackConfig = {
@@ -46,7 +60,6 @@ type RuntimeFallbackConfig = {
   trailingEnabled: boolean;
   trailingType: 'percent' | 'absolute';
   trailingValue: number;
-  automationMode: 'PAPER' | 'LIVE';
 };
 
 const envBoolean = (value: string | undefined, fallback: boolean) => {
@@ -62,8 +75,57 @@ const getRuntimeConfig = (): RuntimeFallbackConfig => ({
   trailingEnabled: envBoolean(process.env.RUNTIME_TRAILING_ENABLED, false),
   trailingType: (process.env.RUNTIME_TRAILING_TYPE ?? 'percent') as 'percent' | 'absolute',
   trailingValue: Number.parseFloat(process.env.RUNTIME_TRAILING_VALUE ?? '0.005'),
-  automationMode: (process.env.RUNTIME_AUTOMATION_MODE ?? 'LIVE') as 'PAPER' | 'LIVE',
 });
+
+const getRuntimeManualPositionMode = (): 'PAPER' | 'LIVE' =>
+  (process.env.RUNTIME_MANUAL_POSITION_MODE ?? 'LIVE') as 'PAPER' | 'LIVE';
+
+const getRuntimeManualPositionMarketType = (): TradeMarket =>
+  (process.env.RUNTIME_MANUAL_POSITION_MARKET_TYPE ?? 'FUTURES') as TradeMarket;
+
+const getRuntimeManualPaperStartBalance = () => {
+  const parsed = Number.parseFloat(process.env.RUNTIME_MANUAL_PAPER_START_BALANCE ?? '10000');
+  return Number.isFinite(parsed) ? Math.max(0, parsed) : 10_000;
+};
+
+const resolvePositionExecutionMode = (position: RuntimeManagedPosition): 'PAPER' | 'LIVE' => {
+  const botMode = position.bot?.mode;
+  if (botMode === 'PAPER' || botMode === 'LIVE') return botMode;
+  return getRuntimeManualPositionMode();
+};
+
+const resolvePositionMarketType = (position: RuntimeManagedPosition): TradeMarket => {
+  if (position.bot?.marketType === 'FUTURES' || position.bot?.marketType === 'SPOT') {
+    return position.bot.marketType;
+  }
+  return getRuntimeManualPositionMarketType();
+};
+
+const resolvePositionPaperStartBalance = (position: RuntimeManagedPosition) => {
+  if (position.bot && Number.isFinite(position.bot.paperStartBalance)) {
+    return Math.max(0, position.bot.paperStartBalance);
+  }
+  return getRuntimeManualPaperStartBalance();
+};
+
+const resolveDcaLevelCount = (input: PositionManagementInput) => {
+  if (!input.dca?.enabled) return 0;
+  if (Array.isArray(input.dca.levelPercents) && input.dca.levelPercents.length > 0) {
+    return input.dca.levelPercents.length;
+  }
+  return Math.max(0, input.dca.maxAdds ?? 0);
+};
+
+const estimateNextDcaAddedQuantity = (
+  input: PositionManagementInput,
+  state: PositionManagementState
+) => {
+  if (!input.dca?.enabled) return 0;
+  const index = Math.max(0, state.currentAdds);
+  const addFraction = input.dca.addSizeFractions?.[index] ?? input.dca.addSizeFraction ?? 0;
+  if (!Number.isFinite(addFraction) || addFraction <= 0) return 0;
+  return state.quantity * addFraction;
+};
 
 const defaultDeps: RuntimePositionAutomationDeps = {
   listOpenPositionsBySymbol: (symbol) =>
@@ -71,6 +133,7 @@ const defaultDeps: RuntimePositionAutomationDeps = {
       where: {
         status: 'OPEN',
         symbol,
+        managementMode: 'BOT_MANAGED',
       },
       select: {
         id: true,
@@ -84,6 +147,14 @@ const defaultDeps: RuntimePositionAutomationDeps = {
         leverage: true,
         stopLoss: true,
         takeProfit: true,
+        managementMode: true,
+        bot: {
+          select: {
+            mode: true,
+            marketType: true,
+            paperStartBalance: true,
+          },
+        },
       },
     }),
   getStrategyConfigById: async (strategyId) => {
@@ -114,6 +185,8 @@ const defaultDeps: RuntimePositionAutomationDeps = {
       mode: input.mode,
     });
   },
+  resolveDcaFundsExhausted: (input) => resolveRuntimeDcaFundsExhausted(input),
+  nowMs: () => Date.now(),
 };
 
 const toPercent = (value: unknown, fallback = 0) => {
@@ -184,15 +257,16 @@ const buildPositionManagementInput = (
     .map((level) => Number(level.multiplier))
     .filter((value) => Number.isFinite(value) && value > 0);
 
-  const trailingTakeProfitPercent = closeMode === 'advanced' ? toPercent(ttpConfig[0]?.percent) : 0;
-  const trailingTakeProfitArmPercent = closeMode === 'advanced' ? toPercent(ttpConfig[0]?.arm) : 0;
+  // UI contract: `percent` = activation threshold (start), `arm` = trailing step.
+  const trailingTakeProfitPercent = closeMode === 'advanced' ? toPercent(ttpConfig[0]?.arm) : 0;
+  const trailingTakeProfitArmPercent = closeMode === 'advanced' ? toPercent(ttpConfig[0]?.percent) : 0;
   const trailingStopPercent = closeMode === 'advanced' ? toPercent(tslConfig[0]?.percent) : 0;
   const trailingLossStartPercent = closeMode === 'advanced' ? toSignedPercent(tslConfig[0]?.percent, Number.NaN) : Number.NaN;
   const trailingLossStepPercent = closeMode === 'advanced' ? toPercent(tslConfig[0]?.arm) : 0;
   const trailingTakeProfitLevels = (closeMode === 'advanced' ? ttpConfig : [])
     .map((level) => ({
-      armPercent: toPercent(level.arm),
-      trailPercent: toPercent(level.percent),
+      armPercent: toPercent(level.percent),
+      trailPercent: toPercent(level.arm),
     }))
     .filter((level) => level.armPercent > 0 && level.trailPercent > 0)
     .sort((left, right) => left.armPercent - right.armPercent);
@@ -323,21 +397,10 @@ export class RuntimePositionAutomationService {
 
   private async processPosition(
     event: StreamTickerEvent,
-    position: Pick<
-      Position,
-      | 'id'
-      | 'userId'
-      | 'botId'
-      | 'strategyId'
-      | 'symbol'
-      | 'side'
-      | 'entryPrice'
-      | 'quantity'
-      | 'leverage'
-      | 'stopLoss'
-      | 'takeProfit'
-    >
+    position: RuntimeManagedPosition
   ) {
+    if (position.managementMode !== 'BOT_MANAGED') return;
+
     const runtimeConfig = getRuntimeConfig();
     const strategyConfig = await this.getStrategyConfig(position.strategyId ?? null);
     const input = buildPositionManagementInput(position, event.lastPrice, strategyConfig, runtimeConfig);
@@ -350,7 +413,41 @@ export class RuntimePositionAutomationService {
       lastDcaPrice: undefined,
     };
 
-    const result = evaluatePositionManagement(input, previousState);
+    const mode = resolvePositionExecutionMode(position);
+    const marketType = resolvePositionMarketType(position);
+    const paperStartBalance = resolvePositionPaperStartBalance(position);
+    const dcaLevelCount = resolveDcaLevelCount(input);
+    const hasPendingDca = input.dca?.enabled && previousState.currentAdds < dcaLevelCount;
+    const estimatedAddedQuantity = hasPendingDca
+      ? estimateNextDcaAddedQuantity(input, previousState)
+      : 0;
+    const dcaFundsExhausted =
+      hasPendingDca && estimatedAddedQuantity > 0
+        ? await this.deps.resolveDcaFundsExhausted({
+            userId: position.userId,
+            botId: position.botId,
+            mode,
+            marketType,
+            paperStartBalance,
+            markPrice: event.lastPrice,
+            addedQuantity: estimatedAddedQuantity,
+            leverage: Math.max(1, position.leverage || 1),
+            nowMs: this.deps.nowMs(),
+          })
+        : false;
+
+    const managementInput: PositionManagementInput = dcaFundsExhausted
+      ? {
+          ...input,
+          dca: undefined,
+          dcaFundsExhausted: true,
+        }
+      : {
+          ...input,
+          dcaFundsExhausted: false,
+        };
+
+    const result = evaluatePositionManagement(managementInput, previousState);
     this.positionStates.set(position.id, result.nextState);
 
     if (result.dcaExecuted) {
@@ -366,7 +463,7 @@ export class RuntimePositionAutomationService {
         botId: position.botId ?? undefined,
         symbol: position.symbol,
         markPrice: event.lastPrice,
-        mode: runtimeConfig.automationMode,
+        mode,
         quantity: result.nextState.quantity,
       });
       this.positionStates.delete(position.id);

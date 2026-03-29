@@ -1,7 +1,6 @@
 import { Prisma, SignalDirection } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { metricsStore } from '../../observability/metrics';
-import { decrypt } from '../../utils/crypto';
 import {
   MarketStreamEvent,
   StreamCandleEvent,
@@ -17,6 +16,7 @@ import {
   parseStrategySignalRules,
 } from './strategySignalEvaluator';
 import { computeRiskBasedOrderQuantity, normalizeWalletRiskPercent } from './positionSizing';
+import { resolveRuntimeReferenceBalance } from './runtimeCapitalContext.service';
 
 type ActiveBotStrategy = {
   strategyId: string;
@@ -76,7 +76,6 @@ const runtimeLongThreshold = Number.parseFloat(process.env.RUNTIME_SIGNAL_LONG_T
 const runtimeShortThreshold = Number.parseFloat(process.env.RUNTIME_SIGNAL_SHORT_THRESHOLD ?? '-1');
 const runtimeExitBand = Number.parseFloat(process.env.RUNTIME_SIGNAL_EXIT_BAND ?? '0.2');
 const runtimeSignalQuantity = Number.parseFloat(process.env.RUNTIME_SIGNAL_QUANTITY ?? '0.01');
-const runtimeRiskReferenceBalance = Number.parseFloat(process.env.RUNTIME_RISK_REFERENCE_BALANCE ?? '1000');
 const runtimeDirectionCooldownMs = Number.parseInt(process.env.RUNTIME_SIGNAL_COOLDOWN_MS ?? '30000', 10);
 const runtimeManualPositionMode = (process.env.RUNTIME_MANUAL_POSITION_MODE ?? 'LIVE') as 'PAPER' | 'LIVE';
 const maxCandlesPerSeries = Number.parseInt(process.env.RUNTIME_SIGNAL_CANDLE_BUFFER ?? '500', 10);
@@ -85,8 +84,6 @@ const defaultGroupMaxOpenPositions = Number.parseInt(
   process.env.RUNTIME_GROUP_MAX_OPEN_POSITIONS_DEFAULT ?? '1',
   10
 );
-const liveBalanceCacheTtlMs = Number.parseInt(process.env.RUNTIME_LIVE_BALANCE_CACHE_TTL_MS ?? '30000', 10);
-const liveBalanceCache = new Map<string, { value: number; fetchedAt: number }>();
 
 type RuntimeCandle = {
   openTime: number;
@@ -299,78 +296,6 @@ const resolveRuntimeOrderQuantity = (input: {
     leverage: input.marketType === 'SPOT' ? 1 : Math.max(1, strategy.strategyLeverage),
     minQuantity: runtimeSignalQuantity,
   });
-};
-
-const extractUsdtBalance = (payload: unknown) => {
-  if (!payload || typeof payload !== 'object') return null;
-  const withTotal = payload as { total?: Record<string, unknown>; free?: Record<string, unknown> };
-  const totalUsdt = Number(withTotal.total?.USDT);
-  if (Number.isFinite(totalUsdt) && totalUsdt > 0) return totalUsdt;
-  const freeUsdt = Number(withTotal.free?.USDT);
-  if (Number.isFinite(freeUsdt) && freeUsdt > 0) return freeUsdt;
-  return null;
-};
-
-const resolveReferenceBalanceForMode = async (input: {
-  userId: string;
-  mode: 'PAPER' | 'LIVE';
-  marketType: 'FUTURES' | 'SPOT';
-  paperStartBalance: number;
-  nowMs: number;
-}) => {
-  if (input.mode === 'PAPER') {
-    return Math.max(0, input.paperStartBalance);
-  }
-
-  const cacheKey = `${input.userId}:${input.marketType}`;
-  const cached = liveBalanceCache.get(cacheKey);
-  if (cached && input.nowMs - cached.fetchedAt <= liveBalanceCacheTtlMs) {
-    return cached.value;
-  }
-
-  const apiKey = await prisma.apiKey.findFirst({
-    where: { userId: input.userId, exchange: 'BINANCE' },
-    orderBy: { updatedAt: 'desc' },
-  });
-  if (!apiKey) {
-    return runtimeRiskReferenceBalance;
-  }
-
-  try {
-    const ccxtModule = (await import('ccxt')) as unknown as {
-      binance: new (config: Record<string, unknown>) => {
-        fetchBalance: () => Promise<unknown>;
-        close?: () => Promise<void>;
-      };
-    };
-    const client = new ccxtModule.binance({
-      apiKey: decrypt(apiKey.apiKey),
-      secret: decrypt(apiKey.apiSecret),
-      enableRateLimit: true,
-      options: {
-        defaultType: input.marketType === 'FUTURES' ? 'future' : 'spot',
-      },
-    });
-    try {
-      const balance = await client.fetchBalance();
-      const usdtBalance = extractUsdtBalance(balance);
-      if (Number.isFinite(usdtBalance) && usdtBalance !== null && usdtBalance > 0) {
-        liveBalanceCache.set(cacheKey, {
-          value: usdtBalance,
-          fetchedAt: input.nowMs,
-        });
-        return usdtBalance;
-      }
-    } finally {
-      if (typeof client.close === 'function') {
-        await client.close().catch(() => undefined);
-      }
-    }
-  } catch {
-    // Fallback to runtime env value if exchange balance is temporarily unavailable.
-  }
-
-  return runtimeRiskReferenceBalance;
 };
 
 const normalizeInterval = (value?: string | null) => {
@@ -686,6 +611,8 @@ export class RuntimeSignalLoop {
               }
             }
 
+            const strategyExitTraceOnly = direction === 'EXIT' && group.strategies.length > 0;
+
             await this.deps.createSignal({
               userId: bot.userId,
               botId: bot.id,
@@ -700,6 +627,7 @@ export class RuntimeSignalLoop {
                 strategyDriven: group.strategies.length > 0,
                 strategyInterval: group.strategies[0]?.strategyInterval ?? null,
                 merge: merged.metadata,
+                strategyExitTraceOnly,
                 groupRisk: {
                   maxOpenPositions: group.maxOpenPositions,
                 },
@@ -709,9 +637,16 @@ export class RuntimeSignalLoop {
               },
             });
 
+            if (strategyExitTraceOnly) {
+              metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
+              metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
+              return;
+            }
+
             const selectedStrategy = group.strategies.find((strategy) => strategy.strategyId === merged.strategyId);
-            const referenceBalance = await resolveReferenceBalanceForMode({
+            const referenceBalance = await resolveRuntimeReferenceBalance({
               userId: bot.userId,
+              botId: bot.id,
               mode: bot.mode,
               marketType: bot.marketType,
               paperStartBalance: bot.paperStartBalance,

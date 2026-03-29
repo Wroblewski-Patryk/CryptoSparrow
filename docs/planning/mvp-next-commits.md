@@ -7,15 +7,15 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `POS-31 parity(audit): map old CryptoBot position lifecycle order and exact trigger semantics into canonical parity matrix doc`
-- [x] `POS-32 refactor(engine): enforce strict one-position-per-symbol lifecycle and no-overlap interval rendering contract in shared manager`
-- [x] `POS-33 fix(engine): implement old-bot-equivalent DCA/TTP/TSL sequencing (including advanced/basic mode gates and post-DCA activation rules)`
-- [x] `POS-34 fix(backtest-runtime): use one shared lifecycle engine for BACKTEST/PAPER/LIVE with identical event emission and closure reasons`
-- [x] `POS-35 test(e2e+ui): add parity fixtures + chart assertion contract (entries/exits/DCA counts + open-position stats) and publish operator checklist`
+- [x] `POS-36 fix(contract): remove strategy-exit close bypass from backtest/replay/runtime and keep EXIT as trace-only in parity mode`
+- [x] `POS-37 fix(runtime): align runtime automation mode/context with bot/position mode and enforce BOT_MANAGED-only automation`
+- [x] `POS-38 feat(runtime-capital): add shared runtime capital context (dynamic paper equity + next-DCA affordability -> dcaFundsExhausted)`
+- [ ] `POS-39 refactor(runtime-dca): execute DCA via execution adapters (paper/live) instead of DB state mutation-only path`
+- [ ] `POS-40 refactor(backtest): unify on single lifecycle close semantics across interleaved/replay adapters`
 
 ## NEXT
-- [x] `PAR-06 feat(report): expose parity-delta diagnostics in backtest report and raw event payload`
-- [x] `PAR-07 qa(manual): publish Binance side-by-side verification checklist for 3 symbols and same indicator setup`
+- [ ] `POS-41 test(parity): add golden fixtures for close-reason sequence parity across backtest/paper/live`
+- [ ] `POS-42 qa(manual): publish side-by-side Binance verification protocol for lifecycle reason parity`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 

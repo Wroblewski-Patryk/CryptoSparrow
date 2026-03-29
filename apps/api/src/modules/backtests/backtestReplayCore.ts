@@ -97,6 +97,11 @@ type StrategyRiskConfig = {
   dcaMultipliers: number[];
 };
 
+type TtpLevel = {
+  arm: number;
+  percent: number;
+};
+
 const computeRiskPriceFromPercent = (
   side: 'LONG' | 'SHORT',
   entryPrice: number,
@@ -125,6 +130,38 @@ const closeReasonToEventType = (reason?: 'take_profit' | 'trailing_take_profit' 
     default:
       return 'EXIT';
   }
+};
+
+const computeTrailingTakeProfitTriggerPrice = (input: {
+  side: PositionSide;
+  entryPrice: number;
+  anchorPrice: number;
+  leverage: number;
+  levels: TtpLevel[];
+}): number | null => {
+  const effectiveLeverage = Math.max(1, input.leverage);
+  const peakFavorableMove =
+    input.side === 'LONG'
+      ? ((input.anchorPrice - input.entryPrice) / Math.max(input.entryPrice, 1e-8)) * effectiveLeverage
+      : ((input.entryPrice - input.anchorPrice) / Math.max(input.entryPrice, 1e-8)) * effectiveLeverage;
+  if (!Number.isFinite(peakFavorableMove) || peakFavorableMove <= 0) return null;
+
+  const sorted = [...input.levels]
+    .filter((level) => Number.isFinite(level.arm) && Number.isFinite(level.percent) && level.arm > 0 && level.percent > 0)
+    .sort((left, right) => left.arm - right.arm);
+  let active: TtpLevel | null = null;
+  for (const level of sorted) {
+    if (peakFavorableMove >= level.arm) active = level;
+  }
+  if (!active) return null;
+
+  const floorMove = Math.max(0, peakFavorableMove - active.percent);
+  if (floorMove <= 0) return null;
+  const trigger =
+    input.side === 'LONG'
+      ? input.entryPrice * (1 + floorMove / effectiveLeverage)
+      : input.entryPrice * (1 - floorMove / effectiveLeverage);
+  return Number.isFinite(trigger) ? trigger : null;
 };
 
 const buildReplayPositionManagementInput = (args: {
@@ -245,8 +282,9 @@ const parseStrategyRiskConfig = (strategyConfig?: Record<string, unknown> | null
   const stopLossPct = asPercent(close.sl, defaultRiskConfig.stopLossPct * 100);
   const trailingTakeProfitLevels = (Array.isArray(close.ttp) ? close.ttp : [])
     .map((level) => ({
-      arm: asPercent(level?.arm, Number.NaN),
-      percent: asPercent(level?.percent, Number.NaN),
+      // UI contract: `percent` = activation threshold (start), `arm` = trailing step.
+      arm: asPercent(level?.percent, Number.NaN),
+      percent: asPercent(level?.arm, Number.NaN),
     }))
     .filter((level) => Number.isFinite(level.arm) && Number.isFinite(level.percent) && level.arm > 0 && level.percent > 0)
     .sort((left, right) => left.arm - right.arm);
@@ -527,6 +565,9 @@ export const simulateTradesForSymbolReplay = (input: {
       trailingLoss: undefined,
     };
     const dcaProbeResult = evaluatePositionManagement(dcaProbeInput, baseState);
+    const hasPendingDcaLevels = openPosition.dcaCount < riskConfig.maxDcaPerTrade;
+    const dcaFundsExhausted = trackedBalanceEnabled ? accountBalance <= 0 : false;
+    const lockTrailingByPendingDca = hasPendingDcaLevels && !dcaFundsExhausted;
     if (dcaProbeResult.dcaExecuted) {
       openPosition.quantity = dcaProbeResult.nextState.quantity;
       openPosition.entryPrice = dcaProbeResult.nextState.averageEntryPrice;
@@ -552,8 +593,9 @@ export const simulateTradesForSymbolReplay = (input: {
         riskConfig,
       }),
       dca: undefined,
+      dcaFundsExhausted,
     };
-    const managementResult = evaluatePositionManagement(managementInput, {
+    let managementResult = evaluatePositionManagement(managementInput, {
       averageEntryPrice: openPosition.entryPrice,
       quantity: openPosition.quantity,
       currentAdds: openPosition.dcaCount,
@@ -564,7 +606,56 @@ export const simulateTradesForSymbolReplay = (input: {
     openPosition.trailingLossLimit = managementResult.nextState.trailingLossLimitPercent;
     openPosition.bestPrice = managementResult.nextState.trailingAnchorPrice ?? openPosition.bestPrice;
 
-    const effectiveExitPrice = fillModel.exitPrice(current.close, openPosition.side as PositionSide);
+    if (
+      lockTrailingByPendingDca &&
+      managementResult.shouldClose &&
+      ['trailing_take_profit', 'trailing_stop', 'stop_loss'].includes(
+        managementResult.closeReason ?? '',
+      )
+    ) {
+      managementResult = {
+        ...managementResult,
+        shouldClose: false,
+        closeReason: undefined,
+      };
+    }
+
+    let exitMarkPrice = current.close;
+    if (!managementResult.shouldClose && !lockTrailingByPendingDca) {
+      const ttpTriggerPrice = computeTrailingTakeProfitTriggerPrice({
+        side: openPosition.side as PositionSide,
+        entryPrice: openPosition.entryPrice,
+        anchorPrice: openPosition.bestPrice,
+        leverage: effectiveLeverage,
+        levels: riskConfig.trailingTakeProfitLevels,
+      });
+      if (typeof ttpTriggerPrice === 'number') {
+        const crossedIntrabar =
+          openPosition.side === 'LONG' ? current.low <= ttpTriggerPrice : current.high >= ttpTriggerPrice;
+        if (crossedIntrabar) {
+          managementResult = {
+            ...managementResult,
+            shouldClose: true,
+            closeReason: 'trailing_take_profit',
+          };
+          exitMarkPrice = ttpTriggerPrice;
+        }
+      }
+    } else if (managementResult.closeReason === 'trailing_take_profit') {
+      const ttpTriggerPrice = computeTrailingTakeProfitTriggerPrice({
+        side: openPosition.side as PositionSide,
+        entryPrice: openPosition.entryPrice,
+        anchorPrice: openPosition.bestPrice,
+        leverage: effectiveLeverage,
+        levels: riskConfig.trailingTakeProfitLevels,
+      });
+      if (typeof ttpTriggerPrice === 'number') {
+        exitMarkPrice = ttpTriggerPrice;
+      }
+    }
+
+    const clampedExitMarkPrice = Math.min(current.high, Math.max(current.low, exitMarkPrice));
+    const effectiveExitPrice = fillModel.exitPrice(clampedExitMarkPrice, openPosition.side as PositionSide);
     const settlement = fillModel.settle({
       side: openPosition.side as PositionSide,
       entryPrice: openPosition.entryPrice,
@@ -579,8 +670,6 @@ export const simulateTradesForSymbolReplay = (input: {
       openPosition.side === 'LONG'
         ? (openPosition.entryPrice - current.low) / Math.max(openPosition.entryPrice, 1e-8)
         : (current.high - openPosition.entryPrice) / Math.max(openPosition.entryPrice, 1e-8);
-    const shouldSignalExit = decision?.kind === 'close';
-
     const isolatedLiquidationThreshold = 1 / Math.max(1, effectiveLeverage);
     const isIsolatedLiquidated =
       marketType === 'FUTURES' &&
@@ -589,8 +678,7 @@ export const simulateTradesForSymbolReplay = (input: {
 
     if (
       !isIsolatedLiquidated &&
-      !managementResult.shouldClose &&
-      !shouldSignalExit
+      !managementResult.shouldClose
     ) {
       continue;
     }

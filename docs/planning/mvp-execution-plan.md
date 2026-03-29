@@ -275,7 +275,20 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `POS-34 fix(backtest-runtime): route BACKTEST/PAPER/LIVE position management through one shared lifecycle engine with identical closure reasons`
 - [x] `POS-35 test(e2e+ui): add deterministic parity fixtures and chart event contract assertions (entry/exit/dca/ttp/sl/tsl counts + open-position stats)`
 
+## Phase 17 - Position Lifecycle Parity Remediation (Backtest <-> Paper/Live)
+- [x] `POS-36 fix(contract): remove strategy-exit close bypass from backtest/replay/runtime and keep EXIT as trace-only in parity mode`
+- [x] `POS-37 fix(runtime): align runtime automation mode/context with bot/position mode and enforce BOT_MANAGED-only automation`
+- [x] `POS-38 feat(runtime-capital): add shared runtime capital context (dynamic paper equity + next-DCA affordability -> dcaFundsExhausted)`
+- [ ] `POS-39 refactor(runtime-dca): execute DCA via execution adapters (paper/live) instead of DB state mutation-only path`
+- [ ] `POS-40 refactor(backtest): unify on single lifecycle close semantics across interleaved/replay adapters`
+- [ ] `POS-41 test(parity): add golden fixtures for close-reason sequence parity across backtest/paper/live`
+- [ ] `POS-42 qa(manual): publish side-by-side Binance verification protocol for lifecycle reason parity`
+
 ## Progress Log
+- 2026-03-29: Completed `POS-38` by introducing shared runtime capital context (dynamic PAPER reference balance + free-cash snapshot) and wiring runtime DCA affordability guard (`dcaFundsExhausted`) into automation/lifecycle evaluation.
+- 2026-03-29: Completed `POS-37` by enforcing `BOT_MANAGED` automation scope in runtime position automation and resolving close execution mode from position/bot context (with manual-mode fallback only when bot mode is unavailable).
+- 2026-03-29: Completed `POS-36` by removing direct strategy `EXIT` close authority from backtest/replay and runtime strategy path; `EXIT` remains trace-only for strategy-driven groups while lifecycle manager remains sole close authority.
+- 2026-03-29: Added Phase 17 remediation plan after parity-gap audit; canonical plan doc: `docs/planning/position-lifecycle-parity-remediation-plan-2026-03-29.md`.
 - 2026-03-29: Completed `POS-35` by adding e2e chart parity assertions (eventCounts vs timeline events + positionStats contract) and publishing operator checklist in `docs/operations/backtest-markets-chart-parity-checklist.md`.
 - 2026-03-29: Completed `POS-34` by wiring backtest replay/interleaved runtime to shared `evaluatePositionManagement` lifecycle (shared close reasons/event mapping), including DCA wick-probe compatibility and green replay/e2e contracts.
 - 2026-03-29: Completed `POS-33` by switching engine lifecycle order to legacy parity (`DCA -> TP -> TTP -> SL -> TSL`), adding TTP/TSL tracker exclusivity, and extending engine regression tests.

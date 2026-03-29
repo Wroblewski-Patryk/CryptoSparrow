@@ -120,7 +120,9 @@ export const evaluatePositionManagement = (
 
   // Legacy parity order: DCA -> TP -> TTP -> SL -> TSL.
   if (dcaEnabled && nextState.currentAdds < dcaLevelsRequired) {
-    const referencePrice = nextState.lastDcaPrice ?? nextState.averageEntryPrice;
+    // DCA levels are evaluated against current average entry.
+    // This keeps repeated levels (e.g. -30, -30, -30) meaningful after each add.
+    const referencePrice = nextState.averageEntryPrice;
     const nextLevelPercent = dcaLevels[nextState.currentAdds] ?? -(parsedInput.dca?.stepPercent ?? 0.01);
     const trigger = shouldDca(
       parsedInput.side,
@@ -149,6 +151,7 @@ export const evaluatePositionManagement = (
   }
 
   const dcaSequenceCompleted = !dcaEnabled || dcaLevelsRequired === 0 || nextState.currentAdds >= dcaLevelsRequired;
+  const dcaProtectionSatisfied = dcaSequenceCompleted || parsedInput.dcaFundsExhausted === true;
 
   if (
     typeof parsedInput.takeProfitPrice === 'number' &&
@@ -200,19 +203,24 @@ export const evaluatePositionManagement = (
     nextState.trailingLossLimitPercent = undefined;
   }
 
-  // TTP follows highest reached profit and closes on profit pullback (analogous to legacy bot behavior).
-  if (activeTtpLevel && favorableMove <= peakFavorableMove - activeTtpLevel.trailPercent) {
-    return {
-      shouldClose: true,
-      closeReason: 'trailing_take_profit',
-      dcaExecuted,
-      dcaAddedQuantity,
-      nextState,
-    };
+  // TTP follows highest reached profit and closes on pullback, but never below breakeven in leveraged terms.
+  // This avoids TTP exits turning into deep losses when trail > arm.
+  if (activeTtpLevel && dcaProtectionSatisfied) {
+    const ttpFloorMove = Math.max(0, peakFavorableMove - activeTtpLevel.trailPercent);
+    // TTP is profit-protection logic; it must not close while move is non-positive.
+    if (favorableMove > 0 && favorableMove <= ttpFloorMove) {
+      return {
+        shouldClose: true,
+        closeReason: 'trailing_take_profit',
+        dcaExecuted,
+        dcaAddedQuantity,
+        nextState,
+      };
+    }
   }
 
   if (
-    dcaSequenceCompleted &&
+    dcaProtectionSatisfied &&
     typeof parsedInput.stopLossPrice === 'number' &&
     isStopLossHit(parsedInput.side, parsedInput.currentPrice, parsedInput.stopLossPrice)
   ) {
@@ -225,7 +233,7 @@ export const evaluatePositionManagement = (
     };
   }
 
-  if (dcaSequenceCompleted) {
+  if (dcaProtectionSatisfied) {
     if (parsedInput.trailingLoss?.enabled) {
       const start = parsedInput.trailingLoss.startPercent;
       const step = parsedInput.trailingLoss.stepPercent;

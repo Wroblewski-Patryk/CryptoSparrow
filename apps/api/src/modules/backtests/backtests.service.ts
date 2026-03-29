@@ -121,6 +121,11 @@ type IndicatorSpec = {
   panel: 'price' | 'oscillator';
 };
 
+type TtpLevel = {
+  arm: number;
+  percent: number;
+};
+
 const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
 
 const timeframeIntervalMs: Record<string, number> = {
@@ -219,6 +224,38 @@ const computeSourceWindowMs = (timeframe: string, maxCandles: number) => {
   return Math.max(TWO_WEEKS_MS, bufferedWindowMs);
 };
 
+const computeTrailingTakeProfitTriggerPrice = (input: {
+  side: PositionSide;
+  entryPrice: number;
+  anchorPrice: number;
+  leverage: number;
+  levels: TtpLevel[];
+}): number | null => {
+  const effectiveLeverage = Math.max(1, input.leverage);
+  const peakFavorableMove =
+    input.side === 'LONG'
+      ? ((input.anchorPrice - input.entryPrice) / Math.max(input.entryPrice, 1e-8)) * effectiveLeverage
+      : ((input.entryPrice - input.anchorPrice) / Math.max(input.entryPrice, 1e-8)) * effectiveLeverage;
+  if (!Number.isFinite(peakFavorableMove) || peakFavorableMove <= 0) return null;
+
+  const sorted = [...input.levels]
+    .filter((level) => Number.isFinite(level.arm) && Number.isFinite(level.percent) && level.arm > 0 && level.percent > 0)
+    .sort((left, right) => left.arm - right.arm);
+  let active: TtpLevel | null = null;
+  for (const level of sorted) {
+    if (peakFavorableMove >= level.arm) active = level;
+  }
+  if (!active) return null;
+
+  const floorMove = Math.max(0, peakFavorableMove - active.percent);
+  if (floorMove <= 0) return null;
+  const trigger =
+    input.side === 'LONG'
+      ? input.entryPrice * (1 + floorMove / effectiveLeverage)
+      : input.entryPrice * (1 - floorMove / effectiveLeverage);
+  return Number.isFinite(trigger) ? trigger : null;
+};
+
 const getDefaultCandlesForTimeframe = (timeframe: string) =>
   timeframeDefaultCandles[normalizeTimeframe(timeframe)] ?? 1000;
 
@@ -270,10 +307,26 @@ const toKlineFromDb = (row: {
   volume: row.volume,
 });
 
-const cacheKeyForCandles = (symbol: string, timeframe: string, marketType: MarketType, maxCandles: number) =>
-  `${marketType}:${symbol}:${normalizeTimeframe(timeframe)}:${maxCandles}`;
-const cacheKeyForSupplemental = (symbol: string, timeframe: string, marketType: MarketType, maxCandles: number) =>
-  `supp:${marketType}:${symbol}:${normalizeTimeframe(timeframe)}:${maxCandles}`;
+const cacheKeyForCandles = (
+  symbol: string,
+  timeframe: string,
+  marketType: MarketType,
+  maxCandles: number,
+  endTimeMs?: number,
+) =>
+  `${marketType}:${symbol}:${normalizeTimeframe(timeframe)}:${maxCandles}:${
+    Number.isFinite(endTimeMs) ? Math.floor(endTimeMs as number) : 'latest'
+  }`;
+const cacheKeyForSupplemental = (
+  symbol: string,
+  timeframe: string,
+  marketType: MarketType,
+  maxCandles: number,
+  endTimeMs?: number,
+) =>
+  `supp:${marketType}:${symbol}:${normalizeTimeframe(timeframe)}:${maxCandles}:${
+    Number.isFinite(endTimeMs) ? Math.floor(endTimeMs as number) : 'latest'
+  }`;
 
 const pruneCandleCache = () => {
   const now = Date.now();
@@ -306,18 +359,19 @@ const fetchKlines = async (
   timeframe: string,
   marketType: MarketType,
   maxCandles: number,
+  endTimeMs?: number,
 ): Promise<KlineCandle[]> => {
   pruneCandleCache();
-  const key = cacheKeyForCandles(symbol, timeframe, marketType, maxCandles);
+  const key = cacheKeyForCandles(symbol, timeframe, marketType, maxCandles, endTimeMs);
   const cached = candleCache.get(key);
   if (cached && Date.now() - cached.cachedAt <= CANDLE_CACHE_TTL_MS) {
     return cached.candles;
   }
 
   const normalizedTimeframe = normalizeTimeframe(timeframe);
-  const now = Date.now();
+  const endTime = Number.isFinite(endTimeMs) ? Math.floor(endTimeMs as number) : Date.now();
   const sourceWindowMs = computeSourceWindowMs(timeframe, maxCandles);
-  const startTimeByRange = now - sourceWindowMs;
+  const startTimeByRange = endTime - sourceWindowMs;
   const dbDelegate = useDbCandleCache ? getDbCandleDelegate() : undefined;
   if (dbDelegate) {
     try {
@@ -328,6 +382,7 @@ const fetchKlines = async (
           timeframe: normalizedTimeframe,
           openTime: {
             gte: BigInt(startTimeByRange),
+            lte: BigInt(endTime),
           },
         },
         orderBy: { openTime: 'desc' },
@@ -367,6 +422,7 @@ const fetchKlines = async (
       interval: normalizedTimeframe,
       limit: String(chunkLimit),
       startTime: String(nextStartTime),
+      endTime: String(endTime),
     });
 
     const response = await fetch(`${endpoint}?${query.toString()}`);
@@ -405,7 +461,7 @@ const fetchKlines = async (
 
     const last = parsed[parsed.length - 1];
     nextStartTime = last.openTime + intervalMs;
-    if (nextStartTime >= now) break;
+    if (nextStartTime >= endTime) break;
   }
 
   const result = candles
@@ -451,34 +507,35 @@ const fetchSupplementalSeries = async (
   timeframe: string,
   marketType: MarketType,
   maxCandles: number,
+  endTimeMs?: number,
 ): Promise<SupplementalSeries> => {
   if (marketType !== 'FUTURES') {
     return { fundingRates: [], openInterest: [] };
   }
 
   pruneCandleCache();
-  const key = cacheKeyForSupplemental(symbol, timeframe, marketType, maxCandles);
+  const key = cacheKeyForSupplemental(symbol, timeframe, marketType, maxCandles, endTimeMs);
   const cached = supplementalCache.get(key);
   if (cached && Date.now() - cached.cachedAt <= CANDLE_CACHE_TTL_MS) {
     return cached.data;
   }
 
-  const now = Date.now();
+  const endTime = Number.isFinite(endTimeMs) ? Math.floor(endTimeMs as number) : Date.now();
   const sourceWindowMs = computeSourceWindowMs(timeframe, maxCandles);
-  const startTime = now - sourceWindowMs;
+  const startTime = endTime - sourceWindowMs;
   const limit = clamp(maxCandles, 50, 1000);
 
   const fundingQuery = new URLSearchParams({
     symbol,
     startTime: String(startTime),
-    endTime: String(now),
+    endTime: String(endTime),
     limit: String(limit),
   });
   const oiQuery = new URLSearchParams({
     symbol,
     period: openInterestPeriodForTimeframe(timeframe),
     startTime: String(startTime),
-    endTime: String(now),
+    endTime: String(endTime),
     limit: String(limit),
   });
 
@@ -724,8 +781,9 @@ const parseReplayRiskConfig = (strategyConfig?: Record<string, unknown> | null):
   const stopLossPct = Math.max(0.0001, asPercent(close.sl, fallback.stopLossPct * 100));
   const trailingTakeProfitLevels = (Array.isArray(close.ttp) ? close.ttp : [])
     .map((level) => ({
-      arm: asPercent(level?.arm, Number.NaN),
-      percent: asPercent(level?.percent, Number.NaN),
+      // UI contract: `percent` = activation threshold (start), `arm` = trailing step.
+      arm: asPercent(level?.percent, Number.NaN),
+      percent: asPercent(level?.arm, Number.NaN),
     }))
     .filter((level) => Number.isFinite(level.arm) && Number.isFinite(level.percent) && level.arm > 0 && level.percent > 0)
     .sort((left, right) => left.arm - right.arm);
@@ -1018,6 +1076,18 @@ const simulateInterleavedPortfolio = (input: {
       trailingLoss: undefined,
     };
     const dcaProbeResult = evaluatePositionManagement(dcaProbeInput, baseState);
+    const hasPendingDcaLevels = position.dcaCount < riskConfig.maxDcaPerTrade;
+    const nextDcaMultiplier =
+      riskConfig.dcaMultipliers[position.dcaCount] ??
+      riskConfig.dcaMultipliers[riskConfig.dcaMultipliers.length - 1] ??
+      1;
+    const estimatedNextDcaAddedQty = Math.max(0, position.quantity * Math.max(0, nextDcaMultiplier));
+    const estimatedNextDcaMargin = (current.close * estimatedNextDcaAddedQty) / Math.max(1, effectiveLeverage);
+    const dcaFundsExhausted =
+      hasPendingDcaLevels && estimatedNextDcaAddedQty > 0
+        ? estimatedNextDcaMargin > cashBalance
+        : false;
+    const lockTrailingByPendingDca = hasPendingDcaLevels && !dcaFundsExhausted;
 
     if (dcaProbeResult.dcaExecuted) {
       const addedQty = Math.max(0, dcaProbeResult.nextState.quantity - position.quantity);
@@ -1060,8 +1130,9 @@ const simulateInterleavedPortfolio = (input: {
         riskConfig,
       }),
       dca: undefined,
+      dcaFundsExhausted,
     } satisfies PositionManagementInput;
-    const managementResult = evaluatePositionManagement(managementInput, {
+    let managementResult = evaluatePositionManagement(managementInput, {
       averageEntryPrice: position.entryPrice,
       quantity: position.quantity,
       currentAdds: position.dcaCount,
@@ -1073,6 +1144,54 @@ const simulateInterleavedPortfolio = (input: {
     position.trailingLossLimit = managementResult.nextState.trailingLossLimitPercent;
     position.bestPrice = managementResult.nextState.trailingAnchorPrice ?? position.bestPrice;
 
+    if (
+      lockTrailingByPendingDca &&
+      managementResult.shouldClose &&
+      ['trailing_take_profit', 'trailing_stop', 'stop_loss'].includes(
+        managementResult.closeReason ?? '',
+      )
+    ) {
+      managementResult = {
+        ...managementResult,
+        shouldClose: false,
+        closeReason: undefined,
+      };
+    }
+
+    let exitMarkPrice = current.close;
+    if (!managementResult.shouldClose && !lockTrailingByPendingDca) {
+      const ttpTriggerPrice = computeTrailingTakeProfitTriggerPrice({
+        side: position.side as PositionSide,
+        entryPrice: position.entryPrice,
+        anchorPrice: position.bestPrice,
+        leverage: effectiveLeverage,
+        levels: riskConfig.trailingTakeProfitLevels,
+      });
+      if (typeof ttpTriggerPrice === 'number') {
+        const crossedIntrabar =
+          position.side === 'LONG' ? current.low <= ttpTriggerPrice : current.high >= ttpTriggerPrice;
+        if (crossedIntrabar) {
+          managementResult = {
+            ...managementResult,
+            shouldClose: true,
+            closeReason: 'trailing_take_profit',
+          };
+          exitMarkPrice = ttpTriggerPrice;
+        }
+      }
+    } else if (managementResult.closeReason === 'trailing_take_profit') {
+      const ttpTriggerPrice = computeTrailingTakeProfitTriggerPrice({
+        side: position.side as PositionSide,
+        entryPrice: position.entryPrice,
+        anchorPrice: position.bestPrice,
+        leverage: effectiveLeverage,
+        levels: riskConfig.trailingTakeProfitLevels,
+      });
+      if (typeof ttpTriggerPrice === 'number') {
+        exitMarkPrice = ttpTriggerPrice;
+      }
+    }
+
     const adverseMove =
       position.side === 'LONG'
         ? (position.entryPrice - current.low) / Math.max(position.entryPrice, 1e-8)
@@ -1083,18 +1202,19 @@ const simulateInterleavedPortfolio = (input: {
       input.marketType === 'FUTURES' &&
       input.marginMode === 'ISOLATED' &&
       adverseMove >= isolatedThreshold;
-    const shouldSignalExit = decision?.kind === 'close';
-
     if (
       !isIsolatedLiquidated &&
-      !managementResult.shouldClose &&
-      !shouldSignalExit
+      !managementResult.shouldClose
     ) {
       cursorBySymbol.set(symbol, index + 1);
       continue;
     }
 
-    const exitPrice = fillModel.exitPrice(current.close, position.side as PositionSide);
+    const clampedExitMarkPrice =
+      position.side === 'LONG'
+        ? clamp(exitMarkPrice, current.low, current.high)
+        : clamp(exitMarkPrice, current.low, current.high);
+    const exitPrice = fillModel.exitPrice(clampedExitMarkPrice, position.side as PositionSide);
     const settlement = fillModel.settle({
       side: position.side as PositionSide,
       entryPrice: position.entryPrice,
@@ -1910,6 +2030,7 @@ export const getRunTimeline = async (
       symbol: true,
       seedConfig: true,
       status: true,
+      finishedAt: true,
     },
   });
   if (!run) return null;
@@ -1927,8 +2048,34 @@ export const getRunTimeline = async (
   if (runSymbols.length > 0 && !runSymbols.includes(symbol)) {
     return null;
   }
-  const candles = await fetchKlines(symbol, run.timeframe, marketType, maxCandles);
-  const supplemental = await fetchSupplementalSeries(symbol, run.timeframe, marketType, maxCandles);
+  const replaySymbols = runSymbols.length > 0 ? runSymbols : [symbol];
+  const liveProgress = (seed.liveProgress ?? {}) as {
+    currentCandleTime?: string | null;
+  };
+  const timelineEndTimeMsRaw =
+    typeof liveProgress.currentCandleTime === 'string'
+      ? Date.parse(liveProgress.currentCandleTime)
+      : Number.NaN;
+  const timelineEndTimeMs = Number.isFinite(timelineEndTimeMsRaw)
+    ? timelineEndTimeMsRaw
+    : run.finishedAt
+      ? run.finishedAt.getTime()
+      : undefined;
+  const candlesBySymbol = new Map<string, KlineCandle[]>();
+  for (const replaySymbol of replaySymbols) {
+    candlesBySymbol.set(
+      replaySymbol,
+      await fetchKlines(replaySymbol, run.timeframe, marketType, maxCandles, timelineEndTimeMs),
+    );
+  }
+  const candles = candlesBySymbol.get(symbol) ?? [];
+  const supplemental = await fetchSupplementalSeries(
+    symbol,
+    run.timeframe,
+    marketType,
+    maxCandles,
+    timelineEndTimeMs,
+  );
   const total = candles.length;
   const requestedCursor = clamp(query.cursor, 0, total);
   const start =
@@ -1963,14 +2110,14 @@ export const getRunTimeline = async (
   const leverageCandidate = Number((seed as { leverage?: unknown }).leverage);
   const leverage = Number.isFinite(leverageCandidate) ? leverageCandidate : 1;
   const marginMode = seed.marginMode === 'ISOLATED' ? 'ISOLATED' : (seed.marginMode === 'CROSSED' ? 'CROSSED' : 'NONE');
-  const replay = simulateTradesForSymbol(
-    symbol,
-    candles,
+  const replay = simulateInterleavedPortfolio({
+    symbols: replaySymbols,
+    candlesBySymbol,
     marketType,
-    marketType === 'SPOT' ? 1 : leverage,
+    leverage: marketType === 'SPOT' ? 1 : leverage,
     marginMode,
-    (strategy?.config as Record<string, unknown> | undefined) ?? null,
-    {
+    strategyConfig: (strategy?.config as Record<string, unknown> | undefined) ?? null,
+    fillModelConfig: {
       feeRate:
         typeof (seed as { feeRate?: unknown }).feeRate === 'number'
           ? Number((seed as { feeRate?: unknown }).feeRate)
@@ -1984,16 +2131,30 @@ export const getRunTimeline = async (
           ? Number((seed as { fundingRate?: unknown }).fundingRate)
           : undefined,
     },
-    {
-      mode: 'wallet_risk',
-      walletRiskPercent: strategyWalletRisk,
-      referenceBalance:
-        typeof (seed as { initialBalance?: unknown }).initialBalance === 'number'
-          ? Number((seed as { initialBalance?: number }).initialBalance)
-          : 10_000,
-    },
-  );
-  const events = replay.events
+    walletRiskPercent: strategyWalletRisk,
+    initialBalance:
+      typeof (seed as { initialBalance?: unknown }).initialBalance === 'number'
+        ? Number((seed as { initialBalance?: number }).initialBalance)
+        : 10_000,
+  });
+  const symbolReplay = replay.perSymbol[symbol] ?? {
+    trades: [],
+    liquidations: 0,
+    events: [],
+    eventCounts: {
+      ENTRY: 0,
+      EXIT: 0,
+      DCA: 0,
+      TP: 0,
+      TTP: 0,
+      SL: 0,
+      TRAILING: 0,
+      LIQUIDATION: 0,
+    } as Record<ReplayEventType, number>,
+    decisionTrace: [],
+  };
+
+  const events = symbolReplay.events
     .filter((event) => event.candleIndex >= start && event.candleIndex < end)
     .map((event) => {
       const eventId = `${runId}_${symbol}_${event.tradeSequence}_${event.type}_${event.candleIndex}`;
@@ -2011,7 +2172,7 @@ export const getRunTimeline = async (
       };
     });
 
-  const liveProgress = (seed.liveProgress ?? {}) as {
+  const liveProgressPlayback = (seed.liveProgress ?? {}) as {
     currentSymbol?: string | null;
     currentCandleIndex?: number;
     totalCandlesForSymbol?: number;
@@ -2043,9 +2204,9 @@ export const getRunTimeline = async (
       strategyRulesActive: Boolean(
         parseStrategySignalRules((strategy?.config as Record<string, unknown> | undefined) ?? null),
       ),
-      eventCounts: replay.eventCounts,
-      mismatchCount: replay.decisionTrace.filter((entry) => entry.mismatchReason !== null).length,
-      mismatchSamples: replay.decisionTrace
+      eventCounts: symbolReplay.eventCounts,
+      mismatchCount: symbolReplay.decisionTrace.filter((entry) => entry.mismatchReason !== null).length,
+      mismatchSamples: symbolReplay.decisionTrace
         .filter(
           (entry) =>
             entry.mismatchReason !== null && entry.candleIndex >= start && entry.candleIndex < end,
@@ -2061,9 +2222,9 @@ export const getRunTimeline = async (
       openInterestPoints: supplemental.openInterest.length,
     },
     positionStats: {
-      closedOnFinalCandleCount: replay.trades.filter((trade) => trade.exitReason === 'FINAL_CANDLE').length,
-      liquidationsCount: replay.trades.filter((trade) => trade.exitReason === 'LIQUIDATION' || trade.liquidated).length,
-      tradeCount: replay.trades.length,
+      closedOnFinalCandleCount: symbolReplay.trades.filter((trade) => trade.exitReason === 'FINAL_CANDLE').length,
+      liquidationsCount: symbolReplay.trades.filter((trade) => trade.exitReason === 'LIQUIDATION' || trade.liquidated).length,
+      tradeCount: symbolReplay.trades.length,
     },
     marketInputs: {
       fundingRates: supplemental.fundingRates
@@ -2092,8 +2253,8 @@ export const getRunTimeline = async (
         supportedEventTypes: ['ENTRY', 'EXIT', 'DCA', 'TP', 'TTP', 'SL', 'TRAILING', 'LIQUIDATION'],
     unsupportedEventTypes: [],
     playbackCursor:
-      liveProgress.currentSymbol === symbol && typeof liveProgress.currentCandleIndex === 'number'
-        ? liveProgress.currentCandleIndex
+      liveProgressPlayback.currentSymbol === symbol && typeof liveProgressPlayback.currentCandleIndex === 'number'
+        ? liveProgressPlayback.currentCandleIndex
         : null,
   };
 };

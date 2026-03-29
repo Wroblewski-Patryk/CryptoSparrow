@@ -139,6 +139,54 @@ describe('position management', () => {
     expect(result.nextState.lastDcaPrice).toBe(94);
   });
 
+  it('evaluates next DCA level against updated average entry (not last dca price)', () => {
+    const first = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 90,
+        leverage: 1,
+        dca: {
+          enabled: true,
+          maxAdds: 2,
+          levelPercents: [-0.1, -0.1],
+          addSizeFractions: [1, 1],
+          stepPercent: 0.1,
+          addSizeFraction: 1,
+        },
+      },
+      {
+        averageEntryPrice: 100,
+        quantity: 1,
+        currentAdds: 0,
+      }
+    );
+
+    // After first add at 90 with multiplier 1x:
+    // average entry becomes 95. Next -10% threshold from average is 85.5.
+    // Price 84 should trigger second DCA by average-entry logic.
+    const second = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 84,
+        leverage: 1,
+        dca: {
+          enabled: true,
+          maxAdds: 2,
+          levelPercents: [-0.1, -0.1],
+          addSizeFractions: [1, 1],
+          stepPercent: 0.1,
+          addSizeFraction: 1,
+        },
+      },
+      first.nextState
+    );
+
+    expect(first.dcaExecuted).toBe(true);
+    expect(first.nextState.averageEntryPrice).toBe(95);
+    expect(second.dcaExecuted).toBe(true);
+    expect(second.nextState.currentAdds).toBe(2);
+  });
+
   it('applies DCA before TP in the same cycle (legacy order contract)', () => {
     const result = evaluatePositionManagement(
       {
@@ -168,7 +216,7 @@ describe('position management', () => {
     expect(result.closeReason).toBe('take_profit');
   });
 
-  it('triggers trailing take-profit even before DCA sequence is completed', () => {
+  it('does not trigger trailing take-profit before DCA sequence is completed', () => {
     const armed = evaluatePositionManagement(
       {
         side: 'LONG',
@@ -218,6 +266,61 @@ describe('position management', () => {
     );
 
     expect(armed.shouldClose).toBe(false);
+    expect(closed.shouldClose).toBe(false);
+    expect(closed.closeReason).toBeUndefined();
+  });
+
+  it('allows trailing take-profit before DCA completion only when DCA funds are exhausted', () => {
+    const armed = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 120,
+        leverage: 10,
+        dcaFundsExhausted: true,
+        trailingTakeProfit: {
+          enabled: true,
+          armPercent: 0.05,
+          trailPercent: 0.1,
+        },
+        dca: {
+          enabled: true,
+          maxAdds: 2,
+          levelPercents: [-0.2, -0.2],
+          addSizeFractions: [1, 1],
+          stepPercent: 0.2,
+          addSizeFraction: 1,
+        },
+      },
+      {
+        averageEntryPrice: 100,
+        quantity: 1,
+        currentAdds: 0,
+      }
+    );
+
+    const closed = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 115,
+        leverage: 10,
+        dcaFundsExhausted: true,
+        trailingTakeProfit: {
+          enabled: true,
+          armPercent: 0.05,
+          trailPercent: 0.1,
+        },
+        dca: {
+          enabled: true,
+          maxAdds: 2,
+          levelPercents: [-0.2, -0.2],
+          addSizeFractions: [1, 1],
+          stepPercent: 0.2,
+          addSizeFraction: 1,
+        },
+      },
+      armed.nextState
+    );
+
     expect(closed.shouldClose).toBe(true);
     expect(closed.closeReason).toBe('trailing_take_profit');
   });

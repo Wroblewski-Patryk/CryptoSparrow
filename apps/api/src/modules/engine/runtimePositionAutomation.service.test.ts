@@ -17,11 +17,15 @@ describe('RuntimePositionAutomationService', () => {
           leverage: 5,
           stopLoss: 58_000,
           takeProfit: 61_000,
+          managementMode: 'BOT_MANAGED' as const,
+          bot: { mode: 'PAPER' as const },
         },
       ]),
       getStrategyConfigById: vi.fn(async () => null),
       updatePositionAfterDca: vi.fn(async () => undefined),
       closeByExitSignal: vi.fn(async () => undefined),
+      resolveDcaFundsExhausted: vi.fn(async () => false),
+      nowMs: vi.fn(() => Date.now()),
     };
 
     const service = new RuntimePositionAutomationService(deps);
@@ -39,6 +43,7 @@ describe('RuntimePositionAutomationService', () => {
         userId: 'user-1',
         botId: 'bot-1',
         symbol: 'BTCUSDT',
+        mode: 'PAPER',
       })
     );
     expect(deps.updatePositionAfterDca).not.toHaveBeenCalled();
@@ -65,11 +70,15 @@ describe('RuntimePositionAutomationService', () => {
           leverage: 5,
           stopLoss: null,
           takeProfit: null,
+          managementMode: 'BOT_MANAGED' as const,
+          bot: null,
         },
       ]),
       getStrategyConfigById: vi.fn(async () => null),
       updatePositionAfterDca: vi.fn(async () => undefined),
       closeByExitSignal: vi.fn(async () => undefined),
+      resolveDcaFundsExhausted: vi.fn(async () => false),
+      nowMs: vi.fn(() => Date.now()),
     };
 
     const service = new RuntimePositionAutomationService(deps);
@@ -102,6 +111,8 @@ describe('RuntimePositionAutomationService', () => {
           leverage: 5,
           stopLoss: null,
           takeProfit: null,
+          managementMode: 'BOT_MANAGED' as const,
+          bot: { mode: 'LIVE' as const },
         },
       ]),
       getStrategyConfigById: vi.fn(async () => ({
@@ -110,6 +121,8 @@ describe('RuntimePositionAutomationService', () => {
       })),
       updatePositionAfterDca: vi.fn(async () => undefined),
       closeByExitSignal: vi.fn(async () => undefined),
+      resolveDcaFundsExhausted: vi.fn(async () => false),
+      nowMs: vi.fn(() => Date.now()),
     };
 
     const service = new RuntimePositionAutomationService(deps);
@@ -124,6 +137,52 @@ describe('RuntimePositionAutomationService', () => {
 
     expect(deps.getStrategyConfigById).toHaveBeenCalledWith('strat-3');
     expect(deps.updatePositionAfterDca).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips DCA add when runtime capital marks next DCA as unaffordable', async () => {
+    process.env.RUNTIME_TRAILING_ENABLED = 'false';
+    process.env.RUNTIME_DCA_ENABLED = 'false';
+
+    const deps: any = {
+      listOpenPositionsBySymbol: vi.fn(async () => [
+        {
+          id: 'pos-3b',
+          userId: 'user-3b',
+          botId: 'bot-3b',
+          strategyId: 'strat-3b',
+          symbol: 'SOLUSDT',
+          side: 'LONG' as const,
+          entryPrice: 100,
+          quantity: 1,
+          leverage: 5,
+          stopLoss: null,
+          takeProfit: null,
+          managementMode: 'BOT_MANAGED' as const,
+          bot: { mode: 'PAPER' as const, marketType: 'FUTURES' as const, paperStartBalance: 1000 },
+        },
+      ]),
+      getStrategyConfigById: vi.fn(async () => ({
+        close: { tp: 2, sl: 3, ttp: [{ arm: 1.2, percent: 0.4 }], tsl: [] },
+        additional: { dcaEnabled: true, dcaTimes: 2, dcaLevels: [{ percent: -1, multiplier: 1.5 }] },
+      })),
+      updatePositionAfterDca: vi.fn(async () => undefined),
+      closeByExitSignal: vi.fn(async () => undefined),
+      resolveDcaFundsExhausted: vi.fn(async () => true),
+      nowMs: vi.fn(() => Date.now()),
+    };
+
+    const service = new RuntimePositionAutomationService(deps);
+    await service.handleTickerEvent({
+      type: 'ticker',
+      marketType: 'FUTURES',
+      symbol: 'SOLUSDT',
+      eventTime: 2_500,
+      lastPrice: 98.8,
+      priceChangePercent24h: -0.6,
+    });
+
+    expect(deps.resolveDcaFundsExhausted).toHaveBeenCalledTimes(1);
+    expect(deps.updatePositionAfterDca).not.toHaveBeenCalled();
   });
 
   it('respects advanced DCA levels even when dcaTimes is lower than levels length', async () => {
@@ -144,6 +203,8 @@ describe('RuntimePositionAutomationService', () => {
           leverage: 5,
           stopLoss: null,
           takeProfit: null,
+          managementMode: 'BOT_MANAGED' as const,
+          bot: { mode: 'PAPER' as const },
         },
       ]),
       getStrategyConfigById: vi.fn(async () => ({
@@ -160,6 +221,8 @@ describe('RuntimePositionAutomationService', () => {
       })),
       updatePositionAfterDca: vi.fn(async () => undefined),
       closeByExitSignal: vi.fn(async () => undefined),
+      resolveDcaFundsExhausted: vi.fn(async () => false),
+      nowMs: vi.fn(() => Date.now()),
     };
 
     const service = new RuntimePositionAutomationService(deps);
@@ -202,6 +265,8 @@ describe('RuntimePositionAutomationService', () => {
           leverage: 3,
           stopLoss: null,
           takeProfit: null,
+          managementMode: 'BOT_MANAGED' as const,
+          bot: { mode: 'LIVE' as const },
         },
       ]),
       getStrategyConfigById: vi.fn(async () => ({
@@ -215,6 +280,8 @@ describe('RuntimePositionAutomationService', () => {
       })),
       updatePositionAfterDca: vi.fn(async () => undefined),
       closeByExitSignal: vi.fn(async () => undefined),
+      resolveDcaFundsExhausted: vi.fn(async () => false),
+      nowMs: vi.fn(() => Date.now()),
     };
 
     const service = new RuntimePositionAutomationService(deps);
@@ -256,6 +323,8 @@ describe('RuntimePositionAutomationService', () => {
           leverage: 5,
           stopLoss: null,
           takeProfit: null,
+          managementMode: 'BOT_MANAGED' as const,
+          bot: { mode: 'LIVE' as const },
         },
       ]),
       getStrategyConfigById: vi.fn(async () => ({
@@ -269,6 +338,8 @@ describe('RuntimePositionAutomationService', () => {
       })),
       updatePositionAfterDca: vi.fn(async () => undefined),
       closeByExitSignal: vi.fn(async () => undefined),
+      resolveDcaFundsExhausted: vi.fn(async () => false),
+      nowMs: vi.fn(() => Date.now()),
     };
 
     const service = new RuntimePositionAutomationService(deps);
@@ -281,6 +352,93 @@ describe('RuntimePositionAutomationService', () => {
       priceChangePercent24h: 1.1,
     });
 
+    expect(deps.closeByExitSignal).not.toHaveBeenCalled();
+  });
+
+  it('uses manual position mode fallback only when bot mode is unavailable', async () => {
+    process.env.RUNTIME_MANUAL_POSITION_MODE = 'PAPER';
+
+    const deps: any = {
+      listOpenPositionsBySymbol: vi.fn(async () => [
+        {
+          id: 'pos-7',
+          userId: 'user-7',
+          botId: null,
+          strategyId: null,
+          symbol: 'BNBUSDT',
+          side: 'LONG' as const,
+          entryPrice: 600,
+          quantity: 1,
+          leverage: 3,
+          stopLoss: 590,
+          takeProfit: 605,
+          managementMode: 'BOT_MANAGED' as const,
+          bot: null,
+        },
+      ]),
+      getStrategyConfigById: vi.fn(async () => null),
+      updatePositionAfterDca: vi.fn(async () => undefined),
+      closeByExitSignal: vi.fn(async () => undefined),
+      resolveDcaFundsExhausted: vi.fn(async () => false),
+      nowMs: vi.fn(() => Date.now()),
+    };
+
+    const service = new RuntimePositionAutomationService(deps);
+    await service.handleTickerEvent({
+      type: 'ticker',
+      marketType: 'FUTURES',
+      symbol: 'BNBUSDT',
+      eventTime: 6_000,
+      lastPrice: 606,
+      priceChangePercent24h: 0.2,
+    });
+
+    expect(deps.closeByExitSignal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        symbol: 'BNBUSDT',
+        mode: 'PAPER',
+      }),
+    );
+  });
+
+  it('ignores MANUAL_MANAGED positions as an additional safeguard', async () => {
+    const deps: any = {
+      listOpenPositionsBySymbol: vi.fn(async () => [
+        {
+          id: 'pos-8',
+          userId: 'user-8',
+          botId: 'bot-8',
+          strategyId: null,
+          symbol: 'XRPUSDT',
+          side: 'LONG' as const,
+          entryPrice: 1.0,
+          quantity: 500,
+          leverage: 2,
+          stopLoss: 0.95,
+          takeProfit: 1.05,
+          managementMode: 'MANUAL_MANAGED' as const,
+          bot: { mode: 'LIVE' as const },
+        },
+      ]),
+      getStrategyConfigById: vi.fn(async () => null),
+      updatePositionAfterDca: vi.fn(async () => undefined),
+      closeByExitSignal: vi.fn(async () => undefined),
+      resolveDcaFundsExhausted: vi.fn(async () => false),
+      nowMs: vi.fn(() => Date.now()),
+    };
+
+    const service = new RuntimePositionAutomationService(deps);
+    await service.handleTickerEvent({
+      type: 'ticker',
+      marketType: 'FUTURES',
+      symbol: 'XRPUSDT',
+      eventTime: 7_000,
+      lastPrice: 1.06,
+      priceChangePercent24h: 0.2,
+    });
+
+    expect(deps.getStrategyConfigById).not.toHaveBeenCalled();
+    expect(deps.updatePositionAfterDca).not.toHaveBeenCalled();
     expect(deps.closeByExitSignal).not.toHaveBeenCalled();
   });
 });

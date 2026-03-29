@@ -45,6 +45,7 @@ export const PositionManagementInputSchema = z.object({
   side: PositionSideSchema,
   currentPrice: z.number().positive(),
   leverage: z.number().positive().default(1),
+  dcaFundsExhausted: z.boolean().optional(),
   takeProfitPrice: z.number().positive().optional(),
   stopLossPrice: z.number().positive().optional(),
   trailingStop: TrailingStopConfigSchema.optional(),

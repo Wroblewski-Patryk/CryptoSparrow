@@ -46,6 +46,19 @@ This file tracks intentionally unresolved architecture choices so implementation
 - Canonical reference:
   - `docs/product/autonomous-agent-vision.md`
 
+## Lifecycle Close Authority (Parity Contract)
+- Decision state: resolved on 2026-03-29.
+- Scope: backtest, paper, and live runtime equivalence.
+- Decision:
+  - strategy evaluation can produce `EXIT` as analytical trace context,
+  - but direct strategy `EXIT` must not close an already open position in parity mode,
+  - open positions are closed only by lifecycle manager reasons:
+    - `TP`, `TTP`, `SL`, `TSL`, `LIQUIDATION` (plus account-floor protection),
+  - lifecycle order remains canonical:
+    - `DCA -> (basic: TP->SL | advanced: TTP->TSL) -> liquidation/floor`.
+- Implementation rollout:
+  - `Phase 17` (`POS-36..POS-42`) in `docs/planning/mvp-execution-plan.md`.
+
 ## Strategy Schema (MVP)
 - Decision state: resolved on 2026-03-15.
 - MVP schema is frozen as:

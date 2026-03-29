@@ -410,14 +410,11 @@ describe('RuntimeSignalLoop', () => {
         botId: 'bot-merge',
         strategyId: 'strategy-exit',
         direction: 'EXIT',
+        payload: expect.objectContaining({
+          strategyExitTraceOnly: true,
+        }),
       })
     );
-    expect(deps.orchestrateFn).toHaveBeenCalledWith(
-      expect.objectContaining({
-        botId: 'bot-merge',
-        strategyId: 'strategy-exit',
-        direction: 'EXIT',
-      })
-    );
+    expect(deps.orchestrateFn).not.toHaveBeenCalled();
   });
 });
