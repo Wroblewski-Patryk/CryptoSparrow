@@ -10,7 +10,7 @@ Operational queue for one-task execution runs.
 - [x] `POS-36 fix(contract): remove strategy-exit close bypass from backtest/replay/runtime and keep EXIT as trace-only in parity mode`
 - [x] `POS-37 fix(runtime): align runtime automation mode/context with bot/position mode and enforce BOT_MANAGED-only automation`
 - [x] `POS-38 feat(runtime-capital): add shared runtime capital context (dynamic paper equity + next-DCA affordability -> dcaFundsExhausted)`
-- [ ] `POS-39 refactor(runtime-dca): execute DCA via execution adapters (paper/live) instead of DB state mutation-only path`
+- [x] `POS-39 refactor(runtime-dca): execute DCA via execution adapters (paper/live) instead of DB state mutation-only path`
 - [ ] `POS-40 refactor(backtest): unify on single lifecycle close semantics across interleaved/replay adapters`
 
 ## NEXT

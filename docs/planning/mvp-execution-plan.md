@@ -279,12 +279,13 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `POS-36 fix(contract): remove strategy-exit close bypass from backtest/replay/runtime and keep EXIT as trace-only in parity mode`
 - [x] `POS-37 fix(runtime): align runtime automation mode/context with bot/position mode and enforce BOT_MANAGED-only automation`
 - [x] `POS-38 feat(runtime-capital): add shared runtime capital context (dynamic paper equity + next-DCA affordability -> dcaFundsExhausted)`
-- [ ] `POS-39 refactor(runtime-dca): execute DCA via execution adapters (paper/live) instead of DB state mutation-only path`
+- [x] `POS-39 refactor(runtime-dca): execute DCA via execution adapters (paper/live) instead of DB state mutation-only path`
 - [ ] `POS-40 refactor(backtest): unify on single lifecycle close semantics across interleaved/replay adapters`
 - [ ] `POS-41 test(parity): add golden fixtures for close-reason sequence parity across backtest/paper/live`
 - [ ] `POS-42 qa(manual): publish side-by-side Binance verification protocol for lifecycle reason parity`
 
 ## Progress Log
+- 2026-03-29: Completed `POS-39` by replacing runtime DCA mutation-only flow with execution-adapter flow (`openOrder` paper/live + trade/log persistence + position averaging update).
 - 2026-03-29: Completed `POS-38` by introducing shared runtime capital context (dynamic PAPER reference balance + free-cash snapshot) and wiring runtime DCA affordability guard (`dcaFundsExhausted`) into automation/lifecycle evaluation.
 - 2026-03-29: Completed `POS-37` by enforcing `BOT_MANAGED` automation scope in runtime position automation and resolving close execution mode from position/bot context (with manual-mode fallback only when bot mode is unavailable).
 - 2026-03-29: Completed `POS-36` by removing direct strategy `EXIT` close authority from backtest/replay and runtime strategy path; `EXIT` remains trace-only for strategy-driven groups while lifecycle manager remains sole close authority.

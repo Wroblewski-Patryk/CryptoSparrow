@@ -2,6 +2,7 @@ import { BotMode, Position, PositionSide, Prisma, TradeMarket } from '@prisma/cl
 import { prisma } from '../../prisma/client';
 import { StreamTickerEvent } from '../market-stream/binanceStream.types';
 import { orchestrateRuntimeSignal } from './executionOrchestrator.service';
+import { closeOrder as closeOrderLifecycle, openOrder as openOrderLifecycle } from '../orders/orders.service';
 import { evaluatePositionManagement } from './positionManagement.service';
 import { PositionManagementInput, PositionManagementState } from './positionManagement.types';
 import { resolveRuntimeDcaFundsExhausted } from './runtimeCapitalContext.service';
@@ -29,7 +30,19 @@ type RuntimePositionAutomationDeps = {
     symbol: string
   ) => Promise<RuntimeManagedPosition[]>;
   getStrategyConfigById: (strategyId: string) => Promise<Record<string, unknown> | null>;
-  updatePositionAfterDca: (positionId: string, input: { quantity: number; entryPrice: number }) => Promise<void>;
+  executeDca: (input: {
+    userId: string;
+    botId?: string | null;
+    strategyId?: string | null;
+    positionId: string;
+    symbol: string;
+    positionSide: PositionSide;
+    markPrice: number;
+    mode: 'PAPER' | 'LIVE';
+    addedQuantity: number;
+    nextQuantity: number;
+    nextEntryPrice: number;
+  }) => Promise<void>;
   closeByExitSignal: (input: {
     userId: string;
     botId?: string;
@@ -165,13 +178,82 @@ const defaultDeps: RuntimePositionAutomationDeps = {
     if (!strategy || typeof strategy.config !== 'object' || strategy.config == null) return null;
     return strategy.config as Record<string, unknown>;
   },
-  updatePositionAfterDca: async (positionId, input) => {
-    await prisma.position.update({
-      where: { id: positionId },
-      data: {
-        quantity: input.quantity,
-        entryPrice: input.entryPrice,
-      },
+  executeDca: async (input) => {
+    const dcaQuantity = Math.max(0, input.addedQuantity);
+    if (dcaQuantity <= 0) return;
+
+    const orderSide = input.positionSide === 'LONG' ? 'BUY' : 'SELL';
+    const opened = await openOrderLifecycle(input.userId, {
+      botId: input.botId ?? undefined,
+      strategyId: input.strategyId ?? undefined,
+      symbol: input.symbol,
+      side: orderSide,
+      type: 'MARKET',
+      quantity: dcaQuantity,
+      mode: input.mode,
+      riskAck: true,
+    });
+
+    let finalizedOrderId = opened.id;
+    if (opened.status === 'OPEN' || opened.status === 'PARTIALLY_FILLED') {
+      const closed = await closeOrderLifecycle(input.userId, opened.id, { riskAck: true });
+      finalizedOrderId = closed?.id ?? opened.id;
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.position.update({
+        where: { id: input.positionId },
+        data: {
+          quantity: input.nextQuantity,
+          entryPrice: input.nextEntryPrice,
+        },
+      });
+
+      await tx.order.update({
+        where: { id: finalizedOrderId },
+        data: { positionId: input.positionId },
+      });
+
+      await tx.trade.create({
+        data: {
+          userId: input.userId,
+          botId: input.botId ?? undefined,
+          strategyId: input.strategyId ?? undefined,
+          orderId: finalizedOrderId,
+          positionId: input.positionId,
+          symbol: input.symbol,
+          side: orderSide,
+          price: input.markPrice,
+          quantity: dcaQuantity,
+          origin: 'BOT',
+          managementMode: 'BOT_MANAGED',
+        },
+      });
+
+      await tx.log.create({
+        data: {
+          userId: input.userId,
+          botId: input.botId ?? undefined,
+          strategyId: input.strategyId ?? undefined,
+          action: 'runtime.dca',
+          level: 'INFO',
+          source: 'engine.runtimePositionAutomation',
+          message: `Runtime DCA executed for ${input.symbol}`,
+          category: 'runtime',
+          entityType: 'position',
+          entityId: input.positionId,
+          actor: 'runtime',
+          metadata: {
+            symbol: input.symbol,
+            side: input.positionSide,
+            mode: input.mode,
+            orderId: finalizedOrderId,
+            addedQuantity: dcaQuantity,
+            nextQuantity: input.nextQuantity,
+            nextEntryPrice: input.nextEntryPrice,
+          } as Prisma.InputJsonValue,
+        },
+      });
     });
   },
   closeByExitSignal: async (input) => {
@@ -451,10 +533,24 @@ export class RuntimePositionAutomationService {
     this.positionStates.set(position.id, result.nextState);
 
     if (result.dcaExecuted) {
-      await this.deps.updatePositionAfterDca(position.id, {
-        quantity: result.nextState.quantity,
-        entryPrice: result.nextState.averageEntryPrice,
-      });
+      const dcaAddedQuantity = Number.isFinite(result.dcaAddedQuantity)
+        ? Math.max(0, result.dcaAddedQuantity)
+        : Math.max(0, result.nextState.quantity - previousState.quantity);
+      if (dcaAddedQuantity > 0) {
+        await this.deps.executeDca({
+          userId: position.userId,
+          botId: position.botId,
+          strategyId: position.strategyId,
+          positionId: position.id,
+          symbol: position.symbol,
+          positionSide: position.side,
+          markPrice: event.lastPrice,
+          mode,
+          addedQuantity: dcaAddedQuantity,
+          nextQuantity: result.nextState.quantity,
+          nextEntryPrice: result.nextState.averageEntryPrice,
+        });
+      }
     }
 
     if (result.shouldClose) {

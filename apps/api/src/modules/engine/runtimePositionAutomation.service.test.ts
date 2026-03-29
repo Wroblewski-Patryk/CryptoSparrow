@@ -22,7 +22,7 @@ describe('RuntimePositionAutomationService', () => {
         },
       ]),
       getStrategyConfigById: vi.fn(async () => null),
-      updatePositionAfterDca: vi.fn(async () => undefined),
+      executeDca: vi.fn(async () => undefined),
       closeByExitSignal: vi.fn(async () => undefined),
       resolveDcaFundsExhausted: vi.fn(async () => false),
       nowMs: vi.fn(() => Date.now()),
@@ -46,7 +46,7 @@ describe('RuntimePositionAutomationService', () => {
         mode: 'PAPER',
       })
     );
-    expect(deps.updatePositionAfterDca).not.toHaveBeenCalled();
+    expect(deps.executeDca).not.toHaveBeenCalled();
   });
 
   it('does not force close position when only DCA fallback config is active', async () => {
@@ -75,7 +75,7 @@ describe('RuntimePositionAutomationService', () => {
         },
       ]),
       getStrategyConfigById: vi.fn(async () => null),
-      updatePositionAfterDca: vi.fn(async () => undefined),
+      executeDca: vi.fn(async () => undefined),
       closeByExitSignal: vi.fn(async () => undefined),
       resolveDcaFundsExhausted: vi.fn(async () => false),
       nowMs: vi.fn(() => Date.now()),
@@ -119,7 +119,7 @@ describe('RuntimePositionAutomationService', () => {
         close: { tp: 2, sl: 3, ttp: [{ arm: 1.2, percent: 0.4 }], tsl: [] },
         additional: { dcaEnabled: true, dcaTimes: 2, dcaLevels: [{ percent: -1, multiplier: 1.5 }] },
       })),
-      updatePositionAfterDca: vi.fn(async () => undefined),
+      executeDca: vi.fn(async () => undefined),
       closeByExitSignal: vi.fn(async () => undefined),
       resolveDcaFundsExhausted: vi.fn(async () => false),
       nowMs: vi.fn(() => Date.now()),
@@ -136,7 +136,17 @@ describe('RuntimePositionAutomationService', () => {
     });
 
     expect(deps.getStrategyConfigById).toHaveBeenCalledWith('strat-3');
-    expect(deps.updatePositionAfterDca).toHaveBeenCalledTimes(1);
+    expect(deps.executeDca).toHaveBeenCalledTimes(1);
+    expect(deps.executeDca).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-3',
+        botId: 'bot-3',
+        strategyId: 'strat-3',
+        symbol: 'SOLUSDT',
+        positionSide: 'LONG',
+        mode: 'LIVE',
+      }),
+    );
   });
 
   it('skips DCA add when runtime capital marks next DCA as unaffordable', async () => {
@@ -165,7 +175,7 @@ describe('RuntimePositionAutomationService', () => {
         close: { tp: 2, sl: 3, ttp: [{ arm: 1.2, percent: 0.4 }], tsl: [] },
         additional: { dcaEnabled: true, dcaTimes: 2, dcaLevels: [{ percent: -1, multiplier: 1.5 }] },
       })),
-      updatePositionAfterDca: vi.fn(async () => undefined),
+      executeDca: vi.fn(async () => undefined),
       closeByExitSignal: vi.fn(async () => undefined),
       resolveDcaFundsExhausted: vi.fn(async () => true),
       nowMs: vi.fn(() => Date.now()),
@@ -182,7 +192,7 @@ describe('RuntimePositionAutomationService', () => {
     });
 
     expect(deps.resolveDcaFundsExhausted).toHaveBeenCalledTimes(1);
-    expect(deps.updatePositionAfterDca).not.toHaveBeenCalled();
+    expect(deps.executeDca).not.toHaveBeenCalled();
   });
 
   it('respects advanced DCA levels even when dcaTimes is lower than levels length', async () => {
@@ -219,7 +229,7 @@ describe('RuntimePositionAutomationService', () => {
           ],
         },
       })),
-      updatePositionAfterDca: vi.fn(async () => undefined),
+      executeDca: vi.fn(async () => undefined),
       closeByExitSignal: vi.fn(async () => undefined),
       resolveDcaFundsExhausted: vi.fn(async () => false),
       nowMs: vi.fn(() => Date.now()),
@@ -243,7 +253,7 @@ describe('RuntimePositionAutomationService', () => {
       priceChangePercent24h: -1.2,
     });
 
-    expect(deps.updatePositionAfterDca).toHaveBeenCalledTimes(2);
+    expect(deps.executeDca).toHaveBeenCalledTimes(2);
     expect(deps.closeByExitSignal).not.toHaveBeenCalled();
   });
 
@@ -278,7 +288,7 @@ describe('RuntimePositionAutomationService', () => {
           tsl: [{ arm: 1, percent: 0.2 }],
         },
       })),
-      updatePositionAfterDca: vi.fn(async () => undefined),
+      executeDca: vi.fn(async () => undefined),
       closeByExitSignal: vi.fn(async () => undefined),
       resolveDcaFundsExhausted: vi.fn(async () => false),
       nowMs: vi.fn(() => Date.now()),
@@ -336,7 +346,7 @@ describe('RuntimePositionAutomationService', () => {
           tsl: [],
         },
       })),
-      updatePositionAfterDca: vi.fn(async () => undefined),
+      executeDca: vi.fn(async () => undefined),
       closeByExitSignal: vi.fn(async () => undefined),
       resolveDcaFundsExhausted: vi.fn(async () => false),
       nowMs: vi.fn(() => Date.now()),
@@ -377,7 +387,7 @@ describe('RuntimePositionAutomationService', () => {
         },
       ]),
       getStrategyConfigById: vi.fn(async () => null),
-      updatePositionAfterDca: vi.fn(async () => undefined),
+      executeDca: vi.fn(async () => undefined),
       closeByExitSignal: vi.fn(async () => undefined),
       resolveDcaFundsExhausted: vi.fn(async () => false),
       nowMs: vi.fn(() => Date.now()),
@@ -421,7 +431,7 @@ describe('RuntimePositionAutomationService', () => {
         },
       ]),
       getStrategyConfigById: vi.fn(async () => null),
-      updatePositionAfterDca: vi.fn(async () => undefined),
+      executeDca: vi.fn(async () => undefined),
       closeByExitSignal: vi.fn(async () => undefined),
       resolveDcaFundsExhausted: vi.fn(async () => false),
       nowMs: vi.fn(() => Date.now()),
@@ -438,7 +448,7 @@ describe('RuntimePositionAutomationService', () => {
     });
 
     expect(deps.getStrategyConfigById).not.toHaveBeenCalled();
-    expect(deps.updatePositionAfterDca).not.toHaveBeenCalled();
+    expect(deps.executeDca).not.toHaveBeenCalled();
     expect(deps.closeByExitSignal).not.toHaveBeenCalled();
   });
 });
