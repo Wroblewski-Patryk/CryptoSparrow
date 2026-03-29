@@ -4,6 +4,8 @@ Date: `2026-03-28`
 Owner: `QA / Operator`
 Scope: verify that `BACKTEST` behavior is consistent with strategy intent and is comparable to Binance chart conditions for the same symbols, interval, and indicators.
 
+Related protocol (close-reason focused): `docs/operations/binance-lifecycle-reason-parity-protocol.md`.
+
 ## Goal
 - Run one deterministic parity pass for exactly 3 symbols.
 - Confirm strategy-trigger context on Binance charts.
@@ -73,4 +75,3 @@ Record these values before starting. Any change means a new run.
 - 3 CryptoSparrow market charts from report
 - Extracted `parityDiagnostics` JSON fragment
 - Final verdict: `PASS` or `FAIL` with short reason
-

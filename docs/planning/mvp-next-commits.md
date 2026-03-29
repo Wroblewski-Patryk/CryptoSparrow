@@ -8,7 +8,7 @@ Operational queue for one-task execution runs.
 
 ## NOW
 - [x] `POS-41 test(parity): add golden fixtures for close-reason sequence parity across backtest/paper/live`
-- [ ] `POS-42 qa(manual): publish side-by-side Binance verification protocol for lifecycle reason parity`
+- [x] `POS-42 qa(manual): publish side-by-side Binance verification protocol for lifecycle reason parity`
 
 ## NEXT
 - [ ] `exit-ready(review): re-check full parity gap list after POS-41/POS-42 and promote any new findings into next tiny-commit queue`
