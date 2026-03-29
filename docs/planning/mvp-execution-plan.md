@@ -281,10 +281,11 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `POS-38 feat(runtime-capital): add shared runtime capital context (dynamic paper equity + next-DCA affordability -> dcaFundsExhausted)`
 - [x] `POS-39 refactor(runtime-dca): execute DCA via execution adapters (paper/live) instead of DB state mutation-only path`
 - [x] `POS-40 refactor(backtest): unify on single lifecycle close semantics across interleaved/replay adapters`
-- [ ] `POS-41 test(parity): add golden fixtures for close-reason sequence parity across backtest/paper/live`
+- [x] `POS-41 test(parity): add golden fixtures for close-reason sequence parity across backtest/paper/live`
 - [ ] `POS-42 qa(manual): publish side-by-side Binance verification protocol for lifecycle reason parity`
 
 ## Progress Log
+- 2026-03-29: Completed `POS-41` by adding golden close-reason fixtures (`TP/SL/TTP/TSL`) and a parity harness asserting identical close-reason sequences for backtest, paper lifecycle, and live lifecycle core.
 - 2026-03-29: Completed `POS-40` by refactoring backtest service to consume shared replay lifecycle helpers (risk parsing + close-reason/event mapping + management input + TTP trigger), removing duplicated divergence-prone close semantics between interleaved and replay paths.
 - 2026-03-29: Completed `POS-39` by replacing runtime DCA mutation-only flow with execution-adapter flow (`openOrder` paper/live + trade/log persistence + position averaging update).
 - 2026-03-29: Completed `POS-38` by introducing shared runtime capital context (dynamic PAPER reference balance + free-cash snapshot) and wiring runtime DCA affordability guard (`dcaFundsExhausted`) into automation/lifecycle evaluation.

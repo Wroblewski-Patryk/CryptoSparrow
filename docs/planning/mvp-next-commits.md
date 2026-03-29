@@ -7,15 +7,11 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `POS-36 fix(contract): remove strategy-exit close bypass from backtest/replay/runtime and keep EXIT as trace-only in parity mode`
-- [x] `POS-37 fix(runtime): align runtime automation mode/context with bot/position mode and enforce BOT_MANAGED-only automation`
-- [x] `POS-38 feat(runtime-capital): add shared runtime capital context (dynamic paper equity + next-DCA affordability -> dcaFundsExhausted)`
-- [x] `POS-39 refactor(runtime-dca): execute DCA via execution adapters (paper/live) instead of DB state mutation-only path`
-- [x] `POS-40 refactor(backtest): unify on single lifecycle close semantics across interleaved/replay adapters`
+- [x] `POS-41 test(parity): add golden fixtures for close-reason sequence parity across backtest/paper/live`
+- [ ] `POS-42 qa(manual): publish side-by-side Binance verification protocol for lifecycle reason parity`
 
 ## NEXT
-- [ ] `POS-41 test(parity): add golden fixtures for close-reason sequence parity across backtest/paper/live`
-- [ ] `POS-42 qa(manual): publish side-by-side Binance verification protocol for lifecycle reason parity`
+- [ ] `exit-ready(review): re-check full parity gap list after POS-41/POS-42 and promote any new findings into next tiny-commit queue`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
