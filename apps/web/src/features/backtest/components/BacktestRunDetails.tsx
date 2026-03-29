@@ -66,6 +66,11 @@ type SymbolStats = {
 type TimelineState = {
   data: BacktestTimeline | null;
   loading: boolean;
+  loadingPhase: 'candles' | 'events' | null;
+  candlesNextCursor: number | null;
+  eventsNextCursor: number | null;
+  candlesLoaded: boolean;
+  eventsLoaded: boolean;
   error: string | null;
 };
 
@@ -113,11 +118,6 @@ const filterTradesByTimelineWindow = (items: BacktestTrade[], timeline: Backtest
     if (openedAt <= 0 || closedAt <= 0) return false;
     return closedAt >= windowStartMs && openedAt <= windowEndMs;
   });
-};
-
-const countTradesVisibleInTimeline = (items: BacktestTrade[], timeline: BacktestTimeline | null) => {
-  if (!timeline) return 0;
-  return filterTradesByTimelineWindow(items, timeline).length;
 };
 
 const extractStrategyIndicatorMeta = (strategy: StrategyDto | null): StrategyIndicatorMeta => {
@@ -451,12 +451,18 @@ function SummaryBalanceChart({
 function TimelineCandlesChart({
   timeline,
   trades,
+  symbol,
+  netPnl,
+  formatCurrency,
   formatNumber,
   rsiLongLevel,
   rsiShortLevel,
 }: {
   timeline: BacktestTimeline;
   trades: BacktestTrade[];
+  symbol: string;
+  netPnl: number;
+  formatCurrency: (value: number) => string;
   formatNumber: (value: number) => string;
   rsiLongLevel: number | null;
   rsiShortLevel: number | null;
@@ -471,10 +477,13 @@ function TimelineCandlesChart({
   }
 
   const width = Math.round(900 * zoom);
-  const height = 320;
-  const padding = { top: 12, right: 8, bottom: 20, left: 8 };
+  const pricePanelHeight = 320;
+  const oscillatorPanelHeight = 100;
+  const xAxisHeight = 24;
+  const axisOverlayWidth = 72;
+  const padding = { top: 12, right: 8, bottom: 2, left: 8 };
   const innerWidth = width - padding.left - padding.right;
-  const innerHeight = height - padding.top - padding.bottom;
+  const innerHeight = pricePanelHeight - padding.top - padding.bottom;
 
   const prices = candles.flatMap((candle) => [candle.low, candle.high]);
   const min = Math.min(...prices);
@@ -487,8 +496,18 @@ function TimelineCandlesChart({
     const y = padding.top + ratio * innerHeight;
     return { y, value };
   });
-  const xTickIndexes = [0, Math.floor(candles.length * 0.33), Math.floor(candles.length * 0.66), candles.length - 1]
-    .filter((idx, index, array) => idx >= 0 && idx < candles.length && array.indexOf(idx) === index);
+  const desiredTickCount = Math.max(4, Math.min(16, Math.round(4 + zoom * 1.25)));
+  const tickStep = Math.max(1, Math.floor(Math.max(1, candles.length - 1) / Math.max(1, desiredTickCount - 1)));
+  const xTickIndexes = (() => {
+    const indexes: number[] = [];
+    for (let index = 0; index < candles.length; index += tickStep) {
+      indexes.push(index);
+    }
+    if (candles.length > 0 && indexes[indexes.length - 1] !== candles.length - 1) {
+      indexes.push(candles.length - 1);
+    }
+    return indexes.filter((idx, index, array) => idx >= 0 && idx < candles.length && array.indexOf(idx) === index);
+  })();
 
   const xAt = (index: number) => padding.left + (index + 0.5) * barWidth;
   const yAt = (price: number) => padding.top + (1 - (price - min) / range) * innerHeight;
@@ -559,311 +578,398 @@ function TimelineCandlesChart({
       ? tradeSegmentsFromEvents
       : buildNonOverlappingTradeSegments(trades, candles);
 
+  const oscillatorPanels = oscillatorIndicators.flatMap((series) => {
+    const values = series.points
+      .map((point) => point.value)
+      .filter((value): value is number => typeof value === 'number');
+    if (values.length === 0) return [];
+
+    const localMin = Math.min(...values);
+    const localMax = Math.max(...values);
+    const localRange = localMax - localMin || 1;
+    const localYTicks = Array.from({ length: 4 }, (_, idx) => {
+      const ratio = idx / 3;
+      const value = localMax - ratio * localRange;
+      const y = ratio * oscillatorPanelHeight;
+      return { y, value };
+    });
+    const levelToY = (value: number) =>
+      Math.max(0, Math.min(oscillatorPanelHeight, oscillatorPanelHeight - ((value - localMin) / localRange) * oscillatorPanelHeight));
+    const points = series.points
+      .map((point) => {
+        if (typeof point.value !== 'number') return null;
+        const localIndex = point.candleIndex - timeline.cursor;
+        if (localIndex < 0 || localIndex >= candles.length) return null;
+        const x = xAt(localIndex);
+        const y = oscillatorPanelHeight - ((point.value - localMin) / localRange) * oscillatorPanelHeight;
+        return `${x},${y}`;
+      })
+      .filter((point): point is string => Boolean(point))
+      .join(' ');
+    if (!points) return [];
+
+    const title = series.period != null ? `${series.name}(${series.period})` : series.name;
+    return [
+      {
+        key: series.key,
+        name: series.name,
+        title,
+        localYTicks,
+        points,
+        levelToY,
+      },
+    ];
+  });
+
+  const formatXAxisLabel = (index: number) => {
+    const labelDate = new Date(candles[index].openTime);
+    const sameDayAsStart =
+      candles.length > 0 &&
+      labelDate.toDateString() === new Date(candles[0].openTime).toDateString();
+    if (sameDayAsStart) {
+      return labelDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return labelDate.toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
     <div className='space-y-2'>
-      <div className='flex items-center justify-end gap-2'>
-        <button
-          type='button'
-          className='btn btn-xs btn-outline'
-          onClick={() => setZoomIndex((prev) => Math.max(0, prev - 1))}
-          disabled={zoomIndex === 0}
-          title='Oddal (wiecej swiec)'
-        >
-          -
-        </button>
-        <span className='text-xs opacity-70'>Zoom x{zoom.toFixed(2)}</span>
-        <button
-          type='button'
-          className='btn btn-xs btn-outline'
-          onClick={() => setZoomIndex((prev) => Math.min(zoomSteps.length - 1, prev + 1))}
-          disabled={zoomIndex === zoomSteps.length - 1}
-          title='Przybliz (mniej swiec)'
-        >
-          +
-        </button>
+      <div className='flex flex-wrap items-center justify-between gap-2 rounded-lg border border-base-300/70 bg-base-100/60 px-2 py-1.5'>
+        <div className='flex min-w-0 items-center gap-2'>
+          <h4 className='truncate text-sm font-semibold uppercase tracking-wide'>{symbol}</h4>
+          <span className={`badge ${netPnl >= 0 ? 'badge-success' : 'badge-error'} badge-outline`}>
+            {formatCurrency(netPnl)}
+          </span>
+        </div>
+
+        <div className='flex items-center gap-2'>
+          <button
+            type='button'
+            className='btn btn-xs btn-outline'
+            onClick={() => setZoomIndex((prev) => Math.max(0, prev - 1))}
+            disabled={zoomIndex === 0}
+            title='Oddal (wiecej swiec)'
+          >
+            -
+          </button>
+          <span className='text-xs opacity-70'>Zoom x{zoom.toFixed(2)}</span>
+          <button
+            type='button'
+            className='btn btn-xs btn-outline'
+            onClick={() => setZoomIndex((prev) => Math.min(zoomSteps.length - 1, prev + 1))}
+            disabled={zoomIndex === zoomSteps.length - 1}
+            title='Przybliz (mniej swiec)'
+          >
+            +
+          </button>
+        </div>
       </div>
 
       <div
-        ref={sharedScrollRef}
-        className='overflow-x-auto pb-1'
+        className='grid overflow-hidden rounded-lg border border-base-300 bg-base-200/60'
+        style={{ gridTemplateColumns: `minmax(0,1fr) ${axisOverlayWidth}px` }}
       >
-        <div style={{ width: `${width}px` }} className='space-y-2'>
-          <svg className='h-[320px] w-full rounded-lg bg-base-200/60' viewBox={`0 0 ${width} ${height}`} preserveAspectRatio='none'>
-            <line
-              x1={padding.left}
-              x2={padding.left + innerWidth}
-              y1={padding.top + innerHeight}
-              y2={padding.top + innerHeight}
-              className='stroke-base-300'
-            />
-            {yTicks.map((tick) => (
-              <g key={`y-${tick.y}`}>
+        <div
+          ref={sharedScrollRef}
+          className='overflow-x-auto'
+        >
+          <div style={{ width: `${width}px` }}>
+            <svg className='h-[320px] w-full' viewBox={`0 0 ${width} ${pricePanelHeight}`} preserveAspectRatio='none'>
+              {yTicks.map((tick) => (
                 <line
+                  key={`y-${tick.y}`}
                   x1={padding.left}
                   x2={padding.left + innerWidth}
                   y1={tick.y}
                   y2={tick.y}
                   className='stroke-base-300/30'
                 />
-                <text x={padding.left + innerWidth - 2} y={tick.y - 2} textAnchor='end' className='fill-base-content/60 text-[9px]'>
-                  {formatNumber(tick.value)}
-                </text>
-              </g>
-            ))}
+              ))}
 
-            {xTickIndexes.map((index) => {
-              const x = xAt(index);
-              const label = new Date(candles[index].openTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-              return (
-                <g key={`x-${candles[index].candleIndex}`}>
-                  <line x1={x} x2={x} y1={padding.top} y2={padding.top + innerHeight} className='stroke-base-300/20' />
-                  <text x={x} y={padding.top + innerHeight + 12} textAnchor='middle' className='fill-base-content/55 text-[9px]'>
-                    {label}
-                  </text>
-                </g>
-              );
-            })}
+              {xTickIndexes.map((index) => {
+                const x = xAt(index);
+                return <line key={`x-grid-${candles[index].candleIndex}`} x1={x} x2={x} y1={padding.top} y2={padding.top + innerHeight} className='stroke-base-300/20' />;
+              })}
 
-            {tradeSegments.map((segment, index) => {
-              const xStart = xAt(segment.start) - barWidth / 2;
-              const xEnd = xAt(segment.end) + barWidth / 2;
-              return (
-                <rect
-                  key={`trade-bg-${index}`}
-                  x={xStart}
-                  y={padding.top}
-                  width={Math.max(1, xEnd - xStart)}
-                  height={innerHeight}
-                  className={segment.profit ? 'fill-success/10' : 'fill-error/10'}
-                />
-              );
-            })}
-
-            {candles.map((candle, index) => {
-              const x = xAt(index);
-              const yOpen = yAt(candle.open);
-              const yClose = yAt(candle.close);
-              const yHigh = yAt(candle.high);
-              const yLow = yAt(candle.low);
-              const bodyTop = Math.min(yOpen, yClose);
-              const bodyHeight = Math.max(1, Math.abs(yOpen - yClose));
-              const bullish = candle.close >= candle.open;
-              const bodyWidth = Math.max(1.4, barWidth * 0.55);
-
-              return (
-                <g key={`candle-${candle.candleIndex}`}>
-                  <line x1={x} x2={x} y1={yHigh} y2={yLow} className={bullish ? 'stroke-success/70' : 'stroke-error/70'} />
-                  <rect
-                    x={x - bodyWidth / 2}
-                    y={bodyTop}
-                    width={bodyWidth}
-                    height={bodyHeight}
-                    className={bullish ? 'fill-success/70' : 'fill-error/70'}
-                  />
-                </g>
-              );
-            })}
-
-            {priceIndicators.map((series, seriesIndex) => {
-              const palette = ['text-info', 'text-warning', 'text-secondary', 'text-accent'];
-              const points = series.points
-                .map((point) => {
-                  if (typeof point.value !== 'number') return null;
-                  const localIndex = point.candleIndex - timeline.cursor;
-                  if (localIndex < 0 || localIndex >= candles.length) return null;
-                  return `${xAt(localIndex)},${yAt(point.value)}`;
-                })
-                .filter((point): point is string => Boolean(point))
-                .join(' ');
-
-              if (!points) return null;
-              return (
-                <polyline
-                  key={series.key}
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth='1.6'
-                  className={palette[seriesIndex % palette.length]}
-                  points={points}
-                />
-              );
-            })}
-
-            {tradeSegments.map((segment, index) => {
-              const x1 = xAt(segment.start);
-              const y1 = yAt(segment.entryPrice);
-              const x2 = xAt(segment.end);
-              const y2 = yAt(segment.exitPrice);
-              return (
-                <line
-                  key={`segment-${index}`}
-                  x1={x1}
-                  y1={y1}
-                  x2={x2}
-                  y2={y2}
-                  className={segment.profit ? 'stroke-success/70' : 'stroke-error/70'}
-                  strokeDasharray='2 3'
-                />
-              );
-            })}
-
-            {tradeSegments.map((segment, index) => {
-              const xStart = xAt(segment.start);
-              const yStart = yAt(segment.entryPrice);
-              const xEnd = xAt(segment.end);
-              const yEnd = yAt(segment.exitPrice);
-              const exitColor = segment.profit ? 'text-success' : 'text-error';
-              const entryColor = segment.side === 'LONG' ? 'text-success' : 'text-error';
-              return (
-                <g key={`trade-markers-${index}`}>
-                  {segment.side === 'LONG' ? (
-                    <polygon
-                      points={`${xStart},${yStart - 5} ${xStart - 4},${yStart + 3} ${xStart + 4},${yStart + 3}`}
-                      fill='currentColor'
-                      className={entryColor}
-                    />
-                  ) : (
-                    <polygon
-                      points={`${xStart},${yStart + 5} ${xStart - 4},${yStart - 3} ${xStart + 4},${yStart - 3}`}
-                      fill='currentColor'
-                      className={entryColor}
-                    />
-                  )}
-                  <rect x={xEnd - 3.5} y={yEnd - 3.5} width={7} height={7} fill='currentColor' className={exitColor} />
-                </g>
-              );
-            })}
-
-            {lifecycleEvents.map((event) => {
-              const localIndex = event.candleIndex - timeline.cursor;
-              if (localIndex < 0 || localIndex >= candles.length) return null;
-              const x = xAt(localIndex);
-              const y = yAt(event.price);
-
-              if (event.type === 'DCA') {
+              {tradeSegments.map((segment, index) => {
+                const xStart = xAt(segment.start) - barWidth / 2;
+                const xEnd = xAt(segment.end) + barWidth / 2;
                 return (
-                  <polygon
-                    key={event.id}
-                    points={`${x},${y - 6} ${x - 5},${y + 4} ${x + 5},${y + 4}`}
-                    fill='currentColor'
-                    className='text-info'
+                  <rect
+                    key={`trade-bg-${index}`}
+                    x={xStart}
+                    y={padding.top}
+                    width={Math.max(1, xEnd - xStart)}
+                    height={innerHeight}
+                    className={segment.profit ? 'fill-success/10' : 'fill-error/10'}
                   />
                 );
-              }
+              })}
 
-              return null;
-            })}
+              {candles.map((candle, index) => {
+                const x = xAt(index);
+                const yOpen = yAt(candle.open);
+                const yClose = yAt(candle.close);
+                const yHigh = yAt(candle.high);
+                const yLow = yAt(candle.low);
+                const bodyTop = Math.min(yOpen, yClose);
+                const bodyHeight = Math.max(1, Math.abs(yOpen - yClose));
+                const bullish = candle.close >= candle.open;
+                const bodyWidth = Math.max(1.4, barWidth * 0.55);
 
-            {playbackX != null ? (
-              <line
-                x1={playbackX}
-                x2={playbackX}
-                y1={padding.top}
-                y2={padding.top + innerHeight}
-                className='stroke-primary/80'
-                strokeDasharray='4 4'
-              />
-            ) : null}
-          </svg>
-          {oscillatorIndicators.length > 0 ? (
-            <div className='space-y-2'>
-              {oscillatorIndicators.map((series) => {
-                const values = series.points
-                  .map((point) => point.value)
-                  .filter((value): value is number => typeof value === 'number');
-                if (values.length === 0) return null;
-                const localMin = Math.min(...values);
-                const localMax = Math.max(...values);
-                const localRange = localMax - localMin || 1;
-                const levelToY = (value: number) =>
-                  Math.max(0, Math.min(100, 100 - ((value - localMin) / localRange) * 100));
+                return (
+                  <g key={`candle-${candle.candleIndex}`}>
+                    <line x1={x} x2={x} y1={yHigh} y2={yLow} className={bullish ? 'stroke-success/70' : 'stroke-error/70'} />
+                    <rect
+                      x={x - bodyWidth / 2}
+                      y={bodyTop}
+                      width={bodyWidth}
+                      height={bodyHeight}
+                      className={bullish ? 'fill-success/70' : 'fill-error/70'}
+                    />
+                  </g>
+                );
+              })}
+
+              {priceIndicators.map((series, seriesIndex) => {
+                const palette = ['text-info', 'text-warning', 'text-secondary', 'text-accent'];
                 const points = series.points
                   .map((point) => {
                     if (typeof point.value !== 'number') return null;
                     const localIndex = point.candleIndex - timeline.cursor;
                     if (localIndex < 0 || localIndex >= candles.length) return null;
-                    const x = xAt(localIndex);
-                    const y = 100 - ((point.value - localMin) / localRange) * 100;
-                    return `${x},${y}`;
+                    return `${xAt(localIndex)},${yAt(point.value)}`;
                   })
                   .filter((point): point is string => Boolean(point))
                   .join(' ');
 
+                if (!points) return null;
                 return (
-                  <div key={series.key} className='rounded-lg border border-base-300 bg-base-200 p-2'>
-                    <p className='mb-1 text-xs font-medium'>{series.name}({series.period})</p>
-                    <svg className='h-[100px] w-full' viewBox={`0 0 ${width} 100`} preserveAspectRatio='none'>
-                      {tradeSegments.map((segment, index) => {
-                        const xStart = xAt(segment.start) - barWidth / 2;
-                        const xEnd = xAt(segment.end) + barWidth / 2;
-                        return (
-                          <rect
-                            key={`rsi-bg-${series.key}-${index}`}
-                            x={xStart}
-                            y={0}
-                            width={Math.max(1, xEnd - xStart)}
-                            height={100}
-                            className={segment.profit ? 'fill-success/10' : 'fill-error/10'}
-                          />
-                        );
-                      })}
-                      {series.name.includes('RSI') && rsiLongLevel != null ? (
-                        <>
-                          <line
-                            x1={padding.left}
-                            x2={padding.left + innerWidth}
-                            y1={levelToY(rsiLongLevel)}
-                            y2={levelToY(rsiLongLevel)}
-                            className='stroke-success/70'
-                            strokeDasharray='3 3'
-                          />
-                          <text x={padding.left + innerWidth - 2} y={levelToY(rsiLongLevel) - 2} textAnchor='end' className='fill-success text-[9px]'>
-                            LONG {rsiLongLevel}
-                          </text>
-                        </>
-                      ) : null}
-                      {series.name.includes('RSI') && rsiShortLevel != null ? (
-                        <>
-                          <line
-                            x1={padding.left}
-                            x2={padding.left + innerWidth}
-                            y1={levelToY(rsiShortLevel)}
-                            y2={levelToY(rsiShortLevel)}
-                            className='stroke-error/70'
-                            strokeDasharray='3 3'
-                          />
-                          <text x={padding.left + innerWidth - 2} y={levelToY(rsiShortLevel) - 2} textAnchor='end' className='fill-error text-[9px]'>
-                            SHORT {rsiShortLevel}
-                          </text>
-                        </>
-                      ) : null}
-                      <polyline fill='none' stroke='currentColor' strokeWidth='1.6' className='text-info' points={points} />
-                      {playbackX != null ? (
-                        <line
-                          x1={playbackX}
-                          x2={playbackX}
-                          y1={0}
-                          y2={100}
-                          className='stroke-primary/70'
-                          strokeDasharray='4 4'
-                        />
-                      ) : null}
-                    </svg>
-                  </div>
+                  <polyline
+                    key={series.key}
+                    fill='none'
+                    stroke='currentColor'
+                    strokeWidth='1.6'
+                    className={palette[seriesIndex % palette.length]}
+                    points={points}
+                  />
                 );
               })}
-            </div>
-          ) : null}
+
+              {tradeSegments.map((segment, index) => {
+                const x1 = xAt(segment.start);
+                const y1 = yAt(segment.entryPrice);
+                const x2 = xAt(segment.end);
+                const y2 = yAt(segment.exitPrice);
+                return (
+                  <line
+                    key={`segment-${index}`}
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    className={segment.profit ? 'stroke-success/70' : 'stroke-error/70'}
+                    strokeDasharray='2 3'
+                  />
+                );
+              })}
+
+              {tradeSegments.map((segment, index) => {
+                const xStart = xAt(segment.start);
+                const yStart = yAt(segment.entryPrice);
+                const xEnd = xAt(segment.end);
+                const yEnd = yAt(segment.exitPrice);
+                const exitColor = segment.profit ? 'text-success' : 'text-error';
+                const entryColor = segment.side === 'LONG' ? 'text-success' : 'text-error';
+                return (
+                  <g key={`trade-markers-${index}`}>
+                    {segment.side === 'LONG' ? (
+                      <polygon
+                        points={`${xStart},${yStart - 5} ${xStart - 4},${yStart + 3} ${xStart + 4},${yStart + 3}`}
+                        fill='currentColor'
+                        className={entryColor}
+                      />
+                    ) : (
+                      <polygon
+                        points={`${xStart},${yStart + 5} ${xStart - 4},${yStart - 3} ${xStart + 4},${yStart - 3}`}
+                        fill='currentColor'
+                        className={entryColor}
+                      />
+                    )}
+                    <rect x={xEnd - 3.5} y={yEnd - 3.5} width={7} height={7} fill='currentColor' className={exitColor} />
+                  </g>
+                );
+              })}
+
+              {lifecycleEvents.map((event) => {
+                const localIndex = event.candleIndex - timeline.cursor;
+                if (localIndex < 0 || localIndex >= candles.length) return null;
+                const x = xAt(localIndex);
+                const y = yAt(event.price);
+
+                if (event.type === 'DCA') {
+                  return (
+                    <polygon
+                      key={event.id}
+                      points={`${x},${y - 6} ${x - 5},${y + 4} ${x + 5},${y + 4}`}
+                      fill='currentColor'
+                      className='text-info'
+                    />
+                  );
+                }
+
+                return null;
+              })}
+
+              {playbackX != null ? (
+                <line
+                  x1={playbackX}
+                  x2={playbackX}
+                  y1={padding.top}
+                  y2={padding.top + innerHeight}
+                  className='stroke-primary/80'
+                  strokeDasharray='4 4'
+                />
+              ) : null}
+            </svg>
+
+            {oscillatorPanels.map((panel) => (
+              <svg
+                key={panel.key}
+                className='h-[100px] w-full border-t border-base-300/50'
+                viewBox={`0 0 ${width} ${oscillatorPanelHeight}`}
+                preserveAspectRatio='none'
+              >
+                {panel.localYTicks.map((tick) => (
+                  <line
+                    key={`${panel.key}-y-${tick.y}`}
+                    x1={padding.left}
+                    x2={padding.left + innerWidth}
+                    y1={tick.y}
+                    y2={tick.y}
+                    className='stroke-base-300/30'
+                  />
+                ))}
+                {xTickIndexes.map((index) => {
+                  const x = xAt(index);
+                  return (
+                    <line
+                      key={`${panel.key}-x-grid-${candles[index].candleIndex}`}
+                      x1={x}
+                      x2={x}
+                      y1={0}
+                      y2={oscillatorPanelHeight}
+                      className='stroke-base-300/20'
+                    />
+                  );
+                })}
+                <text x={padding.left + 2} y={10} textAnchor='start' className='fill-base-content/70 text-[9px] font-medium'>
+                  {panel.title}
+                </text>
+
+                {tradeSegments.map((segment, index) => {
+                  const xStart = xAt(segment.start) - barWidth / 2;
+                  const xEnd = xAt(segment.end) + barWidth / 2;
+                  return (
+                    <rect
+                      key={`osc-bg-${panel.key}-${index}`}
+                      x={xStart}
+                      y={0}
+                      width={Math.max(1, xEnd - xStart)}
+                      height={oscillatorPanelHeight}
+                      className={segment.profit ? 'fill-success/10' : 'fill-error/10'}
+                    />
+                  );
+                })}
+
+                {panel.name.includes('RSI') && rsiLongLevel != null ? (
+                  <line
+                    x1={padding.left}
+                    x2={padding.left + innerWidth}
+                    y1={panel.levelToY(rsiLongLevel)}
+                    y2={panel.levelToY(rsiLongLevel)}
+                    className='stroke-success/70'
+                    strokeDasharray='3 3'
+                  />
+                ) : null}
+                {panel.name.includes('RSI') && rsiShortLevel != null ? (
+                  <line
+                    x1={padding.left}
+                    x2={padding.left + innerWidth}
+                    y1={panel.levelToY(rsiShortLevel)}
+                    y2={panel.levelToY(rsiShortLevel)}
+                    className='stroke-error/70'
+                    strokeDasharray='3 3'
+                  />
+                ) : null}
+
+                <polyline fill='none' stroke='currentColor' strokeWidth='1.6' className='text-info' points={panel.points} />
+
+                {playbackX != null ? (
+                  <line
+                    x1={playbackX}
+                    x2={playbackX}
+                    y1={0}
+                    y2={oscillatorPanelHeight}
+                    className='stroke-primary/70'
+                    strokeDasharray='4 4'
+                  />
+                ) : null}
+              </svg>
+            ))}
+
+            <svg className='h-[24px] w-full border-t border-base-300/50 bg-base-100/40' viewBox={`0 0 ${width} ${xAxisHeight}`} preserveAspectRatio='none'>
+              {xTickIndexes.map((index) => {
+                const isFirst = index === 0;
+                const isLast = index === candles.length - 1;
+                const x = isFirst ? padding.left : isLast ? padding.left + innerWidth : xAt(index);
+                const anchor: 'start' | 'middle' | 'end' = isFirst ? 'start' : isLast ? 'end' : 'middle';
+
+                return (
+                  <g key={`x-label-${candles[index].candleIndex}`}>
+                    <line x1={x} x2={x} y1={0} y2={4} className='stroke-base-300/40' />
+                    <text x={x} y={xAxisHeight - 6} textAnchor={anchor} className='fill-base-content/60 text-[9px]'>
+                      {formatXAxisLabel(index)}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
         </div>
 
-      </div>
+        <div className='pointer-events-none border-l border-base-300 bg-base-100/95'>
+          <svg className='h-[320px] w-full' viewBox={`0 0 ${axisOverlayWidth} ${pricePanelHeight}`} preserveAspectRatio='none'>
+            {yTicks.map((tick) => (
+              <g key={`price-axis-${tick.y}`}>
+                <line x1={0} x2={8} y1={tick.y} y2={tick.y} className='stroke-base-300/50' />
+                <text x={10} y={tick.y + 3} textAnchor='start' className='fill-base-content/70 text-[9px]'>
+                  {formatNumber(tick.value)}
+                </text>
+              </g>
+            ))}
+          </svg>
 
-      <div className='flex flex-wrap items-center justify-between gap-2 text-xs text-base-content/70'>
-        <span>Cena min: {formatNumber(min)} | max: {formatNumber(max)}</span>
-        <span>
-          Zakres: {candles.length > 0 ? new Date(candles[0].openTime).toLocaleString() : '-'} -{' '}
-          {candles.length > 0 ? new Date(candles[candles.length - 1].closeTime).toLocaleString() : '-'}
-        </span>
+          {oscillatorPanels.map((panel) => (
+            <svg
+              key={`axis-${panel.key}`}
+              className='h-[100px] w-full border-t border-base-300/50'
+              viewBox={`0 0 ${axisOverlayWidth} ${oscillatorPanelHeight}`}
+              preserveAspectRatio='none'
+            >
+              {panel.localYTicks.map((tick) => (
+                <g key={`axis-${panel.key}-y-${tick.y}`}>
+                  <line x1={0} x2={8} y1={tick.y} y2={tick.y} className='stroke-base-300/50' />
+                  <text x={10} y={tick.y + 3} textAnchor='start' className='fill-base-content/65 text-[9px]'>
+                    {formatNumber(tick.value)}
+                  </text>
+                </g>
+              ))}
+            </svg>
+          ))}
+
+          <div className='h-[24px] border-t border-base-300/50' />
+        </div>
       </div>
     </div>
   );
@@ -881,7 +987,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
   const [activeTab, setActiveTab] = useState<'summary' | 'markets' | 'trades' | 'raw'>('markets');
   const symbolSectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const timelinesRef = useRef<Record<string, TimelineState>>({});
-  const inFlightSymbolsRef = useRef<Set<string>>(new Set());
+  const inFlightTimelineRequestsRef = useRef<Map<string, Promise<BacktestTimeline | undefined>>>(new Map());
 
   useEffect(() => {
     timelinesRef.current = timelines;
@@ -890,7 +996,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
   useEffect(() => {
     // When navigating between runs with the same symbols, clear cached timeline cards
     // to avoid rendering stale market charts from a previous run.
-    inFlightSymbolsRef.current.clear();
+    inFlightTimelineRequestsRef.current.clear();
     timelinesRef.current = {};
     setTimelines({});
   }, [runId]);
@@ -999,52 +1105,84 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
     return [...map.values()];
   };
 
-  const loadSymbolTimeline = useCallback(
-    async (symbol: string, cursor = 0, append = false) => {
-      const lockKey = `${symbol}:${cursor}:${append ? 'append' : 'replace'}`;
-      if (inFlightSymbolsRef.current.has(lockKey)) return timelinesRef.current[symbol]?.data ?? undefined;
-      inFlightSymbolsRef.current.add(lockKey);
+  const TIMELINE_CHUNK_SIZE = 600;
+  const loadSymbolTimelineChunk = useCallback(
+    async ({
+      symbol,
+      cursor = 0,
+      append = false,
+      scope,
+    }: {
+      symbol: string;
+      cursor?: number;
+      append?: boolean;
+      scope: 'candles' | 'events';
+    }) => {
+      const lockKey = `${symbol}:${scope}:${cursor}:${append ? 'append' : 'replace'}`;
+      const existingRequest = inFlightTimelineRequestsRef.current.get(lockKey);
+      if (existingRequest) return existingRequest;
 
-      setTimelines((prev) => ({
-        ...prev,
+      const requestPromise = (async () => {
+        setTimelines((prev) => ({
+          ...prev,
         [symbol]: {
           data: prev[symbol]?.data ?? null,
           loading: true,
+          loadingPhase: scope,
+          candlesNextCursor: prev[symbol]?.candlesNextCursor ?? null,
+          eventsNextCursor: prev[symbol]?.eventsNextCursor ?? null,
+          candlesLoaded: prev[symbol]?.candlesLoaded ?? false,
+          eventsLoaded: prev[symbol]?.eventsLoaded ?? false,
           error: null,
         },
       }));
 
-      try {
-        let data: BacktestTimeline;
         try {
-          data = await getBacktestRunTimeline(runId, {
+          const data = await getBacktestRunTimeline(runId, {
             symbol,
             cursor,
-            chunkSize: 10000,
+            chunkSize: TIMELINE_CHUNK_SIZE,
+            includeCandles: scope === 'candles',
+            includeIndicators: scope === 'candles',
+            includeEvents: scope === 'events',
           });
-        } catch {
-          // Backward-compat fallback for older backend validators.
-          data = await getBacktestRunTimeline(runId, {
-            symbol,
-            cursor,
-            chunkSize: 800,
-          });
-        }
-        const normalizedData: BacktestTimeline = {
-          ...data,
-          candles: Array.isArray(data.candles) ? data.candles : [],
-          events: Array.isArray(data.events) ? data.events : [],
-          indicatorSeries: Array.isArray(data.indicatorSeries) ? data.indicatorSeries : [],
-        };
 
-        let mergedForReturn: BacktestTimeline | null = null;
-        setTimelines((prev) => {
-          const existing = prev[symbol]?.data;
-          const merged = append && existing
-            ? {
+          const normalizedData: BacktestTimeline = {
+            ...data,
+            candles: Array.isArray(data.candles) ? data.candles : [],
+            events: Array.isArray(data.events) ? data.events : [],
+            indicatorSeries: Array.isArray(data.indicatorSeries) ? data.indicatorSeries : [],
+          };
+
+          setTimelines((prev) => {
+            const existing = prev[symbol]?.data;
+            let prepared: BacktestTimeline;
+
+            if (!existing) {
+              prepared = normalizedData;
+            } else if (!append) {
+              if (scope === 'candles') {
+                prepared = {
+                  ...normalizedData,
+                  events: existing.events,
+                };
+              } else {
+                prepared = {
+                  ...existing,
+                  ...normalizedData,
+                  candles: existing.candles,
+                  indicatorSeries: existing.indicatorSeries,
+                  events: normalizedData.events,
+                  cursor: existing.cursor,
+                  previousCursor: existing.previousCursor,
+                };
+              }
+            } else if (scope === 'candles') {
+              prepared = {
+                ...existing,
                 ...normalizedData,
                 candles: mergeByKey(existing.candles, normalizedData.candles, (candle) => candle.candleIndex),
-                events: mergeByKey(existing.events, normalizedData.events, (event) => event.id),
+                events: existing.events,
                 indicatorSeries: normalizedData.indicatorSeries.map((series) => {
                   const existingSeries = existing.indicatorSeries.find((item) => item.key === series.key);
                   return {
@@ -1053,43 +1191,80 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                   };
                 }),
                 cursor: 0,
-              }
-            : normalizedData;
+                previousCursor: null,
+              };
+            } else {
+              prepared = {
+                ...existing,
+                ...normalizedData,
+                candles: existing.candles,
+                indicatorSeries: existing.indicatorSeries,
+                events: mergeByKey(existing.events, normalizedData.events, (event) => event.id),
+                cursor: existing.cursor,
+                previousCursor: existing.previousCursor,
+              };
+            }
 
-          const prepared: BacktestTimeline = {
-            ...merged,
-            candles: [...merged.candles].sort((a, b) => a.candleIndex - b.candleIndex),
-            events: [...merged.events].sort((a, b) => a.candleIndex - b.candleIndex),
-            indicatorSeries: merged.indicatorSeries.map((series) => ({
-              ...series,
-              points: [...series.points].sort((a, b) => a.candleIndex - b.candleIndex),
-            })),
-          };
-          mergedForReturn = prepared;
+            prepared = {
+              ...prepared,
+              candles: [...prepared.candles].sort((a, b) => a.candleIndex - b.candleIndex),
+              events: [...prepared.events].sort((a, b) => a.candleIndex - b.candleIndex),
+              indicatorSeries: prepared.indicatorSeries.map((series) => ({
+                ...series,
+                points: [...series.points].sort((a, b) => a.candleIndex - b.candleIndex),
+              })),
+            };
 
-          return {
+            return {
+              ...prev,
+              [symbol]: {
+                data: prepared,
+                loading: false,
+                loadingPhase: null,
+                candlesNextCursor:
+                  scope === 'candles'
+                    ? (typeof normalizedData.nextCursor === 'number' ? normalizedData.nextCursor : null)
+                    : (prev[symbol]?.candlesNextCursor ?? null),
+                eventsNextCursor:
+                  scope === 'events'
+                    ? (typeof normalizedData.nextCursor === 'number' ? normalizedData.nextCursor : null)
+                    : (prev[symbol]?.eventsNextCursor ?? null),
+                candlesLoaded:
+                  scope === 'candles'
+                    ? normalizedData.nextCursor == null
+                    : (prev[symbol]?.candlesLoaded ?? false),
+                eventsLoaded:
+                  scope === 'events'
+                    ? normalizedData.nextCursor == null
+                    : (prev[symbol]?.eventsLoaded ?? false),
+                error: null,
+              },
+            };
+          });
+
+          return normalizedData;
+        } catch (err: unknown) {
+          setTimelines((prev) => ({
             ...prev,
             [symbol]: {
-              data: prepared,
-              loading: false,
-              error: null,
-            },
-          };
-        });
-        return mergedForReturn ?? normalizedData;
-      } catch (err: unknown) {
-        setTimelines((prev) => ({
-          ...prev,
-          [symbol]: {
             data: prev[symbol]?.data ?? null,
             loading: false,
+            loadingPhase: null,
+            candlesNextCursor: prev[symbol]?.candlesNextCursor ?? null,
+            eventsNextCursor: prev[symbol]?.eventsNextCursor ?? null,
+            candlesLoaded: prev[symbol]?.candlesLoaded ?? false,
+            eventsLoaded: prev[symbol]?.eventsLoaded ?? false,
             error: getAxiosMessage(err) ?? 'Nie udalo sie pobrac timeline dla rynku.',
           },
         }));
-        return undefined;
-      } finally {
-        inFlightSymbolsRef.current.delete(lockKey);
-      }
+          return undefined;
+        } finally {
+          inFlightTimelineRequestsRef.current.delete(lockKey);
+        }
+      })();
+
+      inFlightTimelineRequestsRef.current.set(lockKey, requestPromise);
+      return requestPromise;
     },
     [runId],
   );
@@ -1110,35 +1285,62 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
             [symbol]: {
               data: prev[symbol]?.data ?? null,
               loading: false,
+              loadingPhase: null,
+              candlesNextCursor: prev[symbol]?.candlesNextCursor ?? null,
+              eventsNextCursor: prev[symbol]?.eventsNextCursor ?? null,
+              candlesLoaded: prev[symbol]?.candlesLoaded ?? false,
+              eventsLoaded: prev[symbol]?.eventsLoaded ?? false,
               error: parity.error ?? 'Symbol processing failed during backtest run.',
             },
           }));
           continue;
         }
         const timelineState = timelinesRef.current[symbol];
+        const existingTimeline = timelineState?.data;
+        const hasExistingCandles = Boolean(existingTimeline && existingTimeline.candles.length > 0);
 
-        if (!timelineState?.data && !timelineState?.loading) {
-          let currentTimeline = await loadSymbolTimeline(symbol, 0, false);
-          if (cancelled) return;
-          if (!currentTimeline) continue;
+        let candlesCursor: number | null =
+          timelineState?.candlesLoaded
+            ? null
+            : timelineState?.candlesNextCursor ??
+              (hasExistingCandles && existingTimeline
+                ? Math.min(existingTimeline.candles.length, existingTimeline.totalCandles)
+                : 0);
+        let firstCandlesChunk = !hasExistingCandles;
 
-          const symbolTrades = tradesBySymbol.get(symbol) ?? [];
-          let safety = 0;
-          while (
-            !cancelled &&
-            currentTimeline.nextCursor != null &&
-            countTradesVisibleInTimeline(symbolTrades, currentTimeline) < symbolTrades.length &&
-            safety < 20
-          ) {
-            safety += 1;
-            const mergedTimeline = await loadSymbolTimeline(symbol, currentTimeline.nextCursor, true);
-            if (!mergedTimeline) break;
-            currentTimeline = mergedTimeline;
-          }
+        while (!cancelled && candlesCursor != null) {
+          const candlesChunk = await loadSymbolTimelineChunk({
+            symbol,
+            cursor: candlesCursor,
+            append: !firstCandlesChunk,
+            scope: 'candles',
+          });
+          if (!candlesChunk) break;
+          candlesCursor = candlesChunk.nextCursor;
+          firstCandlesChunk = false;
         }
 
-        // PERF: keep only first chunk auto-loaded per symbol to avoid loading
-        // full history for every market card at once; users can load more on demand.
+        if (cancelled || candlesCursor != null) continue;
+
+        const refreshedTimelineState = timelinesRef.current[symbol];
+        const hasExistingEvents = Boolean(refreshedTimelineState?.data && refreshedTimelineState.data.events.length > 0);
+        let eventsCursor: number | null =
+          refreshedTimelineState?.eventsLoaded
+            ? null
+            : refreshedTimelineState?.eventsNextCursor ?? 0;
+        let firstEventsChunk = !hasExistingEvents;
+
+        while (!cancelled && eventsCursor != null) {
+          const eventsChunk = await loadSymbolTimelineChunk({
+            symbol,
+            cursor: eventsCursor,
+            append: !firstEventsChunk,
+            scope: 'events',
+          });
+          if (!eventsChunk) break;
+          eventsCursor = eventsChunk.nextCursor;
+          firstEventsChunk = false;
+        }
       }
     };
 
@@ -1146,7 +1348,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, loadSymbolTimeline, parityDiagnosticsBySymbol, symbolStats, tradesBySymbol]);
+  }, [activeTab, loadSymbolTimelineChunk, parityDiagnosticsBySymbol, symbolStats]);
 
   const progress = useMemo(() => {
     if (!run) return 0;
@@ -1350,6 +1552,32 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
               />
             ) : (
               <>
+                <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                  <h4 className='mb-2 text-sm font-semibold'>Legenda globalna wykresow</h4>
+                  <div className='flex flex-wrap items-center gap-4 text-xs text-base-content/75'>
+                    <span className='inline-flex items-center gap-1'>
+                      <span className='inline-block h-0 w-0 border-l-[4px] border-r-[4px] border-b-[6px] border-l-transparent border-r-transparent border-b-success' />
+                      Entry LONG
+                    </span>
+                    <span className='inline-flex items-center gap-1'>
+                      <span className='inline-block h-0 w-0 border-l-[4px] border-r-[4px] border-t-[6px] border-l-transparent border-r-transparent border-t-error' />
+                      Entry SHORT
+                    </span>
+                    <span className='inline-flex items-center gap-1'>
+                      <LuSquare className='h-3.5 w-3.5 text-success' />
+                      Exit zysk
+                    </span>
+                    <span className='inline-flex items-center gap-1'>
+                      <LuSquare className='h-3.5 w-3.5 text-error' />
+                      Exit strata
+                    </span>
+                    <span className='inline-flex items-center gap-1'>
+                      <LuCircleDot className='h-3.5 w-3.5 text-info' />
+                      DCA
+                    </span>
+                  </div>
+                </div>
+
                 {symbolStats.map((stats) => (
                   <article
                     key={stats.symbol}
@@ -1359,7 +1587,16 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                     className='rounded-xl border border-base-300 bg-base-100 p-3'
                   >
                     {(() => {
-                      const timelineState = timelines[stats.symbol] ?? { data: null, loading: false, error: null };
+                      const timelineState = timelines[stats.symbol] ?? {
+                        data: null,
+                        loading: false,
+                        loadingPhase: null,
+                        candlesNextCursor: null,
+                        eventsNextCursor: null,
+                        candlesLoaded: false,
+                        eventsLoaded: false,
+                        error: null,
+                      };
                       const timeline = timelineState.data;
                       const symbolTrades = tradesBySymbol.get(stats.symbol) ?? [];
                       const visibleTrades = timeline ? filterTradesByTimelineWindow(symbolTrades, timeline) : symbolTrades;
@@ -1373,25 +1610,32 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                         acc[event.type] = (acc[event.type] ?? 0) + 1;
                         return acc;
                       }, {});
+                      const timelineCandles = Array.isArray(timeline?.candles) ? timeline.candles : [];
+                      const candlePrices = timelineCandles.flatMap((candle) => [candle.low, candle.high]);
+                      const timelineMinPrice = candlePrices.length > 0 ? Math.min(...candlePrices) : null;
+                      const timelineMaxPrice = candlePrices.length > 0 ? Math.max(...candlePrices) : null;
+                      const timelineWindowStart = timelineCandles.length > 0 ? timelineCandles[0].openTime : null;
+                      const timelineWindowEnd = timelineCandles.length > 0 ? timelineCandles[timelineCandles.length - 1].closeTime : null;
+                      const parity = parityDiagnosticsBySymbol.get(stats.symbol.toUpperCase());
+                      const parityFailed = Boolean(parity && parity.status !== 'PROCESSED');
                       return (
                         <>
-                          <div className='mb-3 flex items-center justify-between gap-2'>
-                            <h3 className='text-base font-semibold'>{stats.symbol}</h3>
-                            <div className='flex items-center gap-2'>
-                              <span className={`badge ${stats.netPnl >= 0 ? 'badge-success' : 'badge-error'} badge-outline`}>
-                                {formatCurrency(stats.netPnl)}
-                              </span>
-                            </div>
-                          </div>
-
                           <div className='grid gap-3 xl:grid-cols-[minmax(0,1fr)_320px]'>
                             <div className='space-y-3'>
                               {timelineState.loading && !timeline ? <p className='text-sm opacity-70'>Ladowanie timeline...</p> : null}
+                              {timelineState.loading && timeline ? (
+                                <p className='text-xs opacity-70'>
+                                  Doladowywanie {timelineState.loadingPhase === 'events' ? 'znacznikow pozycji' : 'swiec i wskaznikow'}...
+                                </p>
+                              ) : null}
                               {timelineState.error ? <p className='text-sm text-error'>{timelineState.error}</p> : null}
                               {timeline ? (
                                 <TimelineCandlesChart
                                   timeline={timeline}
                                   trades={visibleTrades}
+                                  symbol={stats.symbol}
+                                  netPnl={stats.netPnl}
+                                  formatCurrency={formatCurrency}
                                   formatNumber={formatNumber}
                                   rsiLongLevel={indicatorMeta.rsiLongLevel}
                                   rsiShortLevel={indicatorMeta.rsiShortLevel}
@@ -1399,85 +1643,100 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                               ) : (
                                 <div className='h-[320px] w-full animate-pulse rounded-lg bg-base-200/60' />
                               )}
-
-                              {timeline?.nextCursor != null ? (
-                                <button
-                                  type='button'
-                                  className='btn btn-sm btn-outline'
-                                  onClick={() => void loadSymbolTimeline(stats.symbol, timeline.nextCursor ?? 0, true)}
-                                  disabled={timelineState.loading}
-                                >
-                                  {timelineState.loading ? 'Ladowanie...' : 'Doloaduj kolejne swiece'}
-                                </button>
-                              ) : null}
-
-                              <div className='flex flex-wrap items-center gap-4 text-xs text-base-content/75'>
-                                <span className='inline-flex items-center gap-1'>
-                                  <span className='inline-block h-0 w-0 border-l-[4px] border-r-[4px] border-b-[6px] border-l-transparent border-r-transparent border-b-success' />
-                                  Entry LONG
-                                </span>
-                                <span className='inline-flex items-center gap-1'>
-                                  <span className='inline-block h-0 w-0 border-l-[4px] border-r-[4px] border-t-[6px] border-l-transparent border-r-transparent border-t-error' />
-                                  Entry SHORT
-                                </span>
-                                <span className='inline-flex items-center gap-1'>
-                                  <LuSquare className='h-3.5 w-3.5 text-success' />
-                                  Exit zysk
-                                </span>
-                                <span className='inline-flex items-center gap-1'>
-                                  <LuSquare className='h-3.5 w-3.5 text-error' />
-                                  Exit strata
-                                </span>
-                                <span className='inline-flex items-center gap-1'>
-                                  <LuCircleDot className='h-3.5 w-3.5 text-info' />
-                                  DCA
-                                </span>
-                                <span className='inline-flex items-center gap-1'>
-                                  DCA {visibleLifecycleCounts.DCA ?? 0}
-                                </span>
-                              </div>
                             </div>
 
                             <aside className='rounded-lg border border-base-300 bg-base-200 p-3 text-sm'>
-                              <h4 className='mb-2 font-semibold'>Statystyki pary</h4>
-                              {(() => {
-                                const parity = parityDiagnosticsBySymbol.get(stats.symbol.toUpperCase());
-                                if (!parity) return null;
-                                return (
-                                  <div className='mb-2'>
-                                    <span className={`badge badge-sm ${parity.status === 'PROCESSED' ? 'badge-success' : 'badge-error'}`}>
-                                      {parity.status === 'PROCESSED' ? 'Parity: PROCESSED' : 'Parity: FAILED'}
-                                    </span>
-                                    {parity.error ? <p className='mt-1 text-xs text-error'>{parity.error}</p> : null}
-                                  </div>
-                                );
-                              })()}
-                              <div className='space-y-1'>
-                                <p>
-                                  Transakcji:{' '}
-                                  <span className='font-medium'>
+                              <h4 className='font-semibold'>Statystyki pary</h4>
+                              {parityFailed ? (
+                                <div className='mt-2 rounded-md border border-error/40 bg-error/10 p-2'>
+                                  <p className='text-xs font-medium text-error'>Parity FAILED</p>
+                                  {parity?.error ? <p className='mt-1 text-xs text-error/90'>{parity.error}</p> : null}
+                                </div>
+                              ) : null}
+
+                              <div className='mt-3 grid grid-cols-2 gap-2'>
+                                <div className='rounded-md border border-base-300 bg-base-100/70 p-2'>
+                                  <p className='text-[10px] uppercase tracking-wide opacity-65'>Transakcje</p>
+                                  <p className='mt-1 text-base font-semibold'>
                                     {formatNumber(visibleStats.tradesCount)}
                                     {showVisibleSubset ? ` / ${formatNumber(stats.tradesCount)}` : ''}
-                                  </span>
-                                </p>
-                                {showVisibleSubset ? (
-                                  <p className='text-xs opacity-70'>w zakresie wykresu / lacznie</p>
-                                ) : null}
-                                <p>Win rate: <span className='font-medium'>{formatPercent(visibleStats.winRate)}</span></p>
-                                <p>Wygrane/Przegrane: <span className='font-medium'>{visibleStats.wins}/{visibleStats.losses}</span></p>
-                                <p>Srednie wejscie: <span className='font-medium'>{formatNumber(visibleStats.avgEntry)}</span></p>
-                                <p>Srednie wyjscie: <span className='font-medium'>{formatNumber(visibleStats.avgExit)}</span></p>
-                                <p>Sredni czas pozycji: <span className='font-medium'>{formatNumber(visibleStats.avgHoldMinutes)} min</span></p>
-                                <p>
-                                  Zakres:{' '}
-                                  <span className='font-medium'>
-                                    {visibleStats.firstAt ? formatDateTime(new Date(visibleStats.firstAt).toISOString()) : '-'} -{' '}
-                                    {visibleStats.lastAt ? formatDateTime(new Date(visibleStats.lastAt).toISOString()) : '-'}
-                                  </span>
-                                </p>
-                                <p>Zamkniete na ostatniej swiecy: <span className='font-medium'>{formatNumber(visibleFinalCandleClosures)}</span></p>
-                                <p>Likwidacje: <span className='font-medium'>{formatNumber(visibleLiquidations)}</span></p>
+                                  </p>
+                                  {showVisibleSubset ? <p className='mt-0.5 text-[10px] opacity-60'>w zakresie / lacznie</p> : null}
+                                </div>
+                                <div className='rounded-md border border-base-300 bg-base-100/70 p-2'>
+                                  <p className='text-[10px] uppercase tracking-wide opacity-65'>Win rate</p>
+                                  <p className='mt-1 text-base font-semibold'>{formatPercent(visibleStats.winRate)}</p>
+                                  <p className='mt-0.5 text-[10px] opacity-60'>{visibleStats.wins}/{visibleStats.losses} W/L</p>
+                                </div>
+                                <div className='rounded-md border border-base-300 bg-base-100/70 p-2'>
+                                  <p className='text-[10px] uppercase tracking-wide opacity-65'>PnL</p>
+                                  <p className={`mt-1 text-base font-semibold ${pnlClass(visibleStats.netPnl)}`}>
+                                    {formatCurrency(visibleStats.netPnl)}
+                                    {showVisibleSubset ? ` / ${formatCurrency(stats.netPnl)}` : ''}
+                                  </p>
+                                </div>
+                                <div className='rounded-md border border-base-300 bg-base-100/70 p-2'>
+                                  <p className='text-[10px] uppercase tracking-wide opacity-65'>Sredni hold</p>
+                                  <p className='mt-1 text-base font-semibold'>{formatNumber(visibleStats.avgHoldMinutes)} min</p>
+                                </div>
                               </div>
+
+                              <div className='mt-3 space-y-3'>
+                                <section className='rounded-md border border-base-300 bg-base-100/60 p-2'>
+                                  <h5 className='text-xs font-semibold uppercase tracking-wide opacity-70'>Egzekucja</h5>
+                                  <div className='mt-1 space-y-1 text-xs'>
+                                    <p className='flex items-center justify-between gap-2'>
+                                      <span className='opacity-70'>Srednie wejscie</span>
+                                      <span className='font-medium'>{formatNumber(visibleStats.avgEntry)}</span>
+                                    </p>
+                                    <p className='flex items-center justify-between gap-2'>
+                                      <span className='opacity-70'>Srednie wyjscie</span>
+                                      <span className='font-medium'>{formatNumber(visibleStats.avgExit)}</span>
+                                    </p>
+                                    <p className='flex items-center justify-between gap-2'>
+                                      <span className='opacity-70'>DCA</span>
+                                      <span className='font-medium'>{formatNumber(visibleLifecycleCounts.DCA ?? 0)}</span>
+                                    </p>
+                                    <p className='flex items-center justify-between gap-2'>
+                                      <span className='opacity-70'>Zamkniete na ostatniej swiecy</span>
+                                      <span className='font-medium'>{formatNumber(visibleFinalCandleClosures)}</span>
+                                    </p>
+                                    <p className='flex items-center justify-between gap-2'>
+                                      <span className='opacity-70'>Likwidacje</span>
+                                      <span className='font-medium'>{formatNumber(visibleLiquidations)}</span>
+                                    </p>
+                                  </div>
+                                </section>
+
+                                <section className='rounded-md border border-base-300 bg-base-100/60 p-2'>
+                                  <h5 className='text-xs font-semibold uppercase tracking-wide opacity-70'>Zakres danych</h5>
+                                  <div className='mt-1 space-y-1 text-xs'>
+                                    <p>
+                                      <span className='opacity-70'>Zakres transakcji:</span>{' '}
+                                      <span className='font-medium'>
+                                        {visibleStats.firstAt ? formatDateTime(new Date(visibleStats.firstAt).toISOString()) : '-'} -{' '}
+                                        {visibleStats.lastAt ? formatDateTime(new Date(visibleStats.lastAt).toISOString()) : '-'}
+                                      </span>
+                                    </p>
+                                    <p>
+                                      <span className='opacity-70'>Zakres swiec:</span>{' '}
+                                      <span className='font-medium'>
+                                        {timelineWindowStart ? formatDateTime(new Date(timelineWindowStart).toISOString()) : '-'} -{' '}
+                                        {timelineWindowEnd ? formatDateTime(new Date(timelineWindowEnd).toISOString()) : '-'}
+                                      </span>
+                                    </p>
+                                    <p>
+                                      <span className='opacity-70'>Cena min/max (wykres):</span>{' '}
+                                      <span className='font-medium'>
+                                        {timelineMinPrice != null && timelineMaxPrice != null
+                                          ? `${formatNumber(timelineMinPrice)} / ${formatNumber(timelineMaxPrice)}`
+                                          : '-'}
+                                      </span>
+                                    </p>
+                                  </div>
+                                </section>
+                              </div>
+
                               <div className='divider my-2' />
                               <h5 className='font-semibold'>Wskazniki strategii</h5>
                               {indicatorMeta.names.length > 0 ? (

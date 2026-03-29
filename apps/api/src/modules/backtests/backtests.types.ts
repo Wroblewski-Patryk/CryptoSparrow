@@ -1,6 +1,15 @@
 import { BacktestStatus } from '@prisma/client';
 import { z } from 'zod';
 
+const QueryBooleanSchema = z.preprocess((value) => {
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true' || normalized === '1') return true;
+    if (normalized === 'false' || normalized === '0') return false;
+  }
+  return value;
+}, z.boolean());
+
 export const CreateBacktestRunSchema = z.object({
   name: z.string().trim().min(1),
   symbol: z.string().trim().min(1).optional(),
@@ -32,6 +41,9 @@ export const GetBacktestTimelineQuerySchema = z.object({
   symbol: z.string().trim().min(1),
   cursor: z.coerce.number().int().min(0).default(0),
   chunkSize: z.coerce.number().int().min(50).max(10000).default(300),
+  includeCandles: QueryBooleanSchema.default(true),
+  includeIndicators: QueryBooleanSchema.default(true),
+  includeEvents: QueryBooleanSchema.default(true),
 });
 
 export type CreateBacktestRunDto = z.infer<typeof CreateBacktestRunSchema>;

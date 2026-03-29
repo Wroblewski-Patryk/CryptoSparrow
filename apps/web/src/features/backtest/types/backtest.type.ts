@@ -62,6 +62,9 @@ export type BacktestTimelineQuery = {
   symbol: string;
   cursor?: number;
   chunkSize?: number;
+  includeCandles?: boolean;
+  includeIndicators?: boolean;
+  includeEvents?: boolean;
 };
 
 export type BacktestTimelineEvent = {

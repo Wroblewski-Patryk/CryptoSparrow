@@ -60,6 +60,9 @@ export const getBacktestRunTimeline = async (
       symbol: query.symbol,
       cursor: query.cursor ?? 0,
       chunkSize: query.chunkSize ?? 300,
+      includeCandles: query.includeCandles ?? true,
+      includeIndicators: query.includeIndicators ?? true,
+      includeEvents: query.includeEvents ?? true,
     },
   });
   return res.data;

@@ -565,6 +565,7 @@ type InterleavedPortfolioSimulationResult = {
 const simulateInterleavedPortfolio = (input: {
   symbols: string[];
   candlesBySymbol: Map<string, KlineCandle[]>;
+  analysisStartIndexBySymbol?: Map<string, number>;
   marketType: MarketType;
   leverage: number;
   marginMode: MarginMode | 'NONE';
@@ -603,9 +604,14 @@ const simulateInterleavedPortfolio = (input: {
 
   const indicatorCacheBySymbol = new Map<string, Map<string, Array<number | null>>>();
   const tradeSequenceBySymbol = new Map<string, number>(input.symbols.map((symbol) => [symbol, 0]));
-  const cursorBySymbol = new Map<string, number>(
-    input.symbols.map((symbol) => [symbol, 1]),
-  );
+  const resolveStartIndex = (symbol: string) => {
+    const candles = input.candlesBySymbol.get(symbol) ?? [];
+    if (candles.length <= 1) return 1;
+    const configuredStart = input.analysisStartIndexBySymbol?.get(symbol);
+    if (typeof configuredStart !== 'number' || !Number.isFinite(configuredStart)) return 1;
+    return clamp(Math.floor(configuredStart), 1, candles.length - 1);
+  };
+  const cursorBySymbol = new Map<string, number>(input.symbols.map((symbol) => [symbol, resolveStartIndex(symbol)]));
   const openPositions = new Map<string, {
     side: 'LONG' | 'SHORT';
     entryPrice: number;
@@ -629,7 +635,7 @@ const simulateInterleavedPortfolio = (input: {
     let selected: { symbol: string; openTime: number } | null = null;
     for (const symbol of input.symbols) {
       const candles = input.candlesBySymbol.get(symbol) ?? [];
-      const cursor = cursorBySymbol.get(symbol) ?? 1;
+      const cursor = cursorBySymbol.get(symbol) ?? resolveStartIndex(symbol);
       if (cursor >= candles.length) continue;
       const openTime = candles[cursor].openTime;
       if (!selected || openTime < selected.openTime || (openTime === selected.openTime && symbol.localeCompare(selected.symbol) < 0)) {
@@ -667,7 +673,7 @@ const simulateInterleavedPortfolio = (input: {
     const symbol = pickNextSymbol();
     if (!symbol) break;
     const candles = input.candlesBySymbol.get(symbol) ?? [];
-    const index = cursorBySymbol.get(symbol) ?? 1;
+    const index = cursorBySymbol.get(symbol) ?? resolveStartIndex(symbol);
     const current = candles[index];
     const previous = candles[index - 1];
     const bucket = perSymbol[symbol];
@@ -1103,6 +1109,12 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
   return [...unique.values()];
 };
 
+const resolveIndicatorWarmupCandles = (strategyConfig: unknown) => {
+  const specs = parseStrategyIndicators(strategyConfig);
+  if (specs.length === 0) return 0;
+  return specs.reduce((maxPeriod, spec) => Math.max(maxPeriod, spec.period), 0);
+};
+
 const buildEmaSeries = (candles: KlineCandle[], period: number) => {
   const alpha = 2 / (period + 1);
   const series: Array<number | null> = [];
@@ -1246,6 +1258,7 @@ const runBacktestAsync = async (runId: string) => {
     })
     : null;
   const strategyConfig = (strategy?.config as Record<string, unknown> | undefined) ?? null;
+  const indicatorWarmupCandles = resolveIndicatorWarmupCandles(strategyConfig);
   const strategyWalletRisk = normalizeWalletRiskPercent(strategy?.walletRisk ?? 1, 1);
   const strategyRulesActive = Boolean(parseStrategySignalRules(strategyConfig));
   const fillModelConfig: BacktestFillModelConfig = {
@@ -1302,11 +1315,21 @@ const runBacktestAsync = async (runId: string) => {
       await updateRunProgress(runId, seed, progress);
 
       try {
-        const candles = await fetchKlines(symbol, run.timeframe, marketType, maxCandlesPerSymbol);
+        const candles = await fetchKlines(
+          symbol,
+          run.timeframe,
+          marketType,
+          maxCandlesPerSymbol + indicatorWarmupCandles,
+        );
         if (candles.length === 0) {
           throw new Error('NO_CANDLES_AVAILABLE_FOR_SYMBOL');
         }
-        const supplemental = await fetchSupplementalSeries(symbol, run.timeframe, marketType, maxCandlesPerSymbol);
+        const supplemental = await fetchSupplementalSeries(
+          symbol,
+          run.timeframe,
+          marketType,
+          maxCandlesPerSymbol + indicatorWarmupCandles,
+        );
         candlesBySymbol.set(symbol, candles);
         supplementalBySymbol.set(symbol, supplemental);
         symbolInputCoverage.push({
@@ -1353,6 +1376,13 @@ const runBacktestAsync = async (runId: string) => {
       const simulation = simulateInterleavedPortfolio({
         symbols: loadedSymbols,
         candlesBySymbol,
+        analysisStartIndexBySymbol: new Map(
+          loadedSymbols.map((symbol) => {
+            const symbolCandles = candlesBySymbol.get(symbol) ?? [];
+            const startIndex = Math.max(1, symbolCandles.length - maxCandlesPerSymbol);
+            return [symbol, startIndex];
+          }),
+        ),
         marketType,
         leverage: progress.leverage,
         marginMode: progress.marginMode,
@@ -1728,6 +1758,16 @@ export const getRunTimeline = async (
   if (runSymbols.length > 0 && !runSymbols.includes(symbol)) {
     return null;
   }
+  const strategy = run.strategyId
+    ? await prisma.strategy.findFirst({
+      where: { id: run.strategyId, userId },
+      select: { config: true, walletRisk: true },
+    })
+    : null;
+  const strategyConfig = (strategy?.config as Record<string, unknown> | undefined) ?? null;
+  const indicatorSpecs = parseStrategyIndicators(strategyConfig);
+  const indicatorWarmupCandles = indicatorSpecs.reduce((maxPeriod, spec) => Math.max(maxPeriod, spec.period), 0);
+
   const replaySymbols = runSymbols.length > 0 ? runSymbols : [symbol];
   const liveProgress = (seed.liveProgress ?? {}) as {
     currentCandleTime?: string | null;
@@ -1745,15 +1785,28 @@ export const getRunTimeline = async (
   for (const replaySymbol of replaySymbols) {
     candlesBySymbol.set(
       replaySymbol,
-      await fetchKlines(replaySymbol, run.timeframe, marketType, maxCandles, timelineEndTimeMs),
+      await fetchKlines(
+        replaySymbol,
+        run.timeframe,
+        marketType,
+        maxCandles + indicatorWarmupCandles,
+        timelineEndTimeMs,
+      ),
     );
   }
-  const candles = candlesBySymbol.get(symbol) ?? [];
+  const visibleStartBySymbol = new Map<string, number>();
+  for (const replaySymbol of replaySymbols) {
+    const symbolCandles = candlesBySymbol.get(replaySymbol) ?? [];
+    visibleStartBySymbol.set(replaySymbol, Math.max(0, symbolCandles.length - maxCandles));
+  }
+  const fullCandles = candlesBySymbol.get(symbol) ?? [];
+  const visibleStart = visibleStartBySymbol.get(symbol) ?? 0;
+  const candles = fullCandles.slice(visibleStart);
   const supplemental = await fetchSupplementalSeries(
     symbol,
     run.timeframe,
     marketType,
-    maxCandles,
+    maxCandles + indicatorWarmupCandles,
     timelineEndTimeMs,
   );
   const total = candles.length;
@@ -1765,27 +1818,21 @@ export const getRunTimeline = async (
   const end = clamp(start + query.chunkSize, 0, total);
   const chunk = candles.slice(start, end);
 
-  const strategy = run.strategyId
-    ? await prisma.strategy.findFirst({
-      where: { id: run.strategyId, userId },
-      select: { config: true, walletRisk: true },
-    })
-    : null;
   const strategyWalletRisk = normalizeWalletRiskPercent(strategy?.walletRisk ?? 1, 1);
-
-  const indicatorSpecs = parseStrategyIndicators(strategy?.config);
-  const indicatorSeries = buildIndicatorSeries(candles, indicatorSpecs).map((series) => ({
-    key: series.key,
-    name: series.name,
-    period: series.period,
-    panel: series.panel,
-    points: series.values
-      .slice(start, end)
-      .map((value, index) => ({
-        candleIndex: start + index,
-        value,
-      })),
-  }));
+  const indicatorSeries = query.includeIndicators
+    ? buildIndicatorSeries(fullCandles, indicatorSpecs).map((series) => ({
+      key: series.key,
+      name: series.name,
+      period: series.period,
+      panel: series.panel,
+      points: series.values
+        .slice(visibleStart + start, visibleStart + end)
+        .map((value, index) => ({
+          candleIndex: start + index,
+          value,
+        })),
+    }))
+    : [];
 
   const leverageCandidate = Number((seed as { leverage?: unknown }).leverage);
   const leverage = Number.isFinite(leverageCandidate) ? leverageCandidate : 1;
@@ -1793,10 +1840,16 @@ export const getRunTimeline = async (
   const replay = simulateInterleavedPortfolio({
     symbols: replaySymbols,
     candlesBySymbol,
+    analysisStartIndexBySymbol: new Map(
+      replaySymbols.map((replaySymbol) => {
+        const symbolVisibleStart = visibleStartBySymbol.get(replaySymbol) ?? 0;
+        return [replaySymbol, Math.max(1, symbolVisibleStart)];
+      }),
+    ),
     marketType,
     leverage: marketType === 'SPOT' ? 1 : leverage,
     marginMode,
-    strategyConfig: (strategy?.config as Record<string, unknown> | undefined) ?? null,
+    strategyConfig,
     fillModelConfig: {
       feeRate:
         typeof (seed as { feeRate?: unknown }).feeRate === 'number'
@@ -1834,9 +1887,14 @@ export const getRunTimeline = async (
     decisionTrace: [],
   };
 
-  const events = symbolReplay.events
-    .filter((event) => event.candleIndex >= start && event.candleIndex < end)
-    .map((event) => {
+  const chunkGlobalStart = visibleStart + start;
+  const chunkGlobalEnd = visibleStart + end;
+  const events = (query.includeEvents
+    ? symbolReplay.events.filter(
+      (event) => event.candleIndex >= chunkGlobalStart && event.candleIndex < chunkGlobalEnd,
+    )
+    : []
+  ).map((event) => {
       const eventId = `${runId}_${symbol}_${event.tradeSequence}_${event.type}_${event.candleIndex}`;
       const isCloseLike = event.type !== 'ENTRY' && event.type !== 'DCA';
       return {
@@ -1847,7 +1905,7 @@ export const getRunTimeline = async (
         timestamp: event.timestamp.toISOString(),
         price: event.price,
         pnl: event.pnl,
-        candleIndex: event.candleIndex,
+        candleIndex: event.candleIndex - visibleStart,
         reason: isCloseLike ? event.type : null,
       };
     });
@@ -1857,6 +1915,11 @@ export const getRunTimeline = async (
     currentCandleIndex?: number;
     totalCandlesForSymbol?: number;
   };
+  const shouldExposePlaybackCursor = run.status === 'PENDING' || run.status === 'RUNNING';
+  const playbackCursorRelative =
+    typeof liveProgressPlayback.currentCandleIndex === 'number'
+      ? liveProgressPlayback.currentCandleIndex - visibleStart
+      : null;
 
   return {
     runId,
@@ -1868,28 +1931,32 @@ export const getRunTimeline = async (
     previousCursor: start > 0 ? Math.max(0, start - query.chunkSize) : null,
     nextCursor: end < total ? end : null,
     totalCandles: total,
-    candles: chunk.map((candle, index) => ({
-      candleIndex: start + index,
-      openTime: new Date(candle.openTime).toISOString(),
-      closeTime: new Date(candle.closeTime).toISOString(),
-      open: candle.open,
-      high: candle.high,
-      low: candle.low,
-      close: candle.close,
-      volume: candle.volume,
-    })),
+    candles: query.includeCandles
+      ? chunk.map((candle, index) => ({
+        candleIndex: start + index,
+        openTime: new Date(candle.openTime).toISOString(),
+        closeTime: new Date(candle.closeTime).toISOString(),
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+        volume: candle.volume,
+      }))
+      : [],
     events,
-    indicatorSeries,
+    indicatorSeries: query.includeIndicators ? indicatorSeries : [],
     parityDiagnostics: {
       strategyRulesActive: Boolean(
-        parseStrategySignalRules((strategy?.config as Record<string, unknown> | undefined) ?? null),
+        parseStrategySignalRules(strategyConfig),
       ),
       eventCounts: symbolReplay.eventCounts,
       mismatchCount: symbolReplay.decisionTrace.filter((entry) => entry.mismatchReason !== null).length,
       mismatchSamples: symbolReplay.decisionTrace
         .filter(
           (entry) =>
-            entry.mismatchReason !== null && entry.candleIndex >= start && entry.candleIndex < end,
+            entry.mismatchReason !== null &&
+            entry.candleIndex >= chunkGlobalStart &&
+            entry.candleIndex < chunkGlobalEnd,
         )
         .slice(0, 50)
         .map((entry) => ({
@@ -1933,8 +2000,11 @@ export const getRunTimeline = async (
         supportedEventTypes: ['ENTRY', 'EXIT', 'DCA', 'TP', 'TTP', 'SL', 'TRAILING', 'LIQUIDATION'],
     unsupportedEventTypes: [],
     playbackCursor:
-      liveProgressPlayback.currentSymbol === symbol && typeof liveProgressPlayback.currentCandleIndex === 'number'
-        ? liveProgressPlayback.currentCandleIndex
+      shouldExposePlaybackCursor &&
+      liveProgressPlayback.currentSymbol === symbol &&
+      typeof playbackCursorRelative === 'number' &&
+      playbackCursorRelative >= 0
+        ? playbackCursorRelative
         : null,
   };
 };
