@@ -1,5 +1,6 @@
 'use client';
 
+import { useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -8,19 +9,42 @@ import BacktestCreateForm from '@/features/backtest/components/BacktestCreateFor
 import { createBacktestRun } from '@/features/backtest/services/backtests.service';
 import { CreateBacktestRunInput } from '@/features/backtest/types/backtest.type';
 import { handleError } from '@/lib/handleError';
+import { I18nContext } from '../../../../i18n/I18nProvider';
 
 export default function BacktestsCreatePage() {
   const router = useRouter();
+  const i18n = useContext(I18nContext);
+  const locale = i18n?.locale === 'en' ? 'en' : 'pl';
+  const copy =
+    locale === 'en'
+      ? {
+          success: 'Backtest run created',
+          error: 'Could not create backtest run',
+          title: 'New backtest',
+          breadcrumbDashboard: 'Dashboard',
+          breadcrumbBacktests: 'Backtests',
+          breadcrumbCreate: 'Create',
+          submit: 'Create run',
+        }
+      : {
+          success: 'Run backtestu utworzony',
+          error: 'Nie udalo sie utworzyc runa backtestu',
+          title: 'Nowy backtest',
+          breadcrumbDashboard: 'Dashboard',
+          breadcrumbBacktests: 'Backtests',
+          breadcrumbCreate: 'Create',
+          submit: 'Utworz run',
+        };
   const [submitting, setSubmitting] = useState(false);
 
   const handleCreate = async (payload: CreateBacktestRunInput) => {
     setSubmitting(true);
     try {
       const created = await createBacktestRun(payload);
-      toast.success('Run backtestu utworzony');
+      toast.success(copy.success);
       router.push(`/dashboard/backtests/${created.id}`);
     } catch (error: unknown) {
-      toast.error('Nie udalo sie utworzyc runa backtestu', { description: handleError(error) });
+      toast.error(copy.error, { description: handleError(error) });
     } finally {
       setSubmitting(false);
     }
@@ -29,15 +53,15 @@ export default function BacktestsCreatePage() {
   return (
     <section className='w-full space-y-4'>
       <PageTitle
-        title='Nowy backtest'
+        title={copy.title}
         breadcrumb={[
-          { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Backtests', href: '/dashboard/backtests/list' },
-          { label: 'Create' },
+          { label: copy.breadcrumbDashboard, href: '/dashboard' },
+          { label: copy.breadcrumbBacktests, href: '/dashboard/backtests/list' },
+          { label: copy.breadcrumbCreate },
         ]}
       />
 
-      <BacktestCreateForm submitting={submitting} submitLabel='Utworz run' onSubmit={handleCreate} />
+      <BacktestCreateForm submitting={submitting} submitLabel={copy.submit} onSubmit={handleCreate} />
     </section>
   );
 }

@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useContext, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { listStrategies } from '../../strategies/api/strategies.api';
@@ -9,6 +9,7 @@ import { CreateBacktestRunInput } from '../types/backtest.type';
 import { FieldWrapper, TextInputField } from '../../markets/components/FieldControls';
 import { listMarketUniverses } from '../../markets/services/markets.service';
 import { MarketUniverse } from '../../markets/types/marketUniverse.type';
+import { I18nContext } from '../../../i18n/I18nProvider';
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -26,14 +27,60 @@ const MAX_CANDLES_MAX = 10000;
 const INITIAL_BALANCE_MIN = 1;
 const INITIAL_BALANCE_MAX = 1_000_000_000;
 
-const buildSuggestedRunName = (strategyName?: string, universeName?: string, timeframe?: string) => {
-  const strategy = strategyName?.trim() || 'Strategia';
-  const universe = universeName?.trim() || 'Rynek';
+const buildSuggestedRunName = (locale: 'pl' | 'en', strategyName?: string, universeName?: string, timeframe?: string) => {
+  const strategy = strategyName?.trim() || (locale === 'en' ? 'Strategy' : 'Strategia');
+  const universe = universeName?.trim() || (locale === 'en' ? 'Market' : 'Rynek');
   const tf = timeframe?.trim() || '-';
   return `Backtest ${strategy} | ${universe} (${tf})`;
 };
 
 export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }: BacktestCreateFormProps) {
+  const i18n = useContext(I18nContext);
+  const locale = i18n?.locale === 'en' ? 'en' : 'pl';
+  const copy =
+    locale === 'en'
+      ? {
+          strategyLoadError: 'Could not load strategy list',
+          universesLoadError: 'Could not load market groups',
+          noStrategies: 'No strategies',
+          noUniverses: 'No market groups',
+          creating: 'Creating...',
+          title: 'Backtest wizard',
+          subtitle: 'Pick strategy + market universe and run historical simulation.',
+          sectionRunConfig: 'Run setup',
+          sectionSimParams: 'Simulation parameters',
+          runName: 'Run name',
+          runNamePlaceholder: 'e.g. Backtest Trend Pulse | Spot Core (5m)',
+          strategy: 'Strategy',
+          marketGroup: 'Market group',
+          maxCandles: 'Max candles per market (auto-limit)',
+          maxCandlesErrorPrefix: 'Provide a number in range',
+          initialBalance: 'Initial portfolio balance (Backtest/Paper)',
+          initialBalanceErrorPrefix: 'Provide a value in range',
+          notes: 'Notes (optional)',
+          notesPlaceholder: 'Assumptions, data version, comments...',
+        }
+      : {
+          strategyLoadError: 'Nie udalo sie pobrac listy strategii',
+          universesLoadError: 'Nie udalo sie pobrac grup rynkow',
+          noStrategies: 'Brak strategii',
+          noUniverses: 'Brak grup rynkow',
+          creating: 'Tworzenie...',
+          title: 'Kreator backtestu',
+          subtitle: 'Ustaw strategy + market universe i uruchom symulacje na danych historycznych.',
+          sectionRunConfig: 'Konfiguracja runa',
+          sectionSimParams: 'Parametry symulacji',
+          runName: 'Nazwa runa',
+          runNamePlaceholder: 'np. Backtest Trend Pulse | Spot Core (5m)',
+          strategy: 'Strategia',
+          marketGroup: 'Grupa rynkow',
+          maxCandles: 'Maksymalna liczba swiec na rynek (auto-limit)',
+          maxCandlesErrorPrefix: 'Podaj liczbe z zakresu',
+          initialBalance: 'Startowy balans portfela (Backtest/Paper)',
+          initialBalanceErrorPrefix: 'Podaj wartosc z zakresu',
+          notes: 'Notatki (opcjonalnie)',
+          notesPlaceholder: 'Opis zalozen runa, wersja danych, komentarz...',
+        };
   const [name, setName] = useState('');
   const [nameEdited, setNameEdited] = useState(false);
   const [strategyId, setStrategyId] = useState('');
@@ -55,7 +102,7 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
         setStrategies(data);
         setStrategyId((prev) => prev || data[0]?.id || '');
       } catch (error: unknown) {
-        toast.error('Nie udalo sie pobrac listy strategii', {
+        toast.error(copy.strategyLoadError, {
           description: getAxiosMessage(error),
         });
         setStrategies([]);
@@ -75,7 +122,7 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
         setMarketUniverses(data);
         setMarketUniverseId((prev) => prev || data[0]?.id || '');
       } catch (error: unknown) {
-        toast.error('Nie udalo sie pobrac grup rynkow', {
+        toast.error(copy.universesLoadError, {
           description: getAxiosMessage(error),
         });
         setMarketUniverses([]);
@@ -98,11 +145,12 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
   const suggestedRunName = useMemo(
     () =>
       buildSuggestedRunName(
+        locale,
         selectedStrategy?.name,
         selectedUniverse?.name,
         selectedStrategy?.interval
       ),
-    [selectedStrategy?.interval, selectedStrategy?.name, selectedUniverse?.name]
+    [locale, selectedStrategy?.interval, selectedStrategy?.name, selectedUniverse?.name]
   );
 
   useEffect(() => {
@@ -153,38 +201,36 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
       <div className='rounded-xl border border-base-300 bg-base-100 p-4 md:p-5 space-y-5'>
         <div className='flex flex-wrap items-start gap-3'>
           <div className='space-y-1'>
-            <h2 className='text-2xl'>Kreator backtestu</h2>
-            <p className='text-sm opacity-70'>
-              Ustaw strategy + market universe i uruchom symulacje na danych historycznych.
-            </p>
+            <h2 className='text-2xl'>{copy.title}</h2>
+            <p className='text-sm opacity-70'>{copy.subtitle}</p>
           </div>
           <button type='submit' className='btn btn-success ml-auto btn-sm' disabled={!canSubmit}>
-            {submitting ? 'Tworzenie...' : submitLabel}
+            {submitting ? copy.creating : submitLabel}
           </button>
         </div>
 
         <div className='space-y-4'>
           <section className='rounded-lg border border-base-300 bg-base-100 p-3 space-y-3'>
-            <h3 className='text-xs font-semibold uppercase tracking-wide opacity-70'>Konfiguracja runa</h3>
+            <h3 className='text-xs font-semibold uppercase tracking-wide opacity-70'>{copy.sectionRunConfig}</h3>
             <div className='grid gap-3 md:grid-cols-2'>
               <TextInputField
-                label='Nazwa runa'
+                label={copy.runName}
                 value={name}
                 onChange={(value) => {
                   setName(value);
                   setNameEdited(true);
                 }}
-                placeholder='np. Backtest Trend Pulse | Spot Core (5m)'
+                placeholder={copy.runNamePlaceholder}
               />
 
-              <FieldWrapper label='Strategia'>
+              <FieldWrapper label={copy.strategy}>
                 <select
                   className='select select-bordered'
                   value={strategyId}
                   onChange={(event) => setStrategyId(event.target.value)}
                   disabled={strategiesLoading}
                 >
-                  {strategies.length === 0 ? <option value=''>Brak strategii</option> : null}
+                  {strategies.length === 0 ? <option value=''>{copy.noStrategies}</option> : null}
                   {strategies.map((strategy) => (
                     <option key={strategy.id} value={strategy.id}>
                       {strategy.name}
@@ -193,14 +239,14 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
                 </select>
               </FieldWrapper>
 
-              <FieldWrapper label='Grupa rynkow'>
+              <FieldWrapper label={copy.marketGroup}>
                 <select
                   className='select select-bordered'
                   value={marketUniverseId}
                   onChange={(event) => setMarketUniverseId(event.target.value)}
                   disabled={universesLoading}
                 >
-                  {marketUniverses.length === 0 ? <option value=''>Brak grup rynkow</option> : null}
+                  {marketUniverses.length === 0 ? <option value=''>{copy.noUniverses}</option> : null}
                   {marketUniverses.map((universe) => (
                     <option key={universe.id} value={universe.id}>
                       {universe.name} ({universe.marketType}/{universe.baseCurrency})
@@ -212,9 +258,9 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
           </section>
 
           <section className='rounded-lg border border-base-300 bg-base-100 p-3 space-y-3'>
-            <h3 className='text-xs font-semibold uppercase tracking-wide opacity-70'>Parametry symulacji</h3>
+            <h3 className='text-xs font-semibold uppercase tracking-wide opacity-70'>{copy.sectionSimParams}</h3>
             <div className='grid gap-3 md:grid-cols-2'>
-              <FieldWrapper label='Maksymalna liczba swiec na rynek (auto-limit)'>
+              <FieldWrapper label={copy.maxCandles}>
                 <input
                   className='input input-bordered'
                   value={maxCandles}
@@ -226,12 +272,12 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
                 />
                 {!hasValidMaxCandles ? (
                   <p className='mt-1 text-xs text-error'>
-                    Podaj liczbe z zakresu {MAX_CANDLES_MIN} - {MAX_CANDLES_MAX}.
+                    {copy.maxCandlesErrorPrefix} {MAX_CANDLES_MIN} - {MAX_CANDLES_MAX}.
                   </p>
                 ) : null}
               </FieldWrapper>
 
-              <FieldWrapper label='Startowy balans portfela (Backtest/Paper)'>
+              <FieldWrapper label={copy.initialBalance}>
                 <input
                   className='input input-bordered'
                   value={initialBalance}
@@ -243,18 +289,18 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
                 />
                 {!hasValidInitialBalance ? (
                   <p className='mt-1 text-xs text-error'>
-                    Podaj wartosc z zakresu {INITIAL_BALANCE_MIN} - {INITIAL_BALANCE_MAX}.
+                    {copy.initialBalanceErrorPrefix} {INITIAL_BALANCE_MIN} - {INITIAL_BALANCE_MAX}.
                   </p>
                 ) : null}
               </FieldWrapper>
 
               <div className='md:col-span-2'>
-                <FieldWrapper label='Notatki (opcjonalnie)'>
+                <FieldWrapper label={copy.notes}>
                   <textarea
                     className='textarea textarea-bordered min-h-24'
                     value={notes}
                     onChange={(event) => setNotes(event.target.value)}
-                    placeholder='Opis zalozen runa, wersja danych, komentarz...'
+                    placeholder={copy.notesPlaceholder}
                   />
                 </FieldWrapper>
               </div>

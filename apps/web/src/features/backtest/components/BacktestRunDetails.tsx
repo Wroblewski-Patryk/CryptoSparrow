@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { LuChartLine, LuCircleDot, LuDatabase, LuListChecks, LuLoaderCircle, LuShieldCheck, LuSquare } from 'react-icons/lu';
 import {
@@ -16,6 +16,7 @@ import { getStrategy } from '../../strategies/api/strategies.api';
 import { StrategyDto } from '../../strategies/types/StrategyForm.type';
 import { getMarketUniverse } from '../../markets/services/markets.service';
 import { buildNonOverlappingTradeSegments } from '../utils/nonOverlappingTradeSegments';
+import { I18nContext } from '../../../i18n/I18nProvider';
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -37,12 +38,12 @@ const runStatusBadgeClass = (status: BacktestRun['status']) => {
   return 'badge-outline';
 };
 
-const runStatusLabel = (status: BacktestRun['status']) => {
-  if (status === 'COMPLETED') return 'Zakonczony';
-  if (status === 'RUNNING') return 'W toku';
-  if (status === 'PENDING') return 'Oczekuje';
-  if (status === 'FAILED') return 'Niepowodzenie';
-  if (status === 'CANCELED') return 'Anulowany';
+const runStatusLabel = (status: BacktestRun['status'], locale: 'pl' | 'en') => {
+  if (status === 'COMPLETED') return locale === 'en' ? 'Completed' : 'Zakonczony';
+  if (status === 'RUNNING') return locale === 'en' ? 'Running' : 'W toku';
+  if (status === 'PENDING') return locale === 'en' ? 'Pending' : 'Oczekuje';
+  if (status === 'FAILED') return locale === 'en' ? 'Failed' : 'Niepowodzenie';
+  if (status === 'CANCELED') return locale === 'en' ? 'Canceled' : 'Anulowany';
   return status;
 };
 
@@ -139,10 +140,13 @@ const formatHoldDuration = (minutes: number) => {
   return `${hours}h ${restMinutes}m`;
 };
 
-const EXIT_REASON_LABEL: Record<'SIGNAL_EXIT' | 'FINAL_CANDLE' | 'LIQUIDATION', string> = {
-  SIGNAL_EXIT: 'Signal',
-  FINAL_CANDLE: 'Final candle',
-  LIQUIDATION: 'Liquidation',
+const getExitReasonLabel = (
+  reason: 'SIGNAL_EXIT' | 'FINAL_CANDLE' | 'LIQUIDATION',
+  locale: 'pl' | 'en',
+) => {
+  if (reason === 'SIGNAL_EXIT') return locale === 'en' ? 'Signal' : 'Sygnal';
+  if (reason === 'FINAL_CANDLE') return locale === 'en' ? 'Final candle' : 'Ostatnia swieca';
+  return locale === 'en' ? 'Liquidation' : 'Likwidacja';
 };
 
 const filterTradesByTimelineWindow = (items: BacktestTrade[], timeline: BacktestTimeline) => {
@@ -408,12 +412,14 @@ const buildDailyPerformance = (items: BacktestTrade[], initialBalance: number): 
 function SummaryDailyPnlChart({
   points,
   formatCurrency,
+  emptyText,
 }: {
   points: DailyPerformancePoint[];
   formatCurrency: (value: number) => string;
+  emptyText: string;
 }) {
   if (points.length === 0) {
-    return <p className='mt-2 text-sm opacity-70'>Brak danych dziennych do narysowania wykresu.</p>;
+    return <p className='mt-2 text-sm opacity-70'>{emptyText}</p>;
   }
 
   const width = 920;
@@ -502,12 +508,14 @@ function SummaryDailyPnlChart({
 function SummaryBalanceChart({
   points,
   formatCurrency,
+  emptyText,
 }: {
   points: DailyPerformancePoint[];
   formatCurrency: (value: number) => string;
+  emptyText: string;
 }) {
   if (points.length === 0) {
-    return <p className='mt-2 text-sm opacity-70'>Brak danych salda do narysowania wykresu.</p>;
+    return <p className='mt-2 text-sm opacity-70'>{emptyText}</p>;
   }
 
   const width = 920;
@@ -563,6 +571,8 @@ function TimelineCandlesChart({
   rsiLongLevel,
   rsiShortLevel,
   eventsLoaded,
+  noCandlesText,
+  zoomLabel,
 }: {
   timeline: BacktestTimeline;
   trades: BacktestTrade[];
@@ -573,6 +583,8 @@ function TimelineCandlesChart({
   rsiLongLevel: number | null;
   rsiShortLevel: number | null;
   eventsLoaded: boolean;
+  noCandlesText: string;
+  zoomLabel: string;
 }) {
   const zoomSteps = [1, 1.25, 1.5, 2, 3, 4, 6, 8, 10];
   const [zoomIndex, setZoomIndex] = useState(0);
@@ -580,7 +592,7 @@ function TimelineCandlesChart({
   const zoom = zoomSteps[zoomIndex] ?? 1;
   const candles = timeline.candles;
   if (candles.length === 0) {
-    return <p className='text-sm opacity-70'>Brak swiec dla wybranego zakresu.</p>;
+    return <p className='text-sm opacity-70'>{noCandlesText}</p>;
   }
 
   const width = Math.round(900 * zoom);
@@ -763,7 +775,9 @@ function TimelineCandlesChart({
           >
             -
           </button>
-          <span className='text-xs opacity-70'>Zoom x{zoom.toFixed(2)}</span>
+          <span className='text-xs opacity-70'>
+            {zoomLabel} x{zoom.toFixed(2)}
+          </span>
           <button
             type='button'
             className='btn btn-xs btn-outline'
@@ -1087,7 +1101,217 @@ function TimelineCandlesChart({
 }
 
 export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
+  const i18n = useContext(I18nContext);
+  const locale = i18n?.locale === 'en' ? 'en' : 'pl';
   const { formatCurrency, formatDateTime, formatNumber, formatPercent } = useLocaleFormatting();
+  const copy =
+    locale === 'en'
+      ? {
+          loadingTitle: 'Loading backtest details',
+          loadErrorTitle: 'Failed to load backtest details',
+          loadErrorDefault: 'Could not fetch backtest details.',
+          retry: 'Try again',
+          notFoundTitle: 'Run not found',
+          notFoundDescription: 'Selected run does not exist or you do not have access.',
+          statusInProgress: 'in progress',
+          runPreview: 'Backtest run preview',
+          marketGroup: 'Market group:',
+          strategy: 'Strategy:',
+          calcStart: 'Calculation start:',
+          calcEnd: 'Calculation end:',
+          progressTitle: 'Run progress',
+          stageRunCreated: 'Run created',
+          stageEngineRunning: 'Engine is calculating',
+          stageTradesReady: 'Trades ready',
+          stageReportReady: 'Report and chart',
+          stageRunFinished: 'Backtest finished',
+          trades: 'Trades',
+          netPnl: 'Net PnL',
+          winRate: 'Win rate',
+          maxDrawdown: 'Max drawdown',
+          stagesTitle: 'Stages:',
+          tabSummary: 'Summary',
+          tabMarkets: 'Markets',
+          tabTrades: 'Trades',
+          tabRaw: 'Raw',
+          reportNotReadyTitle: 'Report is not ready yet',
+          reportNotReadyDescription: 'After run completion the report will appear automatically.',
+          summaryNetPnl: 'Net PnL',
+          summaryWinRate: 'Win Rate',
+          summaryTrades: 'Trades',
+          summaryMaxDrawdown: 'Max Drawdown',
+          summaryStartBalance: 'Start Balance',
+          summaryEndBalance: 'End Balance',
+          summaryDailyPnlTitle: 'Daily PnL',
+          summaryBalanceTitle: 'Portfolio balance from start to end',
+          summaryDailyPnlNoData: 'No daily data to draw the chart.',
+          summaryBalanceNoData: 'No balance data to draw the chart.',
+          marketsEmptyTitle: 'No market data',
+          marketsEmptyDescription: 'Per-market results appear after at least one trade.',
+          globalLegendTitle: 'Global chart legend',
+          legendEntryLong: 'Entry LONG',
+          legendEntryShort: 'Entry SHORT',
+          legendExitProfit: 'Exit profit',
+          legendExitLoss: 'Exit loss',
+          legendDca: 'DCA',
+          timelineLoading: 'Loading timeline...',
+          timelineLoadingPhaseEvents: 'position markers',
+          timelineLoadingPhaseCandles: 'candles and indicators',
+          timelineLoadingPrefix: 'Loading more',
+          timelineNoCandles: 'No candles for selected range.',
+          timelineLoadErrorDefault: 'Failed to load market timeline.',
+          timelineParityFailedDefault: 'Symbol processing failed during backtest run.',
+          zoom: 'Zoom',
+          pairStatsTitle: 'Pair stats',
+          parityFailed: 'Parity FAILED',
+          txInRangeTotal: 'in range / total',
+          avgHold: 'Avg hold',
+          pnl: 'PnL',
+          dca: 'DCA',
+          executionTitle: 'Execution',
+          avgEntry: 'Average entry',
+          avgExit: 'Average exit',
+          closedOnLastCandle: 'Closed on last candle',
+          liquidations: 'Liquidations',
+          dataRangeTitle: 'Data range',
+          tradesRange: 'Trades range:',
+          candlesRange: 'Candles range:',
+          chartMinMax: 'Chart min/max:',
+          indicatorsTitle: 'Strategy indicators',
+          noIndicators: 'No indicator metadata in strategy config.',
+          noTradesTitle: 'No trades',
+          noTradesDescription: 'There are no trades for this run.',
+          totalProfit: 'Gross profit',
+          totalLoss: 'Gross loss',
+          extremes: 'Extremes',
+          biggestWin: 'Largest win',
+          biggestLoss: 'Largest loss',
+          colSymbol: 'Symbol',
+          colSide: 'Side',
+          colOpen: 'Open',
+          colClose: 'Close',
+          colDuration: 'Duration',
+          colQty: 'Qty',
+          colDca: 'DCA',
+          colEntry: 'Entry',
+          colExit: 'Exit',
+          colNotionalEntry: 'Entry notional',
+          colNotionalExit: 'Exit notional',
+          colMarginEntry: 'Entry margin',
+          colMarginExit: 'Exit margin',
+          colMoveSide: 'Move % (side)',
+          colPnlNotional: 'PnL % (notional)',
+          colPnlMargin: 'PnL % (margin)',
+          colFee: 'Fee',
+          colExitReason: 'Exit reason',
+          colPnl: 'PnL',
+          colCumPnl: 'Cumulative PnL',
+          dash: '-',
+          custom: 'Custom',
+        }
+      : {
+          loadingTitle: 'Ladowanie szczegolow backtestu',
+          loadErrorTitle: 'Nie udalo sie pobrac szczegolow backtestu',
+          loadErrorDefault: 'Nie udalo sie pobrac danych backtestu.',
+          retry: 'Sprobuj ponownie',
+          notFoundTitle: 'Nie znaleziono runa',
+          notFoundDescription: 'Wybrany run nie istnieje albo nie masz do niego dostepu.',
+          statusInProgress: 'w toku',
+          runPreview: 'Podglad uruchomienia backtestu',
+          marketGroup: 'Grupa rynkow:',
+          strategy: 'Strategia:',
+          calcStart: 'Start obliczen:',
+          calcEnd: 'Koniec obliczen:',
+          progressTitle: 'Postep runa',
+          stageRunCreated: 'Run utworzony',
+          stageEngineRunning: 'Silnik liczy wynik',
+          stageTradesReady: 'Lista transakcji gotowa',
+          stageReportReady: 'Raport i wykres',
+          stageRunFinished: 'Backtest zakonczony',
+          trades: 'Transakcje',
+          netPnl: 'Net PnL',
+          winRate: 'Skutecznosc',
+          maxDrawdown: 'Maks. drawdown',
+          stagesTitle: 'Etapy:',
+          tabSummary: 'Podsumowanie',
+          tabMarkets: 'Rynki',
+          tabTrades: 'Transakcje',
+          tabRaw: 'Raw',
+          reportNotReadyTitle: 'Raport nie jest jeszcze gotowy',
+          reportNotReadyDescription: 'Po zakonczeniu runa raport pojawi sie automatycznie.',
+          summaryNetPnl: 'Net PnL',
+          summaryWinRate: 'Skutecznosc',
+          summaryTrades: 'Transakcje',
+          summaryMaxDrawdown: 'Maks. drawdown',
+          summaryStartBalance: 'Saldo startowe',
+          summaryEndBalance: 'Saldo koncowe',
+          summaryDailyPnlTitle: 'Dzienny wynik (zysk/strata)',
+          summaryBalanceTitle: 'Saldo portfela od startu do konca',
+          summaryDailyPnlNoData: 'Brak danych dziennych do narysowania wykresu.',
+          summaryBalanceNoData: 'Brak danych salda do narysowania wykresu.',
+          marketsEmptyTitle: 'Brak danych per rynek',
+          marketsEmptyDescription: 'Wyniki per para pojawia sie po wygenerowaniu przynajmniej jednej transakcji.',
+          globalLegendTitle: 'Legenda globalna wykresow',
+          legendEntryLong: 'Wejscie LONG',
+          legendEntryShort: 'Wejscie SHORT',
+          legendExitProfit: 'Wyjscie zysk',
+          legendExitLoss: 'Wyjscie strata',
+          legendDca: 'DCA',
+          timelineLoading: 'Ladowanie timeline...',
+          timelineLoadingPhaseEvents: 'znacznikow pozycji',
+          timelineLoadingPhaseCandles: 'swiec i wskaznikow',
+          timelineLoadingPrefix: 'Doladowywanie',
+          timelineNoCandles: 'Brak swiec dla wybranego zakresu.',
+          timelineLoadErrorDefault: 'Nie udalo sie pobrac timeline dla rynku.',
+          timelineParityFailedDefault: 'Przetwarzanie symbolu nie powiodlo sie podczas backtestu.',
+          zoom: 'Zoom',
+          pairStatsTitle: 'Statystyki pary',
+          parityFailed: 'Przetwarzanie pary nie powiodlo sie',
+          txInRangeTotal: 'w zakresie / lacznie',
+          avgHold: 'Sredni hold',
+          pnl: 'PnL',
+          dca: 'DCA',
+          executionTitle: 'Egzekucja',
+          avgEntry: 'Srednie wejscie',
+          avgExit: 'Srednie wyjscie',
+          closedOnLastCandle: 'Zamkniete na ostatniej swiecy',
+          liquidations: 'Likwidacje',
+          dataRangeTitle: 'Zakres danych',
+          tradesRange: 'Zakres transakcji:',
+          candlesRange: 'Zakres swiec:',
+          chartMinMax: 'Cena min/max (wykres):',
+          indicatorsTitle: 'Wskazniki strategii',
+          noIndicators: 'Brak danych o wskaznikach w konfiguracji strategii.',
+          noTradesTitle: 'Brak transakcji',
+          noTradesDescription: 'Dla tego runa nie ma jeszcze transakcji.',
+          totalProfit: 'Suma zyskow',
+          totalLoss: 'Suma strat',
+          extremes: 'Ekstrema',
+          biggestWin: 'Najwiekszy zysk',
+          biggestLoss: 'Najwieksza strata',
+          colSymbol: 'Symbol',
+          colSide: 'Strona',
+          colOpen: 'Otwarcie',
+          colClose: 'Zamkniecie',
+          colDuration: 'Czas',
+          colQty: 'Ilosc',
+          colDca: 'DCA',
+          colEntry: 'Wejscie',
+          colExit: 'Wyjscie',
+          colNotionalEntry: 'Notional wej.',
+          colNotionalExit: 'Notional wyj.',
+          colMarginEntry: 'Margin wej.',
+          colMarginExit: 'Margin wyj.',
+          colMoveSide: 'Ruch % (side)',
+          colPnlNotional: 'PnL % (notional)',
+          colPnlMargin: 'PnL % (margin)',
+          colFee: 'Prowizja',
+          colExitReason: 'Powod wyjscia',
+          colPnl: 'PnL',
+          colCumPnl: 'Skumulowany PnL',
+          dash: '-',
+          custom: 'Niestandardowa',
+        };
   const [run, setRun] = useState<BacktestRun | null>(null);
   const [report, setReport] = useState<BacktestReport | null>(null);
   const [trades, setTrades] = useState<BacktestTrade[]>([]);
@@ -1160,11 +1384,11 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
 
       setError(null);
     } catch (err: unknown) {
-      setError(getAxiosMessage(err) ?? 'Nie udalo sie pobrac danych backtestu.');
+      setError(getAxiosMessage(err) ?? copy.loadErrorDefault);
     } finally {
       setLoading(false);
     }
-  }, [runId]);
+  }, [copy.loadErrorDefault, runId]);
 
   useEffect(() => {
     setLoading(true);
@@ -1509,9 +1733,9 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
 
           return normalizedData;
         } catch (err: unknown) {
-          setTimelines((prev) => ({
-            ...prev,
-            [symbol]: {
+        setTimelines((prev) => ({
+          ...prev,
+          [symbol]: {
             data: prev[symbol]?.data ?? null,
             loading: false,
             loadingPhase: null,
@@ -1519,7 +1743,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
             eventsNextCursor: prev[symbol]?.eventsNextCursor ?? null,
             candlesLoaded: prev[symbol]?.candlesLoaded ?? false,
             eventsLoaded: prev[symbol]?.eventsLoaded ?? false,
-            error: getAxiosMessage(err) ?? 'Nie udalo sie pobrac timeline dla rynku.',
+            error: getAxiosMessage(err) ?? copy.timelineLoadErrorDefault,
           },
         }));
           return undefined;
@@ -1556,7 +1780,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
               eventsNextCursor: prev[symbol]?.eventsNextCursor ?? null,
               candlesLoaded: prev[symbol]?.candlesLoaded ?? false,
               eventsLoaded: prev[symbol]?.eventsLoaded ?? false,
-              error: parity.error ?? 'Symbol processing failed during backtest run.',
+              error: parity.error ?? copy.timelineParityFailedDefault,
             },
           }));
           continue;
@@ -1650,46 +1874,46 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
   const stages = useMemo(
     () => [
       {
-        label: 'Run utworzony',
+        label: copy.stageRunCreated,
         icon: <LuListChecks className='h-4 w-4' />,
         done: Boolean(run),
         active: !run,
       },
       {
-        label: 'Silnik liczy wynik',
+        label: copy.stageEngineRunning,
         icon: <LuLoaderCircle className='h-4 w-4' />,
         done: run?.status === 'RUNNING' || run?.status === 'COMPLETED' || run?.status === 'FAILED' || run?.status === 'CANCELED',
         active: run?.status === 'PENDING',
       },
       {
-        label: 'Trade list gotowa',
+        label: copy.stageTradesReady,
         icon: <LuDatabase className='h-4 w-4' />,
         done: trades.length > 0 || run?.status === 'FAILED' || run?.status === 'CANCELED' || run?.status === 'COMPLETED',
         active: run?.status === 'RUNNING' && trades.length === 0,
       },
       {
-        label: 'Raport i wykres',
+        label: copy.stageReportReady,
         icon: <LuChartLine className='h-4 w-4' />,
         done: Boolean(report) || run?.status === 'FAILED' || run?.status === 'CANCELED',
         active: run?.status === 'COMPLETED' && !report,
       },
       {
-        label: 'Backtest zakonczony',
+        label: copy.stageRunFinished,
         icon: <LuShieldCheck className='h-4 w-4' />,
         done: run?.status === 'COMPLETED' || run?.status === 'FAILED' || run?.status === 'CANCELED',
         active: run?.status === 'RUNNING',
       },
     ],
-    [report, run, trades.length]
+    [copy.stageEngineRunning, copy.stageReportReady, copy.stageRunCreated, copy.stageRunFinished, copy.stageTradesReady, report, run, trades.length]
   );
 
-  if (loading) return <LoadingState title='Ladowanie szczegolow backtestu' />;
+  if (loading) return <LoadingState title={copy.loadingTitle} />;
   if (error) {
     return (
       <ErrorState
-        title='Nie udalo sie pobrac szczegolow backtestu'
+        title={copy.loadErrorTitle}
         description={error}
-        retryLabel='Sprobuj ponownie'
+        retryLabel={copy.retry}
         onRetry={() => {
           setLoading(true);
           void loadData();
@@ -1697,12 +1921,16 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
       />
     );
   }
-  if (!run) return <EmptyState title='Nie znaleziono runa' description='Wybrany run nie istnieje albo nie masz do niego dostepu.' />;
+  if (!run) return <EmptyState title={copy.notFoundTitle} description={copy.notFoundDescription} />;
 
   const runEndLabel =
-    run.finishedAt != null ? formatDateTime(run.finishedAt) : run.status === 'RUNNING' || run.status === 'PENDING' ? 'w toku' : '-';
+    run.finishedAt != null
+      ? formatDateTime(run.finishedAt)
+      : run.status === 'RUNNING' || run.status === 'PENDING'
+        ? copy.statusInProgress
+        : copy.dash;
   const showProgress = progress > 0 && progress < 100;
-  const marketGroupLabel = marketUniverseName ?? 'Custom';
+  const marketGroupLabel = marketUniverseName ?? copy.custom;
   const preferReportMetrics = run.status === 'COMPLETED' || run.status === 'FAILED' || run.status === 'CANCELED';
   const headlineTrades =
     (preferReportMetrics ? report?.totalTrades : liveProgress?.totalTrades) ??
@@ -1715,25 +1943,25 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
   const headlineMetrics = [
     {
       key: 'trades',
-      label: 'Transakcje',
+      label: copy.trades,
       value: formatNumber(headlineTrades),
       valueClass: '',
     },
     {
       key: 'net',
-      label: 'Net PnL',
+      label: copy.netPnl,
       value: headlineNetPnl == null ? '-' : formatCurrency(headlineNetPnl),
       valueClass: pnlClass(headlineNetPnl),
     },
     {
       key: 'winrate',
-      label: 'Win rate',
+      label: copy.winRate,
       value: report ? formatPercent(report.winRate) : '-',
       valueClass: '',
     },
     {
       key: 'drawdown',
-      label: 'Max drawdown',
+      label: copy.maxDrawdown,
       value: report ? formatPercent(report.maxDrawdown) : '-',
       valueClass: '',
     },
@@ -1744,23 +1972,23 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
         <div className='flex flex-wrap items-start justify-between gap-3'>
           <div className='space-y-1'>
             <h2 className='text-lg font-semibold'>{run.name}</h2>
-            <p className='text-xs opacity-60'>Podglad uruchomienia backtestu</p>
+            <p className='text-xs opacity-60'>{copy.runPreview}</p>
           </div>
-          <span className={`badge ${runStatusBadgeClass(run.status)}`}>{runStatusLabel(run.status)}</span>
+          <span className={`badge ${runStatusBadgeClass(run.status)}`}>{runStatusLabel(run.status, locale)}</span>
         </div>
 
         <div className='rounded-lg border border-base-300 bg-base-200 px-3 py-2 text-xs'>
           <div className='flex flex-wrap items-center gap-x-3 gap-y-1'>
-            <span className='opacity-70'>Grupa rynkow:</span>
+            <span className='opacity-70'>{copy.marketGroup}</span>
             <span className='font-semibold text-sm tracking-wide'>{marketGroupLabel}</span>
             <span className='opacity-40'>|</span>
-            <span className='opacity-70'>Strategia:</span>
-            <span className='font-medium'>{strategy?.name ?? '-'}</span>
+            <span className='opacity-70'>{copy.strategy}</span>
+            <span className='font-medium'>{strategy?.name ?? copy.dash}</span>
             <span className='opacity-40'>|</span>
-            <span className='opacity-70'>Start obliczen:</span>
+            <span className='opacity-70'>{copy.calcStart}</span>
             <span className='font-medium'>{formatDateTime(run.startedAt)}</span>
             <span className='opacity-40'>|</span>
-            <span className='opacity-70'>Koniec obliczen:</span>
+            <span className='opacity-70'>{copy.calcEnd}</span>
             <span className='font-medium'>{runEndLabel}</span>
           </div>
         </div>
@@ -1768,7 +1996,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
         {showProgress ? (
           <div className='space-y-1'>
             <div className='flex items-center justify-between text-xs opacity-70'>
-              <span>Postep runa</span>
+              <span>{copy.progressTitle}</span>
               <span>{progress}%</span>
             </div>
             <progress className={`progress w-full ${runProgressClass(run.status)}`} value={progress} max={100} />
@@ -1790,7 +2018,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
 
         <div className='rounded-lg border border-base-300 bg-base-200 px-3 py-2'>
           <div className='flex flex-wrap items-center gap-2 text-xs'>
-            <span className='text-[11px] uppercase tracking-wide opacity-60'>Etapy:</span>
+            <span className='text-[11px] uppercase tracking-wide opacity-60'>{copy.stagesTitle}</span>
           {stages.map((stage) => (
             <span
               key={stage.label}
@@ -1817,28 +2045,28 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
             className={`tab ${activeTab === 'summary' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('summary')}
           >
-            Summary
+            {copy.tabSummary}
           </button>
           <button
             type='button'
             className={`tab ${activeTab === 'markets' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('markets')}
           >
-            Markets
+            {copy.tabMarkets}
           </button>
           <button
             type='button'
             className={`tab ${activeTab === 'trades' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('trades')}
           >
-            Trades
+            {copy.tabTrades}
           </button>
           <button
             type='button'
             className={`tab ${activeTab === 'raw' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('raw')}
           >
-            Raw
+            {copy.tabRaw}
           </button>
         </div>
 
@@ -1846,46 +2074,54 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
           <div className='mt-4 space-y-3'>
             {!report ? (
               <EmptyState
-                title='Raport nie jest jeszcze gotowy'
-                description='Po zakonczeniu runa raport pojawi sie automatycznie.'
+                title={copy.reportNotReadyTitle}
+                description={copy.reportNotReadyDescription}
               />
             ) : (
               <>
                 <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-6'>
                   <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
-                    <p className='text-xs uppercase tracking-wide opacity-70'>Net PnL</p>
+                    <p className='text-xs uppercase tracking-wide opacity-70'>{copy.summaryNetPnl}</p>
                     <p className={`mt-1 text-2xl font-semibold ${pnlClass(report.netPnl)}`}>{formatCurrency(report.netPnl)}</p>
                   </div>
                   <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
-                    <p className='text-xs uppercase tracking-wide opacity-70'>Win Rate</p>
+                    <p className='text-xs uppercase tracking-wide opacity-70'>{copy.summaryWinRate}</p>
                     <p className='mt-1 text-2xl font-semibold'>{formatPercent(report.winRate)}</p>
                   </div>
                   <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
-                    <p className='text-xs uppercase tracking-wide opacity-70'>Transakcje</p>
+                    <p className='text-xs uppercase tracking-wide opacity-70'>{copy.summaryTrades}</p>
                     <p className='mt-1 text-2xl font-semibold'>{formatNumber(report.totalTrades)}</p>
                   </div>
                   <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
-                    <p className='text-xs uppercase tracking-wide opacity-70'>Max Drawdown</p>
+                    <p className='text-xs uppercase tracking-wide opacity-70'>{copy.summaryMaxDrawdown}</p>
                     <p className='mt-1 text-2xl font-semibold'>{formatPercent(report.maxDrawdown)}</p>
                   </div>
                   <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
-                    <p className='text-xs uppercase tracking-wide opacity-70'>Start Balance</p>
+                    <p className='text-xs uppercase tracking-wide opacity-70'>{copy.summaryStartBalance}</p>
                     <p className='mt-1 text-2xl font-semibold'>{formatCurrency(summaryMetrics?.initialBalance ?? 0)}</p>
                   </div>
                   <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
-                    <p className='text-xs uppercase tracking-wide opacity-70'>End Balance</p>
+                    <p className='text-xs uppercase tracking-wide opacity-70'>{copy.summaryEndBalance}</p>
                     <p className='mt-1 text-2xl font-semibold'>{formatCurrency(summaryMetrics?.endBalance ?? 0)}</p>
                   </div>
                 </div>
 
                 <div className='grid gap-3 xl:grid-cols-2'>
                   <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
-                    <p className='text-sm font-medium'>Dzienny wynik (zysk/strata)</p>
-                    <SummaryDailyPnlChart points={dailyPerformance} formatCurrency={formatCurrency} />
+                    <p className='text-sm font-medium'>{copy.summaryDailyPnlTitle}</p>
+                    <SummaryDailyPnlChart
+                      points={dailyPerformance}
+                      formatCurrency={formatCurrency}
+                      emptyText={copy.summaryDailyPnlNoData}
+                    />
                   </div>
                   <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
-                    <p className='text-sm font-medium'>Saldo portfela od startu do konca</p>
-                    <SummaryBalanceChart points={dailyPerformance} formatCurrency={formatCurrency} />
+                    <p className='text-sm font-medium'>{copy.summaryBalanceTitle}</p>
+                    <SummaryBalanceChart
+                      points={dailyPerformance}
+                      formatCurrency={formatCurrency}
+                      emptyText={copy.summaryBalanceNoData}
+                    />
                   </div>
                 </div>
               </>
@@ -1897,33 +2133,33 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
           <div className='mt-4 space-y-4'>
             {symbolStats.length === 0 ? (
               <EmptyState
-                title='Brak danych per rynek'
-                description='Wyniki per para pojawia sie po wygenerowaniu przynajmniej jednej transakcji.'
+                title={copy.marketsEmptyTitle}
+                description={copy.marketsEmptyDescription}
               />
             ) : (
               <>
                 <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
-                  <h4 className='mb-2 text-sm font-semibold'>Legenda globalna wykresow</h4>
+                  <h4 className='mb-2 text-sm font-semibold'>{copy.globalLegendTitle}</h4>
                   <div className='flex flex-wrap items-center gap-4 text-xs text-base-content/75'>
                     <span className='inline-flex items-center gap-1'>
                       <span className='inline-block h-0 w-0 border-l-[4px] border-r-[4px] border-b-[6px] border-l-transparent border-r-transparent border-b-success' />
-                      Entry LONG
+                      {copy.legendEntryLong}
                     </span>
                     <span className='inline-flex items-center gap-1'>
                       <span className='inline-block h-0 w-0 border-l-[4px] border-r-[4px] border-t-[6px] border-l-transparent border-r-transparent border-t-error' />
-                      Entry SHORT
+                      {copy.legendEntryShort}
                     </span>
                     <span className='inline-flex items-center gap-1'>
                       <LuSquare className='h-3.5 w-3.5 text-success' />
-                      Exit zysk
+                      {copy.legendExitProfit}
                     </span>
                     <span className='inline-flex items-center gap-1'>
                       <LuSquare className='h-3.5 w-3.5 text-error' />
-                      Exit strata
+                      {copy.legendExitLoss}
                     </span>
                     <span className='inline-flex items-center gap-1'>
                       <LuCircleDot className='h-3.5 w-3.5 text-info' />
-                      DCA
+                      {copy.legendDca}
                     </span>
                   </div>
                 </div>
@@ -1982,10 +2218,12 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                         <>
                           <div className='grid gap-3 xl:grid-cols-[minmax(0,1fr)_320px]'>
                             <div className='space-y-3'>
-                              {timelineState.loading && !timeline ? <p className='text-sm opacity-70'>Ladowanie timeline...</p> : null}
+                              {timelineState.loading && !timeline ? <p className='text-sm opacity-70'>{copy.timelineLoading}</p> : null}
                               {timelineState.loading && timeline ? (
                                 <p className='text-xs opacity-70'>
-                                  Doladowywanie {timelineState.loadingPhase === 'events' ? 'znacznikow pozycji' : 'swiec i wskaznikow'}...
+                                  {copy.timelineLoadingPrefix}{' '}
+                                  {timelineState.loadingPhase === 'events' ? copy.timelineLoadingPhaseEvents : copy.timelineLoadingPhaseCandles}
+                                  ...
                                 </p>
                               ) : null}
                               {timelineState.error ? <p className='text-sm text-error'>{timelineState.error}</p> : null}
@@ -2000,6 +2238,8 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                                   rsiLongLevel={indicatorMeta.rsiLongLevel}
                                   rsiShortLevel={indicatorMeta.rsiShortLevel}
                                   eventsLoaded={timelineState.eventsLoaded}
+                                  noCandlesText={copy.timelineNoCandles}
+                                  zoomLabel={copy.zoom}
                                 />
                               ) : (
                                 <div className='h-[320px] w-full animate-pulse rounded-lg bg-base-200/60' />
@@ -2007,91 +2247,91 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                             </div>
 
                             <aside className='rounded-lg border border-base-300 bg-base-200 p-3 text-sm'>
-                              <h4 className='font-semibold'>Statystyki pary</h4>
+                              <h4 className='font-semibold'>{copy.pairStatsTitle}</h4>
                               {parityFailed ? (
                                 <div className='mt-2 rounded-md border border-error/40 bg-error/10 p-2'>
-                                  <p className='text-xs font-medium text-error'>Parity FAILED</p>
+                                  <p className='text-xs font-medium text-error'>{copy.parityFailed}</p>
                                   {parity?.error ? <p className='mt-1 text-xs text-error/90'>{parity.error}</p> : null}
                                 </div>
                               ) : null}
 
                               <div className='mt-3 grid grid-cols-2 gap-2'>
                                 <div className='rounded-md border border-base-300 bg-base-100/70 p-2'>
-                                  <p className='text-[10px] uppercase tracking-wide opacity-65'>Transakcje</p>
+                                  <p className='text-[10px] uppercase tracking-wide opacity-65'>{copy.trades}</p>
                                   <p className='mt-1 text-base font-semibold'>
                                     {formatNumber(visibleStats.tradesCount)}
                                     {showVisibleSubset ? ` / ${formatNumber(stats.tradesCount)}` : ''}
                                   </p>
-                                  {showVisibleSubset ? <p className='mt-0.5 text-[10px] opacity-60'>w zakresie / lacznie</p> : null}
+                                  {showVisibleSubset ? <p className='mt-0.5 text-[10px] opacity-60'>{copy.txInRangeTotal}</p> : null}
                                 </div>
                                 <div className='rounded-md border border-base-300 bg-base-100/70 p-2'>
-                                  <p className='text-[10px] uppercase tracking-wide opacity-65'>Win rate</p>
+                                  <p className='text-[10px] uppercase tracking-wide opacity-65'>{copy.winRate}</p>
                                   <p className='mt-1 text-base font-semibold'>{formatPercent(visibleStats.winRate)}</p>
                                   <p className='mt-0.5 text-[10px] opacity-60'>{visibleStats.wins}/{visibleStats.losses} W/L</p>
                                 </div>
                                 <div className='rounded-md border border-base-300 bg-base-100/70 p-2'>
-                                  <p className='text-[10px] uppercase tracking-wide opacity-65'>PnL</p>
+                                  <p className='text-[10px] uppercase tracking-wide opacity-65'>{copy.pnl}</p>
                                   <p className={`mt-1 text-base font-semibold ${pnlClass(visibleStats.netPnl)}`}>
                                     {formatCurrency(visibleStats.netPnl)}
                                     {showVisibleSubset ? ` / ${formatCurrency(stats.netPnl)}` : ''}
                                   </p>
                                 </div>
                                 <div className='rounded-md border border-base-300 bg-base-100/70 p-2'>
-                                  <p className='text-[10px] uppercase tracking-wide opacity-65'>Sredni hold</p>
+                                  <p className='text-[10px] uppercase tracking-wide opacity-65'>{copy.avgHold}</p>
                                   <p className='mt-1 text-base font-semibold'>{formatNumber(visibleStats.avgHoldMinutes)} min</p>
                                 </div>
                               </div>
 
                               <div className='mt-3 space-y-3'>
                                 <section className='rounded-md border border-base-300 bg-base-100/60 p-2'>
-                                  <h5 className='text-xs font-semibold uppercase tracking-wide opacity-70'>Egzekucja</h5>
+                                  <h5 className='text-xs font-semibold uppercase tracking-wide opacity-70'>{copy.executionTitle}</h5>
                                   <div className='mt-1 space-y-1 text-xs'>
                                     <p className='flex items-center justify-between gap-2'>
-                                      <span className='opacity-70'>Srednie wejscie</span>
+                                      <span className='opacity-70'>{copy.avgEntry}</span>
                                       <span className='font-medium'>{formatNumber(visibleStats.avgEntry)}</span>
                                     </p>
                                     <p className='flex items-center justify-between gap-2'>
-                                      <span className='opacity-70'>Srednie wyjscie</span>
+                                      <span className='opacity-70'>{copy.avgExit}</span>
                                       <span className='font-medium'>{formatNumber(visibleStats.avgExit)}</span>
                                     </p>
                                     <p className='flex items-center justify-between gap-2'>
-                                      <span className='opacity-70'>DCA</span>
+                                      <span className='opacity-70'>{copy.dca}</span>
                                       <span className='font-medium'>{formatNumber(visibleLifecycleCounts.DCA ?? 0)}</span>
                                     </p>
                                     <p className='flex items-center justify-between gap-2'>
-                                      <span className='opacity-70'>Zamkniete na ostatniej swiecy</span>
+                                      <span className='opacity-70'>{copy.closedOnLastCandle}</span>
                                       <span className='font-medium'>{formatNumber(visibleFinalCandleClosures)}</span>
                                     </p>
                                     <p className='flex items-center justify-between gap-2'>
-                                      <span className='opacity-70'>Likwidacje</span>
+                                      <span className='opacity-70'>{copy.liquidations}</span>
                                       <span className='font-medium'>{formatNumber(visibleLiquidations)}</span>
                                     </p>
                                   </div>
                                 </section>
 
                                 <section className='rounded-md border border-base-300 bg-base-100/60 p-2'>
-                                  <h5 className='text-xs font-semibold uppercase tracking-wide opacity-70'>Zakres danych</h5>
+                                  <h5 className='text-xs font-semibold uppercase tracking-wide opacity-70'>{copy.dataRangeTitle}</h5>
                                   <div className='mt-1 space-y-1 text-xs'>
                                     <p>
-                                      <span className='opacity-70'>Zakres transakcji:</span>{' '}
+                                      <span className='opacity-70'>{copy.tradesRange}</span>{' '}
                                       <span className='font-medium'>
-                                        {visibleStats.firstAt ? formatDateTime(new Date(visibleStats.firstAt).toISOString()) : '-'} -{' '}
-                                        {visibleStats.lastAt ? formatDateTime(new Date(visibleStats.lastAt).toISOString()) : '-'}
+                                        {visibleStats.firstAt ? formatDateTime(new Date(visibleStats.firstAt).toISOString()) : copy.dash} -{' '}
+                                        {visibleStats.lastAt ? formatDateTime(new Date(visibleStats.lastAt).toISOString()) : copy.dash}
                                       </span>
                                     </p>
                                     <p>
-                                      <span className='opacity-70'>Zakres swiec:</span>{' '}
+                                      <span className='opacity-70'>{copy.candlesRange}</span>{' '}
                                       <span className='font-medium'>
-                                        {timelineWindowStart ? formatDateTime(new Date(timelineWindowStart).toISOString()) : '-'} -{' '}
-                                        {timelineWindowEnd ? formatDateTime(new Date(timelineWindowEnd).toISOString()) : '-'}
+                                        {timelineWindowStart ? formatDateTime(new Date(timelineWindowStart).toISOString()) : copy.dash} -{' '}
+                                        {timelineWindowEnd ? formatDateTime(new Date(timelineWindowEnd).toISOString()) : copy.dash}
                                       </span>
                                     </p>
                                     <p>
-                                      <span className='opacity-70'>Cena min/max (wykres):</span>{' '}
+                                      <span className='opacity-70'>{copy.chartMinMax}</span>{' '}
                                       <span className='font-medium'>
                                         {timelineMinPrice != null && timelineMaxPrice != null
                                           ? `${formatNumber(timelineMinPrice)} / ${formatNumber(timelineMaxPrice)}`
-                                          : '-'}
+                                          : copy.dash}
                                       </span>
                                     </p>
                                   </div>
@@ -2099,7 +2339,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                               </div>
 
                               <div className='divider my-2' />
-                              <h5 className='font-semibold'>Wskazniki strategii</h5>
+                              <h5 className='font-semibold'>{copy.indicatorsTitle}</h5>
                               {indicatorMeta.names.length > 0 ? (
                                 <div className='mt-2 flex flex-wrap gap-1.5'>
                                   {indicatorMeta.names.map((name) => (
@@ -2109,7 +2349,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                                   ))}
                                 </div>
                               ) : (
-                                <p className='mt-1 text-xs opacity-70'>Brak danych o wskaznikach w konfiguracji strategii.</p>
+                                <p className='mt-1 text-xs opacity-70'>{copy.noIndicators}</p>
                               )}
                             </aside>
                           </div>
@@ -2126,38 +2366,38 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
         {activeTab === 'trades' ? (
           <div className='mt-4'>
             {trades.length === 0 ? (
-              <EmptyState title='Brak trades' description='Dla tego runa nie ma jeszcze transakcji.' />
+              <EmptyState title={copy.noTradesTitle} description={copy.noTradesDescription} />
             ) : (
               <div className='space-y-3'>
                 {tradeInsights ? (
                   <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-4'>
                     <div className='rounded-md border border-base-300 bg-base-200 p-2'>
-                      <p className='text-[10px] uppercase tracking-wide opacity-65'>Net PnL</p>
+                      <p className='text-[10px] uppercase tracking-wide opacity-65'>{copy.netPnl}</p>
                       <p className={`mt-1 text-sm font-semibold ${pnlClass(tradeInsights.finalCumulative)}`}>
                         {formatCurrency(tradeInsights.finalCumulative)}
                       </p>
                     </div>
                     <div className='rounded-md border border-base-300 bg-base-200 p-2'>
-                      <p className='text-[10px] uppercase tracking-wide opacity-65'>Suma zyskow</p>
+                      <p className='text-[10px] uppercase tracking-wide opacity-65'>{copy.totalProfit}</p>
                       <p className='mt-1 text-sm font-semibold text-success'>{formatCurrency(tradeInsights.grossProfit)}</p>
                     </div>
                     <div className='rounded-md border border-base-300 bg-base-200 p-2'>
-                      <p className='text-[10px] uppercase tracking-wide opacity-65'>Suma strat</p>
+                      <p className='text-[10px] uppercase tracking-wide opacity-65'>{copy.totalLoss}</p>
                       <p className='mt-1 text-sm font-semibold text-error'>{formatCurrency(tradeInsights.grossLoss)}</p>
                     </div>
                     <div className='rounded-md border border-base-300 bg-base-200 p-2'>
-                      <p className='text-[10px] uppercase tracking-wide opacity-65'>Ekstrema</p>
+                      <p className='text-[10px] uppercase tracking-wide opacity-65'>{copy.extremes}</p>
                       <div className='mt-1 space-y-0.5 text-xs'>
                         <p className='flex items-center justify-between gap-2'>
-                          <span className='opacity-70'>Najwiekszy zysk</span>
+                          <span className='opacity-70'>{copy.biggestWin}</span>
                           <span className='font-semibold text-success'>
-                            {tradeInsights.hasWins ? formatCurrency(tradeInsights.maxWin) : '-'}
+                            {tradeInsights.hasWins ? formatCurrency(tradeInsights.maxWin) : copy.dash}
                           </span>
                         </p>
                         <p className='flex items-center justify-between gap-2'>
-                          <span className='opacity-70'>Najwieksza strata</span>
+                          <span className='opacity-70'>{copy.biggestLoss}</span>
                           <span className='font-semibold text-error'>
-                            {tradeInsights.hasLosses ? formatCurrency(tradeInsights.maxLoss) : '-'}
+                            {tradeInsights.hasLosses ? formatCurrency(tradeInsights.maxLoss) : copy.dash}
                           </span>
                         </p>
                       </div>
@@ -2170,26 +2410,26 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                     <thead>
                       <tr>
                         <th>#</th>
-                        <th>Symbol</th>
-                        <th>Side</th>
-                        <th>Otwarcie</th>
-                        <th>Zamkniecie</th>
-                        <th>Czas</th>
-                        <th>Qty</th>
-                        <th>DCA</th>
-                        <th>Entry</th>
-                        <th>Exit</th>
-                        <th>Notional wej.</th>
-                        <th>Notional wyj.</th>
-                        <th>Margin wej.</th>
-                        <th>Margin wyj.</th>
-                        <th>Ruch % (side)</th>
-                        <th>PnL % (notional)</th>
-                        <th>PnL % (margin)</th>
-                        <th>Fee</th>
-                        <th>Exit reason</th>
-                        <th>PnL</th>
-                        <th>Skumulowany PnL</th>
+                        <th>{copy.colSymbol}</th>
+                        <th>{copy.colSide}</th>
+                        <th>{copy.colOpen}</th>
+                        <th>{copy.colClose}</th>
+                        <th>{copy.colDuration}</th>
+                        <th>{copy.colQty}</th>
+                        <th>{copy.colDca}</th>
+                        <th>{copy.colEntry}</th>
+                        <th>{copy.colExit}</th>
+                        <th>{copy.colNotionalEntry}</th>
+                        <th>{copy.colNotionalExit}</th>
+                        <th>{copy.colMarginEntry}</th>
+                        <th>{copy.colMarginExit}</th>
+                        <th>{copy.colMoveSide}</th>
+                        <th>{copy.colPnlNotional}</th>
+                        <th>{copy.colPnlMargin}</th>
+                        <th>{copy.colFee}</th>
+                        <th>{copy.colExitReason}</th>
+                        <th>{copy.colPnl}</th>
+                        <th>{copy.colCumPnl}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2241,7 +2481,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                                     : 'badge-ghost'
                               }`}
                             >
-                              {EXIT_REASON_LABEL[row.trade.exitReason ?? 'SIGNAL_EXIT']}
+                              {getExitReasonLabel(row.trade.exitReason ?? 'SIGNAL_EXIT', locale)}
                             </span>
                           </td>
                           <td className={pnlClass(row.trade.pnl)}>{formatCurrency(row.trade.pnl)}</td>

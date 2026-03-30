@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import { EmptyState, ErrorState, LoadingState } from '@/ui/components/ViewState';
 import BacktestsRunsTable from './BacktestsRunsTable';
 import { listBacktestRuns } from '../services/backtests.service';
 import { BacktestRun, BacktestStatus } from '../types/backtest.type';
+import { I18nContext } from '../../../i18n/I18nProvider';
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -13,6 +14,26 @@ const getAxiosMessage = (err: unknown) => {
 };
 
 export default function BacktestsListView() {
+  const i18n = useContext(I18nContext);
+  const locale = i18n?.locale === 'en' ? 'en' : 'pl';
+  const copy =
+    locale === 'en'
+      ? {
+          loadErrorDefault: 'Could not load backtest list.',
+          loadingTitle: 'Loading backtest list',
+          errorTitle: 'Could not load backtest list',
+          retry: 'Try again',
+          emptyTitle: 'No backtest runs',
+          emptyDescription: 'Create the first run to browse results.',
+        }
+      : {
+          loadErrorDefault: 'Nie udalo sie pobrac listy backtestow.',
+          loadingTitle: 'Ladowanie listy backtestow',
+          errorTitle: 'Nie udalo sie pobrac listy backtestow',
+          retry: 'Sprobuj ponownie',
+          emptyTitle: 'Brak runow backtestu',
+          emptyDescription: 'Utworz pierwszy run, aby przejrzec wyniki.',
+        };
   const [rows, setRows] = useState<BacktestRun[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<BacktestStatus | 'ALL'>('ALL');
   const [loading, setLoading] = useState(true);
@@ -25,29 +46,29 @@ export default function BacktestsListView() {
       const data = await listBacktestRuns(selectedStatus === 'ALL' ? undefined : selectedStatus);
       setRows(data);
     } catch (err: unknown) {
-      setError(getAxiosMessage(err) ?? 'Nie udalo sie pobrac listy backtestow.');
+      setError(getAxiosMessage(err) ?? copy.loadErrorDefault);
     } finally {
       setLoading(false);
     }
-  }, [selectedStatus]);
+  }, [copy.loadErrorDefault, selectedStatus]);
 
   useEffect(() => {
     void loadData();
   }, [loadData]);
 
-  if (loading) return <LoadingState title='Ladowanie listy backtestow' />;
+  if (loading) return <LoadingState title={copy.loadingTitle} />;
   if (error) {
     return (
       <ErrorState
-        title='Nie udalo sie pobrac listy backtestow'
+        title={copy.errorTitle}
         description={error}
-        retryLabel='Sprobuj ponownie'
+        retryLabel={copy.retry}
         onRetry={() => void loadData()}
       />
     );
   }
   if (rows.length === 0) {
-    return <EmptyState title='Brak runow backtestu' description='Utworz pierwszy run, aby przejrzec wyniki.' />;
+    return <EmptyState title={copy.emptyTitle} description={copy.emptyDescription} />;
   }
 
   return (
