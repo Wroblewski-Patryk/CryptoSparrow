@@ -9,11 +9,12 @@ import {
   getBacktestRunTimeline,
   listBacktestRunTrades,
 } from '../services/backtests.service';
-import { BacktestReport, BacktestRun, BacktestTimeline, BacktestTrade } from '../types/backtest.type';
+import { BacktestReport, BacktestRun, BacktestTimeline, BacktestTimelineEvent, BacktestTrade } from '../types/backtest.type';
 import { EmptyState, ErrorState, LoadingState } from '@/ui/components/ViewState';
 import { useLocaleFormatting } from '@/i18n/useLocaleFormatting';
 import { getStrategy } from '../../strategies/api/strategies.api';
 import { StrategyDto } from '../../strategies/types/StrategyForm.type';
+import { getMarketUniverse } from '../../markets/services/markets.service';
 import { buildNonOverlappingTradeSegments } from '../utils/nonOverlappingTradeSegments';
 
 const getAxiosMessage = (err: unknown) => {
@@ -26,6 +27,30 @@ const pnlClass = (value: number | null) => {
   if (value > 0) return 'text-success';
   if (value < 0) return 'text-error';
   return '';
+};
+
+const runStatusBadgeClass = (status: BacktestRun['status']) => {
+  if (status === 'COMPLETED') return 'badge-success';
+  if (status === 'RUNNING') return 'badge-info';
+  if (status === 'PENDING') return 'badge-warning';
+  if (status === 'FAILED' || status === 'CANCELED') return 'badge-error';
+  return 'badge-outline';
+};
+
+const runStatusLabel = (status: BacktestRun['status']) => {
+  if (status === 'COMPLETED') return 'Zakonczony';
+  if (status === 'RUNNING') return 'W toku';
+  if (status === 'PENDING') return 'Oczekuje';
+  if (status === 'FAILED') return 'Niepowodzenie';
+  if (status === 'CANCELED') return 'Anulowany';
+  return status;
+};
+
+const runProgressClass = (status: BacktestRun['status']) => {
+  if (status === 'COMPLETED') return 'progress-success';
+  if (status === 'FAILED' || status === 'CANCELED') return 'progress-error';
+  if (status === 'RUNNING') return 'progress-info';
+  return 'progress-primary';
 };
 
 type DailyPerformancePoint = {
@@ -103,6 +128,21 @@ type StrategyIndicatorMeta = {
 const safeDateMs = (value: string) => {
   const ms = Date.parse(value);
   return Number.isFinite(ms) ? ms : 0;
+};
+
+const formatHoldDuration = (minutes: number) => {
+  if (!Number.isFinite(minutes) || minutes <= 0) return '0m';
+  if (minutes < 60) return `${Math.round(minutes)}m`;
+  const hours = Math.floor(minutes / 60);
+  const restMinutes = Math.round(minutes % 60);
+  if (restMinutes === 0) return `${hours}h`;
+  return `${hours}h ${restMinutes}m`;
+};
+
+const EXIT_REASON_LABEL: Record<'SIGNAL_EXIT' | 'FINAL_CANDLE' | 'LIQUIDATION', string> = {
+  SIGNAL_EXIT: 'Signal',
+  FINAL_CANDLE: 'Final candle',
+  LIQUIDATION: 'Liquidation',
 };
 
 const filterTradesByTimelineWindow = (items: BacktestTrade[], timeline: BacktestTimeline) => {
@@ -275,6 +315,71 @@ const buildSymbolStats = (items: BacktestTrade[], configuredSymbols: string[] = 
   }
 
   return withMissing.sort((a, b) => a.symbol.localeCompare(b.symbol));
+};
+
+const CLOSE_LIKE_TIMELINE_EVENT_TYPES = new Set<BacktestTimelineEvent['type']>([
+  'EXIT',
+  'TP',
+  'TTP',
+  'SL',
+  'TRAILING',
+  'LIQUIDATION',
+]);
+
+const buildSyntheticTradesFromTimelineEvents = (
+  events: BacktestTimelineEvent[],
+  symbol: string,
+): BacktestTrade[] => {
+  if (!Array.isArray(events) || events.length === 0) return [];
+
+  const grouped = new Map<
+    string,
+    {
+      entry?: BacktestTimelineEvent;
+      close?: BacktestTimelineEvent;
+    }
+  >();
+
+  const ordered = [...events].sort((a, b) => {
+    const byIndex = a.candleIndex - b.candleIndex;
+    if (byIndex !== 0) return byIndex;
+    return safeDateMs(a.timestamp) - safeDateMs(b.timestamp);
+  });
+
+  for (const event of ordered) {
+    const bucket = grouped.get(event.tradeId) ?? {};
+    if (event.type === 'ENTRY') {
+      if (!bucket.entry || event.candleIndex <= bucket.entry.candleIndex) {
+        bucket.entry = event;
+      }
+    } else if (CLOSE_LIKE_TIMELINE_EVENT_TYPES.has(event.type)) {
+      if (!bucket.close || event.candleIndex >= bucket.close.candleIndex) {
+        bucket.close = event;
+      }
+    }
+    grouped.set(event.tradeId, bucket);
+  }
+
+  const result: BacktestTrade[] = [];
+  for (const [tradeId, pair] of grouped.entries()) {
+    if (!pair.entry || !pair.close) continue;
+    result.push({
+      id: tradeId,
+      symbol,
+      side: pair.entry.side,
+      entryPrice: pair.entry.price,
+      exitPrice: pair.close.price,
+      quantity: 0,
+      openedAt: pair.entry.timestamp,
+      closedAt: pair.close.timestamp,
+      pnl: pair.close.pnl ?? 0,
+      fee: null,
+      exitReason: pair.close.type === 'LIQUIDATION' ? 'LIQUIDATION' : 'SIGNAL_EXIT',
+      liquidated: pair.close.type === 'LIQUIDATION',
+    });
+  }
+
+  return result.sort((a, b) => safeDateMs(a.openedAt) - safeDateMs(b.openedAt));
 };
 
 const buildDailyPerformance = (items: BacktestTrade[], initialBalance: number): DailyPerformancePoint[] => {
@@ -457,6 +562,7 @@ function TimelineCandlesChart({
   formatNumber,
   rsiLongLevel,
   rsiShortLevel,
+  eventsLoaded,
 }: {
   timeline: BacktestTimeline;
   trades: BacktestTrade[];
@@ -466,6 +572,7 @@ function TimelineCandlesChart({
   formatNumber: (value: number) => string;
   rsiLongLevel: number | null;
   rsiShortLevel: number | null;
+  eventsLoaded: boolean;
 }) {
   const zoomSteps = [1, 1.25, 1.5, 2, 3, 4, 6, 8, 10];
   const [zoomIndex, setZoomIndex] = useState(0);
@@ -518,7 +625,9 @@ function TimelineCandlesChart({
       ? xAt(timeline.playbackCursor - timeline.cursor)
       : null;
 
-  const timelineEvents = Array.isArray(timeline.events) ? timeline.events : [];
+  const rawTimelineEvents = Array.isArray(timeline.events) ? timeline.events : [];
+  const symbolEventKey = `_${symbol}_`;
+  const timelineEvents = rawTimelineEvents.filter((event) => event.tradeId.includes(symbolEventKey));
   const lifecycleEvents = timelineEvents.filter((event) => event.type === 'DCA');
   const timelineIndicatorSeries = Array.isArray(timeline.indicatorSeries) ? timeline.indicatorSeries : [];
   const priceIndicators = timelineIndicatorSeries.filter((series) => series.panel === 'price');
@@ -576,7 +685,9 @@ function TimelineCandlesChart({
   const tradeSegments =
     tradeSegmentsFromEvents.length > 0
       ? tradeSegmentsFromEvents
-      : buildNonOverlappingTradeSegments(trades, candles);
+      : eventsLoaded
+        ? buildNonOverlappingTradeSegments(trades, candles)
+        : [];
 
   const oscillatorPanels = oscillatorIndicators.flatMap((series) => {
     const values = series.points
@@ -981,6 +1092,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
   const [report, setReport] = useState<BacktestReport | null>(null);
   const [trades, setTrades] = useState<BacktestTrade[]>([]);
   const [strategy, setStrategy] = useState<StrategyDto | null>(null);
+  const [marketUniverseName, setMarketUniverseName] = useState<string | null>(null);
   const [timelines, setTimelines] = useState<Record<string, TimelineState>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -988,6 +1100,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
   const symbolSectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const timelinesRef = useRef<Record<string, TimelineState>>({});
   const inFlightTimelineRequestsRef = useRef<Map<string, Promise<BacktestTimeline | undefined>>>(new Map());
+  const lastMarketUniverseIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     timelinesRef.current = timelines;
@@ -998,6 +1111,8 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
     // to avoid rendering stale market charts from a previous run.
     inFlightTimelineRequestsRef.current.clear();
     timelinesRef.current = {};
+    lastMarketUniverseIdRef.current = null;
+    setMarketUniverseName(null);
     setTimelines({});
   }, [runId]);
 
@@ -1013,6 +1128,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
 
       setTrades(tradesData);
       setReport(reportData);
+
       if (runData.strategyId) {
         try {
           const strategyData = await getStrategy(runData.strategyId);
@@ -1023,6 +1139,25 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
       } else {
         setStrategy(null);
       }
+
+      const runSeedConfig = (runData.seedConfig as { marketUniverseId?: unknown } | null) ?? null;
+      const marketUniverseId =
+        runSeedConfig && typeof runSeedConfig.marketUniverseId === 'string' ? runSeedConfig.marketUniverseId : null;
+      if (marketUniverseId) {
+        if (lastMarketUniverseIdRef.current !== marketUniverseId) {
+          try {
+            const universe = await getMarketUniverse(marketUniverseId);
+            setMarketUniverseName(universe.name);
+            lastMarketUniverseIdRef.current = marketUniverseId;
+          } catch {
+            setMarketUniverseName(null);
+          }
+        }
+      } else {
+        lastMarketUniverseIdRef.current = null;
+        setMarketUniverseName(null);
+      }
+
       setError(null);
     } catch (err: unknown) {
       setError(getAxiosMessage(err) ?? 'Nie udalo sie pobrac danych backtestu.');
@@ -1047,6 +1182,24 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
   }, [loadData, run]);
 
   const liveProgress = ((run?.seedConfig as { liveProgress?: LiveProgress } | null)?.liveProgress ?? null) as LiveProgress | null;
+  const seedConfig = (run?.seedConfig as {
+    leverage?: unknown;
+    marketType?: unknown;
+  } | null) ?? null;
+  const runMarketType = seedConfig?.marketType === 'SPOT' ? 'SPOT' : 'FUTURES';
+  const leverageFromSeed = Number(seedConfig?.leverage);
+  const leverageFromProgress = Number(liveProgress?.leverage);
+  const effectiveLeverage =
+    runMarketType === 'SPOT'
+      ? 1
+      : Math.max(
+          1,
+          Number.isFinite(leverageFromSeed)
+            ? leverageFromSeed
+            : Number.isFinite(leverageFromProgress)
+              ? leverageFromProgress
+              : 1,
+        );
   const indicatorMeta = useMemo(() => extractStrategyIndicatorMeta(strategy), [strategy]);
   const configuredRunSymbols = useMemo(() => {
     const symbols = ((run?.seedConfig as { symbols?: unknown } | null)?.symbols ?? null) as string[] | null;
@@ -1071,9 +1224,63 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
     }
     return grouped;
   }, [trades]);
+  const timelineTradeEventMeta = useMemo(() => {
+    const dcaCountByTradeId = new Map<string, number>();
+    const knownTradeIds = new Set<string>();
+
+    for (const state of Object.values(timelines)) {
+      const events = state.data?.events ?? [];
+      for (const event of events) {
+        knownTradeIds.add(event.tradeId);
+        if (event.type !== 'DCA') continue;
+        dcaCountByTradeId.set(event.tradeId, (dcaCountByTradeId.get(event.tradeId) ?? 0) + 1);
+      }
+    }
+
+    return {
+      dcaCountByTradeId,
+      knownTradeIds,
+    };
+  }, [timelines]);
+  const tradeDcaMetaByTradeId = useMemo(() => {
+    const byTradeId = new Map<
+      string,
+      {
+        syntheticTradeId: string;
+        dcaCount: number;
+        knownFromTimeline: boolean;
+      }
+    >();
+
+    const orderedBySymbol = [...trades].sort((a, b) => {
+      const bySymbol = a.symbol.localeCompare(b.symbol);
+      if (bySymbol !== 0) return bySymbol;
+      const byOpen = safeDateMs(a.openedAt) - safeDateMs(b.openedAt);
+      if (byOpen !== 0) return byOpen;
+      return safeDateMs(a.closedAt) - safeDateMs(b.closedAt);
+    });
+
+    const sequenceBySymbol = new Map<string, number>();
+    for (const trade of orderedBySymbol) {
+      const sequence = (sequenceBySymbol.get(trade.symbol) ?? 0) + 1;
+      sequenceBySymbol.set(trade.symbol, sequence);
+      const syntheticTradeId = `${runId}_${trade.symbol}_${sequence}`;
+
+      byTradeId.set(trade.id, {
+        syntheticTradeId,
+        dcaCount: timelineTradeEventMeta.dcaCountByTradeId.get(syntheticTradeId) ?? 0,
+        knownFromTimeline: timelineTradeEventMeta.knownTradeIds.has(syntheticTradeId),
+      });
+    }
+
+    return byTradeId;
+  }, [runId, timelineTradeEventMeta.dcaCountByTradeId, timelineTradeEventMeta.knownTradeIds, trades]);
   const summaryMetrics = ((report?.metrics ?? null) as {
     initialBalance?: number;
     endBalance?: number;
+    lifecycleEventCounts?: {
+      DCA?: number;
+    };
     parityDiagnostics?: Array<{
       symbol?: string;
       status?: 'PROCESSED' | 'FAILED';
@@ -1093,6 +1300,64 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
   }, [summaryMetrics?.parityDiagnostics]);
   const initialBalance = summaryMetrics?.initialBalance ?? 0;
   const dailyPerformance = useMemo(() => buildDailyPerformance(trades, initialBalance), [initialBalance, trades]);
+  const tradesTimelineRows = useMemo(() => {
+    const ordered = [...trades].sort((a, b) => {
+      const byClose = safeDateMs(a.closedAt) - safeDateMs(b.closedAt);
+      if (byClose !== 0) return byClose;
+      return safeDateMs(a.openedAt) - safeDateMs(b.openedAt);
+    });
+
+    let cumulativePnl = 0;
+    return ordered.map((trade, index) => {
+      const entryNotional = trade.entryPrice * trade.quantity;
+      const exitNotional = trade.exitPrice * trade.quantity;
+      const holdMinutes = Math.max(0, safeDateMs(trade.closedAt) - safeDateMs(trade.openedAt)) / 60_000;
+      const rawPriceMovePct =
+        trade.entryPrice !== 0 ? ((trade.exitPrice - trade.entryPrice) / trade.entryPrice) * 100 : null;
+      const sidePriceMovePct = rawPriceMovePct == null ? null : trade.side === 'LONG' ? rawPriceMovePct : -rawPriceMovePct;
+      const entryMargin = effectiveLeverage > 0 ? entryNotional / effectiveLeverage : entryNotional;
+      const exitMargin = effectiveLeverage > 0 ? exitNotional / effectiveLeverage : exitNotional;
+      const pnlPctOnNotional = entryNotional > 0 ? (trade.pnl / entryNotional) * 100 : null;
+      const pnlPctOnMargin = entryMargin > 0 ? (trade.pnl / entryMargin) * 100 : null;
+      const dcaMeta = tradeDcaMetaByTradeId.get(trade.id);
+      cumulativePnl += trade.pnl;
+
+      return {
+        index: index + 1,
+        trade,
+        holdMinutes,
+        entryNotional,
+        exitNotional,
+        entryMargin,
+        exitMargin,
+        sidePriceMovePct,
+        pnlPctOnNotional,
+        pnlPctOnMargin,
+        dcaCount: dcaMeta?.dcaCount ?? 0,
+        dcaKnownFromTimeline: dcaMeta?.knownFromTimeline ?? false,
+        cumulativePnl,
+      };
+    });
+  }, [effectiveLeverage, tradeDcaMetaByTradeId, trades]);
+  const tradeInsights = useMemo(() => {
+    if (tradesTimelineRows.length === 0) return null;
+    const pnls = tradesTimelineRows.map((row) => row.trade.pnl);
+    const positivePnls = pnls.filter((value) => value > 0);
+    const negativePnls = pnls.filter((value) => value < 0);
+    const grossProfit = positivePnls.reduce((sum, value) => sum + value, 0);
+    const grossLoss = negativePnls.reduce((sum, value) => sum + value, 0);
+    const maxWin = positivePnls.length > 0 ? Math.max(...positivePnls) : 0;
+    const maxLoss = negativePnls.length > 0 ? Math.min(...negativePnls) : 0;
+    return {
+      finalCumulative: tradesTimelineRows[tradesTimelineRows.length - 1]?.cumulativePnl ?? 0,
+      grossProfit,
+      grossLoss,
+      maxWin,
+      maxLoss,
+      hasWins: positivePnls.length > 0,
+      hasLosses: negativePnls.length > 0,
+    };
+  }, [tradesTimelineRows]);
 
   const mergeByKey = <T, K extends string | number>(current: T[], incoming: T[], getKey: (value: T) => K) => {
     const map = new Map<K, T>();
@@ -1270,9 +1535,10 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
   );
 
   useEffect(() => {
-    if (activeTab !== 'markets') return;
+    if (activeTab !== 'markets' && activeTab !== 'trades') return;
     if (symbolStats.length === 0) return;
     let cancelled = false;
+    const shouldLoadCandles = activeTab === 'markets';
 
     const runQueue = async () => {
       for (const stats of symbolStats) {
@@ -1295,32 +1561,37 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
           }));
           continue;
         }
-        const timelineState = timelinesRef.current[symbol];
-        const existingTimeline = timelineState?.data;
-        const hasExistingCandles = Boolean(existingTimeline && existingTimeline.candles.length > 0);
+        let candlesCursor: number | null = null;
+        let firstCandlesChunk = false;
 
-        let candlesCursor: number | null =
-          timelineState?.candlesLoaded
-            ? null
-            : timelineState?.candlesNextCursor ??
-              (hasExistingCandles && existingTimeline
-                ? Math.min(existingTimeline.candles.length, existingTimeline.totalCandles)
-                : 0);
-        let firstCandlesChunk = !hasExistingCandles;
+        if (shouldLoadCandles) {
+          const timelineState = timelinesRef.current[symbol];
+          const existingTimeline = timelineState?.data;
+          const hasExistingCandles = Boolean(existingTimeline && existingTimeline.candles.length > 0);
 
-        while (!cancelled && candlesCursor != null) {
-          const candlesChunk = await loadSymbolTimelineChunk({
-            symbol,
-            cursor: candlesCursor,
-            append: !firstCandlesChunk,
-            scope: 'candles',
-          });
-          if (!candlesChunk) break;
-          candlesCursor = candlesChunk.nextCursor;
-          firstCandlesChunk = false;
+          candlesCursor =
+            timelineState?.candlesLoaded
+              ? null
+              : timelineState?.candlesNextCursor ??
+                (hasExistingCandles && existingTimeline
+                  ? Math.min(existingTimeline.candles.length, existingTimeline.totalCandles)
+                  : 0);
+          firstCandlesChunk = !hasExistingCandles;
+
+          // Zaladuj najpierw pierwszy chunk ceny, aby wykres pojawil sie szybko,
+          // a eventy pozycji mogly dociagac sie niezaleznie.
+          if (!cancelled && candlesCursor != null && firstCandlesChunk) {
+            const firstChunk = await loadSymbolTimelineChunk({
+              symbol,
+              cursor: candlesCursor,
+              append: false,
+              scope: 'candles',
+            });
+            if (!firstChunk) continue;
+            candlesCursor = firstChunk.nextCursor;
+            firstCandlesChunk = false;
+          }
         }
-
-        if (cancelled || candlesCursor != null) continue;
 
         const refreshedTimelineState = timelinesRef.current[symbol];
         const hasExistingEvents = Boolean(refreshedTimelineState?.data && refreshedTimelineState.data.events.length > 0);
@@ -1340,6 +1611,19 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
           if (!eventsChunk) break;
           eventsCursor = eventsChunk.nextCursor;
           firstEventsChunk = false;
+        }
+
+        if (!shouldLoadCandles) continue;
+
+        while (!cancelled && candlesCursor != null) {
+          const candlesChunk = await loadSymbolTimelineChunk({
+            symbol,
+            cursor: candlesCursor,
+            append: true,
+            scope: 'candles',
+          });
+          if (!candlesChunk) break;
+          candlesCursor = candlesChunk.nextCursor;
         }
       }
     };
@@ -1415,49 +1699,115 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
   }
   if (!run) return <EmptyState title='Nie znaleziono runa' description='Wybrany run nie istnieje albo nie masz do niego dostepu.' />;
 
+  const runEndLabel =
+    run.finishedAt != null ? formatDateTime(run.finishedAt) : run.status === 'RUNNING' || run.status === 'PENDING' ? 'w toku' : '-';
+  const showProgress = progress > 0 && progress < 100;
+  const marketGroupLabel = marketUniverseName ?? 'Custom';
+  const preferReportMetrics = run.status === 'COMPLETED' || run.status === 'FAILED' || run.status === 'CANCELED';
+  const headlineTrades =
+    (preferReportMetrics ? report?.totalTrades : liveProgress?.totalTrades) ??
+    (preferReportMetrics ? liveProgress?.totalTrades : report?.totalTrades) ??
+    trades.length;
+  const headlineNetPnl =
+    (preferReportMetrics ? report?.netPnl : liveProgress?.netPnl) ??
+    (preferReportMetrics ? liveProgress?.netPnl : report?.netPnl) ??
+    null;
+  const headlineMetrics = [
+    {
+      key: 'trades',
+      label: 'Transakcje',
+      value: formatNumber(headlineTrades),
+      valueClass: '',
+    },
+    {
+      key: 'net',
+      label: 'Net PnL',
+      value: headlineNetPnl == null ? '-' : formatCurrency(headlineNetPnl),
+      valueClass: pnlClass(headlineNetPnl),
+    },
+    {
+      key: 'winrate',
+      label: 'Win rate',
+      value: report ? formatPercent(report.winRate) : '-',
+      valueClass: '',
+    },
+    {
+      key: 'drawdown',
+      label: 'Max drawdown',
+      value: report ? formatPercent(report.maxDrawdown) : '-',
+      valueClass: '',
+    },
+  ];
   return (
     <div className='space-y-4'>
-      <section className='rounded-xl border border-base-300 bg-base-100 p-4 space-y-3'>
-        <div className='flex flex-wrap items-center justify-between gap-2'>
-          <h2 className='text-lg font-semibold'>{run.name}</h2>
-          <span className='badge badge-outline'>{run.status}</span>
+      <section className='rounded-xl border border-base-300 bg-base-100 p-4 space-y-4'>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
+          <div className='space-y-1'>
+            <h2 className='text-lg font-semibold'>{run.name}</h2>
+            <p className='text-xs opacity-60'>Podglad uruchomienia backtestu</p>
+          </div>
+          <span className={`badge ${runStatusBadgeClass(run.status)}`}>{runStatusLabel(run.status)}</span>
         </div>
 
-        <div className='text-sm opacity-80 flex flex-wrap gap-x-4 gap-y-1'>
-          <p>Symbol: <span className='font-medium'>{run.symbol}</span></p>
-          <p>Interwal: <span className='font-medium'>{run.timeframe}</span></p>
-          <p>Start: <span className='font-medium'>{formatDateTime(run.startedAt)}</span></p>
+        <div className='rounded-lg border border-base-300 bg-base-200 px-3 py-2 text-xs'>
+          <div className='flex flex-wrap items-center gap-x-3 gap-y-1'>
+            <span className='opacity-70'>Grupa rynkow:</span>
+            <span className='font-semibold text-sm tracking-wide'>{marketGroupLabel}</span>
+            <span className='opacity-40'>|</span>
+            <span className='opacity-70'>Strategia:</span>
+            <span className='font-medium'>{strategy?.name ?? '-'}</span>
+            <span className='opacity-40'>|</span>
+            <span className='opacity-70'>Start obliczen:</span>
+            <span className='font-medium'>{formatDateTime(run.startedAt)}</span>
+            <span className='opacity-40'>|</span>
+            <span className='opacity-70'>Koniec obliczen:</span>
+            <span className='font-medium'>{runEndLabel}</span>
+          </div>
         </div>
 
-        <progress className='progress progress-primary w-full' value={progress} max={100} />
-
-        {liveProgress ? (
-          <div className='rounded-lg border border-base-300 bg-base-200 p-3 text-sm'>
-            <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-4'>
-              <p>Symboli: <span className='font-medium'>{liveProgress.processedSymbols ?? 0}/{liveProgress.totalSymbols ?? 0}</span></p>
-              <p>Aktualny: <span className='font-medium'>{liveProgress.currentSymbol ?? '-'}</span></p>
-              <p>Transakcji: <span className='font-medium'>{formatNumber(liveProgress.totalTrades ?? 0)}</span></p>
-              <p>Net PnL (live): <span className={`font-medium ${pnlClass(liveProgress.netPnl ?? null)}`}>{formatCurrency(liveProgress.netPnl ?? 0)}</span></p>
+        {showProgress ? (
+          <div className='space-y-1'>
+            <div className='flex items-center justify-between text-xs opacity-70'>
+              <span>Postep runa</span>
+              <span>{progress}%</span>
             </div>
-            <p className='mt-1 opacity-70'>
-              Leverage: {liveProgress.leverage ?? 1}x | Margin: {liveProgress.marginMode ?? 'NONE'} | Liquidations: {liveProgress.liquidations ?? 0}
-            </p>
-            <p className='opacity-70'>
-              Candle cursor: {(liveProgress.currentCandleIndex ?? 0) + 1}/{liveProgress.totalCandlesForSymbol ?? '-'} | Max candles/rynek: {liveProgress.maxCandlesPerSymbol ?? '-'} | Fail symboli: {(liveProgress.failedSymbols ?? []).length}
-            </p>
+            <progress className={`progress w-full ${runProgressClass(run.status)}`} value={progress} max={100} />
           </div>
         ) : null}
 
-        <ul className='steps steps-vertical lg:steps-horizontal w-full'>
+        {liveProgress || report ? (
+          <div className='rounded-lg border border-base-300 bg-base-200 p-3 text-sm'>
+            <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-4'>
+              {headlineMetrics.map((metric) => (
+                <div key={metric.key} className='rounded-md border border-base-300 bg-base-100 px-2 py-2'>
+                  <p className='text-[11px] uppercase tracking-wide opacity-60'>{metric.label}</p>
+                  <p className={`font-medium ${metric.valueClass}`}>{metric.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <div className='rounded-lg border border-base-300 bg-base-200 px-3 py-2'>
+          <div className='flex flex-wrap items-center gap-2 text-xs'>
+            <span className='text-[11px] uppercase tracking-wide opacity-60'>Etapy:</span>
           {stages.map((stage) => (
-            <li key={stage.label} className={`step ${stage.done ? 'step-primary' : ''}`}>
-              <span className={`inline-flex items-center gap-2 ${stage.active ? 'animate-pulse' : ''}`}>
-                {stage.icon}
-                {stage.label}
-              </span>
-            </li>
+            <span
+              key={stage.label}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 ${
+                stage.done
+                  ? 'border-success/40 bg-success/10 text-success'
+                  : stage.active
+                    ? 'border-info/40 bg-info/10 text-info'
+                    : 'border-base-300 bg-base-100 opacity-70'
+              }`}
+            >
+              <span className={stage.active ? 'animate-pulse' : ''}>{stage.icon}</span>
+              <span className='font-medium'>{stage.label}</span>
+            </span>
           ))}
-        </ul>
+          </div>
+        </div>
       </section>
 
       <section className='rounded-xl border border-base-300 bg-base-100 p-4'>
@@ -1600,10 +1950,20 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                       const timeline = timelineState.data;
                       const symbolTrades = tradesBySymbol.get(stats.symbol) ?? [];
                       const visibleTrades = timeline ? filterTradesByTimelineWindow(symbolTrades, timeline) : symbolTrades;
-                      const visibleStats = buildSymbolStats(visibleTrades, [stats.symbol])[0] ?? stats;
+                      const timelineDerivedTrades =
+                        timeline && timelineState.eventsLoaded
+                          ? buildSyntheticTradesFromTimelineEvents(
+                              (Array.isArray(timeline.events) ? timeline.events : []).filter((event) =>
+                                event.tradeId.includes(`_${stats.symbol}_`),
+                              ),
+                              stats.symbol,
+                            )
+                          : [];
+                      const visibleTradesForStats = timelineDerivedTrades.length > 0 ? timelineDerivedTrades : visibleTrades;
+                      const visibleStats = buildSymbolStats(visibleTradesForStats, [stats.symbol])[0] ?? stats;
                       const showVisibleSubset = visibleStats.tradesCount !== stats.tradesCount;
-                      const visibleFinalCandleClosures = visibleTrades.filter((trade) => trade.exitReason === 'FINAL_CANDLE').length;
-                      const visibleLiquidations = visibleTrades.filter(
+                      const visibleFinalCandleClosures = visibleTradesForStats.filter((trade) => trade.exitReason === 'FINAL_CANDLE').length;
+                      const visibleLiquidations = visibleTradesForStats.filter(
                         (trade) => trade.exitReason === 'LIQUIDATION' || trade.liquidated,
                       ).length;
                       const visibleLifecycleCounts = (Array.isArray(timeline?.events) ? timeline.events : []).reduce<Record<string, number>>((acc, event) => {
@@ -1639,6 +1999,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                                   formatNumber={formatNumber}
                                   rsiLongLevel={indicatorMeta.rsiLongLevel}
                                   rsiShortLevel={indicatorMeta.rsiShortLevel}
+                                  eventsLoaded={timelineState.eventsLoaded}
                                 />
                               ) : (
                                 <div className='h-[320px] w-full animate-pulse rounded-lg bg-base-200/60' />
@@ -1767,29 +2128,129 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
             {trades.length === 0 ? (
               <EmptyState title='Brak trades' description='Dla tego runa nie ma jeszcze transakcji.' />
             ) : (
-              <div className='overflow-x-auto'>
-                <table className='table table-zebra table-sm'>
-                  <thead>
-                    <tr>
-                      <th>Symbol</th>
-                      <th>Side</th>
-                      <th>Entry</th>
-                      <th>Exit</th>
-                      <th>PnL</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {trades.map((trade) => (
-                      <tr key={trade.id}>
-                        <td>{trade.symbol}</td>
-                        <td>{trade.side}</td>
-                        <td>{formatNumber(trade.entryPrice)}</td>
-                        <td>{formatNumber(trade.exitPrice)}</td>
-                        <td className={trade.pnl >= 0 ? 'text-success' : 'text-error'}>{formatCurrency(trade.pnl)}</td>
+              <div className='space-y-3'>
+                {tradeInsights ? (
+                  <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-4'>
+                    <div className='rounded-md border border-base-300 bg-base-200 p-2'>
+                      <p className='text-[10px] uppercase tracking-wide opacity-65'>Net PnL</p>
+                      <p className={`mt-1 text-sm font-semibold ${pnlClass(tradeInsights.finalCumulative)}`}>
+                        {formatCurrency(tradeInsights.finalCumulative)}
+                      </p>
+                    </div>
+                    <div className='rounded-md border border-base-300 bg-base-200 p-2'>
+                      <p className='text-[10px] uppercase tracking-wide opacity-65'>Suma zyskow</p>
+                      <p className='mt-1 text-sm font-semibold text-success'>{formatCurrency(tradeInsights.grossProfit)}</p>
+                    </div>
+                    <div className='rounded-md border border-base-300 bg-base-200 p-2'>
+                      <p className='text-[10px] uppercase tracking-wide opacity-65'>Suma strat</p>
+                      <p className='mt-1 text-sm font-semibold text-error'>{formatCurrency(tradeInsights.grossLoss)}</p>
+                    </div>
+                    <div className='rounded-md border border-base-300 bg-base-200 p-2'>
+                      <p className='text-[10px] uppercase tracking-wide opacity-65'>Ekstrema</p>
+                      <div className='mt-1 space-y-0.5 text-xs'>
+                        <p className='flex items-center justify-between gap-2'>
+                          <span className='opacity-70'>Najwiekszy zysk</span>
+                          <span className='font-semibold text-success'>
+                            {tradeInsights.hasWins ? formatCurrency(tradeInsights.maxWin) : '-'}
+                          </span>
+                        </p>
+                        <p className='flex items-center justify-between gap-2'>
+                          <span className='opacity-70'>Najwieksza strata</span>
+                          <span className='font-semibold text-error'>
+                            {tradeInsights.hasLosses ? formatCurrency(tradeInsights.maxLoss) : '-'}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className='overflow-x-auto rounded-lg border border-base-300'>
+                  <table className='table table-zebra table-sm'>
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Symbol</th>
+                        <th>Side</th>
+                        <th>Otwarcie</th>
+                        <th>Zamkniecie</th>
+                        <th>Czas</th>
+                        <th>Qty</th>
+                        <th>DCA</th>
+                        <th>Entry</th>
+                        <th>Exit</th>
+                        <th>Notional wej.</th>
+                        <th>Notional wyj.</th>
+                        <th>Margin wej.</th>
+                        <th>Margin wyj.</th>
+                        <th>Ruch % (side)</th>
+                        <th>PnL % (notional)</th>
+                        <th>PnL % (margin)</th>
+                        <th>Fee</th>
+                        <th>Exit reason</th>
+                        <th>PnL</th>
+                        <th>Skumulowany PnL</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {tradesTimelineRows.map((row) => (
+                        <tr key={row.trade.id} className={row.trade.pnl < 0 && Math.abs(row.trade.pnl) > Math.abs(row.cumulativePnl) * 0.25 ? 'bg-error/5' : ''}>
+                          <td className='opacity-70'>{row.index}</td>
+                          <td className='font-medium'>{row.trade.symbol}</td>
+                          <td>
+                            <span className={`badge badge-xs ${row.trade.side === 'LONG' ? 'badge-success' : 'badge-error'} badge-outline`}>
+                              {row.trade.side}
+                            </span>
+                          </td>
+                          <td>{formatDateTime(new Date(row.trade.openedAt).toISOString())}</td>
+                          <td>{formatDateTime(new Date(row.trade.closedAt).toISOString())}</td>
+                          <td>{formatHoldDuration(row.holdMinutes)}</td>
+                          <td>{formatNumber(row.trade.quantity)}</td>
+                          <td>
+                            {row.dcaKnownFromTimeline ? (
+                              <span className={`badge badge-xs ${row.dcaCount > 0 ? 'badge-info' : 'badge-ghost'}`}>
+                                {row.dcaCount}
+                              </span>
+                            ) : (
+                              <span className='opacity-60'>-</span>
+                            )}
+                          </td>
+                          <td>{formatNumber(row.trade.entryPrice)}</td>
+                          <td>{formatNumber(row.trade.exitPrice)}</td>
+                          <td>{formatCurrency(row.entryNotional)}</td>
+                          <td>{formatCurrency(row.exitNotional)}</td>
+                          <td>{formatCurrency(row.entryMargin)}</td>
+                          <td>{formatCurrency(row.exitMargin)}</td>
+                          <td className={pnlClass(row.sidePriceMovePct)}>
+                            {row.sidePriceMovePct == null ? '-' : formatPercent(row.sidePriceMovePct)}
+                          </td>
+                          <td className={pnlClass(row.pnlPctOnNotional)}>
+                            {row.pnlPctOnNotional == null ? '-' : formatPercent(row.pnlPctOnNotional)}
+                          </td>
+                          <td className={pnlClass(row.pnlPctOnMargin)}>
+                            {row.pnlPctOnMargin == null ? '-' : formatPercent(row.pnlPctOnMargin)}
+                          </td>
+                          <td>{row.trade.fee == null ? '-' : formatCurrency(row.trade.fee)}</td>
+                          <td>
+                            <span
+                              className={`badge badge-xs ${
+                                row.trade.exitReason === 'LIQUIDATION'
+                                  ? 'badge-error'
+                                  : row.trade.exitReason === 'FINAL_CANDLE'
+                                    ? 'badge-warning'
+                                    : 'badge-ghost'
+                              }`}
+                            >
+                              {EXIT_REASON_LABEL[row.trade.exitReason ?? 'SIGNAL_EXIT']}
+                            </span>
+                          </td>
+                          <td className={pnlClass(row.trade.pnl)}>{formatCurrency(row.trade.pnl)}</td>
+                          <td className={pnlClass(row.cumulativePnl)}>{formatCurrency(row.cumulativePnl)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>

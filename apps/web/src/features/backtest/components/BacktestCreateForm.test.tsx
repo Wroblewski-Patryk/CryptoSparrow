@@ -84,7 +84,12 @@ describe('BacktestCreateForm', () => {
       expect(screen.getByDisplayValue('EMA Crossover')).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByPlaceholderText('MVP Backtest Run'), { target: { value: 'Parity check run' } });
+    const nameInput = screen.getByLabelText('Nazwa runa');
+    await waitFor(() => {
+      expect(nameInput).toHaveValue('Backtest EMA Crossover | Majors (15m)');
+    });
+
+    fireEvent.change(nameInput, { target: { value: 'Parity check run' } });
     fireEvent.change(screen.getByPlaceholderText('1200'), { target: { value: '800' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Utworz run' }));

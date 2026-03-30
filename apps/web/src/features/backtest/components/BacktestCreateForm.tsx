@@ -26,8 +26,16 @@ const MAX_CANDLES_MAX = 10000;
 const INITIAL_BALANCE_MIN = 1;
 const INITIAL_BALANCE_MAX = 1_000_000_000;
 
+const buildSuggestedRunName = (strategyName?: string, universeName?: string, timeframe?: string) => {
+  const strategy = strategyName?.trim() || 'Strategia';
+  const universe = universeName?.trim() || 'Rynek';
+  const tf = timeframe?.trim() || '-';
+  return `Backtest ${strategy} | ${universe} (${tf})`;
+};
+
 export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }: BacktestCreateFormProps) {
-  const [name, setName] = useState('MVP Backtest Run');
+  const [name, setName] = useState('');
+  const [nameEdited, setNameEdited] = useState(false);
   const [strategyId, setStrategyId] = useState('');
   const [marketUniverseId, setMarketUniverseId] = useState('');
   const [notes, setNotes] = useState('');
@@ -83,16 +91,25 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
     () => strategies.find((strategy) => strategy.id === strategyId) ?? null,
     [strategies, strategyId]
   );
-
   const selectedUniverse = useMemo(
     () => marketUniverses.find((item) => item.id === marketUniverseId) ?? null,
     [marketUniverses, marketUniverseId]
   );
+  const suggestedRunName = useMemo(
+    () =>
+      buildSuggestedRunName(
+        selectedStrategy?.name,
+        selectedUniverse?.name,
+        selectedStrategy?.interval
+      ),
+    [selectedStrategy?.interval, selectedStrategy?.name, selectedUniverse?.name]
+  );
 
-  const selectedStrategyMarginMode = useMemo(() => {
-    const config = (selectedStrategy?.config ?? null) as { additional?: { marginMode?: unknown } } | null;
-    return config?.additional?.marginMode === 'ISOLATED' ? 'ISOLATED' : 'CROSSED';
-  }, [selectedStrategy]);
+  useEffect(() => {
+    if (nameEdited) return;
+    setName(suggestedRunName);
+  }, [nameEdited, suggestedRunName]);
+
   const parsedMaxCandles = Number.parseInt(maxCandles, 10);
   const parsedInitialBalance = Number.parseFloat(initialBalance);
   const hasValidMaxCandles =
@@ -133,131 +150,116 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
 
   return (
     <form onSubmit={handleSubmit} className='space-y-4'>
-      <div className='rounded-xl border border-base-300 bg-base-100 p-4 space-y-3'>
-        <div className='flex items-center gap-2'>
-          <h2 className='text-2xl'>Kreator backtestu</h2>
+      <div className='rounded-xl border border-base-300 bg-base-100 p-4 md:p-5 space-y-5'>
+        <div className='flex flex-wrap items-start gap-3'>
+          <div className='space-y-1'>
+            <h2 className='text-2xl'>Kreator backtestu</h2>
+            <p className='text-sm opacity-70'>
+              Ustaw strategy + market universe i uruchom symulacje na danych historycznych.
+            </p>
+          </div>
           <button type='submit' className='btn btn-success ml-auto btn-sm' disabled={!canSubmit}>
             {submitting ? 'Tworzenie...' : submitLabel}
           </button>
         </div>
 
-        <div className='grid gap-3 md:grid-cols-2'>
-          <TextInputField label='Nazwa runa' value={name} onChange={setName} placeholder='MVP Backtest Run' />
+        <div className='space-y-4'>
+          <section className='rounded-lg border border-base-300 bg-base-100 p-3 space-y-3'>
+            <h3 className='text-xs font-semibold uppercase tracking-wide opacity-70'>Konfiguracja runa</h3>
+            <div className='grid gap-3 md:grid-cols-2'>
+              <TextInputField
+                label='Nazwa runa'
+                value={name}
+                onChange={(value) => {
+                  setName(value);
+                  setNameEdited(true);
+                }}
+                placeholder='np. Backtest Trend Pulse | Spot Core (5m)'
+              />
 
-          <FieldWrapper label='Strategia'>
-            <select
-              className='select select-bordered'
-              value={strategyId}
-              onChange={(event) => setStrategyId(event.target.value)}
-              disabled={strategiesLoading}
-            >
-              {strategies.length === 0 ? <option value=''>Brak strategii</option> : null}
-              {strategies.map((strategy) => (
-                <option key={strategy.id} value={strategy.id}>
-                  {strategy.name}
-                </option>
-              ))}
-            </select>
-          </FieldWrapper>
+              <FieldWrapper label='Strategia'>
+                <select
+                  className='select select-bordered'
+                  value={strategyId}
+                  onChange={(event) => setStrategyId(event.target.value)}
+                  disabled={strategiesLoading}
+                >
+                  {strategies.length === 0 ? <option value=''>Brak strategii</option> : null}
+                  {strategies.map((strategy) => (
+                    <option key={strategy.id} value={strategy.id}>
+                      {strategy.name}
+                    </option>
+                  ))}
+                </select>
+              </FieldWrapper>
 
-          <FieldWrapper label='Grupa rynkow'>
-            <select
-              className='select select-bordered'
-              value={marketUniverseId}
-              onChange={(event) => setMarketUniverseId(event.target.value)}
-              disabled={universesLoading}
-            >
-              {marketUniverses.length === 0 ? <option value=''>Brak grup rynkow</option> : null}
-              {marketUniverses.map((universe) => (
-                <option key={universe.id} value={universe.id}>
-                  {universe.name} ({universe.marketType}/{universe.baseCurrency})
-                </option>
-              ))}
-            </select>
-          </FieldWrapper>
+              <FieldWrapper label='Grupa rynkow'>
+                <select
+                  className='select select-bordered'
+                  value={marketUniverseId}
+                  onChange={(event) => setMarketUniverseId(event.target.value)}
+                  disabled={universesLoading}
+                >
+                  {marketUniverses.length === 0 ? <option value=''>Brak grup rynkow</option> : null}
+                  {marketUniverses.map((universe) => (
+                    <option key={universe.id} value={universe.id}>
+                      {universe.name} ({universe.marketType}/{universe.baseCurrency})
+                    </option>
+                  ))}
+                </select>
+              </FieldWrapper>
+            </div>
+          </section>
 
-          <FieldWrapper label='Interwal (ze strategii)'>
-            <input
-              className='input input-bordered'
-              value={selectedStrategy?.interval ?? '-'}
-              disabled
-              readOnly
-            />
-          </FieldWrapper>
+          <section className='rounded-lg border border-base-300 bg-base-100 p-3 space-y-3'>
+            <h3 className='text-xs font-semibold uppercase tracking-wide opacity-70'>Parametry symulacji</h3>
+            <div className='grid gap-3 md:grid-cols-2'>
+              <FieldWrapper label='Maksymalna liczba swiec na rynek (auto-limit)'>
+                <input
+                  className='input input-bordered'
+                  value={maxCandles}
+                  onChange={(event) => setMaxCandles(event.target.value)}
+                  inputMode='numeric'
+                  min={MAX_CANDLES_MIN}
+                  max={MAX_CANDLES_MAX}
+                  placeholder='1200'
+                />
+                {!hasValidMaxCandles ? (
+                  <p className='mt-1 text-xs text-error'>
+                    Podaj liczbe z zakresu {MAX_CANDLES_MIN} - {MAX_CANDLES_MAX}.
+                  </p>
+                ) : null}
+              </FieldWrapper>
 
-          <FieldWrapper label='Maksymalna liczba swiec na rynek (auto-limit)'>
-            <input
-              className='input input-bordered'
-              value={maxCandles}
-              onChange={(event) => setMaxCandles(event.target.value)}
-              inputMode='numeric'
-              min={MAX_CANDLES_MIN}
-              max={MAX_CANDLES_MAX}
-              placeholder='1200'
-            />
-            {!hasValidMaxCandles ? (
-              <p className='mt-1 text-xs text-error'>
-                Podaj liczbe z zakresu {MAX_CANDLES_MIN} - {MAX_CANDLES_MAX}.
-              </p>
-            ) : null}
-          </FieldWrapper>
+              <FieldWrapper label='Startowy balans portfela (Backtest/Paper)'>
+                <input
+                  className='input input-bordered'
+                  value={initialBalance}
+                  onChange={(event) => setInitialBalance(event.target.value)}
+                  inputMode='decimal'
+                  min={INITIAL_BALANCE_MIN}
+                  max={INITIAL_BALANCE_MAX}
+                  placeholder='10000'
+                />
+                {!hasValidInitialBalance ? (
+                  <p className='mt-1 text-xs text-error'>
+                    Podaj wartosc z zakresu {INITIAL_BALANCE_MIN} - {INITIAL_BALANCE_MAX}.
+                  </p>
+                ) : null}
+              </FieldWrapper>
 
-          <FieldWrapper label='Startowy balans portfela (Backtest/Paper)'>
-            <input
-              className='input input-bordered'
-              value={initialBalance}
-              onChange={(event) => setInitialBalance(event.target.value)}
-              inputMode='decimal'
-              min={INITIAL_BALANCE_MIN}
-              max={INITIAL_BALANCE_MAX}
-              placeholder='10000'
-            />
-            {!hasValidInitialBalance ? (
-              <p className='mt-1 text-xs text-error'>
-                Podaj wartosc z zakresu {INITIAL_BALANCE_MIN} - {INITIAL_BALANCE_MAX}.
-              </p>
-            ) : null}
-          </FieldWrapper>
-
-          <FieldWrapper label='Notatki (opcjonalnie)'>
-            <textarea
-              className='textarea textarea-bordered min-h-24'
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder='Opis zalozen runa, wersja danych, komentarz...'
-            />
-          </FieldWrapper>
-        </div>
-
-        <div className='rounded-box border border-base-300 bg-base-200 p-3 text-sm'>
-          <p>
-            <span className='opacity-70'>Strategia:</span> <span className='font-medium'>{selectedStrategy?.name ?? '-'}</span>
-          </p>
-          <p>
-            <span className='opacity-70'>Interwal:</span> <span className='font-medium'>{selectedStrategy?.interval ?? '-'}</span>
-          </p>
-          <p>
-            <span className='opacity-70'>Leverage:</span> <span className='font-medium'>{selectedStrategy?.leverage ?? 1}x</span>
-          </p>
-          <p>
-            <span className='opacity-70'>Margin mode:</span> <span className='font-medium'>{selectedStrategyMarginMode}</span>
-          </p>
-          <p>
-            <span className='opacity-70'>Grupa rynkow:</span> <span className='font-medium'>{selectedUniverse?.name ?? '-'}</span>
-          </p>
-          <p>
-            <span className='opacity-70'>Whitelist/Blacklist:</span>{' '}
-            <span className='font-medium'>
-              {(selectedUniverse?.whitelist?.length ?? 0)}/{selectedUniverse?.blacklist?.length ?? 0}
-            </span>
-          </p>
-          <p>
-            <span className='opacity-70'>Tryb:</span> <span className='font-medium'>interleaved (swieca po swiecy, wszystkie rynki)</span>
-          </p>
-          <p>
-            <span className='opacity-70'>Startowy balans:</span>{' '}
-            <span className='font-medium'>{hasValidInitialBalance ? parsedInitialBalance : '-'}</span>
-          </p>
+              <div className='md:col-span-2'>
+                <FieldWrapper label='Notatki (opcjonalnie)'>
+                  <textarea
+                    className='textarea textarea-bordered min-h-24'
+                    value={notes}
+                    onChange={(event) => setNotes(event.target.value)}
+                    placeholder='Opis zalozen runa, wersja danych, komentarz...'
+                  />
+                </FieldWrapper>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </form>
