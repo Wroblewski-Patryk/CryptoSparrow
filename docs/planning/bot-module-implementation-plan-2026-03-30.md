@@ -44,7 +44,7 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 ## Phase C - Web Bot Creator Refactor
 - [x] `BMOD-13 refactor(web-types): remove LOCAL and legacy creator-only fields from bot types`
 - [x] `BMOD-14 feat(web-data): load market groups into bot creator`
-- [ ] `BMOD-15 feat(web-creator): create V2 form with Strategy + MarketGroup selectors`
+- [x] `BMOD-15 feat(web-creator): create V2 form with Strategy + MarketGroup selectors`
 - [ ] `BMOD-16 feat(web-creator): make paperStartBalance visible only for PAPER mode`
 - [ ] `BMOD-17 feat(web-creator): remove positionMode and maxOpenPositions inputs from UI`
 - [ ] `BMOD-18 feat(web-creator): add derived strategy summary (interval/leverage/max-open)`

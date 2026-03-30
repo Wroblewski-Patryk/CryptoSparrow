@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BMOD-15 feat(web-creator): create V2 form with Strategy + MarketGroup selectors`
 - [ ] `BMOD-16 feat(web-creator): make paperStartBalance visible only for PAPER mode`
 
 ## NEXT
@@ -15,6 +14,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BMOD-15 feat(web-creator): create V2 form with Strategy + MarketGroup selectors`
 - [x] `BMOD-14 feat(web-data): load market groups into bot creator`
 - [x] `BMOD-13 refactor(web-types): remove LOCAL and legacy creator-only fields from bot types`
 - [x] `BMOD-12 test(api): extend bots e2e coverage for new create/edit payload and ownership checks`

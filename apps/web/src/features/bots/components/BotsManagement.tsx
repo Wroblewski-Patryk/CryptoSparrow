@@ -63,7 +63,6 @@ export default function BotsManagement() {
   const [name, setName] = useState("");
   const [mode, setMode] = useState<BotMode>("PAPER");
   const [paperStartBalance, setPaperStartBalance] = useState(10_000);
-  const [marketType, setMarketType] = useState<TradeMarket>("FUTURES");
   const [positionMode, setPositionMode] = useState<PositionMode>("ONE_WAY");
   const [marketFilter, setMarketFilter] = useState<"ALL" | TradeMarket>("ALL");
   const [maxOpenPositions, setMaxOpenPositions] = useState(1);
@@ -221,7 +220,6 @@ export default function BotsManagement() {
       setName("");
       setMode("PAPER");
       setPaperStartBalance(10_000);
-      setMarketType("FUTURES");
       setPositionMode("ONE_WAY");
       setStrategyId((prev) => prev || strategies[0]?.id || "");
       setMarketGroupId((prev) => prev || marketGroups[0]?.id || "");
@@ -413,9 +411,7 @@ export default function BotsManagement() {
         <>
       <form onSubmit={handleCreate} className="rounded-xl border border-base-300 bg-base-200 p-4">
         <h2 className="text-lg font-semibold">Nowy bot</h2>
-        <p className="text-sm opacity-70">
-          Dodaj bota i ustaw tryb uruchomienia. LIVE wymaga opt-in.
-        </p>
+        <p className="text-sm opacity-70">Dodaj bota i wybierz strategia + grupe rynkow. LIVE wymaga opt-in.</p>
         <div className="mt-4 grid gap-3 md:grid-cols-7">
           <label className="form-control">
             <span className="label-text">Nazwa</span>
@@ -440,15 +436,20 @@ export default function BotsManagement() {
             </select>
           </label>
           <label className="form-control">
-            <span className="label-text">Rynek</span>
+            <span className="label-text">Grupa rynkow</span>
             <select
               className="select select-bordered"
-              aria-label="Rynek bota"
-              value={marketType}
-              onChange={(event) => setMarketType(event.target.value as TradeMarket)}
+              aria-label="Grupa rynkow bota"
+              value={marketGroupId}
+              onChange={(event) => setMarketGroupId(event.target.value)}
+              disabled={marketGroups.length === 0}
             >
-              <option value="FUTURES">FUTURES</option>
-              <option value="SPOT">SPOT</option>
+              {marketGroups.length === 0 ? <option value="">Brak grup rynkow</option> : null}
+              {marketGroups.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.name} ({group.marketType}/{group.baseCurrency})
+                </option>
+              ))}
             </select>
           </label>
           <label className="form-control">
@@ -497,8 +498,9 @@ export default function BotsManagement() {
               aria-label="Strategia bota"
               value={strategyId}
               onChange={(event) => setStrategyId(event.target.value)}
+              disabled={strategies.length === 0}
             >
-              <option value="">Brak</option>
+              {strategies.length === 0 ? <option value="">Brak strategii</option> : null}
               {strategies.map((strategy) => (
                 <option key={strategy.id} value={strategy.id}>
                   {strategy.name}
