@@ -47,6 +47,19 @@ const toRiskBadge = (bot: Bot) => {
   return { value: "safe", label: "Safe mode" } as const;
 };
 
+const deriveStrategyMaxOpenPositions = (strategy: StrategyDto | null): number => {
+  if (!strategy?.config || typeof strategy.config !== "object") return 1;
+  const config = strategy.config as {
+    additional?: {
+      maxPositions?: unknown;
+      maxOpenPositions?: unknown;
+    };
+  };
+  const raw = config.additional?.maxPositions ?? config.additional?.maxOpenPositions;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : 1;
+};
+
 export default function BotsManagement() {
   const [activeTab, setActiveTab] = useState<"bots" | "assistant">("bots");
   const [bots, setBots] = useState<Bot[]>([]);
@@ -146,6 +159,15 @@ export default function BotsManagement() {
       paperStartBalance >= 0 &&
       !creating,
     [creating, marketGroupId, name, paperStartBalance, strategyId]
+  );
+
+  const selectedStrategy = useMemo(
+    () => strategies.find((strategy) => strategy.id === strategyId) ?? null,
+    [strategies, strategyId]
+  );
+  const selectedStrategyMaxOpenPositions = useMemo(
+    () => deriveStrategyMaxOpenPositions(selectedStrategy),
+    [selectedStrategy]
   );
 
   const assistantSlots = useMemo(
@@ -478,6 +500,25 @@ export default function BotsManagement() {
               ))}
             </select>
           </label>
+        </div>
+        <div className="mt-4 rounded-lg border border-base-300 bg-base-100 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide opacity-60">Parametry ze strategii</p>
+          <div className="mt-2 grid gap-2 text-xs sm:grid-cols-3">
+            <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+              <p className="uppercase tracking-wide opacity-60">Interwal</p>
+              <p className="font-medium">{selectedStrategy?.interval ?? "-"}</p>
+            </div>
+            <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+              <p className="uppercase tracking-wide opacity-60">Dzwignia</p>
+              <p className="font-medium">
+                {typeof selectedStrategy?.leverage === "number" ? `${selectedStrategy.leverage}x` : "-"}
+              </p>
+            </div>
+            <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+              <p className="uppercase tracking-wide opacity-60">Max open positions</p>
+              <p className="font-medium">{selectedStrategy ? selectedStrategyMaxOpenPositions : "-"}</p>
+            </div>
+          </div>
         </div>
         <div className="mt-4 flex justify-end">
           <button type="submit" className="btn btn-primary btn-sm" disabled={!canCreate}>
