@@ -7,14 +7,15 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BMOD-21 refactor(runtime-lifecycle): keep ticker path for open-position automation only`
 - [ ] `BMOD-22 feat(runtime-idempotency): add deterministic dedupe key per bot/group/symbol/candle window`
+- [ ] `BMOD-23 feat(runtime-risk): compute group max-open cap from active strategy risk settings`
 
 ## NEXT
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BMOD-21 refactor(runtime-lifecycle): keep ticker path for open-position automation only`
 - [x] `BMOD-20 refactor(runtime-signal): evaluate entry/exit strategy decisions only on final candle events`
 - [x] `BMOD-19 test(web): update BotsManagement tests for new payload and mode-conditional behavior`
 - [x] `BMOD-18 feat(web-creator): add derived strategy summary (interval/leverage/max-open)`

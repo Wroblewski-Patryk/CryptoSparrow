@@ -72,12 +72,8 @@ type RuntimeSignalLoopDeps = {
   nowMs: () => number;
 };
 
-const runtimeLongThreshold = Number.parseFloat(process.env.RUNTIME_SIGNAL_LONG_THRESHOLD ?? '1');
-const runtimeShortThreshold = Number.parseFloat(process.env.RUNTIME_SIGNAL_SHORT_THRESHOLD ?? '-1');
-const runtimeExitBand = Number.parseFloat(process.env.RUNTIME_SIGNAL_EXIT_BAND ?? '0.2');
 const runtimeSignalQuantity = Number.parseFloat(process.env.RUNTIME_SIGNAL_QUANTITY ?? '0.01');
 const runtimeDirectionCooldownMs = Number.parseInt(process.env.RUNTIME_SIGNAL_COOLDOWN_MS ?? '30000', 10);
-const runtimeManualPositionMode = (process.env.RUNTIME_MANUAL_POSITION_MODE ?? 'LIVE') as 'PAPER' | 'LIVE';
 const maxCandlesPerSeries = Number.parseInt(process.env.RUNTIME_SIGNAL_CANDLE_BUFFER ?? '500', 10);
 const minDirectionalScore = Number.parseFloat(process.env.RUNTIME_SIGNAL_MIN_DIRECTIONAL_SCORE ?? '1');
 const defaultGroupMaxOpenPositions = Number.parseInt(
@@ -272,13 +268,6 @@ const defaultDeps: RuntimeSignalLoopDeps = {
   orchestrateFn: orchestrateRuntimeSignal,
   processPositionAutomation: (event) => runtimePositionAutomationService.handleTickerEvent(event),
   nowMs: () => Date.now(),
-};
-
-const toDirection = (ticker: StreamTickerEvent): SignalDirection | null => {
-  if (ticker.priceChangePercent24h >= runtimeLongThreshold) return 'LONG';
-  if (ticker.priceChangePercent24h <= runtimeShortThreshold) return 'SHORT';
-  if (Math.abs(ticker.priceChangePercent24h) <= runtimeExitBand) return 'EXIT';
-  return null;
 };
 
 const resolveRuntimeOrderQuantity = (input: {
@@ -702,159 +691,6 @@ export class RuntimeSignalLoop {
   private async handleTickerEvent(event: StreamTickerEvent) {
     upsertRuntimeTicker(event);
     await this.deps.processPositionAutomation(event);
-    const bots = await this.deps.listActiveBots();
-    await Promise.all(
-      bots.map(async (bot) => {
-        if (bot.marketType !== event.marketType) return;
-
-        const eligibleGroups = bot.marketGroups.filter((group) => {
-          if (group.strategies.length > 0) return false;
-          if (group.symbols.length === 0) return true;
-          return group.symbols.some((symbol) => symbol.toUpperCase() === event.symbol.toUpperCase());
-        });
-
-        await Promise.all(
-          eligibleGroups.map(async (group) => {
-            const groupEvalStartedAt = this.deps.nowMs();
-            const merged = {
-              direction: toDirection(event),
-              strategyId: undefined,
-              metadata: {
-                mergePolicy: 'fallback_ticker',
-                reason: 'no_strategies_attached',
-              },
-            };
-
-            const direction = merged.direction;
-            if (!direction) {
-              metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
-              metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
-              return;
-            }
-
-            const dedupeKey = `${bot.id}|${group.id}|${event.symbol}`;
-            const now = this.deps.nowMs();
-            const previous = this.recentlyProcessed.get(dedupeKey);
-            if (
-              previous &&
-              previous.direction === direction &&
-              now - previous.at < runtimeDirectionCooldownMs
-            ) {
-              metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
-              return;
-            }
-            this.recentlyProcessed.set(dedupeKey, { direction, at: now });
-
-            if (direction === 'LONG' || direction === 'SHORT') {
-              const openPositionsInGroup = await this.deps.countOpenPositionsForBotAndSymbols({
-                userId: bot.userId,
-                botId: bot.id,
-                symbols: group.symbols,
-              });
-              if (openPositionsInGroup >= group.maxOpenPositions) {
-                return;
-              }
-
-              const preTradeDecision = await this.deps.analyzePreTradeFn({
-                userId: bot.userId,
-                botId: bot.id,
-                symbol: event.symbol,
-                mode: bot.mode,
-                marketType: event.marketType,
-              });
-              if (!preTradeDecision.allowed) {
-                metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
-                metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
-                return;
-              }
-            }
-
-            await this.deps.createSignal({
-              userId: bot.userId,
-              botId: bot.id,
-              strategyId: undefined,
-              symbol: event.symbol,
-              direction,
-              confidence: Math.min(1, Math.abs(event.priceChangePercent24h) / 100),
-              payload: {
-                source: 'market_stream.ticker',
-                botMarketGroupId: group.id,
-                symbolGroupId: group.symbolGroupId,
-                strategyDriven: false,
-                strategyInterval: null,
-                merge: merged.metadata,
-                strategyExitTraceOnly: false,
-                groupRisk: {
-                  maxOpenPositions: group.maxOpenPositions,
-                },
-                eventTime: event.eventTime,
-                lastPrice: event.lastPrice,
-                priceChangePercent24h: event.priceChangePercent24h,
-              },
-            });
-
-            await this.deps.orchestrateFn({
-              userId: bot.userId,
-              botId: bot.id,
-              symbol: event.symbol,
-              direction,
-              strategyId: undefined,
-              quantity: runtimeSignalQuantity,
-              markPrice: event.lastPrice,
-              mode: bot.mode,
-            });
-            metricsStore.recordRuntimeMergeOutcome(direction);
-            metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
-          })
-        );
-      })
-    );
-
-    const direction = toDirection(event);
-    if (direction !== 'EXIT') return;
-
-    const runtimeManagedExternalPositions = await this.deps.listRuntimeManagedExternalPositions();
-    await Promise.all(
-      runtimeManagedExternalPositions
-        .filter((position) => position.symbol === event.symbol)
-        .map(async (position) => {
-          const dedupeKey = `manual|${position.userId}|${position.symbol}`;
-          const now = this.deps.nowMs();
-          const previous = this.recentlyProcessed.get(dedupeKey);
-          if (
-            previous &&
-            previous.direction === direction &&
-            now - previous.at < runtimeDirectionCooldownMs
-          ) {
-            return;
-          }
-          this.recentlyProcessed.set(dedupeKey, { direction, at: now });
-
-          await this.deps.createSignal({
-            userId: position.userId,
-            botId: undefined,
-            symbol: position.symbol,
-            direction,
-            confidence: Math.min(1, Math.abs(event.priceChangePercent24h) / 100),
-            payload: {
-              source: 'market_stream.ticker',
-              managedManualPosition: true,
-              eventTime: event.eventTime,
-              lastPrice: event.lastPrice,
-              priceChangePercent24h: event.priceChangePercent24h,
-            },
-          });
-
-          await this.deps.orchestrateFn({
-            userId: position.userId,
-            symbol: position.symbol,
-            direction: 'EXIT',
-            quantity: runtimeSignalQuantity,
-            markPrice: event.lastPrice,
-            mode: runtimeManualPositionMode,
-          });
-        })
-    );
   }
 }
 
