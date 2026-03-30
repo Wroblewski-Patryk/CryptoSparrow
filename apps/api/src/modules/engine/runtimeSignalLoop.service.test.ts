@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { RuntimeSignalLoop } from './runtimeSignalLoop.service';
+import { RuntimeSignalLoop, deriveRuntimeGroupMaxOpenPositions } from './runtimeSignalLoop.service';
 import { MarketStreamEvent } from '../market-stream/binanceStream.types';
 
 const strategyLong = {
@@ -304,5 +304,44 @@ describe('RuntimeSignalLoop', () => {
 
     expect(deps.createSignal).not.toHaveBeenCalled();
     expect(deps.orchestrateFn).not.toHaveBeenCalled();
+  });
+
+  it('derives market-group max-open cap from active strategy risk settings', () => {
+    const derived = deriveRuntimeGroupMaxOpenPositions({
+      configuredGroupMaxOpenPositions: 6,
+      strategies: [
+        {
+          strategyConfig: {
+            additional: {
+              maxPositions: 4,
+            },
+          },
+        },
+        {
+          strategyConfig: {
+            additional: {
+              maxOpenPositions: 2,
+            },
+          },
+        },
+      ],
+    });
+    expect(derived).toBe(2);
+  });
+
+  it('falls back to configured group max-open cap when strategies do not define risk limits', () => {
+    const derived = deriveRuntimeGroupMaxOpenPositions({
+      configuredGroupMaxOpenPositions: 3,
+      strategies: [
+        {
+          strategyConfig: {
+            additional: {
+              dcaEnabled: true,
+            },
+          },
+        },
+      ],
+    });
+    expect(derived).toBe(3);
   });
 });

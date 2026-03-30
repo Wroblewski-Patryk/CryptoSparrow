@@ -169,13 +169,8 @@ const defaultDeps: RuntimeSignalLoopDeps = {
       },
     });
     return bots.map((bot) => {
-      const marketGroupsFromNewModel: ActiveBotMarketGroup[] = bot.botMarketGroups.map((group) => ({
-        id: group.id,
-        symbolGroupId: group.symbolGroupId,
-        executionOrder: group.executionOrder,
-        maxOpenPositions: group.maxOpenPositions,
-        symbols: group.symbolGroup.symbols ?? [],
-        strategies: group.strategyLinks.map((link) => ({
+      const marketGroupsFromNewModel: ActiveBotMarketGroup[] = bot.botMarketGroups.map((group) => {
+        const strategies = group.strategyLinks.map((link) => ({
           strategyId: link.strategyId,
           strategyInterval: link.strategy.interval,
           strategyConfig: (link.strategy.config as Record<string, unknown> | undefined) ?? null,
@@ -183,16 +178,22 @@ const defaultDeps: RuntimeSignalLoopDeps = {
           walletRisk: normalizeWalletRiskPercent(link.strategy.walletRisk, 1),
           priority: link.priority,
           weight: link.weight,
-        })),
-      }));
+        }));
+        return {
+          id: group.id,
+          symbolGroupId: group.symbolGroupId,
+          executionOrder: group.executionOrder,
+          maxOpenPositions: deriveRuntimeGroupMaxOpenPositions({
+            configuredGroupMaxOpenPositions: group.maxOpenPositions,
+            strategies,
+          }),
+          symbols: group.symbolGroup.symbols ?? [],
+          strategies,
+        };
+      });
 
-      const marketGroupsFromLegacyModel: ActiveBotMarketGroup[] = bot.botStrategies.map((item) => ({
-        id: `legacy:${item.symbolGroupId}`,
-        symbolGroupId: item.symbolGroupId,
-        executionOrder: 10_000,
-        maxOpenPositions: defaultGroupMaxOpenPositions,
-        symbols: item.symbolGroup.symbols ?? [],
-        strategies: [
+      const marketGroupsFromLegacyModel: ActiveBotMarketGroup[] = bot.botStrategies.map((item) => {
+        const strategies = [
           {
             strategyId: item.strategyId,
             strategyInterval: item.strategy.interval,
@@ -202,8 +203,19 @@ const defaultDeps: RuntimeSignalLoopDeps = {
             priority: 100,
             weight: 1,
           },
-        ],
-      }));
+        ];
+        return {
+          id: `legacy:${item.symbolGroupId}`,
+          symbolGroupId: item.symbolGroupId,
+          executionOrder: 10_000,
+          maxOpenPositions: deriveRuntimeGroupMaxOpenPositions({
+            configuredGroupMaxOpenPositions: defaultGroupMaxOpenPositions,
+            strategies,
+          }),
+          symbols: item.symbolGroup.symbols ?? [],
+          strategies,
+        };
+      });
 
       const dedupBySymbolGroup = new Map<string, ActiveBotMarketGroup>();
       for (const group of [...marketGroupsFromNewModel, ...marketGroupsFromLegacyModel]) {
@@ -303,6 +315,37 @@ const normalizeInterval = (value?: string | null) => {
     '60 min': '1h',
   };
   return aliases[normalized] ?? normalized;
+};
+
+const toPositiveInteger = (value: unknown): number | null => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return Math.trunc(parsed);
+};
+
+const extractStrategyMaxOpenPositions = (strategyConfig: Record<string, unknown> | null | undefined) => {
+  if (!strategyConfig || typeof strategyConfig !== 'object') return null;
+  const additional =
+    strategyConfig.additional && typeof strategyConfig.additional === 'object'
+      ? (strategyConfig.additional as Record<string, unknown>)
+      : null;
+  if (!additional) return null;
+  return toPositiveInteger(additional.maxPositions ?? additional.maxOpenPositions);
+};
+
+export const deriveRuntimeGroupMaxOpenPositions = (input: {
+  configuredGroupMaxOpenPositions: number;
+  strategies: Array<{ strategyConfig: Record<string, unknown> | null }>;
+}) => {
+  const strategyCaps = input.strategies
+    .map((strategy) => extractStrategyMaxOpenPositions(strategy.strategyConfig))
+    .filter((value): value is number => Number.isFinite(value as number) && (value as number) > 0);
+
+  if (strategyCaps.length > 0) {
+    return Math.max(1, Math.min(...strategyCaps));
+  }
+
+  return toPositiveInteger(input.configuredGroupMaxOpenPositions) ?? 1;
 };
 
 

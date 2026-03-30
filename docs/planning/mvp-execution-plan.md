@@ -307,7 +307,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BMOD-20 refactor(runtime-signal): evaluate entry/exit strategy decisions only on final candle events`
 - [x] `BMOD-21 refactor(runtime-lifecycle): keep ticker path for open-position automation only`
 - [x] `BMOD-22 feat(runtime-idempotency): add deterministic dedupe key per bot/group/symbol/candle window`
-- [ ] `BMOD-23 feat(runtime-risk): compute group max-open cap from active strategy risk settings`
+- [x] `BMOD-23 feat(runtime-risk): compute group max-open cap from active strategy risk settings`
 - [ ] `BMOD-24 refactor(runtime-model): remove runtime dependency on legacy bot-strategy fallback graph`
 - [ ] `BMOD-25 feat(runtime-watchdog): keep scan loop as disabled-by-default fallback watchdog`
 - [ ] `BMOD-26 test(runtime): extend signal-loop and watchdog tests for websocket-first semantics`
@@ -327,6 +327,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BMOD-40 release(gate): run full regression gate for bot/backtest/runtime and record evidence`
 
 ## Progress Log
+- 2026-03-30: Completed `BMOD-23 feat(runtime-risk): introduced runtime derivation of market-group `maxOpenPositions` from active strategy risk config (`additional.maxPositions` / `additional.maxOpenPositions`) using safest cap (minimum positive value), with fallback to configured group cap and dedicated helper tests`.
 - 2026-03-30: Completed `BMOD-22 feat(runtime-idempotency): added deterministic candle-window dedupe key (`botId+groupId+symbol+interval+open/closeTime`) with retention pruning to prevent duplicate final-candle signal/orchestration on repeated stream delivery, plus regression test for duplicate window replay`.
 - 2026-03-30: Completed `BMOD-21 refactor(runtime-lifecycle): reduced ticker handler to lifecycle-only path (ticker snapshot upsert + open-position automation), removing ticker-originated signal generation/orchestration so runtime trading decisions no longer execute from ticker events`.
 - 2026-03-30: Completed `BMOD-20 refactor(runtime-signal): moved strategy-driven runtime decisions (`LONG`/`SHORT`/`EXIT`) from ticker path to final candle events (`source=market_stream.candle_final`), including strategy interval matching per candle, candle-based confidence payload, and updated runtime signal-loop tests for candle-trigger semantics`.
