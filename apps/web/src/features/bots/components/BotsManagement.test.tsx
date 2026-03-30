@@ -8,6 +8,7 @@ const createMock = vi.hoisted(() => vi.fn());
 const updateMock = vi.hoisted(() => vi.fn());
 const deleteMock = vi.hoisted(() => vi.fn());
 const listStrategiesMock = vi.hoisted(() => vi.fn());
+const listMarketUniversesMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../services/bots.service", () => ({
   listBots: listMock,
@@ -20,15 +21,23 @@ vi.mock("../../strategies/api/strategies.api", () => ({
   listStrategies: listStrategiesMock,
 }));
 
+vi.mock("../../markets/services/markets.service", () => ({
+  listMarketUniverses: listMarketUniversesMock,
+}));
+
 afterEach(() => {
   vi.restoreAllMocks();
   listStrategiesMock.mockReset();
+  listMarketUniversesMock.mockReset();
 });
 
 describe("BotsManagement", () => {
   it("requires confirmation before creating LIVE bot", async () => {
     listMock.mockResolvedValue([]);
-    listStrategiesMock.mockResolvedValue([]);
+    listStrategiesMock.mockResolvedValue([{ id: "s-live", name: "Live Strategy", interval: "5m" }]);
+    listMarketUniversesMock.mockResolvedValue([
+      { id: "g-live", name: "Live Group", marketType: "FUTURES", baseCurrency: "USDT", whitelist: [], blacklist: [] },
+    ]);
     createMock.mockResolvedValue({
       id: "b-live",
       name: "Live Runner",
@@ -43,6 +52,10 @@ describe("BotsManagement", () => {
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
 
     render(<BotsManagement />);
+    await waitFor(() => {
+      expect(listMarketUniversesMock).toHaveBeenCalled();
+      expect(screen.getByLabelText("Strategia")).toHaveValue("s-live");
+    });
 
     fireEvent.change(screen.getByPlaceholderText("Momentum Runner"), {
       target: { value: "Live Runner" },
@@ -62,6 +75,7 @@ describe("BotsManagement", () => {
   it("renders empty state when no bots returned", async () => {
     listMock.mockResolvedValue([]);
     listStrategiesMock.mockResolvedValue([]);
+    listMarketUniversesMock.mockResolvedValue([]);
 
     render(<BotsManagement />);
 
@@ -72,7 +86,10 @@ describe("BotsManagement", () => {
 
   it("creates bot from form fields", async () => {
     listMock.mockResolvedValue([]);
-    listStrategiesMock.mockResolvedValue([]);
+    listStrategiesMock.mockResolvedValue([{ id: "s1", name: "Momentum Strategy", interval: "5m" }]);
+    listMarketUniversesMock.mockResolvedValue([
+      { id: "g1", name: "Core Group", marketType: "FUTURES", baseCurrency: "USDT", whitelist: [], blacklist: [] },
+    ]);
     vi.spyOn(window, "confirm").mockReturnValue(true);
     createMock.mockResolvedValue({
       id: "b1",
@@ -87,6 +104,10 @@ describe("BotsManagement", () => {
     });
 
     render(<BotsManagement />);
+    await waitFor(() => {
+      expect(listMarketUniversesMock).toHaveBeenCalled();
+      expect(screen.getByLabelText("Strategia")).toHaveValue("s1");
+    });
 
     fireEvent.change(screen.getByPlaceholderText("Momentum Runner"), {
       target: { value: "Momentum Runner" },
@@ -101,19 +122,20 @@ describe("BotsManagement", () => {
         name: "Momentum Runner",
         mode: "PAPER",
         paperStartBalance: 10000,
-        marketType: "FUTURES",
-        positionMode: "ONE_WAY",
-        strategyId: null,
+        strategyId: "s1",
+        marketGroupId: "g1",
         isActive: false,
         liveOptIn: false,
         consentTextVersion: null,
-        maxOpenPositions: 3,
       });
     });
   });
 
   it("filters bots by market type", async () => {
-    listStrategiesMock.mockResolvedValue([]);
+    listStrategiesMock.mockResolvedValue([{ id: "s-filter", name: "Filter Strategy", interval: "5m" }]);
+    listMarketUniversesMock.mockResolvedValue([
+      { id: "g-filter", name: "Filter Group", marketType: "FUTURES", baseCurrency: "USDT", whitelist: [], blacklist: [] },
+    ]);
     listMock
       .mockResolvedValueOnce([
         {
@@ -172,7 +194,10 @@ describe("BotsManagement", () => {
   });
 
   it("requires confirmation before deleting active LIVE bot", async () => {
-    listStrategiesMock.mockResolvedValue([]);
+    listStrategiesMock.mockResolvedValue([{ id: "s-delete", name: "Delete Strategy", interval: "5m" }]);
+    listMarketUniversesMock.mockResolvedValue([
+      { id: "g-delete", name: "Delete Group", marketType: "FUTURES", baseCurrency: "USDT", whitelist: [], blacklist: [] },
+    ]);
     listMock.mockResolvedValue([
       {
         id: "b-live",

@@ -25,6 +25,8 @@ import {
   PositionMode,
   TradeMarket,
 } from "../types/bot.type";
+import { listMarketUniverses } from "../../markets/services/markets.service";
+import { MarketUniverse } from "../../markets/types/marketUniverse.type";
 import { listStrategies } from "../../strategies/api/strategies.api";
 import { StrategyDto } from "../../strategies/types/StrategyForm.type";
 
@@ -56,6 +58,7 @@ export default function BotsManagement() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [strategies, setStrategies] = useState<StrategyDto[]>([]);
+  const [marketGroups, setMarketGroups] = useState<MarketUniverse[]>([]);
 
   const [name, setName] = useState("");
   const [mode, setMode] = useState<BotMode>("PAPER");
@@ -65,6 +68,7 @@ export default function BotsManagement() {
   const [marketFilter, setMarketFilter] = useState<"ALL" | TradeMarket>("ALL");
   const [maxOpenPositions, setMaxOpenPositions] = useState(1);
   const [strategyId, setStrategyId] = useState<string>("");
+  const [marketGroupId, setMarketGroupId] = useState<string>("");
   const [assistantBotId, setAssistantBotId] = useState<string>("");
   const [assistantLoading, setAssistantLoading] = useState(false);
   const [assistantSaving, setAssistantSaving] = useState(false);
@@ -102,9 +106,13 @@ export default function BotsManagement() {
     const loadStrategyOptions = async () => {
       try {
         const items = await listStrategies();
-        if (mounted) setStrategies(items);
+        if (!mounted) return;
+        setStrategies(items);
+        setStrategyId((prev) => prev || items[0]?.id || "");
       } catch {
-        if (mounted) setStrategies([]);
+        if (!mounted) return;
+        setStrategies([]);
+        setStrategyId("");
       }
     };
     void loadStrategyOptions();
@@ -113,13 +121,35 @@ export default function BotsManagement() {
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    const loadMarketGroupOptions = async () => {
+      try {
+        const items = await listMarketUniverses();
+        if (!mounted) return;
+        setMarketGroups(items);
+        setMarketGroupId((prev) => prev || items[0]?.id || "");
+      } catch (err: unknown) {
+        if (!mounted) return;
+        setMarketGroups([]);
+        toast.error("Nie udalo sie pobrac grup rynkow", { description: getAxiosMessage(err) });
+      }
+    };
+    void loadMarketGroupOptions();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const canCreate = useMemo(
     () =>
       name.trim().length > 0 &&
+      strategyId.trim().length > 0 &&
+      marketGroupId.trim().length > 0 &&
       Number.isFinite(paperStartBalance) &&
       paperStartBalance >= 0 &&
       !creating,
-    [creating, name, paperStartBalance]
+    [creating, marketGroupId, name, paperStartBalance, strategyId]
   );
 
   const assistantSlots = useMemo(
@@ -180,13 +210,11 @@ export default function BotsManagement() {
         name: name.trim(),
         mode,
         paperStartBalance,
-        marketType,
-        positionMode,
-        strategyId: strategyId || null,
+        strategyId,
+        marketGroupId,
         isActive: false,
         liveOptIn: false,
         consentTextVersion: null,
-        maxOpenPositions,
       });
       setBots((prev) => [created, ...prev]);
       setServerSnapshot((prev) => ({ ...prev, [created.id]: created }));
@@ -195,7 +223,8 @@ export default function BotsManagement() {
       setPaperStartBalance(10_000);
       setMarketType("FUTURES");
       setPositionMode("ONE_WAY");
-      setStrategyId("");
+      setStrategyId((prev) => prev || strategies[0]?.id || "");
+      setMarketGroupId((prev) => prev || marketGroups[0]?.id || "");
       setMaxOpenPositions(1);
       toast.success("Bot utworzony");
       await loadBots(marketFilter);
