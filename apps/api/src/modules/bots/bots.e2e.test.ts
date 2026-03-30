@@ -61,7 +61,6 @@ const createMarketGroup = async (
 const createPayload = (refs: { strategyId: string; marketGroupId: string }) => ({
   name: 'Momentum Runner',
   mode: 'PAPER',
-  marketType: 'FUTURES',
   strategyId: refs.strategyId,
   marketGroupId: refs.marketGroupId,
   isActive: false,
@@ -153,7 +152,6 @@ describe('Bots module contract', () => {
     const createSpotRes = await agent.post('/dashboard/bots').send({
       ...createPayload({ strategyId, marketGroupId: spotMarketGroupId }),
       name: 'Spot Runner',
-      marketType: 'SPOT',
     });
     expect(createSpotRes.status).toBe(201);
     const spotBotId = createSpotRes.body.id as string;

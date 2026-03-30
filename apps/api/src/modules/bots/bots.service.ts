@@ -260,16 +260,14 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
 
   const symbolGroup = await getOwnedSymbolGroup(userId, marketGroupId);
   if (!symbolGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
-
-  if (symbolGroup.marketUniverse.marketType !== botData.marketType) {
-    throw new Error('BOT_MARKET_GROUP_MARKET_TYPE_MISMATCH');
-  }
+  const derivedMarketType = symbolGroup.marketUniverse.marketType;
 
   const createdBotId = await prisma.$transaction(async (tx) => {
     const createdBot = await tx.bot.create({
       data: {
         userId,
         ...botData,
+        marketType: derivedMarketType,
         consentTextVersion: botData.liveOptIn
           ? normalizeConsentTextVersion(botData.consentTextVersion)
           : null,
