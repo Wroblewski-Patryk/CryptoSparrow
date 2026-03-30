@@ -1,4 +1,4 @@
-export type BotMode = "PAPER" | "LIVE" | "LOCAL";
+export type BotMode = "PAPER" | "LIVE";
 export type TradeMarket = "FUTURES" | "SPOT";
 export type PositionMode = "ONE_WAY" | "HEDGE";
 
@@ -22,16 +22,23 @@ export type CreateBotInput = {
   name: string;
   mode: BotMode;
   paperStartBalance: number;
-  marketType: TradeMarket;
-  positionMode: PositionMode;
-  strategyId?: string | null;
+  strategyId: string;
+  marketGroupId: string;
   isActive: boolean;
   liveOptIn: boolean;
   consentTextVersion?: string | null;
-  maxOpenPositions: number;
 };
 
-export type UpdateBotInput = Partial<CreateBotInput>;
+export type UpdateBotInput = Partial<{
+  name: string;
+  mode: BotMode;
+  paperStartBalance: number;
+  strategyId: string | null;
+  marketGroupId: string | null;
+  isActive: boolean;
+  liveOptIn: boolean;
+  consentTextVersion: string | null;
+}>;
 
 export type AssistantSafetyMode = "STRICT" | "BALANCED" | "EXPERIMENTAL";
 

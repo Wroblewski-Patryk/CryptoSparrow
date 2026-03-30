@@ -37,7 +37,6 @@ const getAxiosMessage = (err: unknown) => {
 
 const toModeBadge = (mode: BotMode) => {
   if (mode === "LIVE") return "live";
-  if (mode === "LOCAL") return "local";
   return "paper";
 };
 
@@ -409,7 +408,6 @@ export default function BotsManagement() {
             >
               <option value="PAPER">PAPER</option>
               <option value="LIVE">LIVE</option>
-              <option value="LOCAL">LOCAL</option>
             </select>
           </label>
           <label className="form-control">
@@ -606,7 +604,6 @@ export default function BotsManagement() {
                           >
                             <option value="PAPER">PAPER</option>
                             <option value="LIVE">LIVE</option>
-                            <option value="LOCAL">LOCAL</option>
                           </select>
                         </div>
                       </td>

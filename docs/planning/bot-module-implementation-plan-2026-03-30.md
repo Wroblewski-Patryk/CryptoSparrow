@@ -42,7 +42,7 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 - [x] `BMOD-12 test(api): extend bots e2e coverage for new create/edit payload and ownership checks`
 
 ## Phase C - Web Bot Creator Refactor
-- [ ] `BMOD-13 refactor(web-types): remove LOCAL and legacy creator-only fields from bot types`
+- [x] `BMOD-13 refactor(web-types): remove LOCAL and legacy creator-only fields from bot types`
 - [ ] `BMOD-14 feat(web-data): load market groups into bot creator`
 - [ ] `BMOD-15 feat(web-creator): create V2 form with Strategy + MarketGroup selectors`
 - [ ] `BMOD-16 feat(web-creator): make paperStartBalance visible only for PAPER mode`

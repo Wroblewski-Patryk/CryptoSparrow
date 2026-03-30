@@ -297,7 +297,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BMOD-10 refactor(api-write): remove positionMode from bot write payload contract`
 - [x] `BMOD-11 refactor(api-write): remove bot-level maxOpenPositions input contract`
   - [x] `BMOD-12 test(api): extend bots e2e coverage for new create/edit payload and ownership checks`
-- [ ] `BMOD-13 refactor(web-types): remove LOCAL and legacy creator-only fields from bot types`
+- [x] `BMOD-13 refactor(web-types): remove LOCAL and legacy creator-only fields from bot types`
 - [ ] `BMOD-14 feat(web-data): load market groups into bot creator`
 - [ ] `BMOD-15 feat(web-creator): create V2 form with Strategy + MarketGroup selectors`
 - [ ] `BMOD-16 feat(web-creator): make paperStartBalance visible only for PAPER mode`
@@ -327,6 +327,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BMOD-40 release(gate): run full regression gate for bot/backtest/runtime and record evidence`
 
 ## Progress Log
+- 2026-03-30: Completed `BMOD-13 refactor(web-types): aligned web bot contracts to V2 by removing `LOCAL` mode from shared bot types, dropping creator write-only legacy fields (`marketType`, `positionMode`, `maxOpenPositions`) from create/update payload types, and updating BotsManagement mode options to PAPER/LIVE only (web bots component tests PASS)`.
 - 2026-03-30: Completed `BMOD-12 test(api): extended bots e2e for new create ownership contract (foreign strategy/group rejection), marketType derivation from market-group universe, and ignored removed write fields (`positionMode`, `maxOpenPositions`)`.
 - 2026-03-30: Completed `BMOD-11 refactor(api-write): removed bot-level `maxOpenPositions` from create/update write contract and derive create defaults from selected strategy config (fallback=1) for bot + initial bot-market-group caps (targeted API e2e PASS)`.
 - 2026-03-30: Completed `BMOD-10 refactor(api-write): removed `positionMode` from bot create/update write contract and forced create default `ONE_WAY` server-side to preserve runtime behavior (targeted API e2e PASS)`.
