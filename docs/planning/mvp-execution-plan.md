@@ -284,7 +284,50 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `POS-41 test(parity): add golden fixtures for close-reason sequence parity across backtest/paper/live`
 - [x] `POS-42 qa(manual): publish side-by-side Binance verification protocol for lifecycle reason parity`
 
+## Phase 18 - Bot Module Delivery (Stream-First, Backtest-Parity, No-Chart Monitoring)
+- [ ] `BMOD-01 docs(contract): freeze Bot V2 create/update payload and migration invariants`
+- [ ] `BMOD-02 docs(decisions): lock websocket-first bot signal policy and no-chart monitoring scope`
+- [ ] `BMOD-03 chore(audit): add preflight report script for LOCAL bots and legacy bot-strategy bindings`
+- [ ] `BMOD-04 test(baseline): pin current bot api/ui/runtime baseline tests before refactor`
+- [ ] `BMOD-05 refactor(api-types): remove LOCAL from bot mode zod/types contract`
+- [ ] `BMOD-06 feat(api-compat): add temporary LOCAL->PAPER read-compat adapter for transition window`
+- [ ] `BMOD-07 refactor(api-create): switch bot create contract to Strategy + MarketGroup payload`
+- [ ] `BMOD-08 feat(api-create): create bot + botMarketGroup + strategyLink in one transaction`
+- [ ] `BMOD-09 refactor(api-derive): derive bot marketType from selected market-group universe`
+- [ ] `BMOD-10 refactor(api-write): remove positionMode from bot write payload contract`
+- [ ] `BMOD-11 refactor(api-write): remove bot-level maxOpenPositions input contract`
+- [ ] `BMOD-12 test(api): extend bots e2e coverage for new create/edit payload and ownership checks`
+- [ ] `BMOD-13 refactor(web-types): remove LOCAL and legacy creator-only fields from bot types`
+- [ ] `BMOD-14 feat(web-data): load market groups into bot creator`
+- [ ] `BMOD-15 feat(web-creator): create V2 form with Strategy + MarketGroup selectors`
+- [ ] `BMOD-16 feat(web-creator): make paperStartBalance visible only for PAPER mode`
+- [ ] `BMOD-17 feat(web-creator): remove positionMode and maxOpenPositions inputs from UI`
+- [ ] `BMOD-18 feat(web-creator): add derived strategy summary (interval/leverage/max-open)`
+- [ ] `BMOD-19 test(web): update BotsManagement tests for new payload and mode-conditional behavior`
+- [ ] `BMOD-20 refactor(runtime-signal): evaluate entry/exit strategy decisions only on final candle events`
+- [ ] `BMOD-21 refactor(runtime-lifecycle): keep ticker path for open-position automation only`
+- [ ] `BMOD-22 feat(runtime-idempotency): add deterministic dedupe key per bot/group/symbol/candle window`
+- [ ] `BMOD-23 feat(runtime-risk): compute group max-open cap from active strategy risk settings`
+- [ ] `BMOD-24 refactor(runtime-model): remove runtime dependency on legacy bot-strategy fallback graph`
+- [ ] `BMOD-25 feat(runtime-watchdog): keep scan loop as disabled-by-default fallback watchdog`
+- [ ] `BMOD-26 test(runtime): extend signal-loop and watchdog tests for websocket-first semantics`
+- [ ] `BMOD-27 test(parity): add bot-paper vs backtest decision parity regression suite`
+- [ ] `BMOD-28 feat(db): add bot runtime session model for run-like monitoring windows`
+- [ ] `BMOD-29 feat(db): add bot runtime event model for lifecycle trace storage`
+- [ ] `BMOD-30 feat(db): add bot runtime per-symbol stats snapshot model`
+- [ ] `BMOD-31 feat(runtime-telemetry): persist session/event/stat snapshots from runtime orchestrator`
+- [ ] `BMOD-32 feat(api-monitor): add endpoints for bot sessions list/detail`
+- [ ] `BMOD-33 feat(api-monitor): add endpoints for per-symbol stats and trades list (no chart payload)`
+- [ ] `BMOD-34 feat(web-monitor): add bot monitoring view with summary + pair stats + trades table`
+- [ ] `BMOD-35 feat(web-live-refresh): add lightweight auto-refresh for active bot sessions`
+- [ ] `BMOD-36 test(e2e): add end-to-end monitoring contract coverage for session/stat/trade data`
+- [ ] `BMOD-37 chore(data-migration): migrate legacy LOCAL modes and legacy botStrategy bindings to canonical model`
+- [ ] `BMOD-38 refactor(db): remove LOCAL enum from Prisma after successful migration verification`
+- [ ] `BMOD-39 docs(runbook): publish bot module operator runbook and manual smoke checklist`
+- [ ] `BMOD-40 release(gate): run full regression gate for bot/backtest/runtime and record evidence`
+
 ## Progress Log
+- 2026-03-30: Added Phase 18 `BMOD` execution queue and canonical implementation blueprint `docs/planning/bot-module-implementation-plan-2026-03-30.md` (stream-first runtime + no-chart bot monitoring scope).
 - 2026-03-30: Completed `feat(backtest-ui): improved run header readability and removed redundant progress/status noise for completed runs`.
 - 2026-03-30: Completed `fix(backtest-parity-ux): aligned Markets pair stats with timeline/trades visibility and execution counters for clearer operator diagnostics`.
 - 2026-03-30: Completed `perf(backtest-ui): staged timeline loading flow (`events` first, then `candles/indicators`) to reduce chart jitter during hydration`.

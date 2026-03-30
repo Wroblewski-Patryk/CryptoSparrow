@@ -7,11 +7,18 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `POS-41 test(parity): add golden fixtures for close-reason sequence parity across backtest/paper/live`
-- [x] `POS-42 qa(manual): publish side-by-side Binance verification protocol for lifecycle reason parity`
+- [ ] `BMOD-01 docs(contract): freeze Bot V2 create/update payload and migration invariants`
+- [ ] `BMOD-02 docs(decisions): lock websocket-first bot signal policy and no-chart monitoring scope`
+- [ ] `BMOD-03 chore(audit): add preflight report script for LOCAL bots and legacy bot-strategy bindings`
+- [ ] `BMOD-04 test(baseline): pin current bot api/ui/runtime baseline tests before refactor`
+- [ ] `BMOD-05 refactor(api-types): remove LOCAL from bot mode zod/types contract`
 
 ## NEXT
-- [ ] `exit-ready(review): re-check full parity gap list after POS-41/POS-42 and promote any new findings into next tiny-commit queue`
+- [ ] `BMOD-06 feat(api-compat): add temporary LOCAL->PAPER read-compat adapter for transition window`
+- [ ] `BMOD-07 refactor(api-create): switch bot create contract to Strategy + MarketGroup payload`
+- [ ] `BMOD-08 feat(api-create): create bot + botMarketGroup + strategyLink in one transaction`
+- [ ] `BMOD-09 refactor(api-derive): derive bot marketType from selected market-group universe`
+- [ ] `BMOD-10 refactor(api-write): remove positionMode from bot write payload contract`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
