@@ -51,7 +51,7 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 - [x] `BMOD-19 test(web): update BotsManagement tests for new payload and mode-conditional behavior`
 
 ## Phase D - Runtime Parity and Stream-First Execution
-- [ ] `BMOD-20 refactor(runtime-signal): evaluate entry/exit strategy decisions only on final candle events`
+- [x] `BMOD-20 refactor(runtime-signal): evaluate entry/exit strategy decisions only on final candle events`
 - [ ] `BMOD-21 refactor(runtime-lifecycle): keep ticker path for open-position automation only`
 - [ ] `BMOD-22 feat(runtime-idempotency): add deterministic dedupe key per bot/group/symbol/candle window`
 - [ ] `BMOD-23 feat(runtime-risk): compute group max-open cap from active strategy risk settings`

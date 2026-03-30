@@ -296,20 +296,14 @@ describe('RuntimeSignalLoop', () => {
       });
     }
 
-    await emit({
-      type: 'ticker',
-      marketType: 'FUTURES',
-      symbol: 'BTCUSDT',
-      eventTime: 20_000,
-      lastPrice: 108,
-      priceChangePercent24h: 0.1,
-    });
-
     expect(deps.createSignal).toHaveBeenCalledWith(
       expect.objectContaining({
         botId: 'bot-strategy',
         strategyId: 'strategy-1',
         direction: 'LONG',
+        payload: expect.objectContaining({
+          source: 'market_stream.candle_final',
+        }),
       })
     );
     expect(deps.orchestrateFn).toHaveBeenCalledWith(
@@ -320,7 +314,64 @@ describe('RuntimeSignalLoop', () => {
       })
     );
     const orchestratePayload = deps.orchestrateFn.mock.calls.at(-1)?.[0];
-    expect(orchestratePayload?.quantity).toBeCloseTo((1000 * 0.1 * 5) / 108, 8);
+    expect(orchestratePayload?.markPrice).toBeGreaterThan(0);
+    expect(orchestratePayload?.quantity).toBeCloseTo(
+      (1000 * 0.1 * 5) / Number(orchestratePayload?.markPrice),
+      8
+    );
+  });
+
+  it('does not evaluate strategy decisions on ticker events', async () => {
+    const { deps, emit } = createDeps();
+    deps.listActiveBots = vi.fn(async () => [
+      {
+        id: 'bot-strategy-ticker',
+        userId: 'user-1',
+        mode: 'PAPER' as const,
+        paperStartBalance: 1000,
+        marketType: 'FUTURES' as const,
+        marketGroups: [
+          {
+            id: 'group-strategy-ticker-1',
+            symbolGroupId: 'symbol-group-strategy-ticker-1',
+            executionOrder: 1,
+            maxOpenPositions: 1,
+            symbols: ['BTCUSDT'],
+            strategies: [
+              {
+                strategyId: 'strategy-1',
+                strategyInterval: '1m',
+                strategyLeverage: 5,
+                walletRisk: 10,
+                strategyConfig: {
+                  open: {
+                    indicatorsLong: [{ name: 'EMA', params: { fast: 3, slow: 5 }, condition: '>', value: 1 }],
+                    indicatorsShort: [],
+                  },
+                },
+                priority: 10,
+                weight: 1,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    await emit({
+      type: 'ticker',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      eventTime: 20_000,
+      lastPrice: 108,
+      priceChangePercent24h: 2.1,
+    });
+
+    expect(deps.createSignal).not.toHaveBeenCalled();
+    expect(deps.orchestrateFn).not.toHaveBeenCalled();
   });
 
   it('merges multi-strategy votes with EXIT priority and deterministic strategy selection', async () => {
@@ -395,15 +446,6 @@ describe('RuntimeSignalLoop', () => {
         isFinal: true,
       });
     }
-
-    await emit({
-      type: 'ticker',
-      marketType: 'FUTURES',
-      symbol: 'BTCUSDT',
-      eventTime: 30_000,
-      lastPrice: 108,
-      priceChangePercent24h: 0.05,
-    });
 
     expect(deps.createSignal).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -344,7 +344,7 @@ export class RuntimeSignalLoop {
 
   private async handleEvent(event: MarketStreamEvent) {
     if (event.type === 'candle') {
-      this.handleCandleEvent(event);
+      await this.handleCandleEvent(event);
       return;
     }
     if (event.type === 'ticker') {
@@ -352,7 +352,7 @@ export class RuntimeSignalLoop {
     }
   }
 
-  private handleCandleEvent(event: StreamCandleEvent) {
+  private async handleCandleEvent(event: StreamCandleEvent) {
     if (!event.isFinal) return;
     const key = this.getSeriesKey(event.marketType, event.symbol, event.interval);
     const series = this.candleSeries.get(key) ?? [];
@@ -371,6 +371,7 @@ export class RuntimeSignalLoop {
       series.splice(0, series.length - maxCandlesPerSeries);
     }
     this.candleSeries.set(key, series);
+    await this.handleFinalCandleDecision(event);
   }
 
   private getSeriesKey(marketType: 'FUTURES' | 'SPOT', symbol: string, interval: string) {
@@ -392,6 +393,176 @@ export class RuntimeSignalLoop {
     if (!fallbackKey) return null;
     const fallbackSeries = this.candleSeries.get(fallbackKey);
     return fallbackSeries && fallbackSeries.length > 0 ? fallbackSeries : null;
+  }
+
+  private strategyMatchesCandleInterval(strategyInterval: string | null | undefined, candleInterval: string) {
+    if (!strategyInterval) return true;
+    return normalizeInterval(strategyInterval) === normalizeInterval(candleInterval);
+  }
+
+  private candleConfidence(event: StreamCandleEvent) {
+    if (!Number.isFinite(event.open) || event.open === 0) return 0;
+    const percentMove = Math.abs((event.close - event.open) / event.open);
+    return Math.max(0, Math.min(1, percentMove));
+  }
+
+  private async handleFinalCandleDecision(event: StreamCandleEvent) {
+    const bots = await this.deps.listActiveBots();
+    await Promise.all(
+      bots.map(async (bot) => {
+        if (bot.marketType !== event.marketType) return;
+
+        const eligibleGroups = bot.marketGroups.filter((group) => {
+          if (group.symbols.length > 0) {
+            const hasSymbol = group.symbols.some(
+              (symbol) => symbol.toUpperCase() === event.symbol.toUpperCase()
+            );
+            if (!hasSymbol) return false;
+          }
+          return group.strategies.some((strategy) =>
+            this.strategyMatchesCandleInterval(strategy.strategyInterval, event.interval)
+          );
+        });
+
+        await Promise.all(
+          eligibleGroups.map(async (group) => {
+            const groupEvalStartedAt = this.deps.nowMs();
+            const strategyVotes: StrategyVote[] = group.strategies
+              .filter((strategy) =>
+                this.strategyMatchesCandleInterval(strategy.strategyInterval, event.interval)
+              )
+              .map((strategy) => {
+                const direction = this.directionFromStrategy({
+                  marketType: bot.marketType,
+                  symbol: event.symbol,
+                  strategy,
+                });
+                if (!direction) return null;
+                return {
+                  strategyId: strategy.strategyId,
+                  direction,
+                  priority: strategy.priority,
+                  weight: strategy.weight,
+                } satisfies StrategyVote;
+              })
+              .filter((vote): vote is StrategyVote => Boolean(vote));
+
+            const merged = this.mergeStrategyVotes(group.strategies, strategyVotes);
+            const direction = merged.direction;
+            if (!direction) {
+              metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
+              metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
+              return;
+            }
+
+            const dedupeKey = `${bot.id}|${group.id}|${event.symbol}`;
+            const now = this.deps.nowMs();
+            const previous = this.recentlyProcessed.get(dedupeKey);
+            if (
+              previous &&
+              previous.direction === direction &&
+              now - previous.at < runtimeDirectionCooldownMs
+            ) {
+              metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
+              return;
+            }
+            this.recentlyProcessed.set(dedupeKey, { direction, at: now });
+
+            if (direction === 'LONG' || direction === 'SHORT') {
+              const openPositionsInGroup = await this.deps.countOpenPositionsForBotAndSymbols({
+                userId: bot.userId,
+                botId: bot.id,
+                symbols: group.symbols,
+              });
+              if (openPositionsInGroup >= group.maxOpenPositions) {
+                return;
+              }
+
+              const preTradeDecision = await this.deps.analyzePreTradeFn({
+                userId: bot.userId,
+                botId: bot.id,
+                symbol: event.symbol,
+                mode: bot.mode,
+                marketType: event.marketType,
+              });
+              if (!preTradeDecision.allowed) {
+                metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
+                metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
+                return;
+              }
+            }
+
+            const strategyExitTraceOnly = direction === 'EXIT';
+            await this.deps.createSignal({
+              userId: bot.userId,
+              botId: bot.id,
+              strategyId: merged.strategyId,
+              symbol: event.symbol,
+              direction,
+              confidence: this.candleConfidence(event),
+              payload: {
+                source: 'market_stream.candle_final',
+                botMarketGroupId: group.id,
+                symbolGroupId: group.symbolGroupId,
+                strategyDriven: true,
+                strategyInterval: event.interval,
+                merge: merged.metadata,
+                strategyExitTraceOnly,
+                groupRisk: {
+                  maxOpenPositions: group.maxOpenPositions,
+                },
+                eventTime: event.eventTime,
+                candle: {
+                  interval: event.interval,
+                  openTime: event.openTime,
+                  closeTime: event.closeTime,
+                  open: event.open,
+                  high: event.high,
+                  low: event.low,
+                  close: event.close,
+                  volume: event.volume,
+                },
+              },
+            });
+
+            if (strategyExitTraceOnly) {
+              metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
+              metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
+              return;
+            }
+
+            const selectedStrategy = group.strategies.find((strategy) => strategy.strategyId === merged.strategyId);
+            const referenceBalance = await resolveRuntimeReferenceBalance({
+              userId: bot.userId,
+              botId: bot.id,
+              mode: bot.mode,
+              marketType: bot.marketType,
+              paperStartBalance: bot.paperStartBalance,
+              nowMs: this.deps.nowMs(),
+            });
+            const orderQuantity = resolveRuntimeOrderQuantity({
+              strategy: selectedStrategy,
+              price: event.close,
+              marketType: bot.marketType,
+              referenceBalance,
+            });
+
+            await this.deps.orchestrateFn({
+              userId: bot.userId,
+              botId: bot.id,
+              symbol: event.symbol,
+              direction,
+              strategyId: merged.strategyId,
+              quantity: orderQuantity,
+              markPrice: event.close,
+              mode: bot.mode,
+            });
+            metricsStore.recordRuntimeMergeOutcome(direction);
+            metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
+          })
+        );
+      })
+    );
   }
 
   private mergeStrategyVotes(strategies: ActiveBotStrategy[], votes: StrategyVote[]): MergedStrategyDecision {
@@ -512,16 +683,17 @@ export class RuntimeSignalLoop {
     };
   }
 
-  private directionFromStrategy(
-    event: StreamTickerEvent,
-    marketType: 'FUTURES' | 'SPOT',
-    strategy: ActiveBotStrategy
-  ): SignalDirection | null {
+  private directionFromStrategy(input: {
+    marketType: 'FUTURES' | 'SPOT';
+    symbol: string;
+    strategy: ActiveBotStrategy;
+  }): SignalDirection | null {
+    const { marketType, symbol, strategy } = input;
     if (!strategy.strategyConfig) return null;
     const signalRules = parseStrategySignalRules(strategy.strategyConfig);
     if (!signalRules) return null;
 
-    const candles = this.getSeries(marketType, event.symbol, strategy.strategyInterval);
+    const candles = this.getSeries(marketType, symbol, strategy.strategyInterval);
     if (!candles || candles.length === 0) return null;
     const indicatorCache = new Map<string, Array<number | null>>();
     return evaluateStrategySignalAtIndex(signalRules, candles, candles.length - 1, indicatorCache);
@@ -536,6 +708,7 @@ export class RuntimeSignalLoop {
         if (bot.marketType !== event.marketType) return;
 
         const eligibleGroups = bot.marketGroups.filter((group) => {
+          if (group.strategies.length > 0) return false;
           if (group.symbols.length === 0) return true;
           return group.symbols.some((symbol) => symbol.toUpperCase() === event.symbol.toUpperCase());
         });
@@ -543,29 +716,14 @@ export class RuntimeSignalLoop {
         await Promise.all(
           eligibleGroups.map(async (group) => {
             const groupEvalStartedAt = this.deps.nowMs();
-            const strategyVotes: StrategyVote[] = group.strategies
-              .map((strategy) => {
-                const direction = this.directionFromStrategy(event, bot.marketType, strategy);
-                if (!direction) return null;
-                return {
-                  strategyId: strategy.strategyId,
-                  direction,
-                  priority: strategy.priority,
-                  weight: strategy.weight,
-                } satisfies StrategyVote;
-              })
-              .filter((vote): vote is StrategyVote => Boolean(vote));
-
-            const merged = group.strategies.length > 0
-              ? this.mergeStrategyVotes(group.strategies, strategyVotes)
-              : {
-                  direction: toDirection(event),
-                  strategyId: undefined,
-                  metadata: {
-                    mergePolicy: 'fallback_ticker',
-                    reason: 'no_strategies_attached',
-                  },
-                };
+            const merged = {
+              direction: toDirection(event),
+              strategyId: undefined,
+              metadata: {
+                mergePolicy: 'fallback_ticker',
+                reason: 'no_strategies_attached',
+              },
+            };
 
             const direction = merged.direction;
             if (!direction) {
@@ -611,12 +769,10 @@ export class RuntimeSignalLoop {
               }
             }
 
-            const strategyExitTraceOnly = direction === 'EXIT' && group.strategies.length > 0;
-
             await this.deps.createSignal({
               userId: bot.userId,
               botId: bot.id,
-              strategyId: merged.strategyId,
+              strategyId: undefined,
               symbol: event.symbol,
               direction,
               confidence: Math.min(1, Math.abs(event.priceChangePercent24h) / 100),
@@ -624,10 +780,10 @@ export class RuntimeSignalLoop {
                 source: 'market_stream.ticker',
                 botMarketGroupId: group.id,
                 symbolGroupId: group.symbolGroupId,
-                strategyDriven: group.strategies.length > 0,
-                strategyInterval: group.strategies[0]?.strategyInterval ?? null,
+                strategyDriven: false,
+                strategyInterval: null,
                 merge: merged.metadata,
-                strategyExitTraceOnly,
+                strategyExitTraceOnly: false,
                 groupRisk: {
                   maxOpenPositions: group.maxOpenPositions,
                 },
@@ -637,38 +793,13 @@ export class RuntimeSignalLoop {
               },
             });
 
-            if (strategyExitTraceOnly) {
-              metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
-              metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
-              return;
-            }
-
-            const selectedStrategy = group.strategies.find((strategy) => strategy.strategyId === merged.strategyId);
-            const referenceBalance = await resolveRuntimeReferenceBalance({
-              userId: bot.userId,
-              botId: bot.id,
-              mode: bot.mode,
-              marketType: bot.marketType,
-              paperStartBalance: bot.paperStartBalance,
-              nowMs: this.deps.nowMs(),
-            });
-            const orderQuantity =
-              direction === 'EXIT'
-                ? runtimeSignalQuantity
-                : resolveRuntimeOrderQuantity({
-                    strategy: selectedStrategy,
-                    price: event.lastPrice,
-                    marketType: bot.marketType,
-                    referenceBalance,
-                  });
-
             await this.deps.orchestrateFn({
               userId: bot.userId,
               botId: bot.id,
               symbol: event.symbol,
               direction,
-              strategyId: merged.strategyId,
-              quantity: orderQuantity,
+              strategyId: undefined,
+              quantity: runtimeSignalQuantity,
               markPrice: event.lastPrice,
               mode: bot.mode,
             });
