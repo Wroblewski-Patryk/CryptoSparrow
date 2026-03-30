@@ -188,6 +188,36 @@ describe('RuntimeSignalLoop', () => {
     );
   });
 
+  it('deduplicates duplicate final-candle window events', async () => {
+    const { deps, emit } = createDeps();
+    withStrategyBot(deps);
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    await emitFinalCandleSeries(emit);
+    const signalCallsAfterFirstPass = deps.createSignal.mock.calls.length;
+    const orchestrateCallsAfterFirstPass = deps.orchestrateFn.mock.calls.length;
+
+    await emit({
+      type: 'candle',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      interval: '1m',
+      eventTime: 10_000 + 7 * 60_000,
+      openTime: 7 * 60_000,
+      closeTime: 7 * 60_000 + 59_000,
+      open: 107,
+      high: 108,
+      low: 106,
+      close: 107,
+      volume: 1000,
+      isFinal: true,
+    });
+
+    expect(deps.createSignal).toHaveBeenCalledTimes(signalCallsAfterFirstPass);
+    expect(deps.orchestrateFn).toHaveBeenCalledTimes(orchestrateCallsAfterFirstPass);
+  });
+
   it('skips final-candle LONG/SHORT execution when pre-trade blocks signal', async () => {
     const { deps, emit } = createDeps();
     withStrategyBot(deps);

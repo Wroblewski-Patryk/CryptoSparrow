@@ -73,7 +73,10 @@ type RuntimeSignalLoopDeps = {
 };
 
 const runtimeSignalQuantity = Number.parseFloat(process.env.RUNTIME_SIGNAL_QUANTITY ?? '0.01');
-const runtimeDirectionCooldownMs = Number.parseInt(process.env.RUNTIME_SIGNAL_COOLDOWN_MS ?? '30000', 10);
+const runtimeSignalDecisionDedupeRetentionMs = Number.parseInt(
+  process.env.RUNTIME_SIGNAL_DEDUPE_RETENTION_MS ?? '21600000',
+  10
+);
 const maxCandlesPerSeries = Number.parseInt(process.env.RUNTIME_SIGNAL_CANDLE_BUFFER ?? '500', 10);
 const minDirectionalScore = Number.parseFloat(process.env.RUNTIME_SIGNAL_MIN_DIRECTIONAL_SCORE ?? '1');
 const defaultGroupMaxOpenPositions = Number.parseInt(
@@ -305,7 +308,7 @@ const normalizeInterval = (value?: string | null) => {
 
 export class RuntimeSignalLoop {
   private unsubscribe: (() => Promise<void>) | null = null;
-  private readonly recentlyProcessed = new Map<string, { direction: SignalDirection; at: number }>();
+  private readonly processedDecisionWindows = new Map<string, number>();
   private readonly candleSeries = new Map<string, RuntimeCandle[]>();
 
   constructor(private readonly deps: RuntimeSignalLoopDeps = defaultDeps) {}
@@ -395,6 +398,35 @@ export class RuntimeSignalLoop {
     return Math.max(0, Math.min(1, percentMove));
   }
 
+  private buildDecisionWindowKey(input: {
+    botId: string;
+    groupId: string;
+    symbol: string;
+    interval: string;
+    openTime: number;
+    closeTime: number;
+  }) {
+    return [
+      input.botId,
+      input.groupId,
+      input.symbol.toUpperCase(),
+      normalizeInterval(input.interval),
+      String(input.openTime),
+      String(input.closeTime),
+    ].join('|');
+  }
+
+  private pruneDecisionWindowDedup(now: number) {
+    if (!Number.isFinite(runtimeSignalDecisionDedupeRetentionMs) || runtimeSignalDecisionDedupeRetentionMs <= 0) {
+      return;
+    }
+    for (const [key, processedAt] of this.processedDecisionWindows.entries()) {
+      if (now - processedAt > runtimeSignalDecisionDedupeRetentionMs) {
+        this.processedDecisionWindows.delete(key);
+      }
+    }
+  }
+
   private async handleFinalCandleDecision(event: StreamCandleEvent) {
     const bots = await this.deps.listActiveBots();
     await Promise.all(
@@ -444,18 +476,21 @@ export class RuntimeSignalLoop {
               return;
             }
 
-            const dedupeKey = `${bot.id}|${group.id}|${event.symbol}`;
             const now = this.deps.nowMs();
-            const previous = this.recentlyProcessed.get(dedupeKey);
-            if (
-              previous &&
-              previous.direction === direction &&
-              now - previous.at < runtimeDirectionCooldownMs
-            ) {
+            this.pruneDecisionWindowDedup(now);
+            const decisionWindowKey = this.buildDecisionWindowKey({
+              botId: bot.id,
+              groupId: group.id,
+              symbol: event.symbol,
+              interval: event.interval,
+              openTime: event.openTime,
+              closeTime: event.closeTime,
+            });
+            if (this.processedDecisionWindows.has(decisionWindowKey)) {
               metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
               return;
             }
-            this.recentlyProcessed.set(dedupeKey, { direction, at: now });
+            this.processedDecisionWindows.set(decisionWindowKey, now);
 
             if (direction === 'LONG' || direction === 'SHORT') {
               const openPositionsInGroup = await this.deps.countOpenPositionsForBotAndSymbols({
