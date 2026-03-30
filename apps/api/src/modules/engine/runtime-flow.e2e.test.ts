@@ -91,7 +91,6 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
       isActive: true,
       liveOptIn: true,
       consentTextVersion: 'mvp-v1',
-      maxOpenPositions: 2,
     });
     expect(botRes.status).toBe(201);
     const botId = botRes.body.id as string;

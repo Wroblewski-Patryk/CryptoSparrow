@@ -65,7 +65,6 @@ const createPayload = (refs: { strategyId: string; marketGroupId: string }) => (
   marketGroupId: refs.marketGroupId,
   isActive: false,
   liveOptIn: false,
-  maxOpenPositions: 3,
 });
 
 describe('Bots module contract', () => {
@@ -200,7 +199,6 @@ describe('Bots module contract', () => {
       marketType: 'SPOT',
       liveOptIn: true,
       consentTextVersion: 'mvp-v1',
-      maxOpenPositions: 5,
       strategyId: null,
     });
     expect(updateRes.status).toBe(200);
@@ -209,7 +207,7 @@ describe('Bots module contract', () => {
     expect(updateRes.body.positionMode).toBe('ONE_WAY');
     expect(updateRes.body.liveOptIn).toBe(true);
     expect(updateRes.body.consentTextVersion).toBe('mvp-v1');
-    expect(updateRes.body.maxOpenPositions).toBe(5);
+    expect(updateRes.body.maxOpenPositions).toBe(1);
     expect(updateRes.body.strategyId).toBe(strategyId);
 
     const mappingAfterUpdate = await prisma.botStrategy.findMany({

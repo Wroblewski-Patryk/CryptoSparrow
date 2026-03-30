@@ -184,8 +184,31 @@ const getOwnedSymbolGroup = async (userId: string, symbolGroupId: string) =>
 const getOwnedStrategy = async (userId: string, strategyId: string) =>
   prisma.strategy.findFirst({
     where: { id: strategyId, userId },
-    select: { id: true },
+    select: {
+      id: true,
+      config: true,
+    },
   });
+
+const deriveMaxOpenPositionsFromStrategy = (config: unknown) => {
+  if (!config || typeof config !== 'object') return 1;
+
+  const cfg = config as Record<string, unknown>;
+  const candidates = [
+    cfg.maxOpenPositions,
+    (cfg.risk as Record<string, unknown> | undefined)?.maxOpenPositions,
+    (cfg.open as Record<string, unknown> | undefined)?.maxOpenPositions,
+    (cfg.position as Record<string, unknown> | undefined)?.maxOpenPositions,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'number' && Number.isInteger(candidate) && candidate > 0) {
+      return candidate;
+    }
+  }
+
+  return 1;
+};
 
 const validateSymbolGroupForBot = async (params: {
   userId: string;
@@ -261,6 +284,7 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
   const symbolGroup = await getOwnedSymbolGroup(userId, marketGroupId);
   if (!symbolGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
   const derivedMarketType = symbolGroup.marketUniverse.marketType;
+  const derivedMaxOpenPositions = deriveMaxOpenPositionsFromStrategy(strategy.config);
 
   const createdBotId = await prisma.$transaction(async (tx) => {
     const createdBot = await tx.bot.create({
@@ -269,6 +293,7 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
         ...botData,
         marketType: derivedMarketType,
         positionMode: 'ONE_WAY',
+        maxOpenPositions: derivedMaxOpenPositions,
         consentTextVersion: botData.liveOptIn
           ? normalizeConsentTextVersion(botData.consentTextVersion)
           : null,
@@ -285,7 +310,7 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
         symbolGroupId: marketGroupId,
         lifecycleStatus: 'ACTIVE',
         executionOrder: 100,
-        maxOpenPositions: botData.maxOpenPositions,
+        maxOpenPositions: derivedMaxOpenPositions,
         isEnabled: true,
       },
       select: {

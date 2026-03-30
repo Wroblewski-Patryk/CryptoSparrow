@@ -110,7 +110,6 @@ describe('Cross-module data isolation contract', () => {
       marketGroupId: ownerSymbolGroup.id,
       isActive: false,
       liveOptIn: false,
-      maxOpenPositions: 2,
     });
     expect(ownerBotRes.status).toBe(201);
 
@@ -121,7 +120,6 @@ describe('Cross-module data isolation contract', () => {
       marketGroupId: otherSymbolGroup.id,
       isActive: false,
       liveOptIn: false,
-      maxOpenPositions: 2,
     });
     expect(otherBotRes.status).toBe(201);
 
