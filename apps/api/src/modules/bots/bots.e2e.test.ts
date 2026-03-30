@@ -51,6 +51,40 @@ describe('Bots module contract', () => {
     expect(res.body.error.message).toBe('Missing token');
   });
 
+  it('maps legacy LOCAL bot mode to PAPER in read responses during transition window', async () => {
+    const email = 'bots-local-compat@example.com';
+    const agent = await registerAndLogin(email);
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+
+    const legacyBot = await prisma.bot.create({
+      data: {
+        userId: user.id,
+        name: 'Legacy Local Bot',
+        mode: 'LOCAL',
+        paperStartBalance: 10_000,
+        marketType: 'FUTURES',
+        positionMode: 'ONE_WAY',
+        isActive: false,
+        liveOptIn: false,
+        maxOpenPositions: 1,
+      },
+    });
+
+    const listRes = await agent.get('/dashboard/bots');
+    expect(listRes.status).toBe(200);
+    const listedBot = listRes.body.find((item: { id: string }) => item.id === legacyBot.id);
+    expect(listedBot).toBeTruthy();
+    expect(listedBot.mode).toBe('PAPER');
+
+    const getRes = await agent.get(`/dashboard/bots/${legacyBot.id}`);
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.mode).toBe('PAPER');
+
+    const runtimeGraphRes = await agent.get(`/dashboard/bots/${legacyBot.id}/runtime-graph`);
+    expect(runtimeGraphRes.status).toBe(200);
+    expect(runtimeGraphRes.body.bot.mode).toBe('PAPER');
+  });
+
   it('supports full CRUD for authenticated owner', async () => {
     const agent = await registerAndLogin('bots-owner@example.com');
     const strategyRes = await agent.post('/dashboard/strategies').send({
