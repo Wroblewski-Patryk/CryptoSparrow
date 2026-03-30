@@ -31,9 +31,8 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 - [x] `BMOD-02 docs(decisions): lock websocket-first bot signal policy and no-chart monitoring scope`
 - [x] `BMOD-03 chore(audit): add preflight report script for LOCAL bots and legacy bot-strategy bindings`
 - [x] `BMOD-04 test(baseline): pin current bot api/ui/runtime baseline tests before refactor`
-
 ## Phase B - API and Domain Contract Refactor
-- [ ] `BMOD-05 refactor(api-types): remove LOCAL from bot mode zod/types contract`
+- [x] `BMOD-05 refactor(api-types): remove LOCAL from bot mode zod/types contract`
 - [ ] `BMOD-06 feat(api-compat): add temporary LOCAL->PAPER read-compat adapter for transition window`
 - [ ] `BMOD-07 refactor(api-create): switch bot create contract to Strategy + MarketGroup payload`
 - [ ] `BMOD-08 feat(api-create): create bot + botMarketGroup + strategyLink in one transaction`

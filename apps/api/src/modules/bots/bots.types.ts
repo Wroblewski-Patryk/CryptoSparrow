@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const BotModeSchema = z.enum(['PAPER', 'LIVE', 'LOCAL']);
+export const BotModeSchema = z.enum(['PAPER', 'LIVE']);
 export const TradeMarketSchema = z.enum(['FUTURES', 'SPOT']);
 export const PositionModeSchema = z.enum(['ONE_WAY', 'HEDGE']);
 export const BotMarketGroupStatusSchema = z.enum(['DRAFT', 'ACTIVE', 'PAUSED', 'ARCHIVED']);
