@@ -288,7 +288,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BMOD-01 docs(contract): freeze Bot V2 create/update payload and migration invariants`
 - [x] `BMOD-02 docs(decisions): lock websocket-first bot signal policy and no-chart monitoring scope`
 - [x] `BMOD-03 chore(audit): add preflight report script for LOCAL bots and legacy bot-strategy bindings`
-- [ ] `BMOD-04 test(baseline): pin current bot api/ui/runtime baseline tests before refactor`
+- [x] `BMOD-04 test(baseline): pin current bot api/ui/runtime baseline tests before refactor`
 - [ ] `BMOD-05 refactor(api-types): remove LOCAL from bot mode zod/types contract`
 - [ ] `BMOD-06 feat(api-compat): add temporary LOCAL->PAPER read-compat adapter for transition window`
 - [ ] `BMOD-07 refactor(api-create): switch bot create contract to Strategy + MarketGroup payload`
@@ -327,6 +327,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BMOD-40 release(gate): run full regression gate for bot/backtest/runtime and record evidence`
 
 ## Progress Log
+- 2026-03-30: Completed `BMOD-04 test(baseline): pinned and executed `test:bot:v2:baseline` (PASS) and recorded suite in `docs/operations/bot-v2-baseline-test-suite.md``.
 - 2026-03-30: Completed `BMOD-03 chore(audit): added `apps/api/scripts/bot-v2-preflight-report.ts` and `ops:bot:v2:preflight` command for LOCAL + legacy BotStrategy migration readiness checks`.
 - 2026-03-30: Completed `BMOD-02 docs(decisions): locked websocket-first bot trigger policy + no-chart monitoring scope with canonical references in `docs/planning/open-decisions.md``.
 - 2026-03-30: Completed `BMOD-01 docs(contract): froze canonical Bot V2 create/update payload + migration invariants in `docs/architecture/bot-v2-create-update-contract.md``.

@@ -7,22 +7,23 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BMOD-04 test(baseline): pin current bot api/ui/runtime baseline tests before refactor`
 - [ ] `BMOD-05 refactor(api-types): remove LOCAL from bot mode zod/types contract`
 - [ ] `BMOD-06 feat(api-compat): add temporary LOCAL->PAPER read-compat adapter for transition window`
 - [ ] `BMOD-07 refactor(api-create): switch bot create contract to Strategy + MarketGroup payload`
 - [ ] `BMOD-08 feat(api-create): create bot + botMarketGroup + strategyLink in one transaction`
+- [ ] `BMOD-09 refactor(api-derive): derive bot marketType from selected market-group universe`
 
 ## NEXT
-- [ ] `BMOD-09 refactor(api-derive): derive bot marketType from selected market-group universe`
 - [ ] `BMOD-10 refactor(api-write): remove positionMode from bot write payload contract`
 - [ ] `BMOD-11 refactor(api-write): remove bot-level maxOpenPositions input contract`
 - [ ] `BMOD-12 test(api): extend bots e2e coverage for new create/edit payload and ownership checks`
 - [ ] `BMOD-13 refactor(web-types): remove LOCAL and legacy creator-only fields from bot types`
+- [ ] `BMOD-14 feat(web-data): load market groups into bot creator`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BMOD-04 test(baseline): pin current bot api/ui/runtime baseline tests before refactor`
 - [x] `BMOD-03 chore(audit): add preflight report script for LOCAL bots and legacy bot-strategy bindings`
 - [x] `BMOD-02 docs(decisions): lock websocket-first bot signal policy and no-chart monitoring scope`
 - [x] `BMOD-01 docs(contract): freeze Bot V2 create/update payload and migration invariants`

@@ -27,6 +27,7 @@
     "test:go-live:web": "pnpm --filter web exec vitest run src/features/bots/components/BotsManagement.test.tsx src/features/logs/components/AuditTrailView.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx",
     "test:go-live:client": "pnpm run test:go-live:web",
     "test:go-live:smoke": "node scripts/goLiveSmoke.mjs --target=full",
+    "test:bot:v2:baseline": "pnpm --filter api test -- src/modules/bots/bots.e2e.test.ts src/modules/engine/runtime-flow.e2e.test.ts src/modules/engine/runtimeSignalLoop.service.test.ts src/modules/engine/runtimeScanLoop.service.test.ts src/modules/engine/paperLiveDecisionEquivalence.test.ts && pnpm --filter web exec vitest run src/features/bots/components/BotsManagement.test.tsx",
     "ops:slo:collect": "node scripts/collectSloEvidence.mjs",
     "ops:slo:window-report": "node scripts/buildSloWindowReport.mjs",
     "ops:rc:gates:status": "node scripts/buildRcExternalGateStatus.mjs",
