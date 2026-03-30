@@ -46,7 +46,7 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 - [x] `BMOD-14 feat(web-data): load market groups into bot creator`
 - [x] `BMOD-15 feat(web-creator): create V2 form with Strategy + MarketGroup selectors`
 - [x] `BMOD-16 feat(web-creator): make paperStartBalance visible only for PAPER mode`
-- [ ] `BMOD-17 feat(web-creator): remove positionMode and maxOpenPositions inputs from UI`
+- [x] `BMOD-17 feat(web-creator): remove positionMode and maxOpenPositions inputs from UI`
 - [ ] `BMOD-18 feat(web-creator): add derived strategy summary (interval/leverage/max-open)`
 - [ ] `BMOD-19 test(web): update BotsManagement tests for new payload and mode-conditional behavior`
 

@@ -113,9 +113,6 @@ describe("BotsManagement", () => {
     fireEvent.change(screen.getByPlaceholderText("Momentum Runner"), {
       target: { value: "Momentum Runner" },
     });
-    fireEvent.change(screen.getByLabelText("Max open positions"), {
-      target: { value: "3" },
-    });
     fireEvent.click(screen.getByRole("button", { name: "Dodaj bota" }));
 
     await waitFor(() => {

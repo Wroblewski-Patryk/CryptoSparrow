@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BMOD-17 feat(web-creator): remove positionMode and maxOpenPositions inputs from UI`
 - [ ] `BMOD-18 feat(web-creator): add derived strategy summary (interval/leverage/max-open)`
 - [ ] `BMOD-19 test(web): update BotsManagement tests for new payload and mode-conditional behavior`
 
@@ -16,6 +15,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BMOD-17 feat(web-creator): remove positionMode and maxOpenPositions inputs from UI`
 - [x] `BMOD-16 feat(web-creator): make paperStartBalance visible only for PAPER mode`
 - [x] `BMOD-15 feat(web-creator): create V2 form with Strategy + MarketGroup selectors`
 - [x] `BMOD-14 feat(web-data): load market groups into bot creator`

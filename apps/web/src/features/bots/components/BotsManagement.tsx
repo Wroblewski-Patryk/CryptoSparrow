@@ -22,7 +22,6 @@ import {
   AssistantDecisionTrace,
   BotMode,
   BotSubagentConfig,
-  PositionMode,
   TradeMarket,
 } from "../types/bot.type";
 import { listMarketUniverses } from "../../markets/services/markets.service";
@@ -63,9 +62,7 @@ export default function BotsManagement() {
   const [name, setName] = useState("");
   const [mode, setMode] = useState<BotMode>("PAPER");
   const [paperStartBalance, setPaperStartBalance] = useState(10_000);
-  const [positionMode, setPositionMode] = useState<PositionMode>("ONE_WAY");
   const [marketFilter, setMarketFilter] = useState<"ALL" | TradeMarket>("ALL");
-  const [maxOpenPositions, setMaxOpenPositions] = useState(1);
   const [strategyId, setStrategyId] = useState<string>("");
   const [marketGroupId, setMarketGroupId] = useState<string>("");
   const [assistantBotId, setAssistantBotId] = useState<string>("");
@@ -220,10 +217,8 @@ export default function BotsManagement() {
       setName("");
       setMode("PAPER");
       setPaperStartBalance(10_000);
-      setPositionMode("ONE_WAY");
       setStrategyId((prev) => prev || strategies[0]?.id || "");
       setMarketGroupId((prev) => prev || marketGroups[0]?.id || "");
-      setMaxOpenPositions(1);
       toast.success("Bot utworzony");
       await loadBots(marketFilter);
     } catch (err: unknown) {
@@ -260,12 +255,10 @@ export default function BotsManagement() {
         name: bot.name,
         mode: bot.mode,
         marketType: bot.marketType,
-        positionMode: bot.positionMode,
         isActive: bot.isActive,
         liveOptIn: bot.liveOptIn,
         consentTextVersion: bot.liveOptIn ? LIVE_CONSENT_TEXT_VERSION : null,
         paperStartBalance: bot.paperStartBalance,
-        maxOpenPositions: bot.maxOpenPositions,
         strategyId: bot.strategyId ?? null,
       });
       patchBot(bot.id, updated);
@@ -469,30 +462,6 @@ export default function BotsManagement() {
             </label>
           ) : null}
           <label className="form-control">
-            <span className="label-text">Pozycja</span>
-            <select
-              className="select select-bordered"
-              aria-label="Tryb pozycji bota"
-              value={positionMode}
-              onChange={(event) => setPositionMode(event.target.value as PositionMode)}
-            >
-              <option value="ONE_WAY">ONE_WAY</option>
-              <option value="HEDGE">HEDGE</option>
-            </select>
-          </label>
-          <label className="form-control">
-            <span className="label-text">Max open positions</span>
-            <input
-              type="number"
-              min={1}
-              max={100}
-              className="input input-bordered"
-              aria-label="Max open positions"
-              value={maxOpenPositions}
-              onChange={(event) => setMaxOpenPositions(Number(event.target.value))}
-            />
-          </label>
-          <label className="form-control">
             <span className="label-text">Strategia</span>
             <select
               className="select select-bordered"
@@ -596,16 +565,7 @@ export default function BotsManagement() {
                         </select>
                       </td>
                       <td>
-                        <select
-                          className="select select-bordered select-xs w-full"
-                          value={bot.positionMode}
-                          onChange={(event) =>
-                            patchBot(bot.id, { positionMode: event.target.value as PositionMode })
-                          }
-                        >
-                          <option value="ONE_WAY">ONE_WAY</option>
-                          <option value="HEDGE">HEDGE</option>
-                        </select>
+                        <span className="text-xs opacity-70">{bot.positionMode}</span>
                       </td>
                       <td>
                         <select
@@ -657,16 +617,7 @@ export default function BotsManagement() {
                         />
                       </td>
                       <td>
-                        <input
-                          type="number"
-                          min={1}
-                          max={100}
-                          className="input input-bordered input-sm w-24"
-                          value={bot.maxOpenPositions}
-                          onChange={(event) =>
-                            patchBot(bot.id, { maxOpenPositions: Number(event.target.value) })
-                          }
-                        />
+                        <span className="text-xs opacity-70">{bot.maxOpenPositions}</span>
                       </td>
                       <td>
                         <input
