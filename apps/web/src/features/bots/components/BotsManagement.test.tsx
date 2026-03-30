@@ -32,6 +32,71 @@ afterEach(() => {
 });
 
 describe("BotsManagement", () => {
+  it("shows and hides paper start balance based on selected bot mode", async () => {
+    listMock.mockResolvedValue([]);
+    listStrategiesMock.mockResolvedValue([{ id: "s-mode", name: "Mode Strategy", interval: "5m" }]);
+    listMarketUniversesMock.mockResolvedValue([
+      { id: "g-mode", name: "Mode Group", marketType: "FUTURES", baseCurrency: "USDT", whitelist: [], blacklist: [] },
+    ]);
+
+    render(<BotsManagement />);
+    await waitFor(() => {
+      expect(screen.getByLabelText("Tryb bota")).toHaveValue("PAPER");
+      expect(screen.getByLabelText("Paper start balance")).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText("Tryb bota"), {
+      target: { value: "LIVE" },
+    });
+    expect(screen.queryByLabelText("Paper start balance")).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Tryb bota"), {
+      target: { value: "PAPER" },
+    });
+    expect(screen.getByLabelText("Paper start balance")).toBeInTheDocument();
+  });
+
+  it("renders strategy-derived summary values for selected strategy", async () => {
+    listMock.mockResolvedValue([]);
+    listStrategiesMock.mockResolvedValue([
+      {
+        id: "s-one",
+        name: "One",
+        interval: "5m",
+        leverage: 12,
+        config: { additional: { maxPositions: 3 } },
+      },
+      {
+        id: "s-two",
+        name: "Two",
+        interval: "15m",
+        leverage: 7,
+        config: { additional: { maxOpenPositions: 5 } },
+      },
+    ]);
+    listMarketUniversesMock.mockResolvedValue([
+      { id: "g-summary", name: "Summary Group", marketType: "FUTURES", baseCurrency: "USDT", whitelist: [], blacklist: [] },
+    ]);
+
+    render(<BotsManagement />);
+    await waitFor(() => {
+      expect(screen.getByLabelText("Strategia bota")).toHaveValue("s-one");
+    });
+
+    expect(screen.getByText("Parametry ze strategii")).toBeInTheDocument();
+    expect(screen.getByText("5m")).toBeInTheDocument();
+    expect(screen.getByText("12x")).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Strategia bota"), {
+      target: { value: "s-two" },
+    });
+
+    expect(screen.getByText("15m")).toBeInTheDocument();
+    expect(screen.getByText("7x")).toBeInTheDocument();
+    expect(screen.getByText("5")).toBeInTheDocument();
+  });
+
   it("requires confirmation before creating LIVE bot", async () => {
     listMock.mockResolvedValue([]);
     listStrategiesMock.mockResolvedValue([{ id: "s-live", name: "Live Strategy", interval: "5m" }]);

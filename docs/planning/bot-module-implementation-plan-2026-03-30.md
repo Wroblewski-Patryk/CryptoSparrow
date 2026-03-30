@@ -48,7 +48,7 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 - [x] `BMOD-16 feat(web-creator): make paperStartBalance visible only for PAPER mode`
 - [x] `BMOD-17 feat(web-creator): remove positionMode and maxOpenPositions inputs from UI`
 - [x] `BMOD-18 feat(web-creator): add derived strategy summary (interval/leverage/max-open)`
-- [ ] `BMOD-19 test(web): update BotsManagement tests for new payload and mode-conditional behavior`
+- [x] `BMOD-19 test(web): update BotsManagement tests for new payload and mode-conditional behavior`
 
 ## Phase D - Runtime Parity and Stream-First Execution
 - [ ] `BMOD-20 refactor(runtime-signal): evaluate entry/exit strategy decisions only on final candle events`

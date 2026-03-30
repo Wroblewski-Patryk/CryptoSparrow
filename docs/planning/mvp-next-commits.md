@@ -7,14 +7,15 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BMOD-19 test(web): update BotsManagement tests for new payload and mode-conditional behavior`
 - [ ] `BMOD-20 refactor(runtime-signal): evaluate entry/exit strategy decisions only on final candle events`
+- [ ] `BMOD-21 refactor(runtime-lifecycle): keep ticker path for open-position automation only`
 
 ## NEXT
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BMOD-19 test(web): update BotsManagement tests for new payload and mode-conditional behavior`
 - [x] `BMOD-18 feat(web-creator): add derived strategy summary (interval/leverage/max-open)`
 - [x] `BMOD-17 feat(web-creator): remove positionMode and maxOpenPositions inputs from UI`
 - [x] `BMOD-16 feat(web-creator): make paperStartBalance visible only for PAPER mode`

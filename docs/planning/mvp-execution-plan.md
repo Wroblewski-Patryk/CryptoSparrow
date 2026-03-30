@@ -303,7 +303,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BMOD-16 feat(web-creator): make paperStartBalance visible only for PAPER mode`
 - [x] `BMOD-17 feat(web-creator): remove positionMode and maxOpenPositions inputs from UI`
 - [x] `BMOD-18 feat(web-creator): add derived strategy summary (interval/leverage/max-open)`
-- [ ] `BMOD-19 test(web): update BotsManagement tests for new payload and mode-conditional behavior`
+- [x] `BMOD-19 test(web): update BotsManagement tests for new payload and mode-conditional behavior`
 - [ ] `BMOD-20 refactor(runtime-signal): evaluate entry/exit strategy decisions only on final candle events`
 - [ ] `BMOD-21 refactor(runtime-lifecycle): keep ticker path for open-position automation only`
 - [ ] `BMOD-22 feat(runtime-idempotency): add deterministic dedupe key per bot/group/symbol/candle window`
@@ -327,6 +327,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BMOD-40 release(gate): run full regression gate for bot/backtest/runtime and record evidence`
 
 ## Progress Log
+- 2026-03-30: Completed `BMOD-19 test(web): expanded `BotsManagement` suite with regression coverage for mode-conditional `paperStartBalance` visibility (PAPER/LIVE toggle) and strategy-derived creator summary values (`interval`, `leverage`, derived `max open positions`)`.
 - 2026-03-30: Completed `BMOD-18 feat(web-creator): added strategy-derived summary block in bot creator (`Interwal`, `Dzwignia`, `Max open positions`) with max-open derived from strategy risk config (`additional.maxPositions`/`maxOpenPositions`) and fallback to `1` when missing/invalid (web bots component tests PASS)`.
 - 2026-03-30: Completed `BMOD-17 feat(web-creator): removed `Pozycja` and `Max open positions` input controls from bot creator UI, made table values read-only for those fields, and stopped sending them in bot update payload writes (web bots component tests PASS)`.
 - 2026-03-30: Completed `BMOD-16 feat(web-creator): updated bot creator UX so `paperStartBalance` field is rendered only for `PAPER` mode (hidden for LIVE), with regression assertion in bots component tests (PASS)`.
