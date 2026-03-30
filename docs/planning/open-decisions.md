@@ -400,6 +400,8 @@ This file tracks intentionally unresolved architecture choices so implementation
   - open-position lifecycle automation can react to ticker refresh events.
   - interval scan loop is fallback-only watchdog behavior and should be disabled by default in normal operation.
   - no periodic free-running signal-generation loop should be the primary source of bot decisions.
+- Canonical references:
+  - `docs/architecture/bot-v2-create-update-contract.md`
 
 ## Bot Monitoring Surface (Performance Safety)
 - Decision state: resolved on 2026-03-30.
@@ -411,6 +413,8 @@ This file tracks intentionally unresolved architecture choices so implementation
     - trades/events tables,
     - live refresh of textual/tabular metrics.
   - goal is stable UI performance for multi-pair bots under live data load.
+- Canonical references:
+  - `docs/architecture/bot-v2-create-update-contract.md`
 
 ## Dashboard Isometric Mode Placement
 - Decision state: resolved on 2026-03-22.
