@@ -63,6 +63,7 @@ describe("BotsManagement", () => {
     fireEvent.change(screen.getByLabelText("Tryb bota"), {
       target: { value: "LIVE" },
     });
+    expect(screen.queryByLabelText("Paper start balance")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Dodaj bota" }));
 
     await waitFor(() => {

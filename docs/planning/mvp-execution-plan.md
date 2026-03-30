@@ -300,7 +300,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BMOD-13 refactor(web-types): remove LOCAL and legacy creator-only fields from bot types`
 - [x] `BMOD-14 feat(web-data): load market groups into bot creator`
 - [x] `BMOD-15 feat(web-creator): create V2 form with Strategy + MarketGroup selectors`
-- [ ] `BMOD-16 feat(web-creator): make paperStartBalance visible only for PAPER mode`
+- [x] `BMOD-16 feat(web-creator): make paperStartBalance visible only for PAPER mode`
 - [ ] `BMOD-17 feat(web-creator): remove positionMode and maxOpenPositions inputs from UI`
 - [ ] `BMOD-18 feat(web-creator): add derived strategy summary (interval/leverage/max-open)`
 - [ ] `BMOD-19 test(web): update BotsManagement tests for new payload and mode-conditional behavior`
@@ -327,6 +327,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BMOD-40 release(gate): run full regression gate for bot/backtest/runtime and record evidence`
 
 ## Progress Log
+- 2026-03-30: Completed `BMOD-16 feat(web-creator): updated bot creator UX so `paperStartBalance` field is rendered only for `PAPER` mode (hidden for LIVE), with regression assertion in bots component tests (PASS)`.
 - 2026-03-30: Completed `BMOD-15 feat(web-creator): replaced creator `Rynek` selector with canonical `Grupa rynkow` selector, removed optional empty strategy path in create form, and enforced strategy/group-driven create readiness in UI state (web bots component tests PASS)`.
 - 2026-03-30: Completed `BMOD-14 feat(web-data): wired market-group source loading into BotsManagement creator flow (`listMarketUniverses`), persisted first available group as default selection state, and updated bots component tests with market-group mocks (PASS)`.
 - 2026-03-30: Completed `BMOD-13 refactor(web-types): aligned web bot contracts to V2 by removing `LOCAL` mode from shared bot types, dropping creator write-only legacy fields (`marketType`, `positionMode`, `maxOpenPositions`) from create/update payload types, and updating BotsManagement mode options to PAPER/LIVE only (web bots component tests PASS)`.

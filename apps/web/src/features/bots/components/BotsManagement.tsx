@@ -452,21 +452,22 @@ export default function BotsManagement() {
               ))}
             </select>
           </label>
-          <label className="form-control">
-            <span className="label-text">Paper start balance</span>
-            <input
-              type="number"
-              min={0}
-              max={100000000}
-              className="input input-bordered"
-              aria-label="Paper start balance"
-              value={paperStartBalance}
-              onChange={(event) =>
-                setPaperStartBalance(Number.isFinite(Number(event.target.value)) ? Number(event.target.value) : 0)
-              }
-              disabled={mode === "LIVE"}
-            />
-          </label>
+          {mode === "PAPER" ? (
+            <label className="form-control">
+              <span className="label-text">Paper start balance</span>
+              <input
+                type="number"
+                min={0}
+                max={100000000}
+                className="input input-bordered"
+                aria-label="Paper start balance"
+                value={paperStartBalance}
+                onChange={(event) =>
+                  setPaperStartBalance(Number.isFinite(Number(event.target.value)) ? Number(event.target.value) : 0)
+                }
+              />
+            </label>
+          ) : null}
           <label className="form-control">
             <span className="label-text">Pozycja</span>
             <select
