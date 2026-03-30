@@ -198,7 +198,6 @@ describe('Bots module contract', () => {
     const updateRes = await agent.put(`/dashboard/bots/${botId}`).send({
       mode: 'LIVE',
       marketType: 'SPOT',
-      positionMode: 'HEDGE',
       liveOptIn: true,
       consentTextVersion: 'mvp-v1',
       maxOpenPositions: 5,
@@ -207,7 +206,7 @@ describe('Bots module contract', () => {
     expect(updateRes.status).toBe(200);
     expect(updateRes.body.mode).toBe('LIVE');
     expect(updateRes.body.marketType).toBe('SPOT');
-    expect(updateRes.body.positionMode).toBe('HEDGE');
+    expect(updateRes.body.positionMode).toBe('ONE_WAY');
     expect(updateRes.body.liveOptIn).toBe(true);
     expect(updateRes.body.consentTextVersion).toBe('mvp-v1');
     expect(updateRes.body.maxOpenPositions).toBe(5);

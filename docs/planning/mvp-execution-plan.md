@@ -294,7 +294,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BMOD-07 refactor(api-create): switch bot create contract to Strategy + MarketGroup payload`
 - [x] `BMOD-08 feat(api-create): create bot + botMarketGroup + strategyLink in one transaction`
 - [x] `BMOD-09 refactor(api-derive): derive bot marketType from selected market-group universe`
-- [ ] `BMOD-10 refactor(api-write): remove positionMode from bot write payload contract`
+- [x] `BMOD-10 refactor(api-write): remove positionMode from bot write payload contract`
 - [ ] `BMOD-11 refactor(api-write): remove bot-level maxOpenPositions input contract`
 - [ ] `BMOD-12 test(api): extend bots e2e coverage for new create/edit payload and ownership checks`
 - [ ] `BMOD-13 refactor(web-types): remove LOCAL and legacy creator-only fields from bot types`
@@ -327,6 +327,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BMOD-40 release(gate): run full regression gate for bot/backtest/runtime and record evidence`
 
 ## Progress Log
+- 2026-03-30: Completed `BMOD-10 refactor(api-write): removed `positionMode` from bot create/update write contract and forced create default `ONE_WAY` server-side to preserve runtime behavior (targeted API e2e PASS)`.
 - 2026-03-30: Completed `BMOD-09 refactor(api-derive): removed client-writable `marketType` from bot create schema and derive bot market type from selected market-group universe in create transaction (targeted API e2e PASS)`.
 - 2026-03-30: Completed `BMOD-08 feat(api-create): bot create now atomically creates `Bot` + `BotMarketGroup` + `MarketGroupStrategyLink`, adds create error mapping for invalid market-group ownership/compatibility, and hardens bot delete cascade for new relations (targeted API e2e PASS)`.
 - 2026-03-30: Completed `BMOD-07 refactor(api-create): switched bot create write contract to require `strategyId` + `marketGroupId` in API schema, updated bots/runtime/isolation e2e create fixtures, and validated targeted API suites (PASS)`.

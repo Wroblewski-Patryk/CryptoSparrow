@@ -268,6 +268,7 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
         userId,
         ...botData,
         marketType: derivedMarketType,
+        positionMode: 'ONE_WAY',
         consentTextVersion: botData.liveOptIn
           ? normalizeConsentTextVersion(botData.consentTextVersion)
           : null,

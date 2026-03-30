@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BMOD-10 refactor(api-write): remove positionMode from bot write payload contract`
 - [ ] `BMOD-11 refactor(api-write): remove bot-level maxOpenPositions input contract`
 
 ## NEXT
@@ -20,6 +19,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BMOD-10 refactor(api-write): remove positionMode from bot write payload contract`
 - [x] `BMOD-09 refactor(api-derive): derive bot marketType from selected market-group universe`
 - [x] `BMOD-08 feat(api-create): create bot + botMarketGroup + strategyLink in one transaction`
 - [x] `BMOD-07 refactor(api-create): switch bot create contract to Strategy + MarketGroup payload`
