@@ -27,7 +27,7 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 ## Commit Sequence (one task = one commit)
 
 ## Phase A - Contract and Preflight
-- [ ] `BMOD-01 docs(contract): freeze Bot V2 create/update payload and migration invariants`
+- [x] `BMOD-01 docs(contract): freeze Bot V2 create/update payload and migration invariants`
 - [ ] `BMOD-02 docs(decisions): lock websocket-first bot signal policy and no-chart monitoring scope`
 - [ ] `BMOD-03 chore(audit): add preflight report script for LOCAL bots and legacy bot-strategy bindings`
 - [ ] `BMOD-04 test(baseline): pin current bot api/ui/runtime baseline tests before refactor`

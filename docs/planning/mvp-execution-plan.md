@@ -285,7 +285,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `POS-42 qa(manual): publish side-by-side Binance verification protocol for lifecycle reason parity`
 
 ## Phase 18 - Bot Module Delivery (Stream-First, Backtest-Parity, No-Chart Monitoring)
-- [ ] `BMOD-01 docs(contract): freeze Bot V2 create/update payload and migration invariants`
+- [x] `BMOD-01 docs(contract): freeze Bot V2 create/update payload and migration invariants`
 - [ ] `BMOD-02 docs(decisions): lock websocket-first bot signal policy and no-chart monitoring scope`
 - [ ] `BMOD-03 chore(audit): add preflight report script for LOCAL bots and legacy bot-strategy bindings`
 - [ ] `BMOD-04 test(baseline): pin current bot api/ui/runtime baseline tests before refactor`
@@ -327,6 +327,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BMOD-40 release(gate): run full regression gate for bot/backtest/runtime and record evidence`
 
 ## Progress Log
+- 2026-03-30: Completed `BMOD-01 docs(contract): froze canonical Bot V2 create/update payload + migration invariants in `docs/architecture/bot-v2-create-update-contract.md``.
 - 2026-03-30: Added Phase 18 `BMOD` execution queue and canonical implementation blueprint `docs/planning/bot-module-implementation-plan-2026-03-30.md` (stream-first runtime + no-chart bot monitoring scope).
 - 2026-03-30: Completed `feat(backtest-ui): improved run header readability and removed redundant progress/status noise for completed runs`.
 - 2026-03-30: Completed `fix(backtest-parity-ux): aligned Markets pair stats with timeline/trades visibility and execution counters for clearer operator diagnostics`.
