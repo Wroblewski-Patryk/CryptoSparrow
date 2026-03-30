@@ -31,11 +31,19 @@ const validateLiveConsentState = (state: BotConsentState) => {
   }
 };
 
-const mapBotResponse = <T extends { botStrategies: Array<{ strategyId: string; isEnabled: boolean }> }>(
-  bot: T
-) => {
-  const { botStrategies, ...rest } = bot;
-  const activeStrategy = botStrategies.find((item) => item.isEnabled) ?? botStrategies[0] ?? null;
+const mapBotResponse = <
+  T extends {
+    botStrategies: Array<{ strategyId: string; isEnabled: boolean }>;
+    marketGroupStrategyLinks?: Array<{ strategyId: string; isEnabled: boolean }>;
+  },
+>(bot: T) => {
+  const { botStrategies, marketGroupStrategyLinks = [], ...rest } = bot;
+  const activeStrategy =
+    botStrategies.find((item) => item.isEnabled) ??
+    botStrategies[0] ??
+    marketGroupStrategyLinks.find((item) => item.isEnabled) ??
+    marketGroupStrategyLinks[0] ??
+    null;
   return {
     ...rest,
     strategyId: activeStrategy?.strategyId ?? null,
@@ -208,6 +216,12 @@ export const listBots = async (userId: string, query: ListBotsQueryDto = {}) => 
           isEnabled: true,
         },
       },
+      marketGroupStrategyLinks: {
+        select: {
+          strategyId: true,
+          isEnabled: true,
+        },
+      },
     },
     orderBy: { createdAt: 'desc' },
   });
@@ -225,6 +239,12 @@ export const getBot = async (userId: string, id: string) => {
           isEnabled: true,
         },
       },
+      marketGroupStrategyLinks: {
+        select: {
+          strategyId: true,
+          isEnabled: true,
+        },
+      },
     },
   });
 
@@ -234,47 +254,85 @@ export const getBot = async (userId: string, id: string) => {
 export const createBot = async (userId: string, data: CreateBotDto) => {
   validateLiveConsentState(data);
 
-  const { strategyId, marketGroupId: _marketGroupId, ...botData } = data;
-  const created = await prisma.bot.create({
-    data: {
-      userId,
-      ...botData,
-      consentTextVersion: botData.liveOptIn
-        ? normalizeConsentTextVersion(botData.consentTextVersion)
-        : null,
-    },
-    include: {
-      botStrategies: {
-        select: {
-          strategyId: true,
-          isEnabled: true,
-        },
+  const { strategyId, marketGroupId, ...botData } = data;
+  const strategy = await getOwnedStrategy(userId, strategyId);
+  if (!strategy) throw new Error('BOT_STRATEGY_NOT_FOUND');
+
+  const symbolGroup = await getOwnedSymbolGroup(userId, marketGroupId);
+  if (!symbolGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
+
+  if (symbolGroup.marketUniverse.marketType !== botData.marketType) {
+    throw new Error('BOT_MARKET_GROUP_MARKET_TYPE_MISMATCH');
+  }
+
+  const createdBotId = await prisma.$transaction(async (tx) => {
+    const createdBot = await tx.bot.create({
+      data: {
+        userId,
+        ...botData,
+        consentTextVersion: botData.liveOptIn
+          ? normalizeConsentTextVersion(botData.consentTextVersion)
+          : null,
       },
-    },
+      select: {
+        id: true,
+      },
+    });
+
+    const createdBotMarketGroup = await tx.botMarketGroup.create({
+      data: {
+        userId,
+        botId: createdBot.id,
+        symbolGroupId: marketGroupId,
+        lifecycleStatus: 'ACTIVE',
+        executionOrder: 100,
+        maxOpenPositions: botData.maxOpenPositions,
+        isEnabled: true,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    await tx.marketGroupStrategyLink.create({
+      data: {
+        userId,
+        botId: createdBot.id,
+        botMarketGroupId: createdBotMarketGroup.id,
+        strategyId,
+        priority: 100,
+        weight: 1,
+        isEnabled: true,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return createdBot.id;
   });
 
-  await upsertBotStrategy({
-    userId,
-    botId: created.id,
-    strategyId: strategyId ?? null,
-    marketType: created.marketType,
-  });
-
-  if (created.liveOptIn && created.consentTextVersion) {
+  if (botData.liveOptIn && botData.consentTextVersion) {
     await writeLiveConsentAudit({
       userId,
-      botId: created.id,
-      mode: created.mode,
-      liveOptIn: created.liveOptIn,
-      consentTextVersion: created.consentTextVersion,
+      botId: createdBotId,
+      mode: botData.mode,
+      liveOptIn: botData.liveOptIn,
+      consentTextVersion: normalizeConsentTextVersion(botData.consentTextVersion)!,
       action: 'bot.live_consent.accepted',
     });
   }
 
   const withStrategy = await prisma.bot.findUnique({
-    where: { id: created.id },
+    where: { id: createdBotId },
     include: {
       botStrategies: {
+        select: {
+          strategyId: true,
+          isEnabled: true,
+        },
+      },
+      marketGroupStrategyLinks: {
         select: {
           strategyId: true,
           isEnabled: true,
@@ -283,7 +341,8 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
     },
   });
 
-  return withStrategy ? mapBotResponse(withStrategy) : mapBotResponse(created);
+  if (!withStrategy) throw new Error('BOT_NOT_FOUND');
+  return mapBotResponse(withStrategy);
 };
 
 export const updateBot = async (userId: string, id: string, data: UpdateBotDto) => {
@@ -316,6 +375,12 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
     },
     include: {
       botStrategies: {
+        select: {
+          strategyId: true,
+          isEnabled: true,
+        },
+      },
+      marketGroupStrategyLinks: {
         select: {
           strategyId: true,
           isEnabled: true,
@@ -357,6 +422,12 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
           isEnabled: true,
         },
       },
+      marketGroupStrategyLinks: {
+        select: {
+          strategyId: true,
+          isEnabled: true,
+        },
+      },
     },
   });
 
@@ -367,9 +438,26 @@ export const deleteBot = async (userId: string, id: string) => {
   const existing = await getBot(userId, id);
   if (!existing) return false;
 
-  await prisma.bot.delete({
-    where: { id: existing.id },
-  });
+  await prisma.$transaction([
+    prisma.marketGroupStrategyLink.deleteMany({
+      where: { botId: existing.id },
+    }),
+    prisma.botMarketGroup.deleteMany({
+      where: { botId: existing.id },
+    }),
+    prisma.botStrategy.deleteMany({
+      where: { botId: existing.id },
+    }),
+    prisma.botSubagentConfig.deleteMany({
+      where: { botId: existing.id },
+    }),
+    prisma.botAssistantConfig.deleteMany({
+      where: { botId: existing.id },
+    }),
+    prisma.bot.delete({
+      where: { id: existing.id },
+    }),
+  ]);
 
   return true;
 };

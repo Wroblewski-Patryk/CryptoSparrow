@@ -292,7 +292,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BMOD-05 refactor(api-types): remove LOCAL from bot mode zod/types contract`
 - [x] `BMOD-06 feat(api-compat): add temporary LOCAL->PAPER read-compat adapter for transition window`
 - [x] `BMOD-07 refactor(api-create): switch bot create contract to Strategy + MarketGroup payload`
-- [ ] `BMOD-08 feat(api-create): create bot + botMarketGroup + strategyLink in one transaction`
+- [x] `BMOD-08 feat(api-create): create bot + botMarketGroup + strategyLink in one transaction`
 - [ ] `BMOD-09 refactor(api-derive): derive bot marketType from selected market-group universe`
 - [ ] `BMOD-10 refactor(api-write): remove positionMode from bot write payload contract`
 - [ ] `BMOD-11 refactor(api-write): remove bot-level maxOpenPositions input contract`
@@ -327,6 +327,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BMOD-40 release(gate): run full regression gate for bot/backtest/runtime and record evidence`
 
 ## Progress Log
+- 2026-03-30: Completed `BMOD-08 feat(api-create): bot create now atomically creates `Bot` + `BotMarketGroup` + `MarketGroupStrategyLink`, adds create error mapping for invalid market-group ownership/compatibility, and hardens bot delete cascade for new relations (targeted API e2e PASS)`.
 - 2026-03-30: Completed `BMOD-07 refactor(api-create): switched bot create write contract to require `strategyId` + `marketGroupId` in API schema, updated bots/runtime/isolation e2e create fixtures, and validated targeted API suites (PASS)`.
 - 2026-03-30: Completed `BMOD-06 feat(api-compat): added read-path LOCAL->PAPER adapter in bots controller (list/get/create/update/runtime-graph) + e2e regression for legacy LOCAL visibility`.
 - 2026-03-30: Completed `BMOD-05 refactor(api-types): removed `LOCAL` from `BotModeSchema` write contract (`apps/api/src/modules/bots/bots.types.ts`) and validated bots e2e suite (PASS)`.

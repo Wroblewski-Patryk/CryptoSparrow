@@ -74,6 +74,12 @@ export const createBot = async (req: Request, res: Response) => {
     if (error instanceof Error && error.message === 'BOT_STRATEGY_NOT_FOUND') {
       return sendError(res, 400, 'strategyId is invalid for current user');
     }
+    if (error instanceof Error && error.message === 'SYMBOL_GROUP_NOT_FOUND') {
+      return sendError(res, 400, 'marketGroupId is invalid for current user');
+    }
+    if (error instanceof Error && error.message === 'BOT_MARKET_GROUP_MARKET_TYPE_MISMATCH') {
+      return sendError(res, 400, 'marketGroup market type must match bot marketType');
+    }
     return sendValidationError(res, error);
   }
 };

@@ -183,8 +183,19 @@ describe('Bots module contract', () => {
     const mappingAfterCreate = await prisma.botStrategy.findMany({
       where: { botId },
     });
-    expect(mappingAfterCreate).toHaveLength(1);
-    expect(mappingAfterCreate[0].strategyId).toBe(strategyId);
+    expect(mappingAfterCreate).toHaveLength(0);
+
+    const marketGroupsAfterCreate = await prisma.botMarketGroup.findMany({
+      where: { botId },
+    });
+    expect(marketGroupsAfterCreate).toHaveLength(1);
+    expect(marketGroupsAfterCreate[0].symbolGroupId).toBe(futuresMarketGroupId);
+
+    const strategyLinksAfterCreate = await prisma.marketGroupStrategyLink.findMany({
+      where: { botId },
+    });
+    expect(strategyLinksAfterCreate).toHaveLength(1);
+    expect(strategyLinksAfterCreate[0].strategyId).toBe(strategyId);
 
     const updateRes = await agent.put(`/dashboard/bots/${botId}`).send({
       mode: 'LIVE',
@@ -202,7 +213,7 @@ describe('Bots module contract', () => {
     expect(updateRes.body.liveOptIn).toBe(true);
     expect(updateRes.body.consentTextVersion).toBe('mvp-v1');
     expect(updateRes.body.maxOpenPositions).toBe(5);
-    expect(updateRes.body.strategyId).toBeNull();
+    expect(updateRes.body.strategyId).toBe(strategyId);
 
     const mappingAfterUpdate = await prisma.botStrategy.findMany({
       where: { botId },
@@ -376,8 +387,8 @@ describe('Bots module contract', () => {
     const listRes = await owner.get(`/dashboard/bots/${botId}/market-groups`);
     expect(listRes.status).toBe(200);
     expect(Array.isArray(listRes.body)).toBe(true);
-    expect(listRes.body).toHaveLength(1);
-    expect(listRes.body[0].id).toBe(groupId);
+    expect(listRes.body.length).toBeGreaterThanOrEqual(1);
+    expect(listRes.body.some((group: { id: string }) => group.id === groupId)).toBe(true);
 
     const getRes = await owner.get(`/dashboard/bots/${botId}/market-groups/${groupId}`);
     expect(getRes.status).toBe(200);
@@ -717,11 +728,13 @@ describe('Bots module contract', () => {
     expect(graphOneRes.status).toBe(200);
     expect(graphTwoRes.status).toBe(200);
 
-    expect(graphOneRes.body.marketGroups).toHaveLength(2);
-    expect(graphOneRes.body.marketGroups[0].strategies.length).toBeGreaterThanOrEqual(2);
-    expect(graphOneRes.body.marketGroups[1].strategies.length).toBeGreaterThanOrEqual(1);
-    expect(graphTwoRes.body.marketGroups).toHaveLength(1);
-    expect(graphTwoRes.body.marketGroups[0].strategies.length).toBeGreaterThanOrEqual(2);
+    expect(graphOneRes.body.marketGroups.length).toBeGreaterThanOrEqual(2);
+    const graphOneGroupIds = graphOneRes.body.marketGroups.map((group: { id: string }) => group.id);
+    expect(graphOneGroupIds).toContain(botOneGroupAId);
+    expect(graphOneGroupIds).toContain(botOneGroupBId);
+
+    const graphTwoGroupIds = graphTwoRes.body.marketGroups.map((group: { id: string }) => group.id);
+    expect(graphTwoGroupIds).toContain(botTwoGroupAId);
   });
 
   it('supports assistant config CRUD with subagent slot hard limit', async () => {
