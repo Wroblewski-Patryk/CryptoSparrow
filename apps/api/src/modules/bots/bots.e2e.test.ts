@@ -248,6 +248,66 @@ describe('Bots module contract', () => {
     expect(deleteRes.status).toBe(404);
   });
 
+  it('enforces create ownership contract for strategyId/marketGroupId and derives marketType from market group', async () => {
+    const ownerEmail = 'bots-create-contract-owner@example.com';
+    const otherEmail = 'bots-create-contract-other@example.com';
+    const owner = await registerAndLogin(ownerEmail);
+    const other = await registerAndLogin(otherEmail);
+
+    const ownerStrategyId = await createStrategy(owner, 'Owner Create Contract Strategy');
+    const ownerSpotMarketGroupId = await createMarketGroup(ownerEmail, 'SPOT');
+    const otherStrategyId = await createStrategy(other, 'Other Create Contract Strategy');
+    const otherMarketGroupId = await createMarketGroup(otherEmail, 'FUTURES');
+
+    const invalidStrategyRes = await owner.post('/dashboard/bots').send(
+      createPayload({
+        strategyId: otherStrategyId,
+        marketGroupId: ownerSpotMarketGroupId,
+      })
+    );
+    expect(invalidStrategyRes.status).toBe(400);
+    expect(invalidStrategyRes.body.error.message).toBe('strategyId is invalid for current user');
+
+    const invalidMarketGroupRes = await owner.post('/dashboard/bots').send(
+      createPayload({
+        strategyId: ownerStrategyId,
+        marketGroupId: otherMarketGroupId,
+      })
+    );
+    expect(invalidMarketGroupRes.status).toBe(400);
+    expect(invalidMarketGroupRes.body.error.message).toBe('marketGroupId is invalid for current user');
+
+    const createRes = await owner.post('/dashboard/bots').send(
+      createPayload({
+        strategyId: ownerStrategyId,
+        marketGroupId: ownerSpotMarketGroupId,
+      })
+    );
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.marketType).toBe('SPOT');
+  });
+
+  it('ignores removed positionMode/maxOpenPositions fields in update write payload', async () => {
+    const email = 'bots-update-write-contract@example.com';
+    const agent = await registerAndLogin(email);
+    const strategyId = await createStrategy(agent, 'Update Contract Strategy');
+    const marketGroupId = await createMarketGroup(email, 'FUTURES');
+
+    const createRes = await agent
+      .post('/dashboard/bots')
+      .send(createPayload({ strategyId, marketGroupId }));
+    expect(createRes.status).toBe(201);
+    const botId = createRes.body.id as string;
+
+    const updateRes = await agent.put(`/dashboard/bots/${botId}`).send({
+      positionMode: 'HEDGE',
+      maxOpenPositions: 99,
+    });
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.positionMode).toBe('ONE_WAY');
+    expect(updateRes.body.maxOpenPositions).toBe(1);
+  });
+
   it('requires consentTextVersion when enabling live opt-in and writes consent audit log', async () => {
     const email = 'bots-consent@example.com';
     const agent = await registerAndLogin(email);

@@ -39,7 +39,7 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 - [x] `BMOD-09 refactor(api-derive): derive bot marketType from selected market-group universe`
 - [x] `BMOD-10 refactor(api-write): remove positionMode from bot write payload contract`
 - [x] `BMOD-11 refactor(api-write): remove bot-level maxOpenPositions input contract`
-- [ ] `BMOD-12 test(api): extend bots e2e coverage for new create/edit payload and ownership checks`
+- [x] `BMOD-12 test(api): extend bots e2e coverage for new create/edit payload and ownership checks`
 
 ## Phase C - Web Bot Creator Refactor
 - [ ] `BMOD-13 refactor(web-types): remove LOCAL and legacy creator-only fields from bot types`
