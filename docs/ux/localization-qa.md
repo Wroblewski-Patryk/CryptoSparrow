@@ -22,6 +22,19 @@ Use this checklist before release candidates and after any dashboard copy refact
 3. Backtests, reports, logs, exchanges.
 4. Error/empty/loading/degraded states.
 
+## 3a. Backtests Focus Checks (EN then PL)
+1. Backtests list:
+   - table headers/status labels/filter labels are translated,
+   - empty/loading/error states are translated.
+2. Backtest create form:
+   - field labels/placeholders/validation/toasts are translated,
+   - strategy/market-group no-option fallback labels are translated.
+3. Backtest details:
+   - run header labels, tabs, KPI labels, and stage labels are translated,
+   - `Summary` chart empty-state messages are translated,
+   - `Markets` pair stats card labels are translated,
+   - `Trades` table headers and exit-reason badges are translated.
+
 ## 4. Regression Gates
 - Client test suite green.
 - No missing-key visual regressions.

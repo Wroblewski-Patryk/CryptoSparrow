@@ -24,13 +24,44 @@ This guide explains how to start safely with CryptoSparrow V1.
 5. Move to `LIVE` only after stable paper behavior.
 - This is a starter flow; production setups can use multiple symbol groups and multiple BotStrategy bindings per bot.
 
-## 3a. Backtest Report Reading (Markets Tab)
-- `Summary` shows daily result bars (green/red) and portfolio balance trend from start to end balance.
-- `Markets` shows per-pair charts with:
-  - candles + strategy indicators,
-  - entry/exit overlays,
-  - per-pair statistics card.
-- For large runs, market charts load timeline data progressively in chunks.
+## 3a. Backtest Report Reading (Run Header + Tabs)
+- Run header shows:
+  - run name and status,
+  - market group + strategy context,
+  - start/end calculation timestamps,
+  - KPI strip (`Trades`, `Net PnL`, `Win rate`, `Max drawdown`),
+  - compact stage timeline (created -> engine -> trades -> report -> finished).
+- Progress bar is visible only for active runs (`0 < progress < 100`).
+- Tabs:
+  - `Summary`: daily PnL bars + portfolio balance trend from initial to end balance.
+  - `Markets`: per-symbol timeline and pair stats.
+  - `Trades`: chronological trade table with capital context.
+  - `Raw`: debug payload preview.
+
+## 3b. Markets Tab (Per-Symbol Timeline)
+- Each symbol card contains:
+  - price panel (candles, entries/exits, DCA markers, non-overlapping position ranges),
+  - oscillator panel (for example RSI),
+  - synchronized right Y-axis overlays and shared bottom X-axis.
+- Pair stats card contains:
+  - `Trades` in visible range / total,
+  - `Win rate`, `PnL`, `Avg hold`,
+  - execution stats (`avg entry`, `avg exit`, `DCA`, `closed on last candle`, `liquidations`),
+  - data range (`trades range`, `candles range`, `chart min/max`),
+  - strategy indicators used for this run.
+- For large runs, timelines load progressively in chunks; failed parity symbols show an inline error state instead of forcing timeline fetch.
+
+## 3c. Trades Tab
+- Table is ordered by close time and includes:
+  - side, open/close timestamps, duration, qty, DCA count,
+  - entry/exit prices,
+  - `Notional` and `Margin` for entry/exit,
+  - move percent (side-aware), PnL percent (notional + margin), fee,
+  - exit reason and cumulative PnL.
+- Top metrics summarize:
+  - net PnL,
+  - gross profit / gross loss,
+  - largest win / largest loss.
 
 ## 4. FAQ
 ### Why do I need Docker locally?

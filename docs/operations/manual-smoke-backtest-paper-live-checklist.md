@@ -86,7 +86,7 @@ For at least one `PROCESSED` symbol:
 2. Confirm:
    - event markers visible (`ENTRY/EXIT/DCA/TP/TTP/SL/TSL/LIQ`),
    - no overlapping trade background intervals,
-   - legend counters consistent with plotted events.
+   - pair stats (`Execution` + `Trades`) consistent with plotted events in visible range.
 3. Confirm stats card has coherent values:
    - trades count,
    - win/loss,
@@ -129,4 +129,3 @@ Mark `FAIL` if any item above breaks; attach:
 - symbol examples,
 - screenshot,
 - exact error text.
-

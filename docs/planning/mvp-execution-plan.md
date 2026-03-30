@@ -285,6 +285,10 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `POS-42 qa(manual): publish side-by-side Binance verification protocol for lifecycle reason parity`
 
 ## Progress Log
+- 2026-03-30: Completed `feat(backtest-ui): improved run header readability and removed redundant progress/status noise for completed runs`.
+- 2026-03-30: Completed `fix(backtest-parity-ux): aligned Markets pair stats with timeline/trades visibility and execution counters for clearer operator diagnostics`.
+- 2026-03-30: Completed `perf(backtest-ui): staged timeline loading flow (`events` first, then `candles/indicators`) to reduce chart jitter during hydration`.
+- 2026-03-30: Completed `feat(i18n-backtests): localized backtest create/list/details flows and labels to EN/PL without runtime behavior changes`.
 - 2026-03-29: Completed `POS-42` by publishing Binance side-by-side lifecycle reason parity protocol (`docs/operations/binance-lifecycle-reason-parity-protocol.md`) and linking it from the main parity checklist.
 - 2026-03-29: Completed `POS-41` by adding golden close-reason fixtures (`TP/SL/TTP/TSL`) and a parity harness asserting identical close-reason sequences for backtest, paper lifecycle, and live lifecycle core.
 - 2026-03-29: Completed `POS-40` by refactoring backtest service to consume shared replay lifecycle helpers (risk parsing + close-reason/event mapping + management input + TTP trigger), removing duplicated divergence-prone close semantics between interleaved and replay paths.

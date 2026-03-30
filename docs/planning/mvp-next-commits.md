@@ -16,6 +16,8 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `docs(backtest): synchronize backtester documentation with current run-header, markets/trades UX, and staged timeline loading behavior`
+- [x] `docs(i18n-backtests): record EN/PL localization coverage for backtest create/list/details flows and QA checks`
 - [x] `MBA-01 audit(domain): mapped current Bot/SymbolGroup/BotStrategy contracts and documented non-breaking migration path (`docs/planning/mba-01-domain-audit-2026-03-22.md`)
 - [x] `MBA-02 docs(decisions): locked canonical runtime hierarchy and assistant topology in `docs/planning/open-decisions.md``
 - [x] `MBA-03 docs(contract): published deterministic merge contract in `docs/architecture/runtime-signal-merge-contract.md` and linked canonical decision entry in `docs/planning/open-decisions.md``

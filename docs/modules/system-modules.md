@@ -8,7 +8,7 @@
 - bots. Bot CRUD with LIVE opt-in consent validation.
 - orders. Read and write endpoints for order history/details plus open/cancel/close actions.
 - positions. Read endpoints plus live reconciliation status exposure.
-- backtests. Backtest run/trade/report plus timeline endpoint (`/dashboard/backtests/runs/:id/timeline`) with chunked candles, event overlays, and indicator series.
+- backtests. Backtest run/trade/report plus timeline endpoint (`/dashboard/backtests/runs/:id/timeline`) with progressive chunk loading (`events` + `candles`), lifecycle event overlays, indicator series, parity diagnostics, and position stats (`tradeCount`, `closedOnFinalCandleCount`, `liquidationsCount`).
 - logs. Audit/event log read endpoints.
 - exchange. CCXT connector and retrying live-order adapter services.
 - market-data. OHLCV ingest/cache service abstractions.
@@ -31,7 +31,7 @@
 - dashboard/strategies. Strategy list and editor.
 - dashboard/markets. Market universe management.
 - dashboard/bots. Bot management and mode controls.
-- dashboard/backtest. Backtest pages with report summary, per-market timeline charts, and progressive chunk loading.
+- dashboard/backtest. Backtest pages with localized run header, summary/markets/trades/raw tabs, progressive per-symbol timeline loading, and parity-aware error states.
 - dashboard/logs. Audit/log pages.
 - dashboard/reports. Performance reporting views.
 - dashboard home live market bar with SSE client state.
@@ -57,7 +57,12 @@
 - dashboard/markets. Universe builder with filter explainability and explicit whitelist/blacklist outcomes.
 - dashboard/bots. Lifecycle controls with explicit paper/live mode, heartbeat visibility, and emergency controls.
 - dashboard/exchanges. Connection health, permission checks, secure API key UX, plus nested order/position operational views.
-- dashboard/backtest. Run management, daily PnL + balance summary view, market-by-market timeline overlays (candles, indicators, entry/exit), and trade-level result inspection.
+- dashboard/backtest. Run management with:
+  - run header KPI strip (trades, net PnL, win rate, drawdown) and compact stage timeline,
+  - summary charts (daily PnL bars + portfolio balance line),
+  - market-by-market timeline overlays (candles, indicators, entry/exit/DCA markers, non-overlapping position ranges, RSI panel),
+  - pair-side stats card (trades in-range/total, win rate, PnL, avg hold, execution and lifecycle counts),
+  - trades table with capital context (notional/margin entry+exit), move%, PnL%, fees, exit reason, cumulative PnL.
 - dashboard/reports. Performance summaries focused on PnL, drawdown, fees, and funding costs.
 - dashboard/logs. High-signal audit trail with severity, source, and actor filtering.
 - dashboard/profile. Account and user preferences, including locale selection.

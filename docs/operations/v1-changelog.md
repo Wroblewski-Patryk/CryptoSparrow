@@ -2,6 +2,21 @@
 
 ## v1.0.0 (Planned)
 
+### Backtester UX + Localization Refresh (2026-03-30)
+- Improved backtest run header readability:
+  - cleaner metadata strip,
+  - duplicate/compressed status cleanup,
+  - progress bar shown only during active progress (`0 < progress < 100`),
+  - lightweight stage timeline presentation.
+- Aligned Markets and Trades visibility model:
+  - pair stats now reflect visible timeline window vs total values,
+  - execution counters (`DCA`, `closed on last candle`, `liquidations`) are exposed in pair stats card for easier parity verification.
+- Improved timeline loading flow in backtest details:
+  - progressive loading is staged (`events` first, then `candles/indicators`) to reduce visual jitter and improve perceived responsiveness.
+- Localized backtest pages/components to EN/PL:
+  - backtest create/list/details pages,
+  - run header labels, tabs, KPI labels, pair stats labels, trades table headers, and fallback/error texts.
+
 ### MVP Freeze-Gap Closure (2026-03-19)
 - Added Binance market-stream ingest worker with normalized ticker/candle payload handling.
 - Locked MVP stream transport contract to SSE fan-out semantics.
