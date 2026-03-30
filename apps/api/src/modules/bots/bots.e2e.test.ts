@@ -13,10 +13,57 @@ const registerAndLogin = async (email: string) => {
   return agent;
 };
 
-const createPayload = () => ({
+const createStrategy = async (
+  agent: ReturnType<typeof request.agent>,
+  name: string = `Bots Strategy ${Date.now()}`
+) => {
+  const strategyRes = await agent.post('/dashboard/strategies').send({
+    name,
+    interval: '5m',
+    leverage: 2,
+    walletRisk: 1,
+    config: {
+      open: { indicatorsLong: [], indicatorsShort: [] },
+      close: { mode: 'basic', tp: 2, sl: 1 },
+    },
+  });
+  expect(strategyRes.status).toBe(201);
+  return strategyRes.body.id as string;
+};
+
+const createMarketGroup = async (
+  email: string,
+  marketType: 'FUTURES' | 'SPOT' = 'FUTURES'
+) => {
+  const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+  const marketUniverse = await prisma.marketUniverse.create({
+    data: {
+      userId: user.id,
+      name: `Auto Universe ${marketType} ${Date.now()}`,
+      marketType,
+      baseCurrency: 'USDT',
+      whitelist: [],
+      blacklist: [],
+    },
+  });
+  const symbolGroup = await prisma.symbolGroup.create({
+    data: {
+      userId: user.id,
+      marketUniverseId: marketUniverse.id,
+      name: `Auto Group ${marketType} ${Date.now()}`,
+      symbols: marketType === 'SPOT' ? ['BTCUSDT'] : ['BTCUSDT', 'ETHUSDT'],
+    },
+  });
+
+  return symbolGroup.id;
+};
+
+const createPayload = (refs: { strategyId: string; marketGroupId: string }) => ({
   name: 'Momentum Runner',
   mode: 'PAPER',
   marketType: 'FUTURES',
+  strategyId: refs.strategyId,
+  marketGroupId: refs.marketGroupId,
   isActive: false,
   liveOptIn: false,
   maxOpenPositions: 3,
@@ -86,23 +133,14 @@ describe('Bots module contract', () => {
   });
 
   it('supports full CRUD for authenticated owner', async () => {
-    const agent = await registerAndLogin('bots-owner@example.com');
-    const strategyRes = await agent.post('/dashboard/strategies').send({
-      name: 'Bots Strategy Link',
-      interval: '5m',
-      leverage: 2,
-      walletRisk: 1,
-      config: {
-        open: { indicatorsLong: [], indicatorsShort: [] },
-        close: { mode: 'basic', tp: 2, sl: 1 },
-      },
-    });
-    expect(strategyRes.status).toBe(201);
-    const strategyId = strategyRes.body.id as string;
+    const email = 'bots-owner@example.com';
+    const agent = await registerAndLogin(email);
+    const strategyId = await createStrategy(agent, 'Bots Strategy Link');
+    const futuresMarketGroupId = await createMarketGroup(email, 'FUTURES');
+    const spotMarketGroupId = await createMarketGroup(email, 'SPOT');
 
     const createRes = await agent.post('/dashboard/bots').send({
-      ...createPayload(),
-      strategyId,
+      ...createPayload({ strategyId, marketGroupId: futuresMarketGroupId }),
     });
     expect(createRes.status).toBe(201);
     expect(createRes.body.id).toBeDefined();
@@ -113,7 +151,7 @@ describe('Bots module contract', () => {
     const futuresBotId = botId;
 
     const createSpotRes = await agent.post('/dashboard/bots').send({
-      ...createPayload(),
+      ...createPayload({ strategyId, marketGroupId: spotMarketGroupId }),
       name: 'Spot Runner',
       marketType: 'SPOT',
     });
@@ -180,10 +218,15 @@ describe('Bots module contract', () => {
   });
 
   it('enforces ownership isolation for get/update/delete', async () => {
-    const owner = await registerAndLogin('bots-owner-2@example.com');
+    const ownerEmail = 'bots-owner-2@example.com';
+    const owner = await registerAndLogin(ownerEmail);
     const other = await registerAndLogin('bots-other@example.com');
+    const strategyId = await createStrategy(owner, 'Ownership Isolation Strategy');
+    const marketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
 
-    const createRes = await owner.post('/dashboard/bots').send(createPayload());
+    const createRes = await owner
+      .post('/dashboard/bots')
+      .send(createPayload({ strategyId, marketGroupId }));
     expect(createRes.status).toBe(201);
     const botId = createRes.body.id as string;
 
@@ -200,9 +243,14 @@ describe('Bots module contract', () => {
   });
 
   it('requires consentTextVersion when enabling live opt-in and writes consent audit log', async () => {
-    const agent = await registerAndLogin('bots-consent@example.com');
+    const email = 'bots-consent@example.com';
+    const agent = await registerAndLogin(email);
+    const strategyId = await createStrategy(agent, 'Consent Strategy');
+    const marketGroupId = await createMarketGroup(email, 'FUTURES');
 
-    const createRes = await agent.post('/dashboard/bots').send(createPayload());
+    const createRes = await agent
+      .post('/dashboard/bots')
+      .send(createPayload({ strategyId, marketGroupId }));
     expect(createRes.status).toBe(201);
     const botId = createRes.body.id as string;
 
@@ -235,10 +283,13 @@ describe('Bots module contract', () => {
   });
 
   it('persists and audits normalized consentTextVersion across create/update flow', async () => {
-    const agent = await registerAndLogin('bots-consent-persist@example.com');
+    const email = 'bots-consent-persist@example.com';
+    const agent = await registerAndLogin(email);
+    const strategyId = await createStrategy(agent, 'Consent Persist Strategy');
+    const marketGroupId = await createMarketGroup(email, 'FUTURES');
 
     const createLiveRes = await agent.post('/dashboard/bots').send({
-      ...createPayload(),
+      ...createPayload({ strategyId, marketGroupId }),
       mode: 'LIVE',
       liveOptIn: true,
       consentTextVersion: '  mvp-v1  ',
@@ -280,10 +331,15 @@ describe('Bots module contract', () => {
   });
 
   it('supports market-group CRUD under bot with ownership isolation', async () => {
-    const owner = await registerAndLogin('bot-groups-owner@example.com');
+    const ownerEmail = 'bot-groups-owner@example.com';
+    const owner = await registerAndLogin(ownerEmail);
     const other = await registerAndLogin('bot-groups-other@example.com');
+    const strategyId = await createStrategy(owner, 'Market Group Crud Strategy');
+    const defaultMarketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
 
-    const botRes = await owner.post('/dashboard/bots').send(createPayload());
+    const botRes = await owner
+      .post('/dashboard/bots')
+      .send(createPayload({ strategyId, marketGroupId: defaultMarketGroupId }));
     expect(botRes.status).toBe(201);
     const botId = botRes.body.id as string;
 
@@ -352,6 +408,8 @@ describe('Bots module contract', () => {
     const owner = await registerAndLogin(ownerEmail);
     const other = await registerAndLogin('bot-group-links-other@example.com');
     const ownerUser = await prisma.user.findUniqueOrThrow({ where: { email: ownerEmail } });
+    const createBotStrategyId = await createStrategy(owner, 'Group Links Bot Create Strategy');
+    const defaultMarketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
 
     const strategyOneRes = await owner.post('/dashboard/strategies').send({
       name: 'Group Strategy 1',
@@ -370,7 +428,9 @@ describe('Bots module contract', () => {
     });
     expect(strategyTwoRes.status).toBe(201);
 
-    const botRes = await owner.post('/dashboard/bots').send(createPayload());
+    const botRes = await owner
+      .post('/dashboard/bots')
+      .send(createPayload({ strategyId: createBotStrategyId, marketGroupId: defaultMarketGroupId }));
     expect(botRes.status).toBe(201);
     const botId = botRes.body.id as string;
 
@@ -463,9 +523,10 @@ describe('Bots module contract', () => {
       config: { open: { indicatorsLong: [], indicatorsShort: [] }, close: { mode: 'basic', tp: 2, sl: 1 } },
     });
     expect(strategyRes.status).toBe(201);
+    const defaultMarketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
 
     const botRes = await owner.post('/dashboard/bots').send({
-      ...createPayload(),
+      ...createPayload({ strategyId: strategyRes.body.id as string, marketGroupId: defaultMarketGroupId }),
       strategyId: strategyRes.body.id,
     });
     expect(botRes.status).toBe(201);
@@ -546,6 +607,8 @@ describe('Bots module contract', () => {
     expect(strategyAlphaRes.status).toBe(201);
     expect(strategyBetaRes.status).toBe(201);
     expect(strategyGammaRes.status).toBe(201);
+    const createBotStrategyId = await createStrategy(owner, 'Multi Flow Bot Create Strategy');
+    const defaultMarketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
 
     const universe = await prisma.marketUniverse.create({
       data: {
@@ -582,8 +645,14 @@ describe('Bots module contract', () => {
       },
     });
 
-    const botOneRes = await owner.post('/dashboard/bots').send({ ...createPayload(), name: 'Bot One' });
-    const botTwoRes = await owner.post('/dashboard/bots').send({ ...createPayload(), name: 'Bot Two' });
+    const botOneRes = await owner.post('/dashboard/bots').send({
+      ...createPayload({ strategyId: createBotStrategyId, marketGroupId: defaultMarketGroupId }),
+      name: 'Bot One',
+    });
+    const botTwoRes = await owner.post('/dashboard/bots').send({
+      ...createPayload({ strategyId: createBotStrategyId, marketGroupId: defaultMarketGroupId }),
+      name: 'Bot Two',
+    });
     expect(botOneRes.status).toBe(201);
     expect(botTwoRes.status).toBe(201);
     const botOneId = botOneRes.body.id as string;
@@ -656,10 +725,16 @@ describe('Bots module contract', () => {
   });
 
   it('supports assistant config CRUD with subagent slot hard limit', async () => {
-    const owner = await registerAndLogin('assistant-config-owner@example.com');
+    const ownerEmail = 'assistant-config-owner@example.com';
+    const owner = await registerAndLogin(ownerEmail);
     const other = await registerAndLogin('assistant-config-other@example.com');
+    const strategyId = await createStrategy(owner, 'Assistant Config Create Strategy');
+    const defaultMarketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
 
-    const botRes = await owner.post('/dashboard/bots').send({ ...createPayload(), name: 'Assistant Bot' });
+    const botRes = await owner.post('/dashboard/bots').send({
+      ...createPayload({ strategyId, marketGroupId: defaultMarketGroupId }),
+      name: 'Assistant Bot',
+    });
     expect(botRes.status).toBe(201);
     const botId = botRes.body.id as string;
 
@@ -722,9 +797,15 @@ describe('Bots module contract', () => {
   });
 
   it('returns explainable assistant dry-run trace including NO_TRADE output', async () => {
-    const owner = await registerAndLogin('assistant-dryrun-owner@example.com');
+    const ownerEmail = 'assistant-dryrun-owner@example.com';
+    const owner = await registerAndLogin(ownerEmail);
+    const strategyId = await createStrategy(owner, 'Assistant Dry Run Create Strategy');
+    const defaultMarketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
 
-    const botRes = await owner.post('/dashboard/bots').send({ ...createPayload(), name: 'Assistant Dry Run Bot' });
+    const botRes = await owner.post('/dashboard/bots').send({
+      ...createPayload({ strategyId, marketGroupId: defaultMarketGroupId }),
+      name: 'Assistant Dry Run Bot',
+    });
     expect(botRes.status).toBe(201);
     const botId = botRes.body.id as string;
 

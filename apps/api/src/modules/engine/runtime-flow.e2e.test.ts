@@ -38,7 +38,8 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
   });
 
   it('creates runtime orders/positions and closes on EXIT signal for LIVE bot', async () => {
-    const agent = await registerAndLogin('runtime-flow@example.com');
+    const email = 'runtime-flow@example.com';
+    const agent = await registerAndLogin(email);
 
     const strategyRes = await agent.post('/dashboard/strategies').send({
       name: 'Runtime Strategy',
@@ -52,6 +53,25 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
     });
     expect(strategyRes.status).toBe(201);
     const strategyId = strategyRes.body.id as string;
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+    const createMarketUniverse = await prisma.marketUniverse.create({
+      data: {
+        userId: user.id,
+        name: 'Runtime Bot Create Universe',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        whitelist: [],
+        blacklist: [],
+      },
+    });
+    const createSymbolGroup = await prisma.symbolGroup.create({
+      data: {
+        userId: user.id,
+        marketUniverseId: createMarketUniverse.id,
+        name: 'Runtime Bot Create Group',
+        symbols: ['BTCUSDT'],
+      },
+    });
 
     const backtestRes = await agent.post('/dashboard/backtests/runs').send({
       name: 'Runtime Backtest',
@@ -64,6 +84,8 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
     const botRes = await agent.post('/dashboard/bots').send({
       name: 'Runtime Live Bot',
       mode: 'LIVE',
+      strategyId,
+      marketGroupId: createSymbolGroup.id,
       marketType: 'FUTURES',
       positionMode: 'ONE_WAY',
       isActive: true,

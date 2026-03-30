@@ -234,7 +234,7 @@ export const getBot = async (userId: string, id: string) => {
 export const createBot = async (userId: string, data: CreateBotDto) => {
   validateLiveConsentState(data);
 
-  const { strategyId = null, ...botData } = data;
+  const { strategyId, marketGroupId: _marketGroupId, ...botData } = data;
   const created = await prisma.bot.create({
     data: {
       userId,
@@ -256,7 +256,7 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
   await upsertBotStrategy({
     userId,
     botId: created.id,
-    strategyId,
+    strategyId: strategyId ?? null,
     marketType: created.marketType,
   });
 

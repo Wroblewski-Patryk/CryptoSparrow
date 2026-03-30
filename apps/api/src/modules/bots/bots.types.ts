@@ -10,9 +10,10 @@ export const CreateBotSchema = z.object({
   name: z.string().trim().min(1),
   mode: BotModeSchema.default('PAPER'),
   paperStartBalance: z.number().min(0).max(100_000_000).default(10_000),
+  strategyId: z.string().uuid(),
+  marketGroupId: z.string().uuid(),
   marketType: TradeMarketSchema.default('FUTURES'),
   positionMode: PositionModeSchema.default('ONE_WAY'),
-  strategyId: z.string().uuid().optional().nullable(),
   isActive: z.boolean().default(false),
   liveOptIn: z.boolean().default(false),
   consentTextVersion: z.string().trim().min(1).max(64).optional().nullable(),
@@ -27,7 +28,10 @@ export const CreateBotSchema = z.object({
   }
 });
 
-export const UpdateBotSchema = CreateBotSchema.partial();
+export const UpdateBotSchema = CreateBotSchema.partial().extend({
+  strategyId: z.string().uuid().optional().nullable(),
+  marketGroupId: z.string().uuid().optional().nullable(),
+});
 export const ListBotsQuerySchema = z.object({
   marketType: TradeMarketSchema.optional(),
 });

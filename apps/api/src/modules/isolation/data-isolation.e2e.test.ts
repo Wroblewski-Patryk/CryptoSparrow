@@ -63,10 +63,51 @@ describe('Cross-module data isolation contract', () => {
       blacklist: [],
     });
     expect(otherMarketRes.status).toBe(201);
+    const ownerSymbolGroup = await prisma.symbolGroup.create({
+      data: {
+        userId: ownerId,
+        marketUniverseId: ownerMarketRes.body.id,
+        name: 'Owner Bot Group',
+        symbols: ['BTCUSDT'],
+      },
+    });
+    const otherSymbolGroup = await prisma.symbolGroup.create({
+      data: {
+        userId: otherId,
+        marketUniverseId: otherMarketRes.body.id,
+        name: 'Other Bot Group',
+        symbols: ['ETHUSDT'],
+      },
+    });
+
+    const ownerStrategyRes = await ownerAgent.post('/dashboard/strategies').send({
+      name: 'Owner Isolation Strategy',
+      interval: '5m',
+      leverage: 2,
+      walletRisk: 1,
+      config: {
+        open: { indicatorsLong: [], indicatorsShort: [] },
+        close: { mode: 'basic', tp: 2, sl: 1 },
+      },
+    });
+    expect(ownerStrategyRes.status).toBe(201);
+    const otherStrategyRes = await otherAgent.post('/dashboard/strategies').send({
+      name: 'Other Isolation Strategy',
+      interval: '5m',
+      leverage: 2,
+      walletRisk: 1,
+      config: {
+        open: { indicatorsLong: [], indicatorsShort: [] },
+        close: { mode: 'basic', tp: 2, sl: 1 },
+      },
+    });
+    expect(otherStrategyRes.status).toBe(201);
 
     const ownerBotRes = await ownerAgent.post('/dashboard/bots').send({
       name: 'Owner Bot',
       mode: 'PAPER',
+      strategyId: ownerStrategyRes.body.id,
+      marketGroupId: ownerSymbolGroup.id,
       isActive: false,
       liveOptIn: false,
       maxOpenPositions: 2,
@@ -76,6 +117,8 @@ describe('Cross-module data isolation contract', () => {
     const otherBotRes = await otherAgent.post('/dashboard/bots').send({
       name: 'Other Bot',
       mode: 'PAPER',
+      strategyId: otherStrategyRes.body.id,
+      marketGroupId: otherSymbolGroup.id,
       isActive: false,
       liveOptIn: false,
       maxOpenPositions: 2,
