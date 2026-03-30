@@ -7,14 +7,15 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BMOD-24 refactor(runtime-model): remove runtime dependency on legacy bot-strategy fallback graph`
 - [ ] `BMOD-25 feat(runtime-watchdog): keep scan loop as disabled-by-default fallback watchdog`
+- [ ] `BMOD-26 test(runtime): extend signal-loop and watchdog tests for websocket-first semantics`
 
 ## NEXT
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BMOD-24 refactor(runtime-model): remove runtime dependency on legacy bot-strategy fallback graph`
 - [x] `BMOD-23 feat(runtime-risk): compute group max-open cap from active strategy risk settings`
 - [x] `BMOD-22 feat(runtime-idempotency): add deterministic dedupe key per bot/group/symbol/candle window`
 - [x] `BMOD-21 refactor(runtime-lifecycle): keep ticker path for open-position automation only`

@@ -79,10 +79,6 @@ const runtimeSignalDecisionDedupeRetentionMs = Number.parseInt(
 );
 const maxCandlesPerSeries = Number.parseInt(process.env.RUNTIME_SIGNAL_CANDLE_BUFFER ?? '500', 10);
 const minDirectionalScore = Number.parseFloat(process.env.RUNTIME_SIGNAL_MIN_DIRECTIONAL_SCORE ?? '1');
-const defaultGroupMaxOpenPositions = Number.parseInt(
-  process.env.RUNTIME_GROUP_MAX_OPEN_POSITIONS_DEFAULT ?? '1',
-  10
-);
 
 type RuntimeCandle = {
   openTime: number;
@@ -145,27 +141,6 @@ const defaultDeps: RuntimeSignalLoopDeps = {
           },
           orderBy: [{ executionOrder: 'asc' }, { createdAt: 'asc' }],
         },
-        botStrategies: {
-          where: { isEnabled: true },
-          orderBy: { createdAt: 'desc' },
-          select: {
-            symbolGroupId: true,
-            strategyId: true,
-            symbolGroup: {
-              select: {
-                symbols: true,
-              },
-            },
-            strategy: {
-              select: {
-                interval: true,
-                config: true,
-                leverage: true,
-                walletRisk: true,
-              },
-            },
-          },
-        },
       },
     });
     return bots.map((bot) => {
@@ -192,47 +167,13 @@ const defaultDeps: RuntimeSignalLoopDeps = {
         };
       });
 
-      const marketGroupsFromLegacyModel: ActiveBotMarketGroup[] = bot.botStrategies.map((item) => {
-        const strategies = [
-          {
-            strategyId: item.strategyId,
-            strategyInterval: item.strategy.interval,
-            strategyConfig: (item.strategy.config as Record<string, unknown> | undefined) ?? null,
-            strategyLeverage: item.strategy.leverage,
-            walletRisk: normalizeWalletRiskPercent(item.strategy.walletRisk, 1),
-            priority: 100,
-            weight: 1,
-          },
-        ];
-        return {
-          id: `legacy:${item.symbolGroupId}`,
-          symbolGroupId: item.symbolGroupId,
-          executionOrder: 10_000,
-          maxOpenPositions: deriveRuntimeGroupMaxOpenPositions({
-            configuredGroupMaxOpenPositions: defaultGroupMaxOpenPositions,
-            strategies,
-          }),
-          symbols: item.symbolGroup.symbols ?? [],
-          strategies,
-        };
-      });
-
-      const dedupBySymbolGroup = new Map<string, ActiveBotMarketGroup>();
-      for (const group of [...marketGroupsFromNewModel, ...marketGroupsFromLegacyModel]) {
-        if (!dedupBySymbolGroup.has(group.symbolGroupId)) {
-          dedupBySymbolGroup.set(group.symbolGroupId, group);
-        }
-      }
-
       return {
         id: bot.id,
         userId: bot.userId,
         mode: bot.mode as 'PAPER' | 'LIVE',
         paperStartBalance: Number.isFinite(bot.paperStartBalance) ? Math.max(0, bot.paperStartBalance) : 10_000,
         marketType: bot.marketType,
-        marketGroups: [...dedupBySymbolGroup.values()].sort(
-          (left, right) => left.executionOrder - right.executionOrder
-        ),
+        marketGroups: [...marketGroupsFromNewModel].sort((left, right) => left.executionOrder - right.executionOrder),
       };
     });
   },
