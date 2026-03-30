@@ -21,6 +21,14 @@ const parseEnvSymbols = (value: string | undefined) =>
     .map((item) => item.trim().toUpperCase())
     .filter((item) => item.length > 0);
 
+const parseEnvBoolean = (value: string | undefined, fallback: boolean) => {
+  if (value == null) return fallback;
+  const normalized = value.trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  return fallback;
+};
+
 const defaultDeps: RuntimeScanDeps = {
   listScanSymbols: async () => {
     const envSymbols = parseEnvSymbols(process.env.RUNTIME_SCAN_SYMBOLS);
@@ -51,6 +59,9 @@ const defaultDeps: RuntimeScanDeps = {
 
 const scanIntervalMs = Number.parseInt(process.env.RUNTIME_SCAN_INTERVAL_MS ?? '30000', 10);
 const scanMaxSymbols = Number.parseInt(process.env.RUNTIME_SCAN_MAX_SYMBOLS ?? '25', 10);
+const scanWatchdogEnabled = parseEnvBoolean(process.env.RUNTIME_SCAN_WATCHDOG_ENABLED, false);
+
+export const isRuntimeScanWatchdogEnabled = () => scanWatchdogEnabled;
 
 export class RuntimeScanLoop {
   private timer: NodeJS.Timeout | null = null;
@@ -60,6 +71,7 @@ export class RuntimeScanLoop {
 
   start() {
     if (this.timer) return;
+    if (!scanWatchdogEnabled) return;
     if (!Number.isFinite(scanIntervalMs) || scanIntervalMs <= 0) return;
 
     this.timer = setInterval(() => {

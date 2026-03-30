@@ -309,7 +309,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BMOD-22 feat(runtime-idempotency): add deterministic dedupe key per bot/group/symbol/candle window`
 - [x] `BMOD-23 feat(runtime-risk): compute group max-open cap from active strategy risk settings`
 - [x] `BMOD-24 refactor(runtime-model): remove runtime dependency on legacy bot-strategy fallback graph`
-- [ ] `BMOD-25 feat(runtime-watchdog): keep scan loop as disabled-by-default fallback watchdog`
+- [x] `BMOD-25 feat(runtime-watchdog): keep scan loop as disabled-by-default fallback watchdog`
 - [ ] `BMOD-26 test(runtime): extend signal-loop and watchdog tests for websocket-first semantics`
 - [ ] `BMOD-27 test(parity): add bot-paper vs backtest decision parity regression suite`
 - [ ] `BMOD-28 feat(db): add bot runtime session model for run-like monitoring windows`
@@ -327,6 +327,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BMOD-40 release(gate): run full regression gate for bot/backtest/runtime and record evidence`
 
 ## Progress Log
+- 2026-03-30: Completed `BMOD-25 feat(runtime-watchdog): switched runtime scan loop to explicit fallback watchdog mode with `RUNTIME_SCAN_WATCHDOG_ENABLED=false` default and added regression test proving no auto-scan execution when watchdog is disabled`.
 - 2026-03-30: Completed `BMOD-24 refactor(runtime-model): removed runtime signal-loop read dependency on legacy `botStrategies` fallback graph; runtime now resolves active execution graph exclusively from canonical `botMarketGroups + strategyLinks` model`.
 - 2026-03-30: Completed `BMOD-23 feat(runtime-risk): introduced runtime derivation of market-group `maxOpenPositions` from active strategy risk config (`additional.maxPositions` / `additional.maxOpenPositions`) using safest cap (minimum positive value), with fallback to configured group cap and dedicated helper tests`.
 - 2026-03-30: Completed `BMOD-22 feat(runtime-idempotency): added deterministic candle-window dedupe key (`botId+groupId+symbol+interval+open/closeTime`) with retention pruning to prevent duplicate final-candle signal/orchestration on repeated stream delivery, plus regression test for duplicate window replay`.

@@ -1,7 +1,31 @@
 import { describe, expect, it, vi } from 'vitest';
-import { RuntimeScanLoop } from './runtimeScanLoop.service';
+import { RuntimeScanLoop, isRuntimeScanWatchdogEnabled } from './runtimeScanLoop.service';
 
 describe('RuntimeScanLoop', () => {
+  it('keeps watchdog auto-loop disabled by default', async () => {
+    vi.useFakeTimers();
+    const deps = {
+      listScanSymbols: vi.fn(async () => ['BTCUSDT']),
+      getTickerSnapshot: vi.fn(async () => ({
+        symbol: 'BTCUSDT',
+        marketType: 'FUTURES' as const,
+        lastPrice: 60300,
+        priceChangePercent24h: 0.5,
+      })),
+      processTicker: vi.fn(async () => undefined),
+      nowMs: vi.fn(() => 123_456),
+    };
+
+    const loop = new RuntimeScanLoop(deps);
+    loop.start();
+    await vi.advanceTimersByTimeAsync(120_000);
+
+    expect(isRuntimeScanWatchdogEnabled()).toBe(false);
+    expect(deps.processTicker).not.toHaveBeenCalled();
+    loop.stop();
+    vi.useRealTimers();
+  });
+
   it('processes configured symbols and forwards synthesized ticker events', async () => {
     const deps = {
       listScanSymbols: vi.fn(async () => ['BTCUSDT', 'ETHUSDT']),
