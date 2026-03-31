@@ -36,7 +36,7 @@ export default function DashboardPage() {
       <SafetyBar mode='PAPER' />
 
       <div className='mb-6 rounded-lg border border-base-300 bg-base-200 p-4'>
-        <div className='grid gap-3 xl:grid-cols-3'>
+        <div className='grid gap-3 md:grid-cols-2 2xl:grid-cols-3'>
           <div className='rounded-md border border-base-300 bg-base-100 p-3'>
             <div className='flex h-full flex-col'>
               <p className='text-[11px] uppercase tracking-wide opacity-60'>Kontekst operatora</p>
@@ -57,7 +57,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className='rounded-md border border-base-300 bg-base-100 p-3'>
+          <div className='rounded-md border border-base-300 bg-base-100 p-3 md:col-span-2 2xl:col-span-1'>
             <div className='flex h-full flex-col'>
               <p className='text-[11px] uppercase tracking-wide opacity-60'>Sugerowany start</p>
               <div className='mt-auto flex flex-wrap gap-2 pt-2'>

@@ -154,7 +154,7 @@ export default function HomeLiveWidgets() {
           <span className="badge badge-outline">{t("dashboard.home.controlCenterBadge")}</span>
         </div>
 
-        <div className="grid gap-3 xl:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
           <div className="h-full rounded-lg border border-primary/30 bg-base-100 p-3">
             <div className="flex h-full flex-col">
             <div className="mb-1 flex items-center justify-between gap-2">
@@ -193,7 +193,7 @@ export default function HomeLiveWidgets() {
             </div>
           </div>
 
-          <div className="h-full rounded-lg border border-base-300 bg-base-100 p-3">
+          <div className="h-full rounded-lg border border-base-300 bg-base-100 p-3 md:col-span-2 2xl:col-span-1">
             <div className="flex h-full flex-col">
             <div className="mb-1 flex items-center justify-between gap-2">
               <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.executionReviewTitle")}</p>
@@ -243,9 +243,14 @@ export default function HomeLiveWidgets() {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
         {statusGroups.map((group) => (
-          <div key={group.key} className="rounded-md border border-base-300 bg-base-200 p-3">
+          <div
+            key={group.key}
+            className={`rounded-md border border-base-300 bg-base-200 p-3 ${
+              group.key === "activity" ? "md:col-span-2 2xl:col-span-1" : ""
+            }`}
+          >
             <p className="text-[10px] uppercase tracking-wide opacity-60">{group.label}</p>
             <p className={`mt-1 text-[13px] font-semibold ${group.tone}`}>{group.value}</p>
           </div>
