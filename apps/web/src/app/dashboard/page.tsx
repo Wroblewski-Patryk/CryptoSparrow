@@ -1,5 +1,6 @@
 'use client';
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
@@ -36,6 +37,16 @@ export default function DashboardPage() {
 
       <div className='alert mb-6'>
         <span>Signed in as {user?.email}</span>
+      </div>
+      <div className='alert mb-6 border border-base-300 bg-base-200 text-sm'>
+        <span>
+          Dashboard to globalny panel sterowania aplikacja. Operacyjny runtime botow (otwarte pozycje, historia, live
+          check sygnalow) znajdziesz w{" "}
+          <Link href='/dashboard/bots' className='link link-primary font-medium'>
+            Bots Operations Center
+          </Link>
+          .
+        </span>
       </div>
 
       <HomeLiveWidgets />
