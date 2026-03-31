@@ -542,6 +542,15 @@ export default function BotsManagement() {
     });
   }, [monitorTrades?.items]);
 
+  const monitorSignalRows = useMemo(() => {
+    return [...(monitorSymbolStats?.items ?? [])].sort((a, b) => {
+      const aTs = Math.max(toTimestamp(a.lastSignalDecisionAt), toTimestamp(a.lastSignalAt));
+      const bTs = Math.max(toTimestamp(b.lastSignalDecisionAt), toTimestamp(b.lastSignalAt));
+      if (aTs !== bTs) return bTs - aTs;
+      return a.symbol.localeCompare(b.symbol);
+    });
+  }, [monitorSymbolStats?.items]);
+
   const monitorLastSignalAt = useMemo(() => {
     const timestamp = Math.max(
       0,
@@ -1499,6 +1508,9 @@ export default function BotsManagement() {
                         }
                       }}
                     />
+                    <p className="mt-1 text-[11px] opacity-65">
+                      Podpowiedz: wpisz np. BTCUSDT i nacisnij Enter, aby zawezic wszystkie sekcje monitoringu.
+                    </p>
                   </label>
                   <div className="form-control">
                     <span className="label-text">&nbsp;</span>
@@ -1993,11 +2005,14 @@ export default function BotsManagement() {
                   </div>
 
                   <div className="rounded-lg border border-base-300 bg-base-100 p-3">
-                    <div className="mb-2 flex items-center justify-between">
+                    <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
                       <h3 className="text-sm font-semibold">Co bedzie - live check sygnalow</h3>
-                      <span className="text-xs opacity-60">
-                        {monitorSymbolStats?.items.length ?? 0} / {monitorSessionDetail?.symbolsTracked ?? 0} symboli
-                      </span>
+                      <div className="text-right text-xs opacity-60">
+                        <div>
+                          {monitorSignalRows.length} / {monitorSessionDetail?.symbolsTracked ?? 0} symboli
+                        </div>
+                        <div className="opacity-50">Sort: najnowszy sygnal</div>
+                      </div>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="table table-xs table-zebra">
@@ -2019,7 +2034,7 @@ export default function BotsManagement() {
                           </tr>
                         </thead>
                         <tbody>
-                          {(monitorSymbolStats?.items ?? []).map((item) => (
+                          {monitorSignalRows.map((item) => (
                             <tr key={item.id}>
                               <td className="font-medium">{item.symbol}</td>
                               <td>
@@ -2058,7 +2073,7 @@ export default function BotsManagement() {
                               <td>{formatDateTime(item.lastTradeAt)}</td>
                             </tr>
                           ))}
-                          {(monitorSymbolStats?.items.length ?? 0) === 0 ? (
+                          {monitorSignalRows.length === 0 ? (
                             <tr>
                               <td colSpan={13} className="text-center text-xs opacity-70">
                                 Brak danych live-check sygnalow dla tej sesji i filtra.
