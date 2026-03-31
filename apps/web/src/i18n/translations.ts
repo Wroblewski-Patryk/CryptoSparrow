@@ -116,6 +116,11 @@ type TranslationSchema = {
       statusExecutionQualityValue: string;
       statusActivityLabel: string;
       statusActivityValue: string;
+      statusRiskWatchLabel: string;
+      statusRiskWatchValue: string;
+      statusLatestEventLabel: string;
+      statusLatestEventValue: string;
+      statusNoActivityValue: string;
       quickActions: string;
       reviewStrategies: string;
       openOrdersAction: string;
@@ -256,6 +261,11 @@ export const translations: Record<Locale, TranslationSchema> = {
         statusExecutionQualityValue: "{filled} filled | {rejected} rejected",
         statusActivityLabel: "Recent activity",
         statusActivityValue: "{count} recent events",
+        statusRiskWatchLabel: "Risk watch",
+        statusRiskWatchValue: "{pending} pending | {rejected} rejected",
+        statusLatestEventLabel: "Latest event",
+        statusLatestEventValue: "At {time}",
+        statusNoActivityValue: "No recent events",
         quickActions: "Quick Actions",
         reviewStrategies: "Review Strategies",
         openOrdersAction: "Open Orders",
@@ -395,6 +405,11 @@ export const translations: Record<Locale, TranslationSchema> = {
         statusExecutionQualityValue: "{filled} zrealizowanych | {rejected} odrzuconych",
         statusActivityLabel: "Najnowsza aktywnosc",
         statusActivityValue: "{count} ostatnich zdarzen",
+        statusRiskWatchLabel: "Monitoring ryzyka",
+        statusRiskWatchValue: "{pending} oczekujacych | {rejected} odrzuconych",
+        statusLatestEventLabel: "Ostatnie zdarzenie",
+        statusLatestEventValue: "O {time}",
+        statusNoActivityValue: "Brak ostatnich zdarzen",
         quickActions: "Szybkie akcje",
         reviewStrategies: "Przejrzyj strategie",
         openOrdersAction: "Przejdz do zlecen",

@@ -109,18 +109,18 @@ export default function HomeLiveWidgets() {
       tone: "text-info",
     },
     {
-      key: "execution-quality",
-      label: t("dashboard.home.statusExecutionQualityLabel"),
-      value: t("dashboard.home.statusExecutionQualityValue")
-        .replace("{filled}", String(filledOrders))
+      key: "risk-watch",
+      label: t("dashboard.home.statusRiskWatchLabel"),
+      value: t("dashboard.home.statusRiskWatchValue")
+        .replace("{pending}", String(pendingOrders))
         .replace("{rejected}", String(rejectedOrders)),
-      tone: "text-success",
+      tone: rejectedOrders > 0 ? "text-error" : "text-warning",
     },
     {
-      key: "activity",
-      label: t("dashboard.home.statusActivityLabel"),
-      value: t("dashboard.home.statusActivityValue").replace("{count}", String(feed.length)),
-      tone: "text-warning",
+      key: "latest-event",
+      label: t("dashboard.home.statusLatestEventLabel"),
+      value: feed[0]?.at ? t("dashboard.home.statusLatestEventValue").replace("{time}", formatTime(feed[0].at)) : t("dashboard.home.statusNoActivityValue"),
+      tone: "text-success",
     },
   ];
 

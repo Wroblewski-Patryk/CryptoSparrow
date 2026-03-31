@@ -356,8 +356,9 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-27 feat(web-dashboard): normalize button sizing hierarchy + interaction affordances across dashboard control-center actions`
 - [x] `BOPS-28 feat(web-dashboard): harden visual affordance of primary-vs-secondary CTA paths in control-center and onboarding strips`
 - [x] `BOPS-29 feat(web-dashboard): tighten CTA copy + density in dashboard strips to reduce decision latency`
-- [ ] `BOPS-30 feat(web-dashboard): rebalance status-card wording + emphasis to avoid duplicated semantic signals`
+- [x] `BOPS-30 feat(web-dashboard): rebalance status-card wording + emphasis to avoid duplicated semantic signals`
 - [ ] `BOPS-31 feat(web-dashboard): polish control-center + onboarding visual rhythm with final spacing/contrast pass before manual UX review`
+- [ ] `BOPS-32 chore(web-dashboard): prepare focused manual UX review checklist for dashboard+bots operational flow`
 
 ## Progress Log
 - 2026-03-31: Completed `BOPS-07 feat(api+web-guard): added backend duplicate-active guard on create/activate flows (strategy + symbol-group pair), mapped conflict to HTTP 409, added dedicated API e2e coverage, and surfaced explicit conflict messaging in bots UI create/save actions.
@@ -747,6 +748,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-31: Normalized CTA interaction affordance by applying shared primary/secondary button hierarchy with consistent sizing and keyboard focus ring treatment across dashboard onboarding and control-center actions.
 - 2026-03-31: Strengthened primary-vs-secondary CTA affordance by visually separating quick-action strips into distinct lanes (highlighted primary path vs secondary action set) and labeling action intent explicitly.
 - 2026-03-31: Reduced dashboard decision latency by tightening CTA copy in quick-action strips (`Review strategies`, `Run backtests`, `Check orders`, `Open reports`) and simplifying supporting guidance text.
+- 2026-03-31: Rebalanced status-strip semantics to avoid duplication by replacing generic activity/quality counters with clearer cards (`Runtime now`, `Risk watch`, `Latest event`).
 
 
 
