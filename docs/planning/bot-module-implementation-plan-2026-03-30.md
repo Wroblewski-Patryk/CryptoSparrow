@@ -86,8 +86,9 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 - [x] `BOPS-06 feat(web-creator): split bot creation form into three logical UX sections`
 - [x] `BOPS-07 feat(api+web-guard): prevent duplicate active bot for same strategy + market-group`
 - [x] `BOPS-08 feat(api+web-guard): prevent strategy edit while used by active bots`
-- [ ] `BOPS-09 feat(web-monitor): default to aggregated monitoring across sessions with optional advanced drilldown`
+- [x] `BOPS-09 feat(web-monitor): default to aggregated monitoring across sessions with optional advanced drilldown`
 - [ ] `BOPS-10 feat(web-monitor): strengthen operational IA in Bots module (history/open/live-signals split) without runtime-behavior changes`
+- [ ] `BOPS-11 feat(web-monitor): reduce controls clutter and optimize human operator workflow in runtime dashboard`
 
 ## Test Command Map (per phase)
 - Phase A/B:

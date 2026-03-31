@@ -335,8 +335,9 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-06 feat(web-creator): reorganize creator form into three sections (core bot mode, market-group context, strategy context)`
 - [x] `BOPS-07 feat(api+web-guard): block duplicate active bot creation when strategy + market-group pair is already active`
 - [x] `BOPS-08 feat(api+web-guard): block strategy editing while referenced by any active bot (allow when all linked bots inactive)`
-- [ ] `BOPS-09 feat(web-monitor): default monitoring to aggregate session view with optional advanced per-session drilldown`
+- [x] `BOPS-09 feat(web-monitor): default monitoring to aggregate session view with optional advanced per-session drilldown`
 - [ ] `BOPS-10 feat(web-monitor): strengthen Bots operational IA (history/open/live-signals) without backend behavior changes`
+- [ ] `BOPS-11 feat(web-monitor): simplify controls and optimize human-first operator workflow in bot dashboard`
 
 ## Progress Log
 - 2026-03-31: Completed `BOPS-07 feat(api+web-guard): added backend duplicate-active guard on create/activate flows (strategy + symbol-group pair), mapped conflict to HTTP 409, added dedicated API e2e coverage, and surfaced explicit conflict messaging in bots UI create/save actions.
@@ -705,6 +706,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-25: Added `ops:rc:gates:refresh:summary:strict` helper to guarantee summary output even on strict failure, while returning strict exit code for automation gates.
 - 2026-03-26: Normalized local refresh fallback logs to `stdout` to keep operator output order stable and avoid confusing delayed warning lines during offline runs.
 - 2026-03-31: Added strategy-edit guard for active bots (`409 strategy is used by active bot and cannot be edited`) with API e2e coverage and UI-facing edit-page error handling.
+- 2026-03-31: Switched bot monitoring to aggregate-by-default mode (all sessions summed) with optional advanced single-session drilldown; added merge logic for stats/positions/orders/trades and updated component regression coverage.
 
 
 

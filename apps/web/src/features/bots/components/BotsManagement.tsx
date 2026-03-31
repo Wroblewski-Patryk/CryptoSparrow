@@ -41,6 +41,7 @@ import { listStrategies } from "../../strategies/api/strategies.api";
 import { StrategyDto } from "../../strategies/types/StrategyForm.type";
 
 const LIVE_CONSENT_TEXT_VERSION = "mvp-v1";
+const DUPLICATE_ACTIVE_BOT_ERROR = "active bot already exists for this strategy + market group pair";
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -113,6 +114,244 @@ const toTradeSideBadgeClass = (side: string) => {
   return "badge-ghost";
 };
 
+type MonitorAggregateData = {
+  sessionDetail: BotRuntimeSessionDetail;
+  symbolStats: BotRuntimeSymbolStatsResponse;
+  positions: BotRuntimePositionsResponse;
+  trades: BotRuntimeTradesResponse;
+};
+
+const toTimestamp = (value?: string | null) => {
+  if (!value) return 0;
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
+};
+
+const uniqueById = <T extends { id: string }>(items: T[]) => {
+  const map = new Map<string, T>();
+  for (const item of items) {
+    if (!map.has(item.id)) {
+      map.set(item.id, item);
+    }
+  }
+  return [...map.values()];
+};
+
+const aggregateMonitorData = (params: {
+  sessions: BotRuntimeSessionListItem[];
+  symbolResponses: BotRuntimeSymbolStatsResponse[];
+  positionResponses: BotRuntimePositionsResponse[];
+  tradeResponses: BotRuntimeTradesResponse[];
+}): MonitorAggregateData => {
+  const sessions = params.sessions;
+  const mode: BotMode = sessions.some((session) => session.mode === "LIVE") ? "LIVE" : "PAPER";
+  const status: BotRuntimeSessionStatus = sessions.some((session) => session.status === "RUNNING")
+    ? "RUNNING"
+    : sessions.some((session) => session.status === "FAILED")
+      ? "FAILED"
+      : sessions.some((session) => session.status === "CANCELED")
+        ? "CANCELED"
+        : "COMPLETED";
+
+  const startedAt = sessions
+    .map((session) => session.startedAt)
+    .filter(Boolean)
+    .sort((a, b) => toTimestamp(a) - toTimestamp(b))[0] ?? new Date().toISOString();
+  const finishedAt = sessions
+    .map((session) => session.finishedAt)
+    .filter((value): value is string => Boolean(value))
+    .sort((a, b) => toTimestamp(b) - toTimestamp(a))[0] ?? null;
+  const lastHeartbeatAt = sessions
+    .map((session) => session.lastHeartbeatAt)
+    .filter((value): value is string => Boolean(value))
+    .sort((a, b) => toTimestamp(b) - toTimestamp(a))[0] ?? null;
+  const durationMs = Math.max(
+    0,
+    sessions.reduce((acc, session) => acc + Math.max(0, session.durationMs), 0)
+  );
+  const eventsCount = sessions.reduce((acc, session) => acc + session.eventsCount, 0);
+
+  const symbolMap = new Map<string, BotRuntimeSymbolStatsResponse["items"][number]>();
+  for (const response of params.symbolResponses) {
+    for (const item of response.items) {
+      const existing = symbolMap.get(item.symbol);
+      if (!existing) {
+        symbolMap.set(item.symbol, {
+          ...item,
+          id: `aggregate-${item.symbol}`,
+          sessionId: "AGGREGATE",
+        });
+        continue;
+      }
+
+      const currentSignalTs = Math.max(
+        toTimestamp(item.lastSignalDecisionAt),
+        toTimestamp(item.lastSignalAt)
+      );
+      const existingSignalTs = Math.max(
+        toTimestamp(existing.lastSignalDecisionAt),
+        toTimestamp(existing.lastSignalAt)
+      );
+      const currentTradeTs = toTimestamp(item.lastTradeAt);
+      const existingTradeTs = toTimestamp(existing.lastTradeAt);
+
+      symbolMap.set(item.symbol, {
+        ...existing,
+        totalSignals: existing.totalSignals + item.totalSignals,
+        longEntries: existing.longEntries + item.longEntries,
+        shortEntries: existing.shortEntries + item.shortEntries,
+        exits: existing.exits + item.exits,
+        dcaCount: existing.dcaCount + item.dcaCount,
+        closedTrades: existing.closedTrades + item.closedTrades,
+        winningTrades: existing.winningTrades + item.winningTrades,
+        losingTrades: existing.losingTrades + item.losingTrades,
+        realizedPnl: existing.realizedPnl + item.realizedPnl,
+        grossProfit: existing.grossProfit + item.grossProfit,
+        grossLoss: existing.grossLoss + item.grossLoss,
+        feesPaid: existing.feesPaid + item.feesPaid,
+        openPositionCount: existing.openPositionCount + item.openPositionCount,
+        openPositionQty: existing.openPositionQty + item.openPositionQty,
+        unrealizedPnl: (existing.unrealizedPnl ?? 0) + (item.unrealizedPnl ?? 0),
+        lastPrice: currentSignalTs >= existingSignalTs ? item.lastPrice : existing.lastPrice,
+        lastSignalAt: currentSignalTs >= existingSignalTs ? item.lastSignalAt : existing.lastSignalAt,
+        lastSignalDirection:
+          currentSignalTs >= existingSignalTs ? item.lastSignalDirection : existing.lastSignalDirection,
+        lastSignalDecisionAt:
+          currentSignalTs >= existingSignalTs ? item.lastSignalDecisionAt : existing.lastSignalDecisionAt,
+        lastTradeAt: currentTradeTs >= existingTradeTs ? item.lastTradeAt : existing.lastTradeAt,
+        snapshotAt: toTimestamp(item.snapshotAt) >= toTimestamp(existing.snapshotAt) ? item.snapshotAt : existing.snapshotAt,
+      });
+    }
+  }
+  const symbolItems = [...symbolMap.values()].sort((a, b) => a.symbol.localeCompare(b.symbol));
+  const symbolSummary = symbolItems.reduce(
+    (acc, item) => ({
+      totalSignals: acc.totalSignals + item.totalSignals,
+      longEntries: acc.longEntries + item.longEntries,
+      shortEntries: acc.shortEntries + item.shortEntries,
+      exits: acc.exits + item.exits,
+      dcaCount: acc.dcaCount + item.dcaCount,
+      closedTrades: acc.closedTrades + item.closedTrades,
+      winningTrades: acc.winningTrades + item.winningTrades,
+      losingTrades: acc.losingTrades + item.losingTrades,
+      realizedPnl: acc.realizedPnl + item.realizedPnl,
+      unrealizedPnl: acc.unrealizedPnl + (item.unrealizedPnl ?? 0),
+      totalPnl: acc.totalPnl + item.realizedPnl + (item.unrealizedPnl ?? 0),
+      grossProfit: acc.grossProfit + item.grossProfit,
+      grossLoss: acc.grossLoss + item.grossLoss,
+      feesPaid: acc.feesPaid + item.feesPaid,
+      openPositionCount: acc.openPositionCount + item.openPositionCount,
+      openPositionQty: acc.openPositionQty + item.openPositionQty,
+    }),
+    {
+      totalSignals: 0,
+      longEntries: 0,
+      shortEntries: 0,
+      exits: 0,
+      dcaCount: 0,
+      closedTrades: 0,
+      winningTrades: 0,
+      losingTrades: 0,
+      realizedPnl: 0,
+      unrealizedPnl: 0,
+      totalPnl: 0,
+      grossProfit: 0,
+      grossLoss: 0,
+      feesPaid: 0,
+      openPositionCount: 0,
+      openPositionQty: 0,
+    }
+  );
+
+  const openItems = uniqueById(
+    params.positionResponses.flatMap((response) => response.openItems)
+  ).sort((a, b) => toTimestamp(b.openedAt) - toTimestamp(a.openedAt));
+  const historyItems = uniqueById(
+    params.positionResponses.flatMap((response) => response.historyItems)
+  ).sort((a, b) => toTimestamp(b.closedAt) - toTimestamp(a.closedAt));
+  const openOrders = uniqueById(
+    params.positionResponses.flatMap((response) => response.openOrders)
+  ).sort((a, b) => toTimestamp(b.submittedAt ?? b.createdAt) - toTimestamp(a.submittedAt ?? a.createdAt));
+
+  const tradeItems = uniqueById(params.tradeResponses.flatMap((response) => response.items)).sort(
+    (a, b) => toTimestamp(b.executedAt) - toTimestamp(a.executedAt)
+  );
+
+  const positionsSummary = {
+    realizedPnl: historyItems.reduce((acc, item) => acc + item.realizedPnl, 0),
+    unrealizedPnl: openItems.reduce((acc, item) => acc + (item.unrealizedPnl ?? 0), 0),
+    feesPaid: [...openItems, ...historyItems].reduce((acc, item) => acc + item.feesPaid, 0),
+  };
+
+  return {
+    sessionDetail: {
+      id: "AGGREGATE",
+      botId: sessions[0]?.botId ?? "",
+      mode,
+      status,
+      startedAt,
+      finishedAt,
+      lastHeartbeatAt,
+      stopReason: null,
+      errorMessage: null,
+      metadata: {
+        aggregate: true,
+        sessionsCount: sessions.length,
+      },
+      createdAt: startedAt,
+      updatedAt: lastHeartbeatAt ?? finishedAt ?? startedAt,
+      durationMs,
+      eventsCount,
+      symbolsTracked: symbolItems.length,
+      summary: {
+        totalSignals: symbolSummary.totalSignals,
+        longEntries: symbolSummary.longEntries,
+        shortEntries: symbolSummary.shortEntries,
+        exits: symbolSummary.exits,
+        dcaCount: symbolSummary.dcaCount,
+        closedTrades: symbolSummary.closedTrades,
+        winningTrades: symbolSummary.winningTrades,
+        losingTrades: symbolSummary.losingTrades,
+        realizedPnl: tradeItems.reduce((acc, item) => acc + item.realizedPnl, 0),
+        grossProfit: symbolSummary.grossProfit,
+        grossLoss: symbolSummary.grossLoss,
+        feesPaid: tradeItems.reduce((acc, item) => acc + item.fee, 0),
+        openPositionCount: openItems.length,
+        openPositionQty: openItems.reduce((acc, item) => acc + item.quantity, 0),
+      },
+    },
+    symbolStats: {
+      sessionId: "AGGREGATE",
+      items: symbolItems,
+      summary: symbolSummary,
+    },
+    positions: {
+      sessionId: "AGGREGATE",
+      total: openItems.length + historyItems.length,
+      openCount: openItems.length,
+      closedCount: historyItems.length,
+      openOrdersCount: openOrders.length,
+      window: {
+        startedAt,
+        finishedAt: finishedAt ?? new Date().toISOString(),
+      },
+      summary: positionsSummary,
+      openOrders,
+      openItems,
+      historyItems,
+    },
+    trades: {
+      sessionId: "AGGREGATE",
+      total: tradeItems.length,
+      window: {
+        startedAt,
+        finishedAt: finishedAt ?? new Date().toISOString(),
+      },
+      items: tradeItems,
+    },
+  };
+};
+
 export default function BotsManagement() {
   const [activeTab, setActiveTab] = useState<"bots" | "monitoring" | "assistant">("bots");
   const [bots, setBots] = useState<Bot[]>([]);
@@ -146,6 +385,7 @@ export default function BotsManagement() {
   const [assistantDryRunRunning, setAssistantDryRunRunning] = useState(false);
 
   const [monitorBotId, setMonitorBotId] = useState("");
+  const [monitorViewMode, setMonitorViewMode] = useState<"aggregate" | "session">("aggregate");
   const [monitorStatus, setMonitorStatus] = useState<"ALL" | BotRuntimeSessionStatus>("ALL");
   const [monitorSymbolFilter, setMonitorSymbolFilter] = useState("");
   const [monitorAppliedSymbolFilter, setMonitorAppliedSymbolFilter] = useState("");
@@ -266,6 +506,10 @@ export default function BotsManagement() {
   const selectedMonitorSession = useMemo(
     () => monitorSessions.find((session) => session.id === monitorSessionId) ?? null,
     [monitorSessionId, monitorSessions]
+  );
+  const monitorHasRunningSession = useMemo(
+    () => monitorSessions.some((session) => session.status === "RUNNING"),
+    [monitorSessions]
   );
   const monitorQuickSwitchBots = useMemo(() => {
     const active = bots.filter((bot) => bot.isActive);
@@ -424,6 +668,81 @@ export default function BotsManagement() {
     []
   );
 
+  const loadMonitorAggregateData = useCallback(
+    async (
+      botId: string,
+      sessions: BotRuntimeSessionListItem[],
+      symbolFilter: string,
+      options?: { silent?: boolean }
+    ) => {
+      const silent = options?.silent ?? false;
+      if (!botId || sessions.length === 0) {
+        setMonitorSessionDetail(null);
+        setMonitorSymbolStats(null);
+        setMonitorPositions(null);
+        setMonitorTrades(null);
+        return;
+      }
+
+      const normalizedSymbol = symbolFilter.trim().toUpperCase();
+      const scopedSessions = sessions.slice(0, 20);
+
+      if (!silent) {
+        setMonitorSessionLoading(true);
+        setMonitorError(null);
+      }
+
+      try {
+        const payloads = await Promise.all(
+          scopedSessions.map(async (session) => {
+            const [symbolStats, positions, trades] = await Promise.all([
+              listBotRuntimeSessionSymbolStats(botId, session.id, {
+                symbol: normalizedSymbol || undefined,
+                limit: 200,
+              }),
+              listBotRuntimeSessionPositions(botId, session.id, {
+                symbol: normalizedSymbol || undefined,
+                limit: 200,
+              }),
+              listBotRuntimeSessionTrades(botId, session.id, {
+                symbol: normalizedSymbol || undefined,
+                limit: 200,
+              }),
+            ]);
+
+            return {
+              session,
+              symbolStats,
+              positions,
+              trades,
+            };
+          })
+        );
+
+        const aggregate = aggregateMonitorData({
+          sessions: payloads.map((payload) => payload.session),
+          symbolResponses: payloads.map((payload) => payload.symbolStats),
+          positionResponses: payloads.map((payload) => payload.positions),
+          tradeResponses: payloads.map((payload) => payload.trades),
+        });
+
+        setMonitorSessionDetail(aggregate.sessionDetail);
+        setMonitorSymbolStats(aggregate.symbolStats);
+        setMonitorPositions(aggregate.positions);
+        setMonitorTrades(aggregate.trades);
+      } catch (err: unknown) {
+        if (!silent) {
+          setMonitorError(getAxiosMessage(err) ?? "Nie udalo sie pobrac danych monitoringu zbiorczego.");
+        }
+      } finally {
+        if (!silent) {
+          setMonitorSessionLoading(false);
+        }
+      }
+    },
+    []
+  );
+
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canCreate) return;
@@ -457,7 +776,14 @@ export default function BotsManagement() {
       toast.success("Bot utworzony");
       await loadBots(marketFilter);
     } catch (err: unknown) {
-      toast.error("Nie udalo sie utworzyc bota", { description: getAxiosMessage(err) });
+      const message = getAxiosMessage(err);
+      if (message === DUPLICATE_ACTIVE_BOT_ERROR) {
+        toast.error("Aktywny bot dla tej strategii i grupy juz istnieje", {
+          description: "Wylacz poprzedniego bota albo wybierz inna strategie / grupe rynkow.",
+        });
+      } else {
+        toast.error("Nie udalo sie utworzyc bota", { description: message });
+      }
     } finally {
       setCreating(false);
     }
@@ -500,7 +826,14 @@ export default function BotsManagement() {
       setServerSnapshot((prev) => ({ ...prev, [bot.id]: updated }));
       toast.success("Bot zaktualizowany");
     } catch (err: unknown) {
-      toast.error("Nie udalo sie zapisac zmian", { description: getAxiosMessage(err) });
+      const message = getAxiosMessage(err);
+      if (message === DUPLICATE_ACTIVE_BOT_ERROR) {
+        toast.error("Konflikt aktywnych botow", {
+          description: "Ta strategia i grupa rynkow sa juz aktywne w innym bocie.",
+        });
+      } else {
+        toast.error("Nie udalo sie zapisac zmian", { description: message });
+      }
       void loadBots(marketFilter);
     } finally {
       setSavingId(null);
@@ -650,21 +983,35 @@ export default function BotsManagement() {
   }, [activeTab, loadMonitorSessions, monitorBotId, monitorStatus]);
 
   useEffect(() => {
-    if (activeTab !== "monitoring" || !monitorBotId || !monitorSessionId) return;
+    if (activeTab !== "monitoring" || !monitorBotId) return;
+    if (monitorViewMode === "aggregate") {
+      void loadMonitorAggregateData(monitorBotId, monitorSessions, monitorAppliedSymbolFilter);
+      return;
+    }
+    if (!monitorSessionId) return;
     void loadMonitorSessionData(monitorBotId, monitorSessionId, monitorAppliedSymbolFilter);
-  }, [activeTab, loadMonitorSessionData, monitorAppliedSymbolFilter, monitorBotId, monitorSessionId]);
+  }, [
+    activeTab,
+    loadMonitorAggregateData,
+    loadMonitorSessionData,
+    monitorAppliedSymbolFilter,
+    monitorBotId,
+    monitorSessionId,
+    monitorSessions,
+    monitorViewMode,
+  ]);
 
   useEffect(() => {
     if (activeTab !== "monitoring" || !monitorAutoRefreshEnabled || !monitorBotId) return;
-
-    const hasRunningSession =
-      selectedMonitorSession?.status === "RUNNING" || monitorSessions.some((session) => session.status === "RUNNING");
-
-    if (!hasRunningSession) return;
+    if (!monitorHasRunningSession) return;
 
     const intervalId = window.setInterval(() => {
       void loadMonitorSessions(monitorBotId, monitorStatus, { silent: true });
-      if (monitorSessionId) {
+      if (monitorViewMode === "aggregate") {
+        void loadMonitorAggregateData(monitorBotId, monitorSessions, monitorAppliedSymbolFilter, {
+          silent: true,
+        });
+      } else if (monitorSessionId) {
         void loadMonitorSessionData(monitorBotId, monitorSessionId, monitorAppliedSymbolFilter, { silent: true });
       }
     }, 15000);
@@ -674,15 +1021,17 @@ export default function BotsManagement() {
     };
   }, [
     activeTab,
+    loadMonitorAggregateData,
     loadMonitorSessionData,
     loadMonitorSessions,
     monitorAppliedSymbolFilter,
     monitorAutoRefreshEnabled,
     monitorBotId,
+    monitorHasRunningSession,
     monitorSessionId,
     monitorSessions,
     monitorStatus,
-    selectedMonitorSession?.status,
+    monitorViewMode,
   ]);
 
   return (
@@ -1074,7 +1423,7 @@ export default function BotsManagement() {
                 </div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-6">
+              <div className="grid gap-3 md:grid-cols-7">
                 <label className="form-control md:col-span-2">
                   <span className="label-text">Bot</span>
                   <select
@@ -1103,22 +1452,42 @@ export default function BotsManagement() {
                     <option value="CANCELED">CANCELED</option>
                   </select>
                 </label>
-                <label className="form-control md:col-span-2">
-                  <span className="label-text">Sesja</span>
+                <label className="form-control">
+                  <span className="label-text">Widok</span>
                   <select
                     className="select select-bordered"
-                    value={monitorSessionId}
-                    onChange={(event) => setMonitorSessionId(event.target.value)}
-                    disabled={monitorSessions.length === 0}
+                    value={monitorViewMode}
+                    onChange={(event) => setMonitorViewMode(event.target.value as "aggregate" | "session")}
                   >
-                    {monitorSessions.length === 0 ? <option value="">Brak sesji</option> : null}
-                    {monitorSessions.map((session) => (
-                      <option key={session.id} value={session.id}>
-                        {session.id.slice(0, 8)} | {session.status} | {formatDateTime(session.startedAt)}
-                      </option>
-                    ))}
+                    <option value="aggregate">Zbiorczy (domyslny)</option>
+                    <option value="session">Sesja (zaawansowany)</option>
                   </select>
                 </label>
+                {monitorViewMode === "session" ? (
+                  <label className="form-control md:col-span-2">
+                    <span className="label-text">Sesja</span>
+                    <select
+                      className="select select-bordered"
+                      value={monitorSessionId}
+                      onChange={(event) => setMonitorSessionId(event.target.value)}
+                      disabled={monitorSessions.length === 0}
+                    >
+                      {monitorSessions.length === 0 ? <option value="">Brak sesji</option> : null}
+                      {monitorSessions.map((session) => (
+                        <option key={session.id} value={session.id}>
+                          {session.id.slice(0, 8)} | {session.status} | {formatDateTime(session.startedAt)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <div className="form-control md:col-span-2">
+                    <span className="label-text">Zakres</span>
+                    <div className="rounded-md border border-base-300 bg-base-100 px-3 py-2 text-sm">
+                      Wszystkie sesje ({monitorSessions.length})
+                    </div>
+                  </div>
+                )}
                 <div className="form-control">
                   <span className="label-text">&nbsp;</span>
                   <button
@@ -1127,7 +1496,13 @@ export default function BotsManagement() {
                     onClick={() => {
                       if (!monitorBotId) return;
                       void loadMonitorSessions(monitorBotId, monitorStatus);
-                      if (monitorSessionId) {
+                      if (monitorViewMode === "aggregate") {
+                        void loadMonitorAggregateData(
+                          monitorBotId,
+                          monitorSessions,
+                          monitorAppliedSymbolFilter
+                        );
+                      } else if (monitorSessionId) {
                         void loadMonitorSessionData(
                           monitorBotId,
                           monitorSessionId,
@@ -1153,11 +1528,13 @@ export default function BotsManagement() {
                   <span className="label-text">Auto refresh RUNNING (15s)</span>
                 </label>
                 <span className="opacity-70">
-                  {selectedMonitorSession?.status === "RUNNING"
-                    ? "Auto-refresh aktywny dla biezacej sesji"
-                    : monitorSessions.some((session) => session.status === "RUNNING")
-                      ? "Auto-refresh aktywny dla sesji RUNNING"
-                      : "Brak sesji RUNNING - auto-refresh wstrzymany"}
+                  {monitorHasRunningSession
+                    ? monitorViewMode === "aggregate"
+                      ? "Auto-refresh aktywny dla widoku zbiorczego"
+                      : selectedMonitorSession?.status === "RUNNING"
+                        ? "Auto-refresh aktywny dla biezacej sesji"
+                        : "Auto-refresh aktywny dla sesji RUNNING"
+                    : "Brak sesji RUNNING - auto-refresh wstrzymany"}
                 </span>
               </div>
 
@@ -1199,7 +1576,13 @@ export default function BotsManagement() {
                   onRetry={() => {
                     if (!monitorBotId) return;
                     void loadMonitorSessions(monitorBotId, monitorStatus);
-                    if (monitorSessionId) {
+                    if (monitorViewMode === "aggregate") {
+                      void loadMonitorAggregateData(
+                        monitorBotId,
+                        monitorSessions,
+                        monitorAppliedSymbolFilter
+                      );
+                    } else if (monitorSessionId) {
                       void loadMonitorSessionData(monitorBotId, monitorSessionId, monitorAppliedSymbolFilter);
                     }
                   }}
@@ -1213,29 +1596,35 @@ export default function BotsManagement() {
                 />
               ) : null}
 
-              {!monitorLoading && !monitorError && selectedMonitorSession ? (
+              {!monitorLoading && !monitorError && monitorSessionDetail ? (
                 <div className="space-y-3">
                   <div className="rounded-lg border border-base-300 bg-base-100 p-3">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className={`badge ${toSessionStatusBadgeClass(selectedMonitorSession.status)}`}>
-                        {selectedMonitorSession.status}
+                      <span className={`badge ${toSessionStatusBadgeClass(monitorSessionDetail.status)}`}>
+                        {monitorSessionDetail.status}
                       </span>
-                      <span className="badge badge-outline">Mode: {selectedMonitorSession.mode}</span>
-                      <span className="text-xs opacity-70">Session ID: {selectedMonitorSession.id}</span>
+                      <span className="badge badge-outline">Mode: {monitorSessionDetail.mode}</span>
+                      {monitorViewMode === "aggregate" ? (
+                        <span className="text-xs opacity-70">Sesje: {monitorSessions.length}</span>
+                      ) : (
+                        <span className="text-xs opacity-70">
+                          Session ID: {(selectedMonitorSession?.id ?? monitorSessionDetail.id).slice(0, 8)}
+                        </span>
+                      )}
                     </div>
                     <div className="mt-2 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
                       <p>
-                        <span className="opacity-60">Start:</span> {formatDateTime(selectedMonitorSession.startedAt)}
+                        <span className="opacity-60">Start:</span> {formatDateTime(monitorSessionDetail.startedAt)}
                       </p>
                       <p>
-                        <span className="opacity-60">Koniec:</span> {formatDateTime(selectedMonitorSession.finishedAt)}
+                        <span className="opacity-60">Koniec:</span> {formatDateTime(monitorSessionDetail.finishedAt)}
                       </p>
                       <p>
                         <span className="opacity-60">Heartbeat:</span>{" "}
-                        {formatDateTime(selectedMonitorSession.lastHeartbeatAt)}
+                        {formatDateTime(monitorSessionDetail.lastHeartbeatAt)}
                       </p>
                       <p>
-                        <span className="opacity-60">Czas:</span> {formatDuration(selectedMonitorSession.durationMs)}
+                        <span className="opacity-60">Czas:</span> {formatDuration(monitorSessionDetail.durationMs)}
                       </p>
                     </div>
                   </div>
