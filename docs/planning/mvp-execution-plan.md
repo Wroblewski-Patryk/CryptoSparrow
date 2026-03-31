@@ -341,8 +341,9 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-12 feat(web-monitor): improve visual hierarchy and runtime summary cards for faster manual operator validation`
 - [x] `BOPS-13 feat(web-monitor): align section naming + helper copy with "Bots as operational center" IA for human operators`
 - [x] `BOPS-14 feat(web-monitor): align Dashboard vs Bots helper labels so module boundaries stay obvious for operators`
-- [ ] `BOPS-15 feat(web-monitor): tune table ordering + section spacing for faster operator scan during live refresh`
+- [x] `BOPS-15 feat(web-monitor): tune table ordering + section spacing for faster operator scan during live refresh`
 - [ ] `BOPS-16 feat(web-monitor): tune monitoring table defaults + filter hints for faster manual runtime triage`
+- [ ] `BOPS-17 feat(web-monitor): finalize naming consistency across monitoring tabs + section subtitles`
 
 ## Progress Log
 - 2026-03-31: Completed `BOPS-07 feat(api+web-guard): added backend duplicate-active guard on create/activate flows (strategy + symbol-group pair), mapped conflict to HTTP 409, added dedicated API e2e coverage, and surfaced explicit conflict messaging in bots UI create/save actions.
@@ -717,6 +718,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-31: Improved monitoring hierarchy for manual smoke-tests: added quick operator check strip, explicit section order (`1. Teraz / 2. Historia / 3. Co bedzie`), and reordered runtime panels to match operator decision flow.
 - 2026-03-31: Clarified IA boundary copy: `Dashboard` remains global control center, while `Bots` page and monitoring headline now explicitly describe runtime operations center responsibilities.
 - 2026-03-31: Added explicit Dashboard↔Bots context hints on both pages (Dashboard points to Bots runtime center, Bots page points back to Dashboard macro view) to reduce operator navigation ambiguity.
+- 2026-03-31: Increased table readability for live-refresh scanning by applying zebra styling across monitoring tables (now/history/future blocks) to improve row tracking under frequent updates.
 
 
 

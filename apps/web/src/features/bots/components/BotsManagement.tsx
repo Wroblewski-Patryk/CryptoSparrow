@@ -1763,7 +1763,7 @@ export default function BotsManagement() {
                       </span>
                     </div>
                     <div className="overflow-x-auto">
-                      <table className="table table-xs">
+                      <table className="table table-xs table-zebra">
                         <thead>
                           <tr>
                             <th>Symbol</th>
@@ -1814,7 +1814,7 @@ export default function BotsManagement() {
                       </span>
                     </div>
                     <div className="overflow-x-auto">
-                      <table className="table table-xs">
+                      <table className="table table-xs table-zebra">
                         <thead>
                           <tr>
                             <th>Symbol</th>
@@ -1869,7 +1869,7 @@ export default function BotsManagement() {
                       </span>
                     </div>
                     <div className="overflow-x-auto">
-                      <table className="table table-xs">
+                      <table className="table table-xs table-zebra">
                         <thead>
                           <tr>
                             <th>Symbol</th>
@@ -1923,7 +1923,7 @@ export default function BotsManagement() {
                       </span>
                     </div>
                     <div className="overflow-x-auto">
-                      <table className="table table-xs">
+                      <table className="table table-xs table-zebra">
                         <thead>
                           <tr>
                             <th>#</th>
@@ -2000,7 +2000,7 @@ export default function BotsManagement() {
                       </span>
                     </div>
                     <div className="overflow-x-auto">
-                      <table className="table table-xs">
+                      <table className="table table-xs table-zebra">
                         <thead>
                           <tr>
                             <th>Symbol</th>
