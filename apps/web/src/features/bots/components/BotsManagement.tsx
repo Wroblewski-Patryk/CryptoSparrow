@@ -1472,7 +1472,7 @@ export default function BotsManagement() {
                     {bots.some((bot) => bot.isActive) ? " (aktywne)" : " (wszystkie)"}
                   </span>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
                   {monitorQuickSwitchBots.map((bot) => (
                     <button
                       key={bot.id}
@@ -1484,7 +1484,7 @@ export default function BotsManagement() {
                       }`}
                       onClick={() => setMonitorBotId(bot.id)}
                     >
-                      <p className="text-sm font-semibold">{bot.name}</p>
+                      <p className="truncate text-sm font-semibold">{bot.name}</p>
                       <p className="mt-1 text-[11px] opacity-70">
                         {bot.marketType} | {bot.mode} | {bot.isActive ? "ACTIVE" : "INACTIVE"}
                       </p>

@@ -159,7 +159,7 @@ export default function HomeLiveWidgets() {
           <span className="badge badge-outline">{t("dashboard.home.controlCenterBadge")}</span>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
           <div className="h-full rounded-lg border border-primary/30 bg-base-100/90 p-3">
             <div className="flex h-full flex-col">
             <div className="mb-1 flex items-center justify-between gap-2">
@@ -198,7 +198,7 @@ export default function HomeLiveWidgets() {
             </div>
           </div>
 
-          <div className="h-full rounded-lg border border-base-300 bg-base-100/90 p-3 md:col-span-2 2xl:col-span-1">
+          <div className="h-full rounded-lg border border-base-300 bg-base-100/90 p-3 lg:col-span-2 xl:col-span-1">
             <div className="flex h-full flex-col">
             <div className="mb-1 flex items-center justify-between gap-2">
               <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.executionReviewTitle")}</p>
@@ -220,7 +220,7 @@ export default function HomeLiveWidgets() {
         <div className="mt-3 rounded-md border border-base-300 bg-base-100/90 p-3">
           <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.quickActionsStripTitle")}</p>
           <p className="mt-1 text-[11px] leading-5 opacity-65">{t("dashboard.home.quickActionsStripDescription")}</p>
-          <div className="mt-3 grid gap-2 xl:grid-cols-2">
+          <div className="mt-3 grid gap-2 lg:grid-cols-2">
             <div className="rounded-md border border-primary/25 bg-primary/5 p-2">
               <p className="text-[10px] uppercase tracking-wide text-primary">{t("dashboard.home.quickActionsPrimaryLabel")}</p>
               <div className="mt-2">
@@ -265,7 +265,7 @@ export default function HomeLiveWidgets() {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
         {statusGroups.map((group) => (
           <div
             key={group.key}
