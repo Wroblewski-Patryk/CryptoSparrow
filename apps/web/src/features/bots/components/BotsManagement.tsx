@@ -1406,9 +1406,10 @@ export default function BotsManagement() {
 
       {activeTab === "monitoring" && (
         <div className="space-y-4 rounded-xl border border-base-300 bg-base-200 p-4">
-          <h2 className="text-lg font-semibold">Monitoring runtime</h2>
+          <h2 className="text-lg font-semibold">Centrum operacyjne botow (runtime)</h2>
           <p className="text-sm opacity-70">
-            Centrum operacyjne bota: teraz (otwarte), historia (zamkniete) i co bedzie (live check sygnalow) bez ciezkich wykresow.
+            Dashboard zostaje ogolnym panelem sterowania aplikacja, a tutaj monitorujesz runtime botow:
+            teraz (otwarte), historia (zamkniete) i co bedzie (live check sygnalow) bez ciezkich wykresow.
           </p>
 
           {bots.length === 0 ? (
@@ -1417,7 +1418,7 @@ export default function BotsManagement() {
             <>
               <div className="rounded-lg border border-base-300 bg-base-100 p-3">
                 <div className="mb-2 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold">Szybki wybor bota</h3>
+                  <h3 className="text-sm font-semibold">Szybki wybor kontekstu bota</h3>
                   <span className="text-xs opacity-60">
                     {monitorQuickSwitchBots.length} kart
                     {bots.some((bot) => bot.isActive) ? " (aktywne)" : " (wszystkie)"}

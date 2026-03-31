@@ -5,10 +5,10 @@ export default function BotsPage() {
   return (
     <section className="w-full">
       <PageTitle
-        title="Bots Management"
+        title="Bots Operations Center"
         breadcrumb={[
           { label: "Dashboard", href: "/dashboard" },
-          { label: "Bots" },
+          { label: "Bots Operations" },
         ]}
       />
       <BotsManagement />
