@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BOPS-04 feat(web-bots-dashboard): redesign bots dashboard list into clickable operational cards for quick active-bot context switching`
 - [ ] `BOPS-05 feat(web-monitor): replace "Recent Activity" style feed with dense operational table aligned to backtest trades readability`
 
 ## NEXT
@@ -19,6 +18,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BOPS-04 feat(web-bots-dashboard): redesign bots dashboard list into clickable operational cards for quick active-bot context switching`
 - [x] `BOPS-03 feat(web-monitor): stabilize auto-refresh rendering to update values in-place without section remount/flicker`
 - [x] `BOPS-02 feat(web-monitor): refactor Bots monitoring into three clear blocks (Now: open positions+orders, History: closed positions+trades, Future: live signal check per symbol)`
 - [x] `BOPS-01 docs(plan): lock IA split (Dashboard as global control center, Bots as runtime operations center) and define target UX sections now/history/future-signals`

@@ -257,6 +257,10 @@ export default function BotsManagement() {
     () => monitorSessions.find((session) => session.id === monitorSessionId) ?? null,
     [monitorSessionId, monitorSessions]
   );
+  const monitorQuickSwitchBots = useMemo(() => {
+    const active = bots.filter((bot) => bot.isActive);
+    return active.length > 0 ? active : bots;
+  }, [bots]);
 
   const monitorWinRate = useMemo(() => {
     const closedTrades = monitorSessionDetail?.summary.closedTrades ?? 0;
@@ -982,6 +986,35 @@ export default function BotsManagement() {
             <EmptyState title="Brak botow" description="Utworz bota, aby monitorowac jego sesje runtime." />
           ) : (
             <>
+              <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">Szybki wybor bota</h3>
+                  <span className="text-xs opacity-60">
+                    {monitorQuickSwitchBots.length} kart
+                    {bots.some((bot) => bot.isActive) ? " (aktywne)" : " (wszystkie)"}
+                  </span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                  {monitorQuickSwitchBots.map((bot) => (
+                    <button
+                      key={bot.id}
+                      type="button"
+                      className={`rounded-md border p-2 text-left transition-colors ${
+                        monitorBotId === bot.id
+                          ? "border-primary bg-primary/10"
+                          : "border-base-300 bg-base-200 hover:border-primary/50"
+                      }`}
+                      onClick={() => setMonitorBotId(bot.id)}
+                    >
+                      <p className="text-sm font-semibold">{bot.name}</p>
+                      <p className="mt-1 text-[11px] opacity-70">
+                        {bot.marketType} | {bot.mode} | {bot.isActive ? "ACTIVE" : "INACTIVE"}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid gap-3 md:grid-cols-6">
                 <label className="form-control md:col-span-2">
                   <span className="label-text">Bot</span>

@@ -330,7 +330,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-01 docs(plan): lock IA split (Dashboard = global control center, Bots = runtime operations center) and define now/history/future monitoring contract`
 - [x] `BOPS-02 feat(web-monitor): restructure monitoring into explicit operator blocks (Now: open positions + open orders, History: closed positions + trades, Future: live signal checks by symbol)`
 - [x] `BOPS-03 feat(web-monitor): keep auto-refresh updates in-place (no section remount/flicker) for accessibility-safe monitoring`
-- [ ] `BOPS-04 feat(web-bots-dashboard): redesign bot list into clickable operational cards for fast context switching between active bots`
+- [x] `BOPS-04 feat(web-bots-dashboard): redesign bot list into clickable operational cards for fast context switching between active bots`
 - [ ] `BOPS-05 feat(web-monitor): replace lightweight activity feed with dense operational table aligned to backtest readability`
 - [ ] `BOPS-06 feat(web-creator): reorganize creator form into three sections (core bot mode, market-group context, strategy context)`
 - [ ] `BOPS-07 feat(api+web-guard): block duplicate active bot creation when strategy + market-group pair is already active`
@@ -338,6 +338,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BOPS-09 feat(web-monitor): default monitoring to aggregate session view with optional advanced per-session drilldown`
 
 ## Progress Log
+- 2026-03-31: Completed `BOPS-04 feat(web-bots-dashboard): added "Szybki wybor bota" operational card strip in Bots monitoring with one-click context switching and active-first prioritization (fallback to all bots), so operator context can be changed quickly without navigating long select lists.
 - 2026-03-31: Completed `BOPS-03 feat(web-monitor): switched monitoring auto-refresh to silent in-place updates (sessions + session data) so RUNNING refresh no longer toggles loading/error shells every 15s and avoids visual remount/flicker in bot operations view.
 - 2026-03-31: Completed `BOPS-02 feat(web-monitor): delivered temporal monitoring layout in Bots module (`Teraz`/`Historia`/`Co bedzie`) with explicit open-positions + open-orders visibility, history split (positions/trades), and live signal-check columns per symbol (latest direction/time), backed by monitoring API contract extensions for open orders and latest signal direction.
 - 2026-03-31: Completed `BOPS-01 docs(plan): locked Dashboard vs Bots IA split and temporal monitoring contract (Now/History/Future) in `docs/planning/open-decisions.md`, and queued execution track in Phase 19 + `mvp-next-commits.md` for tiny-commit rollout.
