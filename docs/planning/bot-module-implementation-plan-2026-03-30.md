@@ -97,8 +97,9 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 - [x] `BOPS-17 feat(web-monitor): finalize copy consistency across monitoring tabs and section subtitles`
 - [x] `BOPS-18 feat(web-monitor): add compact operator checklist panel for repeated manual health verification`
 - [x] `BOPS-19 feat(web-dashboard): polish global control-center cards and CTA hierarchy to complement Bots operational center`
-- [ ] `BOPS-20 feat(web-dashboard): improve first-view control-center grouping and action clarity for operators`
+- [x] `BOPS-20 feat(web-dashboard): improve first-view control-center grouping and action clarity for operators`
 - [ ] `BOPS-21 feat(web-dashboard): tighten control-center visual density and KPI scan rhythm for high-frequency operator checks`
+- [ ] `BOPS-22 feat(web-dashboard): refine dashboard onboarding microcopy and operator context strip for cleaner first-load orientation`
 
 ## Test Command Map (per phase)
 - Phase A/B:

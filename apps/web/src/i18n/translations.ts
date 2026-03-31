@@ -86,6 +86,7 @@ type TranslationSchema = {
       runtimeOpsDescription: string;
       runtimeOpsMeta: string;
       runtimeOpsAction: string;
+      runtimeOpsActionShort: string;
       strategyLabTitle: string;
       strategyLabDescription: string;
       strategyLabPrimaryAction: string;
@@ -94,6 +95,16 @@ type TranslationSchema = {
       executionReviewDescription: string;
       executionReviewPrimaryAction: string;
       executionReviewSecondaryAction: string;
+      laneStepOne: string;
+      laneStepTwo: string;
+      laneStepThree: string;
+      quickActionsStripTitle: string;
+      statusRuntimeNowLabel: string;
+      statusRuntimeNowValue: string;
+      statusExecutionQualityLabel: string;
+      statusExecutionQualityValue: string;
+      statusActivityLabel: string;
+      statusActivityValue: string;
       quickActions: string;
       reviewStrategies: string;
       openOrdersAction: string;
@@ -202,6 +213,7 @@ export const translations: Record<Locale, TranslationSchema> = {
         runtimeOpsDescription: "Monitor open positions, history, and live signal checks in one operational module.",
         runtimeOpsMeta: "Open positions: {positions} | Open orders: {orders}",
         runtimeOpsAction: "Open Bots Operations Center",
+        runtimeOpsActionShort: "Bots Runtime",
         strategyLabTitle: "Strategy and backtest lane",
         strategyLabDescription: "Prepare and validate ideas before enabling runtime execution.",
         strategyLabPrimaryAction: "Strategies",
@@ -210,6 +222,16 @@ export const translations: Record<Locale, TranslationSchema> = {
         executionReviewDescription: "Review execution outcomes, pending items, and current exposure.",
         executionReviewPrimaryAction: "Orders",
         executionReviewSecondaryAction: "Positions",
+        laneStepOne: "Step 1",
+        laneStepTwo: "Step 2",
+        laneStepThree: "Step 3",
+        quickActionsStripTitle: "Quick actions",
+        statusRuntimeNowLabel: "Runtime now",
+        statusRuntimeNowValue: "{positions} positions | {orders} orders",
+        statusExecutionQualityLabel: "Execution quality",
+        statusExecutionQualityValue: "{filled} filled | {rejected} rejected",
+        statusActivityLabel: "Recent activity",
+        statusActivityValue: "{count} recent events",
         quickActions: "Quick Actions",
         reviewStrategies: "Review Strategies",
         openOrdersAction: "Open Orders",
@@ -317,6 +339,7 @@ export const translations: Record<Locale, TranslationSchema> = {
         runtimeOpsDescription: "Podglad otwartych pozycji, historii i live-check sygnalow w jednym module operacyjnym.",
         runtimeOpsMeta: "Otwarte pozycje: {positions} | Otwarte zlecenia: {orders}",
         runtimeOpsAction: "Przejdz do Operacji Botow",
+        runtimeOpsActionShort: "Runtime botow",
         strategyLabTitle: "Sciezka strategii i backtestu",
         strategyLabDescription: "Przygotuj i zweryfikuj pomysly zanim uruchomisz runtime.",
         strategyLabPrimaryAction: "Strategie",
@@ -325,6 +348,16 @@ export const translations: Record<Locale, TranslationSchema> = {
         executionReviewDescription: "Sprawdz wynik wykonania, pending i aktualna ekspozycje.",
         executionReviewPrimaryAction: "Zlecenia",
         executionReviewSecondaryAction: "Pozycje",
+        laneStepOne: "Krok 1",
+        laneStepTwo: "Krok 2",
+        laneStepThree: "Krok 3",
+        quickActionsStripTitle: "Szybkie akcje",
+        statusRuntimeNowLabel: "Runtime teraz",
+        statusRuntimeNowValue: "{positions} pozycji | {orders} zlecen",
+        statusExecutionQualityLabel: "Jakosc egzekucji",
+        statusExecutionQualityValue: "{filled} zrealizowanych | {rejected} odrzuconych",
+        statusActivityLabel: "Najnowsza aktywnosc",
+        statusActivityValue: "{count} ostatnich zdarzen",
         quickActions: "Szybkie akcje",
         reviewStrategies: "Przejrzyj strategie",
         openOrdersAction: "Przejdz do zlecen",

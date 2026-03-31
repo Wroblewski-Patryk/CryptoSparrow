@@ -94,11 +94,29 @@ export default function HomeLiveWidgets() {
       .slice(0, 8);
   }, [openPositions, orders, t]);
 
-  const kpiCards = [
-    { label: t("dashboard.home.openPositions"), value: openPositions.length, tone: "text-info" },
-    { label: t("dashboard.home.openOrders"), value: openOrders.length, tone: "text-warning" },
-    { label: t("dashboard.home.filledOrders"), value: filledOrders, tone: "text-success" },
-    { label: t("dashboard.home.rejectedOrders"), value: rejectedOrders, tone: "text-error" },
+  const statusGroups = [
+    {
+      key: "runtime-now",
+      label: t("dashboard.home.statusRuntimeNowLabel"),
+      value: t("dashboard.home.statusRuntimeNowValue")
+        .replace("{positions}", String(openPositions.length))
+        .replace("{orders}", String(openOrders.length)),
+      tone: "text-info",
+    },
+    {
+      key: "execution-quality",
+      label: t("dashboard.home.statusExecutionQualityLabel"),
+      value: t("dashboard.home.statusExecutionQualityValue")
+        .replace("{filled}", String(filledOrders))
+        .replace("{rejected}", String(rejectedOrders)),
+      tone: "text-success",
+    },
+    {
+      key: "activity",
+      label: t("dashboard.home.statusActivityLabel"),
+      value: t("dashboard.home.statusActivityValue").replace("{count}", String(feed.length)),
+      tone: "text-warning",
+    },
   ];
 
   if (loading) return <LoadingState title={t("dashboard.home.loadWidgets")} />;
@@ -138,7 +156,10 @@ export default function HomeLiveWidgets() {
 
         <div className="grid gap-3 xl:grid-cols-3">
           <div className="rounded-lg border border-primary/30 bg-base-100 p-3">
-            <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.runtimeOpsTitle")}</p>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.runtimeOpsTitle")}</p>
+              <span className="badge badge-ghost badge-sm">{t("dashboard.home.laneStepOne")}</span>
+            </div>
             <p className="mt-1 text-sm opacity-75">{t("dashboard.home.runtimeOpsDescription")}</p>
             <p className="mt-2 text-xs opacity-65">
               {t("dashboard.home.runtimeOpsMeta")
@@ -153,7 +174,10 @@ export default function HomeLiveWidgets() {
           </div>
 
           <div className="rounded-lg border border-base-300 bg-base-100 p-3">
-            <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.strategyLabTitle")}</p>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.strategyLabTitle")}</p>
+              <span className="badge badge-ghost badge-sm">{t("dashboard.home.laneStepTwo")}</span>
+            </div>
             <p className="mt-1 text-sm opacity-75">{t("dashboard.home.strategyLabDescription")}</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <Link href="/dashboard/strategies/list" className="btn btn-outline btn-sm">
@@ -166,7 +190,10 @@ export default function HomeLiveWidgets() {
           </div>
 
           <div className="rounded-lg border border-base-300 bg-base-100 p-3">
-            <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.executionReviewTitle")}</p>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.executionReviewTitle")}</p>
+              <span className="badge badge-ghost badge-sm">{t("dashboard.home.laneStepThree")}</span>
+            </div>
             <p className="mt-1 text-sm opacity-75">{t("dashboard.home.executionReviewDescription")}</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <Link href="/dashboard/orders" className="btn btn-outline btn-sm">
@@ -178,15 +205,31 @@ export default function HomeLiveWidgets() {
             </div>
           </div>
         </div>
+
+        <div className="mt-3 rounded-md border border-base-300 bg-base-100 p-3">
+          <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.quickActionsStripTitle")}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Link href="/dashboard/bots" className="btn btn-primary btn-sm">
+              {t("dashboard.home.runtimeOpsActionShort")}
+            </Link>
+            <Link href="/dashboard/strategies/list" className="btn btn-outline btn-sm">
+              {t("dashboard.home.strategyLabPrimaryAction")}
+            </Link>
+            <Link href="/dashboard/backtests/list" className="btn btn-outline btn-sm">
+              {t("dashboard.home.strategyLabSecondaryAction")}
+            </Link>
+            <Link href="/dashboard/orders" className="btn btn-outline btn-sm">
+              {t("dashboard.home.executionReviewPrimaryAction")}
+            </Link>
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {kpiCards.map((card) => (
-          <div key={card.label} className="card bg-base-200 shadow-sm">
-            <div className="card-body p-5">
-              <p className="text-sm opacity-70">{card.label}</p>
-              <p className={`text-3xl font-bold ${card.tone}`}>{card.value}</p>
-            </div>
+      <div className="grid gap-3 md:grid-cols-3">
+        {statusGroups.map((group) => (
+          <div key={group.key} className="rounded-md border border-base-300 bg-base-200 p-3">
+            <p className="text-[11px] uppercase tracking-wide opacity-60">{group.label}</p>
+            <p className={`mt-2 text-sm font-semibold ${group.tone}`}>{group.value}</p>
           </div>
         ))}
       </div>
