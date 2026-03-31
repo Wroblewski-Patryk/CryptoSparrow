@@ -354,8 +354,9 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-25 feat(web-dashboard): harmonize dashboard control-center card heights + action alignment across breakpoints`
 - [x] `BOPS-26 feat(web-dashboard): tighten micro-layout consistency of onboarding + control-center strips between 2xl, xl and md breakpoints`
 - [x] `BOPS-27 feat(web-dashboard): normalize button sizing hierarchy + interaction affordances across dashboard control-center actions`
-- [ ] `BOPS-28 feat(web-dashboard): harden visual affordance of primary-vs-secondary CTA paths in control-center and onboarding strips`
+- [x] `BOPS-28 feat(web-dashboard): harden visual affordance of primary-vs-secondary CTA paths in control-center and onboarding strips`
 - [ ] `BOPS-29 feat(web-dashboard): tighten CTA copy + density in dashboard strips to reduce decision latency`
+- [ ] `BOPS-30 feat(web-dashboard): rebalance status-card wording + emphasis to avoid duplicated semantic signals`
 
 ## Progress Log
 - 2026-03-31: Completed `BOPS-07 feat(api+web-guard): added backend duplicate-active guard on create/activate flows (strategy + symbol-group pair), mapped conflict to HTTP 409, added dedicated API e2e coverage, and surfaced explicit conflict messaging in bots UI create/save actions.
@@ -743,6 +744,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-31: Harmonized card/action alignment across breakpoints by introducing equal-height flex layouts and bottom-aligned CTA regions in both onboarding and control-center strips.
 - 2026-03-31: Tightened micro-layout breakpoint consistency by standardizing strips to `md:2-column / 2xl:3-column` flow and adding controlled `col-span` behavior for third cards/status tiles.
 - 2026-03-31: Normalized CTA interaction affordance by applying shared primary/secondary button hierarchy with consistent sizing and keyboard focus ring treatment across dashboard onboarding and control-center actions.
+- 2026-03-31: Strengthened primary-vs-secondary CTA affordance by visually separating quick-action strips into distinct lanes (highlighted primary path vs secondary action set) and labeling action intent explicitly.
 
 
 

@@ -105,8 +105,9 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 - [x] `BOPS-25 feat(web-dashboard): harmonize dashboard control-center card heights and action alignment across breakpoints`
 - [x] `BOPS-26 feat(web-dashboard): tighten micro-layout consistency of onboarding + control-center strips between 2xl, xl and md breakpoints`
 - [x] `BOPS-27 feat(web-dashboard): normalize button sizing hierarchy and interaction affordances across dashboard control-center actions`
-- [ ] `BOPS-28 feat(web-dashboard): harden visual affordance of primary-vs-secondary CTA paths in control-center and onboarding strips`
+- [x] `BOPS-28 feat(web-dashboard): harden visual affordance of primary-vs-secondary CTA paths in control-center and onboarding strips`
 - [ ] `BOPS-29 feat(web-dashboard): tighten CTA copy and density in dashboard strips to reduce decision latency`
+- [ ] `BOPS-30 feat(web-dashboard): rebalance status-card wording and emphasis to avoid duplicated semantic signals`
 
 ## Test Command Map (per phase)
 - Phase A/B:

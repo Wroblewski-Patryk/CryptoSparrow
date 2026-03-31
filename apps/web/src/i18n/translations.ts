@@ -100,6 +100,8 @@ type TranslationSchema = {
       laneStepThree: string;
       quickActionsStripTitle: string;
       quickActionsStripDescription: string;
+      quickActionsPrimaryLabel: string;
+      quickActionsSecondaryLabel: string;
       handoffCuesTitle: string;
       handoffRuntimeCue: string;
       handoffBacktestCue: string;
@@ -234,6 +236,8 @@ export const translations: Record<Locale, TranslationSchema> = {
         laneStepThree: "Step 3",
         quickActionsStripTitle: "Quick actions",
         quickActionsStripDescription: "Jump directly to the module that matches your current operator intent.",
+        quickActionsPrimaryLabel: "Primary path",
+        quickActionsSecondaryLabel: "Secondary paths",
         handoffCuesTitle: "Module handoff cues",
         handoffRuntimeCue: "Live runtime -> Bots",
         handoffBacktestCue: "Validation -> Backtests",
@@ -367,6 +371,8 @@ export const translations: Record<Locale, TranslationSchema> = {
         laneStepThree: "Krok 3",
         quickActionsStripTitle: "Szybkie akcje",
         quickActionsStripDescription: "Przejdz od razu do modulu, ktory odpowiada Twojemu aktualnemu celowi operacyjnemu.",
+        quickActionsPrimaryLabel: "Sciezka glowna",
+        quickActionsSecondaryLabel: "Sciezki pomocnicze",
         handoffCuesTitle: "Wskazniki przekazania miedzy modulami",
         handoffRuntimeCue: "Runtime live -> Boty",
         handoffBacktestCue: "Walidacja -> Backtesty",

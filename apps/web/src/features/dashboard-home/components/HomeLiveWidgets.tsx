@@ -220,22 +220,33 @@ export default function HomeLiveWidgets() {
         <div className="mt-3 rounded-md border border-base-300 bg-base-100 p-3">
           <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.quickActionsStripTitle")}</p>
           <p className="mt-1 text-[11px] leading-5 opacity-65">{t("dashboard.home.quickActionsStripDescription")}</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <Link href="/dashboard/bots" className={PRIMARY_ACTION_CLASS}>
-              {t("dashboard.home.runtimeOpsActionShort")}
-            </Link>
-            <Link href="/dashboard/strategies/list" className={SECONDARY_ACTION_CLASS}>
-              {t("dashboard.home.strategyLabPrimaryAction")}
-            </Link>
-            <Link href="/dashboard/backtests/list" className={SECONDARY_ACTION_CLASS}>
-              {t("dashboard.home.strategyLabSecondaryAction")}
-            </Link>
-            <Link href="/dashboard/orders" className={SECONDARY_ACTION_CLASS}>
-              {t("dashboard.home.executionReviewPrimaryAction")}
-            </Link>
-            <Link href="/dashboard/reports" className={SECONDARY_ACTION_CLASS}>
-              {t("dashboard.nav.reports")}
-            </Link>
+          <div className="mt-3 grid gap-2 xl:grid-cols-2">
+            <div className="rounded-md border border-primary/25 bg-primary/5 p-2">
+              <p className="text-[10px] uppercase tracking-wide text-primary">{t("dashboard.home.quickActionsPrimaryLabel")}</p>
+              <div className="mt-2">
+                <Link href="/dashboard/bots" className={`${PRIMARY_ACTION_CLASS} w-full`}>
+                  {t("dashboard.home.runtimeOpsActionShort")}
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-md border border-base-300 bg-base-200 p-2">
+              <p className="text-[10px] uppercase tracking-wide opacity-60">{t("dashboard.home.quickActionsSecondaryLabel")}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Link href="/dashboard/strategies/list" className={SECONDARY_ACTION_CLASS}>
+                  {t("dashboard.home.strategyLabPrimaryAction")}
+                </Link>
+                <Link href="/dashboard/backtests/list" className={SECONDARY_ACTION_CLASS}>
+                  {t("dashboard.home.strategyLabSecondaryAction")}
+                </Link>
+                <Link href="/dashboard/orders" className={SECONDARY_ACTION_CLASS}>
+                  {t("dashboard.home.executionReviewPrimaryAction")}
+                </Link>
+                <Link href="/dashboard/reports" className={SECONDARY_ACTION_CLASS}>
+                  {t("dashboard.nav.reports")}
+                </Link>
+              </div>
+            </div>
           </div>
           <div className="mt-3">
             <p className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.handoffCuesTitle")}</p>
