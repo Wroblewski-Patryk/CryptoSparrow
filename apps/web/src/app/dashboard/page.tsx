@@ -9,6 +9,11 @@ import SafetyBar from '@/ui/layout/dashboard/SafetyBar';
 import RiskNoticeFooter from '@/ui/layout/dashboard/RiskNoticeFooter';
 import HomeLiveWidgets from '@/features/dashboard-home/components/HomeLiveWidgets';
 
+const PRIMARY_ACTION_CLASS =
+  'btn btn-primary btn-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40';
+const SECONDARY_ACTION_CLASS =
+  'btn btn-outline btn-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30';
+
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -51,7 +56,7 @@ export default function DashboardPage() {
               <p className='mt-1 text-sm opacity-80'>
                 Dashboard = widok globalny. Boty = operacje runtime, otwarte pozycje, historia i live-check sygnalow.
               </p>
-              <Link href='/dashboard/bots' className='link link-primary mt-auto pt-2 inline-block text-sm font-medium'>
+              <Link href='/dashboard/bots' className={`mt-auto inline-block pt-2 text-sm font-medium ${SECONDARY_ACTION_CLASS}`}>
                 Otworz Operacje Botow
               </Link>
             </div>
@@ -61,10 +66,10 @@ export default function DashboardPage() {
             <div className='flex h-full flex-col'>
               <p className='text-[11px] uppercase tracking-wide opacity-60'>Sugerowany start</p>
               <div className='mt-auto flex flex-wrap gap-2 pt-2'>
-                <Link href='/dashboard/bots' className='btn btn-primary btn-xs'>
+                <Link href='/dashboard/bots' className={PRIMARY_ACTION_CLASS}>
                   Boty runtime
                 </Link>
-                <Link href='/dashboard/backtests/list' className='btn btn-outline btn-xs'>
+                <Link href='/dashboard/backtests/list' className={SECONDARY_ACTION_CLASS}>
                   Backtesty
                 </Link>
               </div>

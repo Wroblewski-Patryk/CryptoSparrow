@@ -19,6 +19,11 @@ type FeedItem = {
   text: string;
 };
 
+const PRIMARY_ACTION_CLASS =
+  "btn btn-primary btn-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
+const SECONDARY_ACTION_CLASS =
+  "btn btn-outline btn-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
+
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
   return (err.response?.data as { message?: string } | undefined)?.message;
@@ -168,7 +173,7 @@ export default function HomeLiveWidgets() {
                 .replace("{orders}", String(openOrders.length))}
             </p>
             <div className="mt-auto pt-3">
-              <Link href="/dashboard/bots" className="btn btn-primary btn-sm w-full">
+              <Link href="/dashboard/bots" className={`${PRIMARY_ACTION_CLASS} w-full`}>
                 {t("dashboard.home.runtimeOpsAction")}
               </Link>
             </div>
@@ -183,10 +188,10 @@ export default function HomeLiveWidgets() {
             </div>
             <p className="mt-1 text-[13px] leading-5 opacity-75">{t("dashboard.home.strategyLabDescription")}</p>
             <div className="mt-auto grid gap-2 pt-3 sm:grid-cols-2">
-              <Link href="/dashboard/strategies/list" className="btn btn-outline btn-sm">
+              <Link href="/dashboard/strategies/list" className={SECONDARY_ACTION_CLASS}>
                 {t("dashboard.home.strategyLabPrimaryAction")}
               </Link>
-              <Link href="/dashboard/backtests/list" className="btn btn-outline btn-sm">
+              <Link href="/dashboard/backtests/list" className={SECONDARY_ACTION_CLASS}>
                 {t("dashboard.home.strategyLabSecondaryAction")}
               </Link>
             </div>
@@ -201,10 +206,10 @@ export default function HomeLiveWidgets() {
             </div>
             <p className="mt-1 text-[13px] leading-5 opacity-75">{t("dashboard.home.executionReviewDescription")}</p>
             <div className="mt-auto grid gap-2 pt-3 sm:grid-cols-2">
-              <Link href="/dashboard/orders" className="btn btn-outline btn-sm">
+              <Link href="/dashboard/orders" className={SECONDARY_ACTION_CLASS}>
                 {t("dashboard.home.executionReviewPrimaryAction")}
               </Link>
-              <Link href="/dashboard/positions" className="btn btn-outline btn-sm">
+              <Link href="/dashboard/positions" className={SECONDARY_ACTION_CLASS}>
                 {t("dashboard.home.executionReviewSecondaryAction")}
               </Link>
             </div>
@@ -216,19 +221,19 @@ export default function HomeLiveWidgets() {
           <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.quickActionsStripTitle")}</p>
           <p className="mt-1 text-[11px] leading-5 opacity-65">{t("dashboard.home.quickActionsStripDescription")}</p>
           <div className="mt-2 flex flex-wrap gap-2">
-            <Link href="/dashboard/bots" className="btn btn-primary btn-sm">
+            <Link href="/dashboard/bots" className={PRIMARY_ACTION_CLASS}>
               {t("dashboard.home.runtimeOpsActionShort")}
             </Link>
-            <Link href="/dashboard/strategies/list" className="btn btn-outline btn-sm">
+            <Link href="/dashboard/strategies/list" className={SECONDARY_ACTION_CLASS}>
               {t("dashboard.home.strategyLabPrimaryAction")}
             </Link>
-            <Link href="/dashboard/backtests/list" className="btn btn-outline btn-sm">
+            <Link href="/dashboard/backtests/list" className={SECONDARY_ACTION_CLASS}>
               {t("dashboard.home.strategyLabSecondaryAction")}
             </Link>
-            <Link href="/dashboard/orders" className="btn btn-outline btn-sm">
+            <Link href="/dashboard/orders" className={SECONDARY_ACTION_CLASS}>
               {t("dashboard.home.executionReviewPrimaryAction")}
             </Link>
-            <Link href="/dashboard/reports" className="btn btn-outline btn-sm">
+            <Link href="/dashboard/reports" className={SECONDARY_ACTION_CLASS}>
               {t("dashboard.nav.reports")}
             </Link>
           </div>
