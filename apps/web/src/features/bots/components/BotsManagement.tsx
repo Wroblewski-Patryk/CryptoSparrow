@@ -286,7 +286,12 @@ export default function BotsManagement() {
   }, []);
 
   const loadMonitorSessions = useCallback(
-    async (botId: string, statusFilter: "ALL" | BotRuntimeSessionStatus) => {
+    async (
+      botId: string,
+      statusFilter: "ALL" | BotRuntimeSessionStatus,
+      options?: { silent?: boolean }
+    ) => {
+      const silent = options?.silent ?? false;
       if (!botId) {
         setMonitorSessions([]);
         setMonitorSessionId("");
@@ -297,8 +302,10 @@ export default function BotsManagement() {
         return;
       }
 
-      setMonitorLoading(true);
-      setMonitorError(null);
+      if (!silent) {
+        setMonitorLoading(true);
+        setMonitorError(null);
+      }
       try {
         const sessions = await listBotRuntimeSessions(botId, {
           status: statusFilter === "ALL" ? undefined : statusFilter,
@@ -318,16 +325,26 @@ export default function BotsManagement() {
           setMonitorTrades(null);
         }
       } catch (err: unknown) {
-        setMonitorError(getAxiosMessage(err) ?? "Nie udalo sie pobrac sesji runtime.");
+        if (!silent) {
+          setMonitorError(getAxiosMessage(err) ?? "Nie udalo sie pobrac sesji runtime.");
+        }
       } finally {
-        setMonitorLoading(false);
+        if (!silent) {
+          setMonitorLoading(false);
+        }
       }
     },
     []
   );
 
   const loadMonitorSessionData = useCallback(
-    async (botId: string, sessionId: string, symbolFilter: string) => {
+    async (
+      botId: string,
+      sessionId: string,
+      symbolFilter: string,
+      options?: { silent?: boolean }
+    ) => {
+      const silent = options?.silent ?? false;
       if (!botId || !sessionId) {
         setMonitorSessionDetail(null);
         setMonitorSymbolStats(null);
@@ -337,8 +354,10 @@ export default function BotsManagement() {
       }
 
       const normalizedSymbol = symbolFilter.trim().toUpperCase();
-      setMonitorSessionLoading(true);
-      setMonitorError(null);
+      if (!silent) {
+        setMonitorSessionLoading(true);
+        setMonitorError(null);
+      }
       try {
         const [session, symbolStats, positions, trades] = await Promise.all([
           getBotRuntimeSession(botId, sessionId),
@@ -360,9 +379,13 @@ export default function BotsManagement() {
         setMonitorPositions(positions);
         setMonitorTrades(trades);
       } catch (err: unknown) {
-        setMonitorError(getAxiosMessage(err) ?? "Nie udalo sie pobrac danych sesji runtime.");
+        if (!silent) {
+          setMonitorError(getAxiosMessage(err) ?? "Nie udalo sie pobrac danych sesji runtime.");
+        }
       } finally {
-        setMonitorSessionLoading(false);
+        if (!silent) {
+          setMonitorSessionLoading(false);
+        }
       }
     },
     []
@@ -607,9 +630,9 @@ export default function BotsManagement() {
     if (!hasRunningSession) return;
 
     const intervalId = window.setInterval(() => {
-      void loadMonitorSessions(monitorBotId, monitorStatus);
+      void loadMonitorSessions(monitorBotId, monitorStatus, { silent: true });
       if (monitorSessionId) {
-        void loadMonitorSessionData(monitorBotId, monitorSessionId, monitorAppliedSymbolFilter);
+        void loadMonitorSessionData(monitorBotId, monitorSessionId, monitorAppliedSymbolFilter, { silent: true });
       }
     }, 15000);
 
