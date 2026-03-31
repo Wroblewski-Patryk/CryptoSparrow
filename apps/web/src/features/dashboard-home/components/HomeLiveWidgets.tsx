@@ -251,9 +251,15 @@ export default function HomeLiveWidgets() {
           <div className="mt-3">
             <p className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.handoffCuesTitle")}</p>
             <div className="mt-2 flex flex-wrap gap-2 text-xs">
-              <span className="badge badge-outline">{t("dashboard.home.handoffRuntimeCue")}</span>
-              <span className="badge badge-outline">{t("dashboard.home.handoffBacktestCue")}</span>
-              <span className="badge badge-outline">{t("dashboard.home.handoffReportsCue")}</span>
+              <Link href="/dashboard/bots" className="badge badge-outline hover:border-primary/60">
+                {t("dashboard.home.handoffRuntimeCue")}
+              </Link>
+              <Link href="/dashboard/backtests/list" className="badge badge-outline hover:border-primary/60">
+                {t("dashboard.home.handoffBacktestCue")}
+              </Link>
+              <Link href="/dashboard/reports" className="badge badge-outline hover:border-primary/60">
+                {t("dashboard.home.handoffReportsCue")}
+              </Link>
             </div>
           </div>
         </div>

@@ -1570,7 +1570,7 @@ export default function BotsManagement() {
                   </div>
                 </div>
 
-                <p className="text-xs opacity-70">
+                <p className="rounded-md border border-base-300 bg-base-200 px-3 py-2 text-xs opacity-75" aria-live="polite">
                   {monitorHasRunningSession
                     ? monitorViewMode === "aggregate"
                       ? "Auto-refresh aktywny dla widoku zbiorczego."
@@ -1637,6 +1637,24 @@ export default function BotsManagement() {
                     )}
                   </div>
                 </details>
+              </div>
+
+              <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide opacity-65">Szybka nawigacja runtime</p>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                  <a href="#monitor-now" className="btn btn-outline btn-xs">
+                    1. Teraz
+                  </a>
+                  <a href="#monitor-history" className="btn btn-outline btn-xs">
+                    2. Historia
+                  </a>
+                  <a href="#monitor-future" className="btn btn-outline btn-xs">
+                    3. Co bedzie
+                  </a>
+                </div>
+                <p className="mt-2 text-[11px] opacity-65">
+                  Przejdz bezposrednio do sekcji operacyjnej: otwarte pozycje, historia wykonania i live-check sygnalow.
+                </p>
               </div>
 
               {monitorLoading ? <LoadingState title="Ladowanie sesji runtime" /> : null}
@@ -1821,16 +1839,14 @@ export default function BotsManagement() {
                     </div>
                   ) : null}
 
-                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
-                    <h3 className="text-sm font-semibold">1. Teraz - otwarte pozycje i zlecenia</h3>
-                    <p className="mt-1 text-xs opacity-70">
-                      Sekcja do natychmiastowej kontroli stanu live: co jest aktywne w tej chwili.
-                    </p>
-                  </div>
-
-                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                  <div id="monitor-now" className="scroll-mt-24 rounded-lg border border-base-300 bg-base-100 p-3">
                     <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold">Teraz - otwarte pozycje</h3>
+                      <div>
+                        <h3 className="text-sm font-semibold">1. Teraz - otwarte pozycje</h3>
+                        <p className="text-xs opacity-65">
+                          Natychmiastowa kontrola tego, co jest aktywne w tej chwili.
+                        </p>
+                      </div>
                       <span className="text-xs opacity-60">
                         {(monitorPositions?.openItems.length ?? 0)} / {(monitorPositions?.openCount ?? 0)} aktywne
                       </span>
@@ -1927,16 +1943,14 @@ export default function BotsManagement() {
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
-                    <h3 className="text-sm font-semibold">2. Historia - zamkniete pozycje i wykonane transakcje</h3>
-                    <p className="mt-1 text-xs opacity-70">
-                      Sekcja do weryfikacji co juz sie wydarzylo: wynik, tempo i jakosc wykonania.
-                    </p>
-                  </div>
-
-                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                  <div id="monitor-history" className="scroll-mt-24 rounded-lg border border-base-300 bg-base-100 p-3">
                     <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold">Historia - pozycje</h3>
+                      <div>
+                        <h3 className="text-sm font-semibold">2. Historia - pozycje</h3>
+                        <p className="text-xs opacity-65">
+                          Weryfikacja tego, co juz sie wydarzylo: wynik, tempo i jakosc wykonania.
+                        </p>
+                      </div>
                       <span className="text-xs opacity-60">
                         {(monitorPositions?.historyItems.length ?? 0)} / {(monitorPositions?.closedCount ?? 0)} zamkniete
                       </span>
@@ -2058,16 +2072,14 @@ export default function BotsManagement() {
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
-                    <h3 className="text-sm font-semibold">3. Co bedzie - live check sygnalow per para</h3>
-                    <p className="mt-1 text-xs opacity-70">
-                      Sekcja predykcyjna do szybkiej oceny, ktory symbol ma sygnal LONG/SHORT/EXIT lub brak sygnalu.
-                    </p>
-                  </div>
-
-                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                  <div id="monitor-future" className="scroll-mt-24 rounded-lg border border-base-300 bg-base-100 p-3">
                     <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-                      <h3 className="text-sm font-semibold">Co bedzie - live check sygnalow</h3>
+                      <div>
+                        <h3 className="text-sm font-semibold">3. Co bedzie - live check sygnalow</h3>
+                        <p className="text-xs opacity-65">
+                          Szybka ocena, ktory symbol ma sygnal LONG/SHORT/EXIT lub brak sygnalu.
+                        </p>
+                      </div>
                       <div className="text-right text-xs opacity-60">
                         <div>
                           {monitorSignalRows.length} / {monitorSessionDetail?.symbolsTracked ?? 0} symboli

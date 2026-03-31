@@ -538,7 +538,7 @@ describe("BotsManagement", () => {
         symbol: undefined,
         limit: 200,
       });
-      expect(screen.getByText("Co bedzie - live check sygnalow")).toBeInTheDocument();
+      expect(screen.getByText(/3\. Co bedzie - live check sygnalow|Co bedzie - live check sygnalow/i)).toBeInTheDocument();
       expect(screen.getAllByText("BTCUSDT").length).toBeGreaterThan(0);
       expect(screen.getByText("Historia - log operacyjny trade'ow")).toBeInTheDocument();
     });
