@@ -7,14 +7,15 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BOPS-24 feat(web-dashboard): tune compact typography and spacing rhythm in control-center cards for at-a-glance scan fidelity`
+- [ ] `BOPS-25 feat(web-dashboard): harmonize dashboard control-center card heights and action alignment across breakpoints`
 
 ## NEXT
-- [ ] `BOPS-25 feat(web-dashboard): harmonize dashboard control-center card heights and action alignment across breakpoints`
+- [ ] `BOPS-26 feat(web-dashboard): tighten micro-layout consistency of onboarding + control-center strips between 2xl, xl and md breakpoints`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BOPS-24 feat(web-dashboard): tune compact typography and spacing rhythm in control-center cards for at-a-glance scan fidelity`
 - [x] `BOPS-23 feat(web-dashboard): improve cross-module handoff cues (Dashboard -> Bots, Backtests, Reports) for operator navigation confidence`
 - [x] `BOPS-22 feat(web-dashboard): refine dashboard onboarding microcopy and operator context strip for cleaner first-load orientation`
 - [x] `BOPS-21 feat(web-dashboard): tighten control-center visual density and KPI scan rhythm for high-frequency operator checks`

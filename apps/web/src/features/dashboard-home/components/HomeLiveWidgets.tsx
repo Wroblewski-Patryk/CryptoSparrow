@@ -148,8 +148,8 @@ export default function HomeLiveWidgets() {
       <div className="rounded-lg border border-base-300 bg-base-200 p-4">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold">{t("dashboard.home.controlCenterTitle")}</h2>
-            <p className="text-sm opacity-70">{t("dashboard.home.controlCenterDescription")}</p>
+            <h2 className="text-sm font-semibold tracking-wide">{t("dashboard.home.controlCenterTitle")}</h2>
+            <p className="text-xs leading-5 opacity-70">{t("dashboard.home.controlCenterDescription")}</p>
           </div>
           <span className="badge badge-outline">{t("dashboard.home.controlCenterBadge")}</span>
         </div>
@@ -160,8 +160,8 @@ export default function HomeLiveWidgets() {
               <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.runtimeOpsTitle")}</p>
               <span className="badge badge-ghost badge-sm">{t("dashboard.home.laneStepOne")}</span>
             </div>
-            <p className="mt-1 text-sm opacity-75">{t("dashboard.home.runtimeOpsDescription")}</p>
-            <p className="mt-2 text-xs opacity-65">
+            <p className="mt-1 text-[13px] leading-5 opacity-75">{t("dashboard.home.runtimeOpsDescription")}</p>
+            <p className="mt-2 text-[11px] opacity-65">
               {t("dashboard.home.runtimeOpsMeta")
                 .replace("{positions}", String(openPositions.length))
                 .replace("{orders}", String(openOrders.length))}
@@ -178,7 +178,7 @@ export default function HomeLiveWidgets() {
               <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.strategyLabTitle")}</p>
               <span className="badge badge-ghost badge-sm">{t("dashboard.home.laneStepTwo")}</span>
             </div>
-            <p className="mt-1 text-sm opacity-75">{t("dashboard.home.strategyLabDescription")}</p>
+            <p className="mt-1 text-[13px] leading-5 opacity-75">{t("dashboard.home.strategyLabDescription")}</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <Link href="/dashboard/strategies/list" className="btn btn-outline btn-sm">
                 {t("dashboard.home.strategyLabPrimaryAction")}
@@ -194,7 +194,7 @@ export default function HomeLiveWidgets() {
               <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.executionReviewTitle")}</p>
               <span className="badge badge-ghost badge-sm">{t("dashboard.home.laneStepThree")}</span>
             </div>
-            <p className="mt-1 text-sm opacity-75">{t("dashboard.home.executionReviewDescription")}</p>
+            <p className="mt-1 text-[13px] leading-5 opacity-75">{t("dashboard.home.executionReviewDescription")}</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <Link href="/dashboard/orders" className="btn btn-outline btn-sm">
                 {t("dashboard.home.executionReviewPrimaryAction")}
@@ -208,7 +208,7 @@ export default function HomeLiveWidgets() {
 
         <div className="mt-3 rounded-md border border-base-300 bg-base-100 p-3">
           <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.quickActionsStripTitle")}</p>
-          <p className="mt-1 text-xs opacity-65">{t("dashboard.home.quickActionsStripDescription")}</p>
+          <p className="mt-1 text-[11px] leading-5 opacity-65">{t("dashboard.home.quickActionsStripDescription")}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             <Link href="/dashboard/bots" className="btn btn-primary btn-sm">
               {t("dashboard.home.runtimeOpsActionShort")}
@@ -240,8 +240,8 @@ export default function HomeLiveWidgets() {
       <div className="grid gap-3 md:grid-cols-3">
         {statusGroups.map((group) => (
           <div key={group.key} className="rounded-md border border-base-300 bg-base-200 p-3">
-            <p className="text-[11px] uppercase tracking-wide opacity-60">{group.label}</p>
-            <p className={`mt-2 text-sm font-semibold ${group.tone}`}>{group.value}</p>
+            <p className="text-[10px] uppercase tracking-wide opacity-60">{group.label}</p>
+            <p className={`mt-1 text-[13px] font-semibold ${group.tone}`}>{group.value}</p>
           </div>
         ))}
       </div>
