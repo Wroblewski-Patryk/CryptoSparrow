@@ -351,8 +351,9 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-22 feat(web-dashboard): refine dashboard onboarding microcopy + operator context strip for cleaner first-load orientation`
 - [x] `BOPS-23 feat(web-dashboard): improve cross-module handoff cues (Dashboard -> Bots, Backtests, Reports) for operator navigation confidence`
 - [x] `BOPS-24 feat(web-dashboard): tune compact typography + spacing rhythm in control-center cards for at-a-glance scan fidelity`
-- [ ] `BOPS-25 feat(web-dashboard): harmonize dashboard control-center card heights + action alignment across breakpoints`
+- [x] `BOPS-25 feat(web-dashboard): harmonize dashboard control-center card heights + action alignment across breakpoints`
 - [ ] `BOPS-26 feat(web-dashboard): tighten micro-layout consistency of onboarding + control-center strips between 2xl, xl and md breakpoints`
+- [ ] `BOPS-27 feat(web-dashboard): normalize button sizing hierarchy + interaction affordances across dashboard control-center actions`
 
 ## Progress Log
 - 2026-03-31: Completed `BOPS-07 feat(api+web-guard): added backend duplicate-active guard on create/activate flows (strategy + symbol-group pair), mapped conflict to HTTP 409, added dedicated API e2e coverage, and surfaced explicit conflict messaging in bots UI create/save actions.
@@ -737,6 +738,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-31: Refined dashboard onboarding strip into three compact context cards (`operator context / module split / suggested start`) replacing generic alerts and clarifying first-click paths for runtime vs analysis workflows.
 - 2026-03-31: Added explicit cross-module handoff cues inside dashboard quick actions (runtime -> Bots, validation -> Backtests, performance -> Reports) and exposed direct Reports CTA to improve operator navigation confidence.
 - 2026-03-31: Tuned compact typography/spacing rhythm in control-center cards (smaller headers, tighter body copy, normalized KPI label/value scale) for faster at-a-glance scanning during repeated checks.
+- 2026-03-31: Harmonized card/action alignment across breakpoints by introducing equal-height flex layouts and bottom-aligned CTA regions in both onboarding and control-center strips.
 
 
 

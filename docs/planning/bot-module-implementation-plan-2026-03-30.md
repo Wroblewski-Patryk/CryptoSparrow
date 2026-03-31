@@ -102,8 +102,9 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 - [x] `BOPS-22 feat(web-dashboard): refine dashboard onboarding microcopy and operator context strip for cleaner first-load orientation`
 - [x] `BOPS-23 feat(web-dashboard): improve cross-module handoff cues (Dashboard -> Bots, Backtests, Reports) for operator navigation confidence`
 - [x] `BOPS-24 feat(web-dashboard): tune compact typography and spacing rhythm in control-center cards for at-a-glance scan fidelity`
-- [ ] `BOPS-25 feat(web-dashboard): harmonize dashboard control-center card heights and action alignment across breakpoints`
+- [x] `BOPS-25 feat(web-dashboard): harmonize dashboard control-center card heights and action alignment across breakpoints`
 - [ ] `BOPS-26 feat(web-dashboard): tighten micro-layout consistency of onboarding + control-center strips between 2xl, xl and md breakpoints`
+- [ ] `BOPS-27 feat(web-dashboard): normalize button sizing hierarchy and interaction affordances across dashboard control-center actions`
 
 ## Test Command Map (per phase)
 - Phase A/B:

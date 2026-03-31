@@ -155,7 +155,8 @@ export default function HomeLiveWidgets() {
         </div>
 
         <div className="grid gap-3 xl:grid-cols-3">
-          <div className="rounded-lg border border-primary/30 bg-base-100 p-3">
+          <div className="h-full rounded-lg border border-primary/30 bg-base-100 p-3">
+            <div className="flex h-full flex-col">
             <div className="mb-1 flex items-center justify-between gap-2">
               <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.runtimeOpsTitle")}</p>
               <span className="badge badge-ghost badge-sm">{t("dashboard.home.laneStepOne")}</span>
@@ -166,20 +167,22 @@ export default function HomeLiveWidgets() {
                 .replace("{positions}", String(openPositions.length))
                 .replace("{orders}", String(openOrders.length))}
             </p>
-            <div className="mt-3">
+            <div className="mt-auto pt-3">
               <Link href="/dashboard/bots" className="btn btn-primary btn-sm w-full">
                 {t("dashboard.home.runtimeOpsAction")}
               </Link>
             </div>
+            </div>
           </div>
 
-          <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+          <div className="h-full rounded-lg border border-base-300 bg-base-100 p-3">
+            <div className="flex h-full flex-col">
             <div className="mb-1 flex items-center justify-between gap-2">
               <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.strategyLabTitle")}</p>
               <span className="badge badge-ghost badge-sm">{t("dashboard.home.laneStepTwo")}</span>
             </div>
             <p className="mt-1 text-[13px] leading-5 opacity-75">{t("dashboard.home.strategyLabDescription")}</p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div className="mt-auto grid gap-2 pt-3 sm:grid-cols-2">
               <Link href="/dashboard/strategies/list" className="btn btn-outline btn-sm">
                 {t("dashboard.home.strategyLabPrimaryAction")}
               </Link>
@@ -187,21 +190,24 @@ export default function HomeLiveWidgets() {
                 {t("dashboard.home.strategyLabSecondaryAction")}
               </Link>
             </div>
+            </div>
           </div>
 
-          <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+          <div className="h-full rounded-lg border border-base-300 bg-base-100 p-3">
+            <div className="flex h-full flex-col">
             <div className="mb-1 flex items-center justify-between gap-2">
               <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.executionReviewTitle")}</p>
               <span className="badge badge-ghost badge-sm">{t("dashboard.home.laneStepThree")}</span>
             </div>
             <p className="mt-1 text-[13px] leading-5 opacity-75">{t("dashboard.home.executionReviewDescription")}</p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div className="mt-auto grid gap-2 pt-3 sm:grid-cols-2">
               <Link href="/dashboard/orders" className="btn btn-outline btn-sm">
                 {t("dashboard.home.executionReviewPrimaryAction")}
               </Link>
               <Link href="/dashboard/positions" className="btn btn-outline btn-sm">
                 {t("dashboard.home.executionReviewSecondaryAction")}
               </Link>
+            </div>
             </div>
           </div>
         </div>
