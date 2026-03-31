@@ -1632,56 +1632,77 @@ export default function BotsManagement() {
                   {monitorSessionLoading ? <LoadingState title="Ladowanie danych sesji" /> : null}
 
                   {monitorSessionDetail ? (
-                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-8">
-                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
-                        <p className="text-[10px] uppercase tracking-wide opacity-60">Sygnaly</p>
-                        <p className="mt-1 text-sm font-semibold">{monitorSessionDetail.summary.totalSignals}</p>
+                    <div className="grid gap-3 lg:grid-cols-3">
+                      <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide opacity-65">Co jest teraz</p>
+                        <div className="mt-2 space-y-1 text-sm">
+                          <p>
+                            <span className="opacity-60">Pozycje otwarte:</span>{" "}
+                            <span className="font-semibold">{monitorPositions?.openCount ?? 0}</span>
+                          </p>
+                          <p>
+                            <span className="opacity-60">Zlecenia otwarte:</span>{" "}
+                            <span className="font-semibold">
+                              {monitorPositions?.openOrdersCount ?? monitorPositions?.openOrders?.length ?? 0}
+                            </span>
+                          </p>
+                          <p>
+                            <span className="opacity-60">Open PnL:</span>{" "}
+                            <span
+                              className={`font-semibold ${
+                                (monitorSymbolStats?.summary.unrealizedPnl ?? 0) >= 0 ? "text-success" : "text-error"
+                              }`}
+                            >
+                              {formatCurrency(monitorSymbolStats?.summary.unrealizedPnl ?? 0)}
+                            </span>
+                          </p>
+                        </div>
                       </div>
-                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
-                        <p className="text-[10px] uppercase tracking-wide opacity-60">Trade'y zamkniete</p>
-                        <p className="mt-1 text-sm font-semibold">{monitorSessionDetail.summary.closedTrades}</p>
+
+                      <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide opacity-65">Co bylo</p>
+                        <div className="mt-2 space-y-1 text-sm">
+                          <p>
+                            <span className="opacity-60">Trade'y zamkniete:</span>{" "}
+                            <span className="font-semibold">{monitorSessionDetail.summary.closedTrades}</span>
+                          </p>
+                          <p>
+                            <span className="opacity-60">Win rate:</span>{" "}
+                            <span className="font-semibold">{formatNumber(monitorWinRate, 2)}%</span>
+                          </p>
+                          <p>
+                            <span className="opacity-60">Realized PnL:</span>{" "}
+                            <span
+                              className={`font-semibold ${
+                                monitorSessionDetail.summary.realizedPnl >= 0 ? "text-success" : "text-error"
+                              }`}
+                            >
+                              {formatCurrency(monitorSessionDetail.summary.realizedPnl)}
+                            </span>
+                          </p>
+                        </div>
                       </div>
-                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
-                        <p className="text-[10px] uppercase tracking-wide opacity-60">DCA</p>
-                        <p className="mt-1 text-sm font-semibold">{monitorSessionDetail.summary.dcaCount}</p>
-                      </div>
-                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
-                        <p className="text-[10px] uppercase tracking-wide opacity-60">Pozycje otwarte</p>
-                        <p className="mt-1 text-sm font-semibold">{monitorPositions?.openCount ?? 0}</p>
-                      </div>
-                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
-                        <p className="text-[10px] uppercase tracking-wide opacity-60">Zlecenia otwarte</p>
-                        <p className="mt-1 text-sm font-semibold">
-                          {monitorPositions?.openOrdersCount ?? monitorPositions?.openOrders?.length ?? 0}
-                        </p>
-                      </div>
-                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
-                        <p className="text-[10px] uppercase tracking-wide opacity-60">Win rate</p>
-                        <p className="mt-1 text-sm font-semibold">{formatNumber(monitorWinRate, 2)}%</p>
-                      </div>
-                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
-                        <p className="text-[10px] uppercase tracking-wide opacity-60">Realized PnL</p>
-                        <p
-                          className={`mt-1 text-sm font-semibold ${
-                            monitorSessionDetail.summary.realizedPnl >= 0 ? "text-success" : "text-error"
-                          }`}
-                        >
-                          {formatCurrency(monitorSessionDetail.summary.realizedPnl)}
-                        </p>
-                      </div>
-                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
-                        <p className="text-[10px] uppercase tracking-wide opacity-60">Open PnL</p>
-                        <p
-                          className={`mt-1 text-sm font-semibold ${
-                            (monitorSymbolStats?.summary.unrealizedPnl ?? 0) >= 0 ? "text-success" : "text-error"
-                          }`}
-                        >
-                          {formatCurrency(monitorSymbolStats?.summary.unrealizedPnl ?? 0)}
-                        </p>
-                      </div>
-                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
-                        <p className="text-[10px] uppercase tracking-wide opacity-60">Fees</p>
-                        <p className="mt-1 text-sm font-semibold">{formatCurrency(monitorSessionDetail.summary.feesPaid)}</p>
+
+                      <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide opacity-65">Co bedzie</p>
+                        <div className="mt-2 space-y-1 text-sm">
+                          <p>
+                            <span className="opacity-60">Sledzone symbole:</span>{" "}
+                            <span className="font-semibold">{monitorSymbolStats?.items.length ?? 0}</span>
+                          </p>
+                          <p>
+                            <span className="opacity-60">Sygnały:</span>{" "}
+                            <span className="font-semibold">{monitorSessionDetail.summary.totalSignals}</span>
+                          </p>
+                          <p>
+                            <span className="opacity-60">DCA:</span>{" "}
+                            <span className="font-semibold">{monitorSessionDetail.summary.dcaCount}</span>
+                          </p>
+                          <p>
+                            <span className="opacity-60">Fees:</span>{" "}
+                            <span className="font-semibold">{formatCurrency(monitorSessionDetail.summary.feesPaid)}</span>
+                          </p>
+                        </div>
                       </div>
                     </div>
                   ) : null}
