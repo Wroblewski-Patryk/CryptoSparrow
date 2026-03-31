@@ -99,6 +99,11 @@ type TranslationSchema = {
       laneStepTwo: string;
       laneStepThree: string;
       quickActionsStripTitle: string;
+      quickActionsStripDescription: string;
+      handoffCuesTitle: string;
+      handoffRuntimeCue: string;
+      handoffBacktestCue: string;
+      handoffReportsCue: string;
       statusRuntimeNowLabel: string;
       statusRuntimeNowValue: string;
       statusExecutionQualityLabel: string;
@@ -228,6 +233,11 @@ export const translations: Record<Locale, TranslationSchema> = {
         laneStepTwo: "Step 2",
         laneStepThree: "Step 3",
         quickActionsStripTitle: "Quick actions",
+        quickActionsStripDescription: "Jump directly to the module that matches your current operator intent.",
+        handoffCuesTitle: "Module handoff cues",
+        handoffRuntimeCue: "Live runtime -> Bots",
+        handoffBacktestCue: "Validation -> Backtests",
+        handoffReportsCue: "Performance review -> Reports",
         statusRuntimeNowLabel: "Runtime now",
         statusRuntimeNowValue: "{positions} positions | {orders} orders",
         statusExecutionQualityLabel: "Execution quality",
@@ -356,6 +366,11 @@ export const translations: Record<Locale, TranslationSchema> = {
         laneStepTwo: "Krok 2",
         laneStepThree: "Krok 3",
         quickActionsStripTitle: "Szybkie akcje",
+        quickActionsStripDescription: "Przejdz od razu do modulu, ktory odpowiada Twojemu aktualnemu celowi operacyjnemu.",
+        handoffCuesTitle: "Wskazniki przekazania miedzy modulami",
+        handoffRuntimeCue: "Runtime live -> Boty",
+        handoffBacktestCue: "Walidacja -> Backtesty",
+        handoffReportsCue: "Przeglad wynikow -> Raporty",
         statusRuntimeNowLabel: "Runtime teraz",
         statusRuntimeNowValue: "{positions} pozycji | {orders} zlecen",
         statusExecutionQualityLabel: "Jakosc egzekucji",

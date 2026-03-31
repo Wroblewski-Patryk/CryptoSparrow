@@ -208,6 +208,7 @@ export default function HomeLiveWidgets() {
 
         <div className="mt-3 rounded-md border border-base-300 bg-base-100 p-3">
           <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.quickActionsStripTitle")}</p>
+          <p className="mt-1 text-xs opacity-65">{t("dashboard.home.quickActionsStripDescription")}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             <Link href="/dashboard/bots" className="btn btn-primary btn-sm">
               {t("dashboard.home.runtimeOpsActionShort")}
@@ -221,6 +222,17 @@ export default function HomeLiveWidgets() {
             <Link href="/dashboard/orders" className="btn btn-outline btn-sm">
               {t("dashboard.home.executionReviewPrimaryAction")}
             </Link>
+            <Link href="/dashboard/reports" className="btn btn-outline btn-sm">
+              {t("dashboard.nav.reports")}
+            </Link>
+          </div>
+          <div className="mt-3">
+            <p className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.handoffCuesTitle")}</p>
+            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+              <span className="badge badge-outline">{t("dashboard.home.handoffRuntimeCue")}</span>
+              <span className="badge badge-outline">{t("dashboard.home.handoffBacktestCue")}</span>
+              <span className="badge badge-outline">{t("dashboard.home.handoffReportsCue")}</span>
+            </div>
           </div>
         </div>
       </div>
