@@ -18,6 +18,206 @@ export type Bot = {
   updatedAt?: string;
 };
 
+export type BotRuntimeSessionStatus = "RUNNING" | "COMPLETED" | "FAILED" | "CANCELED";
+
+export type BotRuntimeSessionListItem = {
+  id: string;
+  botId: string;
+  mode: BotMode;
+  status: BotRuntimeSessionStatus;
+  startedAt: string;
+  finishedAt: string | null;
+  lastHeartbeatAt: string | null;
+  stopReason: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+  durationMs: number;
+  eventsCount: number;
+  symbolsTracked: number;
+  summary: {
+    totalSignals: number;
+    dcaCount: number;
+    closedTrades: number;
+    realizedPnl: number;
+  };
+};
+
+export type BotRuntimeSessionDetail = {
+  id: string;
+  botId: string;
+  mode: BotMode;
+  status: BotRuntimeSessionStatus;
+  startedAt: string;
+  finishedAt: string | null;
+  lastHeartbeatAt: string | null;
+  stopReason: string | null;
+  errorMessage: string | null;
+  metadata: unknown;
+  createdAt: string;
+  updatedAt: string;
+  durationMs: number;
+  eventsCount: number;
+  symbolsTracked: number;
+  summary: {
+    totalSignals: number;
+    longEntries: number;
+    shortEntries: number;
+    exits: number;
+    dcaCount: number;
+    closedTrades: number;
+    winningTrades: number;
+    losingTrades: number;
+    realizedPnl: number;
+    grossProfit: number;
+    grossLoss: number;
+    feesPaid: number;
+    openPositionCount?: number;
+    openPositionQty?: number;
+  };
+};
+
+export type BotRuntimeSymbolStat = {
+  id: string;
+  userId: string;
+  botId: string;
+  sessionId: string;
+  symbol: string;
+  totalSignals: number;
+  longEntries: number;
+  shortEntries: number;
+  exits: number;
+  dcaCount: number;
+  closedTrades: number;
+  winningTrades: number;
+  losingTrades: number;
+  realizedPnl: number;
+  grossProfit: number;
+  grossLoss: number;
+  feesPaid: number;
+  openPositionCount: number;
+  openPositionQty: number;
+  unrealizedPnl?: number;
+  lastPrice: number | null;
+  lastSignalAt: string | null;
+  lastSignalDirection?: "LONG" | "SHORT" | "EXIT" | null;
+  lastSignalDecisionAt?: string | null;
+  lastTradeAt: string | null;
+  snapshotAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type BotRuntimeSymbolStatsResponse = {
+  sessionId: string;
+  items: BotRuntimeSymbolStat[];
+  summary: {
+    totalSignals: number;
+    longEntries: number;
+    shortEntries: number;
+    exits: number;
+    dcaCount: number;
+    closedTrades: number;
+    winningTrades: number;
+    losingTrades: number;
+    realizedPnl: number;
+    unrealizedPnl?: number;
+    totalPnl?: number;
+    grossProfit: number;
+    grossLoss: number;
+    feesPaid: number;
+    openPositionCount?: number;
+    openPositionQty?: number;
+  };
+};
+
+export type BotRuntimeTrade = {
+  id: string;
+  symbol: string;
+  side: string;
+  price: number;
+  quantity: number;
+  fee: number;
+  realizedPnl: number;
+  executedAt: string;
+  orderId: string;
+  positionId: string;
+  strategyId: string;
+  origin: string;
+  managementMode: string;
+  notional: number;
+};
+
+export type BotRuntimeTradesResponse = {
+  sessionId: string;
+  total: number;
+  window: {
+    startedAt: string;
+    finishedAt: string;
+  };
+  items: BotRuntimeTrade[];
+};
+
+export type BotRuntimePositionItem = {
+  id: string;
+  symbol: string;
+  side: "LONG" | "SHORT";
+  status: "OPEN" | "CLOSED";
+  quantity: number;
+  leverage: number;
+  entryPrice: number;
+  entryNotional: number;
+  exitPrice: number | null;
+  stopLoss: number | null;
+  takeProfit: number | null;
+  openedAt: string;
+  closedAt: string | null;
+  holdMs: number;
+  dcaCount: number;
+  feesPaid: number;
+  realizedPnl: number;
+  unrealizedPnl: number | null;
+  markPrice: number | null;
+  firstTradeAt: string | null;
+  lastTradeAt: string | null;
+  tradesCount: number;
+};
+
+export type BotRuntimeOpenOrderItem = {
+  id: string;
+  symbol: string;
+  side: string;
+  type: string;
+  status: string;
+  quantity: number;
+  filledQuantity: number;
+  price: number | null;
+  stopPrice: number | null;
+  submittedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type BotRuntimePositionsResponse = {
+  sessionId: string;
+  total: number;
+  openCount: number;
+  closedCount: number;
+  openOrdersCount: number;
+  window: {
+    startedAt: string;
+    finishedAt: string;
+  };
+  summary: {
+    realizedPnl: number;
+    unrealizedPnl: number;
+    feesPaid: number;
+  };
+  openOrders: BotRuntimeOpenOrderItem[];
+  openItems: BotRuntimePositionItem[];
+  historyItems: BotRuntimePositionItem[];
+};
+
 export type CreateBotInput = {
   name: string;
   mode: BotMode;

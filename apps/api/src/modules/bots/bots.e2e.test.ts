@@ -82,6 +82,9 @@ describe('Bots module contract', () => {
     await prisma.marketGroupStrategyLink.deleteMany();
     await prisma.botMarketGroup.deleteMany();
     await prisma.botStrategy.deleteMany();
+    await prisma.botRuntimeEvent.deleteMany();
+    await prisma.botRuntimeSymbolStat.deleteMany();
+    await prisma.botRuntimeSession.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
@@ -96,36 +99,30 @@ describe('Bots module contract', () => {
     expect(res.body.error.message).toBe('Missing token');
   });
 
-  it('maps legacy LOCAL bot mode to PAPER in read responses during transition window', async () => {
-    const email = 'bots-local-compat@example.com';
+  it('returns canonical bot mode in list/get/runtime graph responses', async () => {
+    const email = 'bots-canonical-mode@example.com';
     const agent = await registerAndLogin(email);
-    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+    const strategyId = await createStrategy(agent, 'Canonical Mode Strategy');
+    const marketGroupId = await createMarketGroup(email, 'FUTURES');
 
-    const legacyBot = await prisma.bot.create({
-      data: {
-        userId: user.id,
-        name: 'Legacy Local Bot',
-        mode: 'LOCAL',
-        paperStartBalance: 10_000,
-        marketType: 'FUTURES',
-        positionMode: 'ONE_WAY',
-        isActive: false,
-        liveOptIn: false,
-        maxOpenPositions: 1,
-      },
+    const createRes = await agent.post('/dashboard/bots').send({
+      ...createPayload({ strategyId, marketGroupId }),
+      mode: 'PAPER',
     });
+    expect(createRes.status).toBe(201);
+    const botId = createRes.body.id as string;
 
     const listRes = await agent.get('/dashboard/bots');
     expect(listRes.status).toBe(200);
-    const listedBot = listRes.body.find((item: { id: string }) => item.id === legacyBot.id);
+    const listedBot = listRes.body.find((item: { id: string }) => item.id === botId);
     expect(listedBot).toBeTruthy();
     expect(listedBot.mode).toBe('PAPER');
 
-    const getRes = await agent.get(`/dashboard/bots/${legacyBot.id}`);
+    const getRes = await agent.get(`/dashboard/bots/${botId}`);
     expect(getRes.status).toBe(200);
     expect(getRes.body.mode).toBe('PAPER');
 
-    const runtimeGraphRes = await agent.get(`/dashboard/bots/${legacyBot.id}/runtime-graph`);
+    const runtimeGraphRes = await agent.get(`/dashboard/bots/${botId}/runtime-graph`);
     expect(runtimeGraphRes.status).toBe(200);
     expect(runtimeGraphRes.body.bot.mode).toBe('PAPER');
   });
@@ -285,6 +282,42 @@ describe('Bots module contract', () => {
     );
     expect(createRes.status).toBe(201);
     expect(createRes.body.marketType).toBe('SPOT');
+  });
+
+  it('accepts marketUniverse id in create payload and auto-creates symbol group when missing', async () => {
+    const email = 'bots-create-from-universe-id@example.com';
+    const agent = await registerAndLogin(email);
+    const strategyId = await createStrategy(agent, 'Create From Universe Strategy');
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+
+    const marketUniverse = await prisma.marketUniverse.create({
+      data: {
+        userId: user.id,
+        name: 'Universe Without Symbol Group',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        whitelist: ['btcusdt', 'ETHUSDT'],
+        blacklist: ['ethusdt'],
+      },
+    });
+
+    const createRes = await agent.post('/dashboard/bots').send(
+      createPayload({
+        strategyId,
+        marketGroupId: marketUniverse.id,
+      })
+    );
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.marketType).toBe('FUTURES');
+    const botId = createRes.body.id as string;
+
+    const botMarketGroups = await prisma.botMarketGroup.findMany({
+      where: { botId },
+      include: { symbolGroup: true },
+    });
+    expect(botMarketGroups).toHaveLength(1);
+    expect(botMarketGroups[0].symbolGroup.marketUniverseId).toBe(marketUniverse.id);
+    expect(botMarketGroups[0].symbolGroup.symbols).toEqual(['BTCUSDT']);
   });
 
   it('ignores removed positionMode/maxOpenPositions fields in update write payload', async () => {
@@ -641,6 +674,362 @@ describe('Bots module contract', () => {
 
     const otherGraphRes = await other.get(`/dashboard/bots/${botId}/runtime-graph`);
     expect(otherGraphRes.status).toBe(404);
+  });
+
+  it('lists and returns runtime session monitoring summary with ownership isolation', async () => {
+    const ownerEmail = 'bot-runtime-session-owner@example.com';
+    const owner = await registerAndLogin(ownerEmail);
+    const other = await registerAndLogin('bot-runtime-session-other@example.com');
+
+    const strategyId = await createStrategy(owner, 'Runtime Session Strategy');
+    const defaultMarketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
+
+    const botRes = await owner.post('/dashboard/bots').send(
+      createPayload({
+        strategyId,
+        marketGroupId: defaultMarketGroupId,
+      })
+    );
+    expect(botRes.status).toBe(201);
+    const botId = botRes.body.id as string;
+    const ownerUser = await prisma.user.findUniqueOrThrow({ where: { email: ownerEmail } });
+
+    const startedAt = new Date('2026-03-31T00:00:00.000Z');
+    const finishedAt = new Date('2026-03-31T00:05:00.000Z');
+    const session = await prisma.botRuntimeSession.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        mode: 'PAPER',
+        status: 'COMPLETED',
+        startedAt,
+        finishedAt,
+        lastHeartbeatAt: finishedAt,
+        stopReason: 'manual_stop',
+      },
+    });
+
+    await prisma.botRuntimeEvent.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        sessionId: session.id,
+        eventType: 'SIGNAL_DECISION',
+        level: 'INFO',
+        symbol: 'BTCUSDT',
+        signalDirection: 'LONG',
+        message: 'signal captured',
+        eventAt: new Date('2026-03-31T00:01:00.000Z'),
+      },
+    });
+
+    await prisma.botRuntimeSymbolStat.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        sessionId: session.id,
+        symbol: 'BTCUSDT',
+        totalSignals: 2,
+        longEntries: 1,
+        exits: 1,
+        dcaCount: 1,
+        closedTrades: 1,
+        realizedPnl: 42.5,
+        snapshotAt: new Date('2026-03-31T00:05:00.000Z'),
+      },
+    });
+
+    await prisma.position.createMany({
+      data: [
+        {
+          userId: ownerUser.id,
+          botId,
+          symbol: 'BTCUSDT',
+          side: 'LONG',
+          status: 'OPEN',
+          entryPrice: 50000,
+          quantity: 0.1,
+          leverage: 1,
+          openedAt: new Date('2026-03-31T00:03:00.000Z'),
+          managementMode: 'BOT_MANAGED',
+        },
+        {
+          userId: ownerUser.id,
+          botId,
+          symbol: 'ETHUSDT',
+          side: 'SHORT',
+          status: 'CLOSED',
+          entryPrice: 2500,
+          quantity: 1,
+          leverage: 1,
+          openedAt: new Date('2026-03-31T00:00:30.000Z'),
+          closedAt: new Date('2026-03-31T00:04:30.000Z'),
+          managementMode: 'BOT_MANAGED',
+        },
+      ],
+    });
+
+    await prisma.trade.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        symbol: 'BTCUSDT',
+        side: 'BUY',
+        price: 50000,
+        quantity: 0.1,
+        fee: 2.5,
+        realizedPnl: 25,
+        executedAt: new Date('2026-03-31T00:02:00.000Z'),
+      },
+    });
+    await prisma.trade.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        symbol: 'BTCUSDT',
+        side: 'SELL',
+        price: 51000,
+        quantity: 0.1,
+        fee: 2.5,
+        realizedPnl: 20,
+        executedAt: new Date('2026-03-31T00:10:00.000Z'),
+      },
+    });
+
+    const listRes = await owner.get(`/dashboard/bots/${botId}/runtime-sessions`);
+    expect(listRes.status).toBe(200);
+    expect(Array.isArray(listRes.body)).toBe(true);
+    expect(listRes.body).toHaveLength(1);
+    expect(listRes.body[0].id).toBe(session.id);
+    expect(listRes.body[0].eventsCount).toBe(1);
+    expect(listRes.body[0].symbolsTracked).toBe(1);
+    expect(listRes.body[0].summary.totalSignals).toBe(2);
+    expect(listRes.body[0].summary.dcaCount).toBe(1);
+    expect(listRes.body[0].summary.closedTrades).toBe(1);
+    expect(listRes.body[0].summary.realizedPnl).toBe(42.5);
+
+    const detailRes = await owner.get(`/dashboard/bots/${botId}/runtime-sessions/${session.id}`);
+    expect(detailRes.status).toBe(200);
+    expect(detailRes.body.id).toBe(session.id);
+    expect(detailRes.body.eventsCount).toBe(1);
+    expect(detailRes.body.symbolsTracked).toBe(1);
+    expect(detailRes.body.summary.totalSignals).toBe(2);
+    expect(detailRes.body.summary.longEntries).toBe(1);
+    expect(detailRes.body.summary.exits).toBe(1);
+    expect(detailRes.body.summary.dcaCount).toBe(1);
+    expect(detailRes.body.summary.closedTrades).toBe(1);
+    expect(detailRes.body.summary.realizedPnl).toBe(42.5);
+
+    const symbolStatsRes = await owner.get(
+      `/dashboard/bots/${botId}/runtime-sessions/${session.id}/symbol-stats`
+    );
+    expect(symbolStatsRes.status).toBe(200);
+    expect(symbolStatsRes.body.items).toHaveLength(1);
+    expect(symbolStatsRes.body.items[0].symbol).toBe('BTCUSDT');
+    expect(symbolStatsRes.body.items[0].lastSignalDirection).toBe('LONG');
+    expect(symbolStatsRes.body.summary.totalSignals).toBe(2);
+    expect(symbolStatsRes.body.summary.realizedPnl).toBe(42.5);
+
+    const tradesRes = await owner.get(`/dashboard/bots/${botId}/runtime-sessions/${session.id}/trades`);
+    expect(tradesRes.status).toBe(200);
+    expect(tradesRes.body.total).toBe(1);
+    expect(tradesRes.body.items).toHaveLength(1);
+    expect(tradesRes.body.items[0].symbol).toBe('BTCUSDT');
+    expect(tradesRes.body.items[0].notional).toBe(5000);
+
+    const positionsRes = await owner.get(`/dashboard/bots/${botId}/runtime-sessions/${session.id}/positions`);
+    expect(positionsRes.status).toBe(200);
+    expect(positionsRes.body.total).toBe(2);
+    expect(positionsRes.body.openCount).toBe(1);
+    expect(positionsRes.body.closedCount).toBe(1);
+    expect(positionsRes.body.openOrdersCount).toBe(0);
+    expect(positionsRes.body.openOrders).toHaveLength(0);
+    expect(positionsRes.body.openItems).toHaveLength(1);
+    expect(positionsRes.body.historyItems).toHaveLength(1);
+    expect(positionsRes.body.openItems[0].symbol).toBe('BTCUSDT');
+    expect(positionsRes.body.historyItems[0].symbol).toBe('ETHUSDT');
+
+    const filteredListRes = await owner.get(`/dashboard/bots/${botId}/runtime-sessions`).query({
+      status: 'RUNNING',
+    });
+    expect(filteredListRes.status).toBe(200);
+    expect(filteredListRes.body).toHaveLength(0);
+
+    const otherListRes = await other.get(`/dashboard/bots/${botId}/runtime-sessions`);
+    expect(otherListRes.status).toBe(404);
+
+    const otherDetailRes = await other.get(`/dashboard/bots/${botId}/runtime-sessions/${session.id}`);
+    expect(otherDetailRes.status).toBe(404);
+
+    const otherSymbolStatsRes = await other.get(
+      `/dashboard/bots/${botId}/runtime-sessions/${session.id}/symbol-stats`
+    );
+    expect(otherSymbolStatsRes.status).toBe(404);
+
+    const otherTradesRes = await other.get(`/dashboard/bots/${botId}/runtime-sessions/${session.id}/trades`);
+    expect(otherTradesRes.status).toBe(404);
+
+    const otherPositionsRes = await other.get(`/dashboard/bots/${botId}/runtime-sessions/${session.id}/positions`);
+    expect(otherPositionsRes.status).toBe(404);
+  });
+
+  it('supports monitoring query filters for status/symbol/limit and enforces session time window', async () => {
+    const ownerEmail = 'bot-runtime-monitoring-filters-owner@example.com';
+    const owner = await registerAndLogin(ownerEmail);
+
+    const strategyId = await createStrategy(owner, 'Runtime Monitoring Filter Strategy');
+    const defaultMarketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
+
+    const botRes = await owner.post('/dashboard/bots').send(
+      createPayload({
+        strategyId,
+        marketGroupId: defaultMarketGroupId,
+      })
+    );
+    expect(botRes.status).toBe(201);
+    const botId = botRes.body.id as string;
+    const ownerUser = await prisma.user.findUniqueOrThrow({ where: { email: ownerEmail } });
+
+    const completedSession = await prisma.botRuntimeSession.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        mode: 'PAPER',
+        status: 'COMPLETED',
+        startedAt: new Date('2026-03-31T01:00:00.000Z'),
+        finishedAt: new Date('2026-03-31T01:10:00.000Z'),
+        lastHeartbeatAt: new Date('2026-03-31T01:10:00.000Z'),
+      },
+    });
+
+    const runningSession = await prisma.botRuntimeSession.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        mode: 'PAPER',
+        status: 'RUNNING',
+        startedAt: new Date('2026-03-31T02:00:00.000Z'),
+        lastHeartbeatAt: new Date('2026-03-31T02:06:00.000Z'),
+      },
+    });
+
+    await prisma.botRuntimeSymbolStat.createMany({
+      data: [
+        {
+          userId: ownerUser.id,
+          botId,
+          sessionId: runningSession.id,
+          symbol: 'ETHUSDT',
+          totalSignals: 4,
+          longEntries: 2,
+          shortEntries: 1,
+          exits: 1,
+          dcaCount: 1,
+          closedTrades: 1,
+          winningTrades: 1,
+          losingTrades: 0,
+          realizedPnl: 15.2,
+          snapshotAt: new Date('2026-03-31T02:06:00.000Z'),
+        },
+        {
+          userId: ownerUser.id,
+          botId,
+          sessionId: runningSession.id,
+          symbol: 'BTCUSDT',
+          totalSignals: 3,
+          longEntries: 1,
+          shortEntries: 1,
+          exits: 1,
+          dcaCount: 0,
+          closedTrades: 1,
+          winningTrades: 0,
+          losingTrades: 1,
+          realizedPnl: -7.5,
+          snapshotAt: new Date('2026-03-31T02:06:00.000Z'),
+        },
+      ],
+    });
+
+    await prisma.trade.createMany({
+      data: [
+        {
+          userId: ownerUser.id,
+          botId,
+          symbol: 'ETHUSDT',
+          side: 'BUY',
+          price: 2000,
+          quantity: 0.5,
+          fee: 1,
+          realizedPnl: 5,
+          executedAt: new Date('2026-03-31T02:03:00.000Z'),
+        },
+        {
+          userId: ownerUser.id,
+          botId,
+          symbol: 'ETHUSDT',
+          side: 'SELL',
+          price: 2020,
+          quantity: 0.5,
+          fee: 1,
+          realizedPnl: 10,
+          executedAt: new Date('2026-03-31T02:05:30.000Z'),
+        },
+        {
+          userId: ownerUser.id,
+          botId,
+          symbol: 'ETHUSDT',
+          side: 'SELL',
+          price: 2040,
+          quantity: 0.5,
+          fee: 1,
+          realizedPnl: 15,
+          executedAt: new Date('2026-03-31T02:09:00.000Z'),
+        },
+        {
+          userId: ownerUser.id,
+          botId,
+          symbol: 'BTCUSDT',
+          side: 'BUY',
+          price: 60000,
+          quantity: 0.02,
+          fee: 2,
+          realizedPnl: -7.5,
+          executedAt: new Date('2026-03-31T02:04:00.000Z'),
+        },
+      ],
+    });
+
+    const runningListRes = await owner
+      .get(`/dashboard/bots/${botId}/runtime-sessions`)
+      .query({ status: 'RUNNING', limit: 1 });
+    expect(runningListRes.status).toBe(200);
+    expect(runningListRes.body).toHaveLength(1);
+    expect(runningListRes.body[0].id).toBe(runningSession.id);
+
+    const ethStatsRes = await owner
+      .get(`/dashboard/bots/${botId}/runtime-sessions/${runningSession.id}/symbol-stats`)
+      .query({ symbol: 'ethusdt', limit: 1 });
+    expect(ethStatsRes.status).toBe(200);
+    expect(ethStatsRes.body.items).toHaveLength(1);
+    expect(ethStatsRes.body.items[0].symbol).toBe('ETHUSDT');
+    expect(ethStatsRes.body.summary.totalSignals).toBe(4);
+    expect(ethStatsRes.body.summary.realizedPnl).toBe(15.2);
+
+    const ethTradesRes = await owner
+      .get(`/dashboard/bots/${botId}/runtime-sessions/${runningSession.id}/trades`)
+      .query({ symbol: 'ETHUSDT', limit: 1 });
+    expect(ethTradesRes.status).toBe(200);
+    expect(ethTradesRes.body.total).toBe(2);
+    expect(ethTradesRes.body.items).toHaveLength(1);
+    expect(ethTradesRes.body.items[0].symbol).toBe('ETHUSDT');
+    expect(ethTradesRes.body.items[0].executedAt).toContain('2026-03-31T02:05:30.000Z');
+
+    const completedTradesRes = await owner
+      .get(`/dashboard/bots/${botId}/runtime-sessions/${completedSession.id}/trades`)
+      .query({ symbol: 'ETHUSDT' });
+    expect(completedTradesRes.status).toBe(200);
+    expect(completedTradesRes.body.total).toBe(0);
+    expect(completedTradesRes.body.items).toHaveLength(0);
   });
 
   it('covers one-user multi-bot multi-group multi-strategy flow', async () => {

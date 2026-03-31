@@ -10,8 +10,13 @@ import {
   createBot,
   deleteBot,
   deleteBotSubagentConfig,
+  getBotRuntimeSession,
   getBotAssistantConfig,
   listBots,
+  listBotRuntimeSessionSymbolStats,
+  listBotRuntimeSessionPositions,
+  listBotRuntimeSessionTrades,
+  listBotRuntimeSessions,
   runBotAssistantDryRun,
   updateBot,
   upsertBotAssistantConfig,
@@ -21,6 +26,12 @@ import {
   Bot,
   AssistantDecisionTrace,
   BotMode,
+  BotRuntimeSessionDetail,
+  BotRuntimeSessionListItem,
+  BotRuntimeSessionStatus,
+  BotRuntimeSymbolStatsResponse,
+  BotRuntimePositionsResponse,
+  BotRuntimeTradesResponse,
   BotSubagentConfig,
   TradeMarket,
 } from "../types/bot.type";
@@ -60,8 +71,44 @@ const deriveStrategyMaxOpenPositions = (strategy: StrategyDto | null): number =>
   return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : 1;
 };
 
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  }).format(value);
+
+const formatNumber = (value: number, digits = 2) =>
+  new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(value);
+
+const formatDateTime = (value?: string | null) => {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "-";
+  return parsed.toLocaleString();
+};
+
+const formatDuration = (ms: number) => {
+  if (!Number.isFinite(ms) || ms <= 0) return "0m";
+  const totalMinutes = Math.floor(ms / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours <= 0) return `${minutes}m`;
+  return `${hours}h ${minutes}m`;
+};
+
+const toSessionStatusBadgeClass = (status: BotRuntimeSessionStatus) => {
+  if (status === "RUNNING") return "badge-info";
+  if (status === "COMPLETED") return "badge-success";
+  if (status === "FAILED") return "badge-error";
+  return "badge-warning";
+};
+
 export default function BotsManagement() {
-  const [activeTab, setActiveTab] = useState<"bots" | "assistant">("bots");
+  const [activeTab, setActiveTab] = useState<"bots" | "monitoring" | "assistant">("bots");
   const [bots, setBots] = useState<Bot[]>([]);
   const [serverSnapshot, setServerSnapshot] = useState<Record<string, Bot>>({});
   const [loading, setLoading] = useState(true);
@@ -91,6 +138,21 @@ export default function BotsManagement() {
   const [assistantDryRunSymbol, setAssistantDryRunSymbol] = useState("BTCUSDT");
   const [assistantDryRunInterval, setAssistantDryRunInterval] = useState("5m");
   const [assistantDryRunRunning, setAssistantDryRunRunning] = useState(false);
+
+  const [monitorBotId, setMonitorBotId] = useState("");
+  const [monitorStatus, setMonitorStatus] = useState<"ALL" | BotRuntimeSessionStatus>("ALL");
+  const [monitorSymbolFilter, setMonitorSymbolFilter] = useState("");
+  const [monitorAppliedSymbolFilter, setMonitorAppliedSymbolFilter] = useState("");
+  const [monitorSessions, setMonitorSessions] = useState<BotRuntimeSessionListItem[]>([]);
+  const [monitorSessionId, setMonitorSessionId] = useState("");
+  const [monitorSessionDetail, setMonitorSessionDetail] = useState<BotRuntimeSessionDetail | null>(null);
+  const [monitorSymbolStats, setMonitorSymbolStats] = useState<BotRuntimeSymbolStatsResponse | null>(null);
+  const [monitorPositions, setMonitorPositions] = useState<BotRuntimePositionsResponse | null>(null);
+  const [monitorTrades, setMonitorTrades] = useState<BotRuntimeTradesResponse | null>(null);
+  const [monitorLoading, setMonitorLoading] = useState(false);
+  const [monitorSessionLoading, setMonitorSessionLoading] = useState(false);
+  const [monitorError, setMonitorError] = useState<string | null>(null);
+  const [monitorAutoRefreshEnabled, setMonitorAutoRefreshEnabled] = useState(true);
 
   const loadBots = useCallback(async (filter: "ALL" | TradeMarket) => {
     setLoading(true);
@@ -191,6 +253,18 @@ export default function BotsManagement() {
     [assistantBotId, assistantSubagents]
   );
 
+  const selectedMonitorSession = useMemo(
+    () => monitorSessions.find((session) => session.id === monitorSessionId) ?? null,
+    [monitorSessionId, monitorSessions]
+  );
+
+  const monitorWinRate = useMemo(() => {
+    const closedTrades = monitorSessionDetail?.summary.closedTrades ?? 0;
+    if (closedTrades <= 0) return 0;
+    const wins = monitorSessionDetail?.summary.winningTrades ?? 0;
+    return (wins / closedTrades) * 100;
+  }, [monitorSessionDetail]);
+
   const confirmLiveRisk = (message: string) => window.confirm(message);
 
   const loadAssistant = useCallback(async (botId: string) => {
@@ -211,6 +285,89 @@ export default function BotsManagement() {
     }
   }, []);
 
+  const loadMonitorSessions = useCallback(
+    async (botId: string, statusFilter: "ALL" | BotRuntimeSessionStatus) => {
+      if (!botId) {
+        setMonitorSessions([]);
+        setMonitorSessionId("");
+        setMonitorSessionDetail(null);
+        setMonitorSymbolStats(null);
+        setMonitorPositions(null);
+        setMonitorTrades(null);
+        return;
+      }
+
+      setMonitorLoading(true);
+      setMonitorError(null);
+      try {
+        const sessions = await listBotRuntimeSessions(botId, {
+          status: statusFilter === "ALL" ? undefined : statusFilter,
+          limit: 50,
+        });
+        setMonitorSessions(sessions);
+        setMonitorSessionId((prev) => {
+          const stillExists = sessions.some((item) => item.id === prev);
+          if (stillExists) return prev;
+          return sessions[0]?.id ?? "";
+        });
+
+        if (sessions.length === 0) {
+          setMonitorSessionDetail(null);
+          setMonitorSymbolStats(null);
+          setMonitorPositions(null);
+          setMonitorTrades(null);
+        }
+      } catch (err: unknown) {
+        setMonitorError(getAxiosMessage(err) ?? "Nie udalo sie pobrac sesji runtime.");
+      } finally {
+        setMonitorLoading(false);
+      }
+    },
+    []
+  );
+
+  const loadMonitorSessionData = useCallback(
+    async (botId: string, sessionId: string, symbolFilter: string) => {
+      if (!botId || !sessionId) {
+        setMonitorSessionDetail(null);
+        setMonitorSymbolStats(null);
+        setMonitorPositions(null);
+        setMonitorTrades(null);
+        return;
+      }
+
+      const normalizedSymbol = symbolFilter.trim().toUpperCase();
+      setMonitorSessionLoading(true);
+      setMonitorError(null);
+      try {
+        const [session, symbolStats, positions, trades] = await Promise.all([
+          getBotRuntimeSession(botId, sessionId),
+          listBotRuntimeSessionSymbolStats(botId, sessionId, {
+            symbol: normalizedSymbol || undefined,
+            limit: 200,
+          }),
+          listBotRuntimeSessionPositions(botId, sessionId, {
+            symbol: normalizedSymbol || undefined,
+            limit: 200,
+          }),
+          listBotRuntimeSessionTrades(botId, sessionId, {
+            symbol: normalizedSymbol || undefined,
+            limit: 200,
+          }),
+        ]);
+        setMonitorSessionDetail(session);
+        setMonitorSymbolStats(symbolStats);
+        setMonitorPositions(positions);
+        setMonitorTrades(trades);
+      } catch (err: unknown) {
+        setMonitorError(getAxiosMessage(err) ?? "Nie udalo sie pobrac danych sesji runtime.");
+      } finally {
+        setMonitorSessionLoading(false);
+      }
+    },
+    []
+  );
+
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canCreate) return;
@@ -230,7 +387,7 @@ export default function BotsManagement() {
         paperStartBalance,
         strategyId,
         marketGroupId,
-        isActive: false,
+        isActive: mode === "PAPER",
         liveOptIn: false,
         consentTextVersion: null,
       });
@@ -256,10 +413,11 @@ export default function BotsManagement() {
 
   const handleSave = async (bot: Bot) => {
     const previous = serverSnapshot[bot.id];
+    const effectiveLiveOptIn = bot.mode === "LIVE" ? bot.liveOptIn : false;
     const enteringLiveMode = !!previous && previous.mode !== "LIVE" && bot.mode === "LIVE";
-    const enablingLiveOptIn = !!previous && !previous.liveOptIn && bot.liveOptIn;
+    const enablingLiveOptIn = !!previous && !previous.liveOptIn && effectiveLiveOptIn;
     const activatingLiveBot =
-      !!previous && !previous.isActive && bot.isActive && (bot.mode === "LIVE" || bot.liveOptIn);
+      !!previous && !previous.isActive && bot.isActive && (bot.mode === "LIVE" || effectiveLiveOptIn);
 
     if (enteringLiveMode || enablingLiveOptIn || activatingLiveBot) {
       const accepted = confirmLiveRisk(
@@ -276,10 +434,9 @@ export default function BotsManagement() {
       const updated = await updateBot(bot.id, {
         name: bot.name,
         mode: bot.mode,
-        marketType: bot.marketType,
         isActive: bot.isActive,
-        liveOptIn: bot.liveOptIn,
-        consentTextVersion: bot.liveOptIn ? LIVE_CONSENT_TEXT_VERSION : null,
+        liveOptIn: effectiveLiveOptIn,
+        consentTextVersion: effectiveLiveOptIn ? LIVE_CONSENT_TEXT_VERSION : null,
         paperStartBalance: bot.paperStartBalance,
         strategyId: bot.strategyId ?? null,
       });
@@ -386,6 +543,15 @@ export default function BotsManagement() {
     }
   };
 
+  const handleApplyMonitoringFilter = () => {
+    setMonitorAppliedSymbolFilter(monitorSymbolFilter.trim().toUpperCase());
+  };
+
+  const handleClearMonitoringFilter = () => {
+    setMonitorSymbolFilter("");
+    setMonitorAppliedSymbolFilter("");
+  };
+
   useEffect(() => {
     if (bots.length === 0) return;
     if (!assistantBotId) {
@@ -401,6 +567,68 @@ export default function BotsManagement() {
     void loadAssistant(assistantBotId);
   }, [assistantBotId, activeTab, loadAssistant]);
 
+  useEffect(() => {
+    if (bots.length === 0) {
+      setMonitorBotId("");
+      return;
+    }
+
+    if (!monitorBotId) {
+      setMonitorBotId(bots[0].id);
+      return;
+    }
+
+    const exists = bots.some((bot) => bot.id === monitorBotId);
+    if (!exists) setMonitorBotId(bots[0].id);
+  }, [bots, monitorBotId]);
+
+  useEffect(() => {
+    if ((activeTab === "monitoring" || activeTab === "assistant") && marketFilter !== "ALL") {
+      setMarketFilter("ALL");
+    }
+  }, [activeTab, marketFilter]);
+
+  useEffect(() => {
+    if (activeTab !== "monitoring" || !monitorBotId) return;
+    void loadMonitorSessions(monitorBotId, monitorStatus);
+  }, [activeTab, loadMonitorSessions, monitorBotId, monitorStatus]);
+
+  useEffect(() => {
+    if (activeTab !== "monitoring" || !monitorBotId || !monitorSessionId) return;
+    void loadMonitorSessionData(monitorBotId, monitorSessionId, monitorAppliedSymbolFilter);
+  }, [activeTab, loadMonitorSessionData, monitorAppliedSymbolFilter, monitorBotId, monitorSessionId]);
+
+  useEffect(() => {
+    if (activeTab !== "monitoring" || !monitorAutoRefreshEnabled || !monitorBotId) return;
+
+    const hasRunningSession =
+      selectedMonitorSession?.status === "RUNNING" || monitorSessions.some((session) => session.status === "RUNNING");
+
+    if (!hasRunningSession) return;
+
+    const intervalId = window.setInterval(() => {
+      void loadMonitorSessions(monitorBotId, monitorStatus);
+      if (monitorSessionId) {
+        void loadMonitorSessionData(monitorBotId, monitorSessionId, monitorAppliedSymbolFilter);
+      }
+    }, 15000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [
+    activeTab,
+    loadMonitorSessionData,
+    loadMonitorSessions,
+    monitorAppliedSymbolFilter,
+    monitorAutoRefreshEnabled,
+    monitorBotId,
+    monitorSessionId,
+    monitorSessions,
+    monitorStatus,
+    selectedMonitorSession?.status,
+  ]);
+
   return (
     <div className="space-y-5">
       <div role="tablist" className="tabs tabs-boxed inline-flex gap-1">
@@ -411,6 +639,14 @@ export default function BotsManagement() {
           onClick={() => setActiveTab("bots")}
         >
           Bots
+        </button>
+        <button
+          type="button"
+          role="tab"
+          className={`tab ${activeTab === "monitoring" ? "tab-active" : ""}`}
+          onClick={() => setActiveTab("monitoring")}
+        >
+          Monitoring
         </button>
         <button
           type="button"
@@ -594,16 +830,7 @@ export default function BotsManagement() {
                         />
                       </td>
                       <td>
-                        <select
-                          className="select select-bordered select-xs w-full"
-                          value={bot.marketType}
-                          onChange={(event) =>
-                            patchBot(bot.id, { marketType: event.target.value as TradeMarket })
-                          }
-                        >
-                          <option value="FUTURES">FUTURES</option>
-                          <option value="SPOT">SPOT</option>
-                        </select>
+                        <span className="text-xs opacity-70">{bot.marketType}</span>
                       </td>
                       <td>
                         <span className="text-xs opacity-70">{bot.positionMode}</span>
@@ -633,7 +860,13 @@ export default function BotsManagement() {
                           <select
                             className="select select-bordered select-xs w-full"
                             value={bot.mode}
-                            onChange={(event) => patchBot(bot.id, { mode: event.target.value as BotMode })}
+                            onChange={(event) => {
+                              const nextMode = event.target.value as BotMode;
+                              patchBot(bot.id, {
+                                mode: nextMode,
+                                liveOptIn: nextMode === "LIVE" ? bot.liveOptIn : false,
+                              });
+                            }}
                           >
                             <option value="PAPER">PAPER</option>
                             <option value="LIVE">LIVE</option>
@@ -664,7 +897,8 @@ export default function BotsManagement() {
                         <input
                           type="checkbox"
                           className="toggle toggle-warning toggle-sm"
-                          checked={bot.liveOptIn}
+                          checked={bot.mode === "LIVE" ? bot.liveOptIn : false}
+                          disabled={bot.mode !== "LIVE"}
                           onChange={(event) => patchBot(bot.id, { liveOptIn: event.target.checked })}
                         />
                       </td>
@@ -712,6 +946,527 @@ export default function BotsManagement() {
         </div>
       )}
         </>
+      )}
+
+      {activeTab === "monitoring" && (
+        <div className="space-y-4 rounded-xl border border-base-300 bg-base-200 p-4">
+          <h2 className="text-lg font-semibold">Monitoring runtime</h2>
+          <p className="text-sm opacity-70">
+            Centrum operacyjne bota: teraz (otwarte), historia (zamkniete) i co bedzie (live check sygnalow) bez ciezkich wykresow.
+          </p>
+
+          {bots.length === 0 ? (
+            <EmptyState title="Brak botow" description="Utworz bota, aby monitorowac jego sesje runtime." />
+          ) : (
+            <>
+              <div className="grid gap-3 md:grid-cols-6">
+                <label className="form-control md:col-span-2">
+                  <span className="label-text">Bot</span>
+                  <select
+                    className="select select-bordered"
+                    value={monitorBotId}
+                    onChange={(event) => setMonitorBotId(event.target.value)}
+                  >
+                    {bots.map((bot) => (
+                      <option key={bot.id} value={bot.id}>
+                        {bot.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="form-control">
+                  <span className="label-text">Status sesji</span>
+                  <select
+                    className="select select-bordered"
+                    value={monitorStatus}
+                    onChange={(event) => setMonitorStatus(event.target.value as "ALL" | BotRuntimeSessionStatus)}
+                  >
+                    <option value="ALL">ALL</option>
+                    <option value="RUNNING">RUNNING</option>
+                    <option value="COMPLETED">COMPLETED</option>
+                    <option value="FAILED">FAILED</option>
+                    <option value="CANCELED">CANCELED</option>
+                  </select>
+                </label>
+                <label className="form-control md:col-span-2">
+                  <span className="label-text">Sesja</span>
+                  <select
+                    className="select select-bordered"
+                    value={monitorSessionId}
+                    onChange={(event) => setMonitorSessionId(event.target.value)}
+                    disabled={monitorSessions.length === 0}
+                  >
+                    {monitorSessions.length === 0 ? <option value="">Brak sesji</option> : null}
+                    {monitorSessions.map((session) => (
+                      <option key={session.id} value={session.id}>
+                        {session.id.slice(0, 8)} | {session.status} | {formatDateTime(session.startedAt)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="form-control">
+                  <span className="label-text">&nbsp;</span>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={() => {
+                      if (!monitorBotId) return;
+                      void loadMonitorSessions(monitorBotId, monitorStatus);
+                      if (monitorSessionId) {
+                        void loadMonitorSessionData(
+                          monitorBotId,
+                          monitorSessionId,
+                          monitorAppliedSymbolFilter
+                        );
+                      }
+                    }}
+                  >
+                    Odswiez
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-base-300 bg-base-100 px-3 py-2 text-xs">
+                <label className="label cursor-pointer gap-2 p-0">
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-sm"
+                    aria-label="Auto refresh monitoringu"
+                    checked={monitorAutoRefreshEnabled}
+                    onChange={(event) => setMonitorAutoRefreshEnabled(event.target.checked)}
+                  />
+                  <span className="label-text">Auto refresh RUNNING (15s)</span>
+                </label>
+                <span className="opacity-70">
+                  {selectedMonitorSession?.status === "RUNNING"
+                    ? "Auto-refresh aktywny dla biezacej sesji"
+                    : monitorSessions.some((session) => session.status === "RUNNING")
+                      ? "Auto-refresh aktywny dla sesji RUNNING"
+                      : "Brak sesji RUNNING - auto-refresh wstrzymany"}
+                </span>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-6">
+                <label className="form-control md:col-span-2">
+                  <span className="label-text">Filtr symbolu (opcjonalnie)</span>
+                  <input
+                    className="input input-bordered"
+                    placeholder="np. BTCUSDT"
+                    value={monitorSymbolFilter}
+                    onChange={(event) => setMonitorSymbolFilter(event.target.value.toUpperCase())}
+                  />
+                </label>
+                <div className="form-control md:col-span-2">
+                  <span className="label-text">&nbsp;</span>
+                  <div className="flex gap-2">
+                    <button type="button" className="btn btn-primary btn-sm" onClick={handleApplyMonitoringFilter}>
+                      Zastosuj filtr
+                    </button>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={handleClearMonitoringFilter}>
+                      Wyczysc
+                    </button>
+                  </div>
+                </div>
+                <div className="form-control md:col-span-2">
+                  <span className="label-text">Aktywny filtr</span>
+                  <div className="rounded-md border border-base-300 bg-base-100 px-3 py-2 text-sm">
+                    {monitorAppliedSymbolFilter || "brak"}
+                  </div>
+                </div>
+              </div>
+
+              {monitorLoading ? <LoadingState title="Ladowanie sesji runtime" /> : null}
+              {!monitorLoading && monitorError ? (
+                <ErrorState
+                  title="Nie udalo sie pobrac monitoringu"
+                  description={monitorError}
+                  retryLabel="Sprobuj ponownie"
+                  onRetry={() => {
+                    if (!monitorBotId) return;
+                    void loadMonitorSessions(monitorBotId, monitorStatus);
+                    if (monitorSessionId) {
+                      void loadMonitorSessionData(monitorBotId, monitorSessionId, monitorAppliedSymbolFilter);
+                    }
+                  }}
+                />
+              ) : null}
+
+              {!monitorLoading && !monitorError && monitorSessions.length === 0 ? (
+                <EmptyState
+                  title="Brak sesji runtime"
+                  description="Bot nie uruchomil jeszcze sesji monitoringu albo filtr statusu nic nie zwrocil."
+                />
+              ) : null}
+
+              {!monitorLoading && !monitorError && selectedMonitorSession ? (
+                <div className="space-y-3">
+                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`badge ${toSessionStatusBadgeClass(selectedMonitorSession.status)}`}>
+                        {selectedMonitorSession.status}
+                      </span>
+                      <span className="badge badge-outline">Mode: {selectedMonitorSession.mode}</span>
+                      <span className="text-xs opacity-70">Session ID: {selectedMonitorSession.id}</span>
+                    </div>
+                    <div className="mt-2 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
+                      <p>
+                        <span className="opacity-60">Start:</span> {formatDateTime(selectedMonitorSession.startedAt)}
+                      </p>
+                      <p>
+                        <span className="opacity-60">Koniec:</span> {formatDateTime(selectedMonitorSession.finishedAt)}
+                      </p>
+                      <p>
+                        <span className="opacity-60">Heartbeat:</span>{" "}
+                        {formatDateTime(selectedMonitorSession.lastHeartbeatAt)}
+                      </p>
+                      <p>
+                        <span className="opacity-60">Czas:</span> {formatDuration(selectedMonitorSession.durationMs)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {monitorSessionLoading ? <LoadingState title="Ladowanie danych sesji" /> : null}
+
+                  {monitorSessionDetail ? (
+                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-8">
+                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
+                        <p className="text-[10px] uppercase tracking-wide opacity-60">Sygnaly</p>
+                        <p className="mt-1 text-sm font-semibold">{monitorSessionDetail.summary.totalSignals}</p>
+                      </div>
+                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
+                        <p className="text-[10px] uppercase tracking-wide opacity-60">Trade'y zamkniete</p>
+                        <p className="mt-1 text-sm font-semibold">{monitorSessionDetail.summary.closedTrades}</p>
+                      </div>
+                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
+                        <p className="text-[10px] uppercase tracking-wide opacity-60">DCA</p>
+                        <p className="mt-1 text-sm font-semibold">{monitorSessionDetail.summary.dcaCount}</p>
+                      </div>
+                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
+                        <p className="text-[10px] uppercase tracking-wide opacity-60">Pozycje otwarte</p>
+                        <p className="mt-1 text-sm font-semibold">{monitorPositions?.openCount ?? 0}</p>
+                      </div>
+                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
+                        <p className="text-[10px] uppercase tracking-wide opacity-60">Zlecenia otwarte</p>
+                        <p className="mt-1 text-sm font-semibold">
+                          {monitorPositions?.openOrdersCount ?? monitorPositions?.openOrders?.length ?? 0}
+                        </p>
+                      </div>
+                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
+                        <p className="text-[10px] uppercase tracking-wide opacity-60">Win rate</p>
+                        <p className="mt-1 text-sm font-semibold">{formatNumber(monitorWinRate, 2)}%</p>
+                      </div>
+                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
+                        <p className="text-[10px] uppercase tracking-wide opacity-60">Realized PnL</p>
+                        <p
+                          className={`mt-1 text-sm font-semibold ${
+                            monitorSessionDetail.summary.realizedPnl >= 0 ? "text-success" : "text-error"
+                          }`}
+                        >
+                          {formatCurrency(monitorSessionDetail.summary.realizedPnl)}
+                        </p>
+                      </div>
+                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
+                        <p className="text-[10px] uppercase tracking-wide opacity-60">Open PnL</p>
+                        <p
+                          className={`mt-1 text-sm font-semibold ${
+                            (monitorSymbolStats?.summary.unrealizedPnl ?? 0) >= 0 ? "text-success" : "text-error"
+                          }`}
+                        >
+                          {formatCurrency(monitorSymbolStats?.summary.unrealizedPnl ?? 0)}
+                        </p>
+                      </div>
+                      <div className="rounded-md border border-base-300 bg-base-100 p-2">
+                        <p className="text-[10px] uppercase tracking-wide opacity-60">Fees</p>
+                        <p className="mt-1 text-sm font-semibold">{formatCurrency(monitorSessionDetail.summary.feesPaid)}</p>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h3 className="text-sm font-semibold">Teraz - otwarte pozycje</h3>
+                      <span className="text-xs opacity-60">
+                        {(monitorPositions?.openItems.length ?? 0)} / {(monitorPositions?.openCount ?? 0)} aktywne
+                      </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="table table-xs">
+                        <thead>
+                          <tr>
+                            <th>Symbol</th>
+                            <th>Side</th>
+                            <th>Otwarcie</th>
+                            <th>Qty</th>
+                            <th>Entry</th>
+                            <th>Mark</th>
+                            <th>DCA</th>
+                            <th>Fees</th>
+                            <th>Open PnL</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(monitorPositions?.openItems ?? []).map((position) => (
+                            <tr key={position.id}>
+                              <td className="font-medium">{position.symbol}</td>
+                              <td>{position.side}</td>
+                              <td>{formatDateTime(position.openedAt)}</td>
+                              <td>{formatNumber(position.quantity, 6)}</td>
+                              <td>{formatNumber(position.entryPrice, 4)}</td>
+                              <td>{position.markPrice != null ? formatNumber(position.markPrice, 4) : "-"}</td>
+                              <td>{position.dcaCount}</td>
+                              <td>{formatCurrency(position.feesPaid)}</td>
+                              <td className={(position.unrealizedPnl ?? 0) >= 0 ? "text-success" : "text-error"}>
+                                {formatCurrency(position.unrealizedPnl ?? 0)}
+                              </td>
+                            </tr>
+                          ))}
+                          {(monitorPositions?.openItems.length ?? 0) === 0 ? (
+                            <tr>
+                              <td colSpan={9} className="text-center text-xs opacity-70">
+                                Brak otwartych pozycji w tej sesji.
+                              </td>
+                            </tr>
+                          ) : null}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h3 className="text-sm font-semibold">Teraz - otwarte zlecenia</h3>
+                      <span className="text-xs opacity-60">
+                        {(monitorPositions?.openOrders ?? []).length} /{" "}
+                        {monitorPositions?.openOrdersCount ?? monitorPositions?.openOrders?.length ?? 0} aktywne
+                      </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="table table-xs">
+                        <thead>
+                          <tr>
+                            <th>Symbol</th>
+                            <th>Side</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Qty</th>
+                            <th>Filled</th>
+                            <th>Price</th>
+                            <th>Stop</th>
+                            <th>Submitted</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(monitorPositions?.openOrders ?? []).map((order) => (
+                            <tr key={order.id}>
+                              <td className="font-medium">{order.symbol}</td>
+                              <td>{order.side}</td>
+                              <td>{order.type}</td>
+                              <td>{order.status}</td>
+                              <td>{formatNumber(order.quantity, 6)}</td>
+                              <td>{formatNumber(order.filledQuantity, 6)}</td>
+                              <td>{order.price != null ? formatNumber(order.price, 4) : "-"}</td>
+                              <td>{order.stopPrice != null ? formatNumber(order.stopPrice, 4) : "-"}</td>
+                              <td>{formatDateTime(order.submittedAt ?? order.createdAt)}</td>
+                            </tr>
+                          ))}
+                          {(monitorPositions?.openOrders?.length ?? 0) === 0 ? (
+                            <tr>
+                              <td colSpan={9} className="text-center text-xs opacity-70">
+                                Brak otwartych zlecen.
+                              </td>
+                            </tr>
+                          ) : null}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h3 className="text-sm font-semibold">Historia - pozycje</h3>
+                      <span className="text-xs opacity-60">
+                        {(monitorPositions?.historyItems.length ?? 0)} / {(monitorPositions?.closedCount ?? 0)} zamkniete
+                      </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="table table-xs">
+                        <thead>
+                          <tr>
+                            <th>Symbol</th>
+                            <th>Side</th>
+                            <th>Otwarcie</th>
+                            <th>Zamkniecie</th>
+                            <th>Czas</th>
+                            <th>Qty</th>
+                            <th>Entry</th>
+                            <th>Exit</th>
+                            <th>DCA</th>
+                            <th>Fees</th>
+                            <th>Realized PnL</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(monitorPositions?.historyItems ?? []).map((position) => (
+                            <tr key={position.id}>
+                              <td className="font-medium">{position.symbol}</td>
+                              <td>{position.side}</td>
+                              <td>{formatDateTime(position.openedAt)}</td>
+                              <td>{formatDateTime(position.closedAt)}</td>
+                              <td>{formatDuration(position.holdMs)}</td>
+                              <td>{formatNumber(position.quantity, 6)}</td>
+                              <td>{formatNumber(position.entryPrice, 4)}</td>
+                              <td>{position.exitPrice != null ? formatNumber(position.exitPrice, 4) : "-"}</td>
+                              <td>{position.dcaCount}</td>
+                              <td>{formatCurrency(position.feesPaid)}</td>
+                              <td className={position.realizedPnl >= 0 ? "text-success" : "text-error"}>
+                                {formatCurrency(position.realizedPnl)}
+                              </td>
+                            </tr>
+                          ))}
+                          {(monitorPositions?.historyItems.length ?? 0) === 0 ? (
+                            <tr>
+                              <td colSpan={11} className="text-center text-xs opacity-70">
+                                Brak zamknietych pozycji w tej sesji.
+                              </td>
+                            </tr>
+                          ) : null}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h3 className="text-sm font-semibold">Co bedzie - live check sygnalow</h3>
+                      <span className="text-xs opacity-60">
+                        {monitorSymbolStats?.items.length ?? 0} / {monitorSessionDetail?.symbolsTracked ?? 0} symboli
+                      </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="table table-xs">
+                        <thead>
+                          <tr>
+                            <th>Symbol</th>
+                            <th>Sygnal</th>
+                            <th>Czas sygnalu</th>
+                            <th>Signals</th>
+                            <th>L/S/E</th>
+                            <th>DCA</th>
+                            <th>Closed</th>
+                            <th>W/L</th>
+                            <th>Open qty</th>
+                            <th>Realized PnL</th>
+                            <th>Open PnL</th>
+                            <th>Fees</th>
+                            <th>Last trade</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(monitorSymbolStats?.items ?? []).map((item) => (
+                            <tr key={item.id}>
+                              <td className="font-medium">{item.symbol}</td>
+                              <td>
+                                <span
+                                  className={`badge badge-xs ${
+                                    item.lastSignalDirection === "LONG"
+                                      ? "badge-success"
+                                      : item.lastSignalDirection === "SHORT"
+                                        ? "badge-error"
+                                        : item.lastSignalDirection === "EXIT"
+                                          ? "badge-warning"
+                                          : "badge-ghost"
+                                  }`}
+                                >
+                                  {item.lastSignalDirection ?? "NONE"}
+                                </span>
+                              </td>
+                              <td>{formatDateTime(item.lastSignalDecisionAt ?? item.lastSignalAt)}</td>
+                              <td>{item.totalSignals}</td>
+                              <td>
+                                {item.longEntries}/{item.shortEntries}/{item.exits}
+                              </td>
+                              <td>{item.dcaCount}</td>
+                              <td>{item.closedTrades}</td>
+                              <td>
+                                {item.winningTrades}/{item.losingTrades}
+                              </td>
+                              <td>{formatNumber(item.openPositionQty, 6)}</td>
+                              <td className={item.realizedPnl >= 0 ? "text-success" : "text-error"}>
+                                {formatCurrency(item.realizedPnl)}
+                              </td>
+                              <td className={(item.unrealizedPnl ?? 0) >= 0 ? "text-success" : "text-error"}>
+                                {formatCurrency(item.unrealizedPnl ?? 0)}
+                              </td>
+                              <td>{formatCurrency(item.feesPaid)}</td>
+                              <td>{formatDateTime(item.lastTradeAt)}</td>
+                            </tr>
+                          ))}
+                          {(monitorSymbolStats?.items.length ?? 0) === 0 ? (
+                            <tr>
+                              <td colSpan={13} className="text-center text-xs opacity-70">
+                                Brak danych live-check sygnalow dla tej sesji i filtra.
+                              </td>
+                            </tr>
+                          ) : null}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h3 className="text-sm font-semibold">Historia - transakcje sesji</h3>
+                      <span className="text-xs opacity-60">
+                        {(monitorTrades?.items.length ?? 0)} / {(monitorTrades?.total ?? 0)} rekordow
+                      </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="table table-xs">
+                        <thead>
+                          <tr>
+                            <th>Czas</th>
+                            <th>Symbol</th>
+                            <th>Side</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Notional</th>
+                            <th>Fee</th>
+                            <th>Realized PnL</th>
+                            <th>Origin</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(monitorTrades?.items ?? []).map((trade) => (
+                            <tr key={trade.id}>
+                              <td>{formatDateTime(trade.executedAt)}</td>
+                              <td className="font-medium">{trade.symbol}</td>
+                              <td>{trade.side}</td>
+                              <td>{formatNumber(trade.quantity, 6)}</td>
+                              <td>{formatNumber(trade.price, 4)}</td>
+                              <td>{formatCurrency(trade.notional)}</td>
+                              <td>{formatCurrency(trade.fee)}</td>
+                              <td className={trade.realizedPnl >= 0 ? "text-success" : "text-error"}>
+                                {formatCurrency(trade.realizedPnl)}
+                              </td>
+                              <td>{trade.origin}</td>
+                            </tr>
+                          ))}
+                          {(monitorTrades?.items.length ?? 0) === 0 ? (
+                            <tr>
+                              <td colSpan={9} className="text-center text-xs opacity-70">
+                                Brak transakcji dla tej sesji i filtra.
+                              </td>
+                            </tr>
+                          ) : null}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </>
+          )}
+        </div>
       )}
 
       {activeTab === "assistant" && (

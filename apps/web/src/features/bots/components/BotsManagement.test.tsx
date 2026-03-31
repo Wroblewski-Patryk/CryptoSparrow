@@ -7,6 +7,16 @@ const listMock = vi.hoisted(() => vi.fn());
 const createMock = vi.hoisted(() => vi.fn());
 const updateMock = vi.hoisted(() => vi.fn());
 const deleteMock = vi.hoisted(() => vi.fn());
+const getAssistantConfigMock = vi.hoisted(() => vi.fn());
+const upsertAssistantConfigMock = vi.hoisted(() => vi.fn());
+const upsertSubagentConfigMock = vi.hoisted(() => vi.fn());
+const deleteSubagentConfigMock = vi.hoisted(() => vi.fn());
+const runAssistantDryRunMock = vi.hoisted(() => vi.fn());
+const listRuntimeSessionsMock = vi.hoisted(() => vi.fn());
+const getRuntimeSessionMock = vi.hoisted(() => vi.fn());
+const listRuntimeSymbolStatsMock = vi.hoisted(() => vi.fn());
+const listRuntimePositionsMock = vi.hoisted(() => vi.fn());
+const listRuntimeTradesMock = vi.hoisted(() => vi.fn());
 const listStrategiesMock = vi.hoisted(() => vi.fn());
 const listMarketUniversesMock = vi.hoisted(() => vi.fn());
 
@@ -15,6 +25,16 @@ vi.mock("../services/bots.service", () => ({
   createBot: createMock,
   updateBot: updateMock,
   deleteBot: deleteMock,
+  getBotAssistantConfig: getAssistantConfigMock,
+  upsertBotAssistantConfig: upsertAssistantConfigMock,
+  upsertBotSubagentConfig: upsertSubagentConfigMock,
+  deleteBotSubagentConfig: deleteSubagentConfigMock,
+  runBotAssistantDryRun: runAssistantDryRunMock,
+  listBotRuntimeSessions: listRuntimeSessionsMock,
+  getBotRuntimeSession: getRuntimeSessionMock,
+  listBotRuntimeSessionSymbolStats: listRuntimeSymbolStatsMock,
+  listBotRuntimeSessionPositions: listRuntimePositionsMock,
+  listBotRuntimeSessionTrades: listRuntimeTradesMock,
 }));
 
 vi.mock("../../strategies/api/strategies.api", () => ({
@@ -29,6 +49,16 @@ afterEach(() => {
   vi.restoreAllMocks();
   listStrategiesMock.mockReset();
   listMarketUniversesMock.mockReset();
+  getAssistantConfigMock.mockReset();
+  upsertAssistantConfigMock.mockReset();
+  upsertSubagentConfigMock.mockReset();
+  deleteSubagentConfigMock.mockReset();
+  runAssistantDryRunMock.mockReset();
+  listRuntimeSessionsMock.mockReset();
+  getRuntimeSessionMock.mockReset();
+  listRuntimeSymbolStatsMock.mockReset();
+  listRuntimePositionsMock.mockReset();
+  listRuntimeTradesMock.mockReset();
 });
 
 describe("BotsManagement", () => {
@@ -187,7 +217,7 @@ describe("BotsManagement", () => {
         paperStartBalance: 10000,
         strategyId: "s1",
         marketGroupId: "g1",
-        isActive: false,
+        isActive: true,
         liveOptIn: false,
         consentTextVersion: null,
       });
@@ -288,5 +318,377 @@ describe("BotsManagement", () => {
     expect(confirmSpy).toHaveBeenCalled();
     expect(deleteMock).not.toHaveBeenCalled();
     confirmSpy.mockRestore();
+  });
+
+  it("renders monitoring tab with runtime session summary, symbol stats and trades", async () => {
+    listStrategiesMock.mockResolvedValue([{ id: "s-monitor", name: "Monitor Strategy", interval: "5m" }]);
+    listMarketUniversesMock.mockResolvedValue([
+      {
+        id: "g-monitor",
+        name: "Monitor Group",
+        marketType: "FUTURES",
+        baseCurrency: "USDT",
+        whitelist: [],
+        blacklist: [],
+      },
+    ]);
+    listMock.mockResolvedValue([
+      {
+        id: "b-monitor",
+        name: "Monitor Bot",
+        mode: "PAPER",
+        paperStartBalance: 10000,
+        marketType: "FUTURES",
+        positionMode: "ONE_WAY",
+        isActive: true,
+        liveOptIn: false,
+        maxOpenPositions: 1,
+      },
+    ]);
+
+    listRuntimeSessionsMock.mockResolvedValue([
+      {
+        id: "session-1",
+        botId: "b-monitor",
+        mode: "PAPER",
+        status: "RUNNING",
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: null,
+        lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+        stopReason: null,
+        errorMessage: null,
+        createdAt: "2026-03-31T10:00:00.000Z",
+        updatedAt: "2026-03-31T10:05:00.000Z",
+        durationMs: 300000,
+        eventsCount: 12,
+        symbolsTracked: 2,
+        summary: {
+          totalSignals: 8,
+          dcaCount: 1,
+          closedTrades: 3,
+          realizedPnl: 120.5,
+        },
+      },
+    ]);
+
+    getRuntimeSessionMock.mockResolvedValue({
+      id: "session-1",
+      botId: "b-monitor",
+      mode: "PAPER",
+      status: "RUNNING",
+      startedAt: "2026-03-31T10:00:00.000Z",
+      finishedAt: null,
+      lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+      stopReason: null,
+      errorMessage: null,
+      metadata: null,
+      createdAt: "2026-03-31T10:00:00.000Z",
+      updatedAt: "2026-03-31T10:05:00.000Z",
+      durationMs: 300000,
+      eventsCount: 12,
+      symbolsTracked: 2,
+      summary: {
+        totalSignals: 8,
+        longEntries: 3,
+        shortEntries: 1,
+        exits: 2,
+        dcaCount: 1,
+        closedTrades: 3,
+        winningTrades: 2,
+        losingTrades: 1,
+        realizedPnl: 120.5,
+        grossProfit: 150,
+        grossLoss: -29.5,
+        feesPaid: 8.2,
+      },
+    });
+
+    listRuntimeSymbolStatsMock.mockResolvedValue({
+      sessionId: "session-1",
+      items: [
+        {
+          id: "stat-1",
+          userId: "u1",
+          botId: "b-monitor",
+          sessionId: "session-1",
+          symbol: "BTCUSDT",
+          totalSignals: 5,
+          longEntries: 2,
+          shortEntries: 1,
+          exits: 1,
+          dcaCount: 1,
+          closedTrades: 2,
+          winningTrades: 2,
+          losingTrades: 0,
+          realizedPnl: 90,
+          grossProfit: 100,
+          grossLoss: -10,
+          feesPaid: 4,
+          openPositionCount: 0,
+          openPositionQty: 0,
+          lastPrice: 72000,
+          lastSignalAt: "2026-03-31T10:03:00.000Z",
+          lastTradeAt: "2026-03-31T10:04:00.000Z",
+          snapshotAt: "2026-03-31T10:05:00.000Z",
+          createdAt: "2026-03-31T10:00:00.000Z",
+          updatedAt: "2026-03-31T10:05:00.000Z",
+        },
+      ],
+      summary: {
+        totalSignals: 5,
+        longEntries: 2,
+        shortEntries: 1,
+        exits: 1,
+        dcaCount: 1,
+        closedTrades: 2,
+        winningTrades: 2,
+        losingTrades: 0,
+        realizedPnl: 90,
+        grossProfit: 100,
+        grossLoss: -10,
+        feesPaid: 4,
+      },
+    });
+
+    listRuntimePositionsMock.mockResolvedValue({
+      sessionId: "session-1",
+      total: 1,
+      openCount: 1,
+      closedCount: 0,
+      openOrdersCount: 0,
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      summary: {
+        realizedPnl: 0,
+        unrealizedPnl: 15,
+        feesPaid: 0.7,
+      },
+      openOrders: [],
+      openItems: [
+        {
+          id: "p1",
+          symbol: "BTCUSDT",
+          side: "LONG",
+          status: "OPEN",
+          quantity: 0.01,
+          leverage: 1,
+          entryPrice: 70000,
+          entryNotional: 700,
+          exitPrice: null,
+          stopLoss: null,
+          takeProfit: null,
+          openedAt: "2026-03-31T10:04:00.000Z",
+          closedAt: null,
+          holdMs: 60000,
+          dcaCount: 0,
+          feesPaid: 0.7,
+          realizedPnl: 0,
+          unrealizedPnl: 15,
+          markPrice: 71500,
+          firstTradeAt: "2026-03-31T10:04:30.000Z",
+          lastTradeAt: "2026-03-31T10:04:30.000Z",
+          tradesCount: 1,
+        },
+      ],
+      historyItems: [],
+    });
+
+    listRuntimeTradesMock.mockResolvedValue({
+      sessionId: "session-1",
+      total: 1,
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      items: [
+        {
+          id: "trade-1",
+          symbol: "BTCUSDT",
+          side: "BUY",
+          price: 70000,
+          quantity: 0.01,
+          fee: 0.7,
+          realizedPnl: 30,
+          executedAt: "2026-03-31T10:04:30.000Z",
+          orderId: "o1",
+          positionId: "p1",
+          strategyId: "s-monitor",
+          origin: "BOT",
+          managementMode: "BOT",
+          notional: 700,
+        },
+      ],
+    });
+
+    render(<BotsManagement />);
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Monitor Bot")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("tab", { name: "Monitoring" }));
+
+    await waitFor(() => {
+      expect(listRuntimeSessionsMock).toHaveBeenCalledWith("b-monitor", { status: undefined, limit: 50 });
+    });
+
+    await waitFor(() => {
+      expect(getRuntimeSessionMock).toHaveBeenCalledWith("b-monitor", "session-1");
+      expect(screen.getByText("Co bedzie - live check sygnalow")).toBeInTheDocument();
+      expect(screen.getAllByText("BTCUSDT").length).toBeGreaterThan(0);
+      expect(screen.getByText("Historia - transakcje sesji")).toBeInTheDocument();
+    });
+  });
+
+  it("enables monitoring auto-refresh interval for RUNNING sessions", async () => {
+    const setIntervalSpy = vi.spyOn(window, "setInterval");
+    listStrategiesMock.mockResolvedValue([{ id: "s-refresh", name: "Refresh Strategy", interval: "5m" }]);
+    listMarketUniversesMock.mockResolvedValue([
+      {
+        id: "g-refresh",
+        name: "Refresh Group",
+        marketType: "FUTURES",
+        baseCurrency: "USDT",
+        whitelist: [],
+        blacklist: [],
+      },
+    ]);
+    listMock.mockResolvedValue([
+      {
+        id: "b-refresh",
+        name: "Refresh Bot",
+        mode: "PAPER",
+        paperStartBalance: 10000,
+        marketType: "FUTURES",
+        positionMode: "ONE_WAY",
+        isActive: true,
+        liveOptIn: false,
+        maxOpenPositions: 1,
+      },
+    ]);
+
+    listRuntimeSessionsMock.mockResolvedValue([
+      {
+        id: "session-refresh",
+        botId: "b-refresh",
+        mode: "PAPER",
+        status: "RUNNING",
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: null,
+        lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+        stopReason: null,
+        errorMessage: null,
+        createdAt: "2026-03-31T10:00:00.000Z",
+        updatedAt: "2026-03-31T10:05:00.000Z",
+        durationMs: 300000,
+        eventsCount: 1,
+        symbolsTracked: 1,
+        summary: {
+          totalSignals: 1,
+          dcaCount: 0,
+          closedTrades: 0,
+          realizedPnl: 0,
+        },
+      },
+    ]);
+
+    getRuntimeSessionMock.mockResolvedValue({
+      id: "session-refresh",
+      botId: "b-refresh",
+      mode: "PAPER",
+      status: "RUNNING",
+      startedAt: "2026-03-31T10:00:00.000Z",
+      finishedAt: null,
+      lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+      stopReason: null,
+      errorMessage: null,
+      metadata: null,
+      createdAt: "2026-03-31T10:00:00.000Z",
+      updatedAt: "2026-03-31T10:05:00.000Z",
+      durationMs: 300000,
+      eventsCount: 1,
+      symbolsTracked: 1,
+      summary: {
+        totalSignals: 1,
+        longEntries: 1,
+        shortEntries: 0,
+        exits: 0,
+        dcaCount: 0,
+        closedTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        realizedPnl: 0,
+        grossProfit: 0,
+        grossLoss: 0,
+        feesPaid: 0,
+      },
+    });
+
+    listRuntimeSymbolStatsMock.mockResolvedValue({
+      sessionId: "session-refresh",
+      items: [],
+      summary: {
+        totalSignals: 0,
+        longEntries: 0,
+        shortEntries: 0,
+        exits: 0,
+        dcaCount: 0,
+        closedTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        realizedPnl: 0,
+        grossProfit: 0,
+        grossLoss: 0,
+        feesPaid: 0,
+      },
+    });
+
+    listRuntimePositionsMock.mockResolvedValue({
+      sessionId: "session-refresh",
+      total: 0,
+      openCount: 0,
+      closedCount: 0,
+      openOrdersCount: 0,
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      summary: {
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        feesPaid: 0,
+      },
+      openOrders: [],
+      openItems: [],
+      historyItems: [],
+    });
+
+    listRuntimeTradesMock.mockResolvedValue({
+      sessionId: "session-refresh",
+      total: 0,
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      items: [],
+    });
+
+    render(<BotsManagement />);
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Refresh Bot")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("tab", { name: "Monitoring" }));
+
+    await waitFor(() => {
+      expect(listRuntimeSessionsMock).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
+      expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 15000);
+    });
+
+    setIntervalSpy.mockRestore();
   });
 });

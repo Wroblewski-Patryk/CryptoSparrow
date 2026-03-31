@@ -5,8 +5,12 @@ import {
   CreateBotDto,
   CreateBotMarketGroupDto,
   ListBotsQueryDto,
+  ListBotRuntimeSymbolStatsQueryDto,
+  ListBotRuntimePositionsQueryDto,
+  ListBotRuntimeTradesQueryDto,
   ReorderMarketGroupStrategiesDto,
   AttachMarketGroupStrategyDto,
+  ListBotRuntimeSessionsQueryDto,
   UpsertBotAssistantConfigDto,
   UpsertBotSubagentConfigDto,
   UpdateBotDto,
@@ -15,7 +19,7 @@ import {
 } from './bots.types';
 
 type BotConsentState = {
-  mode: 'PAPER' | 'LIVE' | 'LOCAL';
+  mode: 'PAPER' | 'LIVE';
   liveOptIn: boolean;
   consentTextVersion?: string | null;
 };
@@ -135,7 +139,7 @@ const upsertBotStrategy = async (params: {
 const writeLiveConsentAudit = async (params: {
   userId: string;
   botId: string;
-  mode: 'PAPER' | 'LIVE' | 'LOCAL';
+  mode: 'PAPER' | 'LIVE';
   liveOptIn: boolean;
   consentTextVersion: string;
   action: 'bot.live_consent.accepted' | 'bot.live_consent.updated';
@@ -170,6 +174,15 @@ const getOwnedBot = async (userId: string, botId: string) =>
     select: { id: true, marketType: true },
   });
 
+const getOwnedBotRuntimeSession = async (userId: string, botId: string, sessionId: string) =>
+  prisma.botRuntimeSession.findFirst({
+    where: {
+      id: sessionId,
+      userId,
+      botId,
+    },
+  });
+
 const getOwnedSymbolGroup = async (userId: string, symbolGroupId: string) =>
   prisma.symbolGroup.findFirst({
     where: { id: symbolGroupId, userId },
@@ -180,6 +193,65 @@ const getOwnedSymbolGroup = async (userId: string, symbolGroupId: string) =>
       },
     },
   });
+
+const getOwnedMarketUniverse = async (userId: string, marketUniverseId: string) =>
+  prisma.marketUniverse.findFirst({
+    where: { id: marketUniverseId, userId },
+    select: {
+      id: true,
+      name: true,
+      marketType: true,
+      whitelist: true,
+      blacklist: true,
+    },
+  });
+
+const normalizeSymbols = (symbols: string[]) =>
+  [...new Set(symbols.map((item) => item.trim().toUpperCase()).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b)
+  );
+
+const resolveCreateMarketGroupToSymbolGroup = async (userId: string, marketGroupId: string) => {
+  const directSymbolGroup = await getOwnedSymbolGroup(userId, marketGroupId);
+  if (directSymbolGroup) return directSymbolGroup;
+
+  const marketUniverse = await getOwnedMarketUniverse(userId, marketGroupId);
+  if (!marketUniverse) return null;
+
+  const existingSymbolGroup = await prisma.symbolGroup.findFirst({
+    where: {
+      userId,
+      marketUniverseId: marketUniverse.id,
+    },
+    select: {
+      id: true,
+      marketUniverse: {
+        select: { marketType: true },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+  if (existingSymbolGroup) return existingSymbolGroup;
+
+  const normalizedWhitelist = normalizeSymbols(marketUniverse.whitelist);
+  const blacklistSet = new Set(normalizeSymbols(marketUniverse.blacklist));
+  const resolvedSymbols = normalizedWhitelist.filter((symbol) => !blacklistSet.has(symbol));
+
+  return prisma.symbolGroup.create({
+    data: {
+      userId,
+      marketUniverseId: marketUniverse.id,
+      name: `${marketUniverse.name} Group`,
+      symbols: resolvedSymbols,
+    },
+    select: {
+      id: true,
+      marketUniverse: {
+        select: { marketType: true },
+      },
+    },
+  });
+};
 
 const getOwnedStrategy = async (userId: string, strategyId: string) =>
   prisma.strategy.findFirst({
@@ -281,7 +353,7 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
   const strategy = await getOwnedStrategy(userId, strategyId);
   if (!strategy) throw new Error('BOT_STRATEGY_NOT_FOUND');
 
-  const symbolGroup = await getOwnedSymbolGroup(userId, marketGroupId);
+  const symbolGroup = await resolveCreateMarketGroupToSymbolGroup(userId, marketGroupId);
   if (!symbolGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
   const derivedMarketType = symbolGroup.marketUniverse.marketType;
   const derivedMaxOpenPositions = deriveMaxOpenPositionsFromStrategy(strategy.config);
@@ -307,7 +379,7 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
       data: {
         userId,
         botId: createdBot.id,
-        symbolGroupId: marketGroupId,
+        symbolGroupId: symbolGroup.id,
         lifecycleStatus: 'ACTIVE',
         executionOrder: 100,
         maxOpenPositions: derivedMaxOpenPositions,
@@ -818,6 +890,663 @@ export const getBotRuntimeGraph = async (userId: string, botId: string) => {
       strategy: item.strategy,
       symbolGroup: item.symbolGroup,
     })),
+  };
+};
+
+export const listBotRuntimeSessions = async (
+  userId: string,
+  botId: string,
+  query: ListBotRuntimeSessionsQueryDto
+) => {
+  const bot = await getOwnedBot(userId, botId);
+  if (!bot) return null;
+
+  const sessions = await prisma.botRuntimeSession.findMany({
+    where: {
+      userId,
+      botId,
+      ...(query.status ? { status: query.status } : {}),
+    },
+    orderBy: [{ startedAt: 'desc' }, { createdAt: 'desc' }],
+    take: query.limit,
+  });
+
+  if (sessions.length === 0) return [];
+  const sessionIds = sessions.map((session) => session.id);
+
+  const [eventCounts, symbolCounts, symbolSums] = await Promise.all([
+    prisma.botRuntimeEvent.groupBy({
+      by: ['sessionId'],
+      where: { sessionId: { in: sessionIds } },
+      _count: { _all: true },
+    }),
+    prisma.botRuntimeSymbolStat.groupBy({
+      by: ['sessionId'],
+      where: { sessionId: { in: sessionIds } },
+      _count: { _all: true },
+    }),
+    prisma.botRuntimeSymbolStat.groupBy({
+      by: ['sessionId'],
+      where: { sessionId: { in: sessionIds } },
+      _sum: {
+        totalSignals: true,
+        dcaCount: true,
+        closedTrades: true,
+        realizedPnl: true,
+      },
+    }),
+  ]);
+
+  const eventCountMap = new Map(eventCounts.map((entry) => [entry.sessionId, entry._count._all]));
+  const symbolCountMap = new Map(symbolCounts.map((entry) => [entry.sessionId, entry._count._all]));
+  const symbolSumMap = new Map(
+    symbolSums.map((entry) => [
+      entry.sessionId,
+      {
+        totalSignals: entry._sum.totalSignals ?? 0,
+        dcaCount: entry._sum.dcaCount ?? 0,
+        closedTrades: entry._sum.closedTrades ?? 0,
+        realizedPnl: entry._sum.realizedPnl ?? 0,
+      },
+    ])
+  );
+
+  return sessions.map((session) => {
+    const summary = symbolSumMap.get(session.id) ?? {
+      totalSignals: 0,
+      dcaCount: 0,
+      closedTrades: 0,
+      realizedPnl: 0,
+    };
+    const windowEnd = session.finishedAt ?? session.lastHeartbeatAt ?? session.startedAt;
+    const durationMs = Math.max(0, windowEnd.getTime() - session.startedAt.getTime());
+
+    return {
+      id: session.id,
+      botId: session.botId,
+      mode: session.mode,
+      status: session.status,
+      startedAt: session.startedAt,
+      finishedAt: session.finishedAt,
+      lastHeartbeatAt: session.lastHeartbeatAt,
+      stopReason: session.stopReason,
+      errorMessage: session.errorMessage,
+      createdAt: session.createdAt,
+      updatedAt: session.updatedAt,
+      durationMs,
+      eventsCount: eventCountMap.get(session.id) ?? 0,
+      symbolsTracked: symbolCountMap.get(session.id) ?? 0,
+      summary,
+    };
+  });
+};
+
+export const getBotRuntimeSession = async (userId: string, botId: string, sessionId: string) => {
+  const session = await getOwnedBotRuntimeSession(userId, botId, sessionId);
+  if (!session) return null;
+
+  const [eventCount, symbolsTracked, symbolStatsAggregate] = await Promise.all([
+    prisma.botRuntimeEvent.count({
+      where: { sessionId: session.id },
+    }),
+    prisma.botRuntimeSymbolStat.count({
+      where: { sessionId: session.id },
+    }),
+    prisma.botRuntimeSymbolStat.aggregate({
+      where: { sessionId: session.id },
+      _sum: {
+        totalSignals: true,
+        longEntries: true,
+        shortEntries: true,
+        exits: true,
+        dcaCount: true,
+        closedTrades: true,
+        winningTrades: true,
+        losingTrades: true,
+        realizedPnl: true,
+        grossProfit: true,
+        grossLoss: true,
+        feesPaid: true,
+        openPositionCount: true,
+        openPositionQty: true,
+      },
+    }),
+  ]);
+
+  const windowEnd = session.finishedAt ?? session.lastHeartbeatAt ?? session.startedAt;
+  const durationMs = Math.max(0, windowEnd.getTime() - session.startedAt.getTime());
+
+  return {
+    id: session.id,
+    botId: session.botId,
+    mode: session.mode,
+    status: session.status,
+    startedAt: session.startedAt,
+    finishedAt: session.finishedAt,
+    lastHeartbeatAt: session.lastHeartbeatAt,
+    stopReason: session.stopReason,
+    errorMessage: session.errorMessage,
+    metadata: session.metadata,
+    createdAt: session.createdAt,
+    updatedAt: session.updatedAt,
+    durationMs,
+    eventsCount: eventCount,
+    symbolsTracked,
+    summary: {
+      totalSignals: symbolStatsAggregate._sum.totalSignals ?? 0,
+      longEntries: symbolStatsAggregate._sum.longEntries ?? 0,
+      shortEntries: symbolStatsAggregate._sum.shortEntries ?? 0,
+      exits: symbolStatsAggregate._sum.exits ?? 0,
+      dcaCount: symbolStatsAggregate._sum.dcaCount ?? 0,
+      closedTrades: symbolStatsAggregate._sum.closedTrades ?? 0,
+      winningTrades: symbolStatsAggregate._sum.winningTrades ?? 0,
+      losingTrades: symbolStatsAggregate._sum.losingTrades ?? 0,
+      realizedPnl: symbolStatsAggregate._sum.realizedPnl ?? 0,
+      grossProfit: symbolStatsAggregate._sum.grossProfit ?? 0,
+      grossLoss: symbolStatsAggregate._sum.grossLoss ?? 0,
+      feesPaid: symbolStatsAggregate._sum.feesPaid ?? 0,
+      openPositionCount: symbolStatsAggregate._sum.openPositionCount ?? 0,
+      openPositionQty: symbolStatsAggregate._sum.openPositionQty ?? 0,
+    },
+  };
+};
+
+export const listBotRuntimeSessionSymbolStats = async (
+  userId: string,
+  botId: string,
+  sessionId: string,
+  query: ListBotRuntimeSymbolStatsQueryDto
+) => {
+  const session = await getOwnedBotRuntimeSession(userId, botId, sessionId);
+  if (!session) return null;
+
+  const normalizedSymbol = query.symbol?.trim().toUpperCase();
+  const where = {
+    userId,
+    botId,
+    sessionId,
+    ...(normalizedSymbol ? { symbol: normalizedSymbol } : {}),
+  };
+  const windowEnd = session.finishedAt ?? session.lastHeartbeatAt ?? new Date();
+
+  const [items, summary] = await Promise.all([
+    prisma.botRuntimeSymbolStat.findMany({
+      where,
+      orderBy: [{ realizedPnl: 'desc' }, { updatedAt: 'desc' }],
+      take: query.limit,
+    }),
+    prisma.botRuntimeSymbolStat.aggregate({
+      where,
+      _sum: {
+        totalSignals: true,
+        longEntries: true,
+        shortEntries: true,
+        exits: true,
+        dcaCount: true,
+        closedTrades: true,
+        winningTrades: true,
+        losingTrades: true,
+        realizedPnl: true,
+        grossProfit: true,
+        grossLoss: true,
+        feesPaid: true,
+      },
+    }),
+  ]);
+
+  const symbols = items.map((item) => item.symbol);
+  const [openPositions, latestTradeBySymbolRows, latestSignalEvents] = symbols.length
+    ? await Promise.all([
+        prisma.position.findMany({
+          where: {
+            userId,
+            botId,
+            status: 'OPEN',
+            managementMode: 'BOT_MANAGED',
+            symbol: { in: symbols },
+            openedAt: {
+              gte: session.startedAt,
+              lte: windowEnd,
+            },
+          },
+          select: {
+            symbol: true,
+            side: true,
+            entryPrice: true,
+            quantity: true,
+          },
+        }),
+        prisma.trade.groupBy({
+          by: ['symbol'],
+          where: {
+            userId,
+            botId,
+            symbol: { in: symbols },
+            executedAt: {
+              gte: session.startedAt,
+              lte: windowEnd,
+            },
+          },
+          _max: {
+            executedAt: true,
+          },
+        }),
+        prisma.botRuntimeEvent.findMany({
+          where: {
+            sessionId,
+            eventType: 'SIGNAL_DECISION',
+            symbol: { in: symbols },
+          },
+          orderBy: [{ eventAt: 'desc' }, { createdAt: 'desc' }],
+          select: {
+            symbol: true,
+            signalDirection: true,
+            eventAt: true,
+          },
+        }),
+      ])
+    : [[], [], []];
+
+  const lastPriceBySymbol = new Map(items.map((item) => [item.symbol, item.lastPrice]));
+  const latestTradeAtBySymbol = new Map(
+    latestTradeBySymbolRows.map((row) => [row.symbol, row._max.executedAt ?? null])
+  );
+  const latestSignalBySymbol = new Map<
+    string,
+    {
+      signalDirection: 'LONG' | 'SHORT' | 'EXIT' | null;
+      eventAt: Date | null;
+    }
+  >();
+  for (const event of latestSignalEvents) {
+    if (!event.symbol || latestSignalBySymbol.has(event.symbol)) continue;
+    latestSignalBySymbol.set(event.symbol, {
+      signalDirection:
+        event.signalDirection === 'LONG' ||
+        event.signalDirection === 'SHORT' ||
+        event.signalDirection === 'EXIT'
+          ? event.signalDirection
+          : null,
+      eventAt: event.eventAt ?? null,
+    });
+  }
+  const openPositionCountBySymbol = new Map<string, number>();
+  const openPositionQtyBySymbol = new Map<string, number>();
+  const unrealizedPnlBySymbol = new Map<string, number>();
+
+  for (const position of openPositions) {
+    const lastPrice = lastPriceBySymbol.get(position.symbol);
+    if (typeof lastPrice === 'number' && Number.isFinite(lastPrice)) {
+      const sideMultiplier = position.side === 'LONG' ? 1 : -1;
+      const pnl = (lastPrice - position.entryPrice) * position.quantity * sideMultiplier;
+      unrealizedPnlBySymbol.set(
+        position.symbol,
+        (unrealizedPnlBySymbol.get(position.symbol) ?? 0) + pnl
+      );
+    }
+    openPositionCountBySymbol.set(
+      position.symbol,
+      (openPositionCountBySymbol.get(position.symbol) ?? 0) + 1
+    );
+    openPositionQtyBySymbol.set(
+      position.symbol,
+      (openPositionQtyBySymbol.get(position.symbol) ?? 0) + position.quantity
+    );
+  }
+
+  const itemsWithLivePnl = items.map((item) => {
+    const openCount = openPositionCountBySymbol.get(item.symbol);
+    const openQty = openPositionQtyBySymbol.get(item.symbol);
+    const unrealizedPnl = unrealizedPnlBySymbol.get(item.symbol) ?? 0;
+    const latestSignal = latestSignalBySymbol.get(item.symbol);
+    return {
+      ...item,
+      openPositionCount: openCount ?? item.openPositionCount,
+      openPositionQty: openQty ?? item.openPositionQty,
+      unrealizedPnl,
+      lastTradeAt: item.lastTradeAt ?? latestTradeAtBySymbol.get(item.symbol) ?? null,
+      lastSignalDirection: latestSignal?.signalDirection ?? null,
+      lastSignalDecisionAt: latestSignal?.eventAt ?? item.lastSignalAt ?? null,
+    };
+  });
+
+  const summaryUnrealizedPnl = itemsWithLivePnl.reduce(
+    (acc, item) => acc + (Number.isFinite(item.unrealizedPnl) ? item.unrealizedPnl : 0),
+    0
+  );
+  const summaryOpenPositionCount = itemsWithLivePnl.reduce((acc, item) => acc + item.openPositionCount, 0);
+  const summaryOpenPositionQty = itemsWithLivePnl.reduce((acc, item) => acc + item.openPositionQty, 0);
+  const summaryRealizedPnl = summary._sum.realizedPnl ?? 0;
+
+  return {
+    sessionId,
+    items: itemsWithLivePnl,
+    summary: {
+      totalSignals: summary._sum.totalSignals ?? 0,
+      longEntries: summary._sum.longEntries ?? 0,
+      shortEntries: summary._sum.shortEntries ?? 0,
+      exits: summary._sum.exits ?? 0,
+      dcaCount: summary._sum.dcaCount ?? 0,
+      closedTrades: summary._sum.closedTrades ?? 0,
+      winningTrades: summary._sum.winningTrades ?? 0,
+      losingTrades: summary._sum.losingTrades ?? 0,
+      realizedPnl: summaryRealizedPnl,
+      unrealizedPnl: summaryUnrealizedPnl,
+      totalPnl: summaryRealizedPnl + summaryUnrealizedPnl,
+      grossProfit: summary._sum.grossProfit ?? 0,
+      grossLoss: summary._sum.grossLoss ?? 0,
+      feesPaid: summary._sum.feesPaid ?? 0,
+      openPositionCount: summaryOpenPositionCount,
+      openPositionQty: summaryOpenPositionQty,
+    },
+  };
+};
+
+export const listBotRuntimeSessionTrades = async (
+  userId: string,
+  botId: string,
+  sessionId: string,
+  query: ListBotRuntimeTradesQueryDto
+) => {
+  const session = await getOwnedBotRuntimeSession(userId, botId, sessionId);
+  if (!session) return null;
+
+  const normalizedSymbol = query.symbol?.trim().toUpperCase();
+  const windowEnd = session.finishedAt ?? session.lastHeartbeatAt ?? new Date();
+  const where = {
+    userId,
+    botId,
+    executedAt: {
+      gte: session.startedAt,
+      lte: windowEnd,
+    },
+    ...(normalizedSymbol ? { symbol: normalizedSymbol } : {}),
+  };
+
+  const [total, items] = await Promise.all([
+    prisma.trade.count({
+      where,
+    }),
+    prisma.trade.findMany({
+      where,
+      orderBy: [{ executedAt: 'desc' }, { createdAt: 'desc' }],
+      take: query.limit,
+      select: {
+        id: true,
+        symbol: true,
+        side: true,
+        price: true,
+        quantity: true,
+        fee: true,
+        realizedPnl: true,
+        executedAt: true,
+        orderId: true,
+        positionId: true,
+        strategyId: true,
+        origin: true,
+        managementMode: true,
+      },
+    }),
+  ]);
+
+  return {
+    sessionId,
+    total,
+    window: {
+      startedAt: session.startedAt,
+      finishedAt: windowEnd,
+    },
+    items: items.map((trade) => ({
+      ...trade,
+      notional: trade.price * trade.quantity,
+    })),
+  };
+};
+
+export const listBotRuntimeSessionPositions = async (
+  userId: string,
+  botId: string,
+  sessionId: string,
+  query: ListBotRuntimePositionsQueryDto
+) => {
+  const session = await getOwnedBotRuntimeSession(userId, botId, sessionId);
+  if (!session) return null;
+
+  const normalizedSymbol = query.symbol?.trim().toUpperCase();
+  const windowEnd = session.finishedAt ?? session.lastHeartbeatAt ?? new Date();
+
+  const positions = await prisma.position.findMany({
+    where: {
+      userId,
+      botId,
+      managementMode: 'BOT_MANAGED',
+      ...(normalizedSymbol ? { symbol: normalizedSymbol } : {}),
+      openedAt: {
+        lte: windowEnd,
+      },
+      OR: [{ closedAt: null }, { closedAt: { gte: session.startedAt } }],
+    },
+    orderBy: [{ openedAt: 'desc' }, { createdAt: 'desc' }],
+    take: query.limit,
+    select: {
+      id: true,
+      symbol: true,
+      side: true,
+      status: true,
+      entryPrice: true,
+      quantity: true,
+      leverage: true,
+      stopLoss: true,
+      takeProfit: true,
+      openedAt: true,
+      closedAt: true,
+      realizedPnl: true,
+      unrealizedPnl: true,
+    },
+  });
+
+  if (positions.length === 0) {
+    const openOrders = await prisma.order.findMany({
+      where: {
+        userId,
+        botId,
+        managementMode: 'BOT_MANAGED',
+        status: {
+          in: ['PENDING', 'OPEN', 'PARTIALLY_FILLED'],
+        },
+        ...(normalizedSymbol ? { symbol: normalizedSymbol } : {}),
+        createdAt: {
+          gte: session.startedAt,
+          lte: windowEnd,
+        },
+      },
+      orderBy: [{ createdAt: 'desc' }, { updatedAt: 'desc' }],
+      take: query.limit,
+      select: {
+        id: true,
+        symbol: true,
+        side: true,
+        type: true,
+        status: true,
+        quantity: true,
+        filledQuantity: true,
+        price: true,
+        stopPrice: true,
+        submittedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return {
+      sessionId,
+      total: 0,
+      openCount: 0,
+      closedCount: 0,
+      openOrdersCount: openOrders.length,
+      window: {
+        startedAt: session.startedAt,
+        finishedAt: windowEnd,
+      },
+      summary: {
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        feesPaid: 0,
+      },
+      openOrders: openOrders,
+      openItems: [],
+      historyItems: [],
+    };
+  }
+
+  const positionIds = positions.map((position) => position.id);
+  const symbols = [...new Set(positions.map((position) => position.symbol))];
+
+  const [trades, lastSymbolPrices, openOrders] = await Promise.all([
+    prisma.trade.findMany({
+      where: {
+        userId,
+        botId,
+        positionId: { in: positionIds },
+      },
+      orderBy: [{ executedAt: 'asc' }, { createdAt: 'asc' }],
+      select: {
+        positionId: true,
+        side: true,
+        price: true,
+        quantity: true,
+        fee: true,
+        realizedPnl: true,
+        executedAt: true,
+      },
+    }),
+    prisma.botRuntimeSymbolStat.findMany({
+      where: {
+        sessionId,
+        symbol: { in: symbols },
+      },
+      select: {
+        symbol: true,
+        lastPrice: true,
+      },
+    }),
+    prisma.order.findMany({
+      where: {
+        userId,
+        botId,
+        managementMode: 'BOT_MANAGED',
+        status: {
+          in: ['PENDING', 'OPEN', 'PARTIALLY_FILLED'],
+        },
+        ...(normalizedSymbol ? { symbol: normalizedSymbol } : {}),
+        createdAt: {
+          gte: session.startedAt,
+          lte: windowEnd,
+        },
+      },
+      orderBy: [{ createdAt: 'desc' }, { updatedAt: 'desc' }],
+      take: query.limit,
+      select: {
+        id: true,
+        symbol: true,
+        side: true,
+        type: true,
+        status: true,
+        quantity: true,
+        filledQuantity: true,
+        price: true,
+        stopPrice: true,
+        submittedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    }),
+  ]);
+
+  const tradesByPosition = new Map<string, typeof trades>();
+  for (const trade of trades) {
+    if (!trade.positionId) continue;
+    const bucket = tradesByPosition.get(trade.positionId) ?? [];
+    bucket.push(trade);
+    tradesByPosition.set(trade.positionId, bucket);
+  }
+
+  const lastPriceBySymbol = new Map(
+    lastSymbolPrices.map((row) => [row.symbol, row.lastPrice])
+  );
+
+  const mappedPositions = positions.map((position) => {
+    const positionTrades = tradesByPosition.get(position.id) ?? [];
+    const entrySide = position.side === 'LONG' ? 'BUY' : 'SELL';
+    const entryLegs = positionTrades.filter((trade) => trade.side === entrySide);
+    const exitLegs = positionTrades.filter((trade) => trade.side !== entrySide);
+
+    const feesPaid = positionTrades.reduce((acc, trade) => acc + (trade.fee ?? 0), 0);
+    const tradeRealizedPnl = positionTrades.reduce((acc, trade) => acc + (trade.realizedPnl ?? 0), 0);
+    const entryTrade = entryLegs[0] ?? positionTrades[0] ?? null;
+    const exitTrade = exitLegs.at(-1) ?? (position.status === 'CLOSED' ? positionTrades.at(-1) ?? null : null);
+    const dcaCount = Math.max(0, entryLegs.length - 1);
+
+    const marketPrice = lastPriceBySymbol.get(position.symbol);
+    const liveUnrealizedPnl =
+      typeof marketPrice === 'number' && Number.isFinite(marketPrice)
+        ? (marketPrice - position.entryPrice) * position.quantity * (position.side === 'LONG' ? 1 : -1)
+        : null;
+
+    const holdUntil = position.closedAt ?? windowEnd;
+    const holdMs = Math.max(0, holdUntil.getTime() - position.openedAt.getTime());
+
+    return {
+      id: position.id,
+      symbol: position.symbol,
+      side: position.side,
+      status: position.status,
+      quantity: position.quantity,
+      leverage: position.leverage,
+      entryPrice: position.entryPrice,
+      entryNotional: position.entryPrice * position.quantity,
+      exitPrice: exitTrade?.price ?? null,
+      stopLoss: position.stopLoss,
+      takeProfit: position.takeProfit,
+      openedAt: position.openedAt,
+      closedAt: position.closedAt,
+      holdMs,
+      dcaCount,
+      feesPaid,
+      realizedPnl: position.realizedPnl ?? tradeRealizedPnl ?? 0,
+      unrealizedPnl: liveUnrealizedPnl ?? position.unrealizedPnl ?? null,
+      markPrice: typeof marketPrice === 'number' && Number.isFinite(marketPrice) ? marketPrice : null,
+      firstTradeAt: entryTrade?.executedAt ?? null,
+      lastTradeAt: positionTrades.at(-1)?.executedAt ?? null,
+      tradesCount: positionTrades.length,
+    };
+  });
+
+  const openItems = mappedPositions
+    .filter((position) => position.status === 'OPEN')
+    .sort((left, right) => right.openedAt.getTime() - left.openedAt.getTime());
+  const historyItems = mappedPositions
+    .filter((position) => position.status === 'CLOSED')
+    .sort((left, right) => (right.closedAt?.getTime() ?? 0) - (left.closedAt?.getTime() ?? 0));
+
+  return {
+    sessionId,
+    total: mappedPositions.length,
+    openCount: openItems.length,
+    closedCount: historyItems.length,
+    openOrdersCount: openOrders.length,
+    window: {
+      startedAt: session.startedAt,
+      finishedAt: windowEnd,
+    },
+    summary: {
+      realizedPnl: mappedPositions.reduce((acc, position) => acc + (position.realizedPnl ?? 0), 0),
+      unrealizedPnl: openItems.reduce((acc, position) => acc + (position.unrealizedPnl ?? 0), 0),
+      feesPaid: mappedPositions.reduce((acc, position) => acc + position.feesPaid, 0),
+    },
+    openOrders,
+    openItems,
+    historyItems,
   };
 };
 

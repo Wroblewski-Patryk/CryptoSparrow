@@ -79,7 +79,7 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 
 ## Phase G - Operations UX Cleanup (Dashboard vs Bots)
 - [x] `BOPS-01 docs(plan): lock IA split (Dashboard as global control center, Bots as runtime operations center)`
-- [ ] `BOPS-02 feat(web-monitor): restructure monitoring view into three operator blocks (Now / History / Future signals)`
+- [x] `BOPS-02 feat(web-monitor): restructure monitoring view into three operator blocks (Now / History / Future signals)`
 - [ ] `BOPS-03 feat(web-monitor): keep live refresh in-place without visual remount/flicker`
 - [ ] `BOPS-04 feat(web-bots-dashboard): expose active bots as operational cards with quick context switching`
 - [ ] `BOPS-05 feat(web-monitor): redesign activity stream into dense operational table (backtest-like readability)`
