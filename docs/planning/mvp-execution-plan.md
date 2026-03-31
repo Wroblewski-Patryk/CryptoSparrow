@@ -358,8 +358,9 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-29 feat(web-dashboard): tighten CTA copy + density in dashboard strips to reduce decision latency`
 - [x] `BOPS-30 feat(web-dashboard): rebalance status-card wording + emphasis to avoid duplicated semantic signals`
 - [x] `BOPS-31 feat(web-dashboard): polish control-center + onboarding visual rhythm with final spacing/contrast pass before manual UX review`
-- [ ] `BOPS-32 chore(web-dashboard): prepare focused manual UX review checklist for dashboard+bots operational flow`
+- [x] `BOPS-32 chore(web-dashboard): prepare focused manual UX review checklist for dashboard+bots operational flow`
 - [ ] `BOPS-33 feat(web-dashboard): apply checklist-driven final nits from manual dashboard+bots UX walk-through`
+- [ ] `BOPS-34 chore(web-dashboard): run final responsive pass on dashboard+bots headers/cards after checklist nits and lock release screenshots`
 
 ## Progress Log
 - 2026-03-31: Completed `BOPS-07 feat(api+web-guard): added backend duplicate-active guard on create/activate flows (strategy + symbol-group pair), mapped conflict to HTTP 409, added dedicated API e2e coverage, and surfaced explicit conflict messaging in bots UI create/save actions.
@@ -751,6 +752,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-31: Reduced dashboard decision latency by tightening CTA copy in quick-action strips (`Review strategies`, `Run backtests`, `Check orders`, `Open reports`) and simplifying supporting guidance text.
 - 2026-03-31: Rebalanced status-strip semantics to avoid duplication by replacing generic activity/quality counters with clearer cards (`Runtime now`, `Risk watch`, `Latest event`).
 - 2026-03-31: Completed final spacing/contrast polish pass for onboarding + control-center strips (subtle elevated containers, softer card backgrounds, and tighter vertical rhythm) before manual UX review.
+- 2026-03-31: Added focused manual UX checklist for Dashboard -> Bots operational flow in `docs/operations/dashboard-bots-operational-ux-checklist.md` to drive the final nit pass (`BOPS-33`) with explicit IA, readability, anti-flicker, and responsive checks.
 
 
 

@@ -7,14 +7,15 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BOPS-32 chore(web-dashboard): prepare focused manual UX review checklist for dashboard+bots operational flow`
+- [ ] `BOPS-33 feat(web-dashboard): apply checklist-driven final nits from manual dashboard+bots UX walk-through`
 
 ## NEXT
-- [ ] `BOPS-33 feat(web-dashboard): apply checklist-driven final nits from manual dashboard+bots UX walk-through`
+- [ ] `BOPS-34 chore(web-dashboard): run final responsive pass on dashboard+bots headers/cards after checklist nits and lock release screenshots`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BOPS-32 chore(web-dashboard): prepare focused manual UX review checklist for dashboard+bots operational flow`
 - [x] `BOPS-31 feat(web-dashboard): polish control-center and onboarding visual rhythm with final spacing/contrast pass before manual UX review`
 - [x] `BOPS-30 feat(web-dashboard): rebalance status-card wording and emphasis to avoid duplicated semantic signals`
 - [x] `BOPS-29 feat(web-dashboard): tighten CTA copy and density in dashboard strips to reduce decision latency`
