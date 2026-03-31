@@ -310,23 +310,50 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BMOD-23 feat(runtime-risk): compute group max-open cap from active strategy risk settings`
 - [x] `BMOD-24 refactor(runtime-model): remove runtime dependency on legacy bot-strategy fallback graph`
 - [x] `BMOD-25 feat(runtime-watchdog): keep scan loop as disabled-by-default fallback watchdog`
-- [ ] `BMOD-26 test(runtime): extend signal-loop and watchdog tests for websocket-first semantics`
-- [ ] `BMOD-27 test(parity): add bot-paper vs backtest decision parity regression suite`
-- [ ] `BMOD-28 feat(db): add bot runtime session model for run-like monitoring windows`
-- [ ] `BMOD-29 feat(db): add bot runtime event model for lifecycle trace storage`
-- [ ] `BMOD-30 feat(db): add bot runtime per-symbol stats snapshot model`
-- [ ] `BMOD-31 feat(runtime-telemetry): persist session/event/stat snapshots from runtime orchestrator`
-- [ ] `BMOD-32 feat(api-monitor): add endpoints for bot sessions list/detail`
-- [ ] `BMOD-33 feat(api-monitor): add endpoints for per-symbol stats and trades list (no chart payload)`
-- [ ] `BMOD-34 feat(web-monitor): add bot monitoring view with summary + pair stats + trades table`
-- [ ] `BMOD-35 feat(web-live-refresh): add lightweight auto-refresh for active bot sessions`
-- [ ] `BMOD-36 test(e2e): add end-to-end monitoring contract coverage for session/stat/trade data`
-- [ ] `BMOD-37 chore(data-migration): migrate legacy LOCAL modes and legacy botStrategy bindings to canonical model`
-- [ ] `BMOD-38 refactor(db): remove LOCAL enum from Prisma after successful migration verification`
-- [ ] `BMOD-39 docs(runbook): publish bot module operator runbook and manual smoke checklist`
-- [ ] `BMOD-40 release(gate): run full regression gate for bot/backtest/runtime and record evidence`
+- [x] `BMOD-26 test(runtime): extend signal-loop and watchdog tests for websocket-first semantics`
+- [x] `BMOD-27 test(parity): add bot-paper vs backtest decision parity regression suite`
+- [x] `BMOD-28 feat(db): add bot runtime session model for run-like monitoring windows`
+- [x] `BMOD-29 feat(db): add bot runtime event model for lifecycle trace storage`
+- [x] `BMOD-30 feat(db): add bot runtime per-symbol stats snapshot model`
+- [x] `BMOD-31 feat(runtime-telemetry): persist session/event/stat snapshots from runtime orchestrator`
+- [x] `BMOD-32 feat(api-monitor): add endpoints for bot sessions list/detail`
+- [x] `BMOD-33 feat(api-monitor): add endpoints for per-symbol stats and trades list (no chart payload)`
+- [x] `BMOD-34 feat(web-monitor): add bot monitoring view with summary + pair stats + trades table`
+- [x] `BMOD-35 feat(web-live-refresh): add lightweight auto-refresh for active bot sessions`
+- [x] `BMOD-36 test(e2e): add end-to-end monitoring contract coverage for session/stat/trade data`
+- [x] `BMOD-37 chore(data-migration): migrate legacy LOCAL modes and legacy botStrategy bindings to canonical model`
+- [x] `BMOD-38 refactor(db): remove LOCAL enum from Prisma after successful migration verification`
+- [x] `BMOD-39 docs(runbook): publish bot module operator runbook and manual smoke checklist`
+- [x] `BMOD-40 release(gate): run full regression gate for bot/backtest/runtime and record evidence`
+
+## Phase 19 - Bots Operations Center UX Cleanup (No Runtime Logic Drift)
+- [x] `BOPS-01 docs(plan): lock IA split (Dashboard = global control center, Bots = runtime operations center) and define now/history/future monitoring contract`
+- [ ] `BOPS-02 feat(web-monitor): restructure monitoring into explicit operator blocks (Now: open positions + open orders, History: closed positions + trades, Future: live signal checks by symbol)`
+- [ ] `BOPS-03 feat(web-monitor): keep auto-refresh updates in-place (no section remount/flicker) for accessibility-safe monitoring`
+- [ ] `BOPS-04 feat(web-bots-dashboard): redesign bot list into clickable operational cards for fast context switching between active bots`
+- [ ] `BOPS-05 feat(web-monitor): replace lightweight activity feed with dense operational table aligned to backtest readability`
+- [ ] `BOPS-06 feat(web-creator): reorganize creator form into three sections (core bot mode, market-group context, strategy context)`
+- [ ] `BOPS-07 feat(api+web-guard): block duplicate active bot creation when strategy + market-group pair is already active`
+- [ ] `BOPS-08 feat(api+web-guard): block strategy editing while referenced by any active bot (allow when all linked bots inactive)`
+- [ ] `BOPS-09 feat(web-monitor): default monitoring to aggregate session view with optional advanced per-session drilldown`
 
 ## Progress Log
+- 2026-03-31: Completed `BOPS-01 docs(plan): locked Dashboard vs Bots IA split and temporal monitoring contract (Now/History/Future) in `docs/planning/open-decisions.md`, and queued execution track in Phase 19 + `mvp-next-commits.md` for tiny-commit rollout.
+- 2026-03-31: Completed `BMOD-40 release(gate): executed full bot-module regression gate across API/runtime/backtest/web contracts and published evidence artifact `docs/operations/bot-module-release-gate-2026-03-31.md`; gate includes migration/preflight verification, targeted cross-module suites (44 API tests), bots web suite (9 tests), and API/WEB typechecks (PASS)`.
+- 2026-03-31: Completed `BMOD-39 docs(runbook): published bot-module operator documentation in `docs/operations/bot-module-operator-runbook.md` plus manual validation flow in `docs/operations/bot-module-manual-smoke-checklist.md`, covering PAPER/LIVE create-flow, websocket-first runtime semantics, monitoring interpretation, incident actions, and command-level smoke gates`.
+- 2026-03-31: Completed `BMOD-38 refactor(db): removed `LOCAL` from canonical `BotMode` enum in Prisma schema and added migration `20260331121500_remove_local_from_bot_mode_enum` (safe enum rebuild + LOCAL->PAPER guard updates for `Bot`/`BotRuntimeSession`), then retired transitional API/runtime LOCAL compat surfaces (`bots.controller` mapping adapter, preTrade execution mode unions, legacy LOCAL e2e fixture) while keeping preflight report backward-facing for historical legacy section; verified with `prisma migrate deploy`, bots e2e, engine parity/runtime suites, and API typecheck`.
+- 2026-03-31: Completed `BMOD-37 chore(data-migration): added idempotent Prisma data migration (`20260331113000_migrate_legacy_bot_data_to_canonical_model`) to normalize `Bot.mode LOCAL->PAPER` and re-backfill legacy `BotStrategy` bindings into canonical `BotMarketGroup` + `MarketGroupStrategyLink`; verified with `prisma migrate deploy`, preflight report (`migrationReady=true`), and green bots e2e suite`.
+- 2026-03-31: Completed `BMOD-36 test(e2e): extended bots API e2e monitoring contract with status/symbol/limit filter assertions and session-window trade inclusion/exclusion checks (running vs completed windows), plus web monitoring tab regression for auto-refresh interval wiring`.
+- 2026-03-31: Completed `BMOD-35 feat(web-live-refresh): added lightweight monitoring auto-refresh (15s interval) in Bots Monitoring tab gated by `RUNNING` sessions + user toggle, so runtime stats/trades refresh passively without chart load; covered by component regression test and web typecheck`.
+- 2026-03-31: Completed `BMOD-34 feat(web-monitor): added `Monitoring` tab in Bots module with bot/session selection, runtime session summary cards, per-symbol stats table, and session-scoped trades table (no chart payload), wired to new runtime-monitor APIs with manual refresh + optional symbol filter; validated via updated `BotsManagement` UI tests and web typecheck`.
+- 2026-03-31: Completed `BMOD-33 feat(api-monitor): added session-scoped monitoring endpoints for lightweight observability (`GET /dashboard/bots/:id/runtime-sessions/:sessionId/symbol-stats`, `GET /dashboard/bots/:id/runtime-sessions/:sessionId/trades`) with ownership isolation, session-window trade filtering, and summary aggregates; extended bots e2e contract coverage`.
+- 2026-03-31: Completed `BMOD-32 feat(api-monitor): added bot runtime monitoring API for sessions list/detail (`GET /dashboard/bots/:id/runtime-sessions`, `GET /dashboard/bots/:id/runtime-sessions/:sessionId`) with ownership isolation, status filter/limit query contract, and summary aggregates from runtime events/symbol stats (covered by bots e2e)`.
+- 2026-03-31: Completed `BMOD-31 feat(runtime-telemetry): implemented runtime telemetry persistence service and wired it into signal loop/orchestrator/position automation (session ensure/close, lifecycle events, per-symbol stat upserts incl. DCA and signal counters); validated with green runtime unit suites + bots e2e`.
+- 2026-03-31: Completed `BMOD-30 feat(db): added `BotRuntimeSymbolStat` schema model for per-session/per-symbol monitoring snapshots (signals/entries/exits/DCA/trade counters + realized PnL/fees + open-position snapshot fields) with unique `(sessionId, symbol)` and SQL migration scaffold`.
+- 2026-03-31: Completed `BMOD-29 feat(db): added `BotRuntimeEvent` schema model (typed lifecycle events + level enum + symbol/group/strategy context + payload + eventAt ordering indexes) with SQL migration scaffold and relation wiring to session/bot/user`.
+- 2026-03-31: Completed `BMOD-28 feat(db): added `BotRuntimeSession` schema model (status enum, lifecycle timestamps, heartbeat/stop metadata, indexes, `User`/`Bot` relations) with SQL migration scaffold for run-like bot monitoring windows`.
+- 2026-03-31: Completed `BMOD-27 test(parity): added bot PAPER vs BACKTEST decision parity regression coverage for shared execution decisions (`open/ignore/close`, `no_flip_with_open_position`, `already_open_same_side`, `no_open_position`) and validated with green engine+bots suites`.
+- 2026-03-31: Completed `BMOD-26 test(runtime): extended websocket-first regression coverage in runtime signal/watchdog tests (non-final candles ignored, watchdog ticker path remains strategy-neutral, watchdog emits ticker-only payloads) and decoupled signal-loop unit tests from DB via runtime-capital mock for deterministic CI execution`.
 - 2026-03-30: Completed `BMOD-25 feat(runtime-watchdog): switched runtime scan loop to explicit fallback watchdog mode with `RUNTIME_SCAN_WATCHDOG_ENABLED=false` default and added regression test proving no auto-scan execution when watchdog is disabled`.
 - 2026-03-30: Completed `BMOD-24 refactor(runtime-model): removed runtime signal-loop read dependency on legacy `botStrategies` fallback graph; runtime now resolves active execution graph exclusively from canonical `botMarketGroups + strategyLinks` model`.
 - 2026-03-30: Completed `BMOD-23 feat(runtime-risk): introduced runtime derivation of market-group `maxOpenPositions` from active strategy risk config (`additional.maxPositions` / `additional.maxOpenPositions`) using safest cap (minimum positive value), with fallback to configured group cap and dedicated helper tests`.

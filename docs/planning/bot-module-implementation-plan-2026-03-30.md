@@ -57,25 +57,36 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 - [x] `BMOD-23 feat(runtime-risk): compute group max-open cap from active strategy risk settings`
 - [x] `BMOD-24 refactor(runtime-model): remove runtime dependency on legacy bot-strategy fallback graph`
 - [x] `BMOD-25 feat(runtime-watchdog): keep scan loop as disabled-by-default fallback watchdog`
-- [ ] `BMOD-26 test(runtime): extend signal-loop and watchdog tests for websocket-first semantics`
-- [ ] `BMOD-27 test(parity): add bot-paper vs backtest decision parity regression suite`
+- [x] `BMOD-26 test(runtime): extend signal-loop and watchdog tests for websocket-first semantics`
+- [x] `BMOD-27 test(parity): add bot-paper vs backtest decision parity regression suite`
 
 ## Phase E - Bot Monitoring (No Candlestick Charts)
-- [ ] `BMOD-28 feat(db): add bot runtime session model for run-like monitoring windows`
-- [ ] `BMOD-29 feat(db): add bot runtime event model for lifecycle trace storage`
-- [ ] `BMOD-30 feat(db): add bot runtime per-symbol stats snapshot model`
-- [ ] `BMOD-31 feat(runtime-telemetry): persist session/event/stat snapshots from runtime orchestrator`
-- [ ] `BMOD-32 feat(api-monitor): add endpoints for bot sessions list/detail`
-- [ ] `BMOD-33 feat(api-monitor): add endpoints for per-symbol stats and trades list (no chart payload)`
-- [ ] `BMOD-34 feat(web-monitor): add bot monitoring view with summary + pair stats + trades table`
-- [ ] `BMOD-35 feat(web-live-refresh): add lightweight auto-refresh for active bot sessions`
-- [ ] `BMOD-36 test(e2e): add end-to-end monitoring contract coverage for session/stat/trade data`
+- [x] `BMOD-28 feat(db): add bot runtime session model for run-like monitoring windows`
+- [x] `BMOD-29 feat(db): add bot runtime event model for lifecycle trace storage`
+- [x] `BMOD-30 feat(db): add bot runtime per-symbol stats snapshot model`
+- [x] `BMOD-31 feat(runtime-telemetry): persist session/event/stat snapshots from runtime orchestrator`
+- [x] `BMOD-32 feat(api-monitor): add endpoints for bot sessions list/detail`
+- [x] `BMOD-33 feat(api-monitor): add endpoints for per-symbol stats and trades list (no chart payload)`
+- [x] `BMOD-34 feat(web-monitor): add bot monitoring view with summary + pair stats + trades table`
+- [x] `BMOD-35 feat(web-live-refresh): add lightweight auto-refresh for active bot sessions`
+- [x] `BMOD-36 test(e2e): add end-to-end monitoring contract coverage for session/stat/trade data`
 
 ## Phase F - Migration Cleanup and Hardening
-- [ ] `BMOD-37 chore(data-migration): migrate legacy LOCAL modes and legacy botStrategy bindings to canonical model`
-- [ ] `BMOD-38 refactor(db): remove LOCAL enum from Prisma after successful migration verification`
-- [ ] `BMOD-39 docs(runbook): publish bot module operator runbook and manual smoke checklist`
-- [ ] `BMOD-40 release(gate): run full regression gate for bot/backtest/runtime and record evidence`
+- [x] `BMOD-37 chore(data-migration): migrate legacy LOCAL modes and legacy botStrategy bindings to canonical model`
+- [x] `BMOD-38 refactor(db): remove LOCAL enum from Prisma after successful migration verification`
+- [x] `BMOD-39 docs(runbook): publish bot module operator runbook and manual smoke checklist`
+- [x] `BMOD-40 release(gate): run full regression gate for bot/backtest/runtime and record evidence`
+
+## Phase G - Operations UX Cleanup (Dashboard vs Bots)
+- [x] `BOPS-01 docs(plan): lock IA split (Dashboard as global control center, Bots as runtime operations center)`
+- [ ] `BOPS-02 feat(web-monitor): restructure monitoring view into three operator blocks (Now / History / Future signals)`
+- [ ] `BOPS-03 feat(web-monitor): keep live refresh in-place without visual remount/flicker`
+- [ ] `BOPS-04 feat(web-bots-dashboard): expose active bots as operational cards with quick context switching`
+- [ ] `BOPS-05 feat(web-monitor): redesign activity stream into dense operational table (backtest-like readability)`
+- [ ] `BOPS-06 feat(web-creator): split bot creation form into three logical UX sections`
+- [ ] `BOPS-07 feat(api+web-guard): prevent duplicate active bot for same strategy + market-group`
+- [ ] `BOPS-08 feat(api+web-guard): prevent strategy edit while used by active bots`
+- [ ] `BOPS-09 feat(web-monitor): default to aggregated monitoring across sessions with optional advanced drilldown`
 
 ## Test Command Map (per phase)
 - Phase A/B:

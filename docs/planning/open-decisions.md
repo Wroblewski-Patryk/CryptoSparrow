@@ -46,6 +46,20 @@ This file tracks intentionally unresolved architecture choices so implementation
 - Canonical reference:
   - `docs/product/autonomous-agent-vision.md`
 
+## Dashboard vs Bots Information Architecture Split
+- Decision state: resolved on 2026-03-31.
+- Scope: operator UX for runtime bot workflows.
+- Decision:
+  - `Dashboard` remains the global control-center surface for application-level status and quick navigation.
+  - `Bots` module is the runtime operations center for bot execution context and monitoring.
+  - Bots monitoring must be organized into explicit temporal operator blocks:
+    - `Now` (open positions, open orders, current exposure),
+    - `History` (closed positions, trades, realized outcomes),
+    - `Future` (live signal-check status for tracked symbols).
+  - UI work in this track must not introduce runtime-logic drift; backend changes are allowed only when required to support operator clarity and consistency.
+- Implementation rollout:
+  - `Phase 19` (`BOPS-01..BOPS-09`) in `docs/planning/mvp-execution-plan.md`.
+
 ## Lifecycle Close Authority (Parity Contract)
 - Decision state: resolved on 2026-03-29.
 - Scope: backtest, paper, and live runtime equivalence.
