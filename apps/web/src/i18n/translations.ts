@@ -114,6 +114,8 @@ type TranslationSchema = {
       recentActivity: string;
       noActivityTitle: string;
       noActivityDescription: string;
+      activityTableTime: string;
+      activityTableEvent: string;
       liveSnapshotSyncedTitle: string;
       liveSnapshotSyncedDescription: string;
       activityPositionOpened: string;
@@ -241,6 +243,8 @@ export const translations: Record<Locale, TranslationSchema> = {
         recentActivity: "Recent Activity",
         noActivityTitle: "No activity",
         noActivityDescription: "Feed will appear after first orders/positions.",
+        activityTableTime: "Time",
+        activityTableEvent: "Event",
         liveSnapshotSyncedTitle: "Live snapshot synced",
         liveSnapshotSyncedDescription: "Open positions: {positions}, open orders: {orders}.",
         activityPositionOpened: "{side} {symbol} opened (x{leverage}).",
@@ -367,6 +371,8 @@ export const translations: Record<Locale, TranslationSchema> = {
         recentActivity: "Ostatnia aktywnosc",
         noActivityTitle: "Brak aktywnosci",
         noActivityDescription: "Feed pojawi sie po pierwszych orders/positions.",
+        activityTableTime: "Czas",
+        activityTableEvent: "Zdarzenie",
         liveSnapshotSyncedTitle: "Live snapshot zsynchronizowany",
         liveSnapshotSyncedDescription: "Otwarte pozycje: {positions}, otwarte zlecenia: {orders}.",
         activityPositionOpened: "{side} {symbol} otwarte (x{leverage}).",

@@ -67,7 +67,7 @@ describe("HomeLiveWidgets", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Control center lanes")).toBeInTheDocument();
-      expect(screen.getByText("Live snapshot synced")).toBeInTheDocument();
+      expect(screen.getByText("Event")).toBeInTheDocument();
       expect(screen.getAllByText("ETHUSDT").length).toBeGreaterThan(0);
       expect(screen.getByText(/MARKET BTCUSDT BUY/i)).toBeInTheDocument();
     });

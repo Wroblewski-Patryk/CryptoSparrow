@@ -347,8 +347,9 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-18 feat(web-monitor): add compact operator checklist panel for repeated manual runtime health checks`
 - [x] `BOPS-19 feat(web-dashboard): polish global control-center cards + CTA hierarchy to complement Bots operations center`
 - [x] `BOPS-20 feat(web-dashboard): improve first-view control-center grouping + action clarity for operators`
-- [ ] `BOPS-21 feat(web-dashboard): tighten control-center visual density + KPI scan rhythm for high-frequency operator checks`
+- [x] `BOPS-21 feat(web-dashboard): tighten control-center visual density + KPI scan rhythm for high-frequency operator checks`
 - [ ] `BOPS-22 feat(web-dashboard): refine dashboard onboarding microcopy + operator context strip for cleaner first-load orientation`
+- [ ] `BOPS-23 feat(web-dashboard): improve cross-module handoff cues (Dashboard -> Bots, Backtests, Reports) for operator navigation confidence`
 
 ## Progress Log
 - 2026-03-31: Completed `BOPS-07 feat(api+web-guard): added backend duplicate-active guard on create/activate flows (strategy + symbol-group pair), mapped conflict to HTTP 409, added dedicated API e2e coverage, and surfaced explicit conflict messaging in bots UI create/save actions.
@@ -729,6 +730,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-31: Added compact operator checklist panel in monitoring (session status, heartbeat freshness, positions loaded, signals loaded, error flag) for quick repetitive health verification.
 - 2026-03-31: Polished global Dashboard control-center hierarchy with dedicated operational lanes (runtime bots, strategy/backtest lane, execution review lane), promoted Bots runtime as primary CTA, and removed duplicated quick-actions card to reduce decision clutter.
 - 2026-03-31: Improved first-load dashboard clarity by adding grouped status cards (`Runtime now / Execution quality / Recent activity`), explicit lane sequencing (Step 1..3), and compact quick-action strip anchored to the control-center lanes.
+- 2026-03-31: Tightened dashboard scan rhythm by switching orders snapshot to compact KPI tiles, replacing timeline feed with dense zebra activity table, and removing redundant synced-success banner from the bottom of the page.
 
 
 

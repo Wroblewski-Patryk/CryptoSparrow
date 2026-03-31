@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
 
-import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
+import { EmptyState, ErrorState, LoadingState } from "../../../ui/components/ViewState";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { listOrders } from "../../../features/orders/services/orders.service";
@@ -280,18 +280,18 @@ export default function HomeLiveWidgets() {
         <div className="card bg-base-200 shadow-sm">
           <div className="card-body p-5">
             <h2 className="card-title">{t("dashboard.home.ordersSnapshot")}</h2>
-            <div className="stats stats-vertical lg:stats-horizontal w-full shadow bg-base-100">
-              <div className="stat">
-                <div className="stat-title">{t("dashboard.home.pending")}</div>
-                <div className="stat-value text-warning text-2xl">{pendingOrders}</div>
+            <div className="grid gap-2 sm:grid-cols-3">
+              <div className="rounded-md border border-base-300 bg-base-100 px-3 py-2">
+                <p className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.pending")}</p>
+                <p className="mt-1 text-xl font-semibold text-warning">{pendingOrders}</p>
               </div>
-              <div className="stat">
-                <div className="stat-title">{t("dashboard.home.filledOrders")}</div>
-                <div className="stat-value text-success text-2xl">{filledOrders}</div>
+              <div className="rounded-md border border-base-300 bg-base-100 px-3 py-2">
+                <p className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.filledOrders")}</p>
+                <p className="mt-1 text-xl font-semibold text-success">{filledOrders}</p>
               </div>
-              <div className="stat">
-                <div className="stat-title">{t("dashboard.home.rejectedOrders")}</div>
-                <div className="stat-value text-error text-2xl">{rejectedOrders}</div>
+              <div className="rounded-md border border-base-300 bg-base-100 px-3 py-2">
+                <p className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.rejectedOrders")}</p>
+                <p className="mt-1 text-xl font-semibold text-error">{rejectedOrders}</p>
               </div>
             </div>
             <div className="card-actions justify-end">
@@ -311,27 +311,28 @@ export default function HomeLiveWidgets() {
                 description={t("dashboard.home.noActivityDescription")}
               />
             ) : (
-              <ul className="timeline timeline-vertical">
-                {feed.map((item) => (
-                  <li key={item.key}>
-                    <div className="timeline-start text-xs opacity-60">{formatTime(item.at)}</div>
-                    <div className="timeline-middle">*</div>
-                    <div className="timeline-end py-2 text-sm">{item.text}</div>
-                    <hr />
-                  </li>
-                ))}
-              </ul>
+              <div className="overflow-x-auto">
+                <table className="table table-zebra table-sm">
+                  <thead>
+                    <tr>
+                      <th>{t("dashboard.home.activityTableTime")}</th>
+                      <th>{t("dashboard.home.activityTableEvent")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {feed.map((item) => (
+                      <tr key={item.key}>
+                        <td className="whitespace-nowrap text-xs opacity-65">{formatTime(item.at)}</td>
+                        <td className="text-sm">{item.text}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
       </div>
-
-      <SuccessState
-        title={t("dashboard.home.liveSnapshotSyncedTitle")}
-        description={t("dashboard.home.liveSnapshotSyncedDescription")
-          .replace("{positions}", String(openPositions.length))
-          .replace("{orders}", String(openOrders.length))}
-      />
     </div>
   );
 }
