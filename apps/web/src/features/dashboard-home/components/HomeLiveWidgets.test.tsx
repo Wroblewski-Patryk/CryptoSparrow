@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { I18nProvider } from "../../../i18n/I18nProvider";
 import HomeLiveWidgets from "./HomeLiveWidgets";
 
 const listOrdersMock = vi.hoisted(() => vi.fn());
@@ -15,14 +16,21 @@ vi.mock("../../../features/positions/services/positions.service", () => ({
 }));
 
 describe("HomeLiveWidgets", () => {
+  const renderSubject = () =>
+    render(
+      <I18nProvider>
+        <HomeLiveWidgets />
+      </I18nProvider>
+    );
+
   it("renders empty state when there are no trading records", async () => {
     listOrdersMock.mockResolvedValue([]);
     listPositionsMock.mockResolvedValue([]);
 
-    render(<HomeLiveWidgets />);
+    renderSubject();
 
     await waitFor(() => {
-      expect(screen.getByText("Brak danych tradingowych")).toBeInTheDocument();
+      expect(screen.getByText("No trading data")).toBeInTheDocument();
     });
   });
 
@@ -55,7 +63,7 @@ describe("HomeLiveWidgets", () => {
       },
     ]);
 
-    render(<HomeLiveWidgets />);
+    renderSubject();
 
     await waitFor(() => {
       expect(screen.getByText("Live snapshot synced")).toBeInTheDocument();

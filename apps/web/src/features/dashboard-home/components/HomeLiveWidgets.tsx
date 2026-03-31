@@ -127,6 +127,59 @@ export default function HomeLiveWidgets() {
     <div className="space-y-6">
       <LiveMarketBar symbols={["BTCUSDT", "ETHUSDT"]} interval="1m" />
 
+      <div className="rounded-lg border border-base-300 bg-base-200 p-4">
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold">{t("dashboard.home.controlCenterTitle")}</h2>
+            <p className="text-sm opacity-70">{t("dashboard.home.controlCenterDescription")}</p>
+          </div>
+          <span className="badge badge-outline">{t("dashboard.home.controlCenterBadge")}</span>
+        </div>
+
+        <div className="grid gap-3 xl:grid-cols-3">
+          <div className="rounded-lg border border-primary/30 bg-base-100 p-3">
+            <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.runtimeOpsTitle")}</p>
+            <p className="mt-1 text-sm opacity-75">{t("dashboard.home.runtimeOpsDescription")}</p>
+            <p className="mt-2 text-xs opacity-65">
+              {t("dashboard.home.runtimeOpsMeta")
+                .replace("{positions}", String(openPositions.length))
+                .replace("{orders}", String(openOrders.length))}
+            </p>
+            <div className="mt-3">
+              <Link href="/dashboard/bots" className="btn btn-primary btn-sm w-full">
+                {t("dashboard.home.runtimeOpsAction")}
+              </Link>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+            <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.strategyLabTitle")}</p>
+            <p className="mt-1 text-sm opacity-75">{t("dashboard.home.strategyLabDescription")}</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <Link href="/dashboard/strategies/list" className="btn btn-outline btn-sm">
+                {t("dashboard.home.strategyLabPrimaryAction")}
+              </Link>
+              <Link href="/dashboard/backtests/list" className="btn btn-outline btn-sm">
+                {t("dashboard.home.strategyLabSecondaryAction")}
+              </Link>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+            <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.executionReviewTitle")}</p>
+            <p className="mt-1 text-sm opacity-75">{t("dashboard.home.executionReviewDescription")}</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <Link href="/dashboard/orders" className="btn btn-outline btn-sm">
+                {t("dashboard.home.executionReviewPrimaryAction")}
+              </Link>
+              <Link href="/dashboard/positions" className="btn btn-outline btn-sm">
+                {t("dashboard.home.executionReviewSecondaryAction")}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {kpiCards.map((card) => (
           <div key={card.label} className="card bg-base-200 shadow-sm">
@@ -138,63 +191,44 @@ export default function HomeLiveWidgets() {
         ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-3">
-        <div className="card bg-base-200 shadow-sm xl:col-span-2">
-          <div className="card-body p-5">
-            <h2 className="card-title">{t("dashboard.home.positionsSnapshot")}</h2>
-            {openPositions.length === 0 ? (
-              <EmptyState
-                title={t("dashboard.home.noOpenPositionsTitle")}
-                description={t("dashboard.home.noOpenPositionsDescription")}
-              />
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="table table-zebra">
-                  <thead>
-                    <tr>
-                      <th>Symbol</th>
-                      <th>{t("dashboard.home.side")}</th>
-                      <th>{t("dashboard.home.quantity")}</th>
-                      <th>{t("dashboard.home.leverage")}</th>
-                      <th>{t("dashboard.home.unrealizedPnl")}</th>
+      <div className="card bg-base-200 shadow-sm">
+        <div className="card-body p-5">
+          <h2 className="card-title">{t("dashboard.home.positionsSnapshot")}</h2>
+          {openPositions.length === 0 ? (
+            <EmptyState
+              title={t("dashboard.home.noOpenPositionsTitle")}
+              description={t("dashboard.home.noOpenPositionsDescription")}
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="table table-zebra">
+                <thead>
+                  <tr>
+                    <th>Symbol</th>
+                    <th>{t("dashboard.home.side")}</th>
+                    <th>{t("dashboard.home.quantity")}</th>
+                    <th>{t("dashboard.home.leverage")}</th>
+                    <th>{t("dashboard.home.unrealizedPnl")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {openPositions.slice(0, 6).map((position) => (
+                    <tr key={position.id}>
+                      <td>{position.symbol}</td>
+                      <td>{position.side}</td>
+                      <td>{formatNumber(position.quantity)}</td>
+                      <td>{position.leverage}x</td>
+                      <td className={pnlClass(position.unrealizedPnl)}>{formatNumber(position.unrealizedPnl)}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {openPositions.slice(0, 6).map((position) => (
-                      <tr key={position.id}>
-                        <td>{position.symbol}</td>
-                        <td>{position.side}</td>
-                        <td>{formatNumber(position.quantity)}</td>
-                        <td>{position.leverage}x</td>
-                        <td className={pnlClass(position.unrealizedPnl)}>{formatNumber(position.unrealizedPnl)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            <div className="card-actions justify-end">
-              <Link href="/dashboard/positions" className="btn btn-sm btn-outline">
-                {t("dashboard.home.positionsAction")}
-              </Link>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
-        </div>
-
-        <div className="card bg-base-200 shadow-sm">
-          <div className="card-body p-5">
-            <h2 className="card-title">{t("dashboard.home.quickActions")}</h2>
-            <div className="flex flex-col gap-2">
-              <Link href="/dashboard/strategies/list" className="btn btn-primary btn-sm">
-                {t("dashboard.home.reviewStrategies")}
-              </Link>
-              <Link href="/dashboard/orders" className="btn btn-outline btn-sm">
-                {t("dashboard.home.openOrdersAction")}
-              </Link>
-              <Link href="/dashboard/backtests/list" className="btn btn-outline btn-sm">
-                {t("dashboard.home.runBacktest")}
-              </Link>
-            </div>
+          )}
+          <div className="card-actions justify-end">
+            <Link href="/dashboard/positions" className="btn btn-sm btn-outline">
+              {t("dashboard.home.positionsAction")}
+            </Link>
           </div>
         </div>
       </div>

@@ -79,6 +79,21 @@ type TranslationSchema = {
       noOpenPositionsTitle: string;
       noOpenPositionsDescription: string;
       positionsAction: string;
+      controlCenterTitle: string;
+      controlCenterDescription: string;
+      controlCenterBadge: string;
+      runtimeOpsTitle: string;
+      runtimeOpsDescription: string;
+      runtimeOpsMeta: string;
+      runtimeOpsAction: string;
+      strategyLabTitle: string;
+      strategyLabDescription: string;
+      strategyLabPrimaryAction: string;
+      strategyLabSecondaryAction: string;
+      executionReviewTitle: string;
+      executionReviewDescription: string;
+      executionReviewPrimaryAction: string;
+      executionReviewSecondaryAction: string;
       quickActions: string;
       reviewStrategies: string;
       openOrdersAction: string;
@@ -180,6 +195,21 @@ export const translations: Record<Locale, TranslationSchema> = {
         noOpenPositionsTitle: "No open positions",
         noOpenPositionsDescription: "There are no active positions at the moment.",
         positionsAction: "Open Positions",
+        controlCenterTitle: "Control center lanes",
+        controlCenterDescription: "Use this section to pick your next operational step without jumping between modules.",
+        controlCenterBadge: "Global dashboard",
+        runtimeOpsTitle: "Bots runtime operations",
+        runtimeOpsDescription: "Monitor open positions, history, and live signal checks in one operational module.",
+        runtimeOpsMeta: "Open positions: {positions} | Open orders: {orders}",
+        runtimeOpsAction: "Open Bots Operations Center",
+        strategyLabTitle: "Strategy and backtest lane",
+        strategyLabDescription: "Prepare and validate ideas before enabling runtime execution.",
+        strategyLabPrimaryAction: "Strategies",
+        strategyLabSecondaryAction: "Backtests",
+        executionReviewTitle: "Execution review lane",
+        executionReviewDescription: "Review execution outcomes, pending items, and current exposure.",
+        executionReviewPrimaryAction: "Orders",
+        executionReviewSecondaryAction: "Positions",
         quickActions: "Quick Actions",
         reviewStrategies: "Review Strategies",
         openOrdersAction: "Open Orders",
@@ -279,6 +309,22 @@ export const translations: Record<Locale, TranslationSchema> = {
         noOpenPositionsTitle: "Brak otwartych pozycji",
         noOpenPositionsDescription: "W tej chwili nie ma aktywnych positions.",
         positionsAction: "Przejdz do pozycji",
+        controlCenterTitle: "Sciezki centrum sterowania",
+        controlCenterDescription:
+          "Wybierz kolejny krok operacyjny bez przeskakiwania miedzy modulami i zachowaj pelny kontekst.",
+        controlCenterBadge: "Dashboard globalny",
+        runtimeOpsTitle: "Operacje runtime botow",
+        runtimeOpsDescription: "Podglad otwartych pozycji, historii i live-check sygnalow w jednym module operacyjnym.",
+        runtimeOpsMeta: "Otwarte pozycje: {positions} | Otwarte zlecenia: {orders}",
+        runtimeOpsAction: "Przejdz do Operacji Botow",
+        strategyLabTitle: "Sciezka strategii i backtestu",
+        strategyLabDescription: "Przygotuj i zweryfikuj pomysly zanim uruchomisz runtime.",
+        strategyLabPrimaryAction: "Strategie",
+        strategyLabSecondaryAction: "Backtesty",
+        executionReviewTitle: "Sciezka kontroli egzekucji",
+        executionReviewDescription: "Sprawdz wynik wykonania, pending i aktualna ekspozycje.",
+        executionReviewPrimaryAction: "Zlecenia",
+        executionReviewSecondaryAction: "Pozycje",
         quickActions: "Szybkie akcje",
         reviewStrategies: "Przejrzyj strategie",
         openOrdersAction: "Przejdz do zlecen",
