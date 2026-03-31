@@ -338,8 +338,9 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-09 feat(web-monitor): default monitoring to aggregate session view with optional advanced per-session drilldown`
 - [x] `BOPS-10 feat(web-monitor): strengthen Bots operational IA (history/open/live-signals) without backend behavior changes`
 - [x] `BOPS-11 feat(web-monitor): simplify controls and optimize human-first operator workflow in bot dashboard`
-- [ ] `BOPS-12 feat(web-monitor): improve visual hierarchy and runtime summary cards for faster manual operator validation`
+- [x] `BOPS-12 feat(web-monitor): improve visual hierarchy and runtime summary cards for faster manual operator validation`
 - [ ] `BOPS-13 feat(web-monitor): align section naming + helper copy with "Bots as operational center" IA for human operators`
+- [ ] `BOPS-14 feat(web-monitor): align Dashboard vs Bots helper labels so module boundaries stay obvious for operators`
 
 ## Progress Log
 - 2026-03-31: Completed `BOPS-07 feat(api+web-guard): added backend duplicate-active guard on create/activate flows (strategy + symbol-group pair), mapped conflict to HTTP 409, added dedicated API e2e coverage, and surfaced explicit conflict messaging in bots UI create/save actions.
@@ -711,6 +712,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-31: Switched bot monitoring to aggregate-by-default mode (all sessions summed) with optional advanced single-session drilldown; added merge logic for stats/positions/orders/trades and updated component regression coverage.
 - 2026-03-31: Simplified monitoring operational summary into three human-first cards (`Co jest teraz / Co bylo / Co bedzie`) to reduce KPI clutter and speed up operator orientation.
 - 2026-03-31: Reduced monitoring controls clutter by moving bot/session/view selectors into advanced options, unifying refresh flow, and exposing primary operator controls (status, symbol filter, auto-refresh, quick refresh) in one compact control panel.
+- 2026-03-31: Improved monitoring hierarchy for manual smoke-tests: added quick operator check strip, explicit section order (`1. Teraz / 2. Historia / 3. Co bedzie`), and reordered runtime panels to match operator decision flow.
 
 
 

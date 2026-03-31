@@ -542,6 +542,28 @@ export default function BotsManagement() {
     });
   }, [monitorTrades?.items]);
 
+  const monitorLastSignalAt = useMemo(() => {
+    const timestamp = Math.max(
+      0,
+      ...(monitorSymbolStats?.items ?? []).map((item) =>
+        toTimestamp(item.lastSignalDecisionAt ?? item.lastSignalAt ?? null)
+      )
+    );
+    return timestamp > 0 ? new Date(timestamp).toISOString() : null;
+  }, [monitorSymbolStats?.items]);
+
+  const monitorLastTradeAt = useMemo(() => {
+    const timestamp = Math.max(0, ...monitorOperationalTrades.map((trade) => toTimestamp(trade.executedAt)));
+    return timestamp > 0 ? new Date(timestamp).toISOString() : null;
+  }, [monitorOperationalTrades]);
+
+  const monitorHeartbeatLagMs = useMemo(() => {
+    if (!monitorSessionDetail?.lastHeartbeatAt) return null;
+    const heartbeatTs = toTimestamp(monitorSessionDetail.lastHeartbeatAt);
+    if (heartbeatTs <= 0) return null;
+    return Math.max(0, Date.now() - heartbeatTs);
+  }, [monitorSessionDetail?.lastHeartbeatAt]);
+
   const confirmLiveRisk = (message: string) => window.confirm(message);
 
   const loadAssistant = useCallback(async (botId: string) => {
@@ -1696,6 +1718,42 @@ export default function BotsManagement() {
                     </div>
                   ) : null}
 
+                  {monitorSessionDetail ? (
+                    <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide opacity-65">
+                        Szybka kontrola operatora
+                      </p>
+                      <div className="mt-2 grid gap-2 text-xs sm:grid-cols-2 xl:grid-cols-4">
+                        <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+                          <p className="opacity-60">Heartbeat lag</p>
+                          <p className="mt-1 font-semibold">{formatDuration(monitorHeartbeatLagMs ?? 0)}</p>
+                        </div>
+                        <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+                          <p className="opacity-60">Ostatni sygnal</p>
+                          <p className="mt-1 font-semibold">{formatDateTime(monitorLastSignalAt)}</p>
+                        </div>
+                        <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+                          <p className="opacity-60">Ostatni trade</p>
+                          <p className="mt-1 font-semibold">{formatDateTime(monitorLastTradeAt)}</p>
+                        </div>
+                        <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+                          <p className="opacity-60">Otwarte pozycje / zlecenia</p>
+                          <p className="mt-1 font-semibold">
+                            {monitorPositions?.openCount ?? 0} /{" "}
+                            {monitorPositions?.openOrdersCount ?? monitorPositions?.openOrders?.length ?? 0}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                    <h3 className="text-sm font-semibold">1. Teraz - otwarte pozycje i zlecenia</h3>
+                    <p className="mt-1 text-xs opacity-70">
+                      Sekcja do natychmiastowej kontroli stanu live: co jest aktywne w tej chwili.
+                    </p>
+                  </div>
+
                   <div className="rounded-lg border border-base-300 bg-base-100 p-3">
                     <div className="mb-2 flex items-center justify-between">
                       <h3 className="text-sm font-semibold">Teraz - otwarte pozycje</h3>
@@ -1796,6 +1854,13 @@ export default function BotsManagement() {
                   </div>
 
                   <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                    <h3 className="text-sm font-semibold">2. Historia - zamkniete pozycje i wykonane transakcje</h3>
+                    <p className="mt-1 text-xs opacity-70">
+                      Sekcja do weryfikacji co juz sie wydarzylo: wynik, tempo i jakosc wykonania.
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
                     <div className="mb-2 flex items-center justify-between">
                       <h3 className="text-sm font-semibold">Historia - pozycje</h3>
                       <span className="text-xs opacity-60">
@@ -1847,6 +1912,83 @@ export default function BotsManagement() {
                         </tbody>
                       </table>
                     </div>
+                  </div>
+
+                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h3 className="text-sm font-semibold">Historia - log operacyjny trade'ow</h3>
+                      <span className="text-xs opacity-60">
+                        {monitorOperationalTrades.length} / {(monitorTrades?.total ?? 0)} rekordow
+                      </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="table table-xs">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Czas</th>
+                            <th>Symbol</th>
+                            <th>Side</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Notional</th>
+                            <th>Fee</th>
+                            <th>Fee %</th>
+                            <th>Realized PnL</th>
+                            <th>PnL %</th>
+                            <th>Skumulowany PnL</th>
+                            <th>Origin</th>
+                            <th>Order</th>
+                            <th>Position</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {monitorOperationalTrades.map((trade) => (
+                            <tr key={trade.id}>
+                              <td>{trade.rowNo}</td>
+                              <td>{formatDateTime(trade.executedAt)}</td>
+                              <td className="font-medium">{trade.symbol}</td>
+                              <td>
+                                <span className={`badge badge-xs ${toTradeSideBadgeClass(trade.side)}`}>{trade.side}</span>
+                              </td>
+                              <td>{formatNumber(trade.quantity, 6)}</td>
+                              <td>{formatNumber(trade.price, 4)}</td>
+                              <td>{formatCurrency(trade.notional)}</td>
+                              <td>{formatCurrency(trade.fee)}</td>
+                              <td>{formatNumber(trade.feePct, 2)}%</td>
+                              <td className={trade.realizedPnl >= 0 ? "text-success" : "text-error"}>
+                                {formatCurrency(trade.realizedPnl)}
+                              </td>
+                              <td className={trade.pnlPct >= 0 ? "text-success" : "text-error"}>
+                                {formatNumber(trade.pnlPct, 2)}%
+                              </td>
+                              <td className={trade.cumulativePnl >= 0 ? "text-success" : "text-error"}>
+                                {formatCurrency(trade.cumulativePnl)}
+                              </td>
+                              <td>
+                                <span className="badge badge-outline badge-xs">{trade.origin}</span>
+                              </td>
+                              <td className="font-mono text-[10px]">{trade.orderId.slice(0, 8)}</td>
+                              <td className="font-mono text-[10px]">{trade.positionId.slice(0, 8)}</td>
+                            </tr>
+                          ))}
+                          {monitorOperationalTrades.length === 0 ? (
+                            <tr>
+                              <td colSpan={15} className="text-center text-xs opacity-70">
+                                Brak transakcji dla tej sesji i filtra.
+                              </td>
+                            </tr>
+                          ) : null}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                    <h3 className="text-sm font-semibold">3. Co bedzie - live check sygnalow per para</h3>
+                    <p className="mt-1 text-xs opacity-70">
+                      Sekcja predykcyjna do szybkiej oceny, ktory symbol ma sygnal LONG/SHORT/EXIT lub brak sygnalu.
+                    </p>
                   </div>
 
                   <div className="rounded-lg border border-base-300 bg-base-100 p-3">
@@ -1919,76 +2061,6 @@ export default function BotsManagement() {
                             <tr>
                               <td colSpan={13} className="text-center text-xs opacity-70">
                                 Brak danych live-check sygnalow dla tej sesji i filtra.
-                              </td>
-                            </tr>
-                          ) : null}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
-                    <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold">Historia - log operacyjny trade'ow</h3>
-                      <span className="text-xs opacity-60">
-                        {monitorOperationalTrades.length} / {(monitorTrades?.total ?? 0)} rekordow
-                      </span>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="table table-xs">
-                        <thead>
-                          <tr>
-                            <th>#</th>
-                            <th>Czas</th>
-                            <th>Symbol</th>
-                            <th>Side</th>
-                            <th>Qty</th>
-                            <th>Price</th>
-                            <th>Notional</th>
-                            <th>Fee</th>
-                            <th>Fee %</th>
-                            <th>Realized PnL</th>
-                            <th>PnL %</th>
-                            <th>Skumulowany PnL</th>
-                            <th>Origin</th>
-                            <th>Order</th>
-                            <th>Position</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {monitorOperationalTrades.map((trade) => (
-                            <tr key={trade.id}>
-                              <td>{trade.rowNo}</td>
-                              <td>{formatDateTime(trade.executedAt)}</td>
-                              <td className="font-medium">{trade.symbol}</td>
-                              <td>
-                                <span className={`badge badge-xs ${toTradeSideBadgeClass(trade.side)}`}>{trade.side}</span>
-                              </td>
-                              <td>{formatNumber(trade.quantity, 6)}</td>
-                              <td>{formatNumber(trade.price, 4)}</td>
-                              <td>{formatCurrency(trade.notional)}</td>
-                              <td>{formatCurrency(trade.fee)}</td>
-                              <td>{formatNumber(trade.feePct, 2)}%</td>
-                              <td className={trade.realizedPnl >= 0 ? "text-success" : "text-error"}>
-                                {formatCurrency(trade.realizedPnl)}
-                              </td>
-                              <td className={trade.pnlPct >= 0 ? "text-success" : "text-error"}>
-                                {formatNumber(trade.pnlPct, 2)}%
-                              </td>
-                              <td className={trade.cumulativePnl >= 0 ? "text-success" : "text-error"}>
-                                {formatCurrency(trade.cumulativePnl)}
-                              </td>
-                              <td>
-                                <span className="badge badge-outline badge-xs">{trade.origin}</span>
-                              </td>
-                              <td className="font-mono text-[10px]">{trade.orderId.slice(0, 8)}</td>
-                              <td className="font-mono text-[10px]">{trade.positionId.slice(0, 8)}</td>
-                            </tr>
-                          ))}
-                          {monitorOperationalTrades.length === 0 ? (
-                            <tr>
-                              <td colSpan={15} className="text-center text-xs opacity-70">
-                                Brak transakcji dla tej sesji i filtra.
                               </td>
                             </tr>
                           ) : null}

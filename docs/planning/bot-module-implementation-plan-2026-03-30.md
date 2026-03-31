@@ -89,8 +89,9 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 - [x] `BOPS-09 feat(web-monitor): default to aggregated monitoring across sessions with optional advanced drilldown`
 - [x] `BOPS-10 feat(web-monitor): strengthen operational IA in Bots module (history/open/live-signals split) without runtime-behavior changes`
 - [x] `BOPS-11 feat(web-monitor): reduce controls clutter and optimize human operator workflow in runtime dashboard`
-- [ ] `BOPS-12 feat(web-monitor): improve visual hierarchy and runtime summary cards for manual operator workflow`
+- [x] `BOPS-12 feat(web-monitor): improve visual hierarchy and runtime summary cards for manual operator workflow`
 - [ ] `BOPS-13 feat(web-monitor): tighten operational-center copy and section naming for human-first runtime readability`
+- [ ] `BOPS-14 feat(web-monitor): harmonize dashboard-vs-bots IA helper labels and onboarding microcopy`
 
 ## Test Command Map (per phase)
 - Phase A/B:
