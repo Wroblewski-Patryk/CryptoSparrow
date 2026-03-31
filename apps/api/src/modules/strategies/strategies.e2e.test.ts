@@ -27,12 +27,61 @@ const registerAndLogin = async (email: string) => {
   return agent;
 };
 
+const createMarketGroup = async (
+  email: string,
+  marketType: 'FUTURES' | 'SPOT' = 'FUTURES'
+) => {
+  const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+  const marketUniverse = await prisma.marketUniverse.create({
+    data: {
+      userId: user.id,
+      name: `Strategies Guard Universe ${marketType} ${Date.now()}`,
+      marketType,
+      baseCurrency: 'USDT',
+      whitelist: [],
+      blacklist: [],
+    },
+  });
+  const symbolGroup = await prisma.symbolGroup.create({
+    data: {
+      userId: user.id,
+      marketUniverseId: marketUniverse.id,
+      name: `Strategies Guard Group ${marketType} ${Date.now()}`,
+      symbols: marketType === 'SPOT' ? ['BTCUSDT'] : ['BTCUSDT', 'ETHUSDT'],
+    },
+  });
+
+  return symbolGroup.id;
+};
+
+const createBotWithStrategy = async (params: {
+  agent: ReturnType<typeof request.agent>;
+  email: string;
+  strategyId: string;
+  isActive: boolean;
+}) => {
+  const marketGroupId = await createMarketGroup(params.email, 'FUTURES');
+  const createBotRes = await params.agent.post('/dashboard/bots').send({
+    name: `Strategy Guard Bot ${Date.now()}`,
+    mode: 'PAPER',
+    strategyId: params.strategyId,
+    marketGroupId,
+    isActive: params.isActive,
+    liveOptIn: false,
+  });
+  expect(createBotRes.status).toBe(201);
+  return createBotRes.body.id as string;
+};
+
 describe('Strategies CRUD contract', () => {
   beforeEach(async () => {
     await prisma.trade.deleteMany();
     await prisma.order.deleteMany();
     await prisma.position.deleteMany();
     await prisma.signal.deleteMany();
+    await prisma.botRuntimeEvent.deleteMany();
+    await prisma.botRuntimeSymbolStat.deleteMany();
+    await prisma.botRuntimeSession.deleteMany();
     await prisma.backtestTrade.deleteMany();
     await prisma.backtestReport.deleteMany();
     await prisma.backtestRun.deleteMany();
@@ -146,6 +195,50 @@ describe('Strategies CRUD contract', () => {
     const deleteRes = await otherAgent.delete(`/dashboard/strategies/${strategyId}`);
     expect(deleteRes.status).toBe(404);
     expect(deleteRes.body.error.message).toBe('Not found');
+  });
+
+  it('blocks strategy updates when strategy is used by any active bot', async () => {
+    const email = 'strategies-active-bot-lock@example.com';
+    const agent = await registerAndLogin(email);
+
+    const createRes = await agent.post('/dashboard/strategies').send(createStrategyPayload());
+    expect(createRes.status).toBe(201);
+    const strategyId = createRes.body.id as string;
+
+    await createBotWithStrategy({
+      agent,
+      email,
+      strategyId,
+      isActive: true,
+    });
+
+    const updateRes = await agent.put(`/dashboard/strategies/${strategyId}`).send({
+      name: 'Blocked strategy update',
+    });
+    expect(updateRes.status).toBe(409);
+    expect(updateRes.body.error.message).toBe('strategy is used by active bot and cannot be edited');
+  });
+
+  it('allows strategy updates when linked bots are inactive', async () => {
+    const email = 'strategies-inactive-bot-update@example.com';
+    const agent = await registerAndLogin(email);
+
+    const createRes = await agent.post('/dashboard/strategies').send(createStrategyPayload());
+    expect(createRes.status).toBe(201);
+    const strategyId = createRes.body.id as string;
+
+    await createBotWithStrategy({
+      agent,
+      email,
+      strategyId,
+      isActive: false,
+    });
+
+    const updateRes = await agent.put(`/dashboard/strategies/${strategyId}`).send({
+      name: 'Allowed strategy update',
+    });
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.name).toBe('Allowed strategy update');
   });
 });
 

@@ -11,6 +11,8 @@ import { dtoToForm } from '@/features/strategies/utils/StrategyForm.map';
 import { handleError } from '@/lib/handleError';
 import { ErrorState, LoadingState } from '@/ui/components/ViewState';
 
+const STRATEGY_USED_BY_ACTIVE_BOT_ERROR = 'strategy is used by active bot and cannot be edited';
+
 export default function StrategiesEditPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -40,7 +42,15 @@ export default function StrategiesEditPage() {
       await updateStrategy(id, form);
       toast.success('Strategia zaktualizowana');
     } catch (error: unknown) {
-      toast.error('Blad zapisu strategii', { description: handleError(error) });
+      const message = handleError(error);
+      if (message === STRATEGY_USED_BY_ACTIVE_BOT_ERROR) {
+        toast.error('Strategia jest aktualnie uzywana przez aktywnego bota', {
+          description: 'Wylacz bota lub ustaw go jako nieaktywny przed edycja strategii.',
+        });
+        return;
+      }
+
+      toast.error('Blad zapisu strategii', { description: message });
     }
   };
 

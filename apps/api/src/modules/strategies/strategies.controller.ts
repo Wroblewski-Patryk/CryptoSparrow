@@ -33,9 +33,16 @@ export const updateStrategy = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return sendError(res, 401, 'Unauthorized');
     const { id } = req.params;
-    const strategy = await strategyService.updateStrategy(id, userId, req.body);
-    if (!strategy) return sendError(res, 404, 'Not found');
-    res.json(strategy);
+    try {
+      const strategy = await strategyService.updateStrategy(id, userId, req.body);
+      if (!strategy) return sendError(res, 404, 'Not found');
+      return res.json(strategy);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'STRATEGY_USED_BY_ACTIVE_BOT') {
+        return sendError(res, 409, 'strategy is used by active bot and cannot be edited');
+      }
+      throw error;
+    }
 };
 
 // DELETE /strategies/:id

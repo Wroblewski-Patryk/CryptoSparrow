@@ -333,11 +333,13 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-04 feat(web-bots-dashboard): redesign bot list into clickable operational cards for fast context switching between active bots`
 - [x] `BOPS-05 feat(web-monitor): replace lightweight activity feed with dense operational table aligned to backtest readability`
 - [x] `BOPS-06 feat(web-creator): reorganize creator form into three sections (core bot mode, market-group context, strategy context)`
-- [ ] `BOPS-07 feat(api+web-guard): block duplicate active bot creation when strategy + market-group pair is already active`
-- [ ] `BOPS-08 feat(api+web-guard): block strategy editing while referenced by any active bot (allow when all linked bots inactive)`
+- [x] `BOPS-07 feat(api+web-guard): block duplicate active bot creation when strategy + market-group pair is already active`
+- [x] `BOPS-08 feat(api+web-guard): block strategy editing while referenced by any active bot (allow when all linked bots inactive)`
 - [ ] `BOPS-09 feat(web-monitor): default monitoring to aggregate session view with optional advanced per-session drilldown`
+- [ ] `BOPS-10 feat(web-monitor): strengthen Bots operational IA (history/open/live-signals) without backend behavior changes`
 
 ## Progress Log
+- 2026-03-31: Completed `BOPS-07 feat(api+web-guard): added backend duplicate-active guard on create/activate flows (strategy + symbol-group pair), mapped conflict to HTTP 409, added dedicated API e2e coverage, and surfaced explicit conflict messaging in bots UI create/save actions.
 - 2026-03-31: Completed `BOPS-06 feat(web-creator): reorganized bot creator into three explicit sections (bot core mode, market-group context, strategy context) with contextual summary tiles for selected group and selected strategy, while preserving existing payload and runtime behavior.
 - 2026-03-31: Completed `BOPS-05 feat(web-monitor): replaced basic session trades listing with dense operational trade-log table (chronological index, side badge, notional-relative fee/pnl percentages, cumulative PnL, and order/position trace columns) to match backtest-style readability for runtime analysis.
 - 2026-03-31: Completed `BOPS-04 feat(web-bots-dashboard): added "Szybki wybor bota" operational card strip in Bots monitoring with one-click context switching and active-first prioritization (fallback to all bots), so operator context can be changed quickly without navigating long select lists.
@@ -702,6 +704,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-25: Added `ops:rc:gates:refresh:summary` shortcut chaining quick refresh with immediate gate summary output for fast operator handoff.
 - 2026-03-25: Added `ops:rc:gates:refresh:summary:strict` helper to guarantee summary output even on strict failure, while returning strict exit code for automation gates.
 - 2026-03-26: Normalized local refresh fallback logs to `stdout` to keep operator output order stable and avoid confusing delayed warning lines during offline runs.
+- 2026-03-31: Added strategy-edit guard for active bots (`409 strategy is used by active bot and cannot be edited`) with API e2e coverage and UI-facing edit-page error handling.
 
 
 

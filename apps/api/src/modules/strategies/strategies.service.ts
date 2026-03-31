@@ -28,6 +28,40 @@ export const updateStrategy = async (id: string, userId: string, data: Partial<C
     const existing = await getStrategyById(id, userId);
     if (!existing) return null;
 
+    const usedByActiveCanonicalBot = await prisma.marketGroupStrategyLink.findFirst({
+      where: {
+        userId,
+        strategyId: existing.id,
+        isEnabled: true,
+        bot: {
+          userId,
+          isActive: true,
+        },
+        botMarketGroup: {
+          userId,
+          isEnabled: true,
+          lifecycleStatus: 'ACTIVE',
+        },
+      },
+      select: { id: true },
+    });
+
+    const usedByActiveLegacyBot = await prisma.botStrategy.findFirst({
+      where: {
+        strategyId: existing.id,
+        isEnabled: true,
+        bot: {
+          userId,
+          isActive: true,
+        },
+      },
+      select: { id: true },
+    });
+
+    if (usedByActiveCanonicalBot || usedByActiveLegacyBot) {
+      throw new Error('STRATEGY_USED_BY_ACTIVE_BOT');
+    }
+
     return prisma.strategy.update({
       where: { id: existing.id },
       data: {
