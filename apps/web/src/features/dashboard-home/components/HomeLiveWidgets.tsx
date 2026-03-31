@@ -147,10 +147,10 @@ export default function HomeLiveWidgets() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <LiveMarketBar symbols={["BTCUSDT", "ETHUSDT"]} interval="1m" />
 
-      <div className="rounded-lg border border-base-300 bg-base-200 p-4">
+      <div className="rounded-lg border border-base-300/90 bg-base-200/80 p-4 shadow-sm">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold tracking-wide">{t("dashboard.home.controlCenterTitle")}</h2>
@@ -160,7 +160,7 @@ export default function HomeLiveWidgets() {
         </div>
 
         <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
-          <div className="h-full rounded-lg border border-primary/30 bg-base-100 p-3">
+          <div className="h-full rounded-lg border border-primary/30 bg-base-100/90 p-3">
             <div className="flex h-full flex-col">
             <div className="mb-1 flex items-center justify-between gap-2">
               <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.runtimeOpsTitle")}</p>
@@ -180,7 +180,7 @@ export default function HomeLiveWidgets() {
             </div>
           </div>
 
-          <div className="h-full rounded-lg border border-base-300 bg-base-100 p-3">
+          <div className="h-full rounded-lg border border-base-300 bg-base-100/90 p-3">
             <div className="flex h-full flex-col">
             <div className="mb-1 flex items-center justify-between gap-2">
               <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.strategyLabTitle")}</p>
@@ -198,7 +198,7 @@ export default function HomeLiveWidgets() {
             </div>
           </div>
 
-          <div className="h-full rounded-lg border border-base-300 bg-base-100 p-3 md:col-span-2 2xl:col-span-1">
+          <div className="h-full rounded-lg border border-base-300 bg-base-100/90 p-3 md:col-span-2 2xl:col-span-1">
             <div className="flex h-full flex-col">
             <div className="mb-1 flex items-center justify-between gap-2">
               <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.executionReviewTitle")}</p>
@@ -217,7 +217,7 @@ export default function HomeLiveWidgets() {
           </div>
         </div>
 
-        <div className="mt-3 rounded-md border border-base-300 bg-base-100 p-3">
+        <div className="mt-3 rounded-md border border-base-300 bg-base-100/90 p-3">
           <p className="text-xs uppercase tracking-wide opacity-60">{t("dashboard.home.quickActionsStripTitle")}</p>
           <p className="mt-1 text-[11px] leading-5 opacity-65">{t("dashboard.home.quickActionsStripDescription")}</p>
           <div className="mt-3 grid gap-2 xl:grid-cols-2">
@@ -263,7 +263,7 @@ export default function HomeLiveWidgets() {
         {statusGroups.map((group) => (
           <div
             key={group.key}
-            className={`rounded-md border border-base-300 bg-base-200 p-3 ${
+            className={`rounded-md border border-base-300 bg-base-100/80 p-3 ${
               group.key === "activity" ? "md:col-span-2 2xl:col-span-1" : ""
             }`}
           >
