@@ -567,7 +567,7 @@ export default function BotsManagement() {
       botId: string,
       statusFilter: "ALL" | BotRuntimeSessionStatus,
       options?: { silent?: boolean }
-    ) => {
+    ): Promise<BotRuntimeSessionListItem[]> => {
       const silent = options?.silent ?? false;
       if (!botId) {
         setMonitorSessions([]);
@@ -576,7 +576,7 @@ export default function BotsManagement() {
         setMonitorSymbolStats(null);
         setMonitorPositions(null);
         setMonitorTrades(null);
-        return;
+        return [];
       }
 
       if (!silent) {
@@ -601,10 +601,12 @@ export default function BotsManagement() {
           setMonitorPositions(null);
           setMonitorTrades(null);
         }
+        return sessions;
       } catch (err: unknown) {
         if (!silent) {
           setMonitorError(getAxiosMessage(err) ?? "Nie udalo sie pobrac sesji runtime.");
         }
+        return [];
       } finally {
         if (!silent) {
           setMonitorLoading(false);
@@ -941,6 +943,36 @@ export default function BotsManagement() {
     setMonitorAppliedSymbolFilter("");
   };
 
+  const refreshMonitoring = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!monitorBotId) return;
+      const sessions = await loadMonitorSessions(monitorBotId, monitorStatus, options);
+      if (monitorViewMode === "aggregate") {
+        await loadMonitorAggregateData(monitorBotId, sessions, monitorAppliedSymbolFilter, options);
+        return;
+      }
+      const effectiveSessionId = monitorSessionId || sessions[0]?.id;
+      if (!effectiveSessionId) {
+        setMonitorSessionDetail(null);
+        setMonitorSymbolStats(null);
+        setMonitorPositions(null);
+        setMonitorTrades(null);
+        return;
+      }
+      await loadMonitorSessionData(monitorBotId, effectiveSessionId, monitorAppliedSymbolFilter, options);
+    },
+    [
+      loadMonitorAggregateData,
+      loadMonitorSessionData,
+      loadMonitorSessions,
+      monitorAppliedSymbolFilter,
+      monitorBotId,
+      monitorSessionId,
+      monitorStatus,
+      monitorViewMode,
+    ]
+  );
+
   useEffect(() => {
     if (bots.length === 0) return;
     if (!assistantBotId) {
@@ -979,41 +1011,15 @@ export default function BotsManagement() {
 
   useEffect(() => {
     if (activeTab !== "monitoring" || !monitorBotId) return;
-    void loadMonitorSessions(monitorBotId, monitorStatus);
-  }, [activeTab, loadMonitorSessions, monitorBotId, monitorStatus]);
-
-  useEffect(() => {
-    if (activeTab !== "monitoring" || !monitorBotId) return;
-    if (monitorViewMode === "aggregate") {
-      void loadMonitorAggregateData(monitorBotId, monitorSessions, monitorAppliedSymbolFilter);
-      return;
-    }
-    if (!monitorSessionId) return;
-    void loadMonitorSessionData(monitorBotId, monitorSessionId, monitorAppliedSymbolFilter);
-  }, [
-    activeTab,
-    loadMonitorAggregateData,
-    loadMonitorSessionData,
-    monitorAppliedSymbolFilter,
-    monitorBotId,
-    monitorSessionId,
-    monitorSessions,
-    monitorViewMode,
-  ]);
+    void refreshMonitoring();
+  }, [activeTab, monitorBotId, refreshMonitoring]);
 
   useEffect(() => {
     if (activeTab !== "monitoring" || !monitorAutoRefreshEnabled || !monitorBotId) return;
     if (!monitorHasRunningSession) return;
 
     const intervalId = window.setInterval(() => {
-      void loadMonitorSessions(monitorBotId, monitorStatus, { silent: true });
-      if (monitorViewMode === "aggregate") {
-        void loadMonitorAggregateData(monitorBotId, monitorSessions, monitorAppliedSymbolFilter, {
-          silent: true,
-        });
-      } else if (monitorSessionId) {
-        void loadMonitorSessionData(monitorBotId, monitorSessionId, monitorAppliedSymbolFilter, { silent: true });
-      }
+      void refreshMonitoring({ silent: true });
     }, 15000);
 
     return () => {
@@ -1021,17 +1027,10 @@ export default function BotsManagement() {
     };
   }, [
     activeTab,
-    loadMonitorAggregateData,
-    loadMonitorSessionData,
-    loadMonitorSessions,
-    monitorAppliedSymbolFilter,
     monitorAutoRefreshEnabled,
     monitorBotId,
     monitorHasRunningSession,
-    monitorSessionId,
-    monitorSessions,
-    monitorStatus,
-    monitorViewMode,
+    refreshMonitoring,
   ]);
 
   return (
@@ -1423,148 +1422,147 @@ export default function BotsManagement() {
                 </div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-7">
-                <label className="form-control md:col-span-2">
-                  <span className="label-text">Bot</span>
-                  <select
-                    className="select select-bordered"
-                    value={monitorBotId}
-                    onChange={(event) => setMonitorBotId(event.target.value)}
-                  >
-                    {bots.map((bot) => (
-                      <option key={bot.id} value={bot.id}>
-                        {bot.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="form-control">
-                  <span className="label-text">Status sesji</span>
-                  <select
-                    className="select select-bordered"
-                    value={monitorStatus}
-                    onChange={(event) => setMonitorStatus(event.target.value as "ALL" | BotRuntimeSessionStatus)}
-                  >
-                    <option value="ALL">ALL</option>
-                    <option value="RUNNING">RUNNING</option>
-                    <option value="COMPLETED">COMPLETED</option>
-                    <option value="FAILED">FAILED</option>
-                    <option value="CANCELED">CANCELED</option>
-                  </select>
-                </label>
-                <label className="form-control">
-                  <span className="label-text">Widok</span>
-                  <select
-                    className="select select-bordered"
-                    value={monitorViewMode}
-                    onChange={(event) => setMonitorViewMode(event.target.value as "aggregate" | "session")}
-                  >
-                    <option value="aggregate">Zbiorczy (domyslny)</option>
-                    <option value="session">Sesja (zaawansowany)</option>
-                  </select>
-                </label>
-                {monitorViewMode === "session" ? (
-                  <label className="form-control md:col-span-2">
-                    <span className="label-text">Sesja</span>
+              <div className="space-y-3 rounded-lg border border-base-300 bg-base-100 p-3">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <h3 className="text-sm font-semibold">Sterowanie monitoringiem</h3>
+                    <p className="text-xs opacity-70">
+                      Ustaw zakres i filtr, a potem obserwuj teraz/historie/live-check bez przeladowan sekcji.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="label cursor-pointer gap-2 p-0">
+                      <input
+                        type="checkbox"
+                        className="toggle toggle-sm"
+                        aria-label="Auto refresh monitoringu"
+                        checked={monitorAutoRefreshEnabled}
+                        onChange={(event) => setMonitorAutoRefreshEnabled(event.target.checked)}
+                      />
+                      <span className="label-text text-xs">Auto refresh RUNNING (15s)</span>
+                    </label>
+                    <button type="button" className="btn btn-outline btn-sm" onClick={() => void refreshMonitoring()}>
+                      Odswiez
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-6">
+                  <label className="form-control">
+                    <span className="label-text">Status sesji</span>
                     <select
                       className="select select-bordered"
-                      value={monitorSessionId}
-                      onChange={(event) => setMonitorSessionId(event.target.value)}
-                      disabled={monitorSessions.length === 0}
+                      value={monitorStatus}
+                      onChange={(event) => setMonitorStatus(event.target.value as "ALL" | BotRuntimeSessionStatus)}
                     >
-                      {monitorSessions.length === 0 ? <option value="">Brak sesji</option> : null}
-                      {monitorSessions.map((session) => (
-                        <option key={session.id} value={session.id}>
-                          {session.id.slice(0, 8)} | {session.status} | {formatDateTime(session.startedAt)}
-                        </option>
-                      ))}
+                      <option value="ALL">ALL</option>
+                      <option value="RUNNING">RUNNING</option>
+                      <option value="COMPLETED">COMPLETED</option>
+                      <option value="FAILED">FAILED</option>
+                      <option value="CANCELED">CANCELED</option>
                     </select>
                   </label>
-                ) : (
-                  <div className="form-control md:col-span-2">
-                    <span className="label-text">Zakres</span>
-                    <div className="rounded-md border border-base-300 bg-base-100 px-3 py-2 text-sm">
-                      Wszystkie sesje ({monitorSessions.length})
+                  <label className="form-control md:col-span-2">
+                    <span className="label-text">Filtr symbolu (opcjonalnie)</span>
+                    <input
+                      className="input input-bordered"
+                      placeholder="np. BTCUSDT"
+                      value={monitorSymbolFilter}
+                      onChange={(event) => setMonitorSymbolFilter(event.target.value.toUpperCase())}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          handleApplyMonitoringFilter();
+                        }
+                      }}
+                    />
+                  </label>
+                  <div className="form-control">
+                    <span className="label-text">&nbsp;</span>
+                    <div className="flex gap-2">
+                      <button type="button" className="btn btn-primary btn-sm" onClick={handleApplyMonitoringFilter}>
+                        Zastosuj
+                      </button>
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={handleClearMonitoringFilter}>
+                        Wyczysc
+                      </button>
                     </div>
                   </div>
-                )}
-                <div className="form-control">
-                  <span className="label-text">&nbsp;</span>
-                  <button
-                    type="button"
-                    className="btn btn-outline btn-sm"
-                    onClick={() => {
-                      if (!monitorBotId) return;
-                      void loadMonitorSessions(monitorBotId, monitorStatus);
-                      if (monitorViewMode === "aggregate") {
-                        void loadMonitorAggregateData(
-                          monitorBotId,
-                          monitorSessions,
-                          monitorAppliedSymbolFilter
-                        );
-                      } else if (monitorSessionId) {
-                        void loadMonitorSessionData(
-                          monitorBotId,
-                          monitorSessionId,
-                          monitorAppliedSymbolFilter
-                        );
-                      }
-                    }}
-                  >
-                    Odswiez
-                  </button>
+                  <div className="form-control md:col-span-2">
+                    <span className="label-text">Aktywny filtr</span>
+                    <div className="rounded-md border border-base-300 bg-base-200 px-3 py-2 text-sm">
+                      {monitorAppliedSymbolFilter || "brak"}
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-base-300 bg-base-100 px-3 py-2 text-xs">
-                <label className="label cursor-pointer gap-2 p-0">
-                  <input
-                    type="checkbox"
-                    className="toggle toggle-sm"
-                    aria-label="Auto refresh monitoringu"
-                    checked={monitorAutoRefreshEnabled}
-                    onChange={(event) => setMonitorAutoRefreshEnabled(event.target.checked)}
-                  />
-                  <span className="label-text">Auto refresh RUNNING (15s)</span>
-                </label>
-                <span className="opacity-70">
+                <p className="text-xs opacity-70">
                   {monitorHasRunningSession
                     ? monitorViewMode === "aggregate"
-                      ? "Auto-refresh aktywny dla widoku zbiorczego"
+                      ? "Auto-refresh aktywny dla widoku zbiorczego."
                       : selectedMonitorSession?.status === "RUNNING"
-                        ? "Auto-refresh aktywny dla biezacej sesji"
-                        : "Auto-refresh aktywny dla sesji RUNNING"
-                    : "Brak sesji RUNNING - auto-refresh wstrzymany"}
-                </span>
-              </div>
+                        ? "Auto-refresh aktywny dla biezacej sesji."
+                        : "Auto-refresh aktywny dla sesji RUNNING."
+                    : "Brak sesji RUNNING - auto-refresh jest automatycznie wstrzymany."}
+                </p>
 
-              <div className="grid gap-3 md:grid-cols-6">
-                <label className="form-control md:col-span-2">
-                  <span className="label-text">Filtr symbolu (opcjonalnie)</span>
-                  <input
-                    className="input input-bordered"
-                    placeholder="np. BTCUSDT"
-                    value={monitorSymbolFilter}
-                    onChange={(event) => setMonitorSymbolFilter(event.target.value.toUpperCase())}
-                  />
-                </label>
-                <div className="form-control md:col-span-2">
-                  <span className="label-text">&nbsp;</span>
-                  <div className="flex gap-2">
-                    <button type="button" className="btn btn-primary btn-sm" onClick={handleApplyMonitoringFilter}>
-                      Zastosuj filtr
-                    </button>
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={handleClearMonitoringFilter}>
-                      Wyczysc
-                    </button>
+                <details className="rounded-md border border-base-300 bg-base-200">
+                  <summary className="cursor-pointer px-3 py-2 text-xs font-semibold uppercase tracking-wide opacity-70">
+                    Opcje zaawansowane
+                  </summary>
+                  <div className="grid gap-3 border-t border-base-300 p-3 md:grid-cols-6">
+                    <label className="form-control md:col-span-2">
+                      <span className="label-text">Bot (manualny wybor)</span>
+                      <select
+                        className="select select-bordered"
+                        value={monitorBotId}
+                        onChange={(event) => setMonitorBotId(event.target.value)}
+                      >
+                        {bots.map((bot) => (
+                          <option key={bot.id} value={bot.id}>
+                            {bot.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="form-control">
+                      <span className="label-text">Widok</span>
+                      <select
+                        className="select select-bordered"
+                        value={monitorViewMode}
+                        onChange={(event) => setMonitorViewMode(event.target.value as "aggregate" | "session")}
+                      >
+                        <option value="aggregate">Zbiorczy (domyslny)</option>
+                        <option value="session">Sesja (zaawansowany)</option>
+                      </select>
+                    </label>
+                    {monitorViewMode === "session" ? (
+                      <label className="form-control md:col-span-3">
+                        <span className="label-text">Sesja</span>
+                        <select
+                          className="select select-bordered"
+                          value={monitorSessionId}
+                          onChange={(event) => setMonitorSessionId(event.target.value)}
+                          disabled={monitorSessions.length === 0}
+                        >
+                          {monitorSessions.length === 0 ? <option value="">Brak sesji</option> : null}
+                          {monitorSessions.map((session) => (
+                            <option key={session.id} value={session.id}>
+                              {session.id.slice(0, 8)} | {session.status} | {formatDateTime(session.startedAt)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : (
+                      <div className="form-control md:col-span-3">
+                        <span className="label-text">Zakres</span>
+                        <div className="rounded-md border border-base-300 bg-base-100 px-3 py-2 text-sm">
+                          Wszystkie sesje ({monitorSessions.length})
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="form-control md:col-span-2">
-                  <span className="label-text">Aktywny filtr</span>
-                  <div className="rounded-md border border-base-300 bg-base-100 px-3 py-2 text-sm">
-                    {monitorAppliedSymbolFilter || "brak"}
-                  </div>
-                </div>
+                </details>
               </div>
 
               {monitorLoading ? <LoadingState title="Ladowanie sesji runtime" /> : null}
@@ -1575,16 +1573,7 @@ export default function BotsManagement() {
                   retryLabel="Sprobuj ponownie"
                   onRetry={() => {
                     if (!monitorBotId) return;
-                    void loadMonitorSessions(monitorBotId, monitorStatus);
-                    if (monitorViewMode === "aggregate") {
-                      void loadMonitorAggregateData(
-                        monitorBotId,
-                        monitorSessions,
-                        monitorAppliedSymbolFilter
-                      );
-                    } else if (monitorSessionId) {
-                      void loadMonitorSessionData(monitorBotId, monitorSessionId, monitorAppliedSymbolFilter);
-                    }
+                    void refreshMonitoring();
                   }}
                 />
               ) : null}
@@ -1691,7 +1680,7 @@ export default function BotsManagement() {
                             <span className="font-semibold">{monitorSymbolStats?.items.length ?? 0}</span>
                           </p>
                           <p>
-                            <span className="opacity-60">Sygnały:</span>{" "}
+                            <span className="opacity-60">Sygnaly:</span>{" "}
                             <span className="font-semibold">{monitorSessionDetail.summary.totalSignals}</span>
                           </p>
                           <p>
