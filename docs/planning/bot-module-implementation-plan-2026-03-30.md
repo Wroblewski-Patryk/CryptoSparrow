@@ -82,7 +82,7 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 - [x] `BOPS-02 feat(web-monitor): restructure monitoring view into three operator blocks (Now / History / Future signals)`
 - [x] `BOPS-03 feat(web-monitor): keep live refresh in-place without visual remount/flicker`
 - [x] `BOPS-04 feat(web-bots-dashboard): expose active bots as operational cards with quick context switching`
-- [ ] `BOPS-05 feat(web-monitor): redesign activity stream into dense operational table (backtest-like readability)`
+- [x] `BOPS-05 feat(web-monitor): redesign activity stream into dense operational table (backtest-like readability)`
 - [ ] `BOPS-06 feat(web-creator): split bot creation form into three logical UX sections`
 - [ ] `BOPS-07 feat(api+web-guard): prevent duplicate active bot for same strategy + market-group`
 - [ ] `BOPS-08 feat(api+web-guard): prevent strategy edit while used by active bots`

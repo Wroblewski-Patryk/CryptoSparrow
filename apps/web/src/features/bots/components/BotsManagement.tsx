@@ -107,6 +107,12 @@ const toSessionStatusBadgeClass = (status: BotRuntimeSessionStatus) => {
   return "badge-warning";
 };
 
+const toTradeSideBadgeClass = (side: string) => {
+  if (side === "BUY" || side === "LONG") return "badge-success";
+  if (side === "SELL" || side === "SHORT") return "badge-error";
+  return "badge-ghost";
+};
+
 export default function BotsManagement() {
   const [activeTab, setActiveTab] = useState<"bots" | "monitoring" | "assistant">("bots");
   const [bots, setBots] = useState<Bot[]>([]);
@@ -268,6 +274,25 @@ export default function BotsManagement() {
     const wins = monitorSessionDetail?.summary.winningTrades ?? 0;
     return (wins / closedTrades) * 100;
   }, [monitorSessionDetail]);
+
+  const monitorOperationalTrades = useMemo(() => {
+    const items = [...(monitorTrades?.items ?? [])].sort(
+      (a, b) => new Date(a.executedAt).getTime() - new Date(b.executedAt).getTime()
+    );
+    let cumulativePnl = 0;
+    return items.map((trade, index) => {
+      cumulativePnl += trade.realizedPnl;
+      const pnlPct = trade.notional > 0 ? (trade.realizedPnl / trade.notional) * 100 : 0;
+      const feePct = trade.notional > 0 ? (trade.fee / trade.notional) * 100 : 0;
+      return {
+        ...trade,
+        rowNo: index + 1,
+        pnlPct,
+        feePct,
+        cumulativePnl,
+      };
+    });
+  }, [monitorTrades?.items]);
 
   const confirmLiveRisk = (message: string) => window.confirm(message);
 
@@ -1471,15 +1496,16 @@ export default function BotsManagement() {
 
                   <div className="rounded-lg border border-base-300 bg-base-100 p-3">
                     <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold">Historia - transakcje sesji</h3>
+                      <h3 className="text-sm font-semibold">Historia - log operacyjny trade'ow</h3>
                       <span className="text-xs opacity-60">
-                        {(monitorTrades?.items.length ?? 0)} / {(monitorTrades?.total ?? 0)} rekordow
+                        {monitorOperationalTrades.length} / {(monitorTrades?.total ?? 0)} rekordow
                       </span>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="table table-xs">
                         <thead>
                           <tr>
+                            <th>#</th>
                             <th>Czas</th>
                             <th>Symbol</th>
                             <th>Side</th>
@@ -1487,29 +1513,48 @@ export default function BotsManagement() {
                             <th>Price</th>
                             <th>Notional</th>
                             <th>Fee</th>
+                            <th>Fee %</th>
                             <th>Realized PnL</th>
+                            <th>PnL %</th>
+                            <th>Skumulowany PnL</th>
                             <th>Origin</th>
+                            <th>Order</th>
+                            <th>Position</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {(monitorTrades?.items ?? []).map((trade) => (
+                          {monitorOperationalTrades.map((trade) => (
                             <tr key={trade.id}>
+                              <td>{trade.rowNo}</td>
                               <td>{formatDateTime(trade.executedAt)}</td>
                               <td className="font-medium">{trade.symbol}</td>
-                              <td>{trade.side}</td>
+                              <td>
+                                <span className={`badge badge-xs ${toTradeSideBadgeClass(trade.side)}`}>{trade.side}</span>
+                              </td>
                               <td>{formatNumber(trade.quantity, 6)}</td>
                               <td>{formatNumber(trade.price, 4)}</td>
                               <td>{formatCurrency(trade.notional)}</td>
                               <td>{formatCurrency(trade.fee)}</td>
+                              <td>{formatNumber(trade.feePct, 2)}%</td>
                               <td className={trade.realizedPnl >= 0 ? "text-success" : "text-error"}>
                                 {formatCurrency(trade.realizedPnl)}
                               </td>
-                              <td>{trade.origin}</td>
+                              <td className={trade.pnlPct >= 0 ? "text-success" : "text-error"}>
+                                {formatNumber(trade.pnlPct, 2)}%
+                              </td>
+                              <td className={trade.cumulativePnl >= 0 ? "text-success" : "text-error"}>
+                                {formatCurrency(trade.cumulativePnl)}
+                              </td>
+                              <td>
+                                <span className="badge badge-outline badge-xs">{trade.origin}</span>
+                              </td>
+                              <td className="font-mono text-[10px]">{trade.orderId.slice(0, 8)}</td>
+                              <td className="font-mono text-[10px]">{trade.positionId.slice(0, 8)}</td>
                             </tr>
                           ))}
-                          {(monitorTrades?.items.length ?? 0) === 0 ? (
+                          {monitorOperationalTrades.length === 0 ? (
                             <tr>
-                              <td colSpan={9} className="text-center text-xs opacity-70">
+                              <td colSpan={15} className="text-center text-xs opacity-70">
                                 Brak transakcji dla tej sesji i filtra.
                               </td>
                             </tr>

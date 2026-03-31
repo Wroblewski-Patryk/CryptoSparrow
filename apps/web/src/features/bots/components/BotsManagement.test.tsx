@@ -537,7 +537,7 @@ describe("BotsManagement", () => {
       expect(getRuntimeSessionMock).toHaveBeenCalledWith("b-monitor", "session-1");
       expect(screen.getByText("Co bedzie - live check sygnalow")).toBeInTheDocument();
       expect(screen.getAllByText("BTCUSDT").length).toBeGreaterThan(0);
-      expect(screen.getByText("Historia - transakcje sesji")).toBeInTheDocument();
+      expect(screen.getByText("Historia - log operacyjny trade'ow")).toBeInTheDocument();
     });
   });
 
