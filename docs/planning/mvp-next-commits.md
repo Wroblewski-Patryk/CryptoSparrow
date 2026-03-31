@@ -7,14 +7,15 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BOPS-17 feat(web-monitor): finalize operator-friendly wording consistency in monitoring tabs and section subtitles`
+- [ ] `BOPS-18 feat(web-monitor): add compact operator checklist panel for manual health-verification routine`
 
 ## NEXT
-- [ ] `BOPS-18 feat(web-monitor): add compact operator checklist panel for manual health-verification routine`
+- [ ] `BOPS-19 feat(web-dashboard): polish global control-center cards and CTA hierarchy to complement Bots operations center`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BOPS-17 feat(web-monitor): finalize operator-friendly wording consistency in monitoring tabs and section subtitles`
 - [x] `BOPS-16 feat(web-monitor): tighten monitoring table defaults (sorting/filter hints) for manual operator triage`
 - [x] `BOPS-15 feat(web-monitor): tune table ordering and section spacing for faster visual scan under live-refresh`
 - [x] `BOPS-14 feat(web-monitor): polish dashboard-vs-bots IA copy and helper labels for clearer module boundaries`

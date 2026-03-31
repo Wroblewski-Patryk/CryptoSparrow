@@ -1073,7 +1073,7 @@ export default function BotsManagement() {
           className={`tab ${activeTab === "bots" ? "tab-active" : ""}`}
           onClick={() => setActiveTab("bots")}
         >
-          Bots
+          Boty
         </button>
         <button
           type="button"
@@ -1081,7 +1081,7 @@ export default function BotsManagement() {
           className={`tab ${activeTab === "monitoring" ? "tab-active" : ""}`}
           onClick={() => setActiveTab("monitoring")}
         >
-          Monitoring
+          Operacje runtime
         </button>
         <button
           type="button"
@@ -1089,7 +1089,7 @@ export default function BotsManagement() {
           className={`tab ${activeTab === "assistant" ? "tab-active" : ""}`}
           onClick={() => setActiveTab("assistant")}
         >
-          Assistant
+          Asystent
         </button>
       </div>
 
@@ -2093,7 +2093,7 @@ export default function BotsManagement() {
 
       {activeTab === "assistant" && (
         <div className="space-y-4 rounded-xl border border-base-300 bg-base-200 p-4">
-          <h2 className="text-lg font-semibold">Assistant Config</h2>
+          <h2 className="text-lg font-semibold">Konfiguracja asystenta</h2>
           <p className="text-sm opacity-70">
             Konfiguracja glownego asystenta i 4 slotow subagentow per bot.
           </p>

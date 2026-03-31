@@ -527,7 +527,7 @@ describe("BotsManagement", () => {
       expect(screen.getByDisplayValue("Monitor Bot")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("tab", { name: "Monitoring" }));
+    fireEvent.click(screen.getByRole("tab", { name: /Operacje runtime|Monitoring/i }));
 
     await waitFor(() => {
       expect(listRuntimeSessionsMock).toHaveBeenCalledWith("b-monitor", { status: undefined, limit: 50 });
@@ -682,7 +682,7 @@ describe("BotsManagement", () => {
       expect(screen.getByDisplayValue("Refresh Bot")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("tab", { name: "Monitoring" }));
+    fireEvent.click(screen.getByRole("tab", { name: /Operacje runtime|Monitoring/i }));
 
     await waitFor(() => {
       expect(listRuntimeSessionsMock).toHaveBeenCalledTimes(1);
