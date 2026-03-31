@@ -344,8 +344,9 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-15 feat(web-monitor): tune table ordering + section spacing for faster operator scan during live refresh`
 - [x] `BOPS-16 feat(web-monitor): tune monitoring table defaults + filter hints for faster manual runtime triage`
 - [x] `BOPS-17 feat(web-monitor): finalize naming consistency across monitoring tabs + section subtitles`
-- [ ] `BOPS-18 feat(web-monitor): add compact operator checklist panel for repeated manual runtime health checks`
+- [x] `BOPS-18 feat(web-monitor): add compact operator checklist panel for repeated manual runtime health checks`
 - [ ] `BOPS-19 feat(web-dashboard): polish global control-center cards + CTA hierarchy to complement Bots operations center`
+- [ ] `BOPS-20 feat(web-dashboard): improve first-view control-center grouping + action clarity for operators`
 
 ## Progress Log
 - 2026-03-31: Completed `BOPS-07 feat(api+web-guard): added backend duplicate-active guard on create/activate flows (strategy + symbol-group pair), mapped conflict to HTTP 409, added dedicated API e2e coverage, and surfaced explicit conflict messaging in bots UI create/save actions.
@@ -723,6 +724,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-31: Increased table readability for live-refresh scanning by applying zebra styling across monitoring tables (now/history/future blocks) to improve row tracking under frequent updates.
 - 2026-03-31: Improved manual triage defaults in monitoring by adding explicit filter usage hint (`Enter` flow) and sorting live-signal table by newest signal first.
 - 2026-03-31: Unified operator-facing wording in Bots module tabs/subheaders (`Boty / Operacje runtime / Asystent`) and aligned test selectors to new naming.
+- 2026-03-31: Added compact operator checklist panel in monitoring (session status, heartbeat freshness, positions loaded, signals loaded, error flag) for quick repetitive health verification.
 
 
 

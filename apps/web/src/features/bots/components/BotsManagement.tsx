@@ -573,6 +573,45 @@ export default function BotsManagement() {
     return Math.max(0, Date.now() - heartbeatTs);
   }, [monitorSessionDetail?.lastHeartbeatAt]);
 
+  const monitorChecklistItems = useMemo(() => {
+    if (!monitorSessionDetail) return [];
+
+    const hasSignalData = monitorSessionDetail.symbolsTracked <= 0 || monitorSignalRows.length > 0;
+
+    return [
+      {
+        key: "session",
+        label: "Sesja aktywna",
+        ok: monitorSessionDetail.status === "RUNNING",
+        note: monitorSessionDetail.status,
+      },
+      {
+        key: "heartbeat",
+        label: "Heartbeat swiezy",
+        ok: monitorHeartbeatLagMs != null && monitorHeartbeatLagMs <= 60_000,
+        note: monitorHeartbeatLagMs == null ? "-" : formatDuration(monitorHeartbeatLagMs),
+      },
+      {
+        key: "positions",
+        label: "Dane pozycji",
+        ok: Boolean(monitorPositions),
+        note: monitorPositions ? `${monitorPositions.openCount} open` : "brak",
+      },
+      {
+        key: "signals",
+        label: "Dane sygnalow",
+        ok: hasSignalData,
+        note: `${monitorSignalRows.length} / ${monitorSessionDetail.symbolsTracked}`,
+      },
+      {
+        key: "errors",
+        label: "Brak bledow sesji",
+        ok: !monitorSessionDetail.errorMessage,
+        note: monitorSessionDetail.errorMessage ? "wymaga sprawdzenia" : "OK",
+      },
+    ];
+  }, [monitorHeartbeatLagMs, monitorPositions, monitorSessionDetail, monitorSignalRows.length]);
+
   const confirmLiveRisk = (message: string) => window.confirm(message);
 
   const loadAssistant = useCallback(async (botId: string) => {
@@ -1650,6 +1689,28 @@ export default function BotsManagement() {
                       <p>
                         <span className="opacity-60">Czas:</span> {formatDuration(monitorSessionDetail.durationMs)}
                       </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="text-sm font-semibold">Checklist operatora</h3>
+                      <span className="text-xs opacity-60">
+                        {monitorChecklistItems.filter((item) => item.ok).length}/{monitorChecklistItems.length} OK
+                      </span>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+                      {monitorChecklistItems.map((item) => (
+                        <div key={item.key} className="rounded-md border border-base-300 bg-base-200 px-2 py-2 text-xs">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium">{item.label}</span>
+                            <span className={`badge badge-xs ${item.ok ? "badge-success" : "badge-warning"}`}>
+                              {item.ok ? "OK" : "SPRAWDZ"}
+                            </span>
+                          </div>
+                          <p className="mt-1 opacity-65">{item.note}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
