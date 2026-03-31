@@ -234,16 +234,16 @@ export default function HomeLiveWidgets() {
               <p className="text-[10px] uppercase tracking-wide opacity-60">{t("dashboard.home.quickActionsSecondaryLabel")}</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Link href="/dashboard/strategies/list" className={SECONDARY_ACTION_CLASS}>
-                  {t("dashboard.home.strategyLabPrimaryAction")}
+                  {t("dashboard.home.quickActionStrategies")}
                 </Link>
                 <Link href="/dashboard/backtests/list" className={SECONDARY_ACTION_CLASS}>
-                  {t("dashboard.home.strategyLabSecondaryAction")}
+                  {t("dashboard.home.quickActionBacktests")}
                 </Link>
                 <Link href="/dashboard/orders" className={SECONDARY_ACTION_CLASS}>
-                  {t("dashboard.home.executionReviewPrimaryAction")}
+                  {t("dashboard.home.quickActionOrders")}
                 </Link>
                 <Link href="/dashboard/reports" className={SECONDARY_ACTION_CLASS}>
-                  {t("dashboard.nav.reports")}
+                  {t("dashboard.home.quickActionReports")}
                 </Link>
               </div>
             </div>

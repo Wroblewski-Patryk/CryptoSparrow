@@ -7,14 +7,15 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BOPS-29 feat(web-dashboard): tighten CTA copy and density in dashboard strips to reduce decision latency`
+- [ ] `BOPS-30 feat(web-dashboard): rebalance status-card wording and emphasis to avoid duplicated semantic signals`
 
 ## NEXT
-- [ ] `BOPS-30 feat(web-dashboard): rebalance status-card wording and emphasis to avoid duplicated semantic signals`
+- [ ] `BOPS-31 feat(web-dashboard): polish control-center and onboarding visual rhythm with final spacing/contrast pass before manual UX review`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BOPS-29 feat(web-dashboard): tighten CTA copy and density in dashboard strips to reduce decision latency`
 - [x] `BOPS-28 feat(web-dashboard): harden visual affordance of primary-vs-secondary CTA paths in control-center and onboarding strips`
 - [x] `BOPS-27 feat(web-dashboard): normalize button sizing hierarchy and interaction affordances across dashboard control-center actions`
 - [x] `BOPS-26 feat(web-dashboard): tighten micro-layout consistency of onboarding + control-center strips between 2xl, xl and md breakpoints`

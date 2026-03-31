@@ -67,11 +67,11 @@ export default function DashboardPage() {
               <p className='text-[11px] uppercase tracking-wide opacity-60'>Sugerowany start</p>
               <div className='mt-auto flex flex-wrap gap-2 pt-2'>
                 <Link href='/dashboard/bots' className={PRIMARY_ACTION_CLASS}>
-                  <span className='badge badge-primary badge-xs border-0'>Primary</span>
+                  <span className='badge badge-primary badge-xs border-0'>Glowny</span>
                   Boty runtime
                 </Link>
                 <Link href='/dashboard/backtests/list' className={SECONDARY_ACTION_CLASS}>
-                  <span className='badge badge-ghost badge-xs border-base-300'>Secondary</span>
+                  <span className='badge badge-ghost badge-xs border-base-300'>Pomocniczy</span>
                   Backtesty
                 </Link>
               </div>

@@ -102,6 +102,10 @@ type TranslationSchema = {
       quickActionsStripDescription: string;
       quickActionsPrimaryLabel: string;
       quickActionsSecondaryLabel: string;
+      quickActionStrategies: string;
+      quickActionBacktests: string;
+      quickActionOrders: string;
+      quickActionReports: string;
       handoffCuesTitle: string;
       handoffRuntimeCue: string;
       handoffBacktestCue: string;
@@ -235,9 +239,13 @@ export const translations: Record<Locale, TranslationSchema> = {
         laneStepTwo: "Step 2",
         laneStepThree: "Step 3",
         quickActionsStripTitle: "Quick actions",
-        quickActionsStripDescription: "Jump directly to the module that matches your current operator intent.",
+        quickActionsStripDescription: "Pick one action and move on.",
         quickActionsPrimaryLabel: "Primary path",
         quickActionsSecondaryLabel: "Secondary paths",
+        quickActionStrategies: "Review strategies",
+        quickActionBacktests: "Run backtests",
+        quickActionOrders: "Check orders",
+        quickActionReports: "Open reports",
         handoffCuesTitle: "Module handoff cues",
         handoffRuntimeCue: "Live runtime -> Bots",
         handoffBacktestCue: "Validation -> Backtests",
@@ -370,9 +378,13 @@ export const translations: Record<Locale, TranslationSchema> = {
         laneStepTwo: "Krok 2",
         laneStepThree: "Krok 3",
         quickActionsStripTitle: "Szybkie akcje",
-        quickActionsStripDescription: "Przejdz od razu do modulu, ktory odpowiada Twojemu aktualnemu celowi operacyjnemu.",
+        quickActionsStripDescription: "Wybierz jedna akcje i przejdz dalej.",
         quickActionsPrimaryLabel: "Sciezka glowna",
         quickActionsSecondaryLabel: "Sciezki pomocnicze",
+        quickActionStrategies: "Strategie",
+        quickActionBacktests: "Backtesty",
+        quickActionOrders: "Zlecenia",
+        quickActionReports: "Raporty",
         handoffCuesTitle: "Wskazniki przekazania miedzy modulami",
         handoffRuntimeCue: "Runtime live -> Boty",
         handoffBacktestCue: "Walidacja -> Backtesty",
