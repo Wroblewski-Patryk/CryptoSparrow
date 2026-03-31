@@ -113,7 +113,7 @@ describe("BotsManagement", () => {
       expect(screen.getByLabelText("Strategia bota")).toHaveValue("s-one");
     });
 
-    expect(screen.getByText("Parametry ze strategii")).toBeInTheDocument();
+    expect(screen.getByText("3. Kontekst strategii")).toBeInTheDocument();
     expect(screen.getByText("5m")).toBeInTheDocument();
     expect(screen.getByText("12x")).toBeInTheDocument();
     expect(screen.getByText("3")).toBeInTheDocument();

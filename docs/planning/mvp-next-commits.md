@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BOPS-06 feat(web-creator): reorganize bot creator into 3 logical sections (core mode, market-group context, strategy context)`
 - [ ] `BOPS-07 feat(api+web-guard): block creating duplicate active bot using the same strategy + market-group pair`
 
 ## NEXT
@@ -17,6 +16,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BOPS-06 feat(web-creator): reorganize bot creator into 3 logical sections (core mode, market-group context, strategy context)`
 - [x] `BOPS-05 feat(web-monitor): replace "Recent Activity" style feed with dense operational table aligned to backtest trades readability`
 - [x] `BOPS-04 feat(web-bots-dashboard): redesign bots dashboard list into clickable operational cards for quick active-bot context switching`
 - [x] `BOPS-03 feat(web-monitor): stabilize auto-refresh rendering to update values in-place without section remount/flicker`

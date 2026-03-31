@@ -233,6 +233,10 @@ export default function BotsManagement() {
     () => strategies.find((strategy) => strategy.id === strategyId) ?? null,
     [strategies, strategyId]
   );
+  const selectedMarketGroup = useMemo(
+    () => marketGroups.find((group) => group.id === marketGroupId) ?? null,
+    [marketGroupId, marketGroups]
+  );
   const selectedStrategyMaxOpenPositions = useMemo(
     () => deriveStrategyMaxOpenPositions(selectedStrategy),
     [selectedStrategy]
@@ -715,98 +719,128 @@ export default function BotsManagement() {
       <form onSubmit={handleCreate} className="rounded-xl border border-base-300 bg-base-200 p-4">
         <h2 className="text-lg font-semibold">Nowy bot</h2>
         <p className="text-sm opacity-70">Dodaj bota i wybierz strategia + grupe rynkow. LIVE wymaga opt-in.</p>
-        <div className="mt-4 grid gap-3 md:grid-cols-7">
-          <label className="form-control">
-            <span className="label-text">Nazwa</span>
-            <input
-              className="input input-bordered"
-              placeholder="Momentum Runner"
-              aria-label="Nazwa bota"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-          </label>
-          <label className="form-control">
-            <span className="label-text">Tryb</span>
-            <select
-              className="select select-bordered"
-              aria-label="Tryb bota"
-              value={mode}
-              onChange={(event) => setMode(event.target.value as BotMode)}
-            >
-              <option value="PAPER">PAPER</option>
-              <option value="LIVE">LIVE</option>
-            </select>
-          </label>
-          <label className="form-control">
-            <span className="label-text">Grupa rynkow</span>
-            <select
-              className="select select-bordered"
-              aria-label="Grupa rynkow bota"
-              value={marketGroupId}
-              onChange={(event) => setMarketGroupId(event.target.value)}
-              disabled={marketGroups.length === 0}
-            >
-              {marketGroups.length === 0 ? <option value="">Brak grup rynkow</option> : null}
-              {marketGroups.map((group) => (
-                <option key={group.id} value={group.id}>
-                  {group.name} ({group.marketType}/{group.baseCurrency})
-                </option>
-              ))}
-            </select>
-          </label>
-          {mode === "PAPER" ? (
-            <label className="form-control">
-              <span className="label-text">Paper start balance</span>
-              <input
-                type="number"
-                min={0}
-                max={100000000}
-                className="input input-bordered"
-                aria-label="Paper start balance"
-                value={paperStartBalance}
-                onChange={(event) =>
-                  setPaperStartBalance(Number.isFinite(Number(event.target.value)) ? Number(event.target.value) : 0)
-                }
-              />
-            </label>
-          ) : null}
-          <label className="form-control">
-            <span className="label-text">Strategia</span>
-            <select
-              className="select select-bordered"
-              aria-label="Strategia bota"
-              value={strategyId}
-              onChange={(event) => setStrategyId(event.target.value)}
-              disabled={strategies.length === 0}
-            >
-              {strategies.length === 0 ? <option value="">Brak strategii</option> : null}
-              {strategies.map((strategy) => (
-                <option key={strategy.id} value={strategy.id}>
-                  {strategy.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <div className="mt-4 rounded-lg border border-base-300 bg-base-100 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide opacity-60">Parametry ze strategii</p>
-          <div className="mt-2 grid gap-2 text-xs sm:grid-cols-3">
-            <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
-              <p className="uppercase tracking-wide opacity-60">Interwal</p>
-              <p className="font-medium">{selectedStrategy?.interval ?? "-"}</p>
+        <div className="mt-4 grid gap-3 xl:grid-cols-3">
+          <section className="rounded-lg border border-base-300 bg-base-100 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide opacity-60">1. Podstawy bota</p>
+            <div className="mt-2 space-y-3">
+              <label className="form-control">
+                <span className="label-text">Nazwa</span>
+                <input
+                  className="input input-bordered"
+                  placeholder="Momentum Runner"
+                  aria-label="Nazwa bota"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                />
+              </label>
+              <label className="form-control">
+                <span className="label-text">Tryb</span>
+                <select
+                  className="select select-bordered"
+                  aria-label="Tryb bota"
+                  value={mode}
+                  onChange={(event) => setMode(event.target.value as BotMode)}
+                >
+                  <option value="PAPER">PAPER</option>
+                  <option value="LIVE">LIVE</option>
+                </select>
+              </label>
+              {mode === "PAPER" ? (
+                <label className="form-control">
+                  <span className="label-text">Paper start balance</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100000000}
+                    className="input input-bordered"
+                    aria-label="Paper start balance"
+                    value={paperStartBalance}
+                    onChange={(event) =>
+                      setPaperStartBalance(Number.isFinite(Number(event.target.value)) ? Number(event.target.value) : 0)
+                    }
+                  />
+                </label>
+              ) : null}
             </div>
-            <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
-              <p className="uppercase tracking-wide opacity-60">Dzwignia</p>
-              <p className="font-medium">
-                {typeof selectedStrategy?.leverage === "number" ? `${selectedStrategy.leverage}x` : "-"}
-              </p>
+          </section>
+
+          <section className="rounded-lg border border-base-300 bg-base-100 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide opacity-60">2. Kontekst rynku</p>
+            <div className="mt-2 space-y-3">
+              <label className="form-control">
+                <span className="label-text">Grupa rynkow</span>
+                <select
+                  className="select select-bordered"
+                  aria-label="Grupa rynkow bota"
+                  value={marketGroupId}
+                  onChange={(event) => setMarketGroupId(event.target.value)}
+                  disabled={marketGroups.length === 0}
+                >
+                  {marketGroups.length === 0 ? <option value="">Brak grup rynkow</option> : null}
+                  {marketGroups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.name} ({group.marketType}/{group.baseCurrency})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="grid gap-2 text-xs sm:grid-cols-3">
+                <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+                  <p className="uppercase tracking-wide opacity-60">Rynek</p>
+                  <p className="font-medium">
+                    {selectedMarketGroup ? `${selectedMarketGroup.marketType}/${selectedMarketGroup.baseCurrency}` : "-"}
+                  </p>
+                </div>
+                <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+                  <p className="uppercase tracking-wide opacity-60">Whitelist</p>
+                  <p className="font-medium">{selectedMarketGroup?.whitelist?.length ?? 0}</p>
+                </div>
+                <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+                  <p className="uppercase tracking-wide opacity-60">Blacklist</p>
+                  <p className="font-medium">{selectedMarketGroup?.blacklist?.length ?? 0}</p>
+                </div>
+              </div>
             </div>
-            <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
-              <p className="uppercase tracking-wide opacity-60">Max open positions</p>
-              <p className="font-medium">{selectedStrategy ? selectedStrategyMaxOpenPositions : "-"}</p>
+          </section>
+
+          <section className="rounded-lg border border-base-300 bg-base-100 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide opacity-60">3. Kontekst strategii</p>
+            <div className="mt-2 space-y-3">
+              <label className="form-control">
+                <span className="label-text">Strategia</span>
+                <select
+                  className="select select-bordered"
+                  aria-label="Strategia bota"
+                  value={strategyId}
+                  onChange={(event) => setStrategyId(event.target.value)}
+                  disabled={strategies.length === 0}
+                >
+                  {strategies.length === 0 ? <option value="">Brak strategii</option> : null}
+                  {strategies.map((strategy) => (
+                    <option key={strategy.id} value={strategy.id}>
+                      {strategy.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="grid gap-2 text-xs sm:grid-cols-3">
+                <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+                  <p className="uppercase tracking-wide opacity-60">Interwal</p>
+                  <p className="font-medium">{selectedStrategy?.interval ?? "-"}</p>
+                </div>
+                <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+                  <p className="uppercase tracking-wide opacity-60">Dzwignia</p>
+                  <p className="font-medium">
+                    {typeof selectedStrategy?.leverage === "number" ? `${selectedStrategy.leverage}x` : "-"}
+                  </p>
+                </div>
+                <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+                  <p className="uppercase tracking-wide opacity-60">Max open positions</p>
+                  <p className="font-medium">{selectedStrategy ? selectedStrategyMaxOpenPositions : "-"}</p>
+                </div>
+              </div>
             </div>
-          </div>
+          </section>
         </div>
         <div className="mt-4 flex justify-end">
           <button type="submit" className="btn btn-primary btn-sm" disabled={!canCreate}>
