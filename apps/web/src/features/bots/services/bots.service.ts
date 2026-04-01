@@ -4,6 +4,12 @@ import {
   BotAssistantConfig,
   BotAssistantConfigResponse,
   AssistantDecisionTrace,
+  BotRuntimeSessionDetail,
+  BotRuntimeSessionListItem,
+  BotRuntimeSessionStatus,
+  BotRuntimeSymbolStatsResponse,
+  BotRuntimePositionsResponse,
+  BotRuntimeTradesResponse,
   BotSubagentConfig,
   CreateBotInput,
   TradeMarket,
@@ -29,6 +35,66 @@ export const updateBot = async (id: string, payload: UpdateBotInput): Promise<Bo
 
 export const deleteBot = async (id: string): Promise<void> => {
   await api.delete(`/dashboard/bots/${id}`);
+};
+
+export const listBotRuntimeSessions = async (
+  botId: string,
+  params?: {
+    status?: BotRuntimeSessionStatus;
+    limit?: number;
+  }
+): Promise<BotRuntimeSessionListItem[]> => {
+  const res = await api.get<BotRuntimeSessionListItem[]>(`/dashboard/bots/${botId}/runtime-sessions`, { params });
+  return res.data;
+};
+
+export const getBotRuntimeSession = async (botId: string, sessionId: string): Promise<BotRuntimeSessionDetail> => {
+  const res = await api.get<BotRuntimeSessionDetail>(`/dashboard/bots/${botId}/runtime-sessions/${sessionId}`);
+  return res.data;
+};
+
+export const listBotRuntimeSessionSymbolStats = async (
+  botId: string,
+  sessionId: string,
+  params?: {
+    symbol?: string;
+    limit?: number;
+  }
+): Promise<BotRuntimeSymbolStatsResponse> => {
+  const res = await api.get<BotRuntimeSymbolStatsResponse>(
+    `/dashboard/bots/${botId}/runtime-sessions/${sessionId}/symbol-stats`,
+    { params }
+  );
+  return res.data;
+};
+
+export const listBotRuntimeSessionTrades = async (
+  botId: string,
+  sessionId: string,
+  params?: {
+    symbol?: string;
+    limit?: number;
+  }
+): Promise<BotRuntimeTradesResponse> => {
+  const res = await api.get<BotRuntimeTradesResponse>(`/dashboard/bots/${botId}/runtime-sessions/${sessionId}/trades`, {
+    params,
+  });
+  return res.data;
+};
+
+export const listBotRuntimeSessionPositions = async (
+  botId: string,
+  sessionId: string,
+  params?: {
+    symbol?: string;
+    limit?: number;
+  }
+): Promise<BotRuntimePositionsResponse> => {
+  const res = await api.get<BotRuntimePositionsResponse>(
+    `/dashboard/bots/${botId}/runtime-sessions/${sessionId}/positions`,
+    { params }
+  );
+  return res.data;
 };
 
 export const getBotAssistantConfig = async (botId: string): Promise<BotAssistantConfigResponse> => {

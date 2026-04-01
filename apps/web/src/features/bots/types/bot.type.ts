@@ -102,6 +102,15 @@ export type BotRuntimeSymbolStat = {
   lastSignalAt: string | null;
   lastSignalDirection?: "LONG" | "SHORT" | "EXIT" | null;
   lastSignalDecisionAt?: string | null;
+  lastSignalMessage?: string | null;
+  lastSignalReason?: string | null;
+  lastSignalStrategyId?: string | null;
+  lastSignalStrategyName?: string | null;
+  lastSignalConditionSummary?: string | null;
+  lastSignalScoreSummary?: {
+    longScore: number;
+    shortScore: number;
+  } | null;
   lastTradeAt: string | null;
   snapshotAt: string;
   createdAt: string;
@@ -178,6 +187,8 @@ export type BotRuntimePositionItem = {
   realizedPnl: number;
   unrealizedPnl: number | null;
   markPrice: number | null;
+  dynamicTtpStopLoss?: number | null;
+  dynamicTslStopLoss?: number | null;
   firstTradeAt: string | null;
   lastTradeAt: string | null;
   tradesCount: number;

@@ -39,9 +39,11 @@ import { listMarketUniverses } from "../../markets/services/markets.service";
 import { MarketUniverse } from "../../markets/types/marketUniverse.type";
 import { listStrategies } from "../../strategies/api/strategies.api";
 import { StrategyDto } from "../../strategies/types/StrategyForm.type";
+import { createMarketStreamEventSource } from "../../../lib/marketStream";
 
 const LIVE_CONSENT_TEXT_VERSION = "mvp-v1";
 const DUPLICATE_ACTIVE_BOT_ERROR = "active bot already exists for this strategy + market group pair";
+const MONITOR_AUTO_REFRESH_INTERVAL_MS = 5_000;
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -119,6 +121,14 @@ type MonitorAggregateData = {
   symbolStats: BotRuntimeSymbolStatsResponse;
   positions: BotRuntimePositionsResponse;
   trades: BotRuntimeTradesResponse;
+};
+
+const FIELD_WRAPPER_CLASS = "form-control gap-1";
+const META_CARD_CLASS = "rounded-md border border-base-300 bg-base-200/70 px-3 py-2";
+const normalizeSymbol = (value: string) => value.trim().toUpperCase();
+type TickerEventPayload = {
+  symbol: string;
+  lastPrice: number;
 };
 
 const toTimestamp = (value?: string | null) => {
@@ -399,6 +409,7 @@ export default function BotsManagement() {
   const [monitorSessionLoading, setMonitorSessionLoading] = useState(false);
   const [monitorError, setMonitorError] = useState<string | null>(null);
   const [monitorAutoRefreshEnabled, setMonitorAutoRefreshEnabled] = useState(true);
+  const [monitorLiveTickerPrices, setMonitorLiveTickerPrices] = useState<Record<string, number>>({});
 
   const loadBots = useCallback(async (filter: "ALL" | TradeMarket) => {
     setLoading(true);
@@ -507,14 +518,23 @@ export default function BotsManagement() {
     () => monitorSessions.find((session) => session.id === monitorSessionId) ?? null,
     [monitorSessionId, monitorSessions]
   );
-  const monitorHasRunningSession = useMemo(
-    () => monitorSessions.some((session) => session.status === "RUNNING"),
-    [monitorSessions]
-  );
   const monitorQuickSwitchBots = useMemo(() => {
     const active = bots.filter((bot) => bot.isActive);
     return active.length > 0 ? active : bots;
   }, [bots]);
+  const selectedMonitorBot = useMemo(
+    () => bots.find((bot) => bot.id === monitorBotId) ?? null,
+    [bots, monitorBotId]
+  );
+  const monitorStreamSymbols = useMemo(() => {
+    const fromStats = monitorSymbolStats?.items?.map((item) => item.symbol) ?? [];
+    const fromPositions = monitorPositions?.openItems?.map((item) => item.symbol) ?? [];
+    return [...new Set([...fromStats, ...fromPositions].map((symbol) => normalizeSymbol(symbol)))];
+  }, [monitorPositions?.openItems, monitorSymbolStats?.items]);
+  const monitorStreamSymbolsKey = useMemo(
+    () => monitorStreamSymbols.join(","),
+    [monitorStreamSymbols]
+  );
 
   const monitorWinRate = useMemo(() => {
     const closedTrades = monitorSessionDetail?.summary.closedTrades ?? 0;
@@ -541,6 +561,72 @@ export default function BotsManagement() {
       };
     });
   }, [monitorTrades?.items]);
+
+  const monitorOpenPositionRows = useMemo(() => {
+    const initBalance =
+      selectedMonitorBot?.mode === "PAPER" && selectedMonitorBot.paperStartBalance > 0
+        ? selectedMonitorBot.paperStartBalance
+        : null;
+
+    return (monitorPositions?.openItems ?? []).map((position) => {
+      const liveMarkPrice =
+        monitorLiveTickerPrices[normalizeSymbol(position.symbol)] ?? position.markPrice ?? null;
+      const openPnl =
+        typeof liveMarkPrice === "number" && Number.isFinite(liveMarkPrice)
+          ? (liveMarkPrice - position.entryPrice) *
+            position.quantity *
+            (position.side === "LONG" ? 1 : -1)
+          : (position.unrealizedPnl ?? 0);
+      const entryNotional = position.entryNotional;
+      const marginUsed = position.leverage > 0 ? entryNotional / position.leverage : entryNotional;
+      const pnlNotionalPct = entryNotional > 0 ? (openPnl / entryNotional) * 100 : 0;
+      const pnlMarginPct = marginUsed > 0 ? (openPnl / marginUsed) * 100 : 0;
+      const marginInitPct = initBalance && initBalance > 0 ? (marginUsed / initBalance) * 100 : null;
+
+      return {
+        ...position,
+        markPrice: liveMarkPrice,
+        openPnl,
+        entryNotional,
+        marginUsed,
+        pnlNotionalPct,
+        pnlMarginPct,
+        marginInitPct,
+      };
+    });
+  }, [monitorLiveTickerPrices, monitorPositions?.openItems, selectedMonitorBot]);
+
+  const monitorShowDynamicStopColumns = useMemo(
+    () =>
+      monitorOpenPositionRows.some(
+        (position) =>
+          position.dynamicTtpStopLoss != null || position.dynamicTslStopLoss != null
+      ),
+    [monitorOpenPositionRows]
+  );
+
+  const monitorOpenMarginSummary = useMemo(() => {
+    const totalMarginUsed = monitorOpenPositionRows.reduce((acc, item) => acc + item.marginUsed, 0);
+    const totalNotional = monitorOpenPositionRows.reduce((acc, item) => acc + item.entryNotional, 0);
+    const totalOpenPnl = monitorOpenPositionRows.reduce((acc, item) => acc + item.openPnl, 0);
+    const initBalance =
+      selectedMonitorBot?.mode === "PAPER" && selectedMonitorBot.paperStartBalance > 0
+        ? selectedMonitorBot.paperStartBalance
+        : null;
+    const marginInitPct = initBalance && initBalance > 0 ? (totalMarginUsed / initBalance) * 100 : null;
+
+    return {
+      totalMarginUsed,
+      totalNotional,
+      totalOpenPnl,
+      marginInitPct,
+    };
+  }, [monitorOpenPositionRows, selectedMonitorBot]);
+
+  const monitorShowOpenOrders = useMemo(() => {
+    const mode = monitorSessionDetail?.mode ?? selectedMonitorBot?.mode ?? null;
+    return mode === "LIVE";
+  }, [monitorSessionDetail?.mode, selectedMonitorBot?.mode]);
 
   const monitorSignalRows = useMemo(() => {
     return [...(monitorSymbolStats?.items ?? [])].sort((a, b) => {
@@ -1086,11 +1172,10 @@ export default function BotsManagement() {
 
   useEffect(() => {
     if (activeTab !== "monitoring" || !monitorAutoRefreshEnabled || !monitorBotId) return;
-    if (!monitorHasRunningSession) return;
 
     const intervalId = window.setInterval(() => {
       void refreshMonitoring({ silent: true });
-    }, 15000);
+    }, MONITOR_AUTO_REFRESH_INTERVAL_MS);
 
     return () => {
       window.clearInterval(intervalId);
@@ -1099,9 +1184,41 @@ export default function BotsManagement() {
     activeTab,
     monitorAutoRefreshEnabled,
     monitorBotId,
-    monitorHasRunningSession,
     refreshMonitoring,
   ]);
+
+  useEffect(() => {
+    setMonitorLiveTickerPrices({});
+  }, [monitorBotId, monitorSessionId, monitorViewMode]);
+
+  useEffect(() => {
+    if (activeTab !== "monitoring" || !monitorBotId) return;
+    if (!monitorStreamSymbolsKey) return;
+    if (typeof window === "undefined" || typeof window.EventSource === "undefined") return;
+
+    const source = createMarketStreamEventSource({
+      symbols: monitorStreamSymbols,
+      interval: "1m",
+    });
+
+    source.addEventListener("ticker", (event) => {
+      try {
+        const data = JSON.parse((event as MessageEvent).data) as TickerEventPayload;
+        if (!data?.symbol || !Number.isFinite(data.lastPrice)) return;
+        const symbolKey = normalizeSymbol(data.symbol);
+        setMonitorLiveTickerPrices((prev) => {
+          if (prev[symbolKey] === data.lastPrice) return prev;
+          return { ...prev, [symbolKey]: data.lastPrice };
+        });
+      } catch {
+        // ignore malformed ticker payload
+      }
+    });
+
+    return () => {
+      source.close();
+    };
+  }, [activeTab, monitorBotId, monitorStreamSymbols, monitorStreamSymbolsKey]);
 
   return (
     <div className="space-y-5">
@@ -1138,10 +1255,10 @@ export default function BotsManagement() {
         <h2 className="text-lg font-semibold">Nowy bot</h2>
         <p className="text-sm opacity-70">Dodaj bota i wybierz strategia + grupe rynkow. LIVE wymaga opt-in.</p>
         <div className="mt-4 grid gap-3 xl:grid-cols-3">
-          <section className="rounded-lg border border-base-300 bg-base-100 p-3">
+          <section className="rounded-lg border border-base-300 bg-base-100 p-3 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide opacity-60">1. Podstawy bota</p>
             <div className="mt-2 space-y-3">
-              <label className="form-control">
+              <label className={FIELD_WRAPPER_CLASS}>
                 <span className="label-text">Nazwa</span>
                 <input
                   className="input input-bordered"
@@ -1151,7 +1268,7 @@ export default function BotsManagement() {
                   onChange={(event) => setName(event.target.value)}
                 />
               </label>
-              <label className="form-control">
+              <label className={FIELD_WRAPPER_CLASS}>
                 <span className="label-text">Tryb</span>
                 <select
                   className="select select-bordered"
@@ -1164,7 +1281,7 @@ export default function BotsManagement() {
                 </select>
               </label>
               {mode === "PAPER" ? (
-                <label className="form-control">
+                <label className={FIELD_WRAPPER_CLASS}>
                   <span className="label-text">Paper start balance</span>
                   <input
                     type="number"
@@ -1182,10 +1299,10 @@ export default function BotsManagement() {
             </div>
           </section>
 
-          <section className="rounded-lg border border-base-300 bg-base-100 p-3">
+          <section className="rounded-lg border border-base-300 bg-base-100 p-3 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide opacity-60">2. Kontekst rynku</p>
             <div className="mt-2 space-y-3">
-              <label className="form-control">
+              <label className={FIELD_WRAPPER_CLASS}>
                 <span className="label-text">Grupa rynkow</span>
                 <select
                   className="select select-bordered"
@@ -1203,17 +1320,17 @@ export default function BotsManagement() {
                 </select>
               </label>
               <div className="grid gap-2 text-xs sm:grid-cols-3">
-                <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+                <div className={META_CARD_CLASS}>
                   <p className="uppercase tracking-wide opacity-60">Rynek</p>
                   <p className="font-medium">
                     {selectedMarketGroup ? `${selectedMarketGroup.marketType}/${selectedMarketGroup.baseCurrency}` : "-"}
                   </p>
                 </div>
-                <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+                <div className={META_CARD_CLASS}>
                   <p className="uppercase tracking-wide opacity-60">Whitelist</p>
                   <p className="font-medium">{selectedMarketGroup?.whitelist?.length ?? 0}</p>
                 </div>
-                <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+                <div className={META_CARD_CLASS}>
                   <p className="uppercase tracking-wide opacity-60">Blacklist</p>
                   <p className="font-medium">{selectedMarketGroup?.blacklist?.length ?? 0}</p>
                 </div>
@@ -1221,10 +1338,10 @@ export default function BotsManagement() {
             </div>
           </section>
 
-          <section className="rounded-lg border border-base-300 bg-base-100 p-3">
+          <section className="rounded-lg border border-base-300 bg-base-100 p-3 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide opacity-60">3. Kontekst strategii</p>
             <div className="mt-2 space-y-3">
-              <label className="form-control">
+              <label className={FIELD_WRAPPER_CLASS}>
                 <span className="label-text">Strategia</span>
                 <select
                   className="select select-bordered"
@@ -1242,17 +1359,17 @@ export default function BotsManagement() {
                 </select>
               </label>
               <div className="grid gap-2 text-xs sm:grid-cols-3">
-                <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+                <div className={META_CARD_CLASS}>
                   <p className="uppercase tracking-wide opacity-60">Interwal</p>
                   <p className="font-medium">{selectedStrategy?.interval ?? "-"}</p>
                 </div>
-                <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+                <div className={META_CARD_CLASS}>
                   <p className="uppercase tracking-wide opacity-60">Dzwignia</p>
                   <p className="font-medium">
                     {typeof selectedStrategy?.leverage === "number" ? `${selectedStrategy.leverage}x` : "-"}
                   </p>
                 </div>
-                <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
+                <div className={META_CARD_CLASS}>
                   <p className="uppercase tracking-wide opacity-60">Max open positions</p>
                   <p className="font-medium">{selectedStrategy ? selectedStrategyMaxOpenPositions : "-"}</p>
                 </div>
@@ -1510,7 +1627,7 @@ export default function BotsManagement() {
                         checked={monitorAutoRefreshEnabled}
                         onChange={(event) => setMonitorAutoRefreshEnabled(event.target.checked)}
                       />
-                      <span className="label-text text-xs">Auto refresh RUNNING (15s)</span>
+                      <span className="label-text text-xs">Auto refresh runtime (5s)</span>
                     </label>
                     <button type="button" className="btn btn-outline btn-sm" onClick={() => void refreshMonitoring()}>
                       Odswiez
@@ -1571,13 +1688,11 @@ export default function BotsManagement() {
                 </div>
 
                 <p className="rounded-md border border-base-300 bg-base-200 px-3 py-2 text-xs opacity-75" aria-live="polite">
-                  {monitorHasRunningSession
-                    ? monitorViewMode === "aggregate"
-                      ? "Auto-refresh aktywny dla widoku zbiorczego."
-                      : selectedMonitorSession?.status === "RUNNING"
-                        ? "Auto-refresh aktywny dla biezacej sesji."
-                        : "Auto-refresh aktywny dla sesji RUNNING."
-                    : "Brak sesji RUNNING - auto-refresh jest automatycznie wstrzymany."}
+                  {monitorViewMode === "aggregate"
+                    ? "Auto-refresh aktywny dla widoku zbiorczego."
+                    : selectedMonitorSession?.status === "RUNNING"
+                      ? "Auto-refresh aktywny dla biezacej sesji."
+                      : "Auto-refresh aktywny dla wybranej sesji."}
                 </p>
 
                 <details className="rounded-md border border-base-300 bg-base-200">
@@ -1753,10 +1868,10 @@ export default function BotsManagement() {
                             <span className="opacity-60">Open PnL:</span>{" "}
                             <span
                               className={`font-semibold ${
-                                (monitorSymbolStats?.summary.unrealizedPnl ?? 0) >= 0 ? "text-success" : "text-error"
+                                monitorOpenMarginSummary.totalOpenPnl >= 0 ? "text-success" : "text-error"
                               }`}
                             >
-                              {formatCurrency(monitorSymbolStats?.summary.unrealizedPnl ?? 0)}
+                              {formatCurrency(monitorOpenMarginSummary.totalOpenPnl)}
                             </span>
                           </p>
                         </div>
@@ -1846,45 +1961,99 @@ export default function BotsManagement() {
                         <p className="text-xs opacity-65">
                           Natychmiastowa kontrola tego, co jest aktywne w tej chwili.
                         </p>
+                        <p className="mt-1 text-xs opacity-60">
+                          Notional: {formatCurrency(monitorOpenMarginSummary.totalNotional)} | Margin:{" "}
+                          {formatCurrency(monitorOpenMarginSummary.totalMarginUsed)} | Open PnL:{" "}
+                          <span
+                            className={
+                              monitorOpenMarginSummary.totalOpenPnl >= 0 ? "text-success" : "text-error"
+                            }
+                          >
+                            {formatCurrency(monitorOpenMarginSummary.totalOpenPnl)}
+                          </span>
+                          {monitorOpenMarginSummary.marginInitPct != null ? (
+                            <>
+                              {" "}
+                              | Margin/init: {formatNumber(monitorOpenMarginSummary.marginInitPct, 2)}%
+                            </>
+                          ) : null}
+                        </p>
                       </div>
                       <span className="text-xs opacity-60">
-                        {(monitorPositions?.openItems.length ?? 0)} / {(monitorPositions?.openCount ?? 0)} aktywne
+                        {monitorOpenPositionRows.length} / {(monitorPositions?.openCount ?? 0)} aktywne
                       </span>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="table table-xs table-zebra">
                         <thead>
                           <tr>
+                            <th>Czas otwarcia</th>
                             <th>Symbol</th>
                             <th>Side</th>
-                            <th>Otwarcie</th>
                             <th>Qty</th>
                             <th>Entry</th>
                             <th>Mark</th>
-                            <th>DCA</th>
+                            <th>Notional</th>
+                            <th>Margin</th>
+                            <th>Margin/init</th>
                             <th>Fees</th>
                             <th>Open PnL</th>
+                            <th>Open %</th>
+                            <th>ROI % (margin)</th>
+                            <th>DCA</th>
+                            {monitorShowDynamicStopColumns ? <th>SL (TTP)</th> : null}
+                            {monitorShowDynamicStopColumns ? <th>SL (TSL)</th> : null}
                           </tr>
                         </thead>
                         <tbody>
-                          {(monitorPositions?.openItems ?? []).map((position) => (
+                          {monitorOpenPositionRows.map((position) => (
                             <tr key={position.id}>
+                              <td>{formatDateTime(position.openedAt)}</td>
                               <td className="font-medium">{position.symbol}</td>
                               <td>{position.side}</td>
-                              <td>{formatDateTime(position.openedAt)}</td>
                               <td>{formatNumber(position.quantity, 6)}</td>
                               <td>{formatNumber(position.entryPrice, 4)}</td>
                               <td>{position.markPrice != null ? formatNumber(position.markPrice, 4) : "-"}</td>
-                              <td>{position.dcaCount}</td>
-                              <td>{formatCurrency(position.feesPaid)}</td>
-                              <td className={(position.unrealizedPnl ?? 0) >= 0 ? "text-success" : "text-error"}>
-                                {formatCurrency(position.unrealizedPnl ?? 0)}
+                              <td>{formatCurrency(position.entryNotional)}</td>
+                              <td>{formatCurrency(position.marginUsed)}</td>
+                              <td>
+                                {position.marginInitPct != null
+                                  ? `${formatNumber(position.marginInitPct, 2)}%`
+                                  : "-"}
                               </td>
+                              <td>{formatCurrency(position.feesPaid)}</td>
+                              <td className={position.openPnl >= 0 ? "text-success" : "text-error"}>
+                                {formatCurrency(position.openPnl)}
+                              </td>
+                              <td className={position.pnlNotionalPct >= 0 ? "text-success" : "text-error"}>
+                                {formatNumber(position.pnlNotionalPct, 2)}%
+                              </td>
+                              <td className={position.pnlMarginPct >= 0 ? "text-success" : "text-error"}>
+                                {formatNumber(position.pnlMarginPct, 2)}%
+                              </td>
+                              <td>{position.dcaCount}</td>
+                              {monitorShowDynamicStopColumns ? (
+                                <td>
+                                  {position.dynamicTtpStopLoss == null
+                                    ? "-"
+                                    : formatNumber(position.dynamicTtpStopLoss, 4)}
+                                </td>
+                              ) : null}
+                              {monitorShowDynamicStopColumns ? (
+                                <td>
+                                  {position.dynamicTslStopLoss == null
+                                    ? "-"
+                                    : formatNumber(position.dynamicTslStopLoss, 4)}
+                                </td>
+                              ) : null}
                             </tr>
                           ))}
-                          {(monitorPositions?.openItems.length ?? 0) === 0 ? (
+                          {monitorOpenPositionRows.length === 0 ? (
                             <tr>
-                              <td colSpan={9} className="text-center text-xs opacity-70">
+                              <td
+                                colSpan={monitorShowDynamicStopColumns ? 16 : 14}
+                                className="text-center text-xs opacity-70"
+                              >
                                 Brak otwartych pozycji w tej sesji.
                               </td>
                             </tr>
@@ -1894,54 +2063,56 @@ export default function BotsManagement() {
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-base-300 bg-base-100 p-3">
-                    <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold">Teraz - otwarte zlecenia</h3>
-                      <span className="text-xs opacity-60">
-                        {(monitorPositions?.openOrders ?? []).length} /{" "}
-                        {monitorPositions?.openOrdersCount ?? monitorPositions?.openOrders?.length ?? 0} aktywne
-                      </span>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="table table-xs table-zebra">
-                        <thead>
-                          <tr>
-                            <th>Symbol</th>
-                            <th>Side</th>
-                            <th>Type</th>
-                            <th>Status</th>
-                            <th>Qty</th>
-                            <th>Filled</th>
-                            <th>Price</th>
-                            <th>Stop</th>
-                            <th>Submitted</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(monitorPositions?.openOrders ?? []).map((order) => (
-                            <tr key={order.id}>
-                              <td className="font-medium">{order.symbol}</td>
-                              <td>{order.side}</td>
-                              <td>{order.type}</td>
-                              <td>{order.status}</td>
-                              <td>{formatNumber(order.quantity, 6)}</td>
-                              <td>{formatNumber(order.filledQuantity, 6)}</td>
-                              <td>{order.price != null ? formatNumber(order.price, 4) : "-"}</td>
-                              <td>{order.stopPrice != null ? formatNumber(order.stopPrice, 4) : "-"}</td>
-                              <td>{formatDateTime(order.submittedAt ?? order.createdAt)}</td>
-                            </tr>
-                          ))}
-                          {(monitorPositions?.openOrders?.length ?? 0) === 0 ? (
+                  {monitorShowOpenOrders ? (
+                    <div className="rounded-lg border border-base-300 bg-base-100 p-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <h3 className="text-sm font-semibold">Teraz - otwarte zlecenia</h3>
+                        <span className="text-xs opacity-60">
+                          {(monitorPositions?.openOrders ?? []).length} /{" "}
+                          {monitorPositions?.openOrdersCount ?? monitorPositions?.openOrders?.length ?? 0} aktywne
+                        </span>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="table table-xs table-zebra">
+                          <thead>
                             <tr>
-                              <td colSpan={9} className="text-center text-xs opacity-70">
-                                Brak otwartych zlecen.
-                              </td>
+                              <th>Symbol</th>
+                              <th>Side</th>
+                              <th>Type</th>
+                              <th>Status</th>
+                              <th>Qty</th>
+                              <th>Filled</th>
+                              <th>Price</th>
+                              <th>Stop</th>
+                              <th>Submitted</th>
                             </tr>
-                          ) : null}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {(monitorPositions?.openOrders ?? []).map((order) => (
+                              <tr key={order.id}>
+                                <td className="font-medium">{order.symbol}</td>
+                                <td>{order.side}</td>
+                                <td>{order.type}</td>
+                                <td>{order.status}</td>
+                                <td>{formatNumber(order.quantity, 6)}</td>
+                                <td>{formatNumber(order.filledQuantity, 6)}</td>
+                                <td>{order.price != null ? formatNumber(order.price, 4) : "-"}</td>
+                                <td>{order.stopPrice != null ? formatNumber(order.stopPrice, 4) : "-"}</td>
+                                <td>{formatDateTime(order.submittedAt ?? order.createdAt)}</td>
+                              </tr>
+                            ))}
+                            {(monitorPositions?.openOrders?.length ?? 0) === 0 ? (
+                              <tr>
+                                <td colSpan={9} className="text-center text-xs opacity-70">
+                                  Brak otwartych zlecen.
+                                </td>
+                              </tr>
+                            ) : null}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
 
                   <div id="monitor-history" className="scroll-mt-24 rounded-lg border border-base-300 bg-base-100 p-3">
                     <div className="mb-2 flex items-center justify-between">
@@ -2122,7 +2293,7 @@ export default function BotsManagement() {
                                           : "badge-ghost"
                                   }`}
                                 >
-                                  {item.lastSignalDirection ?? "NONE"}
+                                  {item.lastSignalDirection ?? "NEUTRAL"}
                                 </span>
                               </td>
                               <td>{formatDateTime(item.lastSignalDecisionAt ?? item.lastSignalAt)}</td>

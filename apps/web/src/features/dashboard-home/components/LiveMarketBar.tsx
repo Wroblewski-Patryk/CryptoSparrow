@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
+import { createMarketStreamEventSource } from "../../../lib/marketStream";
 
 type TickerEventPayload = {
   symbol: string;
@@ -67,10 +68,10 @@ export default function LiveMarketBar({ symbols, interval }: LiveMarketBarProps)
       return;
     }
 
-    const streamQuery = encodeURIComponent(uniqueSymbols.join(","));
-    const source = new EventSource(
-      `/dashboard/market-stream/events?symbols=${streamQuery}&interval=${encodeURIComponent(interval)}`
-    );
+    const source = createMarketStreamEventSource({
+      symbols: uniqueSymbols,
+      interval,
+    });
 
     source.addEventListener("ticker", (event) => {
       const data = JSON.parse((event as MessageEvent).data) as TickerEventPayload;
