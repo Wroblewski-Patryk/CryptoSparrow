@@ -625,29 +625,37 @@ export default function HomeLiveWidgets() {
                       <SignalPill value={signal} />
                     </div>
                     <div className="mt-2 space-y-1 text-[11px] leading-4 opacity-75">
-                      {s.lastSignalConditionSummary ? (
-                        <p>
-                          <span className="opacity-60">Warunek:</span>{" "}
-                          <span className="font-medium">{s.lastSignalConditionSummary}</span>
-                        </p>
-                      ) : null}
-                      {s.lastSignalStrategyName || s.lastSignalReason ? (
-                        <p>
-                          <span className="opacity-60">Dlaczego:</span>{" "}
-                          <span>
-                            {[s.lastSignalStrategyName, s.lastSignalReason].filter(Boolean).join(" · ")}
-                          </span>
-                        </p>
-                      ) : null}
-                      {s.lastSignalScoreSummary ? (
-                        <p>
-                          <span className="opacity-60">Score L/S:</span>{" "}
-                          <span className="font-medium">
-                            {formatNumber(s.lastSignalScoreSummary.longScore, { maximumFractionDigits: 2 })}/
-                            {formatNumber(s.lastSignalScoreSummary.shortScore, { maximumFractionDigits: 2 })}
-                          </span>
-                        </p>
-                      ) : null}
+                      <div>
+                        <p className="opacity-60">Warunki:</p>
+                        {s.lastSignalConditionLines && s.lastSignalConditionLines.length > 0 ? (
+                          <ul className="mt-1 space-y-1">
+                            {s.lastSignalConditionLines.map((line, index) => (
+                              <li key={`${s.id}-condition-${index}`} className="flex flex-wrap items-center gap-1">
+                                <span
+                                  className={
+                                    line.scope === "LONG"
+                                      ? "inline-flex rounded border border-success/40 bg-success/10 px-1 py-[1px] text-[10px] font-semibold text-success"
+                                      : "inline-flex rounded border border-error/40 bg-error/10 px-1 py-[1px] text-[10px] font-semibold text-error"
+                                  }
+                                >
+                                  {line.scope}
+                                </span>
+                                <span>{line.left}</span>
+                                <span>=</span>
+                                <span className="font-semibold">{line.value}</span>
+                                <span>{line.operator}</span>
+                                <span>{line.right}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="mt-1 font-medium">-</p>
+                        )}
+                      </div>
+                      <p>
+                        <span className="opacity-60">Wskazniki live:</span>{" "}
+                        <span className="font-medium">{s.lastSignalIndicatorSummary ?? "-"}</span>
+                      </p>
                     </div>
                   </article>
                 );

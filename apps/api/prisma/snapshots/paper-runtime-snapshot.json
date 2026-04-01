@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "exportedAt": "2026-04-01T02:45:03.461Z",
+  "source": {
+    "email": "wroblewskipatryk@gmail.com"
+  },
+  "data": {
+    "marketUniverses": [
+      {
+        "id": "5260df68-4b6e-475f-bd96-0dc1dc9a9d17",
+        "name": "Ulubione",
+        "marketType": "FUTURES",
+        "baseCurrency": "USDT",
+        "filterRules": {
+          "minQuoteVolume24h": 0,
+          "minQuoteVolumeEnabled": false
+        },
+        "whitelist": [
+          "BTCUSDT",
+          "ETHUSDT",
+          "BNBUSDT"
+        ],
+        "blacklist": [],
+        "autoExcludeRules": null,
+        "createdAt": "2026-04-01T02:37:50.110Z",
+        "updatedAt": "2026-04-01T02:37:50.110Z"
+      }
+    ],
+    "symbolGroups": [
+      {
+        "id": "e2277c38-66ad-4ad6-b369-22f664b7e41b",
+        "marketUniverseId": "5260df68-4b6e-475f-bd96-0dc1dc9a9d17",
+        "name": "Ulubione Group",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT",
+          "ETHUSDT"
+        ],
+        "createdAt": "2026-04-01T02:38:29.908Z",
+        "updatedAt": "2026-04-01T02:38:29.908Z"
+      }
+    ],
+    "strategies": [
+      {
+        "id": "58de38d9-544c-4ad2-94f4-5fa96b553fd0",
+        "name": "Trend Pulse (RSI + EMA)",
+        "description": "Seed strategy pod szybki start backtestu na grupie rynkow futures.",
+        "interval": "5m",
+        "leverage": 15,
+        "walletRisk": 10,
+        "config": {
+          "open": {
+            "direction": "both",
+            "indicatorsLong": [
+              {
+                "name": "RSI",
+                "group": "Analiza techniczna",
+                "value": 60,
+                "params": {
+                  "period": 14
+                },
+                "weight": 1,
+                "expanded": true,
+                "condition": ">"
+              }
+            ],
+            "indicatorsShort": [
+              {
+                "name": "RSI",
+                "group": "Analiza techniczna",
+                "value": 40,
+                "params": {
+                  "period": 14
+                },
+                "weight": 1,
+                "expanded": true,
+                "condition": "<"
+              }
+            ]
+          },
+          "close": {
+            "sl": 1.4,
+            "tp": 2.8,
+            "tsl": [
+              {
+                "arm": 10,
+                "percent": -25
+              }
+            ],
+            "ttp": [
+              {
+                "arm": 5,
+                "percent": 10
+              },
+              {
+                "arm": 10,
+                "percent": 20
+              },
+              {
+                "arm": 20,
+                "percent": 40
+              },
+              {
+                "arm": 40,
+                "percent": 80
+              }
+            ],
+            "mode": "advanced"
+          },
+          "additional": {
+            "dcaMode": "advanced",
+            "dcaTimes": 3,
+            "dcaLevels": [
+              {
+                "percent": -30,
+                "multiplier": 1
+              },
+              {
+                "percent": -30,
+                "multiplier": 1
+              },
+              {
+                "percent": -30,
+                "multiplier": 1
+              }
+            ],
+            "maxOrders": 10,
+            "orderUnit": "h",
+            "dcaEnabled": true,
+            "marginMode": "ISOLATED",
+            "maxPositions": 10,
+            "positionUnit": "d",
+            "dcaMultiplier": 1.5,
+            "orderLifetime": 8,
+            "positionLifetime": 2
+          }
+        },
+        "createdAt": "2026-04-01T02:37:50.116Z",
+        "updatedAt": "2026-04-01T02:38:21.907Z"
+      }
+    ],
+    "bots": [
+      {
+        "id": "2009f226-28ed-4231-878b-350d27057b5f",
+        "name": "asd",
+        "mode": "PAPER",
+        "paperStartBalance": 10000,
+        "marketType": "FUTURES",
+        "positionMode": "ONE_WAY",
+        "isActive": true,
+        "liveOptIn": false,
+        "consentTextVersion": null,
+        "maxOpenPositions": 1,
+        "createdAt": "2026-04-01T02:38:29.922Z",
+        "updatedAt": "2026-04-01T02:38:29.922Z"
+      }
+    ],
+    "botStrategies": [],
+    "botMarketGroups": [
+      {
+        "id": "5d330664-1de1-4220-adf6-d0e36ce5ecdb",
+        "botId": "2009f226-28ed-4231-878b-350d27057b5f",
+        "symbolGroupId": "e2277c38-66ad-4ad6-b369-22f664b7e41b",
+        "lifecycleStatus": "ACTIVE",
+        "executionOrder": 100,
+        "maxOpenPositions": 1,
+        "isEnabled": true,
+        "createdAt": "2026-04-01T02:38:29.925Z",
+        "updatedAt": "2026-04-01T02:38:29.925Z"
+      }
+    ],
+    "marketGroupStrategyLinks": [
+      {
+        "id": "cfc3063c-ea22-4b50-95d1-078ccc517d07",
+        "botId": "2009f226-28ed-4231-878b-350d27057b5f",
+        "botMarketGroupId": "5d330664-1de1-4220-adf6-d0e36ce5ecdb",
+        "strategyId": "58de38d9-544c-4ad2-94f4-5fa96b553fd0",
+        "priority": 100,
+        "weight": 1,
+        "isEnabled": true,
+        "createdAt": "2026-04-01T02:38:29.928Z",
+        "updatedAt": "2026-04-01T02:38:29.928Z"
+      }
+    ],
+    "openPositions": [
+      {
+        "id": "240e0755-5ff9-4b19-8b90-c2dbe1b9186f",
+        "botId": "2009f226-28ed-4231-878b-350d27057b5f",
+        "strategyId": "58de38d9-544c-4ad2-94f4-5fa96b553fd0",
+        "externalId": null,
+        "origin": "BOT",
+        "managementMode": "BOT_MANAGED",
+        "syncState": "IN_SYNC",
+        "symbol": "BTCUSDT",
+        "side": "SHORT",
+        "status": "OPEN",
+        "entryPrice": 67627.39,
+        "quantity": 0.22180362,
+        "leverage": 15,
+        "stopLoss": null,
+        "takeProfit": null,
+        "openedAt": "2026-04-01T02:40:00.642Z",
+        "closedAt": null,
+        "realizedPnl": null,
+        "unrealizedPnl": null,
+        "createdAt": "2026-04-01T02:40:00.642Z",
+        "updatedAt": "2026-04-01T02:40:00.642Z"
+      },
+      {
+        "id": "ba2ca4b2-2f22-44ff-a4f8-cfb50e97ca67",
+        "botId": "2009f226-28ed-4231-878b-350d27057b5f",
+        "strategyId": "58de38d9-544c-4ad2-94f4-5fa96b553fd0",
+        "externalId": null,
+        "origin": "BOT",
+        "managementMode": "BOT_MANAGED",
+        "syncState": "IN_SYNC",
+        "symbol": "BNBUSDT",
+        "side": "SHORT",
+        "status": "OPEN",
+        "entryPrice": 614.9,
+        "quantity": 24.39421044,
+        "leverage": 15,
+        "stopLoss": null,
+        "takeProfit": null,
+        "openedAt": "2026-04-01T02:40:00.642Z",
+        "closedAt": null,
+        "realizedPnl": null,
+        "unrealizedPnl": null,
+        "createdAt": "2026-04-01T02:40:00.642Z",
+        "updatedAt": "2026-04-01T02:40:00.642Z"
+      },
+      {
+        "id": "34557b37-43d9-4de1-9f76-337f4a08ce53",
+        "botId": "2009f226-28ed-4231-878b-350d27057b5f",
+        "strategyId": "58de38d9-544c-4ad2-94f4-5fa96b553fd0",
+        "externalId": null,
+        "origin": "BOT",
+        "managementMode": "BOT_MANAGED",
+        "syncState": "IN_SYNC",
+        "symbol": "ETHUSDT",
+        "side": "SHORT",
+        "status": "OPEN",
+        "entryPrice": 2087.75,
+        "quantity": 7.18476829,
+        "leverage": 15,
+        "stopLoss": null,
+        "takeProfit": null,
+        "openedAt": "2026-04-01T02:40:00.658Z",
+        "closedAt": null,
+        "realizedPnl": null,
+        "unrealizedPnl": null,
+        "createdAt": "2026-04-01T02:40:00.658Z",
+        "updatedAt": "2026-04-01T02:40:00.658Z"
+      }
+    ]
+  }
+}

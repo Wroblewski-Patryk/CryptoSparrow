@@ -284,9 +284,17 @@ const buildSignalConditionSummary = (
       ? 'No-match action: EXIT'
       : 'No-match action: HOLD';
   }
-  const source = direction === 'SHORT' ? rules.shortRules : rules.longRules;
-  if (source.length === 0) return null;
-  return source.map(formatSignalRule).join(' • ');
+  if (direction === 'LONG' || direction === 'SHORT') {
+    const source = direction === 'SHORT' ? rules.shortRules : rules.longRules;
+    if (source.length === 0) return null;
+    return source.map(formatSignalRule).join(' | ');
+  }
+  const longSummary =
+    rules.longRules.length > 0 ? `LONG: ${rules.longRules.map(formatSignalRule).join(' & ')}` : null;
+  const shortSummary =
+    rules.shortRules.length > 0 ? `SHORT: ${rules.shortRules.map(formatSignalRule).join(' & ')}` : null;
+  if (!longSummary && !shortSummary) return null;
+  return [longSummary, shortSummary].filter((item): item is string => item != null).join(' | ');
 };
 
 const humanizeMergeReason = (reason: string | null) => {
@@ -298,6 +306,270 @@ const humanizeMergeReason = (reason: string | null) => {
   return reason;
 };
 
+const clampPeriod = (value: unknown, fallback: number) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(2, Math.floor(parsed));
+};
+
+const computeEmaSeriesFromCloses = (closes: number[], period: number): Array<number | null> => {
+  const alpha = 2 / (period + 1);
+  let ema: number | null = null;
+  const output: Array<number | null> = [];
+  for (let index = 0; index < closes.length; index += 1) {
+    const price = closes[index];
+    if (!Number.isFinite(price)) {
+      output.push(null);
+      continue;
+    }
+    if (ema === null) ema = price;
+    else ema = alpha * price + (1 - alpha) * ema;
+    output.push(index + 1 >= period ? ema : null);
+  }
+  return output;
+};
+
+const computeRsiSeriesFromCloses = (closes: number[], period: number): Array<number | null> => {
+  const output: Array<number | null> = Array.from({ length: closes.length }, () => null);
+  if (closes.length <= period) return output;
+
+  let gains = 0;
+  let losses = 0;
+  for (let index = 1; index <= period; index += 1) {
+    const diff = closes[index] - closes[index - 1];
+    if (diff >= 0) gains += diff;
+    else losses += Math.abs(diff);
+  }
+
+  let avgGain = gains / period;
+  let avgLoss = losses / period;
+  output[period] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+
+  for (let index = period + 1; index < closes.length; index += 1) {
+    const diff = closes[index] - closes[index - 1];
+    const gain = diff > 0 ? diff : 0;
+    const loss = diff < 0 ? Math.abs(diff) : 0;
+    avgGain = (avgGain * (period - 1) + gain) / period;
+    avgLoss = (avgLoss * (period - 1) + loss) / period;
+    output[index] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+  }
+
+  return output;
+};
+
+const computeMomentumSeriesFromCloses = (closes: number[], period: number): Array<number | null> => {
+  const output: Array<number | null> = [];
+  for (let index = 0; index < closes.length; index += 1) {
+    if (index < period) {
+      output.push(null);
+      continue;
+    }
+    output.push(closes[index] - closes[index - period]);
+  }
+  return output;
+};
+
+const formatIndicatorValue = (value: number | null | undefined) => {
+  if (value == null || !Number.isFinite(value)) return null;
+  return Number(value.toFixed(4)).toString();
+};
+
+type SignalConditionLine = {
+  scope: 'LONG' | 'SHORT';
+  left: string;
+  value: string;
+  operator: string;
+  right: string;
+};
+
+const buildSignalConditionLines = (params: {
+  strategyConfig: Record<string, unknown> | null | undefined;
+  direction: 'LONG' | 'SHORT' | 'EXIT' | null;
+  closes: number[];
+}): SignalConditionLine[] | null => {
+  if (!params.strategyConfig) return null;
+  if (params.direction === 'EXIT') return null;
+  if (params.closes.length === 0) return null;
+  const rules = parseStrategySignalRules(params.strategyConfig);
+  if (!rules) return null;
+
+  const latestIndex = params.closes.length - 1;
+  const emaCache = new Map<number, Array<number | null>>();
+  const rsiCache = new Map<number, Array<number | null>>();
+  const momentumCache = new Map<number, Array<number | null>>();
+
+  const ensureEma = (period: number) => {
+    if (!emaCache.has(period)) {
+      emaCache.set(period, computeEmaSeriesFromCloses(params.closes, period));
+    }
+    return emaCache.get(period)!;
+  };
+  const ensureRsi = (period: number) => {
+    if (!rsiCache.has(period)) {
+      rsiCache.set(period, computeRsiSeriesFromCloses(params.closes, period));
+    }
+    return rsiCache.get(period)!;
+  };
+  const ensureMomentum = (period: number) => {
+    if (!momentumCache.has(period)) {
+      momentumCache.set(period, computeMomentumSeriesFromCloses(params.closes, period));
+    }
+    return momentumCache.get(period)!;
+  };
+
+  const formatFixedTarget = (value: number) => Number(value.toFixed(6)).toString();
+  const formatLive = (value: number | null | undefined) => formatIndicatorValue(value) ?? '-';
+  const buildLinesForScope = (
+    scope: 'LONG' | 'SHORT',
+    selectedRules: Array<{ name: string; condition: string; value: number; params: Record<string, unknown> }>
+  ): SignalConditionLine[] => {
+    const output: SignalConditionLine[] = [];
+    for (const rule of selectedRules) {
+      const indicator = rule.name.toUpperCase();
+      if (indicator.includes('EMA')) {
+        const fast = clampPeriod(rule.params.fast, 9);
+        const slow = clampPeriod(rule.params.slow, 21);
+        const fastValue = ensureEma(fast)[latestIndex];
+        const slowValue = ensureEma(slow)[latestIndex];
+        output.push({
+          scope,
+          left: `EMA(${fast})`,
+          value: formatLive(fastValue),
+          operator: rule.condition,
+          right: `EMA(${slow})=${formatLive(slowValue)}`,
+        });
+        continue;
+      }
+
+      if (indicator.includes('RSI')) {
+        const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
+        const value = ensureRsi(period)[latestIndex];
+        output.push({
+          scope,
+          left: `RSI(${period})`,
+          value: formatLive(value),
+          operator: rule.condition,
+          right: formatFixedTarget(rule.value),
+        });
+        continue;
+      }
+
+      if (indicator.includes('MOMENTUM')) {
+        const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
+        const value = ensureMomentum(period)[latestIndex];
+        output.push({
+          scope,
+          left: `MOMENTUM(${period})`,
+          value: formatLive(value),
+          operator: rule.condition,
+          right: formatFixedTarget(rule.value),
+        });
+        continue;
+      }
+
+      output.push({
+        scope,
+        left: indicator,
+        value: '-',
+        operator: rule.condition,
+        right: formatFixedTarget(rule.value),
+      });
+    }
+    return output;
+  };
+
+  if (params.direction === 'LONG') {
+    const lines = buildLinesForScope('LONG', rules.longRules);
+    return lines.length > 0 ? lines : null;
+  }
+  if (params.direction === 'SHORT') {
+    const lines = buildLinesForScope('SHORT', rules.shortRules);
+    return lines.length > 0 ? lines : null;
+  }
+  const neutralLines = [
+    ...buildLinesForScope('LONG', rules.longRules),
+    ...buildLinesForScope('SHORT', rules.shortRules),
+  ];
+  return neutralLines.length > 0 ? neutralLines : null;
+};
+
+const buildSignalIndicatorSummary = (params: {
+  strategyConfig: Record<string, unknown> | null | undefined;
+  direction: 'LONG' | 'SHORT' | 'EXIT' | null;
+  closes: number[];
+}) => {
+  if (!params.strategyConfig) return null;
+  if (params.direction === 'EXIT') return null;
+  if (params.closes.length === 0) return null;
+
+  const rules = parseStrategySignalRules(params.strategyConfig);
+  if (!rules) return null;
+  const selectedRules =
+    params.direction === 'LONG'
+      ? rules.longRules
+      : params.direction === 'SHORT'
+        ? rules.shortRules
+        : [...rules.longRules, ...rules.shortRules];
+  if (selectedRules.length === 0) return null;
+
+  const parts: string[] = [];
+  const latestIndex = params.closes.length - 1;
+  const emaCache = new Map<number, Array<number | null>>();
+  const seenEmaSeries = new Set<string>();
+  const seenRsiPeriods = new Set<number>();
+  const seenMomentumPeriods = new Set<number>();
+
+  const ensureEmaSeries = (period: number) => {
+    if (!emaCache.has(period)) {
+      emaCache.set(period, computeEmaSeriesFromCloses(params.closes, period));
+    }
+    return emaCache.get(period)!;
+  };
+
+  for (const rule of selectedRules) {
+    const indicator = rule.name.toUpperCase();
+
+    if (indicator.includes('RSI')) {
+      const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
+      if (seenRsiPeriods.has(period)) continue;
+      const series = computeRsiSeriesFromCloses(params.closes, period);
+      const value = formatIndicatorValue(series[latestIndex]);
+      if (value) parts.push(`RSI(${period})=${value}`);
+      seenRsiPeriods.add(period);
+      continue;
+    }
+
+    if (indicator.includes('MOMENTUM')) {
+      const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
+      if (seenMomentumPeriods.has(period)) continue;
+      const series = computeMomentumSeriesFromCloses(params.closes, period);
+      const value = formatIndicatorValue(series[latestIndex]);
+      if (value) parts.push(`MOMENTUM(${period})=${value}`);
+      seenMomentumPeriods.add(period);
+      continue;
+    }
+
+    if (indicator.includes('EMA')) {
+      const fast = clampPeriod(rule.params.fast, 9);
+      const slow = clampPeriod(rule.params.slow, 21);
+      const fastSeriesKey = `EMA_FAST_${fast}`;
+      const slowSeriesKey = `EMA_SLOW_${slow}`;
+      if (!seenEmaSeries.has(fastSeriesKey)) {
+        const fastValue = formatIndicatorValue(ensureEmaSeries(fast)[latestIndex]);
+        if (fastValue) parts.push(`EMA(${fast})=${fastValue}`);
+        seenEmaSeries.add(fastSeriesKey);
+      }
+      if (!seenEmaSeries.has(slowSeriesKey)) {
+        const slowValue = formatIndicatorValue(ensureEmaSeries(slow)[latestIndex]);
+        if (slowValue) parts.push(`EMA(${slow})=${slowValue}`);
+        seenEmaSeries.add(slowSeriesKey);
+      }
+      continue;
+    }
+  }
+
+  return parts.length > 0 ? parts.join(' | ') : null;
+};
 const resolveCreateMarketGroupToSymbolGroup = async (userId: string, marketGroupId: string) => {
   const directSymbolGroup = await getOwnedSymbolGroup(userId, marketGroupId);
   if (directSymbolGroup) return directSymbolGroup;
@@ -1247,7 +1519,7 @@ export const listBotRuntimeSessionSymbolStats = async (
   };
   const windowEnd = resolveSessionWindowEnd(session);
 
-  const [items, summary, configuredMarketGroups, configuredBotStrategies] = await Promise.all([
+  const [items, summary, configuredMarketGroups, configuredBotStrategies, botMarketTypeRow] = await Promise.all([
     prisma.botRuntimeSymbolStat.findMany({
       where,
       orderBy: [{ realizedPnl: 'desc' }, { updatedAt: 'desc' }],
@@ -1297,20 +1569,39 @@ export const listBotRuntimeSessionSymbolStats = async (
         },
       },
       select: {
+        strategyId: true,
         symbolGroup: {
           select: {
             symbols: true,
           },
         },
+        strategy: {
+          select: {
+            id: true,
+            name: true,
+            interval: true,
+            config: true,
+          },
+        },
       },
       orderBy: [{ createdAt: 'asc' }],
     }),
+    prisma.bot.findFirst({
+      where: {
+        id: botId,
+        userId,
+      },
+      select: {
+        marketType: true,
+      },
+    }),
   ]);
+  const botMarketType = botMarketTypeRow?.marketType ?? 'FUTURES';
 
   const configuredSymbols = normalizeSymbols(
     [
       ...configuredMarketGroups.flatMap((group) => group.symbolGroup.symbols ?? []),
-      ...configuredBotStrategies.flatMap((strategy) => strategy.symbolGroup.symbols ?? []),
+      ...configuredBotStrategies.flatMap((strategy) => strategy.symbolGroup?.symbols ?? []),
     ]
   );
   const symbols = (
@@ -1395,6 +1686,19 @@ export const listBotRuntimeSessionSymbolStats = async (
       scoreShort: number | null;
     }
   >();
+  const strategiesById = new Map<
+    string,
+    { name: string; interval: string; config: Record<string, unknown> | null }
+  >();
+  for (const configuredBotStrategy of configuredBotStrategies) {
+    const strategy = configuredBotStrategy.strategy;
+    if (!strategy) continue;
+    strategiesById.set(strategy.id, {
+      name: strategy.name,
+      interval: strategy.interval,
+      config: asRecord(strategy.config) ?? null,
+    });
+  }
   const latestSignalStrategyIds = new Set<string>();
   for (const event of latestSignalEvents) {
     if (!event.symbol || latestSignalBySymbol.has(event.symbol)) continue;
@@ -1431,30 +1735,85 @@ export const listBotRuntimeSessionSymbolStats = async (
       scoreShort: toFiniteNumber(scores?.shortScore),
     });
   }
-  const strategiesById =
-    latestSignalStrategyIds.size > 0
-      ? new Map(
-          (
-            await prisma.strategy.findMany({
-              where: {
-                userId,
-                id: { in: [...latestSignalStrategyIds] },
-              },
-              select: {
-                id: true,
-                name: true,
-                config: true,
-              },
-            })
-          ).map((strategy) => [
-            strategy.id,
-            {
-              name: strategy.name,
-              config: asRecord(strategy.config) ?? null,
-            },
-          ])
-        )
-      : new Map<string, { name: string; config: Record<string, unknown> | null }>();
+  const missingStrategyIds = [...latestSignalStrategyIds].filter((strategyId) => !strategiesById.has(strategyId));
+  if (missingStrategyIds.length > 0) {
+    const signalStrategies = await prisma.strategy.findMany({
+      where: {
+        userId,
+        id: { in: missingStrategyIds },
+      },
+      select: {
+        id: true,
+        name: true,
+        interval: true,
+        config: true,
+      },
+    });
+    for (const strategy of signalStrategies) {
+      strategiesById.set(strategy.id, {
+        name: strategy.name,
+        interval: strategy.interval,
+        config: asRecord(strategy.config) ?? null,
+      });
+    }
+  }
+
+  const configuredStrategyBySymbol = new Map<string, string>();
+  for (const configuredBotStrategy of configuredBotStrategies) {
+    const strategyId = configuredBotStrategy.strategyId?.trim();
+    if (!strategyId) continue;
+    const assignedSymbols = normalizeSymbols(configuredBotStrategy.symbolGroup?.symbols ?? []);
+    const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : symbols;
+    for (const symbol of targetSymbols) {
+      if (!configuredStrategyBySymbol.has(symbol)) {
+        configuredStrategyBySymbol.set(symbol, strategyId);
+      }
+    }
+  }
+
+  const strategySeriesKeys = new Map<string, { symbol: string; interval: string }>();
+  for (const symbol of symbols) {
+    const latestSignal = latestSignalBySymbol.get(symbol);
+    const strategyId = latestSignal?.strategyId ?? configuredStrategyBySymbol.get(symbol) ?? null;
+    if (!strategyId) continue;
+    const strategy = strategiesById.get(strategyId);
+    if (!strategy?.interval) continue;
+    const interval = strategy.interval.trim().toLowerCase();
+    if (!interval) continue;
+    const key = `${symbol}|${interval}`;
+    strategySeriesKeys.set(key, { symbol, interval });
+  }
+
+  const candleClosesBySeries = new Map<string, number[]>();
+  if (strategySeriesKeys.size > 0) {
+    const entries = [...strategySeriesKeys.values()];
+    const seriesRows = await Promise.all(
+      entries.map(async ({ symbol, interval }) => {
+        const candles = await prisma.marketCandleCache.findMany({
+          where: {
+            marketType: botMarketType,
+            symbol,
+            timeframe: interval,
+          },
+          orderBy: [{ openTime: 'desc' }],
+          take: 300,
+          select: {
+            close: true,
+          },
+        });
+        return {
+          key: `${symbol}|${interval}`,
+          closes: candles
+            .map((item) => item.close)
+            .filter((value): value is number => Number.isFinite(value))
+            .reverse(),
+        };
+      })
+    );
+    for (const row of seriesRows) {
+      candleClosesBySeries.set(row.key, row.closes);
+    }
+  }
   const openPositionCountBySymbol = new Map<string, number>();
   const openPositionQtyBySymbol = new Map<string, number>();
   const unrealizedPnlBySymbol = new Map<string, number>();
@@ -1487,12 +1846,26 @@ export const listBotRuntimeSessionSymbolStats = async (
     const unrealizedPnl = unrealizedPnlBySymbol.get(symbol) ?? 0;
     const latestSignal = latestSignalBySymbol.get(symbol);
     const lastPrice = lastPriceBySymbol.get(symbol) ?? null;
-    const signalStrategy =
-      latestSignal?.strategyId != null ? strategiesById.get(latestSignal.strategyId) ?? null : null;
+    const fallbackStrategyId = configuredStrategyBySymbol.get(symbol) ?? null;
+    const signalStrategyId = latestSignal?.strategyId ?? fallbackStrategyId;
+    const signalStrategy = signalStrategyId != null ? strategiesById.get(signalStrategyId) ?? null : null;
     const signalConditionSummary = buildSignalConditionSummary(
       signalStrategy?.config ?? null,
       latestSignal?.signalDirection ?? null
     );
+    const signalSeriesKey =
+      signalStrategy?.interval != null ? `${symbol}|${signalStrategy.interval.trim().toLowerCase()}` : null;
+    const signalCloses = signalSeriesKey ? candleClosesBySeries.get(signalSeriesKey) ?? [] : [];
+    const signalIndicatorSummary = buildSignalIndicatorSummary({
+      strategyConfig: signalStrategy?.config ?? null,
+      direction: latestSignal?.signalDirection ?? null,
+      closes: signalCloses,
+    });
+    const signalConditionLines = buildSignalConditionLines({
+      strategyConfig: signalStrategy?.config ?? null,
+      direction: latestSignal?.signalDirection ?? null,
+      closes: signalCloses,
+    });
     const signalScoreSummary =
       latestSignal?.scoreLong != null || latestSignal?.scoreShort != null
         ? {
@@ -1532,6 +1905,8 @@ export const listBotRuntimeSessionSymbolStats = async (
       lastSignalStrategyId: latestSignal?.strategyId ?? null,
       lastSignalStrategyName: signalStrategy?.name ?? null,
       lastSignalConditionSummary: signalConditionSummary,
+      lastSignalIndicatorSummary: signalIndicatorSummary,
+      lastSignalConditionLines: signalConditionLines,
       lastSignalScoreSummary: signalScoreSummary,
       snapshotAt: stat?.snapshotAt ?? session.startedAt,
       createdAt: stat?.createdAt ?? session.createdAt,

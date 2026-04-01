@@ -11,6 +11,8 @@
     "dev:worker:market-stream": "tsx watch src/workers/marketStream.worker.ts",
     "dev:worker:backtest": "tsx watch src/workers/backtest.worker.ts",
     "dev:worker:execution": "tsx watch src/workers/execution.worker.ts",
+    "snapshot:paper:export": "tsx scripts/exportPaperRuntimeSnapshot.ts",
+    "snapshot:paper:import": "tsx scripts/importPaperRuntimeSnapshot.ts",
     "ops:bot:v2:preflight": "tsx scripts/bot-v2-preflight-report.ts",
     "test:load:baseline": "node scripts/load-test.mjs baseline",
     "test:load:assistant-profile": "tsx scripts/assistant-load-benchmark.ts",

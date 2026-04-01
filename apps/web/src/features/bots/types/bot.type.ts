@@ -107,6 +107,14 @@ export type BotRuntimeSymbolStat = {
   lastSignalStrategyId?: string | null;
   lastSignalStrategyName?: string | null;
   lastSignalConditionSummary?: string | null;
+  lastSignalIndicatorSummary?: string | null;
+  lastSignalConditionLines?: Array<{
+    scope: "LONG" | "SHORT";
+    left: string;
+    value: string;
+    operator: string;
+    right: string;
+  }> | null;
   lastSignalScoreSummary?: {
     longScore: number;
     shortScore: number;
