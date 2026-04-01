@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { evaluatePositionManagement } from './positionManagement.service';
 import { processPaperLifecycleTick, type PaperLifecycleState } from './paperLifecycle.service';
+import { type PositionManagementState } from './positionManagement.types';
 import {
   ReplayCandle,
   buildReplayPositionManagementInput,
@@ -120,7 +121,7 @@ const runLiveCloseReasons = (input: {
 }) => {
   const riskConfig = parseStrategyRiskConfig(input.strategyConfig);
   const closeReasons: LifecycleCloseReason[] = [];
-  let state = {
+  let state: PositionManagementState = {
     averageEntryPrice: input.entry.price,
     quantity: input.entry.quantity,
     currentAdds: 0,
@@ -166,10 +167,7 @@ describe('lifecycle close parity golden fixtures', () => {
         candleIndex: backtest.entry.candleIndex,
         side: backtest.entry.side,
         price: backtest.entry.price,
-        quantity:
-          Number.isFinite(backtest.entry.quantity) && backtest.entry.quantity > 0
-            ? backtest.entry.quantity
-            : 1,
+        quantity: 1,
       };
 
       const paperReasons = runPaperCloseReasons({

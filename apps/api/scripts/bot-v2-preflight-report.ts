@@ -12,7 +12,7 @@ type LegacyBindingRow = {
   botStrategyId: string;
   botId: string;
   botName: string;
-  botMode: 'PAPER' | 'LIVE' | 'LOCAL';
+  botMode: 'PAPER' | 'LIVE';
   userId: string;
   strategyId: string;
   strategyName: string;
@@ -62,7 +62,6 @@ const renderMarkdown = (report: {
   generatedAt: string;
   totals: {
     bots: number;
-    localModeBots: number;
     legacyBotStrategies: number;
     legacyMapped: number;
     legacyUnmapped: number;
@@ -103,13 +102,12 @@ Generated (UTC): ${report.generatedAt}
 
 ## Summary
 - Total bots: ${report.totals.bots}
-- Bots in LOCAL mode: ${report.totals.localModeBots}
 - Legacy BotStrategy bindings: ${report.totals.legacyBotStrategies}
 - Legacy mapped to BotMarketGroup/StrategyLink: ${report.totals.legacyMapped}
 - Legacy unmapped bindings: ${report.totals.legacyUnmapped}
-- Migration ready for LOCAL removal: ${report.migrationReady ? 'yes' : 'no'}
+- Migration ready for canonical mode contract: ${report.migrationReady ? 'yes' : 'no'}
 
-## LOCAL bots
+## Legacy LOCAL bots (removed in canonical schema)
 | Bot ID | Name | User ID | Active | Created (UTC) |
 | --- | --- | --- | --- | --- |
 ${localRows}
@@ -130,19 +128,8 @@ const main = async () => {
     return;
   }
 
-  const [totalBots, localBotsRaw, botStrategies, strategyLinks] = await Promise.all([
+  const [totalBots, botStrategies, strategyLinks] = await Promise.all([
     prisma.bot.count(),
-    prisma.bot.findMany({
-      where: { mode: 'LOCAL' },
-      select: {
-        id: true,
-        name: true,
-        userId: true,
-        isActive: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: 'asc' },
-    }),
     prisma.botStrategy.findMany({
       select: {
         id: true,
@@ -211,19 +198,12 @@ const main = async () => {
     generatedAt: new Date().toISOString(),
     totals: {
       bots: totalBots,
-      localModeBots: localBotsRaw.length,
       legacyBotStrategies: legacyRows.length,
       legacyMapped: legacyRows.length - unmappedLegacyBindings.length,
       legacyUnmapped: unmappedLegacyBindings.length,
     },
-    migrationReady: localBotsRaw.length === 0 && unmappedLegacyBindings.length === 0,
-    localBots: localBotsRaw.map((item) => ({
-      botId: item.id,
-      name: item.name,
-      userId: item.userId,
-      isActive: item.isActive,
-      createdAt: toIso(item.createdAt),
-    })),
+    migrationReady: unmappedLegacyBindings.length === 0,
+    localBots: [],
     unmappedLegacyBindings,
   };
 

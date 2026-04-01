@@ -12,7 +12,7 @@ describe('RuntimeScanLoop', () => {
         lastPrice: 60300,
         priceChangePercent24h: 0.5,
       })),
-      processTicker: vi.fn(async () => undefined),
+      processTicker: vi.fn(async (_event: Record<string, unknown>) => undefined),
       nowMs: vi.fn(() => 123_456),
     };
 
@@ -35,7 +35,7 @@ describe('RuntimeScanLoop', () => {
         }
         return { symbol: 'ETHUSDT', marketType: 'FUTURES' as const, lastPrice: 2970, priceChangePercent24h: -1 };
       }),
-      processTicker: vi.fn(async () => undefined),
+      processTicker: vi.fn(async (_event: Record<string, unknown>) => undefined),
       nowMs: vi.fn(() => 123_456),
     };
 
@@ -55,5 +55,34 @@ describe('RuntimeScanLoop', () => {
         lastPrice: 2970,
       })
     );
+  });
+
+  it('forwards watchdog fallback as ticker-only payloads (no candle semantics)', async () => {
+    const deps = {
+      listScanSymbols: vi.fn(async () => ['BTCUSDT']),
+      getTickerSnapshot: vi.fn(async () => ({
+        symbol: 'BTCUSDT',
+        marketType: 'FUTURES' as const,
+        lastPrice: 61234,
+        priceChangePercent24h: 1.25,
+      })),
+      processTicker: vi.fn(async (_event: Record<string, unknown>) => undefined),
+      nowMs: vi.fn(() => 777_000),
+    };
+
+    const loop = new RuntimeScanLoop(deps);
+    await loop.runOnce();
+
+    expect(deps.processTicker).toHaveBeenCalledTimes(1);
+    const forwardedCall = deps.processTicker.mock.calls[0];
+    expect(forwardedCall).toBeTruthy();
+    const forwarded = (forwardedCall?.[0] ?? {}) as Record<string, unknown>;
+    expect(forwarded.type).toBe('ticker');
+    expect(forwarded.symbol).toBe('BTCUSDT');
+    expect(forwarded.eventTime).toBe(777_000);
+    expect(forwarded).not.toHaveProperty('interval');
+    expect(forwarded).not.toHaveProperty('isFinal');
+    expect(forwarded).not.toHaveProperty('openTime');
+    expect(forwarded).not.toHaveProperty('closeTime');
   });
 });

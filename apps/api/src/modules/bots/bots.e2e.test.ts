@@ -824,9 +824,12 @@ describe('Bots module contract', () => {
       `/dashboard/bots/${botId}/runtime-sessions/${session.id}/symbol-stats`
     );
     expect(symbolStatsRes.status).toBe(200);
-    expect(symbolStatsRes.body.items).toHaveLength(1);
-    expect(symbolStatsRes.body.items[0].symbol).toBe('BTCUSDT');
-    expect(symbolStatsRes.body.items[0].lastSignalDirection).toBe('LONG');
+    expect(symbolStatsRes.body.items.length).toBeGreaterThanOrEqual(1);
+    expect(symbolStatsRes.body.items.map((item: { symbol: string }) => item.symbol)).toContain('BTCUSDT');
+    expect(
+      symbolStatsRes.body.items.find((item: { symbol: string }) => item.symbol === 'BTCUSDT')
+        ?.lastSignalDirection
+    ).toBe('LONG');
     expect(symbolStatsRes.body.summary.totalSignals).toBe(2);
     expect(symbolStatsRes.body.summary.realizedPnl).toBe(42.5);
 
@@ -1019,10 +1022,10 @@ describe('Bots module contract', () => {
       .get(`/dashboard/bots/${botId}/runtime-sessions/${runningSession.id}/trades`)
       .query({ symbol: 'ETHUSDT', limit: 1 });
     expect(ethTradesRes.status).toBe(200);
-    expect(ethTradesRes.body.total).toBe(2);
+    expect(ethTradesRes.body.total).toBe(3);
     expect(ethTradesRes.body.items).toHaveLength(1);
     expect(ethTradesRes.body.items[0].symbol).toBe('ETHUSDT');
-    expect(ethTradesRes.body.items[0].executedAt).toContain('2026-03-31T02:05:30.000Z');
+    expect(ethTradesRes.body.items[0].executedAt).toContain('2026-03-31T02:09:00.000Z');
 
     const completedTradesRes = await owner
       .get(`/dashboard/bots/${botId}/runtime-sessions/${completedSession.id}/trades`)

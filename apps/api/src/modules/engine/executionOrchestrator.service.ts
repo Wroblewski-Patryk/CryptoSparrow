@@ -2,6 +2,7 @@ import { Order, Position, PositionSide, Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { closeOrder as closeOrderLifecycle, openOrder as openOrderLifecycle } from '../orders/orders.service';
 import { decideExecutionAction } from './sharedExecutionCore';
+import { runtimeTelemetryService } from './runtimeTelemetry.service';
 
 export type RuntimeSignalDirection = 'LONG' | 'SHORT' | 'EXIT';
 export type RuntimeExecutionMode = 'PAPER' | 'LIVE';
@@ -9,6 +10,7 @@ export type RuntimeExecutionMode = 'PAPER' | 'LIVE';
 export type RuntimeSignalInput = {
   userId: string;
   botId?: string;
+  runtimeSessionId?: string;
   strategyId?: string;
   symbol: string;
   direction: RuntimeSignalDirection;
@@ -58,10 +60,14 @@ export interface RuntimeExecutionEventGateway {
     symbol: string;
     direction: RuntimeSignalDirection;
     mode: RuntimeExecutionMode;
+    runtimeSessionId?: string;
     status: 'ignored' | 'opened' | 'closed';
     reason?: string;
     orderId?: string;
     positionId?: string;
+    positionQty?: number;
+    lastPrice?: number;
+    eventAt?: Date;
   }): Promise<void>;
 }
 
@@ -113,6 +119,19 @@ const defaultPositionGateway: PositionFlowGateway = {
 
 const defaultRuntimeEventGateway: RuntimeExecutionEventGateway = {
   writeEvent: async (input) => {
+    const eventAt = input.eventAt ?? new Date();
+    const metadata = {
+      symbol: input.symbol,
+      direction: input.direction,
+      mode: input.mode,
+      status: input.status,
+      reason: input.reason ?? null,
+      orderId: input.orderId ?? null,
+      positionId: input.positionId ?? null,
+      positionQty: input.positionQty ?? null,
+      lastPrice: input.lastPrice ?? null,
+    } as Prisma.InputJsonValue;
+
     await prisma.log.create({
       data: {
         userId: input.userId,
@@ -126,16 +145,64 @@ const defaultRuntimeEventGateway: RuntimeExecutionEventGateway = {
         entityType: 'position',
         entityId: input.positionId,
         actor: 'runtime',
-        metadata: {
-          symbol: input.symbol,
-          direction: input.direction,
-          mode: input.mode,
-          status: input.status,
-          reason: input.reason ?? null,
-          orderId: input.orderId ?? null,
-          positionId: input.positionId ?? null,
-        } as Prisma.InputJsonValue,
+        metadata,
       },
+    });
+
+    if (!input.botId) return;
+
+    const eventType =
+      input.status === 'opened'
+        ? 'POSITION_OPENED'
+        : input.status === 'closed'
+          ? 'POSITION_CLOSED'
+          : 'SIGNAL_DECISION';
+
+    await runtimeTelemetryService.recordRuntimeEvent({
+      userId: input.userId,
+      botId: input.botId,
+      mode: input.mode,
+      sessionId: input.runtimeSessionId,
+      eventType,
+      level: input.status === 'ignored' ? 'DEBUG' : 'INFO',
+      symbol: input.symbol,
+      strategyId: input.strategyId,
+      signalDirection: input.direction,
+      message:
+        input.status === 'ignored'
+          ? `Decision ignored (${input.reason ?? 'n/a'}) for ${input.symbol}`
+          : `Runtime execution ${input.status} for ${input.symbol} (${input.direction})`,
+      payload: metadata as unknown as Record<string, unknown>,
+      eventAt,
+    });
+
+    const increments =
+      input.status === 'closed'
+        ? {
+            closedTrades: 1,
+          }
+        : undefined;
+
+    const isTradeEvent = input.status === 'opened' || input.status === 'closed';
+    const openPositionCount = input.status === 'opened' ? 1 : input.status === 'closed' ? 0 : undefined;
+    const openPositionQty =
+      input.status === 'opened'
+        ? Math.max(0, input.positionQty ?? 0)
+        : input.status === 'closed'
+          ? 0
+          : undefined;
+
+    await runtimeTelemetryService.upsertRuntimeSymbolStat({
+      userId: input.userId,
+      botId: input.botId,
+      mode: input.mode,
+      sessionId: input.runtimeSessionId,
+      symbol: input.symbol,
+      increments,
+      lastPrice: input.lastPrice,
+      lastTradeAt: isTradeEvent ? eventAt : undefined,
+      openPositionCount,
+      openPositionQty,
     });
   },
 };
@@ -187,6 +254,7 @@ export const orchestrateRuntimeSignal = async (
       symbol: input.symbol,
       direction: input.direction,
       mode: input.mode,
+      runtimeSessionId: input.runtimeSessionId,
       status: 'ignored',
       reason: decision.reason,
     });
@@ -202,6 +270,7 @@ export const orchestrateRuntimeSignal = async (
         symbol: input.symbol,
         direction: input.direction,
         mode: input.mode,
+        runtimeSessionId: input.runtimeSessionId,
         status: 'ignored',
         reason: 'no_open_position',
       });
@@ -242,9 +311,13 @@ export const orchestrateRuntimeSignal = async (
       symbol: input.symbol,
       direction: input.direction,
       mode: input.mode,
+      runtimeSessionId: input.runtimeSessionId,
       status: 'closed',
       orderId: closeOrder.id,
       positionId: openPosition.id,
+      positionQty: openPosition.quantity,
+      lastPrice: input.markPrice,
+      eventAt: new Date(),
     });
 
     return {
@@ -307,9 +380,13 @@ export const orchestrateRuntimeSignal = async (
     symbol: input.symbol,
     direction: input.direction,
     mode: input.mode,
+    runtimeSessionId: input.runtimeSessionId,
     status: 'opened',
     orderId: openOrder.id,
     positionId: position.id,
+    positionQty: input.quantity,
+    lastPrice: input.markPrice,
+    eventAt: new Date(),
   });
 
   return {

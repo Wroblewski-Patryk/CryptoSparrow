@@ -11,8 +11,13 @@ import {
   getBot,
   getBotAssistantConfig,
   getBotRuntimeGraph,
+  getBotRuntimeSession,
   getBotMarketGroup,
   listBotMarketGroups,
+  listBotRuntimeSessions,
+  listBotRuntimeSessionSymbolStats,
+  listBotRuntimeSessionPositions,
+  listBotRuntimeSessionTrades,
   listMarketGroupStrategies,
   listBots,
   runAssistantDryRun,
@@ -31,6 +36,11 @@ const tradingWriteLimiter = createRateLimiter({ windowMs: 60_000, max: 40 });
 botsRouter.get('/', tradingReadLimiter, listBots);
 botsRouter.get('/:id', tradingReadLimiter, getBot);
 botsRouter.get('/:id/runtime-graph', tradingReadLimiter, getBotRuntimeGraph);
+botsRouter.get('/:id/runtime-sessions', tradingReadLimiter, listBotRuntimeSessions);
+botsRouter.get('/:id/runtime-sessions/:sessionId', tradingReadLimiter, getBotRuntimeSession);
+botsRouter.get('/:id/runtime-sessions/:sessionId/symbol-stats', tradingReadLimiter, listBotRuntimeSessionSymbolStats);
+botsRouter.get('/:id/runtime-sessions/:sessionId/positions', tradingReadLimiter, listBotRuntimeSessionPositions);
+botsRouter.get('/:id/runtime-sessions/:sessionId/trades', tradingReadLimiter, listBotRuntimeSessionTrades);
 botsRouter.post('/', tradingWriteLimiter, createBot);
 botsRouter.put('/:id', tradingWriteLimiter, updateBot);
 botsRouter.delete('/:id', tradingWriteLimiter, deleteBot);

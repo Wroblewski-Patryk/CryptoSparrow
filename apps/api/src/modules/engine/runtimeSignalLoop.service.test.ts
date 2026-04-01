@@ -2,6 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { RuntimeSignalLoop, deriveRuntimeGroupMaxOpenPositions } from './runtimeSignalLoop.service';
 import { MarketStreamEvent } from '../market-stream/binanceStream.types';
 
+vi.mock('./runtimeCapitalContext.service', () => ({
+  resolveRuntimeReferenceBalance: vi.fn(async () => 10_000),
+}));
+
 const strategyLong = {
   strategyId: 'strategy-1',
   strategyInterval: '1m',
@@ -269,6 +273,54 @@ describe('RuntimeSignalLoop', () => {
       priceChangePercent24h: 2.1,
     });
 
+    expect(deps.createSignal).not.toHaveBeenCalled();
+    expect(deps.orchestrateFn).not.toHaveBeenCalled();
+  });
+
+  it('ignores non-final candle events for strategy decisions', async () => {
+    const { deps, emit } = createDeps();
+    withStrategyBot(deps);
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    for (let index = 0; index < 8; index += 1) {
+      await emit({
+        type: 'candle',
+        marketType: 'FUTURES',
+        symbol: 'BTCUSDT',
+        interval: '1m',
+        eventTime: 10_000 + index * 60_000,
+        openTime: index * 60_000,
+        closeTime: index * 60_000 + 59_000,
+        open: 100 + index,
+        high: 101 + index,
+        low: 99 + index,
+        close: 100 + index,
+        volume: 1000,
+        isFinal: false,
+      });
+    }
+
+    expect(deps.createSignal).not.toHaveBeenCalled();
+    expect(deps.orchestrateFn).not.toHaveBeenCalled();
+    expect(deps.processPositionAutomation).not.toHaveBeenCalled();
+  });
+
+  it('keeps watchdog ticker reprocessing strategy-neutral via processTickerEvent', async () => {
+    const { deps } = createDeps();
+    withStrategyBot(deps);
+    const loop = new RuntimeSignalLoop(deps);
+
+    await loop.processTickerEvent({
+      type: 'ticker',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      eventTime: 25_000,
+      lastPrice: 109,
+      priceChangePercent24h: 1.8,
+    });
+
+    expect(deps.processPositionAutomation).toHaveBeenCalledTimes(1);
     expect(deps.createSignal).not.toHaveBeenCalled();
     expect(deps.orchestrateFn).not.toHaveBeenCalled();
   });

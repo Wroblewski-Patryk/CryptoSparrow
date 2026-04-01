@@ -1,5 +1,8 @@
 import { prisma } from '../../prisma/client';
 import { orchestrateAssistantDecision } from '../engine/assistantOrchestrator.service';
+import { runtimePositionAutomationService } from '../engine/runtimePositionAutomation.service';
+import { getRuntimeTicker } from '../engine/runtimeTickerStore';
+import { parseStrategySignalRules } from '../engine/strategySignalEvaluator';
 import {
   AssistantDryRunDto,
   CreateBotDto,
@@ -183,6 +186,17 @@ const getOwnedBotRuntimeSession = async (userId: string, botId: string, sessionI
     },
   });
 
+const resolveSessionWindowEnd = (session: {
+  status: 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELED';
+  finishedAt: Date | null;
+  lastHeartbeatAt: Date | null;
+  startedAt: Date;
+}) => {
+  if (session.finishedAt) return session.finishedAt;
+  if (session.status === 'RUNNING') return new Date();
+  return session.lastHeartbeatAt ?? session.startedAt;
+};
+
 const getOwnedSymbolGroup = async (userId: string, symbolGroupId: string) =>
   prisma.symbolGroup.findFirst({
     where: { id: symbolGroupId, userId },
@@ -210,6 +224,79 @@ const normalizeSymbols = (symbols: string[]) =>
   [...new Set(symbols.map((item) => item.trim().toUpperCase()).filter(Boolean))].sort((a, b) =>
     a.localeCompare(b)
   );
+
+const computePriceFromLeveragedMovePercent = (
+  side: 'LONG' | 'SHORT',
+  entryPrice: number,
+  movePercent: number,
+  leverage: number
+) => {
+  if (!Number.isFinite(entryPrice) || entryPrice <= 0) return null;
+  if (!Number.isFinite(movePercent)) return null;
+  const effectiveLeverage = Number.isFinite(leverage) && leverage > 0 ? leverage : 1;
+  const delta = movePercent / effectiveLeverage;
+  const raw =
+    side === 'LONG' ? entryPrice * (1 + delta) : entryPrice * (1 - delta);
+  if (!Number.isFinite(raw) || raw <= 0) return null;
+  return raw;
+};
+
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+
+const toFiniteNumber = (value: unknown): number | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const formatSignalRule = (rule: {
+  name: string;
+  condition: string;
+  value: number;
+  params: Record<string, unknown>;
+}) => {
+  const indicator = rule.name.toUpperCase();
+  if (indicator.includes('RSI')) {
+    const period = toFiniteNumber(rule.params.period ?? rule.params.length) ?? 14;
+    return `RSI(${Math.trunc(period)}) ${rule.condition} ${rule.value}`;
+  }
+  if (indicator.includes('MOMENTUM')) {
+    const period = toFiniteNumber(rule.params.period ?? rule.params.length) ?? 14;
+    return `MOMENTUM(${Math.trunc(period)}) ${rule.condition} ${rule.value}`;
+  }
+  if (indicator.includes('EMA')) {
+    const fast = toFiniteNumber(rule.params.fast) ?? 9;
+    const slow = toFiniteNumber(rule.params.slow) ?? 21;
+    return `EMA(${Math.trunc(fast)}/${Math.trunc(slow)}) ${rule.condition}`;
+  }
+  return `${indicator} ${rule.condition} ${rule.value}`;
+};
+
+const buildSignalConditionSummary = (
+  strategyConfig: Record<string, unknown> | null | undefined,
+  direction: 'LONG' | 'SHORT' | 'EXIT' | null
+) => {
+  if (!strategyConfig) return null;
+  const rules = parseStrategySignalRules(strategyConfig);
+  if (!rules) return null;
+  if (direction === 'EXIT') {
+    return rules.noMatchAction === 'EXIT'
+      ? 'No-match action: EXIT'
+      : 'No-match action: HOLD';
+  }
+  const source = direction === 'SHORT' ? rules.shortRules : rules.longRules;
+  if (source.length === 0) return null;
+  return source.map(formatSignalRule).join(' • ');
+};
+
+const humanizeMergeReason = (reason: string | null) => {
+  if (reason === 'weighted_winner') return 'Weighted winner';
+  if (reason === 'exit_priority') return 'Exit priority';
+  if (reason === 'weak_consensus') return 'Weak consensus';
+  if (reason === 'tie') return 'Tie';
+  if (reason === 'no_votes') return 'No votes';
+  return reason;
+};
 
 const resolveCreateMarketGroupToSymbolGroup = async (userId: string, marketGroupId: string) => {
   const directSymbolGroup = await getOwnedSymbolGroup(userId, marketGroupId);
@@ -280,6 +367,51 @@ const deriveMaxOpenPositionsFromStrategy = (config: unknown) => {
   }
 
   return 1;
+};
+
+const findDuplicateActiveBotByStrategyAndSymbolGroup = async (params: {
+  userId: string;
+  strategyId: string;
+  symbolGroupId: string;
+  excludeBotId?: string;
+}) =>
+  prisma.marketGroupStrategyLink.findFirst({
+    where: {
+      userId: params.userId,
+      strategyId: params.strategyId,
+      isEnabled: true,
+      bot: {
+        userId: params.userId,
+        isActive: true,
+        ...(params.excludeBotId ? { id: { not: params.excludeBotId } } : {}),
+      },
+      botMarketGroup: {
+        userId: params.userId,
+        symbolGroupId: params.symbolGroupId,
+        isEnabled: true,
+        lifecycleStatus: 'ACTIVE',
+      },
+    },
+    select: {
+      bot: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
+
+const assertNoDuplicateActiveBotByStrategyAndSymbolGroup = async (params: {
+  userId: string;
+  strategyId: string;
+  symbolGroupId: string;
+  excludeBotId?: string;
+}) => {
+  const duplicate = await findDuplicateActiveBotByStrategyAndSymbolGroup(params);
+  if (duplicate?.bot) {
+    throw new Error('ACTIVE_BOT_STRATEGY_MARKET_GROUP_DUPLICATE');
+  }
 };
 
 const validateSymbolGroupForBot = async (params: {
@@ -357,6 +489,14 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
   if (!symbolGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
   const derivedMarketType = symbolGroup.marketUniverse.marketType;
   const derivedMaxOpenPositions = deriveMaxOpenPositionsFromStrategy(strategy.config);
+
+  if (botData.isActive) {
+    await assertNoDuplicateActiveBotByStrategyAndSymbolGroup({
+      userId,
+      strategyId,
+      symbolGroupId: symbolGroup.id,
+    });
+  }
 
   const createdBotId = await prisma.$transaction(async (tx) => {
     const createdBot = await tx.bot.create({
@@ -461,6 +601,44 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
 
   const strategyIdUpdateRequested = Object.prototype.hasOwnProperty.call(data, 'strategyId');
   const requestedStrategyId = strategyIdUpdateRequested ? (data.strategyId ?? null) : undefined;
+  const marketGroupIdUpdateRequested = Object.prototype.hasOwnProperty.call(data, 'marketGroupId');
+  const requestedMarketGroupId = marketGroupIdUpdateRequested ? (data.marketGroupId ?? null) : undefined;
+  const nextIsActive = data.isActive ?? existing.isActive;
+
+  if (nextIsActive) {
+    const targetStrategyId = requestedStrategyId !== undefined ? requestedStrategyId : (existing.strategyId ?? null);
+    if (targetStrategyId) {
+      let targetSymbolGroupId: string | null = null;
+
+      if (requestedMarketGroupId) {
+        const resolvedGroup = await resolveCreateMarketGroupToSymbolGroup(userId, requestedMarketGroupId);
+        if (!resolvedGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
+        targetSymbolGroupId = resolvedGroup.id;
+      } else {
+        const primaryGroup = await prisma.botMarketGroup.findFirst({
+          where: {
+            userId,
+            botId: existing.id,
+            isEnabled: true,
+          },
+          orderBy: [{ executionOrder: 'asc' }, { createdAt: 'asc' }],
+          select: {
+            symbolGroupId: true,
+          },
+        });
+        targetSymbolGroupId = primaryGroup?.symbolGroupId ?? null;
+      }
+
+      if (targetSymbolGroupId) {
+        await assertNoDuplicateActiveBotByStrategyAndSymbolGroup({
+          userId,
+          strategyId: targetStrategyId,
+          symbolGroupId: targetSymbolGroupId,
+          excludeBotId: existing.id,
+        });
+      }
+    }
+  }
 
   const { strategyId: _ignoredStrategyId, ...botData } = data;
   const updated = await prisma.bot.update({
@@ -958,7 +1136,7 @@ export const listBotRuntimeSessions = async (
       closedTrades: 0,
       realizedPnl: 0,
     };
-    const windowEnd = session.finishedAt ?? session.lastHeartbeatAt ?? session.startedAt;
+    const windowEnd = resolveSessionWindowEnd(session);
     const durationMs = Math.max(0, windowEnd.getTime() - session.startedAt.getTime());
 
     return {
@@ -1013,7 +1191,7 @@ export const getBotRuntimeSession = async (userId: string, botId: string, sessio
     }),
   ]);
 
-  const windowEnd = session.finishedAt ?? session.lastHeartbeatAt ?? session.startedAt;
+  const windowEnd = resolveSessionWindowEnd(session);
   const durationMs = Math.max(0, windowEnd.getTime() - session.startedAt.getTime());
 
   return {
@@ -1067,9 +1245,9 @@ export const listBotRuntimeSessionSymbolStats = async (
     sessionId,
     ...(normalizedSymbol ? { symbol: normalizedSymbol } : {}),
   };
-  const windowEnd = session.finishedAt ?? session.lastHeartbeatAt ?? new Date();
+  const windowEnd = resolveSessionWindowEnd(session);
 
-  const [items, summary] = await Promise.all([
+  const [items, summary, configuredMarketGroups, configuredBotStrategies] = await Promise.all([
     prisma.botRuntimeSymbolStat.findMany({
       where,
       orderBy: [{ realizedPnl: 'desc' }, { updatedAt: 'desc' }],
@@ -1092,9 +1270,54 @@ export const listBotRuntimeSessionSymbolStats = async (
         feesPaid: true,
       },
     }),
+    prisma.botMarketGroup.findMany({
+      where: {
+        userId,
+        botId,
+        isEnabled: true,
+        lifecycleStatus: {
+          in: ['ACTIVE', 'PAUSED'],
+        },
+      },
+      select: {
+        symbolGroup: {
+          select: {
+            symbols: true,
+          },
+        },
+      },
+      orderBy: [{ executionOrder: 'asc' }, { createdAt: 'asc' }],
+    }),
+    prisma.botStrategy.findMany({
+      where: {
+        botId,
+        isEnabled: true,
+        bot: {
+          userId,
+        },
+      },
+      select: {
+        symbolGroup: {
+          select: {
+            symbols: true,
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'asc' }],
+    }),
   ]);
 
-  const symbols = items.map((item) => item.symbol);
+  const configuredSymbols = normalizeSymbols(
+    [
+      ...configuredMarketGroups.flatMap((group) => group.symbolGroup.symbols ?? []),
+      ...configuredBotStrategies.flatMap((strategy) => strategy.symbolGroup.symbols ?? []),
+    ]
+  );
+  const symbols = (
+    normalizedSymbol
+      ? [normalizedSymbol]
+      : normalizeSymbols([...configuredSymbols, ...items.map((item) => item.symbol)])
+  ).slice(0, query.limit);
   const [openPositions, latestTradeBySymbolRows, latestSignalEvents] = symbols.length
     ? await Promise.all([
         prisma.position.findMany({
@@ -1142,12 +1365,21 @@ export const listBotRuntimeSessionSymbolStats = async (
             symbol: true,
             signalDirection: true,
             eventAt: true,
+            message: true,
+            strategyId: true,
+            payload: true,
           },
         }),
       ])
     : [[], [], []];
 
   const lastPriceBySymbol = new Map(items.map((item) => [item.symbol, item.lastPrice]));
+  for (const symbol of symbols) {
+    const ticker = getRuntimeTicker(symbol);
+    if (ticker && Number.isFinite(ticker.lastPrice)) {
+      lastPriceBySymbol.set(symbol, ticker.lastPrice);
+    }
+  }
   const latestTradeAtBySymbol = new Map(
     latestTradeBySymbolRows.map((row) => [row.symbol, row._max.executedAt ?? null])
   );
@@ -1156,10 +1388,34 @@ export const listBotRuntimeSessionSymbolStats = async (
     {
       signalDirection: 'LONG' | 'SHORT' | 'EXIT' | null;
       eventAt: Date | null;
+      message: string | null;
+      mergeReason: string | null;
+      strategyId: string | null;
+      scoreLong: number | null;
+      scoreShort: number | null;
     }
   >();
+  const latestSignalStrategyIds = new Set<string>();
   for (const event of latestSignalEvents) {
     if (!event.symbol || latestSignalBySymbol.has(event.symbol)) continue;
+    const payload = asRecord(event.payload);
+    const merge = asRecord(payload?.merge);
+    const scores = asRecord(merge?.scores);
+    const winner = asRecord(merge?.winner);
+    const mergeReasonRaw =
+      typeof merge?.reason === 'string' && merge.reason.trim().length > 0
+        ? merge.reason.trim()
+        : null;
+    const winnerStrategyId =
+      typeof winner?.strategyId === 'string' && winner.strategyId.trim().length > 0
+        ? winner.strategyId.trim()
+        : null;
+    const strategyId =
+      (typeof event.strategyId === 'string' && event.strategyId.trim().length > 0
+        ? event.strategyId.trim()
+        : null) ??
+      winnerStrategyId;
+    if (strategyId) latestSignalStrategyIds.add(strategyId);
     latestSignalBySymbol.set(event.symbol, {
       signalDirection:
         event.signalDirection === 'LONG' ||
@@ -1168,8 +1424,37 @@ export const listBotRuntimeSessionSymbolStats = async (
           ? event.signalDirection
           : null,
       eventAt: event.eventAt ?? null,
+      message: event.message ?? null,
+      mergeReason: humanizeMergeReason(mergeReasonRaw),
+      strategyId,
+      scoreLong: toFiniteNumber(scores?.longScore),
+      scoreShort: toFiniteNumber(scores?.shortScore),
     });
   }
+  const strategiesById =
+    latestSignalStrategyIds.size > 0
+      ? new Map(
+          (
+            await prisma.strategy.findMany({
+              where: {
+                userId,
+                id: { in: [...latestSignalStrategyIds] },
+              },
+              select: {
+                id: true,
+                name: true,
+                config: true,
+              },
+            })
+          ).map((strategy) => [
+            strategy.id,
+            {
+              name: strategy.name,
+              config: asRecord(strategy.config) ?? null,
+            },
+          ])
+        )
+      : new Map<string, { name: string; config: Record<string, unknown> | null }>();
   const openPositionCountBySymbol = new Map<string, number>();
   const openPositionQtyBySymbol = new Map<string, number>();
   const unrealizedPnlBySymbol = new Map<string, number>();
@@ -1194,19 +1479,63 @@ export const listBotRuntimeSessionSymbolStats = async (
     );
   }
 
-  const itemsWithLivePnl = items.map((item) => {
-    const openCount = openPositionCountBySymbol.get(item.symbol);
-    const openQty = openPositionQtyBySymbol.get(item.symbol);
-    const unrealizedPnl = unrealizedPnlBySymbol.get(item.symbol) ?? 0;
-    const latestSignal = latestSignalBySymbol.get(item.symbol);
+  const statBySymbol = new Map(items.map((item) => [item.symbol, item]));
+  const itemsWithLivePnl = symbols.map((symbol) => {
+    const stat = statBySymbol.get(symbol) ?? null;
+    const openCount = openPositionCountBySymbol.get(symbol);
+    const openQty = openPositionQtyBySymbol.get(symbol);
+    const unrealizedPnl = unrealizedPnlBySymbol.get(symbol) ?? 0;
+    const latestSignal = latestSignalBySymbol.get(symbol);
+    const lastPrice = lastPriceBySymbol.get(symbol) ?? null;
+    const signalStrategy =
+      latestSignal?.strategyId != null ? strategiesById.get(latestSignal.strategyId) ?? null : null;
+    const signalConditionSummary = buildSignalConditionSummary(
+      signalStrategy?.config ?? null,
+      latestSignal?.signalDirection ?? null
+    );
+    const signalScoreSummary =
+      latestSignal?.scoreLong != null || latestSignal?.scoreShort != null
+        ? {
+            longScore: latestSignal?.scoreLong ?? 0,
+            shortScore: latestSignal?.scoreShort ?? 0,
+          }
+        : null;
+
     return {
-      ...item,
-      openPositionCount: openCount ?? item.openPositionCount,
-      openPositionQty: openQty ?? item.openPositionQty,
+      id: stat?.id ?? `virtual-${sessionId}-${symbol}`,
+      userId,
+      botId,
+      sessionId,
+      symbol,
+      totalSignals: stat?.totalSignals ?? 0,
+      longEntries: stat?.longEntries ?? 0,
+      shortEntries: stat?.shortEntries ?? 0,
+      exits: stat?.exits ?? 0,
+      dcaCount: stat?.dcaCount ?? 0,
+      closedTrades: stat?.closedTrades ?? 0,
+      winningTrades: stat?.winningTrades ?? 0,
+      losingTrades: stat?.losingTrades ?? 0,
+      realizedPnl: stat?.realizedPnl ?? 0,
+      grossProfit: stat?.grossProfit ?? 0,
+      grossLoss: stat?.grossLoss ?? 0,
+      feesPaid: stat?.feesPaid ?? 0,
+      openPositionCount: openCount ?? stat?.openPositionCount ?? 0,
+      openPositionQty: openQty ?? stat?.openPositionQty ?? 0,
       unrealizedPnl,
-      lastTradeAt: item.lastTradeAt ?? latestTradeAtBySymbol.get(item.symbol) ?? null,
+      lastPrice,
+      lastSignalAt: stat?.lastSignalAt ?? null,
+      lastTradeAt: stat?.lastTradeAt ?? latestTradeAtBySymbol.get(symbol) ?? null,
       lastSignalDirection: latestSignal?.signalDirection ?? null,
-      lastSignalDecisionAt: latestSignal?.eventAt ?? item.lastSignalAt ?? null,
+      lastSignalDecisionAt: latestSignal?.eventAt ?? stat?.lastSignalAt ?? null,
+      lastSignalMessage: latestSignal?.message ?? null,
+      lastSignalReason: latestSignal?.mergeReason ?? null,
+      lastSignalStrategyId: latestSignal?.strategyId ?? null,
+      lastSignalStrategyName: signalStrategy?.name ?? null,
+      lastSignalConditionSummary: signalConditionSummary,
+      lastSignalScoreSummary: signalScoreSummary,
+      snapshotAt: stat?.snapshotAt ?? session.startedAt,
+      createdAt: stat?.createdAt ?? session.createdAt,
+      updatedAt: stat?.updatedAt ?? session.updatedAt,
     };
   });
 
@@ -1252,7 +1581,7 @@ export const listBotRuntimeSessionTrades = async (
   if (!session) return null;
 
   const normalizedSymbol = query.symbol?.trim().toUpperCase();
-  const windowEnd = session.finishedAt ?? session.lastHeartbeatAt ?? new Date();
+  const windowEnd = resolveSessionWindowEnd(session);
   const where = {
     userId,
     botId,
@@ -1313,7 +1642,7 @@ export const listBotRuntimeSessionPositions = async (
   if (!session) return null;
 
   const normalizedSymbol = query.symbol?.trim().toUpperCase();
-  const windowEnd = session.finishedAt ?? session.lastHeartbeatAt ?? new Date();
+  const windowEnd = resolveSessionWindowEnd(session);
 
   const positions = await prisma.position.findMany({
     where: {
@@ -1474,6 +1803,12 @@ export const listBotRuntimeSessionPositions = async (
   const lastPriceBySymbol = new Map(
     lastSymbolPrices.map((row) => [row.symbol, row.lastPrice])
   );
+  for (const symbol of symbols) {
+    const ticker = getRuntimeTicker(symbol);
+    if (ticker && Number.isFinite(ticker.lastPrice)) {
+      lastPriceBySymbol.set(symbol, ticker.lastPrice);
+    }
+  }
 
   const mappedPositions = positions.map((position) => {
     const positionTrades = tradesByPosition.get(position.id) ?? [];
@@ -1488,6 +1823,40 @@ export const listBotRuntimeSessionPositions = async (
     const dcaCount = Math.max(0, entryLegs.length - 1);
 
     const marketPrice = lastPriceBySymbol.get(position.symbol);
+    const runtimeState = runtimePositionAutomationService.getPositionStateSnapshot(position.id);
+    const stateEntryPrice =
+      runtimeState && Number.isFinite(runtimeState.averageEntryPrice) && runtimeState.averageEntryPrice > 0
+        ? runtimeState.averageEntryPrice
+        : position.entryPrice;
+    const ttpTriggerPercent =
+      runtimeState &&
+      Number.isFinite(runtimeState.trailingTakeProfitHighPercent) &&
+      Number.isFinite(runtimeState.trailingTakeProfitStepPercent)
+        ? (runtimeState.trailingTakeProfitHighPercent as number) -
+          (runtimeState.trailingTakeProfitStepPercent as number)
+        : null;
+    const tslTriggerPercent =
+      runtimeState && Number.isFinite(runtimeState.trailingLossLimitPercent)
+        ? (runtimeState.trailingLossLimitPercent as number)
+        : null;
+    const dynamicTtpStopLoss =
+      ttpTriggerPercent != null
+        ? computePriceFromLeveragedMovePercent(
+            position.side,
+            stateEntryPrice,
+            ttpTriggerPercent,
+            position.leverage
+          )
+        : null;
+    const dynamicTslStopLoss =
+      tslTriggerPercent != null
+        ? computePriceFromLeveragedMovePercent(
+            position.side,
+            stateEntryPrice,
+            tslTriggerPercent,
+            position.leverage
+          )
+        : null;
     const liveUnrealizedPnl =
       typeof marketPrice === 'number' && Number.isFinite(marketPrice)
         ? (marketPrice - position.entryPrice) * position.quantity * (position.side === 'LONG' ? 1 : -1)
@@ -1516,6 +1885,8 @@ export const listBotRuntimeSessionPositions = async (
       realizedPnl: position.realizedPnl ?? tradeRealizedPnl ?? 0,
       unrealizedPnl: liveUnrealizedPnl ?? position.unrealizedPnl ?? null,
       markPrice: typeof marketPrice === 'number' && Number.isFinite(marketPrice) ? marketPrice : null,
+      dynamicTtpStopLoss,
+      dynamicTslStopLoss,
       firstTradeAt: entryTrade?.executedAt ?? null,
       lastTradeAt: positionTrades.at(-1)?.executedAt ?? null,
       tradesCount: positionTrades.length,

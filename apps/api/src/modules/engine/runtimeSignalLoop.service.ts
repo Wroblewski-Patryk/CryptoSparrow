@@ -17,6 +17,7 @@ import {
 } from './strategySignalEvaluator';
 import { computeRiskBasedOrderQuantity, normalizeWalletRiskPercent } from './positionSizing';
 import { resolveRuntimeReferenceBalance } from './runtimeCapitalContext.service';
+import { runtimeTelemetryService } from './runtimeTelemetry.service';
 
 type ActiveBotStrategy = {
   strategyId: string;
@@ -70,6 +71,70 @@ type RuntimeSignalLoopDeps = {
   orchestrateFn: typeof orchestrateRuntimeSignal;
   processPositionAutomation: (event: StreamTickerEvent) => Promise<void>;
   nowMs: () => number;
+  ensureRuntimeSession?: (params: {
+    userId: string;
+    botId: string;
+    mode: 'PAPER' | 'LIVE';
+  }) => Promise<string>;
+  closeRuntimeSession?: (params: {
+    botId: string;
+    status: 'COMPLETED' | 'FAILED' | 'CANCELED';
+    stopReason?: string;
+    errorMessage?: string;
+  }) => Promise<void>;
+  closeInactiveRuntimeSessions?: (activeBotIds: string[]) => Promise<void>;
+  recordRuntimeEvent?: (params: {
+    userId: string;
+    botId: string;
+    mode?: 'PAPER' | 'LIVE';
+    sessionId?: string;
+    eventType:
+      | 'SESSION_STARTED'
+      | 'SESSION_STOPPED'
+      | 'HEARTBEAT'
+      | 'SIGNAL_DECISION'
+      | 'PRETRADE_BLOCKED'
+      | 'ORDER_SUBMITTED'
+      | 'ORDER_FILLED'
+      | 'POSITION_OPENED'
+      | 'POSITION_CLOSED'
+      | 'DCA_EXECUTED'
+      | 'ERROR';
+    level?: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
+    symbol?: string;
+    botMarketGroupId?: string;
+    strategyId?: string;
+    signalDirection?: SignalDirection;
+    message?: string;
+    payload?: Record<string, unknown>;
+    eventAt?: Date;
+  }) => Promise<void>;
+  upsertRuntimeSymbolStat?: (params: {
+    userId: string;
+    botId: string;
+    mode?: 'PAPER' | 'LIVE';
+    sessionId?: string;
+    symbol: string;
+    increments?: {
+      totalSignals?: number;
+      longEntries?: number;
+      shortEntries?: number;
+      exits?: number;
+      dcaCount?: number;
+      closedTrades?: number;
+      winningTrades?: number;
+      losingTrades?: number;
+      realizedPnl?: number;
+      grossProfit?: number;
+      grossLoss?: number;
+      feesPaid?: number;
+    };
+    lastPrice?: number;
+    lastSignalAt?: Date;
+    lastTradeAt?: Date;
+    openPositionCount?: number;
+    openPositionQty?: number;
+  }) => Promise<void>;
 };
 
 const runtimeSignalQuantity = Number.parseFloat(process.env.RUNTIME_SIGNAL_QUANTITY ?? '0.01');
@@ -79,6 +144,15 @@ const runtimeSignalDecisionDedupeRetentionMs = Number.parseInt(
 );
 const maxCandlesPerSeries = Number.parseInt(process.env.RUNTIME_SIGNAL_CANDLE_BUFFER ?? '500', 10);
 const minDirectionalScore = Number.parseFloat(process.env.RUNTIME_SIGNAL_MIN_DIRECTIONAL_SCORE ?? '1');
+const runtimeSignalWarmupEnabled = process.env.RUNTIME_SIGNAL_WARMUP_ENABLED !== 'false';
+const runtimeSignalWarmupCandles = Math.max(
+  20,
+  Number.parseInt(process.env.RUNTIME_SIGNAL_WARMUP_CANDLES ?? '150', 10)
+);
+const runtimeSignalWarmupRetryMs = Math.max(
+  60_000,
+  Number.parseInt(process.env.RUNTIME_SIGNAL_WARMUP_RETRY_MS ?? '300000', 10)
+);
 
 type RuntimeCandle = {
   openTime: number;
@@ -224,6 +298,12 @@ const defaultDeps: RuntimeSignalLoopDeps = {
   orchestrateFn: orchestrateRuntimeSignal,
   processPositionAutomation: (event) => runtimePositionAutomationService.handleTickerEvent(event),
   nowMs: () => Date.now(),
+  ensureRuntimeSession: (params) => runtimeTelemetryService.ensureRuntimeSession(params),
+  closeRuntimeSession: (params) => runtimeTelemetryService.closeRuntimeSession(params),
+  closeInactiveRuntimeSessions: (activeBotIds) =>
+    runtimeTelemetryService.closeInactiveRuntimeSessions(activeBotIds),
+  recordRuntimeEvent: (params) => runtimeTelemetryService.recordRuntimeEvent(params),
+  upsertRuntimeSymbolStat: (params) => runtimeTelemetryService.upsertRuntimeSymbolStat(params),
 };
 
 const resolveRuntimeOrderQuantity = (input: {
@@ -294,6 +374,7 @@ export class RuntimeSignalLoop {
   private unsubscribe: (() => Promise<void>) | null = null;
   private readonly processedDecisionWindows = new Map<string, number>();
   private readonly candleSeries = new Map<string, RuntimeCandle[]>();
+  private readonly warmupLastAttemptAt = new Map<string, number>();
 
   constructor(private readonly deps: RuntimeSignalLoopDeps = defaultDeps) {}
 
@@ -303,6 +384,17 @@ export class RuntimeSignalLoop {
 
   async start() {
     if (this.unsubscribe) return;
+    const activeBots = await this.deps.listActiveBots();
+    await this.deps.closeInactiveRuntimeSessions?.(activeBots.map((bot) => bot.id));
+    await Promise.all(
+      activeBots.map((bot) =>
+        this.deps.ensureRuntimeSession?.({
+          userId: bot.userId,
+          botId: bot.id,
+          mode: bot.mode,
+        })
+      )
+    );
     this.unsubscribe = await this.deps.subscribe(async (event) => {
       await this.handleEvent(event);
     });
@@ -310,12 +402,26 @@ export class RuntimeSignalLoop {
 
   async stop() {
     if (!this.unsubscribe) return;
+    const activeBots = await this.deps.listActiveBots();
+    await Promise.all(
+      activeBots.map((bot) =>
+        this.deps.closeRuntimeSession?.({
+          botId: bot.id,
+          status: 'CANCELED',
+          stopReason: 'signal_loop_stopped',
+        })
+      )
+    );
     await this.unsubscribe();
     this.unsubscribe = null;
   }
 
   async processTickerEvent(event: StreamTickerEvent) {
     await this.handleTickerEvent(event);
+  }
+
+  async processCandleEvent(event: StreamCandleEvent) {
+    await this.handleCandleEvent(event);
   }
 
   private async handleEvent(event: MarketStreamEvent) {
@@ -347,7 +453,88 @@ export class RuntimeSignalLoop {
       series.splice(0, series.length - maxCandlesPerSeries);
     }
     this.candleSeries.set(key, series);
+    await this.ensureSeriesWarmup(event.marketType, event.symbol, event.interval);
     await this.handleFinalCandleDecision(event);
+  }
+
+  private warmupUrl(marketType: 'FUTURES' | 'SPOT', symbol: string, interval: string, limit: number) {
+    const base =
+      marketType === 'SPOT'
+        ? process.env.BINANCE_SPOT_REST_URL ?? 'https://api.binance.com'
+        : process.env.BINANCE_FUTURES_REST_URL ?? 'https://fapi.binance.com';
+    const endpoint = marketType === 'SPOT' ? '/api/v3/klines' : '/fapi/v1/klines';
+    const params = new URLSearchParams({
+      symbol: symbol.toUpperCase(),
+      interval: normalizeInterval(interval),
+      limit: String(Math.min(1000, Math.max(20, limit))),
+    });
+    return `${base}${endpoint}?${params.toString()}`;
+  }
+
+  private async fetchWarmupCandles(
+    marketType: 'FUTURES' | 'SPOT',
+    symbol: string,
+    interval: string,
+    limit: number
+  ): Promise<RuntimeCandle[]> {
+    if (process.env.NODE_ENV === 'test') return [];
+    const url = this.warmupUrl(marketType, symbol, interval, limit);
+    try {
+      const response = await fetch(url, { method: 'GET' });
+      if (!response.ok) return [];
+      const payload = (await response.json()) as unknown;
+      if (!Array.isArray(payload)) return [];
+      return payload
+        .map((item) => {
+          if (!Array.isArray(item)) return null;
+          const openTime = Number(item[0]);
+          const close = Number(item[4]);
+          if (!Number.isFinite(openTime) || !Number.isFinite(close)) return null;
+          return {
+            openTime,
+            close,
+          } satisfies RuntimeCandle;
+        })
+        .filter((item): item is RuntimeCandle => Boolean(item))
+        .sort((left, right) => left.openTime - right.openTime);
+    } catch {
+      return [];
+    }
+  }
+
+  private async ensureSeriesWarmup(
+    marketType: 'FUTURES' | 'SPOT',
+    symbol: string,
+    interval: string
+  ) {
+    if (!runtimeSignalWarmupEnabled) return;
+    const normalizedInterval = normalizeInterval(interval);
+    const key = this.getSeriesKey(marketType, symbol, normalizedInterval);
+    const currentSeries = this.candleSeries.get(key) ?? [];
+    if (currentSeries.length >= runtimeSignalWarmupCandles) return;
+
+    const now = this.deps.nowMs();
+    const lastAttemptAt = this.warmupLastAttemptAt.get(key) ?? 0;
+    if (now - lastAttemptAt < runtimeSignalWarmupRetryMs) return;
+    this.warmupLastAttemptAt.set(key, now);
+
+    const fetched = await this.fetchWarmupCandles(
+      marketType,
+      symbol,
+      normalizedInterval,
+      runtimeSignalWarmupCandles
+    );
+    if (fetched.length === 0) return;
+
+    const deduped = new Map<number, RuntimeCandle>();
+    for (const candle of fetched) deduped.set(candle.openTime, candle);
+    for (const candle of currentSeries) deduped.set(candle.openTime, candle);
+
+    const merged = [...deduped.values()].sort((left, right) => left.openTime - right.openTime);
+    if (merged.length > maxCandlesPerSeries) {
+      merged.splice(0, merged.length - maxCandlesPerSeries);
+    }
+    this.candleSeries.set(key, merged);
   }
 
   private getSeriesKey(marketType: 'FUTURES' | 'SPOT', symbol: string, interval: string) {
@@ -416,6 +603,11 @@ export class RuntimeSignalLoop {
     await Promise.all(
       bots.map(async (bot) => {
         if (bot.marketType !== event.marketType) return;
+        const sessionId = await this.deps.ensureRuntimeSession?.({
+          userId: bot.userId,
+          botId: bot.id,
+          mode: bot.mode,
+        });
 
         const eligibleGroups = bot.marketGroups.filter((group) => {
           if (group.symbols.length > 0) {
@@ -455,6 +647,21 @@ export class RuntimeSignalLoop {
             const merged = this.mergeStrategyVotes(group.strategies, strategyVotes);
             const direction = merged.direction;
             if (!direction) {
+              await this.deps.recordRuntimeEvent?.({
+                userId: bot.userId,
+                botId: bot.id,
+                mode: bot.mode,
+                sessionId,
+                eventType: 'SIGNAL_DECISION',
+                level: 'DEBUG',
+                symbol: event.symbol,
+                botMarketGroupId: group.id,
+                message: 'No trade decision after strategy merge',
+                payload: {
+                  merge: merged.metadata,
+                },
+                eventAt: new Date(event.eventTime),
+              });
               metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
               metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
               return;
@@ -494,6 +701,24 @@ export class RuntimeSignalLoop {
                 marketType: event.marketType,
               });
               if (!preTradeDecision.allowed) {
+                await this.deps.recordRuntimeEvent?.({
+                  userId: bot.userId,
+                  botId: bot.id,
+                  mode: bot.mode,
+                  sessionId,
+                  eventType: 'PRETRADE_BLOCKED',
+                  level: 'WARN',
+                  symbol: event.symbol,
+                  botMarketGroupId: group.id,
+                  strategyId: merged.strategyId,
+                  signalDirection: direction,
+                  message: 'Pre-trade guard blocked execution',
+                  payload: {
+                    reasons: preTradeDecision.reasons,
+                    metrics: preTradeDecision.metrics,
+                  },
+                  eventAt: new Date(event.eventTime),
+                });
                 metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
                 metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
                 return;
@@ -501,6 +726,7 @@ export class RuntimeSignalLoop {
             }
 
             const strategyExitTraceOnly = direction === 'EXIT';
+            const signalEventAt = new Date(event.eventTime);
             await this.deps.createSignal({
               userId: bot.userId,
               botId: bot.id,
@@ -532,6 +758,43 @@ export class RuntimeSignalLoop {
                 },
               },
             });
+            await this.deps.recordRuntimeEvent?.({
+              userId: bot.userId,
+              botId: bot.id,
+              mode: bot.mode,
+              sessionId,
+              eventType: 'SIGNAL_DECISION',
+              level: 'INFO',
+              symbol: event.symbol,
+              botMarketGroupId: group.id,
+              strategyId: merged.strategyId,
+              signalDirection: direction,
+              message: strategyExitTraceOnly
+                ? 'Strategy EXIT signal recorded (trace-only)'
+                : 'Strategy signal accepted for execution',
+              payload: {
+                merge: merged.metadata,
+                strategyExitTraceOnly,
+              },
+              eventAt: signalEventAt,
+            });
+            await this.deps.upsertRuntimeSymbolStat?.({
+              userId: bot.userId,
+              botId: bot.id,
+              mode: bot.mode,
+              sessionId,
+              symbol: event.symbol,
+              increments: {
+                totalSignals: 1,
+                ...(direction === 'LONG'
+                  ? { longEntries: 1 }
+                  : direction === 'SHORT'
+                    ? { shortEntries: 1 }
+                    : { exits: 1 }),
+              },
+              lastPrice: event.close,
+              lastSignalAt: signalEventAt,
+            });
 
             if (strategyExitTraceOnly) {
               metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
@@ -558,6 +821,7 @@ export class RuntimeSignalLoop {
             await this.deps.orchestrateFn({
               userId: bot.userId,
               botId: bot.id,
+              runtimeSessionId: sessionId,
               symbol: event.symbol,
               direction,
               strategyId: merged.strategyId,

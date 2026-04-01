@@ -91,6 +91,33 @@ export const AssistantDryRunSchema = z.object({
   mode: z.enum(['BACKTEST', 'PAPER', 'LIVE']).default('PAPER'),
 });
 
+export const BotRuntimeSessionStatusSchema = z.enum([
+  'RUNNING',
+  'COMPLETED',
+  'FAILED',
+  'CANCELED',
+]);
+
+export const ListBotRuntimeSessionsQuerySchema = z.object({
+  status: BotRuntimeSessionStatusSchema.optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
+
+export const ListBotRuntimeSymbolStatsQuerySchema = z.object({
+  symbol: z.string().trim().min(1).max(40).optional(),
+  limit: z.coerce.number().int().min(1).max(500).default(200),
+});
+
+export const ListBotRuntimeTradesQuerySchema = z.object({
+  symbol: z.string().trim().min(1).max(40).optional(),
+  limit: z.coerce.number().int().min(1).max(500).default(200),
+});
+
+export const ListBotRuntimePositionsQuerySchema = z.object({
+  symbol: z.string().trim().min(1).max(40).optional(),
+  limit: z.coerce.number().int().min(1).max(500).default(200),
+});
+
 export type CreateBotDto = z.infer<typeof CreateBotSchema>;
 export type UpdateBotDto = z.infer<typeof UpdateBotSchema>;
 export type ListBotsQueryDto = z.infer<typeof ListBotsQuerySchema>;
@@ -102,3 +129,7 @@ export type ReorderMarketGroupStrategiesDto = z.infer<typeof ReorderMarketGroupS
 export type UpsertBotAssistantConfigDto = z.infer<typeof UpsertBotAssistantConfigSchema>;
 export type UpsertBotSubagentConfigDto = z.infer<typeof UpsertBotSubagentConfigSchema>;
 export type AssistantDryRunDto = z.infer<typeof AssistantDryRunSchema>;
+export type ListBotRuntimeSessionsQueryDto = z.infer<typeof ListBotRuntimeSessionsQuerySchema>;
+export type ListBotRuntimeSymbolStatsQueryDto = z.infer<typeof ListBotRuntimeSymbolStatsQuerySchema>;
+export type ListBotRuntimeTradesQueryDto = z.infer<typeof ListBotRuntimeTradesQuerySchema>;
+export type ListBotRuntimePositionsQueryDto = z.infer<typeof ListBotRuntimePositionsQuerySchema>;

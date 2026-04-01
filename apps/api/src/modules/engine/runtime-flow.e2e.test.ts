@@ -2,7 +2,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { app } from '../../index';
 import { prisma } from '../../prisma/client';
-import { runtimeSignalLoop } from './runtimeSignalLoop.service';
+import { RuntimeSignalLoop } from './runtimeSignalLoop.service';
 
 const registerAndLogin = async (email: string) => {
   const agent = request.agent(app);
@@ -29,6 +29,9 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
     await prisma.botAssistantConfig.deleteMany();
     await prisma.marketGroupStrategyLink.deleteMany();
     await prisma.botMarketGroup.deleteMany();
+    await prisma.botRuntimeEvent.deleteMany();
+    await prisma.botRuntimeSymbolStat.deleteMany();
+    await prisma.botRuntimeSession.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
@@ -37,7 +40,8 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
     await prisma.user.deleteMany();
   });
 
-  it('creates runtime orders/positions and closes on EXIT signal for LIVE bot', async () => {
+  it('creates runtime orders/positions and closes via ticker lifecycle after strategy entry for LIVE bot', async () => {
+    const runtimeSignalLoop = new RuntimeSignalLoop();
     const email = 'runtime-flow@example.com';
     const agent = await registerAndLogin(email);
 
@@ -47,8 +51,20 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
       leverage: 1,
       walletRisk: 1,
       config: {
-        open: { logic: 'AND', rules: [] },
-        close: { logic: 'OR', rules: [] },
+        open: {
+          direction: 'both',
+          noMatchAction: 'EXIT',
+          indicatorsLong: [
+            {
+              name: 'RSI',
+              condition: '>',
+              value: 99,
+              params: { period: 2 },
+            },
+          ],
+          indicatorsShort: [],
+        },
+        close: { mode: 'basic', tp: 2, sl: 1 },
       },
     });
     expect(strategyRes.status).toBe(201);
@@ -124,12 +140,37 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
     });
     expect(marketGroupRes.status).toBe(201);
 
+    const candleBaseTime = Date.now();
+    const emitFinalCandle = async (index: number, close: number) => {
+      const openTime = candleBaseTime + index * 60_000;
+      const closeTime = openTime + 59_999;
+      await runtimeSignalLoop.processCandleEvent({
+        type: 'candle',
+        marketType: 'FUTURES',
+        symbol: 'BTCUSDT',
+        interval: '1m',
+        eventTime: closeTime,
+        openTime,
+        closeTime,
+        open: close,
+        high: close * 1.001,
+        low: close * 0.999,
+        close,
+        volume: 1000 + index,
+        isFinal: true,
+      });
+    };
+
+    await emitFinalCandle(0, 64000);
+    await emitFinalCandle(1, 64100);
+    await emitFinalCandle(2, 64200);
+
     await runtimeSignalLoop.processTickerEvent({
       type: 'ticker',
       marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: Date.now(),
-      lastPrice: 64000,
+      lastPrice: 64200,
       priceChangePercent24h: 1.8,
     });
 
@@ -160,13 +201,23 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
     });
     expect(runtimeSignal?.direction).toBe('LONG');
 
+    await emitFinalCandle(3, 50000);
+    const exitSignal = await prisma.signal.findFirst({
+      where: {
+        botId,
+        symbol: 'BTCUSDT',
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(exitSignal?.direction).toBe('EXIT');
+
     await runtimeSignalLoop.processTickerEvent({
       type: 'ticker',
       marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: Date.now() + 60_000,
-      lastPrice: 64100,
-      priceChangePercent24h: 0.05,
+      lastPrice: 50000,
+      priceChangePercent24h: -3.8,
     });
 
     const closedPosition = await prisma.position.findFirst({

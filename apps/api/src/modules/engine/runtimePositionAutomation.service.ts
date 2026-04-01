@@ -6,6 +6,7 @@ import { closeOrder as closeOrderLifecycle, openOrder as openOrderLifecycle } fr
 import { evaluatePositionManagement } from './positionManagement.service';
 import { PositionManagementInput, PositionManagementState } from './positionManagement.types';
 import { resolveRuntimeDcaFundsExhausted } from './runtimeCapitalContext.service';
+import { runtimeTelemetryService } from './runtimeTelemetry.service';
 
 type RuntimeManagedPosition = Pick<
   Position,
@@ -62,6 +63,55 @@ type RuntimePositionAutomationDeps = {
     leverage: number;
     nowMs: number;
   }) => Promise<boolean>;
+  recordRuntimeEvent?: (params: {
+    userId: string;
+    botId: string;
+    mode: 'PAPER' | 'LIVE';
+    eventType:
+      | 'SESSION_STARTED'
+      | 'SESSION_STOPPED'
+      | 'HEARTBEAT'
+      | 'SIGNAL_DECISION'
+      | 'PRETRADE_BLOCKED'
+      | 'ORDER_SUBMITTED'
+      | 'ORDER_FILLED'
+      | 'POSITION_OPENED'
+      | 'POSITION_CLOSED'
+      | 'DCA_EXECUTED'
+      | 'ERROR';
+    level?: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
+    symbol?: string;
+    strategyId?: string;
+    signalDirection?: 'LONG' | 'SHORT' | 'EXIT';
+    message?: string;
+    payload?: Record<string, unknown>;
+    eventAt?: Date;
+  }) => Promise<void>;
+  upsertRuntimeSymbolStat?: (params: {
+    userId: string;
+    botId: string;
+    mode?: 'PAPER' | 'LIVE';
+    symbol: string;
+    increments?: {
+      totalSignals?: number;
+      longEntries?: number;
+      shortEntries?: number;
+      exits?: number;
+      dcaCount?: number;
+      closedTrades?: number;
+      winningTrades?: number;
+      losingTrades?: number;
+      realizedPnl?: number;
+      grossProfit?: number;
+      grossLoss?: number;
+      feesPaid?: number;
+    };
+    lastPrice?: number;
+    lastSignalAt?: Date;
+    lastTradeAt?: Date;
+    openPositionCount?: number;
+    openPositionQty?: number;
+  }) => Promise<void>;
   nowMs: () => number;
 };
 
@@ -268,6 +318,8 @@ const defaultDeps: RuntimePositionAutomationDeps = {
     });
   },
   resolveDcaFundsExhausted: (input) => resolveRuntimeDcaFundsExhausted(input),
+  recordRuntimeEvent: (params) => runtimeTelemetryService.recordRuntimeEvent(params),
+  upsertRuntimeSymbolStat: (params) => runtimeTelemetryService.upsertRuntimeSymbolStat(params),
   nowMs: () => Date.now(),
 };
 
@@ -462,6 +514,12 @@ export class RuntimePositionAutomationService {
 
   constructor(private readonly deps: RuntimePositionAutomationDeps = defaultDeps) {}
 
+  getPositionStateSnapshot(positionId: string): PositionManagementState | null {
+    const state = this.positionStates.get(positionId);
+    if (!state) return null;
+    return { ...state };
+  }
+
   async handleTickerEvent(event: StreamTickerEvent) {
     const openPositions = await this.deps.listOpenPositionsBySymbol(event.symbol);
     await Promise.all(openPositions.map((position) => this.processPosition(event, position)));
@@ -550,6 +608,38 @@ export class RuntimePositionAutomationService {
           nextQuantity: result.nextState.quantity,
           nextEntryPrice: result.nextState.averageEntryPrice,
         });
+        if (position.botId) {
+          const eventAt = new Date(event.eventTime);
+          await this.deps.recordRuntimeEvent?.({
+            userId: position.userId,
+            botId: position.botId,
+            mode,
+            eventType: 'DCA_EXECUTED',
+            level: 'INFO',
+            symbol: position.symbol,
+            strategyId: position.strategyId ?? undefined,
+            signalDirection: position.side === 'LONG' ? 'LONG' : 'SHORT',
+            message: 'Runtime DCA executed',
+            payload: {
+              addedQuantity: dcaAddedQuantity,
+              nextQuantity: result.nextState.quantity,
+              nextEntryPrice: result.nextState.averageEntryPrice,
+            },
+            eventAt,
+          });
+          await this.deps.upsertRuntimeSymbolStat?.({
+            userId: position.userId,
+            botId: position.botId,
+            mode,
+            symbol: position.symbol,
+            increments: {
+              dcaCount: 1,
+            },
+            lastPrice: event.lastPrice,
+            lastTradeAt: eventAt,
+            openPositionQty: result.nextState.quantity,
+          });
+        }
       }
     }
 

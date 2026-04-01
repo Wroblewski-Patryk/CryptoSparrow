@@ -8,6 +8,7 @@ import {
   RuntimeTradeGateway,
   orchestrateRuntimeSignal,
 } from './executionOrchestrator.service';
+import { decideExecutionAction } from './sharedExecutionCore';
 
 type MemoryPosition = {
   id: string;
@@ -141,9 +142,11 @@ const createInMemoryGateways = (mode: RuntimeExecutionMode) => {
   return { orderGateway, positionGateway, eventGateway, tradeGateway };
 };
 
-const runScenario = async (mode: RuntimeExecutionMode) => {
+const runScenario = async (
+  mode: RuntimeExecutionMode,
+  steps: RuntimeSignalDirection[] = ['LONG', 'SHORT', 'EXIT']
+) => {
   const gateways = createInMemoryGateways(mode);
-  const steps: RuntimeSignalDirection[] = ['LONG', 'SHORT', 'EXIT'];
   const outcomes: Array<{ status: string; reason?: string }> = [];
 
   for (const direction of steps) {
@@ -172,6 +175,48 @@ const runScenario = async (mode: RuntimeExecutionMode) => {
   return outcomes;
 };
 
+const runBacktestDecisionScenario = (steps: RuntimeSignalDirection[]) => {
+  const outcomes: Array<{ status: string; reason?: string }> = [];
+  let openPosition: { side: 'LONG' | 'SHORT'; quantity: number } | null = null;
+
+  for (const direction of steps) {
+    const decision = decideExecutionAction(
+      direction,
+      openPosition
+        ? {
+            side: openPosition.side,
+            quantity: openPosition.quantity,
+            managementMode: 'BOT_MANAGED',
+          }
+        : null
+    );
+
+    if (decision.kind === 'ignore') {
+      outcomes.push({ status: 'ignored', reason: decision.reason });
+      continue;
+    }
+
+    if (decision.kind === 'open') {
+      openPosition = {
+        side: decision.positionSide,
+        quantity: 0.1,
+      };
+      outcomes.push({ status: 'opened' });
+      continue;
+    }
+
+    if (!openPosition) {
+      outcomes.push({ status: 'ignored', reason: 'no_open_position' });
+      continue;
+    }
+
+    openPosition = null;
+    outcomes.push({ status: 'closed' });
+  }
+
+  return outcomes;
+};
+
 describe('paper/live decision equivalence', () => {
   it('keeps identical decision outcomes for same signal sequence', async () => {
     const paperOutcomes = await runScenario('PAPER');
@@ -183,5 +228,19 @@ describe('paper/live decision equivalence', () => {
       { status: 'ignored', reason: 'no_flip_with_open_position' },
       { status: 'closed' },
     ]);
+  });
+
+  it('keeps identical decision outcomes between BACKTEST core and PAPER runtime', async () => {
+    const scenarios: RuntimeSignalDirection[][] = [
+      ['LONG', 'SHORT', 'EXIT'],
+      ['EXIT', 'LONG', 'LONG', 'EXIT', 'EXIT'],
+    ];
+
+    for (const steps of scenarios) {
+      const paperOutcomes = await runScenario('PAPER', steps);
+      const backtestOutcomes = runBacktestDecisionScenario(steps);
+
+      expect(paperOutcomes).toEqual(backtestOutcomes);
+    }
   });
 });

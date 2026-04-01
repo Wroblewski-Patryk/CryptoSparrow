@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const ExecutionModeSchema = z.enum(['PAPER', 'LIVE', 'LOCAL']);
+export const ExecutionModeSchema = z.enum(['PAPER', 'LIVE']);
 
 export const PreTradeAnalysisInputSchema = z.object({
   userId: z.string().trim().min(1),
@@ -30,7 +30,7 @@ export type PreTradeAnalysisInput = z.input<typeof PreTradeAnalysisInputSchema>;
 export type PreTradeAnalysisParsedInput = z.output<typeof PreTradeAnalysisInputSchema>;
 
 export type PreTradeBotLiveConfig = {
-  mode: 'PAPER' | 'LIVE' | 'LOCAL';
+  mode: 'PAPER' | 'LIVE';
   marketType: 'FUTURES' | 'SPOT';
   positionMode: 'ONE_WAY' | 'HEDGE';
   liveOptIn: boolean;

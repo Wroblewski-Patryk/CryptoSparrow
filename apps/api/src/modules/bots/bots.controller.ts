@@ -6,7 +6,11 @@ import {
   AssistantDryRunSchema,
   AttachMarketGroupStrategySchema,
   CreateBotMarketGroupSchema,
+  ListBotRuntimePositionsQuerySchema,
   CreateBotSchema,
+  ListBotRuntimeSymbolStatsQuerySchema,
+  ListBotRuntimeTradesQuerySchema,
+  ListBotRuntimeSessionsQuerySchema,
   ListBotsQuerySchema,
   ReorderMarketGroupStrategiesSchema,
   UpsertBotAssistantConfigSchema,
@@ -16,11 +20,6 @@ import {
   UpdateBotSchema,
 } from './bots.types';
 
-const mapLegacyLocalMode = <T extends { mode: unknown }>(payload: T) => ({
-  ...payload,
-  mode: payload.mode === 'LOCAL' ? 'PAPER' : payload.mode,
-});
-
 export const listBots = async (req: Request, res: Response) => {
   const userId = req.user?.id;
   if (!userId) return sendError(res, 401, 'Unauthorized');
@@ -28,7 +27,7 @@ export const listBots = async (req: Request, res: Response) => {
   try {
     const query = ListBotsQuerySchema.parse(req.query);
     const bots = await botsService.listBots(userId, query);
-    return res.json(bots.map((bot) => mapLegacyLocalMode(bot)));
+    return res.json(bots);
   } catch (error) {
     return sendValidationError(res, error);
   }
@@ -42,7 +41,7 @@ export const getBot = async (req: Request, res: Response) => {
   const bot = await botsService.getBot(userId, id);
   if (!bot) return sendError(res, 404, 'Not found');
 
-  return res.json(mapLegacyLocalMode(bot));
+  return res.json(bot);
 };
 
 export const getBotRuntimeGraph = async (req: Request, res: Response) => {
@@ -53,10 +52,78 @@ export const getBotRuntimeGraph = async (req: Request, res: Response) => {
   const graph = await botsService.getBotRuntimeGraph(userId, id);
   if (!graph) return sendError(res, 404, 'Not found');
 
-  return res.json({
-    ...graph,
-    bot: mapLegacyLocalMode(graph.bot),
-  });
+  return res.json(graph);
+};
+
+export const listBotRuntimeSessions = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const query = ListBotRuntimeSessionsQuerySchema.parse(req.query);
+    const { id } = req.params;
+    const sessions = await botsService.listBotRuntimeSessions(userId, id, query);
+    if (!sessions) return sendError(res, 404, 'Not found');
+    return res.json(sessions);
+  } catch (error) {
+    return sendValidationError(res, error);
+  }
+};
+
+export const getBotRuntimeSession = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  const { id, sessionId } = req.params;
+  const session = await botsService.getBotRuntimeSession(userId, id, sessionId);
+  if (!session) return sendError(res, 404, 'Not found');
+
+  return res.json(session);
+};
+
+export const listBotRuntimeSessionSymbolStats = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const query = ListBotRuntimeSymbolStatsQuerySchema.parse(req.query);
+    const { id, sessionId } = req.params;
+    const stats = await botsService.listBotRuntimeSessionSymbolStats(userId, id, sessionId, query);
+    if (!stats) return sendError(res, 404, 'Not found');
+    return res.json(stats);
+  } catch (error) {
+    return sendValidationError(res, error);
+  }
+};
+
+export const listBotRuntimeSessionTrades = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const query = ListBotRuntimeTradesQuerySchema.parse(req.query);
+    const { id, sessionId } = req.params;
+    const trades = await botsService.listBotRuntimeSessionTrades(userId, id, sessionId, query);
+    if (!trades) return sendError(res, 404, 'Not found');
+    return res.json(trades);
+  } catch (error) {
+    return sendValidationError(res, error);
+  }
+};
+
+export const listBotRuntimeSessionPositions = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const query = ListBotRuntimePositionsQuerySchema.parse(req.query);
+    const { id, sessionId } = req.params;
+    const positions = await botsService.listBotRuntimeSessionPositions(userId, id, sessionId, query);
+    if (!positions) return sendError(res, 404, 'Not found');
+    return res.json(positions);
+  } catch (error) {
+    return sendValidationError(res, error);
+  }
 };
 
 export const createBot = async (req: Request, res: Response) => {
@@ -66,7 +133,7 @@ export const createBot = async (req: Request, res: Response) => {
   try {
     const payload = CreateBotSchema.parse(req.body);
     const created = await botsService.createBot(userId, payload);
-    return res.status(201).json(mapLegacyLocalMode(created));
+    return res.status(201).json(created);
   } catch (error) {
     if (error instanceof Error && error.message === 'LIVE_CONSENT_VERSION_REQUIRED') {
       return sendError(res, 400, 'consentTextVersion is required when liveOptIn is enabled');
@@ -79,6 +146,9 @@ export const createBot = async (req: Request, res: Response) => {
     }
     if (error instanceof Error && error.message === 'BOT_MARKET_GROUP_MARKET_TYPE_MISMATCH') {
       return sendError(res, 400, 'marketGroup market type must match bot marketType');
+    }
+    if (error instanceof Error && error.message === 'ACTIVE_BOT_STRATEGY_MARKET_GROUP_DUPLICATE') {
+      return sendError(res, 409, 'active bot already exists for this strategy + market group pair');
     }
     return sendValidationError(res, error);
   }
@@ -94,13 +164,19 @@ export const updateBot = async (req: Request, res: Response) => {
     const updated = await botsService.updateBot(userId, id, payload);
     if (!updated) return sendError(res, 404, 'Not found');
 
-    return res.json(mapLegacyLocalMode(updated));
+    return res.json(updated);
   } catch (error) {
     if (error instanceof Error && error.message === 'LIVE_CONSENT_VERSION_REQUIRED') {
       return sendError(res, 400, 'consentTextVersion is required when liveOptIn is enabled');
     }
     if (error instanceof Error && error.message === 'BOT_STRATEGY_NOT_FOUND') {
       return sendError(res, 400, 'strategyId is invalid for current user');
+    }
+    if (error instanceof Error && error.message === 'SYMBOL_GROUP_NOT_FOUND') {
+      return sendError(res, 400, 'marketGroupId is invalid for current user');
+    }
+    if (error instanceof Error && error.message === 'ACTIVE_BOT_STRATEGY_MARKET_GROUP_DUPLICATE') {
+      return sendError(res, 409, 'active bot already exists for this strategy + market group pair');
     }
     return sendValidationError(res, error);
   }
