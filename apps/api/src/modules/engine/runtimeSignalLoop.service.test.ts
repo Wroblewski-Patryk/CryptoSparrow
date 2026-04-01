@@ -125,6 +125,81 @@ const emitFinalCandleSeries = async (
 };
 
 describe('RuntimeSignalLoop', () => {
+  it('runs position automation fallback from final candle when ticker is stale or missing', async () => {
+    const { deps, emit } = createDeps();
+    withStrategyBot(deps, { strategies: [] });
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    await emit({
+      type: 'candle',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      interval: '1m',
+      eventTime: 60_000,
+      openTime: 0,
+      closeTime: 59_000,
+      open: 100,
+      high: 101,
+      low: 99,
+      close: 100.5,
+      volume: 1000,
+      isFinal: true,
+    });
+
+    expect(deps.processPositionAutomation).toHaveBeenCalledTimes(1);
+    expect(deps.processPositionAutomation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'ticker',
+        symbol: 'BTCUSDT',
+        marketType: 'FUTURES',
+        lastPrice: 100.5,
+      })
+    );
+  });
+
+  it('skips final-candle fallback automation when ticker is fresh', async () => {
+    const { deps, emit } = createDeps();
+    withStrategyBot(deps, { strategies: [] });
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    await emit({
+      type: 'ticker',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      eventTime: 60_000,
+      lastPrice: 100.2,
+      priceChangePercent24h: 1.2,
+    });
+
+    await emit({
+      type: 'candle',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      interval: '1m',
+      eventTime: 65_000,
+      openTime: 60_000,
+      closeTime: 119_000,
+      open: 100.2,
+      high: 100.9,
+      low: 99.8,
+      close: 100.7,
+      volume: 1000,
+      isFinal: true,
+    });
+
+    expect(deps.processPositionAutomation).toHaveBeenCalledTimes(1);
+    expect(deps.processPositionAutomation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'ticker',
+        symbol: 'BTCUSDT',
+        marketType: 'FUTURES',
+        lastPrice: 100.2,
+      })
+    );
+  });
+
   it('keeps ticker path for position automation only', async () => {
     const { deps, emit } = createDeps();
     deps.listActiveBots = vi.fn(async () => [

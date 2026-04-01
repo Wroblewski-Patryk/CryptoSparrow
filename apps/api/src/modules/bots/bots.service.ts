@@ -1,6 +1,8 @@
 import { prisma } from '../../prisma/client';
 import { orchestrateAssistantDecision } from '../engine/assistantOrchestrator.service';
 import { runtimePositionAutomationService } from '../engine/runtimePositionAutomation.service';
+import { runtimeSignalLoop } from '../engine/runtimeSignalLoop.service';
+import { runtimeTelemetryService } from '../engine/runtimeTelemetry.service';
 import { getRuntimeTicker } from '../engine/runtimeTickerStore';
 import { parseStrategySignalRules } from '../engine/strategySignalEvaluator';
 import {
@@ -30,6 +32,66 @@ type BotConsentState = {
 const normalizeConsentTextVersion = (value?: string | null) => {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
+};
+
+const normalizeKlineInterval = (value?: string | null) => {
+  if (!value) return '1m';
+  const normalized = value.trim().toLowerCase();
+  const aliases: Record<string, string> = {
+    '1 min': '1m',
+    '3 min': '3m',
+    '5 min': '5m',
+    '10 min': '10m',
+    '15 min': '15m',
+    '30 min': '30m',
+    '60 min': '1h',
+  };
+  return aliases[normalized] ?? normalized;
+};
+
+const klineFallbackCache = new Map<string, { fetchedAt: number; closes: number[] }>();
+const KLINE_FALLBACK_TTL_MS = 10_000;
+
+const fetchFallbackKlineCloses = async (params: {
+  marketType: 'FUTURES' | 'SPOT';
+  symbol: string;
+  interval: string;
+  limit?: number;
+}) => {
+  if (process.env.NODE_ENV === 'test') return [];
+  const normalizedInterval = normalizeKlineInterval(params.interval);
+  const limit = Math.min(1000, Math.max(20, params.limit ?? 300));
+  const cacheKey = `${params.marketType}|${params.symbol.toUpperCase()}|${normalizedInterval}|${limit}`;
+  const now = Date.now();
+  const cached = klineFallbackCache.get(cacheKey);
+  if (cached && now - cached.fetchedAt < KLINE_FALLBACK_TTL_MS) {
+    return cached.closes;
+  }
+
+  const base =
+    params.marketType === 'SPOT'
+      ? process.env.BINANCE_SPOT_REST_URL ?? 'https://api.binance.com'
+      : process.env.BINANCE_FUTURES_REST_URL ?? 'https://fapi.binance.com';
+  const endpoint = params.marketType === 'SPOT' ? '/api/v3/klines' : '/fapi/v1/klines';
+  const url = `${base}${endpoint}?symbol=${encodeURIComponent(
+    params.symbol.toUpperCase()
+  )}&interval=${encodeURIComponent(normalizedInterval)}&limit=${limit}`;
+
+  try {
+    const response = await fetch(url, { method: 'GET' });
+    if (!response.ok) return [];
+    const payload = (await response.json()) as unknown;
+    if (!Array.isArray(payload)) return [];
+    const closes = payload
+      .map((row) => (Array.isArray(row) ? Number(row[4]) : Number.NaN))
+      .filter((value): value is number => Number.isFinite(value));
+    if (closes.length > 0) {
+      klineFallbackCache.set(cacheKey, { fetchedAt: now, closes });
+    }
+    return closes;
+  } catch {
+    return [];
+  }
 };
 
 const validateLiveConsentState = (state: BotConsentState) => {
@@ -382,6 +444,30 @@ type SignalConditionLine = {
   right: string;
 };
 
+const parseSignalConditionLines = (value: unknown): SignalConditionLine[] | null => {
+  if (!Array.isArray(value)) return null;
+  const lines = value
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const row = item as Record<string, unknown>;
+      const scope = row.scope === 'LONG' || row.scope === 'SHORT' ? row.scope : null;
+      const left = typeof row.left === 'string' ? row.left.trim() : '';
+      const lineValue = typeof row.value === 'string' ? row.value.trim() : '';
+      const operator = typeof row.operator === 'string' ? row.operator.trim() : '';
+      const right = typeof row.right === 'string' ? row.right.trim() : '';
+      if (!scope || !left || !operator || !right) return null;
+      return {
+        scope,
+        left,
+        value: lineValue.length > 0 ? lineValue : 'X',
+        operator,
+        right,
+      } satisfies SignalConditionLine;
+    })
+    .filter((item): item is SignalConditionLine => Boolean(item));
+  return lines.length > 0 ? lines : null;
+};
+
 const buildSignalConditionLines = (params: {
   strategyConfig: Record<string, unknown> | null | undefined;
   direction: 'LONG' | 'SHORT' | 'EXIT' | null;
@@ -389,11 +475,10 @@ const buildSignalConditionLines = (params: {
 }): SignalConditionLine[] | null => {
   if (!params.strategyConfig) return null;
   if (params.direction === 'EXIT') return null;
-  if (params.closes.length === 0) return null;
   const rules = parseStrategySignalRules(params.strategyConfig);
   if (!rules) return null;
 
-  const latestIndex = params.closes.length - 1;
+  const latestIndex = params.closes.length > 0 ? params.closes.length - 1 : -1;
   const emaCache = new Map<number, Array<number | null>>();
   const rsiCache = new Map<number, Array<number | null>>();
   const momentumCache = new Map<number, Array<number | null>>();
@@ -418,7 +503,7 @@ const buildSignalConditionLines = (params: {
   };
 
   const formatFixedTarget = (value: number) => Number(value.toFixed(6)).toString();
-  const formatLive = (value: number | null | undefined) => formatIndicatorValue(value) ?? '-';
+  const formatLive = (value: number | null | undefined) => formatIndicatorValue(value) ?? 'X';
   const buildLinesForScope = (
     scope: 'LONG' | 'SHORT',
     selectedRules: Array<{ name: string; condition: string; value: number; params: Record<string, unknown> }>
@@ -500,7 +585,6 @@ const buildSignalIndicatorSummary = (params: {
 }) => {
   if (!params.strategyConfig) return null;
   if (params.direction === 'EXIT') return null;
-  if (params.closes.length === 0) return null;
 
   const rules = parseStrategySignalRules(params.strategyConfig);
   if (!rules) return null;
@@ -513,7 +597,7 @@ const buildSignalIndicatorSummary = (params: {
   if (selectedRules.length === 0) return null;
 
   const parts: string[] = [];
-  const latestIndex = params.closes.length - 1;
+  const latestIndex = params.closes.length > 0 ? params.closes.length - 1 : -1;
   const emaCache = new Map<number, Array<number | null>>();
   const seenEmaSeries = new Set<string>();
   const seenRsiPeriods = new Set<number>();
@@ -533,8 +617,8 @@ const buildSignalIndicatorSummary = (params: {
       const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
       if (seenRsiPeriods.has(period)) continue;
       const series = computeRsiSeriesFromCloses(params.closes, period);
-      const value = formatIndicatorValue(series[latestIndex]);
-      if (value) parts.push(`RSI(${period})=${value}`);
+      const value = formatIndicatorValue(series[latestIndex]) ?? 'X';
+      parts.push(`RSI(${period})=${value}`);
       seenRsiPeriods.add(period);
       continue;
     }
@@ -543,8 +627,8 @@ const buildSignalIndicatorSummary = (params: {
       const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
       if (seenMomentumPeriods.has(period)) continue;
       const series = computeMomentumSeriesFromCloses(params.closes, period);
-      const value = formatIndicatorValue(series[latestIndex]);
-      if (value) parts.push(`MOMENTUM(${period})=${value}`);
+      const value = formatIndicatorValue(series[latestIndex]) ?? 'X';
+      parts.push(`MOMENTUM(${period})=${value}`);
       seenMomentumPeriods.add(period);
       continue;
     }
@@ -555,13 +639,13 @@ const buildSignalIndicatorSummary = (params: {
       const fastSeriesKey = `EMA_FAST_${fast}`;
       const slowSeriesKey = `EMA_SLOW_${slow}`;
       if (!seenEmaSeries.has(fastSeriesKey)) {
-        const fastValue = formatIndicatorValue(ensureEmaSeries(fast)[latestIndex]);
-        if (fastValue) parts.push(`EMA(${fast})=${fastValue}`);
+        const fastValue = formatIndicatorValue(ensureEmaSeries(fast)[latestIndex]) ?? 'X';
+        parts.push(`EMA(${fast})=${fastValue}`);
         seenEmaSeries.add(fastSeriesKey);
       }
       if (!seenEmaSeries.has(slowSeriesKey)) {
-        const slowValue = formatIndicatorValue(ensureEmaSeries(slow)[latestIndex]);
-        if (slowValue) parts.push(`EMA(${slow})=${slowValue}`);
+        const slowValue = formatIndicatorValue(ensureEmaSeries(slow)[latestIndex]) ?? 'X';
+        parts.push(`EMA(${slow})=${slowValue}`);
         seenEmaSeries.add(slowSeriesKey);
       }
       continue;
@@ -957,6 +1041,14 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
         action: optInChanged ? 'bot.live_consent.accepted' : 'bot.live_consent.updated',
       });
     }
+  }
+
+  if (existing.isActive && !updated.isActive) {
+    await runtimeTelemetryService.closeRuntimeSession({
+      botId: updated.id,
+      status: 'CANCELED',
+      stopReason: 'bot_deactivated',
+    });
   }
 
   const withStrategy = await prisma.bot.findUnique({
@@ -1519,7 +1611,14 @@ export const listBotRuntimeSessionSymbolStats = async (
   };
   const windowEnd = resolveSessionWindowEnd(session);
 
-  const [items, summary, configuredMarketGroups, configuredBotStrategies, botMarketTypeRow] = await Promise.all([
+  const [
+    items,
+    summary,
+    configuredMarketGroups,
+    configuredBotStrategies,
+    configuredMarketGroupStrategyLinks,
+    botMarketTypeRow,
+  ] = await Promise.all([
     prisma.botRuntimeSymbolStat.findMany({
       where,
       orderBy: [{ realizedPnl: 'desc' }, { updatedAt: 'desc' }],
@@ -1585,6 +1684,40 @@ export const listBotRuntimeSessionSymbolStats = async (
         },
       },
       orderBy: [{ createdAt: 'asc' }],
+    }),
+    prisma.marketGroupStrategyLink.findMany({
+      where: {
+        userId,
+        botId,
+        isEnabled: true,
+        botMarketGroup: {
+          lifecycleStatus: {
+            in: ['ACTIVE', 'PAUSED'],
+          },
+          isEnabled: true,
+        },
+      },
+      select: {
+        strategyId: true,
+        strategy: {
+          select: {
+            id: true,
+            name: true,
+            interval: true,
+            config: true,
+          },
+        },
+        botMarketGroup: {
+          select: {
+            symbolGroup: {
+              select: {
+                symbols: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
     }),
     prisma.bot.findFirst({
       where: {
@@ -1684,6 +1817,10 @@ export const listBotRuntimeSessionSymbolStats = async (
       strategyId: string | null;
       scoreLong: number | null;
       scoreShort: number | null;
+      analysisByStrategy: Record<
+        string,
+        { conditionLines: SignalConditionLine[] | null; indicatorSummary: string | null }
+      >;
     }
   >();
   const strategiesById = new Map<
@@ -1699,6 +1836,15 @@ export const listBotRuntimeSessionSymbolStats = async (
       config: asRecord(strategy.config) ?? null,
     });
   }
+  for (const configuredLink of configuredMarketGroupStrategyLinks) {
+    const strategy = configuredLink.strategy;
+    if (!strategy) continue;
+    strategiesById.set(strategy.id, {
+      name: strategy.name,
+      interval: strategy.interval,
+      config: asRecord(strategy.config) ?? null,
+    });
+  }
   const latestSignalStrategyIds = new Set<string>();
   for (const event of latestSignalEvents) {
     if (!event.symbol || latestSignalBySymbol.has(event.symbol)) continue;
@@ -1706,6 +1852,26 @@ export const listBotRuntimeSessionSymbolStats = async (
     const merge = asRecord(payload?.merge);
     const scores = asRecord(merge?.scores);
     const winner = asRecord(merge?.winner);
+    const analysis = asRecord(payload?.analysis);
+    const byStrategy = asRecord(analysis?.byStrategy);
+    const parsedAnalysisByStrategy: Record<
+      string,
+      { conditionLines: SignalConditionLine[] | null; indicatorSummary: string | null }
+    > = {};
+    if (byStrategy) {
+      for (const [strategyKey, rawStats] of Object.entries(byStrategy)) {
+        if (typeof strategyKey !== 'string' || strategyKey.trim().length === 0) continue;
+        const strategyStats = asRecord(rawStats);
+        if (!strategyStats) continue;
+        parsedAnalysisByStrategy[strategyKey.trim()] = {
+          conditionLines: parseSignalConditionLines(strategyStats.conditionLines),
+          indicatorSummary:
+            typeof strategyStats.indicatorSummary === 'string' && strategyStats.indicatorSummary.trim().length > 0
+              ? strategyStats.indicatorSummary.trim()
+              : null,
+        };
+      }
+    }
     const mergeReasonRaw =
       typeof merge?.reason === 'string' && merge.reason.trim().length > 0
         ? merge.reason.trim()
@@ -1733,6 +1899,7 @@ export const listBotRuntimeSessionSymbolStats = async (
       strategyId,
       scoreLong: toFiniteNumber(scores?.longScore),
       scoreShort: toFiniteNumber(scores?.shortScore),
+      analysisByStrategy: parsedAnalysisByStrategy,
     });
   }
   const missingStrategyIds = [...latestSignalStrategyIds].filter((strategyId) => !strategiesById.has(strategyId));
@@ -1770,6 +1937,17 @@ export const listBotRuntimeSessionSymbolStats = async (
       }
     }
   }
+  for (const configuredLink of configuredMarketGroupStrategyLinks) {
+    const strategyId = configuredLink.strategyId?.trim();
+    if (!strategyId) continue;
+    const assignedSymbols = normalizeSymbols(configuredLink.botMarketGroup.symbolGroup.symbols ?? []);
+    const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : symbols;
+    for (const symbol of targetSymbols) {
+      if (!configuredStrategyBySymbol.has(symbol)) {
+        configuredStrategyBySymbol.set(symbol, strategyId);
+      }
+    }
+  }
 
   const strategySeriesKeys = new Map<string, { symbol: string; interval: string }>();
   for (const symbol of symbols) {
@@ -1789,6 +1967,19 @@ export const listBotRuntimeSessionSymbolStats = async (
     const entries = [...strategySeriesKeys.values()];
     const seriesRows = await Promise.all(
       entries.map(async ({ symbol, interval }) => {
+        const inMemoryCloses = runtimeSignalLoop.getRecentCloses({
+          marketType: botMarketType,
+          symbol,
+          interval,
+          limit: 300,
+        });
+        if (inMemoryCloses.length > 0) {
+          return {
+            key: `${symbol}|${interval}`,
+            closes: inMemoryCloses,
+          };
+        }
+
         const candles = await prisma.marketCandleCache.findMany({
           where: {
             marketType: botMarketType,
@@ -1803,7 +1994,8 @@ export const listBotRuntimeSessionSymbolStats = async (
         });
         return {
           key: `${symbol}|${interval}`,
-          closes: candles
+          closes:
+            candles
             .map((item) => item.close)
             .filter((value): value is number => Number.isFinite(value))
             .reverse(),
@@ -1811,7 +2003,18 @@ export const listBotRuntimeSessionSymbolStats = async (
       })
     );
     for (const row of seriesRows) {
-      candleClosesBySeries.set(row.key, row.closes);
+      if (row.closes.length > 0) {
+        candleClosesBySeries.set(row.key, row.closes);
+        continue;
+      }
+      const [symbol, interval] = row.key.split('|');
+      const fallbackCloses = await fetchFallbackKlineCloses({
+        marketType: botMarketType,
+        symbol,
+        interval,
+        limit: 300,
+      });
+      candleClosesBySeries.set(row.key, fallbackCloses);
     }
   }
   const openPositionCountBySymbol = new Map<string, number>();
@@ -1853,6 +2056,8 @@ export const listBotRuntimeSessionSymbolStats = async (
       signalStrategy?.config ?? null,
       latestSignal?.signalDirection ?? null
     );
+    const signalAnalysis =
+      signalStrategyId != null ? latestSignal?.analysisByStrategy?.[signalStrategyId] ?? null : null;
     const signalSeriesKey =
       signalStrategy?.interval != null ? `${symbol}|${signalStrategy.interval.trim().toLowerCase()}` : null;
     const signalCloses = signalSeriesKey ? candleClosesBySeries.get(signalSeriesKey) ?? [] : [];
@@ -1866,6 +2071,7 @@ export const listBotRuntimeSessionSymbolStats = async (
       direction: latestSignal?.signalDirection ?? null,
       closes: signalCloses,
     });
+    const useComputedSignalValues = signalCloses.length > 0;
     const signalScoreSummary =
       latestSignal?.scoreLong != null || latestSignal?.scoreShort != null
         ? {
@@ -1905,8 +2111,12 @@ export const listBotRuntimeSessionSymbolStats = async (
       lastSignalStrategyId: latestSignal?.strategyId ?? null,
       lastSignalStrategyName: signalStrategy?.name ?? null,
       lastSignalConditionSummary: signalConditionSummary,
-      lastSignalIndicatorSummary: signalIndicatorSummary,
-      lastSignalConditionLines: signalConditionLines,
+      lastSignalIndicatorSummary: useComputedSignalValues
+        ? signalIndicatorSummary
+        : signalAnalysis?.indicatorSummary ?? signalIndicatorSummary,
+      lastSignalConditionLines: useComputedSignalValues
+        ? signalConditionLines
+        : signalAnalysis?.conditionLines ?? signalConditionLines,
       lastSignalScoreSummary: signalScoreSummary,
       snapshotAt: stat?.snapshotAt ?? session.startedAt,
       createdAt: stat?.createdAt ?? session.createdAt,
@@ -1957,14 +2167,42 @@ export const listBotRuntimeSessionTrades = async (
 
   const normalizedSymbol = query.symbol?.trim().toUpperCase();
   const windowEnd = resolveSessionWindowEnd(session);
-  const where = {
-    userId,
-    botId,
+  const windowClause = {
     executedAt: {
       gte: session.startedAt,
       lte: windowEnd,
     },
+  };
+
+  const carryOverPositionIds =
+    session.status === 'RUNNING'
+      ? (
+          await prisma.position.findMany({
+            where: {
+              userId,
+              botId,
+              managementMode: 'BOT_MANAGED',
+              ...(normalizedSymbol ? { symbol: normalizedSymbol } : {}),
+              openedAt: {
+                lte: windowEnd,
+              },
+              OR: [{ closedAt: null }, { closedAt: { gte: session.startedAt } }],
+            },
+            select: {
+              id: true,
+            },
+          })
+        ).map((position) => position.id)
+      : [];
+
+  const where = {
+    userId,
+    botId,
     ...(normalizedSymbol ? { symbol: normalizedSymbol } : {}),
+    OR:
+      carryOverPositionIds.length > 0
+        ? [windowClause, { positionId: { in: carryOverPositionIds } }]
+        : [windowClause],
   };
 
   const [total, items] = await Promise.all([

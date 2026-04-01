@@ -10,7 +10,7 @@ import { subscribeMarketStreamEvents } from '../market-stream/marketStreamFanout
 import { analyzePreTrade } from './preTrade.service';
 import { orchestrateRuntimeSignal } from './executionOrchestrator.service';
 import { runtimePositionAutomationService } from './runtimePositionAutomation.service';
-import { upsertRuntimeTicker } from './runtimeTickerStore';
+import { getRuntimeTicker, upsertRuntimeTicker } from './runtimeTickerStore';
 import {
   evaluateStrategySignalAtIndex,
   parseStrategySignalRules,
@@ -153,6 +153,10 @@ const runtimeSignalWarmupRetryMs = Math.max(
   60_000,
   Number.parseInt(process.env.RUNTIME_SIGNAL_WARMUP_RETRY_MS ?? '300000', 10)
 );
+const tickerFreshnessFallbackMs = Math.max(
+  30_000,
+  Number.parseInt(process.env.RUNTIME_SIGNAL_TICKER_FRESHNESS_MS ?? '90000', 10)
+);
 
 type RuntimeCandle = {
   openTime: number;
@@ -164,6 +168,20 @@ type StrategyVote = {
   direction: SignalDirection;
   priority: number;
   weight: number;
+};
+
+type RuntimeSignalConditionLine = {
+  scope: 'LONG' | 'SHORT';
+  left: string;
+  value: string;
+  operator: string;
+  right: string;
+};
+
+type StrategyEvaluation = {
+  direction: SignalDirection | null;
+  conditionLines: RuntimeSignalConditionLine[];
+  indicatorSummary: string | null;
 };
 
 type MergedStrategyDecision = {
@@ -338,6 +356,76 @@ const normalizeInterval = (value?: string | null) => {
   return aliases[normalized] ?? normalized;
 };
 
+const formatIndicatorValue = (value: number | null | undefined) => {
+  if (value == null || !Number.isFinite(value)) return 'X';
+  return Number(value.toFixed(4)).toString();
+};
+
+const formatRuleTarget = (value: number) => Number(value.toFixed(6)).toString();
+
+const clampPeriod = (value: unknown, fallback: number) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(2, Math.floor(parsed));
+};
+
+const computeEmaSeriesFromRuntimeCandles = (candles: RuntimeCandle[], period: number): Array<number | null> => {
+  const alpha = 2 / (period + 1);
+  let ema: number | null = null;
+  const output: Array<number | null> = [];
+  for (let index = 0; index < candles.length; index += 1) {
+    const price = candles[index].close;
+    if (!Number.isFinite(price)) {
+      output.push(null);
+      continue;
+    }
+    if (ema === null) ema = price;
+    else ema = alpha * price + (1 - alpha) * ema;
+    output.push(index + 1 >= period ? ema : null);
+  }
+  return output;
+};
+
+const computeRsiSeriesFromRuntimeCandles = (candles: RuntimeCandle[], period: number): Array<number | null> => {
+  const output: Array<number | null> = Array.from({ length: candles.length }, () => null);
+  if (candles.length <= period) return output;
+
+  let gains = 0;
+  let losses = 0;
+  for (let index = 1; index <= period; index += 1) {
+    const diff = candles[index].close - candles[index - 1].close;
+    if (diff >= 0) gains += diff;
+    else losses += Math.abs(diff);
+  }
+
+  let avgGain = gains / period;
+  let avgLoss = losses / period;
+  output[period] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+
+  for (let index = period + 1; index < candles.length; index += 1) {
+    const diff = candles[index].close - candles[index - 1].close;
+    const gain = diff > 0 ? diff : 0;
+    const loss = diff < 0 ? Math.abs(diff) : 0;
+    avgGain = (avgGain * (period - 1) + gain) / period;
+    avgLoss = (avgLoss * (period - 1) + loss) / period;
+    output[index] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+  }
+
+  return output;
+};
+
+const computeMomentumSeriesFromRuntimeCandles = (candles: RuntimeCandle[], period: number): Array<number | null> => {
+  const output: Array<number | null> = [];
+  for (let index = 0; index < candles.length; index += 1) {
+    if (index < period) {
+      output.push(null);
+      continue;
+    }
+    output.push(candles[index].close - candles[index - period].close);
+  }
+  return output;
+};
+
 const toPositiveInteger = (value: unknown): number | null => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed <= 0) return null;
@@ -454,6 +542,7 @@ export class RuntimeSignalLoop {
     }
     this.candleSeries.set(key, series);
     await this.ensureSeriesWarmup(event.marketType, event.symbol, event.interval);
+    await this.processPositionAutomationFallbackFromCandle(event);
     await this.handleFinalCandleDecision(event);
   }
 
@@ -558,6 +647,22 @@ export class RuntimeSignalLoop {
     return fallbackSeries && fallbackSeries.length > 0 ? fallbackSeries : null;
   }
 
+  getRecentCloses(input: {
+    marketType: 'FUTURES' | 'SPOT';
+    symbol: string;
+    interval?: string | null;
+    limit?: number;
+  }) {
+    const series = this.getSeries(input.marketType, input.symbol, input.interval);
+    if (!series || series.length === 0) return [];
+    const closes = series
+      .map((candle) => candle.close)
+      .filter((value): value is number => Number.isFinite(value));
+    if (closes.length === 0) return [];
+    const limit = Number.isFinite(input.limit) ? Math.max(1, Math.floor(input.limit as number)) : closes.length;
+    return closes.slice(-limit);
+  }
+
   private strategyMatchesCandleInterval(strategyInterval: string | null | undefined, candleInterval: string) {
     if (!strategyInterval) return true;
     return normalizeInterval(strategyInterval) === normalizeInterval(candleInterval);
@@ -600,6 +705,7 @@ export class RuntimeSignalLoop {
 
   private async handleFinalCandleDecision(event: StreamCandleEvent) {
     const bots = await this.deps.listActiveBots();
+    await this.deps.closeInactiveRuntimeSessions?.(bots.map((bot) => bot.id));
     await Promise.all(
       bots.map(async (bot) => {
         if (bot.marketType !== event.marketType) return;
@@ -624,16 +730,25 @@ export class RuntimeSignalLoop {
         await Promise.all(
           eligibleGroups.map(async (group) => {
             const groupEvalStartedAt = this.deps.nowMs();
+            const strategyAnalysisById: Record<
+              string,
+              { conditionLines: RuntimeSignalConditionLine[]; indicatorSummary: string | null }
+            > = {};
             const strategyVotes: StrategyVote[] = group.strategies
               .filter((strategy) =>
                 this.strategyMatchesCandleInterval(strategy.strategyInterval, event.interval)
               )
               .map((strategy) => {
-                const direction = this.directionFromStrategy({
+                const evaluation = this.evaluateStrategy({
                   marketType: bot.marketType,
                   symbol: event.symbol,
                   strategy,
                 });
+                strategyAnalysisById[strategy.strategyId] = {
+                  conditionLines: evaluation.conditionLines,
+                  indicatorSummary: evaluation.indicatorSummary,
+                };
+                const direction = evaluation.direction;
                 if (!direction) return null;
                 return {
                   strategyId: strategy.strategyId,
@@ -659,6 +774,9 @@ export class RuntimeSignalLoop {
                 message: 'No trade decision after strategy merge',
                 payload: {
                   merge: merged.metadata,
+                  analysis: {
+                    byStrategy: strategyAnalysisById,
+                  },
                 },
                 eventAt: new Date(event.eventTime),
               });
@@ -775,6 +893,9 @@ export class RuntimeSignalLoop {
               payload: {
                 merge: merged.metadata,
                 strategyExitTraceOnly,
+                analysis: {
+                  byStrategy: strategyAnalysisById,
+                },
               },
               eventAt: signalEventAt,
             });
@@ -955,25 +1076,165 @@ export class RuntimeSignalLoop {
     };
   }
 
-  private directionFromStrategy(input: {
+  private evaluateStrategy(input: {
     marketType: 'FUTURES' | 'SPOT';
     symbol: string;
     strategy: ActiveBotStrategy;
-  }): SignalDirection | null {
+  }): StrategyEvaluation {
     const { marketType, symbol, strategy } = input;
-    if (!strategy.strategyConfig) return null;
+    if (!strategy.strategyConfig) {
+      return {
+        direction: null,
+        conditionLines: [],
+        indicatorSummary: null,
+      };
+    }
     const signalRules = parseStrategySignalRules(strategy.strategyConfig);
-    if (!signalRules) return null;
+    if (!signalRules) {
+      return {
+        direction: null,
+        conditionLines: [],
+        indicatorSummary: null,
+      };
+    }
 
     const candles = this.getSeries(marketType, symbol, strategy.strategyInterval);
-    if (!candles || candles.length === 0) return null;
+    if (!candles || candles.length === 0) {
+      return {
+        direction: null,
+        conditionLines: [],
+        indicatorSummary: null,
+      };
+    }
+    const latestIndex = candles.length - 1;
     const indicatorCache = new Map<string, Array<number | null>>();
-    return evaluateStrategySignalAtIndex(signalRules, candles, candles.length - 1, indicatorCache);
+    const direction = evaluateStrategySignalAtIndex(signalRules, candles, latestIndex, indicatorCache);
+
+    const ensureEma = (period: number) => {
+      const key = `EMA_${period}`;
+      if (!indicatorCache.has(key)) {
+        indicatorCache.set(key, computeEmaSeriesFromRuntimeCandles(candles, period));
+      }
+      return indicatorCache.get(key)!;
+    };
+    const ensureRsi = (period: number) => {
+      const key = `RSI_${period}`;
+      if (!indicatorCache.has(key)) {
+        indicatorCache.set(key, computeRsiSeriesFromRuntimeCandles(candles, period));
+      }
+      return indicatorCache.get(key)!;
+    };
+    const ensureMomentum = (period: number) => {
+      const key = `MOMENTUM_${period}`;
+      if (!indicatorCache.has(key)) {
+        indicatorCache.set(key, computeMomentumSeriesFromRuntimeCandles(candles, period));
+      }
+      return indicatorCache.get(key)!;
+    };
+
+    const conditionLines: RuntimeSignalConditionLine[] = [];
+    const indicatorParts: string[] = [];
+    const indicatorKeys = new Set<string>();
+    const pushRule = (
+      scope: 'LONG' | 'SHORT',
+      rule: { name: string; condition: string; value: number; params: Record<string, unknown> }
+    ) => {
+      const indicator = rule.name.toUpperCase();
+      if (indicator.includes('EMA')) {
+        const fast = clampPeriod(rule.params.fast, 9);
+        const slow = clampPeriod(rule.params.slow, 21);
+        const fastValue = ensureEma(fast)[latestIndex];
+        const slowValue = ensureEma(slow)[latestIndex];
+        conditionLines.push({
+          scope,
+          left: `EMA(${fast})`,
+          value: formatIndicatorValue(fastValue),
+          operator: rule.condition,
+          right: `EMA(${slow})=${formatIndicatorValue(slowValue)}`,
+        });
+        if (!indicatorKeys.has(`EMA(${fast})`)) {
+          indicatorKeys.add(`EMA(${fast})`);
+          indicatorParts.push(`EMA(${fast})=${formatIndicatorValue(fastValue)}`);
+        }
+        if (!indicatorKeys.has(`EMA(${slow})`)) {
+          indicatorKeys.add(`EMA(${slow})`);
+          indicatorParts.push(`EMA(${slow})=${formatIndicatorValue(slowValue)}`);
+        }
+        return;
+      }
+
+      if (indicator.includes('RSI')) {
+        const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
+        const value = ensureRsi(period)[latestIndex];
+        conditionLines.push({
+          scope,
+          left: `RSI(${period})`,
+          value: formatIndicatorValue(value),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has(`RSI(${period})`)) {
+          indicatorKeys.add(`RSI(${period})`);
+          indicatorParts.push(`RSI(${period})=${formatIndicatorValue(value)}`);
+        }
+        return;
+      }
+
+      if (indicator.includes('MOMENTUM')) {
+        const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
+        const value = ensureMomentum(period)[latestIndex];
+        conditionLines.push({
+          scope,
+          left: `MOMENTUM(${period})`,
+          value: formatIndicatorValue(value),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has(`MOMENTUM(${period})`)) {
+          indicatorKeys.add(`MOMENTUM(${period})`);
+          indicatorParts.push(`MOMENTUM(${period})=${formatIndicatorValue(value)}`);
+        }
+        return;
+      }
+
+      conditionLines.push({
+        scope,
+        left: indicator,
+        value: 'X',
+        operator: rule.condition,
+        right: formatRuleTarget(rule.value),
+      });
+    };
+
+    for (const rule of signalRules.longRules) pushRule('LONG', rule);
+    for (const rule of signalRules.shortRules) pushRule('SHORT', rule);
+
+    return {
+      direction,
+      conditionLines,
+      indicatorSummary: indicatorParts.length > 0 ? indicatorParts.join(' | ') : null,
+    };
   }
 
   private async handleTickerEvent(event: StreamTickerEvent) {
     upsertRuntimeTicker(event);
     await this.deps.processPositionAutomation(event);
+  }
+
+  private async processPositionAutomationFallbackFromCandle(event: StreamCandleEvent) {
+    const latestTicker = getRuntimeTicker(event.symbol);
+    const tickerIsFresh =
+      latestTicker &&
+      Math.abs(event.eventTime - latestTicker.eventTime) <= tickerFreshnessFallbackMs;
+    if (tickerIsFresh) return;
+    await this.deps.processPositionAutomation({
+      type: 'ticker',
+      marketType: event.marketType,
+      symbol: event.symbol,
+      eventTime: event.eventTime,
+      lastPrice: event.close,
+      priceChangePercent24h: 0,
+    });
   }
 }
 

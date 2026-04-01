@@ -252,8 +252,7 @@ describe("HomeLiveWidgets", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Otwarte pozycje")).toBeInTheDocument();
-      expect(screen.getByText("Bot runtime")).toBeInTheDocument();
-      expect(screen.getByText("Ryzyko")).toBeInTheDocument();
+      expect(screen.getByText("Bot runtime i ryzyko")).toBeInTheDocument();
       expect(screen.getByRole("option", { name: /Monitor Bot/i })).toBeInTheDocument();
       expect(screen.getAllByText("RUNNING").length).toBeGreaterThan(0);
       expect(screen.getByText("Live checks")).toBeInTheDocument();

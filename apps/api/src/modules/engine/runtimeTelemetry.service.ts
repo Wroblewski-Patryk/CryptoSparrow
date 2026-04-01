@@ -87,7 +87,7 @@ export class RuntimeTelemetryService {
       return cached.sessionId;
     }
 
-    const existing = await prisma.botRuntimeSession.findFirst({
+    const existingSessions = await prisma.botRuntimeSession.findMany({
       where: {
         botId: input.botId,
         status: 'RUNNING',
@@ -102,7 +102,24 @@ export class RuntimeTelemetryService {
       },
     });
 
+    const existing = existingSessions[0];
     if (existing) {
+      const duplicates = existingSessions.slice(1).map((session) => session.id);
+      if (duplicates.length > 0) {
+        const now = new Date();
+        await prisma.botRuntimeSession.updateMany({
+          where: {
+            id: { in: duplicates },
+            status: 'RUNNING',
+          },
+          data: {
+            status: 'CANCELED',
+            finishedAt: now,
+            lastHeartbeatAt: now,
+            stopReason: 'duplicate_running_session',
+          },
+        });
+      }
       const sessionId = existing.id;
       this.botSessionCache.set(input.botId, {
         sessionId,
@@ -152,13 +169,32 @@ export class RuntimeTelemetryService {
   }
 
   async closeRuntimeSession(input: CloseSessionInput) {
-    const cached = this.botSessionCache.get(input.botId);
-    const sessionId = cached?.sessionId ?? (await this.findRunningSessionId(input.botId));
-    if (!sessionId) return;
+    const runningSessions = await prisma.botRuntimeSession.findMany({
+      where: {
+        botId: input.botId,
+        status: 'RUNNING',
+      },
+      select: {
+        id: true,
+        userId: true,
+        botId: true,
+      },
+      orderBy: {
+        startedAt: 'desc',
+      },
+    });
+    if (runningSessions.length === 0) {
+      this.botSessionCache.delete(input.botId);
+      return;
+    }
 
+    const sessionIds = runningSessions.map((session) => session.id);
     const now = new Date();
-    const session = await prisma.botRuntimeSession.update({
-      where: { id: sessionId },
+    await prisma.botRuntimeSession.updateMany({
+      where: {
+        id: { in: sessionIds },
+        status: 'RUNNING',
+      },
       data: {
         status: input.status,
         finishedAt: now,
@@ -166,17 +202,13 @@ export class RuntimeTelemetryService {
         stopReason: input.stopReason ?? null,
         errorMessage: input.errorMessage ?? null,
       },
-      select: {
-        userId: true,
-        botId: true,
-      },
     });
 
-    await prisma.botRuntimeEvent.create({
-      data: {
+    await prisma.botRuntimeEvent.createMany({
+      data: runningSessions.map((session) => ({
         userId: session.userId,
         botId: session.botId,
-        sessionId,
+        sessionId: session.id,
         eventType: 'SESSION_STOPPED',
         level: input.status === 'FAILED' ? 'ERROR' : 'INFO',
         message: input.stopReason ?? 'Runtime session stopped',
@@ -186,7 +218,7 @@ export class RuntimeTelemetryService {
             }
           : undefined,
         eventAt: now,
-      },
+      })),
     });
 
     this.botSessionCache.delete(input.botId);
@@ -194,8 +226,17 @@ export class RuntimeTelemetryService {
 
   async closeInactiveRuntimeSessions(activeBotIds: string[]) {
     const activeSet = new Set(activeBotIds);
-    const cachedBotIds = [...this.botSessionCache.keys()];
-    const closeBotIds = cachedBotIds.filter((botId) => !activeSet.has(botId));
+    const runningRows = await prisma.botRuntimeSession.findMany({
+      where: {
+        status: 'RUNNING',
+      },
+      select: {
+        botId: true,
+      },
+      distinct: ['botId'],
+    });
+    const runningBotIds = runningRows.map((row) => row.botId);
+    const closeBotIds = runningBotIds.filter((botId) => !activeSet.has(botId));
     await Promise.all(
       closeBotIds.map((botId) =>
         this.closeRuntimeSession({

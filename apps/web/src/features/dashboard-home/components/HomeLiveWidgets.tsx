@@ -48,6 +48,7 @@ const BTN_PRIMARY = "btn btn-primary btn-sm";
 const BTN_SECONDARY = "btn btn-outline btn-sm";
 const MAX_DASHBOARD_BOTS = 8;
 const AUTO_REFRESH_INTERVAL_MS = 5_000;
+const LOAD_STALE_AFTER_MS = 20_000;
 const SELECTED_BOT_STORAGE_KEY = "dashboard.home.selectedBotId";
 const normalizeSymbol = (value: string) => value.trim().toUpperCase();
 
@@ -62,8 +63,10 @@ const toTs = (v?: string | null) => {
 
 const pickPrimarySession = (sessions: BotRuntimeSessionListItem[]) => {
   if (sessions.length === 0) return null;
-  const running = sessions.find((x) => x.status === "RUNNING");
-  if (running) return running;
+  const running = sessions.filter((x) => x.status === "RUNNING");
+  if (running.length > 0) {
+    return [...running].sort((a, b) => toTs(b.startedAt) - toTs(a.startedAt))[0] ?? null;
+  }
   return [...sessions].sort((a, b) => toTs(b.startedAt) - toTs(a.startedAt))[0] ?? null;
 };
 
@@ -262,12 +265,17 @@ export default function HomeLiveWidgets() {
   const [refreshToken, setRefreshToken] = useState(0);
   const [liveTickerPrices, setLiveTickerPrices] = useState<Record<string, number>>({});
   const loadInFlightRef = useRef(false);
+  const loadStartedAtRef = useRef<number | null>(null);
 
   const load = useCallback(async (opts?: { silent?: boolean; showRefreshing?: boolean }) => {
     const silent = opts?.silent ?? false;
     const showRefreshing = opts?.showRefreshing ?? false;
-    if (silent && loadInFlightRef.current) return;
+    if (silent && loadInFlightRef.current) {
+      const startedAt = loadStartedAtRef.current ?? 0;
+      if (Date.now() - startedAt < LOAD_STALE_AFTER_MS) return;
+    }
     loadInFlightRef.current = true;
+    loadStartedAtRef.current = Date.now();
     if (showRefreshing) setRefreshing(true);
     if (!silent) {
       setLoading(true);
@@ -291,12 +299,19 @@ export default function HomeLiveWidgets() {
       }
 
       const active = ordered.filter((x) => x.isActive);
-      const scope = (active.length > 0 ? active : ordered).slice(0, MAX_DASHBOARD_BOTS);
+      if (active.length === 0) {
+        setSnapshots([]);
+        setSelectedBotId(null);
+        setLastUpdatedAt(new Date().toISOString());
+        setRefreshToken((x) => x + 1);
+        return;
+      }
+      const scope = active.slice(0, MAX_DASHBOARD_BOTS);
       const next = await Promise.all(
         scope.map(async (bot): Promise<RuntimeSnapshot> => {
           try {
-            const sessions = await listBotRuntimeSessions(bot.id, { limit: 20 });
-            const primary = pickPrimarySession(sessions);
+            const runningSessions = await listBotRuntimeSessions(bot.id, { status: "RUNNING", limit: 20 });
+            const primary = pickPrimarySession(runningSessions);
             if (!primary) return { bot, session: null, symbolStats: null, positions: null };
             const [symbolStats, positions] = await Promise.all([
               listBotRuntimeSessionSymbolStats(bot.id, primary.id, { limit: 200 }),
@@ -325,6 +340,7 @@ export default function HomeLiveWidgets() {
       }
     } finally {
       loadInFlightRef.current = false;
+      loadStartedAtRef.current = null;
       if (showRefreshing) setRefreshing(false);
       if (!silent) setLoading(false);
     }
@@ -481,7 +497,6 @@ export default function HomeLiveWidgets() {
     const equity = paperInit != null ? paperInit + net : null;
     const free = equity != null ? Math.max(0, equity - usedMargin) : null;
     const exposurePct = equity && equity > 0 ? (usedMargin / equity) * 100 : null;
-    const exposureNotional = open.reduce((acc, p) => acc + p.entryNotional, 0);
     const trades = selectedTrades?.items ?? [];
     return {
       session,
@@ -498,7 +513,6 @@ export default function HomeLiveWidgets() {
       equity,
       free,
       exposurePct,
-      exposureNotional,
       trades,
       drawdown: maxDrawdown(trades),
     };
@@ -521,6 +535,20 @@ export default function HomeLiveWidgets() {
         <div className="flex gap-2">
           <Link href="/dashboard/bots" className={BTN_PRIMARY}>Dodaj bota</Link>
           <Link href="/dashboard/strategies/list" className={BTN_SECONDARY}>Przejdz do strategii</Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (snapshots.length === 0) {
+    return (
+      <div className="space-y-4">
+        <EmptyState
+          title="Brak aktywnych botow na dashboardzie"
+          description="Aktywuj co najmniej jednego bota, aby zobaczyc live runtime."
+        />
+        <div className="flex gap-2">
+          <Link href="/dashboard/bots" className={BTN_PRIMARY}>Przejdz do botow</Link>
         </div>
       </div>
     );
@@ -652,10 +680,6 @@ export default function HomeLiveWidgets() {
                           <p className="mt-1 font-medium">-</p>
                         )}
                       </div>
-                      <p>
-                        <span className="opacity-60">Wskazniki live:</span>{" "}
-                        <span className="font-medium">{s.lastSignalIndicatorSummary ?? "-"}</span>
-                      </p>
                     </div>
                   </article>
                 );
@@ -669,12 +693,13 @@ export default function HomeLiveWidgets() {
           </section>
         </div>
 
-        <aside className={`${CARD} h-fit space-y-4`}>
-          <section className="space-y-3">
+        <aside className={`${CARD} h-fit`}>
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold uppercase opacity-75">Bot runtime</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wide opacity-75">Bot runtime i ryzyko</h3>
               <span className="text-xs opacity-60">{snapshots.length}</span>
             </div>
+
             <label className="form-control gap-1">
               <span className="text-[11px] uppercase tracking-wide opacity-60">Wybrany bot</span>
               <select
@@ -690,88 +715,104 @@ export default function HomeLiveWidgets() {
               </select>
             </label>
 
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="rounded-md bg-base-200 px-2 py-2">
-                <p className="opacity-60">Status</p>
-                <div className="mt-1">
-                  <span className={`badge badge-xs ${sessionBadge(selectedData?.session?.status)}`}>
-                    {selectedData?.session?.status ?? "NO_SESSION"}
-                  </span>
-                </div>
-              </div>
-              <div className="rounded-md bg-base-200 px-2 py-2">
-                <p className="opacity-60">Tryb</p>
-                <p className="mt-1 font-semibold">{selected?.bot.mode ?? "-"}</p>
-              </div>
-              <div className="rounded-md bg-base-200 px-2 py-2">
-                <p className="opacity-60">Heartbeat</p>
-                <p className="mt-1 font-semibold">{formatTime(selectedData?.session?.lastHeartbeatAt)}</p>
-              </div>
-              <div className="rounded-md bg-base-200 px-2 py-2">
-                <p className="opacity-60">Open pozycje</p>
-                <p className="mt-1 font-semibold">{formatNumber(selected?.positions?.openCount ?? 0)}</p>
-              </div>
-              <div className="rounded-md bg-base-200 px-2 py-2">
-                <p className="opacity-60">Sygnaly / DCA</p>
-                <p className="mt-1 font-semibold">
-                  {formatNumber(selectedData?.session?.summary.totalSignals ?? 0)} /{" "}
-                  {formatNumber(selectedData?.session?.summary.dcaCount ?? 0)}
-                </p>
-              </div>
-              <div className="rounded-md bg-base-200 px-2 py-2">
-                <p className="opacity-60">Net PnL</p>
-                <p className={`mt-1 font-semibold ${(selectedData?.net ?? 0) >= 0 ? "text-success" : "text-error"}`}>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-2 border-y border-base-300/80 py-2 text-xs">
+              <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">Status</span>
+                <span className={`badge badge-xs ${sessionBadge(selectedData?.session?.status)}`}>
+                  {selectedData?.session?.status ?? "NO_SESSION"}
+                </span>
+              </p>
+              <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">Tryb</span>
+                <span className="font-semibold">{selected?.bot.mode ?? "-"}</span>
+              </p>
+              <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">Heartbeat</span>
+                <span className="font-semibold">{formatTime(selectedData?.session?.lastHeartbeatAt)}</span>
+              </p>
+              <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">Open pozycje</span>
+                <span className="font-semibold">{formatNumber(selected?.positions?.openCount ?? 0)}</span>
+              </p>
+              <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">Sygnaly / DCA</span>
+                <span className="font-semibold">
+                  {formatNumber(selectedData?.session?.summary.totalSignals ?? 0)} / {formatNumber(selectedData?.session?.summary.dcaCount ?? 0)}
+                </span>
+              </p>
+              <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">Net PnL</span>
+                <span className={`font-semibold ${(selectedData?.net ?? 0) >= 0 ? "text-success" : "text-error"}`}>
                   {formatCurrency(selectedData?.net ?? 0)}
-                </p>
-              </div>
+                </span>
+              </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button type="button" className={BTN_SECONDARY} onClick={() => void load({ silent: true, showRefreshing: true })} disabled={refreshing}>
+            <div className="space-y-2 text-xs">
+              <h4 className="text-[11px] uppercase tracking-wide opacity-60">Kapital i ryzyko</h4>
+              <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">Portfel</span>
+                <span className={`font-semibold ${summary.paperDelta >= 0 ? "text-success" : "text-error"}`}>
+                  {summary.paperStart > 0 ? formatCurrency(summary.paperEquity) : "-"}
+                </span>
+              </p>
+              <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">Zmiana</span>
+                <span className={`font-semibold ${summary.paperDelta >= 0 ? "text-success" : "text-error"}`}>
+                  {summary.paperStart > 0 ? formatCurrency(summary.paperDelta) : "-"}
+                </span>
+              </p>
+              <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">Zmiana %</span>
+                <span className="font-semibold">
+                  {summary.paperStart > 0 ? formatPercent((summary.paperDelta / summary.paperStart) * 100) : "-"}
+                </span>
+              </p>
+              <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">Wolne srodki</span>
+                <span className="font-semibold">{selectedData?.equity == null ? "-" : formatCurrency(selectedData.free)}</span>
+              </p>
+              <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">Srodki w pozycjach</span>
+                <span className="font-semibold">{formatCurrency(summary.usedMargin)}</span>
+              </p>
+              <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">Open / Exposure</span>
+                <span className="font-semibold">
+                  {formatNumber(summary.openPositions)} / {selectedData?.exposurePct != null ? formatPercent(selectedData.exposurePct) : "-"}
+                </span>
+              </p>
+              <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">Realized / Open</span>
+                <span className="font-semibold">
+                  {formatCurrency(selectedData?.realized ?? 0)} / {formatCurrency(selectedData?.unrealized ?? 0)}
+                </span>
+              </p>
+              <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">Win rate</span>
+                <span className="font-semibold">{selectedData?.winRate == null ? "-" : formatPercent(selectedData.winRate)}</span>
+              </p>
+              <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">Max drawdown</span>
+                <span className="font-semibold text-error">{formatCurrency(-(selectedData?.drawdown.abs ?? 0))}</span>
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                type="button"
+                className={BTN_SECONDARY}
+                onClick={() => void load({ silent: true, showRefreshing: true })}
+                disabled={refreshing}
+              >
                 {refreshing ? "Odswiezanie..." : "Odswiez"}
               </button>
               <Link href="/dashboard/bots" className={BTN_PRIMARY}>Boty runtime</Link>
             </div>
-          </section>
 
-          <section className="space-y-3 border-t border-base-300 pt-3">
-            <div className="mb-1 flex items-center justify-between">
-              <h3 className="text-sm font-semibold uppercase opacity-75">Ryzyko</h3>
-              <span className={`badge badge-sm ${sessionBadge(selectedData?.session?.status)}`}>{selectedData?.session?.status ?? "NO_SESSION"}</span>
-            </div>
-
-            <div className="rounded-md bg-base-200 px-3 py-2 text-xs">
-              <p className="text-[11px] uppercase tracking-wide opacity-60">Kapital</p>
-              <div className="mt-2 space-y-1">
-                <p className="flex items-center justify-between"><span className="opacity-65">Portfel</span><span className={`font-semibold ${summary.paperDelta >= 0 ? "text-success" : "text-error"}`}>{summary.paperStart > 0 ? formatCurrency(summary.paperEquity) : "-"}</span></p>
-                <p className="flex items-center justify-between"><span className="opacity-65">Zmiana</span><span className={`font-semibold ${summary.paperDelta >= 0 ? "text-success" : "text-error"}`}>{summary.paperStart > 0 ? formatCurrency(summary.paperDelta) : "-"}</span></p>
-                <p className="flex items-center justify-between"><span className="opacity-65">Zmiana %</span><span className="font-semibold">{summary.paperStart > 0 ? formatPercent((summary.paperDelta / summary.paperStart) * 100) : "-"}</span></p>
-                <p className="flex items-center justify-between"><span className="opacity-65">Wolne srodki</span><span className="font-semibold">{selectedData?.equity == null ? "-" : formatCurrency(selectedData.free)}</span></p>
-              </div>
-            </div>
-
-            <div className="rounded-md bg-base-200 px-3 py-2 text-xs">
-              <p className="text-[11px] uppercase tracking-wide opacity-60">Ekspozycja</p>
-              <div className="mt-2 space-y-1">
-                <p className="flex items-center justify-between"><span className="opacity-65">Srodki w pozycjach</span><span className="font-semibold">{formatCurrency(summary.usedMargin)}</span></p>
-                <p className="flex items-center justify-between"><span className="opacity-65">Ekspozycja notional</span><span className="font-semibold">{formatCurrency(selectedData?.exposureNotional ?? 0)}</span></p>
-                <p className="flex items-center justify-between"><span className="opacity-65">Open / Exposure</span><span className="font-semibold">{formatNumber(summary.openPositions)} / {selectedData?.exposurePct != null ? formatPercent(selectedData.exposurePct) : "-"}</span></p>
-              </div>
-            </div>
-
-            <div className="rounded-md bg-base-200 px-3 py-2 text-xs">
-              <p className="text-[11px] uppercase tracking-wide opacity-60">Wynik i jakosc</p>
-              <div className="mt-2 space-y-1">
-                <p className="flex items-center justify-between"><span className="opacity-65">Net PnL (global)</span><span className={`font-semibold ${summary.realized + summary.unrealized >= 0 ? "text-success" : "text-error"}`}>{formatCurrency(summary.realized + summary.unrealized)}</span></p>
-                <p className="flex items-center justify-between"><span className="opacity-65">Net PnL (wybrany)</span><span className={`font-semibold ${(selectedData?.net ?? 0) >= 0 ? "text-success" : "text-error"}`}>{formatCurrency(selectedData?.net ?? 0)}</span></p>
-                <p className="flex items-center justify-between"><span className="opacity-65">Win rate</span><span className="font-semibold">{selectedData?.winRate == null ? "-" : formatPercent(selectedData.winRate)}</span></p>
-                <p className="flex items-center justify-between"><span className="opacity-65">Max drawdown</span><span className="font-semibold text-error">{formatCurrency(-(selectedData?.drawdown.abs ?? 0))}</span></p>
-              </div>
-            </div>
-          </section>
-
-          <div className="border-t border-base-300 pt-2 text-[11px] opacity-60">
-            <p>Aktualizacja: {lastUpdatedAt ? formatDateTime(lastUpdatedAt) : "-"}</p>
+            <p className="text-[11px] opacity-60">
+              Aktualizacja: {lastUpdatedAt ? formatDateTime(lastUpdatedAt) : "-"}
+            </p>
           </div>
         </aside>
       </section>

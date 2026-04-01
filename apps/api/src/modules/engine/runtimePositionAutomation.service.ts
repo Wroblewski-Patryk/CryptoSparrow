@@ -197,6 +197,14 @@ const defaultDeps: RuntimePositionAutomationDeps = {
         status: 'OPEN',
         symbol,
         managementMode: 'BOT_MANAGED',
+        OR: [
+          { botId: null },
+          {
+            bot: {
+              isActive: true,
+            },
+          },
+        ],
       },
       select: {
         id: true,
@@ -510,7 +518,6 @@ const buildPositionManagementInput = (
 
 export class RuntimePositionAutomationService {
   private readonly positionStates = new Map<string, PositionManagementState>();
-  private readonly strategyConfigCache = new Map<string, Record<string, unknown> | null>();
 
   constructor(private readonly deps: RuntimePositionAutomationDeps = defaultDeps) {}
 
@@ -527,12 +534,7 @@ export class RuntimePositionAutomationService {
 
   private async getStrategyConfig(strategyId: string | null) {
     if (!strategyId) return null;
-    if (this.strategyConfigCache.has(strategyId)) {
-      return this.strategyConfigCache.get(strategyId) ?? null;
-    }
-    const config = await this.deps.getStrategyConfigById(strategyId);
-    this.strategyConfigCache.set(strategyId, config);
-    return config;
+    return this.deps.getStrategyConfigById(strategyId);
   }
 
   private async processPosition(
