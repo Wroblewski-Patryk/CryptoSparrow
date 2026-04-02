@@ -430,7 +430,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DPL-11 docs(rename-audit): inventory all `CryptoSparrow` tokens and classify rename waves`
 - [x] `DPL-12 docs(rename-plan): define controlled global rename rollout `CryptoSparrow -> Soar` with risk gates`
 - [x] `DPL-13 docs(cicd-contract): define immutable commit promotion contract DEV -> STAGE -> PROD`
-- [ ] `DPL-14 ci(stage): implement automatic deploy-to-stage on integration-branch push`
+- [x] `DPL-14 ci(stage): implement automatic deploy-to-stage on integration-branch push`
 - [ ] `DPL-15 ci(stage-gates): enforce stage gate pack (build/test/migrate/health/smoke) with machine-readable report`
 - [ ] `DPL-16 ci(promote): implement automatic promotion to prod when stage gates are fully green`
 - [ ] `DPL-17 ci(prod-rollback): implement automatic rollback to previous stable release on failed post-deploy prod health`
@@ -458,6 +458,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 
 ## Progress Log
+- 2026-04-03: Completed `DPL-14` by adding `.github/workflows/deploy-stage.yml` to trigger STAGE deployment automatically on `develop` pushes (plus manual dispatch), with concurrency guard and required `COOLIFY_STAGE_DEPLOY_HOOK_URL` webhook secret; linked automation entry in promotion contract doc.
 - 2026-04-03: Completed `DPL-12` by publishing `docs/planning/cryptosparrow-soar-rename-rollout-plan-2026-04-03.md` with wave-based rollout (`Wave 1..4`), mandatory stage/prod risk gates, compatibility-first constraints for runtime identifiers, ownership matrix, and rollback checkpoints linked to deployment contracts.
 - 2026-04-03: Completed `DPL-11` by running repository-wide token audit (`CryptoSparrow`/`cryptosparrow`) and publishing wave-classified inventory in `docs/planning/cryptosparrow-soar-rename-audit-2026-04-03.md` (runtime-critical identifiers, infra/domain naming, UI/doc surfaces, and compatibility-first rollout sequencing); linked in deployment plan outputs.
 - 2026-04-03: Completed `DPL-10` by publishing `docs/operations/deployment-rollback-playbook.md` with rollback triggers, ownership matrix, app/env/worker rollback modes, migration-aware guardrails, communication template, and mandatory post-rollback gate/evidence contract.

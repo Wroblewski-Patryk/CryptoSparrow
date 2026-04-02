@@ -1,0 +1,51 @@
+name: Deploy STAGE
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-stage
+  cancel-in-progress: true
+
+jobs:
+  deploy-stage:
+    name: Trigger stage deployment
+    runs-on: ubuntu-latest
+    environment: stage
+    permissions:
+      contents: read
+    steps:
+      - name: Trigger Coolify STAGE deploy webhook
+        env:
+          STAGE_DEPLOY_WEBHOOK_URL: ${{ secrets.COOLIFY_STAGE_DEPLOY_HOOK_URL }}
+          GIT_SHA: ${{ github.sha }}
+          GIT_REF: ${{ github.ref }}
+          REPOSITORY: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          if [ -z "$STAGE_DEPLOY_WEBHOOK_URL" ]; then
+            echo "::error::Missing required secret COOLIFY_STAGE_DEPLOY_HOOK_URL"
+            exit 1
+          fi
+
+          payload=$(cat <<EOF
+          {"sha":"$GIT_SHA","ref":"$GIT_REF","repository":"$REPOSITORY","actor":"$ACTOR","environment":"stage"}
+          EOF
+          )
+
+          http_code=$(curl -sS -o response.txt -w "%{http_code}" \
+            -X POST "$STAGE_DEPLOY_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            --data "$payload")
+
+          echo "Coolify response code: $http_code"
+          cat response.txt || true
+
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "::error::Stage deploy webhook failed with HTTP $http_code"
+            exit 1
+          fi
+
