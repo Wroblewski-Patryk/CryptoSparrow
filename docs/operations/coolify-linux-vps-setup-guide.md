@@ -179,6 +179,7 @@ If post-deploy health fails:
 
 ## References
 - `docs/operations/dev-stage-prod-environment-matrix.md`
+- `docs/operations/coolify-trigger-wiring.md`
 - `docs/engineering/local-development.md`
 - `docs/planning/deployment-dev-prod-coolify-plan-2026-04-02.md`
 - `docs/operations/v1-ops-runbook.md`
