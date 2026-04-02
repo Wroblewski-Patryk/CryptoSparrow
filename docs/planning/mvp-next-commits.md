@@ -7,15 +7,16 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `LFIN-07B refactor(web-i18n-bots): migrate bots management/runtime strings to translation keys with EN/PL parity`
+- [ ] `LFIN-08 refactor(web-nav-i18n): remove inline locale dictionaries from header and use canonical i18n keys only`
 
 ## NEXT
-- [ ] `LFIN-08 refactor(web-nav-i18n): remove inline locale dictionaries from header and use canonical i18n keys only`
+- [ ] `LFIN-10 feat(web-utils): add shared number parser/normalizer and form-level validation contract`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
 - [x] `BMOD-42 test(runtime): add regression coverage for resilient stream handling and runtime auto-restart after handler failure`
+- [x] `LFIN-07B refactor(web-i18n-bots): migrate bots management/runtime strings to translation keys with EN/PL parity`
 - [x] `LFIN-07A refactor(web-i18n-dashboard-home): migrate dashboard home/control-center strings to translation keys with EN/PL parity`
 - [x] `BMOD-41 fix(runtime-resilience): harden runtime signal loop against stream-handler crashes and add auto-restart watchdog for canceled/stalled sessions`
 - [x] `BOPS-42 feat(api+web-guard): block market-universe update/delete while linked symbol-group is used by any active bot (409 + explicit UX message)`

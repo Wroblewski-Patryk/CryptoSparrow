@@ -389,7 +389,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `LFIN-05 feat(api+web): expose and render feeSource/feePending/feeCurrency in dashboard+bots history views`
 - [x] `LFIN-06 audit(i18n): inventory hardcoded copy in dashboard-home, bots module, and dashboard header menu`
 - [x] `LFIN-07A refactor(web-i18n-dashboard-home): migrate dashboard home/control-center strings to translation keys with EN/PL parity`
-- [ ] `LFIN-07B refactor(web-i18n-bots): migrate bots management/runtime strings to translation keys with EN/PL parity`
+- [x] `LFIN-07B refactor(web-i18n-bots): migrate bots management/runtime strings to translation keys with EN/PL parity`
 - [ ] `LFIN-08 refactor(web-nav-i18n): remove inline locale dictionaries from header and use canonical i18n keys only`
 - [x] `LFIN-09 docs(contract): lock locale-safe numeric input policy (comma/dot, precision matrix, integer vs decimal fields)`
 - [ ] `LFIN-10 feat(web-utils): add shared number parser/normalizer and form-level validation contract`
@@ -417,6 +417,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DBRT-10 feat(web-dashboard): implement tri-state column sorting cycle (asc -> desc -> none) for trades table`
 
 ## Progress Log
+- 2026-04-02: Completed `LFIN-07B` by migrating Bots module (management + runtime + assistant) UI copy to canonical i18n keys, adding EN/PL parity entries in `translations.ts`, updating bots page to i18n usage, and refreshing BotsManagement tests with `I18nProvider` wrapper; verified with web tests + typecheck.
 - 2026-04-02: Completed `BMOD-41/BMOD-42` runtime resilience hardening: wrapped market-stream fanout handler promises to prevent unhandled async crashes, added event-level try/catch shielding in runtime signal loop, introduced session watchdog re-ensure cycle (`RUNTIME_SESSION_WATCHDOG_INTERVAL_MS`) for active bots, added execution worker auto-start watchdog (`RUNTIME_SIGNAL_LOOP_BOOTSTRAP_INTERVAL_MS`), and expanded runtime unit coverage for crash-survival + periodic session re-ensure.
 - 2026-04-02: Completed `BOPS-42` markets guard parity with strategies: backend now blocks market-universe update/delete when linked symbol-groups are used by active bots (canonical + legacy links), controllers map to HTTP 409 conflict, markets e2e guard scenarios added, and web edit/delete UX shows explicit active-bot lock messaging.
 - 2026-04-02: Queued follow-up hardening tasks `BOPS-42` (market-universe edit/delete guard while active bot uses linked symbol-group) and `BMOD-41/BMOD-42` (runtime session resilience + auto-restart + regression coverage) after production-like report of `CANCELED` sessions and stalled runtime refresh.

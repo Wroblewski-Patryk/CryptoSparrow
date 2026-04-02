@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
+import { useI18n } from "../../../i18n/I18nProvider";
+import { TranslationKey } from "../../../i18n/translations";
 
 import StatusBadge from "../../../ui/components/StatusBadge";
 import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
@@ -56,9 +58,13 @@ const toModeBadge = (mode: BotMode) => {
 };
 
 const toRiskBadge = (bot: Bot) => {
-  if (bot.mode === "LIVE" && bot.liveOptIn) return { value: "danger", label: "LIVE enabled" } as const;
-  if (bot.mode === "LIVE" && !bot.liveOptIn) return { value: "warning", label: "LIVE blocked" } as const;
-  return { value: "safe", label: "Safe mode" } as const;
+  if (bot.mode === "LIVE" && bot.liveOptIn) {
+    return { value: "danger", labelKey: "dashboard.bots.badges.liveEnabled" as TranslationKey } as const;
+  }
+  if (bot.mode === "LIVE" && !bot.liveOptIn) {
+    return { value: "warning", labelKey: "dashboard.bots.badges.liveBlocked" as TranslationKey } as const;
+  }
+  return { value: "safe", labelKey: "dashboard.bots.badges.safeMode" as TranslationKey } as const;
 };
 
 const deriveStrategyMaxOpenPositions = (strategy: StrategyDto | null): number => {
@@ -103,6 +109,9 @@ const formatDuration = (ms: number) => {
   return `${hours}h ${minutes}m`;
 };
 
+const interpolateTemplate = (template: string, values: Record<string, string | number>) =>
+  template.replace(/\{(\w+)\}/g, (_, token) => String(values[token] ?? ""));
+
 const toSessionStatusBadgeClass = (status: BotRuntimeSessionStatus) => {
   if (status === "RUNNING") return "badge-info";
   if (status === "COMPLETED") return "badge-success";
@@ -123,11 +132,11 @@ const toTradeLifecycleBadgeClass = (value: "OPEN" | "DCA" | "CLOSE" | "UNKNOWN")
   return "badge-ghost";
 };
 
-const toTradeLifecycleLabel = (value: "OPEN" | "DCA" | "CLOSE" | "UNKNOWN") => {
-  if (value === "OPEN") return "Otwarcie";
-  if (value === "DCA") return "DCA";
-  if (value === "CLOSE") return "Zamkniecie";
-  return "Nieznane";
+const toTradeLifecycleLabelKey = (value: "OPEN" | "DCA" | "CLOSE" | "UNKNOWN") => {
+  if (value === "OPEN") return "dashboard.bots.actions.open" as TranslationKey;
+  if (value === "DCA") return "dashboard.bots.actions.dca" as TranslationKey;
+  if (value === "CLOSE") return "dashboard.bots.actions.close" as TranslationKey;
+  return "dashboard.bots.actions.unknown" as TranslationKey;
 };
 
 const formatTradeFeeMeta = (trade: {
@@ -396,6 +405,7 @@ const aggregateMonitorData = (params: {
 };
 
 export default function BotsManagement() {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<"bots" | "monitoring" | "assistant">("bots");
   const [bots, setBots] = useState<Bot[]>([]);
   const [serverSnapshot, setServerSnapshot] = useState<Record<string, Bot>>({});
@@ -452,11 +462,11 @@ export default function BotsManagement() {
       setBots(data);
       setServerSnapshot(Object.fromEntries(data.map((bot) => [bot.id, bot])));
     } catch (err: unknown) {
-      setError(getAxiosMessage(err) ?? "Nie udalo sie pobrac botow.");
+      setError(getAxiosMessage(err) ?? t("dashboard.bots.errors.loadBots"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void loadBots(marketFilter);
@@ -493,7 +503,7 @@ export default function BotsManagement() {
       } catch (err: unknown) {
         if (!mounted) return;
         setMarketGroups([]);
-        toast.error("Nie udalo sie pobrac grup rynkow", { description: getAxiosMessage(err) });
+        toast.error(t("dashboard.bots.toasts.marketGroupsLoadFailed"), { description: getAxiosMessage(err) });
       }
     };
     void loadMarketGroupOptions();
@@ -702,36 +712,42 @@ export default function BotsManagement() {
     return [
       {
         key: "session",
-        label: "Sesja aktywna",
+        label: t("dashboard.bots.monitoring.checklist.sessionActive"),
         ok: monitorSessionDetail.status === "RUNNING",
         note: monitorSessionDetail.status,
       },
       {
         key: "heartbeat",
-        label: "Heartbeat swiezy",
+        label: t("dashboard.bots.monitoring.checklist.heartbeatFresh"),
         ok: monitorHeartbeatLagMs != null && monitorHeartbeatLagMs <= 60_000,
         note: monitorHeartbeatLagMs == null ? "-" : formatDuration(monitorHeartbeatLagMs),
       },
       {
         key: "positions",
-        label: "Dane pozycji",
+        label: t("dashboard.bots.monitoring.checklist.positionData"),
         ok: Boolean(monitorPositions),
-        note: monitorPositions ? `${monitorPositions.openCount} open` : "brak",
+        note: monitorPositions
+          ? interpolateTemplate(t("dashboard.bots.monitoring.checklist.openCount"), {
+              count: monitorPositions.openCount,
+            })
+          : t("dashboard.bots.monitoring.checklist.none"),
       },
       {
         key: "signals",
-        label: "Dane sygnalow",
+        label: t("dashboard.bots.monitoring.checklist.signalData"),
         ok: hasSignalData,
         note: `${monitorSignalRows.length} / ${monitorSessionDetail.symbolsTracked}`,
       },
       {
         key: "errors",
-        label: "Brak bledow sesji",
+        label: t("dashboard.bots.monitoring.checklist.noSessionErrors"),
         ok: !monitorSessionDetail.errorMessage,
-        note: monitorSessionDetail.errorMessage ? "wymaga sprawdzenia" : "OK",
+        note: monitorSessionDetail.errorMessage
+          ? t("dashboard.bots.monitoring.checklist.reviewRequired")
+          : t("dashboard.bots.monitoring.checklist.ok"),
       },
     ];
-  }, [monitorHeartbeatLagMs, monitorPositions, monitorSessionDetail, monitorSignalRows.length]);
+  }, [monitorHeartbeatLagMs, monitorPositions, monitorSessionDetail, monitorSignalRows.length, t]);
 
   const confirmLiveRisk = (message: string) => window.confirm(message);
 
@@ -746,12 +762,12 @@ export default function BotsManagement() {
       setAssistantLatencyMs(config.assistant?.maxDecisionLatencyMs ?? 2500);
       setAssistantSubagents(config.subagents ?? []);
     } catch (err: unknown) {
-      toast.error("Nie udalo sie pobrac konfiguracji asystenta", { description: getAxiosMessage(err) });
+      toast.error(t("dashboard.bots.assistant.toasts.loadFailed"), { description: getAxiosMessage(err) });
       setAssistantSubagents([]);
     } finally {
       setAssistantLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const loadMonitorSessions = useCallback(
     async (
@@ -795,7 +811,7 @@ export default function BotsManagement() {
         return sessions;
       } catch (err: unknown) {
         if (!silent) {
-          setMonitorError(getAxiosMessage(err) ?? "Nie udalo sie pobrac sesji runtime.");
+          setMonitorError(getAxiosMessage(err) ?? t("dashboard.bots.errors.loadRuntimeSessions"));
         }
         return [];
       } finally {
@@ -804,7 +820,7 @@ export default function BotsManagement() {
         }
       }
     },
-    []
+    [t]
   );
 
   const loadMonitorSessionData = useCallback(
@@ -850,7 +866,7 @@ export default function BotsManagement() {
         setMonitorTrades(trades);
       } catch (err: unknown) {
         if (!silent) {
-          setMonitorError(getAxiosMessage(err) ?? "Nie udalo sie pobrac danych sesji runtime.");
+          setMonitorError(getAxiosMessage(err) ?? t("dashboard.bots.errors.loadRuntimeSessionData"));
         }
       } finally {
         if (!silent) {
@@ -858,7 +874,7 @@ export default function BotsManagement() {
         }
       }
     },
-    []
+    [t]
   );
 
   const loadMonitorAggregateData = useCallback(
@@ -925,7 +941,7 @@ export default function BotsManagement() {
         setMonitorTrades(aggregate.trades);
       } catch (err: unknown) {
         if (!silent) {
-          setMonitorError(getAxiosMessage(err) ?? "Nie udalo sie pobrac danych monitoringu zbiorczego.");
+          setMonitorError(getAxiosMessage(err) ?? t("dashboard.bots.errors.loadAggregateMonitoring"));
         }
       } finally {
         if (!silent) {
@@ -933,7 +949,7 @@ export default function BotsManagement() {
         }
       }
     },
-    []
+    [t]
   );
 
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -943,9 +959,7 @@ export default function BotsManagement() {
     setCreating(true);
     try {
       if (mode === "LIVE") {
-        const accepted = confirmLiveRisk(
-          "Potwierdzenie LIVE: ten bot bedzie tworzony w trybie LIVE. Kontynuowac?"
-        );
+        const accepted = confirmLiveRisk(t("dashboard.bots.confirms.liveCreate"));
         if (!accepted) return;
       }
 
@@ -966,16 +980,16 @@ export default function BotsManagement() {
       setPaperStartBalance(10_000);
       setStrategyId((prev) => prev || strategies[0]?.id || "");
       setMarketGroupId((prev) => prev || marketGroups[0]?.id || "");
-      toast.success("Bot utworzony");
+      toast.success(t("dashboard.bots.toasts.created"));
       await loadBots(marketFilter);
     } catch (err: unknown) {
       const message = getAxiosMessage(err);
       if (message === DUPLICATE_ACTIVE_BOT_ERROR) {
-        toast.error("Aktywny bot dla tej strategii i grupy juz istnieje", {
-          description: "Wylacz poprzedniego bota albo wybierz inna strategie / grupe rynkow.",
+        toast.error(t("dashboard.bots.toasts.duplicateActiveTitle"), {
+          description: t("dashboard.bots.toasts.duplicateActiveDescription"),
         });
       } else {
-        toast.error("Nie udalo sie utworzyc bota", { description: message });
+        toast.error(t("dashboard.bots.toasts.createFailed"), { description: message });
       }
     } finally {
       setCreating(false);
@@ -995,9 +1009,7 @@ export default function BotsManagement() {
       !!previous && !previous.isActive && bot.isActive && (bot.mode === "LIVE" || effectiveLiveOptIn);
 
     if (enteringLiveMode || enablingLiveOptIn || activatingLiveBot) {
-      const accepted = confirmLiveRisk(
-        "Potwierdzenie LIVE: zapis aktywuje ryzyko handlu na zywo. Kontynuowac?"
-      );
+      const accepted = confirmLiveRisk(t("dashboard.bots.confirms.liveSave"));
       if (!accepted) {
         patchBot(bot.id, previous);
         return;
@@ -1017,15 +1029,15 @@ export default function BotsManagement() {
       });
       patchBot(bot.id, updated);
       setServerSnapshot((prev) => ({ ...prev, [bot.id]: updated }));
-      toast.success("Bot zaktualizowany");
+      toast.success(t("dashboard.bots.toasts.updated"));
     } catch (err: unknown) {
       const message = getAxiosMessage(err);
       if (message === DUPLICATE_ACTIVE_BOT_ERROR) {
-        toast.error("Konflikt aktywnych botow", {
-          description: "Ta strategia i grupa rynkow sa juz aktywne w innym bocie.",
+        toast.error(t("dashboard.bots.toasts.activeConflictTitle"), {
+          description: t("dashboard.bots.toasts.activeConflictDescription"),
         });
       } else {
-        toast.error("Nie udalo sie zapisac zmian", { description: message });
+        toast.error(t("dashboard.bots.toasts.saveFailed"), { description: message });
       }
       void loadBots(marketFilter);
     } finally {
@@ -1035,9 +1047,7 @@ export default function BotsManagement() {
 
   const handleDelete = async (bot: Bot) => {
     if (bot.mode === "LIVE" || bot.liveOptIn || bot.isActive) {
-      const accepted = confirmLiveRisk(
-        "Potwierdzenie LIVE: usuniecie tego bota zatrzyma aktywna konfiguracje tradingowa. Kontynuowac?"
-      );
+      const accepted = confirmLiveRisk(t("dashboard.bots.confirms.liveDelete"));
       if (!accepted) return;
     }
 
@@ -1045,9 +1055,9 @@ export default function BotsManagement() {
     try {
       await deleteBot(bot.id);
       await loadBots(marketFilter);
-      toast.success("Bot usuniety");
+      toast.success(t("dashboard.bots.toasts.deleted"));
     } catch (err: unknown) {
-      toast.error("Nie udalo sie usunac bota", { description: getAxiosMessage(err) });
+      toast.error(t("dashboard.bots.toasts.deleteFailed"), { description: getAxiosMessage(err) });
     } finally {
       setDeletingId(null);
     }
@@ -1064,10 +1074,10 @@ export default function BotsManagement() {
         safetyMode: assistantSafetyMode,
         maxDecisionLatencyMs: assistantLatencyMs,
       });
-      toast.success("Konfiguracja main asystenta zapisana");
+      toast.success(t("dashboard.bots.assistant.toasts.mainSaved"));
       await loadAssistant(assistantBotId);
     } catch (err: unknown) {
-      toast.error("Nie udalo sie zapisac konfiguracji asystenta", { description: getAxiosMessage(err) });
+      toast.error(t("dashboard.bots.assistant.toasts.mainSaveFailed"), { description: getAxiosMessage(err) });
     } finally {
       setAssistantSaving(false);
     }
@@ -1084,10 +1094,10 @@ export default function BotsManagement() {
         timeoutMs: slot.timeoutMs,
         safetyMode: slot.safetyMode,
       });
-      toast.success(`Slot ${slot.slotIndex} zapisany`);
+      toast.success(interpolateTemplate(t("dashboard.bots.assistant.toasts.slotSaved"), { slot: slot.slotIndex }));
       await loadAssistant(assistantBotId);
     } catch (err: unknown) {
-      toast.error("Nie udalo sie zapisac slotu subagenta", { description: getAxiosMessage(err) });
+      toast.error(t("dashboard.bots.assistant.toasts.slotSaveFailed"), { description: getAxiosMessage(err) });
     } finally {
       setAssistantSaving(false);
     }
@@ -1098,10 +1108,10 @@ export default function BotsManagement() {
     setAssistantSaving(true);
     try {
       await deleteBotSubagentConfig(assistantBotId, slotIndex);
-      toast.success(`Slot ${slotIndex} usuniety`);
+      toast.success(interpolateTemplate(t("dashboard.bots.assistant.toasts.slotDeleted"), { slot: slotIndex }));
       await loadAssistant(assistantBotId);
     } catch (err: unknown) {
-      toast.error("Nie udalo sie usunac slotu subagenta", { description: getAxiosMessage(err) });
+      toast.error(t("dashboard.bots.assistant.toasts.slotDeleteFailed"), { description: getAxiosMessage(err) });
     } finally {
       setAssistantSaving(false);
     }
@@ -1117,9 +1127,9 @@ export default function BotsManagement() {
         mode: "PAPER",
       });
       setAssistantTrace(trace);
-      toast.success("Assistant dry-run gotowy");
+      toast.success(t("dashboard.bots.assistant.toasts.dryRunReady"));
     } catch (err: unknown) {
-      toast.error("Nie udalo sie wykonac dry-run asystenta", { description: getAxiosMessage(err) });
+      toast.error(t("dashboard.bots.assistant.toasts.dryRunFailed"), { description: getAxiosMessage(err) });
     } finally {
       setAssistantDryRunRunning(false);
     }
@@ -1264,7 +1274,7 @@ export default function BotsManagement() {
           className={`tab ${activeTab === "bots" ? "tab-active" : ""}`}
           onClick={() => setActiveTab("bots")}
         >
-          Boty
+          {t("dashboard.bots.tabs.bots")}
         </button>
         <button
           type="button"
@@ -1272,7 +1282,7 @@ export default function BotsManagement() {
           className={`tab ${activeTab === "monitoring" ? "tab-active" : ""}`}
           onClick={() => setActiveTab("monitoring")}
         >
-          Operacje runtime
+          {t("dashboard.bots.tabs.monitoring")}
         </button>
         <button
           type="button"
@@ -1280,34 +1290,34 @@ export default function BotsManagement() {
           className={`tab ${activeTab === "assistant" ? "tab-active" : ""}`}
           onClick={() => setActiveTab("assistant")}
         >
-          Asystent
+          {t("dashboard.bots.tabs.assistant")}
         </button>
       </div>
 
       {activeTab === "bots" && (
         <>
       <form onSubmit={handleCreate} className="rounded-xl border border-base-300 bg-base-200 p-4">
-        <h2 className="text-lg font-semibold">Nowy bot</h2>
-        <p className="text-sm opacity-70">Dodaj bota i wybierz strategia + grupe rynkow. LIVE wymaga opt-in.</p>
+        <h2 className="text-lg font-semibold">{t("dashboard.bots.create.title")}</h2>
+        <p className="text-sm opacity-70">{t("dashboard.bots.create.description")}</p>
         <div className="mt-4 grid gap-3 xl:grid-cols-3">
           <section className="rounded-lg border border-base-300 bg-base-100 p-3 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide opacity-60">1. Podstawy bota</p>
+            <p className="text-xs font-semibold uppercase tracking-wide opacity-60">{t("dashboard.bots.create.sectionBasics")}</p>
             <div className="mt-2 space-y-3">
               <label className={FIELD_WRAPPER_CLASS}>
-                <span className="label-text">Nazwa</span>
+                <span className="label-text">{t("dashboard.bots.create.nameLabel")}</span>
                 <input
                   className="input input-bordered"
-                  placeholder="Momentum Runner"
-                  aria-label="Nazwa bota"
+                  placeholder={t("dashboard.bots.create.namePlaceholder")}
+                  aria-label={t("dashboard.bots.create.nameAria")}
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                 />
               </label>
               <label className={FIELD_WRAPPER_CLASS}>
-                <span className="label-text">Tryb</span>
+                <span className="label-text">{t("dashboard.bots.create.modeLabel")}</span>
                 <select
                   className="select select-bordered"
-                  aria-label="Tryb bota"
+                  aria-label={t("dashboard.bots.create.modeAria")}
                   value={mode}
                   onChange={(event) => setMode(event.target.value as BotMode)}
                 >
@@ -1317,13 +1327,13 @@ export default function BotsManagement() {
               </label>
               {mode === "PAPER" ? (
                 <label className={FIELD_WRAPPER_CLASS}>
-                  <span className="label-text">Paper start balance</span>
+                  <span className="label-text">{t("dashboard.bots.create.paperBalanceLabel")}</span>
                   <input
                     type="number"
                     min={0}
                     max={100000000}
                     className="input input-bordered"
-                    aria-label="Paper start balance"
+                    aria-label={t("dashboard.bots.create.paperBalanceAria")}
                     value={paperStartBalance}
                     onChange={(event) =>
                       setPaperStartBalance(Number.isFinite(Number(event.target.value)) ? Number(event.target.value) : 0)
@@ -1335,18 +1345,18 @@ export default function BotsManagement() {
           </section>
 
           <section className="rounded-lg border border-base-300 bg-base-100 p-3 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide opacity-60">2. Kontekst rynku</p>
+            <p className="text-xs font-semibold uppercase tracking-wide opacity-60">{t("dashboard.bots.create.sectionMarket")}</p>
             <div className="mt-2 space-y-3">
               <label className={FIELD_WRAPPER_CLASS}>
-                <span className="label-text">Grupa rynkow</span>
+                <span className="label-text">{t("dashboard.bots.create.marketGroupLabel")}</span>
                 <select
                   className="select select-bordered"
-                  aria-label="Grupa rynkow bota"
+                  aria-label={t("dashboard.bots.create.marketGroupAria")}
                   value={marketGroupId}
                   onChange={(event) => setMarketGroupId(event.target.value)}
                   disabled={marketGroups.length === 0}
                 >
-                  {marketGroups.length === 0 ? <option value="">Brak grup rynkow</option> : null}
+                  {marketGroups.length === 0 ? <option value="">{t("dashboard.bots.create.noMarketGroups")}</option> : null}
                   {marketGroups.map((group) => (
                     <option key={group.id} value={group.id}>
                       {group.name} ({group.exchange ?? "BINANCE"} · {group.marketType}/{group.baseCurrency})
@@ -1356,7 +1366,7 @@ export default function BotsManagement() {
               </label>
               <div className="grid gap-2 text-xs sm:grid-cols-3">
                 <div className={META_CARD_CLASS}>
-                  <p className="uppercase tracking-wide opacity-60">Gielda / rynek</p>
+                  <p className="uppercase tracking-wide opacity-60">{t("dashboard.bots.create.marketSummaryLabel")}</p>
                   <p className="font-medium">
                     {selectedMarketGroup
                       ? `${selectedMarketGroup.exchange ?? "BINANCE"} · ${selectedMarketGroup.marketType}/${selectedMarketGroup.baseCurrency}`
@@ -1364,11 +1374,11 @@ export default function BotsManagement() {
                   </p>
                 </div>
                 <div className={META_CARD_CLASS}>
-                  <p className="uppercase tracking-wide opacity-60">Whitelist</p>
+                  <p className="uppercase tracking-wide opacity-60">{t("dashboard.bots.create.whitelistLabel")}</p>
                   <p className="font-medium">{selectedMarketGroup?.whitelist?.length ?? 0}</p>
                 </div>
                 <div className={META_CARD_CLASS}>
-                  <p className="uppercase tracking-wide opacity-60">Blacklist</p>
+                  <p className="uppercase tracking-wide opacity-60">{t("dashboard.bots.create.blacklistLabel")}</p>
                   <p className="font-medium">{selectedMarketGroup?.blacklist?.length ?? 0}</p>
                 </div>
               </div>
@@ -1376,18 +1386,18 @@ export default function BotsManagement() {
           </section>
 
           <section className="rounded-lg border border-base-300 bg-base-100 p-3 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide opacity-60">3. Kontekst strategii</p>
+            <p className="text-xs font-semibold uppercase tracking-wide opacity-60">{t("dashboard.bots.create.sectionStrategy")}</p>
             <div className="mt-2 space-y-3">
               <label className={FIELD_WRAPPER_CLASS}>
-                <span className="label-text">Strategia</span>
+                <span className="label-text">{t("dashboard.bots.create.strategyLabel")}</span>
                 <select
                   className="select select-bordered"
-                  aria-label="Strategia bota"
+                  aria-label={t("dashboard.bots.create.strategyAria")}
                   value={strategyId}
                   onChange={(event) => setStrategyId(event.target.value)}
                   disabled={strategies.length === 0}
                 >
-                  {strategies.length === 0 ? <option value="">Brak strategii</option> : null}
+                  {strategies.length === 0 ? <option value="">{t("dashboard.bots.create.noStrategies")}</option> : null}
                   {strategies.map((strategy) => (
                     <option key={strategy.id} value={strategy.id}>
                       {strategy.name}
@@ -1397,17 +1407,17 @@ export default function BotsManagement() {
               </label>
               <div className="grid gap-2 text-xs sm:grid-cols-3">
                 <div className={META_CARD_CLASS}>
-                  <p className="uppercase tracking-wide opacity-60">Interwal</p>
+                  <p className="uppercase tracking-wide opacity-60">{t("dashboard.bots.create.intervalLabel")}</p>
                   <p className="font-medium">{selectedStrategy?.interval ?? "-"}</p>
                 </div>
                 <div className={META_CARD_CLASS}>
-                  <p className="uppercase tracking-wide opacity-60">Dzwignia</p>
+                  <p className="uppercase tracking-wide opacity-60">{t("dashboard.bots.create.leverageLabel")}</p>
                   <p className="font-medium">
                     {typeof selectedStrategy?.leverage === "number" ? `${selectedStrategy.leverage}x` : "-"}
                   </p>
                 </div>
                 <div className={META_CARD_CLASS}>
-                  <p className="uppercase tracking-wide opacity-60">Max open positions</p>
+                  <p className="uppercase tracking-wide opacity-60">{t("dashboard.bots.create.maxOpenLabel")}</p>
                   <p className="font-medium">{selectedStrategy ? selectedStrategyMaxOpenPositions : "-"}</p>
                 </div>
               </div>
@@ -1416,43 +1426,46 @@ export default function BotsManagement() {
         </div>
         <div className="mt-4 flex justify-end">
           <button type="submit" className="btn btn-primary btn-sm" disabled={!canCreate}>
-            {creating ? "Tworzenie..." : "Dodaj bota"}
+            {creating ? t("dashboard.bots.create.creatingCta") : t("dashboard.bots.create.createCta")}
           </button>
         </div>
       </form>
 
-      {loading && <LoadingState title="Ladowanie botow" />}
+      {loading && <LoadingState title={t("dashboard.bots.states.loadingBots")} />}
       {!loading && error && (
         <ErrorState
-          title="Nie udalo sie pobrac botow"
+          title={t("dashboard.bots.states.loadBotsFailedTitle")}
           description={error}
-          retryLabel="Sprobuj ponownie"
+          retryLabel={t("dashboard.bots.states.retry")}
           onRetry={() => void loadBots(marketFilter)}
         />
       )}
       {!loading && !error && bots.length === 0 && (
         <EmptyState
-          title="Brak botow"
-          description="Dodaj pierwszego bota, aby kontrolowac tryb PAPER/LIVE i limity."
+          title={t("dashboard.bots.states.emptyTitle")}
+          description={t("dashboard.bots.states.emptyDescription")}
         />
       )}
 
       {!loading && !error && bots.length > 0 && (
         <div className="space-y-3">
           <SuccessState
-            title="Bots control center aktywny"
-            description={`Skonfigurowano ${bots.length} ${bots.length === 1 ? "bota" : "botow"}.`}
+            title={t("dashboard.bots.states.successTitle")}
+            description={interpolateTemplate(
+              t(bots.length === 1 ? "dashboard.bots.states.successDescriptionOne" : "dashboard.bots.states.successDescriptionMany"),
+              { count: bots.length }
+            )}
           />
           <div className="flex justify-end">
             <label className="form-control w-48">
-              <span className="label-text text-xs">Filtr rynku</span>
+              <span className="label-text text-xs">{t("dashboard.bots.list.marketFilterLabel")}</span>
               <select
                 className="select select-bordered select-sm"
-                aria-label="Filtr rynku botow"
+                aria-label={t("dashboard.bots.list.marketFilterAria")}
                 value={marketFilter}
                 onChange={(event) => setMarketFilter(event.target.value as "ALL" | TradeMarket)}
               >
-                <option value="ALL">Wszystkie</option>
+                <option value="ALL">{t("dashboard.bots.list.allMarkets")}</option>
                 <option value="FUTURES">FUTURES</option>
                 <option value="SPOT">SPOT</option>
               </select>
@@ -1462,17 +1475,17 @@ export default function BotsManagement() {
             <table className="table table-zebra">
               <thead>
                 <tr>
-                  <th>Nazwa</th>
-                  <th>Rynek</th>
-                  <th>Pozycja</th>
-                  <th>Strategia</th>
-                  <th>Status</th>
-                  <th>Tryb</th>
-                  <th>Paper balance</th>
-                  <th>Max positions</th>
-                  <th>Live opt-in</th>
-                  <th>Aktywny</th>
-                  <th>Akcje</th>
+                  <th>{t("dashboard.bots.list.columns.name")}</th>
+                  <th>{t("dashboard.bots.list.columns.market")}</th>
+                  <th>{t("dashboard.bots.list.columns.position")}</th>
+                  <th>{t("dashboard.bots.list.columns.strategy")}</th>
+                  <th>{t("dashboard.bots.list.columns.status")}</th>
+                  <th>{t("dashboard.bots.list.columns.mode")}</th>
+                  <th>{t("dashboard.bots.list.columns.paperBalance")}</th>
+                  <th>{t("dashboard.bots.list.columns.maxPositions")}</th>
+                  <th>{t("dashboard.bots.list.columns.liveOptIn")}</th>
+                  <th>{t("dashboard.bots.list.columns.active")}</th>
+                  <th>{t("dashboard.bots.list.columns.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1501,7 +1514,7 @@ export default function BotsManagement() {
                             patchBot(bot.id, { strategyId: event.target.value || null })
                           }
                         >
-                          <option value="">Brak</option>
+                          <option value="">{t("dashboard.bots.list.noneOption")}</option>
                           {strategies.map((strategy) => (
                             <option key={strategy.id} value={strategy.id}>
                               {strategy.name}
@@ -1510,11 +1523,15 @@ export default function BotsManagement() {
                         </select>
                       </td>
                       <td>
-                        <StatusBadge kind="risk" value={risk.value} label={risk.label} />
+                        <StatusBadge kind="risk" value={risk.value} label={t(risk.labelKey)} />
                       </td>
                       <td>
                         <div className="space-y-1">
-                          <StatusBadge kind="mode" value={toModeBadge(bot.mode)} label={`Mode: ${bot.mode}`} />
+                          <StatusBadge
+                            kind="mode"
+                            value={toModeBadge(bot.mode)}
+                            label={interpolateTemplate(t("dashboard.bots.list.modeLabel"), { mode: bot.mode })}
+                          />
                           <select
                             className="select select-bordered select-xs w-full"
                             value={bot.mode}
@@ -1576,7 +1593,7 @@ export default function BotsManagement() {
                             disabled={savingId === bot.id}
                             onClick={() => void handleSave(bot)}
                           >
-                            {savingId === bot.id ? "Zapisywanie..." : "Zapisz"}
+                            {savingId === bot.id ? t("dashboard.bots.list.saving") : t("dashboard.bots.list.save")}
                           </button>
                           <button
                             type="button"
@@ -1584,7 +1601,7 @@ export default function BotsManagement() {
                             disabled={deletingId === bot.id}
                             onClick={() => void handleDelete(bot)}
                           >
-                            {deletingId === bot.id ? "Usuwanie..." : "Usun"}
+                            {deletingId === bot.id ? t("dashboard.bots.list.deleting") : t("dashboard.bots.list.delete")}
                           </button>
                         </div>
                       </td>
@@ -1594,7 +1611,7 @@ export default function BotsManagement() {
                 {bots.length === 0 && (
                   <tr>
                     <td colSpan={11} className="text-center text-sm opacity-70">
-                      Brak botow dla wybranego rynku.
+                      {t("dashboard.bots.list.noBotsForFilter")}
                     </td>
                   </tr>
                 )}
@@ -1608,22 +1625,26 @@ export default function BotsManagement() {
 
       {activeTab === "monitoring" && (
         <div className="space-y-4 rounded-xl border border-base-300 bg-base-200 p-4">
-          <h2 className="text-lg font-semibold">Centrum operacyjne botow (runtime)</h2>
-          <p className="text-sm opacity-70">
-            Dashboard zostaje ogolnym panelem sterowania aplikacja, a tutaj monitorujesz runtime botow:
-            teraz (otwarte), historia (zamkniete) i co bedzie (live check sygnalow) bez ciezkich wykresow.
-          </p>
+          <h2 className="text-lg font-semibold">{t("dashboard.bots.monitoring.title")}</h2>
+          <p className="text-sm opacity-70">{t("dashboard.bots.monitoring.description")}</p>
 
           {bots.length === 0 ? (
-            <EmptyState title="Brak botow" description="Utworz bota, aby monitorowac jego sesje runtime." />
+            <EmptyState
+              title={t("dashboard.bots.monitoring.emptyBotsTitle")}
+              description={t("dashboard.bots.monitoring.emptyBotsDescription")}
+            />
           ) : (
             <>
               <div className="rounded-lg border border-base-300 bg-base-100 p-3">
                 <div className="mb-2 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold">Szybki wybor kontekstu bota</h3>
+                  <h3 className="text-sm font-semibold">{t("dashboard.bots.monitoring.quickContextTitle")}</h3>
                   <span className="text-xs opacity-60">
-                    {monitorQuickSwitchBots.length} kart
-                    {bots.some((bot) => bot.isActive) ? " (aktywne)" : " (wszystkie)"}
+                    {interpolateTemplate(t("dashboard.bots.monitoring.cardsCount"), {
+                      count: monitorQuickSwitchBots.length,
+                    })}
+                    {bots.some((bot) => bot.isActive)
+                      ? t("dashboard.bots.monitoring.cardsActiveSuffix")
+                      : t("dashboard.bots.monitoring.cardsAllSuffix")}
                   </span>
                 </div>
                 <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
@@ -1640,7 +1661,7 @@ export default function BotsManagement() {
                     >
                       <p className="truncate text-sm font-semibold">{bot.name}</p>
                       <p className="mt-1 text-[11px] opacity-70">
-                        {bot.exchange} · {bot.marketType} | {bot.mode} | {bot.isActive ? "ACTIVE" : "INACTIVE"}
+                        {bot.exchange} · {bot.marketType} | {bot.mode} | {bot.isActive ? t("dashboard.bots.monitoring.active") : t("dashboard.bots.monitoring.inactive")}
                       </p>
                     </button>
                   ))}
@@ -1650,37 +1671,35 @@ export default function BotsManagement() {
               <div className="space-y-3 rounded-lg border border-base-300 bg-base-100 p-3">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <h3 className="text-sm font-semibold">Sterowanie monitoringiem</h3>
-                    <p className="text-xs opacity-70">
-                      Ustaw zakres i filtr, a potem obserwuj teraz/historie/live-check bez przeladowan sekcji.
-                    </p>
+                    <h3 className="text-sm font-semibold">{t("dashboard.bots.monitoring.controlsTitle")}</h3>
+                    <p className="text-xs opacity-70">{t("dashboard.bots.monitoring.controlsDescription")}</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <label className="label cursor-pointer gap-2 p-0">
                       <input
                         type="checkbox"
                         className="toggle toggle-sm"
-                        aria-label="Auto refresh monitoringu"
+                        aria-label={t("dashboard.bots.monitoring.autoRefreshAria")}
                         checked={monitorAutoRefreshEnabled}
                         onChange={(event) => setMonitorAutoRefreshEnabled(event.target.checked)}
                       />
-                      <span className="label-text text-xs">Auto refresh runtime (5s)</span>
+                      <span className="label-text text-xs">{t("dashboard.bots.monitoring.autoRefreshLabel")}</span>
                     </label>
                     <button type="button" className="btn btn-outline btn-sm" onClick={() => void refreshMonitoring()}>
-                      Odswiez
+                      {t("dashboard.bots.monitoring.refresh")}
                     </button>
                   </div>
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-6">
                   <label className="form-control">
-                    <span className="label-text">Status sesji</span>
+                    <span className="label-text">{t("dashboard.bots.monitoring.sessionStatusLabel")}</span>
                     <select
                       className="select select-bordered"
                       value={monitorStatus}
                       onChange={(event) => setMonitorStatus(event.target.value as "ALL" | BotRuntimeSessionStatus)}
                     >
-                      <option value="ALL">ALL</option>
+                      <option value="ALL">{t("dashboard.bots.monitoring.sessionStatusAll")}</option>
                       <option value="RUNNING">RUNNING</option>
                       <option value="COMPLETED">COMPLETED</option>
                       <option value="FAILED">FAILED</option>
@@ -1688,10 +1707,10 @@ export default function BotsManagement() {
                     </select>
                   </label>
                   <label className="form-control md:col-span-2">
-                    <span className="label-text">Filtr symbolu (opcjonalnie)</span>
+                    <span className="label-text">{t("dashboard.bots.monitoring.symbolFilterLabel")}</span>
                     <input
                       className="input input-bordered"
-                      placeholder="np. BTCUSDT"
+                      placeholder={t("dashboard.bots.monitoring.symbolFilterPlaceholder")}
                       value={monitorSymbolFilter}
                       onChange={(event) => setMonitorSymbolFilter(event.target.value.toUpperCase())}
                       onKeyDown={(event) => {
@@ -1702,43 +1721,43 @@ export default function BotsManagement() {
                       }}
                     />
                     <p className="mt-1 text-[11px] opacity-65">
-                      Podpowiedz: wpisz np. BTCUSDT i nacisnij Enter, aby zawezic wszystkie sekcje monitoringu.
+                      {t("dashboard.bots.monitoring.symbolFilterHint")}
                     </p>
                   </label>
                   <div className="form-control">
                     <span className="label-text">&nbsp;</span>
                     <div className="flex gap-2">
                       <button type="button" className="btn btn-primary btn-sm" onClick={handleApplyMonitoringFilter}>
-                        Zastosuj
+                        {t("dashboard.bots.monitoring.applyFilter")}
                       </button>
                       <button type="button" className="btn btn-ghost btn-sm" onClick={handleClearMonitoringFilter}>
-                        Wyczysc
+                        {t("dashboard.bots.monitoring.clearFilter")}
                       </button>
                     </div>
                   </div>
                   <div className="form-control md:col-span-2">
-                    <span className="label-text">Aktywny filtr</span>
+                    <span className="label-text">{t("dashboard.bots.monitoring.activeFilterLabel")}</span>
                     <div className="rounded-md border border-base-300 bg-base-200 px-3 py-2 text-sm">
-                      {monitorAppliedSymbolFilter || "brak"}
+                      {monitorAppliedSymbolFilter || t("dashboard.bots.monitoring.none")}
                     </div>
                   </div>
                 </div>
 
                 <p className="rounded-md border border-base-300 bg-base-200 px-3 py-2 text-xs opacity-75" aria-live="polite">
                   {monitorViewMode === "aggregate"
-                    ? "Auto-refresh aktywny dla widoku zbiorczego."
+                    ? t("dashboard.bots.monitoring.autoRefreshAggregate")
                     : selectedMonitorSession?.status === "RUNNING"
-                      ? "Auto-refresh aktywny dla biezacej sesji."
-                      : "Auto-refresh aktywny dla wybranej sesji."}
+                      ? t("dashboard.bots.monitoring.autoRefreshCurrentSession")
+                      : t("dashboard.bots.monitoring.autoRefreshSelectedSession")}
                 </p>
 
                 <details className="rounded-md border border-base-300 bg-base-200">
                   <summary className="cursor-pointer px-3 py-2 text-xs font-semibold uppercase tracking-wide opacity-70">
-                    Opcje zaawansowane
+                    {t("dashboard.bots.monitoring.advancedOptions")}
                   </summary>
                   <div className="grid gap-3 border-t border-base-300 p-3 md:grid-cols-6">
                     <label className="form-control md:col-span-2">
-                      <span className="label-text">Bot (manualny wybor)</span>
+                      <span className="label-text">{t("dashboard.bots.monitoring.botManualLabel")}</span>
                       <select
                         className="select select-bordered"
                         value={monitorBotId}
@@ -1752,26 +1771,26 @@ export default function BotsManagement() {
                       </select>
                     </label>
                     <label className="form-control">
-                      <span className="label-text">Widok</span>
+                      <span className="label-text">{t("dashboard.bots.monitoring.viewLabel")}</span>
                       <select
                         className="select select-bordered"
                         value={monitorViewMode}
                         onChange={(event) => setMonitorViewMode(event.target.value as "aggregate" | "session")}
                       >
-                        <option value="aggregate">Zbiorczy (domyslny)</option>
-                        <option value="session">Sesja (zaawansowany)</option>
+                        <option value="aggregate">{t("dashboard.bots.monitoring.viewAggregate")}</option>
+                        <option value="session">{t("dashboard.bots.monitoring.viewSession")}</option>
                       </select>
                     </label>
                     {monitorViewMode === "session" ? (
                       <label className="form-control md:col-span-3">
-                        <span className="label-text">Sesja</span>
+                        <span className="label-text">{t("dashboard.bots.monitoring.sessionLabel")}</span>
                         <select
                           className="select select-bordered"
                           value={monitorSessionId}
                           onChange={(event) => setMonitorSessionId(event.target.value)}
                           disabled={monitorSessions.length === 0}
                         >
-                          {monitorSessions.length === 0 ? <option value="">Brak sesji</option> : null}
+                          {monitorSessions.length === 0 ? <option value="">{t("dashboard.bots.monitoring.noSessionsOption")}</option> : null}
                           {monitorSessions.map((session) => (
                             <option key={session.id} value={session.id}>
                               {session.id.slice(0, 8)} | {session.status} | {formatDateTime(session.startedAt)}
@@ -1781,9 +1800,11 @@ export default function BotsManagement() {
                       </label>
                     ) : (
                       <div className="form-control md:col-span-3">
-                        <span className="label-text">Zakres</span>
+                        <span className="label-text">{t("dashboard.bots.monitoring.scopeLabel")}</span>
                         <div className="rounded-md border border-base-300 bg-base-100 px-3 py-2 text-sm">
-                          Wszystkie sesje ({monitorSessions.length})
+                          {interpolateTemplate(t("dashboard.bots.monitoring.scopeAllSessions"), {
+                            count: monitorSessions.length,
+                          })}
                         </div>
                       </div>
                     )}
@@ -1792,29 +1813,29 @@ export default function BotsManagement() {
               </div>
 
               <div className="rounded-lg border border-base-300 bg-base-100 p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide opacity-65">Szybka nawigacja runtime</p>
+                <p className="text-xs font-semibold uppercase tracking-wide opacity-65">{t("dashboard.bots.monitoring.quickNavTitle")}</p>
                 <div className="mt-2 flex flex-wrap gap-2 text-xs">
                   <a href="#monitor-now" className="btn btn-outline btn-xs">
-                    1. Teraz
+                    {t("dashboard.bots.monitoring.quickNavNow")}
                   </a>
                   <a href="#monitor-history" className="btn btn-outline btn-xs">
-                    2. Historia
+                    {t("dashboard.bots.monitoring.quickNavHistory")}
                   </a>
                   <a href="#monitor-future" className="btn btn-outline btn-xs">
-                    3. Co bedzie
+                    {t("dashboard.bots.monitoring.quickNavFuture")}
                   </a>
                 </div>
                 <p className="mt-2 text-[11px] opacity-65">
-                  Przejdz bezposrednio do sekcji operacyjnej: otwarte pozycje, historia wykonania i live-check sygnalow.
+                  {t("dashboard.bots.monitoring.quickNavDescription")}
                 </p>
               </div>
 
-              {monitorLoading ? <LoadingState title="Ladowanie sesji runtime" /> : null}
+              {monitorLoading ? <LoadingState title={t("dashboard.bots.monitoring.loadingSessions")} /> : null}
               {!monitorLoading && monitorError ? (
                 <ErrorState
-                  title="Nie udalo sie pobrac monitoringu"
+                  title={t("dashboard.bots.monitoring.loadErrorTitle")}
                   description={monitorError}
-                  retryLabel="Sprobuj ponownie"
+                  retryLabel={t("dashboard.bots.states.retry")}
                   onRetry={() => {
                     if (!monitorBotId) return;
                     void refreshMonitoring();
@@ -1824,8 +1845,8 @@ export default function BotsManagement() {
 
               {!monitorLoading && !monitorError && monitorSessions.length === 0 ? (
                 <EmptyState
-                  title="Brak sesji runtime"
-                  description="Bot nie uruchomil jeszcze sesji monitoringu albo filtr statusu nic nie zwrocil. Upewnij sie, ze dziala worker execution + market-stream (np. przez `pnpm run backend/dev` albo `pnpm run workers/dev`)."
+                  title={t("dashboard.bots.monitoring.emptySessionsTitle")}
+                  description={t("dashboard.bots.monitoring.emptySessionsDescription")}
                 />
               ) : null}
 
@@ -1836,37 +1857,53 @@ export default function BotsManagement() {
                       <span className={`badge ${toSessionStatusBadgeClass(monitorSessionDetail.status)}`}>
                         {monitorSessionDetail.status}
                       </span>
-                      <span className="badge badge-outline">Mode: {monitorSessionDetail.mode}</span>
+                      <span className="badge badge-outline">
+                        {interpolateTemplate(t("dashboard.bots.monitoring.sessionModeBadge"), {
+                          mode: monitorSessionDetail.mode,
+                        })}
+                      </span>
                       {monitorViewMode === "aggregate" ? (
-                        <span className="text-xs opacity-70">Sesje: {monitorSessions.length}</span>
+                        <span className="text-xs opacity-70">
+                          {interpolateTemplate(t("dashboard.bots.monitoring.sessionsBadge"), {
+                            count: monitorSessions.length,
+                          })}
+                        </span>
                       ) : (
                         <span className="text-xs opacity-70">
-                          Session ID: {(selectedMonitorSession?.id ?? monitorSessionDetail.id).slice(0, 8)}
+                          {interpolateTemplate(t("dashboard.bots.monitoring.sessionIdBadge"), {
+                            id: (selectedMonitorSession?.id ?? monitorSessionDetail.id).slice(0, 8),
+                          })}
                         </span>
                       )}
                     </div>
                     <div className="mt-2 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
                       <p>
-                        <span className="opacity-60">Start:</span> {formatDateTime(monitorSessionDetail.startedAt)}
+                        <span className="opacity-60">{t("dashboard.bots.monitoring.startLabel")}</span>{" "}
+                        {formatDateTime(monitorSessionDetail.startedAt)}
                       </p>
                       <p>
-                        <span className="opacity-60">Koniec:</span> {formatDateTime(monitorSessionDetail.finishedAt)}
+                        <span className="opacity-60">{t("dashboard.bots.monitoring.endLabel")}</span>{" "}
+                        {formatDateTime(monitorSessionDetail.finishedAt)}
                       </p>
                       <p>
-                        <span className="opacity-60">Heartbeat:</span>{" "}
+                        <span className="opacity-60">{t("dashboard.bots.monitoring.heartbeatLabel")}</span>{" "}
                         {formatDateTime(monitorSessionDetail.lastHeartbeatAt)}
                       </p>
                       <p>
-                        <span className="opacity-60">Czas:</span> {formatDuration(monitorSessionDetail.durationMs)}
+                        <span className="opacity-60">{t("dashboard.bots.monitoring.durationLabel")}</span>{" "}
+                        {formatDuration(monitorSessionDetail.durationMs)}
                       </p>
                     </div>
                   </div>
 
                   <div className="rounded-lg border border-base-300 bg-base-100 p-3">
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                      <h3 className="text-sm font-semibold">Checklist operatora</h3>
+                      <h3 className="text-sm font-semibold">{t("dashboard.bots.monitoring.checklist.title")}</h3>
                       <span className="text-xs opacity-60">
-                        {monitorChecklistItems.filter((item) => item.ok).length}/{monitorChecklistItems.length} OK
+                        {interpolateTemplate(t("dashboard.bots.monitoring.checklist.summary"), {
+                          ok: monitorChecklistItems.filter((item) => item.ok).length,
+                          total: monitorChecklistItems.length,
+                        })}
                       </span>
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
@@ -1875,7 +1912,9 @@ export default function BotsManagement() {
                           <div className="flex items-center justify-between gap-2">
                             <span className="font-medium">{item.label}</span>
                             <span className={`badge badge-xs ${item.ok ? "badge-success" : "badge-warning"}`}>
-                              {item.ok ? "OK" : "SPRAWDZ"}
+                              {item.ok
+                                ? t("dashboard.bots.monitoring.checklist.ok")
+                                : t("dashboard.bots.monitoring.checklist.check")}
                             </span>
                           </div>
                           <p className="mt-1 opacity-65">{item.note}</p>
@@ -1884,25 +1923,25 @@ export default function BotsManagement() {
                     </div>
                   </div>
 
-                  {monitorSessionLoading ? <LoadingState title="Ladowanie danych sesji" /> : null}
+                  {monitorSessionLoading ? <LoadingState title={t("dashboard.bots.monitoring.loadingSessionData")} /> : null}
 
                   {monitorSessionDetail ? (
                     <div className="grid gap-3 lg:grid-cols-3">
                       <div className="rounded-lg border border-base-300 bg-base-100 p-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide opacity-65">Co jest teraz</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide opacity-65">{t("dashboard.bots.monitoring.nowTitle")}</p>
                         <div className="mt-2 space-y-1 text-sm">
                           <p>
-                            <span className="opacity-60">Pozycje otwarte:</span>{" "}
+                            <span className="opacity-60">{t("dashboard.bots.monitoring.openPositionsLabel")}</span>{" "}
                             <span className="font-semibold">{monitorPositions?.openCount ?? 0}</span>
                           </p>
                           <p>
-                            <span className="opacity-60">Zlecenia otwarte:</span>{" "}
+                            <span className="opacity-60">{t("dashboard.bots.monitoring.openOrdersLabel")}</span>{" "}
                             <span className="font-semibold">
                               {monitorPositions?.openOrdersCount ?? monitorPositions?.openOrders?.length ?? 0}
                             </span>
                           </p>
                           <p>
-                            <span className="opacity-60">Open PnL:</span>{" "}
+                            <span className="opacity-60">{t("dashboard.bots.monitoring.openPnlLabel")}</span>{" "}
                             <span
                               className={`font-semibold ${
                                 monitorOpenMarginSummary.totalOpenPnl >= 0 ? "text-success" : "text-error"
@@ -1915,18 +1954,18 @@ export default function BotsManagement() {
                       </div>
 
                       <div className="rounded-lg border border-base-300 bg-base-100 p-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide opacity-65">Co bylo</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide opacity-65">{t("dashboard.bots.monitoring.wasTitle")}</p>
                         <div className="mt-2 space-y-1 text-sm">
                           <p>
-                            <span className="opacity-60">Trade&apos;y zamkniete:</span>{" "}
+                            <span className="opacity-60">{t("dashboard.bots.monitoring.closedTradesLabel")}</span>{" "}
                             <span className="font-semibold">{monitorSessionDetail.summary.closedTrades}</span>
                           </p>
                           <p>
-                            <span className="opacity-60">Win rate:</span>{" "}
+                            <span className="opacity-60">{t("dashboard.bots.monitoring.winRateLabel")}</span>{" "}
                             <span className="font-semibold">{formatNumber(monitorWinRate, 2)}%</span>
                           </p>
                           <p>
-                            <span className="opacity-60">Realized PnL:</span>{" "}
+                            <span className="opacity-60">{t("dashboard.bots.monitoring.realizedPnlLabel")}</span>{" "}
                             <span
                               className={`font-semibold ${
                                 monitorSessionDetail.summary.realizedPnl >= 0 ? "text-success" : "text-error"
@@ -1939,22 +1978,22 @@ export default function BotsManagement() {
                       </div>
 
                       <div className="rounded-lg border border-base-300 bg-base-100 p-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide opacity-65">Co bedzie</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide opacity-65">{t("dashboard.bots.monitoring.futureTitle")}</p>
                         <div className="mt-2 space-y-1 text-sm">
                           <p>
-                            <span className="opacity-60">Sledzone symbole:</span>{" "}
+                            <span className="opacity-60">{t("dashboard.bots.monitoring.trackedSymbolsLabel")}</span>{" "}
                             <span className="font-semibold">{monitorSymbolStats?.items.length ?? 0}</span>
                           </p>
                           <p>
-                            <span className="opacity-60">Sygnaly:</span>{" "}
+                            <span className="opacity-60">{t("dashboard.bots.monitoring.signalsLabel")}</span>{" "}
                             <span className="font-semibold">{monitorSessionDetail.summary.totalSignals}</span>
                           </p>
                           <p>
-                            <span className="opacity-60">DCA:</span>{" "}
+                            <span className="opacity-60">{t("dashboard.bots.monitoring.dcaLabel")}</span>{" "}
                             <span className="font-semibold">{monitorSessionDetail.summary.dcaCount}</span>
                           </p>
                           <p>
-                            <span className="opacity-60">Fees:</span>{" "}
+                            <span className="opacity-60">{t("dashboard.bots.monitoring.feesLabel")}</span>{" "}
                             <span className="font-semibold">{formatCurrency(monitorSessionDetail.summary.feesPaid)}</span>
                           </p>
                         </div>
@@ -1965,23 +2004,23 @@ export default function BotsManagement() {
                   {monitorSessionDetail ? (
                     <div className="rounded-lg border border-base-300 bg-base-100 p-3">
                       <p className="text-xs font-semibold uppercase tracking-wide opacity-65">
-                        Szybka kontrola operatora
+                        {t("dashboard.bots.monitoring.operatorCheckTitle")}
                       </p>
                       <div className="mt-2 grid gap-2 text-xs sm:grid-cols-2 xl:grid-cols-4">
                         <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
-                          <p className="opacity-60">Heartbeat lag</p>
+                          <p className="opacity-60">{t("dashboard.bots.monitoring.heartbeatLagLabel")}</p>
                           <p className="mt-1 font-semibold">{formatDuration(monitorHeartbeatLagMs ?? 0)}</p>
                         </div>
                         <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
-                          <p className="opacity-60">Ostatni sygnal</p>
+                          <p className="opacity-60">{t("dashboard.bots.monitoring.lastSignalLabel")}</p>
                           <p className="mt-1 font-semibold">{formatDateTime(monitorLastSignalAt)}</p>
                         </div>
                         <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
-                          <p className="opacity-60">Ostatni trade</p>
+                          <p className="opacity-60">{t("dashboard.bots.monitoring.lastTradeLabel")}</p>
                           <p className="mt-1 font-semibold">{formatDateTime(monitorLastTradeAt)}</p>
                         </div>
                         <div className="rounded-md border border-base-300 bg-base-200 px-2 py-2">
-                          <p className="opacity-60">Otwarte pozycje / zlecenia</p>
+                          <p className="opacity-60">{t("dashboard.bots.monitoring.openPositionsOrdersLabel")}</p>
                           <p className="mt-1 font-semibold">
                             {monitorPositions?.openCount ?? 0} /{" "}
                             {monitorPositions?.openOrdersCount ?? monitorPositions?.openOrders?.length ?? 0}
@@ -1994,13 +2033,13 @@ export default function BotsManagement() {
                   <div id="monitor-now" className="scroll-mt-24 rounded-lg border border-base-300 bg-base-100 p-3">
                     <div className="mb-2 flex items-center justify-between">
                       <div>
-                        <h3 className="text-sm font-semibold">1. Teraz - otwarte pozycje</h3>
+                        <h3 className="text-sm font-semibold">{t("dashboard.bots.monitoring.sections.nowOpenPositionsTitle")}</h3>
                         <p className="text-xs opacity-65">
-                          Natychmiastowa kontrola tego, co jest aktywne w tej chwili.
+                          {t("dashboard.bots.monitoring.sections.nowOpenPositionsDescription")}
                         </p>
                         <p className="mt-1 text-xs opacity-60">
-                          Notional: {formatCurrency(monitorOpenMarginSummary.totalNotional)} | Margin:{" "}
-                          {formatCurrency(monitorOpenMarginSummary.totalMarginUsed)} | Open PnL:{" "}
+                          {t("dashboard.bots.monitoring.notionalLabel")}: {formatCurrency(monitorOpenMarginSummary.totalNotional)} | {t("dashboard.bots.monitoring.marginLabel")}:{" "}
+                          {formatCurrency(monitorOpenMarginSummary.totalMarginUsed)} | {t("dashboard.bots.monitoring.openPnlLabel")}{" "}
                           <span
                             className={
                               monitorOpenMarginSummary.totalOpenPnl >= 0 ? "text-success" : "text-error"
@@ -2011,35 +2050,38 @@ export default function BotsManagement() {
                           {monitorOpenMarginSummary.marginInitPct != null ? (
                             <>
                               {" "}
-                              | Margin/init: {formatNumber(monitorOpenMarginSummary.marginInitPct, 2)}%
+                              | {t("dashboard.bots.monitoring.marginInitLabel")}: {formatNumber(monitorOpenMarginSummary.marginInitPct, 2)}%
                             </>
                           ) : null}
                         </p>
                       </div>
                       <span className="text-xs opacity-60">
-                        {monitorOpenPositionRows.length} / {(monitorPositions?.openCount ?? 0)} aktywne
+                        {interpolateTemplate(t("dashboard.bots.monitoring.activeCount"), {
+                          count: monitorOpenPositionRows.length,
+                          total: monitorPositions?.openCount ?? 0,
+                        })}
                       </span>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="table table-xs table-zebra">
                         <thead>
                           <tr>
-                            <th>Czas otwarcia</th>
-                            <th>Symbol</th>
-                            <th>Side</th>
-                            <th>Qty</th>
-                            <th>Entry</th>
-                            <th>Mark</th>
-                            <th>Notional</th>
-                            <th>Margin</th>
-                            <th>Margin/init</th>
-                            <th>Fees</th>
-                            <th>Open PnL</th>
-                            <th>Open %</th>
-                            <th>ROI % (margin)</th>
-                            <th>DCA</th>
-                            {monitorShowDynamicStopColumns ? <th>SL (TTP)</th> : null}
-                            {monitorShowDynamicStopColumns ? <th>SL (TSL)</th> : null}
+                            <th>{t("dashboard.bots.monitoring.table.timeOpened")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.symbol")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.side")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.qty")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.entry")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.mark")}</th>
+                            <th>{t("dashboard.bots.monitoring.notionalLabel")}</th>
+                            <th>{t("dashboard.bots.monitoring.marginLabel")}</th>
+                            <th>{t("dashboard.bots.monitoring.marginInitLabel")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.fees")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.openPnl")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.openPct")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.roiMarginPct")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.dca")}</th>
+                            {monitorShowDynamicStopColumns ? <th>{t("dashboard.bots.monitoring.table.slTtp")}</th> : null}
+                            {monitorShowDynamicStopColumns ? <th>{t("dashboard.bots.monitoring.table.slTsl")}</th> : null}
                           </tr>
                         </thead>
                         <tbody>
@@ -2091,7 +2133,7 @@ export default function BotsManagement() {
                                 colSpan={monitorShowDynamicStopColumns ? 16 : 14}
                                 className="text-center text-xs opacity-70"
                               >
-                                Brak otwartych pozycji w tej sesji.
+                                {t("dashboard.bots.monitoring.emptyOpenPositions")}
                               </td>
                             </tr>
                           ) : null}
@@ -2103,25 +2145,27 @@ export default function BotsManagement() {
                   {monitorShowOpenOrders ? (
                     <div className="rounded-lg border border-base-300 bg-base-100 p-3">
                       <div className="mb-2 flex items-center justify-between">
-                        <h3 className="text-sm font-semibold">Teraz - otwarte zlecenia</h3>
+                        <h3 className="text-sm font-semibold">{t("dashboard.bots.monitoring.sections.nowOpenOrdersTitle")}</h3>
                         <span className="text-xs opacity-60">
-                          {(monitorPositions?.openOrders ?? []).length} /{" "}
-                          {monitorPositions?.openOrdersCount ?? monitorPositions?.openOrders?.length ?? 0} aktywne
+                          {interpolateTemplate(t("dashboard.bots.monitoring.activeCount"), {
+                            count: (monitorPositions?.openOrders ?? []).length,
+                            total: monitorPositions?.openOrdersCount ?? monitorPositions?.openOrders?.length ?? 0,
+                          })}
                         </span>
                       </div>
                       <div className="overflow-x-auto">
                         <table className="table table-xs table-zebra">
                           <thead>
                             <tr>
-                              <th>Symbol</th>
-                              <th>Side</th>
-                              <th>Type</th>
-                              <th>Status</th>
-                              <th>Qty</th>
-                              <th>Filled</th>
-                              <th>Price</th>
-                              <th>Stop</th>
-                              <th>Submitted</th>
+                              <th>{t("dashboard.bots.monitoring.table.symbol")}</th>
+                              <th>{t("dashboard.bots.monitoring.table.side")}</th>
+                              <th>{t("dashboard.bots.monitoring.table.type")}</th>
+                              <th>{t("dashboard.bots.monitoring.table.status")}</th>
+                              <th>{t("dashboard.bots.monitoring.table.qty")}</th>
+                              <th>{t("dashboard.bots.monitoring.table.filled")}</th>
+                              <th>{t("dashboard.bots.monitoring.table.price")}</th>
+                              <th>{t("dashboard.bots.monitoring.table.stop")}</th>
+                              <th>{t("dashboard.bots.monitoring.table.submitted")}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -2141,7 +2185,7 @@ export default function BotsManagement() {
                             {(monitorPositions?.openOrders?.length ?? 0) === 0 ? (
                               <tr>
                                 <td colSpan={9} className="text-center text-xs opacity-70">
-                                  Brak otwartych zlecen.
+                                  {t("dashboard.bots.monitoring.emptyOpenOrders")}
                                 </td>
                               </tr>
                             ) : null}
@@ -2154,30 +2198,33 @@ export default function BotsManagement() {
                   <div id="monitor-history" className="scroll-mt-24 rounded-lg border border-base-300 bg-base-100 p-3">
                     <div className="mb-2 flex items-center justify-between">
                       <div>
-                        <h3 className="text-sm font-semibold">2. Historia - pozycje</h3>
+                        <h3 className="text-sm font-semibold">{t("dashboard.bots.monitoring.sections.historyPositionsTitle")}</h3>
                         <p className="text-xs opacity-65">
-                          Weryfikacja tego, co juz sie wydarzylo: wynik, tempo i jakosc wykonania.
+                          {t("dashboard.bots.monitoring.sections.historyPositionsDescription")}
                         </p>
                       </div>
                       <span className="text-xs opacity-60">
-                        {(monitorPositions?.historyItems.length ?? 0)} / {(monitorPositions?.closedCount ?? 0)} zamkniete
+                        {interpolateTemplate(t("dashboard.bots.monitoring.closedCount"), {
+                          count: monitorPositions?.historyItems.length ?? 0,
+                          total: monitorPositions?.closedCount ?? 0,
+                        })}
                       </span>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="table table-xs table-zebra">
                         <thead>
                           <tr>
-                            <th>Symbol</th>
-                            <th>Side</th>
-                            <th>Otwarcie</th>
-                            <th>Zamkniecie</th>
-                            <th>Czas</th>
-                            <th>Qty</th>
-                            <th>Entry</th>
-                            <th>Exit</th>
-                            <th>DCA</th>
-                            <th>Fees</th>
-                            <th>Realized PnL</th>
+                            <th>{t("dashboard.bots.monitoring.table.symbol")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.side")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.open")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.close")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.duration")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.qty")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.entry")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.exit")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.dca")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.fees")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.realizedPnl")}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2201,7 +2248,7 @@ export default function BotsManagement() {
                           {(monitorPositions?.historyItems.length ?? 0) === 0 ? (
                             <tr>
                               <td colSpan={11} className="text-center text-xs opacity-70">
-                                Brak zamknietych pozycji w tej sesji.
+                                {t("dashboard.bots.monitoring.emptyClosedPositions")}
                               </td>
                             </tr>
                           ) : null}
@@ -2212,9 +2259,12 @@ export default function BotsManagement() {
 
                   <div className="rounded-lg border border-base-300 bg-base-100 p-3">
                     <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold">Historia - log operacyjny trade&apos;ow</h3>
+                      <h3 className="text-sm font-semibold">{t("dashboard.bots.monitoring.sections.historyTradesTitle")}</h3>
                       <span className="text-xs opacity-60">
-                        {monitorOperationalTrades.length} / {(monitorTrades?.total ?? 0)} rekordow
+                        {interpolateTemplate(t("dashboard.bots.monitoring.recordsCount"), {
+                          count: monitorOperationalTrades.length,
+                          total: monitorTrades?.total ?? 0,
+                        })}
                       </span>
                     </div>
                     <div className="overflow-x-auto">
@@ -2222,21 +2272,21 @@ export default function BotsManagement() {
                         <thead>
                           <tr>
                             <th>#</th>
-                            <th>Czas</th>
-                            <th>Symbol</th>
-                            <th>Side</th>
-                            <th>Action</th>
-                            <th>Qty</th>
-                            <th>Price</th>
-                            <th>Margin</th>
-                            <th>Fee</th>
-                            <th>Fee %</th>
-                            <th>Realized PnL</th>
-                            <th>PnL %</th>
-                            <th>Skumulowany PnL</th>
-                            <th>Origin</th>
-                            <th>Order</th>
-                            <th>Position</th>
+                            <th>{t("dashboard.bots.monitoring.table.time")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.symbol")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.side")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.action")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.qty")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.price")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.margin")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.fee")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.feePct")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.realizedPnl")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.pnlPct")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.cumulativePnl")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.origin")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.order")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.position")}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2250,7 +2300,7 @@ export default function BotsManagement() {
                               </td>
                               <td>
                                 <span className={`badge badge-xs ${toTradeLifecycleBadgeClass(trade.lifecycleAction)}`}>
-                                  {toTradeLifecycleLabel(trade.lifecycleAction)}
+                                  {t(toTradeLifecycleLabelKey(trade.lifecycleAction))}
                                 </span>
                               </td>
                               <td>{formatNumber(trade.quantity, 6)}</td>
@@ -2282,7 +2332,7 @@ export default function BotsManagement() {
                           {monitorOperationalTrades.length === 0 ? (
                             <tr>
                               <td colSpan={16} className="text-center text-xs opacity-70">
-                                Brak transakcji dla tej sesji i filtra.
+                                {t("dashboard.bots.monitoring.emptyTrades")}
                               </td>
                             </tr>
                           ) : null}
@@ -2294,35 +2344,38 @@ export default function BotsManagement() {
                   <div id="monitor-future" className="scroll-mt-24 rounded-lg border border-base-300 bg-base-100 p-3">
                     <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
                       <div>
-                        <h3 className="text-sm font-semibold">3. Co bedzie - live check sygnalow</h3>
+                        <h3 className="text-sm font-semibold">{t("dashboard.bots.monitoring.sections.futureSignalsTitle")}</h3>
                         <p className="text-xs opacity-65">
-                          Szybka ocena, ktory symbol ma sygnal LONG/SHORT/EXIT lub brak sygnalu.
+                          {t("dashboard.bots.monitoring.sections.futureSignalsDescription")}
                         </p>
                       </div>
                       <div className="text-right text-xs opacity-60">
                         <div>
-                          {monitorSignalRows.length} / {monitorSessionDetail?.symbolsTracked ?? 0} symboli
+                          {interpolateTemplate(t("dashboard.bots.monitoring.symbolCount"), {
+                            count: monitorSignalRows.length,
+                            total: monitorSessionDetail?.symbolsTracked ?? 0,
+                          })}
                         </div>
-                        <div className="opacity-50">Sort: najnowszy sygnal</div>
+                        <div className="opacity-50">{t("dashboard.bots.monitoring.sortLatestSignal")}</div>
                       </div>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="table table-xs table-zebra">
                         <thead>
                           <tr>
-                            <th>Symbol</th>
-                            <th>Sygnal</th>
-                            <th>Czas sygnalu</th>
-                            <th>Signals</th>
-                            <th>L/S/E</th>
-                            <th>DCA</th>
-                            <th>Closed</th>
-                            <th>W/L</th>
-                            <th>Open qty</th>
-                            <th>Realized PnL</th>
-                            <th>Open PnL</th>
-                            <th>Fees</th>
-                            <th>Last trade</th>
+                            <th>{t("dashboard.bots.monitoring.table.symbol")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.signal")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.signalTime")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.signals")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.lse")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.dca")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.closed")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.wl")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.openQty")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.realizedPnl")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.openPnl")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.fees")}</th>
+                            <th>{t("dashboard.bots.monitoring.table.lastTrade")}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2341,7 +2394,7 @@ export default function BotsManagement() {
                                           : "badge-ghost"
                                   }`}
                                 >
-                                  {item.lastSignalDirection ?? "NEUTRAL"}
+                                  {item.lastSignalDirection ?? t("dashboard.bots.monitoring.neutral")}
                                 </span>
                               </td>
                               <td>{formatDateTime(item.lastSignalDecisionAt ?? item.lastSignalAt)}</td>
@@ -2368,7 +2421,7 @@ export default function BotsManagement() {
                           {monitorSignalRows.length === 0 ? (
                             <tr>
                               <td colSpan={13} className="text-center text-xs opacity-70">
-                                Brak danych live-check sygnalow dla tej sesji i filtra.
+                                {t("dashboard.bots.monitoring.emptySignalData")}
                               </td>
                             </tr>
                           ) : null}
@@ -2385,20 +2438,20 @@ export default function BotsManagement() {
 
       {activeTab === "assistant" && (
         <div className="space-y-4 rounded-xl border border-base-300 bg-base-200 p-4">
-          <h2 className="text-lg font-semibold">Konfiguracja asystenta</h2>
+          <h2 className="text-lg font-semibold">{t("dashboard.bots.assistant.title")}</h2>
           <p className="text-sm opacity-70">
-            Konfiguracja glownego asystenta i 4 slotow subagentow per bot.
+            {t("dashboard.bots.assistant.description")}
           </p>
 
           {bots.length === 0 ? (
             <EmptyState
-              title="Brak botow"
-              description="Utworz najpierw bota, aby skonfigurowac Assistant."
+              title={t("dashboard.bots.assistant.emptyTitle")}
+              description={t("dashboard.bots.assistant.emptyDescription")}
             />
           ) : (
             <>
               <label className="form-control max-w-sm">
-                <span className="label-text">Bot</span>
+                <span className="label-text">{t("dashboard.bots.assistant.botLabel")}</span>
                 <select
                   className="select select-bordered"
                   value={assistantBotId}
@@ -2413,12 +2466,12 @@ export default function BotsManagement() {
               </label>
 
               {assistantLoading ? (
-                <LoadingState title="Ladowanie konfiguracji asystenta" />
+                <LoadingState title={t("dashboard.bots.assistant.loading")} />
               ) : (
                 <div className="space-y-4">
                   <div className="grid gap-3 md:grid-cols-5">
                     <label className="form-control">
-                      <span className="label-text">Main enabled</span>
+                      <span className="label-text">{t("dashboard.bots.assistant.mainEnabledLabel")}</span>
                       <input
                         type="checkbox"
                         className="toggle toggle-success"
@@ -2427,16 +2480,16 @@ export default function BotsManagement() {
                       />
                     </label>
                     <label className="form-control md:col-span-2">
-                      <span className="label-text">Mandate</span>
+                      <span className="label-text">{t("dashboard.bots.assistant.mandateLabel")}</span>
                       <input
                         className="input input-bordered"
                         value={assistantMandate}
                         onChange={(event) => setAssistantMandate(event.target.value)}
-                        placeholder="Trade only with clear risk-adjusted edge"
+                        placeholder={t("dashboard.bots.assistant.mandatePlaceholder")}
                       />
                     </label>
                     <label className="form-control">
-                      <span className="label-text">Model profile</span>
+                      <span className="label-text">{t("dashboard.bots.assistant.modelProfileLabel")}</span>
                       <input
                         className="input input-bordered"
                         value={assistantModelProfile}
@@ -2444,7 +2497,7 @@ export default function BotsManagement() {
                       />
                     </label>
                     <label className="form-control">
-                      <span className="label-text">Safety mode</span>
+                      <span className="label-text">{t("dashboard.bots.assistant.safetyModeLabel")}</span>
                       <select
                         className="select select-bordered"
                         value={assistantSafetyMode}
@@ -2459,7 +2512,7 @@ export default function BotsManagement() {
                     </label>
                   </div>
                   <label className="form-control max-w-xs">
-                    <span className="label-text">Main latency (ms)</span>
+                    <span className="label-text">{t("dashboard.bots.assistant.mainLatencyLabel")}</span>
                     <input
                       type="number"
                       className="input input-bordered"
@@ -2476,17 +2529,21 @@ export default function BotsManagement() {
                       disabled={assistantSaving || !assistantBotId}
                       onClick={() => void handleSaveAssistantMain()}
                     >
-                      {assistantSaving ? "Zapisywanie..." : "Zapisz main config"}
+                      {assistantSaving ? t("dashboard.bots.assistant.saving") : t("dashboard.bots.assistant.saveMain")}
                     </button>
                   </div>
 
                   <div className="space-y-3">
                     {assistantSlots.map((slot) => (
                       <div key={slot.slotIndex} className="rounded-lg border border-base-300 p-3">
-                        <div className="mb-2 font-medium">Subagent slot {slot.slotIndex}</div>
+                        <div className="mb-2 font-medium">
+                          {interpolateTemplate(t("dashboard.bots.assistant.subagentSlotTitle"), {
+                            slot: slot.slotIndex,
+                          })}
+                        </div>
                         <div className="grid gap-3 md:grid-cols-5">
                           <label className="form-control">
-                            <span className="label-text">Enabled</span>
+                            <span className="label-text">{t("dashboard.bots.assistant.enabledLabel")}</span>
                             <input
                               type="checkbox"
                               className="toggle toggle-sm"
@@ -2504,7 +2561,7 @@ export default function BotsManagement() {
                             />
                           </label>
                           <label className="form-control">
-                            <span className="label-text">Role</span>
+                            <span className="label-text">{t("dashboard.bots.assistant.roleLabel")}</span>
                             <input
                               className="input input-bordered input-sm"
                               value={slot.role}
@@ -2521,7 +2578,7 @@ export default function BotsManagement() {
                             />
                           </label>
                           <label className="form-control">
-                            <span className="label-text">Profile</span>
+                            <span className="label-text">{t("dashboard.bots.assistant.profileLabel")}</span>
                             <input
                               className="input input-bordered input-sm"
                               value={slot.modelProfile}
@@ -2538,7 +2595,7 @@ export default function BotsManagement() {
                             />
                           </label>
                           <label className="form-control">
-                            <span className="label-text">Timeout (ms)</span>
+                            <span className="label-text">{t("dashboard.bots.assistant.timeoutLabel")}</span>
                             <input
                               type="number"
                               min={100}
@@ -2558,7 +2615,7 @@ export default function BotsManagement() {
                             />
                           </label>
                           <label className="form-control">
-                            <span className="label-text">Safety</span>
+                            <span className="label-text">{t("dashboard.bots.assistant.safetyLabel")}</span>
                             <select
                               className="select select-bordered select-sm"
                               value={slot.safetyMode}
@@ -2589,7 +2646,7 @@ export default function BotsManagement() {
                             disabled={assistantSaving || !assistantBotId}
                             onClick={() => void handleSaveSubagent(slot)}
                           >
-                            Zapisz slot
+                            {t("dashboard.bots.assistant.saveSlot")}
                           </button>
                           <button
                             type="button"
@@ -2597,7 +2654,7 @@ export default function BotsManagement() {
                             disabled={assistantSaving || !assistantBotId}
                             onClick={() => void handleClearSubagent(slot.slotIndex)}
                           >
-                            Usun slot
+                            {t("dashboard.bots.assistant.deleteSlot")}
                           </button>
                         </div>
                       </div>
@@ -2605,10 +2662,10 @@ export default function BotsManagement() {
                   </div>
 
                   <div className="rounded-lg border border-base-300 p-3">
-                    <div className="mb-2 font-medium">Decision Timeline (dry-run)</div>
+                    <div className="mb-2 font-medium">{t("dashboard.bots.assistant.decisionTimelineTitle")}</div>
                     <div className="grid gap-3 md:grid-cols-4">
                       <label className="form-control">
-                        <span className="label-text">Symbol</span>
+                        <span className="label-text">{t("dashboard.bots.assistant.symbolLabel")}</span>
                         <input
                           className="input input-bordered input-sm"
                           value={assistantDryRunSymbol}
@@ -2616,7 +2673,7 @@ export default function BotsManagement() {
                         />
                       </label>
                       <label className="form-control">
-                        <span className="label-text">Interval</span>
+                        <span className="label-text">{t("dashboard.bots.assistant.intervalLabel")}</span>
                         <input
                           className="input input-bordered input-sm"
                           value={assistantDryRunInterval}
@@ -2630,7 +2687,7 @@ export default function BotsManagement() {
                           disabled={assistantDryRunRunning || !assistantBotId}
                           onClick={() => void handleRunAssistantDryRun()}
                         >
-                          {assistantDryRunRunning ? "Uruchamianie..." : "Uruchom dry-run"}
+                          {assistantDryRunRunning ? t("dashboard.bots.assistant.running") : t("dashboard.bots.assistant.runDryRun")}
                         </button>
                       </div>
                     </div>
@@ -2638,20 +2695,20 @@ export default function BotsManagement() {
                     {assistantTrace && (
                       <div className="mt-4 space-y-3">
                         <div className="rounded-md border border-base-300 p-2 text-sm">
-                          <div>Request: {assistantTrace.requestId}</div>
-                          <div>Mode: {assistantTrace.mode}</div>
-                          <div>Final decision: {assistantTrace.finalDecision}</div>
-                          <div>Reason: {assistantTrace.finalReason}</div>
+                          <div>{t("dashboard.bots.assistant.traceRequest")}: {assistantTrace.requestId}</div>
+                          <div>{t("dashboard.bots.assistant.traceMode")}: {assistantTrace.mode}</div>
+                          <div>{t("dashboard.bots.assistant.traceFinalDecision")}: {assistantTrace.finalDecision}</div>
+                          <div>{t("dashboard.bots.assistant.traceReason")}: {assistantTrace.finalReason}</div>
                         </div>
                         <div className="overflow-x-auto">
                           <table className="table table-xs">
                             <thead>
                               <tr>
-                                <th>Slot</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th>Latency (ms)</th>
-                                <th>Msg</th>
+                                <th>{t("dashboard.bots.assistant.traceTableSlot")}</th>
+                                <th>{t("dashboard.bots.assistant.traceTableRole")}</th>
+                                <th>{t("dashboard.bots.assistant.traceTableStatus")}</th>
+                                <th>{t("dashboard.bots.assistant.traceTableLatency")}</th>
+                                <th>{t("dashboard.bots.assistant.traceTableMessage")}</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -2679,3 +2736,4 @@ export default function BotsManagement() {
     </div>
   );
 }
+

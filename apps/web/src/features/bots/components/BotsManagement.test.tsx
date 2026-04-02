@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import BotsManagement from "./BotsManagement";
+import { I18nProvider } from "../../../i18n/I18nProvider";
 
 const listMock = vi.hoisted(() => vi.fn());
 const createMock = vi.hoisted(() => vi.fn());
@@ -47,6 +48,7 @@ vi.mock("../../markets/services/markets.service", () => ({
 
 afterEach(() => {
   vi.restoreAllMocks();
+  window.localStorage.clear();
   listStrategiesMock.mockReset();
   listMarketUniversesMock.mockReset();
   getAssistantConfigMock.mockReset();
@@ -61,6 +63,15 @@ afterEach(() => {
   listRuntimeTradesMock.mockReset();
 });
 
+const renderWithI18n = () => {
+  window.localStorage.setItem("cryptosparrow-locale", "pl");
+  return render(
+    <I18nProvider>
+      <BotsManagement />
+    </I18nProvider>
+  );
+};
+
 describe("BotsManagement", () => {
   it("shows and hides paper start balance based on selected bot mode", async () => {
     listMock.mockResolvedValue([]);
@@ -69,7 +80,7 @@ describe("BotsManagement", () => {
       { id: "g-mode", name: "Mode Group", marketType: "FUTURES", baseCurrency: "USDT", whitelist: [], blacklist: [] },
     ]);
 
-    render(<BotsManagement />);
+    renderWithI18n();
     await waitFor(() => {
       expect(screen.getByLabelText("Tryb bota")).toHaveValue("PAPER");
       expect(screen.getByLabelText("Paper start balance")).toBeInTheDocument();
@@ -108,7 +119,7 @@ describe("BotsManagement", () => {
       { id: "g-summary", name: "Summary Group", marketType: "FUTURES", baseCurrency: "USDT", whitelist: [], blacklist: [] },
     ]);
 
-    render(<BotsManagement />);
+    renderWithI18n();
     await waitFor(() => {
       expect(screen.getByLabelText("Strategia bota")).toHaveValue("s-one");
     });
@@ -146,7 +157,7 @@ describe("BotsManagement", () => {
     });
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
 
-    render(<BotsManagement />);
+    renderWithI18n();
     await waitFor(() => {
       expect(listMarketUniversesMock).toHaveBeenCalled();
       expect(screen.getByLabelText("Strategia")).toHaveValue("s-live");
@@ -173,7 +184,7 @@ describe("BotsManagement", () => {
     listStrategiesMock.mockResolvedValue([]);
     listMarketUniversesMock.mockResolvedValue([]);
 
-    render(<BotsManagement />);
+    renderWithI18n();
 
     await waitFor(() => {
       expect(screen.getByText("Brak botow")).toBeInTheDocument();
@@ -199,7 +210,7 @@ describe("BotsManagement", () => {
       maxOpenPositions: 3,
     });
 
-    render(<BotsManagement />);
+    renderWithI18n();
     await waitFor(() => {
       expect(listMarketUniversesMock).toHaveBeenCalled();
       expect(screen.getByLabelText("Strategia")).toHaveValue("s1");
@@ -256,6 +267,30 @@ describe("BotsManagement", () => {
       ])
       .mockResolvedValueOnce([
         {
+          id: "b-futures",
+          name: "Futures Bot",
+          mode: "PAPER",
+          paperStartBalance: 10000,
+          marketType: "FUTURES",
+          positionMode: "ONE_WAY",
+          isActive: false,
+          liveOptIn: false,
+          maxOpenPositions: 1,
+        },
+        {
+          id: "b-spot",
+          name: "Spot Bot",
+          mode: "PAPER",
+          paperStartBalance: 10000,
+          marketType: "SPOT",
+          positionMode: "ONE_WAY",
+          isActive: false,
+          liveOptIn: false,
+          maxOpenPositions: 1,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
           id: "b-spot",
           name: "Spot Bot",
           mode: "PAPER",
@@ -268,7 +303,7 @@ describe("BotsManagement", () => {
         },
       ]);
 
-    render(<BotsManagement />);
+    renderWithI18n();
 
     await waitFor(() => {
       expect(screen.getByDisplayValue("Futures Bot")).toBeInTheDocument();
@@ -307,7 +342,7 @@ describe("BotsManagement", () => {
     deleteMock.mockResolvedValue(undefined);
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
 
-    render(<BotsManagement />);
+    renderWithI18n();
 
     await waitFor(() => {
       expect(screen.getByDisplayValue("Live Bot")).toBeInTheDocument();
@@ -535,7 +570,7 @@ describe("BotsManagement", () => {
       ],
     });
 
-    render(<BotsManagement />);
+    renderWithI18n();
     await waitFor(() => {
       expect(screen.getByDisplayValue("Monitor Bot")).toBeInTheDocument();
     });
@@ -698,7 +733,7 @@ describe("BotsManagement", () => {
       items: [],
     });
 
-    render(<BotsManagement />);
+    renderWithI18n();
     await waitFor(() => {
       expect(screen.getByDisplayValue("Refresh Bot")).toBeInTheDocument();
     });
