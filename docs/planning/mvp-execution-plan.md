@@ -425,7 +425,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DPL-06 chore(scripts): add one-command local prod-like orchestration with preflight checks`
 - [x] `DPL-07 ops(migrations): define migration strategy for deployment pipeline and operator ownership`
 - [x] `DPL-08 ops(health): standardize deployment readiness gates for web/api/workers`
-- [ ] `DPL-09 ops(smoke): add post-deploy smoke checklist for target domains`
+- [x] `DPL-09 ops(smoke): add post-deploy smoke checklist for target domains`
 - [ ] `DPL-10 ops(rollback): define rollback playbook for app version/env rollback and worker incidents`
 - [ ] `DPL-11 docs(rename-audit): inventory all `CryptoSparrow` tokens and classify rename waves`
 - [ ] `DPL-12 docs(rename-plan): define controlled global rename rollout `CryptoSparrow -> Soar` with risk gates`
@@ -458,6 +458,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 
 ## Progress Log
+- 2026-04-03: Completed `DPL-09` by publishing `docs/operations/post-deploy-smoke-checklist.md` with target-domain smoke checks (api/web/auth/dashboard/bots/workers/data-write/security), pass/fail policy, and evidence capture contract for STAGE/PROD rollout validation.
 - 2026-04-03: Completed `DPL-08` by publishing `docs/operations/deployment-readiness-gates.md` with canonical gate pack (`G1..G6`) for build/migration/api/web/workers/smoke, immutable stage-promotion criteria, required prod post-deploy checks, and fail-closed evidence contract; linked in deployment planning outputs.
 - 2026-04-03: Completed `DPL-07` by publishing `docs/operations/deployment-migration-strategy.md` with explicit ownership (developer/CI/release-owner), immutable-SHA migration gate policy, STAGE->PROD migration sequence, backward-compatible expand/switch/contract pattern, and incident/evidence contract; linked in deployment planning outputs.
 - 2026-04-03: Completed `DPL-06` by adding `scripts/start-local-prod-like.mjs` and root script `pnpm run prod-like/start`, including preflight checks for required env files, build gate for `api` + `web`, and fail-fast orchestration for `api`, `web`, and `workers` in one command; updated local runbook with fast-path usage.

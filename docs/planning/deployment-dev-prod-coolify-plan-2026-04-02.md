@@ -15,6 +15,7 @@ Make startup and deployment predictable and low-friction in three modes:
 - `docs/operations/dev-stage-prod-promotion-contract.md` (immutable SHA promotion contract DEV -> STAGE -> PROD)
 - `docs/operations/deployment-migration-strategy.md` (migration ownership + stage/prod pipeline execution policy)
 - `docs/operations/deployment-readiness-gates.md` (canonical gate pack and pass/fail contract for web/api/workers)
+- `docs/operations/post-deploy-smoke-checklist.md` (post-deploy smoke checklist and evidence requirements for target domains)
 
 ## Requested Target
 - Web domain: `cryptosparrow.luckysparrow.ch`
