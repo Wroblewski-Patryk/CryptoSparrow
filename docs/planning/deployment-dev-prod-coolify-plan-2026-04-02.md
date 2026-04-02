@@ -9,6 +9,9 @@ Make startup and deployment predictable and low-friction in three modes:
 - `STAGE` (test environment on VPS) for automatic verification of incoming commits.
 - `PROD` for user-facing stable runtime on VPS.
 
+## Canonical Output Documents
+- `docs/operations/dev-stage-prod-environment-matrix.md` (environment + secrets contract)
+
 ## Requested Target
 - Web domain: `cryptosparrow.luckysparrow.ch`
 - API domain: `api.cryptosparrow.luckysparrow.ch`

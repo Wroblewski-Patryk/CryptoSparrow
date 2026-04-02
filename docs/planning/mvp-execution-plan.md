@@ -417,8 +417,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DBRT-10 feat(web-dashboard): implement tri-state column sorting cycle (asc -> desc -> none) for trades table`
 
 ## Phase 25 - Deployment Simplicity (DEV/STAGE/PROD + Coolify VPS)
-- [ ] `DPL-01 docs(contract): publish canonical DEV/STAGE/PROD environment matrix and secrets policy`
-- [ ] `DPL-02 docs(runbook): publish step-by-step local DEV and local PROD-like startup procedures`
+- [x] `DPL-01 docs(contract): publish canonical DEV/STAGE/PROD environment matrix and secrets policy`
+- [x] `DPL-02 docs(runbook): publish step-by-step local DEV and local PROD-like startup procedures`
 - [ ] `DPL-03 docs(coolify): publish Linux VPS Coolify setup guide with service mapping and domain routing`
 - [ ] `DPL-04 chore(env): add non-secret `.env.example` templates for api/web with required keys and comments`
 - [ ] `DPL-05 chore(scripts): add production-safe worker start script and explicit process ownership contract`
@@ -458,6 +458,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 
 ## Progress Log
+- 2026-04-03: Completed `DPL-02` by publishing canonical step-by-step local startup procedures for both `DEV` and `local PROD-like` in `docs/engineering/local-development.md` (infra, api/web/workers startup, verification, and shutdown flow).
+- 2026-04-03: Completed `DPL-01` by publishing canonical `DEV/STAGE/PROD` environment + secrets contract in `docs/operations/dev-stage-prod-environment-matrix.md` (service variable matrix, secret classes, non-negotiable handling rules, and validation checklist) and linking it from deployment planning doc.
 - 2026-04-02: Completed `BOPS-56..BOPS-58` by splitting Bots IA into `/dashboard/bots` (table-first list), `/dashboard/bots/create` (shared create/edit form), and dedicated row actions for Runtime/Assistant with preferred-bot deep links; updated header route contract to `/dashboard/bots/create` and kept `/dashboard/bots/new` as legacy redirect.
 - 2026-04-02: Added `BOPS-55..BOPS-59` planning for Bots module IA split: `/bots` as table-only list, `/bots/create` as shared create/edit form, and row actions routing to Runtime/Assistant contexts.
 - 2026-04-02: Added `BOPS-51..BOPS-54` planning for Dashboard signal panel polish: rename `Live checks` to strategy-signal semantics, move panel above open positions, and add responsive + horizontal overflow navigation contract for large universes (up to hundreds of symbols).
