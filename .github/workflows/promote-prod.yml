@@ -1,0 +1,52 @@
+name: Promote PROD
+
+on:
+  workflow_run:
+    workflows: ["Stage Gates"]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: promote-prod
+  cancel-in-progress: false
+
+jobs:
+  promote-prod:
+    name: Promote verified SHA to production
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - name: Trigger Coolify PROD deploy webhook
+        env:
+          PROD_DEPLOY_WEBHOOK_URL: ${{ secrets.COOLIFY_PROD_DEPLOY_HOOK_URL }}
+          GIT_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          GIT_REF: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref }}
+          REPOSITORY: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          if [ -z "$PROD_DEPLOY_WEBHOOK_URL" ]; then
+            echo "::error::Missing required secret COOLIFY_PROD_DEPLOY_HOOK_URL"
+            exit 1
+          fi
+
+          payload=$(cat <<EOF
+          {"sha":"$GIT_SHA","ref":"$GIT_REF","repository":"$REPOSITORY","actor":"$ACTOR","environment":"production","source":"stage-gates"}
+          EOF
+          )
+
+          http_code=$(curl -sS -o response.txt -w "%{http_code}" \
+            -X POST "$PROD_DEPLOY_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            --data "$payload")
+
+          echo "Coolify response code: $http_code"
+          cat response.txt || true
+
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "::error::Production deploy webhook failed with HTTP $http_code"
+            exit 1
+          fi
+

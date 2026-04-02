@@ -21,6 +21,11 @@ Core principle: **build once, verify once, promote the same immutable commit SHA
 - Trigger: push to `develop` (and manual `workflow_dispatch`)
 - Required secret: `COOLIFY_STAGE_DEPLOY_HOOK_URL`
 
+## Production Promotion Automation Entry Point
+- Workflow: `.github/workflows/promote-prod.yml`
+- Trigger: successful completion of `Stage Gates` (and manual `workflow_dispatch`)
+- Required secret: `COOLIFY_PROD_DEPLOY_HOOK_URL`
+
 ## Immutable SHA Invariants
 The following are non-negotiable:
 1. `PROD` deployment input SHA must equal the SHA validated on `STAGE`.
