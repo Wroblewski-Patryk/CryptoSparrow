@@ -291,8 +291,8 @@ describe("HomeLiveWidgets", () => {
       expect(screen.getByText("Live checks")).toBeInTheDocument();
       expect(screen.getAllByText("BTCUSDT").length).toBeGreaterThan(0);
       expect(screen.getByText("2 (1:-15%, 2:-30%)")).toBeInTheDocument();
-      expect(screen.getByText("SL (TTP)")).toBeInTheDocument();
-      expect(screen.getByText("SL (TSL)")).toBeInTheDocument();
+      expect(screen.getByText("TTP")).toBeInTheDocument();
+      expect(screen.getByText("TSL")).toBeInTheDocument();
     });
   });
 

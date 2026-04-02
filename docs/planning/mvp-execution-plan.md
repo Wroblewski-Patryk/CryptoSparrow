@@ -445,7 +445,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-46 test(api+web): add regression coverage for DCA ladder mapping/rendering (basic repeated levels, advanced ladder, legacy fallback)`
 - [x] `BOPS-47 docs(contract): lock dynamic stop display contract (TTP/TSL) for dashboard+bots runtime tables, including TSL derivation from trailing-stop anchor`
 - [x] `BOPS-48 feat(api-runtime): compute dynamicTslStopLoss from active trailing-stop config + runtime trailingAnchorPrice (with trailingLossLimit fallback) and expose stable payload fields`
-- [ ] `BOPS-49 feat(web-i18n+tables): rename stop headers from 'SL (TTP)/(TSL)' to 'TTP/TSL' and keep parity in Dashboard + Bots runtime views`
+- [x] `BOPS-49 feat(web-i18n+tables): rename stop headers from 'SL (TTP)/(TSL)' to 'TTP/TSL' and keep parity in Dashboard + Bots runtime views`
 - [ ] `BOPS-50 test(api+web): add regression coverage for TSL/TTP rendering lifecycle (pre-arm '-', post-arm value) and runtime payload mapping`
 - [ ] `BOPS-51 docs(contract): lock Dashboard signal-panel IA contract (name, placement above open positions, responsive density, and high-symbol navigation behavior)`
 - [ ] `BOPS-52 feat(web-dashboard): rename 'Live checks' section to strategy-signal wording and move signal panel above open-positions block`
@@ -458,6 +458,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 
 ## Progress Log
+- 2026-04-03: Completed `BOPS-49` by updating Dashboard/Bots runtime i18n header labels from `SL (TTP)/SL (TSL)` to concise `TTP/TSL` in EN/PL translation dictionaries and aligned component regression assertions in `HomeLiveWidgets` with preserved table parity.
 - 2026-04-03: Completed `BOPS-48` by extending runtime positions mapping in `bots.service` to compute `dynamicTslStopLoss` primarily from active strategy trailing-stop levels (`close.tsl`) and runtime `trailingAnchorPrice` (side/leverage aware), with deterministic fallback to legacy `trailingLossLimitPercent` path for compatibility.
 - 2026-04-03: Completed `BOPS-47` by publishing `docs/architecture/dynamic-stop-display-contract.md` as canonical runtime contract for dynamic stop display (`TTP`/`TSL`) across Dashboard and Bots tables, including lifecycle semantics, TSL primary derivation from trailing-anchor + fallback compatibility path, and regression requirements.
 - 2026-04-03: Completed `BOPS-46` by adding DCA ladder regression coverage end-to-end: API e2e now verifies runtime positions payload mapping for basic repeated levels, advanced ladders, and legacy no-config fallback; web component tests now assert compact ladder rendering in Dashboard and Bots runtime tables.
