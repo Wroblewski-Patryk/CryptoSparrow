@@ -12,6 +12,7 @@ Make startup and deployment predictable and low-friction in three modes:
 ## Canonical Output Documents
 - `docs/operations/dev-stage-prod-environment-matrix.md` (environment + secrets contract)
 - `docs/operations/coolify-linux-vps-setup-guide.md` (VPS setup + service mapping + domains)
+- `docs/operations/dev-stage-prod-promotion-contract.md` (immutable SHA promotion contract DEV -> STAGE -> PROD)
 
 ## Requested Target
 - Web domain: `cryptosparrow.luckysparrow.ch`

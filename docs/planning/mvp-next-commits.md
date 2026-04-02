@@ -7,7 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `DPL-13 docs(cicd-contract): define immutable commit promotion contract DEV -> STAGE -> PROD`
+- [ ] `DPL-06 chore(scripts): add one-command local prod-like orchestration with preflight checks`
 ## NEXT
 - [ ] `BOPS-43 docs(contract): lock DCA ladder display contract in Dashboard/Bots (count + executed levels mapping for basic/advanced strategy modes)`
 - [ ] `BOPS-44 feat(api-runtime): extend runtime positions payload with DCA planned/executed levels derived from strategy additional.dcaLevels/dcaTimes`
@@ -26,6 +26,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `DPL-13 docs(cicd-contract): define immutable commit promotion contract DEV -> STAGE -> PROD`
 - [x] `DPL-05 chore(scripts): add production-safe worker start script and explicit process ownership contract`
 - [x] `DPL-04 chore(env): add non-secret `.env.example` templates for api/web with required keys and comments`
 - [x] `DPL-03 docs(coolify): publish Linux VPS Coolify setup guide with service mapping and domain routing`

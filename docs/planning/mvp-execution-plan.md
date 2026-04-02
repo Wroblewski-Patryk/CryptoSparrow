@@ -429,7 +429,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `DPL-10 ops(rollback): define rollback playbook for app version/env rollback and worker incidents`
 - [ ] `DPL-11 docs(rename-audit): inventory all `CryptoSparrow` tokens and classify rename waves`
 - [ ] `DPL-12 docs(rename-plan): define controlled global rename rollout `CryptoSparrow -> Soar` with risk gates`
-- [ ] `DPL-13 docs(cicd-contract): define immutable commit promotion contract DEV -> STAGE -> PROD`
+- [x] `DPL-13 docs(cicd-contract): define immutable commit promotion contract DEV -> STAGE -> PROD`
 - [ ] `DPL-14 ci(stage): implement automatic deploy-to-stage on integration-branch push`
 - [ ] `DPL-15 ci(stage-gates): enforce stage gate pack (build/test/migrate/health/smoke) with machine-readable report`
 - [ ] `DPL-16 ci(promote): implement automatic promotion to prod when stage gates are fully green`
@@ -458,6 +458,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 
 ## Progress Log
+- 2026-04-03: Completed `DPL-13` by publishing immutable promotion contract `DEV -> STAGE -> PROD` in `docs/operations/dev-stage-prod-promotion-contract.md` (same-SHA invariants, required stage gate pack, promotion eligibility rules, fail-closed policy, rollback contract, and evidence/audit requirements) and linking it in deployment planning outputs.
 - 2026-04-03: Completed `DPL-05` by adding `scripts/start-workers-prod.mjs` (fail-fast worker launcher with prefixed logs and graceful shutdown), wiring root scripts `workers/prod` + `workers:prod`, and documenting explicit process ownership contract in `docs/operations/v1-ops-runbook.md`, `docs/operations/coolify-linux-vps-setup-guide.md`, and `docs/engineering/local-development.md`.
 - 2026-04-03: Completed `DPL-04` by adding non-secret environment templates `apps/api/.env.example` and `apps/web/.env.example` with required keys/comments, and linking bootstrap copy flow in `docs/engineering/local-development.md`.
 - 2026-04-03: Completed `DPL-03` by publishing Linux VPS Coolify setup guide in `docs/operations/coolify-linux-vps-setup-guide.md` with concrete service split (`postgres/redis/api/web/workers`), domain routing, env requirements, migration gate, stage validation, and rollback baseline.
