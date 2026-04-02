@@ -179,7 +179,26 @@ This file tracks intentionally unresolved architecture choices so implementation
   - continue improving modular boundaries, contracts, and test coverage on current Express codebase.
 - Post-V1 rule:
   - keep Express by default if delivery and maintainability remain healthy.
-  - evaluate Nest migration only if clear pain appears (team velocity, maintainability, module ownership, framework-level needs).
+- evaluate Nest migration only if clear pain appears (team velocity, maintainability, module ownership, framework-level needs).
+
+## LIVE Fee Source-of-Truth Contract
+- Decision state: open (planned in Phase 21 `LFIN-01..LFIN-05`).
+- Open choice:
+  - whether LIVE runtime should always block on full fill-fee reconciliation before marking trade final,
+  - or allow `feePending` with bounded asynchronous reconciliation window.
+- Current planning assumption:
+  - prefer non-blocking execution continuity (`feePending`) with deterministic retry/reconciliation,
+  - use exchange fills/trades as canonical fee source once available,
+  - estimator-derived fee allowed only as temporary placeholder in LIVE and must be traceable via `feeSource`.
+
+## Numeric Locale Input Policy (Comma vs Dot)
+- Decision state: open (planned in Phase 21 `LFIN-09..LFIN-11`).
+- Open choice:
+  - strict dot-only decimal contract (`.`) vs locale-tolerant input (`.` and `,`).
+- Current planning assumption:
+  - UI accepts both separators and normalizes to canonical decimal value,
+  - parser enforces precision/range with explicit validation errors,
+  - integer and decimal field classes are validated separately by policy matrix.
 
 ## Worker Split Timing
 - Open: exact threshold for splitting API and workers into separate processes.

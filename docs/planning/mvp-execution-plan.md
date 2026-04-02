@@ -361,10 +361,44 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-32 chore(web-dashboard): prepare focused manual UX review checklist for dashboard+bots operational flow`
 - [x] `BOPS-33 feat(web-dashboard): apply checklist-driven final nits from manual dashboard+bots UX walk-through`
 - [x] `BOPS-34 chore(web-dashboard): run final responsive pass on dashboard+bots headers/cards after checklist nits and lock release screenshots`
-- [ ] `BOPS-35 chore(web-dashboard): execute final manual smoke of Dashboard->Bots UX flow and attach validation notes to planning log`
+- [x] `BOPS-35 chore(web-dashboard): execute final manual smoke of Dashboard->Bots UX flow and attach validation notes to planning log`
 - [ ] `BOPS-36 feat(web-dashboard): apply final fixes from manual smoke notes and freeze Dashboard->Bots UX for wider QA`
+- [x] `BOPS-37 feat(web-dashboard): remove redundant sidebar actions (Odswiez/Boty runtime) from dashboard Bot runtime card`
+- [x] `BOPS-38 test(web-dashboard): update dashboard component tests for no-local-CTA runtime sidebar contract`
+- [x] `BOPS-39 feat(web-nav): add Bots dropdown entries (Lista botow, Dodaj bota) aligned with Markets/Strategies/Backtests IA`
+- [x] `BOPS-40 feat(web-bots-routing): wire canonical create/list routes for Bots menu entries with proper active-state and breadcrumbs`
+- [x] `BOPS-41 test(web-nav): add regression coverage for Bots dropdown structure and route targets`
+
+## Phase 20 - Dashboard Trade Action Clarity (OPEN/DCA/CLOSE)
+- [x] `DBACT-01 docs(contract): define dashboard transaction action semantics and rollout plan in docs/planning/dashboard-trade-action-ux-plan-2026-04-01.md`
+- [x] `DBACT-02 feat(db): add trade lifecycleAction enum/column with backward-safe default for historical rows`
+- [x] `DBACT-03 feat(runtime): classify trade fills into OPEN/DCA/CLOSE and persist lifecycleAction at write-time`
+- [x] `DBACT-04 feat(api-monitor): expose lifecycleAction plus non-null fee/realizedPnl and margin in dashboard/bots history payloads`
+- [x] `DBACT-05 feat(web-dashboard): add Action column with localized OPEN/DCA/CLOSE badges and switch capital column to Margin`
+- [x] `DBACT-06 feat(web-dashboard): render Fee and Realized PnL as always-filled currency values (no placeholder '-')`
+- [x] `DBACT-07 test(api+web): add contract + component coverage for action mapping, margin rendering, and non-null fee/realized values`
+
+## Phase 21 - LIVE Fee Truth + i18n + Numeric Input Hardening
+- [ ] `LFIN-01 docs(contract): lock LIVE fee source-of-truth and reconciliation fallback hierarchy (exchange fills/trades first, estimator only as temporary pending fallback)`
+- [ ] `LFIN-02 feat(db): add fill-level persistence and fee-source metadata for order/trade runtime history`
+- [ ] `LFIN-03 feat(exchange): extend ccxt connector contract with normalized fill/trade retrieval methods for executed orders`
+- [ ] `LFIN-04 feat(runtime): add live fill reconciliation flow and persist exchange-true fee totals in order/trade`
+- [ ] `LFIN-05 feat(api+web): expose and render feeSource/feePending/feeCurrency in dashboard+bots history views`
+- [ ] `LFIN-06 audit(i18n): inventory hardcoded copy in dashboard-home, bots module, and dashboard header menu`
+- [ ] `LFIN-07 refactor(web-i18n): migrate dashboard-home and bots strings to translation keys with EN/PL parity`
+- [ ] `LFIN-08 refactor(web-nav-i18n): remove inline locale dictionaries from header and use canonical i18n keys only`
+- [ ] `LFIN-09 docs(contract): lock locale-safe numeric input policy (comma/dot, precision matrix, integer vs decimal fields)`
+- [ ] `LFIN-10 feat(web-utils): add shared number parser/normalizer and form-level validation contract`
+- [ ] `LFIN-11 refactor(web-strategies): replace direct Number(...) parsing in strategy form sections with parser-driven handling + precision guards`
+- [ ] `LFIN-12 test(api+web): add reconciliation, i18n, and numeric-input regression suites for new contracts`
 
 ## Progress Log
+- 2026-04-02: Added Phase 21 planning track (`LFIN-01..LFIN-12`) and detailed implementation plan in `docs/planning/live-fee-i18n-numeric-hardening-plan-2026-04-02.md` for LIVE fee truth, dashboard/bots/menu i18n parity, and locale-safe numeric input validation.
+- 2026-04-01: Completed `DBACT-02/03`: added `TradeLifecycleAction` enum+column (migration `20260401191000_add_trade_lifecycle_action`) and persisted `OPEN/DCA/CLOSE` at runtime write-time in execution + DCA paths; verified with green bots API e2e after migration deploy.
+- 2026-04-01: Completed `BOPS-37..BOPS-41`: removed redundant dashboard runtime CTAs, updated dashboard/nav tests, and wired canonical Bots IA routes (`/dashboard/bots`, `/dashboard/bots/new`) with dropdown parity.
+- 2026-04-01: Extended dashboard trade-action rollout plan to include non-null `Fee`/`Realized PnL` display and `Notional -> Margin` history-column unification in Control Center (`DBACT-04..DBACT-07` scope update).
+- 2026-04-01: Added dashboard trade-action rollout plan in `docs/planning/dashboard-trade-action-ux-plan-2026-04-01.md` and queued execution tasks (`DBACT-02..DBACT-06`) so dashboard history can clearly show `Otwarcie pozycji / DCA / Zamkniecie pozycji`.
+- 2026-04-01: Added Bots menu IA plan in `docs/planning/bots-menu-ia-plan-2026-04-01.md` to align top-nav dropdown behavior with other modules (`Lista botow` + `Dodaj bota`) and queued `BOPS-39..BOPS-41`.
 - 2026-03-31: Completed `BOPS-07 feat(api+web-guard): added backend duplicate-active guard on create/activate flows (strategy + symbol-group pair), mapped conflict to HTTP 409, added dedicated API e2e coverage, and surfaced explicit conflict messaging in bots UI create/save actions.
 - 2026-03-31: Completed `BOPS-06 feat(web-creator): reorganized bot creator into three explicit sections (bot core mode, market-group context, strategy context) with contextual summary tiles for selected group and selected strategy, while preserving existing payload and runtime behavior.
 - 2026-03-31: Completed `BOPS-05 feat(web-monitor): replaced basic session trades listing with dense operational trade-log table (chronological index, side badge, notional-relative fee/pnl percentages, cumulative PnL, and order/position trace columns) to match backtest-style readability for runtime analysis.
@@ -757,6 +791,9 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-03-31: Added focused manual UX checklist for Dashboard -> Bots operational flow in `docs/operations/dashboard-bots-operational-ux-checklist.md` to drive the final nit pass (`BOPS-33`) with explicit IA, readability, anti-flicker, and responsive checks.
 - 2026-03-31: Applied checklist-driven final UX nits for Dashboard -> Bots flow: replaced passive handoff badges with clickable shortcut chips on Dashboard, reduced monitoring heading duplication in Bots, added quick section jump pills (`Teraz/Historia/Co bedzie`), and made auto-refresh status message more prominent/accessible (`aria-live`).
 - 2026-03-31: Completed final responsive pass for Dashboard -> Bots headers/cards (tablet breakpoint cleanup, card-span normalization, quick-switch truncation) and locked snapshot matrix in `docs/operations/dashboard-bots-responsive-pass-2026-03-31.md`.
+- 2026-04-01: Removed redundant runtime sidebar actions (`Odswiez`, `Boty runtime`) from dashboard control-center widget and kept polling-only refresh contract (BOPS-37/38).
+- 2026-04-01: Implemented Bots menu IA parity with other modules by adding dropdown entries (`Lista botow`, `Dodaj bota`), canonical route `"/dashboard/bots/new"`, and nav regression assertions (BOPS-39/40/41).
+- 2026-04-01: Implemented dashboard+bots trade-history action contract using read-time lifecycle classification (`OPEN/DCA/CLOSE/UNKNOWN`) with `margin` and non-null `fee/realizedPnl` payloads, then aligned both web tables to `Action + Margin` presentation (DBACT-04..09 partial rollout).
 
 
 
@@ -765,3 +802,5 @@ Rule: fix/cleanup/update first, then feature delivery.
 
 
 
+- 2026-04-01: Completed BOPS-35 dashboard->bots final smoke (hybrid: focused regression tests + local build/runtime verification) and logged validation notes + BOPS-36 nits in docs/operations/dashboard-bots-manual-smoke-2026-04-01.md.
+- 2026-04-01: BOPS-36 progress: dashboard open-positions table now shows SL (TTP/TSL) columns by strategy close-mode (advanced) from API contract (showDynamicStopColumns), with API+web regression coverage.

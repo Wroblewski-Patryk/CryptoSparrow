@@ -7,14 +7,30 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BOPS-35 chore(web-dashboard): execute final manual smoke of Dashboard->Bots UX flow and attach validation notes to planning log`
+- [ ] `BOPS-36 feat(web-dashboard): apply final fixes from manual smoke notes and freeze Dashboard->Bots UX for wider QA`
 
 ## NEXT
-- [ ] `BOPS-36 feat(web-dashboard): apply final fixes from manual smoke notes and freeze Dashboard->Bots UX for wider QA`
+- [ ] `LFIN-01 docs(contract): lock LIVE fee source-of-truth and reconciliation fallback hierarchy (fills/trades first, estimator fallback only for pending)`
+- [ ] `LFIN-02 feat(db): add fill-level persistence + fee source fields for order/trade runtime history`
+- [ ] `LFIN-08 audit(i18n): inventory hardcoded strings in dashboard-home, bots runtime, and dashboard header menu`
+- [ ] `LFIN-14 docs(contract): lock numeric input policy (comma/dot parsing, precision, integer vs decimal field matrix)`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BOPS-35 chore(web-dashboard): execute final manual smoke of Dashboard->Bots UX flow and attach validation notes to planning log`
+- [x] `DBACT-03 feat(runtime): classify fill events into OPEN/DCA/CLOSE and persist lifecycleAction on trade rows`
+- [x] `DBACT-02 feat(db): add trade lifecycleAction enum/column with backward-safe default for dashboard history semantics`
+- [x] `DBACT-09 test(web): add component tests for action badges, margin column, and non-placeholder financial values`
+- [x] `DBACT-07 feat(web-bots): align bots runtime history action + margin/fee/pnl rendering with dashboard contract`
+- [x] `DBACT-06 feat(web-dashboard): render Fee/Realized as always-filled currency values (no placeholder '-')`
+- [x] `DBACT-05 feat(web-dashboard): render Action badge and switch history capital column from Notional to Margin`
+- [x] `DBACT-04 feat(api-runtime): expose lifecycleAction + non-null fee/realizedPnl + margin in history payloads`
+- [x] `BOPS-41 test(web-nav): add regression coverage for Bots dropdown structure and route targets`
+- [x] `BOPS-40 feat(web-bots-routing): wire canonical create/list routes for Bots menu entries with proper active-state and breadcrumbs`
+- [x] `BOPS-39 feat(web-nav): add Bots dropdown entries (Lista botow, Dodaj bota) aligned with Markets/Strategies/Backtests IA`
+- [x] `BOPS-38 test(web-dashboard): update dashboard component tests for no-local-CTA runtime sidebar contract`
+- [x] `BOPS-37 feat(web-dashboard): remove redundant sidebar actions (Odswiez/Boty runtime) from dashboard Bot runtime card`
 - [x] `BOPS-34 chore(web-dashboard): run final responsive pass on dashboard+bots headers/cards after checklist nits and lock release screenshots`
 - [x] `BOPS-33 feat(web-dashboard): apply checklist-driven final nits from manual dashboard+bots UX walk-through`
 - [x] `BOPS-32 chore(web-dashboard): prepare focused manual UX review checklist for dashboard+bots operational flow`
