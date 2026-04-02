@@ -439,7 +439,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DPL-20 docs(runbook): publish incident playbook for blocked promotion and failed stage/prod rollout`
 
 ## Phase 26 - Runtime Operability Polish (DCA Ladder + Dynamic TTP/TSL)
-- [ ] `BOPS-43 docs(contract): lock DCA ladder display contract in Dashboard/Bots (count + executed levels mapping for basic/advanced strategy modes)`
+- [x] `BOPS-43 docs(contract): lock DCA ladder display contract in Dashboard/Bots (count + executed levels mapping for basic/advanced strategy modes)`
 - [ ] `BOPS-44 feat(api-runtime): extend runtime positions payload with DCA planned/executed levels derived from strategy additional.dcaLevels/dcaTimes`
 - [ ] `BOPS-45 feat(web-dashboard+bots): replace plain DCA count cell with compact executed ladder view (e.g. 1: -15%, 2: -30%) while preserving count`
 - [ ] `BOPS-46 test(api+web): add regression coverage for DCA ladder mapping/rendering (basic repeated levels, advanced ladder, legacy fallback)`
@@ -458,6 +458,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 
 ## Progress Log
+- 2026-04-03: Completed `BOPS-43` by publishing `docs/architecture/dca-ladder-display-contract.md` defining canonical DCA ladder payload/render contract for Dashboard + Bots (basic vs advanced mapping, `dcaPlannedLevels`/`dcaExecutedLevels`, compact ladder format, and legacy count-only fallback).
 - 2026-04-03: Completed `DPL-20` by publishing `docs/operations/deployment-incident-playbook.md` covering blocked-promotion, failed-stage, and failed-prod response flows with role ownership, triage checklists, communication contract, and incident close criteria; linked in deployment planning outputs.
 - 2026-04-03: Completed `DPL-19` by adding `.github/CODEOWNERS`, reducing default CI workflow permissions to `contents: read`, and publishing `docs/security/ci-auto-promotion-hardening.md` with required branch protections, environment protections, and secret-hardening controls for stage/prod auto-promotion chain.
 - 2026-04-03: Completed `DPL-18` by publishing `docs/operations/coolify-trigger-wiring.md` with exact GitHub secret contract and webhook wiring steps for stage deploy/prod promote/prod rollback flows, and linking it in deployment setup references.
