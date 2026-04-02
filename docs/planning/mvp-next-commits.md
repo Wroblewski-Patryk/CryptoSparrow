@@ -7,7 +7,13 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [ ] `DPL-01 docs(contract): publish canonical DEV/STAGE/PROD environment matrix and secrets policy`
 ## NEXT
+- [ ] `DPL-02 docs(runbook): publish step-by-step local DEV and local PROD-like startup procedures`
+- [ ] `DPL-03 docs(coolify): publish Linux VPS Coolify setup guide with service mapping and domain routing`
+- [ ] `DPL-04 chore(env): add non-secret `.env.example` templates for api/web with required keys and comments`
+- [ ] `DPL-05 chore(scripts): add production-safe worker start script and explicit process ownership contract`
+- [ ] `DPL-13 docs(cicd-contract): define immutable commit promotion contract DEV -> STAGE -> PROD`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 

@@ -416,7 +416,31 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DBRT-09 test(web-dashboard): add regression tests for apply-flow, date-range behavior, and UNKNOWN filter UX contract`
 - [x] `DBRT-10 feat(web-dashboard): implement tri-state column sorting cycle (asc -> desc -> none) for trades table`
 
+## Phase 25 - Deployment Simplicity (DEV/STAGE/PROD + Coolify VPS)
+- [ ] `DPL-01 docs(contract): publish canonical DEV/STAGE/PROD environment matrix and secrets policy`
+- [ ] `DPL-02 docs(runbook): publish step-by-step local DEV and local PROD-like startup procedures`
+- [ ] `DPL-03 docs(coolify): publish Linux VPS Coolify setup guide with service mapping and domain routing`
+- [ ] `DPL-04 chore(env): add non-secret `.env.example` templates for api/web with required keys and comments`
+- [ ] `DPL-05 chore(scripts): add production-safe worker start script and explicit process ownership contract`
+- [ ] `DPL-06 chore(scripts): add one-command local prod-like orchestration with preflight checks`
+- [ ] `DPL-07 ops(migrations): define migration strategy for deployment pipeline and operator ownership`
+- [ ] `DPL-08 ops(health): standardize deployment readiness gates for web/api/workers`
+- [ ] `DPL-09 ops(smoke): add post-deploy smoke checklist for target domains`
+- [ ] `DPL-10 ops(rollback): define rollback playbook for app version/env rollback and worker incidents`
+- [ ] `DPL-11 docs(rename-audit): inventory all `CryptoSparrow` tokens and classify rename waves`
+- [ ] `DPL-12 docs(rename-plan): define controlled global rename rollout `CryptoSparrow -> Soar` with risk gates`
+- [ ] `DPL-13 docs(cicd-contract): define immutable commit promotion contract DEV -> STAGE -> PROD`
+- [ ] `DPL-14 ci(stage): implement automatic deploy-to-stage on integration-branch push`
+- [ ] `DPL-15 ci(stage-gates): enforce stage gate pack (build/test/migrate/health/smoke) with machine-readable report`
+- [ ] `DPL-16 ci(promote): implement automatic promotion to prod when stage gates are fully green`
+- [ ] `DPL-17 ci(prod-rollback): implement automatic rollback to previous stable release on failed post-deploy prod health`
+- [ ] `DPL-18 ops(coolify): wire Coolify deployment triggers for stage and prod services`
+- [ ] `DPL-19 security(ci): apply branch protection + secret hardening for safe auto-promotion`
+- [ ] `DPL-20 docs(runbook): publish incident playbook for blocked promotion and failed stage/prod rollout`
+
 ## Progress Log
+- 2026-04-02: Extended `Phase 25` to include three-environment deployment contract (`DEV/STAGE/PROD`) and auto-promotion pipeline tasks (`DPL-13..DPL-20`) with stage-gated commit promotion and prod rollback requirements.
+- 2026-04-02: Added deployment planning track `Phase 25 (DPL-01..DPL-12)` and published executor handoff plan in `docs/planning/deployment-dev-prod-coolify-plan-2026-04-02.md` for local DEV/PROD and Coolify VPS rollout with separate global rename planning.
 - 2026-04-02: Completed `LFIN-07B` by migrating Bots module (management + runtime + assistant) UI copy to canonical i18n keys, adding EN/PL parity entries in `translations.ts`, updating bots page to i18n usage, and refreshing BotsManagement tests with `I18nProvider` wrapper; verified with web tests + typecheck.
 - 2026-04-02: Completed `BMOD-41/BMOD-42` runtime resilience hardening: wrapped market-stream fanout handler promises to prevent unhandled async crashes, added event-level try/catch shielding in runtime signal loop, introduced session watchdog re-ensure cycle (`RUNTIME_SESSION_WATCHDOG_INTERVAL_MS`) for active bots, added execution worker auto-start watchdog (`RUNTIME_SIGNAL_LOOP_BOOTSTRAP_INTERVAL_MS`), and expanded runtime unit coverage for crash-survival + periodic session re-ensure.
 - 2026-04-02: Completed `BOPS-42` markets guard parity with strategies: backend now blocks market-universe update/delete when linked symbol-groups are used by active bots (canonical + legacy links), controllers map to HTTP 409 conflict, markets e2e guard scenarios added, and web edit/delete UX shows explicit active-bot lock messaging.

@@ -34,6 +34,50 @@ This file tracks intentionally unresolved architecture choices so implementation
       - `advanced`: enabled full global interval catalog (with `1m` default).
     - these are default plan baselines and may be tuned from admin controls if production load data requires adjustment.
 
+## Deployment Topology and Domain Split (DEV/STAGE/PROD)
+- Decision state: resolved on 2026-04-02.
+- Deployment direction:
+  - keep explicit mode split: `DEV` (local watch flow), `STAGE` (VPS test gate), and `PROD` (user-facing runtime).
+  - for production runtime, treat workers as separate process ownership from API service.
+  - preferred VPS topology on Coolify:
+    - stage stack: `stage-web`, `stage-api`, `stage-workers`, `stage-postgres`, `stage-redis`,
+    - prod stack: `web`, `api`, `workers`, `postgres`, `redis`.
+  - canonical domain split for current rollout:
+    - web: `cryptosparrow.luckysparrow.ch`,
+    - api: `api.cryptosparrow.luckysparrow.ch`.
+  - stage should use separate stage hostnames and isolated data stores.
+  - exchange API keys are optional in baseline env setup and required only when testing LIVE exchange paths.
+- Canonical reference:
+  - `docs/planning/deployment-dev-prod-coolify-plan-2026-04-02.md`
+
+## Commit Promotion Policy (Automatic Update)
+- Decision state: open (planned on 2026-04-02).
+- Open choice:
+  - exact branch strategy for promotion (`develop -> main` vs same-branch staged promotion).
+- Current planning assumption:
+  - immutable commit SHA promotion path:
+    - local change and push,
+    - automatic deploy to `STAGE`,
+    - gate pack pass (`build/test/migrate/health/smoke`),
+    - automatic promotion of same SHA to `PROD`.
+  - failed stage gate blocks production rollout.
+  - failed post-deploy production health triggers automatic rollback to previous stable release.
+- Canonical references:
+  - `docs/planning/deployment-dev-prod-coolify-plan-2026-04-02.md`
+  - `docs/planning/mvp-execution-plan.md` (`Phase 25`, tasks `DPL-13..DPL-20`)
+
+## Global Brand Rename (`CryptoSparrow` -> `Soar`)
+- Decision state: open (planned on 2026-04-02).
+- Open choice:
+  - whether to execute rename in one global cut or phased waves (`docs`, `UI copy`, `domains`, `repo/package names`, `assets`, `operations`).
+- Current planning assumption:
+  - perform audit-first phased rollout with explicit rollback points.
+  - do not block deployment-simplicity track on rename completion.
+  - preserve existing domains during deployment hardening; domain rename/redirect policy is separate follow-up.
+- Canonical references:
+  - `docs/planning/deployment-dev-prod-coolify-plan-2026-04-02.md`
+  - `docs/planning/mvp-execution-plan.md` (`Phase 25`, tasks `DPL-11`, `DPL-12`)
+
 ## Product North Star (Autonomous Agent Trajectory)
 - Decision state: resolved on 2026-03-22.
 - Product direction:
