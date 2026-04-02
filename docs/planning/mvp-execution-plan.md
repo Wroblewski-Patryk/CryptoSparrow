@@ -435,7 +435,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DPL-16 ci(promote): implement automatic promotion to prod when stage gates are fully green`
 - [x] `DPL-17 ci(prod-rollback): implement automatic rollback to previous stable release on failed post-deploy prod health`
 - [x] `DPL-18 ops(coolify): wire Coolify deployment triggers for stage and prod services`
-- [ ] `DPL-19 security(ci): apply branch protection + secret hardening for safe auto-promotion`
+- [x] `DPL-19 security(ci): apply branch protection + secret hardening for safe auto-promotion`
 - [ ] `DPL-20 docs(runbook): publish incident playbook for blocked promotion and failed stage/prod rollout`
 
 ## Phase 26 - Runtime Operability Polish (DCA Ladder + Dynamic TTP/TSL)
@@ -458,6 +458,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 
 ## Progress Log
+- 2026-04-03: Completed `DPL-19` by adding `.github/CODEOWNERS`, reducing default CI workflow permissions to `contents: read`, and publishing `docs/security/ci-auto-promotion-hardening.md` with required branch protections, environment protections, and secret-hardening controls for stage/prod auto-promotion chain.
 - 2026-04-03: Completed `DPL-18` by publishing `docs/operations/coolify-trigger-wiring.md` with exact GitHub secret contract and webhook wiring steps for stage deploy/prod promote/prod rollback flows, and linking it in deployment setup references.
 - 2026-04-03: Completed `DPL-17` by adding `.github/workflows/prod-rollback.yml` to auto-trigger production rollback when `Promote PROD` fails (with manual fallback), forwarding failure metadata to rollback webhook (`COOLIFY_PROD_ROLLBACK_HOOK_URL`) and documenting automation entry in rollback playbook.
 - 2026-04-03: Completed `DPL-16` by adding `.github/workflows/promote-prod.yml` to auto-trigger production promotion after successful `Stage Gates`, forwarding verified SHA metadata to Coolify PROD deploy webhook (`COOLIFY_PROD_DEPLOY_HOOK_URL`) with production environment isolation and concurrency guard.

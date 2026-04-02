@@ -1,0 +1,8 @@
+# Global default ownership
+* @Wroblewski-Patryk
+
+# CI/CD and deployment automation must always be reviewed
+.github/workflows/* @Wroblewski-Patryk
+docs/operations/* @Wroblewski-Patryk
+docs/planning/* @Wroblewski-Patryk
+
