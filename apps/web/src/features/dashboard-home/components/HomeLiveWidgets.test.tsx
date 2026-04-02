@@ -225,7 +225,9 @@ describe("HomeLiveWidgets", () => {
           openedAt: "2026-03-31T10:03:00.000Z",
           closedAt: null,
           holdMs: 120000,
-          dcaCount: 0,
+          dcaCount: 2,
+          dcaPlannedLevels: [-15, -30, -45],
+          dcaExecutedLevels: [-15, -30],
           feesPaid: 0,
           realizedPnl: 0,
           unrealizedPnl: 35,
@@ -288,6 +290,7 @@ describe("HomeLiveWidgets", () => {
       expect(screen.getAllByText("RUNNING").length).toBeGreaterThan(0);
       expect(screen.getByText("Live checks")).toBeInTheDocument();
       expect(screen.getAllByText("BTCUSDT").length).toBeGreaterThan(0);
+      expect(screen.getByText("2 (1:-15%, 2:-30%)")).toBeInTheDocument();
       expect(screen.getByText("SL (TTP)")).toBeInTheDocument();
       expect(screen.getByText("SL (TSL)")).toBeInTheDocument();
     });

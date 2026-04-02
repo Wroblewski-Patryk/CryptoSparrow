@@ -517,7 +517,9 @@ describe("BotsManagement", () => {
           openedAt: "2026-03-31T10:04:00.000Z",
           closedAt: null,
           holdMs: 60000,
-          dcaCount: 0,
+          dcaCount: 2,
+          dcaPlannedLevels: [-15, -30, -45],
+          dcaExecutedLevels: [-15, -30],
           feesPaid: 0.7,
           realizedPnl: 0,
           unrealizedPnl: 15,
@@ -586,6 +588,7 @@ describe("BotsManagement", () => {
         symbol: undefined,
         limit: 200,
       });
+      expect(screen.getByText("2 (1:-15.00%, 2:-30.00%)")).toBeInTheDocument();
       expect(screen.getByText(/3\. Co bedzie - live check sygnalow|Co bedzie - live check sygnalow/i)).toBeInTheDocument();
       expect(screen.getAllByText("BTCUSDT").length).toBeGreaterThan(0);
       expect(screen.getByText("Historia - log operacyjny trade'ow")).toBeInTheDocument();

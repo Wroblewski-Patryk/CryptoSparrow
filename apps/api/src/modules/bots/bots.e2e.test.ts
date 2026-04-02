@@ -15,17 +15,19 @@ const registerAndLogin = async (email: string) => {
 
 const createStrategy = async (
   agent: ReturnType<typeof request.agent>,
-  name: string = `Bots Strategy ${Date.now()}`
+  name: string = `Bots Strategy ${Date.now()}`,
+  config?: Record<string, unknown>
 ) => {
   const strategyRes = await agent.post('/dashboard/strategies').send({
     name,
     interval: '5m',
     leverage: 2,
     walletRisk: 1,
-    config: {
-      open: { indicatorsLong: [], indicatorsShort: [] },
-      close: { mode: 'basic', tp: 2, sl: 1 },
-    },
+    config:
+      config ?? {
+        open: { indicatorsLong: [], indicatorsShort: [] },
+        close: { mode: 'basic', tp: 2, sl: 1 },
+      },
   });
   expect(strategyRes.status).toBe(201);
   return strategyRes.body.id as string;
@@ -1084,6 +1086,356 @@ describe('Bots module contract', () => {
     expect(completedTradesRes.status).toBe(200);
     expect(completedTradesRes.body.total).toBe(0);
     expect(completedTradesRes.body.items).toHaveLength(0);
+  });
+
+  it('maps DCA ladder levels for basic repeated, advanced, and legacy strategy configs', async () => {
+    const ownerEmail = 'bot-runtime-dca-ladder-owner@example.com';
+    const owner = await registerAndLogin(ownerEmail);
+    const ownerUser = await prisma.user.findUniqueOrThrow({ where: { email: ownerEmail } });
+
+    const basicStrategyId = await createStrategy(owner, 'Runtime DCA Basic', {
+      open: { indicatorsLong: [], indicatorsShort: [] },
+      close: { mode: 'basic', tp: 2, sl: 1 },
+      additional: {
+        dcaEnabled: true,
+        dcaMode: 'basic',
+        dcaTimes: 2,
+        dcaLevels: [{ percent: -15 }],
+      },
+    });
+    const advancedStrategyId = await createStrategy(owner, 'Runtime DCA Advanced', {
+      open: { indicatorsLong: [], indicatorsShort: [] },
+      close: { mode: 'basic', tp: 2, sl: 1 },
+      additional: {
+        dcaEnabled: true,
+        dcaMode: 'advanced',
+        dcaTimes: 3,
+        dcaLevels: [{ percent: -10 }, { percent: -20 }, { percent: -30 }],
+      },
+    });
+    const legacyStrategyId = await createStrategy(owner, 'Runtime DCA Legacy', {
+      open: { indicatorsLong: [], indicatorsShort: [] },
+      close: { mode: 'basic', tp: 2, sl: 1 },
+    });
+
+    const universe = await prisma.marketUniverse.create({
+      data: {
+        userId: ownerUser.id,
+        name: `DCA Ladder Universe ${Date.now()}`,
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        whitelist: [],
+        blacklist: [],
+      },
+    });
+
+    const groupBasic = await prisma.symbolGroup.create({
+      data: {
+        userId: ownerUser.id,
+        marketUniverseId: universe.id,
+        name: 'DCA Basic Group',
+        symbols: ['BTCUSDT'],
+      },
+    });
+    const groupAdvanced = await prisma.symbolGroup.create({
+      data: {
+        userId: ownerUser.id,
+        marketUniverseId: universe.id,
+        name: 'DCA Advanced Group',
+        symbols: ['ETHUSDT'],
+      },
+    });
+    const groupLegacy = await prisma.symbolGroup.create({
+      data: {
+        userId: ownerUser.id,
+        marketUniverseId: universe.id,
+        name: 'DCA Legacy Group',
+        symbols: ['BNBUSDT'],
+      },
+    });
+
+    const bot = await prisma.bot.create({
+      data: {
+        userId: ownerUser.id,
+        name: 'DCA Ladder Bot',
+        mode: 'PAPER',
+        marketType: 'FUTURES',
+        isActive: true,
+      },
+    });
+
+    const basicBotGroup = await prisma.botMarketGroup.create({
+      data: {
+        userId: ownerUser.id,
+        botId: bot.id,
+        symbolGroupId: groupBasic.id,
+        lifecycleStatus: 'ACTIVE',
+        executionOrder: 1,
+        isEnabled: true,
+      },
+    });
+    const advancedBotGroup = await prisma.botMarketGroup.create({
+      data: {
+        userId: ownerUser.id,
+        botId: bot.id,
+        symbolGroupId: groupAdvanced.id,
+        lifecycleStatus: 'ACTIVE',
+        executionOrder: 2,
+        isEnabled: true,
+      },
+    });
+    const legacyBotGroup = await prisma.botMarketGroup.create({
+      data: {
+        userId: ownerUser.id,
+        botId: bot.id,
+        symbolGroupId: groupLegacy.id,
+        lifecycleStatus: 'ACTIVE',
+        executionOrder: 3,
+        isEnabled: true,
+      },
+    });
+
+    await prisma.marketGroupStrategyLink.createMany({
+      data: [
+        {
+          userId: ownerUser.id,
+          botId: bot.id,
+          botMarketGroupId: basicBotGroup.id,
+          strategyId: basicStrategyId,
+          priority: 1,
+          weight: 1,
+          isEnabled: true,
+        },
+        {
+          userId: ownerUser.id,
+          botId: bot.id,
+          botMarketGroupId: advancedBotGroup.id,
+          strategyId: advancedStrategyId,
+          priority: 1,
+          weight: 1,
+          isEnabled: true,
+        },
+        {
+          userId: ownerUser.id,
+          botId: bot.id,
+          botMarketGroupId: legacyBotGroup.id,
+          strategyId: legacyStrategyId,
+          priority: 1,
+          weight: 1,
+          isEnabled: true,
+        },
+      ],
+    });
+
+    const session = await prisma.botRuntimeSession.create({
+      data: {
+        userId: ownerUser.id,
+        botId: bot.id,
+        mode: 'PAPER',
+        status: 'RUNNING',
+        startedAt: new Date('2026-04-02T10:00:00.000Z'),
+        lastHeartbeatAt: new Date('2026-04-02T10:10:00.000Z'),
+      },
+    });
+
+    const basicPosition = await prisma.position.create({
+      data: {
+        userId: ownerUser.id,
+        botId: bot.id,
+        strategyId: basicStrategyId,
+        symbol: 'BTCUSDT',
+        side: 'LONG',
+        status: 'OPEN',
+        entryPrice: 65000,
+        quantity: 0.2,
+        leverage: 15,
+        openedAt: new Date('2026-04-02T10:01:00.000Z'),
+        managementMode: 'BOT_MANAGED',
+      },
+    });
+    const advancedPosition = await prisma.position.create({
+      data: {
+        userId: ownerUser.id,
+        botId: bot.id,
+        strategyId: advancedStrategyId,
+        symbol: 'ETHUSDT',
+        side: 'SHORT',
+        status: 'OPEN',
+        entryPrice: 2200,
+        quantity: 5,
+        leverage: 15,
+        openedAt: new Date('2026-04-02T10:02:00.000Z'),
+        managementMode: 'BOT_MANAGED',
+      },
+    });
+    const legacyPosition = await prisma.position.create({
+      data: {
+        userId: ownerUser.id,
+        botId: bot.id,
+        strategyId: legacyStrategyId,
+        symbol: 'BNBUSDT',
+        side: 'LONG',
+        status: 'OPEN',
+        entryPrice: 600,
+        quantity: 20,
+        leverage: 15,
+        openedAt: new Date('2026-04-02T10:03:00.000Z'),
+        managementMode: 'BOT_MANAGED',
+      },
+    });
+
+    await prisma.trade.createMany({
+      data: [
+        {
+          userId: ownerUser.id,
+          botId: bot.id,
+          positionId: basicPosition.id,
+          strategyId: basicStrategyId,
+          symbol: 'BTCUSDT',
+          side: 'BUY',
+          lifecycleAction: 'OPEN',
+          price: 65000,
+          quantity: 0.1,
+          fee: 0,
+          realizedPnl: 0,
+          executedAt: new Date('2026-04-02T10:01:10.000Z'),
+        },
+        {
+          userId: ownerUser.id,
+          botId: bot.id,
+          positionId: basicPosition.id,
+          strategyId: basicStrategyId,
+          symbol: 'BTCUSDT',
+          side: 'BUY',
+          lifecycleAction: 'DCA',
+          price: 64500,
+          quantity: 0.05,
+          fee: 0,
+          realizedPnl: 0,
+          executedAt: new Date('2026-04-02T10:01:40.000Z'),
+        },
+        {
+          userId: ownerUser.id,
+          botId: bot.id,
+          positionId: basicPosition.id,
+          strategyId: basicStrategyId,
+          symbol: 'BTCUSDT',
+          side: 'BUY',
+          lifecycleAction: 'DCA',
+          price: 64000,
+          quantity: 0.05,
+          fee: 0,
+          realizedPnl: 0,
+          executedAt: new Date('2026-04-02T10:02:00.000Z'),
+        },
+        {
+          userId: ownerUser.id,
+          botId: bot.id,
+          positionId: advancedPosition.id,
+          strategyId: advancedStrategyId,
+          symbol: 'ETHUSDT',
+          side: 'SELL',
+          lifecycleAction: 'OPEN',
+          price: 2200,
+          quantity: 2,
+          fee: 0,
+          realizedPnl: 0,
+          executedAt: new Date('2026-04-02T10:02:10.000Z'),
+        },
+        {
+          userId: ownerUser.id,
+          botId: bot.id,
+          positionId: advancedPosition.id,
+          strategyId: advancedStrategyId,
+          symbol: 'ETHUSDT',
+          side: 'SELL',
+          lifecycleAction: 'DCA',
+          price: 2220,
+          quantity: 1.5,
+          fee: 0,
+          realizedPnl: 0,
+          executedAt: new Date('2026-04-02T10:02:40.000Z'),
+        },
+        {
+          userId: ownerUser.id,
+          botId: bot.id,
+          positionId: advancedPosition.id,
+          strategyId: advancedStrategyId,
+          symbol: 'ETHUSDT',
+          side: 'SELL',
+          lifecycleAction: 'DCA',
+          price: 2240,
+          quantity: 1.5,
+          fee: 0,
+          realizedPnl: 0,
+          executedAt: new Date('2026-04-02T10:03:00.000Z'),
+        },
+        {
+          userId: ownerUser.id,
+          botId: bot.id,
+          positionId: legacyPosition.id,
+          strategyId: legacyStrategyId,
+          symbol: 'BNBUSDT',
+          side: 'BUY',
+          lifecycleAction: 'OPEN',
+          price: 600,
+          quantity: 10,
+          fee: 0,
+          realizedPnl: 0,
+          executedAt: new Date('2026-04-02T10:03:10.000Z'),
+        },
+        {
+          userId: ownerUser.id,
+          botId: bot.id,
+          positionId: legacyPosition.id,
+          strategyId: legacyStrategyId,
+          symbol: 'BNBUSDT',
+          side: 'BUY',
+          lifecycleAction: 'DCA',
+          price: 595,
+          quantity: 10,
+          fee: 0,
+          realizedPnl: 0,
+          executedAt: new Date('2026-04-02T10:03:40.000Z'),
+        },
+      ],
+    });
+
+    const positionsRes = await owner.get(`/dashboard/bots/${bot.id}/runtime-sessions/${session.id}/positions`);
+    expect(positionsRes.status).toBe(200);
+    expect(positionsRes.body.openItems).toHaveLength(3);
+
+    const bySymbol = new Map(
+      positionsRes.body.openItems.map((item: { symbol: string }) => [item.symbol, item])
+    );
+
+    const basic = bySymbol.get('BTCUSDT') as {
+      dcaCount: number;
+      dcaPlannedLevels: number[];
+      dcaExecutedLevels: number[];
+    };
+    const advanced = bySymbol.get('ETHUSDT') as {
+      dcaCount: number;
+      dcaPlannedLevels: number[];
+      dcaExecutedLevels: number[];
+    };
+    const legacy = bySymbol.get('BNBUSDT') as {
+      dcaCount: number;
+      dcaPlannedLevels: number[];
+      dcaExecutedLevels: number[];
+    };
+
+    expect(basic.dcaCount).toBe(2);
+    expect(basic.dcaPlannedLevels).toEqual([-15, -15]);
+    expect(basic.dcaExecutedLevels).toEqual([-15, -15]);
+
+    expect(advanced.dcaCount).toBe(2);
+    expect(advanced.dcaPlannedLevels).toEqual([-10, -20, -30]);
+    expect(advanced.dcaExecutedLevels).toEqual([-10, -20]);
+
+    expect(legacy.dcaCount).toBe(1);
+    expect(legacy.dcaPlannedLevels).toEqual([]);
+    expect(legacy.dcaExecutedLevels).toEqual([]);
   });
 
   it('computes live signal direction from latest candles when no signal event exists yet', async () => {
