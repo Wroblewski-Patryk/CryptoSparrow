@@ -7,17 +7,34 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BOPS-36 feat(web-dashboard): apply final fixes from manual smoke notes and freeze Dashboard->Bots UX for wider QA`
+- [ ] `LFIN-04 feat(runtime): add live fill reconciliation flow and persist exchange-true fee totals in order/trade`
 
 ## NEXT
-- [ ] `LFIN-01 docs(contract): lock LIVE fee source-of-truth and reconciliation fallback hierarchy (fills/trades first, estimator fallback only for pending)`
-- [ ] `LFIN-02 feat(db): add fill-level persistence + fee source fields for order/trade runtime history`
-- [ ] `LFIN-08 audit(i18n): inventory hardcoded strings in dashboard-home, bots runtime, and dashboard header menu`
-- [ ] `LFIN-14 docs(contract): lock numeric input policy (comma/dot parsing, precision, integer vs decimal field matrix)`
+- [ ] `LFIN-05 feat(api+web): expose and render feeSource/feePending/feeCurrency in dashboard+bots history views`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `LFIN-03 feat(exchange): extend ccxt connector contract with normalized fill/trade retrieval methods for executed orders`
+- [x] `LFIN-02 feat(db): add fill-level persistence + fee source fields for order/trade runtime history`
+- [x] `BOPS-36 feat(web-dashboard): apply final fixes from manual smoke notes and freeze Dashboard->Bots UX for wider QA`
+- [x] `LFIN-14 docs(contract): lock numeric input policy (comma/dot parsing, precision, integer vs decimal field matrix)`
+- [x] `LFIN-08 audit(i18n): inventory hardcoded strings in dashboard-home, bots runtime, and dashboard header menu`
+- [x] `LFIN-01 docs(contract): lock LIVE fee source-of-truth and reconciliation fallback hierarchy (fills/trades first, estimator fallback only for pending)`
+- [x] `TCHK-04 chore(ci-quality): add/enable typecheck step in quality pipeline and document gate usage`
+- [x] `TCHK-03 feat(tooling-root): add root aggregate typecheck script for api+web`
+- [x] `TCHK-02 feat(tooling-web): add web typecheck script (tsc --noEmit) and verify local pass`
+- [x] `TCHK-01 feat(tooling-api): add api typecheck script (tsc --noEmit) and verify local pass`
+- [x] `DBRT-10 feat(web-dashboard): implement tri-state column sorting cycle (asc -> desc -> none) for trades table`
+- [x] `DBRT-09 test(web-dashboard): add regression tests for apply-flow, date-range behavior, and UNKNOWN filter UX contract`
+- [x] `DBRT-08 feat(web-dashboard): hide UNKNOWN from action filter while keeping UNKNOWN row rendering`
+- [x] `DBRT-07 feat(web-dashboard): introduce apply/reset filter workflow (draft vs applied state)`
+- [x] `DBRT-06 feat(web-dashboard): simplify trades header and pagination summary presentation`
+- [x] `DBRT-05 test(api+web): add regression coverage for runtime trade-history pagination/sort/filter and dashboard state persistence on auto-refresh`
+- [x] `DBRT-04 feat(web-dashboard): implement server-driven trade-history table controls (filters, sortable headers, pagination) in Dashboard`
+- [x] `DBRT-03 feat(web-types): extend bots runtime trades DTO/service with pagination+sorting contract and meta mapping`
+- [x] `DBRT-02 feat(api-runtime): extend runtime-session trades query with page/pageSize/sortBy/sortDir/filters and deterministic ordering`
+- [x] `DBRT-01 docs(contract): lock Dashboard runtime trade-history table contract (server-side pagination, sort, filters, response meta)`
 - [x] `BOPS-35 chore(web-dashboard): execute final manual smoke of Dashboard->Bots UX flow and attach validation notes to planning log`
 - [x] `DBACT-03 feat(runtime): classify fill events into OPEN/DCA/CLOSE and persist lifecycleAction on trade rows`
 - [x] `DBACT-02 feat(db): add trade lifecycleAction enum/column with backward-safe default for dashboard history semantics`

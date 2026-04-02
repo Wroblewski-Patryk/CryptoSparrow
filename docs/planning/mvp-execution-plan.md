@@ -362,7 +362,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-33 feat(web-dashboard): apply checklist-driven final nits from manual dashboard+bots UX walk-through`
 - [x] `BOPS-34 chore(web-dashboard): run final responsive pass on dashboard+bots headers/cards after checklist nits and lock release screenshots`
 - [x] `BOPS-35 chore(web-dashboard): execute final manual smoke of Dashboard->Bots UX flow and attach validation notes to planning log`
-- [ ] `BOPS-36 feat(web-dashboard): apply final fixes from manual smoke notes and freeze Dashboard->Bots UX for wider QA`
+- [x] `BOPS-36 feat(web-dashboard): apply final fixes from manual smoke notes and freeze Dashboard->Bots UX for wider QA`
 - [x] `BOPS-37 feat(web-dashboard): remove redundant sidebar actions (Odswiez/Boty runtime) from dashboard Bot runtime card`
 - [x] `BOPS-38 test(web-dashboard): update dashboard component tests for no-local-CTA runtime sidebar contract`
 - [x] `BOPS-39 feat(web-nav): add Bots dropdown entries (Lista botow, Dodaj bota) aligned with Markets/Strategies/Backtests IA`
@@ -379,20 +379,50 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DBACT-07 test(api+web): add contract + component coverage for action mapping, margin rendering, and non-null fee/realized values`
 
 ## Phase 21 - LIVE Fee Truth + i18n + Numeric Input Hardening
-- [ ] `LFIN-01 docs(contract): lock LIVE fee source-of-truth and reconciliation fallback hierarchy (exchange fills/trades first, estimator only as temporary pending fallback)`
-- [ ] `LFIN-02 feat(db): add fill-level persistence and fee-source metadata for order/trade runtime history`
-- [ ] `LFIN-03 feat(exchange): extend ccxt connector contract with normalized fill/trade retrieval methods for executed orders`
+- [x] `LFIN-01 docs(contract): lock LIVE fee source-of-truth and reconciliation fallback hierarchy (exchange fills/trades first, estimator only as temporary pending fallback)`
+- [x] `LFIN-02 feat(db): add fill-level persistence and fee-source metadata for order/trade runtime history`
+- [x] `LFIN-03 feat(exchange): extend ccxt connector contract with normalized fill/trade retrieval methods for executed orders`
 - [ ] `LFIN-04 feat(runtime): add live fill reconciliation flow and persist exchange-true fee totals in order/trade`
 - [ ] `LFIN-05 feat(api+web): expose and render feeSource/feePending/feeCurrency in dashboard+bots history views`
-- [ ] `LFIN-06 audit(i18n): inventory hardcoded copy in dashboard-home, bots module, and dashboard header menu`
+- [x] `LFIN-06 audit(i18n): inventory hardcoded copy in dashboard-home, bots module, and dashboard header menu`
 - [ ] `LFIN-07 refactor(web-i18n): migrate dashboard-home and bots strings to translation keys with EN/PL parity`
 - [ ] `LFIN-08 refactor(web-nav-i18n): remove inline locale dictionaries from header and use canonical i18n keys only`
-- [ ] `LFIN-09 docs(contract): lock locale-safe numeric input policy (comma/dot, precision matrix, integer vs decimal fields)`
+- [x] `LFIN-09 docs(contract): lock locale-safe numeric input policy (comma/dot, precision matrix, integer vs decimal fields)`
 - [ ] `LFIN-10 feat(web-utils): add shared number parser/normalizer and form-level validation contract`
 - [ ] `LFIN-11 refactor(web-strategies): replace direct Number(...) parsing in strategy form sections with parser-driven handling + precision guards`
 - [ ] `LFIN-12 test(api+web): add reconciliation, i18n, and numeric-input regression suites for new contracts`
 
+## Phase 22 - Dashboard Runtime Trades Table (Server-Side Operability)
+- [x] `DBRT-01 docs(contract): lock Dashboard runtime trade-history table contract (server-side pagination, sort, filters, response meta)`
+- [x] `DBRT-02 feat(api-runtime): extend runtime-session trades query with page/pageSize/sortBy/sortDir/filters and deterministic ordering`
+- [x] `DBRT-03 feat(web-types): extend bots runtime trades DTO/service with pagination+sorting contract and meta mapping`
+- [x] `DBRT-04 feat(web-dashboard): implement server-driven trade-history table controls (filters, sortable headers, pagination) in Dashboard`
+- [x] `DBRT-05 test(api+web): add regression coverage for runtime trade-history pagination/sort/filter and dashboard state persistence on auto-refresh`
+
+## Phase 23 - Typecheck Gate Adoption (Tooling)
+- [x] `TCHK-01 feat(tooling-api): add api typecheck script (tsc --noEmit) and verify local pass`
+- [x] `TCHK-02 feat(tooling-web): add web typecheck script (tsc --noEmit) and verify local pass`
+- [x] `TCHK-03 feat(tooling-root): add root aggregate typecheck script for api+web`
+- [x] `TCHK-04 chore(ci-quality): add/enable typecheck step in quality pipeline and document gate usage`
+
+## Phase 24 - Dashboard Trades Filter Polish (UX)
+- [x] `DBRT-06 feat(web-dashboard): simplify trades header and pagination summary presentation`
+- [x] `DBRT-07 feat(web-dashboard): introduce apply/reset filter workflow (draft vs applied state)`
+- [x] `DBRT-08 feat(web-dashboard): hide UNKNOWN from action filter while keeping UNKNOWN row rendering`
+- [x] `DBRT-09 test(web-dashboard): add regression tests for apply-flow, date-range behavior, and UNKNOWN filter UX contract`
+- [x] `DBRT-10 feat(web-dashboard): implement tri-state column sorting cycle (asc -> desc -> none) for trades table`
+
 ## Progress Log
+- 2026-04-02: Completed `LFIN-02` DB foundation for exact LIVE fee reconciliation: added enum `FeeSource`, extended `Order`/`Trade` with `feeSource`, `feePending`, `feeCurrency`, `effectiveFeeRate`, `exchangeTradeId`, and introduced `OrderFill` persistence model (+ migration `20260402173000_add_order_fill_and_fee_source`) with runtime-friendly indexes and FK contracts.
+- 2026-04-02: Completed `BOPS-36` final Dashboard->Bots UX freeze pass: reduced runtime sidebar density (lighter section cards + trimmed decision metrics), polished live-check cards for cleaner LONG/SHORT condition readability under NEUTRAL/active states, and validated with focused web regression suites (`HomeLiveWidgets`, `BotsManagement`, `Header.responsive`) all PASS.
+- 2026-04-02: Completed docs/audit tranche for Phase 21: published LIVE fee reconciliation contract (`docs/architecture/live-fee-reconciliation-contract.md`), i18n inventory for dashboard+bots+header (`docs/planning/i18n-dashboard-bots-menu-inventory-2026-04-02.md`), and numeric input policy (`docs/architecture/numeric-input-policy.md`).
+- 2026-04-02: Completed `TCHK-01..TCHK-04`: added `typecheck` scripts to `apps/api` and `apps/web`, switched root aggregate `typecheck` to explicit api+web gate, enabled CI `typecheck` steps in both jobs, and documented local/CI usage in `docs/engineering/local-development.md` (all local commands PASS).
+- 2026-04-02: Completed `DBRT-06..DBRT-10` in dashboard trades table: removed redundant header count/page string, switched filters to draft+apply/reset model, hid `UNKNOWN` from action select, implemented tri-state sorting (`asc -> desc -> none`) with omitted sort params in `none`, polished pagination summary badges, and updated dashboard component regression tests.
+- 2026-04-02: Extended dashboard-trades UX polish scope with `DBRT-10` tri-state sort behavior (`asc -> desc -> none`) for column headers and request contract consistency when sort is cleared.
+- 2026-04-02: Added dashboard-trades UX polish plan in `docs/planning/dashboard-trades-filter-polish-plan-2026-04-02.md` and queued execution tasks `DBRT-06..DBRT-09` (header cleanup, apply-filter flow, UNKNOWN filter UX, regression coverage).
+- 2026-04-02: Added Typecheck adoption plan in `docs/planning/typecheck-adoption-plan-2026-04-02.md` and queued execution tasks `TCHK-01..TCHK-04` (api/web/root scripts + CI quality gate).
+- 2026-04-02: Completed `DBRT-02..DBRT-05`: extended runtime trades API query (page/pageSize/sort/filter/date range + response `meta`), updated web DTO/service contract, implemented dashboard server-driven table controls (filters/sort/pagination), and added regression coverage in API e2e + dashboard component tests.
+- 2026-04-02: Completed `DBRT-01` by publishing runtime trade-table contract in `docs/planning/dashboard-runtime-trades-table-plan-2026-04-02.md` (server-side pagination/sort/filter + response meta), and queued implementation steps `DBRT-02..DBRT-05` in execution/next-commit plans.
 - 2026-04-02: Added Phase 21 planning track (`LFIN-01..LFIN-12`) and detailed implementation plan in `docs/planning/live-fee-i18n-numeric-hardening-plan-2026-04-02.md` for LIVE fee truth, dashboard/bots/menu i18n parity, and locale-safe numeric input validation.
 - 2026-04-01: Completed `DBACT-02/03`: added `TradeLifecycleAction` enum+column (migration `20260401191000_add_trade_lifecycle_action`) and persisted `OPEN/DCA/CLOSE` at runtime write-time in execution + DCA paths; verified with green bots API e2e after migration deploy.
 - 2026-04-01: Completed `BOPS-37..BOPS-41`: removed redundant dashboard runtime CTAs, updated dashboard/nav tests, and wired canonical Bots IA routes (`/dashboard/bots`, `/dashboard/bots/new`) with dropdown parity.
@@ -804,3 +834,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 
 - 2026-04-01: Completed BOPS-35 dashboard->bots final smoke (hybrid: focused regression tests + local build/runtime verification) and logged validation notes + BOPS-36 nits in docs/operations/dashboard-bots-manual-smoke-2026-04-01.md.
 - 2026-04-01: BOPS-36 progress: dashboard open-positions table now shows SL (TTP/TSL) columns by strategy close-mode (advanced) from API contract (showDynamicStopColumns), with API+web regression coverage.
+- 2026-04-02: Completed `LFIN-03` by extending CCXT connector contract with normalized fill/trade retrieval methods (`fetchOrderWithFills`, `fetchTradesForOrder`), adding inline create-order fill normalization, and covering fallback/support scenarios in connector unit tests.

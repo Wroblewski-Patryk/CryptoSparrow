@@ -26,8 +26,38 @@ export const CcxtFuturesOrderRequestSchema = z.object({
   clientOrderId: z.string().trim().min(1).optional(),
 });
 
+export const CcxtFetchOrderWithFillsInputSchema = z.object({
+  symbol: z.string().trim().min(1),
+  orderId: z.string().trim().min(1),
+});
+
+export const CcxtFetchTradesForOrderInputSchema = z.object({
+  symbol: z.string().trim().min(1),
+  orderId: z.string().trim().min(1),
+  since: z.number().int().nonnegative().optional(),
+  limit: z.number().int().min(1).max(1000).optional(),
+});
+
 export type CcxtFuturesConnectorConfig = z.input<typeof CcxtFuturesConnectorConfigSchema>;
 export type CcxtFuturesOrderRequest = z.input<typeof CcxtFuturesOrderRequestSchema>;
+export type CcxtFetchOrderWithFillsInput = z.input<typeof CcxtFetchOrderWithFillsInputSchema>;
+export type CcxtFetchTradesForOrderInput = z.input<typeof CcxtFetchTradesForOrderInputSchema>;
+
+export type CcxtFuturesOrderFill = {
+  exchangeTradeId: string | null;
+  exchangeOrderId: string | null;
+  symbol: string;
+  side: string | null;
+  price: number;
+  quantity: number;
+  notional: number;
+  feeCost: number;
+  feeCurrency: string | null;
+  feeRate: number | null;
+  executedAt: Date | null;
+  source: 'createOrder' | 'fetchOrder' | 'fetchMyTrades';
+  raw: unknown;
+};
 
 export type CcxtFuturesOrderResult = {
   id: string;
@@ -39,5 +69,6 @@ export type CcxtFuturesOrderResult = {
   filled?: number;
   price?: number;
   average?: number;
+  fills?: CcxtFuturesOrderFill[];
   raw: unknown;
 };
