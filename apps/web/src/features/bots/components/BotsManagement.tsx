@@ -130,6 +130,17 @@ const toTradeLifecycleLabel = (value: "OPEN" | "DCA" | "CLOSE" | "UNKNOWN") => {
   return "Nieznane";
 };
 
+const formatTradeFeeMeta = (trade: {
+  feeSource: "ESTIMATED" | "EXCHANGE_FILL";
+  feePending: boolean;
+  feeCurrency: string | null;
+}) => {
+  const currencySuffix = trade.feeCurrency ? ` ${trade.feeCurrency}` : "";
+  if (trade.feePending) return `PENDING${currencySuffix}`;
+  const sourceLabel = trade.feeSource === "EXCHANGE_FILL" ? "EXCHANGE" : "EST.";
+  return `${sourceLabel}${currencySuffix}`;
+};
+
 type MonitorAggregateData = {
   sessionDetail: BotRuntimeSessionDetail;
   symbolStats: BotRuntimeSymbolStatsResponse;
@@ -367,6 +378,14 @@ const aggregateMonitorData = (params: {
     trades: {
       sessionId: "AGGREGATE",
       total: tradeItems.length,
+      meta: {
+        page: 1,
+        pageSize: tradeItems.length || 1,
+        total: tradeItems.length,
+        totalPages: 1,
+        hasPrev: false,
+        hasNext: false,
+      },
       window: {
         startedAt,
         finishedAt: finishedAt ?? new Date().toISOString(),
@@ -2237,7 +2256,12 @@ export default function BotsManagement() {
                               <td>{formatNumber(trade.quantity, 6)}</td>
                               <td>{formatNumber(trade.price, 4)}</td>
                               <td>{formatCurrency(trade.margin)}</td>
-                              <td>{formatCurrency(trade.fee)}</td>
+                              <td>
+                                <div className="flex flex-col leading-tight">
+                                  <span>{formatCurrency(trade.fee)}</span>
+                                  <span className="text-[10px] opacity-60">{formatTradeFeeMeta(trade)}</span>
+                                </div>
+                              </td>
                               <td>{formatNumber(trade.feePct, 2)}%</td>
                               <td className={trade.realizedPnl >= 0 ? "text-success" : "text-error"}>
                                 {formatCurrency(trade.realizedPnl)}

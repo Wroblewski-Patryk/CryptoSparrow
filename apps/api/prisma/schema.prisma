@@ -37,6 +37,7 @@ model User {
   positions                Position[]
   orders                   Order[]
   trades                   Trade[]
+  orderFills               OrderFill[]
   signals                  Signal[]
   backtestRuns             BacktestRun[]
   backtestTrades           BacktestTrade[]
@@ -94,6 +95,7 @@ model Strategy {
   positions                Position[]
   orders                   Order[]
   trades                   Trade[]
+  orderFills               OrderFill[]
   signals                  Signal[]
   backtestRuns             BacktestRun[]
   backtestTrades           BacktestTrade[]
@@ -196,6 +198,7 @@ model Bot {
   positions                Position[]
   orders                   Order[]
   trades                   Trade[]
+  orderFills               OrderFill[]
   signals                  Signal[]
   logs                     Log[]
 
@@ -508,11 +511,12 @@ model Position {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user     User      @relation(fields: [userId], references: [id])
-  bot      Bot?      @relation(fields: [botId], references: [id])
-  strategy Strategy? @relation(fields: [strategyId], references: [id])
-  orders   Order[]
-  trades   Trade[]
+  user       User        @relation(fields: [userId], references: [id])
+  bot        Bot?        @relation(fields: [botId], references: [id])
+  strategy   Strategy?   @relation(fields: [strategyId], references: [id])
+  orders     Order[]
+  trades     Trade[]
+  orderFills OrderFill[]
 
   @@index([userId])
   @@index([userId, openedAt])
@@ -547,7 +551,12 @@ model Order {
   filledQuantity   Float       @default(0)
   averageFillPrice Float?
   fee              Float?
+  feeSource        FeeSource   @default(ESTIMATED)
+  feePending       Boolean     @default(false)
+  feeCurrency      String?
+  effectiveFeeRate Float?
   exchangeOrderId  String?
+  exchangeTradeId  String?
   submittedAt      DateTime?
   filledAt         DateTime?
   canceledAt       DateTime?
@@ -555,11 +564,12 @@ model Order {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user     User      @relation(fields: [userId], references: [id])
-  bot      Bot?      @relation(fields: [botId], references: [id])
-  strategy Strategy? @relation(fields: [strategyId], references: [id])
-  position Position? @relation(fields: [positionId], references: [id])
+  user     User        @relation(fields: [userId], references: [id])
+  bot      Bot?        @relation(fields: [botId], references: [id])
+  strategy Strategy?   @relation(fields: [strategyId], references: [id])
+  position Position?   @relation(fields: [positionId], references: [id])
   trades   Trade[]
+  fills    OrderFill[]
 
   @@index([userId])
   @@index([userId, createdAt])
@@ -570,6 +580,9 @@ model Order {
   @@index([botId])
   @@index([strategyId])
   @@index([positionId])
+  @@index([exchangeOrderId])
+  @@index([exchangeTradeId])
+  @@index([feeSource, feePending])
   @@index([symbol])
   @@index([status])
 }
@@ -584,23 +597,29 @@ model Trade {
   origin         TradingRecordOrigin    @default(BOT)
   managementMode PositionManagementMode @default(BOT_MANAGED)
 
-  symbol      String
-  side        OrderSide
-  lifecycleAction TradeLifecycleAction @default(UNKNOWN)
-  price       Float
-  quantity    Float
-  fee         Float?
-  realizedPnl Float?
-  executedAt  DateTime  @default(now())
+  symbol           String
+  side             OrderSide
+  lifecycleAction  TradeLifecycleAction @default(UNKNOWN)
+  price            Float
+  quantity         Float
+  fee              Float?
+  feeSource        FeeSource            @default(ESTIMATED)
+  feePending       Boolean              @default(false)
+  feeCurrency      String?
+  effectiveFeeRate Float?
+  exchangeTradeId  String?
+  realizedPnl      Float?
+  executedAt       DateTime             @default(now())
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user     User      @relation(fields: [userId], references: [id])
-  bot      Bot?      @relation(fields: [botId], references: [id])
-  strategy Strategy? @relation(fields: [strategyId], references: [id])
-  order    Order?    @relation(fields: [orderId], references: [id])
-  position Position? @relation(fields: [positionId], references: [id])
+  user     User        @relation(fields: [userId], references: [id])
+  bot      Bot?        @relation(fields: [botId], references: [id])
+  strategy Strategy?   @relation(fields: [strategyId], references: [id])
+  order    Order?      @relation(fields: [orderId], references: [id])
+  position Position?   @relation(fields: [positionId], references: [id])
+  fills    OrderFill[]
 
   @@index([userId])
   @@index([botId])
@@ -609,7 +628,54 @@ model Trade {
   @@index([positionId])
   @@index([userId, origin, executedAt])
   @@index([userId, managementMode, executedAt])
+  @@index([exchangeTradeId])
+  @@index([feeSource, feePending])
   @@index([symbol])
+}
+
+model OrderFill {
+  id String @id @default(uuid())
+
+  userId     String
+  botId      String?
+  strategyId String?
+  orderId    String
+  tradeId    String?
+  positionId String?
+
+  symbol String
+  side   OrderSide
+
+  exchangeTradeId String
+  price           Float
+  quantity        Float
+  notional        Float
+  feeCost         Float?
+  feeCurrency     String?
+  feeRate         Float?
+  executedAt      DateTime
+  raw             Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id])
+  bot      Bot?      @relation(fields: [botId], references: [id], onDelete: SetNull)
+  strategy Strategy? @relation(fields: [strategyId], references: [id], onDelete: SetNull)
+  order    Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  trade    Trade?    @relation(fields: [tradeId], references: [id], onDelete: SetNull)
+  position Position? @relation(fields: [positionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([botId])
+  @@index([strategyId])
+  @@index([orderId])
+  @@index([tradeId])
+  @@index([positionId])
+  @@index([exchangeTradeId])
+  @@index([symbol])
+  @@index([executedAt])
+  @@index([userId, executedAt])
 }
 
 model Signal {
@@ -685,6 +751,11 @@ enum TradeLifecycleAction {
   DCA
   CLOSE
   UNKNOWN
+}
+
+enum FeeSource {
+  ESTIMATED
+  EXCHANGE_FILL
 }
 
 enum TradingRecordOrigin {

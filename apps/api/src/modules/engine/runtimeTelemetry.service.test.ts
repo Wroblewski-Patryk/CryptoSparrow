@@ -52,10 +52,11 @@ describe('RuntimeTelemetryService.ensureRuntimeSession', () => {
       mode: 'PAPER',
       status: 'RUNNING',
     } as any);
+    const findManySpy = vi.spyOn(prisma.botRuntimeSession, 'findMany').mockResolvedValue([] as any);
+    const updateManySpy = vi.spyOn(prisma.botRuntimeSession, 'updateMany').mockResolvedValue({ count: 0 } as any);
     const touchSpy = vi.spyOn(prisma.botRuntimeSession, 'update').mockResolvedValue({
       id: 'session-running',
     } as any);
-    const findManySpy = vi.spyOn(prisma.botRuntimeSession, 'findMany');
     const createSpy = vi.spyOn(prisma.botRuntimeSession, 'create');
 
     const sessionId = await service.ensureRuntimeSession({
@@ -66,8 +67,50 @@ describe('RuntimeTelemetryService.ensureRuntimeSession', () => {
 
     expect(sessionId).toBe('session-running');
     expect(touchSpy).toHaveBeenCalledTimes(1);
-    expect(findManySpy).not.toHaveBeenCalled();
+    expect(findManySpy).toHaveBeenCalledTimes(1);
+    expect(updateManySpy).not.toHaveBeenCalled();
     expect(createSpy).not.toHaveBeenCalled();
   });
-});
 
+  it('cancels duplicate RUNNING sessions when cached session is valid', async () => {
+    const service = new RuntimeTelemetryService();
+    (service as any).botSessionCache.set('bot-1', {
+      sessionId: 'session-running',
+      userId: 'user-1',
+      mode: 'PAPER',
+    });
+
+    vi.spyOn(prisma.botRuntimeSession, 'findFirst').mockResolvedValue({
+      id: 'session-running',
+      userId: 'user-1',
+      mode: 'PAPER',
+      status: 'RUNNING',
+    } as any);
+    vi.spyOn(prisma.botRuntimeSession, 'findMany').mockResolvedValue([{ id: 'session-dup' }] as any);
+    const updateManySpy = vi.spyOn(prisma.botRuntimeSession, 'updateMany').mockResolvedValue({ count: 1 } as any);
+    vi.spyOn(prisma.botRuntimeSession, 'update').mockResolvedValue({
+      id: 'session-running',
+    } as any);
+
+    const sessionId = await service.ensureRuntimeSession({
+      userId: 'user-1',
+      botId: 'bot-1',
+      mode: 'PAPER',
+    });
+
+    expect(sessionId).toBe('session-running');
+    expect(updateManySpy).toHaveBeenCalledTimes(1);
+    expect(updateManySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          id: { in: ['session-dup'] },
+          status: 'RUNNING',
+        }),
+        data: expect.objectContaining({
+          status: 'CANCELED',
+          stopReason: 'duplicate_running_session',
+        }),
+      })
+    );
+  });
+});

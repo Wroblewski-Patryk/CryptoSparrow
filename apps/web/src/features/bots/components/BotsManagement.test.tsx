@@ -498,6 +498,14 @@ describe("BotsManagement", () => {
     listRuntimeTradesMock.mockResolvedValue({
       sessionId: "session-1",
       total: 1,
+      meta: {
+        page: 1,
+        pageSize: 25,
+        total: 1,
+        totalPages: 1,
+        hasPrev: false,
+        hasNext: false,
+      },
       window: {
         startedAt: "2026-03-31T10:00:00.000Z",
         finishedAt: "2026-03-31T10:05:00.000Z",
@@ -511,6 +519,9 @@ describe("BotsManagement", () => {
           price: 70000,
           quantity: 0.01,
           fee: 0.7,
+          feeSource: "EXCHANGE_FILL",
+          feePending: false,
+          feeCurrency: "USDT",
           realizedPnl: 30,
           executedAt: "2026-03-31T10:04:30.000Z",
           orderId: "o1",
@@ -672,6 +683,14 @@ describe("BotsManagement", () => {
     listRuntimeTradesMock.mockResolvedValue({
       sessionId: "session-refresh",
       total: 0,
+      meta: {
+        page: 1,
+        pageSize: 25,
+        total: 0,
+        totalPages: 0,
+        hasPrev: false,
+        hasNext: false,
+      },
       window: {
         startedAt: "2026-03-31T10:00:00.000Z",
         finishedAt: "2026-03-31T10:05:00.000Z",

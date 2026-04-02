@@ -43,7 +43,7 @@ type RuntimePositionAutomationDeps = {
     addedQuantity: number;
     nextQuantity: number;
     nextEntryPrice: number;
-  }) => Promise<void>;
+  }) => Promise<{ feePaid: number }>;
   closeByExitSignal: (input: {
     userId: string;
     botId?: string;
@@ -263,11 +263,10 @@ const defaultDeps: RuntimePositionAutomationDeps = {
   },
   executeDca: async (input) => {
     const dcaQuantity = Math.max(0, input.addedQuantity);
-    if (dcaQuantity <= 0) return;
+    if (dcaQuantity <= 0) return { feePaid: 0 };
 
     const orderSide = input.positionSide === 'LONG' ? 'BUY' : 'SELL';
-    const feeRate = resolveRuntimeTakerFeeRate(input.mode);
-    const dcaFee = input.markPrice * dcaQuantity * feeRate;
+    const estimatedFee = input.markPrice * dcaQuantity * resolveRuntimeTakerFeeRate(input.mode);
     const opened = await openOrderLifecycle(input.userId, {
       botId: input.botId ?? undefined,
       strategyId: input.strategyId ?? undefined,
@@ -311,7 +310,12 @@ const defaultDeps: RuntimePositionAutomationDeps = {
           lifecycleAction: 'DCA',
           price: input.markPrice,
           quantity: dcaQuantity,
-          fee: dcaFee,
+          fee: input.mode === 'LIVE' ? (opened.fee ?? estimatedFee) : estimatedFee,
+          feeSource: opened.feeSource,
+          feePending: opened.feePending,
+          feeCurrency: opened.feeCurrency,
+          effectiveFeeRate: opened.effectiveFeeRate,
+          exchangeTradeId: opened.exchangeTradeId,
           realizedPnl: 0,
           origin: 'BOT',
           managementMode: 'BOT_MANAGED',
@@ -337,13 +341,14 @@ const defaultDeps: RuntimePositionAutomationDeps = {
             mode: input.mode,
             orderId: finalizedOrderId,
             addedQuantity: dcaQuantity,
-            fee: dcaFee,
+            fee: input.mode === 'LIVE' ? (opened.fee ?? estimatedFee) : estimatedFee,
             nextQuantity: input.nextQuantity,
             nextEntryPrice: input.nextEntryPrice,
           } as Prisma.InputJsonValue,
         },
       });
     });
+    return { feePaid: input.mode === 'LIVE' ? (opened.fee ?? estimatedFee) : estimatedFee };
   },
   closeByExitSignal: async (input) => {
     await orchestrateRuntimeSignal({
@@ -630,8 +635,7 @@ export class RuntimePositionAutomationService {
         ? Math.max(0, result.dcaAddedQuantity)
         : Math.max(0, result.nextState.quantity - previousState.quantity);
       if (dcaAddedQuantity > 0) {
-        const dcaFee = event.lastPrice * dcaAddedQuantity * resolveRuntimeTakerFeeRate(mode);
-        await this.deps.executeDca({
+        const dcaResult = await this.deps.executeDca({
           userId: position.userId,
           botId: position.botId,
           strategyId: position.strategyId,
@@ -670,7 +674,7 @@ export class RuntimePositionAutomationService {
             symbol: position.symbol,
             increments: {
               dcaCount: 1,
-              feesPaid: dcaFee,
+              feesPaid: dcaResult.feePaid,
             },
             lastPrice: event.lastPrice,
             lastTradeAt: eventAt,

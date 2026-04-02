@@ -1611,7 +1611,7 @@ export const listBotRuntimeSessions = async (
       botId,
       ...(query.status ? { status: query.status } : {}),
     },
-    orderBy: [{ startedAt: 'desc' }, { createdAt: 'desc' }],
+    orderBy: [{ lastHeartbeatAt: 'desc' }, { startedAt: 'desc' }, { createdAt: 'desc' }],
     take: query.limit,
   });
 
@@ -2341,16 +2341,61 @@ export const listBotRuntimeSessionTrades = async (
   if (!session) return null;
 
   const normalizedSymbol = query.symbol?.trim().toUpperCase();
+  const normalizedSide = query.side?.trim().toUpperCase() as 'BUY' | 'SELL' | undefined;
+  const normalizedAction = query.action?.trim().toUpperCase() as
+    | 'OPEN'
+    | 'DCA'
+    | 'CLOSE'
+    | 'UNKNOWN'
+    | undefined;
+  const isLegacyLimitOnly =
+    query.limit != null &&
+    query.page == null &&
+    query.pageSize == null &&
+    query.sortBy == null &&
+    query.sortDir == null &&
+    query.side == null &&
+    query.action == null &&
+    query.from == null &&
+    query.to == null;
+  const page = isLegacyLimitOnly ? 1 : Math.max(1, query.page ?? 1);
+  const pageSize = Math.min(
+    200,
+    Math.max(1, isLegacyLimitOnly ? query.limit : (query.pageSize ?? query.limit ?? 50))
+  );
+  const sortBy = query.sortBy ?? 'executedAt';
+  const sortDir = query.sortDir ?? 'desc';
   const windowEnd = resolveSessionWindowEnd(session);
+  const rangeStart = query.from ? new Date(Math.max(query.from.getTime(), session.startedAt.getTime())) : session.startedAt;
+  const rangeEnd = query.to ? new Date(Math.min(query.to.getTime(), windowEnd.getTime())) : windowEnd;
+  if (rangeStart.getTime() > rangeEnd.getTime()) {
+    return {
+      sessionId,
+      total: 0,
+      meta: {
+        page,
+        pageSize,
+        total: 0,
+        totalPages: 0,
+        hasPrev: page > 1,
+        hasNext: false,
+      },
+      window: {
+        startedAt: session.startedAt,
+        finishedAt: windowEnd,
+      },
+      items: [],
+    };
+  }
   const windowClause = {
     executedAt: {
-      gte: session.startedAt,
-      lte: windowEnd,
+      gte: rangeStart,
+      lte: rangeEnd,
     },
   };
 
   const carryOverPositionIds =
-    session.status === 'RUNNING'
+    session.status === 'RUNNING' && !query.from && !query.to
       ? (
           await prisma.position.findMany({
             where: {
@@ -2374,41 +2419,40 @@ export const listBotRuntimeSessionTrades = async (
     userId,
     botId,
     ...(normalizedSymbol ? { symbol: normalizedSymbol } : {}),
+    ...(normalizedSide ? { side: normalizedSide } : {}),
     OR:
       carryOverPositionIds.length > 0
         ? [windowClause, { positionId: { in: carryOverPositionIds } }]
         : [windowClause],
   };
 
-  const [total, items] = await Promise.all([
-    prisma.trade.count({
-      where,
-    }),
-    prisma.trade.findMany({
-      where,
-      orderBy: [{ executedAt: 'desc' }, { createdAt: 'desc' }],
-      take: query.limit,
-      select: {
-        id: true,
-        symbol: true,
-        side: true,
-        lifecycleAction: true,
-        price: true,
-        quantity: true,
-        fee: true,
-        realizedPnl: true,
-        executedAt: true,
-        createdAt: true,
-        orderId: true,
-        positionId: true,
-        strategyId: true,
-        origin: true,
-        managementMode: true,
-      },
-    }),
-  ]);
+  const rows = await prisma.trade.findMany({
+    where,
+    select: {
+      id: true,
+      symbol: true,
+      side: true,
+      lifecycleAction: true,
+      price: true,
+      quantity: true,
+      fee: true,
+      feeSource: true,
+      feePending: true,
+      feeCurrency: true,
+      realizedPnl: true,
+      executedAt: true,
+      createdAt: true,
+      orderId: true,
+      positionId: true,
+      strategyId: true,
+      origin: true,
+      managementMode: true,
+    },
+  });
 
-  const positionIds = [...new Set(items.map((trade) => trade.positionId).filter((value): value is string => Boolean(value)))];
+  const positionIds = [
+    ...new Set(rows.map((trade) => trade.positionId).filter((value): value is string => Boolean(value))),
+  ];
 
   const positionMetaById = new Map<string, { side: 'LONG' | 'SHORT'; leverage: number; entryPrice: number }>();
   const lifecycleActionByTradeId = new Map<string, 'OPEN' | 'DCA' | 'CLOSE' | 'UNKNOWN'>();
@@ -2479,14 +2523,8 @@ export const listBotRuntimeSessionTrades = async (
     }
   }
 
-  return {
-    sessionId,
-    total,
-    window: {
-      startedAt: session.startedAt,
-      finishedAt: windowEnd,
-    },
-    items: items.map((trade) => {
+  const enrichedRows = rows
+    .map((trade) => {
       const notional = trade.price * trade.quantity;
       const positionMeta = positionMetaById.get(trade.positionId ?? '');
       const leverage = positionMeta?.leverage ?? 1;
@@ -2499,6 +2537,7 @@ export const listBotRuntimeSessionTrades = async (
         inferredLifecycleAction === 'CLOSE' && positionMeta
           ? positionMeta.entryPrice * trade.quantity
           : notional;
+
       return {
         id: trade.id,
         symbol: trade.symbol,
@@ -2506,8 +2545,12 @@ export const listBotRuntimeSessionTrades = async (
         price: trade.price,
         quantity: trade.quantity,
         fee: trade.fee ?? 0,
+        feeSource: trade.feeSource,
+        feePending: trade.feePending,
+        feeCurrency: trade.feeCurrency ?? null,
         realizedPnl: trade.realizedPnl ?? 0,
         executedAt: trade.executedAt,
+        createdAt: trade.createdAt,
         orderId: trade.orderId,
         positionId: trade.positionId,
         strategyId: trade.strategyId,
@@ -2517,6 +2560,69 @@ export const listBotRuntimeSessionTrades = async (
         notional,
         margin: marginNotional / effectiveLeverage,
       };
+    })
+    .filter((trade) => (normalizedAction ? trade.lifecycleAction === normalizedAction : true));
+
+  const primaryCompare = (
+    left: (typeof enrichedRows)[number],
+    right: (typeof enrichedRows)[number]
+  ) => {
+    const dir = sortDir === 'asc' ? 1 : -1;
+    const compareNumbers = (a: number, b: number) => (a === b ? 0 : a > b ? 1 : -1) * dir;
+    const compareStrings = (a: string, b: string) => a.localeCompare(b) * dir;
+    switch (sortBy) {
+      case 'symbol':
+        return compareStrings(left.symbol, right.symbol);
+      case 'side':
+        return compareStrings(left.side, right.side);
+      case 'lifecycleAction':
+        return compareStrings(left.lifecycleAction, right.lifecycleAction);
+      case 'margin':
+        return compareNumbers(left.margin, right.margin);
+      case 'fee':
+        return compareNumbers(left.fee, right.fee);
+      case 'realizedPnl':
+        return compareNumbers(left.realizedPnl, right.realizedPnl);
+      case 'executedAt':
+      default:
+        return compareNumbers(left.executedAt.getTime(), right.executedAt.getTime());
+    }
+  };
+
+  const sortedRows = [...enrichedRows].sort((left, right) => {
+    const first = primaryCompare(left, right);
+    if (first !== 0) return first;
+    const byExecuted = right.executedAt.getTime() - left.executedAt.getTime();
+    if (byExecuted !== 0) return byExecuted;
+    const byCreated = right.createdAt.getTime() - left.createdAt.getTime();
+    if (byCreated !== 0) return byCreated;
+    return right.id.localeCompare(left.id);
+  });
+
+  const total = sortedRows.length;
+  const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize);
+  const safePage = totalPages === 0 ? 1 : Math.min(page, totalPages);
+  const offset = (safePage - 1) * pageSize;
+  const pagedRows = sortedRows.slice(offset, offset + pageSize);
+
+  return {
+    sessionId,
+    total,
+    meta: {
+      page: safePage,
+      pageSize,
+      total,
+      totalPages,
+      hasPrev: safePage > 1 && totalPages > 0,
+      hasNext: safePage < totalPages,
+    },
+    window: {
+      startedAt: session.startedAt,
+      finishedAt: windowEnd,
+    },
+    items: pagedRows.map((trade) => {
+      const { createdAt: _createdAt, ...rest } = trade;
+      return rest;
     }),
   };
 };

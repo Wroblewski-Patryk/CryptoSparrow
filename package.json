@@ -15,7 +15,7 @@
     "workers/dev": "node scripts/dev-workers.mjs",
     "workers:dev": "pnpm run workers/dev",
     "lint": "pnpm -r --if-present run lint",
-    "typecheck": "pnpm -r --if-present run typecheck",
+    "typecheck": "pnpm --filter api run typecheck && pnpm --filter web run typecheck",
     "test": "pnpm -r --if-present run test",
     "build": "pnpm -r --if-present run build",
     "go-live:infra:up": "docker compose up -d postgres redis",

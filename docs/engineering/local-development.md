@@ -70,6 +70,14 @@ pnpm run test
 pnpm run build
 ```
 
+## Quality Gate (Typecheck)
+- Local quick gates:
+  - `pnpm --filter api run typecheck`
+  - `pnpm --filter web run typecheck`
+  - `pnpm run typecheck` (aggregate root gate)
+- CI gate:
+  - `.github/workflows/ci.yml` runs `typecheck` for both `api` and `web` before tests.
+
 ## Notes
 - Current client lint/type issues can fail `build`/`lint`, but `client dev` still starts for local development.
 

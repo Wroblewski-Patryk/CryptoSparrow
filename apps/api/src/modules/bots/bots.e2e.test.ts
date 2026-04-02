@@ -843,6 +843,9 @@ describe('Bots module contract', () => {
     expect(tradesRes.body.items[0].notional).toBe(5000);
     expect(tradesRes.body.items[0].margin).toBe(5000);
     expect(tradesRes.body.items[0].fee).toBe(2.5);
+    expect(tradesRes.body.items[0].feeSource).toBe('ESTIMATED');
+    expect(tradesRes.body.items[0].feePending).toBe(false);
+    expect(tradesRes.body.items[0].feeCurrency).toBeNull();
     expect(tradesRes.body.items[0].realizedPnl).toBe(25);
 
     const positionsRes = await owner.get(`/dashboard/bots/${botId}/runtime-sessions/${session.id}/positions`);
@@ -966,6 +969,7 @@ describe('Bots module contract', () => {
           botId,
           symbol: 'ETHUSDT',
           side: 'BUY',
+          lifecycleAction: 'OPEN',
           price: 2000,
           quantity: 0.5,
           fee: 1,
@@ -977,6 +981,7 @@ describe('Bots module contract', () => {
           botId,
           symbol: 'ETHUSDT',
           side: 'SELL',
+          lifecycleAction: 'DCA',
           price: 2020,
           quantity: 0.5,
           fee: 1,
@@ -988,6 +993,7 @@ describe('Bots module contract', () => {
           botId,
           symbol: 'ETHUSDT',
           side: 'SELL',
+          lifecycleAction: 'CLOSE',
           price: 2040,
           quantity: 0.5,
           fee: 1,
@@ -999,6 +1005,7 @@ describe('Bots module contract', () => {
           botId,
           symbol: 'BTCUSDT',
           side: 'BUY',
+          lifecycleAction: 'OPEN',
           price: 60000,
           quantity: 0.02,
           fee: 2,
@@ -1032,6 +1039,44 @@ describe('Bots module contract', () => {
     expect(ethTradesRes.body.items).toHaveLength(1);
     expect(ethTradesRes.body.items[0].symbol).toBe('ETHUSDT');
     expect(ethTradesRes.body.items[0].executedAt).toContain('2026-03-31T02:09:00.000Z');
+    expect(ethTradesRes.body.meta.page).toBe(1);
+    expect(ethTradesRes.body.meta.pageSize).toBe(1);
+    expect(ethTradesRes.body.meta.total).toBe(3);
+    expect(ethTradesRes.body.meta.totalPages).toBe(3);
+
+    const ethTradesPage2Res = await owner
+      .get(`/dashboard/bots/${botId}/runtime-sessions/${runningSession.id}/trades`)
+      .query({ symbol: 'ETHUSDT', page: 2, pageSize: 1, sortBy: 'realizedPnl', sortDir: 'desc' });
+    expect(ethTradesPage2Res.status).toBe(200);
+    expect(ethTradesPage2Res.body.total).toBe(3);
+    expect(ethTradesPage2Res.body.items).toHaveLength(1);
+    expect(ethTradesPage2Res.body.items[0].realizedPnl).toBe(10);
+    expect(ethTradesPage2Res.body.meta.page).toBe(2);
+
+    const ethSellTradesRes = await owner
+      .get(`/dashboard/bots/${botId}/runtime-sessions/${runningSession.id}/trades`)
+      .query({ symbol: 'ETHUSDT', side: 'SELL', page: 1, pageSize: 10 });
+    expect(ethSellTradesRes.status).toBe(200);
+    expect(ethSellTradesRes.body.total).toBe(2);
+    expect(ethSellTradesRes.body.items.every((item: { side: string }) => item.side === 'SELL')).toBe(true);
+
+    const ethCloseTradesRes = await owner
+      .get(`/dashboard/bots/${botId}/runtime-sessions/${runningSession.id}/trades`)
+      .query({ symbol: 'ETHUSDT', action: 'CLOSE' });
+    expect(ethCloseTradesRes.status).toBe(200);
+    expect(ethCloseTradesRes.body.total).toBe(1);
+    expect(ethCloseTradesRes.body.items[0].lifecycleAction).toBe('CLOSE');
+
+    const ethFromToTradesRes = await owner
+      .get(`/dashboard/bots/${botId}/runtime-sessions/${runningSession.id}/trades`)
+      .query({
+        symbol: 'ETHUSDT',
+        from: '2026-03-31T02:05:00.000Z',
+        to: '2026-03-31T02:06:00.000Z',
+      });
+    expect(ethFromToTradesRes.status).toBe(200);
+    expect(ethFromToTradesRes.body.total).toBe(1);
+    expect(ethFromToTradesRes.body.items[0].executedAt).toContain('2026-03-31T02:05:30.000Z');
 
     const completedTradesRes = await owner
       .get(`/dashboard/bots/${botId}/runtime-sessions/${completedSession.id}/trades`)

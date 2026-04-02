@@ -159,6 +159,9 @@ export type BotRuntimeTrade = {
   price: number;
   quantity: number;
   fee: number;
+  feeSource: "ESTIMATED" | "EXCHANGE_FILL";
+  feePending: boolean;
+  feeCurrency: string | null;
   realizedPnl: number;
   executedAt: string;
   orderId: string;
@@ -173,6 +176,14 @@ export type BotRuntimeTrade = {
 export type BotRuntimeTradesResponse = {
   sessionId: string;
   total: number;
+  meta: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    hasPrev: boolean;
+    hasNext: boolean;
+  };
   window: {
     startedAt: string;
     finishedAt: string;

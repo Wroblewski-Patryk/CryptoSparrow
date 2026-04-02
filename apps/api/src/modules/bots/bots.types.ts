@@ -111,7 +111,25 @@ export const ListBotRuntimeSymbolStatsQuerySchema = z.object({
 
 export const ListBotRuntimeTradesQuerySchema = z.object({
   symbol: z.string().trim().min(1).max(40).optional(),
+  side: z.enum(['BUY', 'SELL']).optional(),
+  action: z.enum(['OPEN', 'DCA', 'CLOSE', 'UNKNOWN']).optional(),
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(200).optional(),
+  sortBy: z
+    .enum(['executedAt', 'symbol', 'side', 'lifecycleAction', 'margin', 'fee', 'realizedPnl'])
+    .optional(),
+  sortDir: z.enum(['asc', 'desc']).optional(),
   limit: z.coerce.number().int().min(1).max(500).default(200),
+}).superRefine((value, ctx) => {
+  if (value.from && value.to && value.from.getTime() > value.to.getTime()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: '`from` must be before or equal to `to`',
+      path: ['from'],
+    });
+  }
 });
 
 export const ListBotRuntimePositionsQuerySchema = z.object({

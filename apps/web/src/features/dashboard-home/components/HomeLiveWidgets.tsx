@@ -50,7 +50,45 @@ const MAX_DASHBOARD_BOTS = 8;
 const AUTO_REFRESH_INTERVAL_MS = 5_000;
 const LOAD_STALE_AFTER_MS = 20_000;
 const SELECTED_BOT_STORAGE_KEY = "dashboard.home.selectedBotId";
+const TRADE_PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 const normalizeSymbol = (value: string) => value.trim().toUpperCase();
+
+type TradeSortBy = "executedAt" | "symbol" | "side" | "lifecycleAction" | "margin" | "fee" | "realizedPnl";
+type TradeSortDir = "asc" | "desc";
+type TradeSideFilter = "ALL" | "BUY" | "SELL";
+type TradeActionFilter = "ALL" | "OPEN" | "DCA" | "CLOSE";
+
+type TradeFiltersState = {
+  symbol: string;
+  side: TradeSideFilter;
+  action: TradeActionFilter;
+  from: string;
+  to: string;
+};
+
+const EMPTY_TRADE_FILTERS: TradeFiltersState = {
+  symbol: "",
+  side: "ALL",
+  action: "ALL",
+  from: "",
+  to: "",
+};
+
+const normalizeDateTimeLocalToIso = (value: string, bound: "from" | "to") => {
+  const raw = value.trim();
+  if (!raw) return undefined;
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return undefined;
+  if (bound === "to") {
+    const hasSeconds = raw.length >= 19;
+    if (hasSeconds) {
+      parsed.setMilliseconds(999);
+    } else {
+      parsed.setSeconds(59, 999);
+    }
+  }
+  return parsed.toISOString();
+};
 
 const getAxiosMessage = (err: unknown) =>
   axios.isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
@@ -63,11 +101,18 @@ const toTs = (v?: string | null) => {
 
 const pickPrimarySession = (sessions: BotRuntimeSessionListItem[]) => {
   if (sessions.length === 0) return null;
+  const byFreshestHeartbeat = (a: BotRuntimeSessionListItem, b: BotRuntimeSessionListItem) => {
+    const heartbeatDiff = toTs(b.lastHeartbeatAt) - toTs(a.lastHeartbeatAt);
+    if (heartbeatDiff !== 0) return heartbeatDiff;
+    const startedDiff = toTs(b.startedAt) - toTs(a.startedAt);
+    if (startedDiff !== 0) return startedDiff;
+    return b.id.localeCompare(a.id);
+  };
   const running = sessions.filter((x) => x.status === "RUNNING");
   if (running.length > 0) {
-    return [...running].sort((a, b) => toTs(b.startedAt) - toTs(a.startedAt))[0] ?? null;
+    return [...running].sort(byFreshestHeartbeat)[0] ?? null;
   }
-  return [...sessions].sort((a, b) => toTs(b.startedAt) - toTs(a.startedAt))[0] ?? null;
+  return [...sessions].sort(byFreshestHeartbeat)[0] ?? null;
 };
 
 const sessionBadge = (status?: string | null) => {
@@ -203,6 +248,15 @@ const TradeActionPill = ({ value }: { value: TradeActionValue }) => (
   </span>
 );
 
+const formatTradeFeeMeta = (
+  trade: Pick<BotRuntimeTrade, "feeSource" | "feePending" | "feeCurrency">
+) => {
+  const currencySuffix = trade.feeCurrency ? ` ${trade.feeCurrency}` : "";
+  if (trade.feePending) return `PENDING${currencySuffix}`;
+  const sourceLabel = trade.feeSource === "EXCHANGE_FILL" ? "EXCHANGE" : "EST.";
+  return `${sourceLabel}${currencySuffix}`;
+};
+
 const resolveUsedMargin = (positions: BotRuntimePositionsResponse | null) =>
   (positions?.openItems ?? []).reduce((sum, p) => {
     const lev = Number.isFinite(p.leverage) && p.leverage > 0 ? p.leverage : 1;
@@ -283,6 +337,12 @@ export default function HomeLiveWidgets() {
   const [selectedBotId, setSelectedBotId] = useState<string | null>(null);
   const [selectedTrades, setSelectedTrades] = useState<BotRuntimeTradesResponse | null>(null);
   const [selectedTradesLoading, setSelectedTradesLoading] = useState(false);
+  const [tradePage, setTradePage] = useState(1);
+  const [tradePageSize, setTradePageSize] = useState<number>(TRADE_PAGE_SIZE_OPTIONS[0]);
+  const [tradeSortBy, setTradeSortBy] = useState<TradeSortBy | null>(null);
+  const [tradeSortDir, setTradeSortDir] = useState<TradeSortDir>("asc");
+  const [tradeDraftFilters, setTradeDraftFilters] = useState<TradeFiltersState>(EMPTY_TRADE_FILTERS);
+  const [tradeAppliedFilters, setTradeAppliedFilters] = useState<TradeFiltersState>(EMPTY_TRADE_FILTERS);
   const [refreshToken, setRefreshToken] = useState(0);
   const [liveTickerPrices, setLiveTickerPrices] = useState<Record<string, number>>({});
   const loadInFlightRef = useRef(false);
@@ -392,6 +452,10 @@ export default function HomeLiveWidgets() {
     window.localStorage.setItem(SELECTED_BOT_STORAGE_KEY, selected.bot.id);
   }, [selected?.bot.id]);
 
+  useEffect(() => {
+    setTradePage(1);
+  }, [selected?.bot.id, selected?.session?.id]);
+
   const streamSymbols = useMemo(() => {
     const fromStats = selected?.symbolStats?.items?.map((item) => item.symbol) ?? [];
     const fromOpen = selected?.positions?.openItems?.map((item) => item.symbol) ?? [];
@@ -438,7 +502,26 @@ export default function HomeLiveWidgets() {
       const shouldShowLoading = selectedTrades == null;
       if (shouldShowLoading) setSelectedTradesLoading(true);
       try {
-        const trades = await listBotRuntimeSessionTrades(selected.bot.id, selected.session.id, { limit: 300 });
+        const query: Parameters<typeof listBotRuntimeSessionTrades>[2] = {
+          page: tradePage,
+          pageSize: tradePageSize,
+        };
+        const symbol = tradeAppliedFilters.symbol.trim() ? normalizeSymbol(tradeAppliedFilters.symbol) : undefined;
+        const side = tradeAppliedFilters.side === "ALL" ? undefined : tradeAppliedFilters.side;
+        const action = tradeAppliedFilters.action === "ALL" ? undefined : tradeAppliedFilters.action;
+        const from = normalizeDateTimeLocalToIso(tradeAppliedFilters.from, "from");
+        const to = normalizeDateTimeLocalToIso(tradeAppliedFilters.to, "to");
+        if (tradeSortBy) {
+          query.sortBy = tradeSortBy;
+          query.sortDir = tradeSortDir;
+        }
+        if (symbol) query.symbol = symbol;
+        if (side) query.side = side;
+        if (action) query.action = action;
+        if (from) query.from = from;
+        if (to) query.to = to;
+
+        const trades = await listBotRuntimeSessionTrades(selected.bot.id, selected.session.id, query);
         if (!cancelled) setSelectedTrades(trades);
       } catch {
         if (!cancelled) setSelectedTrades(null);
@@ -450,7 +533,16 @@ export default function HomeLiveWidgets() {
     return () => {
       cancelled = true;
     };
-  }, [selected?.bot.id, selected?.session?.id, refreshToken]);
+  }, [
+    selected?.bot.id,
+    selected?.session?.id,
+    refreshToken,
+    tradePage,
+    tradePageSize,
+    tradeSortBy,
+    tradeSortDir,
+    tradeAppliedFilters,
+  ]);
 
   const summary = useMemo(() => {
     const openPositions = snapshots.reduce((acc, x) => acc + (x.positions?.openCount ?? 0), 0);
@@ -544,6 +636,52 @@ export default function HomeLiveWidgets() {
     );
   }, [selected?.positions?.showDynamicStopColumns, selectedData?.open]);
 
+  const tradeMeta = selectedTrades?.meta ?? {
+    page: tradePage,
+    pageSize: tradePageSize,
+    total: selectedData?.trades.length ?? 0,
+    totalPages: 1,
+    hasPrev: false,
+    hasNext: false,
+  };
+
+  const patchTradeDraftFilters = (patch: Partial<TradeFiltersState>) => {
+    setTradeDraftFilters((prev) => ({ ...prev, ...patch }));
+  };
+
+  const applyTradeFilters = () => {
+    setTradePage(1);
+    setTradeAppliedFilters({ ...tradeDraftFilters });
+  };
+
+  const handleTradeSort = (column: TradeSortBy) => {
+    setTradePage(1);
+    if (tradeSortBy !== column) {
+      setTradeSortBy(column);
+      setTradeSortDir("asc");
+      return;
+    }
+    if (tradeSortDir === "asc") {
+      setTradeSortDir("desc");
+      return;
+    }
+    setTradeSortBy(null);
+    setTradeSortDir("asc");
+  };
+
+  const tradeSortIndicator = (column: TradeSortBy) => {
+    if (tradeSortBy !== column) return "";
+    return tradeSortDir === "asc" ? " (asc)" : " (desc)";
+  };
+
+  const resetTradeFilters = () => {
+    setTradePage(1);
+    setTradeDraftFilters(EMPTY_TRADE_FILTERS);
+    setTradeAppliedFilters(EMPTY_TRADE_FILTERS);
+    setTradeSortBy(null);
+    setTradeSortDir("asc");
+  };
+
   if (loading) return <LoadingState title="Ladowanie dashboardu operacyjnego" />;
   if (error) return <ErrorState title="Nie udalo sie zaladowac dashboardu operacyjnego" description={error} retryLabel="Sprobuj ponownie" onRetry={() => void load()} />;
   if (bots.length === 0) {
@@ -635,10 +773,128 @@ export default function HomeLiveWidgets() {
           </section>
 
           <section className={CARD}>
-            <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-semibold">{selected?.bot.mode === "LIVE" ? "Zlecenia i historia transakcji" : "Historia transakcji"}</h3><span className="text-xs opacity-60">{selectedTradesLoading ? "Ladowanie..." : `${selectedData?.trades.length ?? 0}`}</span></div>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold">
+                {selected?.bot.mode === "LIVE" ? "Zlecenia i historia transakcji" : "Historia transakcji"}
+              </h3>
+              {selectedTradesLoading ? <span className="text-xs opacity-60">Ladowanie...</span> : null}
+            </div>
+            <div className="mb-3 grid gap-2 rounded-lg border border-base-300/70 bg-base-200/30 p-2 md:grid-cols-2 xl:grid-cols-6">
+              <label className="form-control gap-1">
+                <span className="text-[11px] uppercase tracking-wide opacity-60">Symbol</span>
+                <input
+                  className="input input-bordered input-xs"
+                  placeholder="BTCUSDT"
+                  value={tradeDraftFilters.symbol}
+                  onChange={(event) => {
+                    patchTradeDraftFilters({ symbol: event.target.value });
+                  }}
+                />
+              </label>
+              <label className="form-control gap-1">
+                <span className="text-[11px] uppercase tracking-wide opacity-60">Side</span>
+                <select
+                  className="select select-bordered select-xs"
+                  value={tradeDraftFilters.side}
+                  onChange={(event) => {
+                    patchTradeDraftFilters({ side: event.target.value as TradeSideFilter });
+                  }}
+                >
+                  <option value="ALL">Wszystkie</option>
+                  <option value="BUY">BUY</option>
+                  <option value="SELL">SELL</option>
+                </select>
+              </label>
+              <label className="form-control gap-1">
+                <span className="text-[11px] uppercase tracking-wide opacity-60">Action</span>
+                <select
+                  className="select select-bordered select-xs"
+                  value={tradeDraftFilters.action}
+                  onChange={(event) => {
+                    patchTradeDraftFilters({ action: event.target.value as TradeActionFilter });
+                  }}
+                >
+                  <option value="ALL">Wszystkie</option>
+                  <option value="OPEN">Otwarcie</option>
+                  <option value="DCA">DCA</option>
+                  <option value="CLOSE">Zamkniecie</option>
+                </select>
+              </label>
+              <label className="form-control gap-1">
+                <span className="text-[11px] uppercase tracking-wide opacity-60">Od</span>
+                <input
+                  type="datetime-local"
+                  className="input input-bordered input-xs"
+                  value={tradeDraftFilters.from}
+                  onChange={(event) => {
+                    patchTradeDraftFilters({ from: event.target.value });
+                  }}
+                />
+              </label>
+              <label className="form-control gap-1">
+                <span className="text-[11px] uppercase tracking-wide opacity-60">Do</span>
+                <input
+                  type="datetime-local"
+                  className="input input-bordered input-xs"
+                  value={tradeDraftFilters.to}
+                  onChange={(event) => {
+                    patchTradeDraftFilters({ to: event.target.value });
+                  }}
+                />
+              </label>
+              <div className="flex items-end justify-end gap-2">
+                <button type="button" className="btn btn-primary btn-xs" onClick={applyTradeFilters}>
+                  Zastosuj
+                </button>
+                <button type="button" className="btn btn-ghost btn-xs" onClick={resetTradeFilters}>
+                  Reset
+                </button>
+              </div>
+            </div>
             <div className="overflow-x-auto rounded-lg border border-base-300/70 bg-base-200/40">
               <table className="table table-sm">
-                <thead><tr><th>Czas</th><th>Symbol</th><th>Side</th><th>Action</th><th>Qty</th><th>Price</th><th>Margin</th><th>Fee</th><th>Realized PnL</th><th>Origin</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>
+                      <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("executedAt")}>
+                        Czas {tradeSortIndicator("executedAt")}
+                      </button>
+                    </th>
+                    <th>
+                      <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("symbol")}>
+                        Symbol {tradeSortIndicator("symbol")}
+                      </button>
+                    </th>
+                    <th>
+                      <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("side")}>
+                        Side {tradeSortIndicator("side")}
+                      </button>
+                    </th>
+                    <th>
+                      <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("lifecycleAction")}>
+                        Action {tradeSortIndicator("lifecycleAction")}
+                      </button>
+                    </th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>
+                      <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("margin")}>
+                        Margin {tradeSortIndicator("margin")}
+                      </button>
+                    </th>
+                    <th>
+                      <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("fee")}>
+                        Fee {tradeSortIndicator("fee")}
+                      </button>
+                    </th>
+                    <th>
+                      <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("realizedPnl")}>
+                        Realized PnL {tradeSortIndicator("realizedPnl")}
+                      </button>
+                    </th>
+                    <th>Origin</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {(selectedData?.trades ?? []).map((t) => (
                     <tr key={t.id}>
@@ -649,7 +905,12 @@ export default function HomeLiveWidgets() {
                       <td>{formatNumber(t.quantity, { maximumFractionDigits: 6 })}</td>
                       <td>{formatNumber(t.price, { maximumFractionDigits: 4 })}</td>
                       <td>{formatCurrency(t.margin)}</td>
-                      <td>{formatCurrency(t.fee)}</td>
+                      <td>
+                        <div className="flex flex-col leading-tight">
+                          <span>{formatCurrency(t.fee)}</span>
+                          <span className="text-[10px] opacity-60">{formatTradeFeeMeta(t)}</span>
+                        </div>
+                      </td>
                       <td className={t.realizedPnl >= 0 ? "text-success" : "text-error"}>{formatCurrency(t.realizedPnl)}</td>
                       <td>{t.origin}</td>
                     </tr>
@@ -658,45 +919,111 @@ export default function HomeLiveWidgets() {
                 </tbody>
               </table>
             </div>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="badge badge-outline badge-sm">Rekordy: {tradeMeta.total}</span>
+                <span className="badge badge-outline badge-sm">
+                  Strona {tradeMeta.page}/{Math.max(1, tradeMeta.totalPages)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1 text-xs opacity-70">
+                  <span>Wierszy</span>
+                  <select
+                    className="select select-bordered select-xs"
+                    value={tradePageSize}
+                    onChange={(event) => {
+                      setTradePageSize(Number(event.target.value));
+                      setTradePage(1);
+                    }}
+                  >
+                    {TRADE_PAGE_SIZE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-xs"
+                  disabled={!tradeMeta.hasPrev}
+                  onClick={() => setTradePage((prev) => Math.max(1, prev - 1))}
+                >
+                  Poprzednia
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-xs"
+                  disabled={!tradeMeta.hasNext}
+                  onClick={() => setTradePage((prev) => prev + 1)}
+                >
+                  Nastepna
+                </button>
+              </div>
+            </div>
           </section>
 
           <section className={CARD}>
-            <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-semibold">Live checks</h3><span className="text-xs opacity-60">{selectedData?.symbols.length ?? 0} par</span></div>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Live checks</h3>
+              <span className="text-xs opacity-60">{selectedData?.symbols.length ?? 0} par</span>
+            </div>
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {(selectedData?.symbols ?? []).map((s) => {
                 const signal: SignalPillValue = s.lastSignalDirection ?? "NEUTRAL";
+                const lines = s.lastSignalConditionLines ?? [];
+                const longLines = lines.filter((line) => line.scope === "LONG");
+                const shortLines = lines.filter((line) => line.scope === "SHORT");
+
                 return (
                   <article key={s.id} className="rounded-lg border border-base-300/70 bg-base-200/40 px-3 py-2">
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-semibold tracking-wide">{s.symbol}</p>
                       <SignalPill value={signal} />
                     </div>
-                    <div className="mt-2 space-y-1 text-[11px] leading-4 opacity-75">
-                      <div>
-                        <p className="opacity-60">Warunki:</p>
-                        {s.lastSignalConditionLines && s.lastSignalConditionLines.length > 0 ? (
-                          <ul className="mt-1 space-y-1">
-                            {s.lastSignalConditionLines.map((line, index) => (
-                              <li key={`${s.id}-condition-${index}`} className="flex flex-wrap items-center gap-1">
-                                <span
-                                  className={
-                                    line.scope === "LONG"
-                                      ? "inline-flex rounded border border-success/40 bg-success/10 px-1 py-[1px] text-[10px] font-semibold text-success"
-                                      : "inline-flex rounded border border-error/40 bg-error/10 px-1 py-[1px] text-[10px] font-semibold text-error"
-                                  }
-                                >
-                                  {line.scope}
-                                </span>
-                                <span>{line.left}</span>
-                                <span>=</span>
-                                <span className="font-semibold">{line.value}</span>
-                                <span>{line.operator}</span>
-                                <span>{line.right}</span>
-                              </li>
-                            ))}
-                          </ul>
+                    <div className="mt-2 space-y-2 text-[11px] leading-4">
+                      {signal === "NEUTRAL" ? (
+                        <p className="text-[10px] opacity-55">Brak sygnalu, warunki niespelnione.</p>
+                      ) : null}
+                      <div className="space-y-1 rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
+                        <div className="mb-0.5 flex items-center gap-1">
+                          <span className="inline-flex rounded border border-success/40 bg-success/10 px-1 py-[1px] text-[10px] font-semibold text-success">
+                            LONG
+                          </span>
+                        </div>
+                        {longLines.length === 0 ? (
+                          <p className="text-[10px] opacity-55">-</p>
                         ) : (
-                          <p className="mt-1 font-medium">-</p>
+                          longLines.map((line, index) => (
+                            <p key={`${s.id}-long-${index}`} className="font-mono text-[10px]">
+                              <span>{line.left}</span>
+                              <span className="mx-1">=</span>
+                              <span className="font-semibold">{line.value}</span>
+                              <span className="mx-1">{line.operator}</span>
+                              <span>{line.right}</span>
+                            </p>
+                          ))
+                        )}
+                      </div>
+                      <div className="space-y-1 rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
+                        <div className="mb-0.5 flex items-center gap-1">
+                          <span className="inline-flex rounded border border-error/40 bg-error/10 px-1 py-[1px] text-[10px] font-semibold text-error">
+                            SHORT
+                          </span>
+                        </div>
+                        {shortLines.length === 0 ? (
+                          <p className="text-[10px] opacity-55">-</p>
+                        ) : (
+                          shortLines.map((line, index) => (
+                            <p key={`${s.id}-short-${index}`} className="font-mono text-[10px]">
+                              <span>{line.left}</span>
+                              <span className="mx-1">=</span>
+                              <span className="font-semibold">{line.value}</span>
+                              <span className="mx-1">{line.operator}</span>
+                              <span>{line.right}</span>
+                            </p>
+                          ))
                         )}
                       </div>
                     </div>
@@ -713,118 +1040,114 @@ export default function HomeLiveWidgets() {
         </div>
 
         <aside className={`${CARD} h-fit`}>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold uppercase tracking-wide opacity-75">Bot runtime i ryzyko</h3>
-              <span className="text-xs opacity-60">{snapshots.length}</span>
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold uppercase tracking-wide opacity-75">Bot runtime i ryzyko</h3>
+
+            <div className="rounded-lg border border-base-300/70 bg-base-200/40 p-3">
+              <label className="form-control gap-1">
+                <span className="text-[11px] uppercase tracking-wide opacity-60">Wybrany bot</span>
+                <select
+                  className="select select-sm select-bordered"
+                  value={selected?.bot.id ?? ""}
+                  onChange={(event) => setSelectedBotId(event.target.value)}
+                >
+                  {snapshots.map((item) => (
+                    <option key={item.bot.id} value={item.bot.id}>
+                      {item.bot.name} ({item.bot.mode})
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
+                  <p className="opacity-65">Status</p>
+                  <p className="mt-1">
+                    <span className={`badge badge-xs ${sessionBadge(selectedData?.session?.status)}`}>
+                      {selectedData?.session?.status ?? "NO_SESSION"}
+                    </span>
+                  </p>
+                </div>
+                <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
+                  <p className="opacity-65">Tryb</p>
+                  <p className="mt-1 font-semibold">{selected?.bot.mode ?? "-"}</p>
+                </div>
+                <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
+                  <p className="opacity-65">Heartbeat</p>
+                  <p className="mt-1 font-semibold">{formatTime(selectedData?.session?.lastHeartbeatAt)}</p>
+                </div>
+                <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
+                  <p className="opacity-65">Pozycje otwarte</p>
+                  <p className="mt-1 font-semibold">{formatNumber(selectedData?.open.length ?? 0)}</p>
+                </div>
+                <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
+                  <p className="opacity-65">Sygnaly / DCA</p>
+                  <p className="mt-1 font-semibold">
+                    {formatNumber(selectedData?.session?.summary.totalSignals ?? 0)} / {formatNumber(selectedData?.session?.summary.dcaCount ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
+                  <p className="opacity-65">Net PnL</p>
+                  <p className={`mt-1 font-semibold ${(selectedData?.net ?? 0) >= 0 ? "text-success" : "text-error"}`}>
+                    {formatCurrency(selectedData?.net ?? 0)}
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <label className="form-control gap-1">
-              <span className="text-[11px] uppercase tracking-wide opacity-60">Wybrany bot</span>
-              <select
-                className="select select-sm select-bordered"
-                value={selected?.bot.id ?? ""}
-                onChange={(event) => setSelectedBotId(event.target.value)}
-              >
-                {snapshots.map((item) => (
-                  <option key={item.bot.id} value={item.bot.id}>
-                    {item.bot.name} ({item.bot.mode})
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="grid grid-cols-2 gap-x-3 gap-y-2 border-y border-base-300/80 py-2 text-xs">
-              <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">Status</span>
-                <span className={`badge badge-xs ${sessionBadge(selectedData?.session?.status)}`}>
-                  {selectedData?.session?.status ?? "NO_SESSION"}
-                </span>
-              </p>
-              <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">Tryb</span>
-                <span className="font-semibold">{selected?.bot.mode ?? "-"}</span>
-              </p>
-              <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">Heartbeat</span>
-                <span className="font-semibold">{formatTime(selectedData?.session?.lastHeartbeatAt)}</span>
-              </p>
-              <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">Open pozycje</span>
-                <span className="font-semibold">{formatNumber(selected?.positions?.openCount ?? 0)}</span>
-              </p>
-              <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">Sygnaly / DCA</span>
-                <span className="font-semibold">
-                  {formatNumber(selectedData?.session?.summary.totalSignals ?? 0)} / {formatNumber(selectedData?.session?.summary.dcaCount ?? 0)}
-                </span>
-              </p>
-              <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">Net PnL</span>
-                <span className={`font-semibold ${(selectedData?.net ?? 0) >= 0 ? "text-success" : "text-error"}`}>
-                  {formatCurrency(selectedData?.net ?? 0)}
-                </span>
-              </p>
-            </div>
             {selectedData?.session?.status !== "RUNNING" ? (
               <p className="text-[11px] rounded-md border border-warning/40 bg-warning/10 px-2 py-1 text-warning-content/80">
-                Brak aktywnej sesji runtime. Sprawdz czy uruchomione sa workery execution + market-stream.
+                Brak aktywnej sesji runtime. Sprawdz, czy dzialaja workery execution oraz market-stream.
               </p>
             ) : null}
 
-            <div className="space-y-2 text-xs">
-              <h4 className="text-[11px] uppercase tracking-wide opacity-60">Kapital i ryzyko</h4>
-              <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">Portfel</span>
-                <span className={`font-semibold ${summary.paperDelta >= 0 ? "text-success" : "text-error"}`}>
-                  {summary.paperStart > 0 ? formatCurrency(summary.paperEquity) : "-"}
-                </span>
-              </p>
-              <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">Zmiana</span>
-                <span className={`font-semibold ${summary.paperDelta >= 0 ? "text-success" : "text-error"}`}>
-                  {summary.paperStart > 0 ? formatCurrency(summary.paperDelta) : "-"}
-                </span>
-              </p>
-              <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">Zmiana %</span>
-                <span className="font-semibold">
-                  {summary.paperStart > 0 ? formatPercent((summary.paperDelta / summary.paperStart) * 100) : "-"}
-                </span>
-              </p>
-              <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">Wolne srodki</span>
-                <span className="font-semibold">{selectedData?.equity == null ? "-" : formatCurrency(selectedData.free)}</span>
-              </p>
-              <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">Srodki w pozycjach</span>
-                <span className="font-semibold">{formatCurrency(summary.usedMargin)}</span>
-              </p>
-              <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">Open / Exposure</span>
-                <span className="font-semibold">
-                  {formatNumber(summary.openPositions)} / {selectedData?.exposurePct != null ? formatPercent(selectedData.exposurePct) : "-"}
-                </span>
-              </p>
-              <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">Realized / Open</span>
-                <span className="font-semibold">
-                  {formatCurrency(selectedData?.realized ?? 0)} / {formatCurrency(selectedData?.unrealized ?? 0)}
-                </span>
-              </p>
-              <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">Win rate</span>
-                <span className="font-semibold">{selectedData?.winRate == null ? "-" : formatPercent(selectedData.winRate)}</span>
-              </p>
-              <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">Max drawdown</span>
-                <span className="font-semibold text-error">{formatCurrency(-(selectedData?.drawdown.abs ?? 0))}</span>
-              </p>
+            <div className="rounded-lg border border-base-300/70 bg-base-200/40 p-3 text-xs">
+              <h4 className="mb-2 text-[11px] uppercase tracking-wide opacity-60">Kapital i ryzyko</h4>
+              <div className="space-y-1.5">
+                <p className="flex items-center justify-between gap-2">
+                  <span className="opacity-65">Portfel</span>
+                  <span className={`font-semibold ${summary.paperDelta >= 0 ? "text-success" : "text-error"}`}>
+                    {summary.paperStart > 0 ? formatCurrency(summary.paperEquity) : "-"}
+                  </span>
+                </p>
+                <p className="flex items-center justify-between gap-2">
+                  <span className="opacity-65">Zmiana od startu</span>
+                  <span className={`font-semibold ${summary.paperDelta >= 0 ? "text-success" : "text-error"}`}>
+                    {summary.paperStart > 0
+                      ? `${formatCurrency(summary.paperDelta)} (${formatPercent((summary.paperDelta / summary.paperStart) * 100)})`
+                      : "-"}
+                  </span>
+                </p>
+                <p className="flex items-center justify-between gap-2">
+                  <span className="opacity-65">Wolne srodki</span>
+                  <span className="font-semibold">{selectedData?.equity == null ? "-" : formatCurrency(selectedData.free)}</span>
+                </p>
+                <p className="flex items-center justify-between gap-2">
+                  <span className="opacity-65">Srodki w pozycjach</span>
+                  <span className="font-semibold">{formatCurrency(summary.usedMargin)}</span>
+                </p>
+                <p className="flex items-center justify-between gap-2">
+                  <span className="opacity-65">Ekspozycja</span>
+                  <span className="font-semibold">{selectedData?.exposurePct != null ? formatPercent(selectedData.exposurePct) : "-"}</span>
+                </p>
+                <p className="flex items-center justify-between gap-2">
+                  <span className="opacity-65">Realized / Open</span>
+                  <span className="font-semibold">
+                    {formatCurrency(selectedData?.realized ?? 0)} / {formatCurrency(selectedData?.unrealized ?? 0)}
+                  </span>
+                </p>
+                <p className="flex items-center justify-between gap-2">
+                  <span className="opacity-65">Win rate</span>
+                  <span className="font-semibold">{selectedData?.winRate == null ? "-" : formatPercent(selectedData.winRate)}</span>
+                </p>
+                <p className="flex items-center justify-between gap-2">
+                  <span className="opacity-65">Max drawdown</span>
+                  <span className="font-semibold text-error">{formatCurrency(-(selectedData?.drawdown.abs ?? 0))}</span>
+                </p>
+              </div>
             </div>
 
-            <p className="text-[11px] opacity-60">
-              Aktualizacja: {lastUpdatedAt ? formatDateTime(lastUpdatedAt) : "-"}
-            </p>
+            <p className="text-[11px] opacity-60">Aktualizacja: {lastUpdatedAt ? formatDateTime(lastUpdatedAt) : "-"}</p>
           </div>
         </aside>
       </section>

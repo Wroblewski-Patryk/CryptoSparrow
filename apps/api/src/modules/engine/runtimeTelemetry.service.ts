@@ -80,6 +80,39 @@ const safeNumber = (value: number | undefined) =>
 export class RuntimeTelemetryService {
   private readonly botSessionCache = new Map<string, CachedSession>();
 
+  private async cancelDuplicateRunningSessions(botId: string, keepSessionId: string) {
+    const duplicates = await prisma.botRuntimeSession.findMany({
+      where: {
+        botId,
+        status: 'RUNNING',
+        id: {
+          not: keepSessionId,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+    if (duplicates.length === 0) return;
+
+    const duplicateIds = duplicates.map((session) => session.id);
+    const now = new Date();
+    await prisma.botRuntimeSession.updateMany({
+      where: {
+        id: {
+          in: duplicateIds,
+        },
+        status: 'RUNNING',
+      },
+      data: {
+        status: 'CANCELED',
+        finishedAt: now,
+        lastHeartbeatAt: now,
+        stopReason: 'duplicate_running_session',
+      },
+    });
+  }
+
   async ensureRuntimeSession(input: EnsureRuntimeSessionInput) {
     const cached = this.botSessionCache.get(input.botId);
     if (cached) {
@@ -101,6 +134,7 @@ export class RuntimeTelemetryService {
           userId: cachedSession.userId,
           mode: cachedSession.mode as RuntimeMode,
         });
+        await this.cancelDuplicateRunningSessions(input.botId, cachedSession.id);
         await this.touchSession(cachedSession.id);
         return cachedSession.id;
       }
@@ -117,29 +151,12 @@ export class RuntimeTelemetryService {
         userId: true,
         mode: true,
       },
-      orderBy: {
-        startedAt: 'desc',
-      },
+      orderBy: [{ lastHeartbeatAt: 'desc' }, { startedAt: 'desc' }, { createdAt: 'desc' }],
     });
 
     const existing = existingSessions[0];
     if (existing) {
-      const duplicates = existingSessions.slice(1).map((session) => session.id);
-      if (duplicates.length > 0) {
-        const now = new Date();
-        await prisma.botRuntimeSession.updateMany({
-          where: {
-            id: { in: duplicates },
-            status: 'RUNNING',
-          },
-          data: {
-            status: 'CANCELED',
-            finishedAt: now,
-            lastHeartbeatAt: now,
-            stopReason: 'duplicate_running_session',
-          },
-        });
-      }
+      await this.cancelDuplicateRunningSessions(input.botId, existing.id);
       const sessionId = existing.id;
       this.botSessionCache.set(input.botId, {
         sessionId,

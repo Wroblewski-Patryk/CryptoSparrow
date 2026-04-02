@@ -73,6 +73,14 @@ export const listBotRuntimeSessionTrades = async (
   sessionId: string,
   params?: {
     symbol?: string;
+    side?: "BUY" | "SELL";
+    action?: "OPEN" | "DCA" | "CLOSE" | "UNKNOWN";
+    from?: string;
+    to?: string;
+    page?: number;
+    pageSize?: number;
+    sortBy?: "executedAt" | "symbol" | "side" | "lifecycleAction" | "margin" | "fee" | "realizedPnl";
+    sortDir?: "asc" | "desc";
     limit?: number;
   }
 ): Promise<BotRuntimeTradesResponse> => {

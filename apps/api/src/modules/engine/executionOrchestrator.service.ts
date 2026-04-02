@@ -90,6 +90,11 @@ export interface RuntimeTradeGateway {
     price: number;
     quantity: number;
     fee?: number;
+    feeSource?: 'ESTIMATED' | 'EXCHANGE_FILL';
+    feePending?: boolean;
+    feeCurrency?: string | null;
+    effectiveFeeRate?: number | null;
+    exchangeTradeId?: string | null;
     realizedPnl?: number;
     lifecycleAction?: 'OPEN' | 'DCA' | 'CLOSE' | 'UNKNOWN';
     origin?: 'BOT';
@@ -240,6 +245,11 @@ const defaultRuntimeTradeGateway: RuntimeTradeGateway = {
         price: input.price,
         quantity: input.quantity,
         fee: input.fee,
+        feeSource: input.feeSource ?? 'ESTIMATED',
+        feePending: input.feePending ?? false,
+        feeCurrency: input.feeCurrency ?? null,
+        effectiveFeeRate: input.effectiveFeeRate ?? null,
+        exchangeTradeId: input.exchangeTradeId ?? null,
         realizedPnl: input.realizedPnl,
         origin: input.origin ?? 'BOT',
         managementMode: input.managementMode ?? 'BOT_MANAGED',
@@ -321,7 +331,7 @@ export const orchestrateRuntimeSignal = async (
       return { status: 'ignored', reason: 'no_open_position' };
     }
     const closeEventAt = new Date();
-    const exitFee = computeTradeFee(input.markPrice, openPosition.quantity, feeRate);
+    const estimatedExitFee = computeTradeFee(input.markPrice, openPosition.quantity, feeRate);
     const entryLegSide = openPosition.side === 'LONG' ? 'BUY' : 'SELL';
     const entryFeeAggregate = await prisma.trade.aggregate({
       where: {
@@ -339,7 +349,6 @@ export const orchestrateRuntimeSignal = async (
       openPosition.side === 'LONG'
         ? (input.markPrice - openPosition.entryPrice) * openPosition.quantity
         : (openPosition.entryPrice - input.markPrice) * openPosition.quantity;
-    const realizedPnl = grossPnl - entryFees - exitFee;
 
     const closeOrder = await orderGateway.openOrder(input.userId, {
       botId: input.botId,
@@ -351,6 +360,8 @@ export const orchestrateRuntimeSignal = async (
       mode: input.mode,
       riskAck: true,
     });
+    const exitFee = input.mode === 'LIVE' ? (closeOrder.fee ?? estimatedExitFee) : estimatedExitFee;
+    const realizedPnl = grossPnl - entryFees - exitFee;
 
     await positionGateway.closePosition(openPosition.id, input.userId, {
       closedAt: closeEventAt,
@@ -370,6 +381,11 @@ export const orchestrateRuntimeSignal = async (
       price: input.markPrice,
       quantity: openPosition.quantity,
       fee: exitFee,
+      feeSource: closeOrder.feeSource,
+      feePending: closeOrder.feePending,
+      feeCurrency: closeOrder.feeCurrency,
+      effectiveFeeRate: closeOrder.effectiveFeeRate,
+      exchangeTradeId: closeOrder.exchangeTradeId,
       realizedPnl,
       lifecycleAction: 'CLOSE',
       managementMode: openPosition.managementMode as 'BOT_MANAGED' | 'MANUAL_MANAGED',
@@ -450,7 +466,8 @@ export const orchestrateRuntimeSignal = async (
 
   await orderGateway.linkOrderToPosition(openOrder.id, position.id);
   const openEventAt = new Date();
-  const openFee = computeTradeFee(input.markPrice, input.quantity, feeRate);
+  const estimatedOpenFee = computeTradeFee(input.markPrice, input.quantity, feeRate);
+  const openFee = input.mode === 'LIVE' ? (openOrder.fee ?? estimatedOpenFee) : estimatedOpenFee;
   await runtimeTradeGateway.createTrade({
     userId: input.userId,
     botId: input.botId,
@@ -462,6 +479,11 @@ export const orchestrateRuntimeSignal = async (
     price: input.markPrice,
     quantity: input.quantity,
     fee: openFee,
+    feeSource: openOrder.feeSource,
+    feePending: openOrder.feePending,
+    feeCurrency: openOrder.feeCurrency,
+    effectiveFeeRate: openOrder.effectiveFeeRate,
+    exchangeTradeId: openOrder.exchangeTradeId,
     realizedPnl: 0,
     lifecycleAction: 'OPEN',
     managementMode: 'BOT_MANAGED',

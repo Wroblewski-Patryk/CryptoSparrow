@@ -4,6 +4,8 @@ import { CancelOrderDto, CloseOrderDto, ListOrdersQuery, OpenOrderDto } from './
 import { decrypt } from '../../utils/crypto';
 import { CcxtFuturesConnector } from '../exchange/ccxtFuturesConnector.service';
 import { createLiveOrderAdapter } from '../exchange/liveOrderAdapter.service';
+import { reconcileLiveOrderFee } from '../exchange/liveFeeReconciliation.service';
+import { CcxtFuturesOrderFill } from '../exchange/ccxtFuturesConnector.types';
 
 export const listOrders = async (userId: string, query: ListOrdersQuery) => {
   const skip = (query.page - 1) * query.limit;
@@ -36,6 +38,13 @@ type LiveBotContext = {
 type LiveExecutionResult = {
   exchangeOrderId: string | null;
   status: 'OPEN' | 'FILLED';
+  fee?: number | null;
+  feeSource?: 'ESTIMATED' | 'EXCHANGE_FILL';
+  feePending?: boolean;
+  feeCurrency?: string | null;
+  effectiveFeeRate?: number | null;
+  exchangeTradeId?: string | null;
+  fills?: CcxtFuturesOrderFill[];
 };
 
 type OpenOrderDeps = {
@@ -126,10 +135,22 @@ const executeLiveOrderOnExchange: OpenOrderDeps['executeLiveOrder'] = async (par
         positionMode: params.bot.positionMode,
       },
     });
+    const feeReconciliation = await reconcileLiveOrderFee(connector, {
+      symbol: params.payload.symbol,
+      exchangeOrderId: result.id || null,
+      inlineFills: result.fills ?? [],
+    });
 
     return {
       exchangeOrderId: result.id || null,
       status: mapLiveOrderStatus(result.status, params.payload.type),
+      fee: feeReconciliation.fee,
+      feeSource: feeReconciliation.feeSource,
+      feePending: feeReconciliation.feePending,
+      feeCurrency: feeReconciliation.feeCurrency,
+      effectiveFeeRate: feeReconciliation.effectiveFeeRate,
+      exchangeTradeId: feeReconciliation.exchangeTradeId,
+      fills: feeReconciliation.fills,
     };
   } catch {
     throw new Error('LIVE_EXECUTION_FAILED');
@@ -177,7 +198,14 @@ export const openOrder = async (
 
   const now = new Date();
   let exchangeOrderId: string | null = null;
+  let exchangeTradeId: string | null = null;
   let status: 'OPEN' | 'FILLED' = payload.type === 'MARKET' ? 'FILLED' : 'OPEN';
+  let fee: number | null = null;
+  let feeSource: 'ESTIMATED' | 'EXCHANGE_FILL' = 'ESTIMATED';
+  let feePending = payload.mode === 'LIVE';
+  let feeCurrency: string | null = null;
+  let effectiveFeeRate: number | null = null;
+  let fills: CcxtFuturesOrderFill[] = [];
 
   if (payload.mode === 'LIVE' && process.env.NODE_ENV !== 'test') {
     if (!liveBot) {
@@ -190,6 +218,14 @@ export const openOrder = async (
     });
     exchangeOrderId = liveResult.exchangeOrderId;
     status = liveResult.status;
+    exchangeTradeId = liveResult.exchangeTradeId ?? null;
+    fee = typeof liveResult.fee === 'number' ? liveResult.fee : null;
+    feeSource = liveResult.feeSource ?? 'ESTIMATED';
+    feePending = liveResult.feePending ?? false;
+    feeCurrency = liveResult.feeCurrency ?? null;
+    effectiveFeeRate =
+      typeof liveResult.effectiveFeeRate === 'number' ? liveResult.effectiveFeeRate : null;
+    fills = Array.isArray(liveResult.fills) ? liveResult.fills : [];
   }
 
   const order = await prisma.order.create({
@@ -204,11 +240,42 @@ export const openOrder = async (
       quantity: payload.quantity,
       filledQuantity: status === 'FILLED' ? payload.quantity : 0,
       price: payload.price,
+      fee,
+      feeSource,
+      feePending,
+      feeCurrency,
+      effectiveFeeRate,
       exchangeOrderId,
+      exchangeTradeId,
       submittedAt: now,
       filledAt: status === 'FILLED' ? now : null,
     },
   });
+
+  if (payload.mode === 'LIVE' && fills.length > 0) {
+    await prisma.orderFill.createMany({
+      data: fills.map((fill) => ({
+        userId,
+        botId: payload.botId ?? null,
+        strategyId: payload.strategyId ?? null,
+        orderId: order.id,
+        tradeId: null,
+        positionId: null,
+        symbol: fill.symbol,
+        side: payload.side,
+        exchangeTradeId:
+          fill.exchangeTradeId ?? `${exchangeOrderId ?? order.id}-${fill.executedAt?.toISOString() ?? 'na'}`,
+        price: fill.price,
+        quantity: fill.quantity,
+        notional: fill.notional,
+        feeCost: typeof fill.feeCost === 'number' ? fill.feeCost : null,
+        feeCurrency: fill.feeCurrency,
+        feeRate: fill.feeRate,
+        executedAt: fill.executedAt ?? now,
+        raw: (fill.raw ?? {}) as Prisma.InputJsonValue,
+      })),
+    });
+  }
 
   await writeOrderAudit({
     userId,

@@ -51,7 +51,12 @@ const createInMemoryGateways = (mode: RuntimeExecutionMode) => {
         stopPrice: null,
         averageFillPrice: null,
         fee: null,
+        feeSource: 'ESTIMATED',
+        feePending: false,
+        feeCurrency: null,
+        effectiveFeeRate: null,
         exchangeOrderId: null,
+        exchangeTradeId: null,
         canceledAt: null,
       };
     },

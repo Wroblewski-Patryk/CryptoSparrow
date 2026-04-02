@@ -6,6 +6,7 @@
   "scripts": {
     "test": "vitest",
     "test:ui": "vitest --ui",
+    "typecheck": "tsc --noEmit",
     "dev": "tsx watch src/index.ts",
     "dev:worker:market-data": "tsx watch src/workers/marketData.worker.ts",
     "dev:worker:market-stream": "tsx watch src/workers/marketStream.worker.ts",
