@@ -393,7 +393,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `LFIN-08 refactor(web-nav-i18n): remove inline locale dictionaries from header and use canonical i18n keys only`
 - [x] `LFIN-09 docs(contract): lock locale-safe numeric input policy (comma/dot, precision matrix, integer vs decimal fields)`
 - [x] `LFIN-10 feat(web-utils): add shared number parser/normalizer and form-level validation contract`
-- [ ] `LFIN-11 refactor(web-strategies): replace direct Number(...) parsing in strategy form sections with parser-driven handling + precision guards`
+- [x] `LFIN-11 refactor(web-strategies): replace direct Number(...) parsing in strategy form sections with parser-driven handling + precision guards`
 - [ ] `LFIN-12 test(api+web): add reconciliation, i18n, and numeric-input regression suites for new contracts`
 
 ## Phase 22 - Dashboard Runtime Trades Table (Server-Side Operability)
@@ -434,6 +434,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-04-02: Added Phase 21 planning track (`LFIN-01..LFIN-12`) and detailed implementation plan in `docs/planning/live-fee-i18n-numeric-hardening-plan-2026-04-02.md` for LIVE fee truth, dashboard/bots/menu i18n parity, and locale-safe numeric input validation.
 - 2026-04-02: Completed `LFIN-08`: removed inline locale dictionaries from dashboard header navigation, migrated all header labels to canonical `dashboard.nav.*` keys, and extended EN/PL translation schema with explicit menu entry keys (plus responsive header + i18n parity tests green).
 - 2026-04-02: Completed `LFIN-10`: added shared numeric parser/normalizer contract in `apps/web/src/lib/numericInput.ts` (comma/dot normalization, precision/integer/range validation, HTML input attributes helper) with regression coverage in `apps/web/src/lib/numericInput.test.ts` (8 passing cases).
+- 2026-04-02: Completed `LFIN-11`: refactored strategy form sections (`Basic`, `Additional`, `Close`, `Indicators`) to use shared parser-driven numeric handling (`readNumericInputValue`) with 2-decimal guards and integer-only contracts, and aligned numeric inputs with canonical `inputMode/step` helpers.
 - 2026-04-01: Completed `DBACT-02/03`: added `TradeLifecycleAction` enum+column (migration `20260401191000_add_trade_lifecycle_action`) and persisted `OPEN/DCA/CLOSE` at runtime write-time in execution + DCA paths; verified with green bots API e2e after migration deploy.
 - 2026-04-01: Completed `BOPS-37..BOPS-41`: removed redundant dashboard runtime CTAs, updated dashboard/nav tests, and wired canonical Bots IA routes (`/dashboard/bots`, `/dashboard/bots/new`) with dropdown parity.
 - 2026-04-01: Extended dashboard trade-action rollout plan to include non-null `Fee`/`Realized PnL` display and `Notional -> Margin` history-column unification in Control Center (`DBACT-04..DBACT-07` scope update).

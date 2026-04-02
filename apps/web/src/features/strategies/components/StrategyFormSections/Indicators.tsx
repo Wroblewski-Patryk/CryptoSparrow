@@ -1,5 +1,8 @@
 import { LuChevronDown, LuChevronRight, LuChevronUp, LuTrash2, LuTrendingDown, LuTrendingUp } from "react-icons/lu";
 import { IndicatorsProps } from "../../types/StrategyForm.type";
+import { numericInputProps, readNumericInputValue, strategyNumericContracts } from "../../utils/strategyNumericInput";
+
+const decimalInputProps = numericInputProps(strategyNumericContracts.decimal2);
 
 export default function Indicators({ side, indicators, value, setValue }: IndicatorsProps) {
     const indicatorGroups = Array.from(
@@ -207,8 +210,21 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                                                         className="input input-bordered"
                                                         min={param.min}
                                                         max={param.max}
+                                                        inputMode={
+                                                            Number.isInteger(param.default) ? "numeric" : decimalInputProps.inputMode
+                                                        }
+                                                        step={
+                                                            Number.isInteger(param.default) ? "1" : decimalInputProps.step
+                                                        }
                                                         value={indicator.params[param.name]}
-                                                        onChange={e => updateParam(idx, param.name, Number(e.target.value))}
+                                                        onChange={e => {
+                                                            const contract = Number.isInteger(param.default)
+                                                                ? strategyNumericContracts.integer
+                                                                : strategyNumericContracts.decimal2;
+                                                            const parsed = readNumericInputValue(e.target.value, contract);
+                                                            if (parsed == null) return;
+                                                            updateParam(idx, param.name, parsed);
+                                                        }}
                                                     />
                                                 </div>
                                             ))}
@@ -246,9 +262,15 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                                                     <label className="label mb-1 font-semibold">Wartość</label>
                                                     <input
                                                         type="number"
+                                                        inputMode={decimalInputProps.inputMode}
+                                                        step={decimalInputProps.step}
                                                         className="input input-bordered w-full"
                                                         value={indicator.value}
-                                                        onChange={e => updateValue(idx, Number(e.target.value))}
+                                                        onChange={e => {
+                                                            const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.decimal2);
+                                                            if (parsed == null) return;
+                                                            updateValue(idx, parsed);
+                                                        }}
                                                     />
                                                 </div>
                                             </div>
@@ -269,7 +291,11 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                                                         min={0}
                                                         max="1"
                                                         value={indicator.weight}
-                                                        onChange={e => updateWeight(idx, Number(e.target.value))}
+                                                        onChange={e => {
+                                                            const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.decimal2);
+                                                            if (parsed == null) return;
+                                                            updateWeight(idx, parsed);
+                                                        }}
                                                         step="0.2" />
 
                                                     <div className="flex justify-between px-2.5 mt-2 text-xs">

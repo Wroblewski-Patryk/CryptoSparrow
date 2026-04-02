@@ -1,7 +1,14 @@
 import { LuTrash2 } from 'react-icons/lu';
 import { AdditionalProps, DcaLevel, TimeUnit } from '../../types/StrategyForm.type';
+import {
+  numericInputProps,
+  readNumericInputValue,
+  strategyNumericContracts,
+} from '../../utils/strategyNumericInput';
 
 const getPrimaryDcaLevel = (levels: DcaLevel[]): DcaLevel => levels[0] ?? { percent: -1, multiplier: 2 };
+const integerInputProps = numericInputProps(strategyNumericContracts.integer);
+const decimalInputProps = numericInputProps(strategyNumericContracts.decimal2);
 
 export function Additional({ data, setData }: AdditionalProps) {
   const patch = (changes: Partial<typeof data>) => setData((prev) => ({ ...prev, ...changes }));
@@ -52,9 +59,15 @@ export function Additional({ data, setData }: AdditionalProps) {
                 <input
                   type='number'
                   min={1}
+                  inputMode={integerInputProps.inputMode}
+                  step={integerInputProps.step}
                   className='input input-bordered w-full'
                   value={data.maxPositions}
-                  onChange={(e) => patch({ maxPositions: Number(e.target.value) })}
+                  onChange={(e) => {
+                    const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.integer);
+                    if (parsed == null) return;
+                    patch({ maxPositions: parsed });
+                  }}
                 />
               </div>
               <div className='form-control gap-2'>
@@ -63,9 +76,15 @@ export function Additional({ data, setData }: AdditionalProps) {
                   <input
                     type='number'
                     min={1}
+                    inputMode={integerInputProps.inputMode}
+                    step={integerInputProps.step}
                     className='input input-bordered w-24'
                     value={data.positionLifetime}
-                    onChange={(e) => patch({ positionLifetime: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.integer);
+                      if (parsed == null) return;
+                      patch({ positionLifetime: parsed });
+                    }}
                   />
                   <select
                     className='select select-bordered'
@@ -90,9 +109,15 @@ export function Additional({ data, setData }: AdditionalProps) {
                 <input
                   type='number'
                   min={1}
+                  inputMode={integerInputProps.inputMode}
+                  step={integerInputProps.step}
                   className='input input-bordered w-full'
                   value={data.maxOrders}
-                  onChange={(e) => patch({ maxOrders: Number(e.target.value) })}
+                  onChange={(e) => {
+                    const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.integer);
+                    if (parsed == null) return;
+                    patch({ maxOrders: parsed });
+                  }}
                 />
               </div>
               <div className='form-control gap-2'>
@@ -101,9 +126,15 @@ export function Additional({ data, setData }: AdditionalProps) {
                   <input
                     type='number'
                     min={1}
+                    inputMode={integerInputProps.inputMode}
+                    step={integerInputProps.step}
                     className='input input-bordered w-24'
                     value={data.orderLifetime}
-                    onChange={(e) => patch({ orderLifetime: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.integer);
+                      if (parsed == null) return;
+                      patch({ orderLifetime: parsed });
+                    }}
                   />
                   <select
                     className='select select-bordered'
@@ -183,9 +214,14 @@ export function Additional({ data, setData }: AdditionalProps) {
                         min={1}
                         max={10}
                         step={1}
+                        inputMode={integerInputProps.inputMode}
                         className='input input-bordered w-20 text-center'
                         value={data.dcaTimes}
-                        onChange={(e) => patch({ dcaTimes: Number(e.target.value) })}
+                        onChange={(e) => {
+                          const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.integer);
+                          if (parsed == null) return;
+                          patch({ dcaTimes: parsed });
+                        }}
                       />
                       <input
                         type='range'
@@ -194,7 +230,11 @@ export function Additional({ data, setData }: AdditionalProps) {
                         step={1}
                         className='range'
                         value={data.dcaTimes}
-                        onChange={(e) => patch({ dcaTimes: Number(e.target.value) })}
+                        onChange={(e) => {
+                          const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.integer);
+                          if (parsed == null) return;
+                          patch({ dcaTimes: parsed });
+                        }}
                       />
                     </div>
                   </div>
@@ -205,10 +245,15 @@ export function Additional({ data, setData }: AdditionalProps) {
                       type='number'
                       min={-100}
                       max={100}
-                      step={0.1}
+                      step={decimalInputProps.step}
+                      inputMode={decimalInputProps.inputMode}
                       className='input input-bordered'
                       value={primaryLevel.percent}
-                      onChange={(e) => setPrimaryDcaLevel({ percent: Number(e.target.value) })}
+                      onChange={(e) => {
+                        const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.decimal2);
+                        if (parsed == null) return;
+                        setPrimaryDcaLevel({ percent: parsed });
+                      }}
                     />
                   </div>
 
@@ -217,13 +262,15 @@ export function Additional({ data, setData }: AdditionalProps) {
                     <input
                       type='number'
                       min={1}
-                      step={0.05}
+                      step={decimalInputProps.step}
+                      inputMode={decimalInputProps.inputMode}
                       className='input input-bordered'
                       value={data.dcaMultiplier}
                       onChange={(e) => {
-                        const value = Number(e.target.value);
-                        patch({ dcaMultiplier: value });
-                        setPrimaryDcaLevel({ multiplier: value });
+                        const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.decimal2);
+                        if (parsed == null) return;
+                        patch({ dcaMultiplier: parsed });
+                        setPrimaryDcaLevel({ multiplier: parsed });
                       }}
                     />
                   </div>
@@ -237,9 +284,15 @@ export function Additional({ data, setData }: AdditionalProps) {
                           <label className='label p-0'>Poziom (%)</label>
                           <input
                             type='number'
+                            step={decimalInputProps.step}
+                            inputMode={decimalInputProps.inputMode}
                             className='input input-bordered'
                             value={level.percent}
-                            onChange={(e) => updateLevel(idx, 'percent', Number(e.target.value))}
+                            onChange={(e) => {
+                              const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.decimal2);
+                              if (parsed == null) return;
+                              updateLevel(idx, 'percent', parsed);
+                            }}
                           />
                         </div>
                         <div className='form-control gap-2'>
@@ -247,10 +300,15 @@ export function Additional({ data, setData }: AdditionalProps) {
                           <input
                             type='number'
                             min={1}
-                            step={0.05}
+                            step={decimalInputProps.step}
+                            inputMode={decimalInputProps.inputMode}
                             className='input input-bordered'
                             value={level.multiplier}
-                            onChange={(e) => updateLevel(idx, 'multiplier', Number(e.target.value))}
+                            onChange={(e) => {
+                              const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.decimal2);
+                              if (parsed == null) return;
+                              updateLevel(idx, 'multiplier', parsed);
+                            }}
                           />
                         </div>
                         <button type='button' className='btn btn-primary' onClick={() => removeLevel(idx)} title='Usun poziom'>

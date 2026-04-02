@@ -1,4 +1,13 @@
-﻿import { BasicProps } from "../../types/StrategyForm.type";
+import { BasicProps } from "../../types/StrategyForm.type";
+import {
+  clampToRange,
+  numericInputProps,
+  readNumericInputValue,
+  strategyNumericContracts,
+} from "../../utils/strategyNumericInput";
+
+const leverageInputProps = numericInputProps(strategyNumericContracts.integer);
+const walletRiskInputProps = numericInputProps(strategyNumericContracts.decimal2);
 
 export function Basic({ data, setData }: BasicProps) {
   return (
@@ -65,7 +74,11 @@ export function Basic({ data, setData }: BasicProps) {
               step={1}
               value={data.leverage}
               className="range w-full"
-              onChange={(e) => setData((prev) => ({ ...prev, leverage: Number(e.target.value) }))}
+              onChange={(e) => {
+                const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.integer);
+                if (parsed == null) return;
+                setData((prev) => ({ ...prev, leverage: clampToRange(parsed, 1, 75) }));
+              }}
             />
             <input
               type="number"
@@ -73,11 +86,12 @@ export function Basic({ data, setData }: BasicProps) {
               max={75}
               value={data.leverage}
               className="input input-bordered w-20"
+              inputMode={leverageInputProps.inputMode}
+              step={leverageInputProps.step}
               onChange={(e) => {
-                let val = Number(e.target.value);
-                if (val < 1) val = 1;
-                if (val > 75) val = 75;
-                setData((prev) => ({ ...prev, leverage: val }));
+                const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.integer);
+                if (parsed == null) return;
+                setData((prev) => ({ ...prev, leverage: clampToRange(parsed, 1, 75) }));
               }}
             />
             <span className="opacity-60">x</span>
@@ -91,19 +105,28 @@ export function Basic({ data, setData }: BasicProps) {
               type="range"
               min={0.1}
               max={100}
-              step={0.1}
+              step={0.01}
               value={data.walletRisk}
               className="range w-full"
-              onChange={(e) => setData((prev) => ({ ...prev, walletRisk: Number(e.target.value) }))}
+              onChange={(e) => {
+                const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.decimal2);
+                if (parsed == null) return;
+                setData((prev) => ({ ...prev, walletRisk: parsed }));
+              }}
             />
             <input
               type="number"
               min={0.1}
               max={100}
-              step={0.1}
+              step={walletRiskInputProps.step}
+              inputMode={walletRiskInputProps.inputMode}
               className="input input-bordered w-20"
               value={data.walletRisk}
-              onChange={(e) => setData((prev) => ({ ...prev, walletRisk: Number(e.target.value) }))}
+              onChange={(e) => {
+                const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.decimal2);
+                if (parsed == null) return;
+                setData((prev) => ({ ...prev, walletRisk: parsed }));
+              }}
             />
             <span className="opacity-60">%</span>
           </div>
