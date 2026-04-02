@@ -46,6 +46,16 @@ let catalogCache: Record<MarketType, { fetchedAt: number; entries: PublicMarketE
 };
 
 const normalizeAsset = (value: string | undefined) => value?.trim().toUpperCase() ?? '';
+const normalizeSymbols = (symbols: string[]) =>
+  [...new Set(symbols.map((item) => item.trim().toUpperCase()).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b)
+  );
+
+const resolveUniverseSymbols = (whitelist: string[], blacklist: string[]) => {
+  const normalizedWhitelist = normalizeSymbols(whitelist);
+  const blacklistSet = new Set(normalizeSymbols(blacklist));
+  return normalizedWhitelist.filter((symbol) => !blacklistSet.has(symbol));
+};
 
 const toPublicMarketEntry = (market: MarketLike): PublicMarketEntry | null => {
   const id = normalizeAsset(market.id);
@@ -205,6 +215,44 @@ export const getUniverse = async (userId: string, id: string) => {
   });
 };
 
+const assertUniverseNotUsedByActiveBot = async (params: { userId: string; marketUniverseId: string }) => {
+  const { userId, marketUniverseId } = params;
+
+  const usedByActiveCanonicalBot = await prisma.botMarketGroup.findFirst({
+    where: {
+      userId,
+      isEnabled: true,
+      lifecycleStatus: { in: ['ACTIVE', 'PAUSED'] },
+      bot: {
+        userId,
+        isActive: true,
+      },
+      symbolGroup: {
+        marketUniverseId,
+      },
+    },
+    select: { id: true },
+  });
+
+  const usedByActiveLegacyBot = await prisma.botStrategy.findFirst({
+    where: {
+      isEnabled: true,
+      bot: {
+        userId,
+        isActive: true,
+      },
+      symbolGroup: {
+        marketUniverseId,
+      },
+    },
+    select: { id: true },
+  });
+
+  if (usedByActiveCanonicalBot || usedByActiveLegacyBot) {
+    throw new Error('MARKET_UNIVERSE_USED_BY_ACTIVE_BOT');
+  }
+};
+
 export const createUniverse = async (userId: string, data: CreateMarketUniverseDto) => {
   return prisma.marketUniverse.create({
     data: {
@@ -221,16 +269,36 @@ export const updateUniverse = async (
 ) => {
   const existing = await getUniverse(userId, id);
   if (!existing) return null;
+  await assertUniverseNotUsedByActiveBot({ userId, marketUniverseId: existing.id });
 
-  return prisma.marketUniverse.update({
-    where: { id: existing.id },
-    data,
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.marketUniverse.update({
+      where: { id: existing.id },
+      data,
+    });
+
+    const shouldSyncSymbols = data.whitelist !== undefined || data.blacklist !== undefined;
+    if (shouldSyncSymbols) {
+      const resolvedSymbols = resolveUniverseSymbols(updated.whitelist, updated.blacklist);
+      await tx.symbolGroup.updateMany({
+        where: {
+          userId,
+          marketUniverseId: updated.id,
+        },
+        data: {
+          symbols: resolvedSymbols,
+        },
+      });
+    }
+
+    return updated;
   });
 };
 
 export const deleteUniverse = async (userId: string, id: string) => {
   const existing = await getUniverse(userId, id);
   if (!existing) return false;
+  await assertUniverseNotUsedByActiveBot({ userId, marketUniverseId: existing.id });
 
   await prisma.marketUniverse.delete({
     where: { id: existing.id },

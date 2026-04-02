@@ -10,6 +10,8 @@ import { getMarketUniverse, updateMarketUniverse } from '@/features/markets/serv
 import { CreateMarketUniverseInput, MarketUniverse } from '@/features/markets/types/marketUniverse.type';
 import { handleError } from '@/lib/handleError';
 
+const MARKET_UNIVERSE_ACTIVE_BOT_ERROR = 'market universe is used by active bot and cannot be edited';
+
 export default function MarketsEditPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -41,7 +43,14 @@ export default function MarketsEditPage() {
       setInitial(updated);
       toast.success('Grupa rynkow zaktualizowana');
     } catch (err: unknown) {
-      toast.error('Nie udalo sie zapisac zmian', { description: handleError(err) });
+      const message = handleError(err);
+      if (message === MARKET_UNIVERSE_ACTIVE_BOT_ERROR) {
+        toast.error('Grupa rynkow jest aktualnie uzywana przez aktywnego bota', {
+          description: 'Wylacz bota, a potem zapisz zmiany.',
+        });
+      } else {
+        toast.error('Nie udalo sie zapisac zmian', { description: message });
+      }
     } finally {
       setSubmitting(false);
     }

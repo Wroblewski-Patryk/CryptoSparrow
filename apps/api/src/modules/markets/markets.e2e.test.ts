@@ -23,6 +23,47 @@ const createPayload = () => ({
   autoExcludeRules: { stablePairs: true },
 });
 
+const createActiveBotUsingUniverse = async (params: {
+  userId: string;
+  universeId: string;
+  isActive?: boolean;
+}) => {
+  const symbolGroup = await prisma.symbolGroup.create({
+    data: {
+      userId: params.userId,
+      marketUniverseId: params.universeId,
+      name: `Guard group ${Date.now()}`,
+      symbols: ['BTCUSDT', 'ETHUSDT'],
+    },
+  });
+
+  const bot = await prisma.bot.create({
+    data: {
+      userId: params.userId,
+      name: `Guard bot ${Date.now()}`,
+      mode: 'PAPER',
+      isActive: params.isActive ?? true,
+      paperStartBalance: 10_000,
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      positionMode: 'ONE_WAY',
+      maxOpenPositions: 1,
+    },
+  });
+
+  await prisma.botMarketGroup.create({
+    data: {
+      userId: params.userId,
+      botId: bot.id,
+      symbolGroupId: symbolGroup.id,
+      lifecycleStatus: 'ACTIVE',
+      isEnabled: true,
+      executionOrder: 1,
+      maxOpenPositions: 1,
+    },
+  });
+};
+
 describe('Markets module contract', () => {
   beforeEach(async () => {
     await prisma.log.deleteMany();
@@ -38,6 +79,9 @@ describe('Markets module contract', () => {
     await prisma.botAssistantConfig.deleteMany();
     await prisma.marketGroupStrategyLink.deleteMany();
     await prisma.botMarketGroup.deleteMany();
+    await prisma.botRuntimeSymbolStat.deleteMany();
+    await prisma.botRuntimeEvent.deleteMany();
+    await prisma.botRuntimeSession.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.strategy.deleteMany();
@@ -93,6 +137,41 @@ describe('Markets module contract', () => {
     expect(getDeletedRes.body.error.message).toBe('Not found');
   });
 
+  it('syncs linked symbol groups when universe whitelist/blacklist changes', async () => {
+    const agent = await registerAndLogin('markets-sync@example.com');
+
+    const createRes = await agent.post('/dashboard/markets/universes').send(createPayload());
+    expect(createRes.status).toBe(201);
+    const universeId = createRes.body.id as string;
+    const createdUniverse = await prisma.marketUniverse.findUnique({
+      where: { id: universeId },
+      select: { userId: true },
+    });
+    expect(createdUniverse?.userId).toBeTruthy();
+    const userId = createdUniverse!.userId;
+
+    const symbolGroup = await prisma.symbolGroup.create({
+      data: {
+        userId,
+        marketUniverseId: universeId,
+        name: 'Synced group',
+        symbols: ['BTCUSDT', 'ETHUSDT'],
+      },
+    });
+
+    const updateRes = await agent.put(`/dashboard/markets/universes/${universeId}`).send({
+      whitelist: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT'],
+      blacklist: ['ETHUSDT'],
+    });
+    expect(updateRes.status).toBe(200);
+
+    const refreshedGroup = await prisma.symbolGroup.findUnique({
+      where: { id: symbolGroup.id },
+      select: { symbols: true },
+    });
+    expect(refreshedGroup?.symbols).toEqual(['BTCUSDT', 'SOLUSDT', 'XRPUSDT']);
+  });
+
   it('returns public market catalog filtered by base currency and market type', async () => {
     const agent = await registerAndLogin('markets-catalog@example.com');
 
@@ -114,6 +193,66 @@ describe('Markets module contract', () => {
     expect(res.body.markets[0]).toHaveProperty('displaySymbol');
     expect(res.body.markets[0]).toHaveProperty('baseAsset');
     expect(res.body.markets[0]).toHaveProperty('quoteAsset', 'USDT');
+  });
+
+  it('blocks universe update/delete when linked symbol group is used by active bot', async () => {
+    const agent = await registerAndLogin('markets-active-guard@example.com');
+
+    const createRes = await agent.post('/dashboard/markets/universes').send(createPayload());
+    expect(createRes.status).toBe(201);
+    const universeId = createRes.body.id as string;
+    const universe = await prisma.marketUniverse.findUnique({
+      where: { id: universeId },
+      select: { userId: true },
+    });
+    expect(universe?.userId).toBeTruthy();
+    const userId = universe!.userId;
+
+    await createActiveBotUsingUniverse({
+      userId,
+      universeId,
+      isActive: true,
+    });
+
+    const updateRes = await agent.put(`/dashboard/markets/universes/${universeId}`).send({
+      name: 'Blocked while active bot runs',
+    });
+    expect(updateRes.status).toBe(409);
+    expect(updateRes.body.error.message).toBe(
+      'market universe is used by active bot and cannot be edited'
+    );
+
+    const deleteRes = await agent.delete(`/dashboard/markets/universes/${universeId}`);
+    expect(deleteRes.status).toBe(409);
+    expect(deleteRes.body.error.message).toBe(
+      'market universe is used by active bot and cannot be deleted'
+    );
+  });
+
+  it('allows universe updates when linked bot is inactive', async () => {
+    const agent = await registerAndLogin('markets-inactive-guard@example.com');
+
+    const createRes = await agent.post('/dashboard/markets/universes').send(createPayload());
+    expect(createRes.status).toBe(201);
+    const universeId = createRes.body.id as string;
+    const universe = await prisma.marketUniverse.findUnique({
+      where: { id: universeId },
+      select: { userId: true },
+    });
+    expect(universe?.userId).toBeTruthy();
+    const userId = universe!.userId;
+
+    await createActiveBotUsingUniverse({
+      userId,
+      universeId,
+      isActive: false,
+    });
+
+    const updateRes = await agent.put(`/dashboard/markets/universes/${universeId}`).send({
+      name: 'Allowed when bot inactive',
+    });
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.name).toBe('Allowed when bot inactive');
   });
 
   it('enforces ownership isolation for get/update/delete', async () => {

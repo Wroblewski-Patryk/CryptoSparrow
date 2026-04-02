@@ -17,6 +17,9 @@ const getAxiosMessage = (err: unknown) => {
   return response?.error?.message ?? response?.message;
 };
 
+const MARKET_UNIVERSE_ACTIVE_BOT_DELETE_ERROR =
+  'market universe is used by active bot and cannot be deleted';
+
 type MarketUniversesTableProps = {
   rows: MarketUniverse[];
   onDeleted: (id: string) => void;
@@ -208,7 +211,14 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
       toast.success('Grupe rynkow usunieto');
       setDeleteTarget(null);
     } catch (error: unknown) {
-      toast.error('Nie udalo sie usunac grupy rynkow', { description: getAxiosMessage(error) });
+      const message = getAxiosMessage(error);
+      if (message === MARKET_UNIVERSE_ACTIVE_BOT_DELETE_ERROR) {
+        toast.error('Nie mozna usunac grupy rynkow, bo aktywny bot z niej korzysta', {
+          description: 'Wylacz bota, a nastepnie usun grupe.',
+        });
+      } else {
+        toast.error('Nie udalo sie usunac grupy rynkow', { description: message });
+      }
     } finally {
       setDeleting(false);
     }

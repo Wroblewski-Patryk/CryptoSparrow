@@ -62,6 +62,9 @@ export const updateMarketUniverse = async (req: Request, res: Response) => {
 
     return res.json(updated);
   } catch (error) {
+    if (error instanceof Error && error.message === 'MARKET_UNIVERSE_USED_BY_ACTIVE_BOT') {
+      return sendError(res, 409, 'market universe is used by active bot and cannot be edited');
+    }
     return sendValidationError(res, error);
   }
 };
@@ -70,9 +73,16 @@ export const deleteMarketUniverse = async (req: Request, res: Response) => {
   const userId = req.user?.id;
   if (!userId) return sendError(res, 401, 'Unauthorized');
 
-  const { id } = req.params;
-  const deleted = await marketsService.deleteUniverse(userId, id);
-  if (!deleted) return sendError(res, 404, 'Not found');
+  try {
+    const { id } = req.params;
+    const deleted = await marketsService.deleteUniverse(userId, id);
+    if (!deleted) return sendError(res, 404, 'Not found');
 
-  return res.status(204).end();
+    return res.status(204).end();
+  } catch (error) {
+    if (error instanceof Error && error.message === 'MARKET_UNIVERSE_USED_BY_ACTIVE_BOT') {
+      return sendError(res, 409, 'market universe is used by active bot and cannot be deleted');
+    }
+    return sendError(res, 500, 'Internal server error');
+  }
 };
