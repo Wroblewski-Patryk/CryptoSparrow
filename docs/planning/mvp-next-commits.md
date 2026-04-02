@@ -7,7 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `DPL-11 docs(rename-audit): inventory all `CryptoSparrow` tokens and classify rename waves`
+- [ ] `DPL-12 docs(rename-plan): define controlled global rename rollout `CryptoSparrow -> Soar` with risk gates`
 ## NEXT
 - [ ] `BOPS-43 docs(contract): lock DCA ladder display contract in Dashboard/Bots (count + executed levels mapping for basic/advanced strategy modes)`
 - [ ] `BOPS-44 feat(api-runtime): extend runtime positions payload with DCA planned/executed levels derived from strategy additional.dcaLevels/dcaTimes`
@@ -26,6 +26,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `DPL-11 docs(rename-audit): inventory all `CryptoSparrow` tokens and classify rename waves`
 - [x] `DPL-10 ops(rollback): define rollback playbook for app version/env rollback and worker incidents`
 - [x] `DPL-09 ops(smoke): add post-deploy smoke checklist for target domains`
 - [x] `DPL-08 ops(health): standardize deployment readiness gates for web/api/workers`

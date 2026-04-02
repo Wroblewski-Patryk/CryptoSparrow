@@ -427,7 +427,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DPL-08 ops(health): standardize deployment readiness gates for web/api/workers`
 - [x] `DPL-09 ops(smoke): add post-deploy smoke checklist for target domains`
 - [x] `DPL-10 ops(rollback): define rollback playbook for app version/env rollback and worker incidents`
-- [ ] `DPL-11 docs(rename-audit): inventory all `CryptoSparrow` tokens and classify rename waves`
+- [x] `DPL-11 docs(rename-audit): inventory all `CryptoSparrow` tokens and classify rename waves`
 - [ ] `DPL-12 docs(rename-plan): define controlled global rename rollout `CryptoSparrow -> Soar` with risk gates`
 - [x] `DPL-13 docs(cicd-contract): define immutable commit promotion contract DEV -> STAGE -> PROD`
 - [ ] `DPL-14 ci(stage): implement automatic deploy-to-stage on integration-branch push`
@@ -458,6 +458,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 
 ## Progress Log
+- 2026-04-03: Completed `DPL-11` by running repository-wide token audit (`CryptoSparrow`/`cryptosparrow`) and publishing wave-classified inventory in `docs/planning/cryptosparrow-soar-rename-audit-2026-04-03.md` (runtime-critical identifiers, infra/domain naming, UI/doc surfaces, and compatibility-first rollout sequencing); linked in deployment plan outputs.
 - 2026-04-03: Completed `DPL-10` by publishing `docs/operations/deployment-rollback-playbook.md` with rollback triggers, ownership matrix, app/env/worker rollback modes, migration-aware guardrails, communication template, and mandatory post-rollback gate/evidence contract.
 - 2026-04-03: Completed `DPL-09` by publishing `docs/operations/post-deploy-smoke-checklist.md` with target-domain smoke checks (api/web/auth/dashboard/bots/workers/data-write/security), pass/fail policy, and evidence capture contract for STAGE/PROD rollout validation.
 - 2026-04-03: Completed `DPL-08` by publishing `docs/operations/deployment-readiness-gates.md` with canonical gate pack (`G1..G6`) for build/migration/api/web/workers/smoke, immutable stage-promotion criteria, required prod post-deploy checks, and fail-closed evidence contract; linked in deployment planning outputs.
