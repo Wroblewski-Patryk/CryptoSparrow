@@ -428,7 +428,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DPL-09 ops(smoke): add post-deploy smoke checklist for target domains`
 - [x] `DPL-10 ops(rollback): define rollback playbook for app version/env rollback and worker incidents`
 - [x] `DPL-11 docs(rename-audit): inventory all `CryptoSparrow` tokens and classify rename waves`
-- [ ] `DPL-12 docs(rename-plan): define controlled global rename rollout `CryptoSparrow -> Soar` with risk gates`
+- [x] `DPL-12 docs(rename-plan): define controlled global rename rollout `CryptoSparrow -> Soar` with risk gates`
 - [x] `DPL-13 docs(cicd-contract): define immutable commit promotion contract DEV -> STAGE -> PROD`
 - [ ] `DPL-14 ci(stage): implement automatic deploy-to-stage on integration-branch push`
 - [ ] `DPL-15 ci(stage-gates): enforce stage gate pack (build/test/migrate/health/smoke) with machine-readable report`
@@ -458,6 +458,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 
 ## Progress Log
+- 2026-04-03: Completed `DPL-12` by publishing `docs/planning/cryptosparrow-soar-rename-rollout-plan-2026-04-03.md` with wave-based rollout (`Wave 1..4`), mandatory stage/prod risk gates, compatibility-first constraints for runtime identifiers, ownership matrix, and rollback checkpoints linked to deployment contracts.
 - 2026-04-03: Completed `DPL-11` by running repository-wide token audit (`CryptoSparrow`/`cryptosparrow`) and publishing wave-classified inventory in `docs/planning/cryptosparrow-soar-rename-audit-2026-04-03.md` (runtime-critical identifiers, infra/domain naming, UI/doc surfaces, and compatibility-first rollout sequencing); linked in deployment plan outputs.
 - 2026-04-03: Completed `DPL-10` by publishing `docs/operations/deployment-rollback-playbook.md` with rollback triggers, ownership matrix, app/env/worker rollback modes, migration-aware guardrails, communication template, and mandatory post-rollback gate/evidence contract.
 - 2026-04-03: Completed `DPL-09` by publishing `docs/operations/post-deploy-smoke-checklist.md` with target-domain smoke checks (api/web/auth/dashboard/bots/workers/data-write/security), pass/fail policy, and evidence capture contract for STAGE/PROD rollout validation.
