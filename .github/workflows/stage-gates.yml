@@ -1,0 +1,236 @@
+name: Stage Gates
+
+on:
+  workflow_run:
+    workflows: ["Deploy STAGE"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  stage-gates:
+    name: Enforce stage gate pack
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: stage
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Gate - Build (api + web)
+        id: gate_build
+        continue-on-error: true
+        run: |
+          set +e
+          pnpm --filter api run build
+          api_status=$?
+          pnpm --filter web run build
+          web_status=$?
+          if [ "$api_status" -eq 0 ] && [ "$web_status" -eq 0 ]; then
+            echo "status=PASS" >> "$GITHUB_OUTPUT"
+            echo "detail=api+web build green" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=FAIL" >> "$GITHUB_OUTPUT"
+            echo "detail=api=$api_status web=$web_status" >> "$GITHUB_OUTPUT"
+          fi
+          exit 0
+
+      - name: Gate - Test (api + web)
+        id: gate_test
+        continue-on-error: true
+        run: |
+          set +e
+          pnpm --filter api run test -- --run
+          api_status=$?
+          pnpm --filter web run test -- --run
+          web_status=$?
+          if [ "$api_status" -eq 0 ] && [ "$web_status" -eq 0 ]; then
+            echo "status=PASS" >> "$GITHUB_OUTPUT"
+            echo "detail=api+web tests green" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=FAIL" >> "$GITHUB_OUTPUT"
+            echo "detail=api=$api_status web=$web_status" >> "$GITHUB_OUTPUT"
+          fi
+          exit 0
+
+      - name: Gate - Migration (stage DB)
+        id: gate_migration
+        continue-on-error: true
+        env:
+          DATABASE_URL: ${{ secrets.STAGE_DATABASE_URL }}
+        run: |
+          set +e
+          if [ -z "$DATABASE_URL" ]; then
+            echo "status=FAIL" >> "$GITHUB_OUTPUT"
+            echo "detail=missing STAGE_DATABASE_URL secret" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          pnpm --filter api exec prisma migrate status
+          status=$?
+          if [ "$status" -eq 0 ]; then
+            echo "status=PASS" >> "$GITHUB_OUTPUT"
+            echo "detail=prisma migrate status ok" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=FAIL" >> "$GITHUB_OUTPUT"
+            echo "detail=prisma migrate status exit=$status" >> "$GITHUB_OUTPUT"
+          fi
+          exit 0
+
+      - name: Gate - API health/readiness
+        id: gate_api
+        continue-on-error: true
+        env:
+          STAGE_API_BASE_URL: ${{ secrets.STAGE_API_BASE_URL }}
+        run: |
+          set +e
+          if [ -z "$STAGE_API_BASE_URL" ]; then
+            echo "status=FAIL" >> "$GITHUB_OUTPUT"
+            echo "detail=missing STAGE_API_BASE_URL secret" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          curl -fsS "$STAGE_API_BASE_URL/health" > /dev/null
+          health_status=$?
+          curl -fsS "$STAGE_API_BASE_URL/ready" > /dev/null
+          ready_status=$?
+          if [ "$health_status" -eq 0 ] && [ "$ready_status" -eq 0 ]; then
+            echo "status=PASS" >> "$GITHUB_OUTPUT"
+            echo "detail=api health+ready green" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=FAIL" >> "$GITHUB_OUTPUT"
+            echo "detail=health=$health_status ready=$ready_status" >> "$GITHUB_OUTPUT"
+          fi
+          exit 0
+
+      - name: Gate - Web smoke
+        id: gate_web_smoke
+        continue-on-error: true
+        env:
+          STAGE_WEB_BASE_URL: ${{ secrets.STAGE_WEB_BASE_URL }}
+        run: |
+          set +e
+          if [ -z "$STAGE_WEB_BASE_URL" ]; then
+            echo "status=FAIL" >> "$GITHUB_OUTPUT"
+            echo "detail=missing STAGE_WEB_BASE_URL secret" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          root_code=$(curl -sS -o /dev/null -w "%{http_code}" "$STAGE_WEB_BASE_URL/")
+          dashboard_code=$(curl -sS -o /dev/null -w "%{http_code}" "$STAGE_WEB_BASE_URL/dashboard")
+          root_ok=0
+          dashboard_ok=0
+          if [ "$root_code" -ge 200 ] && [ "$root_code" -lt 400 ]; then root_ok=1; fi
+          if [ "$dashboard_code" -ge 200 ] && [ "$dashboard_code" -lt 400 ]; then dashboard_ok=1; fi
+          if [ "$root_ok" -eq 1 ] && [ "$dashboard_ok" -eq 1 ]; then
+            echo "status=PASS" >> "$GITHUB_OUTPUT"
+            echo "detail=root=$root_code dashboard=$dashboard_code" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=FAIL" >> "$GITHUB_OUTPUT"
+            echo "detail=root=$root_code dashboard=$dashboard_code" >> "$GITHUB_OUTPUT"
+          fi
+          exit 0
+
+      - name: Gate - Workers readiness
+        id: gate_workers
+        continue-on-error: true
+        env:
+          STAGE_API_BASE_URL: ${{ secrets.STAGE_API_BASE_URL }}
+        run: |
+          set +e
+          if [ -z "$STAGE_API_BASE_URL" ]; then
+            echo "status=FAIL" >> "$GITHUB_OUTPUT"
+            echo "detail=missing STAGE_API_BASE_URL secret" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          curl -fsS "$STAGE_API_BASE_URL/workers/health" > /dev/null
+          health_status=$?
+          curl -fsS "$STAGE_API_BASE_URL/workers/ready" > /dev/null
+          ready_status=$?
+          if [ "$health_status" -eq 0 ] && [ "$ready_status" -eq 0 ]; then
+            echo "status=PASS" >> "$GITHUB_OUTPUT"
+            echo "detail=workers health+ready green" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=FAIL" >> "$GITHUB_OUTPUT"
+            echo "detail=health=$health_status ready=$ready_status" >> "$GITHUB_OUTPUT"
+          fi
+          exit 0
+
+      - name: Build machine-readable gate report
+        id: gate_report
+        env:
+          BUILD_STATUS: ${{ steps.gate_build.outputs.status || 'FAIL' }}
+          BUILD_DETAIL: ${{ steps.gate_build.outputs.detail || 'missing' }}
+          TEST_STATUS: ${{ steps.gate_test.outputs.status || 'FAIL' }}
+          TEST_DETAIL: ${{ steps.gate_test.outputs.detail || 'missing' }}
+          MIGRATION_STATUS: ${{ steps.gate_migration.outputs.status || 'FAIL' }}
+          MIGRATION_DETAIL: ${{ steps.gate_migration.outputs.detail || 'missing' }}
+          API_STATUS: ${{ steps.gate_api.outputs.status || 'FAIL' }}
+          API_DETAIL: ${{ steps.gate_api.outputs.detail || 'missing' }}
+          WEB_SMOKE_STATUS: ${{ steps.gate_web_smoke.outputs.status || 'FAIL' }}
+          WEB_SMOKE_DETAIL: ${{ steps.gate_web_smoke.outputs.detail || 'missing' }}
+          WORKERS_STATUS: ${{ steps.gate_workers.outputs.status || 'FAIL' }}
+          WORKERS_DETAIL: ${{ steps.gate_workers.outputs.detail || 'missing' }}
+        run: |
+          mkdir -p artifacts
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const gates = [
+            { id: 'build', status: process.env.BUILD_STATUS, detail: process.env.BUILD_DETAIL },
+            { id: 'test', status: process.env.TEST_STATUS, detail: process.env.TEST_DETAIL },
+            { id: 'migration', status: process.env.MIGRATION_STATUS, detail: process.env.MIGRATION_DETAIL },
+            { id: 'api', status: process.env.API_STATUS, detail: process.env.API_DETAIL },
+            { id: 'web_smoke', status: process.env.WEB_SMOKE_STATUS, detail: process.env.WEB_SMOKE_DETAIL },
+            { id: 'workers', status: process.env.WORKERS_STATUS, detail: process.env.WORKERS_DETAIL },
+          ];
+          const overall = gates.every((gate) => gate.status === 'PASS') ? 'PASS' : 'FAIL';
+          const report = {
+            overall,
+            generatedAt: new Date().toISOString(),
+            commitSha: process.env.GITHUB_SHA,
+            runId: process.env.GITHUB_RUN_ID,
+            runNumber: process.env.GITHUB_RUN_NUMBER,
+            environment: 'stage',
+            gates,
+          };
+          fs.writeFileSync('artifacts/stage-gates-report.json', JSON.stringify(report, null, 2));
+          const lines = [
+            '# Stage Gates Report',
+            '',
+            `- Overall: **${overall}**`,
+            `- Commit: \`${report.commitSha}\``,
+            `- Run: \`${report.runId}\` (#${report.runNumber})`,
+            `- Generated: ${report.generatedAt}`,
+            '',
+            '| Gate | Status | Detail |',
+            '| --- | --- | --- |',
+            ...gates.map((gate) => `| ${gate.id} | ${gate.status} | ${gate.detail} |`),
+          ];
+          fs.writeFileSync('artifacts/stage-gates-report.md', `${lines.join('\n')}\n`);
+          NODE
+          overall=$(node -p "require('./artifacts/stage-gates-report.json').overall")
+          echo "overall=$overall" >> "$GITHUB_OUTPUT"
+
+      - name: Upload stage gate report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage-gates-report-${{ github.run_id }}
+          path: artifacts/stage-gates-report.*
+          retention-days: 14
+
+      - name: Enforce stage gates
+        if: ${{ steps.gate_report.outputs.overall != 'PASS' }}
+        run: |
+          echo "::error::Stage gate pack failed. See stage-gates-report artifact."
+          exit 1
+

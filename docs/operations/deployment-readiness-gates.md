@@ -8,6 +8,11 @@ Provide one deterministic gate pack for deployment promotion and post-deploy ver
 
 ## Gate Categories
 
+Automation entry point:
+- Workflow: `.github/workflows/stage-gates.yml`
+- Output artifact: `stage-gates-report-<run_id>` (`.json` + `.md`)
+- Required stage secrets: `STAGE_DATABASE_URL`, `STAGE_API_BASE_URL`, `STAGE_WEB_BASE_URL`
+
 ### G1 - Build Gate
 Required:
 - `api` build succeeds.
