@@ -67,6 +67,18 @@ pnpm run workers/dev
 
 Use this mode to validate behavior close to STAGE/PROD process ownership.
 
+### Fast path (one command, with preflight checks)
+```bash
+pnpm run prod-like/start
+```
+
+Preflight includes:
+- required env files (`apps/api/.env`, `apps/web/.env.local`),
+- build of `api` and `web`,
+- fail-fast orchestration of `api`, `web`, and `workers`.
+
+If you prefer manual startup, use the steps below.
+
 ### 1) Start infrastructure (repo root)
 ```bash
 docker compose up -d postgres redis

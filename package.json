@@ -16,6 +16,8 @@
     "workers:dev": "pnpm run workers/dev",
     "workers/prod": "node scripts/start-workers-prod.mjs",
     "workers:prod": "pnpm run workers/prod",
+    "prod-like/start": "node scripts/start-local-prod-like.mjs",
+    "prod-like:start": "pnpm run prod-like/start",
     "lint": "pnpm -r --if-present run lint",
     "typecheck": "pnpm --filter api run typecheck && pnpm --filter web run typecheck",
     "test": "pnpm -r --if-present run test",
