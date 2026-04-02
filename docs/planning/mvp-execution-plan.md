@@ -325,6 +325,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BMOD-38 refactor(db): remove LOCAL enum from Prisma after successful migration verification`
 - [x] `BMOD-39 docs(runbook): publish bot module operator runbook and manual smoke checklist`
 - [x] `BMOD-40 release(gate): run full regression gate for bot/backtest/runtime and record evidence`
+- [ ] `BMOD-41 fix(runtime-resilience): harden runtime signal loop against stream-handler crashes and add auto-restart watchdog for canceled/stalled sessions`
+- [ ] `BMOD-42 test(runtime): add regression coverage for resilient stream handling and runtime auto-restart after handler failure`
 
 ## Phase 19 - Bots Operations Center UX Cleanup (No Runtime Logic Drift)
 - [x] `BOPS-01 docs(plan): lock IA split (Dashboard = global control center, Bots = runtime operations center) and define now/history/future monitoring contract`
@@ -368,6 +370,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-39 feat(web-nav): add Bots dropdown entries (Lista botow, Dodaj bota) aligned with Markets/Strategies/Backtests IA`
 - [x] `BOPS-40 feat(web-bots-routing): wire canonical create/list routes for Bots menu entries with proper active-state and breadcrumbs`
 - [x] `BOPS-41 test(web-nav): add regression coverage for Bots dropdown structure and route targets`
+- [ ] `BOPS-42 feat(api+web-guard): block market-universe update/delete while linked symbol-group is used by any active bot (409 + explicit UX message)`
 
 ## Phase 20 - Dashboard Trade Action Clarity (OPEN/DCA/CLOSE)
 - [x] `DBACT-01 docs(contract): define dashboard transaction action semantics and rollout plan in docs/planning/dashboard-trade-action-ux-plan-2026-04-01.md`
@@ -382,8 +385,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `LFIN-01 docs(contract): lock LIVE fee source-of-truth and reconciliation fallback hierarchy (exchange fills/trades first, estimator only as temporary pending fallback)`
 - [x] `LFIN-02 feat(db): add fill-level persistence and fee-source metadata for order/trade runtime history`
 - [x] `LFIN-03 feat(exchange): extend ccxt connector contract with normalized fill/trade retrieval methods for executed orders`
-- [ ] `LFIN-04 feat(runtime): add live fill reconciliation flow and persist exchange-true fee totals in order/trade`
-- [ ] `LFIN-05 feat(api+web): expose and render feeSource/feePending/feeCurrency in dashboard+bots history views`
+- [x] `LFIN-04 feat(runtime): add live fill reconciliation flow and persist exchange-true fee totals in order/trade`
+- [x] `LFIN-05 feat(api+web): expose and render feeSource/feePending/feeCurrency in dashboard+bots history views`
 - [x] `LFIN-06 audit(i18n): inventory hardcoded copy in dashboard-home, bots module, and dashboard header menu`
 - [ ] `LFIN-07 refactor(web-i18n): migrate dashboard-home and bots strings to translation keys with EN/PL parity`
 - [ ] `LFIN-08 refactor(web-nav-i18n): remove inline locale dictionaries from header and use canonical i18n keys only`
@@ -413,6 +416,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DBRT-10 feat(web-dashboard): implement tri-state column sorting cycle (asc -> desc -> none) for trades table`
 
 ## Progress Log
+- 2026-04-02: Queued follow-up hardening tasks `BOPS-42` (market-universe edit/delete guard while active bot uses linked symbol-group) and `BMOD-41/BMOD-42` (runtime session resilience + auto-restart + regression coverage) after production-like report of `CANCELED` sessions and stalled runtime refresh.
 - 2026-04-02: Completed `LFIN-02` DB foundation for exact LIVE fee reconciliation: added enum `FeeSource`, extended `Order`/`Trade` with `feeSource`, `feePending`, `feeCurrency`, `effectiveFeeRate`, `exchangeTradeId`, and introduced `OrderFill` persistence model (+ migration `20260402173000_add_order_fill_and_fee_source`) with runtime-friendly indexes and FK contracts.
 - 2026-04-02: Completed `BOPS-36` final Dashboard->Bots UX freeze pass: reduced runtime sidebar density (lighter section cards + trimmed decision metrics), polished live-check cards for cleaner LONG/SHORT condition readability under NEUTRAL/active states, and validated with focused web regression suites (`HomeLiveWidgets`, `BotsManagement`, `Header.responsive`) all PASS.
 - 2026-04-02: Completed docs/audit tranche for Phase 21: published LIVE fee reconciliation contract (`docs/architecture/live-fee-reconciliation-contract.md`), i18n inventory for dashboard+bots+header (`docs/planning/i18n-dashboard-bots-menu-inventory-2026-04-02.md`), and numeric input policy (`docs/architecture/numeric-input-policy.md`).
@@ -835,3 +839,5 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-04-01: Completed BOPS-35 dashboard->bots final smoke (hybrid: focused regression tests + local build/runtime verification) and logged validation notes + BOPS-36 nits in docs/operations/dashboard-bots-manual-smoke-2026-04-01.md.
 - 2026-04-01: BOPS-36 progress: dashboard open-positions table now shows SL (TTP/TSL) columns by strategy close-mode (advanced) from API contract (showDynamicStopColumns), with API+web regression coverage.
 - 2026-04-02: Completed `LFIN-03` by extending CCXT connector contract with normalized fill/trade retrieval methods (`fetchOrderWithFills`, `fetchTradesForOrder`), adding inline create-order fill normalization, and covering fallback/support scenarios in connector unit tests.
+- 2026-04-02: Completed `LFIN-04` runtime reconciliation flow: added live fee reconciler (`inline -> fetchOrder -> fetchMyTrades` fallback), persisted exchange-derived order fee metadata + fill rows, propagated fee-source/pending/currency/rate into runtime trades (open/close/DCA), and validated with targeted exchange/orders/engine suites + API typecheck.
+- 2026-04-02: Completed `LFIN-05` API+web exposure/render for fee metadata: runtime trades endpoint now returns `feeSource/feePending/feeCurrency`; dashboard-home and bots runtime history render fee amount with source/pending/currency label (`EXCHANGE`, `EST.`, `PENDING`), with API e2e + web component regressions + root typecheck passing.
