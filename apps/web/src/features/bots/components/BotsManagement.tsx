@@ -109,6 +109,54 @@ const formatDuration = (ms: number) => {
   return `${hours}h ${minutes}m`;
 };
 
+const normalizeDcaLevels = (levels?: number[] | null) =>
+  (levels ?? []).filter((level) => Number.isFinite(level));
+
+const resolveDcaExecutedLevels = (params: {
+  dcaCount: number;
+  dcaExecutedLevels?: number[] | null;
+  dcaPlannedLevels?: number[] | null;
+}) => {
+  const dcaCount = Number.isFinite(params.dcaCount) ? Math.max(0, Math.trunc(params.dcaCount)) : 0;
+  if (dcaCount <= 0) return [];
+
+  const executed = normalizeDcaLevels(params.dcaExecutedLevels);
+  if (executed.length >= dcaCount) return executed.slice(0, dcaCount);
+  if (executed.length > 0) {
+    return [
+      ...executed,
+      ...Array.from({ length: dcaCount - executed.length }, () => executed[executed.length - 1]!),
+    ];
+  }
+
+  const planned = normalizeDcaLevels(params.dcaPlannedLevels);
+  if (planned.length === 0) return [];
+  if (planned.length >= dcaCount) return planned.slice(0, dcaCount);
+
+  return [
+    ...planned,
+    ...Array.from({ length: dcaCount - planned.length }, () => planned[planned.length - 1]!),
+  ];
+};
+
+const formatDcaLadderCell = (params: {
+  dcaCount: number;
+  dcaExecutedLevels?: number[] | null;
+  dcaPlannedLevels?: number[] | null;
+}) => {
+  const dcaCount = Number.isFinite(params.dcaCount) ? Math.max(0, Math.trunc(params.dcaCount)) : 0;
+  if (dcaCount <= 0) return "0";
+
+  const executedLevels = resolveDcaExecutedLevels(params);
+  if (executedLevels.length === 0) return String(dcaCount);
+
+  const ladder = executedLevels
+    .map((level, index) => `${index + 1}:${formatNumber(level, 2)}%`)
+    .join(", ");
+
+  return `${dcaCount} (${ladder})`;
+};
+
 const interpolateTemplate = (template: string, values: Record<string, string | number>) =>
   template.replace(/\{(\w+)\}/g, (_, token) => String(values[token] ?? ""));
 
@@ -2139,7 +2187,13 @@ export default function BotsManagement({
                               <td className={position.pnlMarginPct >= 0 ? "text-success" : "text-error"}>
                                 {formatNumber(position.pnlMarginPct, 2)}%
                               </td>
-                              <td>{position.dcaCount}</td>
+                              <td className="text-[11px]">
+                                {formatDcaLadderCell({
+                                  dcaCount: position.dcaCount,
+                                  dcaExecutedLevels: position.dcaExecutedLevels,
+                                  dcaPlannedLevels: position.dcaPlannedLevels,
+                                })}
+                              </td>
                               {monitorShowDynamicStopColumns ? (
                                 <td>
                                   {position.dynamicTtpStopLoss == null
@@ -2267,7 +2321,13 @@ export default function BotsManagement({
                               <td>{formatNumber(position.quantity, 6)}</td>
                               <td>{formatNumber(position.entryPrice, 4)}</td>
                               <td>{position.exitPrice != null ? formatNumber(position.exitPrice, 4) : "-"}</td>
-                              <td>{position.dcaCount}</td>
+                              <td className="text-[11px]">
+                                {formatDcaLadderCell({
+                                  dcaCount: position.dcaCount,
+                                  dcaExecutedLevels: position.dcaExecutedLevels,
+                                  dcaPlannedLevels: position.dcaPlannedLevels,
+                                })}
+                              </td>
                               <td>{formatCurrency(position.feesPaid)}</td>
                               <td className={position.realizedPnl >= 0 ? "text-success" : "text-error"}>
                                 {formatCurrency(position.realizedPnl)}

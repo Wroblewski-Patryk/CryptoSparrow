@@ -127,6 +127,51 @@ const sessionBadge = (status?: string | null) => {
   return "badge-ghost";
 };
 
+const normalizeDcaLevels = (levels?: number[] | null) =>
+  (levels ?? []).filter((level) => Number.isFinite(level));
+
+const resolveDcaExecutedLevels = (position: BotRuntimePositionItem) => {
+  const dcaCount = Number.isFinite(position.dcaCount) ? Math.max(0, Math.trunc(position.dcaCount)) : 0;
+  if (dcaCount <= 0) return [];
+
+  const executed = normalizeDcaLevels(position.dcaExecutedLevels);
+  if (executed.length >= dcaCount) return executed.slice(0, dcaCount);
+  if (executed.length > 0) {
+    return [
+      ...executed,
+      ...Array.from({ length: dcaCount - executed.length }, () => executed[executed.length - 1]!),
+    ];
+  }
+
+  const planned = normalizeDcaLevels(position.dcaPlannedLevels);
+  if (planned.length === 0) return [];
+  if (planned.length >= dcaCount) return planned.slice(0, dcaCount);
+
+  return [
+    ...planned,
+    ...Array.from({ length: dcaCount - planned.length }, () => planned[planned.length - 1]!),
+  ];
+};
+
+const formatDcaLadderCell = (params: {
+  position: BotRuntimePositionItem;
+  formatPercent: (value: number) => string;
+}) => {
+  const dcaCount = Number.isFinite(params.position.dcaCount)
+    ? Math.max(0, Math.trunc(params.position.dcaCount))
+    : 0;
+  if (dcaCount <= 0) return "0";
+
+  const executedLevels = resolveDcaExecutedLevels(params.position);
+  if (executedLevels.length === 0) return String(dcaCount);
+
+  const ladder = executedLevels
+    .map((level, index) => `${index + 1}:${params.formatPercent(level)}`)
+    .join(", ");
+
+  return `${dcaCount} (${ladder})`;
+};
+
 type SignalPillValue = "LONG" | "SHORT" | "EXIT" | "NEUTRAL";
 
 const directionPillClass = (value: DirectionPillValue) => {
@@ -334,6 +379,10 @@ const maxDrawdown = (trades: BotRuntimeTrade[]) => {
 export default function HomeLiveWidgets() {
   const { t } = useI18n();
   const { formatCurrency, formatDateTime, formatNumber, formatPercent, formatTime } = useLocaleFormatting();
+  const formatDcaPercent = useCallback(
+    (value: number) => `${formatNumber(value, { maximumFractionDigits: 2 })}%`,
+    [formatNumber]
+  );
   const [bots, setBots] = useState<Bot[]>([]);
   const [snapshots, setSnapshots] = useState<RuntimeSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -759,7 +808,7 @@ export default function HomeLiveWidgets() {
                         <td>{formatCurrency(p.marginNotional)}</td>
                         <td className={pnl >= 0 ? "text-success" : "text-error"}>{formatCurrency(pnl)}</td>
                         <td className={pnl >= 0 ? "text-success" : "text-error"}>{p.livePnlPct == null ? "-" : formatPercent(p.livePnlPct)}</td>
-                        <td>{p.dcaCount}</td>
+                        <td className="text-[11px]">{formatDcaLadderCell({ position: p, formatPercent: formatDcaPercent })}</td>
                         {showDynamicStopColumns ? (
                           <td>
                             {p.dynamicTtpStopLoss == null

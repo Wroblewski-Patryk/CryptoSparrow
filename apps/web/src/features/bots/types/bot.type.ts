@@ -272,6 +272,8 @@ export type BotRuntimePositionItem = {
   closedAt: string | null;
   holdMs: number;
   dcaCount: number;
+  dcaPlannedLevels?: number[];
+  dcaExecutedLevels?: number[];
   feesPaid: number;
   realizedPnl: number;
   unrealizedPnl: number | null;
