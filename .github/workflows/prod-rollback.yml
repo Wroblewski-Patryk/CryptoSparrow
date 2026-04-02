@@ -1,0 +1,53 @@
+name: PROD Rollback
+
+on:
+  workflow_run:
+    workflows: ["Promote PROD"]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: prod-rollback
+  cancel-in-progress: false
+
+jobs:
+  rollback-prod:
+    name: Rollback production to previous stable release
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - name: Trigger Coolify PROD rollback webhook
+        env:
+          PROD_ROLLBACK_WEBHOOK_URL: ${{ secrets.COOLIFY_PROD_ROLLBACK_HOOK_URL }}
+          FAILED_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          FAILED_WORKFLOW: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name || 'manual' }}
+          FAILED_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || github.run_id }}
+          REPOSITORY: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          if [ -z "$PROD_ROLLBACK_WEBHOOK_URL" ]; then
+            echo "::error::Missing required secret COOLIFY_PROD_ROLLBACK_HOOK_URL"
+            exit 1
+          fi
+
+          payload=$(cat <<EOF
+          {"failedSha":"$FAILED_SHA","failedWorkflow":"$FAILED_WORKFLOW","failedRunId":"$FAILED_RUN_ID","repository":"$REPOSITORY","actor":"$ACTOR","environment":"production","action":"rollback_to_previous_stable"}
+          EOF
+          )
+
+          http_code=$(curl -sS -o response.txt -w "%{http_code}" \
+            -X POST "$PROD_ROLLBACK_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            --data "$payload")
+
+          echo "Coolify response code: $http_code"
+          cat response.txt || true
+
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "::error::Production rollback webhook failed with HTTP $http_code"
+            exit 1
+          fi
+

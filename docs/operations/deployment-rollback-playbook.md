@@ -38,6 +38,11 @@ If web/api are healthy and issue is isolated to workers:
 - rollback/restart worker services only,
 - keep web/api online.
 
+## Automation Entry Point
+- Workflow: `.github/workflows/prod-rollback.yml`
+- Trigger: failed completion of `Promote PROD` (and manual dispatch)
+- Required secret: `COOLIFY_PROD_ROLLBACK_HOOK_URL`
+
 ## Standard Rollback Procedure
 1. Freeze promotion pipeline for affected environment.
 2. Identify last known stable release reference (tag/artifact/SHA).

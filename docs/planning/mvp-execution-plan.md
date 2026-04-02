@@ -433,7 +433,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DPL-14 ci(stage): implement automatic deploy-to-stage on integration-branch push`
 - [x] `DPL-15 ci(stage-gates): enforce stage gate pack (build/test/migrate/health/smoke) with machine-readable report`
 - [x] `DPL-16 ci(promote): implement automatic promotion to prod when stage gates are fully green`
-- [ ] `DPL-17 ci(prod-rollback): implement automatic rollback to previous stable release on failed post-deploy prod health`
+- [x] `DPL-17 ci(prod-rollback): implement automatic rollback to previous stable release on failed post-deploy prod health`
 - [ ] `DPL-18 ops(coolify): wire Coolify deployment triggers for stage and prod services`
 - [ ] `DPL-19 security(ci): apply branch protection + secret hardening for safe auto-promotion`
 - [ ] `DPL-20 docs(runbook): publish incident playbook for blocked promotion and failed stage/prod rollout`
@@ -458,6 +458,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 
 ## Progress Log
+- 2026-04-03: Completed `DPL-17` by adding `.github/workflows/prod-rollback.yml` to auto-trigger production rollback when `Promote PROD` fails (with manual fallback), forwarding failure metadata to rollback webhook (`COOLIFY_PROD_ROLLBACK_HOOK_URL`) and documenting automation entry in rollback playbook.
 - 2026-04-03: Completed `DPL-16` by adding `.github/workflows/promote-prod.yml` to auto-trigger production promotion after successful `Stage Gates`, forwarding verified SHA metadata to Coolify PROD deploy webhook (`COOLIFY_PROD_DEPLOY_HOOK_URL`) with production environment isolation and concurrency guard.
 - 2026-04-03: Completed `DPL-15` by adding `.github/workflows/stage-gates.yml` (triggered after successful `Deploy STAGE`) to enforce stage gate pack for build/test/migration/api health/web smoke/workers readiness, generate machine-readable report artifacts (`stage-gates-report.json` + `.md`), and fail workflow when any required gate is not PASS.
 - 2026-04-03: Completed `DPL-14` by adding `.github/workflows/deploy-stage.yml` to trigger STAGE deployment automatically on `develop` pushes (plus manual dispatch), with concurrency guard and required `COOLIFY_STAGE_DEPLOY_HOOK_URL` webhook secret; linked automation entry in promotion contract doc.
