@@ -7,17 +7,17 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BOPS-42 feat(api+web-guard): block market-universe update/delete while linked symbol-group is used by any active bot (409 + explicit UX message)`
-- [ ] `BMOD-41 fix(runtime-resilience): harden runtime signal loop against stream-handler crashes and add auto-restart watchdog for canceled/stalled sessions`
 - [ ] `LFIN-07 refactor(web-i18n): migrate dashboard-home and bots strings to translation keys with EN/PL parity`
 
 ## NEXT
-- [ ] `BMOD-42 test(runtime): add regression coverage for resilient stream handling and runtime auto-restart after handler failure`
 - [ ] `LFIN-08 refactor(web-nav-i18n): remove inline locale dictionaries from header and use canonical i18n keys only`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BMOD-42 test(runtime): add regression coverage for resilient stream handling and runtime auto-restart after handler failure`
+- [x] `BMOD-41 fix(runtime-resilience): harden runtime signal loop against stream-handler crashes and add auto-restart watchdog for canceled/stalled sessions`
+- [x] `BOPS-42 feat(api+web-guard): block market-universe update/delete while linked symbol-group is used by any active bot (409 + explicit UX message)`
 - [x] `LFIN-05 feat(api+web): expose and render feeSource/feePending/feeCurrency in dashboard+bots history views`
 - [x] `LFIN-04 feat(runtime): add live fill reconciliation flow and persist exchange-true fee totals in order/trade`
 - [x] `LFIN-03 feat(exchange): extend ccxt connector contract with normalized fill/trade retrieval methods for executed orders`

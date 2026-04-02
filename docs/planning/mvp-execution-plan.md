@@ -325,8 +325,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BMOD-38 refactor(db): remove LOCAL enum from Prisma after successful migration verification`
 - [x] `BMOD-39 docs(runbook): publish bot module operator runbook and manual smoke checklist`
 - [x] `BMOD-40 release(gate): run full regression gate for bot/backtest/runtime and record evidence`
-- [ ] `BMOD-41 fix(runtime-resilience): harden runtime signal loop against stream-handler crashes and add auto-restart watchdog for canceled/stalled sessions`
-- [ ] `BMOD-42 test(runtime): add regression coverage for resilient stream handling and runtime auto-restart after handler failure`
+- [x] `BMOD-41 fix(runtime-resilience): harden runtime signal loop against stream-handler crashes and add auto-restart watchdog for canceled/stalled sessions`
+- [x] `BMOD-42 test(runtime): add regression coverage for resilient stream handling and runtime auto-restart after handler failure`
 
 ## Phase 19 - Bots Operations Center UX Cleanup (No Runtime Logic Drift)
 - [x] `BOPS-01 docs(plan): lock IA split (Dashboard = global control center, Bots = runtime operations center) and define now/history/future monitoring contract`
@@ -370,7 +370,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-39 feat(web-nav): add Bots dropdown entries (Lista botow, Dodaj bota) aligned with Markets/Strategies/Backtests IA`
 - [x] `BOPS-40 feat(web-bots-routing): wire canonical create/list routes for Bots menu entries with proper active-state and breadcrumbs`
 - [x] `BOPS-41 test(web-nav): add regression coverage for Bots dropdown structure and route targets`
-- [ ] `BOPS-42 feat(api+web-guard): block market-universe update/delete while linked symbol-group is used by any active bot (409 + explicit UX message)`
+- [x] `BOPS-42 feat(api+web-guard): block market-universe update/delete while linked symbol-group is used by any active bot (409 + explicit UX message)`
 
 ## Phase 20 - Dashboard Trade Action Clarity (OPEN/DCA/CLOSE)
 - [x] `DBACT-01 docs(contract): define dashboard transaction action semantics and rollout plan in docs/planning/dashboard-trade-action-ux-plan-2026-04-01.md`
@@ -416,6 +416,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DBRT-10 feat(web-dashboard): implement tri-state column sorting cycle (asc -> desc -> none) for trades table`
 
 ## Progress Log
+- 2026-04-02: Completed `BMOD-41/BMOD-42` runtime resilience hardening: wrapped market-stream fanout handler promises to prevent unhandled async crashes, added event-level try/catch shielding in runtime signal loop, introduced session watchdog re-ensure cycle (`RUNTIME_SESSION_WATCHDOG_INTERVAL_MS`) for active bots, added execution worker auto-start watchdog (`RUNTIME_SIGNAL_LOOP_BOOTSTRAP_INTERVAL_MS`), and expanded runtime unit coverage for crash-survival + periodic session re-ensure.
+- 2026-04-02: Completed `BOPS-42` markets guard parity with strategies: backend now blocks market-universe update/delete when linked symbol-groups are used by active bots (canonical + legacy links), controllers map to HTTP 409 conflict, markets e2e guard scenarios added, and web edit/delete UX shows explicit active-bot lock messaging.
 - 2026-04-02: Queued follow-up hardening tasks `BOPS-42` (market-universe edit/delete guard while active bot uses linked symbol-group) and `BMOD-41/BMOD-42` (runtime session resilience + auto-restart + regression coverage) after production-like report of `CANCELED` sessions and stalled runtime refresh.
 - 2026-04-02: Completed `LFIN-02` DB foundation for exact LIVE fee reconciliation: added enum `FeeSource`, extended `Order`/`Trade` with `feeSource`, `feePending`, `feeCurrency`, `effectiveFeeRate`, `exchangeTradeId`, and introduced `OrderFill` persistence model (+ migration `20260402173000_add_order_fill_and_fee_source`) with runtime-friendly indexes and FK contracts.
 - 2026-04-02: Completed `BOPS-36` final Dashboard->Bots UX freeze pass: reduced runtime sidebar density (lighter section cards + trimmed decision metrics), polished live-check cards for cleaner LONG/SHORT condition readability under NEUTRAL/active states, and validated with focused web regression suites (`HomeLiveWidgets`, `BotsManagement`, `Header.responsive`) all PASS.
