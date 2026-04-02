@@ -390,7 +390,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `LFIN-06 audit(i18n): inventory hardcoded copy in dashboard-home, bots module, and dashboard header menu`
 - [x] `LFIN-07A refactor(web-i18n-dashboard-home): migrate dashboard home/control-center strings to translation keys with EN/PL parity`
 - [x] `LFIN-07B refactor(web-i18n-bots): migrate bots management/runtime strings to translation keys with EN/PL parity`
-- [ ] `LFIN-08 refactor(web-nav-i18n): remove inline locale dictionaries from header and use canonical i18n keys only`
+- [x] `LFIN-08 refactor(web-nav-i18n): remove inline locale dictionaries from header and use canonical i18n keys only`
 - [x] `LFIN-09 docs(contract): lock locale-safe numeric input policy (comma/dot, precision matrix, integer vs decimal fields)`
 - [ ] `LFIN-10 feat(web-utils): add shared number parser/normalizer and form-level validation contract`
 - [ ] `LFIN-11 refactor(web-strategies): replace direct Number(...) parsing in strategy form sections with parser-driven handling + precision guards`
@@ -432,6 +432,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-04-02: Completed `DBRT-02..DBRT-05`: extended runtime trades API query (page/pageSize/sort/filter/date range + response `meta`), updated web DTO/service contract, implemented dashboard server-driven table controls (filters/sort/pagination), and added regression coverage in API e2e + dashboard component tests.
 - 2026-04-02: Completed `DBRT-01` by publishing runtime trade-table contract in `docs/planning/dashboard-runtime-trades-table-plan-2026-04-02.md` (server-side pagination/sort/filter + response meta), and queued implementation steps `DBRT-02..DBRT-05` in execution/next-commit plans.
 - 2026-04-02: Added Phase 21 planning track (`LFIN-01..LFIN-12`) and detailed implementation plan in `docs/planning/live-fee-i18n-numeric-hardening-plan-2026-04-02.md` for LIVE fee truth, dashboard/bots/menu i18n parity, and locale-safe numeric input validation.
+- 2026-04-02: Completed `LFIN-08`: removed inline locale dictionaries from dashboard header navigation, migrated all header labels to canonical `dashboard.nav.*` keys, and extended EN/PL translation schema with explicit menu entry keys (plus responsive header + i18n parity tests green).
 - 2026-04-01: Completed `DBACT-02/03`: added `TradeLifecycleAction` enum+column (migration `20260401191000_add_trade_lifecycle_action`) and persisted `OPEN/DCA/CLOSE` at runtime write-time in execution + DCA paths; verified with green bots API e2e after migration deploy.
 - 2026-04-01: Completed `BOPS-37..BOPS-41`: removed redundant dashboard runtime CTAs, updated dashboard/nav tests, and wired canonical Bots IA routes (`/dashboard/bots`, `/dashboard/bots/new`) with dropdown parity.
 - 2026-04-01: Extended dashboard trade-action rollout plan to include non-null `Fee`/`Realized PnL` display and `Notional -> Margin` history-column unification in Control Center (`DBACT-04..DBACT-07` scope update).

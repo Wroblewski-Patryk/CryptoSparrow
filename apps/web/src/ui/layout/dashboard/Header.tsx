@@ -55,80 +55,39 @@ function NavGroup({ active, label, links, pathname }: NavGroupProps) {
 }
 
 export default function Header() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const labels =
-    locale === 'pl'
-      ? {
-          home: 'Pulpit',
-          exchangesGroup: 'Gieldy',
-          marketsGroup: 'Rynki',
-          strategyGroup: 'Strategie',
-          backtestGroup: 'Backtest',
-          botsGroup: 'Boty',
-          analyticsGroup: 'Analityka',
-          exchangesConnections: 'Integracje',
-          marketList: 'Lista grup',
-          marketCreate: 'Dodaj grupe',
-          strategyList: 'Lista strategii',
-          strategyCreate: 'Dodaj strategie',
-          backtestList: 'Lista backtestow',
-          backtestCreate: 'Nowy backtest',
-          botsList: 'Lista botow',
-          botsCreate: 'Dodaj bota',
-          mobileMenu: 'Menu',
-        }
-      : {
-          home: 'Dashboard',
-          exchangesGroup: 'Exchanges',
-          marketsGroup: 'Markets',
-          strategyGroup: 'Strategies',
-          backtestGroup: 'Backtests',
-          botsGroup: 'Bots',
-          analyticsGroup: 'Analytics',
-          exchangesConnections: 'Connections',
-          marketList: 'Groups list',
-          marketCreate: 'Create group',
-          strategyList: 'Strategies list',
-          strategyCreate: 'Create strategy',
-          backtestList: 'Backtests list',
-          backtestCreate: 'Create backtest',
-          botsList: 'Bots list',
-          botsCreate: 'Create bot',
-          mobileMenu: 'Menu',
-        };
-
   const homeLink: NavItem = {
     href: dashboardRoutes.home,
-    label: labels.home,
+    label: t('dashboard.nav.home'),
   };
 
   const exchangesLinks: NavItem[] = [
-    { href: dashboardRoutes.exchanges.root, label: labels.exchangesConnections },
+    { href: dashboardRoutes.exchanges.root, label: t('dashboard.nav.connections') },
     { href: dashboardRoutes.exchanges.orders, label: t('dashboard.nav.orders') },
     { href: dashboardRoutes.exchanges.positions, label: t('dashboard.nav.positions') },
   ];
 
   const marketsLinks: NavItem[] = [
-    { href: dashboardRoutes.markets.list, label: labels.marketList },
-    { href: dashboardRoutes.markets.create, label: labels.marketCreate },
+    { href: dashboardRoutes.markets.list, label: t('dashboard.nav.marketGroupsList') },
+    { href: dashboardRoutes.markets.create, label: t('dashboard.nav.createMarketGroup') },
   ];
 
   const strategyLinks: NavItem[] = [
-    { href: dashboardRoutes.strategies.list, label: labels.strategyList },
-    { href: dashboardRoutes.strategies.create, label: labels.strategyCreate },
+    { href: dashboardRoutes.strategies.list, label: t('dashboard.nav.strategiesList') },
+    { href: dashboardRoutes.strategies.create, label: t('dashboard.nav.createStrategy') },
   ];
 
   const backtestLinks: NavItem[] = [
-    { href: dashboardRoutes.backtests.list, label: labels.backtestList },
-    { href: dashboardRoutes.backtests.create, label: labels.backtestCreate },
+    { href: dashboardRoutes.backtests.list, label: t('dashboard.nav.backtestsList') },
+    { href: dashboardRoutes.backtests.create, label: t('dashboard.nav.createBacktest') },
   ];
 
   const botsLinks: NavItem[] = [
-    { href: dashboardRoutes.bots.list, label: labels.botsList },
-    { href: dashboardRoutes.bots.create, label: labels.botsCreate },
+    { href: dashboardRoutes.bots.list, label: t('dashboard.nav.botsList') },
+    { href: dashboardRoutes.bots.create, label: t('dashboard.nav.createBot') },
   ];
 
   const analyticsLinks: NavItem[] = [
@@ -139,7 +98,7 @@ export default function Header() {
   const groups = [
     {
       id: 'exchanges',
-      label: labels.exchangesGroup,
+      label: t('dashboard.nav.exchanges'),
       links: exchangesLinks,
       activePrefixes: [
         dashboardRoutes.exchanges.root,
@@ -149,31 +108,31 @@ export default function Header() {
     },
     {
       id: 'markets',
-      label: labels.marketsGroup,
+      label: t('dashboard.nav.markets'),
       links: marketsLinks,
       activePrefixes: [dashboardRoutes.markets.root],
     },
     {
       id: 'strategies',
-      label: labels.strategyGroup,
+      label: t('dashboard.nav.strategies'),
       links: strategyLinks,
       activePrefixes: [dashboardRoutes.strategies.root],
     },
     {
       id: 'backtests',
-      label: labels.backtestGroup,
+      label: t('dashboard.nav.backtests'),
       links: backtestLinks,
       activePrefixes: [dashboardRoutes.backtests.root],
     },
     {
       id: 'bots',
-      label: labels.botsGroup,
+      label: t('dashboard.nav.bots'),
       links: botsLinks,
       activePrefixes: [dashboardRoutes.bots.root],
     },
     {
       id: 'analytics',
-      label: labels.analyticsGroup,
+      label: t('dashboard.nav.analytics'),
       links: analyticsLinks,
       activePrefixes: [dashboardRoutes.analytics.reports, dashboardRoutes.analytics.logs],
     },
@@ -237,7 +196,7 @@ export default function Header() {
               aria-controls="dashboard-mobile-nav"
               onClick={() => setMobileMenuOpen((value) => !value)}
             >
-              {labels.mobileMenu}
+              {t('dashboard.nav.menu')}
             </button>
           </div>
         </div>

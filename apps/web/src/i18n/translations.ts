@@ -3,16 +3,29 @@ export type Locale = "en" | "pl";
 type TranslationSchema = {
   dashboard: {
     nav: {
+      home: string;
+      analytics: string;
       markets: string;
       builder: string;
       strategies: string;
       backtest: string;
+      backtests: string;
       reports: string;
       logs: string;
       exchanges: string;
+      connections: string;
       orders: string;
       positions: string;
       bots: string;
+      marketGroupsList: string;
+      createMarketGroup: string;
+      strategiesList: string;
+      createStrategy: string;
+      backtestsList: string;
+      createBacktest: string;
+      botsList: string;
+      createBot: string;
+      menu: string;
     };
     common: {
       dashboard: string;
@@ -225,16 +238,29 @@ export const translations: Record<Locale, TranslationSchema> = {
   en: {
     dashboard: {
       nav: {
+        home: "Dashboard",
+        analytics: "Analytics",
         markets: "Markets",
         builder: "Builder",
         strategies: "Strategies",
         backtest: "Backtest",
+        backtests: "Backtests",
         reports: "Reports",
         logs: "Logs",
         exchanges: "Exchanges",
+        connections: "Connections",
         orders: "Orders",
         positions: "Positions",
         bots: "Bots",
+        marketGroupsList: "Groups list",
+        createMarketGroup: "Create group",
+        strategiesList: "Strategies list",
+        createStrategy: "Create strategy",
+        backtestsList: "Backtests list",
+        createBacktest: "Create backtest",
+        botsList: "Bots list",
+        createBot: "Create bot",
+        menu: "Menu",
       },
       common: {
         dashboard: "Dashboard",
@@ -765,16 +791,29 @@ export const translations: Record<Locale, TranslationSchema> = {
   pl: {
     dashboard: {
       nav: {
+        home: "Pulpit",
+        analytics: "Analityka",
         markets: "Rynki",
         builder: "Builder",
         strategies: "Strategie",
         backtest: "Backtest",
+        backtests: "Backtesty",
         reports: "Raporty",
         logs: "Logi",
         exchanges: "Gieldy",
+        connections: "Integracje",
         orders: "Zlecenia",
         positions: "Pozycje",
         bots: "Boty",
+        marketGroupsList: "Lista grup",
+        createMarketGroup: "Dodaj grupe",
+        strategiesList: "Lista strategii",
+        createStrategy: "Dodaj strategie",
+        backtestsList: "Lista backtestow",
+        createBacktest: "Nowy backtest",
+        botsList: "Lista botow",
+        createBot: "Dodaj bota",
+        menu: "Menu",
       },
       common: {
         dashboard: "Dashboard",
