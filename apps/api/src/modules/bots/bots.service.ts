@@ -405,6 +405,134 @@ const resolveBotAdvancedCloseMode = async (userId: string, botId: string) => {
   return configs.some((config) => hasAdvancedCloseMode(config));
 };
 
+const toFiniteInteger = (value: unknown) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.floor(parsed));
+};
+
+const resolveDcaPlannedLevelsFromStrategyConfig = (config: unknown): number[] => {
+  const root = asRecord(config);
+  const additional = asRecord(root?.additional);
+  if (!additional) return [];
+
+  const dcaEnabledRaw = additional.dcaEnabled;
+  const dcaEnabled =
+    typeof dcaEnabledRaw === 'boolean' ? dcaEnabledRaw : true;
+  if (!dcaEnabled) return [];
+
+  const dcaMode =
+    typeof additional.dcaMode === 'string' && additional.dcaMode.trim().toLowerCase() === 'advanced'
+      ? 'advanced'
+      : 'basic';
+  const dcaTimes = toFiniteInteger(additional.dcaTimes);
+  const rawDcaLevels = Array.isArray(additional.dcaLevels) ? additional.dcaLevels : [];
+  const parsedLevelPercents = rawDcaLevels
+    .map((level) => asRecord(level))
+    .map((level) => Number(level?.percent))
+    .filter((level): level is number => Number.isFinite(level) && level !== 0);
+  const primaryLevel = parsedLevelPercents[0] ?? null;
+
+  if (dcaMode === 'advanced') {
+    if (parsedLevelPercents.length > 0) {
+      return dcaTimes > 0 ? parsedLevelPercents.slice(0, dcaTimes) : parsedLevelPercents;
+    }
+    if (dcaTimes > 0 && primaryLevel != null) {
+      return Array.from({ length: dcaTimes }, () => primaryLevel);
+    }
+    return [];
+  }
+
+  const basicCount = dcaTimes > 0 ? dcaTimes : parsedLevelPercents.length > 0 ? 1 : 0;
+  if (basicCount <= 0 || primaryLevel == null) return [];
+  return Array.from({ length: basicCount }, () => primaryLevel);
+};
+
+const resolveBotDcaPlanBySymbol = async (userId: string, botId: string, symbols: string[]) => {
+  const normalizedSymbols = normalizeSymbols(symbols);
+  const dcaPlanBySymbol = new Map<string, number[]>();
+  if (normalizedSymbols.length === 0) return dcaPlanBySymbol;
+
+  const [groupLinks, legacyLinks] = await Promise.all([
+    prisma.marketGroupStrategyLink.findMany({
+      where: {
+        isEnabled: true,
+        botMarketGroup: {
+          botId,
+          userId,
+          isEnabled: true,
+          lifecycleStatus: {
+            in: ['ACTIVE', 'PAUSED'],
+          },
+        },
+      },
+      orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
+      select: {
+        strategy: {
+          select: {
+            config: true,
+          },
+        },
+        botMarketGroup: {
+          select: {
+            symbolGroup: {
+              select: {
+                symbols: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    prisma.botStrategy.findMany({
+      where: {
+        isEnabled: true,
+        botId,
+        bot: {
+          userId,
+        },
+      },
+      orderBy: [{ createdAt: 'asc' }],
+      select: {
+        strategy: {
+          select: {
+            config: true,
+          },
+        },
+        symbolGroup: {
+          select: {
+            symbols: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  const assignPlanToSymbols = (targetSymbols: string[], config: unknown) => {
+    const plannedLevels = resolveDcaPlannedLevelsFromStrategyConfig(config);
+    for (const symbol of targetSymbols) {
+      if (!normalizedSymbols.includes(symbol)) continue;
+      if (!dcaPlanBySymbol.has(symbol)) {
+        dcaPlanBySymbol.set(symbol, plannedLevels);
+      }
+    }
+  };
+
+  for (const link of groupLinks) {
+    const assignedSymbols = normalizeSymbols(link.botMarketGroup.symbolGroup.symbols ?? []);
+    const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : normalizedSymbols;
+    assignPlanToSymbols(targetSymbols, link.strategy.config);
+  }
+
+  for (const link of legacyLinks) {
+    const assignedSymbols = normalizeSymbols(link.symbolGroup?.symbols ?? []);
+    const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : normalizedSymbols;
+    assignPlanToSymbols(targetSymbols, link.strategy.config);
+  }
+
+  return dcaPlanBySymbol;
+};
+
 const toFiniteNumber = (value: unknown): number | null => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
@@ -2727,6 +2855,7 @@ export const listBotRuntimeSessionPositions = async (
 
   const positionIds = positions.map((position) => position.id);
   const symbols = [...new Set(positions.map((position) => position.symbol))];
+  const dcaPlanBySymbol = await resolveBotDcaPlanBySymbol(userId, botId, symbols);
 
   const [trades, lastSymbolPrices, openOrders] = await Promise.all([
     prisma.trade.findMany({
@@ -2818,6 +2947,19 @@ export const listBotRuntimeSessionPositions = async (
     const entryTrade = entryLegs[0] ?? positionTrades[0] ?? null;
     const exitTrade = exitLegs.at(-1) ?? (position.status === 'CLOSED' ? positionTrades.at(-1) ?? null : null);
     const dcaCount = Math.max(0, entryLegs.length - 1);
+    const dcaPlannedLevels = dcaPlanBySymbol.get(position.symbol) ?? [];
+    const dcaExecutedLevels =
+      dcaCount <= dcaPlannedLevels.length
+        ? dcaPlannedLevels.slice(0, dcaCount)
+        : dcaPlannedLevels.length > 0
+          ? [
+              ...dcaPlannedLevels,
+              ...Array.from(
+                { length: dcaCount - dcaPlannedLevels.length },
+                () => dcaPlannedLevels[dcaPlannedLevels.length - 1]
+              ),
+            ]
+          : [];
 
     const marketPrice = lastPriceBySymbol.get(position.symbol);
     const runtimeState = runtimePositionAutomationService.getPositionStateSnapshot(position.id);
@@ -2878,6 +3020,8 @@ export const listBotRuntimeSessionPositions = async (
       closedAt: position.closedAt,
       holdMs,
       dcaCount,
+      dcaPlannedLevels,
+      dcaExecutedLevels,
       feesPaid,
       realizedPnl: position.realizedPnl ?? tradeRealizedPnl ?? 0,
       unrealizedPnl: liveUnrealizedPnl ?? position.unrealizedPnl ?? null,
