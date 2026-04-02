@@ -351,6 +351,22 @@ const computePriceFromLeveragedMovePercent = (
   return raw;
 };
 
+const computeTrailingStopPriceFromAnchor = (
+  side: 'LONG' | 'SHORT',
+  anchorPrice: number,
+  trailingPercent: number,
+  leverage: number
+) => {
+  if (!Number.isFinite(anchorPrice) || anchorPrice <= 0) return null;
+  if (!Number.isFinite(trailingPercent) || trailingPercent <= 0) return null;
+  const effectiveLeverage = Number.isFinite(leverage) && leverage > 0 ? leverage : 1;
+  const delta = trailingPercent / effectiveLeverage;
+  const raw =
+    side === 'LONG' ? anchorPrice * (1 - delta) : anchorPrice * (1 + delta);
+  if (!Number.isFinite(raw) || raw <= 0) return null;
+  return raw;
+};
+
 const asRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
 
@@ -409,6 +425,48 @@ const toFiniteInteger = (value: unknown) => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return 0;
   return Math.max(0, Math.floor(parsed));
+};
+
+type TrailingStopDisplayLevel = {
+  armPercent: number;
+  trailPercent: number;
+};
+
+const resolveTrailingStopLevelsFromStrategyConfig = (
+  config: unknown
+): TrailingStopDisplayLevel[] => {
+  const root = asRecord(config);
+  const close = asRecord(root?.close);
+  const mode = typeof close?.mode === 'string' ? close.mode.trim().toLowerCase() : null;
+  if (mode !== 'advanced') return [];
+
+  const rawLevels = Array.isArray(close?.tsl) ? close.tsl : [];
+  return rawLevels
+    .map((item) => asRecord(item))
+    .map((item) => ({
+      armPercent: Math.abs(Number(item?.arm)) / 100,
+      trailPercent: Math.abs(Number(item?.percent)) / 100,
+    }))
+    .filter(
+      (item) =>
+        Number.isFinite(item.armPercent) &&
+        Number.isFinite(item.trailPercent) &&
+        item.armPercent > 0 &&
+        item.trailPercent > 0
+    )
+    .sort((left, right) => left.armPercent - right.armPercent);
+};
+
+const selectActiveTrailingStopDisplayLevel = (
+  favorableMovePercent: number | null,
+  levels: TrailingStopDisplayLevel[]
+) => {
+  if (favorableMovePercent == null || !Number.isFinite(favorableMovePercent)) return null;
+  let active: TrailingStopDisplayLevel | null = null;
+  for (const level of levels) {
+    if (favorableMovePercent >= level.armPercent) active = level;
+  }
+  return active;
 };
 
 const resolveDcaPlannedLevelsFromStrategyConfig = (config: unknown): number[] => {
@@ -531,6 +589,95 @@ const resolveBotDcaPlanBySymbol = async (userId: string, botId: string, symbols:
   }
 
   return dcaPlanBySymbol;
+};
+
+const resolveBotTrailingStopLevelsBySymbol = async (
+  userId: string,
+  botId: string,
+  symbols: string[]
+) => {
+  const normalizedSymbols = normalizeSymbols(symbols);
+  const trailingLevelsBySymbol = new Map<string, TrailingStopDisplayLevel[]>();
+  if (normalizedSymbols.length === 0) return trailingLevelsBySymbol;
+
+  const [groupLinks, legacyLinks] = await Promise.all([
+    prisma.marketGroupStrategyLink.findMany({
+      where: {
+        isEnabled: true,
+        botMarketGroup: {
+          botId,
+          userId,
+          isEnabled: true,
+          lifecycleStatus: {
+            in: ['ACTIVE', 'PAUSED'],
+          },
+        },
+      },
+      orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
+      select: {
+        strategy: {
+          select: {
+            config: true,
+          },
+        },
+        botMarketGroup: {
+          select: {
+            symbolGroup: {
+              select: {
+                symbols: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    prisma.botStrategy.findMany({
+      where: {
+        isEnabled: true,
+        botId,
+        bot: {
+          userId,
+        },
+      },
+      orderBy: [{ createdAt: 'asc' }],
+      select: {
+        strategy: {
+          select: {
+            config: true,
+          },
+        },
+        symbolGroup: {
+          select: {
+            symbols: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  const assignLevelsToSymbols = (targetSymbols: string[], config: unknown) => {
+    const levels = resolveTrailingStopLevelsFromStrategyConfig(config);
+    for (const symbol of targetSymbols) {
+      if (!normalizedSymbols.includes(symbol)) continue;
+      if (!trailingLevelsBySymbol.has(symbol)) {
+        trailingLevelsBySymbol.set(symbol, levels);
+      }
+    }
+  };
+
+  for (const link of groupLinks) {
+    const assignedSymbols = normalizeSymbols(link.botMarketGroup.symbolGroup.symbols ?? []);
+    const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : normalizedSymbols;
+    assignLevelsToSymbols(targetSymbols, link.strategy.config);
+  }
+
+  for (const link of legacyLinks) {
+    const assignedSymbols = normalizeSymbols(link.symbolGroup?.symbols ?? []);
+    const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : normalizedSymbols;
+    assignLevelsToSymbols(targetSymbols, link.strategy.config);
+  }
+
+  return trailingLevelsBySymbol;
 };
 
 const toFiniteNumber = (value: unknown): number | null => {
@@ -2855,7 +3002,10 @@ export const listBotRuntimeSessionPositions = async (
 
   const positionIds = positions.map((position) => position.id);
   const symbols = [...new Set(positions.map((position) => position.symbol))];
-  const dcaPlanBySymbol = await resolveBotDcaPlanBySymbol(userId, botId, symbols);
+  const [dcaPlanBySymbol, trailingStopLevelsBySymbol] = await Promise.all([
+    resolveBotDcaPlanBySymbol(userId, botId, symbols),
+    resolveBotTrailingStopLevelsBySymbol(userId, botId, symbols),
+  ]);
 
   const [trades, lastSymbolPrices, openOrders] = await Promise.all([
     prisma.trade.findMany({
@@ -2963,10 +3113,29 @@ export const listBotRuntimeSessionPositions = async (
 
     const marketPrice = lastPriceBySymbol.get(position.symbol);
     const runtimeState = runtimePositionAutomationService.getPositionStateSnapshot(position.id);
+    const effectiveLeverage =
+      Number.isFinite(position.leverage) && position.leverage > 0 ? position.leverage : 1;
     const stateEntryPrice =
       runtimeState && Number.isFinite(runtimeState.averageEntryPrice) && runtimeState.averageEntryPrice > 0
         ? runtimeState.averageEntryPrice
         : position.entryPrice;
+    const trailingAnchorPrice = runtimeState?.trailingAnchorPrice;
+    const stateAnchorPrice =
+      typeof trailingAnchorPrice === 'number' &&
+      Number.isFinite(trailingAnchorPrice) &&
+      trailingAnchorPrice > 0
+        ? trailingAnchorPrice
+        : null;
+    const favorableMovePercent =
+      typeof marketPrice === 'number' && Number.isFinite(marketPrice)
+        ? position.side === 'LONG'
+          ? ((marketPrice - stateEntryPrice) / Math.max(stateEntryPrice, 1e-8)) * effectiveLeverage
+          : ((stateEntryPrice - marketPrice) / Math.max(stateEntryPrice, 1e-8)) * effectiveLeverage
+        : null;
+    const activeTrailingStopLevel = selectActiveTrailingStopDisplayLevel(
+      favorableMovePercent,
+      trailingStopLevelsBySymbol.get(position.symbol) ?? []
+    );
     const ttpTriggerPercent =
       runtimeState &&
       Number.isFinite(runtimeState.trailingTakeProfitHighPercent) &&
@@ -2987,15 +3156,25 @@ export const listBotRuntimeSessionPositions = async (
             position.leverage
           )
         : null;
+    const dynamicTslStopLossFromAnchor =
+      activeTrailingStopLevel && stateAnchorPrice != null
+        ? computeTrailingStopPriceFromAnchor(
+            position.side,
+            stateAnchorPrice,
+            activeTrailingStopLevel.trailPercent,
+            effectiveLeverage
+          )
+        : null;
     const dynamicTslStopLoss =
-      tslTriggerPercent != null
+      dynamicTslStopLossFromAnchor ??
+      (tslTriggerPercent != null
         ? computePriceFromLeveragedMovePercent(
             position.side,
             stateEntryPrice,
             tslTriggerPercent,
-            position.leverage
+            effectiveLeverage
           )
-        : null;
+        : null);
     const liveUnrealizedPnl =
       typeof marketPrice === 'number' && Number.isFinite(marketPrice)
         ? (marketPrice - position.entryPrice) * position.quantity * (position.side === 'LONG' ? 1 : -1)
