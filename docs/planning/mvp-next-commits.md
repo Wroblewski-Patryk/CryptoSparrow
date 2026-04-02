@@ -7,15 +7,15 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `LFIN-10 feat(web-utils): add shared number parser/normalizer and form-level validation contract`
+- [ ] `LFIN-11 refactor(web-strategies): replace direct Number(...) parsing in strategy form sections with parser-driven handling + precision guards`
 
 ## NEXT
-- [ ] `LFIN-11 refactor(web-strategies): replace direct Number(...) parsing in strategy form sections with parser-driven handling + precision guards`
 - [ ] `LFIN-12 test(api+web): add reconciliation, i18n, and numeric-input regression suites for new contracts`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `LFIN-10 feat(web-utils): add shared number parser/normalizer and form-level validation contract`
 - [x] `LFIN-08 refactor(web-nav-i18n): remove inline locale dictionaries from header and use canonical i18n keys only`
 - [x] `BMOD-42 test(runtime): add regression coverage for resilient stream handling and runtime auto-restart after handler failure`
 - [x] `LFIN-07B refactor(web-i18n-bots): migrate bots management/runtime strings to translation keys with EN/PL parity`
