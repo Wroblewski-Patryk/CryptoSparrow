@@ -388,7 +388,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `LFIN-04 feat(runtime): add live fill reconciliation flow and persist exchange-true fee totals in order/trade`
 - [x] `LFIN-05 feat(api+web): expose and render feeSource/feePending/feeCurrency in dashboard+bots history views`
 - [x] `LFIN-06 audit(i18n): inventory hardcoded copy in dashboard-home, bots module, and dashboard header menu`
-- [ ] `LFIN-07 refactor(web-i18n): migrate dashboard-home and bots strings to translation keys with EN/PL parity`
+- [x] `LFIN-07A refactor(web-i18n-dashboard-home): migrate dashboard home/control-center strings to translation keys with EN/PL parity`
+- [ ] `LFIN-07B refactor(web-i18n-bots): migrate bots management/runtime strings to translation keys with EN/PL parity`
 - [ ] `LFIN-08 refactor(web-nav-i18n): remove inline locale dictionaries from header and use canonical i18n keys only`
 - [x] `LFIN-09 docs(contract): lock locale-safe numeric input policy (comma/dot, precision matrix, integer vs decimal fields)`
 - [ ] `LFIN-10 feat(web-utils): add shared number parser/normalizer and form-level validation contract`
@@ -843,3 +844,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-04-02: Completed `LFIN-03` by extending CCXT connector contract with normalized fill/trade retrieval methods (`fetchOrderWithFills`, `fetchTradesForOrder`), adding inline create-order fill normalization, and covering fallback/support scenarios in connector unit tests.
 - 2026-04-02: Completed `LFIN-04` runtime reconciliation flow: added live fee reconciler (`inline -> fetchOrder -> fetchMyTrades` fallback), persisted exchange-derived order fee metadata + fill rows, propagated fee-source/pending/currency/rate into runtime trades (open/close/DCA), and validated with targeted exchange/orders/engine suites + API typecheck.
 - 2026-04-02: Completed `LFIN-05` API+web exposure/render for fee metadata: runtime trades endpoint now returns `feeSource/feePending/feeCurrency`; dashboard-home and bots runtime history render fee amount with source/pending/currency label (`EXCHANGE`, `EST.`, `PENDING`), with API e2e + web component regressions + root typecheck passing.
+- 2026-04-02: Completed LFIN-07A by migrating dashboard home/control-center copy (/dashboard page + HomeLiveWidgets) to canonical i18n keys (dashboard.home.*, dashboard.home.runtime.*) with EN/PL parity, plus component-test and web typecheck pass.

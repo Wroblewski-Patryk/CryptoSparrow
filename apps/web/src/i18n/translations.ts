@@ -140,6 +140,82 @@ type TranslationSchema = {
       quantity: string;
       leverage: string;
       unrealizedPnl: string;
+      pageTitle: string;
+      pageBreadcrumb: string;
+      runtime: {
+        loadingTitle: string;
+        errorTitle: string;
+        errorRetry: string;
+        noBotsTitle: string;
+        noBotsDescription: string;
+        addBot: string;
+        goToStrategies: string;
+        noActiveBotsTitle: string;
+        noActiveBotsDescription: string;
+        goToBots: string;
+        openPositionsTitle: string;
+        timeOpened: string;
+        symbol: string;
+        side: string;
+        margin: string;
+        pnl: string;
+        pnlPercent: string;
+        dca: string;
+        slTtp: string;
+        slTsl: string;
+        noOpenPositions: string;
+        tradesHistoryTitlePaper: string;
+        tradesHistoryTitleLive: string;
+        filterSymbol: string;
+        filterSide: string;
+        filterAction: string;
+        filterFrom: string;
+        filterTo: string;
+        apply: string;
+        reset: string;
+        all: string;
+        actionOpen: string;
+        actionDca: string;
+        actionClose: string;
+        time: string;
+        qty: string;
+        price: string;
+        fee: string;
+        realizedPnl: string;
+        origin: string;
+        noTradeHistory: string;
+        recordsBadge: string;
+        pageBadge: string;
+        rows: string;
+        previous: string;
+        next: string;
+        liveChecksTitle: string;
+        pairsCount: string;
+        noSignalConditions: string;
+        noSignalData: string;
+        long: string;
+        short: string;
+        runtimeRiskTitle: string;
+        selectedBot: string;
+        status: string;
+        mode: string;
+        heartbeat: string;
+        openPositions: string;
+        signalsDca: string;
+        netPnl: string;
+        noSession: string;
+        noActiveSessionWarning: string;
+        capitalRiskTitle: string;
+        portfolio: string;
+        deltaFromStart: string;
+        freeFunds: string;
+        fundsInPositions: string;
+        exposure: string;
+        realizedOpen: string;
+        winRate: string;
+        maxDrawdown: string;
+        updatedAt: string;
+      };
     };
   };
 };
@@ -285,6 +361,83 @@ export const translations: Record<Locale, TranslationSchema> = {
         quantity: "Qty",
         leverage: "Leverage",
         unrealizedPnl: "Unrealized PnL",
+        pageTitle: "Control Center",
+        pageBreadcrumb: "Control Center",
+        runtime: {
+          loadingTitle: "Loading operational dashboard",
+          errorTitle: "Could not load operational dashboard",
+          errorRetry: "Try again",
+          noBotsTitle: "No bots available for dashboard summary",
+          noBotsDescription: "Add your first bot to start the operations center.",
+          addBot: "Add bot",
+          goToStrategies: "Go to strategies",
+          noActiveBotsTitle: "No active bots on dashboard",
+          noActiveBotsDescription: "Activate at least one bot to see live runtime.",
+          goToBots: "Go to bots",
+          openPositionsTitle: "Open positions",
+          timeOpened: "Time opened",
+          symbol: "Symbol",
+          side: "Side",
+          margin: "Margin",
+          pnl: "PnL",
+          pnlPercent: "PnL %",
+          dca: "DCA",
+          slTtp: "SL (TTP)",
+          slTsl: "SL (TSL)",
+          noOpenPositions: "No open positions.",
+          tradesHistoryTitlePaper: "Trade history",
+          tradesHistoryTitleLive: "Orders and trade history",
+          filterSymbol: "Symbol",
+          filterSide: "Side",
+          filterAction: "Action",
+          filterFrom: "From",
+          filterTo: "To",
+          apply: "Apply",
+          reset: "Reset",
+          all: "All",
+          actionOpen: "Open",
+          actionDca: "DCA",
+          actionClose: "Close",
+          time: "Time",
+          qty: "Qty",
+          price: "Price",
+          fee: "Fee",
+          realizedPnl: "Realized PnL",
+          origin: "Origin",
+          noTradeHistory: "No trade history.",
+          recordsBadge: "Records: {total}",
+          pageBadge: "Page {page}/{totalPages}",
+          rows: "Rows",
+          previous: "Previous",
+          next: "Next",
+          liveChecksTitle: "Live checks",
+          pairsCount: "{count} pairs",
+          noSignalConditions: "No signal, conditions not met.",
+          noSignalData: "No signal data.",
+          long: "LONG",
+          short: "SHORT",
+          runtimeRiskTitle: "Bot runtime and risk",
+          selectedBot: "Selected bot",
+          status: "Status",
+          mode: "Mode",
+          heartbeat: "Heartbeat",
+          openPositions: "Open positions",
+          signalsDca: "Signals / DCA",
+          netPnl: "Net PnL",
+          noSession: "NO_SESSION",
+          noActiveSessionWarning:
+            "No active runtime session. Check if execution and market-stream workers are running.",
+          capitalRiskTitle: "Capital and risk",
+          portfolio: "Portfolio",
+          deltaFromStart: "Delta from start",
+          freeFunds: "Free funds",
+          fundsInPositions: "Funds in positions",
+          exposure: "Exposure",
+          realizedOpen: "Realized / Open",
+          winRate: "Win rate",
+          maxDrawdown: "Max drawdown",
+          updatedAt: "Updated at: {value}",
+        },
       },
     },
   },
@@ -429,6 +582,82 @@ export const translations: Record<Locale, TranslationSchema> = {
         quantity: "Ilosc",
         leverage: "Dzwignia",
         unrealizedPnl: "Niezrealizowany PnL",
+        pageTitle: "Centrum sterowania",
+        pageBreadcrumb: "Centrum sterowania",
+        runtime: {
+          loadingTitle: "Ladowanie dashboardu operacyjnego",
+          errorTitle: "Nie udalo sie zaladowac dashboardu operacyjnego",
+          errorRetry: "Sprobuj ponownie",
+          noBotsTitle: "Brak botow do podsumowania dashboardu",
+          noBotsDescription: "Dodaj pierwszego bota, aby uruchomic centrum operacyjne.",
+          addBot: "Dodaj bota",
+          goToStrategies: "Przejdz do strategii",
+          noActiveBotsTitle: "Brak aktywnych botow na dashboardzie",
+          noActiveBotsDescription: "Aktywuj co najmniej jednego bota, aby zobaczyc live runtime.",
+          goToBots: "Przejdz do botow",
+          openPositionsTitle: "Otwarte pozycje",
+          timeOpened: "Czas otwarcia",
+          symbol: "Symbol",
+          side: "Side",
+          margin: "Margin",
+          pnl: "PnL",
+          pnlPercent: "PnL %",
+          dca: "DCA",
+          slTtp: "SL (TTP)",
+          slTsl: "SL (TSL)",
+          noOpenPositions: "Brak otwartych pozycji.",
+          tradesHistoryTitlePaper: "Historia transakcji",
+          tradesHistoryTitleLive: "Zlecenia i historia transakcji",
+          filterSymbol: "Symbol",
+          filterSide: "Side",
+          filterAction: "Action",
+          filterFrom: "Od",
+          filterTo: "Do",
+          apply: "Zastosuj",
+          reset: "Reset",
+          all: "Wszystkie",
+          actionOpen: "Otwarcie",
+          actionDca: "DCA",
+          actionClose: "Zamkniecie",
+          time: "Czas",
+          qty: "Qty",
+          price: "Price",
+          fee: "Fee",
+          realizedPnl: "Realized PnL",
+          origin: "Origin",
+          noTradeHistory: "Brak historii transakcji.",
+          recordsBadge: "Rekordy: {total}",
+          pageBadge: "Strona {page}/{totalPages}",
+          rows: "Wierszy",
+          previous: "Poprzednia",
+          next: "Nastepna",
+          liveChecksTitle: "Live checks",
+          pairsCount: "{count} par",
+          noSignalConditions: "Brak sygnalu, warunki niespelnione.",
+          noSignalData: "Brak danych sygnalowych.",
+          long: "LONG",
+          short: "SHORT",
+          runtimeRiskTitle: "Bot runtime i ryzyko",
+          selectedBot: "Wybrany bot",
+          status: "Status",
+          mode: "Tryb",
+          heartbeat: "Heartbeat",
+          openPositions: "Pozycje otwarte",
+          signalsDca: "Sygnaly / DCA",
+          netPnl: "Net PnL",
+          noSession: "NO_SESSION",
+          noActiveSessionWarning: "Brak aktywnej sesji runtime. Sprawdz, czy dzialaja workery execution oraz market-stream.",
+          capitalRiskTitle: "Kapital i ryzyko",
+          portfolio: "Portfel",
+          deltaFromStart: "Zmiana od startu",
+          freeFunds: "Wolne srodki",
+          fundsInPositions: "Srodki w pozycjach",
+          exposure: "Ekspozycja",
+          realizedOpen: "Realized / Open",
+          winRate: "Win rate",
+          maxDrawdown: "Max drawdown",
+          updatedAt: "Aktualizacja: {value}",
+        },
       },
     },
   },

@@ -24,12 +24,14 @@ describe("HomeLiveWidgets", () => {
     vi.clearAllMocks();
   });
 
-  const renderSubject = () =>
-    render(
+  const renderSubject = () => {
+    window.localStorage.setItem("cryptosparrow-locale", "pl");
+    return render(
       <I18nProvider>
         <HomeLiveWidgets />
       </I18nProvider>
     );
+  };
 
   it("renders empty state when there are no bots", async () => {
     listBotsMock.mockResolvedValue([]);

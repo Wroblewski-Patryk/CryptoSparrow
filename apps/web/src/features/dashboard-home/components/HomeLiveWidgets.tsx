@@ -5,6 +5,7 @@ import axios from "axios";
 import Link from "next/link";
 
 import { EmptyState, ErrorState, LoadingState } from "../../../ui/components/ViewState";
+import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { createMarketStreamEventSource } from "../../../lib/marketStream";
 import {
@@ -98,6 +99,9 @@ const toTs = (v?: string | null) => {
   const ts = new Date(v).getTime();
   return Number.isNaN(ts) ? 0 : ts;
 };
+
+const interpolateTemplate = (template: string, values: Record<string, string | number>) =>
+  template.replace(/\{(\w+)\}/g, (_, token) => String(values[token] ?? ""));
 
 const pickPrimarySession = (sessions: BotRuntimeSessionListItem[]) => {
   if (sessions.length === 0) return null;
@@ -328,6 +332,7 @@ const maxDrawdown = (trades: BotRuntimeTrade[]) => {
 };
 
 export default function HomeLiveWidgets() {
+  const { t } = useI18n();
   const { formatCurrency, formatDateTime, formatNumber, formatPercent, formatTime } = useLocaleFormatting();
   const [bots, setBots] = useState<Bot[]>([]);
   const [snapshots, setSnapshots] = useState<RuntimeSnapshot[]>([]);
@@ -403,7 +408,7 @@ export default function HomeLiveWidgets() {
               session: null,
               symbolStats: null,
               positions: null,
-              loadError: getAxiosMessage(err) ?? "Brak danych runtime",
+              loadError: getAxiosMessage(err) ?? t("dashboard.home.runtime.noSignalData"),
             };
           }
         })
@@ -415,14 +420,14 @@ export default function HomeLiveWidgets() {
       setRefreshToken((x) => x + 1);
     } catch (err) {
       if (!silent) {
-        setError(getAxiosMessage(err) ?? "Nie udalo sie pobrac podsumowania dashboardu.");
+        setError(getAxiosMessage(err) ?? t("dashboard.home.loadWidgetsErrorDescription"));
       }
     } finally {
       loadInFlightRef.current = false;
       loadStartedAtRef.current = null;
       if (!silent) setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -682,15 +687,27 @@ export default function HomeLiveWidgets() {
     setTradeSortDir("asc");
   };
 
-  if (loading) return <LoadingState title="Ladowanie dashboardu operacyjnego" />;
-  if (error) return <ErrorState title="Nie udalo sie zaladowac dashboardu operacyjnego" description={error} retryLabel="Sprobuj ponownie" onRetry={() => void load()} />;
+  if (loading) return <LoadingState title={t("dashboard.home.runtime.loadingTitle")} />;
+  if (error) {
+    return (
+      <ErrorState
+        title={t("dashboard.home.runtime.errorTitle")}
+        description={error}
+        retryLabel={t("dashboard.home.runtime.errorRetry")}
+        onRetry={() => void load()}
+      />
+    );
+  }
   if (bots.length === 0) {
     return (
       <div className="space-y-4">
-        <EmptyState title="Brak botow do podsumowania dashboardu" description="Dodaj pierwszego bota, aby uruchomic centrum operacyjne." />
+        <EmptyState
+          title={t("dashboard.home.runtime.noBotsTitle")}
+          description={t("dashboard.home.runtime.noBotsDescription")}
+        />
         <div className="flex gap-2">
-          <Link href="/dashboard/bots" className={BTN_PRIMARY}>Dodaj bota</Link>
-          <Link href="/dashboard/strategies/list" className={BTN_SECONDARY}>Przejdz do strategii</Link>
+          <Link href="/dashboard/bots" className={BTN_PRIMARY}>{t("dashboard.home.runtime.addBot")}</Link>
+          <Link href="/dashboard/strategies/list" className={BTN_SECONDARY}>{t("dashboard.home.runtime.goToStrategies")}</Link>
         </div>
       </div>
     );
@@ -700,11 +717,11 @@ export default function HomeLiveWidgets() {
     return (
       <div className="space-y-4">
         <EmptyState
-          title="Brak aktywnych botow na dashboardzie"
-          description="Aktywuj co najmniej jednego bota, aby zobaczyc live runtime."
+          title={t("dashboard.home.runtime.noActiveBotsTitle")}
+          description={t("dashboard.home.runtime.noActiveBotsDescription")}
         />
         <div className="flex gap-2">
-          <Link href="/dashboard/bots" className={BTN_PRIMARY}>Przejdz do botow</Link>
+          <Link href="/dashboard/bots" className={BTN_PRIMARY}>{t("dashboard.home.runtime.goToBots")}</Link>
         </div>
       </div>
     );
@@ -715,20 +732,20 @@ export default function HomeLiveWidgets() {
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0 space-y-4">
           <section className={CARD}>
-            <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-semibold">Otwarte pozycje</h3><span className="text-xs opacity-60">{selectedData?.open.length ?? 0}</span></div>
+            <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-semibold">{t("dashboard.home.runtime.openPositionsTitle")}</h3><span className="text-xs opacity-60">{selectedData?.open.length ?? 0}</span></div>
             <div className="overflow-x-auto rounded-lg border border-base-300/70 bg-base-200/40">
               <table className="table table-sm">
                 <thead>
                   <tr>
-                    <th>Czas otwarcia</th>
-                    <th>Symbol</th>
-                    <th>Side</th>
-                    <th>Margin</th>
-                    <th>PnL</th>
-                    <th>PnL %</th>
-                    <th>DCA</th>
-                    {showDynamicStopColumns ? <th>SL (TTP)</th> : null}
-                    {showDynamicStopColumns ? <th>SL (TSL)</th> : null}
+                    <th>{t("dashboard.home.runtime.timeOpened")}</th>
+                    <th>{t("dashboard.home.runtime.symbol")}</th>
+                    <th>{t("dashboard.home.runtime.side")}</th>
+                    <th>{t("dashboard.home.runtime.margin")}</th>
+                    <th>{t("dashboard.home.runtime.pnl")}</th>
+                    <th>{t("dashboard.home.runtime.pnlPercent")}</th>
+                    <th>{t("dashboard.home.runtime.dca")}</th>
+                    {showDynamicStopColumns ? <th>{t("dashboard.home.runtime.slTtp")}</th> : null}
+                    {showDynamicStopColumns ? <th>{t("dashboard.home.runtime.slTsl")}</th> : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -763,7 +780,7 @@ export default function HomeLiveWidgets() {
                   {(selectedData?.open.length ?? 0) === 0 ? (
                     <tr>
                       <td colSpan={showDynamicStopColumns ? 9 : 7} className="text-center text-xs opacity-70">
-                        Brak otwartych pozycji.
+                        {t("dashboard.home.runtime.noOpenPositions")}
                       </td>
                     </tr>
                   ) : null}
@@ -775,13 +792,15 @@ export default function HomeLiveWidgets() {
           <section className={CARD}>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold">
-                {selected?.bot.mode === "LIVE" ? "Zlecenia i historia transakcji" : "Historia transakcji"}
+                {selected?.bot.mode === "LIVE"
+                  ? t("dashboard.home.runtime.tradesHistoryTitleLive")
+                  : t("dashboard.home.runtime.tradesHistoryTitlePaper")}
               </h3>
-              {selectedTradesLoading ? <span className="text-xs opacity-60">Ladowanie...</span> : null}
+              {selectedTradesLoading ? <span className="text-xs opacity-60">{t("dashboard.home.loadWidgets")}</span> : null}
             </div>
             <div className="mb-3 grid gap-2 rounded-lg border border-base-300/70 bg-base-200/30 p-2 md:grid-cols-2 xl:grid-cols-6">
               <label className="form-control gap-1">
-                <span className="text-[11px] uppercase tracking-wide opacity-60">Symbol</span>
+                <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterSymbol")}</span>
                 <input
                   className="input input-bordered input-xs"
                   placeholder="BTCUSDT"
@@ -792,7 +811,7 @@ export default function HomeLiveWidgets() {
                 />
               </label>
               <label className="form-control gap-1">
-                <span className="text-[11px] uppercase tracking-wide opacity-60">Side</span>
+                <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterSide")}</span>
                 <select
                   className="select select-bordered select-xs"
                   value={tradeDraftFilters.side}
@@ -800,13 +819,13 @@ export default function HomeLiveWidgets() {
                     patchTradeDraftFilters({ side: event.target.value as TradeSideFilter });
                   }}
                 >
-                  <option value="ALL">Wszystkie</option>
+                  <option value="ALL">{t("dashboard.home.runtime.all")}</option>
                   <option value="BUY">BUY</option>
                   <option value="SELL">SELL</option>
                 </select>
               </label>
               <label className="form-control gap-1">
-                <span className="text-[11px] uppercase tracking-wide opacity-60">Action</span>
+                <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterAction")}</span>
                 <select
                   className="select select-bordered select-xs"
                   value={tradeDraftFilters.action}
@@ -814,14 +833,14 @@ export default function HomeLiveWidgets() {
                     patchTradeDraftFilters({ action: event.target.value as TradeActionFilter });
                   }}
                 >
-                  <option value="ALL">Wszystkie</option>
-                  <option value="OPEN">Otwarcie</option>
+                  <option value="ALL">{t("dashboard.home.runtime.all")}</option>
+                  <option value="OPEN">{t("dashboard.home.runtime.actionOpen")}</option>
                   <option value="DCA">DCA</option>
-                  <option value="CLOSE">Zamkniecie</option>
+                  <option value="CLOSE">{t("dashboard.home.runtime.actionClose")}</option>
                 </select>
               </label>
               <label className="form-control gap-1">
-                <span className="text-[11px] uppercase tracking-wide opacity-60">Od</span>
+                <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterFrom")}</span>
                 <input
                   type="datetime-local"
                   className="input input-bordered input-xs"
@@ -832,7 +851,7 @@ export default function HomeLiveWidgets() {
                 />
               </label>
               <label className="form-control gap-1">
-                <span className="text-[11px] uppercase tracking-wide opacity-60">Do</span>
+                <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterTo")}</span>
                 <input
                   type="datetime-local"
                   className="input input-bordered input-xs"
@@ -844,10 +863,10 @@ export default function HomeLiveWidgets() {
               </label>
               <div className="flex items-end justify-end gap-2">
                 <button type="button" className="btn btn-primary btn-xs" onClick={applyTradeFilters}>
-                  Zastosuj
+                  {t("dashboard.home.runtime.apply")}
                 </button>
                 <button type="button" className="btn btn-ghost btn-xs" onClick={resetTradeFilters}>
-                  Reset
+                  {t("dashboard.home.runtime.reset")}
                 </button>
               </div>
             </div>
@@ -857,42 +876,42 @@ export default function HomeLiveWidgets() {
                   <tr>
                     <th>
                       <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("executedAt")}>
-                        Czas {tradeSortIndicator("executedAt")}
+                        {t("dashboard.home.runtime.time")} {tradeSortIndicator("executedAt")}
                       </button>
                     </th>
                     <th>
                       <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("symbol")}>
-                        Symbol {tradeSortIndicator("symbol")}
+                        {t("dashboard.home.runtime.symbol")} {tradeSortIndicator("symbol")}
                       </button>
                     </th>
                     <th>
                       <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("side")}>
-                        Side {tradeSortIndicator("side")}
+                        {t("dashboard.home.runtime.side")} {tradeSortIndicator("side")}
                       </button>
                     </th>
                     <th>
                       <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("lifecycleAction")}>
-                        Action {tradeSortIndicator("lifecycleAction")}
+                        {t("dashboard.home.runtime.filterAction")} {tradeSortIndicator("lifecycleAction")}
                       </button>
                     </th>
-                    <th>Qty</th>
-                    <th>Price</th>
+                    <th>{t("dashboard.home.runtime.qty")}</th>
+                    <th>{t("dashboard.home.runtime.price")}</th>
                     <th>
                       <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("margin")}>
-                        Margin {tradeSortIndicator("margin")}
+                        {t("dashboard.home.runtime.margin")} {tradeSortIndicator("margin")}
                       </button>
                     </th>
                     <th>
                       <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("fee")}>
-                        Fee {tradeSortIndicator("fee")}
+                        {t("dashboard.home.runtime.fee")} {tradeSortIndicator("fee")}
                       </button>
                     </th>
                     <th>
                       <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("realizedPnl")}>
-                        Realized PnL {tradeSortIndicator("realizedPnl")}
+                        {t("dashboard.home.runtime.realizedPnl")} {tradeSortIndicator("realizedPnl")}
                       </button>
                     </th>
-                    <th>Origin</th>
+                    <th>{t("dashboard.home.runtime.origin")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -915,20 +934,25 @@ export default function HomeLiveWidgets() {
                       <td>{t.origin}</td>
                     </tr>
                   ))}
-                  {(selectedData?.trades.length ?? 0) === 0 ? <tr><td colSpan={10} className="text-center text-xs opacity-70">Brak historii transakcji.</td></tr> : null}
+                  {(selectedData?.trades.length ?? 0) === 0 ? <tr><td colSpan={10} className="text-center text-xs opacity-70">{t("dashboard.home.runtime.noTradeHistory")}</td></tr> : null}
                 </tbody>
               </table>
             </div>
             <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-xs">
-                <span className="badge badge-outline badge-sm">Rekordy: {tradeMeta.total}</span>
                 <span className="badge badge-outline badge-sm">
-                  Strona {tradeMeta.page}/{Math.max(1, tradeMeta.totalPages)}
+                  {interpolateTemplate(t("dashboard.home.runtime.recordsBadge"), { total: tradeMeta.total })}
+                </span>
+                <span className="badge badge-outline badge-sm">
+                  {interpolateTemplate(t("dashboard.home.runtime.pageBadge"), {
+                    page: tradeMeta.page,
+                    totalPages: Math.max(1, tradeMeta.totalPages),
+                  })}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <label className="flex items-center gap-1 text-xs opacity-70">
-                  <span>Wierszy</span>
+                  <span>{t("dashboard.home.runtime.rows")}</span>
                   <select
                     className="select select-bordered select-xs"
                     value={tradePageSize}
@@ -950,7 +974,7 @@ export default function HomeLiveWidgets() {
                   disabled={!tradeMeta.hasPrev}
                   onClick={() => setTradePage((prev) => Math.max(1, prev - 1))}
                 >
-                  Poprzednia
+                  {t("dashboard.home.runtime.previous")}
                 </button>
                 <button
                   type="button"
@@ -958,7 +982,7 @@ export default function HomeLiveWidgets() {
                   disabled={!tradeMeta.hasNext}
                   onClick={() => setTradePage((prev) => prev + 1)}
                 >
-                  Nastepna
+                  {t("dashboard.home.runtime.next")}
                 </button>
               </div>
             </div>
@@ -966,8 +990,10 @@ export default function HomeLiveWidgets() {
 
           <section className={CARD}>
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Live checks</h3>
-              <span className="text-xs opacity-60">{selectedData?.symbols.length ?? 0} par</span>
+              <h3 className="text-sm font-semibold">{t("dashboard.home.runtime.liveChecksTitle")}</h3>
+              <span className="text-xs opacity-60">
+                {interpolateTemplate(t("dashboard.home.runtime.pairsCount"), { count: selectedData?.symbols.length ?? 0 })}
+              </span>
             </div>
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {(selectedData?.symbols ?? []).map((s) => {
@@ -984,12 +1010,12 @@ export default function HomeLiveWidgets() {
                     </div>
                     <div className="mt-2 space-y-2 text-[11px] leading-4">
                       {signal === "NEUTRAL" ? (
-                        <p className="text-[10px] opacity-55">Brak sygnalu, warunki niespelnione.</p>
+                        <p className="text-[10px] opacity-55">{t("dashboard.home.runtime.noSignalConditions")}</p>
                       ) : null}
                       <div className="space-y-1 rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
                         <div className="mb-0.5 flex items-center gap-1">
                           <span className="inline-flex rounded border border-success/40 bg-success/10 px-1 py-[1px] text-[10px] font-semibold text-success">
-                            LONG
+                            {t("dashboard.home.runtime.long")}
                           </span>
                         </div>
                         {longLines.length === 0 ? (
@@ -1009,7 +1035,7 @@ export default function HomeLiveWidgets() {
                       <div className="space-y-1 rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
                         <div className="mb-0.5 flex items-center gap-1">
                           <span className="inline-flex rounded border border-error/40 bg-error/10 px-1 py-[1px] text-[10px] font-semibold text-error">
-                            SHORT
+                            {t("dashboard.home.runtime.short")}
                           </span>
                         </div>
                         {shortLines.length === 0 ? (
@@ -1032,7 +1058,7 @@ export default function HomeLiveWidgets() {
               })}
               {(selectedData?.symbols.length ?? 0) === 0 ? (
                 <div className="rounded-lg border border-base-300/70 bg-base-200/40 p-4 text-center text-xs opacity-70">
-                  Brak danych sygnalowych.
+                  {t("dashboard.home.runtime.noSignalData")}
                 </div>
               ) : null}
             </div>
@@ -1041,11 +1067,11 @@ export default function HomeLiveWidgets() {
 
         <aside className={`${CARD} h-fit`}>
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold uppercase tracking-wide opacity-75">Bot runtime i ryzyko</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wide opacity-75">{t("dashboard.home.runtime.runtimeRiskTitle")}</h3>
 
             <div className="rounded-lg border border-base-300/70 bg-base-200/40 p-3">
               <label className="form-control gap-1">
-                <span className="text-[11px] uppercase tracking-wide opacity-60">Wybrany bot</span>
+                <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.selectedBot")}</span>
                 <select
                   className="select select-sm select-bordered"
                   value={selected?.bot.id ?? ""}
@@ -1061,33 +1087,33 @@ export default function HomeLiveWidgets() {
 
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
-                  <p className="opacity-65">Status</p>
+                  <p className="opacity-65">{t("dashboard.home.runtime.status")}</p>
                   <p className="mt-1">
                     <span className={`badge badge-xs ${sessionBadge(selectedData?.session?.status)}`}>
-                      {selectedData?.session?.status ?? "NO_SESSION"}
+                      {selectedData?.session?.status ?? t("dashboard.home.runtime.noSession")}
                     </span>
                   </p>
                 </div>
                 <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
-                  <p className="opacity-65">Tryb</p>
+                  <p className="opacity-65">{t("dashboard.home.runtime.mode")}</p>
                   <p className="mt-1 font-semibold">{selected?.bot.mode ?? "-"}</p>
                 </div>
                 <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
-                  <p className="opacity-65">Heartbeat</p>
+                  <p className="opacity-65">{t("dashboard.home.runtime.heartbeat")}</p>
                   <p className="mt-1 font-semibold">{formatTime(selectedData?.session?.lastHeartbeatAt)}</p>
                 </div>
                 <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
-                  <p className="opacity-65">Pozycje otwarte</p>
+                  <p className="opacity-65">{t("dashboard.home.runtime.openPositions")}</p>
                   <p className="mt-1 font-semibold">{formatNumber(selectedData?.open.length ?? 0)}</p>
                 </div>
                 <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
-                  <p className="opacity-65">Sygnaly / DCA</p>
+                  <p className="opacity-65">{t("dashboard.home.runtime.signalsDca")}</p>
                   <p className="mt-1 font-semibold">
                     {formatNumber(selectedData?.session?.summary.totalSignals ?? 0)} / {formatNumber(selectedData?.session?.summary.dcaCount ?? 0)}
                   </p>
                 </div>
                 <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
-                  <p className="opacity-65">Net PnL</p>
+                  <p className="opacity-65">{t("dashboard.home.runtime.netPnl")}</p>
                   <p className={`mt-1 font-semibold ${(selectedData?.net ?? 0) >= 0 ? "text-success" : "text-error"}`}>
                     {formatCurrency(selectedData?.net ?? 0)}
                   </p>
@@ -1097,21 +1123,21 @@ export default function HomeLiveWidgets() {
 
             {selectedData?.session?.status !== "RUNNING" ? (
               <p className="text-[11px] rounded-md border border-warning/40 bg-warning/10 px-2 py-1 text-warning-content/80">
-                Brak aktywnej sesji runtime. Sprawdz, czy dzialaja workery execution oraz market-stream.
+                {t("dashboard.home.runtime.noActiveSessionWarning")}
               </p>
             ) : null}
 
             <div className="rounded-lg border border-base-300/70 bg-base-200/40 p-3 text-xs">
-              <h4 className="mb-2 text-[11px] uppercase tracking-wide opacity-60">Kapital i ryzyko</h4>
+              <h4 className="mb-2 text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.capitalRiskTitle")}</h4>
               <div className="space-y-1.5">
                 <p className="flex items-center justify-between gap-2">
-                  <span className="opacity-65">Portfel</span>
+                  <span className="opacity-65">{t("dashboard.home.runtime.portfolio")}</span>
                   <span className={`font-semibold ${summary.paperDelta >= 0 ? "text-success" : "text-error"}`}>
                     {summary.paperStart > 0 ? formatCurrency(summary.paperEquity) : "-"}
                   </span>
                 </p>
                 <p className="flex items-center justify-between gap-2">
-                  <span className="opacity-65">Zmiana od startu</span>
+                  <span className="opacity-65">{t("dashboard.home.runtime.deltaFromStart")}</span>
                   <span className={`font-semibold ${summary.paperDelta >= 0 ? "text-success" : "text-error"}`}>
                     {summary.paperStart > 0
                       ? `${formatCurrency(summary.paperDelta)} (${formatPercent((summary.paperDelta / summary.paperStart) * 100)})`
@@ -1119,35 +1145,39 @@ export default function HomeLiveWidgets() {
                   </span>
                 </p>
                 <p className="flex items-center justify-between gap-2">
-                  <span className="opacity-65">Wolne srodki</span>
+                  <span className="opacity-65">{t("dashboard.home.runtime.freeFunds")}</span>
                   <span className="font-semibold">{selectedData?.equity == null ? "-" : formatCurrency(selectedData.free)}</span>
                 </p>
                 <p className="flex items-center justify-between gap-2">
-                  <span className="opacity-65">Srodki w pozycjach</span>
+                  <span className="opacity-65">{t("dashboard.home.runtime.fundsInPositions")}</span>
                   <span className="font-semibold">{formatCurrency(summary.usedMargin)}</span>
                 </p>
                 <p className="flex items-center justify-between gap-2">
-                  <span className="opacity-65">Ekspozycja</span>
+                  <span className="opacity-65">{t("dashboard.home.runtime.exposure")}</span>
                   <span className="font-semibold">{selectedData?.exposurePct != null ? formatPercent(selectedData.exposurePct) : "-"}</span>
                 </p>
                 <p className="flex items-center justify-between gap-2">
-                  <span className="opacity-65">Realized / Open</span>
+                  <span className="opacity-65">{t("dashboard.home.runtime.realizedOpen")}</span>
                   <span className="font-semibold">
                     {formatCurrency(selectedData?.realized ?? 0)} / {formatCurrency(selectedData?.unrealized ?? 0)}
                   </span>
                 </p>
                 <p className="flex items-center justify-between gap-2">
-                  <span className="opacity-65">Win rate</span>
+                  <span className="opacity-65">{t("dashboard.home.runtime.winRate")}</span>
                   <span className="font-semibold">{selectedData?.winRate == null ? "-" : formatPercent(selectedData.winRate)}</span>
                 </p>
                 <p className="flex items-center justify-between gap-2">
-                  <span className="opacity-65">Max drawdown</span>
+                  <span className="opacity-65">{t("dashboard.home.runtime.maxDrawdown")}</span>
                   <span className="font-semibold text-error">{formatCurrency(-(selectedData?.drawdown.abs ?? 0))}</span>
                 </p>
               </div>
             </div>
 
-            <p className="text-[11px] opacity-60">Aktualizacja: {lastUpdatedAt ? formatDateTime(lastUpdatedAt) : "-"}</p>
+            <p className="text-[11px] opacity-60">
+              {interpolateTemplate(t("dashboard.home.runtime.updatedAt"), {
+                value: lastUpdatedAt ? formatDateTime(lastUpdatedAt) : "-",
+              })}
+            </p>
           </div>
         </aside>
       </section>
