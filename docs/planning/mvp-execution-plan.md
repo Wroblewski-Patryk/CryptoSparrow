@@ -423,7 +423,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DPL-04 chore(env): add non-secret `.env.example` templates for api/web with required keys and comments`
 - [x] `DPL-05 chore(scripts): add production-safe worker start script and explicit process ownership contract`
 - [x] `DPL-06 chore(scripts): add one-command local prod-like orchestration with preflight checks`
-- [ ] `DPL-07 ops(migrations): define migration strategy for deployment pipeline and operator ownership`
+- [x] `DPL-07 ops(migrations): define migration strategy for deployment pipeline and operator ownership`
 - [ ] `DPL-08 ops(health): standardize deployment readiness gates for web/api/workers`
 - [ ] `DPL-09 ops(smoke): add post-deploy smoke checklist for target domains`
 - [ ] `DPL-10 ops(rollback): define rollback playbook for app version/env rollback and worker incidents`
@@ -458,6 +458,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 
 ## Progress Log
+- 2026-04-03: Completed `DPL-07` by publishing `docs/operations/deployment-migration-strategy.md` with explicit ownership (developer/CI/release-owner), immutable-SHA migration gate policy, STAGE->PROD migration sequence, backward-compatible expand/switch/contract pattern, and incident/evidence contract; linked in deployment planning outputs.
 - 2026-04-03: Completed `DPL-06` by adding `scripts/start-local-prod-like.mjs` and root script `pnpm run prod-like/start`, including preflight checks for required env files, build gate for `api` + `web`, and fail-fast orchestration for `api`, `web`, and `workers` in one command; updated local runbook with fast-path usage.
 - 2026-04-03: Completed `DPL-13` by publishing immutable promotion contract `DEV -> STAGE -> PROD` in `docs/operations/dev-stage-prod-promotion-contract.md` (same-SHA invariants, required stage gate pack, promotion eligibility rules, fail-closed policy, rollback contract, and evidence/audit requirements) and linking it in deployment planning outputs.
 - 2026-04-03: Completed `DPL-05` by adding `scripts/start-workers-prod.mjs` (fail-fast worker launcher with prefixed logs and graceful shutdown), wiring root scripts `workers/prod` + `workers:prod`, and documenting explicit process ownership contract in `docs/operations/v1-ops-runbook.md`, `docs/operations/coolify-linux-vps-setup-guide.md`, and `docs/engineering/local-development.md`.
