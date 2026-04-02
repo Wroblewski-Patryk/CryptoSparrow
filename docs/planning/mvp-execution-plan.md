@@ -436,7 +436,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DPL-17 ci(prod-rollback): implement automatic rollback to previous stable release on failed post-deploy prod health`
 - [x] `DPL-18 ops(coolify): wire Coolify deployment triggers for stage and prod services`
 - [x] `DPL-19 security(ci): apply branch protection + secret hardening for safe auto-promotion`
-- [ ] `DPL-20 docs(runbook): publish incident playbook for blocked promotion and failed stage/prod rollout`
+- [x] `DPL-20 docs(runbook): publish incident playbook for blocked promotion and failed stage/prod rollout`
 
 ## Phase 26 - Runtime Operability Polish (DCA Ladder + Dynamic TTP/TSL)
 - [ ] `BOPS-43 docs(contract): lock DCA ladder display contract in Dashboard/Bots (count + executed levels mapping for basic/advanced strategy modes)`
@@ -458,6 +458,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 
 ## Progress Log
+- 2026-04-03: Completed `DPL-20` by publishing `docs/operations/deployment-incident-playbook.md` covering blocked-promotion, failed-stage, and failed-prod response flows with role ownership, triage checklists, communication contract, and incident close criteria; linked in deployment planning outputs.
 - 2026-04-03: Completed `DPL-19` by adding `.github/CODEOWNERS`, reducing default CI workflow permissions to `contents: read`, and publishing `docs/security/ci-auto-promotion-hardening.md` with required branch protections, environment protections, and secret-hardening controls for stage/prod auto-promotion chain.
 - 2026-04-03: Completed `DPL-18` by publishing `docs/operations/coolify-trigger-wiring.md` with exact GitHub secret contract and webhook wiring steps for stage deploy/prod promote/prod rollback flows, and linking it in deployment setup references.
 - 2026-04-03: Completed `DPL-17` by adding `.github/workflows/prod-rollback.yml` to auto-trigger production rollback when `Promote PROD` fails (with manual fallback), forwarding failure metadata to rollback webhook (`COOLIFY_PROD_ROLLBACK_HOOK_URL`) and documenting automation entry in rollback playbook.

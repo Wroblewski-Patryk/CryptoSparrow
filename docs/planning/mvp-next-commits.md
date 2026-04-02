@@ -7,9 +7,8 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `DPL-20 docs(runbook): publish incident playbook for blocked promotion and failed stage/prod rollout`
-## NEXT
 - [ ] `BOPS-43 docs(contract): lock DCA ladder display contract in Dashboard/Bots (count + executed levels mapping for basic/advanced strategy modes)`
+## NEXT
 - [ ] `BOPS-44 feat(api-runtime): extend runtime positions payload with DCA planned/executed levels derived from strategy additional.dcaLevels/dcaTimes`
 - [ ] `BOPS-45 feat(web-dashboard+bots): replace plain DCA count cell with compact executed ladder view (e.g. 1: -15%, 2: -30%) while preserving count`
 - [ ] `BOPS-46 test(api+web): add regression coverage for DCA ladder mapping/rendering (basic repeated levels, advanced ladder, legacy fallback)`
@@ -26,6 +25,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `DPL-20 docs(runbook): publish incident playbook for blocked promotion and failed stage/prod rollout`
 - [x] `DPL-19 security(ci): apply branch protection + secret hardening for safe auto-promotion`
 - [x] `DPL-18 ops(coolify): wire Coolify deployment triggers for stage and prod services`
 - [x] `DPL-17 ci(prod-rollback): implement automatic rollback to previous stable release on failed post-deploy prod health`

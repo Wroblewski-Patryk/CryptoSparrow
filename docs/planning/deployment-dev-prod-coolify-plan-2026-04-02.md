@@ -19,6 +19,7 @@ Make startup and deployment predictable and low-friction in three modes:
 - `docs/operations/deployment-rollback-playbook.md` (rollback paths for app/env/workers with incident ownership contract)
 - `docs/operations/coolify-trigger-wiring.md` (GitHub Actions secrets/webhook wiring for stage deploy, prod promote, and prod rollback triggers)
 - `docs/security/ci-auto-promotion-hardening.md` (branch protection, CODEOWNERS, and secret hardening policy for auto-promotion chain)
+- `docs/operations/deployment-incident-playbook.md` (response playbook for blocked promotion and failed stage/prod rollout)
 - `docs/planning/cryptosparrow-soar-rename-audit-2026-04-03.md` (token inventory + rename wave classification)
 - `docs/planning/cryptosparrow-soar-rename-rollout-plan-2026-04-03.md` (controlled rename rollout with risk gates and rollback checkpoints)
 
