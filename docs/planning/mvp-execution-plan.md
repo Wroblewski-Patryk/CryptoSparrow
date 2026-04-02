@@ -394,7 +394,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `LFIN-09 docs(contract): lock locale-safe numeric input policy (comma/dot, precision matrix, integer vs decimal fields)`
 - [x] `LFIN-10 feat(web-utils): add shared number parser/normalizer and form-level validation contract`
 - [x] `LFIN-11 refactor(web-strategies): replace direct Number(...) parsing in strategy form sections with parser-driven handling + precision guards`
-- [ ] `LFIN-12 test(api+web): add reconciliation, i18n, and numeric-input regression suites for new contracts`
+- [x] `LFIN-12 test(api+web): add reconciliation, i18n, and numeric-input regression suites for new contracts`
 
 ## Phase 22 - Dashboard Runtime Trades Table (Server-Side Operability)
 - [x] `DBRT-01 docs(contract): lock Dashboard runtime trade-history table contract (server-side pagination, sort, filters, response meta)`
@@ -849,3 +849,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-04-02: Completed `LFIN-04` runtime reconciliation flow: added live fee reconciler (`inline -> fetchOrder -> fetchMyTrades` fallback), persisted exchange-derived order fee metadata + fill rows, propagated fee-source/pending/currency/rate into runtime trades (open/close/DCA), and validated with targeted exchange/orders/engine suites + API typecheck.
 - 2026-04-02: Completed `LFIN-05` API+web exposure/render for fee metadata: runtime trades endpoint now returns `feeSource/feePending/feeCurrency`; dashboard-home and bots runtime history render fee amount with source/pending/currency label (`EXCHANGE`, `EST.`, `PENDING`), with API e2e + web component regressions + root typecheck passing.
 - 2026-04-02: Completed LFIN-07A by migrating dashboard home/control-center copy (/dashboard page + HomeLiveWidgets) to canonical i18n keys (dashboard.home.*, dashboard.home.runtime.*) with EN/PL parity, plus component-test and web typecheck pass.
+- 2026-04-02: Completed `LFIN-12`: added API reconciliation regressions (fill dedupe, mixed-currency fee handling, no-order-id fetch guard), strengthened i18n regression coverage for critical nav/runtime keys in EN/PL, and added strategy numeric-input helper regressions with green targeted API/web test suites plus root typecheck.

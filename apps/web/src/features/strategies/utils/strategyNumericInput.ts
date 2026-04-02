@@ -2,7 +2,7 @@ import {
   NumericFieldContract,
   getNumericInputAttributes,
   parseNumericInput,
-} from "@/lib/numericInput";
+} from "../../../lib/numericInput";
 
 export const strategyNumericContracts = {
   integer: {

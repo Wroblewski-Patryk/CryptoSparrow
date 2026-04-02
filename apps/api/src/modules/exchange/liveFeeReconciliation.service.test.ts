@@ -122,4 +122,94 @@ describe('reconcileLiveOrderFee', () => {
     expect(result.fee).toBeNull();
     expect(result.fills).toEqual([]);
   });
+
+  it('deduplicates fills and computes aggregated fee rate from unique exchange fills', async () => {
+    const connector = createConnector();
+    const duplicated = baseFill({
+      exchangeTradeId: 'dup-1',
+      exchangeOrderId: 'o-5',
+      notional: 100,
+      feeCost: 0.02,
+      executedAt: new Date('2026-04-02T15:00:00.000Z'),
+    });
+
+    const result = await reconcileLiveOrderFee(connector, {
+      symbol: 'BTCUSDT',
+      exchangeOrderId: 'o-5',
+      inlineFills: [
+        duplicated,
+        { ...duplicated, source: 'fetchOrder' },
+        baseFill({
+          exchangeTradeId: 'uniq-2',
+          exchangeOrderId: 'o-5',
+          notional: 200,
+          feeCost: 0.06,
+          executedAt: new Date('2026-04-02T15:01:00.000Z'),
+        }),
+      ],
+      nowMs: Date.parse('2026-04-02T15:10:00.000Z'),
+    });
+
+    expect(result.feeSource).toBe('EXCHANGE_FILL');
+    expect(result.feePending).toBe(false);
+    expect(result.fee).toBe(0.08);
+    expect(result.fills).toHaveLength(2);
+    expect(result.effectiveFeeRate).toBeCloseTo(0.08 / 300, 12);
+    expect(connector.fetchOrderWithFills).not.toHaveBeenCalled();
+    expect(connector.fetchTradesForOrder).not.toHaveBeenCalled();
+  });
+
+  it('sets fee currency to null when fills report mixed fee currencies', async () => {
+    const connector = createConnector();
+    const result = await reconcileLiveOrderFee(connector, {
+      symbol: 'ETHUSDT',
+      exchangeOrderId: 'o-6',
+      inlineFills: [
+        baseFill({
+          exchangeTradeId: 'mix-1',
+          exchangeOrderId: 'o-6',
+          feeCurrency: 'USDT',
+          feeCost: 0.04,
+          notional: 100,
+        }),
+        baseFill({
+          exchangeTradeId: 'mix-2',
+          exchangeOrderId: 'o-6',
+          feeCurrency: 'BNB',
+          feeCost: 0.01,
+          notional: 100,
+        }),
+      ],
+      nowMs: Date.parse('2026-04-02T16:00:00.000Z'),
+    });
+
+    expect(result.feeSource).toBe('EXCHANGE_FILL');
+    expect(result.feePending).toBe(false);
+    expect(result.fee).toBe(0.05);
+    expect(result.feeCurrency).toBeNull();
+  });
+
+  it('does not call connector reconciliation fetches when exchangeOrderId is missing', async () => {
+    const connector = createConnector();
+    const result = await reconcileLiveOrderFee(connector, {
+      symbol: 'BNBUSDT',
+      exchangeOrderId: null,
+      inlineFills: [
+        baseFill({
+          exchangeTradeId: 'no-order-id',
+          exchangeOrderId: null,
+          feeCost: Number.NaN,
+          feeCurrency: null,
+        }),
+      ],
+      nowMs: Date.parse('2026-04-02T17:00:00.000Z'),
+    });
+
+    expect(result.feeSource).toBe('ESTIMATED');
+    expect(result.feePending).toBe(true);
+    expect(result.fee).toBeNull();
+    expect(result.fills).toHaveLength(1);
+    expect(connector.fetchOrderWithFills).not.toHaveBeenCalled();
+    expect(connector.fetchTradesForOrder).not.toHaveBeenCalled();
+  });
 });
