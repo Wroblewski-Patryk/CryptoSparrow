@@ -55,7 +55,9 @@ export const subscribeMarketStreamEvents = async (
   await subscriber.subscribe(marketStreamChannel, (payload) => {
     try {
       const parsed = JSON.parse(payload) as MarketStreamEvent;
-      onEvent(parsed);
+      void Promise.resolve(onEvent(parsed)).catch((error) => {
+        console.error('Market stream fanout handler error:', error);
+      });
     } catch {
       // ignore malformed payload
     }
@@ -69,4 +71,3 @@ export const subscribeMarketStreamEvents = async (
     }
   };
 };
-

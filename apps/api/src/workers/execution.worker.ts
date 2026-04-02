@@ -4,6 +4,11 @@ import { livePositionReconciliationLoop } from '../modules/positions/livePositio
 import { runtimeSignalLoop } from '../modules/engine/runtimeSignalLoop.service';
 import { runtimeScanLoop } from '../modules/engine/runtimeScanLoop.service';
 
+const runtimeSignalLoopBootstrapIntervalMs = Math.max(
+  5_000,
+  Number.parseInt(process.env.RUNTIME_SIGNAL_LOOP_BOOTSTRAP_INTERVAL_MS ?? '15000', 10)
+);
+
 bootstrapWorker({
   workerName: 'execution',
   queueName: process.env.WORKER_EXECUTION_QUEUE ?? 'execution',
@@ -11,5 +16,17 @@ bootstrapWorker({
 });
 
 livePositionReconciliationLoop.start();
-void runtimeSignalLoop.start();
+const ensureRuntimeSignalLoopStarted = async () => {
+  try {
+    await runtimeSignalLoop.start();
+  } catch (error) {
+    console.error('Execution worker failed to start runtimeSignalLoop:', error);
+  }
+};
+void ensureRuntimeSignalLoopStarted();
+const runtimeSignalLoopBootstrapTimer = setInterval(() => {
+  if (runtimeSignalLoop.isRunning()) return;
+  void ensureRuntimeSignalLoopStarted();
+}, runtimeSignalLoopBootstrapIntervalMs);
+runtimeSignalLoopBootstrapTimer.unref?.();
 runtimeScanLoop.start();

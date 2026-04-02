@@ -428,6 +428,28 @@ describe('RuntimeSignalLoop', () => {
     expect(deps.processPositionAutomation).not.toHaveBeenCalled();
   });
 
+  it('keeps runtime session watchdog active and re-ensures sessions periodically', async () => {
+    vi.useFakeTimers();
+    const { deps } = createDeps();
+    withStrategyBot(deps, { strategies: [] });
+    deps.ensureRuntimeSession = vi.fn(async () => 'session-1');
+    deps.closeInactiveRuntimeSessions = vi.fn(async () => undefined);
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    expect(deps.ensureRuntimeSession).toHaveBeenCalledTimes(1);
+    expect(deps.closeInactiveRuntimeSessions).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(16_000);
+
+    expect((deps.ensureRuntimeSession as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(1);
+    expect((deps.closeInactiveRuntimeSessions as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(1);
+
+    await loop.stop();
+    vi.useRealTimers();
+  });
+
   it('keeps watchdog ticker reprocessing strategy-neutral via processTickerEvent', async () => {
     const { deps } = createDeps();
     withStrategyBot(deps);
@@ -446,6 +468,31 @@ describe('RuntimeSignalLoop', () => {
     expect(deps.processPositionAutomation).toHaveBeenCalledTimes(1);
     expect(deps.createSignal).not.toHaveBeenCalled();
     expect(deps.orchestrateFn).not.toHaveBeenCalled();
+  });
+
+  it('keeps stream subscription alive when single event handler fails', async () => {
+    const { deps, emit } = createDeps();
+    withStrategyBot(deps, { strategies: [] });
+    deps.processPositionAutomation = vi.fn(async () => {
+      throw new Error('automation_failure');
+    });
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    await expect(
+      emit({
+        type: 'ticker',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        symbol: 'BTCUSDT',
+        eventTime: 30_000,
+        lastPrice: 100,
+        priceChangePercent24h: 0.5,
+      })
+    ).resolves.toBeUndefined();
+
+    expect(loop.isRunning()).toBe(true);
   });
 
   it('merges final-candle multi-strategy votes with EXIT priority and trace-only behavior', async () => {

@@ -158,6 +158,10 @@ const tickerFreshnessFallbackMs = Math.max(
   30_000,
   Number.parseInt(process.env.RUNTIME_SIGNAL_TICKER_FRESHNESS_MS ?? '90000', 10)
 );
+const runtimeSessionWatchdogIntervalMs = Math.max(
+  5_000,
+  Number.parseInt(process.env.RUNTIME_SESSION_WATCHDOG_INTERVAL_MS ?? '15000', 10)
+);
 
 type RuntimeCandle = {
   openTime: number;
@@ -468,6 +472,7 @@ export const deriveRuntimeGroupMaxOpenPositions = (input: {
 
 export class RuntimeSignalLoop {
   private unsubscribe: (() => Promise<void>) | null = null;
+  private sessionWatchdogTimer: NodeJS.Timeout | null = null;
   private readonly processedDecisionWindows = new Map<string, number>();
   private readonly candleSeries = new Map<string, RuntimeCandle[]>();
   private readonly warmupLastAttemptAt = new Map<string, number>();
@@ -480,23 +485,22 @@ export class RuntimeSignalLoop {
 
   async start() {
     if (this.unsubscribe) return;
-    const activeBots = await this.deps.listActiveBots();
-    await this.deps.closeInactiveRuntimeSessions?.(activeBots.map((bot) => bot.id));
-    await Promise.all(
-      activeBots.map((bot) =>
-        this.deps.ensureRuntimeSession?.({
-          userId: bot.userId,
-          botId: bot.id,
-          mode: bot.mode,
-        })
-      )
-    );
+    await this.syncRuntimeSessions();
     this.unsubscribe = await this.deps.subscribe(async (event) => {
-      await this.handleEvent(event);
+      try {
+        await this.handleEvent(event);
+      } catch (error) {
+        console.error('RuntimeSignalLoop event handler failed:', error);
+      }
     });
+    this.startSessionWatchdog();
   }
 
   async stop() {
+    if (this.sessionWatchdogTimer) {
+      clearInterval(this.sessionWatchdogTimer);
+      this.sessionWatchdogTimer = null;
+    }
     if (!this.unsubscribe) return;
     const activeBots = await this.deps.listActiveBots();
     await Promise.all(
@@ -510,6 +514,32 @@ export class RuntimeSignalLoop {
     );
     await this.unsubscribe();
     this.unsubscribe = null;
+  }
+
+  private startSessionWatchdog() {
+    if (this.sessionWatchdogTimer) return;
+    if (!Number.isFinite(runtimeSessionWatchdogIntervalMs) || runtimeSessionWatchdogIntervalMs <= 0) return;
+
+    this.sessionWatchdogTimer = setInterval(() => {
+      void this.syncRuntimeSessions().catch((error) => {
+        console.error('RuntimeSignalLoop session watchdog failed:', error);
+      });
+    }, runtimeSessionWatchdogIntervalMs);
+    this.sessionWatchdogTimer.unref?.();
+  }
+
+  private async syncRuntimeSessions() {
+    const activeBots = await this.deps.listActiveBots();
+    await this.deps.closeInactiveRuntimeSessions?.(activeBots.map((bot) => bot.id));
+    await Promise.all(
+      activeBots.map((bot) =>
+        this.deps.ensureRuntimeSession?.({
+          userId: bot.userId,
+          botId: bot.id,
+          mode: bot.mode,
+        })
+      )
+    );
   }
 
   async processTickerEvent(event: StreamTickerEvent) {
