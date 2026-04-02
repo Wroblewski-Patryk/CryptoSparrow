@@ -11,7 +11,7 @@ import {
 export const listMarketCatalog = async (req: Request, res: Response) => {
   try {
     const query = MarketCatalogQuerySchema.parse(req.query);
-    const catalog = await marketsService.getMarketCatalog(query.baseCurrency, query.marketType);
+    const catalog = await marketsService.getMarketCatalog(query.baseCurrency, query.marketType, query.exchange);
     return res.json(catalog);
   } catch (error) {
     return sendValidationError(res, error);

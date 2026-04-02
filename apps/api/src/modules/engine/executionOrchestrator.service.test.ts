@@ -229,7 +229,13 @@ describe('orchestrateRuntimeSignal', () => {
       'u1',
       expect.objectContaining({ side: 'SELL', quantity: 0.2, mode: 'LIVE' })
     );
-    expect(positionGateway.closePosition).toHaveBeenCalledWith('position-open', 'u1');
+    expect(positionGateway.closePosition).toHaveBeenCalledWith(
+      'position-open',
+      'u1',
+      expect.objectContaining({
+        realizedPnl: expect.any(Number),
+      })
+    );
     expect(orderGateway.closeOrder).not.toHaveBeenCalled();
     expect(tradeGateway.createTrade).toHaveBeenCalledWith(
       expect.objectContaining({

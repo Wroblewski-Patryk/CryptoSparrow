@@ -76,6 +76,8 @@ export default function Header() {
           strategyCreate: 'Dodaj strategie',
           backtestList: 'Lista backtestow',
           backtestCreate: 'Nowy backtest',
+          botsList: 'Lista botow',
+          botsCreate: 'Dodaj bota',
           mobileMenu: 'Menu',
         }
       : {
@@ -93,6 +95,8 @@ export default function Header() {
           strategyCreate: 'Create strategy',
           backtestList: 'Backtests list',
           backtestCreate: 'Create backtest',
+          botsList: 'Bots list',
+          botsCreate: 'Create bot',
           mobileMenu: 'Menu',
         };
 
@@ -123,7 +127,8 @@ export default function Header() {
   ];
 
   const botsLinks: NavItem[] = [
-    { href: dashboardRoutes.bots.root, label: t('dashboard.nav.bots') },
+    { href: dashboardRoutes.bots.list, label: labels.botsList },
+    { href: dashboardRoutes.bots.create, label: labels.botsCreate },
   ];
 
   const analyticsLinks: NavItem[] = [

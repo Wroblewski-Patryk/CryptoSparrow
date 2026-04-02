@@ -31,7 +31,7 @@ export const deleteMarketUniverse = async (id: string): Promise<void> => {
 };
 
 export const fetchMarketCatalog = async (
-  params?: { baseCurrency?: string; marketType?: 'SPOT' | 'FUTURES' }
+  params?: { exchange?: 'BINANCE'; baseCurrency?: string; marketType?: 'SPOT' | 'FUTURES' }
 ): Promise<MarketCatalog> => {
   const res = await api.get<MarketCatalog>('/dashboard/markets/catalog', {
     params: params ?? undefined,

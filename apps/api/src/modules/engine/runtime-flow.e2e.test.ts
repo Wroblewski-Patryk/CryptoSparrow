@@ -97,9 +97,20 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
     });
     expect(backtestRes.status).toBe(201);
 
+    const apiKeyRes = await agent.post('/dashboard/profile/apiKeys').send({
+      label: 'runtime-flow-live',
+      exchange: 'BINANCE',
+      apiKey: 'RUNTIME_FLOW_LIVE_KEY',
+      apiSecret: 'RUNTIME_FLOW_LIVE_SECRET',
+      syncExternalPositions: true,
+      manageExternalPositions: false,
+    });
+    expect(apiKeyRes.status).toBe(201);
+
     const botRes = await agent.post('/dashboard/bots').send({
       name: 'Runtime Live Bot',
       mode: 'LIVE',
+      apiKeyId: apiKeyRes.body.id,
       strategyId,
       marketGroupId: createSymbolGroup.id,
       marketType: 'FUTURES',
@@ -146,6 +157,7 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
       const closeTime = openTime + 59_999;
       await runtimeSignalLoop.processCandleEvent({
         type: 'candle',
+        exchange: 'BINANCE',
         marketType: 'FUTURES',
         symbol: 'BTCUSDT',
         interval: '1m',
@@ -167,6 +179,7 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
 
     await runtimeSignalLoop.processTickerEvent({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: Date.now(),
@@ -213,6 +226,7 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
 
     await runtimeSignalLoop.processTickerEvent({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: Date.now() + 60_000,

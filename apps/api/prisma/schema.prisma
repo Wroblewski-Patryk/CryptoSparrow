@@ -67,6 +67,7 @@ model ApiKey {
   updatedAt DateTime  @updatedAt
   lastUsed  DateTime?
   user      User      @relation(fields: [userId], references: [id])
+  bots      Bot[]
 }
 
 enum Exchange {
@@ -104,6 +105,7 @@ model MarketUniverse {
   userId String
 
   name             String
+  exchange         Exchange    @default(BINANCE)
   marketType       TradeMarket @default(FUTURES)
   baseCurrency     String      @default("USDT")
   filterRules      Json?
@@ -118,6 +120,7 @@ model MarketUniverse {
   symbolGroups SymbolGroup[]
 
   @@index([userId])
+  @@index([userId, exchange, marketType, baseCurrency])
 }
 
 model SymbolGroup {
@@ -168,17 +171,20 @@ model Bot {
   name               String
   mode               BotMode      @default(PAPER)
   paperStartBalance  Float        @default(10000)
+  exchange           Exchange     @default(BINANCE)
   marketType         TradeMarket  @default(FUTURES)
   positionMode       PositionMode @default(ONE_WAY)
   isActive           Boolean      @default(false)
   liveOptIn          Boolean      @default(false)
   consentTextVersion String?
   maxOpenPositions   Int          @default(1)
+  apiKeyId           String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   user                     User                      @relation(fields: [userId], references: [id])
+  apiKey                   ApiKey?                   @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
   botStrategies            BotStrategy[]
   botMarketGroups          BotMarketGroup[]
   marketGroupStrategyLinks MarketGroupStrategyLink[]
@@ -194,6 +200,8 @@ model Bot {
   logs                     Log[]
 
   @@index([userId])
+  @@index([apiKeyId])
+  @@index([userId, exchange])
 }
 
 enum TradeMarket {
@@ -578,6 +586,7 @@ model Trade {
 
   symbol      String
   side        OrderSide
+  lifecycleAction TradeLifecycleAction @default(UNKNOWN)
   price       Float
   quantity    Float
   fee         Float?
@@ -669,6 +678,13 @@ enum SignalDirection {
   LONG
   SHORT
   EXIT
+}
+
+enum TradeLifecycleAction {
+  OPEN
+  DCA
+  CLOSE
+  UNKNOWN
 }
 
 enum TradingRecordOrigin {

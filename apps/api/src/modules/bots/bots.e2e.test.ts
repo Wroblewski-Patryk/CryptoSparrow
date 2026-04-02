@@ -85,6 +85,7 @@ describe('Bots module contract', () => {
     await prisma.botRuntimeEvent.deleteMany();
     await prisma.botRuntimeSymbolStat.deleteMany();
     await prisma.botRuntimeSession.deleteMany();
+    await prisma.marketCandleCache.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
@@ -200,7 +201,7 @@ describe('Bots module contract', () => {
     });
     expect(updateRes.status).toBe(200);
     expect(updateRes.body.mode).toBe('LIVE');
-    expect(updateRes.body.marketType).toBe('SPOT');
+    expect(updateRes.body.marketType).toBe('FUTURES');
     expect(updateRes.body.positionMode).toBe('ONE_WAY');
     expect(updateRes.body.liveOptIn).toBe(true);
     expect(updateRes.body.consentTextVersion).toBe('mvp-v1');
@@ -838,7 +839,11 @@ describe('Bots module contract', () => {
     expect(tradesRes.body.total).toBe(1);
     expect(tradesRes.body.items).toHaveLength(1);
     expect(tradesRes.body.items[0].symbol).toBe('BTCUSDT');
+    expect(tradesRes.body.items[0].lifecycleAction).toBe('UNKNOWN');
     expect(tradesRes.body.items[0].notional).toBe(5000);
+    expect(tradesRes.body.items[0].margin).toBe(5000);
+    expect(tradesRes.body.items[0].fee).toBe(2.5);
+    expect(tradesRes.body.items[0].realizedPnl).toBe(25);
 
     const positionsRes = await owner.get(`/dashboard/bots/${botId}/runtime-sessions/${session.id}/positions`);
     expect(positionsRes.status).toBe(200);
@@ -846,6 +851,7 @@ describe('Bots module contract', () => {
     expect(positionsRes.body.openCount).toBe(1);
     expect(positionsRes.body.closedCount).toBe(1);
     expect(positionsRes.body.openOrdersCount).toBe(0);
+    expect(typeof positionsRes.body.showDynamicStopColumns).toBe('boolean');
     expect(positionsRes.body.openOrders).toHaveLength(0);
     expect(positionsRes.body.openItems).toHaveLength(1);
     expect(positionsRes.body.historyItems).toHaveLength(1);
@@ -1033,6 +1039,78 @@ describe('Bots module contract', () => {
     expect(completedTradesRes.status).toBe(200);
     expect(completedTradesRes.body.total).toBe(0);
     expect(completedTradesRes.body.items).toHaveLength(0);
+  });
+
+  it('computes live signal direction from latest candles when no signal event exists yet', async () => {
+    const ownerEmail = 'bot-runtime-live-direction@example.com';
+    const owner = await registerAndLogin(ownerEmail);
+    const ownerUser = await prisma.user.findUniqueOrThrow({ where: { email: ownerEmail } });
+
+    const strategyRes = await owner.post('/dashboard/strategies').send({
+      name: 'Runtime Live Direction Strategy',
+      interval: '5m',
+      leverage: 2,
+      walletRisk: 1,
+      config: {
+        open: {
+          direction: 'both',
+          noMatchAction: 'HOLD',
+          indicatorsLong: [{ name: 'RSI', condition: '>', value: 55, params: { period: 14 } }],
+          indicatorsShort: [{ name: 'RSI', condition: '<', value: 45, params: { period: 14 } }],
+        },
+        close: { mode: 'basic', tp: 2, sl: 1 },
+      },
+    });
+    expect(strategyRes.status).toBe(201);
+    const strategyId = strategyRes.body.id as string;
+
+    const marketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
+    const botRes = await owner.post('/dashboard/bots').send(
+      createPayload({
+        strategyId,
+        marketGroupId,
+      })
+    );
+    expect(botRes.status).toBe(201);
+    const botId = botRes.body.id as string;
+
+    const session = await prisma.botRuntimeSession.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        mode: 'PAPER',
+        status: 'RUNNING',
+        startedAt: new Date('2026-04-02T00:00:00.000Z'),
+      },
+    });
+
+    const candles = Array.from({ length: 40 }).map((_, index) => {
+      const openTime = BigInt(1712016000000 + index * 300_000);
+      const close = 2000 - index * 12;
+      return {
+        marketType: 'FUTURES' as const,
+        symbol: 'BTCUSDT',
+        timeframe: '5m',
+        openTime,
+        closeTime: openTime + BigInt(299_999),
+        open: close + 3,
+        high: close + 6,
+        low: close - 6,
+        close,
+        volume: 100 + index,
+        source: 'BINANCE',
+      };
+    });
+    await prisma.marketCandleCache.createMany({ data: candles });
+
+    const symbolStatsRes = await owner.get(
+      `/dashboard/bots/${botId}/runtime-sessions/${session.id}/symbol-stats`
+    );
+    expect(symbolStatsRes.status).toBe(200);
+    const btc = symbolStatsRes.body.items.find((item: { symbol: string }) => item.symbol === 'BTCUSDT');
+    expect(btc).toBeTruthy();
+    expect(btc.lastSignalDirection).toBe('SHORT');
+    expect(btc.totalSignals).toBe(0);
   });
 
   it('covers one-user multi-bot multi-group multi-strategy flow', async () => {

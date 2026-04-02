@@ -2,6 +2,7 @@ import { prisma } from '../../prisma/client';
 import { CreateMarketUniverseDto, UpdateMarketUniverseDto } from './markets.types';
 
 type MarketType = 'SPOT' | 'FUTURES';
+type Exchange = 'BINANCE';
 
 type PublicMarketEntry = {
   symbol: string;
@@ -160,7 +161,11 @@ const fetchPublicBinanceMarkets = async (marketType: MarketType): Promise<Public
   }
 };
 
-export const getMarketCatalog = async (requestedBaseCurrency?: string, marketType: MarketType = 'FUTURES') => {
+export const getMarketCatalog = async (
+  requestedBaseCurrency?: string,
+  marketType: MarketType = 'FUTURES',
+  exchange: Exchange = 'BINANCE'
+) => {
   const entries = await fetchPublicBinanceMarkets(marketType);
   const baseCurrencies = [...new Set(entries.map((entry) => entry.quoteAsset))].sort((a, b) =>
     a.localeCompare(b)
@@ -177,6 +182,7 @@ export const getMarketCatalog = async (requestedBaseCurrency?: string, marketTyp
 
   return {
     source: 'BINANCE_PUBLIC',
+    exchange,
     marketType,
     baseCurrency: resolvedBaseCurrency,
     baseCurrencies,

@@ -74,9 +74,10 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
 
       const catalogByKey = new Map<string, Awaited<ReturnType<typeof fetchMarketCatalog>>>();
       for (const row of rows) {
-        const key = `${row.marketType}|${row.baseCurrency}`;
+        const key = `${row.exchange ?? 'BINANCE'}|${row.marketType}|${row.baseCurrency}`;
         if (!catalogByKey.has(key)) {
           const catalog = await fetchMarketCatalog({
+            exchange: row.exchange ?? 'BINANCE',
             marketType: row.marketType,
             baseCurrency: row.baseCurrency,
           });
@@ -88,7 +89,7 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
 
       const nextMap: Record<string, ResolvedTickers> = {};
       for (const row of rows) {
-        const key = `${row.marketType}|${row.baseCurrency}`;
+        const key = `${row.exchange ?? 'BINANCE'}|${row.marketType}|${row.baseCurrency}`;
         const catalog = catalogByKey.get(key);
         const rules = resolveMinVolumeRules(row);
         const filteredByVolume = (catalog?.markets ?? []).filter((market) =>
@@ -127,6 +128,7 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
   const columns = useMemo<DataTableColumn<MarketUniverse>[]>(
     () => [
       { key: 'name', label: 'Nazwa', sortable: true, accessor: (row) => row.name },
+      { key: 'exchange', label: 'Gielda', sortable: true, accessor: (row) => row.exchange ?? 'BINANCE' },
       { key: 'marketType', label: 'Rynek', sortable: true, accessor: (row) => row.marketType },
       { key: 'baseCurrency', label: 'Base', sortable: true, accessor: (row) => row.baseCurrency },
       { key: 'whitelist', label: 'Whitelist', sortable: true, accessor: (row) => row.whitelist.length },
@@ -225,6 +227,7 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
           const normalized = query.trim().toUpperCase();
           return (
             row.name.toUpperCase().includes(normalized) ||
+            (row.exchange ?? 'BINANCE').toUpperCase().includes(normalized) ||
             row.baseCurrency.toUpperCase().includes(normalized) ||
             row.marketType.toUpperCase().includes(normalized)
           );

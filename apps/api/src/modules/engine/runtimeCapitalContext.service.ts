@@ -15,7 +15,11 @@ type RuntimeCapitalContextDeps = {
     botId?: string | null;
   }) => Promise<Array<{ entryPrice: number; quantity: number; leverage: number }>>;
   sumClosedBotManagedRealizedPnl: (input: { userId: string; botId?: string | null }) => Promise<number>;
-  getLatestBinanceApiKey: (userId: string) => Promise<{ apiKey: string; apiSecret: string } | null>;
+  getLiveApiKeyContext: (input: {
+    userId: string;
+    botId?: string | null;
+    exchange: 'BINANCE';
+  }) => Promise<{ apiKey: string; apiSecret: string } | null>;
   fetchLiveUsdtBalance: (input: {
     apiKey: string;
     apiSecret: string;
@@ -72,16 +76,37 @@ const defaultDeps: RuntimeCapitalContextDeps = {
     });
     return Number(aggregate._sum.realizedPnl ?? 0);
   },
-  getLatestBinanceApiKey: async (userId) => {
-    const apiKey = await prisma.apiKey.findFirst({
-      where: { userId, exchange: 'BINANCE' },
+  getLiveApiKeyContext: async ({ userId, botId, exchange }) => {
+    if (botId) {
+      const bot = await prisma.bot.findFirst({
+        where: { id: botId, userId },
+        select: {
+          apiKey: {
+            select: {
+              apiKey: true,
+              apiSecret: true,
+              exchange: true,
+            },
+          },
+        },
+      });
+      if (bot?.apiKey && bot.apiKey.exchange === exchange) {
+        return {
+          apiKey: decrypt(bot.apiKey.apiKey),
+          apiSecret: decrypt(bot.apiKey.apiSecret),
+        };
+      }
+    }
+
+    const latestByExchange = await prisma.apiKey.findFirst({
+      where: { userId, exchange },
       orderBy: { updatedAt: 'desc' },
       select: { apiKey: true, apiSecret: true },
     });
-    if (!apiKey) return null;
+    if (!latestByExchange) return null;
     return {
-      apiKey: decrypt(apiKey.apiKey),
-      apiSecret: decrypt(apiKey.apiSecret),
+      apiKey: decrypt(latestByExchange.apiKey),
+      apiSecret: decrypt(latestByExchange.apiSecret),
     };
   },
   fetchLiveUsdtBalance: async ({ apiKey, apiSecret, marketType }) => {
@@ -148,6 +173,7 @@ export const resolveRuntimeReferenceBalance = async (
     userId: string;
     botId?: string | null;
     mode: BotMode | 'PAPER' | 'LIVE';
+    exchange: 'BINANCE';
     marketType: TradeMarket;
     paperStartBalance: number;
     nowMs: number;
@@ -166,13 +192,17 @@ export const resolveRuntimeReferenceBalance = async (
     return snapshot.referenceBalance;
   }
 
-  const cacheKey = `${input.userId}:${input.marketType}`;
+  const cacheKey = `${input.userId}:${input.botId ?? 'none'}:${input.exchange}:${input.marketType}`;
   const cached = liveBalanceCache.get(cacheKey);
   if (cached && input.nowMs - cached.fetchedAt <= liveBalanceCacheTtlMs) {
     return cached.value;
   }
 
-  const apiKey = await deps.getLatestBinanceApiKey(input.userId);
+  const apiKey = await deps.getLiveApiKeyContext({
+    userId: input.userId,
+    botId: input.botId,
+    exchange: input.exchange,
+  });
   if (!apiKey) return runtimeReferenceBalanceFallback;
 
   const usdtBalance = await deps.fetchLiveUsdtBalance({
@@ -195,6 +225,7 @@ export const resolveRuntimeDcaFundsExhausted = async (
     userId: string;
     botId?: string | null;
     mode: 'PAPER' | 'LIVE';
+    exchange: 'BINANCE';
     marketType: TradeMarket;
     paperStartBalance: number;
     markPrice: number;
@@ -224,6 +255,7 @@ export const resolveRuntimeDcaFundsExhausted = async (
       userId: input.userId,
       botId: input.botId,
       mode: input.mode,
+      exchange: input.exchange,
       marketType: input.marketType,
       paperStartBalance: input.paperStartBalance,
       nowMs: input.nowMs,
@@ -233,4 +265,3 @@ export const resolveRuntimeDcaFundsExhausted = async (
   if (!Number.isFinite(referenceBalance) || referenceBalance <= 0) return true;
   return requiredMargin > referenceBalance;
 };
-

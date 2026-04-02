@@ -249,7 +249,7 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
                   {marketUniverses.length === 0 ? <option value=''>{copy.noUniverses}</option> : null}
                   {marketUniverses.map((universe) => (
                     <option key={universe.id} value={universe.id}>
-                      {universe.name} ({universe.marketType}/{universe.baseCurrency})
+                      {universe.name} ({universe.exchange ?? 'BINANCE'} · {universe.marketType}/{universe.baseCurrency})
                     </option>
                   ))}
                 </select>

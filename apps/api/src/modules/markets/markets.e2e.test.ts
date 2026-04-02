@@ -59,6 +59,7 @@ describe('Markets module contract', () => {
     expect(createRes.status).toBe(201);
     expect(createRes.body.id).toBeDefined();
     expect(createRes.body.name).toBe('Top USDT Futures');
+    expect(createRes.body.exchange).toBe('BINANCE');
     expect(createRes.body.marketType).toBe('FUTURES');
     expect(createRes.body.whitelist).toEqual(['BTCUSDT', 'ETHUSDT']);
     const universeId = createRes.body.id as string;
@@ -72,6 +73,7 @@ describe('Markets module contract', () => {
     const getRes = await agent.get(`/dashboard/markets/universes/${universeId}`);
     expect(getRes.status).toBe(200);
     expect(getRes.body.id).toBe(universeId);
+    expect(getRes.body.exchange).toBe('BINANCE');
     expect(getRes.body.baseCurrency).toBe('USDT');
     expect(getRes.body.marketType).toBe('FUTURES');
 
@@ -94,9 +96,14 @@ describe('Markets module contract', () => {
   it('returns public market catalog filtered by base currency and market type', async () => {
     const agent = await registerAndLogin('markets-catalog@example.com');
 
-    const res = await agent.get('/dashboard/markets/catalog').query({ baseCurrency: 'USDT', marketType: 'FUTURES' });
+    const res = await agent.get('/dashboard/markets/catalog').query({
+      exchange: 'BINANCE',
+      baseCurrency: 'USDT',
+      marketType: 'FUTURES',
+    });
     expect(res.status).toBe(200);
     expect(res.body.source).toBe('BINANCE_PUBLIC');
+    expect(res.body.exchange).toBe('BINANCE');
     expect(res.body.marketType).toBe('FUTURES');
     expect(res.body.baseCurrency).toBe('USDT');
     expect(Array.isArray(res.body.baseCurrencies)).toBe(true);

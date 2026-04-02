@@ -85,6 +85,7 @@ export const normalizeBinanceStreamEvent = (
 
     return {
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType,
       symbol,
       eventTime,
@@ -123,6 +124,7 @@ export const normalizeBinanceStreamEvent = (
 
     return {
       type: 'candle',
+      exchange: 'BINANCE',
       marketType,
       symbol,
       interval,

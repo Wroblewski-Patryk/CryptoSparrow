@@ -9,6 +9,7 @@ import { fetchMarketCatalog } from '../services/markets.service';
 import { CreateMarketUniverseInput, MarketCatalogEntry, MarketUniverse } from '../types/marketUniverse.type';
 
 const MARKET_TYPES: Array<'SPOT' | 'FUTURES'> = ['SPOT', 'FUTURES'];
+const EXCHANGES: Array<'BINANCE'> = ['BINANCE'];
 
 const uniqueSorted = (values: string[]) =>
   [...new Set(values.map((item) => item.trim().toUpperCase()).filter(Boolean))].sort((a, b) =>
@@ -66,6 +67,7 @@ export default function MarketUniverseForm({
   const [currentStep, setCurrentStep] = useState(0);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [exchange, setExchange] = useState<'BINANCE'>(initial?.exchange ?? 'BINANCE');
   const [marketType, setMarketType] = useState<'SPOT' | 'FUTURES'>(initial?.marketType ?? 'FUTURES');
   const [baseCurrency, setBaseCurrency] = useState(initial?.baseCurrency ?? 'USDT');
   const [baseCurrencies, setBaseCurrencies] = useState<string[]>([]);
@@ -81,6 +83,7 @@ export default function MarketUniverseForm({
   useEffect(() => {
     if (!initial) return;
     setName(initial.name);
+    setExchange(initial.exchange ?? 'BINANCE');
     setMarketType(initial.marketType);
     setBaseCurrency(initial.baseCurrency);
     setWhitelistSymbols(initial.whitelist);
@@ -90,15 +93,21 @@ export default function MarketUniverseForm({
   }, [initial]);
 
   const loadCatalog = useCallback(
-    async (params?: { requestedBaseCurrency?: string; requestedMarketType?: 'SPOT' | 'FUTURES' }) => {
+    async (params?: {
+      requestedExchange?: 'BINANCE';
+      requestedBaseCurrency?: string;
+      requestedMarketType?: 'SPOT' | 'FUTURES';
+    }) => {
       setCatalogLoading(true);
       setCatalogError(null);
       try {
         const catalog = await fetchMarketCatalog({
+          exchange: params?.requestedExchange ?? exchange,
           baseCurrency: params?.requestedBaseCurrency,
           marketType: params?.requestedMarketType ?? marketType,
         });
 
+        setExchange((catalog.exchange ?? 'BINANCE') as 'BINANCE');
         setMarketType(catalog.marketType);
         setBaseCurrency(catalog.baseCurrency);
         setBaseCurrencies(catalog.baseCurrencies);
@@ -110,15 +119,16 @@ export default function MarketUniverseForm({
         setCatalogLoading(false);
       }
     },
-    [marketType]
+    [exchange, marketType]
   );
 
   useEffect(() => {
     void loadCatalog({
+      requestedExchange: initial?.exchange ?? 'BINANCE',
       requestedBaseCurrency: initial?.baseCurrency,
       requestedMarketType: initial?.marketType,
     });
-  }, [initial?.baseCurrency, initial?.marketType, loadCatalog]);
+  }, [initial?.baseCurrency, initial?.exchange, initial?.marketType, loadCatalog]);
 
   const maxQuoteVolume = useMemo(
     () => Math.max(...catalogMarkets.map((market) => market.quoteVolume24h ?? 0), 0),
@@ -179,14 +189,32 @@ export default function MarketUniverseForm({
 
   const handleBaseCurrencyChange = async (nextBaseCurrency: string) => {
     setBaseCurrency(nextBaseCurrency);
-    await loadCatalog({ requestedBaseCurrency: nextBaseCurrency, requestedMarketType: marketType });
+    await loadCatalog({
+      requestedExchange: exchange,
+      requestedBaseCurrency: nextBaseCurrency,
+      requestedMarketType: marketType,
+    });
   };
 
   const handleMarketTypeChange = async (nextMarketType: string) => {
     const parsed = nextMarketType === 'SPOT' ? 'SPOT' : 'FUTURES';
     setMarketType(parsed);
     setMinQuoteVolume(0);
-    await loadCatalog({ requestedBaseCurrency: baseCurrency, requestedMarketType: parsed });
+    await loadCatalog({
+      requestedExchange: exchange,
+      requestedBaseCurrency: baseCurrency,
+      requestedMarketType: parsed,
+    });
+  };
+
+  const handleExchangeChange = async (nextExchange: string) => {
+    const parsed = nextExchange === 'BINANCE' ? 'BINANCE' : 'BINANCE';
+    setExchange(parsed);
+    await loadCatalog({
+      requestedExchange: parsed,
+      requestedBaseCurrency: baseCurrency,
+      requestedMarketType: marketType,
+    });
   };
 
   const selectAllFromBaseCurrency = () => {
@@ -209,6 +237,7 @@ export default function MarketUniverseForm({
 
     await onSubmit({
       name: name.trim(),
+      exchange,
       marketType,
       baseCurrency: baseCurrency.trim().toUpperCase(),
       filterRules: {
@@ -260,8 +289,15 @@ export default function MarketUniverseForm({
 
         {currentStep === 0 ? (
           <div className='rounded-xl border border-base-300 bg-base-100 p-4'>
-            <div className='grid gap-3 md:grid-cols-3'>
+            <div className='grid gap-3 md:grid-cols-4'>
               <TextInputField label='Nazwa grupy' placeholder='Top Futures' value={name} onChange={setName} />
+              <SelectField
+                label='Gielda'
+                value={exchange}
+                options={EXCHANGES}
+                onChange={(next) => void handleExchangeChange(next)}
+                disabled={catalogLoading}
+              />
               <SelectField
                 label='Market type'
                 value={marketType}

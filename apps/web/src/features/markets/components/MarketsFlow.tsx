@@ -16,6 +16,7 @@ import {
 import { MarketCatalogEntry, MarketUniverse } from '../types/marketUniverse.type';
 
 const MARKET_TYPES: Array<'SPOT' | 'FUTURES'> = ['SPOT', 'FUTURES'];
+const EXCHANGES: Array<'BINANCE'> = ['BINANCE'];
 
 const uniqueSorted = (values: string[]) =>
   [...new Set(values.map((item) => item.trim().toUpperCase()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
@@ -44,6 +45,7 @@ export default function MarketsFlow() {
 
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [exchange, setExchange] = useState<'BINANCE'>('BINANCE');
   const [marketType, setMarketType] = useState<'SPOT' | 'FUTURES'>('FUTURES');
   const [baseCurrency, setBaseCurrency] = useState('USDT');
   const [baseCurrencies, setBaseCurrencies] = useState<string[]>([]);
@@ -69,15 +71,21 @@ export default function MarketsFlow() {
     }
   }, []);
 
-  const loadCatalog = useCallback(async (params?: { requestedBaseCurrency?: string; requestedMarketType?: 'SPOT' | 'FUTURES' }) => {
+  const loadCatalog = useCallback(async (params?: {
+    requestedExchange?: 'BINANCE';
+    requestedBaseCurrency?: string;
+    requestedMarketType?: 'SPOT' | 'FUTURES';
+  }) => {
     setCatalogLoading(true);
     setCatalogError(null);
     try {
       const catalog = await fetchMarketCatalog({
+        exchange: params?.requestedExchange ?? exchange,
         baseCurrency: params?.requestedBaseCurrency,
         marketType: params?.requestedMarketType ?? marketType,
       });
 
+      setExchange((catalog.exchange ?? 'BINANCE') as 'BINANCE');
       setMarketType(catalog.marketType);
       setBaseCurrency(catalog.baseCurrency);
       setBaseCurrencies(catalog.baseCurrencies);
@@ -88,7 +96,7 @@ export default function MarketsFlow() {
     } finally {
       setCatalogLoading(false);
     }
-  }, [marketType]);
+  }, [exchange, marketType]);
 
   useEffect(() => {
     void loadUniverses();
@@ -145,14 +153,32 @@ export default function MarketsFlow() {
 
   const handleBaseCurrencyChange = async (nextBaseCurrency: string) => {
     setBaseCurrency(nextBaseCurrency);
-    await loadCatalog({ requestedBaseCurrency: nextBaseCurrency, requestedMarketType: marketType });
+    await loadCatalog({
+      requestedExchange: exchange,
+      requestedBaseCurrency: nextBaseCurrency,
+      requestedMarketType: marketType,
+    });
   };
 
   const handleMarketTypeChange = async (nextMarketType: string) => {
     const parsed = nextMarketType === 'SPOT' ? 'SPOT' : 'FUTURES';
     setMarketType(parsed);
     setMinQuoteVolumeMillions(0);
-    await loadCatalog({ requestedBaseCurrency: baseCurrency, requestedMarketType: parsed });
+    await loadCatalog({
+      requestedExchange: exchange,
+      requestedBaseCurrency: baseCurrency,
+      requestedMarketType: parsed,
+    });
+  };
+
+  const handleExchangeChange = async (nextExchange: string) => {
+    const parsed = nextExchange === 'BINANCE' ? 'BINANCE' : 'BINANCE';
+    setExchange(parsed);
+    await loadCatalog({
+      requestedExchange: parsed,
+      requestedBaseCurrency: baseCurrency,
+      requestedMarketType: marketType,
+    });
   };
 
   const selectAllFromBaseCurrency = () => {
@@ -177,6 +203,7 @@ export default function MarketsFlow() {
 
       const created = await createMarketUniverse({
         name: name.trim(),
+        exchange,
         marketType,
         baseCurrency: baseCurrency.trim().toUpperCase(),
         whitelist: payloadWhitelist,
@@ -218,8 +245,15 @@ export default function MarketsFlow() {
         <h2 className='text-lg font-semibold'>Kreator grup rynkow dla bota</h2>
         <p className='text-sm opacity-70'>Wybierz market type, base currency i zbuduj grupe symboli pod bota.</p>
 
-        <div className='mt-4 grid gap-3 md:grid-cols-3'>
+        <div className='mt-4 grid gap-3 md:grid-cols-4'>
           <TextInputField label='Nazwa universe' placeholder='Top Futures' value={name} onChange={setName} />
+          <SelectField
+            label='Gielda'
+            value={exchange}
+            options={EXCHANGES}
+            onChange={(next) => void handleExchangeChange(next)}
+            disabled={catalogLoading}
+          />
 
           <SelectField
             label='Market type'
@@ -366,6 +400,7 @@ export default function MarketsFlow() {
               <thead>
                 <tr>
                   <th>Nazwa</th>
+                  <th>Gielda</th>
                   <th>Rynek</th>
                   <th>Base</th>
                   <th>Whitelist</th>
@@ -378,6 +413,7 @@ export default function MarketsFlow() {
                 {universes.map((item) => (
                   <tr key={item.id}>
                     <td className='font-medium'>{item.name}</td>
+                    <td>{item.exchange ?? 'BINANCE'}</td>
                     <td>{item.marketType}</td>
                     <td>{item.baseCurrency}</td>
                     <td>{item.whitelist.join(', ') || '-'}</td>

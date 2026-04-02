@@ -1588,7 +1588,7 @@ const resolveSymbolsForRun = async (userId: string, data: CreateBacktestRunDto) 
 
   if (!universe) return null;
 
-  const catalog = await getMarketCatalog(universe.baseCurrency, universe.marketType);
+  const catalog = await getMarketCatalog(universe.baseCurrency, universe.marketType, universe.exchange);
   const rules = ((universe.filterRules ?? {}) as { minQuoteVolumeEnabled?: boolean; minQuoteVolume24h?: number }) ?? {};
   const minVolume = typeof rules.minQuoteVolume24h === 'number' ? rules.minQuoteVolume24h : 0;
   const minVolumeEnabled = Boolean(rules.minQuoteVolumeEnabled);
@@ -1610,6 +1610,7 @@ const resolveSymbolsForRun = async (userId: string, data: CreateBacktestRunDto) 
 
   return {
     symbols: uniqueSorted(resolved),
+    exchange: universe.exchange,
     marketType: universe.marketType as MarketType,
     marketUniverseId: universe.id,
   };
@@ -1675,6 +1676,7 @@ export const createRun = async (userId: string, data: CreateBacktestRunDto) => {
             ? (data.seedConfig as { initialBalance: number }).initialBalance
             : 10_000,
         symbols: resolved.symbols,
+        exchange: resolved.exchange,
         marketType: resolved.marketType,
         marketUniverseId: resolved.marketUniverseId,
         leverage: resolved.marketType === 'SPOT' ? 1 : (strategyDefaults?.leverage ?? 1),

@@ -51,7 +51,14 @@ What this command does:
 - checks Postgres/Redis availability
 - if needed, tries `docker compose up -d postgres redis`
 - runs `prisma generate` and `prisma migrate deploy`
-- starts server watch mode
+- starts API watch mode
+- starts workers (`execution` + `market-stream`) by default
+
+Optional:
+- to run API without worker auto-start, set:
+```bash
+BACKEND_DEV_START_WORKERS=false pnpm run backend/dev
+```
 
 ### 5) Start frontend (terminal C)
 Run in project root:
@@ -63,7 +70,7 @@ pnpm run frontend/dev
 Frontend URL:
 - `http://localhost:3002`
 
-### 6) Start runtime workers (optional but needed for auto-trading flows)
+### 6) Start runtime workers manually (optional)
 Run in project root:
 
 ```bash
@@ -74,14 +81,15 @@ This starts:
 - execution worker
 - market-stream worker
 
-If you only test CRUD/UI, you can skip workers.
+Use this only when you intentionally disable worker auto-start in `backend/dev`
+or when you want a separate worker terminal.
 
 ## Minimal number of terminals (VS Code)
-- API + UI only: 2 terminals
+- Standard full runtime: 2 terminals
   - `pnpm run backend/dev`
   - `pnpm run frontend/dev`
-- Full runtime (signals/orders from stream): 3 terminals
-  - `pnpm run backend/dev`
+- API-only + separate workers (advanced/manual): 3 terminals
+  - `BACKEND_DEV_START_WORKERS=false pnpm run backend/dev`
   - `pnpm run frontend/dev`
   - `pnpm run workers/dev`
 

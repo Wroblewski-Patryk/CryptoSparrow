@@ -10,7 +10,7 @@ describe('runtimeCapitalContext', () => {
     getBotPaperStartBalance: async ({ fallback }: { fallback: number }) => fallback,
     listOpenBotManagedPositions: async () => [],
     sumClosedBotManagedRealizedPnl: async () => 0,
-    getLatestBinanceApiKey: async () => null,
+    getLiveApiKeyContext: async () => null,
     fetchLiveUsdtBalance: async () => null,
     ...overrides,
   });
@@ -42,6 +42,7 @@ describe('runtimeCapitalContext', () => {
         userId: 'u2',
         botId: 'b2',
         mode: 'PAPER',
+        exchange: 'BINANCE',
         marketType: 'FUTURES',
         paperStartBalance: 2_000,
         nowMs: 1_000,
@@ -60,6 +61,7 @@ describe('runtimeCapitalContext', () => {
         userId: 'u3',
         botId: 'b3',
         mode: 'PAPER',
+        exchange: 'BINANCE',
         marketType: 'FUTURES',
         paperStartBalance: 1_000,
         markPrice: 100,
@@ -82,6 +84,7 @@ describe('runtimeCapitalContext', () => {
         userId: 'u3',
         botId: 'b3',
         mode: 'PAPER',
+        exchange: 'BINANCE',
         marketType: 'FUTURES',
         paperStartBalance: 1_000,
         markPrice: 100,
@@ -100,4 +103,3 @@ describe('runtimeCapitalContext', () => {
     expect(exhaustedHigh).toBe(true);
   });
 });
-

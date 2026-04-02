@@ -1,14 +1,17 @@
 export type BotMode = "PAPER" | "LIVE";
 export type TradeMarket = "FUTURES" | "SPOT";
 export type PositionMode = "ONE_WAY" | "HEDGE";
+export type Exchange = "BINANCE";
 
 export type Bot = {
   id: string;
   name: string;
   mode: BotMode;
   paperStartBalance: number;
+  exchange: Exchange;
   marketType: TradeMarket;
   positionMode: PositionMode;
+  apiKeyId?: string | null;
   strategyId?: string | null;
   isActive: boolean;
   liveOptIn: boolean;
@@ -152,6 +155,7 @@ export type BotRuntimeTrade = {
   id: string;
   symbol: string;
   side: string;
+  lifecycleAction: "OPEN" | "DCA" | "CLOSE" | "UNKNOWN";
   price: number;
   quantity: number;
   fee: number;
@@ -163,6 +167,7 @@ export type BotRuntimeTrade = {
   origin: string;
   managementMode: string;
   notional: number;
+  margin: number;
 };
 
 export type BotRuntimeTradesResponse = {
@@ -223,6 +228,7 @@ export type BotRuntimePositionsResponse = {
   openCount: number;
   closedCount: number;
   openOrdersCount: number;
+  showDynamicStopColumns?: boolean;
   window: {
     startedAt: string;
     finishedAt: string;
@@ -241,6 +247,7 @@ export type CreateBotInput = {
   name: string;
   mode: BotMode;
   paperStartBalance: number;
+  apiKeyId?: string | null;
   strategyId: string;
   marketGroupId: string;
   isActive: boolean;
@@ -252,6 +259,7 @@ export type UpdateBotInput = Partial<{
   name: string;
   mode: BotMode;
   paperStartBalance: number;
+  apiKeyId: string | null;
   strategyId: string | null;
   marketGroupId: string | null;
   isActive: boolean;

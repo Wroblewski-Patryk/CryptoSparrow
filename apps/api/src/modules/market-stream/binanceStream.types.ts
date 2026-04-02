@@ -1,7 +1,9 @@
 export type TradeMarketType = 'FUTURES' | 'SPOT';
+export type TradeExchange = 'BINANCE';
 
 export type StreamTickerEvent = {
   type: 'ticker';
+  exchange: TradeExchange;
   marketType: TradeMarketType;
   symbol: string;
   eventTime: number;
@@ -11,6 +13,7 @@ export type StreamTickerEvent = {
 
 export type StreamCandleEvent = {
   type: 'candle';
+  exchange: TradeExchange;
   marketType: TradeMarketType;
   symbol: string;
   interval: string;

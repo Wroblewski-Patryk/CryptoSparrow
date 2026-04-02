@@ -8,6 +8,7 @@ describe('RuntimeScanLoop', () => {
       listScanSymbols: vi.fn(async () => ['BTCUSDT']),
       getTickerSnapshot: vi.fn(async () => ({
         symbol: 'BTCUSDT',
+        exchange: 'BINANCE' as const,
         marketType: 'FUTURES' as const,
         lastPrice: 60300,
         priceChangePercent24h: 0.5,
@@ -31,9 +32,21 @@ describe('RuntimeScanLoop', () => {
       listScanSymbols: vi.fn(async () => ['BTCUSDT', 'ETHUSDT']),
       getTickerSnapshot: vi.fn(async (symbol: string) => {
         if (symbol === 'BTCUSDT') {
-          return { symbol: 'BTCUSDT', marketType: 'FUTURES' as const, lastPrice: 60300, priceChangePercent24h: 0.5 };
+          return {
+            symbol: 'BTCUSDT',
+            exchange: 'BINANCE' as const,
+            marketType: 'FUTURES' as const,
+            lastPrice: 60300,
+            priceChangePercent24h: 0.5,
+          };
         }
-        return { symbol: 'ETHUSDT', marketType: 'FUTURES' as const, lastPrice: 2970, priceChangePercent24h: -1 };
+        return {
+          symbol: 'ETHUSDT',
+          exchange: 'BINANCE' as const,
+          marketType: 'FUTURES' as const,
+          lastPrice: 2970,
+          priceChangePercent24h: -1,
+        };
       }),
       processTicker: vi.fn(async (_event: Record<string, unknown>) => undefined),
       nowMs: vi.fn(() => 123_456),
@@ -62,6 +75,7 @@ describe('RuntimeScanLoop', () => {
       listScanSymbols: vi.fn(async () => ['BTCUSDT']),
       getTickerSnapshot: vi.fn(async () => ({
         symbol: 'BTCUSDT',
+        exchange: 'BINANCE' as const,
         marketType: 'FUTURES' as const,
         lastPrice: 61234,
         priceChangePercent24h: 1.25,

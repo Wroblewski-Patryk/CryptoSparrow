@@ -83,8 +83,28 @@ export class RuntimeTelemetryService {
   async ensureRuntimeSession(input: EnsureRuntimeSessionInput) {
     const cached = this.botSessionCache.get(input.botId);
     if (cached) {
-      await this.touchSession(cached.sessionId);
-      return cached.sessionId;
+      const cachedSession = await prisma.botRuntimeSession.findFirst({
+        where: {
+          id: cached.sessionId,
+          botId: input.botId,
+        },
+        select: {
+          id: true,
+          userId: true,
+          mode: true,
+          status: true,
+        },
+      });
+      if (cachedSession?.status === 'RUNNING') {
+        this.botSessionCache.set(input.botId, {
+          sessionId: cachedSession.id,
+          userId: cachedSession.userId,
+          mode: cachedSession.mode as RuntimeMode,
+        });
+        await this.touchSession(cachedSession.id);
+        return cachedSession.id;
+      }
+      this.botSessionCache.delete(input.botId);
     }
 
     const existingSessions = await prisma.botRuntimeSession.findMany({

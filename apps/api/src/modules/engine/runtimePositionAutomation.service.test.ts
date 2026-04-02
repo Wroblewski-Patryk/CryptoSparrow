@@ -31,6 +31,7 @@ describe('RuntimePositionAutomationService', () => {
     const service = new RuntimePositionAutomationService(deps);
     await service.handleTickerEvent({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: 1_000,
@@ -84,6 +85,7 @@ describe('RuntimePositionAutomationService', () => {
     const service = new RuntimePositionAutomationService(deps);
     await service.handleTickerEvent({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'ETHUSDT',
       eventTime: 2_000,
@@ -128,6 +130,7 @@ describe('RuntimePositionAutomationService', () => {
     const service = new RuntimePositionAutomationService(deps);
     await service.handleTickerEvent({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'SOLUSDT',
       eventTime: 2_500,
@@ -184,6 +187,7 @@ describe('RuntimePositionAutomationService', () => {
     const service = new RuntimePositionAutomationService(deps);
     await service.handleTickerEvent({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'SOLUSDT',
       eventTime: 2_500,
@@ -238,6 +242,7 @@ describe('RuntimePositionAutomationService', () => {
     const service = new RuntimePositionAutomationService(deps);
     await service.handleTickerEvent({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: 3_000,
@@ -246,6 +251,7 @@ describe('RuntimePositionAutomationService', () => {
     });
     await service.handleTickerEvent({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: 3_500,
@@ -297,6 +303,7 @@ describe('RuntimePositionAutomationService', () => {
     const service = new RuntimePositionAutomationService(deps);
     await service.handleTickerEvent({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'ETHUSDT',
       eventTime: 4_000,
@@ -305,6 +312,7 @@ describe('RuntimePositionAutomationService', () => {
     });
     await service.handleTickerEvent({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'ETHUSDT',
       eventTime: 4_500,
@@ -355,6 +363,7 @@ describe('RuntimePositionAutomationService', () => {
     const service = new RuntimePositionAutomationService(deps);
     await service.handleTickerEvent({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'SOLUSDT',
       eventTime: 5_000,
@@ -396,6 +405,7 @@ describe('RuntimePositionAutomationService', () => {
     const service = new RuntimePositionAutomationService(deps);
     await service.handleTickerEvent({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'BNBUSDT',
       eventTime: 6_000,
@@ -440,6 +450,7 @@ describe('RuntimePositionAutomationService', () => {
     const service = new RuntimePositionAutomationService(deps);
     await service.handleTickerEvent({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'XRPUSDT',
       eventTime: 7_000,

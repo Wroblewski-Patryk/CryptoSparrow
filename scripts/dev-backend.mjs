@@ -72,6 +72,8 @@ const runPrisma = (args, options = {}) => {
   }
 };
 
+const withWorkersByDefault = process.env.BACKEND_DEV_START_WORKERS !== 'false';
+
 const checkTcpPort = (host, port, timeoutMs = 2000) =>
   new Promise((resolve) => {
     const socket = new net.Socket();
@@ -163,12 +165,52 @@ const main = async () => {
   runPrisma(['migrate', 'deploy']);
 
   console.log('[backend/dev] Starting api in watch mode...');
-  const child = spawn('pnpm', ['--filter', 'api', 'dev'], {
+  const apiChild = spawn('pnpm', ['--filter', 'api', 'dev'], {
     stdio: 'inherit',
     cwd: rootDir,
     shell: process.platform === 'win32',
   });
-  child.on('exit', (code) => process.exit(code ?? 0));
+
+  let workersChild = null;
+  if (withWorkersByDefault) {
+    console.log('[backend/dev] Starting workers (execution + market-stream)...');
+    workersChild = spawn('pnpm', ['run', 'workers/dev'], {
+      stdio: 'inherit',
+      cwd: rootDir,
+      shell: process.platform === 'win32',
+    });
+  } else {
+    console.log('[backend/dev] Workers auto-start disabled (BACKEND_DEV_START_WORKERS=false).');
+  }
+
+  const shutdown = () => {
+    if (workersChild && !workersChild.killed) workersChild.kill();
+    if (!apiChild.killed) apiChild.kill();
+  };
+
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+
+  const handleExit = (name, code) => {
+    const normalized = typeof code === 'number' ? code : 0;
+    if (normalized !== 0) {
+      console.error(`[backend/dev] ${name} exited with code ${normalized}`);
+      shutdown();
+      process.exit(normalized);
+    }
+  };
+
+  apiChild.on('exit', (code) => {
+    handleExit('api', code);
+    if (!workersChild || workersChild.killed) process.exit(code ?? 0);
+  });
+
+  if (workersChild) {
+    workersChild.on('exit', (code) => {
+      handleExit('workers', code);
+      if (apiChild.killed) process.exit(code ?? 0);
+    });
+  }
 };
 
 void main();

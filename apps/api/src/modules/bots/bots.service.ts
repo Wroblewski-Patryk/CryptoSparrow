@@ -4,7 +4,10 @@ import { runtimePositionAutomationService } from '../engine/runtimePositionAutom
 import { runtimeSignalLoop } from '../engine/runtimeSignalLoop.service';
 import { runtimeTelemetryService } from '../engine/runtimeTelemetry.service';
 import { getRuntimeTicker } from '../engine/runtimeTickerStore';
-import { parseStrategySignalRules } from '../engine/strategySignalEvaluator';
+import {
+  evaluateStrategySignalAtIndex,
+  parseStrategySignalRules,
+} from '../engine/strategySignalEvaluator';
 import {
   AssistantDryRunDto,
   CreateBotDto,
@@ -236,7 +239,7 @@ const writeLiveConsentAudit = async (params: {
 const getOwnedBot = async (userId: string, botId: string) =>
   prisma.bot.findFirst({
     where: { id: botId, userId },
-    select: { id: true, marketType: true },
+    select: { id: true, marketType: true, exchange: true, apiKeyId: true },
   });
 
 const getOwnedBotRuntimeSession = async (userId: string, botId: string, sessionId: string) =>
@@ -265,10 +268,54 @@ const getOwnedSymbolGroup = async (userId: string, symbolGroupId: string) =>
     select: {
       id: true,
       marketUniverse: {
-        select: { marketType: true },
+        select: { marketType: true, exchange: true },
       },
     },
   });
+
+const getOwnedApiKey = async (userId: string, apiKeyId: string) =>
+  prisma.apiKey.findFirst({
+    where: { id: apiKeyId, userId },
+    select: {
+      id: true,
+      exchange: true,
+    },
+  });
+
+const findLatestApiKeyByExchange = async (userId: string, exchange: 'BINANCE') =>
+  prisma.apiKey.findFirst({
+    where: {
+      userId,
+      exchange,
+    },
+    orderBy: { updatedAt: 'desc' },
+    select: {
+      id: true,
+      exchange: true,
+    },
+  });
+
+const resolveCompatibleBotApiKey = async (params: {
+  userId: string;
+  exchange: 'BINANCE';
+  requestedApiKeyId?: string | null;
+  requireForActivation: boolean;
+}) => {
+  if (params.requestedApiKeyId) {
+    const apiKey = await getOwnedApiKey(params.userId, params.requestedApiKeyId);
+    if (!apiKey) throw new Error('BOT_LIVE_API_KEY_NOT_FOUND');
+    if (apiKey.exchange !== params.exchange) {
+      throw new Error('BOT_LIVE_API_KEY_EXCHANGE_MISMATCH');
+    }
+    return apiKey.id;
+  }
+
+  if (!params.requireForActivation) return null;
+
+  const latest = await findLatestApiKeyByExchange(params.userId, params.exchange);
+  if (!latest) throw new Error('BOT_LIVE_API_KEY_NOT_FOUND');
+  return latest.id;
+};
 
 const getOwnedMarketUniverse = async (userId: string, marketUniverseId: string) =>
   prisma.marketUniverse.findFirst({
@@ -276,6 +323,7 @@ const getOwnedMarketUniverse = async (userId: string, marketUniverseId: string) 
     select: {
       id: true,
       name: true,
+      exchange: true,
       marketType: true,
       whitelist: true,
       blacklist: true,
@@ -305,6 +353,57 @@ const computePriceFromLeveragedMovePercent = (
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+
+const hasAdvancedCloseMode = (config: unknown) => {
+  const root = asRecord(config);
+  const close = asRecord(root?.close);
+  const mode = typeof close?.mode === 'string' ? close.mode.trim().toLowerCase() : null;
+  return mode === 'advanced';
+};
+
+const resolveBotAdvancedCloseMode = async (userId: string, botId: string) => {
+  const [groupLinks, legacyLinks] = await Promise.all([
+    prisma.marketGroupStrategyLink.findMany({
+      where: {
+        isEnabled: true,
+        botMarketGroup: {
+          botId,
+          userId,
+        },
+      },
+      select: {
+        strategy: {
+          select: {
+            config: true,
+          },
+        },
+      },
+    }),
+    prisma.botStrategy.findMany({
+      where: {
+        isEnabled: true,
+        botId,
+        bot: {
+          userId,
+        },
+      },
+      select: {
+        strategy: {
+          select: {
+            config: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  const configs = [
+    ...groupLinks.map((item) => item.strategy.config),
+    ...legacyLinks.map((item) => item.strategy.config),
+  ];
+
+  return configs.some((config) => hasAdvancedCloseMode(config));
+};
 
 const toFiniteNumber = (value: unknown): number | null => {
   const parsed = Number(value);
@@ -654,6 +753,24 @@ const buildSignalIndicatorSummary = (params: {
 
   return parts.length > 0 ? parts.join(' | ') : null;
 };
+
+const buildComputedSignalDirection = (params: {
+  strategyConfig: Record<string, unknown> | null | undefined;
+  closes: number[];
+}): 'LONG' | 'SHORT' | 'EXIT' | null => {
+  if (!params.strategyConfig || params.closes.length === 0) return null;
+  const rules = parseStrategySignalRules(params.strategyConfig);
+  if (!rules) return null;
+  const candles = params.closes
+    .filter((value): value is number => Number.isFinite(value))
+    .map((close) => ({ close }));
+  if (candles.length === 0) return null;
+  const cache = new Map<string, Array<number | null>>();
+  const index = candles.length - 1;
+  const direction = evaluateStrategySignalAtIndex(rules, candles, index, cache);
+  if (direction === 'LONG' || direction === 'SHORT' || direction === 'EXIT') return direction;
+  return null;
+};
 const resolveCreateMarketGroupToSymbolGroup = async (userId: string, marketGroupId: string) => {
   const directSymbolGroup = await getOwnedSymbolGroup(userId, marketGroupId);
   if (directSymbolGroup) return directSymbolGroup;
@@ -669,7 +786,7 @@ const resolveCreateMarketGroupToSymbolGroup = async (userId: string, marketGroup
     select: {
       id: true,
       marketUniverse: {
-        select: { marketType: true },
+        select: { marketType: true, exchange: true },
       },
     },
     orderBy: { createdAt: 'asc' },
@@ -690,7 +807,7 @@ const resolveCreateMarketGroupToSymbolGroup = async (userId: string, marketGroup
     select: {
       id: true,
       marketUniverse: {
-        select: { marketType: true },
+        select: { marketType: true, exchange: true },
       },
     },
   });
@@ -784,6 +901,9 @@ const validateSymbolGroupForBot = async (params: {
   if (symbolGroup.marketUniverse.marketType !== bot.marketType) {
     throw new Error('BOT_MARKET_GROUP_MARKET_TYPE_MISMATCH');
   }
+  if (symbolGroup.marketUniverse.exchange !== bot.exchange) {
+    throw new Error('BOT_MARKET_GROUP_EXCHANGE_MISMATCH');
+  }
 };
 
 export const listBots = async (userId: string, query: ListBotsQueryDto = {}) => {
@@ -837,14 +957,21 @@ export const getBot = async (userId: string, id: string) => {
 export const createBot = async (userId: string, data: CreateBotDto) => {
   validateLiveConsentState(data);
 
-  const { strategyId, marketGroupId, ...botData } = data;
+  const { strategyId, marketGroupId, apiKeyId, ...botData } = data;
   const strategy = await getOwnedStrategy(userId, strategyId);
   if (!strategy) throw new Error('BOT_STRATEGY_NOT_FOUND');
 
   const symbolGroup = await resolveCreateMarketGroupToSymbolGroup(userId, marketGroupId);
   if (!symbolGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
   const derivedMarketType = symbolGroup.marketUniverse.marketType;
+  const derivedExchange = symbolGroup.marketUniverse.exchange;
   const derivedMaxOpenPositions = deriveMaxOpenPositionsFromStrategy(strategy.config);
+  const resolvedApiKeyId = await resolveCompatibleBotApiKey({
+    userId,
+    exchange: derivedExchange,
+    requestedApiKeyId: apiKeyId,
+    requireForActivation: botData.mode === 'LIVE' && botData.isActive,
+  });
 
   if (botData.isActive) {
     await assertNoDuplicateActiveBotByStrategyAndSymbolGroup({
@@ -859,6 +986,8 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
       data: {
         userId,
         ...botData,
+        apiKeyId: resolvedApiKeyId,
+        exchange: derivedExchange,
         marketType: derivedMarketType,
         positionMode: 'ONE_WAY',
         maxOpenPositions: derivedMaxOpenPositions,
@@ -959,7 +1088,19 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
   const requestedStrategyId = strategyIdUpdateRequested ? (data.strategyId ?? null) : undefined;
   const marketGroupIdUpdateRequested = Object.prototype.hasOwnProperty.call(data, 'marketGroupId');
   const requestedMarketGroupId = marketGroupIdUpdateRequested ? (data.marketGroupId ?? null) : undefined;
+  const apiKeyIdUpdateRequested = Object.prototype.hasOwnProperty.call(data, 'apiKeyId');
+  const requestedApiKeyId = apiKeyIdUpdateRequested ? (data.apiKeyId ?? null) : undefined;
   const nextIsActive = data.isActive ?? existing.isActive;
+  const nextMode = nextState.mode;
+  let targetExchange = existing.exchange as 'BINANCE';
+  let targetMarketType = existing.marketType as 'FUTURES' | 'SPOT';
+
+  if (requestedMarketGroupId) {
+    const resolvedGroup = await resolveCreateMarketGroupToSymbolGroup(userId, requestedMarketGroupId);
+    if (!resolvedGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
+    targetExchange = resolvedGroup.marketUniverse.exchange;
+    targetMarketType = resolvedGroup.marketUniverse.marketType;
+  }
 
   if (nextIsActive) {
     const targetStrategyId = requestedStrategyId !== undefined ? requestedStrategyId : (existing.strategyId ?? null);
@@ -996,11 +1137,32 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
     }
   }
 
-  const { strategyId: _ignoredStrategyId, ...botData } = data;
+  const shouldRequireLiveApiKey = nextMode === 'LIVE' && nextIsActive;
+  let resolvedApiKeyId = existing.apiKeyId ?? null;
+  if (shouldRequireLiveApiKey || apiKeyIdUpdateRequested) {
+    const desiredApiKeyId =
+      requestedApiKeyId !== undefined ? requestedApiKeyId : (existing.apiKeyId ?? null);
+    resolvedApiKeyId = await resolveCompatibleBotApiKey({
+      userId,
+      exchange: targetExchange,
+      requestedApiKeyId: desiredApiKeyId,
+      requireForActivation: shouldRequireLiveApiKey,
+    });
+  }
+
+  const {
+    strategyId: _ignoredStrategyId,
+    marketGroupId: _ignoredMarketGroupId,
+    apiKeyId: _ignoredApiKeyId,
+    ...botData
+  } = data;
   const updated = await prisma.bot.update({
     where: { id: existing.id },
     data: {
       ...botData,
+      exchange: targetExchange,
+      marketType: targetMarketType,
+      apiKeyId: resolvedApiKeyId,
       consentTextVersion: nextConsentTextVersion,
     },
     include: {
@@ -1948,6 +2110,14 @@ export const listBotRuntimeSessionSymbolStats = async (
       }
     }
   }
+  if (configuredStrategyBySymbol.size === 0 && strategiesById.size > 0) {
+    const [fallbackStrategyId] = [...strategiesById.keys()];
+    for (const symbol of symbols) {
+      if (!configuredStrategyBySymbol.has(symbol)) {
+        configuredStrategyBySymbol.set(symbol, fallbackStrategyId);
+      }
+    }
+  }
 
   const strategySeriesKeys = new Map<string, { symbol: string; interval: string }>();
   for (const symbol of symbols) {
@@ -2052,23 +2222,28 @@ export const listBotRuntimeSessionSymbolStats = async (
     const fallbackStrategyId = configuredStrategyBySymbol.get(symbol) ?? null;
     const signalStrategyId = latestSignal?.strategyId ?? fallbackStrategyId;
     const signalStrategy = signalStrategyId != null ? strategiesById.get(signalStrategyId) ?? null : null;
-    const signalConditionSummary = buildSignalConditionSummary(
-      signalStrategy?.config ?? null,
-      latestSignal?.signalDirection ?? null
-    );
-    const signalAnalysis =
-      signalStrategyId != null ? latestSignal?.analysisByStrategy?.[signalStrategyId] ?? null : null;
     const signalSeriesKey =
       signalStrategy?.interval != null ? `${symbol}|${signalStrategy.interval.trim().toLowerCase()}` : null;
     const signalCloses = signalSeriesKey ? candleClosesBySeries.get(signalSeriesKey) ?? [] : [];
+    const computedSignalDirection = buildComputedSignalDirection({
+      strategyConfig: signalStrategy?.config ?? null,
+      closes: signalCloses,
+    });
+    const effectiveSignalDirection = computedSignalDirection ?? latestSignal?.signalDirection ?? null;
+    const signalConditionSummary = buildSignalConditionSummary(
+      signalStrategy?.config ?? null,
+      effectiveSignalDirection
+    );
+    const signalAnalysis =
+      signalStrategyId != null ? latestSignal?.analysisByStrategy?.[signalStrategyId] ?? null : null;
     const signalIndicatorSummary = buildSignalIndicatorSummary({
       strategyConfig: signalStrategy?.config ?? null,
-      direction: latestSignal?.signalDirection ?? null,
+      direction: effectiveSignalDirection,
       closes: signalCloses,
     });
     const signalConditionLines = buildSignalConditionLines({
       strategyConfig: signalStrategy?.config ?? null,
-      direction: latestSignal?.signalDirection ?? null,
+      direction: effectiveSignalDirection,
       closes: signalCloses,
     });
     const useComputedSignalValues = signalCloses.length > 0;
@@ -2104,7 +2279,7 @@ export const listBotRuntimeSessionSymbolStats = async (
       lastPrice,
       lastSignalAt: stat?.lastSignalAt ?? null,
       lastTradeAt: stat?.lastTradeAt ?? latestTradeAtBySymbol.get(symbol) ?? null,
-      lastSignalDirection: latestSignal?.signalDirection ?? null,
+      lastSignalDirection: effectiveSignalDirection,
       lastSignalDecisionAt: latestSignal?.eventAt ?? stat?.lastSignalAt ?? null,
       lastSignalMessage: latestSignal?.message ?? null,
       lastSignalReason: latestSignal?.mergeReason ?? null,
@@ -2217,11 +2392,13 @@ export const listBotRuntimeSessionTrades = async (
         id: true,
         symbol: true,
         side: true,
+        lifecycleAction: true,
         price: true,
         quantity: true,
         fee: true,
         realizedPnl: true,
         executedAt: true,
+        createdAt: true,
         orderId: true,
         positionId: true,
         strategyId: true,
@@ -2231,6 +2408,77 @@ export const listBotRuntimeSessionTrades = async (
     }),
   ]);
 
+  const positionIds = [...new Set(items.map((trade) => trade.positionId).filter((value): value is string => Boolean(value)))];
+
+  const positionMetaById = new Map<string, { side: 'LONG' | 'SHORT'; leverage: number; entryPrice: number }>();
+  const lifecycleActionByTradeId = new Map<string, 'OPEN' | 'DCA' | 'CLOSE' | 'UNKNOWN'>();
+
+  if (positionIds.length > 0) {
+    const [positionMetaRows, allPositionTrades] = await Promise.all([
+      prisma.position.findMany({
+        where: {
+          id: { in: positionIds },
+          userId,
+        },
+        select: {
+          id: true,
+          side: true,
+          leverage: true,
+          entryPrice: true,
+        },
+      }),
+      prisma.trade.findMany({
+        where: {
+          userId,
+          botId,
+          positionId: {
+            in: positionIds,
+          },
+        },
+        orderBy: [{ executedAt: 'asc' }, { createdAt: 'asc' }],
+        select: {
+          id: true,
+          positionId: true,
+          side: true,
+        },
+      }),
+    ]);
+
+    for (const row of positionMetaRows) {
+      positionMetaById.set(row.id, {
+        side: row.side,
+        leverage: row.leverage,
+        entryPrice: row.entryPrice,
+      });
+    }
+
+    const tradesByPosition = new Map<string, Array<{ id: string; side: 'BUY' | 'SELL' }>>();
+    for (const trade of allPositionTrades) {
+      if (!trade.positionId) continue;
+      const bucket = tradesByPosition.get(trade.positionId) ?? [];
+      bucket.push({
+        id: trade.id,
+        side: trade.side,
+      });
+      tradesByPosition.set(trade.positionId, bucket);
+    }
+
+    for (const [positionId, trades] of tradesByPosition.entries()) {
+      const positionMeta = positionMetaById.get(positionId);
+      if (!positionMeta) continue;
+      const entrySide: 'BUY' | 'SELL' = positionMeta.side === 'LONG' ? 'BUY' : 'SELL';
+      let entryLegs = 0;
+      for (const trade of trades) {
+        if (trade.side === entrySide) {
+          lifecycleActionByTradeId.set(trade.id, entryLegs === 0 ? 'OPEN' : 'DCA');
+          entryLegs += 1;
+          continue;
+        }
+        lifecycleActionByTradeId.set(trade.id, 'CLOSE');
+      }
+    }
+  }
+
   return {
     sessionId,
     total,
@@ -2238,10 +2486,38 @@ export const listBotRuntimeSessionTrades = async (
       startedAt: session.startedAt,
       finishedAt: windowEnd,
     },
-    items: items.map((trade) => ({
-      ...trade,
-      notional: trade.price * trade.quantity,
-    })),
+    items: items.map((trade) => {
+      const notional = trade.price * trade.quantity;
+      const positionMeta = positionMetaById.get(trade.positionId ?? '');
+      const leverage = positionMeta?.leverage ?? 1;
+      const effectiveLeverage = Number.isFinite(leverage) && leverage > 0 ? leverage : 1;
+      const inferredLifecycleAction =
+        trade.lifecycleAction && trade.lifecycleAction !== 'UNKNOWN'
+          ? trade.lifecycleAction
+          : lifecycleActionByTradeId.get(trade.id) ?? 'UNKNOWN';
+      const marginNotional =
+        inferredLifecycleAction === 'CLOSE' && positionMeta
+          ? positionMeta.entryPrice * trade.quantity
+          : notional;
+      return {
+        id: trade.id,
+        symbol: trade.symbol,
+        side: trade.side,
+        price: trade.price,
+        quantity: trade.quantity,
+        fee: trade.fee ?? 0,
+        realizedPnl: trade.realizedPnl ?? 0,
+        executedAt: trade.executedAt,
+        orderId: trade.orderId,
+        positionId: trade.positionId,
+        strategyId: trade.strategyId,
+        origin: trade.origin,
+        managementMode: trade.managementMode,
+        lifecycleAction: inferredLifecycleAction,
+        notional,
+        margin: marginNotional / effectiveLeverage,
+      };
+    }),
   };
 };
 
@@ -2253,6 +2529,7 @@ export const listBotRuntimeSessionPositions = async (
 ) => {
   const session = await getOwnedBotRuntimeSession(userId, botId, sessionId);
   if (!session) return null;
+  const showDynamicStopColumns = await resolveBotAdvancedCloseMode(userId, botId);
 
   const normalizedSymbol = query.symbol?.trim().toUpperCase();
   const windowEnd = resolveSessionWindowEnd(session);
@@ -2326,6 +2603,7 @@ export const listBotRuntimeSessionPositions = async (
       openCount: 0,
       closedCount: 0,
       openOrdersCount: openOrders.length,
+      showDynamicStopColumns,
       window: {
         startedAt: session.startedAt,
         finishedAt: windowEnd,
@@ -2519,6 +2797,7 @@ export const listBotRuntimeSessionPositions = async (
     openCount: openItems.length,
     closedCount: historyItems.length,
     openOrdersCount: openOrders.length,
+    showDynamicStopColumns,
     window: {
       startedAt: session.startedAt,
       finishedAt: windowEnd,

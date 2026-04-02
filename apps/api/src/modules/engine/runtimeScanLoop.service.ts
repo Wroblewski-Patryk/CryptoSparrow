@@ -7,6 +7,7 @@ type RuntimeScanDeps = {
   listScanSymbols: () => Promise<string[]>;
   getTickerSnapshot: (symbol: string) => Promise<{
     symbol: string;
+    exchange: 'BINANCE';
     marketType: 'FUTURES' | 'SPOT';
     lastPrice: number;
     priceChangePercent24h: number;
@@ -46,6 +47,7 @@ const defaultDeps: RuntimeScanDeps = {
     if (!ticker) return null;
     return {
       symbol: ticker.symbol,
+      exchange: 'BINANCE',
       marketType: ticker.marketType,
       lastPrice: ticker.lastPrice,
       priceChangePercent24h: ticker.priceChangePercent24h,
@@ -97,6 +99,7 @@ export class RuntimeScanLoop {
           if (!ticker) return;
           await this.deps.processTicker({
             type: 'ticker',
+            exchange: ticker.exchange,
             marketType: ticker.marketType,
             symbol: ticker.symbol,
             eventTime: this.deps.nowMs(),

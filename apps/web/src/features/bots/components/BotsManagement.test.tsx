@@ -507,6 +507,7 @@ describe("BotsManagement", () => {
           id: "trade-1",
           symbol: "BTCUSDT",
           side: "BUY",
+          lifecycleAction: "OPEN",
           price: 70000,
           quantity: 0.01,
           fee: 0.7,
@@ -518,6 +519,7 @@ describe("BotsManagement", () => {
           origin: "BOT",
           managementMode: "BOT",
           notional: 700,
+          margin: 700,
         },
       ],
     });

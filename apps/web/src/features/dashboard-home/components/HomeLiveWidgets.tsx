@@ -181,6 +181,28 @@ const SignalPill = ({ value }: { value: SignalPillValue }) => (
   </span>
 );
 
+type TradeActionValue = "OPEN" | "DCA" | "CLOSE" | "UNKNOWN";
+
+const tradeActionPillClass = (value: TradeActionValue) => {
+  if (value === "OPEN") return "border-success/40 bg-success/10 text-success";
+  if (value === "DCA") return "border-warning/40 bg-warning/10 text-warning";
+  if (value === "CLOSE") return "border-primary/40 bg-primary/10 text-primary";
+  return "border-base-300 bg-base-100 text-base-content/70";
+};
+
+const tradeActionLabel = (value: TradeActionValue) => {
+  if (value === "OPEN") return "Otwarcie";
+  if (value === "DCA") return "DCA";
+  if (value === "CLOSE") return "Zamkniecie";
+  return "Nieznane";
+};
+
+const TradeActionPill = ({ value }: { value: TradeActionValue }) => (
+  <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${tradeActionPillClass(value)}`}>
+    {tradeActionLabel(value)}
+  </span>
+);
+
 const resolveUsedMargin = (positions: BotRuntimePositionsResponse | null) =>
   (positions?.openItems ?? []).reduce((sum, p) => {
     const lev = Number.isFinite(p.leverage) && p.leverage > 0 ? p.leverage : 1;
@@ -256,7 +278,6 @@ export default function HomeLiveWidgets() {
   const [bots, setBots] = useState<Bot[]>([]);
   const [snapshots, setSnapshots] = useState<RuntimeSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
   const [selectedBotId, setSelectedBotId] = useState<string | null>(null);
@@ -267,16 +288,14 @@ export default function HomeLiveWidgets() {
   const loadInFlightRef = useRef(false);
   const loadStartedAtRef = useRef<number | null>(null);
 
-  const load = useCallback(async (opts?: { silent?: boolean; showRefreshing?: boolean }) => {
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
     const silent = opts?.silent ?? false;
-    const showRefreshing = opts?.showRefreshing ?? false;
     if (silent && loadInFlightRef.current) {
       const startedAt = loadStartedAtRef.current ?? 0;
       if (Date.now() - startedAt < LOAD_STALE_AFTER_MS) return;
     }
     loadInFlightRef.current = true;
     loadStartedAtRef.current = Date.now();
-    if (showRefreshing) setRefreshing(true);
     if (!silent) {
       setLoading(true);
       setError(null);
@@ -341,7 +360,6 @@ export default function HomeLiveWidgets() {
     } finally {
       loadInFlightRef.current = false;
       loadStartedAtRef.current = null;
-      if (showRefreshing) setRefreshing(false);
       if (!silent) setLoading(false);
     }
   }, []);
@@ -518,13 +536,13 @@ export default function HomeLiveWidgets() {
     };
   }, [selected, selectedTrades, liveTickerPrices]);
 
-  const showDynamicStopColumns = useMemo(
-    () =>
-      (selectedData?.open ?? []).some(
-        (row) => row.dynamicTtpStopLoss != null || row.dynamicTslStopLoss != null
-      ),
-    [selectedData?.open]
-  );
+  const showDynamicStopColumns = useMemo(() => {
+    const fromStrategyMode = selected?.positions?.showDynamicStopColumns;
+    if (typeof fromStrategyMode === "boolean") return fromStrategyMode;
+    return (selectedData?.open ?? []).some(
+      (row) => row.dynamicTtpStopLoss != null || row.dynamicTslStopLoss != null
+    );
+  }, [selected?.positions?.showDynamicStopColumns, selectedData?.open]);
 
   if (loading) return <LoadingState title="Ladowanie dashboardu operacyjnego" />;
   if (error) return <ErrorState title="Nie udalo sie zaladowac dashboardu operacyjnego" description={error} retryLabel="Sprobuj ponownie" onRetry={() => void load()} />;
@@ -620,22 +638,23 @@ export default function HomeLiveWidgets() {
             <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-semibold">{selected?.bot.mode === "LIVE" ? "Zlecenia i historia transakcji" : "Historia transakcji"}</h3><span className="text-xs opacity-60">{selectedTradesLoading ? "Ladowanie..." : `${selectedData?.trades.length ?? 0}`}</span></div>
             <div className="overflow-x-auto rounded-lg border border-base-300/70 bg-base-200/40">
               <table className="table table-sm">
-                <thead><tr><th>Czas</th><th>Symbol</th><th>Side</th><th>Qty</th><th>Price</th><th>Notional</th><th>Fee</th><th>Realized PnL</th><th>Origin</th></tr></thead>
+                <thead><tr><th>Czas</th><th>Symbol</th><th>Side</th><th>Action</th><th>Qty</th><th>Price</th><th>Margin</th><th>Fee</th><th>Realized PnL</th><th>Origin</th></tr></thead>
                 <tbody>
                   {(selectedData?.trades ?? []).map((t) => (
                     <tr key={t.id}>
                       <td>{formatDateTime(t.executedAt)}</td>
                       <td className="font-medium">{t.symbol}</td>
                       <td><DirectionPill value={t.side === "BUY" ? "BUY" : "SELL"} /></td>
+                      <td><TradeActionPill value={t.lifecycleAction} /></td>
                       <td>{formatNumber(t.quantity, { maximumFractionDigits: 6 })}</td>
                       <td>{formatNumber(t.price, { maximumFractionDigits: 4 })}</td>
-                      <td>{formatCurrency(t.notional)}</td>
+                      <td>{formatCurrency(t.margin)}</td>
                       <td>{formatCurrency(t.fee)}</td>
                       <td className={t.realizedPnl >= 0 ? "text-success" : "text-error"}>{formatCurrency(t.realizedPnl)}</td>
                       <td>{t.origin}</td>
                     </tr>
                   ))}
-                  {(selectedData?.trades.length ?? 0) === 0 ? <tr><td colSpan={9} className="text-center text-xs opacity-70">Brak historii transakcji.</td></tr> : null}
+                  {(selectedData?.trades.length ?? 0) === 0 ? <tr><td colSpan={10} className="text-center text-xs opacity-70">Brak historii transakcji.</td></tr> : null}
                 </tbody>
               </table>
             </div>
@@ -747,6 +766,11 @@ export default function HomeLiveWidgets() {
                 </span>
               </p>
             </div>
+            {selectedData?.session?.status !== "RUNNING" ? (
+              <p className="text-[11px] rounded-md border border-warning/40 bg-warning/10 px-2 py-1 text-warning-content/80">
+                Brak aktywnej sesji runtime. Sprawdz czy uruchomione sa workery execution + market-stream.
+              </p>
+            ) : null}
 
             <div className="space-y-2 text-xs">
               <h4 className="text-[11px] uppercase tracking-wide opacity-60">Kapital i ryzyko</h4>
@@ -796,18 +820,6 @@ export default function HomeLiveWidgets() {
                 <span className="opacity-65">Max drawdown</span>
                 <span className="font-semibold text-error">{formatCurrency(-(selectedData?.drawdown.abs ?? 0))}</span>
               </p>
-            </div>
-
-            <div className="flex items-center gap-2 pt-1">
-              <button
-                type="button"
-                className={BTN_SECONDARY}
-                onClick={() => void load({ silent: true, showRefreshing: true })}
-                disabled={refreshing}
-              >
-                {refreshing ? "Odswiezanie..." : "Odswiez"}
-              </button>
-              <Link href="/dashboard/bots" className={BTN_PRIMARY}>Boty runtime</Link>
             </div>
 
             <p className="text-[11px] opacity-60">

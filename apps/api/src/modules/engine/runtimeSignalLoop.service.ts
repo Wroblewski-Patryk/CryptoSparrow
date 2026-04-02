@@ -42,6 +42,7 @@ type ActiveBot = {
   id: string;
   userId: string;
   mode: 'PAPER' | 'LIVE';
+  exchange: 'BINANCE';
   paperStartBalance: number;
   marketType: 'FUTURES' | 'SPOT';
   marketGroups: ActiveBotMarketGroup[];
@@ -202,6 +203,7 @@ const defaultDeps: RuntimeSignalLoopDeps = {
         id: true,
         userId: true,
         mode: true,
+        exchange: true,
         paperStartBalance: true,
         marketType: true,
         botMarketGroups: {
@@ -214,6 +216,11 @@ const defaultDeps: RuntimeSignalLoopDeps = {
               select: {
                 id: true,
                 symbols: true,
+                marketUniverse: {
+                  select: {
+                    exchange: true,
+                  },
+                },
               },
             },
             strategyLinks: {
@@ -263,6 +270,7 @@ const defaultDeps: RuntimeSignalLoopDeps = {
         id: bot.id,
         userId: bot.userId,
         mode: bot.mode as 'PAPER' | 'LIVE',
+        exchange: bot.exchange,
         paperStartBalance: Number.isFinite(bot.paperStartBalance) ? Math.max(0, bot.paperStartBalance) : 10_000,
         marketType: bot.marketType,
         marketGroups: [...marketGroupsFromNewModel].sort((left, right) => left.executionOrder - right.executionOrder),
@@ -709,6 +717,7 @@ export class RuntimeSignalLoop {
     await Promise.all(
       bots.map(async (bot) => {
         if (bot.marketType !== event.marketType) return;
+        if (bot.exchange !== event.exchange) return;
         const sessionId = await this.deps.ensureRuntimeSession?.({
           userId: bot.userId,
           botId: bot.id,
@@ -743,6 +752,7 @@ export class RuntimeSignalLoop {
                   marketType: bot.marketType,
                   symbol: event.symbol,
                   strategy,
+                  decisionOpenTime: event.openTime,
                 });
                 strategyAnalysisById[strategy.strategyId] = {
                   conditionLines: evaluation.conditionLines,
@@ -928,6 +938,7 @@ export class RuntimeSignalLoop {
               userId: bot.userId,
               botId: bot.id,
               mode: bot.mode,
+              exchange: bot.exchange,
               marketType: bot.marketType,
               paperStartBalance: bot.paperStartBalance,
               nowMs: this.deps.nowMs(),
@@ -1080,8 +1091,9 @@ export class RuntimeSignalLoop {
     marketType: 'FUTURES' | 'SPOT';
     symbol: string;
     strategy: ActiveBotStrategy;
+    decisionOpenTime: number;
   }): StrategyEvaluation {
-    const { marketType, symbol, strategy } = input;
+    const { marketType, symbol, strategy, decisionOpenTime } = input;
     if (!strategy.strategyConfig) {
       return {
         direction: null,
@@ -1107,8 +1119,12 @@ export class RuntimeSignalLoop {
       };
     }
     const latestIndex = candles.length - 1;
+    const decisionIndex = (() => {
+      const index = candles.findIndex((candle) => candle.openTime === decisionOpenTime);
+      return index >= 0 ? index : latestIndex;
+    })();
     const indicatorCache = new Map<string, Array<number | null>>();
-    const direction = evaluateStrategySignalAtIndex(signalRules, candles, latestIndex, indicatorCache);
+    const direction = evaluateStrategySignalAtIndex(signalRules, candles, decisionIndex, indicatorCache);
 
     const ensureEma = (period: number) => {
       const key = `EMA_${period}`;
@@ -1143,8 +1159,8 @@ export class RuntimeSignalLoop {
       if (indicator.includes('EMA')) {
         const fast = clampPeriod(rule.params.fast, 9);
         const slow = clampPeriod(rule.params.slow, 21);
-        const fastValue = ensureEma(fast)[latestIndex];
-        const slowValue = ensureEma(slow)[latestIndex];
+        const fastValue = ensureEma(fast)[decisionIndex];
+        const slowValue = ensureEma(slow)[decisionIndex];
         conditionLines.push({
           scope,
           left: `EMA(${fast})`,
@@ -1165,7 +1181,7 @@ export class RuntimeSignalLoop {
 
       if (indicator.includes('RSI')) {
         const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
-        const value = ensureRsi(period)[latestIndex];
+        const value = ensureRsi(period)[decisionIndex];
         conditionLines.push({
           scope,
           left: `RSI(${period})`,
@@ -1182,7 +1198,7 @@ export class RuntimeSignalLoop {
 
       if (indicator.includes('MOMENTUM')) {
         const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
-        const value = ensureMomentum(period)[latestIndex];
+        const value = ensureMomentum(period)[decisionIndex];
         conditionLines.push({
           scope,
           left: `MOMENTUM(${period})`,
@@ -1229,6 +1245,7 @@ export class RuntimeSignalLoop {
     if (tickerIsFresh) return;
     await this.deps.processPositionAutomation({
       type: 'ticker',
+      exchange: event.exchange,
       marketType: event.marketType,
       symbol: event.symbol,
       eventTime: event.eventTime,

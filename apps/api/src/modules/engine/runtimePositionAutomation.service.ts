@@ -1,4 +1,4 @@
-import { BotMode, Position, PositionSide, Prisma, TradeMarket } from '@prisma/client';
+import { BotMode, Exchange, Position, PositionSide, Prisma, TradeMarket } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { StreamTickerEvent } from '../market-stream/binanceStream.types';
 import { orchestrateRuntimeSignal } from './executionOrchestrator.service';
@@ -23,7 +23,7 @@ type RuntimeManagedPosition = Pick<
   | 'takeProfit'
   | 'managementMode'
 > & {
-  bot: { mode: BotMode; marketType: TradeMarket; paperStartBalance: number } | null;
+  bot: { mode: BotMode; marketType: TradeMarket; exchange: Exchange; paperStartBalance: number } | null;
 };
 
 type RuntimePositionAutomationDeps = {
@@ -56,6 +56,7 @@ type RuntimePositionAutomationDeps = {
     userId: string;
     botId?: string | null;
     mode: 'PAPER' | 'LIVE';
+    exchange: Exchange;
     marketType: TradeMarket;
     paperStartBalance: number;
     markPrice: number;
@@ -145,10 +146,28 @@ const getRuntimeManualPositionMode = (): 'PAPER' | 'LIVE' =>
 
 const getRuntimeManualPositionMarketType = (): TradeMarket =>
   (process.env.RUNTIME_MANUAL_POSITION_MARKET_TYPE ?? 'FUTURES') as TradeMarket;
+const getRuntimeManualPositionExchange = (): Exchange =>
+  (process.env.RUNTIME_MANUAL_POSITION_EXCHANGE ?? 'BINANCE') as Exchange;
 
 const getRuntimeManualPaperStartBalance = () => {
   const parsed = Number.parseFloat(process.env.RUNTIME_MANUAL_PAPER_START_BALANCE ?? '10000');
   return Number.isFinite(parsed) ? Math.max(0, parsed) : 10_000;
+};
+
+const parseFeeRate = (value: string | undefined) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return parsed;
+};
+
+const resolveRuntimeTakerFeeRate = (mode: 'PAPER' | 'LIVE') => {
+  const modeSpecific = parseFeeRate(
+    mode === 'LIVE' ? process.env.RUNTIME_LIVE_TAKER_FEE_RATE : process.env.RUNTIME_PAPER_TAKER_FEE_RATE
+  );
+  if (modeSpecific != null) return modeSpecific;
+  const global = parseFeeRate(process.env.RUNTIME_TAKER_FEE_RATE);
+  if (global != null) return global;
+  return 0.0004;
 };
 
 const resolvePositionExecutionMode = (position: RuntimeManagedPosition): 'PAPER' | 'LIVE' => {
@@ -162,6 +181,11 @@ const resolvePositionMarketType = (position: RuntimeManagedPosition): TradeMarke
     return position.bot.marketType;
   }
   return getRuntimeManualPositionMarketType();
+};
+
+const resolvePositionExchange = (position: RuntimeManagedPosition): Exchange => {
+  if (position.bot?.exchange === 'BINANCE') return position.bot.exchange;
+  return getRuntimeManualPositionExchange();
 };
 
 const resolvePositionPaperStartBalance = (position: RuntimeManagedPosition) => {
@@ -223,6 +247,7 @@ const defaultDeps: RuntimePositionAutomationDeps = {
           select: {
             mode: true,
             marketType: true,
+            exchange: true,
             paperStartBalance: true,
           },
         },
@@ -241,6 +266,8 @@ const defaultDeps: RuntimePositionAutomationDeps = {
     if (dcaQuantity <= 0) return;
 
     const orderSide = input.positionSide === 'LONG' ? 'BUY' : 'SELL';
+    const feeRate = resolveRuntimeTakerFeeRate(input.mode);
+    const dcaFee = input.markPrice * dcaQuantity * feeRate;
     const opened = await openOrderLifecycle(input.userId, {
       botId: input.botId ?? undefined,
       strategyId: input.strategyId ?? undefined,
@@ -281,8 +308,11 @@ const defaultDeps: RuntimePositionAutomationDeps = {
           positionId: input.positionId,
           symbol: input.symbol,
           side: orderSide,
+          lifecycleAction: 'DCA',
           price: input.markPrice,
           quantity: dcaQuantity,
+          fee: dcaFee,
+          realizedPnl: 0,
           origin: 'BOT',
           managementMode: 'BOT_MANAGED',
         },
@@ -307,6 +337,7 @@ const defaultDeps: RuntimePositionAutomationDeps = {
             mode: input.mode,
             orderId: finalizedOrderId,
             addedQuantity: dcaQuantity,
+            fee: dcaFee,
             nextQuantity: input.nextQuantity,
             nextEntryPrice: input.nextEntryPrice,
           } as Prisma.InputJsonValue,
@@ -556,6 +587,7 @@ export class RuntimePositionAutomationService {
     };
 
     const mode = resolvePositionExecutionMode(position);
+    const exchange = resolvePositionExchange(position);
     const marketType = resolvePositionMarketType(position);
     const paperStartBalance = resolvePositionPaperStartBalance(position);
     const dcaLevelCount = resolveDcaLevelCount(input);
@@ -569,6 +601,7 @@ export class RuntimePositionAutomationService {
             userId: position.userId,
             botId: position.botId,
             mode,
+            exchange,
             marketType,
             paperStartBalance,
             markPrice: event.lastPrice,
@@ -597,6 +630,7 @@ export class RuntimePositionAutomationService {
         ? Math.max(0, result.dcaAddedQuantity)
         : Math.max(0, result.nextState.quantity - previousState.quantity);
       if (dcaAddedQuantity > 0) {
+        const dcaFee = event.lastPrice * dcaAddedQuantity * resolveRuntimeTakerFeeRate(mode);
         await this.deps.executeDca({
           userId: position.userId,
           botId: position.botId,
@@ -636,6 +670,7 @@ export class RuntimePositionAutomationService {
             symbol: position.symbol,
             increments: {
               dcaCount: 1,
+              feesPaid: dcaFee,
             },
             lastPrice: event.lastPrice,
             lastTradeAt: eventAt,

@@ -49,7 +49,14 @@ export interface OrderFlowGateway {
 export interface PositionFlowGateway {
   getOpenPositionBySymbol(userId: string, symbol: string): Promise<Position | null>;
   createPosition(input: Prisma.PositionUncheckedCreateInput): Promise<Position>;
-  closePosition(positionId: string, userId: string): Promise<void>;
+  closePosition(
+    positionId: string,
+    userId: string,
+    payload?: {
+      closedAt?: Date;
+      realizedPnl?: number;
+    }
+  ): Promise<void>;
 }
 
 export interface RuntimeExecutionEventGateway {
@@ -82,6 +89,9 @@ export interface RuntimeTradeGateway {
     side: 'BUY' | 'SELL';
     price: number;
     quantity: number;
+    fee?: number;
+    realizedPnl?: number;
+    lifecycleAction?: 'OPEN' | 'DCA' | 'CLOSE' | 'UNKNOWN';
     origin?: 'BOT';
     managementMode?: 'BOT_MANAGED' | 'MANUAL_MANAGED';
   }): Promise<void>;
@@ -109,10 +119,18 @@ const defaultPositionGateway: PositionFlowGateway = {
       orderBy: { openedAt: 'desc' },
     }),
   createPosition: (input) => prisma.position.create({ data: input }),
-  closePosition: async (positionId, userId) => {
+  closePosition: async (positionId, userId, payload) => {
+    const closedAt = payload?.closedAt ?? new Date();
     await prisma.position.updateMany({
       where: { id: positionId, userId, status: 'OPEN' },
-      data: { status: 'CLOSED', closedAt: new Date() },
+      data: {
+        status: 'CLOSED',
+        closedAt,
+        ...(typeof payload?.realizedPnl === 'number' && Number.isFinite(payload.realizedPnl)
+          ? { realizedPnl: payload.realizedPnl }
+          : {}),
+        unrealizedPnl: 0,
+      },
     });
   },
 };
@@ -218,13 +236,38 @@ const defaultRuntimeTradeGateway: RuntimeTradeGateway = {
         positionId: input.positionId,
         symbol: input.symbol,
         side: input.side,
+        lifecycleAction: input.lifecycleAction ?? 'UNKNOWN',
         price: input.price,
         quantity: input.quantity,
+        fee: input.fee,
+        realizedPnl: input.realizedPnl,
         origin: input.origin ?? 'BOT',
         managementMode: input.managementMode ?? 'BOT_MANAGED',
       },
     });
   },
+};
+
+const parseFeeRate = (value: string | undefined) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return parsed;
+};
+
+const resolveRuntimeTakerFeeRate = (mode: RuntimeExecutionMode) => {
+  const modeSpecific = parseFeeRate(
+    mode === 'LIVE' ? process.env.RUNTIME_LIVE_TAKER_FEE_RATE : process.env.RUNTIME_PAPER_TAKER_FEE_RATE
+  );
+  if (modeSpecific != null) return modeSpecific;
+  const global = parseFeeRate(process.env.RUNTIME_TAKER_FEE_RATE);
+  if (global != null) return global;
+  return 0.0004;
+};
+
+const computeTradeFee = (price: number, quantity: number, feeRate: number) => {
+  if (!Number.isFinite(price) || !Number.isFinite(quantity) || !Number.isFinite(feeRate)) return 0;
+  if (price <= 0 || quantity <= 0 || feeRate <= 0) return 0;
+  return price * quantity * feeRate;
 };
 
 export const orchestrateRuntimeSignal = async (
@@ -234,6 +277,7 @@ export const orchestrateRuntimeSignal = async (
   runtimeEventGateway: RuntimeExecutionEventGateway = defaultRuntimeEventGateway,
   runtimeTradeGateway: RuntimeTradeGateway = defaultRuntimeTradeGateway
 ): Promise<OrchestrationResult> => {
+  const feeRate = resolveRuntimeTakerFeeRate(input.mode);
   const openPosition = await positionGateway.getOpenPositionBySymbol(input.userId, input.symbol);
   const decision = decideExecutionAction(
     input.direction,
@@ -276,6 +320,27 @@ export const orchestrateRuntimeSignal = async (
       });
       return { status: 'ignored', reason: 'no_open_position' };
     }
+    const closeEventAt = new Date();
+    const exitFee = computeTradeFee(input.markPrice, openPosition.quantity, feeRate);
+    const entryLegSide = openPosition.side === 'LONG' ? 'BUY' : 'SELL';
+    const entryFeeAggregate = await prisma.trade.aggregate({
+      where: {
+        userId: input.userId,
+        botId: input.botId,
+        positionId: openPosition.id,
+        side: entryLegSide,
+      },
+      _sum: {
+        fee: true,
+      },
+    });
+    const entryFees = entryFeeAggregate._sum.fee ?? 0;
+    const grossPnl =
+      openPosition.side === 'LONG'
+        ? (input.markPrice - openPosition.entryPrice) * openPosition.quantity
+        : (openPosition.entryPrice - input.markPrice) * openPosition.quantity;
+    const realizedPnl = grossPnl - entryFees - exitFee;
+
     const closeOrder = await orderGateway.openOrder(input.userId, {
       botId: input.botId,
       strategyId: input.strategyId,
@@ -287,7 +352,10 @@ export const orchestrateRuntimeSignal = async (
       riskAck: true,
     });
 
-    await positionGateway.closePosition(openPosition.id, input.userId);
+    await positionGateway.closePosition(openPosition.id, input.userId, {
+      closedAt: closeEventAt,
+      realizedPnl,
+    });
     if (closeOrder.status === 'OPEN' || closeOrder.status === 'PARTIALLY_FILLED') {
       await orderGateway.closeOrder(input.userId, closeOrder.id, { riskAck: true });
     }
@@ -301,8 +369,28 @@ export const orchestrateRuntimeSignal = async (
       side: decision.orderSide,
       price: input.markPrice,
       quantity: openPosition.quantity,
+      fee: exitFee,
+      realizedPnl,
+      lifecycleAction: 'CLOSE',
       managementMode: openPosition.managementMode as 'BOT_MANAGED' | 'MANUAL_MANAGED',
     });
+    if (input.botId) {
+      await runtimeTelemetryService.upsertRuntimeSymbolStat({
+        userId: input.userId,
+        botId: input.botId,
+        mode: input.mode,
+        sessionId: input.runtimeSessionId,
+        symbol: input.symbol,
+        increments: {
+          realizedPnl,
+          feesPaid: exitFee,
+          ...(realizedPnl >= 0
+            ? { grossProfit: realizedPnl, winningTrades: 1 }
+            : { grossLoss: Math.abs(realizedPnl), losingTrades: 1 }),
+        },
+        lastTradeAt: closeEventAt,
+      });
+    }
 
     await runtimeEventGateway.writeEvent({
       userId: input.userId,
@@ -317,7 +405,7 @@ export const orchestrateRuntimeSignal = async (
       positionId: openPosition.id,
       positionQty: openPosition.quantity,
       lastPrice: input.markPrice,
-      eventAt: new Date(),
+      eventAt: closeEventAt,
     });
 
     return {
@@ -361,6 +449,8 @@ export const orchestrateRuntimeSignal = async (
   });
 
   await orderGateway.linkOrderToPosition(openOrder.id, position.id);
+  const openEventAt = new Date();
+  const openFee = computeTradeFee(input.markPrice, input.quantity, feeRate);
   await runtimeTradeGateway.createTrade({
     userId: input.userId,
     botId: input.botId,
@@ -371,8 +461,24 @@ export const orchestrateRuntimeSignal = async (
     side: decision.orderSide,
     price: input.markPrice,
     quantity: input.quantity,
+    fee: openFee,
+    realizedPnl: 0,
+    lifecycleAction: 'OPEN',
     managementMode: 'BOT_MANAGED',
   });
+  if (input.botId) {
+    await runtimeTelemetryService.upsertRuntimeSymbolStat({
+      userId: input.userId,
+      botId: input.botId,
+      mode: input.mode,
+      sessionId: input.runtimeSessionId,
+      symbol: input.symbol,
+      increments: {
+        feesPaid: openFee,
+      },
+      lastTradeAt: openEventAt,
+    });
+  }
   await runtimeEventGateway.writeEvent({
     userId: input.userId,
     botId: input.botId,
@@ -386,7 +492,7 @@ export const orchestrateRuntimeSignal = async (
     positionId: position.id,
     positionQty: input.quantity,
     lastPrice: input.markPrice,
-    eventAt: new Date(),
+    eventAt: openEventAt,
   });
 
   return {

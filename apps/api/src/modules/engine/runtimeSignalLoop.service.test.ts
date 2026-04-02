@@ -40,6 +40,21 @@ const strategyExit = {
   weight: 1,
 };
 
+const strategyShortMomentum = {
+  strategyId: 'strategy-short-momentum',
+  strategyInterval: '1m',
+  strategyLeverage: 3,
+  walletRisk: 5,
+  strategyConfig: {
+    open: {
+      indicatorsLong: [],
+      indicatorsShort: [{ name: 'MOMENTUM', params: { period: 2 }, condition: '<', value: 0 }],
+    },
+  },
+  priority: 10,
+  weight: 1,
+};
+
 const createDeps = () => {
   let handler: ((event: MarketStreamEvent) => void | Promise<void>) | null = null;
 
@@ -81,6 +96,7 @@ const withStrategyBot = (deps: any, options?: { maxOpenPositions?: number; strat
       id: 'bot-1',
       userId: 'user-1',
       mode: 'PAPER' as const,
+      exchange: 'BINANCE' as const,
       paperStartBalance: 1000,
       marketType: options?.marketType ?? ('FUTURES' as const),
       marketGroups: [
@@ -108,6 +124,7 @@ const emitFinalCandleSeries = async (
   for (let index = 0; index < points; index += 1) {
     await emit({
       type: 'candle',
+      exchange: 'BINANCE',
       marketType,
       symbol,
       interval,
@@ -133,6 +150,7 @@ describe('RuntimeSignalLoop', () => {
 
     await emit({
       type: 'candle',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       interval: '1m',
@@ -166,6 +184,7 @@ describe('RuntimeSignalLoop', () => {
 
     await emit({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: 60_000,
@@ -175,6 +194,7 @@ describe('RuntimeSignalLoop', () => {
 
     await emit({
       type: 'candle',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       interval: '1m',
@@ -207,6 +227,7 @@ describe('RuntimeSignalLoop', () => {
         id: 'bot-fallback',
         userId: 'user-1',
         mode: 'PAPER' as const,
+        exchange: 'BINANCE' as const,
         paperStartBalance: 1000,
         marketType: 'FUTURES' as const,
         marketGroups: [
@@ -227,6 +248,7 @@ describe('RuntimeSignalLoop', () => {
 
     const tickerEvent: MarketStreamEvent = {
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: 1_000,
@@ -267,6 +289,28 @@ describe('RuntimeSignalLoop', () => {
     );
   });
 
+  it('evaluates direction on the just-closed candle even when series contains a newer candle', () => {
+    const { deps } = createDeps();
+    const loop = new RuntimeSignalLoop(deps);
+
+    const key = 'FUTURES|BTCUSDT|1m';
+    (loop as any).candleSeries.set(key, [
+      { openTime: 0, close: 120 },
+      { openTime: 60_000, close: 110 },
+      { openTime: 120_000, close: 100 },
+      { openTime: 180_000, close: 130 },
+    ]);
+
+    const evaluation = (loop as any).evaluateStrategy({
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      strategy: strategyShortMomentum,
+      decisionOpenTime: 120_000,
+    });
+
+    expect(evaluation.direction).toBe('SHORT');
+  });
+
   it('deduplicates duplicate final-candle window events', async () => {
     const { deps, emit } = createDeps();
     withStrategyBot(deps);
@@ -279,6 +323,7 @@ describe('RuntimeSignalLoop', () => {
 
     await emit({
       type: 'candle',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       interval: '1m',
@@ -341,6 +386,7 @@ describe('RuntimeSignalLoop', () => {
 
     await emit({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: 20_000,
@@ -361,6 +407,7 @@ describe('RuntimeSignalLoop', () => {
     for (let index = 0; index < 8; index += 1) {
       await emit({
         type: 'candle',
+        exchange: 'BINANCE',
         marketType: 'FUTURES',
         symbol: 'BTCUSDT',
         interval: '1m',
@@ -388,6 +435,7 @@ describe('RuntimeSignalLoop', () => {
 
     await loop.processTickerEvent({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: 25_000,

@@ -17,6 +17,7 @@ vi.mock('../services/markets.service', () => ({
 describe('MarketsFlow', () => {
   const catalogFixture = {
     source: 'BINANCE_PUBLIC',
+    exchange: 'BINANCE',
     marketType: 'FUTURES',
     baseCurrency: 'USDT',
     baseCurrencies: ['EUR', 'USDT'],
@@ -45,6 +46,7 @@ describe('MarketsFlow', () => {
     createMock.mockResolvedValue({
       id: 'u1',
       name: 'Top Futures',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       baseCurrency: 'USDT',
       whitelist: ['BTCUSDT'],
@@ -67,6 +69,7 @@ describe('MarketsFlow', () => {
     await waitFor(() => {
       expect(createMock).toHaveBeenCalledWith({
         name: 'Top Futures',
+        exchange: 'BINANCE',
         marketType: 'FUTURES',
         baseCurrency: 'USDT',
         whitelist: ['BTCUSDT', 'ETHUSDT'],

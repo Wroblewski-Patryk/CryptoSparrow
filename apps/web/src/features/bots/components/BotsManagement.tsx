@@ -116,6 +116,20 @@ const toTradeSideBadgeClass = (side: string) => {
   return "badge-ghost";
 };
 
+const toTradeLifecycleBadgeClass = (value: "OPEN" | "DCA" | "CLOSE" | "UNKNOWN") => {
+  if (value === "OPEN") return "badge-success";
+  if (value === "DCA") return "badge-warning";
+  if (value === "CLOSE") return "badge-primary";
+  return "badge-ghost";
+};
+
+const toTradeLifecycleLabel = (value: "OPEN" | "DCA" | "CLOSE" | "UNKNOWN") => {
+  if (value === "OPEN") return "Otwarcie";
+  if (value === "DCA") return "DCA";
+  if (value === "CLOSE") return "Zamkniecie";
+  return "Nieznane";
+};
+
 type MonitorAggregateData = {
   sessionDetail: BotRuntimeSessionDetail;
   symbolStats: BotRuntimeSymbolStatsResponse;
@@ -550,11 +564,13 @@ export default function BotsManagement() {
     let cumulativePnl = 0;
     return items.map((trade, index) => {
       cumulativePnl += trade.realizedPnl;
-      const pnlPct = trade.notional > 0 ? (trade.realizedPnl / trade.notional) * 100 : 0;
-      const feePct = trade.notional > 0 ? (trade.fee / trade.notional) * 100 : 0;
+      const capitalBase = trade.margin > 0 ? trade.margin : trade.notional;
+      const pnlPct = capitalBase > 0 ? (trade.realizedPnl / capitalBase) * 100 : 0;
+      const feePct = capitalBase > 0 ? (trade.fee / capitalBase) * 100 : 0;
       return {
         ...trade,
         rowNo: index + 1,
+        capitalBase,
         pnlPct,
         feePct,
         cumulativePnl,
@@ -1314,16 +1330,18 @@ export default function BotsManagement() {
                   {marketGroups.length === 0 ? <option value="">Brak grup rynkow</option> : null}
                   {marketGroups.map((group) => (
                     <option key={group.id} value={group.id}>
-                      {group.name} ({group.marketType}/{group.baseCurrency})
+                      {group.name} ({group.exchange ?? "BINANCE"} · {group.marketType}/{group.baseCurrency})
                     </option>
                   ))}
                 </select>
               </label>
               <div className="grid gap-2 text-xs sm:grid-cols-3">
                 <div className={META_CARD_CLASS}>
-                  <p className="uppercase tracking-wide opacity-60">Rynek</p>
+                  <p className="uppercase tracking-wide opacity-60">Gielda / rynek</p>
                   <p className="font-medium">
-                    {selectedMarketGroup ? `${selectedMarketGroup.marketType}/${selectedMarketGroup.baseCurrency}` : "-"}
+                    {selectedMarketGroup
+                      ? `${selectedMarketGroup.exchange ?? "BINANCE"} · ${selectedMarketGroup.marketType}/${selectedMarketGroup.baseCurrency}`
+                      : "-"}
                   </p>
                 </div>
                 <div className={META_CARD_CLASS}>
@@ -1451,7 +1469,7 @@ export default function BotsManagement() {
                         />
                       </td>
                       <td>
-                        <span className="text-xs opacity-70">{bot.marketType}</span>
+                        <span className="text-xs opacity-70">{bot.exchange} · {bot.marketType}</span>
                       </td>
                       <td>
                         <span className="text-xs opacity-70">{bot.positionMode}</span>
@@ -1603,7 +1621,7 @@ export default function BotsManagement() {
                     >
                       <p className="truncate text-sm font-semibold">{bot.name}</p>
                       <p className="mt-1 text-[11px] opacity-70">
-                        {bot.marketType} | {bot.mode} | {bot.isActive ? "ACTIVE" : "INACTIVE"}
+                        {bot.exchange} · {bot.marketType} | {bot.mode} | {bot.isActive ? "ACTIVE" : "INACTIVE"}
                       </p>
                     </button>
                   ))}
@@ -1788,7 +1806,7 @@ export default function BotsManagement() {
               {!monitorLoading && !monitorError && monitorSessions.length === 0 ? (
                 <EmptyState
                   title="Brak sesji runtime"
-                  description="Bot nie uruchomil jeszcze sesji monitoringu albo filtr statusu nic nie zwrocil."
+                  description="Bot nie uruchomil jeszcze sesji monitoringu albo filtr statusu nic nie zwrocil. Upewnij sie, ze dziala worker execution + market-stream (np. przez `pnpm run backend/dev` albo `pnpm run workers/dev`)."
                 />
               ) : null}
 
@@ -1881,7 +1899,7 @@ export default function BotsManagement() {
                         <p className="text-xs font-semibold uppercase tracking-wide opacity-65">Co bylo</p>
                         <div className="mt-2 space-y-1 text-sm">
                           <p>
-                            <span className="opacity-60">Trade'y zamkniete:</span>{" "}
+                            <span className="opacity-60">Trade&apos;y zamkniete:</span>{" "}
                             <span className="font-semibold">{monitorSessionDetail.summary.closedTrades}</span>
                           </p>
                           <p>
@@ -2175,7 +2193,7 @@ export default function BotsManagement() {
 
                   <div className="rounded-lg border border-base-300 bg-base-100 p-3">
                     <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold">Historia - log operacyjny trade'ow</h3>
+                      <h3 className="text-sm font-semibold">Historia - log operacyjny trade&apos;ow</h3>
                       <span className="text-xs opacity-60">
                         {monitorOperationalTrades.length} / {(monitorTrades?.total ?? 0)} rekordow
                       </span>
@@ -2188,9 +2206,10 @@ export default function BotsManagement() {
                             <th>Czas</th>
                             <th>Symbol</th>
                             <th>Side</th>
+                            <th>Action</th>
                             <th>Qty</th>
                             <th>Price</th>
-                            <th>Notional</th>
+                            <th>Margin</th>
                             <th>Fee</th>
                             <th>Fee %</th>
                             <th>Realized PnL</th>
@@ -2210,9 +2229,14 @@ export default function BotsManagement() {
                               <td>
                                 <span className={`badge badge-xs ${toTradeSideBadgeClass(trade.side)}`}>{trade.side}</span>
                               </td>
+                              <td>
+                                <span className={`badge badge-xs ${toTradeLifecycleBadgeClass(trade.lifecycleAction)}`}>
+                                  {toTradeLifecycleLabel(trade.lifecycleAction)}
+                                </span>
+                              </td>
                               <td>{formatNumber(trade.quantity, 6)}</td>
                               <td>{formatNumber(trade.price, 4)}</td>
-                              <td>{formatCurrency(trade.notional)}</td>
+                              <td>{formatCurrency(trade.margin)}</td>
                               <td>{formatCurrency(trade.fee)}</td>
                               <td>{formatNumber(trade.feePct, 2)}%</td>
                               <td className={trade.realizedPnl >= 0 ? "text-success" : "text-error"}>
@@ -2233,7 +2257,7 @@ export default function BotsManagement() {
                           ))}
                           {monitorOperationalTrades.length === 0 ? (
                             <tr>
-                              <td colSpan={15} className="text-center text-xs opacity-70">
+                              <td colSpan={16} className="text-center text-xs opacity-70">
                                 Brak transakcji dla tej sesji i filtra.
                               </td>
                             </tr>

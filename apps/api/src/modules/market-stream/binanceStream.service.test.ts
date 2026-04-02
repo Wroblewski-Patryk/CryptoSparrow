@@ -29,6 +29,7 @@ describe('normalizeBinanceStreamEvent', () => {
 
     expect(event).toEqual({
       type: 'ticker',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       eventTime: 1700000000000,
@@ -60,6 +61,7 @@ describe('normalizeBinanceStreamEvent', () => {
 
     expect(event).toEqual({
       type: 'candle',
+      exchange: 'BINANCE',
       marketType: 'FUTURES',
       symbol: 'BTCUSDT',
       interval: '1m',

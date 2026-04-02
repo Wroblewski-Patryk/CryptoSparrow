@@ -183,6 +183,7 @@ describe("HomeLiveWidgets", () => {
       openCount: 1,
       closedCount: 0,
       openOrdersCount: 0,
+      showDynamicStopColumns: true,
       window: {
         startedAt: "2026-03-31T10:00:00.000Z",
         finishedAt: "2026-03-31T10:05:00.000Z",
@@ -214,6 +215,8 @@ describe("HomeLiveWidgets", () => {
           realizedPnl: 0,
           unrealizedPnl: 35,
           markPrice: 68290,
+          dynamicTtpStopLoss: null,
+          dynamicTslStopLoss: null,
           firstTradeAt: "2026-03-31T10:03:00.000Z",
           lastTradeAt: "2026-03-31T10:04:00.000Z",
           tradesCount: 1,
@@ -233,6 +236,7 @@ describe("HomeLiveWidgets", () => {
           id: "trade-1",
           symbol: "BTCUSDT",
           side: "BUY",
+          lifecycleAction: "OPEN",
           price: 68000,
           quantity: 0.12,
           fee: 0,
@@ -244,6 +248,7 @@ describe("HomeLiveWidgets", () => {
           origin: "BOT",
           managementMode: "SIGNAL",
           notional: 8160,
+          margin: 544,
         },
       ],
     });
@@ -257,6 +262,8 @@ describe("HomeLiveWidgets", () => {
       expect(screen.getAllByText("RUNNING").length).toBeGreaterThan(0);
       expect(screen.getByText("Live checks")).toBeInTheDocument();
       expect(screen.getAllByText("BTCUSDT").length).toBeGreaterThan(0);
+      expect(screen.getByText("SL (TTP)")).toBeInTheDocument();
+      expect(screen.getByText("SL (TSL)")).toBeInTheDocument();
     });
   });
 });
