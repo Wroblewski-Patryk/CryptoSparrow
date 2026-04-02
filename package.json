@@ -14,6 +14,8 @@
     "frontend:dev": "pnpm run frontend/dev",
     "workers/dev": "node scripts/dev-workers.mjs",
     "workers:dev": "pnpm run workers/dev",
+    "workers/prod": "node scripts/start-workers-prod.mjs",
+    "workers:prod": "pnpm run workers/prod",
     "lint": "pnpm -r --if-present run lint",
     "typecheck": "pnpm --filter api run typecheck && pnpm --filter web run typecheck",
     "test": "pnpm -r --if-present run test",

@@ -111,6 +111,7 @@ Required environment variables:
 ## Step 5: Add Workers Service
 
 Create a dedicated worker service from `apps/api`.
+Process ownership contract: `api` does not own worker lifecycle in production.
 
 Recommended strategy: one process per worker type (separate services), or one service running a process manager.
 For simplest deterministic setup, create separate services:

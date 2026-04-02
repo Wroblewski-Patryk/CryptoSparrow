@@ -420,8 +420,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DPL-01 docs(contract): publish canonical DEV/STAGE/PROD environment matrix and secrets policy`
 - [x] `DPL-02 docs(runbook): publish step-by-step local DEV and local PROD-like startup procedures`
 - [x] `DPL-03 docs(coolify): publish Linux VPS Coolify setup guide with service mapping and domain routing`
-- [ ] `DPL-04 chore(env): add non-secret `.env.example` templates for api/web with required keys and comments`
-- [ ] `DPL-05 chore(scripts): add production-safe worker start script and explicit process ownership contract`
+- [x] `DPL-04 chore(env): add non-secret `.env.example` templates for api/web with required keys and comments`
+- [x] `DPL-05 chore(scripts): add production-safe worker start script and explicit process ownership contract`
 - [ ] `DPL-06 chore(scripts): add one-command local prod-like orchestration with preflight checks`
 - [ ] `DPL-07 ops(migrations): define migration strategy for deployment pipeline and operator ownership`
 - [ ] `DPL-08 ops(health): standardize deployment readiness gates for web/api/workers`
@@ -458,6 +458,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 
 ## Progress Log
+- 2026-04-03: Completed `DPL-05` by adding `scripts/start-workers-prod.mjs` (fail-fast worker launcher with prefixed logs and graceful shutdown), wiring root scripts `workers/prod` + `workers:prod`, and documenting explicit process ownership contract in `docs/operations/v1-ops-runbook.md`, `docs/operations/coolify-linux-vps-setup-guide.md`, and `docs/engineering/local-development.md`.
+- 2026-04-03: Completed `DPL-04` by adding non-secret environment templates `apps/api/.env.example` and `apps/web/.env.example` with required keys/comments, and linking bootstrap copy flow in `docs/engineering/local-development.md`.
 - 2026-04-03: Completed `DPL-03` by publishing Linux VPS Coolify setup guide in `docs/operations/coolify-linux-vps-setup-guide.md` with concrete service split (`postgres/redis/api/web/workers`), domain routing, env requirements, migration gate, stage validation, and rollback baseline.
 - 2026-04-03: Completed `DPL-02` by publishing canonical step-by-step local startup procedures for both `DEV` and `local PROD-like` in `docs/engineering/local-development.md` (infra, api/web/workers startup, verification, and shutdown flow).
 - 2026-04-03: Completed `DPL-01` by publishing canonical `DEV/STAGE/PROD` environment + secrets contract in `docs/operations/dev-stage-prod-environment-matrix.md` (service variable matrix, secret classes, non-negotiable handling rules, and validation checklist) and linking it from deployment planning doc.

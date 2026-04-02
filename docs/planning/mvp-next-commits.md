@@ -7,7 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `DPL-04 chore(env): add non-secret `.env.example` templates for api/web with required keys and comments`
+- [ ] `DPL-13 docs(cicd-contract): define immutable commit promotion contract DEV -> STAGE -> PROD`
 ## NEXT
 - [ ] `BOPS-43 docs(contract): lock DCA ladder display contract in Dashboard/Bots (count + executed levels mapping for basic/advanced strategy modes)`
 - [ ] `BOPS-44 feat(api-runtime): extend runtime positions payload with DCA planned/executed levels derived from strategy additional.dcaLevels/dcaTimes`
@@ -22,12 +22,12 @@ Operational queue for one-task execution runs.
 - [ ] `BOPS-53 feat(web-dashboard): implement scalable signal cards layout (desktop 4 / tablet 3 / mobile 2) with horizontal rail/slider support for very large symbol sets`
 - [ ] `BOPS-54 test(web-dashboard): add regression coverage for signal-panel placement, heading copy, responsive card density, and overflow navigation controls`
 - [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
-- [ ] `DPL-05 chore(scripts): add production-safe worker start script and explicit process ownership contract`
-- [ ] `DPL-13 docs(cicd-contract): define immutable commit promotion contract DEV -> STAGE -> PROD`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `DPL-05 chore(scripts): add production-safe worker start script and explicit process ownership contract`
+- [x] `DPL-04 chore(env): add non-secret `.env.example` templates for api/web with required keys and comments`
 - [x] `DPL-03 docs(coolify): publish Linux VPS Coolify setup guide with service mapping and domain routing`
 - [x] `DPL-02 docs(runbook): publish step-by-step local DEV and local PROD-like startup procedures`
 - [x] `DPL-01 docs(contract): publish canonical DEV/STAGE/PROD environment matrix and secrets policy`

@@ -14,6 +14,12 @@ Prepare local env files before first run:
 - `apps/api/.env`
 - `apps/web/.env.local`
 
+Bootstrap command (PowerShell, repo root):
+```powershell
+Copy-Item apps/api/.env.example apps/api/.env -ErrorAction SilentlyContinue
+Copy-Item apps/web/.env.example apps/web/.env.local -ErrorAction SilentlyContinue
+```
+
 Minimum local endpoints:
 - API target: `http://localhost:3001`
 - Web target: `http://localhost:3002`
@@ -83,12 +89,9 @@ pnpm --filter api start
 pnpm --filter web start
 ```
 
-### 5) Start workers from built artifacts (separate terminals, repo root)
+### 5) Start workers from built artifacts (terminal #3, repo root)
 ```bash
-pnpm --filter api exec node dist/workers/marketData.worker.js
-pnpm --filter api exec node dist/workers/marketStream.worker.js
-pnpm --filter api exec node dist/workers/backtest.worker.js
-pnpm --filter api exec node dist/workers/execution.worker.js
+pnpm run workers/prod
 ```
 
 ### 6) PROD-like verification

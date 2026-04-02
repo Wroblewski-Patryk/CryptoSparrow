@@ -3,6 +3,21 @@
 ## Scope
 Operational baseline for production deployment, rollback, and incident response for V1.
 
+## Process Ownership Contract
+- `api` process owns HTTP endpoints only.
+- `web` process owns UI rendering only.
+- `workers` processes own async execution pipelines only (`market-data`, `market-stream`, `backtest`, `execution`).
+
+Non-negotiable rules:
+1. Workers are not implicitly started by API in production mode.
+2. Restarting workers must not require API restart.
+3. Runtime incident handling can target worker scope without taking down web/api paths.
+
+Production-safe worker start command (repo root):
+```bash
+pnpm run workers/prod
+```
+
 ## Deployment Checklist
 1. Verify latest `main` commit and changelog entry.
 2. Confirm environment variables:
