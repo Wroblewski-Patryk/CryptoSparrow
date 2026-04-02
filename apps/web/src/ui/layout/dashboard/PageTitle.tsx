@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link";
+import { type ReactNode } from "react";
 import { useI18n } from "../../../i18n/I18nProvider";
 
 interface BreadcrumbItem {
@@ -13,9 +14,10 @@ interface PageTitleProps {
   breadcrumb?: BreadcrumbItem[];
   onAdd?: () => void;
   addLabel?: string;
+  icon?: ReactNode;
 }
 
-export function PageTitle({ title, breadcrumb = [], onAdd, addLabel }: PageTitleProps) {
+export function PageTitle({ title, breadcrumb = [], onAdd, addLabel, icon }: PageTitleProps) {
   const { t } = useI18n();
 
   const normalizedBreadcrumb =
@@ -24,7 +26,14 @@ export function PageTitle({ title, breadcrumb = [], onAdd, addLabel }: PageTitle
   return (
     <div className="mb-6 rounded-xl border border-base-300 bg-base-200 px-5 py-4 shadow-sm md:flex md:items-center md:justify-between">
       <div className="min-w-0">
-        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{title}</h1>
+        <h1 className="inline-flex items-center gap-2 text-2xl font-bold tracking-tight md:text-3xl">
+          {icon ? (
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-base-100/70 text-base-content/75">
+              {icon}
+            </span>
+          ) : null}
+          <span>{title}</span>
+        </h1>
         <div className="breadcrumbs mt-2 max-w-full overflow-x-auto text-sm opacity-80">
           <ul>
             {normalizedBreadcrumb.map((item) => (

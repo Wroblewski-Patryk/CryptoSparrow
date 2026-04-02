@@ -21,6 +21,71 @@ export type Bot = {
   updatedAt?: string;
 };
 
+export type BotRuntimeGraph = {
+  bot: {
+    id: string;
+    userId: string;
+    name: string;
+    mode: BotMode;
+    marketType: TradeMarket;
+    positionMode: PositionMode;
+    isActive: boolean;
+    liveOptIn: boolean;
+    maxOpenPositions: number;
+    createdAt: string;
+    updatedAt: string;
+  };
+  marketGroups: Array<{
+    id: string;
+    botId: string;
+    symbolGroupId: string;
+    lifecycleStatus: string;
+    executionOrder: number;
+    isEnabled: boolean;
+    createdAt: string;
+    updatedAt: string;
+    symbolGroup: {
+      id: string;
+      name: string;
+      symbols: string[];
+      marketUniverseId: string;
+    };
+    strategies: Array<{
+      id: string;
+      strategyId: string;
+      priority: number;
+      weight: number;
+      isEnabled: boolean;
+      createdAt: string;
+      updatedAt: string;
+      strategy: {
+        id: string;
+        name: string;
+        interval: string;
+      };
+    }>;
+  }>;
+  legacyBotStrategies: Array<{
+    id: string;
+    strategyId: string;
+    symbolGroupId: string;
+    isEnabled: boolean;
+    createdAt: string;
+    updatedAt: string;
+    strategy: {
+      id: string;
+      name: string;
+      interval: string;
+    };
+    symbolGroup: {
+      id: string;
+      name: string;
+      symbols: string[];
+      marketUniverseId: string;
+    };
+  }>;
+};
+
 export type BotRuntimeSessionStatus = "RUNNING" | "COMPLETED" | "FAILED" | "CANCELED";
 
 export type BotRuntimeSessionListItem = {

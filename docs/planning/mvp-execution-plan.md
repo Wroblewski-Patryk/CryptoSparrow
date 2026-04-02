@@ -438,7 +438,30 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `DPL-19 security(ci): apply branch protection + secret hardening for safe auto-promotion`
 - [ ] `DPL-20 docs(runbook): publish incident playbook for blocked promotion and failed stage/prod rollout`
 
+## Phase 26 - Runtime Operability Polish (DCA Ladder + Dynamic TTP/TSL)
+- [ ] `BOPS-43 docs(contract): lock DCA ladder display contract in Dashboard/Bots (count + executed levels mapping for basic/advanced strategy modes)`
+- [ ] `BOPS-44 feat(api-runtime): extend runtime positions payload with DCA planned/executed levels derived from strategy additional.dcaLevels/dcaTimes`
+- [ ] `BOPS-45 feat(web-dashboard+bots): replace plain DCA count cell with compact executed ladder view (e.g. 1: -15%, 2: -30%) while preserving count`
+- [ ] `BOPS-46 test(api+web): add regression coverage for DCA ladder mapping/rendering (basic repeated levels, advanced ladder, legacy fallback)`
+- [ ] `BOPS-47 docs(contract): lock dynamic stop display contract (TTP/TSL) for dashboard+bots runtime tables, including TSL derivation from trailing-stop anchor`
+- [ ] `BOPS-48 feat(api-runtime): compute dynamicTslStopLoss from active trailing-stop config + runtime trailingAnchorPrice (with trailingLossLimit fallback) and expose stable payload fields`
+- [ ] `BOPS-49 feat(web-i18n+tables): rename stop headers from 'SL (TTP)/(TSL)' to 'TTP/TSL' and keep parity in Dashboard + Bots runtime views`
+- [ ] `BOPS-50 test(api+web): add regression coverage for TSL/TTP rendering lifecycle (pre-arm '-', post-arm value) and runtime payload mapping`
+- [ ] `BOPS-51 docs(contract): lock Dashboard signal-panel IA contract (name, placement above open positions, responsive density, and high-symbol navigation behavior)`
+- [ ] `BOPS-52 feat(web-dashboard): rename 'Live checks' section to strategy-signal wording and move signal panel above open-positions block`
+- [ ] `BOPS-53 feat(web-dashboard): implement scalable signal cards layout (desktop 4 / tablet 3 / mobile 2) with horizontal rail/slider support for very large symbol sets`
+- [ ] `BOPS-54 test(web-dashboard): add regression coverage for signal-panel placement, heading copy, responsive card density, and overflow navigation controls`
+- [x] `BOPS-55 docs(contract): lock Bots IA split (/bots list, /bots/create form) and table-action navigation contract (Runtime + Assistant + Edit)`
+- [x] `BOPS-56 feat(web-routing+nav): switch bots create route to /dashboard/bots/create and align header/menu links + legacy /new redirect`
+- [x] `BOPS-57 feat(web-bots-list): redesign /bots into table-first list view (no inline create/edit form) with actions: Podglad(Runtime), Asystent, Edytuj`
+- [x] `BOPS-58 feat(web-bot-form): implement single create/edit form view at /bots/create (create mode + edit mode via selected bot id)`
+- [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
+
 ## Progress Log
+- 2026-04-02: Completed `BOPS-56..BOPS-58` by splitting Bots IA into `/dashboard/bots` (table-first list), `/dashboard/bots/create` (shared create/edit form), and dedicated row actions for Runtime/Assistant with preferred-bot deep links; updated header route contract to `/dashboard/bots/create` and kept `/dashboard/bots/new` as legacy redirect.
+- 2026-04-02: Added `BOPS-55..BOPS-59` planning for Bots module IA split: `/bots` as table-only list, `/bots/create` as shared create/edit form, and row actions routing to Runtime/Assistant contexts.
+- 2026-04-02: Added `BOPS-51..BOPS-54` planning for Dashboard signal panel polish: rename `Live checks` to strategy-signal semantics, move panel above open positions, and add responsive + horizontal overflow navigation contract for large universes (up to hundreds of symbols).
+- 2026-04-02: Added `Phase 26` runtime operability polish queue (`BOPS-43..BOPS-50`) covering DCA ladder visibility and dynamic TTP/TSL mapping fix (TSL from trailing-stop anchor + compatibility fallback), with Dashboard/Bots parity and regression gates.
 - 2026-04-02: Extended `Phase 25` to include three-environment deployment contract (`DEV/STAGE/PROD`) and auto-promotion pipeline tasks (`DPL-13..DPL-20`) with stage-gated commit promotion and prod rollback requirements.
 - 2026-04-02: Added deployment planning track `Phase 25 (DPL-01..DPL-12)` and published executor handoff plan in `docs/planning/deployment-dev-prod-coolify-plan-2026-04-02.md` for local DEV/PROD and Coolify VPS rollout with separate global rename planning.
 - 2026-04-02: Completed `LFIN-07B` by migrating Bots module (management + runtime + assistant) UI copy to canonical i18n keys, adding EN/PL parity entries in `translations.ts`, updating bots page to i18n usage, and refreshing BotsManagement tests with `I18nProvider` wrapper; verified with web tests + typecheck.

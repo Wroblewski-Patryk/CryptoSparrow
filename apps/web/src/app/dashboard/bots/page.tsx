@@ -1,32 +1,30 @@
 'use client';
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PageTitle } from "@/ui/layout/dashboard/PageTitle";
-import BotsManagement from "@/features/bots/components/BotsManagement";
+import BotsListTable from "@/features/bots/components/BotsListTable";
 import { useI18n } from "@/i18n/I18nProvider";
+import { LuBot } from "react-icons/lu";
 
 export default function BotsPage() {
   const { t } = useI18n();
+  const router = useRouter();
 
   return (
-    <section className="w-full">
+    <section className="w-full space-y-4">
       <PageTitle
-        title={t("dashboard.bots.page.title")}
+        title={t("dashboard.nav.botsList")}
+        icon={<LuBot className="h-5 w-5" />}
         breadcrumb={[
           { label: t("dashboard.common.dashboard"), href: "/dashboard" },
-          { label: t("dashboard.bots.page.breadcrumb") },
+          { label: t("dashboard.nav.bots"), href: "/dashboard/bots" },
+          { label: t("dashboard.nav.botsList") },
         ]}
+        onAdd={() => router.push("/dashboard/bots/create")}
+        addLabel={t("dashboard.nav.createBot")}
       />
-      <div className="alert mb-4 border border-base-300 bg-base-200 text-sm">
-        <span>
-          {t("dashboard.bots.page.alertPrefix")} <strong>{t("dashboard.nav.bots")}</strong> {t("dashboard.bots.page.alertMiddle")}{" "}
-          <Link href="/dashboard" className="link link-primary font-medium">
-            {t("dashboard.common.dashboard")}
-          </Link>
-          {t("dashboard.bots.page.alertSuffix")}
-        </span>
-      </div>
-      <BotsManagement />
+
+      <BotsListTable />
     </section>
   );
 }

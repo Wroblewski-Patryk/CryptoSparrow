@@ -7,6 +7,7 @@ import StrategiesForm from '@/features/strategies/components/StrategyForm';
 import { StrategyFormState } from '@/features/strategies/types/StrategyForm.type';
 import { createStrategy } from '@/features/strategies/api/strategies.api';
 import { handleError } from '@/lib/handleError';
+import { LuListChecks } from 'react-icons/lu';
 
 export default function StrategiesCreatePage() {
   const router = useRouter();
@@ -25,6 +26,7 @@ export default function StrategiesCreatePage() {
     <section className='w-full space-y-4'>
       <PageTitle
         title='Nowa strategia'
+        icon={<LuListChecks className='h-5 w-5' />}
         breadcrumb={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Strategies', href: '/dashboard/strategies/list' },

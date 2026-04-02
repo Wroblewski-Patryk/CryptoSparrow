@@ -15,6 +15,12 @@ type LanguageOption = {
   icon: string;
 };
 
+type DropdownPlacement = 'top' | 'bottom';
+
+type LanguageSwitcherProps = {
+  placement?: DropdownPlacement;
+};
+
 const LANGUAGES = languageOptions as LanguageOption[];
 
 const getLanguage = (locale: LocaleCode) =>
@@ -33,11 +39,16 @@ function FlagIcon({ option }: { option: LanguageOption }) {
   );
 }
 
-export default function LanguageSwitcher() {
+export default function LanguageSwitcher({ placement = 'bottom' }: LanguageSwitcherProps) {
   const { locale, setLocale, t } = useI18n();
   const detailsRef = useRef<HTMLDetailsElement>(null);
   useDetailsDropdown(detailsRef);
   const active = getLanguage(locale as LocaleCode);
+  const detailsClass = `dropdown dropdown-end group ${placement === 'top' ? 'dropdown-top' : ''}`;
+  const menuClass =
+    placement === 'top'
+      ? 'menu dropdown-content z-[60] mb-2 w-44 rounded-box bg-base-100 p-2 text-base-content shadow-xl border border-base-300/60'
+      : 'menu dropdown-content z-[60] mt-2 w-44 rounded-box bg-base-100 p-2 text-base-content shadow-xl border border-base-300/60';
 
   const handleSelect = (next: LocaleCode) => {
     setLocale(next);
@@ -45,12 +56,12 @@ export default function LanguageSwitcher() {
   };
 
   return (
-    <details ref={detailsRef} className="dropdown dropdown-end group">
+    <details ref={detailsRef} className={detailsClass}>
       <summary className={`${headerMenuItemClass} font-normal`} aria-label={t('dashboard.common.language')}>
         <FlagIcon option={active} />
         <span>{active.short}</span>
       </summary>
-      <ul className="menu dropdown-content z-[60] mt-2 w-44 rounded-box bg-base-100 p-2 text-base-content shadow-xl border border-base-300/60">
+      <ul className={menuClass}>
         {LANGUAGES.map((option) => (
           <li key={option.locale}>
             <button

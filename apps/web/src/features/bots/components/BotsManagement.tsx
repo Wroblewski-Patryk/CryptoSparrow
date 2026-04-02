@@ -404,9 +404,21 @@ const aggregateMonitorData = (params: {
   };
 };
 
-export default function BotsManagement() {
+type BotsManagementProps = {
+  initialTab?: "bots" | "monitoring" | "assistant";
+  lockedTab?: "bots" | "monitoring" | "assistant";
+  preferredBotId?: string | null;
+};
+
+export default function BotsManagement({
+  initialTab = "bots",
+  lockedTab,
+  preferredBotId = null,
+}: BotsManagementProps) {
   const { t } = useI18n();
-  const [activeTab, setActiveTab] = useState<"bots" | "monitoring" | "assistant">("bots");
+  const [activeTab, setActiveTab] = useState<"bots" | "monitoring" | "assistant">(
+    lockedTab ?? initialTab
+  );
   const [bots, setBots] = useState<Bot[]>([]);
   const [serverSnapshot, setServerSnapshot] = useState<Record<string, Bot>>({});
   const [loading, setLoading] = useState(true);
@@ -453,6 +465,11 @@ export default function BotsManagement() {
   const [monitorError, setMonitorError] = useState<string | null>(null);
   const [monitorAutoRefreshEnabled, setMonitorAutoRefreshEnabled] = useState(true);
   const [monitorLiveTickerPrices, setMonitorLiveTickerPrices] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!lockedTab) return;
+    setActiveTab(lockedTab);
+  }, [lockedTab]);
 
   const loadBots = useCallback(async (filter: "ALL" | TradeMarket) => {
     setLoading(true);
@@ -1176,13 +1193,18 @@ export default function BotsManagement() {
 
   useEffect(() => {
     if (bots.length === 0) return;
+    const preferredCandidate =
+      preferredBotId && bots.some((bot) => bot.id === preferredBotId) ? preferredBotId : null;
+    const fallbackBotId = preferredCandidate ?? bots[0].id;
     if (!assistantBotId) {
-      setAssistantBotId(bots[0].id);
+      setAssistantBotId(fallbackBotId);
       return;
     }
     const exists = bots.some((bot) => bot.id === assistantBotId);
-    if (!exists) setAssistantBotId(bots[0].id);
-  }, [bots, assistantBotId]);
+    if (!exists || (preferredCandidate && assistantBotId !== preferredCandidate)) {
+      setAssistantBotId(fallbackBotId);
+    }
+  }, [bots, assistantBotId, preferredBotId]);
 
   useEffect(() => {
     if (!assistantBotId || activeTab !== "assistant") return;
@@ -1194,15 +1216,20 @@ export default function BotsManagement() {
       setMonitorBotId("");
       return;
     }
+    const preferredCandidate =
+      preferredBotId && bots.some((bot) => bot.id === preferredBotId) ? preferredBotId : null;
+    const fallbackBotId = preferredCandidate ?? bots[0].id;
 
     if (!monitorBotId) {
-      setMonitorBotId(bots[0].id);
+      setMonitorBotId(fallbackBotId);
       return;
     }
 
     const exists = bots.some((bot) => bot.id === monitorBotId);
-    if (!exists) setMonitorBotId(bots[0].id);
-  }, [bots, monitorBotId]);
+    if (!exists || (preferredCandidate && monitorBotId !== preferredCandidate)) {
+      setMonitorBotId(fallbackBotId);
+    }
+  }, [bots, monitorBotId, preferredBotId]);
 
   useEffect(() => {
     if ((activeTab === "monitoring" || activeTab === "assistant") && marketFilter !== "ALL") {
@@ -1267,32 +1294,34 @@ export default function BotsManagement() {
 
   return (
     <div className="space-y-5">
-      <div role="tablist" className="tabs tabs-boxed inline-flex gap-1">
-        <button
-          type="button"
-          role="tab"
-          className={`tab ${activeTab === "bots" ? "tab-active" : ""}`}
-          onClick={() => setActiveTab("bots")}
-        >
-          {t("dashboard.bots.tabs.bots")}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          className={`tab ${activeTab === "monitoring" ? "tab-active" : ""}`}
-          onClick={() => setActiveTab("monitoring")}
-        >
-          {t("dashboard.bots.tabs.monitoring")}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          className={`tab ${activeTab === "assistant" ? "tab-active" : ""}`}
-          onClick={() => setActiveTab("assistant")}
-        >
-          {t("dashboard.bots.tabs.assistant")}
-        </button>
-      </div>
+      {!lockedTab ? (
+        <div role="tablist" className="tabs tabs-boxed inline-flex gap-1">
+          <button
+            type="button"
+            role="tab"
+            className={`tab ${activeTab === "bots" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("bots")}
+          >
+            {t("dashboard.bots.tabs.bots")}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            className={`tab ${activeTab === "monitoring" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("monitoring")}
+          >
+            {t("dashboard.bots.tabs.monitoring")}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            className={`tab ${activeTab === "assistant" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("assistant")}
+          >
+            {t("dashboard.bots.tabs.assistant")}
+          </button>
+        </div>
+      ) : null}
 
       {activeTab === "bots" && (
         <>

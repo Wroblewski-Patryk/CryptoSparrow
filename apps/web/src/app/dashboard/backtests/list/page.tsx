@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
 import BacktestsListView from '@/features/backtest/components/BacktestsListView';
 import { I18nContext } from '../../../../i18n/I18nProvider';
+import { LuChartLine } from 'react-icons/lu';
 
 export default function BacktestsListPage() {
   const router = useRouter();
@@ -31,6 +32,7 @@ export default function BacktestsListPage() {
     <section className='w-full space-y-4'>
       <PageTitle
         title={copy.title}
+        icon={<LuChartLine className='h-5 w-5' />}
         breadcrumb={[
           { label: copy.breadcrumbDashboard, href: '/dashboard' },
           { label: copy.breadcrumbBacktests, href: '/dashboard/backtests/list' },

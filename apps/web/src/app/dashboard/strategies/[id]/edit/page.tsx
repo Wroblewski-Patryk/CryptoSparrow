@@ -10,6 +10,7 @@ import { StrategyFormState } from '@/features/strategies/types/StrategyForm.type
 import { dtoToForm } from '@/features/strategies/utils/StrategyForm.map';
 import { handleError } from '@/lib/handleError';
 import { ErrorState, LoadingState } from '@/ui/components/ViewState';
+import { LuListChecks } from 'react-icons/lu';
 
 const STRATEGY_USED_BY_ACTIVE_BOT_ERROR = 'strategy is used by active bot and cannot be edited';
 
@@ -58,6 +59,7 @@ export default function StrategiesEditPage() {
     <section className='w-full space-y-4'>
       <PageTitle
         title={initial ? initial.name : 'Edycja strategii'}
+        icon={<LuListChecks className='h-5 w-5' />}
         breadcrumb={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Strategies', href: '/dashboard/strategies/list' },

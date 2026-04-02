@@ -8,6 +8,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/ui/components/ViewState'
 import MarketUniversesTable from '@/features/markets/components/MarketUniversesTable';
 import { listMarketUniverses } from '@/features/markets/services/markets.service';
 import { MarketUniverse } from '@/features/markets/types/marketUniverse.type';
+import { LuChartCandlestick } from 'react-icons/lu';
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -42,6 +43,7 @@ export default function MarketsListPage() {
     <section className='w-full space-y-4'>
       <PageTitle
         title='Grupy rynkow'
+        icon={<LuChartCandlestick className='h-5 w-5' />}
         breadcrumb={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Markets', href: '/dashboard/markets/list' },

@@ -18,6 +18,11 @@ const themes = [
 ] as const;
 
 type ThemePreference = (typeof themes)[number]['value'];
+type DropdownPlacement = 'top' | 'bottom';
+
+type ThemeSwitcherProps = {
+  placement?: DropdownPlacement;
+};
 
 const normalizeThemePreference = (value: string | null): ThemePreference => {
   if (!value || value === 'default') return 'cryptosparrow';
@@ -30,11 +35,16 @@ const resolveTheme = (preference: ThemePreference): string => {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 };
 
-export default function ThemeSwitcher() {
+export default function ThemeSwitcher({ placement = 'bottom' }: ThemeSwitcherProps) {
   const [activeTheme, setActiveTheme] = useState<ThemePreference>('cryptosparrow');
   const [resolvedTheme, setResolvedTheme] = useState<string>('cryptosparrow');
   const detailsRef = useRef<HTMLDetailsElement>(null);
   useDetailsDropdown(detailsRef);
+  const detailsClass = `dropdown dropdown-end group ${placement === 'top' ? 'dropdown-top' : ''}`;
+  const menuClass =
+    placement === 'top'
+      ? 'menu dropdown-content z-[60] mb-2 w-48 rounded-box bg-base-100 p-2 text-base-content shadow'
+      : 'menu dropdown-content z-[60] mt-2 w-48 rounded-box bg-base-100 p-2 text-base-content shadow';
 
   const applyTheme = (theme: ThemePreference, persist = true) => {
     const normalized = normalizeThemePreference(theme);
@@ -65,7 +75,7 @@ export default function ThemeSwitcher() {
   }, [activeTheme]);
 
   return (
-    <details ref={detailsRef} className="dropdown dropdown-end group">
+    <details ref={detailsRef} className={detailsClass}>
       <summary className={`${headerMenuItemClass} font-normal`} aria-label="Theme selector">
         {activeTheme === 'system' ? (
           resolvedTheme === 'dark' ? (
@@ -78,7 +88,7 @@ export default function ThemeSwitcher() {
         )}
         <span>Theme</span>
       </summary>
-      <ul className="menu dropdown-content z-[60] mt-2 w-48 rounded-box bg-base-100 p-2 text-base-content shadow" aria-label="Theme options">
+      <ul className={menuClass} aria-label="Theme options">
         {themes.map((theme) => (
           <li key={theme.value}>
             <button

@@ -3,28 +3,41 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useRef, useState } from 'react';
+import { type IconType } from 'react-icons';
+import {
+  LuBot,
+  LuChartBar,
+  LuChartCandlestick,
+  LuFileChartColumnIncreasing,
+  LuHouse,
+  LuChartLine,
+  LuListChecks,
+  LuPackageOpen,
+  LuShieldCheck,
+  LuShoppingCart,
+} from 'react-icons/lu';
 
 import ProfileButton from '../../components/ProfileButton';
-import ThemeSwitcher from '../../components/ThemeSwitch';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useDetailsDropdown } from '../../hooks/useDetailsDropdown';
-import LanguageSwitcher from './LanguageSwitcher';
 import { dashboardRoutes, pathStartsWithAny } from './dashboardRoutes';
 import { getHeaderMenuItemClass } from './headerControlStyles';
 
 type NavItem = {
   href: string;
   label: string;
+  icon?: IconType;
 };
 
 type NavGroupProps = {
   active: boolean;
   label: string;
+  icon: IconType;
   links: NavItem[];
   pathname: string;
 };
 
-function NavGroup({ active, label, links, pathname }: NavGroupProps) {
+function NavGroup({ active, label, icon: Icon, links, pathname }: NavGroupProps) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
   useDetailsDropdown(detailsRef);
   const summaryClass = getHeaderMenuItemClass(active);
@@ -32,10 +45,14 @@ function NavGroup({ active, label, links, pathname }: NavGroupProps) {
   return (
     <li>
       <details ref={detailsRef}>
-        <summary className={summaryClass}>{label}</summary>
+        <summary className={summaryClass}>
+          <Icon className='h-4 w-4 opacity-80' aria-hidden />
+          {label}
+        </summary>
         <ul className="bg-base-100 text-base-content rounded-box min-w-64 p-2 z-[80] shadow-xl border border-base-300/60">
           {links.map((item, index) => {
             const current = pathname === item.href;
+            const ItemIcon = item.icon;
             return (
               <li key={`${label}-${item.href}-${index}`}>
                 <Link
@@ -43,6 +60,7 @@ function NavGroup({ active, label, links, pathname }: NavGroupProps) {
                   aria-current={current ? 'page' : undefined}
                   className={current ? 'active font-medium' : undefined}
                 >
+                  {ItemIcon ? <ItemIcon className='h-4 w-4 opacity-75' aria-hidden /> : null}
                   {item.label}
                 </Link>
               </li>
@@ -62,43 +80,44 @@ export default function Header() {
   const homeLink: NavItem = {
     href: dashboardRoutes.home,
     label: t('dashboard.nav.home'),
+    icon: LuHouse,
   };
 
   const exchangesLinks: NavItem[] = [
-    { href: dashboardRoutes.exchanges.root, label: t('dashboard.nav.connections') },
-    { href: dashboardRoutes.exchanges.orders, label: t('dashboard.nav.orders') },
-    { href: dashboardRoutes.exchanges.positions, label: t('dashboard.nav.positions') },
+    { href: dashboardRoutes.exchanges.orders, label: t('dashboard.nav.orders'), icon: LuShoppingCart },
+    { href: dashboardRoutes.exchanges.positions, label: t('dashboard.nav.positions'), icon: LuPackageOpen },
   ];
 
   const marketsLinks: NavItem[] = [
-    { href: dashboardRoutes.markets.list, label: t('dashboard.nav.marketGroupsList') },
-    { href: dashboardRoutes.markets.create, label: t('dashboard.nav.createMarketGroup') },
+    { href: dashboardRoutes.markets.list, label: t('dashboard.nav.marketGroupsList'), icon: LuChartCandlestick },
+    { href: dashboardRoutes.markets.create, label: t('dashboard.nav.createMarketGroup'), icon: LuChartCandlestick },
   ];
 
   const strategyLinks: NavItem[] = [
-    { href: dashboardRoutes.strategies.list, label: t('dashboard.nav.strategiesList') },
-    { href: dashboardRoutes.strategies.create, label: t('dashboard.nav.createStrategy') },
+    { href: dashboardRoutes.strategies.list, label: t('dashboard.nav.strategiesList'), icon: LuListChecks },
+    { href: dashboardRoutes.strategies.create, label: t('dashboard.nav.createStrategy'), icon: LuListChecks },
   ];
 
   const backtestLinks: NavItem[] = [
-    { href: dashboardRoutes.backtests.list, label: t('dashboard.nav.backtestsList') },
-    { href: dashboardRoutes.backtests.create, label: t('dashboard.nav.createBacktest') },
+    { href: dashboardRoutes.backtests.list, label: t('dashboard.nav.backtestsList'), icon: LuChartLine },
+    { href: dashboardRoutes.backtests.create, label: t('dashboard.nav.createBacktest'), icon: LuChartLine },
   ];
 
   const botsLinks: NavItem[] = [
-    { href: dashboardRoutes.bots.list, label: t('dashboard.nav.botsList') },
-    { href: dashboardRoutes.bots.create, label: t('dashboard.nav.createBot') },
+    { href: dashboardRoutes.bots.list, label: t('dashboard.nav.botsList'), icon: LuBot },
+    { href: dashboardRoutes.bots.create, label: t('dashboard.nav.createBot'), icon: LuBot },
   ];
 
   const analyticsLinks: NavItem[] = [
-    { href: dashboardRoutes.analytics.reports, label: t('dashboard.nav.reports') },
-    { href: dashboardRoutes.analytics.logs, label: t('dashboard.nav.logs') },
+    { href: dashboardRoutes.analytics.reports, label: t('dashboard.nav.reports'), icon: LuFileChartColumnIncreasing },
+    { href: dashboardRoutes.analytics.logs, label: t('dashboard.nav.logs'), icon: LuShieldCheck },
   ];
 
   const groups = [
     {
       id: 'exchanges',
       label: t('dashboard.nav.exchanges'),
+      icon: LuShoppingCart,
       links: exchangesLinks,
       activePrefixes: [
         dashboardRoutes.exchanges.root,
@@ -109,30 +128,35 @@ export default function Header() {
     {
       id: 'markets',
       label: t('dashboard.nav.markets'),
+      icon: LuChartCandlestick,
       links: marketsLinks,
       activePrefixes: [dashboardRoutes.markets.root],
     },
     {
       id: 'strategies',
       label: t('dashboard.nav.strategies'),
+      icon: LuListChecks,
       links: strategyLinks,
       activePrefixes: [dashboardRoutes.strategies.root],
     },
     {
       id: 'backtests',
       label: t('dashboard.nav.backtests'),
+      icon: LuChartLine,
       links: backtestLinks,
       activePrefixes: [dashboardRoutes.backtests.root],
     },
     {
       id: 'bots',
       label: t('dashboard.nav.bots'),
+      icon: LuBot,
       links: botsLinks,
       activePrefixes: [dashboardRoutes.bots.root],
     },
     {
       id: 'analytics',
       label: t('dashboard.nav.analytics'),
+      icon: LuChartBar,
       links: analyticsLinks,
       activePrefixes: [dashboardRoutes.analytics.reports, dashboardRoutes.analytics.logs],
     },
@@ -143,6 +167,8 @@ export default function Header() {
   const isActive = (href: string) => pathname === href;
   const isGroupActive = (prefixes: readonly string[]) => pathStartsWithAny(pathname, prefixes);
   const homeLinkClass = getHeaderMenuItemClass(isActive(homeLink.href));
+
+  const HomeIcon = homeLink.icon;
 
   return (
     <header className="bg-primary sticky top-0 z-50 shadow-sm">
@@ -166,6 +192,7 @@ export default function Header() {
                   aria-current={isActive(homeLink.href) ? 'page' : undefined}
                   className={homeLinkClass}
                 >
+                  {HomeIcon ? <HomeIcon className='h-4 w-4 opacity-80' aria-hidden /> : null}
                   {homeLink.label}
                 </Link>
               </li>
@@ -174,6 +201,7 @@ export default function Header() {
                   key={group.id}
                   active={isGroupActive(group.activePrefixes)}
                   label={group.label}
+                  icon={group.icon}
                   links={group.links}
                   pathname={pathname}
                 />
@@ -185,8 +213,6 @@ export default function Header() {
             <nav aria-label="Dashboard utility navigation" className="hidden lg:block">
               <ul className="menu menu-horizontal p-0 gap-1 items-center">
                 <li><ProfileButton /></li>
-                <li><LanguageSwitcher /></li>
-                <li><ThemeSwitcher /></li>
               </ul>
             </nav>
             <button
@@ -205,24 +231,26 @@ export default function Header() {
           <div id="dashboard-mobile-nav" className="xl:hidden mt-2 space-y-2">
             <nav aria-label="Dashboard navigation">
               <ul className="menu rounded-box bg-base-100/10 p-2 gap-1">
-                {allLinks.map((item, index) => (
-                  <li key={`${item.href}-${index}`}>
+                {allLinks.map((item, index) => {
+                  const ItemIcon = item.icon;
+                  return (
+                    <li key={`${item.href}-${index}`}>
                     <Link
                       href={item.href}
                       aria-current={isActive(item.href) ? 'page' : undefined}
                       className={isActive(item.href) ? 'active font-medium' : undefined}
                       onClick={() => setMobileMenuOpen(false)}
                     >
+                      {ItemIcon ? <ItemIcon className='h-4 w-4 opacity-75' aria-hidden /> : null}
                       {item.label}
                     </Link>
-                  </li>
-                ))}
+                    </li>
+                  );
+                })}
               </ul>
             </nav>
             <div className="flex items-center gap-2">
               <ProfileButton />
-              <LanguageSwitcher />
-              <ThemeSwitcher />
             </div>
           </div>
         )}

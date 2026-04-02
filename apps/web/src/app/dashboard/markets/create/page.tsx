@@ -8,6 +8,7 @@ import MarketUniverseForm from '@/features/markets/components/MarketUniverseForm
 import { createMarketUniverse } from '@/features/markets/services/markets.service';
 import { CreateMarketUniverseInput } from '@/features/markets/types/marketUniverse.type';
 import { handleError } from '@/lib/handleError';
+import { LuChartCandlestick } from 'react-icons/lu';
 
 export default function MarketsCreatePage() {
   const router = useRouter();
@@ -30,6 +31,7 @@ export default function MarketsCreatePage() {
     <section className='w-full space-y-4'>
       <PageTitle
         title='Dodaj grupe rynkow'
+        icon={<LuChartCandlestick className='h-5 w-5' />}
         breadcrumb={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Markets', href: '/dashboard/markets/list' },

@@ -9,6 +9,19 @@ Operational queue for one-task execution runs.
 ## NOW
 - [ ] `DPL-01 docs(contract): publish canonical DEV/STAGE/PROD environment matrix and secrets policy`
 ## NEXT
+- [ ] `BOPS-43 docs(contract): lock DCA ladder display contract in Dashboard/Bots (count + executed levels mapping for basic/advanced strategy modes)`
+- [ ] `BOPS-44 feat(api-runtime): extend runtime positions payload with DCA planned/executed levels derived from strategy additional.dcaLevels/dcaTimes`
+- [ ] `BOPS-45 feat(web-dashboard+bots): replace plain DCA count cell with compact executed ladder view (e.g. 1: -15%, 2: -30%) while preserving count`
+- [ ] `BOPS-46 test(api+web): add regression coverage for DCA ladder mapping/rendering (basic repeated levels, advanced ladder, legacy fallback)`
+- [ ] `BOPS-47 docs(contract): lock dynamic stop display contract (TTP/TSL) for dashboard+bots runtime tables, including TSL derivation from trailing-stop anchor`
+- [ ] `BOPS-48 feat(api-runtime): compute dynamicTslStopLoss from active trailing-stop config + runtime trailingAnchorPrice (with trailingLossLimit fallback) and expose stable payload fields`
+- [ ] `BOPS-49 feat(web-i18n+tables): rename stop headers from 'SL (TTP)/(TSL)' to 'TTP/TSL' and keep parity in Dashboard + Bots runtime views`
+- [ ] `BOPS-50 test(api+web): add regression coverage for TSL/TTP rendering lifecycle (pre-arm '-', post-arm value) and runtime payload mapping`
+- [ ] `BOPS-51 docs(contract): lock Dashboard signal-panel IA contract (name, placement above open positions, responsive density, and high-symbol navigation behavior)`
+- [ ] `BOPS-52 feat(web-dashboard): rename 'Live checks' section to strategy-signal wording and move signal panel above open-positions block`
+- [ ] `BOPS-53 feat(web-dashboard): implement scalable signal cards layout (desktop 4 / tablet 3 / mobile 2) with horizontal rail/slider support for very large symbol sets`
+- [ ] `BOPS-54 test(web-dashboard): add regression coverage for signal-panel placement, heading copy, responsive card density, and overflow navigation controls`
+- [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 - [ ] `DPL-02 docs(runbook): publish step-by-step local DEV and local PROD-like startup procedures`
 - [ ] `DPL-03 docs(coolify): publish Linux VPS Coolify setup guide with service mapping and domain routing`
 - [ ] `DPL-04 chore(env): add non-secret `.env.example` templates for api/web with required keys and comments`
@@ -18,6 +31,10 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BOPS-58 feat(web-bot-form): implement single create/edit form view at /bots/create (create mode + edit mode via selected bot id)`
+- [x] `BOPS-57 feat(web-bots-list): redesign /bots into table-first list view (no inline create/edit form) with actions: Podglad(Runtime), Asystent, Edytuj`
+- [x] `BOPS-56 feat(web-routing+nav): switch bots create route to /dashboard/bots/create and align header/menu links + legacy /new redirect`
+- [x] `BOPS-55 docs(contract): lock Bots IA split (/bots list, /bots/create form) and table-action navigation contract (Runtime + Assistant + Edit)`
 - [x] `LFIN-12 test(api+web): add reconciliation, i18n, and numeric-input regression suites for new contracts`
 - [x] `LFIN-11 refactor(web-strategies): replace direct Number(...) parsing in strategy form sections with parser-driven handling + precision guards`
 - [x] `LFIN-10 feat(web-utils): add shared number parser/normalizer and form-level validation contract`

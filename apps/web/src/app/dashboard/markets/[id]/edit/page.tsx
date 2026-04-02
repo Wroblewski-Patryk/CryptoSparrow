@@ -9,6 +9,7 @@ import MarketUniverseForm from '@/features/markets/components/MarketUniverseForm
 import { getMarketUniverse, updateMarketUniverse } from '@/features/markets/services/markets.service';
 import { CreateMarketUniverseInput, MarketUniverse } from '@/features/markets/types/marketUniverse.type';
 import { handleError } from '@/lib/handleError';
+import { LuChartCandlestick } from 'react-icons/lu';
 
 const MARKET_UNIVERSE_ACTIVE_BOT_ERROR = 'market universe is used by active bot and cannot be edited';
 
@@ -60,6 +61,7 @@ export default function MarketsEditPage() {
     <section className='w-full space-y-4'>
       <PageTitle
         title={initial ? `Edytuj: ${initial.name}` : 'Edycja grupy rynkow'}
+        icon={<LuChartCandlestick className='h-5 w-5' />}
         breadcrumb={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Markets', href: '/dashboard/markets/list' },

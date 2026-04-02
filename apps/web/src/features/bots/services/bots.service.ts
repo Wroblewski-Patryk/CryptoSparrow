@@ -4,6 +4,7 @@ import {
   BotAssistantConfig,
   BotAssistantConfigResponse,
   AssistantDecisionTrace,
+  BotRuntimeGraph,
   BotRuntimeSessionDetail,
   BotRuntimeSessionListItem,
   BotRuntimeSessionStatus,
@@ -20,6 +21,16 @@ export const listBots = async (marketType?: TradeMarket): Promise<Bot[]> => {
   const res = await api.get<Bot[]>("/dashboard/bots", {
     params: marketType ? { marketType } : undefined,
   });
+  return res.data;
+};
+
+export const getBot = async (id: string): Promise<Bot> => {
+  const res = await api.get<Bot>(`/dashboard/bots/${id}`);
+  return res.data;
+};
+
+export const getBotRuntimeGraph = async (id: string): Promise<BotRuntimeGraph> => {
+  const res = await api.get<BotRuntimeGraph>(`/dashboard/bots/${id}/runtime-graph`);
   return res.data;
 };
 
