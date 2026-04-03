@@ -35,7 +35,14 @@ export const useLoginForm = () => {
       toast.success('Zalogowano pomyslnie. Przekierowanie za chwile.');
 
       setTimeout(() => {
-        router.push('/dashboard');
+        router.replace('/dashboard');
+        if (typeof window !== 'undefined') {
+          setTimeout(() => {
+            if (window.location.pathname.startsWith('/auth')) {
+              window.location.assign('/dashboard');
+            }
+          }, 500);
+        }
       }, 1000);
     } catch (err) {
       const fallbackMessage = 'Logowanie nieudane. Sprawdz dane i sprobuj ponownie.';

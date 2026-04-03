@@ -21,8 +21,37 @@ const getCookieBaseOptions = () => ({
   secure: process.env.NODE_ENV === 'production',
   path: '/',
   sameSite: 'lax' as const,
-  domain: getCookieDomain(),
 });
+
+const setSessionCookie = (res: Response, token: string, maxAge: number) => {
+  const cookieDomain = getCookieDomain();
+  const baseOptions = getCookieBaseOptions();
+
+  // Always set host-only cookie so legacy sessions on api subdomain are overwritten.
+  res.cookie('token', token, {
+    ...baseOptions,
+    maxAge,
+  });
+
+  // Additionally set shared cookie for web + api subdomains when configured.
+  if (cookieDomain) {
+    res.cookie('token', token, {
+      ...baseOptions,
+      domain: cookieDomain,
+      maxAge,
+    });
+  }
+};
+
+const clearSessionCookie = (res: Response) => {
+  const cookieDomain = getCookieDomain();
+  const baseOptions = getCookieBaseOptions();
+
+  res.clearCookie('token', baseOptions);
+  if (cookieDomain) {
+    res.clearCookie('token', { ...baseOptions, domain: cookieDomain });
+  }
+};
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -34,10 +63,7 @@ export const register = async (req: Request, res: Response) => {
       getSessionJwtExpiresIn(true)
     );
 
-    res.cookie('token', token, {
-      ...getCookieBaseOptions(),
-      maxAge: REMEMBER_ME_TTL_MS,
-    });
+    setSessionCookie(res, token, REMEMBER_ME_TTL_MS);
 
     return res.status(201).json({ message: 'User registered', user });
   } catch (error) {
@@ -58,10 +84,7 @@ export const login = async (req: Request, res: Response) => {
     const { token, user } = await loginUser(input);
     const maxAge = getSessionTtlMs(input.remember);
 
-    res.cookie('token', token, {
-      ...getCookieBaseOptions(),
-      maxAge,
-    });
+    setSessionCookie(res, token, maxAge);
 
     return res.status(200).json({ user });
   } catch (error) {
@@ -84,7 +107,7 @@ export const login = async (req: Request, res: Response) => {
 
 export const me = async (req: Request, res: Response) => {
   const clearSession = () => {
-    res.clearCookie('token', getCookieBaseOptions());
+    clearSessionCookie(res);
   };
 
   try {
@@ -121,6 +144,6 @@ export const me = async (req: Request, res: Response) => {
 };
 
 export const logout = async (_req: Request, res: Response) => {
-  res.clearCookie('token', getCookieBaseOptions());
+  clearSessionCookie(res);
   return res.status(200).json({ message: 'Logged out' });
 };
