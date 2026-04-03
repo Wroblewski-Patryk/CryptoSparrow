@@ -21,7 +21,7 @@ export default function PublicPage() {
               Bot tradingowy, który łączy rynki, strategie i AI w jednym miejscu.
             </h1>
             <p className="max-w-2xl text-lg text-base-content/80 md:text-xl">
-              CryptoSparrow pomaga budować i testować strategie szybciej: od grup rynków, przez backtesty, po
+              Soar pomaga budować i testować strategie szybciej: od grup rynków, przez backtesty, po
               automatyczne wykonanie zleceń.
             </p>
 

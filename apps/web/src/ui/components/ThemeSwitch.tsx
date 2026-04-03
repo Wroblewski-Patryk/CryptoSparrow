@@ -8,7 +8,7 @@ import { useDetailsDropdown } from '../hooks/useDetailsDropdown';
 import { headerMenuItemClass } from '../layout/dashboard/headerControlStyles';
 
 const themes = [
-  { value: 'cryptosparrow', label: 'CryptoSparrow', swatches: ['bg-violet-600', 'bg-yellow-400', 'bg-indigo-400'] },
+  { value: 'cryptosparrow', label: 'Soar', swatches: ['bg-violet-600', 'bg-yellow-400', 'bg-indigo-400'] },
   { value: 'system', label: 'System', swatches: ['bg-slate-300', 'bg-slate-500', 'bg-slate-800'] },
   { value: 'cupcake', label: 'Cupcake', swatches: ['bg-pink-300', 'bg-rose-300', 'bg-orange-200'] },
   { value: 'dracula', label: 'Dracula', swatches: ['bg-violet-800', 'bg-fuchsia-700', 'bg-slate-900'] },

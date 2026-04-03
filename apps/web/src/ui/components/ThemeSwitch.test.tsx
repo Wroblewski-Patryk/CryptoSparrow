@@ -7,7 +7,7 @@ describe('ThemeSwitcher', () => {
     render(<ThemeSwitcher />);
 
     expect(screen.getByLabelText('Theme selector')).toBeInTheDocument();
-    expect(screen.getByLabelText('CryptoSparrow')).toBeInTheDocument();
+    expect(screen.getByLabelText('Soar')).toBeInTheDocument();
     expect(screen.getByLabelText('System')).toBeInTheDocument();
     expect(screen.getByLabelText('Cupcake')).toBeInTheDocument();
     expect(screen.getByLabelText('Dracula')).toBeInTheDocument();

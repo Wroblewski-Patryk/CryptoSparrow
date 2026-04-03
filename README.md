@@ -1,4 +1,4 @@
-# CryptoSparrow
+# Soar
 
 Monorepo with:
 - `apps/api` (Express API)

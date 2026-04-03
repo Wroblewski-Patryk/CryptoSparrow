@@ -11,6 +11,7 @@ Operational queue for one-task execution runs.
 ## NEXT
 - [ ] `LFIN-08 test(api-live-adapter): add regression coverage for LIVE fill fee persistence/fallback behavior and runtime serialization parity`
 - [ ] `BOPS-60 docs(contract): lock dashboard trade-history action/fee semantics (OPEN -> realized blank, CLOSE -> realized value) and margin consistency`
+- [ ] `ADM-01 docs(contract): define third admin app-shell template contract and rollout tasks (public/dashboard/admin split)`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 

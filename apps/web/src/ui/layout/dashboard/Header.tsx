@@ -180,7 +180,7 @@ export default function Header() {
                 aria-hidden
                 className="h-8 w-8 bg-current [mask-image:url('/logo.svg')] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]"
               />
-              <span className="brand-wordmark truncate">CryptoSparrow</span>
+              <span className="brand-wordmark truncate">Soar</span>
             </Link>
           </div>
 

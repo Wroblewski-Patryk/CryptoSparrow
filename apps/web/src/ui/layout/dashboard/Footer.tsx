@@ -11,7 +11,7 @@ export default function Footer() {
     <footer className="bg-primary py-4 text-primary-content">
       <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-4">
         <p className="text-sm opacity-90">
-          &copy; {new Date().getFullYear()} CryptoSparrow. {t("dashboard.footer.rights")}
+          &copy; {new Date().getFullYear()} Soar. {t("dashboard.footer.rights")}
         </p>
         <nav aria-label="Footer preferences">
           <ul className="menu menu-horizontal p-0 gap-1 items-center">

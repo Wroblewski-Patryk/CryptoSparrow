@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "CryptoSparrow",
-    short_name: "CryptoSparrow",
+    name: "Soar",
+    short_name: "Soar",
     description: "AI bot do handlu spot i futures",
     start_url: "/dashboard",
     scope: "/",
@@ -37,7 +37,7 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: "512x512",
         type: "image/png",
         form_factor: "narrow",
-        label: "CryptoSparrow dashboard preview",
+        label: "Soar dashboard preview",
       },
     ],
   };
