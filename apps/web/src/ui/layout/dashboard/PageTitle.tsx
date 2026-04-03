@@ -15,9 +15,10 @@ interface PageTitleProps {
   onAdd?: () => void;
   addLabel?: string;
   icon?: ReactNode;
+  addButtonClassName?: string;
 }
 
-export function PageTitle({ title, breadcrumb = [], onAdd, addLabel, icon }: PageTitleProps) {
+export function PageTitle({ title, breadcrumb = [], onAdd, addLabel, icon, addButtonClassName }: PageTitleProps) {
   const { t } = useI18n();
 
   const normalizedBreadcrumb =
@@ -46,7 +47,7 @@ export function PageTitle({ title, breadcrumb = [], onAdd, addLabel, icon }: Pag
       </div>
 
       {onAdd && (
-        <button className="btn btn-primary mt-4 md:mt-0" onClick={onAdd}>
+        <button className={addButtonClassName ?? "btn btn-primary mt-4 md:mt-0"} onClick={onAdd}>
           {addLabel || t("dashboard.common.add")}
         </button>
       )}

@@ -22,6 +22,7 @@ export default function BotsPage() {
         ]}
         onAdd={() => router.push("/dashboard/bots/create")}
         addLabel={t("dashboard.nav.createBot")}
+        addButtonClassName="btn mt-4 border-base-content/25 bg-base-100/80 text-base-content hover:border-base-content/35 hover:bg-base-100 md:mt-0"
       />
 
       <BotsListTable />

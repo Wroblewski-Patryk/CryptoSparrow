@@ -1,9 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
-import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
+import DataTable, { DataTableColumn } from "../../../ui/components/DataTable";
+import { TableToneBadge } from "../../../ui/components/TableUi";
+import { ErrorState, LoadingState } from "../../../ui/components/ViewState";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import {
   fetchExchangePositionsSnapshot,
@@ -19,6 +21,17 @@ const positionSources = [
 ] as const;
 
 type PositionSource = (typeof positionSources)[number]["value"];
+type PositionsFiltersState = {
+  source: PositionSource;
+  status: PositionStatus | "ALL";
+  symbol: string;
+};
+
+const EMPTY_POSITIONS_FILTERS: PositionsFiltersState = {
+  source: "runtime",
+  status: "ALL",
+  symbol: "",
+};
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -44,12 +57,27 @@ const managementBadgeClass: Record<string, string> = {
   MANUAL_MANAGED: "badge-warning",
 };
 
+const sideTone = (side: string): "success" | "danger" | "neutral" => {
+  const normalized = side.toUpperCase();
+  if (normalized === "LONG") return "success";
+  if (normalized === "SHORT") return "danger";
+  return "neutral";
+};
+
+const statusTone = (
+  status: PositionStatus
+): "success" | "warning" | "danger" | "neutral" => {
+  if (status === "OPEN") return "success";
+  if (status === "CLOSED") return "neutral";
+  if (status === "LIQUIDATED") return "danger";
+  return "warning";
+};
+
 export default function PositionsBoard() {
   const { formatDateTime, formatNumber } = useLocaleFormatting();
   const [positions, setPositions] = useState<Position[]>([]);
-  const [source, setSource] = useState<PositionSource>("runtime");
-  const [status, setStatus] = useState<PositionStatus | "ALL">("ALL");
-  const [symbol, setSymbol] = useState("");
+  const [draftFilters, setDraftFilters] = useState<PositionsFiltersState>(EMPTY_POSITIONS_FILTERS);
+  const [appliedFilters, setAppliedFilters] = useState<PositionsFiltersState>(EMPTY_POSITIONS_FILTERS);
   const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
   const [pendingManagementId, setPendingManagementId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,10 +87,10 @@ export default function PositionsBoard() {
     setLoading(true);
     setError(null);
     try {
-      if (source === "runtime") {
+      if (appliedFilters.source === "runtime") {
         const data = await listPositions({
-          status: status === "ALL" ? undefined : status,
-          symbol: symbol.trim() ? symbol.trim().toUpperCase() : undefined,
+          status: appliedFilters.status === "ALL" ? undefined : appliedFilters.status,
+          symbol: appliedFilters.symbol.trim() ? appliedFilters.symbol.trim().toUpperCase() : undefined,
           limit: 100,
         });
         setPositions(data);
@@ -81,7 +109,7 @@ export default function PositionsBoard() {
           realizedPnl: null,
           openedAt: item.timestamp ?? undefined,
         }));
-        const symbolFilter = symbol.trim().toUpperCase();
+        const symbolFilter = appliedFilters.symbol.trim().toUpperCase();
         const filtered = symbolFilter
           ? normalized.filter((position) => position.symbol.toUpperCase().includes(symbolFilter))
           : normalized;
@@ -93,11 +121,24 @@ export default function PositionsBoard() {
     } finally {
       setLoading(false);
     }
-  }, [source, status, symbol]);
+  }, [appliedFilters]);
 
   useEffect(() => {
     void loadPositions();
   }, [loadPositions]);
+
+  const applyFilters = () => {
+    setAppliedFilters({
+      source: draftFilters.source,
+      status: draftFilters.status,
+      symbol: draftFilters.symbol.trim().toUpperCase(),
+    });
+  };
+
+  const resetFilters = () => {
+    setDraftFilters(EMPTY_POSITIONS_FILTERS);
+    setAppliedFilters(EMPTY_POSITIONS_FILTERS);
+  };
 
   const handleToggleManagementMode = async (position: Position) => {
     if (!position.managementMode) return;
@@ -114,66 +155,140 @@ export default function PositionsBoard() {
     }
   };
 
-  return (
-    <div className="space-y-5">
-      <div className="rounded-xl border border-base-300 bg-base-200 p-4">
-        <h2 className="text-lg font-semibold">Filtry positions</h2>
-        <div className="mt-3 grid gap-3 md:grid-cols-3">
-          <label className="form-control">
-            <span className="label-text">Zrodlo</span>
-            <select
-              className="select select-bordered"
-              value={source}
-              onChange={(event) => setSource(event.target.value as PositionSource)}
+  const columns = useMemo<DataTableColumn<Position>[]>(
+    () => [
+      {
+        key: "symbol",
+        label: "Symbol",
+        sortable: true,
+        accessor: (row) => row.symbol,
+        className: "font-medium",
+      },
+      {
+        key: "side",
+        label: "Side",
+        sortable: true,
+        accessor: (row) => row.side,
+        render: (row) => <TableToneBadge label={row.side} tone={sideTone(row.side)} />,
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        accessor: (row) => row.status,
+        render: (row) => <TableToneBadge label={row.status} tone={statusTone(row.status)} />,
+      },
+      {
+        key: "entryPrice",
+        label: "Entry",
+        sortable: true,
+        accessor: (row) => row.entryPrice,
+        render: (row) => formatNumber(row.entryPrice),
+      },
+      {
+        key: "quantity",
+        label: "Qty",
+        sortable: true,
+        accessor: (row) => row.quantity,
+        render: (row) => formatNumber(row.quantity),
+      },
+      {
+        key: "leverage",
+        label: "Lev",
+        sortable: true,
+        accessor: (row) => row.leverage,
+        render: (row) => `${row.leverage}x`,
+      },
+      {
+        key: "unrealizedPnl",
+        label: "Unrealized PnL",
+        sortable: true,
+        accessor: (row) => row.unrealizedPnl ?? null,
+        render: (row) => (
+          <span className={pnlClass(row.unrealizedPnl)}>
+            {formatNumber(row.unrealizedPnl)}
+          </span>
+        ),
+      },
+      {
+        key: "realizedPnl",
+        label: "Realized PnL",
+        sortable: true,
+        accessor: (row) => row.realizedPnl ?? null,
+        render: (row) => (
+          <span className={pnlClass(row.realizedPnl)}>
+            {formatNumber(row.realizedPnl)}
+          </span>
+        ),
+      },
+      {
+        key: "openedAt",
+        label: "Opened",
+        sortable: true,
+        accessor: (row) => row.openedAt ?? "",
+        render: (row) => formatDateTime(row.openedAt),
+      },
+      {
+        key: "source",
+        label: "Source",
+        sortable: true,
+        accessor: (row) => row.origin ?? (appliedFilters.source === "exchange" ? "EXCHANGE_SYNC" : "BOT"),
+        render: (row) => {
+          const value = row.origin ?? (appliedFilters.source === "exchange" ? "EXCHANGE_SYNC" : "BOT");
+          return (
+            <span
+              className={`badge badge-outline ${sourceBadgeClass[value] ?? "badge-outline"}`}
             >
-              {positionSources.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="form-control">
-            <span className="label-text">Status</span>
-            <select
-              className="select select-bordered"
-              value={status}
-              disabled={source === "exchange"}
-              onChange={(event) => setStatus(event.target.value as PositionStatus | "ALL")}
+              {value}
+            </span>
+          );
+        },
+      },
+      {
+        key: "management",
+        label: "Management",
+        sortable: true,
+        accessor: (row) => row.managementMode ?? (appliedFilters.source === "exchange" ? "MANUAL_MANAGED" : "BOT_MANAGED"),
+        render: (row) => {
+          const value = row.managementMode ?? (appliedFilters.source === "exchange" ? "MANUAL_MANAGED" : "BOT_MANAGED");
+          return (
+            <span
+              className={`badge badge-outline ${managementBadgeClass[value] ?? "badge-outline"}`}
             >
-              {statuses.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="form-control">
-            <span className="label-text">Symbol</span>
-            <input
-              className="input input-bordered"
-              placeholder="ETHUSDT"
-              value={symbol}
-              onChange={(event) => setSymbol(event.target.value)}
-            />
-          </label>
-          <div className="form-control justify-end">
+              {value}
+            </span>
+          );
+        },
+      },
+      {
+        key: "action",
+        label: "Action",
+        sortable: false,
+        accessor: () => "",
+        render: (row) =>
+          appliedFilters.source === "runtime" ? (
             <button
               type="button"
-              className="btn btn-primary btn-sm mt-6"
-              onClick={() => void loadPositions()}
+              className={`btn btn-xs ${row.managementMode === "BOT_MANAGED" ? "btn-warning" : "btn-success"}`}
+              onClick={() => void handleToggleManagementMode(row)}
+              disabled={pendingManagementId === row.id}
             >
-              Odswiez
+              {pendingManagementId === row.id
+                ? "Aktualizacja..."
+                : row.managementMode === "BOT_MANAGED"
+                  ? "Ustaw manual"
+                  : "Ustaw bot"}
             </button>
-          </div>
-        </div>
-        {source === "exchange" && lastSyncAt && (
-          <p className="mt-3 text-xs text-base-content/70">
-            Ostatnia synchronizacja: {formatDateTime(lastSyncAt)}
-          </p>
-        )}
-      </div>
+          ) : (
+            <span className="text-xs text-base-content/70">Readonly</span>
+          ),
+      },
+    ],
+    [appliedFilters.source, formatDateTime, formatNumber, pendingManagementId]
+  );
 
+  return (
+    <div className="space-y-5">
       {loading && <LoadingState title="Ladowanie positions" />}
       {!loading && error && (
         <ErrorState
@@ -183,87 +298,89 @@ export default function PositionsBoard() {
           onRetry={() => void loadPositions()}
         />
       )}
-      {!loading && !error && positions.length === 0 && (
-        <EmptyState title="Brak positions" description="Brak pozycji spelniajacych filtry." />
-      )}
 
-      {!loading && !error && positions.length > 0 && (
-        <div className="space-y-3">
-          <SuccessState
-            title="Positions loaded"
-            description={`${source === "exchange" ? "Exchange snapshot" : "Runtime snapshot"}: pobrano ${positions.length} ${positions.length === 1 ? "position" : "positions"}.`}
+      {!loading && !error ? (
+        <div className="space-y-2">
+          <DataTable
+            compact
+            rows={positions}
+            columns={columns}
+            getRowId={(row) => row.id}
+            filterPlaceholder="ETHUSDT"
+            query={draftFilters.symbol}
+            onQueryChange={(value) =>
+              setDraftFilters((prev) => ({ ...prev, symbol: value }))
+            }
+            onSearch={applyFilters}
+            manualFiltering
+            advancedToggleLabel="Zaawansowane"
+            advancedFilters={
+              <div className="grid gap-2 md:grid-cols-[minmax(12rem,14rem)_minmax(12rem,14rem)_auto]">
+                <label className="form-control gap-1">
+                  <span className="text-[11px] uppercase tracking-wide opacity-60">Zrodlo</span>
+                  <select
+                    className="select select-bordered select-xs"
+                    value={draftFilters.source}
+                    onChange={(event) =>
+                      setDraftFilters((prev) => ({
+                        ...prev,
+                        source: event.target.value as PositionSource,
+                      }))
+                    }
+                  >
+                    {positionSources.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="form-control gap-1">
+                  <span className="text-[11px] uppercase tracking-wide opacity-60">Status</span>
+                  <select
+                    className="select select-bordered select-xs"
+                    value={draftFilters.status}
+                    disabled={draftFilters.source === "exchange"}
+                    onChange={(event) =>
+                      setDraftFilters((prev) => ({
+                        ...prev,
+                        status: event.target.value as PositionStatus | "ALL",
+                      }))
+                    }
+                  >
+                    {statuses.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="flex items-end justify-end gap-2">
+                  <button type="button" className="btn btn-primary btn-xs" onClick={applyFilters}>
+                    Zastosuj
+                  </button>
+                  <button type="button" className="btn btn-ghost btn-xs" onClick={resetFilters}>
+                    Reset
+                  </button>
+                </div>
+              </div>
+            }
+            paginationEnabled
+            defaultPageSize={10}
+            pageSizeOptions={[10, 25, 50, 100]}
+            rowsPerPageLabel="Wierszy"
+            previousLabel="Poprzednia"
+            nextLabel="Nastepna"
+            emptyText="Brak positions"
           />
-          <div className="overflow-x-auto">
-            <table className="table table-zebra">
-              <thead>
-                <tr>
-                  <th>Symbol</th>
-                  <th>Side</th>
-                  <th>Status</th>
-                  <th>Entry</th>
-                  <th>Qty</th>
-                  <th>Lev</th>
-                  <th>Unrealized PnL</th>
-                  <th>Realized PnL</th>
-                  <th>Opened</th>
-                  <th>Source</th>
-                  <th>Management</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {positions.map((position) => (
-                  <tr key={position.id}>
-                    <td className="font-medium">{position.symbol}</td>
-                    <td>{position.side}</td>
-                    <td>
-                      <span className="badge badge-outline">{position.status}</span>
-                    </td>
-                    <td>{formatNumber(position.entryPrice)}</td>
-                    <td>{formatNumber(position.quantity)}</td>
-                    <td>{position.leverage}x</td>
-                    <td className={pnlClass(position.unrealizedPnl)}>{formatNumber(position.unrealizedPnl)}</td>
-                    <td className={pnlClass(position.realizedPnl)}>{formatNumber(position.realizedPnl)}</td>
-                    <td>{formatDateTime(position.openedAt)}</td>
-                    <td>
-                      <span
-                        className={`badge badge-outline ${sourceBadgeClass[position.origin ?? "EXCHANGE_SYNC"] ?? "badge-outline"}`}
-                      >
-                        {position.origin ?? (source === "exchange" ? "EXCHANGE_SYNC" : "BOT")}
-                      </span>
-                    </td>
-                    <td>
-                      <span
-                        className={`badge badge-outline ${managementBadgeClass[position.managementMode ?? "MANUAL_MANAGED"] ?? "badge-outline"}`}
-                      >
-                        {position.managementMode ?? (source === "exchange" ? "MANUAL_MANAGED" : "BOT_MANAGED")}
-                      </span>
-                    </td>
-                    <td>
-                      {source === "runtime" ? (
-                        <button
-                          type="button"
-                          className={`btn btn-xs ${position.managementMode === "BOT_MANAGED" ? "btn-warning" : "btn-success"}`}
-                          onClick={() => void handleToggleManagementMode(position)}
-                          disabled={pendingManagementId === position.id}
-                        >
-                          {pendingManagementId === position.id
-                            ? "Aktualizacja..."
-                            : position.managementMode === "BOT_MANAGED"
-                              ? "Ustaw manual"
-                              : "Ustaw bot"}
-                        </button>
-                      ) : (
-                        <span className="text-xs text-base-content/70">Readonly</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+
+          {appliedFilters.source === "exchange" && lastSyncAt ? (
+            <p className="text-xs text-base-content/70">
+              Ostatnia synchronizacja: {formatDateTime(lastSyncAt)}
+            </p>
+          ) : null}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

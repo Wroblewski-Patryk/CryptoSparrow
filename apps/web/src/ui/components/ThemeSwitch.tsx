@@ -15,6 +15,7 @@ const themes = [
   { value: 'forest', label: 'Forest', swatches: ['bg-green-700', 'bg-lime-500', 'bg-emerald-800'] },
   { value: 'valentine', label: 'Valentine', swatches: ['bg-rose-400', 'bg-pink-400', 'bg-red-300'] },
   { value: 'luxury', label: 'Luxury', swatches: ['bg-amber-700', 'bg-yellow-500', 'bg-stone-900'] },
+  { value: 'cyberpunk', label: 'Cyberpunk', swatches: ['bg-yellow-300', 'bg-fuchsia-500', 'bg-slate-900'] },
 ] as const;
 
 type ThemePreference = (typeof themes)[number]['value'];

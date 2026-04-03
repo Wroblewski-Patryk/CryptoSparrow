@@ -10,6 +10,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/ui/components/ViewState"
 import { useLocaleFormatting } from "@/i18n/useLocaleFormatting";
 import DataTable, { DataTableColumn } from "@/ui/components/DataTable";
 import ConfirmModal from "@/ui/components/ConfirmModal";
+import { TableIconButtonAction } from "@/ui/components/TableUi";
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -96,25 +97,20 @@ export default function StrategiesList() {
     {
       key: "actions",
       label: "Akcje",
-      className: "w-32 text-center",
+      className: "w-28 text-center",
       render: (row) => (
         <div className="flex items-center justify-center gap-2">
-          <button
-            className="btn btn-sm btn-info"
+          <TableIconButtonAction
+            label="Edytuj"
+            icon={<LuPencilLine className="h-3.5 w-3.5" />}
             onClick={() => router.push(`/dashboard/strategies/${row.id}/edit`)}
-            title="Edytuj"
-            type="button"
-          >
-            <LuPencilLine className="w-4 h-4" />
-          </button>
-          <button
-            className="btn btn-sm btn-error"
+          />
+          <TableIconButtonAction
+            label="Usun"
+            icon={<LuTrash2 className="h-3.5 w-3.5" />}
             onClick={() => setSelectedStrategy(row)}
-            title="Usun"
-            type="button"
-          >
-            <LuTrash2 className="w-4 h-4" />
-          </button>
+            tone="danger"
+          />
         </div>
       ),
     },
@@ -142,11 +138,10 @@ export default function StrategiesList() {
 
       {!loading && !loadError && strategies.length > 0 && (
         <DataTable
+          compact
           rows={strategies}
           columns={columns}
           getRowId={(row) => row.id}
-          title="Lista strategii"
-          description="Sortowanie i filtrowanie pomaga szybko znalezc strategie pod backtest i boty."
           filterPlaceholder="Filtruj strategie..."
           filterFn={(row, query) => {
             const normalized = query.trim().toLowerCase();

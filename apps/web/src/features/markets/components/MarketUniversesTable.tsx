@@ -8,6 +8,7 @@ import { LuPencilLine, LuTrash2 } from 'react-icons/lu';
 import { useLocaleFormatting } from '../../../i18n/useLocaleFormatting';
 import DataTable, { DataTableColumn } from '../../../ui/components/DataTable';
 import ConfirmModal from '../../../ui/components/ConfirmModal';
+import { TableIconButtonAction, TableToneBadge } from '../../../ui/components/TableUi';
 import { deleteMarketUniverse, fetchMarketCatalog } from '../services/markets.service';
 import { MarketUniverse } from '../types/marketUniverse.type';
 
@@ -148,9 +149,7 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
 
           return (
             <div className='flex items-center gap-2'>
-              <span className='badge badge-outline font-mono'>
-                {resolved?.loading ? '...' : count}
-              </span>
+              <TableToneBadge label={resolved?.loading ? '...' : `${count}`} tone='neutral' className='font-mono' />
               {!resolved?.loading && count > 0 ? (
                 <button
                   type='button'
@@ -176,25 +175,20 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
       {
         key: 'actions',
         label: 'Akcje',
-        className: 'w-32 text-center',
+        className: 'w-28 text-center',
         render: (row) => (
           <div className='flex items-center justify-center gap-2'>
-            <button
-              className='btn btn-sm btn-info'
+            <TableIconButtonAction
+              label='Edytuj'
+              icon={<LuPencilLine className='h-3.5 w-3.5' />}
               onClick={() => router.push(`/dashboard/markets/${row.id}/edit`)}
-              title='Edytuj'
-              type='button'
-            >
-              <LuPencilLine className='h-4 w-4' />
-            </button>
-            <button
-              type='button'
-              className='btn btn-sm btn-error'
+            />
+            <TableIconButtonAction
+              label='Usun'
+              icon={<LuTrash2 className='h-3.5 w-3.5' />}
               onClick={() => setDeleteTarget(row)}
-              title='Usun'
-            >
-              <LuTrash2 className='h-4 w-4' />
-            </button>
+              tone='danger'
+            />
           </div>
         ),
       },
@@ -227,11 +221,10 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
   return (
     <>
       <DataTable
+        compact
         rows={rows}
         columns={columns}
         getRowId={(row) => row.id}
-        title='Lista grup rynkow'
-        description='Grupy rynkow do wykorzystania przez strategie, boty i backtesty.'
         filterPlaceholder='Filtruj grupy rynkow...'
         filterFn={(row, query) => {
           const normalized = query.trim().toUpperCase();

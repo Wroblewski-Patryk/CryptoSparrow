@@ -1,14 +1,14 @@
 'use client';
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { LuPencilLine, LuTrash2 } from "react-icons/lu";
+import { LuBot, LuLayoutDashboard, LuPencilLine, LuTrash2 } from "react-icons/lu";
 import { useRouter } from "next/navigation";
 
 import ConfirmModal from "@/ui/components/ConfirmModal";
 import DataTable, { DataTableColumn } from "@/ui/components/DataTable";
+import { TableIconButtonAction, TableIconLinkAction, TableToneBadge } from "@/ui/components/TableUi";
 import { EmptyState, ErrorState, LoadingState } from "@/ui/components/ViewState";
 import { useI18n } from "@/i18n/I18nProvider";
 import { listStrategies } from "@/features/strategies/api/strategies.api";
@@ -20,9 +20,6 @@ const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
   return (err.response?.data as { message?: string } | undefined)?.message;
 };
-
-const modeBadgeClass = (mode: string) => (mode === "LIVE" ? "badge-warning" : "badge-info");
-const statusBadgeClass = (active: boolean) => (active ? "badge-success" : "badge-ghost");
 
 export default function BotsListTable() {
   const { t } = useI18n();
@@ -49,10 +46,7 @@ export default function BotsListTable() {
     setLoading(true);
     setError(null);
     try {
-      const [bots, strategyRows] = await Promise.all([
-        listBots(),
-        listStrategies(),
-      ]);
+      const [bots, strategyRows] = await Promise.all([listBots(), listStrategies()]);
       setRows(bots);
       setStrategies(strategyRows);
     } catch (err: unknown) {
@@ -94,7 +88,9 @@ export default function BotsListTable() {
       label: t("dashboard.bots.list.columns.mode"),
       sortable: true,
       accessor: (row) => row.mode,
-      render: (row) => <span className={`badge badge-xs ${modeBadgeClass(row.mode)}`}>{row.mode}</span>,
+      render: (row) => (
+        <TableToneBadge label={row.mode} tone={row.mode === "LIVE" ? "warning" : "info"} />
+      ),
       className: "w-28",
     },
     {
@@ -103,9 +99,10 @@ export default function BotsListTable() {
       sortable: true,
       accessor: (row) => (row.isActive ? 1 : 0),
       render: (row) => (
-        <span className={`badge badge-xs ${statusBadgeClass(row.isActive)}`}>
-          {row.isActive ? t("dashboard.bots.monitoring.active") : t("dashboard.bots.monitoring.inactive")}
-        </span>
+        <TableToneBadge
+          label={row.isActive ? t("dashboard.bots.monitoring.active") : t("dashboard.bots.monitoring.inactive")}
+          tone={row.isActive ? "success" : "neutral"}
+        />
       ),
       className: "w-28",
     },
@@ -115,9 +112,10 @@ export default function BotsListTable() {
       sortable: true,
       accessor: (row) => `${row.exchange} ${row.marketType}`,
       render: (row) => (
-        <span className="text-sm">
-          {row.exchange} / {row.marketType}
-        </span>
+        <div className="space-y-0.5">
+          <p className="font-medium">{row.exchange}</p>
+          <p className="text-[11px] uppercase tracking-wide opacity-60">{row.marketType}</p>
+        </div>
       ),
       className: "w-40",
     },
@@ -133,7 +131,7 @@ export default function BotsListTable() {
           <div className="space-y-0.5">
             <p className="font-medium">{strategyMeta.name}</p>
             <p className="text-[11px] opacity-60">
-              {strategyMeta.interval} · {strategyMeta.leverage ?? 1}x
+              {strategyMeta.interval} | {strategyMeta.leverage ?? 1}x
             </p>
           </div>
         );
@@ -155,26 +153,30 @@ export default function BotsListTable() {
     {
       key: "actions",
       label: t("dashboard.bots.list.columns.actions"),
-      className: "w-[260px] text-right",
+      className: "w-[180px] text-right",
       render: (row) => (
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <Link href={`/dashboard/bots/runtime?botId=${row.id}`} className="btn btn-xs btn-outline">
-            Podglad
-          </Link>
-          <Link href={`/dashboard/bots/assistant?botId=${row.id}`} className="btn btn-xs btn-outline">
-            Asystent
-          </Link>
-          <Link href={`/dashboard/bots/create?editId=${row.id}`} className="btn btn-xs btn-info">
-            <LuPencilLine className="h-3.5 w-3.5" />
-          </Link>
-          <button
-            type="button"
-            className="btn btn-xs btn-error"
+          <TableIconLinkAction
+            href={`/dashboard/bots/runtime?botId=${row.id}`}
+            label={t("dashboard.bots.tabs.monitoring")}
+            icon={<LuLayoutDashboard className="h-3.5 w-3.5" />}
+          />
+          <TableIconLinkAction
+            href={`/dashboard/bots/assistant?botId=${row.id}`}
+            label={t("dashboard.bots.tabs.assistant")}
+            icon={<LuBot className="h-3.5 w-3.5" />}
+          />
+          <TableIconLinkAction
+            href={`/dashboard/bots/create?editId=${row.id}`}
+            label={t("dashboard.bots.list.edit")}
+            icon={<LuPencilLine className="h-3.5 w-3.5" />}
+          />
+          <TableIconButtonAction
+            label={t("dashboard.bots.list.delete")}
+            icon={<LuTrash2 className="h-3.5 w-3.5" />}
             onClick={() => setSelectedDeleteBot(row)}
-            title={t("dashboard.bots.list.delete")}
-          >
-            <LuTrash2 className="h-3.5 w-3.5" />
-          </button>
+            tone="danger"
+          />
         </div>
       ),
     },
@@ -209,21 +211,18 @@ export default function BotsListTable() {
   return (
     <div className="space-y-3">
       <DataTable
+        compact
         rows={rows}
         columns={columns}
         getRowId={(row) => row.id}
-        title={t("dashboard.nav.botsList")}
-        description={t("dashboard.bots.monitoring.description")}
-        filterPlaceholder={t("dashboard.bots.monitoring.symbolFilterPlaceholder")}
+        filterPlaceholder={t("dashboard.bots.list.searchPlaceholder")}
         filterFn={(row, query) => {
           const normalized = query.trim().toLowerCase();
           return (
             row.name.toLowerCase().includes(normalized) ||
             row.marketType.toLowerCase().includes(normalized) ||
             row.mode.toLowerCase().includes(normalized) ||
-            (strategyMap.get(row.strategyId ?? "")?.name ?? "")
-              .toLowerCase()
-              .includes(normalized)
+            (strategyMap.get(row.strategyId ?? "")?.name ?? "").toLowerCase().includes(normalized)
           );
         }}
         emptyText={t("dashboard.bots.list.noBotsForFilter")}

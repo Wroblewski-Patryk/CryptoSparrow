@@ -59,15 +59,12 @@ describe("BotsListTable", () => {
       expect(screen.getByText("Paper Bot")).toBeInTheDocument();
     });
 
-    const runtimeLink = screen.getByRole("link", { name: "Podglad" });
-    const assistantLink = screen.getByRole("link", { name: "Asystent" });
-    const editLinks = screen.getAllByRole("link");
-    const editLink = editLinks.find(
-      (link) => link.getAttribute("href") === "/dashboard/bots/create?editId=bot-1"
-    );
+    const runtimeLink = screen.getByRole("link", { name: /operacje runtime/i });
+    const assistantLink = screen.getByRole("link", { name: /asystent/i });
+    const editLink = screen.getByRole("link", { name: /edytuj/i });
 
     expect(runtimeLink).toHaveAttribute("href", "/dashboard/bots/runtime?botId=bot-1");
     expect(assistantLink).toHaveAttribute("href", "/dashboard/bots/assistant?botId=bot-1");
-    expect(editLink).toBeTruthy();
+    expect(editLink).toHaveAttribute("href", "/dashboard/bots/create?editId=bot-1");
   });
 });

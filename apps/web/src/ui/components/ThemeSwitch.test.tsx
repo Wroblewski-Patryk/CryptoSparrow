@@ -14,5 +14,6 @@ describe('ThemeSwitcher', () => {
     expect(screen.getByLabelText('Forest')).toBeInTheDocument();
     expect(screen.getByLabelText('Valentine')).toBeInTheDocument();
     expect(screen.getByLabelText('Luxury')).toBeInTheDocument();
+    expect(screen.getByLabelText('Cyberpunk')).toBeInTheDocument();
   });
 });

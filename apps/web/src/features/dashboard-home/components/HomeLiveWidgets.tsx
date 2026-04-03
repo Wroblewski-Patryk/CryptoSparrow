@@ -5,6 +5,7 @@ import axios from "axios";
 import Link from "next/link";
 
 import { EmptyState, ErrorState, LoadingState } from "../../../ui/components/ViewState";
+import DataTable, { DataTableColumn } from "../../../ui/components/DataTable";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { createMarketStreamEventSource } from "../../../lib/marketStream";
@@ -51,7 +52,8 @@ const MAX_DASHBOARD_BOTS = 8;
 const AUTO_REFRESH_INTERVAL_MS = 5_000;
 const LOAD_STALE_AFTER_MS = 20_000;
 const SELECTED_BOT_STORAGE_KEY = "dashboard.home.selectedBotId";
-const TRADE_PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
+const TRADE_PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
+const OPEN_POSITIONS_PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 const SIGNAL_CARDS_DENSITY_BREAKPOINTS = {
   desktopMinWidth: 1280,
   tabletMinWidth: 768,
@@ -741,25 +743,14 @@ export default function HomeLiveWidgets() {
     setTradeAppliedFilters({ ...tradeDraftFilters });
   };
 
-  const handleTradeSort = (column: TradeSortBy) => {
-    setTradePage(1);
-    if (tradeSortBy !== column) {
-      setTradeSortBy(column);
-      setTradeSortDir("asc");
-      return;
-    }
-    if (tradeSortDir === "asc") {
-      setTradeSortDir("desc");
-      return;
-    }
-    setTradeSortBy(null);
-    setTradeSortDir("asc");
-  };
-
-  const tradeSortIndicator = (column: TradeSortBy) => {
-    if (tradeSortBy !== column) return "";
-    return tradeSortDir === "asc" ? " (asc)" : " (desc)";
-  };
+  const handleTradeSortChange = useCallback(
+    (columnKey: string | null, direction: "asc" | "desc") => {
+      setTradePage(1);
+      setTradeSortBy(columnKey as TradeSortBy | null);
+      setTradeSortDir(direction);
+    },
+    []
+  );
 
   const resetTradeFilters = () => {
     setTradePage(1);
@@ -768,6 +759,190 @@ export default function HomeLiveWidgets() {
     setTradeSortBy(null);
     setTradeSortDir("asc");
   };
+
+  const openPositionsColumns = useMemo<DataTableColumn<OpenPositionWithLive>[]>(() => {
+    const columns: DataTableColumn<OpenPositionWithLive>[] = [
+      {
+        key: "openedAt",
+        label: t("dashboard.home.runtime.timeOpened"),
+        sortable: true,
+        accessor: (row) => row.openedAt ?? "",
+        render: (row) => formatTime(row.openedAt),
+      },
+      {
+        key: "symbol",
+        label: t("dashboard.home.runtime.symbol"),
+        sortable: true,
+        accessor: (row) => row.symbol,
+        className: "font-medium",
+      },
+      {
+        key: "side",
+        label: t("dashboard.home.runtime.side"),
+        sortable: true,
+        accessor: (row) => row.side,
+        render: (row) => <DirectionPill value={row.side} />,
+      },
+      {
+        key: "margin",
+        label: t("dashboard.home.runtime.margin"),
+        sortable: true,
+        accessor: (row) => row.marginNotional,
+        render: (row) => formatCurrency(row.marginNotional),
+      },
+      {
+        key: "pnl",
+        label: t("dashboard.home.runtime.pnl"),
+        sortable: true,
+        accessor: (row) => row.liveUnrealizedPnl,
+        render: (row) => (
+          <span className={row.liveUnrealizedPnl >= 0 ? "text-success" : "text-error"}>
+            {formatCurrency(row.liveUnrealizedPnl)}
+          </span>
+        ),
+      },
+      {
+        key: "pnlPercent",
+        label: t("dashboard.home.runtime.pnlPercent"),
+        sortable: true,
+        accessor: (row) => row.livePnlPct ?? null,
+        render: (row) => (
+          <span className={row.liveUnrealizedPnl >= 0 ? "text-success" : "text-error"}>
+            {row.livePnlPct == null ? "-" : formatPercent(row.livePnlPct)}
+          </span>
+        ),
+      },
+      {
+        key: "dca",
+        label: t("dashboard.home.runtime.dca"),
+        sortable: true,
+        accessor: (row) => row.dcaCount,
+        className: "text-[11px]",
+        render: (row) => formatDcaLadderCell({ position: row, formatPercent: formatDcaPercent }),
+      },
+    ];
+
+    if (showDynamicStopColumns) {
+      columns.push(
+        {
+          key: "ttp",
+          label: t("dashboard.home.runtime.slTtp"),
+          sortable: true,
+          accessor: (row) => row.dynamicTtpStopLoss ?? null,
+          render: (row) =>
+            row.dynamicTtpStopLoss == null
+              ? "-"
+              : formatNumber(row.dynamicTtpStopLoss, { maximumFractionDigits: 4 }),
+        },
+        {
+          key: "tsl",
+          label: t("dashboard.home.runtime.slTsl"),
+          sortable: true,
+          accessor: (row) => row.dynamicTslStopLoss ?? null,
+          render: (row) =>
+            row.dynamicTslStopLoss == null
+              ? "-"
+              : formatNumber(row.dynamicTslStopLoss, { maximumFractionDigits: 4 }),
+        }
+      );
+    }
+
+    return columns;
+  }, [
+    formatCurrency,
+    formatDcaPercent,
+    formatNumber,
+    formatPercent,
+    formatTime,
+    showDynamicStopColumns,
+    t,
+  ]);
+
+  const tradesColumns = useMemo<DataTableColumn<BotRuntimeTrade>[]>(() => [
+    {
+      key: "executedAt",
+      label: t("dashboard.home.runtime.time"),
+      sortable: true,
+      accessor: (row) => row.executedAt ?? "",
+      render: (row) => formatDateTime(row.executedAt),
+    },
+    {
+      key: "symbol",
+      label: t("dashboard.home.runtime.symbol"),
+      sortable: true,
+      accessor: (row) => row.symbol,
+      className: "font-medium",
+    },
+    {
+      key: "side",
+      label: t("dashboard.home.runtime.side"),
+      sortable: true,
+      accessor: (row) => row.side,
+      render: (row) => <DirectionPill value={row.side === "BUY" ? "BUY" : "SELL"} />,
+    },
+    {
+      key: "lifecycleAction",
+      label: t("dashboard.home.runtime.filterAction"),
+      sortable: true,
+      accessor: (row) => row.lifecycleAction,
+      render: (row) => <TradeActionPill value={row.lifecycleAction} />,
+    },
+    {
+      key: "qty",
+      label: t("dashboard.home.runtime.qty"),
+      sortable: false,
+      accessor: (row) => row.quantity,
+      render: (row) => formatNumber(row.quantity, { maximumFractionDigits: 6 }),
+    },
+    {
+      key: "price",
+      label: t("dashboard.home.runtime.price"),
+      sortable: false,
+      accessor: (row) => row.price,
+      render: (row) => formatNumber(row.price, { maximumFractionDigits: 4 }),
+    },
+    {
+      key: "margin",
+      label: t("dashboard.home.runtime.margin"),
+      sortable: true,
+      accessor: (row) => row.margin,
+      render: (row) => formatCurrency(row.margin),
+    },
+    {
+      key: "fee",
+      label: t("dashboard.home.runtime.fee"),
+      sortable: true,
+      accessor: (row) => row.fee,
+      render: (row) => (
+        <div className="flex flex-col leading-tight">
+          <span>{formatCurrency(row.fee)}</span>
+          <span className="text-[10px] opacity-60">{formatTradeFeeMeta(row)}</span>
+        </div>
+      ),
+    },
+    {
+      key: "realizedPnl",
+      label: t("dashboard.home.runtime.realizedPnl"),
+      sortable: true,
+      accessor: (row) => row.realizedPnl,
+      render: (row) => (
+        <span className={row.realizedPnl >= 0 ? "text-success" : "text-error"}>
+          {formatCurrency(row.realizedPnl)}
+        </span>
+      ),
+    },
+    {
+      key: "origin",
+      label: t("dashboard.home.runtime.origin"),
+      sortable: false,
+      accessor: (row) => row.origin,
+    },
+  ], [
+    formatCurrency,
+    formatDateTime,
+    formatNumber,
+    t,
+  ]);
 
   if (loading) return <LoadingState title={t("dashboard.home.runtime.loadingTitle")} />;
   if (error) {
@@ -913,60 +1088,21 @@ export default function HomeLiveWidgets() {
 
           <section className={CARD}>
             <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-semibold">{t("dashboard.home.runtime.openPositionsTitle")}</h3><span className="text-xs opacity-60">{selectedData?.open.length ?? 0}</span></div>
-            <div className="overflow-x-auto rounded-lg border border-base-300/70 bg-base-200/40">
-              <table className="table table-sm">
-                <thead>
-                  <tr>
-                    <th>{t("dashboard.home.runtime.timeOpened")}</th>
-                    <th>{t("dashboard.home.runtime.symbol")}</th>
-                    <th>{t("dashboard.home.runtime.side")}</th>
-                    <th>{t("dashboard.home.runtime.margin")}</th>
-                    <th>{t("dashboard.home.runtime.pnl")}</th>
-                    <th>{t("dashboard.home.runtime.pnlPercent")}</th>
-                    <th>{t("dashboard.home.runtime.dca")}</th>
-                    {showDynamicStopColumns ? <th>{t("dashboard.home.runtime.slTtp")}</th> : null}
-                    {showDynamicStopColumns ? <th>{t("dashboard.home.runtime.slTsl")}</th> : null}
-                  </tr>
-                </thead>
-                <tbody>
-                  {(selectedData?.open ?? []).map((p) => {
-                    const pnl = p.liveUnrealizedPnl;
-                    return (
-                      <tr key={p.id}>
-                        <td>{formatTime(p.openedAt)}</td>
-                        <td className="font-medium">{p.symbol}</td>
-                        <td><DirectionPill value={p.side} /></td>
-                        <td>{formatCurrency(p.marginNotional)}</td>
-                        <td className={pnl >= 0 ? "text-success" : "text-error"}>{formatCurrency(pnl)}</td>
-                        <td className={pnl >= 0 ? "text-success" : "text-error"}>{p.livePnlPct == null ? "-" : formatPercent(p.livePnlPct)}</td>
-                        <td className="text-[11px]">{formatDcaLadderCell({ position: p, formatPercent: formatDcaPercent })}</td>
-                        {showDynamicStopColumns ? (
-                          <td>
-                            {p.dynamicTtpStopLoss == null
-                              ? "-"
-                              : formatNumber(p.dynamicTtpStopLoss, { maximumFractionDigits: 4 })}
-                          </td>
-                        ) : null}
-                        {showDynamicStopColumns ? (
-                          <td>
-                            {p.dynamicTslStopLoss == null
-                              ? "-"
-                              : formatNumber(p.dynamicTslStopLoss, { maximumFractionDigits: 4 })}
-                          </td>
-                        ) : null}
-                      </tr>
-                    );
-                  })}
-                  {(selectedData?.open.length ?? 0) === 0 ? (
-                    <tr>
-                      <td colSpan={showDynamicStopColumns ? 9 : 7} className="text-center text-xs opacity-70">
-                        {t("dashboard.home.runtime.noOpenPositions")}
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              compact
+              framed={false}
+              rows={selectedData?.open ?? []}
+              columns={openPositionsColumns}
+              getRowId={(row) => row.id}
+              showSearch={false}
+              paginationEnabled
+              pageSizeOptions={[...OPEN_POSITIONS_PAGE_SIZE_OPTIONS]}
+              defaultPageSize={OPEN_POSITIONS_PAGE_SIZE_OPTIONS[0]}
+              rowsPerPageLabel={t("dashboard.home.runtime.rows")}
+              previousLabel={t("dashboard.home.runtime.previous")}
+              nextLabel={t("dashboard.home.runtime.next")}
+              emptyText={t("dashboard.home.runtime.noOpenPositions")}
+            />
           </section>
 
           <section className={CARD}>
@@ -978,194 +1114,117 @@ export default function HomeLiveWidgets() {
               </h3>
               {selectedTradesLoading ? <span className="text-xs opacity-60">{t("dashboard.home.loadWidgets")}</span> : null}
             </div>
-            <div className="mb-3 grid gap-2 rounded-lg border border-base-300/70 bg-base-200/30 p-2 md:grid-cols-2 xl:grid-cols-6">
-              <label className="form-control gap-1">
-                <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterSymbol")}</span>
-                <input
-                  className="input input-bordered input-xs"
-                  placeholder="BTCUSDT"
-                  value={tradeDraftFilters.symbol}
-                  onChange={(event) => {
-                    patchTradeDraftFilters({ symbol: event.target.value });
-                  }}
-                />
-              </label>
-              <label className="form-control gap-1">
-                <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterSide")}</span>
-                <select
-                  className="select select-bordered select-xs"
-                  value={tradeDraftFilters.side}
-                  onChange={(event) => {
-                    patchTradeDraftFilters({ side: event.target.value as TradeSideFilter });
-                  }}
-                >
-                  <option value="ALL">{t("dashboard.home.runtime.all")}</option>
-                  <option value="BUY">BUY</option>
-                  <option value="SELL">SELL</option>
-                </select>
-              </label>
-              <label className="form-control gap-1">
-                <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterAction")}</span>
-                <select
-                  className="select select-bordered select-xs"
-                  value={tradeDraftFilters.action}
-                  onChange={(event) => {
-                    patchTradeDraftFilters({ action: event.target.value as TradeActionFilter });
-                  }}
-                >
-                  <option value="ALL">{t("dashboard.home.runtime.all")}</option>
-                  <option value="OPEN">{t("dashboard.home.runtime.actionOpen")}</option>
-                  <option value="DCA">DCA</option>
-                  <option value="CLOSE">{t("dashboard.home.runtime.actionClose")}</option>
-                </select>
-              </label>
-              <label className="form-control gap-1">
-                <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterFrom")}</span>
-                <input
-                  type="datetime-local"
-                  className="input input-bordered input-xs"
-                  value={tradeDraftFilters.from}
-                  onChange={(event) => {
-                    patchTradeDraftFilters({ from: event.target.value });
-                  }}
-                />
-              </label>
-              <label className="form-control gap-1">
-                <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterTo")}</span>
-                <input
-                  type="datetime-local"
-                  className="input input-bordered input-xs"
-                  value={tradeDraftFilters.to}
-                  onChange={(event) => {
-                    patchTradeDraftFilters({ to: event.target.value });
-                  }}
-                />
-              </label>
-              <div className="flex items-end justify-end gap-2">
-                <button type="button" className="btn btn-primary btn-xs" onClick={applyTradeFilters}>
-                  {t("dashboard.home.runtime.apply")}
-                </button>
-                <button type="button" className="btn btn-ghost btn-xs" onClick={resetTradeFilters}>
-                  {t("dashboard.home.runtime.reset")}
-                </button>
-              </div>
-            </div>
-            <div className="overflow-x-auto rounded-lg border border-base-300/70 bg-base-200/40">
-              <table className="table table-sm">
-                <thead>
-                  <tr>
-                    <th>
-                      <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("executedAt")}>
-                        {t("dashboard.home.runtime.time")} {tradeSortIndicator("executedAt")}
-                      </button>
-                    </th>
-                    <th>
-                      <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("symbol")}>
-                        {t("dashboard.home.runtime.symbol")} {tradeSortIndicator("symbol")}
-                      </button>
-                    </th>
-                    <th>
-                      <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("side")}>
-                        {t("dashboard.home.runtime.side")} {tradeSortIndicator("side")}
-                      </button>
-                    </th>
-                    <th>
-                      <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("lifecycleAction")}>
-                        {t("dashboard.home.runtime.filterAction")} {tradeSortIndicator("lifecycleAction")}
-                      </button>
-                    </th>
-                    <th>{t("dashboard.home.runtime.qty")}</th>
-                    <th>{t("dashboard.home.runtime.price")}</th>
-                    <th>
-                      <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("margin")}>
-                        {t("dashboard.home.runtime.margin")} {tradeSortIndicator("margin")}
-                      </button>
-                    </th>
-                    <th>
-                      <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("fee")}>
-                        {t("dashboard.home.runtime.fee")} {tradeSortIndicator("fee")}
-                      </button>
-                    </th>
-                    <th>
-                      <button type="button" className="btn btn-ghost btn-xs px-1" onClick={() => handleTradeSort("realizedPnl")}>
-                        {t("dashboard.home.runtime.realizedPnl")} {tradeSortIndicator("realizedPnl")}
-                      </button>
-                    </th>
-                    <th>{t("dashboard.home.runtime.origin")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(selectedData?.trades ?? []).map((t) => (
-                    <tr key={t.id}>
-                      <td>{formatDateTime(t.executedAt)}</td>
-                      <td className="font-medium">{t.symbol}</td>
-                      <td><DirectionPill value={t.side === "BUY" ? "BUY" : "SELL"} /></td>
-                      <td><TradeActionPill value={t.lifecycleAction} /></td>
-                      <td>{formatNumber(t.quantity, { maximumFractionDigits: 6 })}</td>
-                      <td>{formatNumber(t.price, { maximumFractionDigits: 4 })}</td>
-                      <td>{formatCurrency(t.margin)}</td>
-                      <td>
-                        <div className="flex flex-col leading-tight">
-                          <span>{formatCurrency(t.fee)}</span>
-                          <span className="text-[10px] opacity-60">{formatTradeFeeMeta(t)}</span>
-                        </div>
-                      </td>
-                      <td className={t.realizedPnl >= 0 ? "text-success" : "text-error"}>{formatCurrency(t.realizedPnl)}</td>
-                      <td>{t.origin}</td>
-                    </tr>
-                  ))}
-                  {(selectedData?.trades.length ?? 0) === 0 ? <tr><td colSpan={10} className="text-center text-xs opacity-70">{t("dashboard.home.runtime.noTradeHistory")}</td></tr> : null}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-xs">
-                <span className="badge badge-outline badge-sm">
-                  {interpolateTemplate(t("dashboard.home.runtime.recordsBadge"), { total: tradeMeta.total })}
-                </span>
-                <span className="badge badge-outline badge-sm">
-                  {interpolateTemplate(t("dashboard.home.runtime.pageBadge"), {
-                    page: tradeMeta.page,
-                    totalPages: Math.max(1, tradeMeta.totalPages),
-                  })}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="flex items-center gap-1 text-xs opacity-70">
-                  <span>{t("dashboard.home.runtime.rows")}</span>
-                  <select
-                    className="select select-bordered select-xs"
-                    value={tradePageSize}
-                    onChange={(event) => {
-                      setTradePageSize(Number(event.target.value));
-                      setTradePage(1);
-                    }}
-                  >
-                    {TRADE_PAGE_SIZE_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  className="btn btn-outline btn-xs"
-                  disabled={!tradeMeta.hasPrev}
-                  onClick={() => setTradePage((prev) => Math.max(1, prev - 1))}
-                >
-                  {t("dashboard.home.runtime.previous")}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-outline btn-xs"
-                  disabled={!tradeMeta.hasNext}
-                  onClick={() => setTradePage((prev) => prev + 1)}
-                >
-                  {t("dashboard.home.runtime.next")}
-                </button>
-              </div>
-            </div>
+            <DataTable
+              compact
+              framed={false}
+              rows={selectedData?.trades ?? []}
+              columns={tradesColumns}
+              getRowId={(row) => row.id}
+              filterPlaceholder="BTCUSDT"
+              query={tradeDraftFilters.symbol}
+              onQueryChange={(value) => patchTradeDraftFilters({ symbol: value })}
+              onSearch={applyTradeFilters}
+              manualFiltering
+              manualSorting
+              sortKey={tradeSortBy}
+              sortDirection={tradeSortDir}
+              onSortChange={handleTradeSortChange}
+              advancedToggleLabel={t("dashboard.bots.monitoring.advancedOptions")}
+              advancedFilters={
+                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-5">
+                  <label className="form-control gap-1">
+                    <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterSide")}</span>
+                    <select
+                      className="select select-bordered select-xs"
+                      value={tradeDraftFilters.side}
+                      onChange={(event) => {
+                        patchTradeDraftFilters({ side: event.target.value as TradeSideFilter });
+                      }}
+                    >
+                      <option value="ALL">{t("dashboard.home.runtime.all")}</option>
+                      <option value="BUY">BUY</option>
+                      <option value="SELL">SELL</option>
+                    </select>
+                  </label>
+                  <label className="form-control gap-1">
+                    <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterAction")}</span>
+                    <select
+                      className="select select-bordered select-xs"
+                      value={tradeDraftFilters.action}
+                      onChange={(event) => {
+                        patchTradeDraftFilters({ action: event.target.value as TradeActionFilter });
+                      }}
+                    >
+                      <option value="ALL">{t("dashboard.home.runtime.all")}</option>
+                      <option value="OPEN">{t("dashboard.home.runtime.actionOpen")}</option>
+                      <option value="DCA">DCA</option>
+                      <option value="CLOSE">{t("dashboard.home.runtime.actionClose")}</option>
+                    </select>
+                  </label>
+                  <label className="form-control gap-1">
+                    <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterFrom")}</span>
+                    <input
+                      type="datetime-local"
+                      className="input input-bordered input-xs"
+                      value={tradeDraftFilters.from}
+                      onChange={(event) => {
+                        patchTradeDraftFilters({ from: event.target.value });
+                      }}
+                    />
+                  </label>
+                  <label className="form-control gap-1">
+                    <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterTo")}</span>
+                    <input
+                      type="datetime-local"
+                      className="input input-bordered input-xs"
+                      value={tradeDraftFilters.to}
+                      onChange={(event) => {
+                        patchTradeDraftFilters({ to: event.target.value });
+                      }}
+                    />
+                  </label>
+                  <div className="flex items-end justify-end gap-2">
+                    <button type="button" className="btn btn-primary btn-xs" onClick={applyTradeFilters}>
+                      {t("dashboard.home.runtime.apply")}
+                    </button>
+                    <button type="button" className="btn btn-ghost btn-xs" onClick={resetTradeFilters}>
+                      {t("dashboard.home.runtime.reset")}
+                    </button>
+                  </div>
+                </div>
+              }
+              paginationEnabled
+              manualPagination
+              page={tradeMeta.page}
+              pageSize={tradePageSize}
+              totalRows={tradeMeta.total}
+              totalPages={tradeMeta.totalPages}
+              hasPrev={tradeMeta.hasPrev}
+              hasNext={tradeMeta.hasNext}
+              onPageChange={(nextPage) => setTradePage(nextPage)}
+              onPageSizeChange={(nextPageSize) => {
+                setTradePageSize(nextPageSize);
+                setTradePage(1);
+              }}
+              pageSizeOptions={[...TRADE_PAGE_SIZE_OPTIONS]}
+              rowsPerPageLabel={t("dashboard.home.runtime.rows")}
+              previousLabel={t("dashboard.home.runtime.previous")}
+              nextLabel={t("dashboard.home.runtime.next")}
+              emptyText={t("dashboard.home.runtime.noTradeHistory")}
+              paginationSummary={({ totalRows, page, totalPages }) => (
+                <>
+                  <span className="badge badge-outline badge-sm">
+                    {interpolateTemplate(t("dashboard.home.runtime.recordsBadge"), { total: totalRows })}
+                  </span>
+                  <span className="badge badge-outline badge-sm">
+                    {interpolateTemplate(t("dashboard.home.runtime.pageBadge"), {
+                      page,
+                      totalPages: Math.max(1, totalPages),
+                    })}
+                  </span>
+                </>
+              )}
+            />
           </section>
 
         </div>

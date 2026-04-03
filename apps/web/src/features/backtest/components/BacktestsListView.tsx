@@ -5,7 +5,7 @@ import axios from 'axios';
 import { EmptyState, ErrorState, LoadingState } from '@/ui/components/ViewState';
 import BacktestsRunsTable from './BacktestsRunsTable';
 import { listBacktestRuns } from '../services/backtests.service';
-import { BacktestRun, BacktestStatus } from '../types/backtest.type';
+import { BacktestRun } from '../types/backtest.type';
 import { I18nContext } from '../../../i18n/I18nProvider';
 
 const getAxiosMessage = (err: unknown) => {
@@ -35,7 +35,6 @@ export default function BacktestsListView() {
           emptyDescription: 'Utworz pierwszy run, aby przejrzec wyniki.',
         };
   const [rows, setRows] = useState<BacktestRun[]>([]);
-  const [selectedStatus, setSelectedStatus] = useState<BacktestStatus | 'ALL'>('ALL');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,14 +42,14 @@ export default function BacktestsListView() {
     setLoading(true);
     setError(null);
     try {
-      const data = await listBacktestRuns(selectedStatus === 'ALL' ? undefined : selectedStatus);
+      const data = await listBacktestRuns();
       setRows(data);
     } catch (err: unknown) {
       setError(getAxiosMessage(err) ?? copy.loadErrorDefault);
     } finally {
       setLoading(false);
     }
-  }, [copy.loadErrorDefault, selectedStatus]);
+  }, [copy.loadErrorDefault]);
 
   useEffect(() => {
     void loadData();
@@ -71,13 +70,6 @@ export default function BacktestsListView() {
     return <EmptyState title={copy.emptyTitle} description={copy.emptyDescription} />;
   }
 
-  return (
-    <BacktestsRunsTable
-      rows={rows}
-      selectedStatus={selectedStatus}
-      onStatusChange={setSelectedStatus}
-      onRefresh={() => void loadData()}
-    />
-  );
+  return <BacktestsRunsTable rows={rows} />;
 }
 

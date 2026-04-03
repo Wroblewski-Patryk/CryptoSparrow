@@ -85,8 +85,10 @@ describe("PositionsBoard", () => {
 
     render(<PositionsBoard />);
 
+    fireEvent.click(await screen.findByRole("button", { name: "Zaawansowane" }));
     const sourceSelect = await screen.findByRole("combobox", { name: "Zrodlo" });
     fireEvent.change(sourceSelect, { target: { value: "exchange" } });
+    fireEvent.click(screen.getByRole("button", { name: "Zastosuj" }));
 
     await waitFor(() => {
       expect(snapshotMock).toHaveBeenCalled();
@@ -108,8 +110,10 @@ describe("PositionsBoard", () => {
 
     render(<PositionsBoard />);
 
+    fireEvent.click(await screen.findByRole("button", { name: "Zaawansowane" }));
     const sourceSelect = await screen.findByRole("combobox", { name: "Zrodlo" });
     fireEvent.change(sourceSelect, { target: { value: "exchange" } });
+    fireEvent.click(screen.getByRole("button", { name: "Zastosuj" }));
 
     await waitFor(() => {
       expect(screen.getByText("Nie udalo sie pobrac positions")).toBeInTheDocument();
