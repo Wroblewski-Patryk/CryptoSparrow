@@ -45,7 +45,8 @@ type OpenPositionWithLive = BotRuntimePositionItem & {
 };
 type DirectionPillValue = "LONG" | "SHORT" | "BUY" | "SELL";
 
-const CARD = "rounded-xl border border-base-300 bg-base-100 p-4 shadow-sm";
+const CARD = "rounded-box bg-base-100/60";
+const CARD_ASIDE = "rounded-box bg-base-100/70 p-4 md:p-5";
 const BTN_PRIMARY = "btn btn-primary btn-sm";
 const BTN_SECONDARY = "btn btn-outline btn-sm";
 const MAX_DASHBOARD_BOTS = 8;
@@ -987,134 +988,125 @@ export default function HomeLiveWidgets() {
   return (
     <div className="space-y-4">
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="min-w-0 space-y-4">
+        <div className="min-w-0">
           <section className={CARD}>
-            <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+            <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-semibold">{t("dashboard.home.runtime.liveChecksTitle")}</h3>
-                <p className="text-[11px] opacity-60">{t("dashboard.home.runtime.liveChecksSubtitle")}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs opacity-60">
-                  {interpolateTemplate(t("dashboard.home.runtime.pairsCount"), { count: signalSymbols.length })}
-                </span>
-              </div>
-            </div>
-            {hasSignalOverflow ? (
-              <div className="mb-2 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  className="btn btn-outline btn-xs"
-                  onClick={() => scrollSignalRail("prev")}
-                >
-                  {t("dashboard.home.runtime.signalRailPrev")}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-outline btn-xs"
-                  onClick={() => scrollSignalRail("next")}
-                >
-                  {t("dashboard.home.runtime.signalRailNext")}
-                </button>
-              </div>
-            ) : null}
-            <div ref={signalRailRef} className="overflow-x-auto pb-1">
-              <div className="grid grid-flow-col auto-cols-[calc((100%-0.75rem)/2)] gap-3 md:auto-cols-[calc((100%-1rem)/3)] xl:auto-cols-[calc((100%-1.5rem)/4)]">
-                {signalSymbols.map((s) => {
-                  const signal: SignalPillValue = s.lastSignalDirection ?? "NEUTRAL";
-                  const lines = s.lastSignalConditionLines ?? [];
-                  const longLines = lines.filter((line) => line.scope === "LONG");
-                  const shortLines = lines.filter((line) => line.scope === "SHORT");
-
-                  return (
-                    <article key={s.id} className="rounded-lg border border-base-300/70 bg-base-200/40 px-3 py-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="font-semibold tracking-wide">{s.symbol}</p>
-                        <SignalPill value={signal} />
-                      </div>
-                      <div className="mt-2 space-y-2 text-[11px] leading-4">
-                        <div className="space-y-1 rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
-                          <div className="mb-0.5 flex items-center gap-1">
-                            <span className="inline-flex rounded border border-success/40 bg-success/10 px-1 py-[1px] text-[10px] font-semibold text-success">
-                              {t("dashboard.home.runtime.long")}
-                            </span>
-                          </div>
-                          {longLines.length === 0 ? (
-                            <p className="text-[10px] opacity-55">-</p>
-                          ) : (
-                            longLines.map((line, index) => (
-                              <p key={`${s.id}-long-${index}`} className="font-mono text-[10px]">
-                                <span>{line.left}</span>
-                                <span className="mx-1">=</span>
-                                <span className="font-semibold">{line.value}</span>
-                                <span className="mx-1">{line.operator}</span>
-                                <span>{line.right}</span>
-                              </p>
-                            ))
-                          )}
-                        </div>
-                        <div className="space-y-1 rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
-                          <div className="mb-0.5 flex items-center gap-1">
-                            <span className="inline-flex rounded border border-error/40 bg-error/10 px-1 py-[1px] text-[10px] font-semibold text-error">
-                              {t("dashboard.home.runtime.short")}
-                            </span>
-                          </div>
-                          {shortLines.length === 0 ? (
-                            <p className="text-[10px] opacity-55">-</p>
-                          ) : (
-                            shortLines.map((line, index) => (
-                              <p key={`${s.id}-short-${index}`} className="font-mono text-[10px]">
-                                <span>{line.left}</span>
-                                <span className="mx-1">=</span>
-                                <span className="font-semibold">{line.value}</span>
-                                <span className="mx-1">{line.operator}</span>
-                                <span>{line.right}</span>
-                              </p>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
-                {signalSymbols.length === 0 ? (
-                  <div className="col-span-full rounded-lg border border-base-300/70 bg-base-200/40 p-4 text-center text-xs opacity-70">
-                    {t("dashboard.home.runtime.noSignalData")}
+                {hasSignalOverflow ? (
+                  <div className="mb-2 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-xs"
+                      onClick={() => scrollSignalRail("prev")}
+                    >
+                      {t("dashboard.home.runtime.signalRailPrev")}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-xs"
+                      onClick={() => scrollSignalRail("next")}
+                    >
+                      {t("dashboard.home.runtime.signalRailNext")}
+                    </button>
                   </div>
                 ) : null}
+                <div ref={signalRailRef} className="overflow-x-auto pb-1">
+                  <div className="grid grid-flow-col auto-cols-[calc((100%-0.75rem)/2)] gap-3 md:auto-cols-[calc((100%-1rem)/3)] xl:auto-cols-[calc((100%-1.5rem)/4)]">
+                    {signalSymbols.map((s) => {
+                      const signal: SignalPillValue = s.lastSignalDirection ?? "NEUTRAL";
+                      const lines = s.lastSignalConditionLines ?? [];
+                      const longLines = lines.filter((line) => line.scope === "LONG");
+                      const shortLines = lines.filter((line) => line.scope === "SHORT");
+
+                      return (
+                        <article key={s.id} className="rounded-box bg-base-200/35 px-3 py-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="font-semibold tracking-wide">{s.symbol}</p>
+                            <SignalPill value={signal} />
+                          </div>
+                          <div className="mt-2 space-y-2 text-[11px] leading-4">
+                            <div className="space-y-1 rounded-box bg-base-100/70 px-2 py-1.5">
+                              <div className="mb-0.5 flex items-center gap-1">
+                                <span className="inline-flex rounded-badge border border-success/40 bg-success/10 px-1 py-[1px] text-[10px] font-semibold text-success">
+                                  {t("dashboard.home.runtime.long")}
+                                </span>
+                              </div>
+                              {longLines.length === 0 ? (
+                                <p className="text-[10px] opacity-55">-</p>
+                              ) : (
+                                longLines.map((line, index) => (
+                                  <p key={`${s.id}-long-${index}`} className="font-mono text-[10px]">
+                                    <span>{line.left}</span>
+                                    <span className="mx-1">=</span>
+                                    <span className="font-semibold">{line.value}</span>
+                                    <span className="mx-1">{line.operator}</span>
+                                    <span>{line.right}</span>
+                                  </p>
+                                ))
+                              )}
+                            </div>
+                            <div className="space-y-1 rounded-box bg-base-100/70 px-2 py-1.5">
+                              <div className="mb-0.5 flex items-center gap-1">
+                                <span className="inline-flex rounded-badge border border-error/40 bg-error/10 px-1 py-[1px] text-[10px] font-semibold text-error">
+                                  {t("dashboard.home.runtime.short")}
+                                </span>
+                              </div>
+                              {shortLines.length === 0 ? (
+                                <p className="text-[10px] opacity-55">-</p>
+                              ) : (
+                                shortLines.map((line, index) => (
+                                  <p key={`${s.id}-short-${index}`} className="font-mono text-[10px]">
+                                    <span>{line.left}</span>
+                                    <span className="mx-1">=</span>
+                                    <span className="font-semibold">{line.value}</span>
+                                    <span className="mx-1">{line.operator}</span>
+                                    <span>{line.right}</span>
+                                  </p>
+                                ))
+                              )}
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                    {signalSymbols.length === 0 ? (
+                      <div className="col-span-full rounded-box bg-base-200/35 p-4 text-center text-xs opacity-70">
+                        {t("dashboard.home.runtime.noSignalData")}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
               </div>
-            </div>
-          </section>
 
-          <section className={CARD}>
-            <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-semibold">{t("dashboard.home.runtime.openPositionsTitle")}</h3><span className="text-xs opacity-60">{selectedData?.open.length ?? 0}</span></div>
-            <DataTable
-              compact
-              framed={false}
-              rows={selectedData?.open ?? []}
-              columns={openPositionsColumns}
-              getRowId={(row) => row.id}
-              showSearch={false}
-              paginationEnabled
-              pageSizeOptions={[...OPEN_POSITIONS_PAGE_SIZE_OPTIONS]}
-              defaultPageSize={OPEN_POSITIONS_PAGE_SIZE_OPTIONS[0]}
-              rowsPerPageLabel={t("dashboard.home.runtime.rows")}
-              previousLabel={t("dashboard.home.runtime.previous")}
-              nextLabel={t("dashboard.home.runtime.next")}
-              emptyText={t("dashboard.home.runtime.noOpenPositions")}
-            />
-          </section>
+              <section className="border-t border-base-300/40 pt-4">
+                <div className="mb-3 flex items-center justify-between"><h3 className="text-base font-semibold md:text-lg">{t("dashboard.home.runtime.openPositionsTitle")}</h3><span className="text-xs opacity-60">{selectedData?.open.length ?? 0}</span></div>
+                <DataTable
+                  compact
+                  framed={false}
+                  rows={selectedData?.open ?? []}
+                  columns={openPositionsColumns}
+                  getRowId={(row) => row.id}
+                  showSearch={false}
+                  paginationEnabled
+                  pageSizeOptions={[...OPEN_POSITIONS_PAGE_SIZE_OPTIONS]}
+                  defaultPageSize={OPEN_POSITIONS_PAGE_SIZE_OPTIONS[0]}
+                  rowsPerPageLabel={t("dashboard.home.runtime.rows")}
+                  previousLabel={t("dashboard.home.runtime.previous")}
+                  nextLabel={t("dashboard.home.runtime.next")}
+                  emptyText={t("dashboard.home.runtime.noOpenPositions")}
+                />
+              </section>
 
-          <section className={CARD}>
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">
-                {selected?.bot.mode === "LIVE"
-                  ? t("dashboard.home.runtime.tradesHistoryTitleLive")
-                  : t("dashboard.home.runtime.tradesHistoryTitlePaper")}
-              </h3>
-              {selectedTradesLoading ? <span className="text-xs opacity-60">{t("dashboard.home.loadWidgets")}</span> : null}
-            </div>
-            <DataTable
+              <section className="border-t border-base-300/40 pt-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-base font-semibold md:text-lg">
+                    {selected?.bot.mode === "LIVE"
+                      ? t("dashboard.home.runtime.tradesHistoryTitleLive")
+                      : t("dashboard.home.runtime.tradesHistoryTitlePaper")}
+                  </h3>
+                  {selectedTradesLoading ? <span className="text-xs opacity-60">{t("dashboard.home.loadWidgets")}</span> : null}
+                </div>
+                <DataTable
               compact
               framed={false}
               rows={selectedData?.trades ?? []}
@@ -1225,15 +1217,17 @@ export default function HomeLiveWidgets() {
                 </>
               )}
             />
+              </section>
+            </div>
           </section>
 
         </div>
 
-        <aside className={`${CARD} h-fit`}>
+        <aside className={`${CARD_ASIDE} h-fit xl:sticky xl:top-4`}>
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold uppercase tracking-wide opacity-75">{t("dashboard.home.runtime.runtimeRiskTitle")}</h3>
+            <h3 className="text-base font-semibold md:text-lg">{t("dashboard.home.runtime.runtimeRiskTitle")}</h3>
 
-            <div className="rounded-lg border border-base-300/70 bg-base-200/40 p-3">
+            <div className="rounded-box bg-base-200/35 p-3">
               <label className="form-control gap-1">
                 <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.selectedBot")}</span>
                 <select
@@ -1250,7 +1244,7 @@ export default function HomeLiveWidgets() {
               </label>
 
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
+                <div className="rounded-box bg-base-100/60 px-2 py-1.5">
                   <p className="opacity-65">{t("dashboard.home.runtime.status")}</p>
                   <p className="mt-1">
                     <span className={`badge badge-xs ${sessionBadge(selectedData?.session?.status)}`}>
@@ -1258,25 +1252,25 @@ export default function HomeLiveWidgets() {
                     </span>
                   </p>
                 </div>
-                <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
+                <div className="rounded-box bg-base-100/60 px-2 py-1.5">
                   <p className="opacity-65">{t("dashboard.home.runtime.mode")}</p>
                   <p className="mt-1 font-semibold">{selected?.bot.mode ?? "-"}</p>
                 </div>
-                <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
+                <div className="rounded-box bg-base-100/60 px-2 py-1.5">
                   <p className="opacity-65">{t("dashboard.home.runtime.heartbeat")}</p>
                   <p className="mt-1 font-semibold">{formatTime(selectedData?.session?.lastHeartbeatAt)}</p>
                 </div>
-                <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
+                <div className="rounded-box bg-base-100/60 px-2 py-1.5">
                   <p className="opacity-65">{t("dashboard.home.runtime.openPositions")}</p>
                   <p className="mt-1 font-semibold">{formatNumber(selectedData?.open.length ?? 0)}</p>
                 </div>
-                <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
+                <div className="rounded-box bg-base-100/60 px-2 py-1.5">
                   <p className="opacity-65">{t("dashboard.home.runtime.signalsDca")}</p>
                   <p className="mt-1 font-semibold">
                     {formatNumber(selectedData?.session?.summary.totalSignals ?? 0)} / {formatNumber(selectedData?.session?.summary.dcaCount ?? 0)}
                   </p>
                 </div>
-                <div className="rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
+                <div className="rounded-box bg-base-100/60 px-2 py-1.5">
                   <p className="opacity-65">{t("dashboard.home.runtime.netPnl")}</p>
                   <p className={`mt-1 font-semibold ${(selectedData?.net ?? 0) >= 0 ? "text-success" : "text-error"}`}>
                     {formatCurrency(selectedData?.net ?? 0)}
@@ -1286,12 +1280,12 @@ export default function HomeLiveWidgets() {
             </div>
 
             {selectedData?.session?.status !== "RUNNING" ? (
-              <p className="text-[11px] rounded-md border border-warning/40 bg-warning/10 px-2 py-1 text-warning-content/80">
+              <p className="text-[11px] rounded-box border border-warning/40 bg-warning/10 px-2 py-1 text-warning-content/80">
                 {t("dashboard.home.runtime.noActiveSessionWarning")}
               </p>
             ) : null}
 
-            <div className="rounded-lg border border-base-300/70 bg-base-200/40 p-3 text-xs">
+            <div className="rounded-box bg-base-200/35 p-3 text-xs">
               <h4 className="mb-2 text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.capitalRiskTitle")}</h4>
               <div className="space-y-1.5">
                 <p className="flex items-center justify-between gap-2">

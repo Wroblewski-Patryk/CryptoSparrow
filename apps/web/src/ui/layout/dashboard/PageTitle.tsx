@@ -16,20 +16,34 @@ interface PageTitleProps {
   addLabel?: string;
   icon?: ReactNode;
   addButtonClassName?: string;
+  variant?: "boxed" | "flat";
 }
 
-export function PageTitle({ title, breadcrumb = [], onAdd, addLabel, icon, addButtonClassName }: PageTitleProps) {
+export function PageTitle({
+  title,
+  breadcrumb = [],
+  onAdd,
+  addLabel,
+  icon,
+  addButtonClassName,
+  variant = "boxed",
+}: PageTitleProps) {
   const { t } = useI18n();
 
   const normalizedBreadcrumb =
     breadcrumb.length > 0 ? breadcrumb : [{ label: t("dashboard.common.dashboard"), href: "/dashboard" }];
 
+  const wrapperClassName =
+    variant === "flat"
+      ? "mb-6 md:flex md:items-center md:justify-between"
+      : "mb-6 rounded-box border border-base-300 bg-base-200 px-5 py-4 md:flex md:items-center md:justify-between";
+
   return (
-    <div className="mb-6 rounded-xl border border-base-300 bg-base-200 px-5 py-4 shadow-sm md:flex md:items-center md:justify-between">
+    <div className={wrapperClassName}>
       <div className="min-w-0">
         <h1 className="inline-flex items-center gap-2 text-2xl font-bold tracking-tight md:text-3xl">
           {icon ? (
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-base-100/70 text-base-content/75">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-box bg-base-200 text-base-content/75">
               {icon}
             </span>
           ) : null}

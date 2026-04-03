@@ -28,6 +28,7 @@ export default function DashboardPage() {
       <PageTitle
         title={t('dashboard.home.pageTitle')}
         icon={<LuHouse className='h-5 w-5' />}
+        variant="flat"
         breadcrumb={[
           { label: t('dashboard.common.dashboard'), href: '/dashboard' },
           { label: t('dashboard.home.pageBreadcrumb') },

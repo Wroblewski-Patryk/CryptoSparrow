@@ -316,7 +316,6 @@ describe("HomeLiveWidgets", () => {
       expect(screen.getByText("Bot runtime i ryzyko")).toBeInTheDocument();
       expect(screen.getByRole("option", { name: /Monitor Bot/i })).toBeInTheDocument();
       expect(screen.getAllByText("RUNNING").length).toBeGreaterThan(0);
-      expect(screen.getByText("Sygnaly strategii")).toBeInTheDocument();
       expect(screen.getAllByText("BTCUSDT").length).toBeGreaterThan(0);
       expect(screen.getByText("2 (1:-15%, 2:-30%)")).toBeInTheDocument();
       expect(screen.getByText("TTP")).toBeInTheDocument();
@@ -456,19 +455,14 @@ describe("HomeLiveWidgets", () => {
     renderSubject();
 
     await waitFor(() => {
-      expect(screen.getByText("Sygnaly strategii")).toBeInTheDocument();
-      expect(
-        screen.getByText("Sygnaly obliczone na podstawie najnowszych danych i warunkow aktywnej strategii.")
-      ).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Wstecz" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Dalej" })).toBeInTheDocument();
-      expect(screen.getByText("5 par")).toBeInTheDocument();
       expect(screen.getByText("SOLUSDT")).toBeInTheDocument();
     });
 
-    const signalsHeading = screen.getByRole("heading", { name: "Sygnaly strategii" });
+    const signalsAnchor = screen.getByText("SOLUSDT");
     const openPositionsHeading = screen.getByRole("heading", { name: "Otwarte pozycje" });
-    expect(signalsHeading.compareDocumentPosition(openPositionsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(signalsAnchor.compareDocumentPosition(openPositionsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("supports apply-based filters, tri-state sorting and preserves state on auto-refresh", async () => {
