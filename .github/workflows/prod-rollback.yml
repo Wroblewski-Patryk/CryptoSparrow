@@ -1,9 +1,6 @@
 name: PROD Rollback
 
 on:
-  workflow_run:
-    workflows: ["Promote PROD"]
-    types: [completed]
   workflow_dispatch:
 
 concurrency:
@@ -13,7 +10,7 @@ concurrency:
 jobs:
   rollback-prod:
     name: Rollback production to previous stable release
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     environment: production
     permissions:
@@ -22,9 +19,9 @@ jobs:
       - name: Trigger Coolify PROD rollback webhook
         env:
           PROD_ROLLBACK_WEBHOOK_URL: ${{ secrets.COOLIFY_PROD_ROLLBACK_HOOK_URL }}
-          FAILED_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
-          FAILED_WORKFLOW: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name || 'manual' }}
-          FAILED_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || github.run_id }}
+          FAILED_SHA: ${{ github.sha }}
+          FAILED_WORKFLOW: manual
+          FAILED_RUN_ID: ${{ github.run_id }}
           REPOSITORY: ${{ github.repository }}
           ACTOR: ${{ github.actor }}
         run: |
@@ -50,4 +47,3 @@ jobs:
             echo "::error::Production rollback webhook failed with HTTP $http_code"
             exit 1
           fi
-

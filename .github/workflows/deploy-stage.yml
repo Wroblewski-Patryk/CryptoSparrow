@@ -1,9 +1,6 @@
 name: Deploy STAGE
 
 on:
-  push:
-    branches:
-      - develop
   workflow_dispatch:
 
 concurrency:
@@ -48,4 +45,3 @@ jobs:
             echo "::error::Stage deploy webhook failed with HTTP $http_code"
             exit 1
           fi
-

@@ -1,9 +1,6 @@
 name: Promote PROD
 
 on:
-  workflow_run:
-    workflows: ["Stage Gates"]
-    types: [completed]
   workflow_dispatch:
 
 concurrency:
@@ -13,7 +10,7 @@ concurrency:
 jobs:
   promote-prod:
     name: Promote verified SHA to production
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     environment: production
     permissions:
@@ -22,8 +19,8 @@ jobs:
       - name: Trigger Coolify PROD deploy webhook
         env:
           PROD_DEPLOY_WEBHOOK_URL: ${{ secrets.COOLIFY_PROD_DEPLOY_HOOK_URL }}
-          GIT_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
-          GIT_REF: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref }}
+          GIT_SHA: ${{ github.sha }}
+          GIT_REF: ${{ github.ref }}
           REPOSITORY: ${{ github.repository }}
           ACTOR: ${{ github.actor }}
         run: |
@@ -49,4 +46,3 @@ jobs:
             echo "::error::Production deploy webhook failed with HTTP $http_code"
             exit 1
           fi
-

@@ -1,15 +1,12 @@
 name: Stage Gates
 
 on:
-  workflow_run:
-    workflows: ["Deploy STAGE"]
-    types: [completed]
   workflow_dispatch:
 
 jobs:
   stage-gates:
     name: Enforce stage gate pack
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     environment: stage
     permissions:
@@ -233,4 +230,3 @@ jobs:
         run: |
           echo "::error::Stage gate pack failed. See stage-gates-report artifact."
           exit 1
-
