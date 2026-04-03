@@ -139,13 +139,21 @@ Canonical guide:
 Dockerfile artifacts used by Coolify:
 - API: `apps/api/Dockerfile`
 - Web: `apps/web/Dockerfile`
-- Workers: reuse `apps/api/Dockerfile` with command override (`node dist/workers/<worker>.worker.js`)
+- Workers:
+  - `apps/api/Dockerfile.worker.market-data`
+  - `apps/api/Dockerfile.worker.market-stream`
+  - `apps/api/Dockerfile.worker.backtest`
+  - `apps/api/Dockerfile.worker.execution`
 
 Quick local verification before first VPS deploy:
 
 ```bash
 docker build -f apps/api/Dockerfile -t cryptosparrow-api:local .
 docker build -f apps/web/Dockerfile -t cryptosparrow-web:local .
+docker build -f apps/api/Dockerfile.worker.market-data -t cryptosparrow-worker-market-data:local .
+docker build -f apps/api/Dockerfile.worker.market-stream -t cryptosparrow-worker-market-stream:local .
+docker build -f apps/api/Dockerfile.worker.backtest -t cryptosparrow-worker-backtest:local .
+docker build -f apps/api/Dockerfile.worker.execution -t cryptosparrow-worker-execution:local .
 ```
 
 VPS fallback env template:

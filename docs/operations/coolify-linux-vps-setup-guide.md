@@ -126,13 +126,12 @@ For deterministic production behavior create separate services:
 Each worker service config:
 - Build pack: `Dockerfile`
 - Docker build context: repository root (`.`)
-- Dockerfile location: `apps/api/Dockerfile`
+- Dockerfile location:
+  - `workers-market-data` -> `apps/api/Dockerfile.worker.market-data`
+  - `workers-market-stream` -> `apps/api/Dockerfile.worker.market-stream`
+  - `workers-backtest` -> `apps/api/Dockerfile.worker.backtest`
+  - `workers-execution` -> `apps/api/Dockerfile.worker.execution`
 - Exposed port: none
-- Override start command:
-  - `node dist/workers/marketData.worker.js`
-  - `node dist/workers/marketStream.worker.js`
-  - `node dist/workers/backtest.worker.js`
-  - `node dist/workers/execution.worker.js`
 
 Shared worker env:
 - `NODE_ENV=production`
