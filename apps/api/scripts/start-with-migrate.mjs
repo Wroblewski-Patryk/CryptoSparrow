@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const shouldRunMigrations = process.env.API_AUTO_MIGRATE !== 'false';
@@ -14,8 +15,17 @@ const runMigrations = () => {
     process.exit(1);
   }
 
-  const prismaCliPath = resolve(process.cwd(), '../../node_modules/prisma/build/index.js');
+  const prismaCliCandidates = [
+    resolve(process.cwd(), 'node_modules/prisma/build/index.js'),
+    resolve(process.cwd(), '../../node_modules/prisma/build/index.js'),
+  ];
+  const prismaCliPath = prismaCliCandidates.find((candidate) => existsSync(candidate));
   const schemaPath = resolve(process.cwd(), 'prisma/schema.prisma');
+
+  if (!prismaCliPath) {
+    console.error('[api/start] Prisma CLI not found in node_modules; cannot run migrations');
+    process.exit(1);
+  }
 
   console.log('[api/start] Running prisma migrate deploy...');
   const migrate = spawnSync(
