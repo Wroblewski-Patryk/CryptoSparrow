@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ApiKeyForm from "./ApiKeyForm";
+import { I18nProvider } from "../../../i18n/I18nProvider";
 
 const testApiKeyConnectionMock = vi.hoisted(() => vi.fn());
 
@@ -9,18 +11,25 @@ vi.mock("../services/apiKeys.service", () => ({
 }));
 
 describe("ApiKeyForm", () => {
+  const renderForm = (props: ComponentProps<typeof ApiKeyForm>) =>
+    render(
+      <I18nProvider>
+        <ApiKeyForm {...props} />
+      </I18nProvider>
+    );
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("shows validation error when test is started without credentials", async () => {
-    render(<ApiKeyForm onSave={vi.fn()} onCancel={vi.fn()} />);
+    renderForm({ onSave: vi.fn(), onCancel: vi.fn() });
 
-    fireEvent.click(screen.getByRole("button", { name: "Testuj polaczenie" }));
+    fireEvent.click(screen.getByRole("button", { name: "Test connection" }));
 
-    expect(await screen.findByText("Blad")).toBeInTheDocument();
+    expect(await screen.findByText("Error")).toBeInTheDocument();
     expect(
-      screen.getByText("Uzupelnij API Key i API Secret przed testem.")
+      screen.getByText("Fill in API Key and API Secret before testing.")
     ).toBeInTheDocument();
     expect(testApiKeyConnectionMock).not.toHaveBeenCalled();
   });
@@ -31,7 +40,7 @@ describe("ApiKeyForm", () => {
       message: "Binance connection OK",
     });
 
-    render(<ApiKeyForm onSave={vi.fn()} onCancel={vi.fn()} />);
+    renderForm({ onSave: vi.fn(), onCancel: vi.fn() });
 
     fireEvent.change(screen.getByLabelText("API Key"), {
       target: { value: "test-api-key" },
@@ -40,7 +49,7 @@ describe("ApiKeyForm", () => {
       target: { value: "test-api-secret" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Testuj polaczenie" }));
+    fireEvent.click(screen.getByRole("button", { name: "Test connection" }));
 
     await waitFor(() => {
       expect(testApiKeyConnectionMock).toHaveBeenCalledWith({
@@ -57,7 +66,7 @@ describe("ApiKeyForm", () => {
   it("shows error status for failed connection test", async () => {
     testApiKeyConnectionMock.mockRejectedValueOnce(new Error("Invalid API credentials"));
 
-    render(<ApiKeyForm onSave={vi.fn()} onCancel={vi.fn()} />);
+    renderForm({ onSave: vi.fn(), onCancel: vi.fn() });
 
     fireEvent.change(screen.getByLabelText("API Key"), {
       target: { value: "bad-key" },
@@ -66,19 +75,19 @@ describe("ApiKeyForm", () => {
       target: { value: "bad-secret" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Testuj polaczenie" }));
+    fireEvent.click(screen.getByRole("button", { name: "Test connection" }));
 
-    expect(await screen.findByText("Blad")).toBeInTheDocument();
+    expect(await screen.findByText("Error")).toBeInTheDocument();
     expect(
-      screen.getByText("Nie udalo sie zweryfikowac polaczenia.")
+      screen.getByText("Could not verify connection.")
     ).toBeInTheDocument();
   });
 
   it("blocks save when connection test has not succeeded in current session", async () => {
     const onSave = vi.fn();
-    render(<ApiKeyForm onSave={onSave} onCancel={vi.fn()} />);
+    renderForm({ onSave, onCancel: vi.fn() });
 
-    fireEvent.change(screen.getByLabelText("Nazwa klucza"), {
+    fireEvent.change(screen.getByLabelText("Key name"), {
       target: { value: "Binance main" },
     });
     fireEvent.change(screen.getByLabelText("API Key"), {
@@ -88,7 +97,7 @@ describe("ApiKeyForm", () => {
       target: { value: "test-api-secret" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Zapisz" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     expect(onSave).not.toHaveBeenCalled();
     expect(testApiKeyConnectionMock).not.toHaveBeenCalled();
@@ -100,9 +109,9 @@ describe("ApiKeyForm", () => {
       ok: true,
       message: "Binance connection OK",
     });
-    render(<ApiKeyForm onSave={onSave} onCancel={vi.fn()} />);
+    renderForm({ onSave, onCancel: vi.fn() });
 
-    fireEvent.change(screen.getByLabelText("Nazwa klucza"), {
+    fireEvent.change(screen.getByLabelText("Key name"), {
       target: { value: "Binance main" },
     });
     fireEvent.change(screen.getByLabelText("API Key"), {
@@ -112,10 +121,10 @@ describe("ApiKeyForm", () => {
       target: { value: "test-api-secret" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Testuj polaczenie" }));
+    fireEvent.click(screen.getByRole("button", { name: "Test connection" }));
     await screen.findByText("OK");
 
-    fireEvent.click(screen.getByRole("button", { name: "Zapisz" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     expect(onSave).toHaveBeenCalledWith({
       label: "Binance main",
@@ -133,9 +142,9 @@ describe("ApiKeyForm", () => {
       ok: true,
       message: "Binance connection OK",
     });
-    render(<ApiKeyForm onSave={onSave} onCancel={vi.fn()} />);
+    renderForm({ onSave, onCancel: vi.fn() });
 
-    fireEvent.change(screen.getByLabelText("Nazwa klucza"), {
+    fireEvent.change(screen.getByLabelText("Key name"), {
       target: { value: "Binance managed" },
     });
     fireEvent.change(screen.getByLabelText("API Key"), {
@@ -145,12 +154,12 @@ describe("ApiKeyForm", () => {
       target: { value: "toggle-api-secret" },
     });
 
-    fireEvent.click(screen.getByLabelText("Synchronizuj zewnetrzne pozycje z gieldy"));
-    fireEvent.click(screen.getByLabelText("Zarzadzaj zewnetrznymi pozycjami przez bota"));
+    fireEvent.click(screen.getByLabelText("Sync external exchange positions"));
+    fireEvent.click(screen.getByLabelText("Allow bot to manage external positions"));
 
-    fireEvent.click(screen.getByRole("button", { name: "Testuj polaczenie" }));
+    fireEvent.click(screen.getByRole("button", { name: "Test connection" }));
     await screen.findByText("OK");
-    fireEvent.click(screen.getByRole("button", { name: "Zapisz" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     expect(onSave).toHaveBeenCalledWith({
       label: "Binance managed",

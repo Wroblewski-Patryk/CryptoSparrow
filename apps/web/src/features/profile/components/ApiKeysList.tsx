@@ -4,18 +4,80 @@ import { LuPencilLine, LuTrash2 } from "react-icons/lu";
 import ApiKeyForm, { ApiKeyFormSavePayload } from "./ApiKeyForm";
 import { useApiKeys } from "../hooks/useApiKeys";
 import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
+import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import DataTable, { DataTableColumn } from "../../../ui/components/DataTable";
 import { TableIconButtonAction, TableToneBadge } from "../../../ui/components/TableUi";
 import type { ApiKey } from "../types/apiKey.type";
 
 export default function ApiKeysList() {
+  const { locale } = useI18n();
   const { formatDate } = useLocaleFormatting();
   const { keys, loading, error, handleAdd, handleEdit, handleDelete } = useApiKeys();
+  const copy =
+    locale === "pl"
+      ? {
+          addApiKeyTitle: "Dodaj klucz API",
+          editApiKeyTitle: "Edytuj klucz API",
+          tableLabel: "Nazwa",
+          tableExchange: "Gielda",
+          tableCreatedAt: "Utworzono",
+          tableLastUsed: "Ostatnio uzywany",
+          tableActions: "Akcje",
+          edit: "Edytuj",
+          remove: "Usun",
+          sectionTitle: "Klucze API",
+          addNewKey: "Dodaj nowy klucz",
+          loadingTitle: "Ladowanie kluczy API",
+          loadErrorTitle: "Nie mozna pobrac kluczy API",
+          refresh: "Odswiez",
+          emptyTitle: "Brak kluczy API",
+          emptyDescription: "Dodaj pierwszy klucz, aby polaczyc gielde i uruchomic tryb live.",
+          activeTitle: "Klucze API aktywne",
+          configuredCountOne: "Skonfigurowano 1 klucz.",
+          configuredCountMany: (count: number) => `Skonfigurowano ${count} klucze.`,
+          searchPlaceholder: "Szukaj kluczy API (label, gielda)",
+          emptyFilter: "Brak kluczy API dla wybranego filtra.",
+          close: "zamknij",
+          deleteModalTitle: "Usun klucz API?",
+          deleteModalDescription: "Czy na pewno chcesz usunac ten klucz? Tej operacji nie mozna cofnac.",
+          deleteRisk: "Ryzyko LIVE: usuniecie klucza moze zatrzymac aktywne boty handlujace na zywo.",
+          deleteRiskConfirm: "Rozumiem ryzyko i chce kontynuowac",
+          cancel: "Anuluj",
+        }
+      : {
+          addApiKeyTitle: "Add API key",
+          editApiKeyTitle: "Edit API key",
+          tableLabel: "Name",
+          tableExchange: "Exchange",
+          tableCreatedAt: "Created at",
+          tableLastUsed: "Last used",
+          tableActions: "Actions",
+          edit: "Edit",
+          remove: "Delete",
+          sectionTitle: "API Keys",
+          addNewKey: "Add new key",
+          loadingTitle: "Loading API keys",
+          loadErrorTitle: "Could not load API keys",
+          refresh: "Refresh",
+          emptyTitle: "No API keys",
+          emptyDescription: "Add your first key to connect exchange and run live mode.",
+          activeTitle: "API keys active",
+          configuredCountOne: "Configured 1 key.",
+          configuredCountMany: (count: number) => `Configured ${count} keys.`,
+          searchPlaceholder: "Search API keys (label, exchange)",
+          emptyFilter: "No API keys for selected filter.",
+          close: "close",
+          deleteModalTitle: "Delete API key?",
+          deleteModalDescription: "Are you sure you want to delete this key? This action cannot be undone.",
+          deleteRisk: "LIVE risk: deleting key may stop actively running live bots.",
+          deleteRiskConfirm: "I understand the risk and want to continue",
+          cancel: "Cancel",
+        };
 
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [modalTitle, setModalTitle] = useState("Dodaj klucz API");
+  const [modalTitle, setModalTitle] = useState(copy.addApiKeyTitle);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -23,13 +85,13 @@ export default function ApiKeysList() {
 
   const handleAddKey = () => {
     setEditId(null);
-    setModalTitle("Dodaj klucz API");
+    setModalTitle(copy.addApiKeyTitle);
     setShowModal(true);
   };
 
   const handleEditKey = (id: string) => {
     setEditId(id);
-    setModalTitle("Edytuj klucz API");
+    setModalTitle(copy.editApiKeyTitle);
     setShowModal(true);
   };
 
@@ -83,28 +145,28 @@ export default function ApiKeysList() {
     () => [
       {
         key: "label",
-        label: "Nazwa",
+        label: copy.tableLabel,
         sortable: true,
         accessor: (row) => row.label,
         className: "font-medium",
       },
       {
         key: "exchange",
-        label: "Gielda",
+        label: copy.tableExchange,
         sortable: true,
         accessor: (row) => row.exchange,
         render: (row) => <TableToneBadge label={row.exchange} tone="info" />,
       },
       {
         key: "createdAt",
-        label: "Utworzono",
+        label: copy.tableCreatedAt,
         sortable: true,
         accessor: (row) => row.createdAt,
         render: (row) => formatDate(row.createdAt),
       },
       {
         key: "lastUsed",
-        label: "Ostatnio uzywany",
+        label: copy.tableLastUsed,
         sortable: true,
         accessor: (row) => row.lastUsed ?? "",
         render: (row) => formatDate(row.lastUsed),
@@ -122,18 +184,18 @@ export default function ApiKeysList() {
       },
       {
         key: "actions",
-        label: "Akcje",
+        label: copy.tableActions,
         className: "text-right",
         render: (row) => (
           <div className="flex items-center justify-end gap-2">
             <TableIconButtonAction
-              label="Edytuj"
+              label={copy.edit}
               icon={<LuPencilLine className="h-3.5 w-3.5" />}
               onClick={() => handleEditKey(row.id)}
               tone="info"
             />
             <TableIconButtonAction
-              label="Usun"
+              label={copy.remove}
               icon={<LuTrash2 className="h-3.5 w-3.5" />}
               onClick={() => handleDeleteKey(row.id)}
               tone="danger"
@@ -142,46 +204,46 @@ export default function ApiKeysList() {
         ),
       },
     ],
-    [formatDate]
+    [copy.edit, copy.remove, copy.tableActions, copy.tableCreatedAt, copy.tableExchange, copy.tableLabel, copy.tableLastUsed, formatDate]
   );
 
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Klucze API</h3>
+        <h3 className="text-lg font-semibold">{copy.sectionTitle}</h3>
         <button className="btn btn-primary btn-sm" onClick={handleAddKey}>
-          Dodaj nowy klucz
+          {copy.addNewKey}
         </button>
       </div>
-      {loading && <LoadingState title="Ladowanie kluczy API" />}
+      {loading && <LoadingState title={copy.loadingTitle} />}
       {!loading && error && (
         <ErrorState
-          title="Nie mozna pobrac kluczy API"
+          title={copy.loadErrorTitle}
           description={error}
-          retryLabel="Odswiez"
+          retryLabel={copy.refresh}
           onRetry={() => window.location.reload()}
         />
       )}
       {!loading && !error && keys.length === 0 && (
         <EmptyState
-          title="Brak kluczy API"
-          description="Dodaj pierwszy klucz, aby polaczyc gielde i uruchomic tryb live."
-          actionLabel="Dodaj nowy klucz"
+          title={copy.emptyTitle}
+          description={copy.emptyDescription}
+          actionLabel={copy.addNewKey}
           onAction={handleAddKey}
         />
       )}
       {!loading && !error && keys.length > 0 && (
         <div className="space-y-3">
           <SuccessState
-            title="Klucze API aktywne"
-            description={`Skonfigurowano ${keys.length} ${keys.length === 1 ? "klucz" : "klucze"}.`}
+            title={copy.activeTitle}
+            description={keys.length === 1 ? copy.configuredCountOne : copy.configuredCountMany(keys.length)}
           />
           <DataTable
             compact
             rows={keys}
             columns={columns}
             getRowId={(row) => row.id}
-            filterPlaceholder="Szukaj kluczy API (label, gielda)"
+            filterPlaceholder={copy.searchPlaceholder}
             filterFn={(row, query) => {
               const normalized = query.trim().toLowerCase();
               return (
@@ -190,7 +252,7 @@ export default function ApiKeysList() {
                 row.apiKey.toLowerCase().includes(normalized)
               );
             }}
-            emptyText="Brak kluczy API dla wybranego filtra."
+            emptyText={copy.emptyFilter}
             paginationEnabled
             defaultPageSize={10}
           />
@@ -209,17 +271,15 @@ export default function ApiKeysList() {
           />
         </div>
         <form method="dialog" className="modal-backdrop" onClick={handleCancel}>
-          <button>close</button>
+          <button>{copy.close}</button>
         </form>
       </dialog>
 
       <dialog id="deleteApiKeyModal" className={`modal ${showDeleteModal ? "modal-open" : ""}`}>
         <div className="modal-box">
-          <h3 className="font-bold text-lg mb-4 text-error">Usun klucz API?</h3>
-          <p className="mb-3">Czy na pewno chcesz usunac ten klucz? Tej operacji nie mozna cofnac.</p>
-          <p className="mb-4 text-sm text-warning">
-            Ryzyko LIVE: usuniecie klucza moze zatrzymac aktywne boty handlujace na zywo.
-          </p>
+          <h3 className="font-bold text-lg mb-4 text-error">{copy.deleteModalTitle}</h3>
+          <p className="mb-3">{copy.deleteModalDescription}</p>
+          <p className="mb-4 text-sm text-warning">{copy.deleteRisk}</p>
           <label className="label cursor-pointer justify-start gap-2 mb-6">
             <input
               type="checkbox"
@@ -227,11 +287,11 @@ export default function ApiKeysList() {
               checked={deleteRiskAccepted}
               onChange={(event) => setDeleteRiskAccepted(event.target.checked)}
             />
-            <span className="label-text">Rozumiem ryzyko i chce kontynuowac</span>
+            <span className="label-text">{copy.deleteRiskConfirm}</span>
           </label>
           <div className="flex gap-4 justify-end">
             <button className="btn btn-outline" type="button" onClick={cancelDelete}>
-              Anuluj
+              {copy.cancel}
             </button>
             <button
               className="btn btn-error"
@@ -239,12 +299,12 @@ export default function ApiKeysList() {
               disabled={!deleteRiskAccepted}
               onClick={confirmDelete}
             >
-              Usun
+              {copy.remove}
             </button>
           </div>
         </div>
         <form method="dialog" className="modal-backdrop" onClick={cancelDelete}>
-          <button>close</button>
+          <button>{copy.close}</button>
         </form>
       </dialog>
     </div>

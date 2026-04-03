@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { LuPencilLine, LuTrash2 } from 'react-icons/lu';
 import { useLocaleFormatting } from '../../../i18n/useLocaleFormatting';
+import { useI18n } from '../../../i18n/I18nProvider';
 import DataTable, { DataTableColumn } from '../../../ui/components/DataTable';
 import ConfirmModal from '../../../ui/components/ConfirmModal';
 import { TableIconButtonAction, TableToneBadge } from '../../../ui/components/TableUi';
@@ -53,12 +54,73 @@ const resolveMinVolumeRules = (row: MarketUniverse) => {
 };
 
 export default function MarketUniversesTable({ rows, onDeleted }: MarketUniversesTableProps) {
+  const { locale } = useI18n();
   const router = useRouter();
   const { formatDate } = useLocaleFormatting();
   const [deleteTarget, setDeleteTarget] = useState<MarketUniverse | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [resolvedTickersMap, setResolvedTickersMap] = useState<Record<string, ResolvedTickers>>({});
+
+  const copy = useMemo(
+    () =>
+      locale === 'pl'
+        ? {
+            colName: 'Nazwa',
+            colExchange: 'Gielda',
+            colMarket: 'Rynek',
+            colBase: 'Base',
+            colWhitelist: 'Whitelist',
+            colBlacklist: 'Blacklist',
+            colTickers: 'Tickery po filtrach',
+            colCreatedAt: 'Utworzono',
+            colActions: 'Akcje',
+            showAll: 'Pokaz wszystkie',
+            hide: 'Ukryj',
+            edit: 'Edytuj',
+            remove: 'Usun',
+            deletedToast: 'Grupe rynkow usunieto',
+            deleteFailedTitle: 'Nie udalo sie usunac grupy rynkow',
+            activeBotDeleteTitle: 'Nie mozna usunac grupy rynkow, bo aktywny bot z niej korzysta',
+            activeBotDeleteDescription: 'Wylacz bota, a nastepnie usun grupe.',
+            filterPlaceholder: 'Filtruj grupy rynkow...',
+            empty: 'Brak grup rynkow.',
+            noTickers: 'Brak tickerow po filtrach.',
+            tickersLabel: 'Tickery',
+            confirmTitle: 'Usunac grupe rynkow?',
+            confirmDescription: 'Operacja usunie grupe "{name}". Tego nie da sie cofnac.',
+            confirm: 'Usun',
+            cancel: 'Anuluj',
+          }
+        : {
+            colName: 'Name',
+            colExchange: 'Exchange',
+            colMarket: 'Market',
+            colBase: 'Base',
+            colWhitelist: 'Whitelist',
+            colBlacklist: 'Blacklist',
+            colTickers: 'Tickers after filters',
+            colCreatedAt: 'Created',
+            colActions: 'Actions',
+            showAll: 'Show all',
+            hide: 'Hide',
+            edit: 'Edit',
+            remove: 'Delete',
+            deletedToast: 'Market group deleted',
+            deleteFailedTitle: 'Could not delete market group',
+            activeBotDeleteTitle: 'Cannot delete market group because an active bot is using it',
+            activeBotDeleteDescription: 'Disable the bot and then delete the group.',
+            filterPlaceholder: 'Filter market groups...',
+            empty: 'No market groups.',
+            noTickers: 'No tickers after filters.',
+            tickersLabel: 'Tickers',
+            confirmTitle: 'Delete market group?',
+            confirmDescription: 'This operation will remove group "{name}". This cannot be undone.',
+            confirm: 'Delete',
+            cancel: 'Cancel',
+          },
+    [locale]
+  );
 
   useEffect(() => {
     let active = true;
@@ -131,15 +193,15 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
 
   const columns = useMemo<DataTableColumn<MarketUniverse>[]>(
     () => [
-      { key: 'name', label: 'Nazwa', sortable: true, accessor: (row) => row.name },
-      { key: 'exchange', label: 'Gielda', sortable: true, accessor: (row) => row.exchange ?? 'BINANCE' },
-      { key: 'marketType', label: 'Rynek', sortable: true, accessor: (row) => row.marketType },
-      { key: 'baseCurrency', label: 'Base', sortable: true, accessor: (row) => row.baseCurrency },
-      { key: 'whitelist', label: 'Whitelist', sortable: true, accessor: (row) => row.whitelist.length },
-      { key: 'blacklist', label: 'Blacklist', sortable: true, accessor: (row) => row.blacklist.length },
+      { key: 'name', label: copy.colName, sortable: true, accessor: (row) => row.name },
+      { key: 'exchange', label: copy.colExchange, sortable: true, accessor: (row) => row.exchange ?? 'BINANCE' },
+      { key: 'marketType', label: copy.colMarket, sortable: true, accessor: (row) => row.marketType },
+      { key: 'baseCurrency', label: copy.colBase, sortable: true, accessor: (row) => row.baseCurrency },
+      { key: 'whitelist', label: copy.colWhitelist, sortable: true, accessor: (row) => row.whitelist.length },
+      { key: 'blacklist', label: copy.colBlacklist, sortable: true, accessor: (row) => row.blacklist.length },
       {
         key: 'resolvedTickers',
-        label: 'Tickery po filtrach',
+        label: copy.colTickers,
         sortable: true,
         accessor: (row) => resolvedTickersMap[row.id]?.tickers.length ?? 0,
         render: (row) => {
@@ -158,7 +220,7 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
                     setExpandedRows((prev) => ({ ...prev, [row.id]: !prev[row.id] }))
                   }
                 >
-                  {expanded ? 'Ukryj' : 'Pokaz wszystkie'}
+                  {expanded ? copy.hide : copy.showAll}
                 </button>
               ) : null}
             </div>
@@ -167,24 +229,24 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
       },
       {
         key: 'createdAt',
-        label: 'Utworzono',
+        label: copy.colCreatedAt,
         sortable: true,
         accessor: (row) => row.createdAt ?? '',
         render: (row) => (row.createdAt ? formatDate(row.createdAt) : '-'),
       },
       {
         key: 'actions',
-        label: 'Akcje',
+        label: copy.colActions,
         className: 'w-28 text-center',
         render: (row) => (
           <div className='flex items-center justify-center gap-2'>
             <TableIconButtonAction
-              label='Edytuj'
+              label={copy.edit}
               icon={<LuPencilLine className='h-3.5 w-3.5' />}
               onClick={() => router.push(`/dashboard/markets/${row.id}/edit`)}
             />
             <TableIconButtonAction
-              label='Usun'
+              label={copy.remove}
               icon={<LuTrash2 className='h-3.5 w-3.5' />}
               onClick={() => setDeleteTarget(row)}
               tone='danger'
@@ -193,7 +255,7 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
         ),
       },
     ],
-    [expandedRows, formatDate, resolvedTickersMap, router]
+    [copy, expandedRows, formatDate, resolvedTickersMap, router]
   );
 
   const handleConfirmDelete = async () => {
@@ -202,16 +264,16 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
     try {
       await deleteMarketUniverse(deleteTarget.id);
       onDeleted(deleteTarget.id);
-      toast.success('Grupe rynkow usunieto');
+      toast.success(copy.deletedToast);
       setDeleteTarget(null);
     } catch (error: unknown) {
       const message = getAxiosMessage(error);
       if (message === MARKET_UNIVERSE_ACTIVE_BOT_DELETE_ERROR) {
-        toast.error('Nie mozna usunac grupy rynkow, bo aktywny bot z niej korzysta', {
-          description: 'Wylacz bota, a nastepnie usun grupe.',
+        toast.error(copy.activeBotDeleteTitle, {
+          description: copy.activeBotDeleteDescription,
         });
       } else {
-        toast.error('Nie udalo sie usunac grupy rynkow', { description: message });
+        toast.error(copy.deleteFailedTitle, { description: message });
       }
     } finally {
       setDeleting(false);
@@ -225,7 +287,7 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
         rows={rows}
         columns={columns}
         getRowId={(row) => row.id}
-        filterPlaceholder='Filtruj grupy rynkow...'
+        filterPlaceholder={copy.filterPlaceholder}
         filterFn={(row, query) => {
           const normalized = query.trim().toUpperCase();
           return (
@@ -235,18 +297,18 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
             row.marketType.toUpperCase().includes(normalized)
           );
         }}
-        emptyText='Brak grup rynkow.'
+        emptyText={copy.empty}
         isRowExpanded={(row) => Boolean(expandedRows[row.id])}
         renderExpandedRow={(row) => {
           const resolved = resolvedTickersMap[row.id];
           if (!resolved || resolved.tickers.length === 0) {
-            return <p className='text-sm opacity-70'>Brak tickerow po filtrach.</p>;
+            return <p className='text-sm opacity-70'>{copy.noTickers}</p>;
           }
 
           return (
             <div className='rounded-box border border-base-300 bg-base-200 p-3'>
               <p className='mb-2 text-sm font-medium'>
-                Tickery ({resolved.tickers.length})
+                {copy.tickersLabel} ({resolved.tickers.length})
               </p>
               <div className='max-h-64 overflow-y-auto overflow-x-hidden'>
                 <div className='flex flex-wrap gap-2'>
@@ -264,14 +326,10 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
 
       <ConfirmModal
         open={Boolean(deleteTarget)}
-        title='Usunac grupe rynkow?'
-        description={
-          deleteTarget
-            ? `Operacja usunie grupe "${deleteTarget.name}". Tego nie da sie cofnac.`
-            : undefined
-        }
-        confirmLabel='Usun'
-        cancelLabel='Anuluj'
+        title={copy.confirmTitle}
+        description={deleteTarget ? copy.confirmDescription.replace('{name}', deleteTarget.name) : undefined}
+        confirmLabel={copy.confirm}
+        cancelLabel={copy.cancel}
         confirmVariant='error'
         pending={deleting}
         onCancel={() => {
@@ -283,3 +341,4 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
     </>
   );
 }
+

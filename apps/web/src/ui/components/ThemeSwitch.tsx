@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { HiOutlineColorSwatch } from 'react-icons/hi';
 import { HiOutlineMoon, HiOutlineSun } from 'react-icons/hi2';
 import { LuCheck } from 'react-icons/lu';
+import { useI18n } from '../../i18n/I18nProvider';
 import { useDetailsDropdown } from '../hooks/useDetailsDropdown';
 import { headerMenuItemClass } from '../layout/dashboard/headerControlStyles';
 
@@ -37,6 +37,7 @@ const resolveTheme = (preference: ThemePreference): string => {
 };
 
 export default function ThemeSwitcher({ placement = 'bottom' }: ThemeSwitcherProps) {
+  const { locale } = useI18n();
   const [activeTheme, setActiveTheme] = useState<ThemePreference>('cryptosparrow');
   const [resolvedTheme, setResolvedTheme] = useState<string>('cryptosparrow');
   const detailsRef = useRef<HTMLDetailsElement>(null);
@@ -75,21 +76,34 @@ export default function ThemeSwitcher({ placement = 'bottom' }: ThemeSwitcherPro
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [activeTheme]);
 
+  const copy = locale === 'pl'
+    ? {
+        selectorAria: 'Wybierz motyw',
+        optionsAria: 'Opcje motywu',
+        currentTheme: 'Aktualny motyw',
+        systemLabel: 'System',
+      }
+    : {
+        selectorAria: 'Theme selector',
+        optionsAria: 'Theme options',
+        currentTheme: 'Current theme',
+        systemLabel: 'System',
+      };
+
+  const activeThemeConfig = themes.find((item) => item.value === activeTheme) ?? themes[0];
+
   return (
     <details ref={detailsRef} className={detailsClass}>
-      <summary className={`${headerMenuItemClass} font-normal`} aria-label="Theme selector">
-        {activeTheme === 'system' ? (
-          resolvedTheme === 'dark' ? (
-            <HiOutlineMoon aria-hidden className="h-4 w-4" />
-          ) : (
-            <HiOutlineSun aria-hidden className="h-4 w-4" />
-          )
-        ) : (
-          <HiOutlineColorSwatch aria-hidden className="h-4 w-4" />
-        )}
-        <span>Theme</span>
+      <summary className={`${headerMenuItemClass} font-normal`} aria-label={copy.selectorAria}>
+        <span className="inline-flex items-center gap-1" aria-hidden="true">
+          {activeThemeConfig.swatches.map((swatch) => (
+            <span key={`summary-${activeThemeConfig.value}-${swatch}`} className={`inline-block h-2 w-2 rounded-full ${swatch}`} />
+          ))}
+        </span>
+        <span>{activeThemeConfig.value === 'system' ? copy.systemLabel : activeThemeConfig.label}</span>
+        <span className="sr-only">{copy.currentTheme}</span>
       </summary>
-      <ul className={menuClass} aria-label="Theme options">
+      <ul className={menuClass} aria-label={copy.optionsAria}>
         {themes.map((theme) => (
           <li key={theme.value}>
             <button
@@ -104,7 +118,7 @@ export default function ThemeSwitcher({ placement = 'bottom' }: ThemeSwitcherPro
                     <span key={`${theme.value}-${swatch}`} className={`inline-block h-2 w-2 rounded-full ${swatch}`} />
                   ))}
                 </span>
-                <span>{theme.label}</span>
+                <span>{theme.value === 'system' ? copy.systemLabel : theme.label}</span>
               </span>
               <span className="inline-flex items-center gap-1">
                 {theme.value === 'system' ? (

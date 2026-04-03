@@ -1,8 +1,7 @@
 'use client';
 
-import ThemeSwitcher from "../../components/ThemeSwitch";
+import FooterPreferencesSwitchers from "../../components/FooterPreferencesSwitchers";
 import { useI18n } from "../../../i18n/I18nProvider";
-import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function Footer() {
   const { t } = useI18n();
@@ -13,12 +12,7 @@ export default function Footer() {
         <p className="text-sm opacity-90">
           &copy; {new Date().getFullYear()} Soar. {t("dashboard.footer.rights")}
         </p>
-        <nav aria-label="Footer preferences">
-          <ul className="menu menu-horizontal p-0 gap-1 items-center">
-            <li><LanguageSwitcher placement="top" /></li>
-            <li><ThemeSwitcher placement="top" /></li>
-          </ul>
-        </nav>
+        <FooterPreferencesSwitchers />
       </div>
     </footer>
   );

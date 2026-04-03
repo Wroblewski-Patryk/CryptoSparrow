@@ -5,6 +5,7 @@ import { ZodError } from "zod";
 import { isAxiosError } from "axios";
 import { apiKeySchema } from "../types/apiKeyForm.type";
 import { testApiKeyConnection } from "../services/apiKeys.service";
+import { useI18n } from "../../../i18n/I18nProvider";
 
 const EXCHANGES = ["BINANCE"];
 
@@ -30,6 +31,54 @@ export type ApiKeyFormProps = {
 };
 
 export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: ApiKeyFormProps) {
+  const { locale } = useI18n();
+  const copy =
+    locale === "pl"
+      ? {
+          fillCredentialsBeforeTest: "Uzupelnij API Key i API Secret przed testem.",
+          testConnectionOk: "Polaczenie dziala poprawnie.",
+          testConnectionFailed: "Nie udalo sie zweryfikowac polaczenia.",
+          provideBothKeys: "Podaj API Key i API Secret, aby zaktualizowac polaczenie.",
+          testBeforeSave: "Przetestuj polaczenie i uzyskaj status OK przed zapisem.",
+          validationError: "Blad walidacji",
+          keyName: "Nazwa klucza",
+          exchange: "Gielda",
+          apiKey: "API Key",
+          apiSecret: "API Secret",
+          apiKeyPlaceholder: "Podaj nowy API Key (opcjonalnie)",
+          apiSecretPlaceholder: "Podaj nowy API Secret (opcjonalnie)",
+          syncExternal: "Synchronizuj zewnetrzne pozycje z gieldy",
+          manageExternal: "Zarzadzaj zewnetrznymi pozycjami przez bota",
+          testing: "Testowanie...",
+          testConnection: "Testuj polaczenie",
+          ok: "OK",
+          error: "Blad",
+          save: "Zapisz",
+          cancel: "Anuluj",
+        }
+      : {
+          fillCredentialsBeforeTest: "Fill in API Key and API Secret before testing.",
+          testConnectionOk: "Connection verified successfully.",
+          testConnectionFailed: "Could not verify connection.",
+          provideBothKeys: "Provide both API Key and API Secret to update connection.",
+          testBeforeSave: "Run connection test and get OK status before saving.",
+          validationError: "Validation error",
+          keyName: "Key name",
+          exchange: "Exchange",
+          apiKey: "API Key",
+          apiSecret: "API Secret",
+          apiKeyPlaceholder: "Provide new API Key (optional)",
+          apiSecretPlaceholder: "Provide new API Secret (optional)",
+          syncExternal: "Sync external exchange positions",
+          manageExternal: "Allow bot to manage external positions",
+          testing: "Testing...",
+          testConnection: "Test connection",
+          ok: "OK",
+          error: "Error",
+          save: "Save",
+          cancel: "Cancel",
+        };
+
   const [label, setLabel] = useState(defaultValues?.label || "");
   const [exchange, setExchange] = useState(defaultValues?.exchange || EXCHANGES[0]);
   const [apiKey, setApiKey] = useState("");
@@ -47,7 +96,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
   const handleTest = async () => {
     if (!apiKey || !apiSecret) {
       setTestStatus("error");
-      setTestMessage("Uzupelnij API Key i API Secret przed testem.");
+      setTestMessage(copy.fillCredentialsBeforeTest);
       setTestedFingerprint(null);
       return;
     }
@@ -59,18 +108,18 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
       const result = await testApiKeyConnection({ exchange, apiKey, apiSecret });
       if (result.ok) {
         setTestStatus("success");
-        setTestMessage(result.message ?? "Polaczenie dziala poprawnie.");
+        setTestMessage(result.message ?? copy.testConnectionOk);
         setTestedFingerprint(currentFingerprint);
         return;
       }
 
       setTestStatus("error");
-      setTestMessage(result.message ?? "Nie udalo sie zweryfikowac polaczenia.");
+      setTestMessage(result.message ?? copy.testConnectionFailed);
       setTestedFingerprint(null);
     } catch (err: unknown) {
       const message = isAxiosError<{ message?: string }>(err)
-        ? (err.response?.data?.message ?? "Nie udalo sie zweryfikowac polaczenia.")
-        : "Nie udalo sie zweryfikowac polaczenia.";
+        ? (err.response?.data?.message ?? copy.testConnectionFailed)
+        : copy.testConnectionFailed;
       setTestStatus("error");
       setTestMessage(message);
       setTestedFingerprint(null);
@@ -83,7 +132,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
       if (isEdit) {
         apiKeySchema.pick({ label: true, exchange: true }).parse({ label, exchange });
         if ((apiKey && !apiSecret) || (!apiKey && apiSecret)) {
-          toast.error("Podaj API Key i API Secret, aby zaktualizowac polaczenie.");
+          toast.error(copy.provideBothKeys);
           return;
         }
       } else {
@@ -93,7 +142,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
       if (requiresConnectionTest) {
         const hasMatchingSuccess = testStatus === "success" && testedFingerprint === currentFingerprint;
         if (!hasMatchingSuccess) {
-          toast.error("Przetestuj polaczenie i uzyskaj status OK przed zapisem.");
+          toast.error(copy.testBeforeSave);
           return;
         }
       }
@@ -104,10 +153,10 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
       onSave(payload);
     } catch (err: unknown) {
       if (err instanceof ZodError) {
-        toast.error(err.issues[0]?.message || "Validation error");
+        toast.error(err.issues[0]?.message || copy.validationError);
         return;
       }
-      toast.error("Validation error");
+      toast.error(copy.validationError);
     }
   };
 
@@ -115,12 +164,12 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
     <form className="space-y-4 w-full" onSubmit={handleSubmit}>
       <div className="form-control w-full">
         <label className="label pl-0">
-          <span className="label-text text-left w-full">Nazwa klucza</span>
+          <span className="label-text text-left w-full">{copy.keyName}</span>
         </label>
         <input
           className="input input-bordered w-full"
           type="text"
-          aria-label="Nazwa klucza"
+          aria-label={copy.keyName}
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           required
@@ -128,11 +177,11 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
       </div>
       <div className="form-control w-full">
         <label className="label pl-0">
-          <span className="label-text text-left w-full">Gielda</span>
+          <span className="label-text text-left w-full">{copy.exchange}</span>
         </label>
         <select
           className="select select-bordered w-full"
-          aria-label="Gielda"
+          aria-label={copy.exchange}
           value={exchange}
           onChange={(e) => setExchange(e.target.value)}
         >
@@ -145,29 +194,29 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
       </div>
       <div className="form-control w-full">
         <label className="label pl-0">
-          <span className="label-text text-left w-full">API Key</span>
+          <span className="label-text text-left w-full">{copy.apiKey}</span>
         </label>
         <input
           className="input input-bordered w-full font-mono"
           type="text"
-          aria-label="API Key"
+          aria-label={copy.apiKey}
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
-          placeholder={isEdit ? "Podaj nowy API Key (opcjonalnie)" : ""}
+          placeholder={isEdit ? copy.apiKeyPlaceholder : ""}
           required={!isEdit}
         />
       </div>
       <div className="form-control w-full">
         <label className="label pl-0">
-          <span className="label-text text-left w-full">API Secret</span>
+          <span className="label-text text-left w-full">{copy.apiSecret}</span>
         </label>
         <input
           className="input input-bordered w-full font-mono"
           type="password"
-          aria-label="API Secret"
+          aria-label={copy.apiSecret}
           value={apiSecret}
           onChange={(e) => setApiSecret(e.target.value)}
-          placeholder={isEdit ? "Podaj nowy API Secret (opcjonalnie)" : ""}
+          placeholder={isEdit ? copy.apiSecretPlaceholder : ""}
           required={!isEdit}
         />
       </div>
@@ -179,7 +228,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
             checked={syncExternalPositions}
             onChange={(e) => setSyncExternalPositions(e.target.checked)}
           />
-          <span className="label-text">Synchronizuj zewnetrzne pozycje z gieldy</span>
+          <span className="label-text">{copy.syncExternal}</span>
         </label>
       </div>
       <div className="form-control">
@@ -190,7 +239,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
             checked={manageExternalPositions}
             onChange={(e) => setManageExternalPositions(e.target.checked)}
           />
-          <span className="label-text">Zarzadzaj zewnetrznymi pozycjami przez bota</span>
+          <span className="label-text">{copy.manageExternal}</span>
         </label>
       </div>
       <div className="flex items-center gap-4 mt-2">
@@ -200,20 +249,20 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           onClick={handleTest}
           disabled={testStatus === "loading"}
         >
-          {testStatus === "loading" ? "Testowanie..." : "Testuj polaczenie"}
+          {testStatus === "loading" ? copy.testing : copy.testConnection}
         </button>
-        {testStatus === "success" && <span className="text-success">OK</span>}
-        {testStatus === "error" && <span className="text-error">Blad</span>}
+        {testStatus === "success" && <span className="text-success">{copy.ok}</span>}
+        {testStatus === "error" && <span className="text-error">{copy.error}</span>}
       </div>
       {testMessage && (
         <p className={`text-sm ${testStatus === "error" ? "text-error" : "text-success"}`}>{testMessage}</p>
       )}
       <div className="flex gap-2 mt-4">
         <button className="btn btn-primary" type="submit">
-          Zapisz
+          {copy.save}
         </button>
         <button className="btn btn-outline" type="button" onClick={onCancel}>
-          Anuluj
+          {copy.cancel}
         </button>
       </div>
     </form>

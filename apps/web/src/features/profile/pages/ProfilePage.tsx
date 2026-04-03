@@ -1,70 +1,92 @@
 'use client';
-import { useEffect, useState } from "react";
-import { LuUserRound } from "react-icons/lu";
+import type { ReactNode } from "react";
+import { useMemo, useState } from "react";
+import { LuKey, LuSettings, LuSubscript, LuUser, LuUserRound } from "react-icons/lu";
+import { useI18n } from "../../../i18n/I18nProvider";
 
 import BasicForm from "../components/BasicForm";
 import Subscription from "../components/Subscription";
 import Security from "../components/Security";
 import { PageTitle } from "@/ui/layout/dashboard/PageTitle";
 import ExchangeConnectionsView from "../../exchanges/components/ExchangeConnectionsView";
+import Tabs from "@/ui/components/Tabs";
 
-const tabs = [
-  { label: "Profil uzytkownika", key: "basic" },
-  { label: "Integracje i API keys", key: "api" },
-  { label: "Subskrypcja", key: "subscription" },
-  { label: "Bezpieczenstwo", key: "security" },
-];
+type ProfileTabKey = "basic" | "api" | "subscription" | "security";
 
 export default function ProfilePage() {
-  const [activeTab, setActiveTab] = useState("basic");
+  const { locale } = useI18n();
+  const copy = locale === 'pl'
+    ? {
+        title: "Moje konto",
+        breadcrumbDashboard: "Dashboard",
+        breadcrumbCurrent: "Moje konto",
+        tabs: {
+          basic: "Profil uzytkownika",
+          api: "Integracje i API keys",
+          subscription: "Subskrypcja",
+          security: "Bezpieczenstwo",
+        },
+      }
+    : {
+        title: "My account",
+        breadcrumbDashboard: "Dashboard",
+        breadcrumbCurrent: "My account",
+        tabs: {
+          basic: "User profile",
+          api: "Integrations and API keys",
+          subscription: "Subscription",
+          security: "Security",
+        },
+      };
 
-  useEffect(() => {
-    if (window.location.hash) {
-      const hash = window.location.hash.replace("#", "");
-      if (tabs.some((tab) => tab.key === hash)) setActiveTab(hash);
+  const tabs: { label: string; key: ProfileTabKey; hash: string; icon: ReactNode }[] = [
+    { label: copy.tabs.basic, key: "basic", hash: "basic", icon: <LuUser className="h-4 w-4" aria-hidden /> },
+    { label: copy.tabs.api, key: "api", hash: "api", icon: <LuKey className="h-4 w-4" aria-hidden /> },
+    {
+      label: copy.tabs.subscription,
+      key: "subscription",
+      hash: "subscription",
+      icon: <LuSubscript className="h-4 w-4" aria-hidden />,
+    },
+    { label: copy.tabs.security, key: "security", hash: "security", icon: <LuSettings className="h-4 w-4" aria-hidden /> },
+  ];
+
+  const hashToTab = useMemo(() => {
+    const map = new Map<string, ProfileTabKey>();
+    for (const tab of tabs) {
+      map.set(tab.hash, tab.key);
     }
+    return map;
+  }, [tabs]);
 
-    const onHashChange = () => {
-      const hash = window.location.hash.replace("#", "");
-      if (tabs.some((tab) => tab.key === hash)) setActiveTab(hash);
-    };
-
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
-  }, []);
+  const [activeTab, setActiveTab] = useState<ProfileTabKey>(() => {
+    if (typeof window === "undefined") return "basic";
+    const hash = window.location.hash.replace(/^#/, "").trim();
+    return hashToTab.get(hash) ?? "basic";
+  });
 
   if (!activeTab) return null;
-
-  const handleTab = (key: string) => {
-    setActiveTab(key);
-    window.location.hash = key;
-  };
 
   return (
     <section className="w-full">
       <div className="py-1">
         <PageTitle
-          title="Moje konto"
+          title={copy.title}
           icon={<LuUserRound className="h-5 w-5" />}
           breadcrumb={[
-            { label: "Dashboard", href: "/dashboard" },
-            { label: "Moje konto" },
+            { label: copy.breadcrumbDashboard, href: "/dashboard" },
+            { label: copy.breadcrumbCurrent },
           ]}
         />
 
-        <div role="tablist" className="tabs tabs-border mb-4">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              role="tab"
-              className={`tab tab-bordered ${activeTab === tab.key ? "tab-active" : ""}`}
-              onClick={() => handleTab(tab.key)}
-              type="button"
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <Tabs
+          items={tabs}
+          value={activeTab}
+          onChange={setActiveTab}
+          variant="border"
+          className="mb-4"
+          syncWithHash
+        />
 
         <div className="rounded-box border border-base-300 bg-base-100 p-4">
           {activeTab === "basic" && <BasicForm />}

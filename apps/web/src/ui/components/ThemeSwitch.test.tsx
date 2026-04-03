@@ -1,10 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { I18nProvider } from '../../i18n/I18nProvider';
 import ThemeSwitcher from './ThemeSwitch';
 
 describe('ThemeSwitcher', () => {
   it('renders accessible theme selector and options', () => {
-    render(<ThemeSwitcher />);
+    render(
+      <I18nProvider>
+        <ThemeSwitcher />
+      </I18nProvider>
+    );
 
     expect(screen.getByLabelText('Theme selector')).toBeInTheDocument();
     expect(screen.getByLabelText('Soar')).toBeInTheDocument();

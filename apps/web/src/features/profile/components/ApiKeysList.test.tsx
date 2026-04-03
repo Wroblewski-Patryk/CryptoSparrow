@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import ApiKeysList from "./ApiKeysList";
+import { I18nProvider } from "../../../i18n/I18nProvider";
 
 const useApiKeysMock = vi.hoisted(() => vi.fn());
 const handleDeleteMock = vi.hoisted(() => vi.fn());
@@ -42,11 +43,15 @@ describe("ApiKeysList", () => {
       handleDelete: handleDeleteMock,
     });
 
-    render(<ApiKeysList />);
+    render(
+      <I18nProvider>
+        <ApiKeysList />
+      </I18nProvider>
+    );
 
-    fireEvent.click(screen.getByRole("button", { name: "Usun" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 
-    const riskLabel = screen.getByText("Rozumiem ryzyko i chce kontynuowac");
+    const riskLabel = screen.getByText("I understand the risk and want to continue");
     const riskCheckbox = riskLabel.closest("label")?.querySelector("input[type='checkbox']") as
       | HTMLInputElement
       | null;
@@ -59,7 +64,7 @@ describe("ApiKeysList", () => {
     if (!deleteButton) return;
     expect(deleteButton).toBeDisabled();
     expect(
-      screen.getByText("Rozumiem ryzyko i chce kontynuowac")
+      screen.getByText("I understand the risk and want to continue")
     ).toBeInTheDocument();
 
     fireEvent.click(riskCheckbox);

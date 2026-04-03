@@ -59,7 +59,7 @@ export default function LanguageSwitcher({ placement = 'bottom' }: LanguageSwitc
     <details ref={detailsRef} className={detailsClass}>
       <summary className={`${headerMenuItemClass} font-normal`} aria-label={t('dashboard.common.language')}>
         <FlagIcon option={active} />
-        <span>{active.short}</span>
+        <span>{active.label}</span>
       </summary>
       <ul className={menuClass}>
         {LANGUAGES.map((option) => (

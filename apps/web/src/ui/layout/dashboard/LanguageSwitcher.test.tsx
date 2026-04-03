@@ -13,14 +13,14 @@ describe("LanguageSwitcher visual contract", () => {
 
     expect(screen.getAllByTestId("flag-en").length).toBeGreaterThan(0);
     const toggle = screen.getByLabelText("Language");
-    expect(toggle).toHaveTextContent("EN");
+    expect(toggle).toHaveTextContent("English");
 
     fireEvent.click(toggle);
     fireEvent.click(screen.getByRole("button", { name: "Polski" }));
 
     await waitFor(() => {
       expect(screen.getAllByTestId("flag-pl").length).toBeGreaterThan(0);
-      expect(screen.getAllByText("PL").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Polski").length).toBeGreaterThan(0);
     });
   });
 });

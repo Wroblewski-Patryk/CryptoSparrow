@@ -3,6 +3,8 @@
 import { FormEvent, useMemo, useState } from "react";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
+
+import { useI18n } from "../../../i18n/I18nProvider";
 import { changePassword, deleteAccount } from "../services/security.service";
 
 const mapApiError = (error: unknown, fallback: string) => {
@@ -13,6 +15,56 @@ const mapApiError = (error: unknown, fallback: string) => {
 };
 
 export default function SecurityPanel() {
+  const { locale } = useI18n();
+  const copy =
+    locale === "pl"
+      ? {
+          mismatch: "Nowe haslo i potwierdzenie musza byc identyczne.",
+          samePassword: "Nowe haslo musi byc inne niz obecne.",
+          passwordChanged: "Haslo zostalo zmienione.",
+          passwordChangeFailed: "Nie udalo sie zmienic hasla.",
+          deletePasswordMissing: "Podaj haslo, aby potwierdzic usuniecie konta.",
+          deleteConfirm: "Ta operacja usunie konto i wszystkie dane. Czy na pewno kontynuowac?",
+          accountDeleted: "Konto zostalo usuniete. Przekierowanie do logowania...",
+          deleteFailed: "Nie udalo sie usunac konta.",
+          passwordSectionTitle: "Zmiana hasla",
+          passwordSectionDescription: "Zmien haslo dostepu do panelu. Minimalna dlugosc: 6 znakow.",
+          currentPassword: "Obecne haslo",
+          newPassword: "Nowe haslo",
+          confirmPassword: "Potwierdz nowe haslo",
+          savePassword: "Zmien haslo",
+          savingPassword: "Zapisywanie...",
+          deleteSectionTitle: "Usuniecie konta",
+          deleteSectionDescription:
+            "Ta operacja jest nieodwracalna i usunie Twoje konto wraz z danymi (boty, strategie, backtesty, logi).",
+          deletePasswordLabel: "Podaj haslo, aby potwierdzic",
+          deleteAction: "Usun konto",
+          deleting: "Usuwanie...",
+        }
+      : {
+          mismatch: "New password and confirmation must match.",
+          samePassword: "New password must be different from current password.",
+          passwordChanged: "Password changed successfully.",
+          passwordChangeFailed: "Could not change password.",
+          deletePasswordMissing: "Provide your password to confirm account deletion.",
+          deleteConfirm: "This operation will remove your account and all data. Continue?",
+          accountDeleted: "Account deleted. Redirecting to login...",
+          deleteFailed: "Could not delete account.",
+          passwordSectionTitle: "Change password",
+          passwordSectionDescription: "Update your panel password. Minimum length: 6 characters.",
+          currentPassword: "Current password",
+          newPassword: "New password",
+          confirmPassword: "Confirm new password",
+          savePassword: "Change password",
+          savingPassword: "Saving...",
+          deleteSectionTitle: "Delete account",
+          deleteSectionDescription:
+            "This operation is irreversible and will remove your account with all data (bots, strategies, backtests, logs).",
+          deletePasswordLabel: "Enter password to confirm",
+          deleteAction: "Delete account",
+          deleting: "Deleting...",
+        };
+
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -34,12 +86,12 @@ export default function SecurityPanel() {
     event.preventDefault();
 
     if (newPassword !== confirmPassword) {
-      toast.error("Nowe haslo i potwierdzenie musza byc identyczne.");
+      toast.error(copy.mismatch);
       return;
     }
 
     if (currentPassword === newPassword) {
-      toast.error("Nowe haslo musi byc inne niz obecne.");
+      toast.error(copy.samePassword);
       return;
     }
 
@@ -53,9 +105,9 @@ export default function SecurityPanel() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      toast.success("Haslo zostalo zmienione.");
+      toast.success(copy.passwordChanged);
     } catch (error) {
-      toast.error(mapApiError(error, "Nie udalo sie zmienic hasla."));
+      toast.error(mapApiError(error, copy.passwordChangeFailed));
     } finally {
       setIsChangingPassword(false);
     }
@@ -65,26 +117,22 @@ export default function SecurityPanel() {
     event.preventDefault();
 
     if (!deletePassword.trim()) {
-      toast.error("Podaj haslo, aby potwierdzic usuniecie konta.");
+      toast.error(copy.deletePasswordMissing);
       return;
     }
 
-    const accepted =
-      typeof window === "undefined"
-        ? false
-        : window.confirm("Ta operacja usunie konto i wszystkie dane. Czy na pewno kontynuowac?");
-
+    const accepted = typeof window === "undefined" ? false : window.confirm(copy.deleteConfirm);
     if (!accepted) return;
 
     setIsDeletingAccount(true);
     try {
       await deleteAccount({ password: deletePassword });
-      toast.success("Konto zostalo usuniete. Przekierowanie do logowania...");
+      toast.success(copy.accountDeleted);
       if (typeof window !== "undefined") {
         window.location.href = "/auth/login";
       }
     } catch (error) {
-      toast.error(mapApiError(error, "Nie udalo sie usunac konta."));
+      toast.error(mapApiError(error, copy.deleteFailed));
       setIsDeletingAccount(false);
     }
   };
@@ -92,12 +140,12 @@ export default function SecurityPanel() {
   return (
     <div className="space-y-6">
       <section className="rounded-box border border-base-300 bg-base-100 p-4">
-        <h2 className="text-lg font-semibold">Zmiana hasla</h2>
-        <p className="mt-1 text-sm opacity-70">Zmien haslo dostepu do panelu. Minimalna dlugosc: 6 znakow.</p>
+        <h2 className="text-lg font-semibold">{copy.passwordSectionTitle}</h2>
+        <p className="mt-1 text-sm opacity-70">{copy.passwordSectionDescription}</p>
 
         <form className="mt-4 grid gap-3 md:max-w-xl" onSubmit={handlePasswordChange}>
           <label className="form-control w-full">
-            <span className="label-text mb-1 block">Obecne haslo</span>
+            <span className="label-text mb-1 block">{copy.currentPassword}</span>
             <input
               className="input input-bordered w-full"
               type="password"
@@ -109,7 +157,7 @@ export default function SecurityPanel() {
           </label>
 
           <label className="form-control w-full">
-            <span className="label-text mb-1 block">Nowe haslo</span>
+            <span className="label-text mb-1 block">{copy.newPassword}</span>
             <input
               className="input input-bordered w-full"
               type="password"
@@ -122,7 +170,7 @@ export default function SecurityPanel() {
           </label>
 
           <label className="form-control w-full">
-            <span className="label-text mb-1 block">Potwierdz nowe haslo</span>
+            <span className="label-text mb-1 block">{copy.confirmPassword}</span>
             <input
               className="input input-bordered w-full"
               type="password"
@@ -136,21 +184,19 @@ export default function SecurityPanel() {
 
           <div>
             <button className="btn btn-primary btn-sm" type="submit" disabled={!canSubmitPasswordChange}>
-              {isChangingPassword ? "Zapisywanie..." : "Zmien haslo"}
+              {isChangingPassword ? copy.savingPassword : copy.savePassword}
             </button>
           </div>
         </form>
       </section>
 
       <section className="rounded-box border border-error/40 bg-error/5 p-4">
-        <h2 className="text-lg font-semibold text-error">Usuniecie konta</h2>
-        <p className="mt-1 text-sm opacity-80">
-          Ta operacja jest nieodwracalna i usunie Twoje konto wraz z danymi (boty, strategie, backtesty, logi).
-        </p>
+        <h2 className="text-lg font-semibold text-error">{copy.deleteSectionTitle}</h2>
+        <p className="mt-1 text-sm opacity-80">{copy.deleteSectionDescription}</p>
 
         <form className="mt-4 grid gap-3 md:max-w-xl" onSubmit={handleDeleteAccount}>
           <label className="form-control w-full">
-            <span className="label-text mb-1 block">Podaj haslo, aby potwierdzic</span>
+            <span className="label-text mb-1 block">{copy.deletePasswordLabel}</span>
             <input
               className="input input-bordered w-full"
               type="password"
@@ -167,7 +213,7 @@ export default function SecurityPanel() {
               type="submit"
               disabled={isDeletingAccount || deletePassword.trim().length === 0}
             >
-              {isDeletingAccount ? "Usuwanie..." : "Usun konto"}
+              {isDeletingAccount ? copy.deleting : copy.deleteAction}
             </button>
           </div>
         </form>

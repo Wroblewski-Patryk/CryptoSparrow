@@ -312,7 +312,7 @@ describe("HomeLiveWidgets", () => {
     renderSubject();
 
     await waitFor(() => {
-      expect(screen.getByText("Otwarte pozycje")).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: "Otwarte pozycje" })).toBeInTheDocument();
       expect(screen.getByText("Bot runtime i ryzyko")).toBeInTheDocument();
       expect(screen.getByRole("option", { name: /Monitor Bot/i })).toBeInTheDocument();
       expect(screen.getAllByText("RUNNING").length).toBeGreaterThan(0);
@@ -461,8 +461,8 @@ describe("HomeLiveWidgets", () => {
     });
 
     const signalsAnchor = screen.getByText("SOLUSDT");
-    const openPositionsHeading = screen.getByRole("heading", { name: "Otwarte pozycje" });
-    expect(signalsAnchor.compareDocumentPosition(openPositionsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const openPositionsTab = screen.getByRole("tab", { name: "Otwarte pozycje" });
+    expect(signalsAnchor.compareDocumentPosition(openPositionsTab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("supports apply-based filters, tri-state sorting and preserves state on auto-refresh", async () => {
@@ -599,6 +599,9 @@ describe("HomeLiveWidgets", () => {
 
     expect(screen.queryByRole("option", { name: /Unknown/i })).not.toBeInTheDocument();
 
+    const tradeHistoryTab = screen.getByRole("tab", { name: /Historia transakcji/i });
+    fireEvent.click(tradeHistoryTab);
+
     const callsAfterInitialLoad = listBotRuntimeSessionTradesMock.mock.calls.length;
     fireEvent.click(screen.getByRole("button", { name: /Opcje zaawansowane/i }));
     fireEvent.change(screen.getByPlaceholderText("BTCUSDT"), { target: { value: "btcusdt" } });
@@ -632,13 +635,10 @@ describe("HomeLiveWidgets", () => {
       expect(toDate.getUTCMilliseconds()).toBe(999);
     }
 
-    const tradesSection = screen
-      .getByRole("heading", { name: "Historia transakcji" })
-      .closest("section");
-    expect(tradesSection).not.toBeNull();
-    const marginSortButton = tradesSection
-      ? within(tradesSection).getByRole("button", { name: /Margin/i })
-      : null;
+    const historyTab = screen.getByRole("tab", { name: /Historia transakcji/i });
+    fireEvent.click(historyTab);
+
+    const marginSortButton = screen.getByRole("button", { name: /Margin/i });
     expect(marginSortButton).not.toBeNull();
 
     fireEvent.click(marginSortButton!);
@@ -667,9 +667,7 @@ describe("HomeLiveWidgets", () => {
       expect(lastParams).not.toHaveProperty("sortDir");
     });
 
-    const nextPageButton = tradesSection
-      ? within(tradesSection).getByRole("button", { name: "Nastepna" })
-      : null;
+    const nextPageButton = screen.getByRole("button", { name: "Nastepna" });
     expect(nextPageButton).not.toBeNull();
     fireEvent.click(nextPageButton!);
 

@@ -46,30 +46,30 @@ export default function RegisterForm() {
         <label htmlFor='terms' className='label'>
           <input id='terms' type='checkbox' className='checkbox mt-4 mr-1' disabled={isSubmitting} {...register('terms')} />
           <span className='pt-4'>
-            I accept the{' '}
-            <Link href='/terms' className='text-blue-600 hover:underline'>
+            I agree to the{' '}
+            <Link href='/terms' className='link link-hover'>
               Terms of Service
             </Link>{' '}
-            and{' '}
-            <Link href='/privacy' className='text-blue-600 hover:underline'>
+            and the{' '}
+            <Link href='/privacy' className='link link-hover'>
               Privacy Policy
             </Link>
           </span>
         </label>
         {errors.terms && <div className='text-error text-sm mt-1'>{errors.terms.message}</div>}
 
-        <button type='submit' className='btn btn-neutral mt-4 mb-4' disabled={isSubmitting}>
-          {isSubmitting ? 'Signing up...' : 'Sign up'}
+        <button type='submit' className='btn btn-primary mt-4 mb-4' disabled={isSubmitting}>
+          {isSubmitting ? 'Creating account...' : 'Create account'}
         </button>
 
         <p className='text-center'>
           Have an account?{' '}
           <Link href='/auth/login' className='link link-hover'>
-            Log in
+            Sign in
           </Link>
         </p>
         <p className='text-center'>
-          <span className='opacity-70'>Password reset will be available after MVP.</span>
+          <span className='opacity-70'>Password reset will be available soon.</span>
         </p>
       </fieldset>
     </form>

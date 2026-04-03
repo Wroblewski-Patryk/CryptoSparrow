@@ -1,12 +1,42 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useUser } from "../hooks/useUser";
 import { toast } from "sonner";
+
 import api from "../../../lib/api";
+import { useI18n } from "../../../i18n/I18nProvider";
+import { useUser } from "../hooks/useUser";
 
 export default function ProfileForm() {
+  const { locale } = useI18n();
   const { user, updateUser, loading } = useUser();
+  const copy =
+    locale === "pl"
+      ? {
+          avatarAlt: "Avatar",
+          avatarUploadChanged: "Avatar zmieniony!",
+          avatarUploadFailed: "Nie udalo sie zapisac avatara.",
+          profileSaved: "Zapisano zmiany profilu!",
+          profileSaveFailed: "Nie udalo sie zapisac zmian.",
+          addAvatar: "Dodaj avatar",
+          changeAvatar: "Zmien avatar",
+          nameLabel: "Imie / Nick",
+          emailLabel: "Email",
+          saveChanges: "Zapisz zmiany",
+        }
+      : {
+          avatarAlt: "Avatar",
+          avatarUploadChanged: "Avatar updated!",
+          avatarUploadFailed: "Could not save avatar.",
+          profileSaved: "Profile changes saved.",
+          profileSaveFailed: "Could not save profile changes.",
+          addAvatar: "Add avatar",
+          changeAvatar: "Change avatar",
+          nameLabel: "Name / Nickname",
+          emailLabel: "Email",
+          saveChanges: "Save changes",
+        };
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -19,40 +49,37 @@ export default function ProfileForm() {
     setAvatarUrl(user?.avatarUrl || "");
   }, [user]);
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('avatar change handled');
-    const file = e.target.files?.[0];
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
+
     try {
-      console.log('avatar formData collection');
       const formData = new FormData();
       formData.append("avatar", file);
-      console.log('avatar formData'+ formData);
-      const res = await api.post("/upload/avatar", formData, {
+      const response = await api.post("/upload/avatar", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      const data = res.data;
-      console.log(data.url);
-      setAvatarUrl(data.url);
-      toast.success("Avatar zmieniony!");
+      setAvatarUrl(response.data.url);
+      toast.success(copy.avatarUploadChanged);
     } catch {
-      toast.error("Nie udało się zapisać avatara.");
+      toast.error(copy.avatarUploadFailed);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setSaving(true);
     try {
       await updateUser({
         name,
         avatarUrl,
       });
-      toast.success("Zapisano zmiany profilu!");
+      toast.success(copy.profileSaved);
     } catch {
-      toast.error("Nie udało się zapisać zmian.");
+      toast.error(copy.profileSaveFailed);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   return (
@@ -62,7 +89,7 @@ export default function ProfileForm() {
           {avatarUrl ? (
             <Image
               src={avatarUrl}
-              alt="Avatar"
+              alt={copy.avatarAlt}
               width={192}
               height={192}
               loader={({ src }) => src}
@@ -70,9 +97,8 @@ export default function ProfileForm() {
               className="w-48 h-48 rounded-full object-cover mb-4"
             />
           ) : (
-            <div className="w-48 h-48 rounded-full bg-primary flex mb-4"></div>
+            <div className="w-48 h-48 rounded-full bg-primary mb-4" />
           )}
-          <div>
 
           <input
             id="avatar-upload"
@@ -80,30 +106,31 @@ export default function ProfileForm() {
             accept="image/*"
             className="hidden"
             onChange={handleAvatarChange}
-          /> 
+          />
           <label htmlFor="avatar-upload">
             <span className="btn btn-outline btn-info w-full mt-2 cursor-pointer">
-              {avatarUrl ? "Zmień avatar" : "Dodaj avatar"}
+              {avatarUrl ? copy.changeAvatar : copy.addAvatar}
             </span>
           </label>
         </div>
-        </div>
+
         <div className="flex-grow">
           <div className="form-control mb-4">
             <label className="label">
-              <span className="label-text">Imię / Nick</span>
+              <span className="label-text">{copy.nameLabel}</span>
             </label>
             <input
               type="text"
               placeholder="John Doe"
               className="input input-bordered w-full"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(event) => setName(event.target.value)}
             />
           </div>
+
           <div className="form-control mb-4">
             <label className="label">
-              <span className="label-text">Email</span>
+              <span className="label-text">{copy.emailLabel}</span>
             </label>
             <input
               type="email"
@@ -113,16 +140,16 @@ export default function ProfileForm() {
               disabled
             />
           </div>
+
           <button
             className={`btn btn-primary ${saving ? "loading" : ""}`}
             type="submit"
             disabled={saving || loading}
           >
-            Zapisz zmiany
+            {copy.saveChanges}
           </button>
         </div>
       </div>
     </form>
   );
 }
-

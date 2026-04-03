@@ -2,10 +2,12 @@
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { useI18n } from '../../../i18n/I18nProvider';
 import RegisterForm from '../components/RegisterForm';
 
 export default function RegisterPage() {
   const { user } = useAuth();
+  const { locale } = useI18n();
   const router = useRouter();
 
   useEffect(() => {
@@ -14,22 +16,32 @@ export default function RegisterPage() {
     }
   }, [user, router]);
   
+  const copy =
+    locale === 'pl'
+      ? {
+          title: 'Utworz konto Soar',
+          description:
+            'Skonfiguruj konto, a potem testuj strategie, uruchamiaj boty i kontroluj ryzyko w jednym panelu.',
+        }
+      : {
+          title: 'Create your Soar account',
+          description:
+            'Set up your account and start testing strategies, running bots, and tracking risk in one dashboard.',
+        };
+
   return (
-    <main className="hero bg-base-200 min-h-screen">
-      <div className="hero-content flex-col lg:flex-row-reverse">
-        <div className="text-center lg:text-left px-12">
-          <h1 className="text-5xl font-bold">Sign up now!</h1>
-          <p className="py-6">
-            Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda excepturi exercitationem
-            quasi. In deleniti eaque aut repudiandae et a id nisi.
-          </p>
+    <section className="hero flex-1 min-h-full bg-base-200 px-4 py-8 md:px-6 md:py-12">
+      <div className="hero-content w-full max-w-6xl flex-col gap-8 p-0 lg:flex-row-reverse lg:gap-12">
+        <div className="max-w-xl text-center lg:text-left">
+          <h1 className="text-4xl font-bold md:text-5xl">{copy.title}</h1>
+          <p className="py-4 text-base-content/75 md:py-6">{copy.description}</p>
         </div>
-        <div className="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
+        <div className="card bg-base-100 w-full max-w-md shrink-0 shadow-xl">
           <div className="card-body">
-            <RegisterForm/>
+            <RegisterForm />
           </div>
         </div>
       </div>
-    </main>
+    </section>
   );
 }

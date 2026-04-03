@@ -250,8 +250,9 @@ export default function DataTable<T>({
         <div className='flex flex-wrap items-center gap-2'>
           {showSearch ? (
             <div className='relative w-full md:max-w-sm'>
+              <LuSearch className='pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 opacity-60' />
               <input
-                className='input input-bordered input-sm w-full pr-10'
+                className='input input-bordered input-sm w-full pl-9 pr-10'
                 placeholder={filterPlaceholder}
                 value={queryValue}
                 onChange={(event) => setQueryValue(event.target.value)}
@@ -264,7 +265,7 @@ export default function DataTable<T>({
               <button
                 type='button'
                 aria-label='Filter rows'
-                className='btn btn-ghost btn-xs absolute right-1 top-1/2 h-7 min-h-7 w-7 -translate-y-1/2 rounded-full opacity-65 hover:opacity-100'
+                className='btn btn-ghost btn-xs absolute right-1 top-1/2 h-7 min-h-7 w-7 -translate-y-1/2 rounded-full opacity-70 hover:opacity-100'
                 onClick={applySearch}
               >
                 <LuSearch className='h-3.5 w-3.5' />
@@ -274,7 +275,9 @@ export default function DataTable<T>({
           {advancedFilters ? (
             <button
               type='button'
-              className='btn btn-outline btn-sm inline-flex items-center gap-1.5'
+              className={`btn btn-outline btn-sm gap-1.5 ${
+                advancedOpen ? 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/15' : ''
+              }`}
               onClick={() => setAdvancedOpen((prev) => !prev)}
               aria-expanded={advancedOpen}
             >
@@ -286,7 +289,7 @@ export default function DataTable<T>({
       ) : null}
 
       {advancedFilters && advancedOpen ? (
-        <div className='rounded-lg border border-base-300/70 bg-base-200/30 p-2'>{advancedFilters}</div>
+        <div className='rounded-box border border-base-300 bg-base-200/40 p-3'>{advancedFilters}</div>
       ) : null}
 
       <div className='overflow-x-auto'>
@@ -298,7 +301,7 @@ export default function DataTable<T>({
                   {column.sortable ? (
                     <button
                       type='button'
-                      className='inline-flex items-center gap-1 rounded-[var(--radius-selector)] px-1 py-0.5 text-xs font-medium hover:bg-base-200'
+                      className='btn btn-ghost btn-xs h-7 min-h-7 px-1.5 normal-case font-medium'
                       onClick={() => handleSort(column)}
                     >
                       <span>{column.label}</span>
@@ -316,7 +319,7 @@ export default function DataTable<T>({
                       </span>
                     </button>
                   ) : (
-                    <span className='inline-flex items-center gap-1 rounded-[var(--radius-selector)] px-1 py-0.5 text-xs font-medium text-base-content/80'>
+                    <span className='inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-base-content/80'>
                       {column.label}
                     </span>
                   )}
@@ -348,24 +351,23 @@ export default function DataTable<T>({
       {pagedRows.length === 0 ? <p className='text-sm opacity-70'>{emptyText}</p> : null}
 
       {paginationEnabled ? (
-        <div className='mt-2 flex flex-wrap items-center justify-between gap-2'>
-          <div className='flex items-center gap-2 text-xs'>
+        <div className='mt-2 flex flex-wrap items-center justify-between gap-3 border-t border-base-300/50 pt-2'>
+          <div className='flex flex-wrap items-center gap-2 text-xs text-base-content/70'>
             {paginationSummary ? (
               paginationSummary({ totalRows: totalRowsCount, page: effectivePage, totalPages })
             ) : (
               <>
-                <span className='badge badge-outline badge-sm'>Records: {totalRowsCount}</span>
-                <span className='badge badge-outline badge-sm'>
-                  Page {effectivePage}/{totalPages}
-                </span>
+                <span>Records: {totalRowsCount}</span>
+                <span aria-hidden className='opacity-50'>•</span>
+                <span>Page {effectivePage}/{totalPages}</span>
               </>
             )}
           </div>
-          <div className='flex items-center gap-2'>
-            <label className='flex items-center gap-1 text-xs opacity-70'>
-              <span>{rowsPerPageLabel}</span>
+          <div className='flex flex-wrap items-center justify-end gap-2'>
+            <label className='label cursor-pointer gap-2 py-0 text-xs'>
+              <span className='label-text text-xs opacity-70'>{rowsPerPageLabel}</span>
               <select
-                className='select select-bordered select-xs'
+                className='select select-bordered select-sm h-8 min-h-8 w-20'
                 value={effectivePageSize}
                 onChange={(event) => handlePageSizeChange(Number(event.target.value))}
               >
@@ -376,22 +378,24 @@ export default function DataTable<T>({
                 ))}
               </select>
             </label>
-            <button
-              type='button'
-              className='btn btn-outline btn-xs'
-              disabled={manualPagination ? !(externalHasPrev ?? effectivePage > 1) : effectivePage <= 1}
-              onClick={() => goToPage(effectivePage - 1)}
-            >
-              {previousLabel}
-            </button>
-            <button
-              type='button'
-              className='btn btn-outline btn-xs'
-              disabled={manualPagination ? !(externalHasNext ?? effectivePage < totalPages) : effectivePage >= totalPages}
-              onClick={() => goToPage(effectivePage + 1)}
-            >
-              {nextLabel}
-            </button>
+            <div className='join'>
+              <button
+                type='button'
+                className='btn btn-outline btn-sm join-item h-8 min-h-8 px-3'
+                disabled={manualPagination ? !(externalHasPrev ?? effectivePage > 1) : effectivePage <= 1}
+                onClick={() => goToPage(effectivePage - 1)}
+              >
+                {previousLabel}
+              </button>
+              <button
+                type='button'
+                className='btn btn-outline btn-sm join-item h-8 min-h-8 px-3'
+                disabled={manualPagination ? !(externalHasNext ?? effectivePage < totalPages) : effectivePage >= totalPages}
+                onClick={() => goToPage(effectivePage + 1)}
+              >
+                {nextLabel}
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

@@ -51,23 +51,23 @@ export default function LoginForm() {
             disabled={isSubmitting}
             {...register('remember')}
           />
-          <span className='pt-4'>Remember me</span>
+          <span className='pt-4'>Remember this device</span>
         </label>
 
         {serverError && <div className='alert alert-error mt-2 text-sm'>{serverError}</div>}
 
-        <button type='submit' className='btn btn-neutral mt-4 mb-4' disabled={isSubmitting}>
-          {isSubmitting ? 'Logging in...' : 'Log In'}
+        <button type='submit' className='btn btn-primary mt-4 mb-4' disabled={isSubmitting}>
+          {isSubmitting ? 'Signing in...' : 'Sign in'}
         </button>
 
         <p className='text-center'>
           Don&apos;t have an account?{' '}
           <Link href='/auth/register' className='link link-hover'>
-            Sign up
+            Create one
           </Link>
         </p>
         <p className='text-center'>
-          <span className='opacity-70'>Password reset will be available after MVP.</span>
+          <span className='opacity-70'>Password reset will be available soon.</span>
         </p>
       </fieldset>
     </form>

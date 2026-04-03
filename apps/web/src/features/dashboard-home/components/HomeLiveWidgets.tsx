@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
+import { LuChartCandlestick, LuPackageOpen } from "react-icons/lu";
 
 import { EmptyState, ErrorState, LoadingState } from "../../../ui/components/ViewState";
 import DataTable, { DataTableColumn } from "../../../ui/components/DataTable";
+import Tabs from "../../../ui/components/Tabs";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { createMarketStreamEventSource } from "../../../lib/marketStream";
@@ -46,7 +48,7 @@ type OpenPositionWithLive = BotRuntimePositionItem & {
 type DirectionPillValue = "LONG" | "SHORT" | "BUY" | "SELL";
 
 const CARD = "rounded-box bg-base-100/60";
-const CARD_ASIDE = "rounded-box bg-base-100/70 p-4 md:p-5";
+const CARD_ASIDE = "rounded-box bg-base-100/70 h-fit xl:sticky xl:top-4";
 const BTN_PRIMARY = "btn btn-primary btn-sm";
 const BTN_SECONDARY = "btn btn-outline btn-sm";
 const MAX_DASHBOARD_BOTS = 8;
@@ -71,6 +73,7 @@ type TradeSortBy = "executedAt" | "symbol" | "side" | "lifecycleAction" | "margi
 type TradeSortDir = "asc" | "desc";
 type TradeSideFilter = "ALL" | "BUY" | "SELL";
 type TradeActionFilter = "ALL" | "OPEN" | "DCA" | "CLOSE";
+type RuntimeDataTab = "OPEN_POSITIONS" | "TRADE_HISTORY";
 
 type TradeFiltersState = {
   symbol: string;
@@ -87,6 +90,15 @@ const EMPTY_TRADE_FILTERS: TradeFiltersState = {
   from: "",
   to: "",
 };
+
+const RUNTIME_DATA_TABS: {
+  key: RuntimeDataTab;
+  hash: string;
+  labelKey: "dashboard.home.runtime.openPositionsTitle" | "dashboard.home.runtime.tradesHistoryTitlePaper";
+}[] = [
+  { key: "OPEN_POSITIONS", hash: "positions", labelKey: "dashboard.home.runtime.openPositionsTitle" },
+  { key: "TRADE_HISTORY", hash: "history", labelKey: "dashboard.home.runtime.tradesHistoryTitlePaper" },
+];
 
 const normalizeDateTimeLocalToIso = (value: string, bound: "from" | "to") => {
   const raw = value.trim();
@@ -408,6 +420,7 @@ export default function HomeLiveWidgets() {
   const [tradePageSize, setTradePageSize] = useState<number>(TRADE_PAGE_SIZE_OPTIONS[0]);
   const [tradeSortBy, setTradeSortBy] = useState<TradeSortBy | null>(null);
   const [tradeSortDir, setTradeSortDir] = useState<TradeSortDir>("asc");
+  const [runtimeDataTab, setRuntimeDataTab] = useState<RuntimeDataTab>("OPEN_POSITIONS");
   const [tradeDraftFilters, setTradeDraftFilters] = useState<TradeFiltersState>(EMPTY_TRADE_FILTERS);
   const [tradeAppliedFilters, setTradeAppliedFilters] = useState<TradeFiltersState>(EMPTY_TRADE_FILTERS);
   const [refreshToken, setRefreshToken] = useState(0);
@@ -1079,151 +1092,175 @@ export default function HomeLiveWidgets() {
               </div>
 
               <section className="border-t border-base-300/40 pt-4">
-                <div className="mb-3 flex items-center justify-between"><h3 className="text-base font-semibold md:text-lg">{t("dashboard.home.runtime.openPositionsTitle")}</h3><span className="text-xs opacity-60">{selectedData?.open.length ?? 0}</span></div>
-                <DataTable
-                  compact
-                  framed={false}
-                  rows={selectedData?.open ?? []}
-                  columns={openPositionsColumns}
-                  getRowId={(row) => row.id}
-                  showSearch={false}
-                  paginationEnabled
-                  pageSizeOptions={[...OPEN_POSITIONS_PAGE_SIZE_OPTIONS]}
-                  defaultPageSize={OPEN_POSITIONS_PAGE_SIZE_OPTIONS[0]}
-                  rowsPerPageLabel={t("dashboard.home.runtime.rows")}
-                  previousLabel={t("dashboard.home.runtime.previous")}
-                  nextLabel={t("dashboard.home.runtime.next")}
-                  emptyText={t("dashboard.home.runtime.noOpenPositions")}
+                <Tabs
+                  items={RUNTIME_DATA_TABS.map((tab) => ({
+                    key: tab.key,
+                    hash: tab.hash,
+                    icon:
+                      tab.key === "TRADE_HISTORY" ? (
+                        <LuChartCandlestick className="h-4 w-4" aria-hidden />
+                      ) : (
+                        <LuPackageOpen className="h-4 w-4" aria-hidden />
+                      ),
+                    label: tab.key === "TRADE_HISTORY"
+                      ? (selected?.bot.mode === "LIVE"
+                        ? t("dashboard.home.runtime.tradesHistoryTitleLive")
+                        : t("dashboard.home.runtime.tradesHistoryTitlePaper"))
+                      : t(tab.labelKey),
+                  }))}
+                  value={runtimeDataTab}
+                  onChange={setRuntimeDataTab}
+                  variant="border"
+                  className="mb-3"
+                  syncWithHash
                 />
-              </section>
 
-              <section className="border-t border-base-300/40 pt-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-base font-semibold md:text-lg">
-                    {selected?.bot.mode === "LIVE"
-                      ? t("dashboard.home.runtime.tradesHistoryTitleLive")
-                      : t("dashboard.home.runtime.tradesHistoryTitlePaper")}
-                  </h3>
-                  {selectedTradesLoading ? <span className="text-xs opacity-60">{t("dashboard.home.loadWidgets")}</span> : null}
-                </div>
-                <DataTable
-              compact
-              framed={false}
-              rows={selectedData?.trades ?? []}
-              columns={tradesColumns}
-              getRowId={(row) => row.id}
-              filterPlaceholder="BTCUSDT"
-              query={tradeDraftFilters.symbol}
-              onQueryChange={(value) => patchTradeDraftFilters({ symbol: value })}
-              onSearch={applyTradeFilters}
-              manualFiltering
-              manualSorting
-              sortKey={tradeSortBy}
-              sortDirection={tradeSortDir}
-              onSortChange={handleTradeSortChange}
-              advancedToggleLabel={t("dashboard.bots.monitoring.advancedOptions")}
-              advancedFilters={
-                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-5">
-                  <label className="form-control gap-1">
-                    <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterSide")}</span>
-                    <select
-                      className="select select-bordered select-xs"
-                      value={tradeDraftFilters.side}
-                      onChange={(event) => {
-                        patchTradeDraftFilters({ side: event.target.value as TradeSideFilter });
-                      }}
-                    >
-                      <option value="ALL">{t("dashboard.home.runtime.all")}</option>
-                      <option value="BUY">BUY</option>
-                      <option value="SELL">SELL</option>
-                    </select>
-                  </label>
-                  <label className="form-control gap-1">
-                    <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterAction")}</span>
-                    <select
-                      className="select select-bordered select-xs"
-                      value={tradeDraftFilters.action}
-                      onChange={(event) => {
-                        patchTradeDraftFilters({ action: event.target.value as TradeActionFilter });
-                      }}
-                    >
-                      <option value="ALL">{t("dashboard.home.runtime.all")}</option>
-                      <option value="OPEN">{t("dashboard.home.runtime.actionOpen")}</option>
-                      <option value="DCA">DCA</option>
-                      <option value="CLOSE">{t("dashboard.home.runtime.actionClose")}</option>
-                    </select>
-                  </label>
-                  <label className="form-control gap-1">
-                    <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterFrom")}</span>
-                    <input
-                      type="datetime-local"
-                      className="input input-bordered input-xs"
-                      value={tradeDraftFilters.from}
-                      onChange={(event) => {
-                        patchTradeDraftFilters({ from: event.target.value });
-                      }}
+                {runtimeDataTab === "OPEN_POSITIONS" ? (
+                  <section>
+                    <DataTable
+                      compact
+                      framed={false}
+                      rows={selectedData?.open ?? []}
+                      columns={openPositionsColumns}
+                      getRowId={(row) => row.id}
+                      showSearch={false}
+                      paginationEnabled
+                      pageSizeOptions={[...OPEN_POSITIONS_PAGE_SIZE_OPTIONS]}
+                      defaultPageSize={OPEN_POSITIONS_PAGE_SIZE_OPTIONS[0]}
+                      rowsPerPageLabel={t("dashboard.home.runtime.rows")}
+                      previousLabel={t("dashboard.home.runtime.previous")}
+                      nextLabel={t("dashboard.home.runtime.next")}
+                      emptyText={t("dashboard.home.runtime.noOpenPositions")}
                     />
-                  </label>
-                  <label className="form-control gap-1">
-                    <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.filterTo")}</span>
-                    <input
-                      type="datetime-local"
-                      className="input input-bordered input-xs"
-                      value={tradeDraftFilters.to}
-                      onChange={(event) => {
-                        patchTradeDraftFilters({ to: event.target.value });
+                  </section>
+                ) : null}
+
+                {runtimeDataTab === "TRADE_HISTORY" ? (
+                  <section>
+                    {selectedTradesLoading ? (
+                      <div className="mb-2 text-xs opacity-60">{t("dashboard.home.loadWidgets")}</div>
+                    ) : null}
+                    <DataTable
+                      compact
+                      framed={false}
+                      rows={selectedData?.trades ?? []}
+                      columns={tradesColumns}
+                      getRowId={(row) => row.id}
+                      filterPlaceholder="BTCUSDT"
+                      query={tradeDraftFilters.symbol}
+                      onQueryChange={(value) => patchTradeDraftFilters({ symbol: value })}
+                      onSearch={applyTradeFilters}
+                      manualFiltering
+                      manualSorting
+                      sortKey={tradeSortBy}
+                      sortDirection={tradeSortDir}
+                      onSortChange={handleTradeSortChange}
+                      advancedToggleLabel={t("dashboard.bots.monitoring.advancedOptions")}
+                      advancedFilters={
+                        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-5">
+                          <label className="form-control gap-1">
+                            <span className="label-text text-xs opacity-70">{t("dashboard.home.runtime.filterSide")}</span>
+                            <select
+                              className="select select-bordered select-sm h-9 min-h-9"
+                              value={tradeDraftFilters.side}
+                              onChange={(event) => {
+                                patchTradeDraftFilters({ side: event.target.value as TradeSideFilter });
+                              }}
+                            >
+                              <option value="ALL">{t("dashboard.home.runtime.all")}</option>
+                              <option value="BUY">BUY</option>
+                              <option value="SELL">SELL</option>
+                            </select>
+                          </label>
+                          <label className="form-control gap-1">
+                            <span className="label-text text-xs opacity-70">{t("dashboard.home.runtime.filterAction")}</span>
+                            <select
+                              className="select select-bordered select-sm h-9 min-h-9"
+                              value={tradeDraftFilters.action}
+                              onChange={(event) => {
+                                patchTradeDraftFilters({ action: event.target.value as TradeActionFilter });
+                              }}
+                            >
+                              <option value="ALL">{t("dashboard.home.runtime.all")}</option>
+                              <option value="OPEN">{t("dashboard.home.runtime.actionOpen")}</option>
+                              <option value="DCA">DCA</option>
+                              <option value="CLOSE">{t("dashboard.home.runtime.actionClose")}</option>
+                            </select>
+                          </label>
+                          <label className="form-control gap-1">
+                            <span className="label-text text-xs opacity-70">{t("dashboard.home.runtime.filterFrom")}</span>
+                            <input
+                              type="datetime-local"
+                              className="input input-bordered input-sm h-9 min-h-9"
+                              value={tradeDraftFilters.from}
+                              onChange={(event) => {
+                                patchTradeDraftFilters({ from: event.target.value });
+                              }}
+                            />
+                          </label>
+                          <label className="form-control gap-1">
+                            <span className="label-text text-xs opacity-70">{t("dashboard.home.runtime.filterTo")}</span>
+                            <input
+                              type="datetime-local"
+                              className="input input-bordered input-sm h-9 min-h-9"
+                              value={tradeDraftFilters.to}
+                              onChange={(event) => {
+                                patchTradeDraftFilters({ to: event.target.value });
+                              }}
+                            />
+                          </label>
+                          <div className="flex items-end justify-end">
+                            <div className="join">
+                              <button type="button" className="btn btn-primary btn-sm join-item" onClick={applyTradeFilters}>
+                                {t("dashboard.home.runtime.apply")}
+                              </button>
+                              <button type="button" className="btn btn-outline btn-sm join-item" onClick={resetTradeFilters}>
+                                {t("dashboard.home.runtime.reset")}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                      paginationEnabled
+                      manualPagination
+                      page={tradeMeta.page}
+                      pageSize={tradePageSize}
+                      totalRows={tradeMeta.total}
+                      totalPages={tradeMeta.totalPages}
+                      hasPrev={tradeMeta.hasPrev}
+                      hasNext={tradeMeta.hasNext}
+                      onPageChange={(nextPage) => setTradePage(nextPage)}
+                      onPageSizeChange={(nextPageSize) => {
+                        setTradePageSize(nextPageSize);
+                        setTradePage(1);
                       }}
+                      pageSizeOptions={[...TRADE_PAGE_SIZE_OPTIONS]}
+                      rowsPerPageLabel={t("dashboard.home.runtime.rows")}
+                      previousLabel={t("dashboard.home.runtime.previous")}
+                      nextLabel={t("dashboard.home.runtime.next")}
+                      emptyText={t("dashboard.home.runtime.noTradeHistory")}
+                      paginationSummary={({ totalRows, page, totalPages }) => (
+                        <>
+                          <span>{interpolateTemplate(t("dashboard.home.runtime.recordsBadge"), { total: totalRows })}</span>
+                          <span aria-hidden className="opacity-50">•</span>
+                          <span>
+                            {interpolateTemplate(t("dashboard.home.runtime.pageBadge"), {
+                              page,
+                              totalPages: Math.max(1, totalPages),
+                            })}
+                          </span>
+                        </>
+                      )}
                     />
-                  </label>
-                  <div className="flex items-end justify-end gap-2">
-                    <button type="button" className="btn btn-primary btn-xs" onClick={applyTradeFilters}>
-                      {t("dashboard.home.runtime.apply")}
-                    </button>
-                    <button type="button" className="btn btn-ghost btn-xs" onClick={resetTradeFilters}>
-                      {t("dashboard.home.runtime.reset")}
-                    </button>
-                  </div>
-                </div>
-              }
-              paginationEnabled
-              manualPagination
-              page={tradeMeta.page}
-              pageSize={tradePageSize}
-              totalRows={tradeMeta.total}
-              totalPages={tradeMeta.totalPages}
-              hasPrev={tradeMeta.hasPrev}
-              hasNext={tradeMeta.hasNext}
-              onPageChange={(nextPage) => setTradePage(nextPage)}
-              onPageSizeChange={(nextPageSize) => {
-                setTradePageSize(nextPageSize);
-                setTradePage(1);
-              }}
-              pageSizeOptions={[...TRADE_PAGE_SIZE_OPTIONS]}
-              rowsPerPageLabel={t("dashboard.home.runtime.rows")}
-              previousLabel={t("dashboard.home.runtime.previous")}
-              nextLabel={t("dashboard.home.runtime.next")}
-              emptyText={t("dashboard.home.runtime.noTradeHistory")}
-              paginationSummary={({ totalRows, page, totalPages }) => (
-                <>
-                  <span className="badge badge-outline badge-sm">
-                    {interpolateTemplate(t("dashboard.home.runtime.recordsBadge"), { total: totalRows })}
-                  </span>
-                  <span className="badge badge-outline badge-sm">
-                    {interpolateTemplate(t("dashboard.home.runtime.pageBadge"), {
-                      page,
-                      totalPages: Math.max(1, totalPages),
-                    })}
-                  </span>
-                </>
-              )}
-            />
+                  </section>
+                ) : null}
               </section>
             </div>
           </section>
 
         </div>
 
-        <aside className={`${CARD_ASIDE} h-fit xl:sticky xl:top-4`}>
+        <aside className={CARD_ASIDE}>
           <div className="space-y-3">
             <h3 className="text-base font-semibold md:text-lg">{t("dashboard.home.runtime.runtimeRiskTitle")}</h3>
 

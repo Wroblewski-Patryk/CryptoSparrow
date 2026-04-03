@@ -1,9 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import type { MouseEvent } from 'react';
 import { useRef } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { LuKey, LuLogOut, LuSettings, LuSubscript, LuUser } from 'react-icons/lu';
 import { useAuth } from '../../context/AuthContext';
+import { useI18n } from '../../i18n/I18nProvider';
 import { useDetailsDropdown } from '../hooks/useDetailsDropdown';
 import { headerMenuItemClass } from '../layout/dashboard/headerControlStyles';
 
@@ -13,9 +16,59 @@ type ProfileButtonProps = {
 };
 
 export default function ProfileButton({ mobile = false, onNavigate }: ProfileButtonProps) {
+  const { locale } = useI18n();
+  const pathname = usePathname();
+  const router = useRouter();
   const { loading, logout, user } = useAuth();
   const detailsRef = useRef<HTMLDetailsElement>(null);
   useDetailsDropdown(detailsRef);
+  const copy = locale === 'pl'
+    ? {
+        myAccount: 'Moje konto',
+        basic: 'Dane podstawowe',
+        subscription: 'Subskrypcja',
+        security: 'Bezpieczenstwo',
+        api: 'Integracje i API keys',
+        logout: 'Wyloguj',
+        openMenu: 'Otworz menu konta',
+      }
+    : {
+        myAccount: 'My account',
+        basic: 'Basic profile',
+        subscription: 'Subscription',
+        security: 'Security',
+        api: 'Integrations and API keys',
+        logout: 'Sign out',
+        openMenu: 'Open account menu',
+      };
+
+  const handleProfileSectionNavigation = (
+    section: 'basic' | 'api' | 'subscription' | 'security',
+    event?: MouseEvent<HTMLElement>
+  ) => {
+    onNavigate?.();
+    if (detailsRef.current) detailsRef.current.open = false;
+
+    const hasModifier =
+      Boolean(event && (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0));
+    if (hasModifier) return;
+
+    const target = `/dashboard/profile#${section}`;
+    if (pathname === '/dashboard/profile' && typeof window !== 'undefined') {
+      event?.preventDefault();
+      const nextHash = `#${section}`;
+      if (window.location.hash !== nextHash) {
+        window.location.hash = section;
+      }
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      return;
+    }
+
+    if (event) {
+      event.preventDefault();
+    }
+    router.push(target);
+  };
 
   if (loading) {
     return <span className="mt-2 loading loading-dots loading-xs text-secondary" />;
@@ -24,31 +77,34 @@ export default function ProfileButton({ mobile = false, onNavigate }: ProfileBut
   if (mobile) {
     return (
       <div className="rounded-box bg-base-100/10 p-2">
-        <p className="px-3 py-1 text-xs font-semibold uppercase tracking-wide opacity-70">Moje konto</p>
+        <p className="px-3 py-1 text-xs font-semibold uppercase tracking-wide opacity-70">{copy.myAccount}</p>
         {user?.email ? <p className="px-3 pb-1 text-xs opacity-75 truncate">{user.email}</p> : null}
         <ul className="menu w-full p-0 gap-1">
           <li>
-            <Link href="/dashboard/profile#basic" onClick={onNavigate}>
+            <Link href="/dashboard/profile#basic" onClick={(event) => handleProfileSectionNavigation('basic', event)}>
               <LuUser className="h-4 w-4" aria-hidden />
-              Dane podstawowe
+              {copy.basic}
             </Link>
           </li>
           <li>
-            <Link href="/dashboard/profile#subscription" onClick={onNavigate}>
-              <LuSubscript className="h-4 w-4" aria-hidden />
-              Subskrypcja
-            </Link>
-          </li>
-          <li>
-            <Link href="/dashboard/profile#security" onClick={onNavigate}>
-              <LuSettings className="h-4 w-4" aria-hidden />
-              Bezpieczenstwo
-            </Link>
-          </li>
-          <li>
-            <Link href="/dashboard/profile#api" onClick={onNavigate}>
+            <Link href="/dashboard/profile#api" onClick={(event) => handleProfileSectionNavigation('api', event)}>
               <LuKey className="h-4 w-4" aria-hidden />
-              Integracje i API keys
+              {copy.api}
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/dashboard/profile#subscription"
+              onClick={(event) => handleProfileSectionNavigation('subscription', event)}
+            >
+              <LuSubscript className="h-4 w-4" aria-hidden />
+              {copy.subscription}
+            </Link>
+          </li>
+          <li>
+            <Link href="/dashboard/profile#security" onClick={(event) => handleProfileSectionNavigation('security', event)}>
+              <LuSettings className="h-4 w-4" aria-hidden />
+              {copy.security}
             </Link>
           </li>
           <li className="mt-1">
@@ -60,7 +116,7 @@ export default function ProfileButton({ mobile = false, onNavigate }: ProfileBut
               className="text-error"
             >
               <LuLogOut className="h-4 w-4" aria-hidden />
-              Wyloguj
+              {copy.logout}
             </button>
           </li>
         </ul>
@@ -70,9 +126,9 @@ export default function ProfileButton({ mobile = false, onNavigate }: ProfileBut
 
   return (
     <details ref={detailsRef} className="dropdown dropdown-end group">
-      <summary className={`${headerMenuItemClass} font-normal`} aria-label="Open account menu">
+      <summary className={`${headerMenuItemClass} font-normal`} aria-label={copy.openMenu}>
         <LuUser className="h-4 w-4" aria-hidden />
-        <span className="hidden sm:inline">Moje konto</span>
+        <span className="hidden sm:inline">{copy.myAccount}</span>
       </summary>
       <ul className="menu dropdown-content z-[60] mt-2 w-72 rounded-box bg-base-100 p-2 text-base-content shadow">
         {user?.email && (
@@ -81,33 +137,33 @@ export default function ProfileButton({ mobile = false, onNavigate }: ProfileBut
           </li>
         )}
         <li>
-          <Link href="/dashboard/profile#basic">
+          <Link href="/dashboard/profile#basic" onClick={(event) => handleProfileSectionNavigation('basic', event)}>
             <LuUser className="h-4 w-4" aria-hidden />
-            Dane podstawowe
+            {copy.basic}
           </Link>
         </li>
         <li>
-          <Link href="/dashboard/profile#subscription">
-            <LuSubscript className="h-4 w-4" aria-hidden />
-            Subskrypcja
-          </Link>
-        </li>
-        <li>
-          <Link href="/dashboard/profile#security">
-            <LuSettings className="h-4 w-4" aria-hidden />
-            Bezpieczenstwo
-          </Link>
-        </li>
-        <li>
-          <Link href="/dashboard/profile#api">
+          <Link href="/dashboard/profile#api" onClick={(event) => handleProfileSectionNavigation('api', event)}>
             <LuKey className="h-4 w-4" aria-hidden />
-            Integracje i API keys
+            {copy.api}
+          </Link>
+        </li>
+        <li>
+          <Link href="/dashboard/profile#subscription" onClick={(event) => handleProfileSectionNavigation('subscription', event)}>
+            <LuSubscript className="h-4 w-4" aria-hidden />
+            {copy.subscription}
+          </Link>
+        </li>
+        <li>
+          <Link href="/dashboard/profile#security" onClick={(event) => handleProfileSectionNavigation('security', event)}>
+            <LuSettings className="h-4 w-4" aria-hidden />
+            {copy.security}
           </Link>
         </li>
         <li className="mt-1">
           <button onClick={logout} className="text-error">
             <LuLogOut className="h-4 w-4" aria-hidden />
-            Wyloguj
+            {copy.logout}
           </button>
         </li>
       </ul>
