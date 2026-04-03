@@ -1,6 +1,6 @@
 import { MarketStreamEvent, StreamLogger, TradeMarketType } from './binanceStream.types';
 
-type WebSocketMessage = { data: string };
+type WebSocketMessage = { data: unknown };
 
 export interface WebSocketLike {
   onopen: (() => void) | null;
@@ -28,12 +28,60 @@ const defaultLogger: StreamLogger = {
   },
 };
 
+type NodeWebSocket = {
+  on(event: 'open', listener: () => void): void;
+  on(event: 'message', listener: (payload: unknown) => void): void;
+  on(event: 'error', listener: (error: unknown) => void): void;
+  on(event: 'close', listener: () => void): void;
+  send(payload: string): void;
+  close(): void;
+};
+
+type NodeWebSocketConstructor = new (url: string) => NodeWebSocket;
+
+const createNodeWebSocketAdapter = (url: string): WebSocketLike => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const wsModule = require('ws') as
+    | NodeWebSocketConstructor
+    | { WebSocket?: NodeWebSocketConstructor; default?: NodeWebSocketConstructor };
+  const WebSocketCtor =
+    typeof wsModule === 'function' ? wsModule : (wsModule.WebSocket ?? wsModule.default);
+  if (!WebSocketCtor) {
+    throw new Error('WebSocket constructor is unavailable');
+  }
+
+  const socket = new WebSocketCtor(url);
+  const adapter: WebSocketLike = {
+    onopen: null,
+    onmessage: null,
+    onerror: null,
+    onclose: null,
+    send: (payload) => socket.send(payload),
+    close: () => socket.close(),
+  };
+
+  socket.on('open', () => adapter.onopen?.());
+  socket.on('message', (payload) => {
+    const data =
+      typeof payload === 'string'
+        ? payload
+        : payload instanceof Buffer
+          ? payload.toString('utf8')
+          : String(payload ?? '');
+    adapter.onmessage?.({ data });
+  });
+  socket.on('error', (error) => adapter.onerror?.(error));
+  socket.on('close', () => adapter.onclose?.());
+
+  return adapter;
+};
+
 const defaultWebSocketFactory: WebSocketFactory = (url) => {
   const ctor = (globalThis as { WebSocket?: new (streamUrl: string) => WebSocketLike }).WebSocket;
-  if (!ctor) {
-    throw new Error('Global WebSocket constructor is unavailable');
+  if (ctor) {
+    return new ctor(url);
   }
-  return new ctor(url);
+  return createNodeWebSocketAdapter(url);
 };
 
 const toNumber = (value: unknown) => {
@@ -194,7 +242,13 @@ export class BinanceMarketStreamWorker {
 
     this.socket.onmessage = (message) => {
       try {
-        const parsed = JSON.parse(message.data) as unknown;
+        const rawData =
+          typeof message.data === 'string'
+            ? message.data
+            : message.data instanceof Buffer
+              ? message.data.toString('utf8')
+              : String(message.data ?? '');
+        const parsed = JSON.parse(rawData) as unknown;
         const normalized = normalizeBinanceStreamEvent(parsed, this.marketType);
         if (!normalized) return;
         this.logger.info({
