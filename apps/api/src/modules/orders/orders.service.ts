@@ -4,7 +4,6 @@ import { CancelOrderDto, CloseOrderDto, ListOrdersQuery, OpenOrderDto } from './
 import { decrypt } from '../../utils/crypto';
 import { CcxtFuturesConnector } from '../exchange/ccxtFuturesConnector.service';
 import { createLiveOrderAdapter } from '../exchange/liveOrderAdapter.service';
-import { reconcileLiveOrderFee } from '../exchange/liveFeeReconciliation.service';
 import { CcxtFuturesOrderFill } from '../exchange/ccxtFuturesConnector.types';
 
 export const listOrders = async (userId: string, query: ListOrdersQuery) => {
@@ -125,7 +124,7 @@ const executeLiveOrderOnExchange: OpenOrderDeps['executeLiveOrder'] = async (par
 
   const liveAdapter = createLiveOrderAdapter(connector);
   try {
-    const result = await liveAdapter.placeLiveOrderWithRetry({
+    const result = await liveAdapter.placeLiveOrderWithFees({
       order: {
         symbol: params.payload.symbol.toUpperCase(),
         side: params.payload.side === 'BUY' ? 'buy' : 'sell',
@@ -135,22 +134,17 @@ const executeLiveOrderOnExchange: OpenOrderDeps['executeLiveOrder'] = async (par
         positionMode: params.bot.positionMode,
       },
     });
-    const feeReconciliation = await reconcileLiveOrderFee(connector, {
-      symbol: params.payload.symbol,
-      exchangeOrderId: result.id || null,
-      inlineFills: result.fills ?? [],
-    });
 
     return {
-      exchangeOrderId: result.id || null,
-      status: mapLiveOrderStatus(result.status, params.payload.type),
-      fee: feeReconciliation.fee,
-      feeSource: feeReconciliation.feeSource,
-      feePending: feeReconciliation.feePending,
-      feeCurrency: feeReconciliation.feeCurrency,
-      effectiveFeeRate: feeReconciliation.effectiveFeeRate,
-      exchangeTradeId: feeReconciliation.exchangeTradeId,
-      fills: feeReconciliation.fills,
+      exchangeOrderId: result.exchangeOrderId,
+      status: mapLiveOrderStatus(result.rawOrderStatus ?? result.status, params.payload.type),
+      fee: result.fee,
+      feeSource: result.feeSource,
+      feePending: result.feePending,
+      feeCurrency: result.feeCurrency,
+      effectiveFeeRate: result.effectiveFeeRate,
+      exchangeTradeId: result.exchangeTradeId,
+      fills: result.fills,
     };
   } catch {
     throw new Error('LIVE_EXECUTION_FAILED');

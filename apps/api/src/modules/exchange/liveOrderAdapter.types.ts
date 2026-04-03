@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { CcxtFuturesOrderRequestSchema } from './ccxtFuturesConnector.types';
+import type { LiveFeeReconciliationResult } from './liveFeeReconciliation.service';
 
 export const LiveOrderRetryPolicySchema = z.object({
   maxAttempts: z.number().int().min(1).max(10).default(3),
@@ -16,3 +17,15 @@ export const PlaceLiveOrderInputSchema = z.object({
 
 export type LiveOrderRetryPolicy = z.infer<typeof LiveOrderRetryPolicySchema>;
 export type PlaceLiveOrderInput = z.input<typeof PlaceLiveOrderInputSchema>;
+export type PlaceLiveOrderWithFeesResult = {
+  exchangeOrderId: string | null;
+  status: string | undefined;
+  fee: LiveFeeReconciliationResult['fee'];
+  feeSource: LiveFeeReconciliationResult['feeSource'];
+  feePending: LiveFeeReconciliationResult['feePending'];
+  feeCurrency: LiveFeeReconciliationResult['feeCurrency'];
+  effectiveFeeRate: LiveFeeReconciliationResult['effectiveFeeRate'];
+  exchangeTradeId: LiveFeeReconciliationResult['exchangeTradeId'];
+  fills: LiveFeeReconciliationResult['fills'];
+  rawOrderStatus?: string;
+};

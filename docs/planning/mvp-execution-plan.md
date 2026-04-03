@@ -386,6 +386,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `LFIN-02 feat(db): add fill-level persistence and fee-source metadata for order/trade runtime history`
 - [x] `LFIN-03 feat(exchange): extend ccxt connector contract with normalized fill/trade retrieval methods for executed orders`
 - [x] `LFIN-04 feat(runtime): add live fill reconciliation flow and persist exchange-true fee totals in order/trade`
+- [x] `LFIN-07 feat(api-live-adapter): ingest exchange fill commissions in LIVE adapter and persist exact fee data into runtime order/trade records`
 - [x] `LFIN-05 feat(api+web): expose and render feeSource/feePending/feeCurrency in dashboard+bots history views`
 - [x] `LFIN-06 audit(i18n): inventory hardcoded copy in dashboard-home, bots module, and dashboard header menu`
 - [x] `LFIN-07A refactor(web-i18n-dashboard-home): migrate dashboard home/control-center strings to translation keys with EN/PL parity`
@@ -930,3 +931,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-04-02: Completed `LFIN-05` API+web exposure/render for fee metadata: runtime trades endpoint now returns `feeSource/feePending/feeCurrency`; dashboard-home and bots runtime history render fee amount with source/pending/currency label (`EXCHANGE`, `EST.`, `PENDING`), with API e2e + web component regressions + root typecheck passing.
 - 2026-04-02: Completed LFIN-07A by migrating dashboard home/control-center copy (/dashboard page + HomeLiveWidgets) to canonical i18n keys (dashboard.home.*, dashboard.home.runtime.*) with EN/PL parity, plus component-test and web typecheck pass.
 - 2026-04-02: Completed `LFIN-12`: added API reconciliation regressions (fill dedupe, mixed-currency fee handling, no-order-id fetch guard), strengthened i18n regression coverage for critical nav/runtime keys in EN/PL, and added strategy numeric-input helper regressions with green targeted API/web test suites plus root typecheck.
+- 2026-04-03: Completed `LFIN-07`: moved LIVE fill commission ingestion into `LiveOrderAdapter` (`placeLiveOrderWithFees` with fill-first reconciliation), removed fee-reconciliation duplication from `orders.service`, and verified exact fee metadata propagation to order/trade persistence with targeted exchange/orders tests + API typecheck.

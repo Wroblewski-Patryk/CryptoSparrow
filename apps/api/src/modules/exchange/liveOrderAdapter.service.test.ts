@@ -122,4 +122,51 @@ describe('LiveOrderAdapter', () => {
     );
     expect(logger.error).not.toHaveBeenCalled();
   });
+
+  it('reconciles exchange fill commissions and returns exact fee metadata', async () => {
+    const placeOrder = vi.fn().mockResolvedValue({
+      id: 'order-fee-1',
+      status: 'closed',
+      fills: [
+        {
+          exchangeTradeId: 'trade-inline',
+          exchangeOrderId: 'order-fee-1',
+          symbol: 'BTC/USDT:USDT',
+          side: 'buy',
+          price: 100,
+          quantity: 0.1,
+          notional: 10,
+          feeCost: 0.01,
+          feeCurrency: 'USDT',
+          feeRate: 0.001,
+          executedAt: new Date('2026-04-02T10:00:00.000Z'),
+          source: 'createOrder',
+          raw: {},
+        },
+      ],
+      raw: {},
+    });
+    const fetchOrderWithFills = vi.fn();
+    const fetchTradesForOrder = vi.fn();
+    const connector = {
+      placeOrder,
+      fetchOrderWithFills,
+      fetchTradesForOrder,
+    } as unknown as CcxtFuturesConnector;
+    const adapter = new LiveOrderAdapter(connector);
+
+    const result = await adapter.placeLiveOrderWithFees({
+      order: liveOrder,
+      retryPolicy: { maxAttempts: 1, baseDelayMs: 0 },
+    });
+
+    expect(result.exchangeOrderId).toBe('order-fee-1');
+    expect(result.fee).toBeCloseTo(0.01, 10);
+    expect(result.feeSource).toBe('EXCHANGE_FILL');
+    expect(result.feePending).toBe(false);
+    expect(result.feeCurrency).toBe('USDT');
+    expect(result.effectiveFeeRate).toBeCloseTo(0.001, 10);
+    expect(fetchOrderWithFills).not.toHaveBeenCalled();
+    expect(fetchTradesForOrder).not.toHaveBeenCalled();
+  });
 });

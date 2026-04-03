@@ -1,6 +1,11 @@
 import { CcxtFuturesConnector } from './ccxtFuturesConnector.service';
 import { CcxtFuturesOrderResult } from './ccxtFuturesConnector.types';
-import { PlaceLiveOrderInput, PlaceLiveOrderInputSchema } from './liveOrderAdapter.types';
+import { reconcileLiveOrderFee } from './liveFeeReconciliation.service';
+import {
+  PlaceLiveOrderInput,
+  PlaceLiveOrderInputSchema,
+  PlaceLiveOrderWithFeesResult,
+} from './liveOrderAdapter.types';
 import { metricsStore } from '../../observability/metrics';
 
 type SleepFn = (delayMs: number) => Promise<void>;
@@ -114,6 +119,29 @@ export class LiveOrderAdapter {
     }
 
     throw lastError instanceof Error ? lastError : new Error('Live order placement failed');
+  }
+
+  async placeLiveOrderWithFees(input: PlaceLiveOrderInput): Promise<PlaceLiveOrderWithFeesResult> {
+    const parsed = PlaceLiveOrderInputSchema.parse(input);
+    const orderResult = await this.placeLiveOrderWithRetry(parsed);
+    const feeReconciliation = await reconcileLiveOrderFee(this.connector, {
+      symbol: parsed.order.symbol,
+      exchangeOrderId: orderResult.id || null,
+      inlineFills: orderResult.fills ?? [],
+    });
+
+    return {
+      exchangeOrderId: orderResult.id || null,
+      status: orderResult.status,
+      fee: feeReconciliation.fee,
+      feeSource: feeReconciliation.feeSource,
+      feePending: feeReconciliation.feePending,
+      feeCurrency: feeReconciliation.feeCurrency,
+      effectiveFeeRate: feeReconciliation.effectiveFeeRate,
+      exchangeTradeId: feeReconciliation.exchangeTradeId,
+      fills: feeReconciliation.fills,
+      rawOrderStatus: orderResult.status,
+    };
   }
 }
 
