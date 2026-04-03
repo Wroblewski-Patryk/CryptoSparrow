@@ -455,9 +455,10 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-56 feat(web-routing+nav): switch bots create route to /dashboard/bots/create and align header/menu links + legacy /new redirect`
 - [x] `BOPS-57 feat(web-bots-list): redesign /bots into table-first list view (no inline create/edit form) with actions: Podglad(Runtime), Asystent, Edytuj`
 - [x] `BOPS-58 feat(web-bot-form): implement single create/edit form view at /bots/create (create mode + edit mode via selected bot id)`
-- [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
+- [x] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 
 ## Progress Log
+- 2026-04-03: Completed `BOPS-59` by adding dedicated web regressions for bots route contract (`/dashboard/bots/new` redirect), create/edit route behavior (`/dashboard/bots/create` with `editId` flow), list page add-navigation, and table action links (`Podglad`, `Asystent`, `Edytuj`) plus vitest alias support for `@` imports in route/component tests.
 - 2026-04-03: Completed `BOPS-54` by extending `HomeLiveWidgets` regression coverage for dashboard signal panel contract: heading copy (`Sygnaly strategii`), canonical placement above open positions, and overflow rail navigation controls for larger symbol sets (`Wstecz`/`Dalej`) with responsive density assumptions intact.
 - 2026-04-03: Completed `BOPS-53` by implementing scalable signal cards rail in dashboard runtime (`desktop 4 / tablet 3 / mobile 2`) with responsive viewport tracking, horizontal overflow handling, and in-place updates for large symbol groups without remount flicker.
 - 2026-04-03: Completed `BOPS-52` by replacing legacy `Live checks` naming with strategy-signal semantics (`Strategy signals` / `Sygnaly strategii`), adding panel subtitle microcopy, and keeping canonical section order (`signals -> open positions -> history`) in dashboard runtime.
