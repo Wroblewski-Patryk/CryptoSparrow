@@ -11,6 +11,19 @@ import {
 } from './auth.session';
 import { signAuthToken, verifyAuthToken } from './auth.jwt';
 
+const getCookieDomain = () => {
+  const domain = process.env.COOKIE_DOMAIN?.trim();
+  return domain && domain.length > 0 ? domain : undefined;
+};
+
+const getCookieBaseOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  path: '/',
+  sameSite: 'lax' as const,
+  domain: getCookieDomain(),
+});
+
 export const register = async (req: Request, res: Response) => {
   try {
     const input = RegisterSchema.parse(req.body);
@@ -22,11 +35,8 @@ export const register = async (req: Request, res: Response) => {
     );
 
     res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      ...getCookieBaseOptions(),
       maxAge: REMEMBER_ME_TTL_MS,
-      path: '/',
-      sameSite: 'lax',
     });
 
     return res.status(201).json({ message: 'User registered', user });
@@ -49,11 +59,8 @@ export const login = async (req: Request, res: Response) => {
     const maxAge = getSessionTtlMs(input.remember);
 
     res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      ...getCookieBaseOptions(),
       maxAge,
-      path: '/',
-      sameSite: 'lax',
     });
 
     return res.status(200).json({ user });
@@ -77,7 +84,7 @@ export const login = async (req: Request, res: Response) => {
 
 export const me = async (req: Request, res: Response) => {
   const clearSession = () => {
-    res.clearCookie('token', { path: '/' });
+    res.clearCookie('token', getCookieBaseOptions());
   };
 
   try {
@@ -114,6 +121,6 @@ export const me = async (req: Request, res: Response) => {
 };
 
 export const logout = async (_req: Request, res: Response) => {
-  res.clearCookie('token', { path: '/' });
+  res.clearCookie('token', getCookieBaseOptions());
   return res.status(200).json({ message: 'Logged out' });
 };
