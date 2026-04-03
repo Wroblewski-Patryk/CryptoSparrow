@@ -38,6 +38,7 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
+    "prisma": "^6.13.0",
     "redis": "^4.7.1",
     "sharp": "^0.34.3",
     "zod": "^4.0.10"
@@ -53,7 +54,6 @@
     "@types/supertest": "^6.0.3",
     "@vitest/ui": "^3.2.4",
     "prima": "^0.0.1",
-    "prisma": "^6.13.0",
     "supertest": "^7.1.4",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",

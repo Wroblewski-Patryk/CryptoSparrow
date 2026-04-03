@@ -50,6 +50,9 @@ importers:
       multer:
         specifier: ^2.0.2
         version: 2.0.2
+      prisma:
+        specifier: ^6.13.0
+        version: 6.13.0(typescript@5.8.3)
       redis:
         specifier: ^4.7.1
         version: 4.7.1
@@ -90,9 +93,6 @@ importers:
       prima:
         specifier: ^0.0.1
         version: 0.0.1(babel-core@6.26.3)(babel-runtime@6.26.0)(eslint@9.31.0(jiti@2.5.0))(typescript@5.8.3)
-      prisma:
-        specifier: ^6.13.0
-        version: 6.13.0(typescript@5.8.3)
       supertest:
         specifier: ^7.1.4
         version: 7.1.4
