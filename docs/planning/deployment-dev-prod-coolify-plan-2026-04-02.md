@@ -119,12 +119,13 @@ Rationale:
   - `SERVER_URL`
   - `CLIENT_URL`
   - `CORS_ORIGINS`
+  - `COOKIE_DOMAIN` (optional)
+  - `COOKIE_SAME_SITE` (optional)
   - `API_KEY_ENCRYPTION_KEYS`
   - `API_KEY_ENCRYPTION_ACTIVE_VERSION`
 - Web core:
   - `NODE_ENV=production`
   - `NEXT_PUBLIC_API_BASE_URL=https://api.cryptosparrow.luckysparrow.ch`
-  - `JWT_SECRET` (required by middleware contract)
 - Workers:
   - `NODE_ENV=production`
   - `DATABASE_URL`

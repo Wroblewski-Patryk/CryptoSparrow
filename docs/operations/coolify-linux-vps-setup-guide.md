@@ -90,6 +90,8 @@ Required environment variables:
 - `CLIENT_URL=https://<web-env-domain>`
 - `CORS_ORIGINS=https://<web-env-domain>`
 - `JWT_SECRET=<secret>`
+- `COOKIE_DOMAIN=<shared-parent-domain>` (optional, for shared subdomain sessions, e.g. `luckysparrow.ch`)
+- `COOKIE_SAME_SITE=<lax|strict|none>` (optional, default `lax`; use `none` only when web/api are cross-site)
 - `API_KEY_ENCRYPTION_KEYS=<versioned-keys>`
 - `API_KEY_ENCRYPTION_ACTIVE_VERSION=<active-version>`
 
@@ -110,7 +112,6 @@ Runtime command:
 Required environment variables:
 - `NODE_ENV=production`
 - `NEXT_PUBLIC_API_BASE_URL=https://api.<env-domain>`
-- `JWT_SECRET=<secret>`
 
 ## Step 5: Add Workers Service
 
@@ -187,7 +188,7 @@ If post-deploy health fails:
 1. Wrong `NEXT_PUBLIC_API_BASE_URL` -> web cannot reach API.
 2. Stage using prod DB/Redis by mistake.
 3. Missing worker service -> runtime data stale.
-4. Missing `JWT_SECRET` in web middleware scope.
+4. Wrong/missing cookie session config (`COOKIE_DOMAIN`, `COOKIE_SAME_SITE`) for deployed domains.
 5. API CORS not matching web domain.
 6. Wrong Dockerfile path in Coolify (must point to `apps/api/Dockerfile` or `apps/web/Dockerfile`).
 7. Using Docker mode without repository Dockerfile artifacts.

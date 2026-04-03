@@ -6,6 +6,7 @@ import { useAuth } from '../../../context/AuthContext';
 
 export default function Header() {
   const { user, loading } = useAuth();
+  const showDashboardCta = !loading && Boolean(user);
 
   return (
     <header className="sticky top-0 z-50 border-b border-base-300/60 bg-base-100/80 backdrop-blur">
@@ -20,9 +21,7 @@ export default function Header() {
           </Link>
         </div>
         <div className="flex-none">
-          {loading ? (
-            <div className="loading loading-dots loading-dots-xs mt-2 text-primary" />
-          ) : user ? (
+          {showDashboardCta ? (
             <Link href="/dashboard" className="btn btn-sm btn-primary">
               <LuLayoutDashboard className="h-4 w-4" aria-hidden />
               Dashboard

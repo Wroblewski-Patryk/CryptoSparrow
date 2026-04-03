@@ -5,16 +5,14 @@ import { useEffect } from 'react';
 import LoginForm from '../components/LoginForm';
 
 export default function LoginPage() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && user) {
+    if (user) {
       router.replace('/dashboard');
     }
-  }, [user, loading, router]);
-
-  if (loading) return null;
+  }, [user, router]);
 
   return (
     <main className="hero bg-base-200 min-h-screen">

@@ -32,18 +32,8 @@ export const useLoginForm = () => {
         throw new Error('Nie udalo sie potwierdzic sesji. Sprobuj zalogowac sie ponownie.');
       }
 
-      toast.success('Zalogowano pomyslnie. Przekierowanie za chwile.');
-
-      setTimeout(() => {
-        router.replace('/dashboard');
-        if (typeof window !== 'undefined') {
-          setTimeout(() => {
-            if (window.location.pathname.startsWith('/auth')) {
-              window.location.assign('/dashboard');
-            }
-          }, 500);
-        }
-      }, 1000);
+      toast.success('Zalogowano pomyslnie.');
+      router.replace('/dashboard');
     } catch (err) {
       const fallbackMessage = 'Logowanie nieudane. Sprawdz dane i sprobuj ponownie.';
       const message = handleError(err) || fallbackMessage;

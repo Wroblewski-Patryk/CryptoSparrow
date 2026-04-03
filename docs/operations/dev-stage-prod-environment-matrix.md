@@ -37,6 +37,8 @@ Required in STAGE/PROD:
 Optional but supported:
 - `JWT_SECRET_PREVIOUS`
 - `JWT_SECRET_PREVIOUS_UNTIL`
+- `COOKIE_DOMAIN`
+- `COOKIE_SAME_SITE`
 - Runtime tuning flags (`RUNTIME_*`, `WORKER_*`, `MARKET_STREAM_*`, `OPS_*`)
 
 ### Web (`apps/web`)
@@ -44,7 +46,6 @@ Optional but supported:
 Required in STAGE/PROD:
 - `NODE_ENV=production`
 - `NEXT_PUBLIC_API_BASE_URL`
-- `JWT_SECRET` (middleware/session contract)
 
 ### Workers (`apps/api` worker process)
 

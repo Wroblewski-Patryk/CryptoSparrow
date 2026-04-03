@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useLoginForm } from './useLoginForm';
 
-const mockPush = vi.fn();
+const mockReplace = vi.fn();
 const mockRefetchUser = vi.fn();
 const mockLoginUser = vi.fn();
 const mockToastSuccess = vi.fn();
@@ -10,7 +10,7 @@ const mockToastError = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: mockPush,
+    replace: mockReplace,
   }),
 }));
 
@@ -71,11 +71,10 @@ describe('useLoginForm', () => {
 
     expect(mockToastError).toHaveBeenCalledWith('Logowanie nieudane: invalid_credentials');
     expect(mockToastSuccess).not.toHaveBeenCalled();
-    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 
   it('shows success toast and redirects to dashboard on successful login', async () => {
-    vi.useFakeTimers();
     mockLoginUser.mockResolvedValueOnce({});
     mockRefetchUser.mockResolvedValueOnce(true);
 
@@ -85,14 +84,9 @@ describe('useLoginForm', () => {
       await result.current.onFormSubmit();
     });
 
-    expect(mockToastSuccess).toHaveBeenCalledWith('Zalogowano pomyslnie. Przekierowanie za chwile.');
+    expect(mockToastSuccess).toHaveBeenCalledWith('Zalogowano pomyslnie.');
     expect(mockToastError).not.toHaveBeenCalled();
-
-    await act(async () => {
-      vi.advanceTimersByTime(1000);
-    });
-
-    expect(mockPush).toHaveBeenCalledWith('/dashboard');
+    expect(mockReplace).toHaveBeenCalledWith('/dashboard');
   });
 
   it('treats missing session refresh after login as failure and does not redirect', async () => {
@@ -109,6 +103,6 @@ describe('useLoginForm', () => {
       expect(mockToastError).toHaveBeenCalled();
     });
     expect(mockToastSuccess).not.toHaveBeenCalled();
-    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 });

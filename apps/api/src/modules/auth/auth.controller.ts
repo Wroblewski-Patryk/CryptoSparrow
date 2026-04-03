@@ -15,22 +15,11 @@ import {
   getVerifiedAuthTokenCandidates,
   VerifiedAuthTokenCandidate,
 } from './sessionToken';
-
-const getCookieDomain = () => {
-  const domain = process.env.COOKIE_DOMAIN?.trim();
-  return domain && domain.length > 0 ? domain : undefined;
-};
-
-const getCookieBaseOptions = () => ({
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  path: '/',
-  sameSite: 'lax' as const,
-});
+import { getCookieDomain, getSessionCookieBaseOptions } from './auth.cookie';
 
 const setSessionCookie = (res: Response, token: string, maxAge: number) => {
   const cookieDomain = getCookieDomain();
-  const baseOptions = getCookieBaseOptions();
+  const baseOptions = getSessionCookieBaseOptions();
 
   // Always set host-only cookie so legacy sessions on api subdomain are overwritten.
   res.cookie('token', token, {
@@ -50,7 +39,7 @@ const setSessionCookie = (res: Response, token: string, maxAge: number) => {
 
 const clearSessionCookie = (res: Response) => {
   const cookieDomain = getCookieDomain();
-  const baseOptions = getCookieBaseOptions();
+  const baseOptions = getSessionCookieBaseOptions();
 
   res.clearCookie('token', baseOptions);
   if (cookieDomain) {

@@ -5,20 +5,11 @@ import {
   getCandidateTokensFromRequest,
   getVerifiedAuthTokenCandidates,
 } from '../modules/auth/sessionToken';
-
-const getCookieDomain = () => {
-  const domain = process.env.COOKIE_DOMAIN?.trim();
-  return domain && domain.length > 0 ? domain : undefined;
-};
+import { getCookieDomain, getSessionCookieBaseOptions } from '../modules/auth/auth.cookie';
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   const clearSession = () => {
-    const baseOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      sameSite: 'lax' as const,
-    };
+    const baseOptions = getSessionCookieBaseOptions();
 
     res.clearCookie('token', baseOptions);
     const cookieDomain = getCookieDomain();

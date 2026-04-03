@@ -24,17 +24,18 @@ export const useRegisterForm = () => {
   const submitHandler = async (data: RegisterFormData) => {
     try {
       await registerUser(data);
-      await refetchUser();
+      const hasActiveSession = await refetchUser();
+      if (!hasActiveSession) {
+        throw new Error('Nie udalo sie potwierdzic sesji po rejestracji. Sprobuj zalogowac sie ponownie.');
+      }
 
-      toast.success("Rejestracja zakończona sukcesem 🎉 Zostaniesz automatycznie przekierowany za sekundę.");
-
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 1000);
+      toast.success('Rejestracja zakonczona sukcesem.');
+      router.replace('/dashboard');
     } catch (err) {
-      toast.error(`Coś poszło nie tak 😢 ${handleError(err)}`);
+      toast.error(`Rejestracja nieudana: ${handleError(err)}`);
     }
   };
+
   const onFormSubmit = handleSubmit(submitHandler);
   return { register, onFormSubmit, errors, isSubmitting };
 };

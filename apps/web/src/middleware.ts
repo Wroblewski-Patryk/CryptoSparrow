@@ -1,39 +1,36 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
 
 const PUBLIC_FILE = /\.(.*)$/;
 
-export async function middleware(request: NextRequest) {
-  const token = request.cookies.get('token')?.value;
+const hasTokenCookie = (request: NextRequest): boolean => {
+  const parsedTokens = request.cookies.getAll('token').filter((entry) => Boolean(entry.value));
+  if (parsedTokens.length > 0) return true;
+
+  const rawCookieHeader = request.headers.get('cookie') ?? '';
+  if (!rawCookieHeader) return false;
+
+  return rawCookieHeader
+    .split(';')
+    .map((part) => part.trim())
+    .some((part) => part.startsWith('token=') && part.length > 'token='.length);
+};
+
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // ignoruj statyczne pliki i api
-  if (
-    PUBLIC_FILE.test(request.nextUrl.pathname) ||
-    request.nextUrl.pathname.startsWith('/api')
-  ) {
+  if (PUBLIC_FILE.test(pathname) || pathname.startsWith('/api')) {
     return NextResponse.next();
   }
 
-  // jeśli nie ma tokena – redirect
-  if (!token) {
+  if (!hasTokenCookie(request)) {
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
-  try {
-    const { payload } = await jwtVerify(
-      token,
-      new TextEncoder().encode(process.env.JWT_SECRET!)
-    );
-    if (pathname.startsWith('/admin') && payload.role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-    return NextResponse.next();
-  } catch (err) {
-    console.error('Invalid JWT', err);
-    return NextResponse.redirect(new URL('/auth/login', request.url));
-  }
+  // Auth token validation is authoritative on API side (/auth/me + requireAuth).
+  // Web middleware should stay transport-level only to avoid secret/cookie drift
+  // between web and api deployments.
+  return NextResponse.next();
 }
 
 export const config = {
