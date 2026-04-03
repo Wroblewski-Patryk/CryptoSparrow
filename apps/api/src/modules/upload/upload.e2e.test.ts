@@ -102,6 +102,27 @@ describe('Avatar upload security contract', () => {
     expect(typeof res.body.url).toBe('string');
     expect(res.body.url).toMatch(/\/avatars\/.+\.jpg$/);
   });
+
+  it('uses forwarded origin for avatar URL behind proxy', async () => {
+    const agent = await registerAndLogin('upload-user-proxy@example.com');
+    const pngBuffer = await sharp({
+      create: { width: 16, height: 16, channels: 3, background: '#0000ff' },
+    })
+      .png()
+      .toBuffer();
+
+    const res = await agent
+      .post('/upload/avatar')
+      .set('X-Forwarded-Proto', 'https')
+      .set('X-Forwarded-Host', 'app.soar.example')
+      .attach('avatar', pngBuffer, {
+        filename: 'avatar.png',
+        contentType: 'image/png',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.url).toMatch(/^https:\/\/app\.soar\.example\/avatars\/.+\.jpg$/);
+  });
 });
 
 

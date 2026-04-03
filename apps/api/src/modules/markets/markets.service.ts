@@ -222,7 +222,6 @@ const assertUniverseNotUsedByActiveBot = async (params: { userId: string; market
     where: {
       userId,
       isEnabled: true,
-      lifecycleStatus: { in: ['ACTIVE', 'PAUSED'] },
       bot: {
         userId,
         isActive: true,
@@ -300,8 +299,51 @@ export const deleteUniverse = async (userId: string, id: string) => {
   if (!existing) return false;
   await assertUniverseNotUsedByActiveBot({ userId, marketUniverseId: existing.id });
 
-  await prisma.marketUniverse.delete({
-    where: { id: existing.id },
+  await prisma.$transaction(async (tx) => {
+    const symbolGroups = await tx.symbolGroup.findMany({
+      where: {
+        userId,
+        marketUniverseId: existing.id,
+      },
+      select: { id: true },
+    });
+
+    const symbolGroupIds = symbolGroups.map((group) => group.id);
+    if (symbolGroupIds.length > 0) {
+      await tx.marketGroupStrategyLink.deleteMany({
+        where: {
+          userId,
+          botMarketGroup: {
+            symbolGroupId: { in: symbolGroupIds },
+          },
+        },
+      });
+
+      await tx.botStrategy.deleteMany({
+        where: {
+          symbolGroupId: { in: symbolGroupIds },
+          bot: { userId },
+        },
+      });
+
+      await tx.botMarketGroup.deleteMany({
+        where: {
+          userId,
+          symbolGroupId: { in: symbolGroupIds },
+        },
+      });
+
+      await tx.symbolGroup.deleteMany({
+        where: {
+          userId,
+          id: { in: symbolGroupIds },
+        },
+      });
+    }
+
+    await tx.marketUniverse.delete({
+      where: { id: existing.id },
+    });
   });
 
   return true;

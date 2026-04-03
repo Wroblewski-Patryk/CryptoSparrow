@@ -9,6 +9,7 @@ import path from 'path';
 import { clientUrl, corsOrigins, serverPort, serverUrl } from './config/runtime';
 
 const app = express();
+app.set('trust proxy', true);
 app.use(cookieParser());
 app.use(
   cors({

@@ -229,7 +229,7 @@ describe('Markets module contract', () => {
     );
   });
 
-  it('allows universe updates when linked bot is inactive', async () => {
+  it('allows universe updates and delete when linked bot is inactive', async () => {
     const agent = await registerAndLogin('markets-inactive-guard@example.com');
 
     const createRes = await agent.post('/dashboard/markets/universes').send(createPayload());
@@ -253,6 +253,15 @@ describe('Markets module contract', () => {
     });
     expect(updateRes.status).toBe(200);
     expect(updateRes.body.name).toBe('Allowed when bot inactive');
+
+    const deleteRes = await agent.delete(`/dashboard/markets/universes/${universeId}`);
+    expect(deleteRes.status).toBe(204);
+
+    const deletedUniverse = await prisma.marketUniverse.findUnique({
+      where: { id: universeId },
+      select: { id: true },
+    });
+    expect(deletedUniverse).toBeNull();
   });
 
   it('enforces ownership isolation for get/update/delete', async () => {

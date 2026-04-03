@@ -84,7 +84,10 @@ export const deleteMarketUniverse = async (req: Request, res: Response) => {
     if (error instanceof Error && error.message === 'MARKET_UNIVERSE_USED_BY_ACTIVE_BOT') {
       return sendError(res, 409, 'market universe is used by active bot and cannot be deleted');
     }
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      ['P2003', 'P2014', 'P2025', 'P2022'].includes(error.code)
+    ) {
       return sendError(res, 409, 'market universe has linked records and cannot be deleted');
     }
     return sendError(res, 500, 'Internal server error');

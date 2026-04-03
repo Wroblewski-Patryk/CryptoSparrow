@@ -2,6 +2,7 @@ import { Router, Request } from 'express';
 import { requireAuth } from '../middleware/requireAuth';
 import apiKeyRouter from '../modules/profile/apiKey/apiKey.routes';
 import basicRouter from '../modules/profile/basic/basic.routes';
+import securityRouter from '../modules/profile/security/security.routes';
 import strategiesRouter from '../modules/strategies/strategies.routes';
 import marketsRouter from '../modules/markets/markets.routes';
 import botsRouter from '../modules/bots/bots.routes';
@@ -21,6 +22,7 @@ router.get('/', (req, res) => {
 // Module - Profile
 // Basic profile routes
 router.use('/profile/basic', basicRouter);
+router.use('/profile/security', securityRouter);
 // API Key management routes
 router.use('/profile/apiKeys', apiKeyRouter);
 // Subscription management routs
