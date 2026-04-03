@@ -22,16 +22,19 @@ const normalizeDomain = (value: string): string | undefined => {
   // Cookie domain must not contain port/path and should not be localhost or IP for host-only local setups.
   const hostOnly = rawHost.split('/')[0]?.split(':')[0]?.trim();
   if (!hostOnly) return undefined;
-  if (LOCAL_HOSTS.has(hostOnly.toLowerCase())) return undefined;
+  const lowerHost = hostOnly.toLowerCase();
+  if (LOCAL_HOSTS.has(lowerHost)) return undefined;
+  if (lowerHost === 'undefined' || lowerHost === 'null') return undefined;
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostOnly)) return undefined;
 
   return hostOnly;
 };
 
 export const getCookieDomain = (): string | undefined => {
-  const candidate = process.env.COOKIE_DOMAIN;
-  if (!candidate) return undefined;
-  return normalizeDomain(candidate);
+  const explicitDomain = normalizeDomain(process.env.COOKIE_DOMAIN ?? '');
+  if (explicitDomain) return explicitDomain;
+
+  return normalizeDomain(process.env.CLIENT_URL ?? '');
 };
 
 const resolveSameSite = (): SessionSameSite => {

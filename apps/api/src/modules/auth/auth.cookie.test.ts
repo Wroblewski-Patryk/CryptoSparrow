@@ -4,11 +4,13 @@ import { getCookieDomain, getSessionCookieBaseOptions } from './auth.cookie';
 const originalCookieDomain = process.env.COOKIE_DOMAIN;
 const originalCookieSameSite = process.env.COOKIE_SAME_SITE;
 const originalNodeEnv = process.env.NODE_ENV;
+const originalClientUrl = process.env.CLIENT_URL;
 
 afterEach(() => {
   process.env.COOKIE_DOMAIN = originalCookieDomain;
   process.env.COOKIE_SAME_SITE = originalCookieSameSite;
   process.env.NODE_ENV = originalNodeEnv;
+  process.env.CLIENT_URL = originalClientUrl;
 });
 
 describe('auth.cookie', () => {
@@ -23,6 +25,13 @@ describe('auth.cookie', () => {
 
     process.env.COOKIE_DOMAIN = '127.0.0.1';
     expect(getCookieDomain()).toBeUndefined();
+  });
+
+  it('falls back to CLIENT_URL domain when COOKIE_DOMAIN is missing', () => {
+    process.env.COOKIE_DOMAIN = '';
+    process.env.CLIENT_URL = 'https://soar.luckysparrow.ch';
+
+    expect(getCookieDomain()).toBe('soar.luckysparrow.ch');
   });
 
   it('defaults sameSite=lax and secure=false outside production', () => {
