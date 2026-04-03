@@ -1,0 +1,31 @@
+.git
+.github
+.vscode
+.claude
+.agents
+.codex
+.playwright-cli
+node_modules
+**/node_modules
+dist
+**/dist
+.next
+**/.next
+coverage
+**/coverage
+*.log
+*.tmp
+tmp
+temp
+playwright-workers.log
+playwright-workers.err.log
+
+# Local env files (never ship to image)
+.env
+.env.*
+apps/**/.env
+apps/**/.env.*
+
+# Keep env templates for ops docs/reference
+!apps/api/.env.example
+!apps/web/.env.example

@@ -68,13 +68,15 @@ Repository requirements:
 
 ## Step 3: Add API Service (`apps/api`)
 
-Build/deploy configuration:
-- Source: repository root
-- Working directory: `apps/api`
-- Install command: `pnpm install --frozen-lockfile`
-- Build command: `pnpm build`
-- Start command: `pnpm start`
+Docker build configuration (Coolify):
+- Source: repository root (monorepo)
+- Build pack: `Dockerfile`
+- Docker build context: repository root (`.`)
+- Dockerfile location: `apps/api/Dockerfile`
 - Exposed port: `3001`
+
+Runtime command:
+- keep image default command (`node dist/index.js`)
 
 Health checks:
 - `/health`
@@ -95,13 +97,15 @@ Reference: `docs/operations/dev-stage-prod-environment-matrix.md`
 
 ## Step 4: Add Web Service (`apps/web`)
 
-Build/deploy configuration:
-- Source: repository root
-- Working directory: `apps/web`
-- Install command: `pnpm install --frozen-lockfile`
-- Build command: `pnpm build`
-- Start command: `pnpm start`
-- Exposed port: `3002` (or default Next start port mapped by Coolify)
+Docker build configuration (Coolify):
+- Source: repository root (monorepo)
+- Build pack: `Dockerfile`
+- Docker build context: repository root (`.`)
+- Dockerfile location: `apps/web/Dockerfile`
+- Exposed port: `3002`
+
+Runtime command:
+- keep image default command (`pnpm --filter web start`)
 
 Required environment variables:
 - `NODE_ENV=production`
@@ -110,15 +114,25 @@ Required environment variables:
 
 ## Step 5: Add Workers Service
 
-Create a dedicated worker service from `apps/api`.
+Create dedicated worker services from the same API image.
 Process ownership contract: `api` does not own worker lifecycle in production.
 
-Recommended strategy: one process per worker type (separate services), or one service running a process manager.
-For simplest deterministic setup, create separate services:
-- `workers-market-data`: `node dist/workers/marketData.worker.js`
-- `workers-market-stream`: `node dist/workers/marketStream.worker.js`
-- `workers-backtest`: `node dist/workers/backtest.worker.js`
-- `workers-execution`: `node dist/workers/execution.worker.js`
+For deterministic production behavior create separate services:
+- `workers-market-data`
+- `workers-market-stream`
+- `workers-backtest`
+- `workers-execution`
+
+Each worker service config:
+- Build pack: `Dockerfile`
+- Docker build context: repository root (`.`)
+- Dockerfile location: `apps/api/Dockerfile`
+- Exposed port: none
+- Override start command:
+  - `node dist/workers/marketData.worker.js`
+  - `node dist/workers/marketStream.worker.js`
+  - `node dist/workers/backtest.worker.js`
+  - `node dist/workers/execution.worker.js`
 
 Shared worker env:
 - `NODE_ENV=production`
@@ -176,6 +190,8 @@ If post-deploy health fails:
 3. Missing worker service -> runtime data stale.
 4. Missing `JWT_SECRET` in web middleware scope.
 5. API CORS not matching web domain.
+6. Wrong Dockerfile path in Coolify (must point to `apps/api/Dockerfile` or `apps/web/Dockerfile`).
+7. Using Docker mode without repository Dockerfile artifacts.
 
 ## References
 - `docs/operations/dev-stage-prod-environment-matrix.md`

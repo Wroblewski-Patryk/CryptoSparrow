@@ -130,6 +130,25 @@ pnpm --filter web build
 pnpm --filter web start
 ```
 
+## Deploy on VPS (Coolify)
+
+Canonical guide:
+- `docs/operations/coolify-linux-vps-setup-guide.md`
+
+Dockerfile artifacts used by Coolify:
+- API: `apps/api/Dockerfile`
+- Web: `apps/web/Dockerfile`
+- Workers: reuse `apps/api/Dockerfile` with command override (`node dist/workers/<worker>.worker.js`)
+
+Quick local verification before first VPS deploy:
+
+```bash
+docker build -f apps/api/Dockerfile -t cryptosparrow-api:local .
+docker build -f apps/web/Dockerfile -t cryptosparrow-web:local .
+```
+
+If Coolify shows `failed to read dockerfile`, verify Dockerfile path in service config.
+
 ## Load Testing (Server)
 With backend running on `http://localhost:3001`:
 
