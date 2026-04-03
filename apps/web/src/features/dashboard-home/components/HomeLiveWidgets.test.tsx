@@ -194,8 +194,8 @@ describe("HomeLiveWidgets", () => {
     });
     listBotRuntimeSessionPositionsMock.mockResolvedValue({
       sessionId: "session-1",
-      total: 1,
-      openCount: 1,
+      total: 2,
+      openCount: 2,
       closedCount: 0,
       openOrdersCount: 0,
       showDynamicStopColumns: true,
@@ -235,6 +235,34 @@ describe("HomeLiveWidgets", () => {
           dynamicTtpStopLoss: null,
           dynamicTslStopLoss: null,
           firstTradeAt: "2026-03-31T10:03:00.000Z",
+          lastTradeAt: "2026-03-31T10:04:00.000Z",
+          tradesCount: 1,
+        },
+        {
+          id: "pos-2",
+          symbol: "ETHUSDT",
+          side: "LONG",
+          status: "OPEN",
+          quantity: 0.5,
+          leverage: 15,
+          entryPrice: 2500,
+          entryNotional: 1250,
+          exitPrice: null,
+          stopLoss: null,
+          takeProfit: null,
+          openedAt: "2026-03-31T10:02:00.000Z",
+          closedAt: null,
+          holdMs: 180000,
+          dcaCount: 0,
+          dcaPlannedLevels: [],
+          dcaExecutedLevels: [],
+          feesPaid: 0,
+          realizedPnl: 0,
+          unrealizedPnl: 12,
+          markPrice: 2520,
+          dynamicTtpStopLoss: 2508.4321,
+          dynamicTslStopLoss: 2496.5555,
+          firstTradeAt: "2026-03-31T10:02:00.000Z",
           lastTradeAt: "2026-03-31T10:04:00.000Z",
           tradesCount: 1,
         },
@@ -288,12 +316,159 @@ describe("HomeLiveWidgets", () => {
       expect(screen.getByText("Bot runtime i ryzyko")).toBeInTheDocument();
       expect(screen.getByRole("option", { name: /Monitor Bot/i })).toBeInTheDocument();
       expect(screen.getAllByText("RUNNING").length).toBeGreaterThan(0);
-      expect(screen.getByText("Live checks")).toBeInTheDocument();
+      expect(screen.getByText("Sygnaly strategii")).toBeInTheDocument();
       expect(screen.getAllByText("BTCUSDT").length).toBeGreaterThan(0);
       expect(screen.getByText("2 (1:-15%, 2:-30%)")).toBeInTheDocument();
       expect(screen.getByText("TTP")).toBeInTheDocument();
       expect(screen.getByText("TSL")).toBeInTheDocument();
+      expect(screen.getByText("2508,4321")).toBeInTheDocument();
+      expect(screen.getByText("2496,5555")).toBeInTheDocument();
+      expect(screen.getAllByText("-").length).toBeGreaterThan(0);
     });
+  });
+
+  it("renders strategy signals above open positions and enables rail controls for larger symbol sets", async () => {
+    listBotsMock.mockResolvedValue([
+      {
+        id: "bot-rail",
+        name: "Rail Bot",
+        mode: "PAPER",
+        paperStartBalance: 10000,
+        marketType: "FUTURES",
+        positionMode: "ONE_WAY",
+        strategyId: "str-rail",
+        isActive: true,
+        liveOptIn: false,
+        maxOpenPositions: 2,
+      },
+    ]);
+    listBotRuntimeSessionsMock.mockResolvedValue([
+      {
+        id: "session-rail",
+        botId: "bot-rail",
+        mode: "PAPER",
+        status: "RUNNING",
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: null,
+        lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+        stopReason: null,
+        errorMessage: null,
+        createdAt: "2026-03-31T10:00:00.000Z",
+        updatedAt: "2026-03-31T10:05:00.000Z",
+        durationMs: 300000,
+        eventsCount: 0,
+        symbolsTracked: 5,
+        summary: {
+          totalSignals: 0,
+          dcaCount: 0,
+          closedTrades: 0,
+          realizedPnl: 0,
+        },
+      },
+    ]);
+    listBotRuntimeSessionSymbolStatsMock.mockResolvedValue({
+      sessionId: "session-rail",
+      items: ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT"].map((symbol, index) => ({
+        id: `stat-rail-${index + 1}`,
+        userId: "u-rail",
+        botId: "bot-rail",
+        sessionId: "session-rail",
+        symbol,
+        totalSignals: 0,
+        longEntries: 0,
+        shortEntries: 0,
+        exits: 0,
+        dcaCount: 0,
+        closedTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        realizedPnl: 0,
+        grossProfit: 0,
+        grossLoss: 0,
+        feesPaid: 0,
+        openPositionCount: 0,
+        openPositionQty: 0,
+        unrealizedPnl: 0,
+        lastPrice: null,
+        lastSignalAt: null,
+        lastSignalDirection: "NEUTRAL",
+        lastSignalDecisionAt: null,
+        lastTradeAt: null,
+        snapshotAt: "2026-03-31T10:05:00.000Z",
+        createdAt: "2026-03-31T10:05:00.000Z",
+        updatedAt: "2026-03-31T10:05:00.000Z",
+      })),
+      summary: {
+        totalSignals: 0,
+        longEntries: 0,
+        shortEntries: 0,
+        exits: 0,
+        dcaCount: 0,
+        closedTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        totalPnl: 0,
+        grossProfit: 0,
+        grossLoss: 0,
+        feesPaid: 0,
+      },
+    });
+    listBotRuntimeSessionPositionsMock.mockResolvedValue({
+      sessionId: "session-rail",
+      total: 0,
+      openCount: 0,
+      closedCount: 0,
+      openOrdersCount: 0,
+      showDynamicStopColumns: false,
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      summary: {
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        feesPaid: 0,
+      },
+      openOrders: [],
+      openItems: [],
+      historyItems: [],
+    });
+    listBotRuntimeSessionTradesMock.mockResolvedValue({
+      sessionId: "session-rail",
+      total: 0,
+      meta: {
+        page: 1,
+        pageSize: 25,
+        total: 0,
+        totalPages: 0,
+        hasPrev: false,
+        hasNext: false,
+      },
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      items: [],
+    });
+
+    renderSubject();
+
+    await waitFor(() => {
+      expect(screen.getByText("Sygnaly strategii")).toBeInTheDocument();
+      expect(
+        screen.getByText("Sygnaly obliczone na podstawie najnowszych danych i warunkow aktywnej strategii.")
+      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Wstecz" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Dalej" })).toBeInTheDocument();
+      expect(screen.getByText("5 par")).toBeInTheDocument();
+      expect(screen.getByText("SOLUSDT")).toBeInTheDocument();
+    });
+
+    const signalsHeading = screen.getByRole("heading", { name: "Sygnaly strategii" });
+    const openPositionsHeading = screen.getByRole("heading", { name: "Otwarte pozycje" });
+    expect(signalsHeading.compareDocumentPosition(openPositionsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("supports apply-based filters, tri-state sorting and preserves state on auto-refresh", async () => {

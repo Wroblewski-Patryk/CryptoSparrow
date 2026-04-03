@@ -446,11 +446,11 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-47 docs(contract): lock dynamic stop display contract (TTP/TSL) for dashboard+bots runtime tables, including TSL derivation from trailing-stop anchor`
 - [x] `BOPS-48 feat(api-runtime): compute dynamicTslStopLoss from active trailing-stop config + runtime trailingAnchorPrice (with trailingLossLimit fallback) and expose stable payload fields`
 - [x] `BOPS-49 feat(web-i18n+tables): rename stop headers from 'SL (TTP)/(TSL)' to 'TTP/TSL' and keep parity in Dashboard + Bots runtime views`
-- [ ] `BOPS-50 test(api+web): add regression coverage for TSL/TTP rendering lifecycle (pre-arm '-', post-arm value) and runtime payload mapping`
-- [ ] `BOPS-51 docs(contract): lock Dashboard signal-panel IA contract (name, placement above open positions, responsive density, and high-symbol navigation behavior)`
-- [ ] `BOPS-52 feat(web-dashboard): rename 'Live checks' section to strategy-signal wording and move signal panel above open-positions block`
-- [ ] `BOPS-53 feat(web-dashboard): implement scalable signal cards layout (desktop 4 / tablet 3 / mobile 2) with horizontal rail/slider support for very large symbol sets`
-- [ ] `BOPS-54 test(web-dashboard): add regression coverage for signal-panel placement, heading copy, responsive card density, and overflow navigation controls`
+- [x] `BOPS-50 test(api+web): add regression coverage for TSL/TTP rendering lifecycle (pre-arm '-', post-arm value) and runtime payload mapping`
+- [x] `BOPS-51 docs(contract): lock Dashboard signal-panel IA contract (name, placement above open positions, responsive density, and high-symbol navigation behavior)`
+- [x] `BOPS-52 feat(web-dashboard): rename 'Live checks' section to strategy-signal wording and move signal panel above open-positions block`
+- [x] `BOPS-53 feat(web-dashboard): implement scalable signal cards layout (desktop 4 / tablet 3 / mobile 2) with horizontal rail/slider support for very large symbol sets`
+- [x] `BOPS-54 test(web-dashboard): add regression coverage for signal-panel placement, heading copy, responsive card density, and overflow navigation controls`
 - [x] `BOPS-55 docs(contract): lock Bots IA split (/bots list, /bots/create form) and table-action navigation contract (Runtime + Assistant + Edit)`
 - [x] `BOPS-56 feat(web-routing+nav): switch bots create route to /dashboard/bots/create and align header/menu links + legacy /new redirect`
 - [x] `BOPS-57 feat(web-bots-list): redesign /bots into table-first list view (no inline create/edit form) with actions: Podglad(Runtime), Asystent, Edytuj`
@@ -458,6 +458,11 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 
 ## Progress Log
+- 2026-04-03: Completed `BOPS-54` by extending `HomeLiveWidgets` regression coverage for dashboard signal panel contract: heading copy (`Sygnaly strategii`), canonical placement above open positions, and overflow rail navigation controls for larger symbol sets (`Wstecz`/`Dalej`) with responsive density assumptions intact.
+- 2026-04-03: Completed `BOPS-53` by implementing scalable signal cards rail in dashboard runtime (`desktop 4 / tablet 3 / mobile 2`) with responsive viewport tracking, horizontal overflow handling, and in-place updates for large symbol groups without remount flicker.
+- 2026-04-03: Completed `BOPS-52` by replacing legacy `Live checks` naming with strategy-signal semantics (`Strategy signals` / `Sygnaly strategii`), adding panel subtitle microcopy, and keeping canonical section order (`signals -> open positions -> history`) in dashboard runtime.
+- 2026-04-03: Completed `BOPS-51` by publishing canonical IA spec in `docs/architecture/dashboard-signal-panel-ia-contract.md`, locking signal-panel naming (`Sygnaly strategii` / `Strategy signals`), mandatory placement above open positions, responsive card density (4/3/2), and high-symbol horizontal navigation behavior with in-place refresh/no-flicker requirement.
+- 2026-04-03: Completed `BOPS-50` by adding end-to-end regression coverage for runtime dynamic stop payload lifecycle in API (`pre-arm -> null`, `post-arm -> numeric`, `fallback legacy trailing -> numeric`) and by extending Dashboard/Bots web tests to assert TTP/TSL rendering parity for both numeric and placeholder states across locale-sensitive formatting.
 - 2026-04-03: Completed `BOPS-49` by updating Dashboard/Bots runtime i18n header labels from `SL (TTP)/SL (TSL)` to concise `TTP/TSL` in EN/PL translation dictionaries and aligned component regression assertions in `HomeLiveWidgets` with preserved table parity.
 - 2026-04-03: Completed `BOPS-48` by extending runtime positions mapping in `bots.service` to compute `dynamicTslStopLoss` primarily from active strategy trailing-stop levels (`close.tsl`) and runtime `trailingAnchorPrice` (side/leverage aware), with deterministic fallback to legacy `trailingLossLimitPercent` path for compatibility.
 - 2026-04-03: Completed `BOPS-47` by publishing `docs/architecture/dynamic-stop-display-contract.md` as canonical runtime contract for dynamic stop display (`TTP`/`TSL`) across Dashboard and Bots tables, including lifecycle semantics, TSL primary derivation from trailing-anchor + fallback compatibility path, and regression requirements.

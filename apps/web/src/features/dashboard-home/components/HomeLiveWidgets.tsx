@@ -52,7 +52,17 @@ const AUTO_REFRESH_INTERVAL_MS = 5_000;
 const LOAD_STALE_AFTER_MS = 20_000;
 const SELECTED_BOT_STORAGE_KEY = "dashboard.home.selectedBotId";
 const TRADE_PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
+const SIGNAL_CARDS_DENSITY_BREAKPOINTS = {
+  desktopMinWidth: 1280,
+  tabletMinWidth: 768,
+} as const;
 const normalizeSymbol = (value: string) => value.trim().toUpperCase();
+
+const resolveSignalCardsPerView = (width: number) => {
+  if (width >= SIGNAL_CARDS_DENSITY_BREAKPOINTS.desktopMinWidth) return 4;
+  if (width >= SIGNAL_CARDS_DENSITY_BREAKPOINTS.tabletMinWidth) return 3;
+  return 2;
+};
 
 type TradeSortBy = "executedAt" | "symbol" | "side" | "lifecycleAction" | "margin" | "fee" | "realizedPnl";
 type TradeSortDir = "asc" | "desc";
@@ -399,8 +409,10 @@ export default function HomeLiveWidgets() {
   const [tradeAppliedFilters, setTradeAppliedFilters] = useState<TradeFiltersState>(EMPTY_TRADE_FILTERS);
   const [refreshToken, setRefreshToken] = useState(0);
   const [liveTickerPrices, setLiveTickerPrices] = useState<Record<string, number>>({});
+  const [viewportWidth, setViewportWidth] = useState(0);
   const loadInFlightRef = useRef(false);
   const loadStartedAtRef = useRef<number | null>(null);
+  const signalRailRef = useRef<HTMLDivElement | null>(null);
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const silent = opts?.silent ?? false;
@@ -482,6 +494,14 @@ export default function HomeLiveWidgets() {
     if (typeof window === "undefined") return;
     const saved = window.localStorage.getItem(SELECTED_BOT_STORAGE_KEY);
     if (saved) setSelectedBotId(saved);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const syncViewport = () => setViewportWidth(window.innerWidth);
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+    return () => window.removeEventListener("resize", syncViewport);
   }, []);
 
   useEffect(() => {
@@ -690,6 +710,19 @@ export default function HomeLiveWidgets() {
     );
   }, [selected?.positions?.showDynamicStopColumns, selectedData?.open]);
 
+  const signalCardsPerView = resolveSignalCardsPerView(
+    viewportWidth > 0 ? viewportWidth : SIGNAL_CARDS_DENSITY_BREAKPOINTS.desktopMinWidth
+  );
+  const signalSymbols = selectedData?.symbols ?? [];
+  const hasSignalOverflow = signalSymbols.length > signalCardsPerView;
+
+  const scrollSignalRail = (direction: "prev" | "next") => {
+    const node = signalRailRef.current;
+    if (!node) return;
+    const delta = Math.max(node.clientWidth * 0.9, 240);
+    node.scrollBy({ left: direction === "next" ? delta : -delta, behavior: "smooth" });
+  };
+
   const tradeMeta = selectedTrades?.meta ?? {
     page: tradePage,
     pageSize: tradePageSize,
@@ -780,6 +813,104 @@ export default function HomeLiveWidgets() {
     <div className="space-y-4">
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0 space-y-4">
+          <section className={CARD}>
+            <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-semibold">{t("dashboard.home.runtime.liveChecksTitle")}</h3>
+                <p className="text-[11px] opacity-60">{t("dashboard.home.runtime.liveChecksSubtitle")}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs opacity-60">
+                  {interpolateTemplate(t("dashboard.home.runtime.pairsCount"), { count: signalSymbols.length })}
+                </span>
+              </div>
+            </div>
+            {hasSignalOverflow ? (
+              <div className="mb-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  className="btn btn-outline btn-xs"
+                  onClick={() => scrollSignalRail("prev")}
+                >
+                  {t("dashboard.home.runtime.signalRailPrev")}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-xs"
+                  onClick={() => scrollSignalRail("next")}
+                >
+                  {t("dashboard.home.runtime.signalRailNext")}
+                </button>
+              </div>
+            ) : null}
+            <div ref={signalRailRef} className="overflow-x-auto pb-1">
+              <div className="grid grid-flow-col auto-cols-[calc((100%-0.75rem)/2)] gap-3 md:auto-cols-[calc((100%-1rem)/3)] xl:auto-cols-[calc((100%-1.5rem)/4)]">
+                {signalSymbols.map((s) => {
+                  const signal: SignalPillValue = s.lastSignalDirection ?? "NEUTRAL";
+                  const lines = s.lastSignalConditionLines ?? [];
+                  const longLines = lines.filter((line) => line.scope === "LONG");
+                  const shortLines = lines.filter((line) => line.scope === "SHORT");
+
+                  return (
+                    <article key={s.id} className="rounded-lg border border-base-300/70 bg-base-200/40 px-3 py-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold tracking-wide">{s.symbol}</p>
+                        <SignalPill value={signal} />
+                      </div>
+                      <div className="mt-2 space-y-2 text-[11px] leading-4">
+                        <div className="space-y-1 rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
+                          <div className="mb-0.5 flex items-center gap-1">
+                            <span className="inline-flex rounded border border-success/40 bg-success/10 px-1 py-[1px] text-[10px] font-semibold text-success">
+                              {t("dashboard.home.runtime.long")}
+                            </span>
+                          </div>
+                          {longLines.length === 0 ? (
+                            <p className="text-[10px] opacity-55">-</p>
+                          ) : (
+                            longLines.map((line, index) => (
+                              <p key={`${s.id}-long-${index}`} className="font-mono text-[10px]">
+                                <span>{line.left}</span>
+                                <span className="mx-1">=</span>
+                                <span className="font-semibold">{line.value}</span>
+                                <span className="mx-1">{line.operator}</span>
+                                <span>{line.right}</span>
+                              </p>
+                            ))
+                          )}
+                        </div>
+                        <div className="space-y-1 rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
+                          <div className="mb-0.5 flex items-center gap-1">
+                            <span className="inline-flex rounded border border-error/40 bg-error/10 px-1 py-[1px] text-[10px] font-semibold text-error">
+                              {t("dashboard.home.runtime.short")}
+                            </span>
+                          </div>
+                          {shortLines.length === 0 ? (
+                            <p className="text-[10px] opacity-55">-</p>
+                          ) : (
+                            shortLines.map((line, index) => (
+                              <p key={`${s.id}-short-${index}`} className="font-mono text-[10px]">
+                                <span>{line.left}</span>
+                                <span className="mx-1">=</span>
+                                <span className="font-semibold">{line.value}</span>
+                                <span className="mx-1">{line.operator}</span>
+                                <span>{line.right}</span>
+                              </p>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+                {signalSymbols.length === 0 ? (
+                  <div className="col-span-full rounded-lg border border-base-300/70 bg-base-200/40 p-4 text-center text-xs opacity-70">
+                    {t("dashboard.home.runtime.noSignalData")}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </section>
+
           <section className={CARD}>
             <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-semibold">{t("dashboard.home.runtime.openPositionsTitle")}</h3><span className="text-xs opacity-60">{selectedData?.open.length ?? 0}</span></div>
             <div className="overflow-x-auto rounded-lg border border-base-300/70 bg-base-200/40">
@@ -1037,81 +1168,6 @@ export default function HomeLiveWidgets() {
             </div>
           </section>
 
-          <section className={CARD}>
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">{t("dashboard.home.runtime.liveChecksTitle")}</h3>
-              <span className="text-xs opacity-60">
-                {interpolateTemplate(t("dashboard.home.runtime.pairsCount"), { count: selectedData?.symbols.length ?? 0 })}
-              </span>
-            </div>
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {(selectedData?.symbols ?? []).map((s) => {
-                const signal: SignalPillValue = s.lastSignalDirection ?? "NEUTRAL";
-                const lines = s.lastSignalConditionLines ?? [];
-                const longLines = lines.filter((line) => line.scope === "LONG");
-                const shortLines = lines.filter((line) => line.scope === "SHORT");
-
-                return (
-                  <article key={s.id} className="rounded-lg border border-base-300/70 bg-base-200/40 px-3 py-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-semibold tracking-wide">{s.symbol}</p>
-                      <SignalPill value={signal} />
-                    </div>
-                    <div className="mt-2 space-y-2 text-[11px] leading-4">
-                      {signal === "NEUTRAL" ? (
-                        <p className="text-[10px] opacity-55">{t("dashboard.home.runtime.noSignalConditions")}</p>
-                      ) : null}
-                      <div className="space-y-1 rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
-                        <div className="mb-0.5 flex items-center gap-1">
-                          <span className="inline-flex rounded border border-success/40 bg-success/10 px-1 py-[1px] text-[10px] font-semibold text-success">
-                            {t("dashboard.home.runtime.long")}
-                          </span>
-                        </div>
-                        {longLines.length === 0 ? (
-                          <p className="text-[10px] opacity-55">-</p>
-                        ) : (
-                          longLines.map((line, index) => (
-                            <p key={`${s.id}-long-${index}`} className="font-mono text-[10px]">
-                              <span>{line.left}</span>
-                              <span className="mx-1">=</span>
-                              <span className="font-semibold">{line.value}</span>
-                              <span className="mx-1">{line.operator}</span>
-                              <span>{line.right}</span>
-                            </p>
-                          ))
-                        )}
-                      </div>
-                      <div className="space-y-1 rounded-md border border-base-300/70 bg-base-100/70 px-2 py-1.5">
-                        <div className="mb-0.5 flex items-center gap-1">
-                          <span className="inline-flex rounded border border-error/40 bg-error/10 px-1 py-[1px] text-[10px] font-semibold text-error">
-                            {t("dashboard.home.runtime.short")}
-                          </span>
-                        </div>
-                        {shortLines.length === 0 ? (
-                          <p className="text-[10px] opacity-55">-</p>
-                        ) : (
-                          shortLines.map((line, index) => (
-                            <p key={`${s.id}-short-${index}`} className="font-mono text-[10px]">
-                              <span>{line.left}</span>
-                              <span className="mx-1">=</span>
-                              <span className="font-semibold">{line.value}</span>
-                              <span className="mx-1">{line.operator}</span>
-                              <span>{line.right}</span>
-                            </p>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-              {(selectedData?.symbols.length ?? 0) === 0 ? (
-                <div className="rounded-lg border border-base-300/70 bg-base-200/40 p-4 text-center text-xs opacity-70">
-                  {t("dashboard.home.runtime.noSignalData")}
-                </div>
-              ) : null}
-            </div>
-          </section>
         </div>
 
         <aside className={`${CARD} h-fit`}>

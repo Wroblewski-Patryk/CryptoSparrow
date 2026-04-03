@@ -487,10 +487,11 @@ describe("BotsManagement", () => {
 
     listRuntimePositionsMock.mockResolvedValue({
       sessionId: "session-1",
-      total: 1,
-      openCount: 1,
+      total: 2,
+      openCount: 2,
       closedCount: 0,
       openOrdersCount: 0,
+      showDynamicStopColumns: true,
       window: {
         startedAt: "2026-03-31T10:00:00.000Z",
         finishedAt: "2026-03-31T10:05:00.000Z",
@@ -524,8 +525,38 @@ describe("BotsManagement", () => {
           realizedPnl: 0,
           unrealizedPnl: 15,
           markPrice: 71500,
+          dynamicTtpStopLoss: null,
+          dynamicTslStopLoss: null,
           firstTradeAt: "2026-03-31T10:04:30.000Z",
           lastTradeAt: "2026-03-31T10:04:30.000Z",
+          tradesCount: 1,
+        },
+        {
+          id: "p2",
+          symbol: "ETHUSDT",
+          side: "LONG",
+          status: "OPEN",
+          quantity: 0.02,
+          leverage: 1,
+          entryPrice: 2500,
+          entryNotional: 50,
+          exitPrice: null,
+          stopLoss: null,
+          takeProfit: null,
+          openedAt: "2026-03-31T10:03:00.000Z",
+          closedAt: null,
+          holdMs: 120000,
+          dcaCount: 0,
+          dcaPlannedLevels: [],
+          dcaExecutedLevels: [],
+          feesPaid: 0.1,
+          realizedPnl: 0,
+          unrealizedPnl: 1.2,
+          markPrice: 2520,
+          dynamicTtpStopLoss: 2508.4321,
+          dynamicTslStopLoss: 2496.5555,
+          firstTradeAt: "2026-03-31T10:03:00.000Z",
+          lastTradeAt: "2026-03-31T10:04:00.000Z",
           tradesCount: 1,
         },
       ],
@@ -589,6 +620,15 @@ describe("BotsManagement", () => {
         limit: 200,
       });
       expect(screen.getByText("2 (1:-15.00%, 2:-30.00%)")).toBeInTheDocument();
+      expect(screen.getByText("TTP")).toBeInTheDocument();
+      expect(screen.getByText("TSL")).toBeInTheDocument();
+      expect(
+        screen.getByText((content) => /2[,\s]?508[.,]4321/.test(content.replace(/\u00a0/g, " ")))
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText((content) => /2[,\s]?496[.,]5555/.test(content.replace(/\u00a0/g, " ")))
+      ).toBeInTheDocument();
+      expect(screen.getAllByText("-").length).toBeGreaterThan(0);
       expect(screen.getByText(/3\. Co bedzie - live check sygnalow|Co bedzie - live check sygnalow/i)).toBeInTheDocument();
       expect(screen.getAllByText("BTCUSDT").length).toBeGreaterThan(0);
       expect(screen.getByText("Historia - log operacyjny trade'ow")).toBeInTheDocument();

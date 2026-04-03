@@ -1,7 +1,8 @@
 import request from 'supertest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { app } from '../../index';
 import { prisma } from '../../prisma/client';
+import { runtimePositionAutomationService } from '../engine/runtimePositionAutomation.service';
 
 const registerAndLogin = async (email: string) => {
   const agent = request.agent(app);
@@ -1436,6 +1437,287 @@ describe('Bots module contract', () => {
     expect(legacy.dcaCount).toBe(1);
     expect(legacy.dcaPlannedLevels).toEqual([]);
     expect(legacy.dcaExecutedLevels).toEqual([]);
+  });
+
+  it('maps dynamic TTP/TSL lifecycle in runtime positions payload (pre-arm, post-arm, fallback)', async () => {
+    const ownerEmail = 'bot-runtime-dynamic-stop-owner@example.com';
+    const owner = await registerAndLogin(ownerEmail);
+    const ownerUser = await prisma.user.findUniqueOrThrow({ where: { email: ownerEmail } });
+
+    const strategyId = await createStrategy(owner, 'Runtime Dynamic Stop Strategy', {
+      open: { indicatorsLong: [], indicatorsShort: [] },
+      close: {
+        mode: 'advanced',
+        tp: 2,
+        sl: 1,
+        ttp: [{ percent: 4, arm: 1 }],
+        tsl: [{ percent: -2, arm: 5 }],
+      },
+      additional: { dcaEnabled: false },
+    });
+
+    const marketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
+    await prisma.symbolGroup.update({
+      where: { id: marketGroupId },
+      data: { symbols: ['BTCUSDT', 'ETHUSDT', 'BNBUSDT'] },
+    });
+    const createRes = await owner
+      .post('/dashboard/bots')
+      .send(createPayload({ strategyId, marketGroupId }));
+    expect(createRes.status).toBe(201);
+    const botId = createRes.body.id as string;
+    const nowTs = Date.now();
+    const sessionStartedAt = new Date(nowTs - 15 * 60 * 1000);
+    const lastHeartbeatAt = new Date(nowTs - 60 * 1000);
+    const preArmOpenedAt = new Date(nowTs - 14 * 60 * 1000);
+    const postArmOpenedAt = new Date(nowTs - 13 * 60 * 1000);
+    const fallbackOpenedAt = new Date(nowTs - 12 * 60 * 1000);
+    const snapshotAt = new Date(nowTs - 30 * 1000);
+
+    const session = await prisma.botRuntimeSession.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        mode: 'PAPER',
+        status: 'RUNNING',
+        startedAt: sessionStartedAt,
+        lastHeartbeatAt,
+      },
+    });
+
+    const preArm = await prisma.position.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        strategyId,
+        symbol: 'BTCUSDT',
+        side: 'LONG',
+        status: 'OPEN',
+        managementMode: 'BOT_MANAGED',
+        entryPrice: 100,
+        quantity: 1,
+        leverage: 2,
+        openedAt: preArmOpenedAt,
+      },
+    });
+    const postArm = await prisma.position.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        strategyId,
+        symbol: 'ETHUSDT',
+        side: 'LONG',
+        status: 'OPEN',
+        managementMode: 'BOT_MANAGED',
+        entryPrice: 100,
+        quantity: 1,
+        leverage: 2,
+        openedAt: postArmOpenedAt,
+      },
+    });
+    const fallback = await prisma.position.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        strategyId,
+        symbol: 'BNBUSDT',
+        side: 'LONG',
+        status: 'OPEN',
+        managementMode: 'BOT_MANAGED',
+        entryPrice: 100,
+        quantity: 1,
+        leverage: 2,
+        openedAt: fallbackOpenedAt,
+      },
+    });
+
+    await prisma.trade.createMany({
+      data: [
+        {
+          userId: ownerUser.id,
+          botId,
+          positionId: preArm.id,
+          strategyId,
+          symbol: 'BTCUSDT',
+          side: 'BUY',
+          lifecycleAction: 'OPEN',
+          price: 100,
+          quantity: 1,
+          fee: 0,
+          realizedPnl: 0,
+          executedAt: new Date(preArmOpenedAt.getTime() + 5_000),
+        },
+        {
+          userId: ownerUser.id,
+          botId,
+          positionId: postArm.id,
+          strategyId,
+          symbol: 'ETHUSDT',
+          side: 'BUY',
+          lifecycleAction: 'OPEN',
+          price: 100,
+          quantity: 1,
+          fee: 0,
+          realizedPnl: 0,
+          executedAt: new Date(postArmOpenedAt.getTime() + 5_000),
+        },
+        {
+          userId: ownerUser.id,
+          botId,
+          positionId: fallback.id,
+          strategyId,
+          symbol: 'BNBUSDT',
+          side: 'BUY',
+          lifecycleAction: 'OPEN',
+          price: 100,
+          quantity: 1,
+          fee: 0,
+          realizedPnl: 0,
+          executedAt: new Date(fallbackOpenedAt.getTime() + 5_000),
+        },
+      ],
+    });
+
+    await prisma.botRuntimeSymbolStat.createMany({
+      data: [
+        {
+          userId: ownerUser.id,
+          botId,
+          sessionId: session.id,
+          symbol: 'BTCUSDT',
+          totalSignals: 0,
+          longEntries: 0,
+          shortEntries: 0,
+          exits: 0,
+          dcaCount: 0,
+          closedTrades: 0,
+          winningTrades: 0,
+          losingTrades: 0,
+          realizedPnl: 0,
+          grossProfit: 0,
+          grossLoss: 0,
+          feesPaid: 0,
+          openPositionCount: 1,
+          openPositionQty: 1,
+          lastPrice: 102,
+          snapshotAt,
+        },
+        {
+          userId: ownerUser.id,
+          botId,
+          sessionId: session.id,
+          symbol: 'ETHUSDT',
+          totalSignals: 0,
+          longEntries: 0,
+          shortEntries: 0,
+          exits: 0,
+          dcaCount: 0,
+          closedTrades: 0,
+          winningTrades: 0,
+          losingTrades: 0,
+          realizedPnl: 0,
+          grossProfit: 0,
+          grossLoss: 0,
+          feesPaid: 0,
+          openPositionCount: 1,
+          openPositionQty: 1,
+          lastPrice: 108,
+          snapshotAt,
+        },
+        {
+          userId: ownerUser.id,
+          botId,
+          sessionId: session.id,
+          symbol: 'BNBUSDT',
+          totalSignals: 0,
+          longEntries: 0,
+          shortEntries: 0,
+          exits: 0,
+          dcaCount: 0,
+          closedTrades: 0,
+          winningTrades: 0,
+          losingTrades: 0,
+          realizedPnl: 0,
+          grossProfit: 0,
+          grossLoss: 0,
+          feesPaid: 0,
+          openPositionCount: 1,
+          openPositionQty: 1,
+          lastPrice: 103,
+          snapshotAt,
+        },
+      ],
+    });
+
+    const stateSpy = vi
+      .spyOn(runtimePositionAutomationService, 'getPositionStateSnapshot')
+      .mockImplementation((positionId: string) => {
+        if (positionId === preArm.id) {
+          return {
+            averageEntryPrice: 100,
+            quantity: 1,
+            currentAdds: 0,
+            trailingAnchorPrice: 101,
+          };
+        }
+        if (positionId === postArm.id) {
+          return {
+            averageEntryPrice: 100,
+            quantity: 1,
+            currentAdds: 0,
+            trailingAnchorPrice: 106,
+            trailingTakeProfitHighPercent: 0.08,
+            trailingTakeProfitStepPercent: 0.02,
+          };
+        }
+        if (positionId === fallback.id) {
+          return {
+            averageEntryPrice: 100,
+            quantity: 1,
+            currentAdds: 0,
+            trailingAnchorPrice: 100,
+            trailingLossLimitPercent: 0.04,
+          };
+        }
+        return null;
+      });
+
+    try {
+      const positionsRes = await owner.get(`/dashboard/bots/${botId}/runtime-sessions/${session.id}/positions`);
+      expect(positionsRes.status).toBe(200);
+      expect(positionsRes.body.showDynamicStopColumns).toBe(true);
+
+      const bySymbol = new Map(
+        positionsRes.body.openItems.map((item: { symbol: string }) => [item.symbol, item])
+      );
+      expect([...bySymbol.keys()]).toEqual(expect.arrayContaining(['BTCUSDT', 'ETHUSDT', 'BNBUSDT']));
+      const preArmItem = bySymbol.get('BTCUSDT') as {
+        dynamicTtpStopLoss: number | null;
+        dynamicTslStopLoss: number | null;
+      };
+      const postArmItem = bySymbol.get('ETHUSDT') as {
+        dynamicTtpStopLoss: number | null;
+        dynamicTslStopLoss: number | null;
+      };
+      const fallbackItem = bySymbol.get('BNBUSDT') as {
+        dynamicTtpStopLoss: number | null;
+        dynamicTslStopLoss: number | null;
+      };
+      expect(preArmItem).toBeDefined();
+      expect(postArmItem).toBeDefined();
+      expect(fallbackItem).toBeDefined();
+
+      expect(preArmItem.dynamicTtpStopLoss).toBeNull();
+      expect(preArmItem.dynamicTslStopLoss).toBeNull();
+
+      expect(postArmItem.dynamicTtpStopLoss).toBeCloseTo(103, 6);
+      expect(postArmItem.dynamicTslStopLoss).toBeCloseTo(104.94, 6);
+
+      expect(fallbackItem.dynamicTtpStopLoss).toBeNull();
+      expect(fallbackItem.dynamicTslStopLoss).toBeCloseTo(99, 6);
+    } finally {
+      stateSpy.mockRestore();
+    }
   });
 
   it('computes live signal direction from latest candles when no signal event exists yet', async () => {

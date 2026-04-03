@@ -203,7 +203,10 @@ type TranslationSchema = {
         previous: string;
         next: string;
         liveChecksTitle: string;
+        liveChecksSubtitle: string;
         pairsCount: string;
+        signalRailPrev: string;
+        signalRailNext: string;
         noSignalConditions: string;
         noSignalData: string;
         long: string;
@@ -437,8 +440,11 @@ export const translations: Record<Locale, TranslationSchema> = {
           rows: "Rows",
           previous: "Previous",
           next: "Next",
-          liveChecksTitle: "Live checks",
+          liveChecksTitle: "Strategy signals",
+          liveChecksSubtitle: "Signals computed from latest market checks against active strategy rules.",
           pairsCount: "{count} pairs",
+          signalRailPrev: "Prev",
+          signalRailNext: "Next",
           noSignalConditions: "No signal, conditions not met.",
           noSignalData: "No signal data.",
           long: "LONG",
@@ -991,8 +997,11 @@ export const translations: Record<Locale, TranslationSchema> = {
           rows: "Wierszy",
           previous: "Poprzednia",
           next: "Nastepna",
-          liveChecksTitle: "Live checks",
+          liveChecksTitle: "Sygnaly strategii",
+          liveChecksSubtitle: "Sygnaly obliczone na podstawie najnowszych danych i warunkow aktywnej strategii.",
           pairsCount: "{count} par",
+          signalRailPrev: "Wstecz",
+          signalRailNext: "Dalej",
           noSignalConditions: "Brak sygnalu, warunki niespelnione.",
           noSignalData: "Brak danych sygnalowych.",
           long: "LONG",
