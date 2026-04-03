@@ -30,4 +30,4 @@ COPY --from=build /app/apps/api /app/apps/api
 
 EXPOSE 3001
 WORKDIR /app/apps/api
-CMD ["node", "dist/index.js"]
+CMD ["node", "scripts/start-with-migrate.mjs"]

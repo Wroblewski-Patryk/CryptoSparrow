@@ -76,7 +76,10 @@ Docker build configuration (Coolify):
 - Exposed port: `3001`
 
 Runtime command:
-- keep image default command (`node dist/index.js`)
+- keep image default command (`node scripts/start-with-migrate.mjs`)
+- startup behavior:
+  1. run `prisma migrate deploy`,
+  2. start API only if migrations succeed.
 
 Health checks:
 - `/health`
@@ -94,6 +97,10 @@ Required environment variables:
 - `COOKIE_SAME_SITE=<lax|strict|none>` (optional, default `lax`; use `none` only when web/api are cross-site)
 - `API_KEY_ENCRYPTION_KEYS=<versioned-keys>`
 - `API_KEY_ENCRYPTION_ACTIVE_VERSION=<active-version>`
+
+Optional migration toggle:
+- `API_AUTO_MIGRATE=true` (default behavior in API image)
+- set `API_AUTO_MIGRATE=false` only for emergency/maintenance windows
 
 Reference: `docs/operations/dev-stage-prod-environment-matrix.md`
 
@@ -155,6 +162,10 @@ Before first stage/prod release:
 3. Confirm API starts without migration drift errors.
 
 If migration fails, do not continue deployment.
+
+Note:
+- API startup runs `prisma migrate deploy` automatically (safe/idempotent path).
+- Do **not** use destructive commands like `prisma migrate reset` or reseeding in production.
 
 ## Step 8: Stage Validation Gate
 

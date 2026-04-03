@@ -39,6 +39,7 @@ Optional but supported:
 - `JWT_SECRET_PREVIOUS_UNTIL`
 - `COOKIE_DOMAIN`
 - `COOKIE_SAME_SITE`
+- `API_AUTO_MIGRATE` (default `true`; controls `prisma migrate deploy` on API startup)
 - Runtime tuning flags (`RUNTIME_*`, `WORKER_*`, `MARKET_STREAM_*`, `OPS_*`)
 
 ### Web (`apps/web`)
