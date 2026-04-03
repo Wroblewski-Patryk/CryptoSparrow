@@ -1,0 +1,110 @@
+x-api-env: &api-env
+  NODE_ENV: ${NODE_ENV:-production}
+  DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:password@postgres:5432/cryptosparrow?schema=public}
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+  SERVER_PORT: ${SERVER_PORT:-3001}
+  SERVER_URL: ${SERVER_URL:-http://localhost:3001}
+  CLIENT_URL: ${CLIENT_URL:-http://localhost:3002}
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3002}
+  JWT_SECRET: ${JWT_SECRET:-change-me}
+  API_KEY_ENCRYPTION_KEYS: ${API_KEY_ENCRYPTION_KEYS:-v1:change-me-32-byte-secret}
+  API_KEY_ENCRYPTION_ACTIVE_VERSION: ${API_KEY_ENCRYPTION_ACTIVE_VERSION:-v1}
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: cryptosparrow/api:local
+    restart: unless-stopped
+    environment: *api-env
+    ports:
+      - "3001:3001"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    image: cryptosparrow/web:local
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3002
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3001}
+      JWT_SECRET: ${JWT_SECRET:-change-me}
+    ports:
+      - "3002:3002"
+
+  workers-market-data:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: cryptosparrow/workers:local
+    restart: unless-stopped
+    environment: *api-env
+    command: ["node", "dist/workers/marketData.worker.js"]
+
+  workers-market-stream:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: cryptosparrow/workers:local
+    restart: unless-stopped
+    environment: *api-env
+    command: ["node", "dist/workers/marketStream.worker.js"]
+
+  workers-backtest:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: cryptosparrow/workers:local
+    restart: unless-stopped
+    environment: *api-env
+    command: ["node", "dist/workers/backtest.worker.js"]
+
+  workers-execution:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: cryptosparrow/workers:local
+    restart: unless-stopped
+    environment: *api-env
+    command: ["node", "dist/workers/execution.worker.js"]
+
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    profiles: ["infra"]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: cryptosparrow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cryptosparrow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    profiles: ["infra"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:

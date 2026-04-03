@@ -61,15 +61,15 @@ Exit criteria:
 - Operator can deploy stage/prod from docs only, without guessing build config.
 
 ## Phase C - Non-Coolify VPS fallback
-- [ ] `DPL-29 feat(vps-compose): add docker-compose.vps.yml (api/web/workers + optional postgres/redis profiles)`
-- [ ] `DPL-30 docs(vps-compose): add fallback runbook for plain Docker Compose on VPS`
+- [x] `DPL-29 feat(vps-compose): add docker-compose.vps.yml (api/web/workers + optional postgres/redis profiles)`
+- [x] `DPL-30 docs(vps-compose): add fallback runbook for plain Docker Compose on VPS`
 
 Exit criteria:
 - Single-host VPS deployment possible without Coolify.
 
 ## Phase D - Validation and safety
-- [ ] `DPL-31 chore(deploy-smoke): add post-deploy smoke script/command pack (health, ready, web reachability, worker heartbeat)`
-- [ ] `DPL-32 docs(ops-gates): extend ops runbook with Dockerfile-based deploy gates and rollback specifics`
+- [x] `DPL-31 chore(deploy-smoke): add post-deploy smoke script/command pack (health, ready, web reachability, worker heartbeat)`
+- [x] `DPL-32 docs(ops-gates): extend ops runbook with Dockerfile-based deploy gates and rollback specifics`
 
 Exit criteria:
 - Deployment and rollback paths are testable and documented end-to-end.
@@ -104,7 +104,7 @@ Risk: stage/prod env drift.
 
 ## 6) Immediate next action
 
-Continue with Phase C fallback path (`docker-compose.vps.yml` + plain VPS runbook), then extend ops smoke/rollback gates for Dockerfile-based deployment flow.
+Run manual stage/prod rehearsal with the new Dockerfile-first contract and capture evidence in operations docs.
 
 ---
 
@@ -119,3 +119,7 @@ Continue with Phase C fallback path (`docker-compose.vps.yml` + plain VPS runboo
   - `docker build -f apps/web/Dockerfile -t cryptosparrow-web:local .` (PASS)
 - 2026-04-03: Completed `DPL-26` and `DPL-27` by updating `docs/operations/coolify-linux-vps-setup-guide.md` to Dockerfile-first service definitions (api/web + 4 worker services) with explicit build context and command overrides.
 - 2026-04-03: Completed `DPL-28` by adding README deployment quickstart section with Dockerfile paths and preflight build commands.
+- 2026-04-03: Completed `DPL-29` by adding `docker-compose.vps.yml` with app services (`api`, `web`, four workers) and optional infra profile (`postgres`, `redis`) for single-host fallback deployment.
+- 2026-04-03: Completed `DPL-30` by publishing `docs/operations/vps-docker-compose-fallback-guide.md` with env contract, start/stop commands, health checks, logs, rollback steps, and failure triage notes.
+- 2026-04-03: Completed `DPL-31` by adding `scripts/deploySmokeCheck.mjs` + root script `ops:deploy:smoke` to verify API `/health`, API `/ready`, web reachability, and (optionally) worker heartbeat endpoint `/workers/health`.
+- 2026-04-03: Completed `DPL-32` by extending `docs/operations/v1-ops-runbook.md` with Dockerfile-based deployment gates, smoke command pack usage, worker ownership checks during rollback, and deploy-specific runbook cross-references.

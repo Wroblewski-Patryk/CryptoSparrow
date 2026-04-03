@@ -46,7 +46,8 @@
     "ops:rc:gates:refresh": "node scripts/runLocalExternalGatesPipeline.mjs --skip-db-check --skip-slo-collect --skip-window-report --allow-offline",
     "ops:rc:gates:refresh:strict": "node scripts/runLocalExternalGatesPipeline.mjs --skip-db-check --skip-slo-collect --skip-window-report --allow-offline --strict-evidence-check",
     "ops:rc:gates:refresh:summary": "pnpm run ops:rc:gates:refresh && pnpm run ops:rc:gates:summary",
-    "ops:rc:gates:refresh:summary:strict": "node scripts/runRcRefreshSummaryStrict.mjs"
+    "ops:rc:gates:refresh:summary:strict": "node scripts/runRcRefreshSummaryStrict.mjs",
+    "ops:deploy:smoke": "node scripts/deploySmokeCheck.mjs"
   },
   "keywords": [],
   "author": "",

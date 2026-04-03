@@ -28,8 +28,15 @@ pnpm run workers/prod
 3. Run CI-equivalent checks:
    - `pnpm --filter api build`
    - `pnpm --filter web build`
-4. Apply DB migrations.
-5. Deploy API and client artifacts.
+4. Build production Docker artifacts:
+   - `docker build -f apps/api/Dockerfile -t cryptosparrow-api:<sha> .`
+   - `docker build -f apps/web/Dockerfile -t cryptosparrow-web:<sha> .`
+5. Apply DB migrations.
+6. Deploy API, web, and worker artifacts.
+   - Coolify path: `docs/operations/coolify-linux-vps-setup-guide.md`
+   - VPS compose fallback: `docs/operations/vps-docker-compose-fallback-guide.md`
+7. Run smoke command pack:
+   - `pnpm run ops:deploy:smoke`
 6. Validate post-deploy probes:
    - `GET /health` returns `200`
    - `GET /ready` returns `200`
@@ -37,15 +44,20 @@ pnpm run workers/prod
 
 ## Rollback Checklist
 1. Identify last known good release tag.
-2. Re-deploy previous API and client artifacts.
-3. Re-run probes:
+2. Re-deploy previous API, web, and worker artifacts (same stable SHA across services).
+3. Ensure runtime ownership split remains intact after rollback:
+   - API alive
+   - web alive
+   - all four workers alive
+4. Re-run probes:
    - `GET /health`
    - `GET /ready`
-4. Validate critical flows:
+   - `pnpm run ops:deploy:smoke`
+5. Validate critical flows:
    - auth login/logout
    - dashboard list pages
    - exchange order path in paper mode
-5. Record rollback reason and owner in incident log.
+6. Record rollback reason and owner in incident log.
 
 ## Incident Playbook
 ### Severity Levels
@@ -71,6 +83,9 @@ pnpm run workers/prod
 - Use baseline alert definitions from `docs/operations/v1-alert-rules.md`.
 - Record and review drill outcomes in `docs/operations/v1-incident-drills.md`.
 - For assistant-specific incidents/fallback/recovery flow, use `docs/operations/v1-assistant-incident-runbook.md`.
+- For deploy-specific rollback and gates, use:
+  - `docs/operations/deployment-rollback-playbook.md`
+  - `docs/operations/deployment-readiness-gates.md`
 
 ## Ownership
 - Incident commander: backend on-call owner.

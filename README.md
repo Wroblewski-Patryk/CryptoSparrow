@@ -134,6 +134,7 @@ pnpm --filter web start
 
 Canonical guide:
 - `docs/operations/coolify-linux-vps-setup-guide.md`
+- fallback without Coolify: `docs/operations/vps-docker-compose-fallback-guide.md`
 
 Dockerfile artifacts used by Coolify:
 - API: `apps/api/Dockerfile`
@@ -146,6 +147,9 @@ Quick local verification before first VPS deploy:
 docker build -f apps/api/Dockerfile -t cryptosparrow-api:local .
 docker build -f apps/web/Dockerfile -t cryptosparrow-web:local .
 ```
+
+VPS fallback env template:
+- `.env.vps.example` (copy to `.env.vps` for `docker-compose.vps.yml`)
 
 If Coolify shows `failed to read dockerfile`, verify Dockerfile path in service config.
 
