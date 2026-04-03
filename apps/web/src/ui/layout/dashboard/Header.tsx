@@ -10,18 +10,20 @@ import {
   LuChartCandlestick,
   LuFileChartColumnIncreasing,
   LuHouse,
+  LuMenu,
   LuChartLine,
   LuListChecks,
   LuPackageOpen,
   LuShieldCheck,
   LuShoppingCart,
+  LuX,
 } from 'react-icons/lu';
 
 import ProfileButton from '../../components/ProfileButton';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useDetailsDropdown } from '../../hooks/useDetailsDropdown';
 import { dashboardRoutes, pathStartsWithAny } from './dashboardRoutes';
-import { getHeaderMenuItemClass } from './headerControlStyles';
+import { getHeaderMenuItemClass, headerMenuItemActiveClass } from './headerControlStyles';
 
 type NavItem = {
   href: string;
@@ -217,20 +219,25 @@ export default function Header() {
             </nav>
             <button
               type="button"
-              className="btn btn-sm btn-ghost text-base-100 xl:hidden"
+              className={`btn btn-sm btn-square btn-ghost xl:hidden text-primary-content/85 hover:bg-base-100/15 hover:text-primary-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-content/50 transition-colors ${mobileMenuOpen ? headerMenuItemActiveClass : ''}`}
               aria-expanded={mobileMenuOpen}
               aria-controls="dashboard-mobile-nav"
+              aria-label={t('dashboard.nav.menu')}
               onClick={() => setMobileMenuOpen((value) => !value)}
             >
-              {t('dashboard.nav.menu')}
+              {mobileMenuOpen ? <LuX className='h-5 w-5' aria-hidden /> : <LuMenu className='h-5 w-5' aria-hidden />}
+              <span className='sr-only'>{t('dashboard.nav.menu')}</span>
             </button>
           </div>
         </div>
 
         {mobileMenuOpen && (
-          <div id="dashboard-mobile-nav" className="xl:hidden mt-2 space-y-2">
-            <nav aria-label="Dashboard navigation">
-              <ul className="menu rounded-box bg-base-100/10 p-2 gap-1">
+          <div
+            id="dashboard-mobile-nav"
+            className="xl:hidden mt-2 w-full max-h-[calc(100vh-5.5rem)] space-y-2 overflow-y-auto overscroll-contain pr-1"
+          >
+            <nav aria-label="Dashboard navigation" className="w-full">
+              <ul className="menu rounded-box bg-base-100/10 p-2 gap-1 w-full">
                 {allLinks.map((item, index) => {
                   const ItemIcon = item.icon;
                   return (
@@ -249,8 +256,8 @@ export default function Header() {
                 })}
               </ul>
             </nav>
-            <div className="flex items-center gap-2">
-              <ProfileButton />
+            <div className="w-full">
+              <ProfileButton mobile onNavigate={() => setMobileMenuOpen(false)} />
             </div>
           </div>
         )}

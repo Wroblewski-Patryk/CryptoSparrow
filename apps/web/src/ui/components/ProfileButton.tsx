@@ -7,13 +7,65 @@ import { useAuth } from '../../context/AuthContext';
 import { useDetailsDropdown } from '../hooks/useDetailsDropdown';
 import { headerMenuItemClass } from '../layout/dashboard/headerControlStyles';
 
-export default function ProfileButton() {
+type ProfileButtonProps = {
+  mobile?: boolean;
+  onNavigate?: () => void;
+};
+
+export default function ProfileButton({ mobile = false, onNavigate }: ProfileButtonProps) {
   const { loading, logout, user } = useAuth();
   const detailsRef = useRef<HTMLDetailsElement>(null);
   useDetailsDropdown(detailsRef);
 
   if (loading) {
     return <span className="mt-2 loading loading-dots loading-xs text-secondary" />;
+  }
+
+  if (mobile) {
+    return (
+      <div className="rounded-box bg-base-100/10 p-2">
+        <p className="px-3 py-1 text-xs font-semibold uppercase tracking-wide opacity-70">Moje konto</p>
+        {user?.email ? <p className="px-3 pb-1 text-xs opacity-75 truncate">{user.email}</p> : null}
+        <ul className="menu w-full p-0 gap-1">
+          <li>
+            <Link href="/dashboard/profile#basic" onClick={onNavigate}>
+              <LuUser className="h-4 w-4" aria-hidden />
+              Dane podstawowe
+            </Link>
+          </li>
+          <li>
+            <Link href="/dashboard/profile#subscription" onClick={onNavigate}>
+              <LuSubscript className="h-4 w-4" aria-hidden />
+              Subskrypcja
+            </Link>
+          </li>
+          <li>
+            <Link href="/dashboard/profile#security" onClick={onNavigate}>
+              <LuSettings className="h-4 w-4" aria-hidden />
+              Bezpieczenstwo
+            </Link>
+          </li>
+          <li>
+            <Link href="/dashboard/profile#api" onClick={onNavigate}>
+              <LuKey className="h-4 w-4" aria-hidden />
+              Integracje i API keys
+            </Link>
+          </li>
+          <li className="mt-1">
+            <button
+              onClick={() => {
+                onNavigate?.();
+                logout();
+              }}
+              className="text-error"
+            >
+              <LuLogOut className="h-4 w-4" aria-hidden />
+              Wyloguj
+            </button>
+          </li>
+        </ul>
+      </div>
+    );
   }
 
   return (
