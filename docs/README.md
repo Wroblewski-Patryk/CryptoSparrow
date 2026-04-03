@@ -40,3 +40,8 @@ This folder contains canonical project documentation grouped by domain.
 ## Notes
 - Root directory stays minimal. Domain documentation belongs under `docs/` categories.
 - Historical assumptions and decisions are preserved in migrated files and planning artifacts.
+
+## New Deployment Docs (Soar Hardening)
+- `operations/soar-production-hardening-2026-04-03.md`
+- `operations/deployment-template-local-stage-production.md`
+- `operations/agent-deployment-skill-template.md`
