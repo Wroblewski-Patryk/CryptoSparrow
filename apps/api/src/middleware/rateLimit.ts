@@ -102,31 +102,37 @@ export const createRateLimiter = ({ windowMs, max, keyScope = 'user' }: RateLimi
     const key = `rate_limit:${rateLimitKey(req, keyScope)}`;
 
     if (redis) {
-      const result = (await redis.eval(
-        `
-          local current = redis.call('INCR', KEYS[1])
-          if current == 1 then
-            redis.call('PEXPIRE', KEYS[1], ARGV[1])
-          end
-          local ttl = redis.call('PTTL', KEYS[1])
-          return { current, ttl }
-        `,
-        {
-          keys: [key],
-          arguments: [String(windowMs)],
+      try {
+        const result = (await redis.eval(
+          `
+            local current = redis.call('INCR', KEYS[1])
+            if current == 1 then
+              redis.call('PEXPIRE', KEYS[1], ARGV[1])
+            end
+            local ttl = redis.call('PTTL', KEYS[1])
+            return { current, ttl }
+          `,
+          {
+            keys: [key],
+            arguments: [String(windowMs)],
+          }
+        )) as [number, number];
+
+        const currentCount = Number(result[0]);
+        const ttlMs = Number(result[1]);
+
+        if (currentCount > max) {
+          const retryAfterSeconds = Math.ceil(Math.max(ttlMs, 1000) / 1000);
+          res.setHeader('Retry-After', String(retryAfterSeconds));
+          return sendError(res, 429, 'Too many requests');
         }
-      )) as [number, number];
 
-      const currentCount = Number(result[0]);
-      const ttlMs = Number(result[1]);
-
-      if (currentCount > max) {
-        const retryAfterSeconds = Math.ceil(Math.max(ttlMs, 1000) / 1000);
-        res.setHeader('Retry-After', String(retryAfterSeconds));
-        return sendError(res, 429, 'Too many requests');
+        return next();
+      } catch (error) {
+        // Fail open to in-memory limiter if Redis write path is temporarily broken
+        // (for example MISCONF during snapshot failures).
+        console.error('Redis rate-limit eval failed, falling back to in-memory limiter:', error);
       }
-
-      return next();
     }
 
     // Fallback for local environments when Redis is temporarily unavailable.
