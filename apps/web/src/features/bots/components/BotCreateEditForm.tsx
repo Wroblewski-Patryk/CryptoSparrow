@@ -24,7 +24,34 @@ const DUPLICATE_ACTIVE_BOT_ERROR = "active bot already exists for this strategy 
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
-  return (err.response?.data as { message?: string } | undefined)?.message;
+  const payload = err.response?.data as
+    | {
+        message?: string;
+        error?: { message?: string; details?: Array<{ message?: string }> | unknown };
+      }
+    | undefined;
+
+  if (typeof payload?.message === "string" && payload.message.trim()) {
+    return payload.message.trim();
+  }
+  if (typeof payload?.error?.message === "string" && payload.error.message.trim()) {
+    return payload.error.message.trim();
+  }
+
+  if (Array.isArray(payload?.error?.details)) {
+    const detailMessages = payload.error.details
+      .map((item) =>
+        item && typeof item === "object" && "message" in item
+          ? (item as { message?: unknown }).message
+          : undefined
+      )
+      .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+    if (detailMessages.length > 0) {
+      return detailMessages.join("; ");
+    }
+  }
+
+  return undefined;
 };
 
 const deriveStrategyMaxOpenPositions = (strategy: StrategyDto | null): number => {
