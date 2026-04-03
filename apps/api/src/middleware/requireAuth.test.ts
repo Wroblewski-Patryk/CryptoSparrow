@@ -13,6 +13,7 @@ afterEach(() => {
   process.env.JWT_SECRET = originalJwtSecret;
   process.env.JWT_SECRET_PREVIOUS = originalJwtSecretPrevious;
   process.env.JWT_SECRET_PREVIOUS_UNTIL = originalJwtSecretPreviousUntil;
+  vi.restoreAllMocks();
 });
 
 describe('requireAuth middleware', () => {
@@ -74,7 +75,7 @@ describe('requireAuth middleware', () => {
   });
 
   it('returns 503 when auth user lookup is temporarily unavailable', async () => {
-    const verifySpy = vi.spyOn(authJwt, 'verifyAuthToken').mockReturnValue({
+    vi.spyOn(authJwt, 'verifyAuthToken').mockReturnValue({
       userId: 'db-down-user',
       email: 'db-down@example.com',
       role: 'USER',
@@ -83,11 +84,56 @@ describe('requireAuth middleware', () => {
       aud: 'cryptosparrow-app',
       iss: 'cryptosparrow',
     });
-    const findUniqueSpy = vi.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('db unavailable'));
+    vi.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('db unavailable'));
     const res = await request(app).get('/dashboard').set('Cookie', ['token=test-token']);
     expect(res.status).toBe(503);
     expect(res.body.error.message).toBe('Auth service temporarily unavailable');
-    findUniqueSpy.mockRestore();
-    verifySpy.mockRestore();
+  });
+
+  it('prefers newest valid token when duplicate token cookies are present', async () => {
+    const olderUserId = 'older-user';
+    const newerUserId = 'newer-user';
+    const olderToken = 'older-token';
+    const newerToken = 'newer-token';
+
+    vi.spyOn(authJwt, 'verifyAuthToken').mockImplementation((token) => {
+      if (token === olderToken) {
+        return {
+          userId: olderUserId,
+          email: 'older@example.com',
+          role: 'USER',
+          iat: 100,
+          exp: 200,
+          aud: 'cryptosparrow-app',
+          iss: 'cryptosparrow',
+        };
+      }
+      if (token === newerToken) {
+        return {
+          userId: newerUserId,
+          email: 'newer@example.com',
+          role: 'USER',
+          iat: 200,
+          exp: 300,
+          aud: 'cryptosparrow-app',
+          iss: 'cryptosparrow',
+        };
+      }
+      throw new Error('Invalid token');
+    });
+    vi.spyOn(prisma.user, 'findUnique').mockImplementation((async (args: { where: { id?: string } }) => {
+      const { where } = args;
+      if (where.id === olderUserId) return { id: olderUserId } as { id: string };
+      if (where.id === newerUserId) return { id: newerUserId } as { id: string };
+      return null;
+    }) as unknown as typeof prisma.user.findUnique);
+
+    const res = await request(app)
+      .get('/dashboard')
+      .set('Cookie', [`token=${olderToken}`, `token=${newerToken}`]);
+
+    expect(res.status).toBe(200);
+    expect(res.body.user.id).toBe(newerUserId);
+    expect(res.body.user.email).toBe('newer@example.com');
   });
 });

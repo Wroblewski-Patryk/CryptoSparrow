@@ -1,25 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { sendError } from '../utils/apiError';
-import { verifyAuthToken } from '../modules/auth/auth.jwt';
 import { prisma } from '../prisma/client';
+import {
+  getCandidateTokensFromRequest,
+  getVerifiedAuthTokenCandidates,
+} from '../modules/auth/sessionToken';
 
 const getCookieDomain = () => {
   const domain = process.env.COOKIE_DOMAIN?.trim();
   return domain && domain.length > 0 ? domain : undefined;
-};
-
-const getCandidateTokens = (req: Request) => {
-  const parsedToken = typeof req.cookies?.token === 'string' ? req.cookies.token : null;
-  const rawCookieHeader = typeof req.headers.cookie === 'string' ? req.headers.cookie : '';
-
-  const rawTokens = rawCookieHeader
-    .split(';')
-    .map((part) => part.trim())
-    .filter((part) => part.startsWith('token='))
-    .map((part) => decodeURIComponent(part.slice('token='.length)))
-    .filter((value) => value.length > 0);
-
-  return [...new Set([...(parsedToken ? [parsedToken] : []), ...rawTokens])];
 };
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -38,44 +27,36 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     }
   };
 
-  const candidateTokens = getCandidateTokens(req);
+  const candidateTokens = getCandidateTokensFromRequest(req);
   if (candidateTokens.length === 0) {
     clearSession();
     return sendError(res, 401, 'Missing token');
   }
 
-  for (const token of candidateTokens) {
+  const verifiedCandidates = getVerifiedAuthTokenCandidates(req);
+
+  for (const candidate of verifiedCandidates) {
+    let userExists: { id: string } | null = null;
     try {
-      const payload = verifyAuthToken(token);
-
-      if (!payload.userId || !payload.email || !payload.role) {
-        continue;
-      }
-
-      let userExists: { id: string } | null = null;
-      try {
-        userExists = await prisma.user.findUnique({
-          where: { id: payload.userId },
-          select: { id: true },
-        });
-      } catch {
-        return sendError(res, 503, 'Auth service temporarily unavailable');
-      }
-
-      if (!userExists) {
-        continue;
-      }
-
-      req.user = {
-        id: payload.userId,
-        email: payload.email,
-        role: payload.role,
-      };
-
-      return next();
+      userExists = await prisma.user.findUnique({
+        where: { id: candidate.claims.userId },
+        select: { id: true },
+      });
     } catch {
+      return sendError(res, 503, 'Auth service temporarily unavailable');
+    }
+
+    if (!userExists) {
       continue;
     }
+
+    req.user = {
+      id: candidate.claims.userId,
+      email: candidate.claims.email,
+      role: candidate.claims.role,
+    };
+
+    return next();
   }
 
   clearSession();

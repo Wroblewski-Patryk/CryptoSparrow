@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { describe, it, expect, beforeEach } from 'vitest';
+import jwt from 'jsonwebtoken';
 import { app } from '../../index';
 import { prisma } from '../../prisma/client';
 import { REMEMBER_ME_TTL_MS, SESSION_TTL_MS } from './auth.session';
@@ -19,6 +20,9 @@ describe('POST /auth/register', () => {
     await prisma.botAssistantConfig.deleteMany();
     await prisma.marketGroupStrategyLink.deleteMany();
     await prisma.botMarketGroup.deleteMany();
+    await prisma.botRuntimeEvent.deleteMany();
+    await prisma.botRuntimeSymbolStat.deleteMany();
+    await prisma.botRuntimeSession.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
@@ -124,6 +128,74 @@ describe('POST /auth/register', () => {
     expect(meRes.body.error.message).toBe('Session expired. Please sign in again.');
     const clearedCookie = meRes.headers['set-cookie']?.[0] ?? '';
     expect(clearedCookie).toContain('token=');
+  });
+
+  it('uses newest valid token on /auth/me when duplicate token cookies are sent', async () => {
+    const originalJwtSecret = process.env.JWT_SECRET;
+    const originalJwtSecretPrevious = process.env.JWT_SECRET_PREVIOUS;
+    const originalJwtSecretPreviousUntil = process.env.JWT_SECRET_PREVIOUS_UNTIL;
+
+    process.env.JWT_SECRET = 'auth-me-token-precedence-secret';
+    process.env.JWT_SECRET_PREVIOUS = '';
+    process.env.JWT_SECRET_PREVIOUS_UNTIL = '';
+    try {
+      const olderUser = await prisma.user.create({
+        data: {
+          email: `me-older-${Date.now()}@example.com`,
+          password: 'hashed-password',
+        },
+      });
+      const newerUser = await prisma.user.create({
+        data: {
+          email: `me-newer-${Date.now()}@example.com`,
+          password: 'hashed-password',
+        },
+      });
+
+      const nowSec = Math.floor(Date.now() / 1000);
+      const olderToken = jwt.sign(
+        {
+          userId: olderUser.id,
+          email: olderUser.email,
+          role: 'USER',
+          iat: nowSec - 120,
+          exp: nowSec + 3600,
+        },
+        'auth-me-token-precedence-secret',
+        {
+          algorithm: 'HS256',
+          issuer: 'cryptosparrow',
+          audience: 'cryptosparrow-app',
+        }
+      );
+      const newerToken = jwt.sign(
+        {
+          userId: newerUser.id,
+          email: newerUser.email,
+          role: 'USER',
+          iat: nowSec - 60,
+          exp: nowSec + 3600,
+        },
+        'auth-me-token-precedence-secret',
+        {
+          algorithm: 'HS256',
+          issuer: 'cryptosparrow',
+          audience: 'cryptosparrow-app',
+        }
+      );
+
+      const meRes = await request(app)
+        .get('/auth/me')
+        .set('Cookie', [`token=${olderToken}`, `token=${newerToken}`]);
+
+      expect(meRes.status).toBe(200);
+      expect(meRes.body.id).toBe(newerUser.id);
+      expect(meRes.body.email).toBe(newerUser.email);
+    } finally {
+      process.env.JWT_SECRET = originalJwtSecret;
+      process.env.JWT_SECRET_PREVIOUS = originalJwtSecretPrevious;
+      process.env.JWT_SECRET_PREVIOUS_UNTIL = originalJwtSecretPreviousUntil;
+    }
   });
 });
 
