@@ -249,6 +249,62 @@ describe('Bots module contract', () => {
     expect(deleteRes.status).toBe(404);
   });
 
+  it('deletes bot with runtime history cleanup', async () => {
+    const email = 'bots-delete-runtime-cleanup@example.com';
+    const agent = await registerAndLogin(email);
+    const strategyId = await createStrategy(agent, 'Delete Runtime Strategy');
+    const marketGroupId = await createMarketGroup(email, 'FUTURES');
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+
+    const createRes = await agent.post('/dashboard/bots').send({
+      ...createPayload({ strategyId, marketGroupId }),
+      isActive: true,
+    });
+    expect(createRes.status).toBe(201);
+    const botId = createRes.body.id as string;
+
+    const session = await prisma.botRuntimeSession.create({
+      data: {
+        userId: user.id,
+        botId,
+        mode: 'PAPER',
+        status: 'RUNNING',
+        startedAt: new Date(),
+      },
+    });
+    await prisma.botRuntimeEvent.create({
+      data: {
+        userId: user.id,
+        botId,
+        sessionId: session.id,
+        eventType: 'HEARTBEAT',
+        level: 'INFO',
+        eventAt: new Date(),
+      },
+    });
+    await prisma.botRuntimeSymbolStat.create({
+      data: {
+        userId: user.id,
+        botId,
+        sessionId: session.id,
+        symbol: 'BTCUSDT',
+      },
+    });
+
+    const deleteRes = await agent.delete(`/dashboard/bots/${botId}`);
+    expect(deleteRes.status).toBe(204);
+
+    const [sessionsCount, eventsCount, statsCount] = await Promise.all([
+      prisma.botRuntimeSession.count({ where: { botId } }),
+      prisma.botRuntimeEvent.count({ where: { botId } }),
+      prisma.botRuntimeSymbolStat.count({ where: { botId } }),
+    ]);
+
+    expect(sessionsCount).toBe(0);
+    expect(eventsCount).toBe(0);
+    expect(statsCount).toBe(0);
+  });
+
   it('enforces create ownership contract for strategyId/marketGroupId and derives marketType from market group', async () => {
     const ownerEmail = 'bots-create-contract-owner@example.com';
     const otherEmail = 'bots-create-contract-other@example.com';

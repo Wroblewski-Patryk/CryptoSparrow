@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import * as strategyService from './strategies.service';
 import { sendError } from '../../utils/apiError';
 
@@ -50,9 +51,19 @@ export const deleteStrategy = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return sendError(res, 401, 'Unauthorized');
     const { id } = req.params;
-    const deleted = await strategyService.deleteStrategy(id, userId);
-    if (!deleted) return sendError(res, 404, 'Not found');
-    res.status(204).end();
+    try {
+      const deleted = await strategyService.deleteStrategy(id, userId);
+      if (!deleted) return sendError(res, 404, 'Not found');
+      return res.status(204).end();
+    } catch (error) {
+      if (error instanceof Error && error.message === 'STRATEGY_USED_BY_ACTIVE_BOT') {
+        return sendError(res, 409, 'strategy is used by active bot and cannot be deleted');
+      }
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        return sendError(res, 409, 'strategy has linked records and cannot be deleted');
+      }
+      throw error;
+    }
 };
 
 // GET /strategies/:id/export

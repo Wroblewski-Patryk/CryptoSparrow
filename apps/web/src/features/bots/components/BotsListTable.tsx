@@ -18,7 +18,8 @@ import { Bot } from "../types/bot.type";
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
-  return (err.response?.data as { message?: string } | undefined)?.message;
+  const response = err.response?.data as { error?: { message?: string }; message?: string } | undefined;
+  return response?.error?.message ?? response?.message;
 };
 
 export default function BotsListTable() {

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import { sendError } from '../../utils/apiError';
 import { sendValidationError } from '../../utils/formatZodError';
 import * as botsService from './bots.service';
@@ -204,11 +205,18 @@ export const deleteBot = async (req: Request, res: Response) => {
   const userId = req.user?.id;
   if (!userId) return sendError(res, 401, 'Unauthorized');
 
-  const { id } = req.params;
-  const deleted = await botsService.deleteBot(userId, id);
-  if (!deleted) return sendError(res, 404, 'Not found');
+  try {
+    const { id } = req.params;
+    const deleted = await botsService.deleteBot(userId, id);
+    if (!deleted) return sendError(res, 404, 'Not found');
 
-  return res.status(204).end();
+    return res.status(204).end();
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+      return sendError(res, 409, 'bot has linked records and cannot be deleted');
+    }
+    return sendError(res, 500, 'Internal server error');
+  }
 };
 
 export const listBotMarketGroups = async (req: Request, res: Response) => {

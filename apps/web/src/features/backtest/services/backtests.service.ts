@@ -25,6 +25,10 @@ export const createBacktestRun = async (payload: CreateBacktestRunInput): Promis
   return res.data;
 };
 
+export const deleteBacktestRun = async (runId: string): Promise<void> => {
+  await api.delete(`/dashboard/backtests/runs/${runId}`);
+};
+
 export const getBacktestRun = async (runId: string): Promise<BacktestRun> => {
   const res = await api.get<BacktestRun>(`/dashboard/backtests/runs/${runId}`);
   return res.data;

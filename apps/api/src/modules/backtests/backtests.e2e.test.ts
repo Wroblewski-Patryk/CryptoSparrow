@@ -178,6 +178,50 @@ describe('Backtests runs contract', () => {
     expect(reportRes.body.totalTrades).toBeGreaterThanOrEqual(2);
   });
 
+  it('supports delete run flow for owner', async () => {
+    const ownerEmail = 'backtests-delete-owner@example.com';
+    const agent = await registerAndLogin(ownerEmail);
+    const userId = await getUserIdByEmail(ownerEmail);
+
+    const createRes = await agent.post('/dashboard/backtests/runs').send(createPayload());
+    expect(createRes.status).toBe(201);
+    const runId = createRes.body.id as string;
+
+    await prisma.backtestTrade.create({
+      data: {
+        userId,
+        backtestRunId: runId,
+        symbol: 'BTCUSDT',
+        side: 'LONG',
+        entryPrice: 100,
+        exitPrice: 101,
+        quantity: 1,
+        openedAt: new Date('2026-01-01T00:00:00.000Z'),
+        closedAt: new Date('2026-01-01T01:00:00.000Z'),
+        pnl: 1,
+        fee: 0,
+      },
+    });
+    await prisma.backtestReport.create({
+      data: {
+        userId,
+        backtestRunId: runId,
+        totalTrades: 1,
+        winningTrades: 1,
+        losingTrades: 0,
+        winRate: 1,
+        netPnl: 1,
+      },
+    });
+
+    const deleteRes = await agent.delete(`/dashboard/backtests/runs/${runId}`);
+    expect(deleteRes.status).toBe(204);
+
+    const getDeletedRes = await agent.get(`/dashboard/backtests/runs/${runId}`);
+    expect(getDeletedRes.status).toBe(404);
+    expect(getDeletedRes.body.error.message).toBe('Not found');
+  });
+
   it('enforces ownership isolation and strategy ownership at create time', async () => {
     const ownerEmail = 'backtests-owner-2@example.com';
     const ownerAgent = await registerAndLogin(ownerEmail);

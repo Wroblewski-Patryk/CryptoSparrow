@@ -10,7 +10,8 @@ import { I18nContext } from '../../../i18n/I18nProvider';
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
-  return (err.response?.data as { message?: string } | undefined)?.message;
+  const response = err.response?.data as { error?: { message?: string }; message?: string } | undefined;
+  return response?.error?.message ?? response?.message;
 };
 
 export default function BacktestsListView() {
@@ -70,6 +71,6 @@ export default function BacktestsListView() {
     return <EmptyState title={copy.emptyTitle} description={copy.emptyDescription} />;
   }
 
-  return <BacktestsRunsTable rows={rows} />;
+  return <BacktestsRunsTable rows={rows} onDeleted={(id) => setRows((prev) => prev.filter((row) => row.id !== id))} />;
 }
 

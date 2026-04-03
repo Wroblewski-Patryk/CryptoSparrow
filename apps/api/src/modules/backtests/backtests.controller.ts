@@ -47,6 +47,17 @@ export const createBacktestRun = async (req: Request, res: Response) => {
   }
 };
 
+export const deleteBacktestRun = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  const { id } = req.params;
+  const deleted = await backtestsService.deleteRun(userId, id);
+  if (!deleted) return sendError(res, 404, 'Not found');
+
+  return res.status(204).end();
+};
+
 export const listBacktestRunTrades = async (req: Request, res: Response) => {
   const userId = req.user?.id;
   if (!userId) return sendError(res, 401, 'Unauthorized');

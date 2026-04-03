@@ -1633,6 +1633,34 @@ export const getRun = async (userId: string, id: string) => {
   });
 };
 
+export const deleteRun = async (userId: string, id: string) => {
+  const existing = await prisma.backtestRun.findFirst({
+    where: { id, userId },
+    select: { id: true },
+  });
+  if (!existing) return false;
+
+  await prisma.$transaction([
+    prisma.backtestReport.deleteMany({
+      where: {
+        userId,
+        backtestRunId: existing.id,
+      },
+    }),
+    prisma.backtestTrade.deleteMany({
+      where: {
+        userId,
+        backtestRunId: existing.id,
+      },
+    }),
+    prisma.backtestRun.delete({
+      where: { id: existing.id },
+    }),
+  ]);
+
+  return true;
+};
+
 export const createRun = async (userId: string, data: CreateBacktestRunDto) => {
   let strategyDefaults: { leverage: number; marginMode: MarginMode } | null = null;
   if (data.strategyId) {

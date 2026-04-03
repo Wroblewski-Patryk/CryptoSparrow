@@ -1513,7 +1513,48 @@ export const deleteBot = async (userId: string, id: string) => {
   const existing = await getBot(userId, id);
   if (!existing) return false;
 
+  if (existing.isActive) {
+    await runtimeTelemetryService.closeRuntimeSession({
+      botId: existing.id,
+      status: 'CANCELED',
+      stopReason: 'bot_deleted',
+    });
+  }
+
   await prisma.$transaction([
+    prisma.position.updateMany({
+      where: { botId: existing.id },
+      data: { botId: null },
+    }),
+    prisma.order.updateMany({
+      where: { botId: existing.id },
+      data: { botId: null },
+    }),
+    prisma.trade.updateMany({
+      where: { botId: existing.id },
+      data: { botId: null },
+    }),
+    prisma.signal.updateMany({
+      where: { botId: existing.id },
+      data: { botId: null },
+    }),
+    prisma.log.updateMany({
+      where: { botId: existing.id },
+      data: { botId: null },
+    }),
+    prisma.orderFill.updateMany({
+      where: { botId: existing.id },
+      data: { botId: null },
+    }),
+    prisma.botRuntimeEvent.deleteMany({
+      where: { botId: existing.id },
+    }),
+    prisma.botRuntimeSymbolStat.deleteMany({
+      where: { botId: existing.id },
+    }),
+    prisma.botRuntimeSession.deleteMany({
+      where: { botId: existing.id },
+    }),
     prisma.marketGroupStrategyLink.deleteMany({
       where: { botId: existing.id },
     }),

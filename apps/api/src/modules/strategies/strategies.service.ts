@@ -28,10 +28,25 @@ export const updateStrategy = async (id: string, userId: string, data: Partial<C
     const existing = await getStrategyById(id, userId);
     if (!existing) return null;
 
+    const usedByActiveBot = await isStrategyUsedByActiveBot(userId, existing.id);
+    if (usedByActiveBot) {
+      throw new Error('STRATEGY_USED_BY_ACTIVE_BOT');
+    }
+
+    return prisma.strategy.update({
+      where: { id: existing.id },
+      data: {
+        ...data,
+        config: data.config as Prisma.InputJsonValue | undefined,
+      },
+    });
+};
+
+const isStrategyUsedByActiveBot = async (userId: string, strategyId: string) => {
     const usedByActiveCanonicalBot = await prisma.marketGroupStrategyLink.findFirst({
       where: {
         userId,
-        strategyId: existing.id,
+        strategyId,
         isEnabled: true,
         bot: {
           userId,
@@ -48,7 +63,7 @@ export const updateStrategy = async (id: string, userId: string, data: Partial<C
 
     const usedByActiveLegacyBot = await prisma.botStrategy.findFirst({
       where: {
-        strategyId: existing.id,
+        strategyId,
         isEnabled: true,
         bot: {
           userId,
@@ -59,21 +74,19 @@ export const updateStrategy = async (id: string, userId: string, data: Partial<C
     });
 
     if (usedByActiveCanonicalBot || usedByActiveLegacyBot) {
-      throw new Error('STRATEGY_USED_BY_ACTIVE_BOT');
+      return true;
     }
-
-    return prisma.strategy.update({
-      where: { id: existing.id },
-      data: {
-        ...data,
-        config: data.config as Prisma.InputJsonValue | undefined,
-      },
-    });
+    return false;
 };
 
 export const deleteStrategy = async (id: string, userId: string) => {
     const existing = await getStrategyById(id, userId);
     if (!existing) return false;
+
+    const usedByActiveBot = await isStrategyUsedByActiveBot(userId, existing.id);
+    if (usedByActiveBot) {
+      throw new Error('STRATEGY_USED_BY_ACTIVE_BOT');
+    }
 
     await prisma.strategy.delete({ where: { id: existing.id } });
     return true;

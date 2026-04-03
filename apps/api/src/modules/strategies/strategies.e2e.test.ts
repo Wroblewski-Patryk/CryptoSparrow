@@ -240,6 +240,26 @@ describe('Strategies CRUD contract', () => {
     expect(updateRes.status).toBe(200);
     expect(updateRes.body.name).toBe('Allowed strategy update');
   });
+
+  it('blocks strategy delete when strategy is used by any active bot', async () => {
+    const email = 'strategies-active-bot-delete-lock@example.com';
+    const agent = await registerAndLogin(email);
+
+    const createRes = await agent.post('/dashboard/strategies').send(createStrategyPayload());
+    expect(createRes.status).toBe(201);
+    const strategyId = createRes.body.id as string;
+
+    await createBotWithStrategy({
+      agent,
+      email,
+      strategyId,
+      isActive: true,
+    });
+
+    const deleteRes = await agent.delete(`/dashboard/strategies/${strategyId}`);
+    expect(deleteRes.status).toBe(409);
+    expect(deleteRes.body.error.message).toBe('strategy is used by active bot and cannot be deleted');
+  });
 });
 
 

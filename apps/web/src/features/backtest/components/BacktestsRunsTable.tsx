@@ -1,15 +1,20 @@
 'use client';
 
-import { useContext, useMemo } from 'react';
-import { LuPencilLine } from 'react-icons/lu';
+import { useContext, useMemo, useState } from 'react';
+import axios from 'axios';
+import { toast } from 'sonner';
+import { LuPencilLine, LuTrash2 } from 'react-icons/lu';
 import DataTable, { DataTableColumn } from '@/ui/components/DataTable';
-import { TableIconLinkAction, TableToneBadge } from '@/ui/components/TableUi';
+import ConfirmModal from '@/ui/components/ConfirmModal';
+import { TableIconButtonAction, TableIconLinkAction, TableToneBadge } from '@/ui/components/TableUi';
 import { useLocaleFormatting } from '@/i18n/useLocaleFormatting';
 import { BacktestRun, BacktestStatus } from '../types/backtest.type';
 import { I18nContext } from '../../../i18n/I18nProvider';
+import { deleteBacktestRun } from '../services/backtests.service';
 
 type BacktestsRunsTableProps = {
   rows: BacktestRun[];
+  onDeleted?: (id: string) => void;
 };
 
 const statusBadgeTone = (status: BacktestStatus): 'success' | 'danger' | 'info' | 'warning' => {
@@ -27,10 +32,18 @@ const getStatusLabel = (status: BacktestStatus, locale: 'pl' | 'en') => {
   return locale === 'en' ? 'Canceled' : 'Anulowany';
 };
 
-export default function BacktestsRunsTable({ rows }: BacktestsRunsTableProps) {
+const getAxiosMessage = (err: unknown) => {
+  if (!axios.isAxiosError(err)) return undefined;
+  const response = err.response?.data as { error?: { message?: string }; message?: string } | undefined;
+  return response?.error?.message ?? response?.message;
+};
+
+export default function BacktestsRunsTable({ rows, onDeleted }: BacktestsRunsTableProps) {
   const { formatDateTime } = useLocaleFormatting();
   const i18n = useContext(I18nContext);
   const locale = i18n?.locale === 'en' ? 'en' : 'pl';
+  const [selectedDeleteRun, setSelectedDeleteRun] = useState<BacktestRun | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const copy =
     locale === 'en'
       ? {
@@ -41,6 +54,11 @@ export default function BacktestsRunsTable({ rows }: BacktestsRunsTableProps) {
           colStart: 'Start',
           colActions: 'Actions',
           preview: 'Preview',
+          delete: 'Delete',
+          deleted: 'Backtest run deleted',
+          deleteFailed: 'Could not delete backtest run',
+          deleteTitle: 'Delete backtest run?',
+          cancel: 'Cancel',
           filterPlaceholder: 'Filter runs...',
           emptyText: 'No backtest runs.',
         }
@@ -52,9 +70,31 @@ export default function BacktestsRunsTable({ rows }: BacktestsRunsTableProps) {
           colStart: 'Start',
           colActions: 'Akcje',
           preview: 'Podglad',
+          delete: 'Usun',
+          deleted: 'Run backtestu usuniety',
+          deleteFailed: 'Nie udalo sie usunac runa backtestu',
+          deleteTitle: 'Usunac run backtestu?',
+          cancel: 'Anuluj',
           filterPlaceholder: 'Filtruj runy...',
           emptyText: 'Brak runow backtestu.',
         };
+
+  const handleDelete = async () => {
+    if (!selectedDeleteRun) return;
+    setDeleting(true);
+    try {
+      await deleteBacktestRun(selectedDeleteRun.id);
+      onDeleted?.(selectedDeleteRun.id);
+      toast.success(copy.deleted);
+      setSelectedDeleteRun(null);
+    } catch (error: unknown) {
+      toast.error(copy.deleteFailed, {
+        description: getAxiosMessage(error),
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const columns = useMemo<DataTableColumn<BacktestRun>[]>(
     () => [
@@ -96,7 +136,7 @@ export default function BacktestsRunsTable({ rows }: BacktestsRunsTableProps) {
       {
         key: 'actions',
         label: copy.colActions,
-        className: 'w-24 text-center',
+        className: 'w-28 text-center',
         render: (row) => (
           <div className='flex items-center justify-center gap-2'>
             <TableIconLinkAction
@@ -104,11 +144,17 @@ export default function BacktestsRunsTable({ rows }: BacktestsRunsTableProps) {
               label={`${copy.preview} ${row.name}`}
               icon={<LuPencilLine className='h-3.5 w-3.5' />}
             />
+            <TableIconButtonAction
+              label={copy.delete}
+              icon={<LuTrash2 className='h-3.5 w-3.5' />}
+              onClick={() => setSelectedDeleteRun(row)}
+              tone='danger'
+            />
           </div>
         ),
       },
     ],
-    [copy.colActions, copy.colName, copy.colStart, copy.colStatus, copy.colSymbol, copy.colTimeframe, copy.preview, formatDateTime, locale]
+    [copy.colActions, copy.colName, copy.colStart, copy.colStatus, copy.colSymbol, copy.colTimeframe, copy.delete, copy.preview, formatDateTime, locale]
   );
 
   return (
@@ -129,6 +175,25 @@ export default function BacktestsRunsTable({ rows }: BacktestsRunsTableProps) {
           );
         }}
         emptyText={copy.emptyText}
+      />
+
+      <ConfirmModal
+        open={Boolean(selectedDeleteRun)}
+        title={copy.deleteTitle}
+        description={
+          selectedDeleteRun
+            ? `${copy.delete} "${selectedDeleteRun.name}"?`
+            : copy.delete
+        }
+        confirmLabel={copy.delete}
+        cancelLabel={copy.cancel}
+        confirmVariant='error'
+        pending={deleting}
+        onCancel={() => {
+          if (deleting) return;
+          setSelectedDeleteRun(null);
+        }}
+        onConfirm={() => void handleDelete()}
       />
     </div>
   );

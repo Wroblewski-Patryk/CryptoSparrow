@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { createRateLimiter } from '../../middleware/rateLimit';
 import {
   createBacktestRun,
+  deleteBacktestRun,
   getBacktestRun,
   getBacktestRunReport,
   getBacktestRunTimeline,
@@ -19,5 +20,6 @@ backtestsRouter.get('/runs/:id/trades', tradingReadLimiter, listBacktestRunTrade
 backtestsRouter.get('/runs/:id/report', tradingReadLimiter, getBacktestRunReport);
 backtestsRouter.get('/runs/:id/timeline', tradingReadLimiter, getBacktestRunTimeline);
 backtestsRouter.post('/runs', tradingWriteLimiter, createBacktestRun);
+backtestsRouter.delete('/runs/:id', tradingWriteLimiter, deleteBacktestRun);
 
 export default backtestsRouter;
