@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from "react";
+import { LuUserRound } from "react-icons/lu";
 
 import BasicForm from "../components/BasicForm";
 import Subscription from "../components/Subscription";
@@ -43,10 +44,11 @@ export default function ProfilePage() {
     <section className="w-full">
       <div className="py-1">
         <PageTitle
-          title="Profil"
+          title="Moje konto"
+          icon={<LuUserRound className="h-5 w-5" />}
           breadcrumb={[
             { label: "Dashboard", href: "/dashboard" },
-            { label: "Profil" },
+            { label: "Moje konto" },
           ]}
         />
 
@@ -64,7 +66,7 @@ export default function ProfilePage() {
           ))}
         </div>
 
-        <div className="bg-base-200 rounded-xl shadow p-4">
+        <div className="rounded-box border border-base-300 bg-base-100 p-4">
           {activeTab === "basic" && <BasicForm />}
           {activeTab === "api" && <ExchangeConnectionsView />}
           {activeTab === "subscription" && <Subscription />}

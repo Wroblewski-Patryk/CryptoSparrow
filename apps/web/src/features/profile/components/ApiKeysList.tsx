@@ -1,9 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { LuPencilLine, LuTrash2 } from "react-icons/lu";
 import ApiKeyForm, { ApiKeyFormSavePayload } from "./ApiKeyForm";
 import { useApiKeys } from "../hooks/useApiKeys";
 import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
+import DataTable, { DataTableColumn } from "../../../ui/components/DataTable";
+import { TableIconButtonAction, TableToneBadge } from "../../../ui/components/TableUi";
+import type { ApiKey } from "../types/apiKey.type";
 
 export default function ApiKeysList() {
   const { formatDate } = useLocaleFormatting();
@@ -75,6 +79,72 @@ export default function ApiKeysList() {
       }
     : undefined;
 
+  const columns = useMemo<DataTableColumn<ApiKey>[]>(
+    () => [
+      {
+        key: "label",
+        label: "Nazwa",
+        sortable: true,
+        accessor: (row) => row.label,
+        className: "font-medium",
+      },
+      {
+        key: "exchange",
+        label: "Gielda",
+        sortable: true,
+        accessor: (row) => row.exchange,
+        render: (row) => <TableToneBadge label={row.exchange} tone="info" />,
+      },
+      {
+        key: "createdAt",
+        label: "Utworzono",
+        sortable: true,
+        accessor: (row) => row.createdAt,
+        render: (row) => formatDate(row.createdAt),
+      },
+      {
+        key: "lastUsed",
+        label: "Ostatnio uzywany",
+        sortable: true,
+        accessor: (row) => row.lastUsed ?? "",
+        render: (row) => formatDate(row.lastUsed),
+      },
+      {
+        key: "apiKey",
+        label: "API Key",
+        sortable: true,
+        accessor: (row) => row.apiKey,
+        render: (row) => (
+          <span className="font-mono">
+            {row.apiKey ? row.apiKey.slice(0, 2) + "********" + row.apiKey.slice(-2) : "-"}
+          </span>
+        ),
+      },
+      {
+        key: "actions",
+        label: "Akcje",
+        className: "text-right",
+        render: (row) => (
+          <div className="flex items-center justify-end gap-2">
+            <TableIconButtonAction
+              label="Edytuj"
+              icon={<LuPencilLine className="h-3.5 w-3.5" />}
+              onClick={() => handleEditKey(row.id)}
+              tone="info"
+            />
+            <TableIconButtonAction
+              label="Usun"
+              icon={<LuTrash2 className="h-3.5 w-3.5" />}
+              onClick={() => handleDeleteKey(row.id)}
+              tone="danger"
+            />
+          </div>
+        ),
+      },
+    ],
+    [formatDate]
+  );
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
@@ -106,45 +176,24 @@ export default function ApiKeysList() {
             title="Klucze API aktywne"
             description={`Skonfigurowano ${keys.length} ${keys.length === 1 ? "klucz" : "klucze"}.`}
           />
-          <div className="overflow-x-auto">
-            <table className="table table-zebra">
-              <thead>
-                <tr>
-                  <th>Nazwa</th>
-                  <th>Gielda</th>
-                  <th>Utworzono</th>
-                  <th>Ostatnio uzywany</th>
-                  <th>API Key</th>
-                  <th>Akcje</th>
-                </tr>
-              </thead>
-              <tbody>
-                {keys.map((key) => (
-                  <tr key={key.id}>
-                    <td>{key.label}</td>
-                    <td>{key.exchange}</td>
-                    <td>{formatDate(key.createdAt)}</td>
-                    <td>{formatDate(key.lastUsed)}</td>
-                    <td>
-                      <span className="font-mono">
-                        {key.apiKey ? key.apiKey.slice(0, 2) + "********" + key.apiKey.slice(-2) : ""}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="flex gap-2">
-                        <button className="btn btn-sm btn-secondary" onClick={() => handleEditKey(key.id)}>
-                          Edytuj
-                        </button>
-                        <button className="btn btn-sm btn-error" onClick={() => handleDeleteKey(key.id)}>
-                          Usun
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            compact
+            rows={keys}
+            columns={columns}
+            getRowId={(row) => row.id}
+            filterPlaceholder="Szukaj kluczy API (label, gielda)"
+            filterFn={(row, query) => {
+              const normalized = query.trim().toLowerCase();
+              return (
+                row.label.toLowerCase().includes(normalized) ||
+                row.exchange.toLowerCase().includes(normalized) ||
+                row.apiKey.toLowerCase().includes(normalized)
+              );
+            }}
+            emptyText="Brak kluczy API dla wybranego filtra."
+            paginationEnabled
+            defaultPageSize={10}
+          />
         </div>
       )}
 

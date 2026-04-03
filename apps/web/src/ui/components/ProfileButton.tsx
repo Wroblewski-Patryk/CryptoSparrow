@@ -80,9 +80,6 @@ export default function ProfileButton({ mobile = false, onNavigate }: ProfileBut
             <span className="truncate normal-case">{user.email}</span>
           </li>
         )}
-        <li className="menu-title">
-          <span>Profil</span>
-        </li>
         <li>
           <Link href="/dashboard/profile#basic">
             <LuUser className="h-4 w-4" aria-hidden />
@@ -100,10 +97,6 @@ export default function ProfileButton({ mobile = false, onNavigate }: ProfileBut
             <LuSettings className="h-4 w-4" aria-hidden />
             Bezpieczenstwo
           </Link>
-        </li>
-
-        <li className="menu-title mt-1">
-          <span>Integracje</span>
         </li>
         <li>
           <Link href="/dashboard/profile#api">
