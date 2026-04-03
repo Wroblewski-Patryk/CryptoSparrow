@@ -31,6 +31,13 @@ export const useRegisterForm = () => {
 
       toast.success('Rejestracja zakonczona sukcesem.');
       router.replace('/dashboard');
+      if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'test') {
+        window.setTimeout(() => {
+          if (window.location.pathname.startsWith('/auth/register')) {
+            window.location.assign('/dashboard');
+          }
+        }, 250);
+      }
     } catch (err) {
       toast.error(`Rejestracja nieudana: ${handleError(err)}`);
     }
