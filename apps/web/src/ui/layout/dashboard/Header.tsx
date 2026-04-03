@@ -20,6 +20,7 @@ import {
 } from 'react-icons/lu';
 
 import ProfileButton from '../../components/ProfileButton';
+import AppLogoLink from '../../components/AppLogoLink';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useDetailsDropdown } from '../../hooks/useDetailsDropdown';
 import { dashboardRoutes, pathStartsWithAny } from './dashboardRoutes';
@@ -177,13 +178,11 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 py-2">
         <div className="navbar min-h-0 px-0 flex-nowrap justify-between gap-4">
           <div className="flex-none min-w-0 pr-2 xl:pr-4">
-            <Link href="/dashboard" className="flex items-center gap-2 font-normal text-primary-content whitespace-nowrap">
-              <span
-                aria-hidden
-                className="h-8 w-8 bg-current [mask-image:url('/logo.svg')] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]"
-              />
-              <span className="brand-wordmark truncate">Soar</span>
-            </Link>
+            <AppLogoLink
+              href="/"
+              className="font-normal text-primary-content whitespace-nowrap"
+              wordmarkClassName="truncate"
+            />
           </div>
 
           <nav aria-label="Dashboard navigation" className="hidden xl:flex flex-1 min-w-0 overflow-visible justify-center">

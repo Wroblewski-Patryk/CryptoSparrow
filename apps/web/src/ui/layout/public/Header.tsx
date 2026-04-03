@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { LuLayoutDashboard } from 'react-icons/lu';
 import { useAuth } from '../../../context/AuthContext';
+import AppLogoLink from '../../components/AppLogoLink';
 
 export default function Header() {
   const { user, loading } = useAuth();
@@ -12,13 +13,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 border-b border-base-300/60 bg-base-100/80 backdrop-blur">
       <div className="navbar max-w-7xl mx-auto px-4 min-h-16">
         <div className="flex-1">
-          <Link href="/" className="flex items-center gap-2 text-lg text-base-content">
-            <span
-              aria-hidden
-              className="h-8 w-8 bg-current [mask-image:url('/logo.svg')] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]"
-            />
-            <span className="brand-wordmark">Soar</span>
-          </Link>
+          <AppLogoLink href="/" className="text-lg text-base-content" />
         </div>
         <div className="flex-none">
           {showDashboardCta ? (
