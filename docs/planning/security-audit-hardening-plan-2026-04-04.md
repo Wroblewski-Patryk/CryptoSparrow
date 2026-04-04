@@ -111,7 +111,7 @@ Tiny-commit track IDs: `SEC-01..SEC-14`.
 
 ## Phase A - Dependency security (highest priority)
 - [x] `SEC-01 chore(deps-web): upgrade next to latest patched 15.x line and align eslint-config-next`
-- [ ] `SEC-02 chore(deps-web): upgrade axios to patched version and run web regression/typecheck`
+- [x] `SEC-02 chore(deps-web): upgrade axios to patched version and run web regression/typecheck`
 - [ ] `SEC-03 chore(deps-api): upgrade multer to patched 2.1.x and run upload/auth regressions`
 - [ ] `SEC-04 chore(deps-root): refresh lockfile and re-run pnpm audit (target: no critical/high in prod deps)`
 
@@ -162,3 +162,4 @@ Exit criteria:
 
 ## Progress log
 - 2026-04-04: Completed `SEC-01` by upgrading `apps/web` to `next@15.5.14` and `eslint-config-next@15.5.14`; validated with `pnpm --filter web run build` and `pnpm --filter web run typecheck` (after refreshing route types via `pnpm --filter web exec next typegen`).
+- 2026-04-04: Completed `SEC-02` by upgrading `apps/web` to `axios@^1.14.0`; validated with `pnpm --filter web run typecheck` and targeted regressions `useLoginForm` + `ApiKeyForm`.
