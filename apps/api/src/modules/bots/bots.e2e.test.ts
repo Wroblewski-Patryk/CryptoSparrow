@@ -344,6 +344,109 @@ describe('Bots module contract', () => {
     expect(createRes.body.marketType).toBe('SPOT');
   });
 
+  it('blocks bot activation for placeholder exchanges and keeps inactive create path available', async () => {
+    const email = 'bots-placeholder-exchange@example.com';
+    const agent = await registerAndLogin(email);
+    const strategyId = await createStrategy(agent, 'Placeholder Exchange Strategy');
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+
+    const marketUniverse = await prisma.marketUniverse.create({
+      data: {
+        userId: user.id,
+        name: 'Placeholder Exchange Universe',
+        exchange: 'OKX',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        whitelist: ['BTCUSDT'],
+        blacklist: [],
+      },
+    });
+    const symbolGroup = await prisma.symbolGroup.create({
+      data: {
+        userId: user.id,
+        marketUniverseId: marketUniverse.id,
+        name: 'Placeholder Exchange Group',
+        symbols: ['BTCUSDT'],
+      },
+    });
+
+    const activeCreateRes = await agent.post('/dashboard/bots').send({
+      ...createPayload({ strategyId, marketGroupId: symbolGroup.id }),
+      isActive: true,
+      mode: 'PAPER',
+    });
+    expect(activeCreateRes.status).toBe(501);
+    expect(activeCreateRes.body.error.details).toEqual({
+      code: 'EXCHANGE_NOT_IMPLEMENTED',
+      exchange: 'OKX',
+      capability: 'PAPER_PRICING_FEED',
+    });
+
+    const inactiveCreateRes = await agent.post('/dashboard/bots').send({
+      ...createPayload({ strategyId, marketGroupId: symbolGroup.id }),
+      isActive: false,
+      mode: 'PAPER',
+    });
+    expect(inactiveCreateRes.status).toBe(201);
+    expect(inactiveCreateRes.body.exchange).toBe('OKX');
+    expect(inactiveCreateRes.body.isActive).toBe(false);
+  });
+
+  it('keeps fail-closed contract when activating existing placeholder-exchange bot', async () => {
+    const email = 'bots-placeholder-exchange-update@example.com';
+    const agent = await registerAndLogin(email);
+    const strategyId = await createStrategy(agent, 'Placeholder Exchange Update Strategy');
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+
+    const marketUniverse = await prisma.marketUniverse.create({
+      data: {
+        userId: user.id,
+        name: 'Placeholder Exchange Universe Update',
+        exchange: 'OKX',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        whitelist: ['BTCUSDT'],
+        blacklist: [],
+      },
+    });
+    const symbolGroup = await prisma.symbolGroup.create({
+      data: {
+        userId: user.id,
+        marketUniverseId: marketUniverse.id,
+        name: 'Placeholder Exchange Group Update',
+        symbols: ['BTCUSDT'],
+      },
+    });
+
+    const createRes = await agent.post('/dashboard/bots').send({
+      ...createPayload({ strategyId, marketGroupId: symbolGroup.id }),
+      mode: 'PAPER',
+      isActive: false,
+    });
+    expect(createRes.status).toBe(201);
+    const botId = createRes.body.id as string;
+    expect(createRes.body.exchange).toBe('OKX');
+    expect(createRes.body.isActive).toBe(false);
+
+    const activateRes = await agent.put(`/dashboard/bots/${botId}`).send({
+      isActive: true,
+      mode: 'PAPER',
+    });
+    expect(activateRes.status).toBe(501);
+    expect(activateRes.body.error.details).toEqual({
+      code: 'EXCHANGE_NOT_IMPLEMENTED',
+      exchange: 'OKX',
+      capability: 'PAPER_PRICING_FEED',
+    });
+
+    const persisted = await prisma.bot.findUniqueOrThrow({
+      where: { id: botId },
+      select: { exchange: true, isActive: true },
+    });
+    expect(persisted.exchange).toBe('OKX');
+    expect(persisted.isActive).toBe(false);
+  });
+
   it('accepts marketUniverse id in create payload and auto-creates symbol group when missing', async () => {
     const email = 'bots-create-from-universe-id@example.com';
     const agent = await registerAndLogin(email);
@@ -1772,7 +1875,7 @@ describe('Bots module contract', () => {
       expect(postArmItem.dynamicTtpStopLoss).toBeCloseTo(103, 6);
       expect(postArmItem.dynamicTslStopLoss).toBeCloseTo(104.94, 6);
 
-      expect(fallbackItem.dynamicTtpStopLoss).toBeNull();
+      expect(fallbackItem.dynamicTtpStopLoss).toBeCloseTo(102.5, 6);
       expect(fallbackItem.dynamicTslStopLoss).toBeCloseTo(99, 6);
     } finally {
       stateSpy.mockRestore();

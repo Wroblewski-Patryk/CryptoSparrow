@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
-import { LuChartCandlestick, LuPackageOpen } from "react-icons/lu";
+import { LuBot, LuChartCandlestick, LuChartLine, LuChevronDown, LuListChecks, LuPackageOpen } from "react-icons/lu";
 
-import { EmptyState, ErrorState, LoadingState } from "../../../ui/components/ViewState";
+import { ErrorState, LoadingState } from "../../../ui/components/ViewState";
 import DataTable, { DataTableColumn } from "../../../ui/components/DataTable";
 import InlinePager from "../../../ui/components/InlinePager";
 import Tabs from "../../../ui/components/Tabs";
@@ -28,6 +28,7 @@ import {
   listBotRuntimeSessionTrades,
   listBotRuntimeSessions,
 } from "../../../features/bots/services/bots.service";
+import { supportsExchangeCapability } from "../../../features/exchanges/exchangeCapabilities";
 
 type RuntimeSnapshot = {
   bot: Bot;
@@ -179,23 +180,51 @@ const resolveDcaExecutedLevels = (position: BotRuntimePositionItem) => {
   ];
 };
 
-const formatDcaLadderCell = (params: {
+const renderDcaLadderCell = (params: {
   position: BotRuntimePositionItem;
   formatPercent: (value: number) => string;
 }) => {
   const dcaCount = Number.isFinite(params.position.dcaCount)
     ? Math.max(0, Math.trunc(params.position.dcaCount))
     : 0;
-  if (dcaCount <= 0) return "0";
+  if (dcaCount <= 0) return <span className="text-xs opacity-70">0</span>;
 
   const executedLevels = resolveDcaExecutedLevels(params.position);
-  if (executedLevels.length === 0) return String(dcaCount);
+  if (executedLevels.length === 0) {
+    return (
+      <span className="inline-flex items-center rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-[11px] font-semibold text-warning">
+        {dcaCount}
+      </span>
+    );
+  }
 
-  const ladder = executedLevels
+  const ladderPreview = executedLevels
     .map((level, index) => `${index + 1}:${params.formatPercent(level)}`)
     .join(", ");
 
-  return `${dcaCount} (${ladder})`;
+  return (
+    <details className="group inline-block align-middle">
+      <summary className="list-none cursor-pointer [&::-webkit-details-marker]:hidden">
+        <span
+          className="inline-flex items-center gap-1 rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-[11px] font-semibold text-warning"
+          title={ladderPreview}
+        >
+          {dcaCount}
+          <LuChevronDown className="h-3 w-3 transition-transform duration-150 group-open:rotate-180" />
+        </span>
+      </summary>
+      <div className="mt-1 min-w-[8rem] rounded-box border border-base-300/70 bg-base-200/60 p-2 text-[11px] shadow-sm">
+        <ul className="space-y-1">
+          {executedLevels.map((level, index) => (
+            <li key={`${params.position.id}-dca-${index}`} className="flex items-center justify-between gap-2">
+              <span className="font-medium opacity-70">{index + 1}</span>
+              <span className="font-semibold">{params.formatPercent(level)}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </details>
+  );
 };
 
 type SignalPillValue = "LONG" | "SHORT" | "EXIT" | "NEUTRAL";
@@ -430,6 +459,88 @@ export default function HomeLiveWidgets() {
   const loadInFlightRef = useRef(false);
   const loadStartedAtRef = useRef<number | null>(null);
   const signalRailRef = useRef<HTMLDivElement | null>(null);
+  const runtimeOnboardingSteps = useMemo(
+    () => [
+      {
+        key: "markets",
+        icon: <LuChartCandlestick className="h-4 w-4" aria-hidden />,
+        toneClass: "border-primary/35 bg-primary/10 text-primary",
+        title: t("dashboard.home.runtime.onboardingStepMarketsTitle"),
+        description: t("dashboard.home.runtime.onboardingStepMarketsDescription"),
+        cta: t("dashboard.home.runtime.onboardingStepMarketsCta"),
+        href: "/dashboard/markets/list",
+      },
+      {
+        key: "strategy",
+        icon: <LuListChecks className="h-4 w-4" aria-hidden />,
+        toneClass: "border-secondary/35 bg-secondary/10 text-secondary",
+        title: t("dashboard.home.runtime.onboardingStepStrategyTitle"),
+        description: t("dashboard.home.runtime.onboardingStepStrategyDescription"),
+        cta: t("dashboard.home.runtime.onboardingStepStrategyCta"),
+        href: "/dashboard/strategies/list",
+      },
+      {
+        key: "backtest",
+        icon: <LuChartLine className="h-4 w-4" aria-hidden />,
+        toneClass: "border-accent/35 bg-accent/10 text-accent",
+        title: t("dashboard.home.runtime.onboardingStepBacktestTitle"),
+        description: t("dashboard.home.runtime.onboardingStepBacktestDescription"),
+        cta: t("dashboard.home.runtime.onboardingStepBacktestCta"),
+        href: "/dashboard/backtests/list",
+      },
+      {
+        key: "bot",
+        icon: <LuBot className="h-4 w-4" aria-hidden />,
+        toneClass: "border-info/35 bg-info/10 text-info",
+        title: t("dashboard.home.runtime.onboardingStepBotTitle"),
+        description: t("dashboard.home.runtime.onboardingStepBotDescription"),
+        cta: t("dashboard.home.runtime.onboardingStepBotCta"),
+        href: "/dashboard/bots/create",
+      },
+    ],
+    [t]
+  );
+
+  const renderRuntimeOnboarding = (options: { title: string; description: string }) => (
+    <section className={`${CARD} p-4 md:p-5`}>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold md:text-lg">{options.title}</h3>
+          <p className="text-sm opacity-70">{options.description}</p>
+        </div>
+        <span className="badge badge-outline badge-sm">{t("dashboard.home.runtime.onboardingBadge")}</span>
+      </div>
+
+      <ol className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {runtimeOnboardingSteps.map((step, index) => (
+          <li key={step.key}>
+            <article className="flex h-full flex-col gap-2 rounded-box border border-base-300/60 bg-base-200/40 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className={`inline-flex h-8 w-8 items-center justify-center rounded-box border ${step.toneClass}`}>
+                  {step.icon}
+                </span>
+                <span className="badge badge-ghost badge-xs">{index + 1}</span>
+              </div>
+              <p className="text-sm font-semibold">{step.title}</p>
+              <p className="text-xs opacity-70">{step.description}</p>
+              <Link href={step.href} className="mt-auto inline-flex items-center text-xs font-medium text-primary hover:underline">
+                {step.cta}
+              </Link>
+            </article>
+          </li>
+        ))}
+      </ol>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Link href="/dashboard/bots/create" className={BTN_PRIMARY}>
+          {t("dashboard.home.runtime.onboardingPrimaryCta")}
+        </Link>
+        <Link href="/dashboard/bots" className={BTN_SECONDARY}>
+          {t("dashboard.home.runtime.onboardingSecondaryCta")}
+        </Link>
+      </div>
+    </section>
+  );
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const silent = opts?.silent ?? false;
@@ -727,6 +838,19 @@ export default function HomeLiveWidgets() {
     );
   }, [selected?.positions?.showDynamicStopColumns, selectedData?.open]);
 
+  const selectedRuntimeCapabilityAvailable = useMemo(() => {
+    if (!selected) return true;
+    if (!selected.bot.exchange) return true;
+    return selected.bot.mode === "LIVE"
+      ? supportsExchangeCapability(selected.bot.exchange, "LIVE_EXECUTION")
+      : supportsExchangeCapability(selected.bot.exchange, "PAPER_PRICING_FEED");
+  }, [selected]);
+
+  const selectedPlaceholderHint = useMemo(() => {
+    if (!selected || !selected.bot.exchange) return "";
+    return `${selected.bot.exchange}: ${t("dashboard.bots.create.placeholderActivationHint").replace("{mode}", selected.bot.mode)}`;
+  }, [selected, t]);
+
   const signalCardsPerView = resolveSignalCardsPerView(
     viewportWidth > 0 ? viewportWidth : SIGNAL_CARDS_DENSITY_BREAKPOINTS.desktopMinWidth
   );
@@ -833,7 +957,7 @@ export default function HomeLiveWidgets() {
         sortable: true,
         accessor: (row) => row.dcaCount,
         className: "text-[11px]",
-        render: (row) => formatDcaLadderCell({ position: row, formatPercent: formatDcaPercent }),
+        render: (row) => renderDcaLadderCell({ position: row, formatPercent: formatDcaPercent }),
       },
     ];
 
@@ -973,14 +1097,10 @@ export default function HomeLiveWidgets() {
   if (bots.length === 0) {
     return (
       <div className="space-y-4">
-        <EmptyState
-          title={t("dashboard.home.runtime.noBotsTitle")}
-          description={t("dashboard.home.runtime.noBotsDescription")}
-        />
-        <div className="flex gap-2">
-          <Link href="/dashboard/bots" className={BTN_PRIMARY}>{t("dashboard.home.runtime.addBot")}</Link>
-          <Link href="/dashboard/strategies/list" className={BTN_SECONDARY}>{t("dashboard.home.runtime.goToStrategies")}</Link>
-        </div>
+        {renderRuntimeOnboarding({
+          title: t("dashboard.home.runtime.noBotsTitle"),
+          description: t("dashboard.home.runtime.noBotsDescription"),
+        })}
       </div>
     );
   }
@@ -988,13 +1108,10 @@ export default function HomeLiveWidgets() {
   if (snapshots.length === 0) {
     return (
       <div className="space-y-4">
-        <EmptyState
-          title={t("dashboard.home.runtime.noActiveBotsTitle")}
-          description={t("dashboard.home.runtime.noActiveBotsDescription")}
-        />
-        <div className="flex gap-2">
-          <Link href="/dashboard/bots" className={BTN_PRIMARY}>{t("dashboard.home.runtime.goToBots")}</Link>
-        </div>
+        {renderRuntimeOnboarding({
+          title: t("dashboard.home.runtime.noActiveBotsTitle"),
+          description: t("dashboard.home.runtime.noActiveBotsDescription"),
+        })}
       </div>
     );
   }
@@ -1085,6 +1202,17 @@ export default function HomeLiveWidgets() {
                   </div>
                 </div>
               </div>
+
+              {!selectedRuntimeCapabilityAvailable ? (
+                <div className="rounded-box border border-warning/40 bg-warning/10 px-3 py-2 text-xs">
+                  <div className="mb-1">
+                    <span className="badge badge-xs badge-warning badge-outline">
+                      {t("dashboard.bots.list.placeholderBadge")}
+                    </span>
+                  </div>
+                  <p>{selectedPlaceholderHint}</p>
+                </div>
+              ) : null}
 
               <section className="border-t border-base-300/40 pt-4">
                 <Tabs
@@ -1272,6 +1400,14 @@ export default function HomeLiveWidgets() {
                   ))}
                 </select>
               </label>
+
+              {!selectedRuntimeCapabilityAvailable ? (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="badge badge-xs badge-warning badge-outline">
+                    {t("dashboard.bots.list.placeholderBadge")}
+                  </span>
+                </div>
+              ) : null}
 
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-box border border-base-300/50 bg-base-100/70 px-2 py-1.5">

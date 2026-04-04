@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
@@ -42,6 +42,8 @@ import { MarketUniverse } from "../../markets/types/marketUniverse.type";
 import { listStrategies } from "../../strategies/api/strategies.api";
 import { StrategyDto } from "../../strategies/types/StrategyForm.type";
 import { createMarketStreamEventSource } from "../../../lib/marketStream";
+import { supportsExchangeCapability } from "../../exchanges/exchangeCapabilities";
+import { LuChevronDown } from "react-icons/lu";
 
 const LIVE_CONSENT_TEXT_VERSION = "mvp-v1";
 const DUPLICATE_ACTIVE_BOT_ERROR = "active bot already exists for this strategy + market group pair";
@@ -141,21 +143,50 @@ const resolveDcaExecutedLevels = (params: {
 };
 
 const formatDcaLadderCell = (params: {
+  id?: string;
   dcaCount: number;
   dcaExecutedLevels?: number[] | null;
   dcaPlannedLevels?: number[] | null;
 }) => {
   const dcaCount = Number.isFinite(params.dcaCount) ? Math.max(0, Math.trunc(params.dcaCount)) : 0;
-  if (dcaCount <= 0) return "0";
+  if (dcaCount <= 0) return <span className="text-xs opacity-70">0</span>;
 
   const executedLevels = resolveDcaExecutedLevels(params);
-  if (executedLevels.length === 0) return String(dcaCount);
+  if (executedLevels.length === 0) {
+    return (
+      <span className="inline-flex items-center rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-[11px] font-semibold text-warning">
+        {dcaCount}
+      </span>
+    );
+  }
 
-  const ladder = executedLevels
+  const ladderPreview = executedLevels
     .map((level, index) => `${index + 1}:${formatNumber(level, 2)}%`)
     .join(", ");
 
-  return `${dcaCount} (${ladder})`;
+  return (
+    <details className="group inline-block align-middle">
+      <summary className="list-none cursor-pointer [&::-webkit-details-marker]:hidden">
+        <span
+          className="inline-flex items-center gap-1 rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-[11px] font-semibold text-warning"
+          title={ladderPreview}
+        >
+          {dcaCount}
+          <LuChevronDown className="h-3 w-3 transition-transform duration-150 group-open:rotate-180" />
+        </span>
+      </summary>
+      <div className="mt-1 min-w-[8rem] rounded-box border border-base-300/70 bg-base-200/60 p-2 text-[11px] shadow-sm">
+        <ul className="space-y-1">
+          {executedLevels.map((level, index) => (
+            <li key={`${params.id ?? "dca"}-${index}`} className="flex items-center justify-between gap-2">
+              <span className="font-medium opacity-70">{index + 1}</span>
+              <span className="font-semibold">{formatNumber(level, 2)}%</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </details>
+  );
 };
 
 const interpolateTemplate = (template: string, values: Record<string, string | number>) =>
@@ -635,6 +666,12 @@ export default function BotsManagement({
     () => bots.find((bot) => bot.id === monitorBotId) ?? null,
     [bots, monitorBotId]
   );
+  const monitorRuntimeCapabilityAvailable = useMemo(() => {
+    if (!selectedMonitorBot) return true;
+    return selectedMonitorBot.mode === "LIVE"
+      ? supportsExchangeCapability(selectedMonitorBot.exchange, "LIVE_EXECUTION")
+      : supportsExchangeCapability(selectedMonitorBot.exchange, "PAPER_PRICING_FEED");
+  }, [selectedMonitorBot]);
   const monitorStreamSymbols = useMemo(() => {
     const fromStats = monitorSymbolStats?.items?.map((item) => item.symbol) ?? [];
     const fromPositions = monitorPositions?.openItems?.map((item) => item.symbol) ?? [];
@@ -1437,7 +1474,7 @@ export default function BotsManagement({
                   {marketGroups.length === 0 ? <option value="">{t("dashboard.bots.create.noMarketGroups")}</option> : null}
                   {marketGroups.map((group) => (
                     <option key={group.id} value={group.id}>
-                      {group.name} ({group.exchange ?? "BINANCE"} · {group.marketType}/{group.baseCurrency})
+                      {group.name} ({group.exchange ?? "BINANCE"} Â· {group.marketType}/{group.baseCurrency})
                     </option>
                   ))}
                 </select>
@@ -1447,7 +1484,7 @@ export default function BotsManagement({
                   <p className="uppercase tracking-wide opacity-60">{t("dashboard.bots.create.marketSummaryLabel")}</p>
                   <p className="font-medium">
                     {selectedMarketGroup
-                      ? `${selectedMarketGroup.exchange ?? "BINANCE"} · ${selectedMarketGroup.marketType}/${selectedMarketGroup.baseCurrency}`
+                      ? `${selectedMarketGroup.exchange ?? "BINANCE"} Â· ${selectedMarketGroup.marketType}/${selectedMarketGroup.baseCurrency}`
                       : "-"}
                   </p>
                 </div>
@@ -1579,7 +1616,7 @@ export default function BotsManagement({
                         />
                       </td>
                       <td>
-                        <span className="text-xs opacity-70">{bot.exchange} · {bot.marketType}</span>
+                        <span className="text-xs opacity-70">{bot.exchange} - {bot.marketType}</span>
                       </td>
                       <td>
                         <span className="text-xs opacity-70">{bot.positionMode}</span>
@@ -1739,8 +1776,17 @@ export default function BotsManagement({
                     >
                       <p className="truncate text-sm font-semibold">{bot.name}</p>
                       <p className="mt-1 text-[11px] opacity-70">
-                        {bot.exchange} · {bot.marketType} | {bot.mode} | {bot.isActive ? t("dashboard.bots.monitoring.active") : t("dashboard.bots.monitoring.inactive")}
+                        {bot.exchange} - {bot.marketType} | {bot.mode} | {bot.isActive ? t("dashboard.bots.monitoring.active") : t("dashboard.bots.monitoring.inactive")}
                       </p>
+                      {!((bot.mode === "LIVE"
+                        ? supportsExchangeCapability(bot.exchange, "LIVE_EXECUTION")
+                        : supportsExchangeCapability(bot.exchange, "PAPER_PRICING_FEED"))) ? (
+                        <div className="mt-1">
+                          <span className="badge badge-xs badge-warning badge-outline">
+                            {t("dashboard.bots.list.placeholderBadge")}
+                          </span>
+                        </div>
+                      ) : null}
                     </button>
                   ))}
                 </div>
@@ -1768,6 +1814,23 @@ export default function BotsManagement({
                     </button>
                   </div>
                 </div>
+
+                {!monitorRuntimeCapabilityAvailable && selectedMonitorBot ? (
+                  <div className="alert alert-warning text-sm">
+                    <div className="space-y-1">
+                      <span className="badge badge-xs badge-warning badge-outline">
+                        {t("dashboard.bots.list.placeholderBadge")}
+                      </span>
+                      <span>
+                        {selectedMonitorBot.exchange}:{" "}
+                        {t("dashboard.bots.create.placeholderActivationHint").replace(
+                          "{mode}",
+                          selectedMonitorBot.mode
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
 
                 <div className="grid gap-3 md:grid-cols-6">
                   <label className="form-control">
@@ -2190,6 +2253,7 @@ export default function BotsManagement({
                               </td>
                               <td className="text-[11px]">
                                 {formatDcaLadderCell({
+                                  id: position.id,
                                   dcaCount: position.dcaCount,
                                   dcaExecutedLevels: position.dcaExecutedLevels,
                                   dcaPlannedLevels: position.dcaPlannedLevels,
@@ -2324,6 +2388,7 @@ export default function BotsManagement({
                               <td>{position.exitPrice != null ? formatNumber(position.exitPrice, 4) : "-"}</td>
                               <td className="text-[11px]">
                                 {formatDcaLadderCell({
+                                  id: position.id,
                                   dcaCount: position.dcaCount,
                                   dcaExecutedLevels: position.dcaExecutedLevels,
                                   dcaPlannedLevels: position.dcaPlannedLevels,
@@ -2826,5 +2891,6 @@ export default function BotsManagement({
     </div>
   );
 }
+
 
 

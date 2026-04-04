@@ -1,9 +1,11 @@
+import { Exchange } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { orchestrateAssistantDecision } from '../engine/assistantOrchestrator.service';
 import { runtimePositionAutomationService } from '../engine/runtimePositionAutomation.service';
 import { runtimeSignalLoop } from '../engine/runtimeSignalLoop.service';
 import { runtimeTelemetryService } from '../engine/runtimeTelemetry.service';
 import { getRuntimeTicker } from '../engine/runtimeTickerStore';
+import { assertExchangeCapability } from '../exchange/exchangeCapabilities';
 import {
   evaluateStrategySignalAtIndex,
   parseStrategySignalRules,
@@ -101,6 +103,17 @@ const validateLiveConsentState = (state: BotConsentState) => {
   if (state.liveOptIn && !normalizeConsentTextVersion(state.consentTextVersion)) {
     throw new Error('LIVE_CONSENT_VERSION_REQUIRED');
   }
+};
+
+const assertBotActivationExchangeCapability = (params: {
+  exchange: Exchange;
+  mode: 'PAPER' | 'LIVE';
+}) => {
+  if (params.mode === 'LIVE') {
+    assertExchangeCapability(params.exchange, 'LIVE_EXECUTION');
+    return;
+  }
+  assertExchangeCapability(params.exchange, 'PAPER_PRICING_FEED');
 };
 
 const mapBotResponse = <
@@ -282,7 +295,7 @@ const getOwnedApiKey = async (userId: string, apiKeyId: string) =>
     },
   });
 
-const findLatestApiKeyByExchange = async (userId: string, exchange: 'BINANCE') =>
+const findLatestApiKeyByExchange = async (userId: string, exchange: Exchange) =>
   prisma.apiKey.findFirst({
     where: {
       userId,
@@ -297,7 +310,7 @@ const findLatestApiKeyByExchange = async (userId: string, exchange: 'BINANCE') =
 
 const resolveCompatibleBotApiKey = async (params: {
   userId: string;
-  exchange: 'BINANCE';
+  exchange: Exchange;
   requestedApiKeyId?: string | null;
   requireForActivation: boolean;
 }) => {
@@ -432,6 +445,36 @@ type TrailingStopDisplayLevel = {
   trailPercent: number;
 };
 
+type TrailingTakeProfitDisplayLevel = {
+  armPercent: number;
+  trailPercent: number;
+};
+
+const resolveTrailingTakeProfitLevelsFromStrategyConfig = (
+  config: unknown
+): TrailingTakeProfitDisplayLevel[] => {
+  const root = asRecord(config);
+  const close = asRecord(root?.close);
+  const mode = typeof close?.mode === 'string' ? close.mode.trim().toLowerCase() : null;
+  if (mode !== 'advanced') return [];
+
+  const rawLevels = Array.isArray(close?.ttp) ? close.ttp : [];
+  return rawLevels
+    .map((item) => asRecord(item))
+    .map((item) => ({
+      armPercent: Math.abs(Number(item?.percent)) / 100,
+      trailPercent: Math.abs(Number(item?.arm)) / 100,
+    }))
+    .filter(
+      (item) =>
+        Number.isFinite(item.armPercent) &&
+        Number.isFinite(item.trailPercent) &&
+        item.armPercent > 0 &&
+        item.trailPercent > 0
+    )
+    .sort((left, right) => left.armPercent - right.armPercent);
+};
+
 const resolveTrailingStopLevelsFromStrategyConfig = (
   config: unknown
 ): TrailingStopDisplayLevel[] => {
@@ -465,6 +508,18 @@ const selectActiveTrailingStopDisplayLevel = (
   let active: TrailingStopDisplayLevel | null = null;
   for (const level of levels) {
     if (favorableMovePercent >= level.armPercent) active = level;
+  }
+  return active;
+};
+
+const selectActiveTrailingTakeProfitDisplayLevel = (
+  favorableMovePercent: number | null,
+  levels: TrailingTakeProfitDisplayLevel[]
+) => {
+  if (favorableMovePercent == null || !Number.isFinite(favorableMovePercent)) return null;
+  let active: TrailingTakeProfitDisplayLevel | null = null;
+  for (const level of levels) {
+    if (favorableMovePercent > level.armPercent) active = level;
   }
   return active;
 };
@@ -657,6 +712,95 @@ const resolveBotTrailingStopLevelsBySymbol = async (
 
   const assignLevelsToSymbols = (targetSymbols: string[], config: unknown) => {
     const levels = resolveTrailingStopLevelsFromStrategyConfig(config);
+    for (const symbol of targetSymbols) {
+      if (!normalizedSymbols.includes(symbol)) continue;
+      if (!trailingLevelsBySymbol.has(symbol)) {
+        trailingLevelsBySymbol.set(symbol, levels);
+      }
+    }
+  };
+
+  for (const link of groupLinks) {
+    const assignedSymbols = normalizeSymbols(link.botMarketGroup.symbolGroup.symbols ?? []);
+    const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : normalizedSymbols;
+    assignLevelsToSymbols(targetSymbols, link.strategy.config);
+  }
+
+  for (const link of legacyLinks) {
+    const assignedSymbols = normalizeSymbols(link.symbolGroup?.symbols ?? []);
+    const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : normalizedSymbols;
+    assignLevelsToSymbols(targetSymbols, link.strategy.config);
+  }
+
+  return trailingLevelsBySymbol;
+};
+
+const resolveBotTrailingTakeProfitLevelsBySymbol = async (
+  userId: string,
+  botId: string,
+  symbols: string[]
+) => {
+  const normalizedSymbols = normalizeSymbols(symbols);
+  const trailingLevelsBySymbol = new Map<string, TrailingTakeProfitDisplayLevel[]>();
+  if (normalizedSymbols.length === 0) return trailingLevelsBySymbol;
+
+  const [groupLinks, legacyLinks] = await Promise.all([
+    prisma.marketGroupStrategyLink.findMany({
+      where: {
+        isEnabled: true,
+        botMarketGroup: {
+          botId,
+          userId,
+          isEnabled: true,
+          lifecycleStatus: {
+            in: ['ACTIVE', 'PAUSED'],
+          },
+        },
+      },
+      orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
+      select: {
+        strategy: {
+          select: {
+            config: true,
+          },
+        },
+        botMarketGroup: {
+          select: {
+            symbolGroup: {
+              select: {
+                symbols: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    prisma.botStrategy.findMany({
+      where: {
+        isEnabled: true,
+        botId,
+        bot: {
+          userId,
+        },
+      },
+      orderBy: [{ createdAt: 'asc' }],
+      select: {
+        strategy: {
+          select: {
+            config: true,
+          },
+        },
+        symbolGroup: {
+          select: {
+            symbols: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  const assignLevelsToSymbols = (targetSymbols: string[], config: unknown) => {
+    const levels = resolveTrailingTakeProfitLevelsFromStrategyConfig(config);
     for (const symbol of targetSymbols) {
       if (!normalizedSymbols.includes(symbol)) continue;
       if (!trailingLevelsBySymbol.has(symbol)) {
@@ -1241,6 +1385,12 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
   const derivedMarketType = symbolGroup.marketUniverse.marketType;
   const derivedExchange = symbolGroup.marketUniverse.exchange;
   const derivedMaxOpenPositions = deriveMaxOpenPositionsFromStrategy(strategy.config);
+  if (botData.isActive) {
+    assertBotActivationExchangeCapability({
+      exchange: derivedExchange,
+      mode: botData.mode,
+    });
+  }
   const resolvedApiKeyId = await resolveCompatibleBotApiKey({
     userId,
     exchange: derivedExchange,
@@ -1367,7 +1517,7 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
   const requestedApiKeyId = apiKeyIdUpdateRequested ? (data.apiKeyId ?? null) : undefined;
   const nextIsActive = data.isActive ?? existing.isActive;
   const nextMode = nextState.mode;
-  let targetExchange = existing.exchange as 'BINANCE';
+  let targetExchange = existing.exchange as Exchange;
   let targetMarketType = existing.marketType as 'FUTURES' | 'SPOT';
 
   if (requestedMarketGroupId) {
@@ -1375,6 +1525,13 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
     if (!resolvedGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
     targetExchange = resolvedGroup.marketUniverse.exchange;
     targetMarketType = resolvedGroup.marketUniverse.marketType;
+  }
+
+  if (nextIsActive) {
+    assertBotActivationExchangeCapability({
+      exchange: targetExchange,
+      mode: nextMode,
+    });
   }
 
   if (nextIsActive) {
@@ -3043,9 +3200,10 @@ export const listBotRuntimeSessionPositions = async (
 
   const positionIds = positions.map((position) => position.id);
   const symbols = [...new Set(positions.map((position) => position.symbol))];
-  const [dcaPlanBySymbol, trailingStopLevelsBySymbol] = await Promise.all([
+  const [dcaPlanBySymbol, trailingStopLevelsBySymbol, trailingTakeProfitLevelsBySymbol] = await Promise.all([
     resolveBotDcaPlanBySymbol(userId, botId, symbols),
     resolveBotTrailingStopLevelsBySymbol(userId, botId, symbols),
+    resolveBotTrailingTakeProfitLevelsBySymbol(userId, botId, symbols),
   ]);
 
   const [trades, lastSymbolPrices, openOrders] = await Promise.all([
@@ -3177,13 +3335,29 @@ export const listBotRuntimeSessionPositions = async (
       favorableMovePercent,
       trailingStopLevelsBySymbol.get(position.symbol) ?? []
     );
-    const ttpTriggerPercent =
+    const activeTrailingTakeProfitLevel = selectActiveTrailingTakeProfitDisplayLevel(
+      favorableMovePercent,
+      trailingTakeProfitLevelsBySymbol.get(position.symbol) ?? []
+    );
+    const ttpTriggerPercentFromState =
       runtimeState &&
       Number.isFinite(runtimeState.trailingTakeProfitHighPercent) &&
       Number.isFinite(runtimeState.trailingTakeProfitStepPercent)
         ? (runtimeState.trailingTakeProfitHighPercent as number) -
           (runtimeState.trailingTakeProfitStepPercent as number)
         : null;
+    const ttpTriggerPercentFromFallback =
+      ttpTriggerPercentFromState == null &&
+      activeTrailingTakeProfitLevel &&
+      favorableMovePercent != null &&
+      Number.isFinite(favorableMovePercent)
+        ? favorableMovePercent - activeTrailingTakeProfitLevel.trailPercent
+        : null;
+    const ttpTriggerPercent =
+      ttpTriggerPercentFromState ??
+      (ttpTriggerPercentFromFallback != null && ttpTriggerPercentFromFallback > 0
+        ? ttpTriggerPercentFromFallback
+        : null);
     const tslTriggerPercent =
       runtimeState && Number.isFinite(runtimeState.trailingLossLimitPercent)
         ? (runtimeState.trailingLossLimitPercent as number)
@@ -3197,11 +3371,16 @@ export const listBotRuntimeSessionPositions = async (
             position.leverage
           )
         : null;
+    const fallbackAnchorPrice =
+      stateAnchorPrice ??
+      (typeof marketPrice === 'number' && Number.isFinite(marketPrice) && marketPrice > 0
+        ? marketPrice
+        : null);
     const dynamicTslStopLossFromAnchor =
-      activeTrailingStopLevel && stateAnchorPrice != null
+      activeTrailingStopLevel && fallbackAnchorPrice != null
         ? computeTrailingStopPriceFromAnchor(
             position.side,
-            stateAnchorPrice,
+            fallbackAnchorPrice,
             activeTrailingStopLevel.trailPercent,
             effectiveLeverage
           )

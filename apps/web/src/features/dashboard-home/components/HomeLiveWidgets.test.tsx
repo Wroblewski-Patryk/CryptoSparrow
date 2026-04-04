@@ -96,7 +96,7 @@ describe("HomeLiveWidgets", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Brak botow do podsumowania dashboardu")).toBeInTheDocument();
-      expect(screen.getByText("Dodaj bota")).toBeInTheDocument();
+      expect(screen.getAllByText(/Dodaj bota|Stworz i aktywuj bota|Create and activate bot/i).length).toBeGreaterThan(0);
     });
   });
 
@@ -312,12 +312,12 @@ describe("HomeLiveWidgets", () => {
     renderSubject();
 
     await waitFor(() => {
-      expect(screen.getByRole("tab", { name: "Otwarte pozycje" })).toBeInTheDocument();
-      expect(screen.getByText("Bot runtime i ryzyko")).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /Otwarte pozycje|Open positions/i })).toBeInTheDocument();
+      expect(screen.getByText(/Wybrany bot|Selected bot/i)).toBeInTheDocument();
       expect(screen.getByRole("option", { name: /Monitor Bot/i })).toBeInTheDocument();
       expect(screen.getAllByText("RUNNING").length).toBeGreaterThan(0);
       expect(screen.getAllByText("BTCUSDT").length).toBeGreaterThan(0);
-      expect(screen.getByText("2 (1:-15%, 2:-30%)")).toBeInTheDocument();
+      expect(screen.getByTitle("1:-15%, 2:-30%")).toBeInTheDocument();
       expect(screen.getByText("TTP")).toBeInTheDocument();
       expect(screen.getByText("TSL")).toBeInTheDocument();
       expect(screen.getByText("2508,4321")).toBeInTheDocument();
@@ -455,13 +455,13 @@ describe("HomeLiveWidgets", () => {
     renderSubject();
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Wstecz" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Dalej" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Wstecz|Prev/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Dalej|Next/i })).toBeInTheDocument();
       expect(screen.getByText("SOLUSDT")).toBeInTheDocument();
     });
 
     const signalsAnchor = screen.getByText("SOLUSDT");
-    const openPositionsTab = screen.getByRole("tab", { name: "Otwarte pozycje" });
+    const openPositionsTab = screen.getByRole("tab", { name: /Otwarte pozycje|Open positions/i });
     expect(signalsAnchor.compareDocumentPosition(openPositionsTab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
