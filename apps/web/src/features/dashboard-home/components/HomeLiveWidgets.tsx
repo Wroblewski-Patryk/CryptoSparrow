@@ -499,8 +499,9 @@ const buildLiveOpenPositions = (
         : position.side === "LONG"
           ? (liveMarkPrice - position.entryPrice) * position.quantity
           : (position.entryPrice - liveMarkPrice) * position.quantity;
-    // If neither live mark nor runtime unrealized is available yet, keep neutral 0 instead of synthetic negative fees-only PnL.
-    const liveUnrealizedPnl = hasPriceContext ? grossLiveUnrealizedPnl - (position.feesPaid ?? 0) : 0;
+    // Keep dashboard PnL model aligned with bots runtime view (gross unrealized move).
+    // If neither live mark nor runtime unrealized is available yet, keep neutral 0.
+    const liveUnrealizedPnl = hasPriceContext ? grossLiveUnrealizedPnl : 0;
     const livePnlPct = marginNotional > 0 ? (liveUnrealizedPnl / marginNotional) * 100 : 0;
 
     return {
@@ -764,10 +765,9 @@ export default function HomeLiveWidgets() {
   }, [load]);
 
   useEffect(() => {
-    if (snapshots.length === 0) return;
     const timer = window.setInterval(() => void load({ silent: true }), AUTO_REFRESH_INTERVAL_MS);
     return () => window.clearInterval(timer);
-  }, [snapshots.length, load]);
+  }, [load]);
 
   const selected = useMemo(() => {
     if (snapshots.length === 0) return null;

@@ -1,4 +1,3 @@
-﻿import Link from 'next/link';
 import { LuBot, LuChartLine, LuShieldCheck } from 'react-icons/lu';
 
 export default function PublicPage() {
@@ -24,15 +23,6 @@ export default function PublicPage() {
               Soar pomaga budować i testować strategie szybciej: od grup rynków, przez backtesty, po
               automatyczne wykonanie zleceń.
             </p>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <Link href="/auth/register" className="btn btn-primary btn-md">
-                Załóż konto
-              </Link>
-              <Link href="/auth/login" className="btn btn-outline btn-secondary btn-md glass">
-                Zaloguj się
-              </Link>
-            </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
               <article className="rounded-box border border-secondary/40 bg-base-100/55 p-4 backdrop-blur">

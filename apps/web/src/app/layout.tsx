@@ -75,7 +75,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
           }}
         />
       </head>
-      <body className={`${lato.variable} ${titilliumWeb.variable} font-body`}>
+      <body
+        suppressHydrationWarning
+        className={`${lato.variable} ${titilliumWeb.variable} font-body`}
+      >
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>
