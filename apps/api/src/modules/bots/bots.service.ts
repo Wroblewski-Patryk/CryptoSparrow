@@ -57,6 +57,8 @@ const normalizeKlineInterval = (value?: string | null) => {
 
 const klineFallbackCache = new Map<string, { fetchedAt: number; closes: number[] }>();
 const KLINE_FALLBACK_TTL_MS = 10_000;
+const tickerPriceFallbackCache = new Map<string, { fetchedAt: number; prices: Map<string, number> }>();
+const TICKER_PRICE_FALLBACK_TTL_MS = 5_000;
 
 const fetchFallbackKlineCloses = async (params: {
   marketType: 'FUTURES' | 'SPOT';
@@ -104,6 +106,69 @@ const fetchFallbackKlineCloses = async (params: {
     return closes;
   } catch {
     return [];
+  }
+};
+
+const fetchFallbackTickerPrices = async (params: {
+  marketType: 'FUTURES' | 'SPOT';
+  symbols: string[];
+}) => {
+  if (process.env.NODE_ENV === 'test') return new Map<string, number>();
+  const normalizedSymbols = normalizeSymbols(params.symbols);
+  if (normalizedSymbols.length === 0) return new Map<string, number>();
+
+  const cacheKey = params.marketType;
+  const now = Date.now();
+  const cached = tickerPriceFallbackCache.get(cacheKey);
+  if (cached && now - cached.fetchedAt < TICKER_PRICE_FALLBACK_TTL_MS) {
+    const fromCache = normalizedSymbols
+      .map((symbol) => [symbol, cached.prices.get(symbol)] as const)
+      .filter((entry): entry is [string, number] => Number.isFinite(entry[1]));
+    return new Map(fromCache);
+  }
+
+  const base =
+    params.marketType === 'SPOT'
+      ? process.env.BINANCE_SPOT_REST_URL ?? 'https://api.binance.com'
+      : process.env.BINANCE_FUTURES_REST_URL ?? 'https://fapi.binance.com';
+  const endpoint = params.marketType === 'SPOT' ? '/api/v3/ticker/price' : '/fapi/v1/ticker/price';
+  const url = `${base}${endpoint}`;
+
+  try {
+    const response = await fetch(url, { method: 'GET' });
+    if (!response.ok) return new Map<string, number>();
+    const payload = (await response.json()) as unknown;
+    const allPrices = new Map<string, number>();
+    const rows = Array.isArray(payload) ? payload : [payload];
+    for (const row of rows) {
+      if (!row || typeof row !== 'object') continue;
+      const parsedRow = row as { symbol?: unknown; price?: unknown };
+      if (typeof parsedRow.symbol !== 'string') continue;
+      const symbol = parsedRow.symbol.trim().toUpperCase();
+      if (!symbol) continue;
+      const priceRaw =
+        typeof parsedRow.price === 'number'
+          ? parsedRow.price
+          : typeof parsedRow.price === 'string'
+            ? Number.parseFloat(parsedRow.price)
+            : Number.NaN;
+      if (!Number.isFinite(priceRaw) || priceRaw <= 0) continue;
+      allPrices.set(symbol, priceRaw);
+    }
+
+    if (allPrices.size > 0) {
+      tickerPriceFallbackCache.set(cacheKey, {
+        fetchedAt: now,
+        prices: allPrices,
+      });
+    }
+
+    const selected = normalizedSymbols
+      .map((symbol) => [symbol, allPrices.get(symbol)] as const)
+      .filter((entry): entry is [string, number] => Number.isFinite(entry[1]));
+    return new Map(selected);
+  } catch {
+    return new Map<string, number>();
   }
 };
 
@@ -3605,6 +3670,27 @@ export const listBotRuntimeSessionPositions = async (
     const ticker = getRuntimeTicker(symbol);
     if (ticker && Number.isFinite(ticker.lastPrice)) {
       lastPriceBySymbol.set(symbol, ticker.lastPrice);
+    }
+  }
+  const missingPriceSymbols = symbols.filter((symbol) => {
+    const current = lastPriceBySymbol.get(symbol);
+    return !Number.isFinite(current) || (current as number) <= 0;
+  });
+  if (missingPriceSymbols.length > 0) {
+    const bot = await prisma.bot.findFirst({
+      where: { id: botId, userId },
+      select: { exchange: true, marketType: true },
+    });
+    if (bot?.exchange === 'BINANCE') {
+      const fallbackPrices = await fetchFallbackTickerPrices({
+        marketType: bot.marketType === 'SPOT' ? 'SPOT' : 'FUTURES',
+        symbols: missingPriceSymbols,
+      });
+      for (const [symbol, price] of fallbackPrices) {
+        if (Number.isFinite(price) && price > 0) {
+          lastPriceBySymbol.set(symbol, price);
+        }
+      }
     }
   }
 
