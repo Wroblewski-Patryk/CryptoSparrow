@@ -1,10 +1,11 @@
 import api from "../../../lib/api"; 
 import type { ApiKey } from "../types/apiKey.type";
+import type { ExchangeOption } from "@/features/exchanges/exchangeCapabilities";
 
 const API = "/dashboard/profile/apiKeys";
 
 export type ApiKeyConnectionTestPayload = {
-  exchange: string;
+  exchange: ExchangeOption;
   apiKey: string;
   apiSecret: string;
 };

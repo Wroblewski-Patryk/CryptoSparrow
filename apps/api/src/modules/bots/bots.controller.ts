@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { sendError } from '../../utils/apiError';
 import { sendValidationError } from '../../utils/formatZodError';
+import { ExchangeNotImplementedError } from '../exchange/exchangeCapabilities';
 import * as botsService from './bots.service';
 import {
   AssistantDryRunSchema,
@@ -136,6 +137,9 @@ export const createBot = async (req: Request, res: Response) => {
     const created = await botsService.createBot(userId, payload);
     return res.status(201).json(created);
   } catch (error) {
+    if (error instanceof ExchangeNotImplementedError) {
+      return sendError(res, error.status, error.message, error.toDetails());
+    }
     if (error instanceof Error && error.message === 'LIVE_CONSENT_VERSION_REQUIRED') {
       return sendError(res, 400, 'consentTextVersion is required when liveOptIn is enabled');
     }
@@ -176,6 +180,9 @@ export const updateBot = async (req: Request, res: Response) => {
 
     return res.json(updated);
   } catch (error) {
+    if (error instanceof ExchangeNotImplementedError) {
+      return sendError(res, error.status, error.message, error.toDetails());
+    }
     if (error instanceof Error && error.message === 'LIVE_CONSENT_VERSION_REQUIRED') {
       return sendError(res, 400, 'consentTextVersion is required when liveOptIn is enabled');
     }

@@ -6,12 +6,17 @@ import { isAxiosError } from "axios";
 import { apiKeySchema } from "../types/apiKeyForm.type";
 import { testApiKeyConnection } from "../services/apiKeys.service";
 import { useI18n } from "../../../i18n/I18nProvider";
+import {
+  EXCHANGE_OPTIONS,
+  ExchangeOption,
+  supportsExchangeCapability,
+} from "@/features/exchanges/exchangeCapabilities";
 
-const EXCHANGES = ["BINANCE"];
+const EXCHANGES: ExchangeOption[] = [...EXCHANGE_OPTIONS];
 
 export type ApiKeyFormSavePayload = {
   label: string;
-  exchange: string;
+  exchange: ExchangeOption;
   apiKey?: string;
   apiSecret?: string;
   syncExternalPositions: boolean;
@@ -21,7 +26,7 @@ export type ApiKeyFormSavePayload = {
 export type ApiKeyFormProps = {
   defaultValues?: {
     label: string;
-    exchange: string;
+    exchange: ExchangeOption;
     syncExternalPositions: boolean;
     manageExternalPositions: boolean;
   };
@@ -55,6 +60,8 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           error: "Blad",
           save: "Zapisz",
           cancel: "Anuluj",
+          placeholderProbeInfo:
+            "Dla tej gieldy test API key nie jest jeszcze dostepny (placeholder adapter). Zapis jest dozwolony.",
         }
       : {
           fillCredentialsBeforeTest: "Fill in API Key and API Secret before testing.",
@@ -77,10 +84,14 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           error: "Error",
           save: "Save",
           cancel: "Cancel",
+          placeholderProbeInfo:
+            "API key test is not available for this exchange yet (placeholder adapter). Saving is still allowed.",
         };
 
   const [label, setLabel] = useState(defaultValues?.label || "");
-  const [exchange, setExchange] = useState(defaultValues?.exchange || EXCHANGES[0]);
+  const [exchange, setExchange] = useState<ExchangeOption>(
+    defaultValues?.exchange || EXCHANGES[0]
+  );
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
   const [syncExternalPositions, setSyncExternalPositions] = useState(defaultValues?.syncExternalPositions ?? true);
@@ -91,9 +102,17 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
 
   const currentFingerprint = `${exchange}::${apiKey}::${apiSecret}`;
 
-  const requiresConnectionTest = !isEdit || Boolean(apiKey) || Boolean(apiSecret);
+  const exchangeSupportsProbe = supportsExchangeCapability(exchange, "API_KEY_PROBE");
+  const requiresConnectionTest = (!isEdit || Boolean(apiKey) || Boolean(apiSecret)) && exchangeSupportsProbe;
 
   const handleTest = async () => {
+    if (!exchangeSupportsProbe) {
+      setTestStatus("idle");
+      setTestMessage(copy.placeholderProbeInfo);
+      setTestedFingerprint(null);
+      return;
+    }
+
     if (!apiKey || !apiSecret) {
       setTestStatus("error");
       setTestMessage(copy.fillCredentialsBeforeTest);
@@ -183,7 +202,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           className="select select-bordered w-full"
           aria-label={copy.exchange}
           value={exchange}
-          onChange={(e) => setExchange(e.target.value)}
+          onChange={(e) => setExchange((e.target.value as ExchangeOption) || "BINANCE")}
         >
           {EXCHANGES.map((ex) => (
             <option key={ex} value={ex}>
@@ -192,6 +211,14 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           ))}
         </select>
       </div>
+      {!exchangeSupportsProbe ? (
+        <div className="alert alert-info text-sm">
+          <div className="space-y-1">
+            <span className="badge badge-xs badge-warning badge-outline">PLACEHOLDER</span>
+            <span>{copy.placeholderProbeInfo}</span>
+          </div>
+        </div>
+      ) : null}
       <div className="form-control w-full">
         <label className="label pl-0">
           <span className="label-text text-left w-full">{copy.apiKey}</span>
@@ -247,7 +274,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           className={`btn btn-outline btn-info ${testStatus === "loading" ? "loading" : ""}`}
           type="button"
           onClick={handleTest}
-          disabled={testStatus === "loading"}
+          disabled={testStatus === "loading" || !exchangeSupportsProbe}
         >
           {testStatus === "loading" ? copy.testing : copy.testConnection}
         </button>

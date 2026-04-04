@@ -1,4 +1,4 @@
-import { BotMode, PositionManagementMode, PositionStatus, TradeMarket } from '@prisma/client';
+import { BotMode, Exchange, PositionManagementMode, PositionStatus, TradeMarket } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { decrypt } from '../../utils/crypto';
 
@@ -18,7 +18,7 @@ type RuntimeCapitalContextDeps = {
   getLiveApiKeyContext: (input: {
     userId: string;
     botId?: string | null;
-    exchange: 'BINANCE';
+    exchange: Exchange;
   }) => Promise<{ apiKey: string; apiSecret: string } | null>;
   fetchLiveUsdtBalance: (input: {
     apiKey: string;
@@ -173,7 +173,7 @@ export const resolveRuntimeReferenceBalance = async (
     userId: string;
     botId?: string | null;
     mode: BotMode | 'PAPER' | 'LIVE';
-    exchange: 'BINANCE';
+    exchange: Exchange;
     marketType: TradeMarket;
     paperStartBalance: number;
     nowMs: number;
@@ -225,7 +225,7 @@ export const resolveRuntimeDcaFundsExhausted = async (
     userId: string;
     botId?: string | null;
     mode: 'PAPER' | 'LIVE';
-    exchange: 'BINANCE';
+    exchange: Exchange;
     marketType: TradeMarket;
     paperStartBalance: number;
     markPrice: number;

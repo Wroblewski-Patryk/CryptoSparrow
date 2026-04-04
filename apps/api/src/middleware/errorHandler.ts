@@ -2,6 +2,7 @@ import { ZodError } from 'zod';
 import { Request, Response, NextFunction } from 'express';
 import { sendValidationError } from '../utils/formatZodError';
 import { sendError } from '../utils/apiError';
+import { ExchangeNotImplementedError } from '../modules/exchange/exchangeCapabilities';
 
 export function errorHandler(
   err: unknown,
@@ -11,6 +12,10 @@ export function errorHandler(
 ) {
   if (err instanceof ZodError) {
     return sendValidationError(res, err);
+  }
+
+  if (err instanceof ExchangeNotImplementedError) {
+    return sendError(res, err.status, err.message, err.toDetails());
   }
 
   console.error(err);

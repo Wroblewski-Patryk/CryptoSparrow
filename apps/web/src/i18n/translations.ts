@@ -166,6 +166,21 @@ type TranslationSchema = {
         noActiveBotsTitle: string;
         noActiveBotsDescription: string;
         goToBots: string;
+        onboardingBadge: string;
+        onboardingPrimaryCta: string;
+        onboardingSecondaryCta: string;
+        onboardingStepMarketsTitle: string;
+        onboardingStepMarketsDescription: string;
+        onboardingStepMarketsCta: string;
+        onboardingStepStrategyTitle: string;
+        onboardingStepStrategyDescription: string;
+        onboardingStepStrategyCta: string;
+        onboardingStepBacktestTitle: string;
+        onboardingStepBacktestDescription: string;
+        onboardingStepBacktestCta: string;
+        onboardingStepBotTitle: string;
+        onboardingStepBotDescription: string;
+        onboardingStepBotCta: string;
         openPositionsTitle: string;
         timeOpened: string;
         symbol: string;
@@ -404,6 +419,21 @@ export const translations: Record<Locale, TranslationSchema> = {
           noActiveBotsTitle: "No active bots on dashboard",
           noActiveBotsDescription: "Activate at least one bot to see live runtime.",
           goToBots: "Go to bots",
+          onboardingBadge: "Quick start",
+          onboardingPrimaryCta: "Create and activate bot",
+          onboardingSecondaryCta: "Open bots list",
+          onboardingStepMarketsTitle: "Create market universe",
+          onboardingStepMarketsDescription: "Build market groups with exchange, market type and symbols.",
+          onboardingStepMarketsCta: "Open markets",
+          onboardingStepStrategyTitle: "Create strategy",
+          onboardingStepStrategyDescription: "Define entry, exit and risk rules for automation.",
+          onboardingStepStrategyCta: "Open strategies",
+          onboardingStepBacktestTitle: "Test in backtester",
+          onboardingStepBacktestDescription: "Validate strategy behavior before runtime activation.",
+          onboardingStepBacktestCta: "Open backtests",
+          onboardingStepBotTitle: "Create and activate bot",
+          onboardingStepBotDescription: "Assign strategy + markets, then start bot session.",
+          onboardingStepBotCta: "Open bot creator",
           openPositionsTitle: "Open positions",
           timeOpened: "Time opened",
           symbol: "Symbol",
@@ -510,6 +540,10 @@ export const translations: Record<Locale, TranslationSchema> = {
           intervalLabel: "Interval",
           leverageLabel: "Leverage",
           maxOpenLabel: "Max open positions",
+          placeholderActivationBlocked:
+            "Selected exchange is in placeholder mode. Bot activation is unavailable.",
+          placeholderActivationHint:
+            "Placeholder exchange selected. Runtime activation for {mode} mode is not implemented yet.",
           creatingCta: "Creating...",
           createCta: "Add bot",
         },
@@ -547,6 +581,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           save: "Save",
           deleting: "Deleting...",
           delete: "Delete",
+          placeholderBadge: "PLACEHOLDER",
           noBotsForFilter: "No bots for the selected market.",
           searchPlaceholder: "Search bots (e.g. BTCUSDT)",
         },
@@ -963,6 +998,21 @@ export const translations: Record<Locale, TranslationSchema> = {
           noActiveBotsTitle: "Brak aktywnych botow na dashboardzie",
           noActiveBotsDescription: "Aktywuj co najmniej jednego bota, aby zobaczyc live runtime.",
           goToBots: "Przejdz do botow",
+          onboardingBadge: "Szybki start",
+          onboardingPrimaryCta: "Stworz i aktywuj bota",
+          onboardingSecondaryCta: "Otworz liste botow",
+          onboardingStepMarketsTitle: "Stworz uniwersum rynkow",
+          onboardingStepMarketsDescription: "Zbuduj grupy rynkow: gielda, typ rynku i symbole.",
+          onboardingStepMarketsCta: "Otworz rynki",
+          onboardingStepStrategyTitle: "Stworz strategie",
+          onboardingStepStrategyDescription: "Zdefiniuj warunki wejscia, wyjscia i ryzyko.",
+          onboardingStepStrategyCta: "Otworz strategie",
+          onboardingStepBacktestTitle: "Przetestuj w backtesterze",
+          onboardingStepBacktestDescription: "Zweryfikuj strategie na danych historycznych.",
+          onboardingStepBacktestCta: "Otworz backtesty",
+          onboardingStepBotTitle: "Stworz i aktywuj bota",
+          onboardingStepBotDescription: "Podepnij strategie i rynki, potem uruchom sesje.",
+          onboardingStepBotCta: "Otworz kreator bota",
           openPositionsTitle: "Otwarte pozycje",
           timeOpened: "Czas otwarcia",
           symbol: "Symbol",
@@ -1068,6 +1118,10 @@ export const translations: Record<Locale, TranslationSchema> = {
           intervalLabel: "Interwal",
           leverageLabel: "Dzwignia",
           maxOpenLabel: "Max open positions",
+          placeholderActivationBlocked:
+            "Wybrana gielda dziala jako placeholder. Aktywacja bota jest niedostepna.",
+          placeholderActivationHint:
+            "Wybrana gielda dziala jako placeholder. Aktywacja runtime dla trybu {mode} nie jest jeszcze wdrozona.",
           creatingCta: "Tworzenie...",
           createCta: "Dodaj bota",
         },
@@ -1105,6 +1159,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           save: "Zapisz",
           deleting: "Usuwanie...",
           delete: "Usun",
+          placeholderBadge: "PLACEHOLDER",
           noBotsForFilter: "Brak botow dla wybranego rynku.",
           searchPlaceholder: "Szukaj botow (np. BTCUSDT)",
         },

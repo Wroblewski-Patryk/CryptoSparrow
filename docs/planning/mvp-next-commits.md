@@ -7,11 +7,21 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- (empty)
 ## NEXT
+- (empty)
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `EXPH-09 feat(web-ux): add placeholder badges/hints for unsupported exchange operations in creators/runtime paths`
+- [x] `EXPH-08 feat(web-types): extend Exchange unions/options across Markets/Bots/Profile modules`
+- [x] `EXPH-06 test(api+web): add regression coverage for placeholder persistence and fail-closed responses`
+- [x] `EXPH-05 feat(web): expose exchange placeholders in Markets/Bots/Profile flows with explicit not-implemented hints`
+- [x] `EXPH-04 feat(api-markets+bots): enforce placeholder exchange fail-closed behavior on unsupported catalog/runtime/live paths`
+- [x] `EXPH-03 feat(api-core): add centralized exchange capability registry and EXCHANGE_NOT_IMPLEMENTED guard mapping`
+- [x] `EXPH-02 feat(db): extend Exchange enum with BYBIT/OKX/KRAKEN/COINBASE while keeping BINANCE default`
+- [x] `EXPH-01 docs(contract): publish exchange placeholder contract and fail-closed behavior for BYBIT/OKX/KRAKEN/COINBASE`
 - [x] `ADM-01 docs(contract): define third admin app-shell template contract and rollout tasks (public/dashboard/admin split)`
 - [x] `BOPS-60 docs(contract): lock dashboard trade-history action/fee semantics (OPEN -> realized blank, CLOSE -> realized value) and margin consistency`
 - [x] `PEX-07 feat(obs-metrics): add production metrics for runtime lag, restart count, reconciliation delay, and execution error classes`

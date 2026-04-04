@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { RuntimeSignalLoop, deriveRuntimeGroupMaxOpenPositions } from './runtimeSignalLoop.service';
+import {
+  RuntimeSignalLoop,
+  deriveRuntimeGroupMaxOpenPositions,
+  supportsRuntimeSignalLoopExchange,
+} from './runtimeSignalLoop.service';
 import { MarketStreamEvent } from '../market-stream/binanceStream.types';
 
 vi.mock('./runtimeCapitalContext.service', () => ({
@@ -627,5 +631,35 @@ describe('RuntimeSignalLoop', () => {
       ],
     });
     expect(derived).toBe(3);
+  });
+
+  it('supports runtime loop only for exchanges with mode-specific capabilities', () => {
+    expect(
+      supportsRuntimeSignalLoopExchange({
+        exchange: 'BINANCE',
+        mode: 'PAPER',
+      })
+    ).toBe(true);
+
+    expect(
+      supportsRuntimeSignalLoopExchange({
+        exchange: 'BINANCE',
+        mode: 'LIVE',
+      })
+    ).toBe(true);
+
+    expect(
+      supportsRuntimeSignalLoopExchange({
+        exchange: 'BYBIT',
+        mode: 'PAPER',
+      })
+    ).toBe(false);
+
+    expect(
+      supportsRuntimeSignalLoopExchange({
+        exchange: 'OKX',
+        mode: 'LIVE',
+      })
+    ).toBe(false);
   });
 });

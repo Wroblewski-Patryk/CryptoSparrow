@@ -1,5 +1,6 @@
 import api from '../../../lib/api';
 import { CreateMarketUniverseInput, MarketCatalog, MarketUniverse } from '../types/marketUniverse.type';
+import type { ExchangeOption } from '@/features/exchanges/exchangeCapabilities';
 
 export const listMarketUniverses = async (): Promise<MarketUniverse[]> => {
   const res = await api.get<MarketUniverse[]>('/dashboard/markets/universes');
@@ -31,7 +32,7 @@ export const deleteMarketUniverse = async (id: string): Promise<void> => {
 };
 
 export const fetchMarketCatalog = async (
-  params?: { exchange?: 'BINANCE'; baseCurrency?: string; marketType?: 'SPOT' | 'FUTURES' }
+  params?: { exchange?: ExchangeOption; baseCurrency?: string; marketType?: 'SPOT' | 'FUTURES' }
 ): Promise<MarketCatalog> => {
   const res = await api.get<MarketCatalog>('/dashboard/markets/catalog', {
     params: params ?? undefined,

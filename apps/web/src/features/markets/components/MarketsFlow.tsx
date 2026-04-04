@@ -5,6 +5,11 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { EmptyState, ErrorState, LoadingState, SuccessState } from '../../../ui/components/ViewState';
 import { useLocaleFormatting } from '../../../i18n/useLocaleFormatting';
+import {
+  EXCHANGE_OPTIONS,
+  ExchangeOption,
+  supportsExchangeCapability,
+} from '@/features/exchanges/exchangeCapabilities';
 import { FieldWrapper, SelectField, TextInputField } from './FieldControls';
 import SearchableMultiSelect, { MultiSelectOption } from './SearchableMultiSelect';
 import {
@@ -16,7 +21,7 @@ import {
 import { MarketCatalogEntry, MarketUniverse } from '../types/marketUniverse.type';
 
 const MARKET_TYPES: Array<'SPOT' | 'FUTURES'> = ['SPOT', 'FUTURES'];
-const EXCHANGES: Array<'BINANCE'> = ['BINANCE'];
+const EXCHANGES: ExchangeOption[] = [...EXCHANGE_OPTIONS];
 
 const uniqueSorted = (values: string[]) =>
   [...new Set(values.map((item) => item.trim().toUpperCase()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
@@ -45,7 +50,7 @@ export default function MarketsFlow() {
 
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
-  const [exchange, setExchange] = useState<'BINANCE'>('BINANCE');
+  const [exchange, setExchange] = useState<ExchangeOption>('BINANCE');
   const [marketType, setMarketType] = useState<'SPOT' | 'FUTURES'>('FUTURES');
   const [baseCurrency, setBaseCurrency] = useState('USDT');
   const [baseCurrencies, setBaseCurrencies] = useState<string[]>([]);
@@ -72,7 +77,7 @@ export default function MarketsFlow() {
   }, []);
 
   const loadCatalog = useCallback(async (params?: {
-    requestedExchange?: 'BINANCE';
+    requestedExchange?: ExchangeOption;
     requestedBaseCurrency?: string;
     requestedMarketType?: 'SPOT' | 'FUTURES';
   }) => {
@@ -85,7 +90,7 @@ export default function MarketsFlow() {
         marketType: params?.requestedMarketType ?? marketType,
       });
 
-      setExchange((catalog.exchange ?? 'BINANCE') as 'BINANCE');
+      setExchange((catalog.exchange ?? 'BINANCE') as ExchangeOption);
       setMarketType(catalog.marketType);
       setBaseCurrency(catalog.baseCurrency);
       setBaseCurrencies(catalog.baseCurrencies);
@@ -146,9 +151,14 @@ export default function MarketsFlow() {
     return previewSymbols.filter((symbol) => symbol.includes(q));
   }, [previewQuery, previewSymbols]);
 
+  const exchangeSupportsMarketCatalog = useMemo(
+    () => supportsExchangeCapability(exchange, 'MARKET_CATALOG'),
+    [exchange]
+  );
+
   const canSubmit = useMemo(
-    () => name.trim().length > 0 && !creating && previewSymbols.length > 0,
-    [creating, name, previewSymbols.length]
+    () => name.trim().length > 0 && !creating && (previewSymbols.length > 0 || !exchangeSupportsMarketCatalog),
+    [creating, exchangeSupportsMarketCatalog, name, previewSymbols.length]
   );
 
   const handleBaseCurrencyChange = async (nextBaseCurrency: string) => {
@@ -172,7 +182,9 @@ export default function MarketsFlow() {
   };
 
   const handleExchangeChange = async (nextExchange: string) => {
-    const parsed = nextExchange === 'BINANCE' ? 'BINANCE' : 'BINANCE';
+    const parsed = EXCHANGE_OPTIONS.includes(nextExchange as ExchangeOption)
+      ? (nextExchange as ExchangeOption)
+      : 'BINANCE';
     setExchange(parsed);
     await loadCatalog({
       requestedExchange: parsed,
@@ -271,6 +283,15 @@ export default function MarketsFlow() {
             disabled={catalogLoading || baseCurrencies.length === 0}
           />
         </div>
+
+        {!exchangeSupportsMarketCatalog ? (
+          <div className='alert alert-warning mt-3 text-sm'>
+            <span>
+              Placeholder exchange selected. Public catalog for this exchange is not implemented yet.
+              You can still save the universe context.
+            </span>
+          </div>
+        ) : null}
 
         <div className='mt-3 rounded-xl border border-base-300 bg-base-100 p-3'>
           <div className='grid gap-3 lg:grid-cols-2'>

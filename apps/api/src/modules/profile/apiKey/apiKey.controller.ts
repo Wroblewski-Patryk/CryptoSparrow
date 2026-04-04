@@ -4,6 +4,7 @@ import * as apiKeyService from './apiKey.service';
 import { apiKeyRotateSchema, apiKeySchema, apiKeyTestSchema } from './apiKey.types';
 import { sendValidationError } from '../../../utils/formatZodError';
 import { sendError } from '../../../utils/apiError';
+import { ExchangeNotImplementedError } from '../../exchange/exchangeCapabilities';
 
 const mapApiKeyPersistenceError = (error: unknown): { status: number; message: string } => {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -129,6 +130,13 @@ export const testConnection = async (req: Request, res: Response) => {
     return sendValidationError(res, error);
   }
 
-  const result = await apiKeyService.testApiKeyConnection(userId, req.body);
-  return res.status(200).json(result);
+  try {
+    const result = await apiKeyService.testApiKeyConnection(userId, req.body);
+    return res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof ExchangeNotImplementedError) {
+      return sendError(res, error.status, error.message, error.toDetails());
+    }
+    return sendError(res, 500, 'Internal server error');
+  }
 };

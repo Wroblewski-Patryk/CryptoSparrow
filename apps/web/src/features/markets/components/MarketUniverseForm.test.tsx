@@ -69,4 +69,58 @@ describe('MarketUniverseForm', () => {
       expect(screen.getByText('Liczba rynkow: 1')).toBeInTheDocument();
     });
   });
+
+  it('allows submitting placeholder exchange context without catalog symbols', async () => {
+    fetchCatalogMock.mockRejectedValue({
+      response: {
+        data: {
+          error: {
+            message: 'Exchange OKX does not support MARKET_CATALOG.',
+          },
+        },
+      },
+    });
+
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <MarketUniverseForm
+        mode='create'
+        submitLabel='Utworz'
+        submitting={false}
+        onSubmit={onSubmit}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Top Futures'), {
+      target: { value: 'OKX Placeholder Universe' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Gielda')).not.toBeDisabled();
+    });
+
+    fireEvent.change(screen.getByLabelText('Gielda'), {
+      target: { value: 'OKX' },
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'Placeholder exchange selected. Public catalog for this exchange is not implemented yet. You can still save the universe context.'
+        )
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Utworz' }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'OKX Placeholder Universe',
+          exchange: 'OKX',
+        })
+      );
+    });
+  });
 });

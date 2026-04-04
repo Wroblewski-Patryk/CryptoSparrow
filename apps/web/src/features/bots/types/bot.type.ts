@@ -1,7 +1,9 @@
+import type { ExchangeOption } from "@/features/exchanges/exchangeCapabilities";
+
 export type BotMode = "PAPER" | "LIVE";
 export type TradeMarket = "FUTURES" | "SPOT";
 export type PositionMode = "ONE_WAY" | "HEDGE";
-export type Exchange = "BINANCE";
+export type Exchange = ExchangeOption;
 
 export type Bot = {
   id: string;

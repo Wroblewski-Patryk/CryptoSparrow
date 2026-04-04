@@ -2,6 +2,9 @@
 
 Status: planning only (no implementation in this step).
 
+Related follow-up (2026-04-04):
+- Exchange placeholder rollout for `BYBIT/OKX/KRAKEN/COINBASE` is tracked in `docs/planning/exchange-placeholder-adapters-plan-2026-04-04.md`.
+
 ## Objective
 Guarantee one coherent venue context across:
 - bot creator (`PAPER` and `LIVE`),

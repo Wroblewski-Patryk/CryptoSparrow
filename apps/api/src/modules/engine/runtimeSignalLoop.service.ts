@@ -1,4 +1,4 @@
-import { Prisma, SignalDirection } from '@prisma/client';
+import { Exchange, Prisma, SignalDirection } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { metricsStore } from '../../observability/metrics';
 import {
@@ -18,6 +18,7 @@ import {
 import { computeRiskBasedOrderQuantity, normalizeWalletRiskPercent } from './positionSizing';
 import { resolveRuntimeReferenceBalance } from './runtimeCapitalContext.service';
 import { runtimeTelemetryService } from './runtimeTelemetry.service';
+import { supportsExchangeCapability } from '../exchange/exchangeCapabilities';
 
 type ActiveBotStrategy = {
   strategyId: string;
@@ -42,11 +43,17 @@ type ActiveBot = {
   id: string;
   userId: string;
   mode: 'PAPER' | 'LIVE';
-  exchange: 'BINANCE';
+  exchange: Exchange;
   paperStartBalance: number;
   marketType: 'FUTURES' | 'SPOT';
   marketGroups: ActiveBotMarketGroup[];
 };
+
+export const supportsRuntimeSignalLoopExchange = (bot: Pick<ActiveBot, 'exchange' | 'mode'>) =>
+  supportsExchangeCapability(
+    bot.exchange,
+    bot.mode === 'LIVE' ? 'LIVE_EXECUTION' : 'PAPER_PRICING_FEED'
+  );
 
 type RuntimeSignalLoopDeps = {
   subscribe: (
@@ -258,7 +265,7 @@ const defaultDeps: RuntimeSignalLoopDeps = {
         },
       },
     });
-    return bots.map((bot) => {
+    return bots.filter(supportsRuntimeSignalLoopExchange).map((bot) => {
       const marketGroupsFromNewModel: ActiveBotMarketGroup[] = bot.botMarketGroups.map((group) => {
         const strategies = group.strategyLinks.map((link) => ({
           strategyId: link.strategyId,

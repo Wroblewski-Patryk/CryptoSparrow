@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { sendError } from '../../utils/apiError';
 import { sendValidationError } from '../../utils/formatZodError';
+import { ExchangeNotImplementedError } from '../exchange/exchangeCapabilities';
 import * as marketsService from './markets.service';
 import {
   MarketCatalogQuerySchema,
@@ -15,6 +16,9 @@ export const listMarketCatalog = async (req: Request, res: Response) => {
     const catalog = await marketsService.getMarketCatalog(query.baseCurrency, query.marketType, query.exchange);
     return res.json(catalog);
   } catch (error) {
+    if (error instanceof ExchangeNotImplementedError) {
+      return sendError(res, error.status, error.message, error.toDetails());
+    }
     return sendValidationError(res, error);
   }
 };

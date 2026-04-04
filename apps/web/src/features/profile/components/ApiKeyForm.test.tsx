@@ -170,4 +170,39 @@ describe("ApiKeyForm", () => {
       manageExternalPositions: true,
     });
   });
+
+  it("allows saving placeholder exchange key without connection probe", async () => {
+    const onSave = vi.fn();
+    renderForm({ onSave, onCancel: vi.fn() });
+
+    fireEvent.change(screen.getByLabelText("Key name"), {
+      target: { value: "OKX main" },
+    });
+    fireEvent.change(screen.getByLabelText("Exchange"), {
+      target: { value: "OKX" },
+    });
+    fireEvent.change(screen.getByLabelText("API Key"), {
+      target: { value: "okx-api-key" },
+    });
+    fireEvent.change(screen.getByLabelText("API Secret"), {
+      target: { value: "okx-api-secret" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(testApiKeyConnectionMock).not.toHaveBeenCalled();
+    expect(onSave).toHaveBeenCalledWith({
+      label: "OKX main",
+      exchange: "OKX",
+      apiKey: "okx-api-key",
+      apiSecret: "okx-api-secret",
+      syncExternalPositions: true,
+      manageExternalPositions: false,
+    });
+    expect(
+      screen.getByText(
+        "API key test is not available for this exchange yet (placeholder adapter). Saving is still allowed."
+      )
+    ).toBeInTheDocument();
+  });
 });

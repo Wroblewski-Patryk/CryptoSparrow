@@ -28,6 +28,9 @@ describe("API Keys security contract", () => {
     await prisma.botAssistantConfig.deleteMany();
     await prisma.marketGroupStrategyLink.deleteMany();
     await prisma.botMarketGroup.deleteMany();
+    await prisma.botRuntimeSymbolStat.deleteMany();
+    await prisma.botRuntimeEvent.deleteMany();
+    await prisma.botRuntimeSession.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
@@ -274,6 +277,44 @@ describe("API Keys security contract", () => {
     } finally {
       process.env.API_KEY_TEST_FORCE_CODE = "";
     }
+  });
+
+  it("allows saving API keys for placeholder exchanges", async () => {
+    const agent = await registerAndLogin("apikey-placeholder-save@example.com");
+
+    const createRes = await agent.post("/dashboard/profile/apiKeys").send({
+      label: "okx-main",
+      exchange: "OKX",
+      apiKey: "OKXKEY12345678",
+      apiSecret: "OKXSECRET12345678",
+    });
+
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.exchange).toBe("OKX");
+    const keyId = createRes.body.id as string;
+
+    const listRes = await agent.get("/dashboard/profile/apiKeys");
+    expect(listRes.status).toBe(200);
+    const persisted = listRes.body.find((item: { id: string }) => item.id === keyId);
+    expect(persisted?.exchange).toBe("OKX");
+  });
+
+  it("returns explicit not-implemented contract for placeholder API key probes", async () => {
+    const agent = await registerAndLogin("apikey-placeholder-probe@example.com");
+
+    const res = await agent.post("/dashboard/profile/apiKeys/test").send({
+      exchange: "OKX",
+      apiKey: "OKXKEY12345678",
+      apiSecret: "OKXSECRET12345678",
+    });
+
+    expect(res.status).toBe(501);
+    expect(res.body.error.message).toContain("Exchange OKX does not support API_KEY_PROBE");
+    expect(res.body.error.details).toEqual({
+      code: "EXCHANGE_NOT_IMPLEMENTED",
+      exchange: "OKX",
+      capability: "API_KEY_PROBE",
+    });
   });
 
   it("enforces ownership on rotate and revoke actions", async () => {

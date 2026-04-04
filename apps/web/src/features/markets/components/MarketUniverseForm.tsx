@@ -7,9 +7,14 @@ import { FieldWrapper, SelectField, TextInputField } from './FieldControls';
 import SearchableMultiSelect, { MultiSelectOption } from './SearchableMultiSelect';
 import { fetchMarketCatalog } from '../services/markets.service';
 import { CreateMarketUniverseInput, MarketCatalogEntry, MarketUniverse } from '../types/marketUniverse.type';
+import {
+  EXCHANGE_OPTIONS,
+  ExchangeOption,
+  supportsExchangeCapability,
+} from '@/features/exchanges/exchangeCapabilities';
 
 const MARKET_TYPES: Array<'SPOT' | 'FUTURES'> = ['SPOT', 'FUTURES'];
-const EXCHANGES: Array<'BINANCE'> = ['BINANCE'];
+const EXCHANGES: ExchangeOption[] = [...EXCHANGE_OPTIONS];
 
 const uniqueSorted = (values: string[]) =>
   [...new Set(values.map((item) => item.trim().toUpperCase()).filter(Boolean))].sort((a, b) =>
@@ -67,7 +72,7 @@ export default function MarketUniverseForm({
   const [currentStep, setCurrentStep] = useState(0);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
-  const [exchange, setExchange] = useState<'BINANCE'>(initial?.exchange ?? 'BINANCE');
+  const [exchange, setExchange] = useState<ExchangeOption>(initial?.exchange ?? 'BINANCE');
   const [marketType, setMarketType] = useState<'SPOT' | 'FUTURES'>(initial?.marketType ?? 'FUTURES');
   const [baseCurrency, setBaseCurrency] = useState(initial?.baseCurrency ?? 'USDT');
   const [baseCurrencies, setBaseCurrencies] = useState<string[]>([]);
@@ -94,7 +99,7 @@ export default function MarketUniverseForm({
 
   const loadCatalog = useCallback(
     async (params?: {
-      requestedExchange?: 'BINANCE';
+      requestedExchange?: ExchangeOption;
       requestedBaseCurrency?: string;
       requestedMarketType?: 'SPOT' | 'FUTURES';
     }) => {
@@ -107,7 +112,7 @@ export default function MarketUniverseForm({
           marketType: params?.requestedMarketType ?? marketType,
         });
 
-        setExchange((catalog.exchange ?? 'BINANCE') as 'BINANCE');
+        setExchange((catalog.exchange ?? 'BINANCE') as ExchangeOption);
         setMarketType(catalog.marketType);
         setBaseCurrency(catalog.baseCurrency);
         setBaseCurrencies(catalog.baseCurrencies);
@@ -129,6 +134,11 @@ export default function MarketUniverseForm({
       requestedMarketType: initial?.marketType,
     });
   }, [initial?.baseCurrency, initial?.exchange, initial?.marketType, loadCatalog]);
+
+  const exchangeSupportsMarketCatalog = useMemo(
+    () => supportsExchangeCapability(exchange, 'MARKET_CATALOG'),
+    [exchange]
+  );
 
   const maxQuoteVolume = useMemo(
     () => Math.max(...catalogMarkets.map((market) => market.quoteVolume24h ?? 0), 0),
@@ -183,8 +193,11 @@ export default function MarketUniverseForm({
   }, [previewQuery, previewSymbols]);
 
   const canSubmit = useMemo(
-    () => name.trim().length > 0 && !submitting && previewSymbols.length > 0,
-    [name, previewSymbols.length, submitting]
+    () =>
+      name.trim().length > 0 &&
+      !submitting &&
+      (previewSymbols.length > 0 || !exchangeSupportsMarketCatalog),
+    [exchangeSupportsMarketCatalog, name, previewSymbols.length, submitting]
   );
 
   const handleBaseCurrencyChange = async (nextBaseCurrency: string) => {
@@ -208,7 +221,9 @@ export default function MarketUniverseForm({
   };
 
   const handleExchangeChange = async (nextExchange: string) => {
-    const parsed = nextExchange === 'BINANCE' ? 'BINANCE' : 'BINANCE';
+    const parsed = EXCHANGE_OPTIONS.includes(nextExchange as ExchangeOption)
+      ? (nextExchange as ExchangeOption)
+      : 'BINANCE';
     setExchange(parsed);
     await loadCatalog({
       requestedExchange: parsed,
@@ -313,6 +328,17 @@ export default function MarketUniverseForm({
                 disabled={catalogLoading || baseCurrencies.length === 0}
               />
             </div>
+            {!exchangeSupportsMarketCatalog ? (
+              <div className='alert alert-warning mt-3 text-sm'>
+                <div className='space-y-1'>
+                  <span className='badge badge-xs badge-warning badge-outline'>PLACEHOLDER</span>
+                  <span>
+                    Placeholder exchange selected. Public catalog for this exchange is not implemented yet.
+                    You can still save the universe context.
+                  </span>
+                </div>
+              </div>
+            ) : null}
 
             <div className='mt-4 rounded-xl border border-base-300 bg-base-200 p-3'>
               <div className='grid gap-3 lg:grid-cols-2'>

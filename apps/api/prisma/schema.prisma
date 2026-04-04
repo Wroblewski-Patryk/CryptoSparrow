@@ -73,6 +73,10 @@ model ApiKey {
 
 enum Exchange {
   BINANCE
+  BYBIT
+  OKX
+  KRAKEN
+  COINBASE
 }
 
 model Strategy {

@@ -1,3 +1,5 @@
+import type { ExchangeOption } from "@/features/exchanges/exchangeCapabilities";
+
 export type MarketFilterRules = {
   minQuoteVolumeEnabled: boolean;
   minQuoteVolume24h?: number;
@@ -6,7 +8,7 @@ export type MarketFilterRules = {
 export type MarketUniverse = {
   id: string;
   name: string;
-  exchange?: 'BINANCE';
+  exchange?: ExchangeOption;
   marketType: 'FUTURES' | 'SPOT';
   baseCurrency: string;
   filterRules?: MarketFilterRules | null;
@@ -18,7 +20,7 @@ export type MarketUniverse = {
 
 export type CreateMarketUniverseInput = {
   name: string;
-  exchange?: 'BINANCE';
+  exchange?: ExchangeOption;
   marketType: 'FUTURES' | 'SPOT';
   baseCurrency: string;
   filterRules?: MarketFilterRules;
@@ -39,7 +41,7 @@ export type MarketCatalogEntry = {
 
 export type MarketCatalog = {
   source: string;
-  exchange?: 'BINANCE';
+  exchange?: ExchangeOption;
   marketType: 'SPOT' | 'FUTURES';
   baseCurrency: string;
   baseCurrencies: string[];

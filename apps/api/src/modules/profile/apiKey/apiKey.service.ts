@@ -1,11 +1,8 @@
 import { encrypt, decrypt } from "../../../utils/crypto";
 import { prisma } from "../../../prisma/client";
-import { ApiKey, Prisma } from "@prisma/client";
+import { ApiKey, Exchange, Prisma } from "@prisma/client";
+import { assertExchangeCapability } from "../../exchange/exchangeCapabilities";
 import { probeBinanceApiKeyPermissions, BinanceApiKeyTestCode } from "./binanceApiKeyProbe.service";
-
-export enum Exchange {
-  BINANCE = "BINANCE"
-}
 
 export type ApiKeyPayload = {
   label: string;
@@ -264,6 +261,8 @@ export const testApiKeyConnection = async (
   userId: string,
   data: ApiKeyTestPayload
 ): Promise<ApiKeyTestResult> => {
+  assertExchangeCapability(data.exchange, "API_KEY_PROBE");
+
   const forcedCode = getForcedApiKeyTestCode();
   const result = forcedCode
     ? buildApiKeyTestResultForCode(forcedCode)

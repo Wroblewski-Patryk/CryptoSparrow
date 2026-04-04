@@ -17,7 +17,7 @@ const MarketFilterRulesSchema = z
 
 export const MarketUniverseCreateSchema = z.object({
   name: z.string().trim().min(1),
-  exchange: z.enum(['BINANCE']).default('BINANCE'),
+  exchange: z.enum(['BINANCE', 'BYBIT', 'OKX', 'KRAKEN', 'COINBASE']).default('BINANCE'),
   marketType: z.enum(['FUTURES', 'SPOT']).default('FUTURES'),
   baseCurrency: z.string().trim().min(2).max(16).default('USDT'),
   filterRules: MarketFilterRulesSchema.optional(),
@@ -29,7 +29,7 @@ export const MarketUniverseCreateSchema = z.object({
 export const MarketUniverseUpdateSchema = MarketUniverseCreateSchema.partial();
 
 export const MarketCatalogQuerySchema = z.object({
-  exchange: z.enum(['BINANCE']).default('BINANCE'),
+  exchange: z.enum(['BINANCE', 'BYBIT', 'OKX', 'KRAKEN', 'COINBASE']).default('BINANCE'),
   baseCurrency: z.string().trim().min(2).max(16).optional(),
   marketType: z.enum(['SPOT', 'FUTURES']).default('FUTURES'),
 });

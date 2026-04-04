@@ -11,6 +11,7 @@ import { listMarketUniverses } from "@/features/markets/services/markets.service
 import { MarketUniverse } from "@/features/markets/types/marketUniverse.type";
 import { listStrategies } from "@/features/strategies/api/strategies.api";
 import { StrategyDto } from "@/features/strategies/types/StrategyForm.type";
+import { supportsExchangeCapability } from "@/features/exchanges/exchangeCapabilities";
 import {
   createBot,
   getBot,
@@ -177,6 +178,18 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
     () => marketGroups.find((group) => group.id === form.marketGroupId) ?? null,
     [marketGroups, form.marketGroupId]
   );
+  const selectedExchange = selectedMarketGroup?.exchange ?? "BINANCE";
+  const canActivateForMode = useMemo(() => {
+    if (form.mode === "LIVE") {
+      return supportsExchangeCapability(selectedExchange, "LIVE_EXECUTION");
+    }
+    return supportsExchangeCapability(selectedExchange, "PAPER_PRICING_FEED");
+  }, [form.mode, selectedExchange]);
+
+  useEffect(() => {
+    if (!form.isActive || canActivateForMode) return;
+    setForm((prev) => ({ ...prev, isActive: false }));
+  }, [canActivateForMode, form.isActive]);
 
   const submitLabel = submitting
     ? t("dashboard.bots.create.creatingCta")
@@ -188,6 +201,10 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
     event.preventDefault();
     if (!form.name.trim() || !form.strategyId || !form.marketGroupId) {
       toast.error(t("dashboard.bots.create.description"));
+      return;
+    }
+    if (form.isActive && !canActivateForMode) {
+      toast.error(t("dashboard.bots.create.placeholderActivationBlocked"));
       return;
     }
 
@@ -316,6 +333,7 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
               type="checkbox"
               className="toggle toggle-success"
               checked={form.isActive}
+              disabled={!canActivateForMode}
               onChange={(event) => setForm((prev) => ({ ...prev, isActive: event.target.checked }))}
             />
           </label>
@@ -364,6 +382,16 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
               {selectedMarketGroup?.whitelist.length ?? 0} | {t("dashboard.bots.create.blacklistLabel")}:{" "}
               {selectedMarketGroup?.blacklist.length ?? 0}
             </p>
+            {!canActivateForMode ? (
+              <div className="mt-2 space-y-1">
+                <span className="badge badge-xs badge-warning badge-outline">
+                  {t("dashboard.bots.list.placeholderBadge")}
+                </span>
+                <p className="text-warning">
+                  {t("dashboard.bots.create.placeholderActivationHint").replace("{mode}", form.mode)}
+                </p>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>

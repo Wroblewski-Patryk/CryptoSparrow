@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { sendError } from '../../utils/apiError';
 import { sendValidationError } from '../../utils/formatZodError';
+import { ExchangeNotImplementedError } from '../exchange/exchangeCapabilities';
 import {
   CreateBacktestRunSchema,
   GetBacktestTimelineQuerySchema,
@@ -43,6 +44,9 @@ export const createBacktestRun = async (req: Request, res: Response) => {
     if (!created) return sendError(res, 404, 'Strategy or market universe not found');
     return res.status(201).json(created);
   } catch (error) {
+    if (error instanceof ExchangeNotImplementedError) {
+      return sendError(res, error.status, error.message, error.toDetails());
+    }
     return sendValidationError(res, error);
   }
 };

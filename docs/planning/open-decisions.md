@@ -265,6 +265,16 @@ This file tracks intentionally unresolved architecture choices so implementation
 - Canonical reference:
   - `docs/architecture/app-shell-template-split-contract.md`
 
+## Exchange Placeholder Policy (Post-Binance Expansion)
+- Decision state: resolved on 2026-04-04.
+- Product/runtime decision:
+  - during placeholder expansion, `BYBIT/OKX/KRAKEN/COINBASE` are selectable context values but not live-enabled adapters,
+  - all unsupported exchange paths must fail closed with explicit error contract (`EXCHANGE_NOT_IMPLEMENTED`),
+  - no silent fallback to `BINANCE` when a non-Binance exchange is selected,
+  - default exchange remains `BINANCE` until each adapter reaches production-ready parity.
+- Canonical reference:
+  - `docs/planning/exchange-placeholder-adapters-plan-2026-04-04.md`
+
 ## Numeric Locale Input Policy (Comma vs Dot)
 - Decision state: open (planned in Phase 21 `LFIN-09..LFIN-11`).
 - Open choice:

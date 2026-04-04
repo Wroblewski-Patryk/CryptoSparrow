@@ -1,7 +1,9 @@
+import type { ExchangeOption } from "@/features/exchanges/exchangeCapabilities";
+
 export type ApiKey = {
   id: string;
   label: string;
-  exchange: string;
+  exchange: ExchangeOption;
   apiKey: string;
   apiSecret: string;
   syncExternalPositions: boolean;

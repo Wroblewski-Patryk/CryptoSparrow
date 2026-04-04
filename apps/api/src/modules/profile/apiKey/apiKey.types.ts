@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const apiKeySchema = z.object({
   label: z.string().min(2).max(100),
-  exchange: z.enum(["BINANCE"]),
+  exchange: z.enum(["BINANCE", "BYBIT", "OKX", "KRAKEN", "COINBASE"]),
   apiKey: z.string().min(8).max(100),
   apiSecret: z.string().min(8).max(100),
   syncExternalPositions: z.boolean().optional().default(true),
@@ -15,7 +15,7 @@ export const apiKeyRotateSchema = z.object({
 });
 
 export const apiKeyTestSchema = z.object({
-  exchange: z.enum(["BINANCE"]),
+  exchange: z.enum(["BINANCE", "BYBIT", "OKX", "KRAKEN", "COINBASE"]),
   apiKey: z.string().min(8).max(100),
   apiSecret: z.string().min(8).max(100),
 });

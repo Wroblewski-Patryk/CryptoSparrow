@@ -13,6 +13,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/ui/components/ViewState"
 import { useI18n } from "@/i18n/I18nProvider";
 import { listStrategies } from "@/features/strategies/api/strategies.api";
 import { StrategyDto } from "@/features/strategies/types/StrategyForm.type";
+import { supportsExchangeCapability } from "@/features/exchanges/exchangeCapabilities";
 import { deleteBot, listBots } from "../services/bots.service";
 import { Bot } from "../types/bot.type";
 
@@ -115,7 +116,17 @@ export default function BotsListTable() {
       render: (row) => (
         <div className="space-y-0.5">
           <p className="font-medium">{row.exchange}</p>
-          <p className="text-[11px] uppercase tracking-wide opacity-60">{row.marketType}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-[11px] uppercase tracking-wide opacity-60">{row.marketType}</p>
+            {!supportsExchangeCapability(row.exchange, "PAPER_PRICING_FEED") &&
+            !supportsExchangeCapability(row.exchange, "LIVE_EXECUTION") ? (
+              <TableToneBadge
+                label={t("dashboard.bots.list.placeholderBadge")}
+                tone="warning"
+                className="badge-xs"
+              />
+            ) : null}
+          </div>
         </div>
       ),
       className: "w-40",
@@ -222,6 +233,7 @@ export default function BotsListTable() {
           return (
             row.name.toLowerCase().includes(normalized) ||
             row.marketType.toLowerCase().includes(normalized) ||
+            row.exchange.toLowerCase().includes(normalized) ||
             row.mode.toLowerCase().includes(normalized) ||
             (strategyMap.get(row.strategyId ?? "")?.name ?? "").toLowerCase().includes(normalized)
           );

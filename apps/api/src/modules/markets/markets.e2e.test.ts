@@ -195,6 +195,45 @@ describe('Markets module contract', () => {
     expect(res.body.markets[0]).toHaveProperty('quoteAsset', 'USDT');
   });
 
+  it('allows persisting universes with placeholder exchanges', async () => {
+    const agent = await registerAndLogin('markets-placeholder-create@example.com');
+
+    const createRes = await agent.post('/dashboard/markets/universes').send({
+      ...createPayload(),
+      exchange: 'OKX',
+    });
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.exchange).toBe('OKX');
+    const universeId = createRes.body.id as string;
+
+    const getRes = await agent.get(`/dashboard/markets/universes/${universeId}`);
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.exchange).toBe('OKX');
+
+    const listRes = await agent.get('/dashboard/markets/universes');
+    expect(listRes.status).toBe(200);
+    const persisted = listRes.body.find((item: { id: string }) => item.id === universeId);
+    expect(persisted?.exchange).toBe('OKX');
+  });
+
+  it('returns explicit not-implemented contract for placeholder market catalog requests', async () => {
+    const agent = await registerAndLogin('markets-placeholder-catalog@example.com');
+
+    const res = await agent.get('/dashboard/markets/catalog').query({
+      exchange: 'OKX',
+      baseCurrency: 'USDT',
+      marketType: 'FUTURES',
+    });
+
+    expect(res.status).toBe(501);
+    expect(res.body.error.message).toContain('Exchange OKX does not support MARKET_CATALOG');
+    expect(res.body.error.details).toEqual({
+      code: 'EXCHANGE_NOT_IMPLEMENTED',
+      exchange: 'OKX',
+      capability: 'MARKET_CATALOG',
+    });
+  });
+
   it('blocks universe update/delete when linked symbol group is used by active bot', async () => {
     const agent = await registerAndLogin('markets-active-guard@example.com');
 
