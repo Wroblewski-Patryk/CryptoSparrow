@@ -38,6 +38,9 @@ type DataTableProps<T> = {
   sortKey?: string | null;
   sortDirection?: SortDirection;
   onSortChange?: (sortKey: string | null, direction: SortDirection) => void;
+  defaultSortKey?: string | null;
+  defaultSortDirection?: SortDirection;
+  persistSortKey?: string;
   paginationEnabled?: boolean;
   pageSizeOptions?: number[];
   defaultPageSize?: number;
@@ -91,6 +94,9 @@ export default function DataTable<T>({
   sortKey: externalSortKey,
   sortDirection: externalSortDirection = 'asc',
   onSortChange,
+  defaultSortKey = null,
+  defaultSortDirection = 'asc',
+  persistSortKey,
   paginationEnabled = false,
   pageSizeOptions = [10, 25, 50, 100],
   defaultPageSize,
@@ -110,8 +116,10 @@ export default function DataTable<T>({
 }: DataTableProps<T>) {
   const resolvedDefaultPageSize = defaultPageSize ?? pageSizeOptions[0] ?? 10;
   const [internalQuery, setInternalQuery] = useState('');
-  const [internalSortKey, setInternalSortKey] = useState<string | null>(null);
-  const [internalSortDirection, setInternalSortDirection] = useState<SortDirection>('asc');
+  const [internalSortKey, setInternalSortKey] = useState<string | null>(defaultSortKey);
+  const [internalSortDirection, setInternalSortDirection] = useState<SortDirection>(
+    defaultSortDirection
+  );
   const [internalPage, setInternalPage] = useState(1);
   const [internalPageSize, setInternalPageSize] = useState(resolvedDefaultPageSize);
   const [advancedOpen, setAdvancedOpen] = useState(advancedDefaultOpen);
@@ -232,6 +240,36 @@ export default function DataTable<T>({
     if (!paginationEnabled || manualPagination) return;
     setInternalPage((prev) => Math.min(Math.max(1, prev), totalPages));
   }, [manualPagination, paginationEnabled, totalPages]);
+
+  useEffect(() => {
+    if (manualSorting || !persistSortKey || typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem(persistSortKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { sortKey?: unknown; sortDirection?: unknown };
+      const nextSortKey = typeof parsed.sortKey === 'string' ? parsed.sortKey : null;
+      const nextSortDirection = parsed.sortDirection === 'desc' ? 'desc' : 'asc';
+      setInternalSortKey(nextSortKey);
+      setInternalSortDirection(nextSortDirection);
+    } catch {
+      // Ignore malformed localStorage payloads.
+    }
+  }, [manualSorting, persistSortKey]);
+
+  useEffect(() => {
+    if (manualSorting || !persistSortKey || typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(
+        persistSortKey,
+        JSON.stringify({
+          sortKey: internalSortKey,
+          sortDirection: internalSortDirection,
+        })
+      );
+    } catch {
+      // Ignore localStorage write failures.
+    }
+  }, [internalSortDirection, internalSortKey, manualSorting, persistSortKey]);
 
   const sectionClassName = framed
     ? compact

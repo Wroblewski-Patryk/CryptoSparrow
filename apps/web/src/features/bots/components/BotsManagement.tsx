@@ -175,10 +175,13 @@ const formatDcaLadderCell = (params: {
           <LuChevronDown className="h-3 w-3 transition-transform duration-150 group-open:rotate-180" />
         </span>
       </summary>
-      <div className="mt-1 min-w-[8rem] rounded-box border border-base-300/70 bg-base-200/60 p-2 text-[11px] shadow-sm">
+      <div className="mt-1 w-max rounded-box border border-base-300/70 bg-base-200/60 px-2 py-1.5 text-[11px] shadow-sm">
         <ul className="space-y-1">
           {executedLevels.map((level, index) => (
-            <li key={`${params.id ?? "dca"}-${index}`} className="flex items-center justify-between gap-2">
+            <li
+              key={`${params.id ?? "dca"}-${index}`}
+              className="grid grid-cols-[auto_auto] items-center gap-x-1.5 whitespace-nowrap"
+            >
               <span className="font-medium opacity-70">{index + 1}</span>
               <span className="font-semibold">{formatNumber(level, 2)}%</span>
             </li>

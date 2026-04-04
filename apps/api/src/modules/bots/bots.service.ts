@@ -868,7 +868,8 @@ const resolveBotTrailingStopLevelsBySymbol = async (
     const levels = resolveTrailingStopLevelsFromStrategyConfig(config);
     for (const symbol of targetSymbols) {
       if (!normalizedSymbols.includes(symbol)) continue;
-      if (!trailingLevelsBySymbol.has(symbol)) {
+      const existing = trailingLevelsBySymbol.get(symbol) ?? [];
+      if (levels.length > 0 || existing.length === 0) {
         trailingLevelsBySymbol.set(symbol, levels);
       }
     }
@@ -977,7 +978,8 @@ const resolveBotTrailingTakeProfitLevelsBySymbol = async (
     const levels = resolveTrailingTakeProfitLevelsFromStrategyConfig(config);
     for (const symbol of targetSymbols) {
       if (!normalizedSymbols.includes(symbol)) continue;
-      if (!trailingLevelsBySymbol.has(symbol)) {
+      const existing = trailingLevelsBySymbol.get(symbol) ?? [];
+      if (levels.length > 0 || existing.length === 0) {
         trailingLevelsBySymbol.set(symbol, levels);
       }
     }

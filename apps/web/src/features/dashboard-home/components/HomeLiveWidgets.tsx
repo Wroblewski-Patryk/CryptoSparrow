@@ -57,6 +57,8 @@ const MAX_DASHBOARD_BOTS = 8;
 const AUTO_REFRESH_INTERVAL_MS = 5_000;
 const LOAD_STALE_AFTER_MS = 20_000;
 const SELECTED_BOT_STORAGE_KEY = "dashboard.home.selectedBotId";
+const DASHBOARD_OPEN_POSITIONS_SORT_STORAGE_KEY = "dashboard.home.openPositions.sort.v1";
+const DASHBOARD_TRADE_HISTORY_SORT_STORAGE_KEY = "dashboard.home.tradeHistory.sort.v1";
 const TRADE_PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 const OPEN_POSITIONS_PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 const SIGNAL_CARDS_DENSITY_BREAKPOINTS = {
@@ -213,10 +215,13 @@ const renderDcaLadderCell = (params: {
           <LuChevronDown className="h-3 w-3 transition-transform duration-150 group-open:rotate-180" />
         </span>
       </summary>
-      <div className="mt-1 min-w-[8rem] rounded-box border border-base-300/70 bg-base-200/60 p-2 text-[11px] shadow-sm">
+      <div className="mt-1 w-max rounded-box border border-base-300/70 bg-base-200/60 px-2 py-1.5 text-[11px] shadow-sm">
         <ul className="space-y-1">
           {executedLevels.map((level, index) => (
-            <li key={`${params.position.id}-dca-${index}`} className="flex items-center justify-between gap-2">
+            <li
+              key={`${params.position.id}-dca-${index}`}
+              className="grid grid-cols-[auto_auto] items-center gap-x-1.5 whitespace-nowrap"
+            >
               <span className="font-medium opacity-70">{index + 1}</span>
               <span className="font-semibold">{params.formatPercent(level)}</span>
             </li>
@@ -448,8 +453,28 @@ export default function HomeLiveWidgets() {
   const [selectedTradesLoading, setSelectedTradesLoading] = useState(false);
   const [tradePage, setTradePage] = useState(1);
   const [tradePageSize, setTradePageSize] = useState<number>(TRADE_PAGE_SIZE_OPTIONS[0]);
-  const [tradeSortBy, setTradeSortBy] = useState<TradeSortBy | null>(null);
-  const [tradeSortDir, setTradeSortDir] = useState<TradeSortDir>("asc");
+  const [tradeSortBy, setTradeSortBy] = useState<TradeSortBy | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = window.localStorage.getItem(DASHBOARD_TRADE_HISTORY_SORT_STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as { sortBy?: unknown };
+      return typeof parsed.sortBy === "string" ? (parsed.sortBy as TradeSortBy) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [tradeSortDir, setTradeSortDir] = useState<TradeSortDir>(() => {
+    if (typeof window === "undefined") return "asc";
+    try {
+      const raw = window.localStorage.getItem(DASHBOARD_TRADE_HISTORY_SORT_STORAGE_KEY);
+      if (!raw) return "asc";
+      const parsed = JSON.parse(raw) as { sortDir?: unknown };
+      return parsed.sortDir === "desc" ? "desc" : "asc";
+    } catch {
+      return "asc";
+    }
+  });
   const [runtimeDataTab, setRuntimeDataTab] = useState<RuntimeDataTab>("OPEN_POSITIONS");
   const [tradeDraftFilters, setTradeDraftFilters] = useState<TradeFiltersState>(EMPTY_TRADE_FILTERS);
   const [tradeAppliedFilters, setTradeAppliedFilters] = useState<TradeFiltersState>(EMPTY_TRADE_FILTERS);
@@ -899,6 +924,21 @@ export default function HomeLiveWidgets() {
     setTradeSortDir("asc");
   };
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        DASHBOARD_TRADE_HISTORY_SORT_STORAGE_KEY,
+        JSON.stringify({
+          sortBy: tradeSortBy,
+          sortDir: tradeSortDir,
+        })
+      );
+    } catch {
+      // Ignore localStorage write failures.
+    }
+  }, [tradeSortBy, tradeSortDir]);
+
   const openPositionsColumns = useMemo<DataTableColumn<OpenPositionWithLive>[]>(() => {
     const columns: DataTableColumn<OpenPositionWithLive>[] = [
       {
@@ -1246,6 +1286,9 @@ export default function HomeLiveWidgets() {
                       rows={selectedData?.open ?? []}
                       columns={openPositionsColumns}
                       getRowId={(row) => row.id}
+                      defaultSortKey="pnlPercent"
+                      defaultSortDirection="desc"
+                      persistSortKey={DASHBOARD_OPEN_POSITIONS_SORT_STORAGE_KEY}
                       showSearch={false}
                       paginationEnabled
                       pageSizeOptions={[...OPEN_POSITIONS_PAGE_SIZE_OPTIONS]}
