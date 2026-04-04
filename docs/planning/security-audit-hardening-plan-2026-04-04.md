@@ -113,7 +113,7 @@ Tiny-commit track IDs: `SEC-01..SEC-14`.
 - [x] `SEC-01 chore(deps-web): upgrade next to latest patched 15.x line and align eslint-config-next`
 - [x] `SEC-02 chore(deps-web): upgrade axios to patched version and run web regression/typecheck`
 - [x] `SEC-03 chore(deps-api): upgrade multer to patched 2.1.x and run upload/auth regressions`
-- [ ] `SEC-04 chore(deps-root): refresh lockfile and re-run pnpm audit (target: no critical/high in prod deps)`
+- [x] `SEC-04 chore(deps-root): refresh lockfile and re-run pnpm audit (target: no critical/high in prod deps)`
 
 Exit criteria:
 - `pnpm audit --prod --audit-level=high` returns no critical/high for app runtime packages.
@@ -164,3 +164,4 @@ Exit criteria:
 - 2026-04-04: Completed `SEC-01` by upgrading `apps/web` to `next@15.5.14` and `eslint-config-next@15.5.14`; validated with `pnpm --filter web run build` and `pnpm --filter web run typecheck` (after refreshing route types via `pnpm --filter web exec next typegen`).
 - 2026-04-04: Completed `SEC-02` by upgrading `apps/web` to `axios@^1.14.0`; validated with `pnpm --filter web run typecheck` and targeted regressions `useLoginForm` + `ApiKeyForm`.
 - 2026-04-04: Completed `SEC-03` by upgrading `apps/api` to `multer@^2.1.1`; validated with `pnpm --filter api run typecheck` and auth/upload regression pack (`auth.*`, `requireAuth`, `upload.e2e`).
+- 2026-04-04: Completed `SEC-04` by refreshing lockfile and finalizing dependency wave (`express@^5.2.1`, `jsonwebtoken@^9.0.3`, `prisma/@prisma-client@^6.19.3`); validation: `pnpm --filter api run typecheck`, targeted auth/upload/strategies/backtests tests, `pnpm --filter web run typecheck`, auth web tests, and `pnpm audit --prod --audit-level=high` => **No known vulnerabilities found**.
