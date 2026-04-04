@@ -8,12 +8,13 @@ import { evaluateRuntimeAlerts } from '../observability/alerts';
 import { requireAuth } from '../middleware/requireAuth';
 import { requireRole } from '../middleware/requireRole';
 import { requireOpsNetwork } from '../middleware/requireOpsNetwork';
+import { applyNoStoreHeaders } from '../middleware/noStoreHeaders';
 
 const router = Router();
 
-router.use('/auth', authRoutes);
-router.use('/dashboard', dashboardRoutes);
-router.use('/admin', adminRoutes);
+router.use('/auth', applyNoStoreHeaders, authRoutes);
+router.use('/dashboard', applyNoStoreHeaders, dashboardRoutes);
+router.use('/admin', applyNoStoreHeaders, adminRoutes);
 
 router.get('/', (_req, res) => {
   res.send('CryptoSparrow API is running');

@@ -459,7 +459,11 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-58 feat(web-bot-form): implement single create/edit form view at /bots/create (create mode + edit mode via selected bot id)`
 - [x] `BOPS-59 test(web-bots): add regression coverage for new bots routes, list-table actions, and shared create/edit form flow`
 
+## Phase 27 - Cache Safety for Authenticated API Surfaces
+- [x] `CACHE-01 feat(api-headers): add authenticated no-store middleware for /auth, /dashboard, /admin responses`
+
 ## Progress Log
+- 2026-04-04: Completed `CACHE-01` by adding centralized `applyNoStoreHeaders` middleware on `/auth`, `/dashboard`, and `/admin` namespaces (`Cache-Control/Pragma/Expires/Surrogate-Control`), plus router regression tests that lock no-store behavior on all three sensitive API surfaces.
 - 2026-04-03: Completed `BOPS-59` by adding dedicated web regressions for bots route contract (`/dashboard/bots/new` redirect), create/edit route behavior (`/dashboard/bots/create` with `editId` flow), list page add-navigation, and table action links (`Podglad`, `Asystent`, `Edytuj`) plus vitest alias support for `@` imports in route/component tests.
 - 2026-04-03: Completed `BOPS-54` by extending `HomeLiveWidgets` regression coverage for dashboard signal panel contract: heading copy (`Sygnaly strategii`), canonical placement above open positions, and overflow rail navigation controls for larger symbol sets (`Wstecz`/`Dalej`) with responsive density assumptions intact.
 - 2026-04-03: Completed `BOPS-53` by implementing scalable signal cards rail in dashboard runtime (`desktop 4 / tablet 3 / mobile 2`) with responsive viewport tracking, horizontal overflow handling, and in-place updates for large symbol groups without remount flicker.
