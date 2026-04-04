@@ -92,6 +92,7 @@ const summarize = (artifacts, options) => {
   const queueLagP95 = [];
   const queueLagMax = [];
   const orderFailureRatios = [];
+  const objectiveStats = new Map();
 
   const breaches = [];
 
@@ -105,6 +106,9 @@ const summarize = (artifacts, options) => {
     const p95 = asNumber(summary?.queueLagExecution?.p95);
     const max = asNumber(summary?.queueLagExecution?.max);
     const orderFailure = asNumber(summary?.liveOrderPath?.failureRatioPct);
+    const objectives = Array.isArray(summary?.evaluation?.objectives)
+      ? summary.evaluation.objectives
+      : [];
 
     if (health != null) probes.health.push(health);
     if (ready != null) probes.ready.push(ready);
@@ -114,6 +118,26 @@ const summarize = (artifacts, options) => {
     if (p95 != null) queueLagP95.push(p95);
     if (max != null) queueLagMax.push(max);
     if (orderFailure != null) orderFailureRatios.push(orderFailure);
+    for (const objective of objectives) {
+      const id = objective?.id;
+      if (!id) continue;
+      const current = objectiveStats.get(id) ?? {
+        id,
+        label: objective?.label ?? id,
+        pass: 0,
+        fail: 0,
+        noData: 0,
+        total: 0,
+        latestStatus: 'NO_DATA',
+      };
+      const status = String(objective?.status ?? 'NO_DATA').toUpperCase();
+      if (status === 'PASS') current.pass += 1;
+      else if (status === 'FAIL') current.fail += 1;
+      else current.noData += 1;
+      current.total += 1;
+      current.latestStatus = status;
+      objectiveStats.set(id, current);
+    }
 
     if (p95 != null && p95 > options.queueLagP95Threshold) {
       breaches.push({
@@ -171,6 +195,9 @@ const summarize = (artifacts, options) => {
       queueLagP95Threshold: options.queueLagP95Threshold,
       queueLagMaxThreshold: options.queueLagMaxThreshold,
     },
+    objectiveStatusSummary: Array.from(objectiveStats.values()).sort((a, b) =>
+      a.id.localeCompare(b.id)
+    ),
     queueLagBreaches: breaches,
     artifactRefs: inWindow.map((artifact) => ({
       file: artifact.fileName,
@@ -198,6 +225,12 @@ const renderMarkdown = (report, jsonRelativePath) => {
         `- ${item.endedAt ?? 'n/a'} | ${item.type}=${item.value} (threshold ${item.threshold}) from \`${item.artifact}\``
     )
     .join('\n');
+  const objectiveRows = (report.objectiveStatusSummary ?? [])
+    .map(
+      (objective) =>
+        `| ${objective.id} | ${objective.label} | ${objective.pass} | ${objective.fail} | ${objective.noData} | ${objective.total} | ${objective.latestStatus} |`
+    )
+    .join('\n');
 
   return `# V1 SLO Window Report (${report.window.days}d)
 
@@ -221,6 +254,11 @@ const renderMarkdown = (report, jsonRelativePath) => {
 
 ## Queue-Lag Breach Timeline
 ${breaches || '- none'}
+
+## Objective Status Rollup
+| Objective | Metric | PASS | FAIL | NO_DATA | Total | Latest |
+| --- | --- | --- | --- | --- | --- | --- |
+${objectiveRows || '| n/a | n/a | 0 | 0 | 0 | 0 | n/a |'}
 
 ## Artifact Timeline
 | Artifact | Started (UTC) | Ended (UTC) | Queue p95 | Queue max |

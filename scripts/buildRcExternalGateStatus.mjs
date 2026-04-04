@@ -173,15 +173,46 @@ const evaluateGate4FromSignoffRecord = async (signoffPathInput) => {
 const statusLabel = (passed) => (passed ? 'PASS' : 'OPEN');
 
 const buildGateRowsFromObservation = (summary) => {
+  const objectives = Array.isArray(summary?.evaluation?.objectives)
+    ? summary.evaluation.objectives
+    : [];
+  const objectiveStatusById = new Map(
+    objectives
+      .map((objective) => [objective?.id, String(objective?.status ?? '').toUpperCase()])
+      .filter(([id]) => typeof id === 'string' && id.length > 0)
+  );
+  const objectivePass = (id) => objectiveStatusById.get(id) === 'PASS';
+
   const ready = asNumber(summary?.probes?.readyAvailabilityPct);
   const workersReady = asNumber(summary?.probes?.workersReadyAvailabilityPct);
   const errorRatio = asNumber(summary?.http?.errorRatioPct);
   const executionP95 = asNumber(summary?.queueLagExecution?.p95);
   const executionMax = asNumber(summary?.queueLagExecution?.max);
 
-  const queueLagPass = executionP95 != null && executionP95 <= 10 && executionMax != null && executionMax <= 20;
-  const probePass = ready != null && ready >= 99.9 && workersReady != null && workersReady >= 99.5;
-  const reliabilityPass = errorRatio != null && errorRatio <= 0.5;
+  const queueLagPassFromObjectives = objectivePass('SLO-5');
+  const probePassFromObjectives =
+    objectivePass('SLO-1A') &&
+    objectivePass('SLO-1B') &&
+    objectivePass('SLO-4A') &&
+    objectivePass('SLO-4B');
+  const reliabilityPassFromObjectives = objectivePass('SLO-2');
+
+  const queueLagPassFallback =
+    executionP95 != null && executionP95 <= 10 && executionMax != null && executionMax <= 20;
+  const probePassFallback = ready != null && ready >= 99.9 && workersReady != null && workersReady >= 99.5;
+  const reliabilityPassFallback = errorRatio != null && errorRatio <= 0.5;
+
+  const queueLagPass = objectiveStatusById.has('SLO-5') ? queueLagPassFromObjectives : queueLagPassFallback;
+  const probePass =
+    objectiveStatusById.has('SLO-1A') &&
+    objectiveStatusById.has('SLO-1B') &&
+    objectiveStatusById.has('SLO-4A') &&
+    objectiveStatusById.has('SLO-4B')
+      ? probePassFromObjectives
+      : probePassFallback;
+  const reliabilityPass = objectiveStatusById.has('SLO-2')
+    ? reliabilityPassFromObjectives
+    : reliabilityPassFallback;
 
   return {
     probePass,
@@ -197,6 +228,7 @@ const buildGateRowsFromObservation = (summary) => {
       orderAttempts: asNumber(summary?.liveOrderPath?.orderAttemptsDelta),
       orderFailures: asNumber(summary?.liveOrderPath?.orderFailuresDelta),
       orderFailureRatio: asNumber(summary?.liveOrderPath?.failureRatioPct),
+      objectiveStatuses: Object.fromEntries(objectiveStatusById.entries()),
     },
   };
 };

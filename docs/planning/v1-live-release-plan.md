@@ -167,6 +167,8 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `G10-23 web-build-stability: provide favicon asset required by Next.js production build pipeline`
 
 ## Progress Log
+- 2026-04-04: Hardened `ops:slo:collect` output with profile-based thresholds (MVP/V1) and explicit objective-level PASS/FAIL/NO_DATA status in JSON + markdown evidence artifacts.
+- 2026-04-04: Extended `ops:slo:window-report` and `ops:rc:gates:status` to aggregate objective-level SLO outcomes across observation artifacts and reuse those statuses in external gate evaluation.
 - 2026-03-28: Added Phase G10 parity-closure workstream to finish deterministic strategy behavior across BACKTEST/PAPER/LIVE and support Binance side-by-side verification.
 - 2026-03-28: Completed `G10-01` by publishing `strategy-evaluation-parity-contract.md` and referencing it from open decisions.
 - 2026-03-28: Completed `G10-02` by removing strategy-mode threshold fallback in backtest replay and enforcing shared evaluator semantics for strategy runs.
