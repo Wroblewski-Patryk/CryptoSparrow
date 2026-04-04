@@ -186,7 +186,7 @@ export function BacktestsList() {
 
   return (
     <div className="space-y-5">
-      <form onSubmit={handleCreate} className="rounded-xl border border-base-300 bg-base-200 p-4">
+      <form onSubmit={handleCreate} className="rounded-box border border-base-300/60 bg-base-200/60 p-4">
         <h2 className="text-lg font-semibold">Nowy backtest run</h2>
         <p className="text-sm opacity-70">Utworz run, a potem sprawdz summary, trades i overlay raportu.</p>
         <div className="mt-3 grid gap-3 md:grid-cols-3">
@@ -284,7 +284,7 @@ export function BacktestsList() {
 
       {!loading && !error && runs.length > 0 && (
         <div className="grid gap-4 xl:grid-cols-3">
-          <div className="xl:col-span-2 rounded-xl border border-base-300 bg-base-200 p-4">
+          <div className="xl:col-span-2 rounded-box border border-base-300/60 bg-base-200/60 p-4">
             <SuccessState title="Backtest runs loaded" description={`Pobrano ${runs.length} run(s).`} />
             <div className="mt-3 overflow-x-auto">
               <table className="table table-zebra">
@@ -324,7 +324,7 @@ export function BacktestsList() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-base-300 bg-base-200 p-4">
+          <div className="rounded-box border border-base-300/60 bg-base-200/60 p-4">
             {!selectedRun && (
               <DegradedState
                 title="Wybierz run"
@@ -536,3 +536,4 @@ export function BacktestsList() {
     </div>
   );
 }
+

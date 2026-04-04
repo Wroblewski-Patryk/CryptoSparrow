@@ -8,19 +8,19 @@ type BadgeTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
 
 const actionClassByTone: Record<ActionTone, string> = {
   neutral:
-    'btn btn-square btn-xs h-7 min-h-7 w-7 border border-base-content/35 bg-base-100/40 text-base-content/75 transition-colors duration-150 hover:border-base-content/55 hover:bg-base-100 hover:text-base-content',
+    'btn btn-square btn-xs h-7 min-h-7 w-7 border border-base-300 bg-base-100/60 text-base-content/75 transition-colors duration-150 hover:border-base-content/35 hover:bg-base-100 hover:text-base-content',
   info:
-    'btn btn-square btn-xs h-7 min-h-7 w-7 border border-sky-500/45 bg-sky-500/10 text-sky-500 transition-colors duration-150 hover:border-sky-500/70 hover:bg-sky-500/20',
+    'btn btn-square btn-xs h-7 min-h-7 w-7 border border-info/45 bg-info/10 text-info transition-colors duration-150 hover:border-info/70 hover:bg-info/20',
   danger:
-    'btn btn-square btn-xs h-7 min-h-7 w-7 border border-rose-500/45 bg-rose-500/10 text-rose-500 transition-colors duration-150 hover:border-rose-500/70 hover:bg-rose-500/20',
+    'btn btn-square btn-xs h-7 min-h-7 w-7 border border-error/45 bg-error/10 text-error transition-colors duration-150 hover:border-error/70 hover:bg-error/20',
 };
 
 const badgeClassByTone: Record<BadgeTone, string> = {
   neutral: 'badge badge-sm badge-outline border-base-content/20 bg-base-100/40 text-base-content/70',
-  info: 'badge badge-sm badge-outline border-sky-500/45 bg-sky-500/10 text-sky-500',
-  success: 'badge badge-sm badge-outline border-emerald-500/45 bg-emerald-500/10 text-emerald-500',
-  warning: 'badge badge-sm badge-outline border-amber-500/45 bg-amber-500/10 text-amber-500',
-  danger: 'badge badge-sm badge-outline border-rose-500/45 bg-rose-500/10 text-rose-500',
+  info: 'badge badge-sm badge-outline border-info/45 bg-info/10 text-info',
+  success: 'badge badge-sm badge-outline border-success/45 bg-success/10 text-success',
+  warning: 'badge badge-sm badge-outline border-warning/45 bg-warning/10 text-warning',
+  danger: 'badge badge-sm badge-outline border-error/45 bg-error/10 text-error',
 };
 
 type TableIconLinkActionProps = {
@@ -86,4 +86,3 @@ type TableToneBadgeProps = {
 export function TableToneBadge({ label, tone = 'neutral', className = '' }: TableToneBadgeProps) {
   return <span className={`${badgeClassByTone[tone]} ${className}`.trim()}>{label}</span>;
 }
-

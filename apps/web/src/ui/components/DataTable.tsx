@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { LuArrowDown, LuArrowUp, LuArrowUpDown, LuSearch, LuSlidersHorizontal } from 'react-icons/lu';
+import InlinePager from './InlinePager';
 
 export type DataTableColumn<T> = {
   key: string;
@@ -234,8 +235,8 @@ export default function DataTable<T>({
 
   const sectionClassName = framed
     ? compact
-      ? 'space-y-2 rounded-xl border border-base-300 bg-base-100 p-3'
-      : 'space-y-3 rounded-xl border border-base-300 bg-base-100 p-4'
+      ? 'space-y-2 rounded-box border border-base-300/60 bg-base-100/80 p-3'
+      : 'space-y-3 rounded-box border border-base-300/60 bg-base-100/80 p-4'
     : compact
       ? 'space-y-2'
       : 'space-y-3';
@@ -276,7 +277,7 @@ export default function DataTable<T>({
             <button
               type='button'
               className={`btn btn-outline btn-sm gap-1.5 ${
-                advancedOpen ? 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/15' : ''
+                advancedOpen ? 'border-base-content/25 bg-base-200 text-base-content hover:bg-base-200' : ''
               }`}
               onClick={() => setAdvancedOpen((prev) => !prev)}
               aria-expanded={advancedOpen}
@@ -289,7 +290,7 @@ export default function DataTable<T>({
       ) : null}
 
       {advancedFilters && advancedOpen ? (
-        <div className='rounded-box border border-base-300 bg-base-200/40 p-3'>{advancedFilters}</div>
+        <div className='rounded-box border border-base-300/60 bg-base-200/45 p-3'>{advancedFilters}</div>
       ) : null}
 
       <div className='overflow-x-auto'>
@@ -358,7 +359,7 @@ export default function DataTable<T>({
             ) : (
               <>
                 <span>Records: {totalRowsCount}</span>
-                <span aria-hidden className='opacity-50'>•</span>
+                <span aria-hidden className='opacity-50'>|</span>
                 <span>Page {effectivePage}/{totalPages}</span>
               </>
             )}
@@ -378,24 +379,15 @@ export default function DataTable<T>({
                 ))}
               </select>
             </label>
-            <div className='join'>
-              <button
-                type='button'
-                className='btn btn-outline btn-sm join-item h-8 min-h-8 px-3'
-                disabled={manualPagination ? !(externalHasPrev ?? effectivePage > 1) : effectivePage <= 1}
-                onClick={() => goToPage(effectivePage - 1)}
-              >
-                {previousLabel}
-              </button>
-              <button
-                type='button'
-                className='btn btn-outline btn-sm join-item h-8 min-h-8 px-3'
-                disabled={manualPagination ? !(externalHasNext ?? effectivePage < totalPages) : effectivePage >= totalPages}
-                onClick={() => goToPage(effectivePage + 1)}
-              >
-                {nextLabel}
-              </button>
-            </div>
+            <InlinePager
+              size='sm'
+              previousLabel={previousLabel}
+              nextLabel={nextLabel}
+              previousDisabled={manualPagination ? !(externalHasPrev ?? effectivePage > 1) : effectivePage <= 1}
+              nextDisabled={manualPagination ? !(externalHasNext ?? effectivePage < totalPages) : effectivePage >= totalPages}
+              onPrevious={() => goToPage(effectivePage - 1)}
+              onNext={() => goToPage(effectivePage + 1)}
+            />
           </div>
         </div>
       ) : null}

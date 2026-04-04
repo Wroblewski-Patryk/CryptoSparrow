@@ -127,7 +127,7 @@ export default function AuditTrailView() {
         description={t("dashboard.logs.loadedDescription").replace("{count}", String(items.length))}
       />
 
-      <div className="rounded-xl border border-base-300 bg-base-200 p-4">
+      <div className="rounded-box border border-base-300/60 bg-base-200/60 p-4">
         <div className="flex flex-wrap gap-2 items-center">
           <select
             aria-label={t("dashboard.logs.sourceFilterLabel")}
@@ -214,7 +214,7 @@ export default function AuditTrailView() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-base-300 bg-base-200 p-4">
+      <div className="rounded-box border border-base-300/60 bg-base-200/60 p-4">
         <h3 className="text-sm font-semibold uppercase tracking-wide opacity-70">
           {t("dashboard.logs.traceTitle")}
         </h3>
@@ -238,3 +238,4 @@ export default function AuditTrailView() {
     </div>
   );
 }
+

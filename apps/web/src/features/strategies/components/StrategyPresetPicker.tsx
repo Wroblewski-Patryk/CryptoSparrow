@@ -16,7 +16,7 @@ export default function StrategyPresetPicker({
   onClear,
 }: StrategyPresetPickerProps) {
   return (
-    <div className="rounded-xl border border-base-300 bg-base-200 p-4">
+    <div className="rounded-box border border-base-300/60 bg-base-200/60 p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">Presety strategii</h2>
@@ -66,4 +66,5 @@ export default function StrategyPresetPicker({
     </div>
   );
 }
+
 

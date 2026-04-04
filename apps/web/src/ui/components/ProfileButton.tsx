@@ -8,7 +8,11 @@ import { LuKey, LuLogOut, LuSettings, LuSubscript, LuUser } from 'react-icons/lu
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useDetailsDropdown } from '../hooks/useDetailsDropdown';
-import { headerMenuItemClass } from '../layout/dashboard/headerControlStyles';
+import {
+  getHeaderDropdownLinkClass,
+  getHeaderDropdownMenuClass,
+  headerMenuItemClass,
+} from '../layout/dashboard/headerControlStyles';
 
 type ProfileButtonProps = {
   mobile?: boolean;
@@ -76,18 +80,26 @@ export default function ProfileButton({ mobile = false, onNavigate }: ProfileBut
 
   if (mobile) {
     return (
-      <div className="rounded-box bg-base-100/10 p-2">
+      <div className="rounded-box border border-base-300/60 bg-base-200/55 p-2">
         <p className="px-3 py-1 text-xs font-semibold uppercase tracking-wide opacity-70">{copy.myAccount}</p>
         {user?.email ? <p className="px-3 pb-1 text-xs opacity-75 truncate">{user.email}</p> : null}
         <ul className="menu w-full p-0 gap-1">
           <li>
-            <Link href="/dashboard/profile#basic" onClick={(event) => handleProfileSectionNavigation('basic', event)}>
+            <Link
+              href="/dashboard/profile#basic"
+              onClick={(event) => handleProfileSectionNavigation('basic', event)}
+              className={getHeaderDropdownLinkClass(false)}
+            >
               <LuUser className="h-4 w-4" aria-hidden />
               {copy.basic}
             </Link>
           </li>
           <li>
-            <Link href="/dashboard/profile#api" onClick={(event) => handleProfileSectionNavigation('api', event)}>
+            <Link
+              href="/dashboard/profile#api"
+              onClick={(event) => handleProfileSectionNavigation('api', event)}
+              className={getHeaderDropdownLinkClass(false)}
+            >
               <LuKey className="h-4 w-4" aria-hidden />
               {copy.api}
             </Link>
@@ -96,13 +108,18 @@ export default function ProfileButton({ mobile = false, onNavigate }: ProfileBut
             <Link
               href="/dashboard/profile#subscription"
               onClick={(event) => handleProfileSectionNavigation('subscription', event)}
+              className={getHeaderDropdownLinkClass(false)}
             >
               <LuSubscript className="h-4 w-4" aria-hidden />
               {copy.subscription}
             </Link>
           </li>
           <li>
-            <Link href="/dashboard/profile#security" onClick={(event) => handleProfileSectionNavigation('security', event)}>
+            <Link
+              href="/dashboard/profile#security"
+              onClick={(event) => handleProfileSectionNavigation('security', event)}
+              className={getHeaderDropdownLinkClass(false)}
+            >
               <LuSettings className="h-4 w-4" aria-hidden />
               {copy.security}
             </Link>
@@ -113,7 +130,7 @@ export default function ProfileButton({ mobile = false, onNavigate }: ProfileBut
                 onNavigate?.();
                 logout();
               }}
-              className="text-error"
+              className={`w-full justify-start ${getHeaderDropdownLinkClass(false)} text-error hover:text-error`}
             >
               <LuLogOut className="h-4 w-4" aria-hidden />
               {copy.logout}
@@ -130,38 +147,49 @@ export default function ProfileButton({ mobile = false, onNavigate }: ProfileBut
         <LuUser className="h-4 w-4" aria-hidden />
         <span className="hidden sm:inline">{copy.myAccount}</span>
       </summary>
-      <ul className="menu dropdown-content z-[60] mt-2 w-72 rounded-box bg-base-100 p-2 text-base-content shadow">
-        {user?.email && (
-          <li className="menu-title">
-            <span className="truncate normal-case">{user.email}</span>
-          </li>
-        )}
+      <ul className={getHeaderDropdownMenuClass('bottom', 'w-72')}>
         <li>
-          <Link href="/dashboard/profile#basic" onClick={(event) => handleProfileSectionNavigation('basic', event)}>
+          <Link
+            href="/dashboard/profile#basic"
+            onClick={(event) => handleProfileSectionNavigation('basic', event)}
+            className={getHeaderDropdownLinkClass(false)}
+          >
             <LuUser className="h-4 w-4" aria-hidden />
             {copy.basic}
           </Link>
         </li>
         <li>
-          <Link href="/dashboard/profile#api" onClick={(event) => handleProfileSectionNavigation('api', event)}>
+          <Link
+            href="/dashboard/profile#api"
+            onClick={(event) => handleProfileSectionNavigation('api', event)}
+            className={getHeaderDropdownLinkClass(false)}
+          >
             <LuKey className="h-4 w-4" aria-hidden />
             {copy.api}
           </Link>
         </li>
         <li>
-          <Link href="/dashboard/profile#subscription" onClick={(event) => handleProfileSectionNavigation('subscription', event)}>
+          <Link
+            href="/dashboard/profile#subscription"
+            onClick={(event) => handleProfileSectionNavigation('subscription', event)}
+            className={getHeaderDropdownLinkClass(false)}
+          >
             <LuSubscript className="h-4 w-4" aria-hidden />
             {copy.subscription}
           </Link>
         </li>
         <li>
-          <Link href="/dashboard/profile#security" onClick={(event) => handleProfileSectionNavigation('security', event)}>
+          <Link
+            href="/dashboard/profile#security"
+            onClick={(event) => handleProfileSectionNavigation('security', event)}
+            className={getHeaderDropdownLinkClass(false)}
+          >
             <LuSettings className="h-4 w-4" aria-hidden />
             {copy.security}
           </Link>
         </li>
         <li className="mt-1">
-          <button onClick={logout} className="text-error">
+          <button onClick={logout} className={`w-full justify-start ${getHeaderDropdownLinkClass(false)} text-error hover:text-error`}>
             <LuLogOut className="h-4 w-4" aria-hidden />
             {copy.logout}
           </button>

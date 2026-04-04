@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
-import { LuChartCandlestick, LuChevronLeft, LuChevronRight, LuPackageOpen } from "react-icons/lu";
+import { LuChartCandlestick, LuPackageOpen } from "react-icons/lu";
 
 import { EmptyState, ErrorState, LoadingState } from "../../../ui/components/ViewState";
 import DataTable, { DataTableColumn } from "../../../ui/components/DataTable";
+import InlinePager from "../../../ui/components/InlinePager";
 import Tabs from "../../../ui/components/Tabs";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
@@ -47,8 +48,8 @@ type OpenPositionWithLive = BotRuntimePositionItem & {
 };
 type DirectionPillValue = "LONG" | "SHORT" | "BUY" | "SELL";
 
-const CARD = "rounded-box bg-base-100/60";
-const CARD_ASIDE = "rounded-box bg-base-100/70 h-fit xl:sticky xl:top-4";
+const CARD = "rounded-box bg-base-100/80";
+const CARD_ASIDE = "rounded-box bg-base-100/85 h-fit xl:sticky xl:top-4";
 const BTN_PRIMARY = "btn btn-primary btn-sm";
 const BTN_SECONDARY = "btn btn-outline btn-sm";
 const MAX_DASHBOARD_BOTS = 8;
@@ -1007,26 +1008,14 @@ export default function HomeLiveWidgets() {
               <div>
                 {hasSignalOverflow ? (
                   <div className="mb-2 flex items-center justify-end">
-                    <div className="join rounded-box border border-base-300/70 bg-base-100/70 p-0.5">
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-xs join-item gap-1 px-2"
-                        onClick={() => scrollSignalRail("prev")}
-                        aria-label={t("dashboard.home.runtime.signalRailPrev")}
-                      >
-                        <LuChevronLeft className="h-3.5 w-3.5" aria-hidden />
-                        <span className="hidden sm:inline">{t("dashboard.home.runtime.signalRailPrev")}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-xs join-item gap-1 px-2"
-                        onClick={() => scrollSignalRail("next")}
-                        aria-label={t("dashboard.home.runtime.signalRailNext")}
-                      >
-                        <span className="hidden sm:inline">{t("dashboard.home.runtime.signalRailNext")}</span>
-                        <LuChevronRight className="h-3.5 w-3.5" aria-hidden />
-                      </button>
-                    </div>
+                    <InlinePager
+                      size="xs"
+                      hideLabelsOnMobile
+                      previousLabel={t("dashboard.home.runtime.signalRailPrev")}
+                      nextLabel={t("dashboard.home.runtime.signalRailNext")}
+                      onPrevious={() => scrollSignalRail("prev")}
+                      onNext={() => scrollSignalRail("next")}
+                    />
                   </div>
                 ) : null}
                 <div ref={signalRailRef} className="overflow-x-auto pb-1">
@@ -1248,7 +1237,7 @@ export default function HomeLiveWidgets() {
                       paginationSummary={({ totalRows, page, totalPages }) => (
                         <>
                           <span>{interpolateTemplate(t("dashboard.home.runtime.recordsBadge"), { total: totalRows })}</span>
-                          <span aria-hidden className="opacity-50">•</span>
+                          <span aria-hidden className="opacity-50">|</span>
                           <span>
                             {interpolateTemplate(t("dashboard.home.runtime.pageBadge"), {
                               page,
@@ -1268,8 +1257,6 @@ export default function HomeLiveWidgets() {
 
         <aside className={CARD_ASIDE}>
           <div className="space-y-3">
-            <h3 className="text-base font-semibold md:text-lg">{t("dashboard.home.runtime.runtimeRiskTitle")}</h3>
-
             <div className="rounded-box bg-base-200/35 p-3">
               <label className="form-control gap-1">
                 <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.selectedBot")}</span>
@@ -1287,7 +1274,7 @@ export default function HomeLiveWidgets() {
               </label>
 
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-box bg-base-100/60 px-2 py-1.5">
+                <div className="rounded-box border border-base-300/50 bg-base-100/70 px-2 py-1.5">
                   <p className="opacity-65">{t("dashboard.home.runtime.status")}</p>
                   <p className="mt-1">
                     <span className={`badge badge-xs ${sessionBadge(selectedData?.session?.status)}`}>
@@ -1295,25 +1282,25 @@ export default function HomeLiveWidgets() {
                     </span>
                   </p>
                 </div>
-                <div className="rounded-box bg-base-100/60 px-2 py-1.5">
+                <div className="rounded-box border border-base-300/50 bg-base-100/70 px-2 py-1.5">
                   <p className="opacity-65">{t("dashboard.home.runtime.mode")}</p>
                   <p className="mt-1 font-semibold">{selected?.bot.mode ?? "-"}</p>
                 </div>
-                <div className="rounded-box bg-base-100/60 px-2 py-1.5">
+                <div className="rounded-box border border-base-300/50 bg-base-100/70 px-2 py-1.5">
                   <p className="opacity-65">{t("dashboard.home.runtime.heartbeat")}</p>
                   <p className="mt-1 font-semibold">{formatTime(selectedData?.session?.lastHeartbeatAt)}</p>
                 </div>
-                <div className="rounded-box bg-base-100/60 px-2 py-1.5">
+                <div className="rounded-box border border-base-300/50 bg-base-100/70 px-2 py-1.5">
                   <p className="opacity-65">{t("dashboard.home.runtime.openPositions")}</p>
                   <p className="mt-1 font-semibold">{formatNumber(selectedData?.open.length ?? 0)}</p>
                 </div>
-                <div className="rounded-box bg-base-100/60 px-2 py-1.5">
+                <div className="rounded-box border border-base-300/50 bg-base-100/70 px-2 py-1.5">
                   <p className="opacity-65">{t("dashboard.home.runtime.signalsDca")}</p>
                   <p className="mt-1 font-semibold">
                     {formatNumber(selectedData?.session?.summary.totalSignals ?? 0)} / {formatNumber(selectedData?.session?.summary.dcaCount ?? 0)}
                   </p>
                 </div>
-                <div className="rounded-box bg-base-100/60 px-2 py-1.5">
+                <div className="rounded-box border border-base-300/50 bg-base-100/70 px-2 py-1.5">
                   <p className="opacity-65">{t("dashboard.home.runtime.netPnl")}</p>
                   <p className={`mt-1 font-semibold ${(selectedData?.net ?? 0) >= 0 ? "text-success" : "text-error"}`}>
                     {formatCurrency(selectedData?.net ?? 0)}

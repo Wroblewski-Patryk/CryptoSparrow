@@ -288,7 +288,7 @@ export default function MarketUniverseForm({
         <hr className='border-t border-base-200' />
 
         {currentStep === 0 ? (
-          <div className='rounded-xl border border-base-300 bg-base-100 p-4'>
+          <div className='rounded-box border border-base-300/60 bg-base-100/80 p-4'>
             <div className='grid gap-3 md:grid-cols-4'>
               <TextInputField label='Nazwa grupy' placeholder='Top Futures' value={name} onChange={setName} />
               <SelectField
@@ -360,7 +360,7 @@ export default function MarketUniverseForm({
 
         {currentStep === 1 ? (
           <>
-            <div className='rounded-xl border border-base-300 bg-base-100 p-4'>
+            <div className='rounded-box border border-base-300/60 bg-base-100/80 p-4'>
               <div className='flex flex-wrap items-center justify-between gap-2'>
                 <p className='text-sm font-medium'>Szybki wybor wszystkich symboli z aktualnego filtra</p>
                 <div className='flex gap-2'>
@@ -462,3 +462,4 @@ export default function MarketUniverseForm({
     </form>
   );
 }
+

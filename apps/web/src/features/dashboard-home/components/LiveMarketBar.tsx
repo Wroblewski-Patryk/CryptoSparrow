@@ -140,7 +140,7 @@ export default function LiveMarketBar({ symbols, interval }: LiveMarketBarProps)
   };
 
   return (
-    <div className="card bg-base-200 shadow-sm">
+    <div className="card border border-base-300/60 bg-base-200/60">
       <div className="card-body p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="card-title text-base">{t("dashboard.liveMarket.title")}</h2>
@@ -153,7 +153,7 @@ export default function LiveMarketBar({ symbols, interval }: LiveMarketBarProps)
         </div>
         <div className="grid gap-3 md:grid-cols-2">
           {rows.map((row) => (
-            <div key={row.symbol} className="rounded-lg border border-base-300 bg-base-100 p-3">
+            <div key={row.symbol} className="rounded-box border border-base-300/60 bg-base-100/80 p-3">
               <div className="flex items-center justify-between">
                 <strong>{row.symbol}</strong>
                 <span className="text-xs opacity-70">candle {getFreshnessLabel(row.candleFreshAt)}</span>

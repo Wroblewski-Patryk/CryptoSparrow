@@ -207,7 +207,7 @@ type MonitorAggregateData = {
 };
 
 const FIELD_WRAPPER_CLASS = "form-control gap-1";
-const META_CARD_CLASS = "rounded-md border border-base-300 bg-base-200/70 px-3 py-2";
+const META_CARD_CLASS = "rounded-box border border-base-300/60 bg-base-200/60 px-3 py-2";
 const normalizeSymbol = (value: string) => value.trim().toUpperCase();
 type TickerEventPayload = {
   symbol: string;
@@ -1374,7 +1374,7 @@ export default function BotsManagement({
 
       {activeTab === "bots" && (
         <>
-      <form onSubmit={handleCreate} className="rounded-xl border border-base-300 bg-base-200 p-4">
+      <form onSubmit={handleCreate} className="rounded-box border border-base-300/60 bg-base-200/60 p-4">
         <h2 className="text-lg font-semibold">{t("dashboard.bots.create.title")}</h2>
         <p className="text-sm opacity-70">{t("dashboard.bots.create.description")}</p>
         <div className="mt-4 grid gap-3 xl:grid-cols-3">
@@ -1702,7 +1702,7 @@ export default function BotsManagement({
       )}
 
       {activeTab === "monitoring" && (
-        <div className="space-y-4 rounded-xl border border-base-300 bg-base-200 p-4">
+        <div className="space-y-4 rounded-box border border-base-300/60 bg-base-200/60 p-4">
           <h2 className="text-lg font-semibold">{t("dashboard.bots.monitoring.title")}</h2>
           <p className="text-sm opacity-70">{t("dashboard.bots.monitoring.description")}</p>
 
@@ -1879,7 +1879,7 @@ export default function BotsManagement({
                     ) : (
                       <div className="form-control md:col-span-3">
                         <span className="label-text">{t("dashboard.bots.monitoring.scopeLabel")}</span>
-                        <div className="rounded-md border border-base-300 bg-base-100 px-3 py-2 text-sm">
+                        <div className="rounded-box border border-base-300/60 bg-base-100/70 px-3 py-2 text-sm">
                           {interpolateTemplate(t("dashboard.bots.monitoring.scopeAllSessions"), {
                             count: monitorSessions.length,
                           })}
@@ -2527,7 +2527,7 @@ export default function BotsManagement({
       )}
 
       {activeTab === "assistant" && (
-        <div className="space-y-4 rounded-xl border border-base-300 bg-base-200 p-4">
+        <div className="space-y-4 rounded-box border border-base-300/60 bg-base-200/60 p-4">
           <h2 className="text-lg font-semibold">{t("dashboard.bots.assistant.title")}</h2>
           <p className="text-sm opacity-70">
             {t("dashboard.bots.assistant.description")}
@@ -2826,4 +2826,5 @@ export default function BotsManagement({
     </div>
   );
 }
+
 

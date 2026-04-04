@@ -23,8 +23,8 @@ describe("Header responsive smoke", () => {
     expect(screen.getAllByText("Markets").length).toBeGreaterThan(0);
     expect(screen.getByText("Exchanges")).toBeInTheDocument();
     expect(screen.getAllByText("Bots").length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: "Bots list" })).toHaveAttribute("href", "/dashboard/bots");
-    expect(screen.getByRole("link", { name: "Create bot" })).toHaveAttribute("href", "/dashboard/bots/create");
+    expect(screen.getByRole("link", { name: "Bots" })).toHaveAttribute("href", "/dashboard/bots");
+    expect(screen.queryByRole("link", { name: "Create bot" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Connections" })).not.toBeInTheDocument();
     expect(screen.getByText("Analytics")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "false");

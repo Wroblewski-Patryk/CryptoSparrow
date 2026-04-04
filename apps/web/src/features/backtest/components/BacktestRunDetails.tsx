@@ -1968,7 +1968,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
   ];
   return (
     <div className='space-y-4'>
-      <section className='rounded-xl border border-base-300 bg-base-100 p-4 space-y-4'>
+      <section className='rounded-box border border-base-300/60 bg-base-100/80 p-4 space-y-4'>
         <div className='flex flex-wrap items-start justify-between gap-3'>
           <div className='space-y-1'>
             <h2 className='text-lg font-semibold'>{run.name}</h2>
@@ -2004,7 +2004,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
         ) : null}
 
         {liveProgress || report ? (
-          <div className='rounded-lg border border-base-300 bg-base-200 p-3 text-sm'>
+          <div className='rounded-box border border-base-300/60 bg-base-200/55 p-3 text-sm'>
             <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-4'>
               {headlineMetrics.map((metric) => (
                 <div key={metric.key} className='rounded-md border border-base-300 bg-base-100 px-2 py-2'>
@@ -2038,7 +2038,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
         </div>
       </section>
 
-      <section className='rounded-xl border border-base-300 bg-base-100 p-4'>
+      <section className='rounded-box border border-base-300/60 bg-base-100/80 p-4'>
         <div role='tablist' className='tabs tabs-boxed'>
           <button
             type='button'
@@ -2080,34 +2080,34 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
             ) : (
               <>
                 <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-6'>
-                  <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                  <div className='rounded-box border border-base-300/60 bg-base-200/55 p-3'>
                     <p className='text-xs uppercase tracking-wide opacity-70'>{copy.summaryNetPnl}</p>
                     <p className={`mt-1 text-2xl font-semibold ${pnlClass(report.netPnl)}`}>{formatCurrency(report.netPnl)}</p>
                   </div>
-                  <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                  <div className='rounded-box border border-base-300/60 bg-base-200/55 p-3'>
                     <p className='text-xs uppercase tracking-wide opacity-70'>{copy.summaryWinRate}</p>
                     <p className='mt-1 text-2xl font-semibold'>{formatPercent(report.winRate)}</p>
                   </div>
-                  <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                  <div className='rounded-box border border-base-300/60 bg-base-200/55 p-3'>
                     <p className='text-xs uppercase tracking-wide opacity-70'>{copy.summaryTrades}</p>
                     <p className='mt-1 text-2xl font-semibold'>{formatNumber(report.totalTrades)}</p>
                   </div>
-                  <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                  <div className='rounded-box border border-base-300/60 bg-base-200/55 p-3'>
                     <p className='text-xs uppercase tracking-wide opacity-70'>{copy.summaryMaxDrawdown}</p>
                     <p className='mt-1 text-2xl font-semibold'>{formatPercent(report.maxDrawdown)}</p>
                   </div>
-                  <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                  <div className='rounded-box border border-base-300/60 bg-base-200/55 p-3'>
                     <p className='text-xs uppercase tracking-wide opacity-70'>{copy.summaryStartBalance}</p>
                     <p className='mt-1 text-2xl font-semibold'>{formatCurrency(summaryMetrics?.initialBalance ?? 0)}</p>
                   </div>
-                  <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                  <div className='rounded-box border border-base-300/60 bg-base-200/55 p-3'>
                     <p className='text-xs uppercase tracking-wide opacity-70'>{copy.summaryEndBalance}</p>
                     <p className='mt-1 text-2xl font-semibold'>{formatCurrency(summaryMetrics?.endBalance ?? 0)}</p>
                   </div>
                 </div>
 
                 <div className='grid gap-3 xl:grid-cols-2'>
-                  <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                  <div className='rounded-box border border-base-300/60 bg-base-200/55 p-3'>
                     <p className='text-sm font-medium'>{copy.summaryDailyPnlTitle}</p>
                     <SummaryDailyPnlChart
                       points={dailyPerformance}
@@ -2115,7 +2115,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                       emptyText={copy.summaryDailyPnlNoData}
                     />
                   </div>
-                  <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                  <div className='rounded-box border border-base-300/60 bg-base-200/55 p-3'>
                     <p className='text-sm font-medium'>{copy.summaryBalanceTitle}</p>
                     <SummaryBalanceChart
                       points={dailyPerformance}
@@ -2138,7 +2138,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
               />
             ) : (
               <>
-                <div className='rounded-lg border border-base-300 bg-base-200 p-3'>
+                <div className='rounded-box border border-base-300/60 bg-base-200/55 p-3'>
                   <h4 className='mb-2 text-sm font-semibold'>{copy.globalLegendTitle}</h4>
                   <div className='flex flex-wrap items-center gap-4 text-xs text-base-content/75'>
                     <span className='inline-flex items-center gap-1'>
@@ -2246,7 +2246,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                               )}
                             </div>
 
-                            <aside className='rounded-lg border border-base-300 bg-base-200 p-3 text-sm'>
+                            <aside className='rounded-box border border-base-300/60 bg-base-200/55 p-3 text-sm'>
                               <h4 className='font-semibold'>{copy.pairStatsTitle}</h4>
                               {parityFailed ? (
                                 <div className='mt-2 rounded-md border border-error/40 bg-error/10 p-2'>
@@ -2505,4 +2505,5 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
     </div>
   );
 }
+
 

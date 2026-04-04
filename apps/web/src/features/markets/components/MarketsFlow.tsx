@@ -241,7 +241,7 @@ export default function MarketsFlow() {
 
   return (
     <div className='space-y-5'>
-      <form onSubmit={handleCreate} className='rounded-xl border border-base-300 bg-base-200 p-4'>
+      <form onSubmit={handleCreate} className='rounded-box border border-base-300/60 bg-base-200/60 p-4'>
         <h2 className='text-lg font-semibold'>Kreator grup rynkow dla bota</h2>
         <p className='text-sm opacity-70'>Wybierz market type, base currency i zbuduj grupe symboli pod bota.</p>
 
@@ -439,3 +439,4 @@ export default function MarketsFlow() {
     </div>
   );
 }
+

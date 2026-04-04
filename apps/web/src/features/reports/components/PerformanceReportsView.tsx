@@ -104,13 +104,13 @@ export default function PerformanceReportsView() {
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="card bg-base-200 shadow-sm">
+        <div className="card border border-base-300/60 bg-base-200/60">
           <div className="card-body p-4">
             <p className="text-sm opacity-70">Reports</p>
             <p className="text-3xl font-bold">{metrics.runsCount}</p>
           </div>
         </div>
-        <div className="card bg-base-200 shadow-sm">
+        <div className="card border border-base-300/60 bg-base-200/60">
           <div className="card-body p-4">
             <p className="text-sm opacity-70">Avg Net PnL</p>
               <p className={`text-3xl font-bold ${metrics.avgNetPnl >= 0 ? "text-success" : "text-error"}`}>
@@ -118,13 +118,13 @@ export default function PerformanceReportsView() {
             </p>
           </div>
         </div>
-        <div className="card bg-base-200 shadow-sm">
+        <div className="card border border-base-300/60 bg-base-200/60">
           <div className="card-body p-4">
             <p className="text-sm opacity-70">Avg Win Rate</p>
             <p className="text-3xl font-bold text-info">{formatPercent(metrics.avgWinRate)}</p>
           </div>
         </div>
-        <div className="card bg-base-200 shadow-sm">
+        <div className="card border border-base-300/60 bg-base-200/60">
           <div className="card-body p-4">
             <p className="text-sm opacity-70">Best Run</p>
             <p className="text-sm font-semibold truncate">{metrics.bestRunName}</p>
@@ -133,7 +133,7 @@ export default function PerformanceReportsView() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-base-300 bg-base-200 p-4">
+      <div className="rounded-box border border-base-300/60 bg-base-100/80 p-4">
         <h2 className="text-lg font-semibold">Cross-mode performance</h2>
         <p className="mt-1 text-sm text-base-content/70">
           Porownanie skutecznosci BACKTEST vs PAPER vs LIVE.
@@ -168,7 +168,7 @@ export default function PerformanceReportsView() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-base-300 bg-base-200 p-4">
+      <div className="rounded-box border border-base-300/60 bg-base-100/80 p-4">
         <h2 className="text-lg font-semibold">Performance by backtest run</h2>
         <div className="mt-3 overflow-x-auto">
           <table className="table table-zebra">
@@ -206,3 +206,4 @@ export default function PerformanceReportsView() {
     </div>
   );
 }
+

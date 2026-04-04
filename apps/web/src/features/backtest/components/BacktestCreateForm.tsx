@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { type FormEvent, useContext, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
@@ -198,7 +198,7 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
 
   return (
     <form onSubmit={handleSubmit} className='space-y-4'>
-      <div className='rounded-xl border border-base-300 bg-base-100 p-4 md:p-5 space-y-5'>
+      <div className='rounded-box border border-base-300/60 bg-base-100/80 p-4 md:p-5 space-y-5'>
         <div className='flex flex-wrap items-start gap-3'>
           <div className='space-y-1'>
             <h2 className='text-2xl'>{copy.title}</h2>
@@ -249,7 +249,7 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
                   {marketUniverses.length === 0 ? <option value=''>{copy.noUniverses}</option> : null}
                   {marketUniverses.map((universe) => (
                     <option key={universe.id} value={universe.id}>
-                      {universe.name} ({universe.exchange ?? 'BINANCE'} · {universe.marketType}/{universe.baseCurrency})
+                      {universe.name} ({universe.exchange ?? 'BINANCE'} - {universe.marketType}/{universe.baseCurrency})
                     </option>
                   ))}
                 </select>
@@ -311,3 +311,4 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
     </form>
   );
 }
+

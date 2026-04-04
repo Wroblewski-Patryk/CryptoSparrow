@@ -1,21 +1,26 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { HiOutlineMoon, HiOutlineSun } from 'react-icons/hi2';
 import { LuCheck } from 'react-icons/lu';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useDetailsDropdown } from '../hooks/useDetailsDropdown';
-import { headerMenuItemClass } from '../layout/dashboard/headerControlStyles';
+import {
+  getHeaderDropdownLinkClass,
+  getHeaderDropdownMenuClass,
+  headerMenuItemClass,
+} from '../layout/dashboard/headerControlStyles';
 
 const themes = [
-  { value: 'cryptosparrow', label: 'Soar', swatches: ['bg-violet-600', 'bg-yellow-400', 'bg-indigo-400'] },
-  { value: 'system', label: 'System', swatches: ['bg-slate-300', 'bg-slate-500', 'bg-slate-800'] },
-  { value: 'cupcake', label: 'Cupcake', swatches: ['bg-pink-300', 'bg-rose-300', 'bg-orange-200'] },
-  { value: 'dracula', label: 'Dracula', swatches: ['bg-violet-800', 'bg-fuchsia-700', 'bg-slate-900'] },
-  { value: 'forest', label: 'Forest', swatches: ['bg-green-700', 'bg-lime-500', 'bg-emerald-800'] },
-  { value: 'valentine', label: 'Valentine', swatches: ['bg-rose-400', 'bg-pink-400', 'bg-red-300'] },
-  { value: 'luxury', label: 'Luxury', swatches: ['bg-amber-700', 'bg-yellow-500', 'bg-stone-900'] },
-  { value: 'cyberpunk', label: 'Cyberpunk', swatches: ['bg-yellow-300', 'bg-fuchsia-500', 'bg-slate-900'] },
+  { value: 'cryptosparrow', label: 'Soar' },
+  { value: 'system', label: 'System' },
+  { value: 'cupcake', label: 'Cupcake' },
+  { value: 'dracula', label: 'Dracula' },
+  { value: 'forest', label: 'Forest' },
+  { value: 'valentine', label: 'Valentine' },
+  { value: 'luxury', label: 'Luxury' },
+  { value: 'cyberpunk', label: 'Cyberpunk' },
 ] as const;
 
 type ThemePreference = (typeof themes)[number]['value'];
@@ -39,6 +44,26 @@ const resolveTheme = (preference: ThemePreference): string => {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 };
 
+const themeSwatchShellStyle = {
+  borderRadius: 'var(--radius-selector)',
+  padding: 'calc(var(--radius-selector) * 0.28)',
+} as CSSProperties;
+
+const ThemeSwatches = ({ theme }: { theme: string }) => (
+  <span
+    data-theme={theme}
+    className='inline-flex items-center gap-1 border border-base-300/70 bg-base-100/65'
+    style={themeSwatchShellStyle}
+    aria-hidden='true'
+  >
+    <span className='inline-block h-2 w-2 rounded-full bg-base-content/85' />
+    <span className='inline-block h-2 w-2 rounded-full bg-neutral' />
+    <span className='inline-block h-2 w-2 rounded-full bg-primary' />
+    <span className='inline-block h-2 w-2 rounded-full bg-secondary' />
+    <span className='inline-block h-2 w-2 rounded-full bg-accent' />
+  </span>
+);
+
 export default function ThemeSwitcher({
   placement = 'bottom',
   summaryClassName = '',
@@ -47,13 +72,11 @@ export default function ThemeSwitcher({
   const { locale } = useI18n();
   const [activeTheme, setActiveTheme] = useState<ThemePreference>('cryptosparrow');
   const [resolvedTheme, setResolvedTheme] = useState<string>('cryptosparrow');
+  const [systemResolvedTheme, setSystemResolvedTheme] = useState<'light' | 'dark'>('light');
   const detailsRef = useRef<HTMLDetailsElement>(null);
   useDetailsDropdown(detailsRef);
   const detailsClass = `dropdown dropdown-end group ${placement === 'top' ? 'dropdown-top' : ''}`;
-  const menuClass =
-    placement === 'top'
-      ? 'menu dropdown-content z-[60] mb-2 w-48 rounded-box bg-base-100 p-2 text-base-content shadow'
-      : 'menu dropdown-content z-[60] mt-2 w-48 rounded-box bg-base-100 p-2 text-base-content shadow';
+  const menuClass = getHeaderDropdownMenuClass(placement, 'w-48');
   const summaryToneClass =
     tone === 'footer'
       ? 'inline-flex min-h-9 items-center gap-2 rounded-md px-3 py-2 text-base-content/80 hover:bg-base-content/10 hover:text-base-content/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content/35 transition-colors group-open:bg-base-content/10 group-open:text-base-content/80 list-none cursor-pointer [&::-webkit-details-marker]:hidden'
@@ -80,9 +103,14 @@ export default function ThemeSwitcher({
   }, []);
 
   useEffect(() => {
-    if (activeTheme !== 'system') return;
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => applyTheme('system', false);
+    const updateSystemTheme = () =>
+      setSystemResolvedTheme(mediaQuery.matches ? 'dark' : 'light');
+    const handleChange = () => {
+      updateSystemTheme();
+      if (activeTheme === 'system') applyTheme('system', false);
+    };
+    updateSystemTheme();
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [activeTheme]);
@@ -102,15 +130,12 @@ export default function ThemeSwitcher({
       };
 
   const activeThemeConfig = themes.find((item) => item.value === activeTheme) ?? themes[0];
+  const activeSwatchTheme = activeTheme === 'system' ? systemResolvedTheme : activeThemeConfig.value;
 
   return (
     <details ref={detailsRef} className={detailsClass}>
       <summary className={`${summaryToneClass} ${summaryClassName}`.trim()} aria-label={copy.selectorAria}>
-        <span className="inline-flex items-center gap-1" aria-hidden="true">
-          {activeThemeConfig.swatches.map((swatch) => (
-            <span key={`summary-${activeThemeConfig.value}-${swatch}`} className={`inline-block h-2 w-2 rounded-full ${swatch}`} />
-          ))}
-        </span>
+        <ThemeSwatches theme={activeSwatchTheme} />
         <span>{activeThemeConfig.value === 'system' ? copy.systemLabel : activeThemeConfig.label}</span>
         <span className="sr-only">{copy.currentTheme}</span>
       </summary>
@@ -120,15 +145,11 @@ export default function ThemeSwitcher({
             <button
               type="button"
               aria-label={theme.label}
-              className={`flex items-center justify-between gap-2 ${activeTheme === theme.value ? 'active' : ''}`}
+              className={`${getHeaderDropdownLinkClass(activeTheme === theme.value)} flex items-center justify-between gap-2 px-2 py-1.5`}
               onClick={() => applyTheme(theme.value)}
             >
               <span className="inline-flex items-center gap-2">
-                <span className="inline-flex items-center gap-1" aria-hidden>
-                  {theme.swatches.map((swatch) => (
-                    <span key={`${theme.value}-${swatch}`} className={`inline-block h-2 w-2 rounded-full ${swatch}`} />
-                  ))}
-                </span>
+                <ThemeSwatches theme={theme.value === 'system' ? systemResolvedTheme : theme.value} />
                 <span>{theme.value === 'system' ? copy.systemLabel : theme.label}</span>
               </span>
               <span className="inline-flex items-center gap-1">

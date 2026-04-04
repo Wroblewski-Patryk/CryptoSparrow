@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useDetailsDropdown } from '../../hooks/useDetailsDropdown';
 import languageOptions from './languageOptions.json';
-import { headerMenuItemClass } from './headerControlStyles';
+import { getHeaderDropdownLinkClass, getHeaderDropdownMenuClass, headerMenuItemClass } from './headerControlStyles';
 
 type LocaleCode = 'en' | 'pl';
 type LanguageOption = {
@@ -52,10 +52,7 @@ export default function LanguageSwitcher({
   useDetailsDropdown(detailsRef);
   const active = getLanguage(locale as LocaleCode);
   const detailsClass = `dropdown dropdown-end group ${placement === 'top' ? 'dropdown-top' : ''}`;
-  const menuClass =
-    placement === 'top'
-      ? 'menu dropdown-content z-[60] mb-2 w-44 rounded-box bg-base-100 p-2 text-base-content shadow-xl border border-base-300/60'
-      : 'menu dropdown-content z-[60] mt-2 w-44 rounded-box bg-base-100 p-2 text-base-content shadow-xl border border-base-300/60';
+  const menuClass = getHeaderDropdownMenuClass(placement, 'w-44');
   const summaryToneClass =
     tone === 'footer'
       ? 'inline-flex min-h-9 items-center gap-2 rounded-md px-3 py-2 text-base-content/80 hover:bg-base-content/10 hover:text-base-content/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content/35 transition-colors group-open:bg-base-content/10 group-open:text-base-content/80 list-none cursor-pointer [&::-webkit-details-marker]:hidden'
@@ -78,7 +75,7 @@ export default function LanguageSwitcher({
             <button
               type="button"
               onClick={() => handleSelect(option.locale)}
-              className={locale === option.locale ? 'active font-medium' : ''}
+              className={getHeaderDropdownLinkClass(locale === option.locale)}
             >
               <FlagIcon option={option} />
               {option.label}

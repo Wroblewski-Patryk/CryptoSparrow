@@ -7,12 +7,15 @@ export default function Footer() {
   const { t } = useI18n();
 
   return (
-    <footer className="bg-primary py-4 text-primary-content">
+    <footer className="border-t border-base-300/60 bg-base-200/70 py-4 text-base-content/80">
       <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-4">
-        <p className="text-sm opacity-90">
+        <p className="text-sm">
           &copy; {new Date().getFullYear()} Soar. {t("dashboard.footer.rights")}
         </p>
-        <FooterPreferencesSwitchers />
+        <FooterPreferencesSwitchers
+          tone="footer"
+          summaryClassName="text-base-content/80 hover:text-base-content/80 group-open:text-base-content/80"
+        />
       </div>
     </footer>
   );

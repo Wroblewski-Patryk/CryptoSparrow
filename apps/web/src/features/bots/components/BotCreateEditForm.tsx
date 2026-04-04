@@ -263,8 +263,8 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-base-300 bg-base-100 p-4 shadow-sm">
-      <section className="space-y-3 rounded-lg border border-base-300 bg-base-200 p-3">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-box border border-base-300/60 bg-base-100/80 p-4">
+      <section className="space-y-3 rounded-box border border-base-300/60 bg-base-200/55 p-3">
         <h2 className="text-base font-semibold">{t("dashboard.bots.create.sectionBasics")}</h2>
         <div className="grid gap-3 md:grid-cols-2">
           <label className="form-control gap-1">
@@ -334,7 +334,7 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
         </div>
       </section>
 
-      <section className="space-y-3 rounded-lg border border-base-300 bg-base-200 p-3">
+      <section className="space-y-3 rounded-box border border-base-300/60 bg-base-200/55 p-3">
         <h2 className="text-base font-semibold">{t("dashboard.bots.create.sectionMarket")}</h2>
         <div className="grid gap-3 md:grid-cols-2">
           <label className="form-control gap-1">
@@ -354,7 +354,7 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
               ))}
             </select>
           </label>
-          <div className="rounded-md border border-base-300 bg-base-100 px-3 py-2 text-xs">
+          <div className="rounded-box border border-base-300/60 bg-base-100/70 px-3 py-2 text-xs">
             <p className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.bots.create.marketSummaryLabel")}</p>
             <p className="mt-1 font-medium">
               {selectedMarketGroup?.exchange ?? "BINANCE"} / {selectedMarketGroup?.marketType ?? "-"}
@@ -368,7 +368,7 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
         </div>
       </section>
 
-      <section className="space-y-3 rounded-lg border border-base-300 bg-base-200 p-3">
+      <section className="space-y-3 rounded-box border border-base-300/60 bg-base-200/55 p-3">
         <h2 className="text-base font-semibold">{t("dashboard.bots.create.sectionStrategy")}</h2>
         <div className="grid gap-3 md:grid-cols-2">
           <label className="form-control gap-1">
@@ -387,7 +387,7 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
             </select>
           </label>
 
-          <div className="rounded-md border border-base-300 bg-base-100 px-3 py-2 text-xs">
+          <div className="rounded-box border border-base-300/60 bg-base-100/70 px-3 py-2 text-xs">
             <p className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.bots.create.strategyLabel")}</p>
             <div className="mt-1 grid gap-1">
               <p className="flex items-center justify-between gap-3">
@@ -423,3 +423,4 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
     </form>
   );
 }
+
