@@ -510,6 +510,7 @@ export class RuntimeSignalLoop {
         await this.handleEvent(event);
       } catch (error) {
         console.error('RuntimeSignalLoop event handler failed:', error);
+        metricsStore.recordRuntimeExecutionError('runtime_event_handler_failure');
       }
     });
     this.startSessionWatchdog();
@@ -552,6 +553,7 @@ export class RuntimeSignalLoop {
           this.lastKnownActiveBotIds = new Set(activeBots.map((bot) => bot.id));
         } catch (error) {
           console.error('RuntimeSignalLoop session watchdog failed:', error);
+          metricsStore.recordRuntimeExecutionError('runtime_watchdog_sync_failure');
         }
         await this.detectRuntimeStall(now, activeBots.map((bot) => bot.id));
       })();
@@ -601,6 +603,7 @@ export class RuntimeSignalLoop {
   ) {
     if (!this.unsubscribe) return;
     console.error(`RuntimeSignalLoop stall detected: ${reason}. Restart requested.`);
+    metricsStore.recordRuntimeRestart(reason);
     await Promise.all(
       activeBotIds.map((botId) =>
         this.deps.closeRuntimeSession?.({
@@ -650,7 +653,9 @@ export class RuntimeSignalLoop {
   }
 
   private async handleEvent(event: MarketStreamEvent) {
-    this.lastStreamEventAtMs = Date.now();
+    const now = Date.now();
+    this.lastStreamEventAtMs = now;
+    metricsStore.recordRuntimeSignalLag(now - event.eventTime);
     if (event.type === 'candle') {
       await this.handleCandleEvent(event);
       return;

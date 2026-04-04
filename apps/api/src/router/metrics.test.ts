@@ -37,6 +37,26 @@ type MetricsPayload = {
       exit: number;
       noTrade: number;
     };
+    signalLag: {
+      total: number;
+      lastMs: number;
+      maxMs: number;
+      totalLagMs: number;
+      avgLagMs: number;
+    };
+    restarts: {
+      total: number;
+      noEvent: number;
+      noHeartbeat: number;
+    };
+    reconciliation: {
+      total: number;
+      pending: number;
+      totalDelayMs: number;
+      avgDelayMs: number;
+      maxDelayMs: number;
+    };
+    executionErrors: Record<string, number>;
   };
   assistant: {
     subagentTimeouts: number;
@@ -133,6 +153,10 @@ describe('metrics endpoint', () => {
     metricsStore.setWorkerQueueLag('execution', 1);
     metricsStore.recordRuntimeGroupEvaluation(12);
     metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
+    metricsStore.recordRuntimeSignalLag(42);
+    metricsStore.recordRuntimeRestart('runtime_stall_no_event');
+    metricsStore.recordRuntimeReconciliationDelay(25, true);
+    metricsStore.recordRuntimeExecutionError('runtime_watchdog_sync_failure');
     metricsStore.recordAssistantSubagentTimeout();
 
     const after = await getMetrics();
@@ -148,6 +172,19 @@ describe('metrics endpoint', () => {
     );
     expect(after.runtime.mergeOutcomes.noTrade).toBeGreaterThanOrEqual(
       before.runtime.mergeOutcomes.noTrade + 1
+    );
+    expect(after.runtime.signalLag.total).toBeGreaterThanOrEqual(before.runtime.signalLag.total + 1);
+    expect(after.runtime.signalLag.maxMs).toBeGreaterThanOrEqual(before.runtime.signalLag.maxMs);
+    expect(after.runtime.restarts.total).toBeGreaterThanOrEqual(before.runtime.restarts.total + 1);
+    expect(after.runtime.restarts.noEvent).toBeGreaterThanOrEqual(before.runtime.restarts.noEvent + 1);
+    expect(after.runtime.reconciliation.total).toBeGreaterThanOrEqual(
+      before.runtime.reconciliation.total + 1
+    );
+    expect(after.runtime.reconciliation.pending).toBeGreaterThanOrEqual(
+      before.runtime.reconciliation.pending + 1
+    );
+    expect(after.runtime.executionErrors.runtime_watchdog_sync_failure ?? 0).toBeGreaterThanOrEqual(
+      (before.runtime.executionErrors.runtime_watchdog_sync_failure ?? 0) + 1
     );
     expect(after.assistant.subagentTimeouts).toBeGreaterThanOrEqual(
       before.assistant.subagentTimeouts + 1

@@ -31,6 +31,26 @@ type MetricsSnapshot = {
       exit: number;
       noTrade: number;
     };
+    signalLag: {
+      total: number;
+      lastMs: number;
+      maxMs: number;
+      totalLagMs: number;
+      avgLagMs: number;
+    };
+    restarts: {
+      total: number;
+      noEvent: number;
+      noHeartbeat: number;
+    };
+    reconciliation: {
+      total: number;
+      pending: number;
+      totalDelayMs: number;
+      avgDelayMs: number;
+      maxDelayMs: number;
+    };
+    executionErrors: Record<string, number>;
   };
   assistant: {
     subagentTimeouts: number;
@@ -60,6 +80,18 @@ class InMemoryMetricsStore {
   private runtimeMergeShort = 0;
   private runtimeMergeExit = 0;
   private runtimeMergeNoTrade = 0;
+  private runtimeSignalLagTotal = 0;
+  private runtimeSignalLagLastMs = 0;
+  private runtimeSignalLagMaxMs = 0;
+  private runtimeSignalLagTotalMs = 0;
+  private runtimeRestartTotal = 0;
+  private runtimeRestartNoEvent = 0;
+  private runtimeRestartNoHeartbeat = 0;
+  private runtimeReconciliationTotal = 0;
+  private runtimeReconciliationPending = 0;
+  private runtimeReconciliationTotalDelayMs = 0;
+  private runtimeReconciliationMaxDelayMs = 0;
+  private readonly runtimeExecutionErrors = new Map<string, number>();
   private assistantSubagentTimeouts = 0;
 
   recordHttp(input: HttpMetricInput) {
@@ -110,6 +142,43 @@ class InMemoryMetricsStore {
     if (outcome === 'NO_TRADE') this.runtimeMergeNoTrade += 1;
   }
 
+  recordRuntimeSignalLag(lagMs: number) {
+    const value = Number.isFinite(lagMs) ? Math.max(0, lagMs) : 0;
+    this.runtimeSignalLagTotal += 1;
+    this.runtimeSignalLagLastMs = value;
+    this.runtimeSignalLagTotalMs += value;
+    this.runtimeSignalLagMaxMs = Math.max(this.runtimeSignalLagMaxMs, value);
+  }
+
+  recordRuntimeRestart(reason: 'runtime_stall_no_event' | 'runtime_stall_no_heartbeat') {
+    this.runtimeRestartTotal += 1;
+    if (reason === 'runtime_stall_no_event') this.runtimeRestartNoEvent += 1;
+    if (reason === 'runtime_stall_no_heartbeat') this.runtimeRestartNoHeartbeat += 1;
+  }
+
+  recordRuntimeReconciliationDelay(delayMs: number, pending: boolean) {
+    const value = Number.isFinite(delayMs) ? Math.max(0, delayMs) : 0;
+    this.runtimeReconciliationTotal += 1;
+    this.runtimeReconciliationTotalDelayMs += value;
+    this.runtimeReconciliationMaxDelayMs = Math.max(this.runtimeReconciliationMaxDelayMs, value);
+    if (pending) this.runtimeReconciliationPending += 1;
+  }
+
+  recordRuntimeExecutionError(errorClass: string) {
+    const key = this.normalizeRuntimeErrorClass(errorClass);
+    const current = this.runtimeExecutionErrors.get(key) ?? 0;
+    this.runtimeExecutionErrors.set(key, current + 1);
+  }
+
+  private normalizeRuntimeErrorClass(errorClass: string) {
+    const normalized = String(errorClass ?? 'unknown')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_:-]+/g, '_')
+      .slice(0, 64);
+    return normalized.length > 0 ? normalized : 'unknown';
+  }
+
   recordAssistantSubagentTimeout() {
     this.assistantSubagentTimeouts += 1;
   }
@@ -119,6 +188,12 @@ class InMemoryMetricsStore {
     const runtimeAvgDurationMs =
       this.runtimeGroupEvaluations > 0
         ? this.runtimeGroupTotalDurationMs / this.runtimeGroupEvaluations
+        : 0;
+    const runtimeAvgLagMs =
+      this.runtimeSignalLagTotal > 0 ? this.runtimeSignalLagTotalMs / this.runtimeSignalLagTotal : 0;
+    const runtimeReconciliationAvgMs =
+      this.runtimeReconciliationTotal > 0
+        ? this.runtimeReconciliationTotalDelayMs / this.runtimeReconciliationTotal
         : 0;
     return {
       http: {
@@ -153,6 +228,26 @@ class InMemoryMetricsStore {
           exit: this.runtimeMergeExit,
           noTrade: this.runtimeMergeNoTrade,
         },
+        signalLag: {
+          total: this.runtimeSignalLagTotal,
+          lastMs: this.runtimeSignalLagLastMs,
+          maxMs: this.runtimeSignalLagMaxMs,
+          totalLagMs: this.runtimeSignalLagTotalMs,
+          avgLagMs: runtimeAvgLagMs,
+        },
+        restarts: {
+          total: this.runtimeRestartTotal,
+          noEvent: this.runtimeRestartNoEvent,
+          noHeartbeat: this.runtimeRestartNoHeartbeat,
+        },
+        reconciliation: {
+          total: this.runtimeReconciliationTotal,
+          pending: this.runtimeReconciliationPending,
+          totalDelayMs: this.runtimeReconciliationTotalDelayMs,
+          avgDelayMs: runtimeReconciliationAvgMs,
+          maxDelayMs: this.runtimeReconciliationMaxDelayMs,
+        },
+        executionErrors: Object.fromEntries(this.runtimeExecutionErrors.entries()),
       },
       assistant: {
         subagentTimeouts: this.assistantSubagentTimeouts,

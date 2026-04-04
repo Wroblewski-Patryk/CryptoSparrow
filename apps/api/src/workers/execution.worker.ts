@@ -3,6 +3,7 @@ import { getQueueTuning } from '../queue/queueTuning';
 import { livePositionReconciliationLoop } from '../modules/positions/livePositionReconciliation.service';
 import { runtimeSignalLoop } from '../modules/engine/runtimeSignalLoop.service';
 import { runtimeScanLoop } from '../modules/engine/runtimeScanLoop.service';
+import { metricsStore } from '../observability/metrics';
 
 const runtimeSignalLoopBootstrapIntervalMs = Math.max(
   5_000,
@@ -21,6 +22,7 @@ const ensureRuntimeSignalLoopStarted = async () => {
     await runtimeSignalLoop.start();
   } catch (error) {
     console.error('Execution worker failed to start runtimeSignalLoop:', error);
+    metricsStore.recordRuntimeExecutionError('runtime_start_failure');
   }
 };
 void ensureRuntimeSignalLoopStarted();

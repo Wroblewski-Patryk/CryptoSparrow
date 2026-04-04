@@ -40,7 +40,7 @@ Exit criteria:
 - runtime recovers from transient stream failures automatically and reports why.
 
 ## Phase C - Observability and Operational Signals
-- [ ] `PEX-07 feat(obs-metrics): add production metrics for runtime lag, restart count, reconciliation delay, and execution error classes`
+- [x] `PEX-07 feat(obs-metrics): add production metrics for runtime lag, restart count, reconciliation delay, and execution error classes`
 - [ ] `PEX-08 feat(obs-alerts): define alert thresholds for stale runtime, repeated restarts, and reconciliation drift`
 - [ ] `PEX-09 docs(runbook): publish incident triage matrix (symptoms -> checks -> mitigations -> rollback)`
 

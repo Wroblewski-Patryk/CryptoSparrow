@@ -87,9 +87,13 @@ export class LiveOrderAdapter {
         return result;
       } catch (error) {
         lastError = error;
-        const canRetry = attempt < maxAttempts && isRetryableError(error);
+        const retryable = isRetryableError(error);
+        const canRetry = attempt < maxAttempts && retryable;
         if (!canRetry) {
           metricsStore.recordExchangeOrderFailure();
+          metricsStore.recordRuntimeExecutionError(
+            retryable ? 'live_order_retry_exhausted' : 'live_order_non_retryable'
+          );
           this.logger.error({
             event: 'exchange.live_order.failed',
             attempt,
@@ -124,11 +128,16 @@ export class LiveOrderAdapter {
   async placeLiveOrderWithFees(input: PlaceLiveOrderInput): Promise<PlaceLiveOrderWithFeesResult> {
     const parsed = PlaceLiveOrderInputSchema.parse(input);
     const orderResult = await this.placeLiveOrderWithRetry(parsed);
+    const reconciliationStartedAt = Date.now();
     const feeReconciliation = await reconcileLiveOrderFee(this.connector, {
       symbol: parsed.order.symbol,
       exchangeOrderId: orderResult.id || null,
       inlineFills: orderResult.fills ?? [],
     });
+    metricsStore.recordRuntimeReconciliationDelay(
+      Date.now() - reconciliationStartedAt,
+      feeReconciliation.feePending
+    );
 
     return {
       exchangeOrderId: orderResult.id || null,
