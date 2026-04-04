@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import nextConfig from './next.config';
+import nextConfig, { buildCsp } from './next.config';
 
 describe('next security headers', () => {
   it('exposes baseline security headers contract for all routes', async () => {
@@ -16,5 +16,14 @@ describe('next security headers', () => {
     expect(findHeader('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
     expect(findHeader('Permissions-Policy')).toContain('camera=()');
   });
-});
 
+  it('allows unsafe-eval only in development CSP', () => {
+    const devCsp = buildCsp('development');
+    const prodCsp = buildCsp('production');
+
+    expect(devCsp).toContain("'unsafe-eval'");
+    expect(prodCsp).not.toContain("'unsafe-eval'");
+    expect(devCsp).toContain("connect-src 'self' http: https: ws: wss:");
+    expect(prodCsp).toContain("connect-src 'self' https: ws: wss:");
+  });
+});
