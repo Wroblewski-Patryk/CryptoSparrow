@@ -19,6 +19,7 @@ import { computeRiskBasedOrderQuantity, normalizeWalletRiskPercent } from './pos
 import { resolveRuntimeReferenceBalance } from './runtimeCapitalContext.service';
 import { runtimeTelemetryService } from './runtimeTelemetry.service';
 import { supportsExchangeCapability } from '../exchange/exchangeCapabilities';
+import { getMarketCatalog } from '../markets/markets.service';
 
 type ActiveBotStrategy = {
   strategyId: string;
@@ -47,6 +48,76 @@ type ActiveBot = {
   paperStartBalance: number;
   marketType: 'FUTURES' | 'SPOT';
   marketGroups: ActiveBotMarketGroup[];
+};
+
+const normalizeSymbols = (symbols: string[]) =>
+  [...new Set(symbols.map((item) => item.trim().toUpperCase()).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b)
+  );
+
+const resolveUniverseSymbols = (whitelist: string[], blacklist: string[]) => {
+  const normalizedWhitelist = normalizeSymbols(whitelist);
+  const blacklistSet = new Set(normalizeSymbols(blacklist));
+  return normalizedWhitelist.filter((symbol) => !blacklistSet.has(symbol));
+};
+
+const resolveMinQuoteVolumeFilter = (filterRules: unknown) => {
+  const parsedRules =
+    filterRules && typeof filterRules === 'object'
+      ? (filterRules as {
+          minQuoteVolumeEnabled?: unknown;
+          minQuoteVolume24h?: unknown;
+          minVolume24h?: unknown;
+        })
+      : null;
+  const enabled = parsedRules?.minQuoteVolumeEnabled === true;
+  const minRaw = Number(parsedRules?.minQuoteVolume24h ?? parsedRules?.minVolume24h ?? 0);
+  const min = Number.isFinite(minRaw) && minRaw > 0 ? minRaw : 0;
+  return { enabled, min };
+};
+
+const resolveCatalogSymbolsForUniverse = async (
+  universe: {
+    exchange: Exchange;
+    marketType: 'FUTURES' | 'SPOT';
+    baseCurrency: string;
+    filterRules: unknown;
+    blacklist: string[];
+  },
+  cache: Map<string, string[]>
+) => {
+  const volumeFilter = resolveMinQuoteVolumeFilter(universe.filterRules);
+  const cacheKey = [
+    universe.exchange,
+    universe.marketType,
+    universe.baseCurrency.toUpperCase(),
+    volumeFilter.enabled ? '1' : '0',
+    volumeFilter.min.toString(),
+    normalizeSymbols(universe.blacklist).join(','),
+  ].join('|');
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const catalog = await getMarketCatalog(
+      universe.baseCurrency,
+      universe.marketType,
+      universe.exchange
+    );
+    const blacklistSet = new Set(normalizeSymbols(universe.blacklist));
+    const symbols = normalizeSymbols(
+      catalog.markets
+        .filter((market) =>
+          volumeFilter.enabled ? (market.quoteVolume24h ?? 0) >= volumeFilter.min : true
+        )
+        .map((market) => market.symbol)
+    ).filter((symbol) => !blacklistSet.has(symbol));
+    cache.set(cacheKey, symbols);
+    return symbols;
+  } catch {
+    cache.set(cacheKey, []);
+    return [];
+  }
 };
 
 export const supportsRuntimeSignalLoopExchange = (bot: Pick<ActiveBot, 'exchange' | 'mode'>) =>
@@ -242,6 +313,11 @@ const defaultDeps: RuntimeSignalLoopDeps = {
                 marketUniverse: {
                   select: {
                     exchange: true,
+                    marketType: true,
+                    baseCurrency: true,
+                    filterRules: true,
+                    whitelist: true,
+                    blacklist: true,
                   },
                 },
               },
@@ -265,40 +341,78 @@ const defaultDeps: RuntimeSignalLoopDeps = {
         },
       },
     });
-    return bots.filter(supportsRuntimeSignalLoopExchange).map((bot) => {
-      const marketGroupsFromNewModel: ActiveBotMarketGroup[] = bot.botMarketGroups.map((group) => {
-        const strategies = group.strategyLinks.map((link) => ({
-          strategyId: link.strategyId,
-          strategyInterval: link.strategy.interval,
-          strategyConfig: (link.strategy.config as Record<string, unknown> | undefined) ?? null,
-          strategyLeverage: link.strategy.leverage,
-          walletRisk: normalizeWalletRiskPercent(link.strategy.walletRisk, 1),
-          priority: link.priority,
-          weight: link.weight,
-        }));
-        return {
-          id: group.id,
-          symbolGroupId: group.symbolGroupId,
-          executionOrder: group.executionOrder,
-          maxOpenPositions: deriveRuntimeGroupMaxOpenPositions({
-            configuredGroupMaxOpenPositions: group.maxOpenPositions,
-            strategies,
-          }),
-          symbols: group.symbolGroup.symbols ?? [],
-          strategies,
-        };
-      });
+    const activeBots = bots.filter(supportsRuntimeSignalLoopExchange);
+    const catalogSymbolsCache = new Map<string, string[]>();
 
-      return {
-        id: bot.id,
-        userId: bot.userId,
-        mode: bot.mode as 'PAPER' | 'LIVE',
-        exchange: bot.exchange,
-        paperStartBalance: Number.isFinite(bot.paperStartBalance) ? Math.max(0, bot.paperStartBalance) : 10_000,
-        marketType: bot.marketType,
-        marketGroups: [...marketGroupsFromNewModel].sort((left, right) => left.executionOrder - right.executionOrder),
-      };
-    });
+    return Promise.all(
+      activeBots.map(async (bot) => {
+        const marketGroupsFromNewModel: ActiveBotMarketGroup[] = [];
+        for (const group of bot.botMarketGroups) {
+          const strategies = group.strategyLinks.map((link) => ({
+            strategyId: link.strategyId,
+            strategyInterval: link.strategy.interval,
+            strategyConfig: (link.strategy.config as Record<string, unknown> | undefined) ?? null,
+            strategyLeverage: link.strategy.leverage,
+            walletRisk: normalizeWalletRiskPercent(link.strategy.walletRisk, 1),
+            priority: link.priority,
+            weight: link.weight,
+          }));
+
+          const symbolGroupSymbols = normalizeSymbols(group.symbolGroup.symbols ?? []);
+          const universeSymbols = group.symbolGroup.marketUniverse
+            ? resolveUniverseSymbols(
+                group.symbolGroup.marketUniverse.whitelist ?? [],
+                group.symbolGroup.marketUniverse.blacklist ?? []
+              )
+            : [];
+          const catalogFallbackSymbols =
+            group.symbolGroup.marketUniverse &&
+            symbolGroupSymbols.length === 0 &&
+            universeSymbols.length === 0
+              ? await resolveCatalogSymbolsForUniverse(
+                  {
+                    exchange: group.symbolGroup.marketUniverse.exchange,
+                    marketType: group.symbolGroup.marketUniverse.marketType,
+                    baseCurrency: group.symbolGroup.marketUniverse.baseCurrency,
+                    filterRules: group.symbolGroup.marketUniverse.filterRules,
+                    blacklist: group.symbolGroup.marketUniverse.blacklist ?? [],
+                  },
+                  catalogSymbolsCache
+                )
+              : [];
+          const symbols =
+            universeSymbols.length > 0
+              ? universeSymbols
+              : symbolGroupSymbols.length > 0
+                ? symbolGroupSymbols
+                : catalogFallbackSymbols;
+
+          marketGroupsFromNewModel.push({
+            id: group.id,
+            symbolGroupId: group.symbolGroupId,
+            executionOrder: group.executionOrder,
+            maxOpenPositions: deriveRuntimeGroupMaxOpenPositions({
+              configuredGroupMaxOpenPositions: group.maxOpenPositions,
+              strategies,
+            }),
+            symbols,
+            strategies,
+          });
+        }
+
+        return {
+          id: bot.id,
+          userId: bot.userId,
+          mode: bot.mode as 'PAPER' | 'LIVE',
+          exchange: bot.exchange,
+          paperStartBalance: Number.isFinite(bot.paperStartBalance) ? Math.max(0, bot.paperStartBalance) : 10_000,
+          marketType: bot.marketType,
+          marketGroups: [...marketGroupsFromNewModel].sort(
+            (left, right) => left.executionOrder - right.executionOrder
+          ),
+        };
+      })
+    );
   },
   listRuntimeManagedExternalPositions: async () => {
     const positions = await prisma.position.findMany({

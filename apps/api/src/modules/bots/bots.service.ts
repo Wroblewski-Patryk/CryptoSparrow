@@ -6,6 +6,7 @@ import { runtimeSignalLoop } from '../engine/runtimeSignalLoop.service';
 import { runtimeTelemetryService } from '../engine/runtimeTelemetry.service';
 import { getRuntimeTicker } from '../engine/runtimeTickerStore';
 import { assertExchangeCapability } from '../exchange/exchangeCapabilities';
+import { getMarketCatalog } from '../markets/markets.service';
 import {
   evaluateStrategySignalAtIndex,
   parseStrategySignalRules,
@@ -348,6 +349,120 @@ const normalizeSymbols = (symbols: string[]) =>
     a.localeCompare(b)
   );
 
+const resolveUniverseSymbols = (whitelist: string[], blacklist: string[]) => {
+  const normalizedWhitelist = normalizeSymbols(whitelist);
+  const blacklistSet = new Set(normalizeSymbols(blacklist));
+  return normalizedWhitelist.filter((symbol) => !blacklistSet.has(symbol));
+};
+
+const resolveMinQuoteVolumeFilter = (filterRules: unknown) => {
+  const parsedRules =
+    filterRules && typeof filterRules === 'object'
+      ? (filterRules as {
+          minQuoteVolumeEnabled?: unknown;
+          minQuoteVolume24h?: unknown;
+          minVolume24h?: unknown;
+        })
+      : null;
+  const enabled = parsedRules?.minQuoteVolumeEnabled === true;
+  const minRaw = Number(parsedRules?.minQuoteVolume24h ?? parsedRules?.minVolume24h ?? 0);
+  const min = Number.isFinite(minRaw) && minRaw > 0 ? minRaw : 0;
+  return { enabled, min };
+};
+
+const resolveCatalogSymbolsForUniverse = async (
+  universe: {
+    exchange: Exchange;
+    marketType: 'FUTURES' | 'SPOT';
+    baseCurrency: string;
+    filterRules: unknown;
+    blacklist: string[];
+  },
+  cache: Map<string, string[]>
+) => {
+  const volumeFilter = resolveMinQuoteVolumeFilter(universe.filterRules);
+  const cacheKey = [
+    universe.exchange,
+    universe.marketType,
+    universe.baseCurrency.toUpperCase(),
+    volumeFilter.enabled ? '1' : '0',
+    volumeFilter.min.toString(),
+    normalizeSymbols(universe.blacklist).join(','),
+  ].join('|');
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const catalog = await getMarketCatalog(
+      universe.baseCurrency,
+      universe.marketType,
+      universe.exchange
+    );
+    const blacklistSet = new Set(normalizeSymbols(universe.blacklist));
+    const symbols = normalizeSymbols(
+      catalog.markets
+        .filter((market) =>
+          volumeFilter.enabled ? (market.quoteVolume24h ?? 0) >= volumeFilter.min : true
+        )
+        .map((market) => market.symbol)
+    ).filter((symbol) => !blacklistSet.has(symbol));
+    cache.set(cacheKey, symbols);
+    return symbols;
+  } catch {
+    cache.set(cacheKey, []);
+    return [];
+  }
+};
+
+const resolveEffectiveSymbolGroupSymbols = (params: {
+  symbols?: string[] | null;
+  marketUniverse?: { whitelist?: string[] | null; blacklist?: string[] | null } | null;
+}) => {
+  const whitelist = params.marketUniverse?.whitelist;
+  const blacklist = params.marketUniverse?.blacklist;
+  if (Array.isArray(whitelist) && Array.isArray(blacklist)) {
+    const universeSymbols = resolveUniverseSymbols(whitelist, blacklist);
+    if (universeSymbols.length > 0) {
+      return universeSymbols;
+    }
+  }
+  return normalizeSymbols(params.symbols ?? []);
+};
+
+const resolveEffectiveSymbolGroupSymbolsWithCatalog = async (
+  params: {
+    symbols?: string[] | null;
+    marketUniverse?: {
+      exchange?: Exchange | null;
+      marketType?: 'FUTURES' | 'SPOT' | null;
+      baseCurrency?: string | null;
+      filterRules?: unknown;
+      whitelist?: string[] | null;
+      blacklist?: string[] | null;
+    } | null;
+  },
+  cache: Map<string, string[]>
+) => {
+  const directSymbols = resolveEffectiveSymbolGroupSymbols(params);
+  if (directSymbols.length > 0) return directSymbols;
+
+  const universe = params.marketUniverse;
+  if (!universe?.exchange || !universe.marketType || !universe.baseCurrency) {
+    return [];
+  }
+
+  return resolveCatalogSymbolsForUniverse(
+    {
+      exchange: universe.exchange,
+      marketType: universe.marketType,
+      baseCurrency: universe.baseCurrency,
+      filterRules: universe.filterRules,
+      blacklist: universe.blacklist ?? [],
+    },
+    cache
+  );
+};
+
 const computePriceFromLeveragedMovePercent = (
   side: 'LONG' | 'SHORT',
   entryPrice: number,
@@ -591,6 +706,12 @@ const resolveBotDcaPlanBySymbol = async (userId: string, botId: string, symbols:
             symbolGroup: {
               select: {
                 symbols: true,
+                marketUniverse: {
+                  select: {
+                    whitelist: true,
+                    blacklist: true,
+                  },
+                },
               },
             },
           },
@@ -615,6 +736,16 @@ const resolveBotDcaPlanBySymbol = async (userId: string, botId: string, symbols:
         symbolGroup: {
           select: {
             symbols: true,
+            marketUniverse: {
+              select: {
+                exchange: true,
+                marketType: true,
+                baseCurrency: true,
+                filterRules: true,
+                whitelist: true,
+                blacklist: true,
+              },
+            },
           },
         },
       },
@@ -632,13 +763,13 @@ const resolveBotDcaPlanBySymbol = async (userId: string, botId: string, symbols:
   };
 
   for (const link of groupLinks) {
-    const assignedSymbols = normalizeSymbols(link.botMarketGroup.symbolGroup.symbols ?? []);
+    const assignedSymbols = resolveEffectiveSymbolGroupSymbols(link.botMarketGroup.symbolGroup);
     const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : normalizedSymbols;
     assignPlanToSymbols(targetSymbols, link.strategy.config);
   }
 
   for (const link of legacyLinks) {
-    const assignedSymbols = normalizeSymbols(link.symbolGroup?.symbols ?? []);
+    const assignedSymbols = resolveEffectiveSymbolGroupSymbols(link.symbolGroup);
     const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : normalizedSymbols;
     assignPlanToSymbols(targetSymbols, link.strategy.config);
   }
@@ -680,6 +811,12 @@ const resolveBotTrailingStopLevelsBySymbol = async (
             symbolGroup: {
               select: {
                 symbols: true,
+                marketUniverse: {
+                  select: {
+                    whitelist: true,
+                    blacklist: true,
+                  },
+                },
               },
             },
           },
@@ -704,6 +841,16 @@ const resolveBotTrailingStopLevelsBySymbol = async (
         symbolGroup: {
           select: {
             symbols: true,
+            marketUniverse: {
+              select: {
+                exchange: true,
+                marketType: true,
+                baseCurrency: true,
+                filterRules: true,
+                whitelist: true,
+                blacklist: true,
+              },
+            },
           },
         },
       },
@@ -721,13 +868,13 @@ const resolveBotTrailingStopLevelsBySymbol = async (
   };
 
   for (const link of groupLinks) {
-    const assignedSymbols = normalizeSymbols(link.botMarketGroup.symbolGroup.symbols ?? []);
+    const assignedSymbols = resolveEffectiveSymbolGroupSymbols(link.botMarketGroup.symbolGroup);
     const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : normalizedSymbols;
     assignLevelsToSymbols(targetSymbols, link.strategy.config);
   }
 
   for (const link of legacyLinks) {
-    const assignedSymbols = normalizeSymbols(link.symbolGroup?.symbols ?? []);
+    const assignedSymbols = resolveEffectiveSymbolGroupSymbols(link.symbolGroup);
     const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : normalizedSymbols;
     assignLevelsToSymbols(targetSymbols, link.strategy.config);
   }
@@ -769,6 +916,16 @@ const resolveBotTrailingTakeProfitLevelsBySymbol = async (
             symbolGroup: {
               select: {
                 symbols: true,
+                marketUniverse: {
+                  select: {
+                    exchange: true,
+                    marketType: true,
+                    baseCurrency: true,
+                    filterRules: true,
+                    whitelist: true,
+                    blacklist: true,
+                  },
+                },
               },
             },
           },
@@ -793,6 +950,16 @@ const resolveBotTrailingTakeProfitLevelsBySymbol = async (
         symbolGroup: {
           select: {
             symbols: true,
+            marketUniverse: {
+              select: {
+                exchange: true,
+                marketType: true,
+                baseCurrency: true,
+                filterRules: true,
+                whitelist: true,
+                blacklist: true,
+              },
+            },
           },
         },
       },
@@ -810,13 +977,13 @@ const resolveBotTrailingTakeProfitLevelsBySymbol = async (
   };
 
   for (const link of groupLinks) {
-    const assignedSymbols = normalizeSymbols(link.botMarketGroup.symbolGroup.symbols ?? []);
+    const assignedSymbols = resolveEffectiveSymbolGroupSymbols(link.botMarketGroup.symbolGroup);
     const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : normalizedSymbols;
     assignLevelsToSymbols(targetSymbols, link.strategy.config);
   }
 
   for (const link of legacyLinks) {
-    const assignedSymbols = normalizeSymbols(link.symbolGroup?.symbols ?? []);
+    const assignedSymbols = resolveEffectiveSymbolGroupSymbols(link.symbolGroup);
     const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : normalizedSymbols;
     assignLevelsToSymbols(targetSymbols, link.strategy.config);
   }
@@ -2289,6 +2456,16 @@ export const listBotRuntimeSessionSymbolStats = async (
         symbolGroup: {
           select: {
             symbols: true,
+            marketUniverse: {
+              select: {
+                exchange: true,
+                marketType: true,
+                baseCurrency: true,
+                filterRules: true,
+                whitelist: true,
+                blacklist: true,
+              },
+            },
           },
         },
       },
@@ -2307,6 +2484,12 @@ export const listBotRuntimeSessionSymbolStats = async (
         symbolGroup: {
           select: {
             symbols: true,
+            marketUniverse: {
+              select: {
+                whitelist: true,
+                blacklist: true,
+              },
+            },
           },
         },
         strategy: {
@@ -2347,6 +2530,16 @@ export const listBotRuntimeSessionSymbolStats = async (
             symbolGroup: {
               select: {
                 symbols: true,
+                marketUniverse: {
+                  select: {
+                    exchange: true,
+                    marketType: true,
+                    baseCurrency: true,
+                    filterRules: true,
+                    whitelist: true,
+                    blacklist: true,
+                  },
+                },
               },
             },
           },
@@ -2366,17 +2559,45 @@ export const listBotRuntimeSessionSymbolStats = async (
   ]);
   const botMarketType = botMarketTypeRow?.marketType ?? 'FUTURES';
 
+  const catalogSymbolsCache = new Map<string, string[]>();
+  const [configuredMarketGroupSymbols, configuredBotStrategySymbols] = await Promise.all([
+    Promise.all(
+      configuredMarketGroups.map((group) =>
+        resolveEffectiveSymbolGroupSymbolsWithCatalog(group.symbolGroup, catalogSymbolsCache)
+      )
+    ),
+    Promise.all(
+      configuredBotStrategies.map((strategy) =>
+        resolveEffectiveSymbolGroupSymbolsWithCatalog(strategy.symbolGroup, catalogSymbolsCache)
+      )
+    ),
+  ]);
   const configuredSymbols = normalizeSymbols(
-    [
-      ...configuredMarketGroups.flatMap((group) => group.symbolGroup.symbols ?? []),
-      ...configuredBotStrategies.flatMap((strategy) => strategy.symbolGroup?.symbols ?? []),
-    ]
+    [...configuredMarketGroupSymbols.flat(), ...configuredBotStrategySymbols.flat()]
   );
-  const symbols = (
+  let symbols = (
     normalizedSymbol
       ? [normalizedSymbol]
       : normalizeSymbols([...configuredSymbols, ...items.map((item) => item.symbol)])
   ).slice(0, query.limit);
+  if (!normalizedSymbol && symbols.length === 0) {
+    const fallbackEventRows = await prisma.botRuntimeEvent.findMany({
+      where: {
+        userId,
+        botId,
+        sessionId,
+        symbol: { not: null },
+      },
+      select: { symbol: true },
+      orderBy: [{ eventAt: 'desc' }, { createdAt: 'desc' }],
+      take: Math.max(50, query.limit * 10),
+    });
+    symbols = normalizeSymbols(
+      fallbackEventRows
+        .map((row) => row.symbol)
+        .filter((symbol): symbol is string => typeof symbol === 'string' && symbol.trim().length > 0)
+    ).slice(0, query.limit);
+  }
   const [openPositions, latestTradeBySymbolRows, latestSignalEvents] = symbols.length
     ? await Promise.all([
         prisma.position.findMany({
@@ -2561,10 +2782,19 @@ export const listBotRuntimeSessionSymbolStats = async (
   }
 
   const configuredStrategyBySymbol = new Map<string, string>();
-  for (const configuredBotStrategy of configuredBotStrategies) {
+  const configuredBotStrategySymbolsResolved = await Promise.all(
+    configuredBotStrategies.map(async (configuredBotStrategy) => ({
+      strategyId: configuredBotStrategy.strategyId?.trim() ?? '',
+      symbols: await resolveEffectiveSymbolGroupSymbolsWithCatalog(
+        configuredBotStrategy.symbolGroup,
+        catalogSymbolsCache
+      ),
+    }))
+  );
+  for (const configuredBotStrategy of configuredBotStrategySymbolsResolved) {
     const strategyId = configuredBotStrategy.strategyId?.trim();
     if (!strategyId) continue;
-    const assignedSymbols = normalizeSymbols(configuredBotStrategy.symbolGroup?.symbols ?? []);
+    const assignedSymbols = configuredBotStrategy.symbols;
     const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : symbols;
     for (const symbol of targetSymbols) {
       if (!configuredStrategyBySymbol.has(symbol)) {
@@ -2572,10 +2802,19 @@ export const listBotRuntimeSessionSymbolStats = async (
       }
     }
   }
-  for (const configuredLink of configuredMarketGroupStrategyLinks) {
+  const configuredLinkSymbolsResolved = await Promise.all(
+    configuredMarketGroupStrategyLinks.map(async (configuredLink) => ({
+      strategyId: configuredLink.strategyId?.trim() ?? '',
+      symbols: await resolveEffectiveSymbolGroupSymbolsWithCatalog(
+        configuredLink.botMarketGroup.symbolGroup,
+        catalogSymbolsCache
+      ),
+    }))
+  );
+  for (const configuredLink of configuredLinkSymbolsResolved) {
     const strategyId = configuredLink.strategyId?.trim();
     if (!strategyId) continue;
-    const assignedSymbols = normalizeSymbols(configuredLink.botMarketGroup.symbolGroup.symbols ?? []);
+    const assignedSymbols = configuredLink.symbols;
     const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : symbols;
     for (const symbol of targetSymbols) {
       if (!configuredStrategyBySymbol.has(symbol)) {
@@ -3318,6 +3557,13 @@ export const listBotRuntimeSessionPositions = async (
       runtimeState && Number.isFinite(runtimeState.averageEntryPrice) && runtimeState.averageEntryPrice > 0
         ? runtimeState.averageEntryPrice
         : position.entryPrice;
+    const positionMarginNotional = (position.entryPrice * position.quantity) / effectiveLeverage;
+    const favorableMovePercentFromStoredUnrealized =
+      Number.isFinite(position.unrealizedPnl) &&
+      Number.isFinite(positionMarginNotional) &&
+      positionMarginNotional > 0
+        ? (position.unrealizedPnl as number) / positionMarginNotional
+        : null;
     const trailingAnchorPrice = runtimeState?.trailingAnchorPrice;
     const stateAnchorPrice =
       typeof trailingAnchorPrice === 'number' &&
@@ -3325,12 +3571,13 @@ export const listBotRuntimeSessionPositions = async (
       trailingAnchorPrice > 0
         ? trailingAnchorPrice
         : null;
-    const favorableMovePercent =
+    const favorableMovePercentFromMarket =
       typeof marketPrice === 'number' && Number.isFinite(marketPrice)
         ? position.side === 'LONG'
           ? ((marketPrice - stateEntryPrice) / Math.max(stateEntryPrice, 1e-8)) * effectiveLeverage
           : ((stateEntryPrice - marketPrice) / Math.max(stateEntryPrice, 1e-8)) * effectiveLeverage
         : null;
+    const favorableMovePercent = favorableMovePercentFromMarket ?? favorableMovePercentFromStoredUnrealized;
     const activeTrailingStopLevel = selectActiveTrailingStopDisplayLevel(
       favorableMovePercent,
       trailingStopLevelsBySymbol.get(position.symbol) ?? []

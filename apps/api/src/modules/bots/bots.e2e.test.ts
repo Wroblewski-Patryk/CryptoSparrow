@@ -1251,6 +1251,118 @@ describe('Bots module contract', () => {
     expect(completedTradesRes.body.items).toHaveLength(0);
   });
 
+  it('derives runtime symbol list from market universe when symbol-group snapshot is stale', async () => {
+    const ownerEmail = 'bot-runtime-market-universe-symbols@example.com';
+    const owner = await registerAndLogin(ownerEmail);
+    const ownerUser = await prisma.user.findUniqueOrThrow({ where: { email: ownerEmail } });
+
+    const strategyId = await createStrategy(owner, 'Runtime Market Universe Symbols Strategy');
+
+    const marketUniverse = await prisma.marketUniverse.create({
+      data: {
+        userId: ownerUser.id,
+        name: `Universe stale-sync ${Date.now()}`,
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        whitelist: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT'],
+        blacklist: ['SOLUSDT'],
+      },
+    });
+
+    // Simulate stale snapshot in symbolGroup (older list) while market universe already has a newer list.
+    await prisma.symbolGroup.create({
+      data: {
+        userId: ownerUser.id,
+        marketUniverseId: marketUniverse.id,
+        name: `Stale group ${Date.now()}`,
+        symbols: ['BTCUSDT', 'ETHUSDT'],
+      },
+    });
+
+    const createRes = await owner.post('/dashboard/bots').send(
+      createPayload({
+        strategyId,
+        marketGroupId: marketUniverse.id,
+      })
+    );
+    expect(createRes.status).toBe(201);
+    const botId = createRes.body.id as string;
+
+    const session = await prisma.botRuntimeSession.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        mode: 'PAPER',
+        status: 'RUNNING',
+        startedAt: new Date('2026-04-04T20:00:00.000Z'),
+      },
+    });
+
+    const statsRes = await owner.get(`/dashboard/bots/${botId}/runtime-sessions/${session.id}/symbol-stats`);
+    expect(statsRes.status).toBe(200);
+    const symbols = statsRes.body.items.map((item: { symbol: string }) => item.symbol);
+
+    expect(symbols).toEqual(expect.arrayContaining(['BTCUSDT', 'ETHUSDT', 'XRPUSDT']));
+    expect(symbols).not.toContain('SOLUSDT');
+    expect(symbols).toHaveLength(3);
+  });
+
+  it('falls back to market catalog symbols when universe and symbol-group snapshots are empty', async () => {
+    const ownerEmail = 'bot-runtime-market-universe-catalog-fallback@example.com';
+    const owner = await registerAndLogin(ownerEmail);
+    const ownerUser = await prisma.user.findUniqueOrThrow({ where: { email: ownerEmail } });
+
+    const strategyId = await createStrategy(owner, 'Runtime Market Universe Catalog Fallback Strategy');
+
+    const marketUniverse = await prisma.marketUniverse.create({
+      data: {
+        userId: ownerUser.id,
+        name: `Universe catalog-fallback ${Date.now()}`,
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        whitelist: [],
+        blacklist: ['SOLUSDT'],
+      },
+    });
+
+    await prisma.symbolGroup.create({
+      data: {
+        userId: ownerUser.id,
+        marketUniverseId: marketUniverse.id,
+        name: `Catalog fallback group ${Date.now()}`,
+        symbols: [],
+      },
+    });
+
+    const createRes = await owner.post('/dashboard/bots').send(
+      createPayload({
+        strategyId,
+        marketGroupId: marketUniverse.id,
+      })
+    );
+    expect(createRes.status).toBe(201);
+    const botId = createRes.body.id as string;
+
+    const session = await prisma.botRuntimeSession.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        mode: 'PAPER',
+        status: 'RUNNING',
+        startedAt: new Date('2026-04-04T20:05:00.000Z'),
+      },
+    });
+
+    const statsRes = await owner.get(`/dashboard/bots/${botId}/runtime-sessions/${session.id}/symbol-stats`);
+    expect(statsRes.status).toBe(200);
+    const symbols = statsRes.body.items.map((item: { symbol: string }) => item.symbol);
+
+    expect(symbols).toEqual(expect.arrayContaining(['BTCUSDT', 'ETHUSDT', 'XRPUSDT']));
+    expect(symbols).not.toContain('SOLUSDT');
+    expect(symbols).toHaveLength(3);
+  });
+
   it('maps DCA ladder levels for basic repeated, advanced, and legacy strategy configs', async () => {
     const ownerEmail = 'bot-runtime-dca-ladder-owner@example.com';
     const owner = await registerAndLogin(ownerEmail);
@@ -1621,7 +1733,7 @@ describe('Bots module contract', () => {
     const marketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
     await prisma.symbolGroup.update({
       where: { id: marketGroupId },
-      data: { symbols: ['BTCUSDT', 'ETHUSDT', 'BNBUSDT'] },
+      data: { symbols: ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'XRPUSDT'] },
     });
     const createRes = await owner
       .post('/dashboard/bots')
@@ -1692,6 +1804,22 @@ describe('Bots module contract', () => {
         openedAt: fallbackOpenedAt,
       },
     });
+    const noSnapshot = await prisma.position.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        strategyId,
+        symbol: 'XRPUSDT',
+        side: 'LONG',
+        status: 'OPEN',
+        managementMode: 'BOT_MANAGED',
+        entryPrice: 100,
+        quantity: 1,
+        leverage: 2,
+        unrealizedPnl: 5,
+        openedAt: new Date(nowTs - 11 * 60 * 1000),
+      },
+    });
 
     await prisma.trade.createMany({
       data: [
@@ -1736,6 +1864,20 @@ describe('Bots module contract', () => {
           fee: 0,
           realizedPnl: 0,
           executedAt: new Date(fallbackOpenedAt.getTime() + 5_000),
+        },
+        {
+          userId: ownerUser.id,
+          botId,
+          positionId: noSnapshot.id,
+          strategyId,
+          symbol: 'XRPUSDT',
+          side: 'BUY',
+          lifecycleAction: 'OPEN',
+          price: 100,
+          quantity: 1,
+          fee: 0,
+          realizedPnl: 0,
+          executedAt: new Date(nowTs - 11 * 60 * 1000 + 5_000),
         },
       ],
     });
@@ -1852,7 +1994,9 @@ describe('Bots module contract', () => {
       const bySymbol = new Map(
         positionsRes.body.openItems.map((item: { symbol: string }) => [item.symbol, item])
       );
-      expect([...bySymbol.keys()]).toEqual(expect.arrayContaining(['BTCUSDT', 'ETHUSDT', 'BNBUSDT']));
+      expect([...bySymbol.keys()]).toEqual(
+        expect.arrayContaining(['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'XRPUSDT'])
+      );
       const preArmItem = bySymbol.get('BTCUSDT') as {
         dynamicTtpStopLoss: number | null;
         dynamicTslStopLoss: number | null;
@@ -1865,9 +2009,14 @@ describe('Bots module contract', () => {
         dynamicTtpStopLoss: number | null;
         dynamicTslStopLoss: number | null;
       };
+      const noSnapshotItem = bySymbol.get('XRPUSDT') as {
+        dynamicTtpStopLoss: number | null;
+        dynamicTslStopLoss: number | null;
+      };
       expect(preArmItem).toBeDefined();
       expect(postArmItem).toBeDefined();
       expect(fallbackItem).toBeDefined();
+      expect(noSnapshotItem).toBeDefined();
 
       expect(preArmItem.dynamicTtpStopLoss).toBeNull();
       expect(preArmItem.dynamicTslStopLoss).toBeNull();
@@ -1877,6 +2026,10 @@ describe('Bots module contract', () => {
 
       expect(fallbackItem.dynamicTtpStopLoss).toBeCloseTo(102.5, 6);
       expect(fallbackItem.dynamicTslStopLoss).toBeCloseTo(99, 6);
+
+      // No runtime snapshot + no symbol-stat price still exposes TTP from stored unrealized PnL.
+      expect(noSnapshotItem.dynamicTtpStopLoss).toBeCloseTo(104.5, 6);
+      expect(noSnapshotItem.dynamicTslStopLoss).toBeNull();
     } finally {
       stateSpy.mockRestore();
     }
