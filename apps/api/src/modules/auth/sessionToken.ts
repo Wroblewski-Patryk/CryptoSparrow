@@ -6,6 +6,7 @@ type AuthTokenClaims = {
   userId: string;
   email: string;
   role: AuthRole;
+  sessionVersion?: number;
   iat?: number;
   exp?: number;
 };
@@ -23,7 +24,11 @@ const hasRequiredClaims = (payload: unknown): payload is AuthTokenClaims => {
     candidate.userId.length > 0 &&
     typeof candidate.email === 'string' &&
     candidate.email.length > 0 &&
-    (candidate.role === 'USER' || candidate.role === 'ADMIN')
+    (candidate.role === 'USER' || candidate.role === 'ADMIN') &&
+    (candidate.sessionVersion === undefined ||
+      (typeof candidate.sessionVersion === 'number' &&
+        Number.isFinite(candidate.sessionVersion) &&
+        candidate.sessionVersion >= 1))
   );
 };
 

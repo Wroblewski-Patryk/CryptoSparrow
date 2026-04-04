@@ -79,7 +79,9 @@ describe('Profile security contract', () => {
     });
     expect(changeRes.status).toBe(204);
 
-    await agent.post('/auth/logout').send({});
+    const meAfterPasswordChange = await agent.get('/auth/me');
+    expect(meAfterPasswordChange.status).toBe(401);
+
     const oldLoginRes = await agent.post('/auth/login').send({
       email: 'security-password@example.com',
       password: 'start1234',

@@ -34,6 +34,7 @@ describe('requireAuth middleware', () => {
         userId: user.id,
         email: user.email,
         role: 'USER',
+        sessionVersion: 1,
       },
       'old-secret',
       {
@@ -79,6 +80,7 @@ describe('requireAuth middleware', () => {
       userId: 'db-down-user',
       email: 'db-down@example.com',
       role: 'USER',
+      sessionVersion: 1,
       iat: 0,
       exp: 0,
       aud: 'cryptosparrow-app',
@@ -102,6 +104,7 @@ describe('requireAuth middleware', () => {
           userId: olderUserId,
           email: 'older@example.com',
           role: 'USER',
+          sessionVersion: 1,
           iat: 100,
           exp: 200,
           aud: 'cryptosparrow-app',
@@ -113,6 +116,7 @@ describe('requireAuth middleware', () => {
           userId: newerUserId,
           email: 'newer@example.com',
           role: 'USER',
+          sessionVersion: 1,
           iat: 200,
           exp: 300,
           aud: 'cryptosparrow-app',
@@ -123,8 +127,8 @@ describe('requireAuth middleware', () => {
     });
     vi.spyOn(prisma.user, 'findUnique').mockImplementation((async (args: { where: { id?: string } }) => {
       const { where } = args;
-      if (where.id === olderUserId) return { id: olderUserId } as { id: string };
-      if (where.id === newerUserId) return { id: newerUserId } as { id: string };
+      if (where.id === olderUserId) return { id: olderUserId, sessionVersion: 1 } as { id: string; sessionVersion: number };
+      if (where.id === newerUserId) return { id: newerUserId, sessionVersion: 1 } as { id: string; sessionVersion: number };
       return null;
     }) as unknown as typeof prisma.user.findUnique);
 

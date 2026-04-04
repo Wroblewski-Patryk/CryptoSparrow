@@ -27,17 +27,23 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   const verifiedCandidates = getVerifiedAuthTokenCandidates(req);
 
   for (const candidate of verifiedCandidates) {
-    let userExists: { id: string } | null = null;
+    let userExists: { id: string; sessionVersion: number } | null = null;
     try {
       userExists = await prisma.user.findUnique({
         where: { id: candidate.claims.userId },
-        select: { id: true },
+        select: { id: true, sessionVersion: true },
       });
     } catch {
       return sendError(res, 503, 'Auth service temporarily unavailable');
     }
 
     if (!userExists) {
+      continue;
+    }
+
+    // Backward-compatible: legacy tokens without sessionVersion are treated as v1.
+    const candidateSessionVersion = candidate.claims.sessionVersion ?? 1;
+    if (candidateSessionVersion !== userExists.sessionVersion) {
       continue;
     }
 

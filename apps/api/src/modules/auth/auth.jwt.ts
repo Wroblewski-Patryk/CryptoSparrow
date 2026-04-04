@@ -5,6 +5,7 @@ type AuthTokenPayload = JwtPayload & {
   userId: string;
   email: string;
   role: AuthRole;
+  sessionVersion?: number;
 };
 
 const JWT_ISSUER = 'cryptosparrow';
@@ -42,7 +43,7 @@ const getJwtSecrets = () => {
 };
 
 export const signAuthToken = (
-  payload: Pick<AuthTokenPayload, 'userId' | 'email' | 'role'>,
+  payload: Pick<AuthTokenPayload, 'userId' | 'email' | 'role' | 'sessionVersion'>,
   expiresIn: NonNullable<SignOptions['expiresIn']>
 ) =>
   jwt.sign(payload, getJwtSecrets()[0], {

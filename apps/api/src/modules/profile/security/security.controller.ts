@@ -23,6 +23,7 @@ export const updatePassword = async (req: ProfileRequest, res: Response) => {
   try {
     const payload = changePasswordSchema.parse(req.body);
     await securityService.changePassword(req.user.id, payload);
+    clearSessionCookie(res);
     return res.status(204).end();
   } catch (error) {
     if (error instanceof Error && error.message === 'INVALID_PASSWORD') {
@@ -53,4 +54,3 @@ export const deleteAccount = async (req: ProfileRequest, res: Response) => {
     return sendValidationError(res, error);
   }
 };
-

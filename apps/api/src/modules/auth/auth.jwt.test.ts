@@ -22,6 +22,7 @@ describe('auth.jwt', () => {
         userId: 'user-1',
         email: 'test@example.com',
         role: 'USER',
+        sessionVersion: 1,
       },
       '1h'
     );
@@ -30,6 +31,7 @@ describe('auth.jwt', () => {
     expect(payload.userId).toBe('user-1');
     expect(payload.email).toBe('test@example.com');
     expect(payload.role).toBe('USER');
+    expect(payload.sessionVersion).toBe(1);
   });
 
   it('accepts token signed with previous secret during rotation window', () => {

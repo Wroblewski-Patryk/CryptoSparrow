@@ -19,6 +19,9 @@ export const changePassword = async (userId: string, input: { currentPassword: s
     where: { id: userId },
     data: {
       password: nextHash,
+      sessionVersion: {
+        increment: 1,
+      },
     },
   });
 };
@@ -56,4 +59,3 @@ export const deleteAccount = async (userId: string, input: { password: string })
     prisma.user.delete({ where: { id: userId } }),
   ]);
 };
-

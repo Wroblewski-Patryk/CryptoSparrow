@@ -39,6 +39,7 @@ export const loginUser = async (input: LoginInput) => {
     select: {
       ...publicUserSelect,
       password: true,
+      sessionVersion: true,
     },
   });
 
@@ -53,7 +54,7 @@ export const loginUser = async (input: LoginInput) => {
   }
 
   const token = signAuthToken(
-    { userId: user.id, email: user.email, role: user.role },
+    { userId: user.id, email: user.email, role: user.role, sessionVersion: user.sessionVersion },
     getSessionJwtExpiresIn(input.remember)
   );
 

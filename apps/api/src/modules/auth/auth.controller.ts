@@ -61,7 +61,7 @@ export const register = async (req: Request, res: Response) => {
     const user = await registerUser(input);
 
     const token = signAuthToken(
-      { userId: user.id, email: user.email, role: user.role },
+      { userId: user.id, email: user.email, role: user.role, sessionVersion: 1 },
       getSessionJwtExpiresIn(true)
     );
 
@@ -121,17 +121,22 @@ export const me = async (req: Request, res: Response) => {
 
     const verifiedCandidates = getVerifiedAuthTokenCandidates(req);
     for (const candidate of verifiedCandidates) {
-      let user: { id: string; email: string } | null = null;
+      let user: { id: string; email: string; sessionVersion: number } | null = null;
       try {
         user = await prisma.user.findUnique({
           where: { id: candidate.claims.userId },
-          select: { id: true, email: true },
+          select: { id: true, email: true, sessionVersion: true },
         });
       } catch {
         return sendError(res, 503, 'Auth service temporarily unavailable');
       }
 
       if (!user) {
+        continue;
+      }
+
+      const candidateSessionVersion = candidate.claims.sessionVersion ?? 1;
+      if (candidateSessionVersion !== user.sessionVersion) {
         continue;
       }
 
