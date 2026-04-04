@@ -88,8 +88,15 @@ const fetchFallbackKlineCloses = async (params: {
     if (!response.ok) return [];
     const payload = (await response.json()) as unknown;
     if (!Array.isArray(payload)) return [];
+    const now = Date.now();
     const closes = payload
-      .map((row) => (Array.isArray(row) ? Number(row[4]) : Number.NaN))
+      .map((row) => {
+        if (!Array.isArray(row)) return Number.NaN;
+        const close = Number(row[4]);
+        const closeTime = Number(row[6]);
+        if (Number.isFinite(closeTime) && closeTime > now) return Number.NaN;
+        return close;
+      })
       .filter((value): value is number => Number.isFinite(value));
     if (closes.length > 0) {
       klineFallbackCache.set(cacheKey, { fetchedAt: now, closes });

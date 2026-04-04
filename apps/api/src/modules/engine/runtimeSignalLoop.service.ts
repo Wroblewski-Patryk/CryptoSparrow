@@ -837,12 +837,15 @@ export class RuntimeSignalLoop {
       if (!response.ok) return [];
       const payload = (await response.json()) as unknown;
       if (!Array.isArray(payload)) return [];
+      const now = Date.now();
       return payload
         .map((item) => {
           if (!Array.isArray(item)) return null;
           const openTime = Number(item[0]);
           const close = Number(item[4]);
+          const closeTime = Number(item[6]);
           if (!Number.isFinite(openTime) || !Number.isFinite(close)) return null;
+          if (Number.isFinite(closeTime) && closeTime > now) return null;
           return {
             openTime,
             close,
