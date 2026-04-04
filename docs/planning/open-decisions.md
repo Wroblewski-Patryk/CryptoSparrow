@@ -245,6 +245,16 @@ This file tracks intentionally unresolved architecture choices so implementation
 - Canonical reference:
   - `docs/architecture/runtime-execution-idempotency-contract.md`
 
+## Dashboard Trade-History Financial Semantics
+- Decision state: resolved on 2026-04-04.
+- Product/UI decision:
+  - trade-history financial display is action-gated,
+  - `OPEN` and `DCA` rows render `Realized PnL` as blank (`"-"`),
+  - `CLOSE` rows render realized payload value (including explicit zero),
+  - `Margin` is canonical capital column for Dashboard and Bots history parity.
+- Canonical reference:
+  - `docs/architecture/dashboard-trade-history-financial-semantics-contract.md`
+
 ## Numeric Locale Input Policy (Comma vs Dot)
 - Decision state: open (planned in Phase 21 `LFIN-09..LFIN-11`).
 - Open choice:

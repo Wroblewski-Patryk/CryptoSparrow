@@ -1,6 +1,7 @@
 # Dashboard Trade Action UX Plan (DBACT) - 2026-04-01
 
 Status: implemented (2026-04-01, write-time + read-time-safe path; pending manual smoke only).
+Note (2026-04-04): Financial rendering semantics were finalized in `docs/architecture/dashboard-trade-history-financial-semantics-contract.md` (`OPEN/DCA -> realized "-"`, `CLOSE -> realized value`) and override older placeholder assumptions in this plan.
 
 ## Objective
 Improve Dashboard transaction history so every row clearly explains what happened in bot lifecycle:
