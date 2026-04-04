@@ -136,6 +136,9 @@ type RuntimeSignalLoopDeps = {
     openPositionCount?: number;
     openPositionQty?: number;
   }) => Promise<void>;
+  stallDetectorEnabled?: boolean;
+  stallNoEventMs?: number;
+  stallNoHeartbeatMs?: number;
 };
 
 const runtimeSignalQuantity = Number.parseFloat(process.env.RUNTIME_SIGNAL_QUANTITY ?? '0.01');
@@ -161,6 +164,15 @@ const tickerFreshnessFallbackMs = Math.max(
 const runtimeSessionWatchdogIntervalMs = Math.max(
   5_000,
   Number.parseInt(process.env.RUNTIME_SESSION_WATCHDOG_INTERVAL_MS ?? '15000', 10)
+);
+const runtimeStallDetectorEnabled = process.env.RUNTIME_STALL_DETECTOR_ENABLED !== 'false';
+const runtimeStallNoEventMs = Math.max(
+  60_000,
+  Number.parseInt(process.env.RUNTIME_STALL_NO_EVENT_MS ?? '180000', 10)
+);
+const runtimeStallNoHeartbeatMs = Math.max(
+  runtimeSessionWatchdogIntervalMs * 2,
+  Number.parseInt(process.env.RUNTIME_STALL_NO_HEARTBEAT_MS ?? '60000', 10)
 );
 
 type RuntimeCandle = {
@@ -476,6 +488,9 @@ export class RuntimeSignalLoop {
   private readonly processedDecisionWindows = new Map<string, number>();
   private readonly candleSeries = new Map<string, RuntimeCandle[]>();
   private readonly warmupLastAttemptAt = new Map<string, number>();
+  private lastStreamEventAtMs: number | null = null;
+  private lastSessionSyncSuccessAtMs: number | null = null;
+  private lastKnownActiveBotIds = new Set<string>();
 
   constructor(private readonly deps: RuntimeSignalLoopDeps = defaultDeps) {}
 
@@ -485,7 +500,11 @@ export class RuntimeSignalLoop {
 
   async start() {
     if (this.unsubscribe) return;
-    await this.syncRuntimeSessions();
+    const activeBots = await this.syncRuntimeSessions();
+    const now = Date.now();
+    this.lastSessionSyncSuccessAtMs = now;
+    this.lastStreamEventAtMs = now;
+    this.lastKnownActiveBotIds = new Set(activeBots.map((bot) => bot.id));
     this.unsubscribe = await this.deps.subscribe(async (event) => {
       try {
         await this.handleEvent(event);
@@ -514,6 +533,9 @@ export class RuntimeSignalLoop {
     );
     await this.unsubscribe();
     this.unsubscribe = null;
+    this.lastStreamEventAtMs = null;
+    this.lastSessionSyncSuccessAtMs = null;
+    this.lastKnownActiveBotIds.clear();
   }
 
   private startSessionWatchdog() {
@@ -521,9 +543,18 @@ export class RuntimeSignalLoop {
     if (!Number.isFinite(runtimeSessionWatchdogIntervalMs) || runtimeSessionWatchdogIntervalMs <= 0) return;
 
     this.sessionWatchdogTimer = setInterval(() => {
-      void this.syncRuntimeSessions().catch((error) => {
-        console.error('RuntimeSignalLoop session watchdog failed:', error);
-      });
+      void (async () => {
+        const now = Date.now();
+        let activeBots: ActiveBot[] = [];
+        try {
+          activeBots = await this.syncRuntimeSessions();
+          this.lastSessionSyncSuccessAtMs = now;
+          this.lastKnownActiveBotIds = new Set(activeBots.map((bot) => bot.id));
+        } catch (error) {
+          console.error('RuntimeSignalLoop session watchdog failed:', error);
+        }
+        await this.detectRuntimeStall(now, activeBots.map((bot) => bot.id));
+      })();
     }, runtimeSessionWatchdogIntervalMs);
     this.sessionWatchdogTimer.unref?.();
   }
@@ -540,6 +571,74 @@ export class RuntimeSignalLoop {
         })
       )
     );
+    return activeBots;
+  }
+
+  private async detectRuntimeStall(now: number, activeBotIdsFromSync: string[]) {
+    if (!this.isStallDetectorEnabled() || !this.unsubscribe) return;
+    const activeBotIds =
+      activeBotIdsFromSync.length > 0
+        ? activeBotIdsFromSync
+        : Array.from(this.lastKnownActiveBotIds.values());
+    if (activeBotIds.length === 0) return;
+
+    if (
+      this.lastSessionSyncSuccessAtMs != null &&
+      now - this.lastSessionSyncSuccessAtMs > this.resolveStallNoHeartbeatMs()
+    ) {
+      await this.handleRuntimeStall('runtime_stall_no_heartbeat', activeBotIds);
+      return;
+    }
+
+    if (this.lastStreamEventAtMs != null && now - this.lastStreamEventAtMs > this.resolveStallNoEventMs()) {
+      await this.handleRuntimeStall('runtime_stall_no_event', activeBotIds);
+    }
+  }
+
+  private async handleRuntimeStall(
+    reason: 'runtime_stall_no_event' | 'runtime_stall_no_heartbeat',
+    activeBotIds: string[]
+  ) {
+    if (!this.unsubscribe) return;
+    console.error(`RuntimeSignalLoop stall detected: ${reason}. Restart requested.`);
+    await Promise.all(
+      activeBotIds.map((botId) =>
+        this.deps.closeRuntimeSession?.({
+          botId,
+          status: 'CANCELED',
+          stopReason: reason,
+        })
+      )
+    );
+    await this.unsubscribe();
+    this.unsubscribe = null;
+    if (this.sessionWatchdogTimer) {
+      clearInterval(this.sessionWatchdogTimer);
+      this.sessionWatchdogTimer = null;
+    }
+    this.processedDecisionWindows.clear();
+    this.lastStreamEventAtMs = null;
+    this.lastSessionSyncSuccessAtMs = null;
+    this.lastKnownActiveBotIds.clear();
+  }
+
+  private isStallDetectorEnabled() {
+    if (typeof this.deps.stallDetectorEnabled === 'boolean') return this.deps.stallDetectorEnabled;
+    return runtimeStallDetectorEnabled;
+  }
+
+  private resolveStallNoEventMs() {
+    if (Number.isFinite(this.deps.stallNoEventMs as number)) {
+      return Math.max(10_000, this.deps.stallNoEventMs as number);
+    }
+    return runtimeStallNoEventMs;
+  }
+
+  private resolveStallNoHeartbeatMs() {
+    if (Number.isFinite(this.deps.stallNoHeartbeatMs as number)) {
+      return Math.max(10_000, this.deps.stallNoHeartbeatMs as number);
+    }
+    return runtimeStallNoHeartbeatMs;
   }
 
   async processTickerEvent(event: StreamTickerEvent) {
@@ -551,6 +650,7 @@ export class RuntimeSignalLoop {
   }
 
   private async handleEvent(event: MarketStreamEvent) {
+    this.lastStreamEventAtMs = Date.now();
     if (event.type === 'candle') {
       await this.handleCandleEvent(event);
       return;

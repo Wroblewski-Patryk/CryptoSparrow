@@ -470,6 +470,68 @@ describe('RuntimeSignalLoop', () => {
     expect(deps.orchestrateFn).not.toHaveBeenCalled();
   });
 
+  it('cancels running sessions and drops subscription on NO_EVENT stall window', async () => {
+    vi.useFakeTimers();
+    const { deps } = createDeps();
+    withStrategyBot(deps, { strategies: [] });
+    deps.ensureRuntimeSession = vi.fn(async () => 'session-1');
+    deps.closeRuntimeSession = vi.fn(async () => undefined);
+    deps.closeInactiveRuntimeSessions = vi.fn(async () => undefined);
+    deps.stallNoEventMs = 20_000;
+    deps.stallNoHeartbeatMs = 300_000;
+    deps.stallDetectorEnabled = true;
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    expect(loop.isRunning()).toBe(true);
+    await vi.advanceTimersByTimeAsync(35_000);
+    await vi.waitFor(() => expect(deps.closeRuntimeSession).toHaveBeenCalled());
+
+    expect(deps.closeRuntimeSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        botId: 'bot-1',
+        status: 'CANCELED',
+        stopReason: 'runtime_stall_no_event',
+      })
+    );
+    expect(loop.isRunning()).toBe(false);
+    vi.useRealTimers();
+  });
+
+  it('cancels running sessions on NO_HEARTBEAT stall when session sync keeps failing', async () => {
+    vi.useFakeTimers();
+    const { deps } = createDeps();
+    withStrategyBot(deps, { strategies: [] });
+    deps.closeRuntimeSession = vi.fn(async () => undefined);
+    deps.closeInactiveRuntimeSessions = vi.fn(async () => undefined);
+    deps.stallNoEventMs = 300_000;
+    deps.stallNoHeartbeatMs = 20_000;
+    deps.stallDetectorEnabled = true;
+    const ensureRuntimeSession = vi
+      .fn()
+      .mockResolvedValueOnce('session-1')
+      .mockRejectedValue(new Error('db_unavailable'));
+    deps.ensureRuntimeSession = ensureRuntimeSession;
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    expect(loop.isRunning()).toBe(true);
+    await vi.advanceTimersByTimeAsync(50_000);
+    await vi.waitFor(() => expect(deps.closeRuntimeSession).toHaveBeenCalled());
+
+    expect(deps.closeRuntimeSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        botId: 'bot-1',
+        status: 'CANCELED',
+        stopReason: 'runtime_stall_no_heartbeat',
+      })
+    );
+    expect(loop.isRunning()).toBe(false);
+    vi.useRealTimers();
+  });
+
   it('keeps stream subscription alive when single event handler fails', async () => {
     const { deps, emit } = createDeps();
     withStrategyBot(deps, { strategies: [] });

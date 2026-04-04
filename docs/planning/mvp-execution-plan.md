@@ -466,12 +466,13 @@ Rule: fix/cleanup/update first, then feature delivery.
 
 ## Phase 28 - Production Excellence Runtime Hardening
 - [x] `PEX-01 docs(contract): freeze idempotency contract for runtime execution commands (open/dca/close/cancel) with dedupe-key schema`
-- [ ] `PEX-04 feat(runtime-watchdog): add explicit stall detector for NO_EVENT/NO_HEARTBEAT windows with classified failure reasons`
+- [x] `PEX-04 feat(runtime-watchdog): add explicit stall detector for NO_EVENT/NO_HEARTBEAT windows with classified failure reasons`
 - [ ] `PEX-07 feat(obs-metrics): add production metrics for runtime lag, restart count, reconciliation delay, and execution error classes`
 - [ ] `BOPS-60 docs(contract): lock dashboard trade-history action/fee semantics (OPEN -> realized blank, CLOSE -> realized value) and margin consistency`
 - [ ] `ADM-01 docs(contract): define third admin app-shell template contract and rollout tasks (public/dashboard/admin split)`
 
 ## Progress Log
+- 2026-04-04: Completed `PEX-04` by extending `RuntimeSignalLoop` with explicit stall detector windows for `NO_EVENT` and `NO_HEARTBEAT`, introducing classified stop reasons (`runtime_stall_no_event`, `runtime_stall_no_heartbeat`) that cancel stale running sessions and force clean loop resubscription, with dedicated regression coverage in `runtimeSignalLoop.service.test.ts`.
 - 2026-04-04: Completed `PEX-01` by publishing `docs/architecture/runtime-execution-idempotency-contract.md` as canonical contract for runtime command idempotency (`OPEN/DCA/CLOSE/CANCEL`), freezing deterministic `dedupeKey` schema (`v1`), command-specific key mapping, persistence state machine (`PENDING/SUCCEEDED/FAILED/EXPIRED`), and replay-safe invariants for crash/retry scenarios.
 - 2026-04-04: Completed `CACHE-06` by extending `docs/operations/coolify-linux-vps-setup-guide.md` with explicit reverse-proxy cache contract for STAGE/PROD (`never cache /auth|/dashboard|/admin`, static-only cache allowlist, SSE no-cache, Set-Cookie no-cache) and operational `curl` verification checklist.
 - 2026-04-04: Completed `CACHE-03` by tightening `sw.js` runtime contract to cache only static assets, removing dynamic `/` from precache list, adding explicit API/runtime bypass (`/api|/auth|/dashboard|/admin` + `_rsc`) with `cache: 'no-store'`, and adding web regression coverage in `serviceWorkerCacheContract.test.ts`.

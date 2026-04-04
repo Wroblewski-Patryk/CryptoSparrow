@@ -32,7 +32,7 @@ Exit criteria:
 - repeated event delivery or worker restart does not duplicate execution side effects.
 
 ## Phase B - Liveness, Self-Healing, and Session Continuity
-- [ ] `PEX-04 feat(runtime-watchdog): add explicit stall detector for NO_EVENT/NO_HEARTBEAT windows with classified failure reasons`
+- [x] `PEX-04 feat(runtime-watchdog): add explicit stall detector for NO_EVENT/NO_HEARTBEAT windows with classified failure reasons`
 - [ ] `PEX-05 feat(runtime-recovery): implement bounded auto-restart policy with cooldown and max-attempt guardrails`
 - [ ] `PEX-06 test(runtime): add long-running soak test for session continuity (heartbeat freshness, auto-restart trace, no stuck CANCELED loop)`
 
