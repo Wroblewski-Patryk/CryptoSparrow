@@ -5,7 +5,11 @@ export const registerSchema = z.object({
     .string()
     .trim()
     .email({ message: 'Podaj poprawny email' }),
-  password: z.string().min(6, { message: 'Haslo musi miec min. 6 znakow' }),
+  password: z
+    .string()
+    .min(8, { message: 'Haslo musi miec min. 8 znakow' })
+    .regex(/[A-Za-z]/, { message: 'Haslo musi zawierac co najmniej jedna litere' })
+    .regex(/\d/, { message: 'Haslo musi zawierac co najmniej jedna cyfre' }),
   terms: z.boolean().refine(val => val, {
     message: 'Musisz zaakceptowac regulamin',
   }),

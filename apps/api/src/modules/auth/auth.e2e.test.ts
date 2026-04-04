@@ -58,6 +58,32 @@ describe('POST /auth/register', () => {
     expect(res.body.error.details[0].field).toBe('password');
   });
 
+  it('should reject password without digit', async () => {
+    const res = await request(app)
+      .post('/auth/register')
+      .send({
+        email: 'letters-only@example.com',
+        password: 'password',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toBe('Validation failed');
+    expect(res.body.error.details.some((detail: { field?: string }) => detail.field === 'password')).toBe(true);
+  });
+
+  it('should reject password without letter', async () => {
+    const res = await request(app)
+      .post('/auth/register')
+      .send({
+        email: 'digits-only@example.com',
+        password: '12345678',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toBe('Validation failed');
+    expect(res.body.error.details.some((detail: { field?: string }) => detail.field === 'password')).toBe(true);
+  });
+
   it('should reject duplicate email', async () => {
     await prisma.user.create({
       data: {

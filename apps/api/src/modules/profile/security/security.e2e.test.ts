@@ -63,6 +63,16 @@ describe('Profile security contract', () => {
     expect(wrongCurrentRes.status).toBe(400);
     expect(wrongCurrentRes.body.error.message).toBe('Invalid current password');
 
+    const weakNextPasswordRes = await agent.patch('/dashboard/profile/security/password').send({
+      currentPassword: 'start1234',
+      newPassword: 'weak',
+    });
+    expect(weakNextPasswordRes.status).toBe(400);
+    expect(weakNextPasswordRes.body.error.message).toBe('Validation failed');
+    expect(
+      weakNextPasswordRes.body.error.details.some((detail: { field?: string }) => detail.field === 'newPassword')
+    ).toBe(true);
+
     const changeRes = await agent.patch('/dashboard/profile/security/password').send({
       currentPassword: 'start1234',
       newPassword: 'next1234',
@@ -128,4 +138,3 @@ describe('Profile security contract', () => {
     expect(deletedUser).toBeNull();
   });
 });
-

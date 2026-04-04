@@ -135,7 +135,7 @@ Exit criteria:
 - dashboard/auth pages and API responses carry documented hardening headers.
 
 ## Phase D - Auth hardening
-- [ ] `SEC-11 feat(auth-password-policy): raise password complexity/length contract + localized validation messages`
+- [x] `SEC-11 feat(auth-password-policy): raise password complexity/length contract + localized validation messages`
 - [ ] `SEC-12 feat(auth-session-revoke): invalidate existing sessions/tokens on password change`
 - [ ] `SEC-13 feat(csrf-guard): add origin+method guard for cookie-auth state-changing endpoints (and stricter behavior when SameSite=None)`
 - [ ] `SEC-14 test(auth-security): add e2e coverage for password-policy, session-revoke, csrf/origin guard`
@@ -168,3 +168,4 @@ Exit criteria:
 - 2026-04-04: Completed `SEC-05` + `SEC-07` by hardening `requireOpsNetwork` to trust `x-forwarded-for` only when socket peer is a trusted proxy (`OPS_TRUSTED_PROXY_IPS` or private ranges), and adding spoof-regression coverage (`requireOpsNetwork.test.ts`); validated with `pnpm --filter api run typecheck` + middleware tests.
 - 2026-04-04: Completed `SEC-06` by documenting proxy trust contract and Coolify/Traefik header-overwrite requirements in `docs/operations/v1-ops-runbook.md` (`Ops Endpoint Proxy Trust Contract` section).
 - 2026-04-04: Completed `SEC-08..10` by adding `helmet` baseline headers in API, introducing web `headers()` security contract in `next.config.ts` (CSP + frame/content/referrer/permissions policies), and adding smoke regressions (`security-headers.test.ts`, `next.config.test.ts`); validated with API+web typecheck, targeted tests, and `pnpm --filter web run build`.
+- 2026-04-04: Completed `SEC-11` by enforcing stronger password policy (min 8 + letter + digit) across API register/change-password and web register schema, while keeping login/delete-account presence-only validation for backward compatibility with legacy credentials; validated via API+web typecheck and targeted auth/security test packs.
