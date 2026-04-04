@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import helmet from 'helmet';
 import { clientUrl, corsOrigins, serverPort, serverUrl } from './config/runtime';
+import { requireTrustedOrigin } from './middleware/requireTrustedOrigin';
 
 const app = express();
 app.set('trust proxy', true);
@@ -33,6 +34,7 @@ app.use(
 );
 app.use("/avatars", express.static(path.join(process.cwd(), "public", "avatars")));
 app.use(express.json());
+app.use(requireTrustedOrigin);
 app.use(requestLogger);
 app.use(router);
 app.use(errorHandler);

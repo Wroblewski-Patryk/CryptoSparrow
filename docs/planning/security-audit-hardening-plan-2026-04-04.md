@@ -137,8 +137,8 @@ Exit criteria:
 ## Phase D - Auth hardening
 - [x] `SEC-11 feat(auth-password-policy): raise password complexity/length contract + localized validation messages`
 - [x] `SEC-12 feat(auth-session-revoke): invalidate existing sessions/tokens on password change`
-- [ ] `SEC-13 feat(csrf-guard): add origin+method guard for cookie-auth state-changing endpoints (and stricter behavior when SameSite=None)`
-- [ ] `SEC-14 test(auth-security): add e2e coverage for password-policy, session-revoke, csrf/origin guard`
+- [x] `SEC-13 feat(csrf-guard): add origin+method guard for cookie-auth state-changing endpoints (and stricter behavior when SameSite=None)`
+- [x] `SEC-14 test(auth-security): add e2e coverage for password-policy, session-revoke, csrf/origin guard`
 
 Exit criteria:
 - password-change invalidates old sessions and CSRF guard is explicit/covered by tests.
@@ -170,3 +170,5 @@ Exit criteria:
 - 2026-04-04: Completed `SEC-08..10` by adding `helmet` baseline headers in API, introducing web `headers()` security contract in `next.config.ts` (CSP + frame/content/referrer/permissions policies), and adding smoke regressions (`security-headers.test.ts`, `next.config.test.ts`); validated with API+web typecheck, targeted tests, and `pnpm --filter web run build`.
 - 2026-04-04: Completed `SEC-11` by enforcing stronger password policy (min 8 + letter + digit) across API register/change-password and web register schema, while keeping login/delete-account presence-only validation for backward compatibility with legacy credentials; validated via API+web typecheck and targeted auth/security test packs.
 - 2026-04-04: Completed `SEC-12` by introducing user `sessionVersion` (Prisma migration), embedding session version in newly minted auth tokens, validating it in `/auth/me` and `requireAuth`, and incrementing/clearing sessions on password change; validated with `pnpm --filter api run typecheck` and auth/security middleware e2e/unit suite.
+- 2026-04-04: Completed `SEC-13` by adding `requireTrustedOrigin` middleware for unsafe methods with session cookies (origin/referer allowlist based on runtime origins), including stricter `SameSite=None` handling that requires origin headers.
+- 2026-04-04: Completed `SEC-14` by extending auth/security test coverage for password complexity, password-change session invalidation, and CSRF/origin guard behavior (`requireTrustedOrigin.test.ts`, `security.e2e.test.ts`, `auth.e2e.test.ts`, `requireAuth.test.ts`).
