@@ -336,6 +336,16 @@ const SignalPill = ({ value }: { value: SignalPillValue }) => (
 );
 
 type TradeActionValue = "OPEN" | "DCA" | "CLOSE" | "UNKNOWN";
+type TradeActionReasonValue =
+  | "SIGNAL_ENTRY"
+  | "DCA_LEVEL"
+  | "TAKE_PROFIT"
+  | "STOP_LOSS"
+  | "TRAILING_TAKE_PROFIT"
+  | "TRAILING_STOP"
+  | "SIGNAL_EXIT"
+  | "MANUAL"
+  | "UNKNOWN";
 
 const tradeActionPillClass = (value: TradeActionValue) => {
   if (value === "OPEN") return "border-success/40 bg-success/10 text-success";
@@ -357,6 +367,27 @@ const TradeActionPill = ({ value }: { value: TradeActionValue }) => (
   </span>
 );
 
+const tradeReasonPillClass = (value: TradeActionReasonValue) => {
+  if (value === "TAKE_PROFIT" || value === "TRAILING_TAKE_PROFIT") return "border-success/40 bg-success/10 text-success";
+  if (value === "STOP_LOSS" || value === "TRAILING_STOP") return "border-error/40 bg-error/10 text-error";
+  if (value === "SIGNAL_ENTRY" || value === "SIGNAL_EXIT") return "border-info/40 bg-info/10 text-info";
+  if (value === "DCA_LEVEL") return "border-warning/40 bg-warning/10 text-warning";
+  if (value === "MANUAL") return "border-secondary/40 bg-secondary/10 text-secondary";
+  return "border-base-300 bg-base-100 text-base-content/70";
+};
+
+const tradeReasonLabelKey = (value: TradeActionReasonValue) => {
+  if (value === "SIGNAL_ENTRY") return "dashboard.home.runtime.reasonSignalEntry";
+  if (value === "DCA_LEVEL") return "dashboard.home.runtime.reasonDcaLevel";
+  if (value === "TAKE_PROFIT") return "dashboard.home.runtime.reasonTakeProfit";
+  if (value === "STOP_LOSS") return "dashboard.home.runtime.reasonStopLoss";
+  if (value === "TRAILING_TAKE_PROFIT") return "dashboard.home.runtime.reasonTrailingTakeProfit";
+  if (value === "TRAILING_STOP") return "dashboard.home.runtime.reasonTrailingStop";
+  if (value === "SIGNAL_EXIT") return "dashboard.home.runtime.reasonSignalExit";
+  if (value === "MANUAL") return "dashboard.home.runtime.reasonManual";
+  return "dashboard.home.runtime.reasonUnknown";
+};
+
 const formatTradeFeeMeta = (
   trade: Pick<BotRuntimeTrade, "feeSource" | "feePending" | "feeCurrency">
 ) => {
@@ -371,6 +402,76 @@ const resolveUsedMargin = (positions: BotRuntimePositionsResponse | null) =>
     const lev = Number.isFinite(p.leverage) && p.leverage > 0 ? p.leverage : 1;
     return sum + p.entryNotional / lev;
   }, 0);
+
+const computePriceFromLeveragedMovePercent = (
+  side: "LONG" | "SHORT",
+  entryPrice: number,
+  leveragedMovePercent: number,
+  leverage: number
+) => {
+  if (!Number.isFinite(entryPrice) || entryPrice <= 0) return null;
+  if (!Number.isFinite(leveragedMovePercent)) return null;
+  const effectiveLeverage = Number.isFinite(leverage) && leverage > 0 ? leverage : 1;
+  const spotMove = leveragedMovePercent / effectiveLeverage;
+  const multiplier = side === "LONG" ? 1 + spotMove : 1 - spotMove;
+  if (!Number.isFinite(multiplier) || multiplier <= 0) return null;
+  return entryPrice * multiplier;
+};
+
+const computeTrailingStopFromAnchor = (
+  side: "LONG" | "SHORT",
+  anchorPrice: number,
+  trailPercent: number,
+  leverage: number
+) => {
+  if (!Number.isFinite(anchorPrice) || anchorPrice <= 0) return null;
+  if (!Number.isFinite(trailPercent) || trailPercent <= 0) return null;
+  const effectiveLeverage = Number.isFinite(leverage) && leverage > 0 ? leverage : 1;
+  const spotTrail = trailPercent / effectiveLeverage;
+  const multiplier = side === "LONG" ? 1 - spotTrail : 1 + spotTrail;
+  if (!Number.isFinite(multiplier) || multiplier <= 0) return null;
+  return anchorPrice * multiplier;
+};
+
+const resolveDynamicTtpDisplay = (position: OpenPositionWithLive) => {
+  if (position.dynamicTtpStopLoss != null) return position.dynamicTtpStopLoss;
+  const levels = [...(position.trailingTakeProfitLevels ?? [])]
+    .filter((level) => Number.isFinite(level.armPercent) && Number.isFinite(level.trailPercent))
+    .sort((left, right) => left.armPercent - right.armPercent);
+  if (levels.length === 0) return null;
+  if (!Number.isFinite(position.livePnlPct as number)) return null;
+  const favorableMove = (position.livePnlPct as number) / 100;
+  let active: (typeof levels)[number] | null = null;
+  for (const level of levels) {
+    if (favorableMove > level.armPercent) active = level;
+  }
+  if (!active) return null;
+  const triggerPercent = favorableMove - active.trailPercent;
+  if (!Number.isFinite(triggerPercent) || triggerPercent <= 0) return null;
+  return computePriceFromLeveragedMovePercent(position.side, position.entryPrice, triggerPercent, position.leverage);
+};
+
+const resolveDynamicTslDisplay = (position: OpenPositionWithLive) => {
+  if (position.dynamicTslStopLoss != null) return position.dynamicTslStopLoss;
+  if (!Number.isFinite(position.liveMarkPrice as number) || (position.liveMarkPrice as number) <= 0) return null;
+  const levels = [...(position.trailingStopLevels ?? [])]
+    .filter((level) => Number.isFinite(level.armPercent) && Number.isFinite(level.trailPercent))
+    .sort((left, right) => left.armPercent - right.armPercent);
+  if (levels.length === 0) return null;
+  if (!Number.isFinite(position.livePnlPct as number)) return null;
+  const favorableMove = (position.livePnlPct as number) / 100;
+  let active: (typeof levels)[number] | null = null;
+  for (const level of levels) {
+    if (favorableMove >= level.armPercent) active = level;
+  }
+  if (!active) return null;
+  return computeTrailingStopFromAnchor(
+    position.side,
+    position.liveMarkPrice as number,
+    active.trailPercent,
+    position.leverage
+  );
+};
 
 const buildLiveOpenPositions = (
   positions: BotRuntimePositionsResponse | null,
@@ -391,15 +492,16 @@ const buildLiveOpenPositions = (
     const candidateMark =
       streamPrices.get(symbolKey) ?? priceBySymbol.get(symbolKey) ?? position.markPrice ?? null;
     const liveMarkPrice = typeof candidateMark === "number" && Number.isFinite(candidateMark) ? candidateMark : null;
+    const hasPriceContext = liveMarkPrice != null || position.unrealizedPnl != null;
     const grossLiveUnrealizedPnl =
       liveMarkPrice == null
         ? (position.unrealizedPnl ?? 0)
         : position.side === "LONG"
           ? (liveMarkPrice - position.entryPrice) * position.quantity
           : (position.entryPrice - liveMarkPrice) * position.quantity;
-    // Open PnL presented as net value including fees paid on the position.
-    const liveUnrealizedPnl = grossLiveUnrealizedPnl - (position.feesPaid ?? 0);
-    const livePnlPct = marginNotional > 0 ? (liveUnrealizedPnl / marginNotional) * 100 : null;
+    // If neither live mark nor runtime unrealized is available yet, keep neutral 0 instead of synthetic negative fees-only PnL.
+    const liveUnrealizedPnl = hasPriceContext ? grossLiveUnrealizedPnl - (position.feesPaid ?? 0) : 0;
+    const livePnlPct = marginNotional > 0 ? (liveUnrealizedPnl / marginNotional) * 100 : 0;
 
     return {
       ...position,
@@ -608,8 +710,8 @@ export default function HomeLiveWidgets() {
       const next = await Promise.all(
         scope.map(async (bot): Promise<RuntimeSnapshot> => {
           try {
-            const runningSessions = await listBotRuntimeSessions(bot.id, { status: "RUNNING", limit: 20 });
-            const primary = pickPrimarySession(runningSessions);
+            const sessions = await listBotRuntimeSessions(bot.id, { limit: 20 });
+            const primary = pickPrimarySession(sessions);
             if (!primary) return { bot, session: null, symbolStats: null, positions: null };
             const [symbolStats, positions] = await Promise.all([
               listBotRuntimeSessionSymbolStats(bot.id, primary.id, { limit: 200 }),
@@ -1007,21 +1109,25 @@ export default function HomeLiveWidgets() {
           key: "ttp",
           label: t("dashboard.home.runtime.slTtp"),
           sortable: true,
-          accessor: (row) => row.dynamicTtpStopLoss ?? null,
-          render: (row) =>
-            row.dynamicTtpStopLoss == null
+          accessor: (row) => resolveDynamicTtpDisplay(row) ?? null,
+          render: (row) => {
+            const ttpDisplay = resolveDynamicTtpDisplay(row);
+            return ttpDisplay == null
               ? "-"
-              : formatNumber(row.dynamicTtpStopLoss, { maximumFractionDigits: 4 }),
+              : formatNumber(ttpDisplay, { maximumFractionDigits: 4 });
+          },
         },
         {
           key: "tsl",
           label: t("dashboard.home.runtime.slTsl"),
           sortable: true,
-          accessor: (row) => row.dynamicTslStopLoss ?? null,
-          render: (row) =>
-            row.dynamicTslStopLoss == null
+          accessor: (row) => resolveDynamicTslDisplay(row) ?? null,
+          render: (row) => {
+            const tslDisplay = resolveDynamicTslDisplay(row);
+            return tslDisplay == null
               ? "-"
-              : formatNumber(row.dynamicTslStopLoss, { maximumFractionDigits: 4 }),
+              : formatNumber(tslDisplay, { maximumFractionDigits: 4 });
+          },
         }
       );
     }
@@ -1065,6 +1171,20 @@ export default function HomeLiveWidgets() {
       sortable: true,
       accessor: (row) => row.lifecycleAction,
       render: (row) => <TradeActionPill value={row.lifecycleAction} />,
+    },
+    {
+      key: "actionReason",
+      label: t("dashboard.home.runtime.reason"),
+      sortable: false,
+      accessor: (row) => row.actionReason ?? "UNKNOWN",
+      render: (row) => {
+        const reason = (row.actionReason ?? "UNKNOWN") as TradeActionReasonValue;
+        return (
+          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${tradeReasonPillClass(reason)}`}>
+            {t(tradeReasonLabelKey(reason))}
+          </span>
+        );
+      },
     },
     {
       key: "qty",

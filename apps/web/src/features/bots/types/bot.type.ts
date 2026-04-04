@@ -223,6 +223,16 @@ export type BotRuntimeTrade = {
   symbol: string;
   side: string;
   lifecycleAction: "OPEN" | "DCA" | "CLOSE" | "UNKNOWN";
+  actionReason?:
+    | "SIGNAL_ENTRY"
+    | "DCA_LEVEL"
+    | "TAKE_PROFIT"
+    | "STOP_LOSS"
+    | "TRAILING_TAKE_PROFIT"
+    | "TRAILING_STOP"
+    | "SIGNAL_EXIT"
+    | "MANUAL"
+    | "UNKNOWN";
   price: number;
   quantity: number;
   fee: number;
@@ -276,6 +286,14 @@ export type BotRuntimePositionItem = {
   dcaCount: number;
   dcaPlannedLevels?: number[];
   dcaExecutedLevels?: number[];
+  trailingStopLevels?: Array<{
+    armPercent: number;
+    trailPercent: number;
+  }>;
+  trailingTakeProfitLevels?: Array<{
+    armPercent: number;
+    trailPercent: number;
+  }>;
   feesPaid: number;
   realizedPnl: number;
   unrealizedPnl: number | null;

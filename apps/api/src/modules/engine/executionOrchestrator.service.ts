@@ -17,6 +17,7 @@ export type RuntimeSignalInput = {
   quantity: number;
   markPrice: number;
   mode: RuntimeExecutionMode;
+  reason?: string;
 };
 
 type OrchestrationResult =
@@ -421,6 +422,7 @@ export const orchestrateRuntimeSignal = async (
       positionId: openPosition.id,
       positionQty: openPosition.quantity,
       lastPrice: input.markPrice,
+      reason: input.reason,
       eventAt: closeEventAt,
     });
 

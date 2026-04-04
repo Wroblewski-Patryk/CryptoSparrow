@@ -205,6 +205,16 @@ type TranslationSchema = {
         actionOpen: string;
         actionDca: string;
         actionClose: string;
+        reason: string;
+        reasonSignalEntry: string;
+        reasonDcaLevel: string;
+        reasonTakeProfit: string;
+        reasonStopLoss: string;
+        reasonTrailingTakeProfit: string;
+        reasonTrailingStop: string;
+        reasonSignalExit: string;
+        reasonManual: string;
+        reasonUnknown: string;
         time: string;
         qty: string;
         price: string;
@@ -458,6 +468,16 @@ export const translations: Record<Locale, TranslationSchema> = {
           actionOpen: "Open",
           actionDca: "DCA",
           actionClose: "Close",
+          reason: "Reason",
+          reasonSignalEntry: "Signal",
+          reasonDcaLevel: "DCA level",
+          reasonTakeProfit: "TP",
+          reasonStopLoss: "SL",
+          reasonTrailingTakeProfit: "TTP",
+          reasonTrailingStop: "TSL",
+          reasonSignalExit: "Signal exit",
+          reasonManual: "Manual",
+          reasonUnknown: "-",
           time: "Time",
           qty: "Qty",
           price: "Price",
@@ -1037,6 +1057,16 @@ export const translations: Record<Locale, TranslationSchema> = {
           actionOpen: "Otwarcie",
           actionDca: "DCA",
           actionClose: "Zamkniecie",
+          reason: "Powod",
+          reasonSignalEntry: "Sygnal",
+          reasonDcaLevel: "Poziom DCA",
+          reasonTakeProfit: "TP",
+          reasonStopLoss: "SL",
+          reasonTrailingTakeProfit: "TTP",
+          reasonTrailingStop: "TSL",
+          reasonSignalExit: "Wyjscie sygnalem",
+          reasonManual: "Manualnie",
+          reasonUnknown: "-",
           time: "Czas",
           qty: "Qty",
           price: "Price",

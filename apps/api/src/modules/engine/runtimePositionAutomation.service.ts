@@ -51,6 +51,7 @@ type RuntimePositionAutomationDeps = {
     markPrice: number;
     mode: 'PAPER' | 'LIVE';
     quantity: number;
+    reason?: 'take_profit' | 'trailing_take_profit' | 'stop_loss' | 'trailing_stop';
   }) => Promise<void>;
   resolveDcaFundsExhausted: (input: {
     userId: string;
@@ -359,6 +360,7 @@ const defaultDeps: RuntimePositionAutomationDeps = {
       quantity: input.quantity,
       markPrice: input.markPrice,
       mode: input.mode,
+      reason: input.reason,
     });
   },
   resolveDcaFundsExhausted: (input) => resolveRuntimeDcaFundsExhausted(input),
@@ -692,6 +694,7 @@ export class RuntimePositionAutomationService {
         markPrice: event.lastPrice,
         mode,
         quantity: result.nextState.quantity,
+        reason: result.closeReason,
       });
       this.positionStates.delete(position.id);
     }
