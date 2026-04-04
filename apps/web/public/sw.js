@@ -1,8 +1,9 @@
-const CACHE_NAME = 'cryptosparrow-pwa-v2';
+const CACHE_NAME = 'cryptosparrow-pwa-v3';
 const OFFLINE_URL = '/offline';
-const PRECACHE_URLS = ['/', '/offline', '/manifest.webmanifest', '/logo.png'];
+const PRECACHE_URLS = ['/offline', '/manifest.webmanifest', '/logo.png'];
 const CACHE_PREFIX = 'cryptosparrow-pwa-';
 const STATIC_PATH_PREFIXES = ['/_next/static/', '/icons/'];
+const RUNTIME_BYPASS_PATH_PREFIXES = ['/api/', '/auth/', '/dashboard/', '/admin/'];
 const STATIC_EXTENSIONS = [
   '.js',
   '.css',
@@ -21,6 +22,13 @@ const isStaticAssetRequest = (url) => {
   if (url.origin !== self.location.origin) return false;
   if (STATIC_PATH_PREFIXES.some((prefix) => url.pathname.startsWith(prefix))) return true;
   return STATIC_EXTENSIONS.some((extension) => url.pathname.endsWith(extension));
+};
+
+const isApiOrRuntimeRequest = (url) => {
+  if (url.origin !== self.location.origin) return false;
+  if (RUNTIME_BYPASS_PATH_PREFIXES.some((prefix) => url.pathname.startsWith(prefix))) return true;
+  if (url.searchParams.has('_rsc')) return true;
+  return false;
 };
 
 self.addEventListener('install', (event) => {
@@ -55,8 +63,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  if (isApiOrRuntimeRequest(url)) {
+    event.respondWith(fetch(new Request(event.request, { cache: 'no-store' })));
+    return;
+  }
+
   if (!isStaticAssetRequest(url)) {
-    event.respondWith(fetch(event.request));
     return;
   }
 
