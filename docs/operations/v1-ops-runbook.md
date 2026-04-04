@@ -42,6 +42,24 @@ pnpm run workers/prod
    - `GET /ready` returns `200`
 7. Smoke test auth login and dashboard load.
 
+## Ops Endpoint Proxy Trust Contract
+Operational endpoints (`/metrics`, `/alerts`, `/workers/*`) are protected by auth + role + network guard.
+
+Rules for proxy/IP trust:
+1. Edge proxy must overwrite forwarding headers (`X-Forwarded-For`, `X-Real-IP`) and must not pass client-supplied values unchanged.
+2. API must see the proxy hop as the direct socket peer (Docker/private network in Coolify/Traefik).
+3. `x-forwarded-for` is trusted only when socket peer is trusted:
+   - private ranges by default, or
+   - explicit allowlist via `OPS_TRUSTED_PROXY_IPS` (comma-separated).
+4. Allowed operator client sources for ops endpoints are controlled by:
+   - `OPS_ALLOWED_IPS` (exact allowlist),
+   - `OPS_ALLOW_PRIVATE_NETWORK` (`true|false`).
+
+Recommended Coolify/Traefik practice:
+- keep API service non-public except through Traefik route,
+- configure Traefik to overwrite forwarding headers,
+- set `OPS_ALLOW_PRIVATE_NETWORK=false` in production and use explicit `OPS_ALLOWED_IPS` + `OPS_TRUSTED_PROXY_IPS`.
+
 ## Rollback Checklist
 1. Identify last known good release tag.
 2. Re-deploy previous API, web, and worker artifacts (same stable SHA across services).
