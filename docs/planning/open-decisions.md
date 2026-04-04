@@ -235,6 +235,16 @@ This file tracks intentionally unresolved architecture choices so implementation
   - use exchange fills/trades as canonical fee source once available,
   - estimator-derived fee allowed only as temporary placeholder in LIVE and must be traceable via `feeSource`.
 
+## Runtime Execution Idempotency (OPEN/DCA/CLOSE/CANCEL)
+- Decision state: resolved on 2026-04-04.
+- Product/runtime decision:
+  - all side-effecting runtime execution commands must use deterministic dedupe keys and replay-safe semantics,
+  - command contract is frozen for `OPEN`, `DCA`, `CLOSE`, and `CANCEL`,
+  - persistence-based dedupe is required for restart/crash safety (in-memory dedupe alone is not sufficient for production correctness),
+  - replayed intents must resolve to `reuse/no-op` instead of duplicated external side effects.
+- Canonical reference:
+  - `docs/architecture/runtime-execution-idempotency-contract.md`
+
 ## Numeric Locale Input Policy (Comma vs Dot)
 - Decision state: open (planned in Phase 21 `LFIN-09..LFIN-11`).
 - Open choice:

@@ -24,7 +24,7 @@ Move from "works in production" to "predictable, auditable, and resilient in pro
 ## 3) Delivery Phases
 
 ## Phase A - Idempotency and Runtime Correctness
-- [ ] `PEX-01 docs(contract): freeze idempotency contract for runtime execution commands (open/dca/close/cancel) with dedupe-key schema`
+- [x] `PEX-01 docs(contract): freeze idempotency contract for runtime execution commands (open/dca/close/cancel) with dedupe-key schema`
 - [ ] `PEX-02 feat(api-runtime): enforce dedupe key persistence + replay-safe execution guards for side-effecting runtime actions`
 - [ ] `PEX-03 test(runtime): add crash/retry regression suite proving no duplicate open/close orders after restart`
 
@@ -96,4 +96,3 @@ Exit criteria:
 - New trading strategies/indicators UX expansion.
 - Exchange-specific feature expansion beyond current adapter contracts.
 - Admin/billing product surface work.
-
