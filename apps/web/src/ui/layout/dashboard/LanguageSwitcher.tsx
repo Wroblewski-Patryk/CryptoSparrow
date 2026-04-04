@@ -16,9 +16,12 @@ type LanguageOption = {
 };
 
 type DropdownPlacement = 'top' | 'bottom';
+type LanguageSwitcherTone = 'header' | 'footer';
 
 type LanguageSwitcherProps = {
   placement?: DropdownPlacement;
+  summaryClassName?: string;
+  tone?: LanguageSwitcherTone;
 };
 
 const LANGUAGES = languageOptions as LanguageOption[];
@@ -39,7 +42,11 @@ function FlagIcon({ option }: { option: LanguageOption }) {
   );
 }
 
-export default function LanguageSwitcher({ placement = 'bottom' }: LanguageSwitcherProps) {
+export default function LanguageSwitcher({
+  placement = 'bottom',
+  summaryClassName = '',
+  tone = 'header',
+}: LanguageSwitcherProps) {
   const { locale, setLocale, t } = useI18n();
   const detailsRef = useRef<HTMLDetailsElement>(null);
   useDetailsDropdown(detailsRef);
@@ -49,6 +56,10 @@ export default function LanguageSwitcher({ placement = 'bottom' }: LanguageSwitc
     placement === 'top'
       ? 'menu dropdown-content z-[60] mb-2 w-44 rounded-box bg-base-100 p-2 text-base-content shadow-xl border border-base-300/60'
       : 'menu dropdown-content z-[60] mt-2 w-44 rounded-box bg-base-100 p-2 text-base-content shadow-xl border border-base-300/60';
+  const summaryToneClass =
+    tone === 'footer'
+      ? 'inline-flex min-h-9 items-center gap-2 rounded-md px-3 py-2 text-base-content/80 hover:bg-base-content/10 hover:text-base-content/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content/35 transition-colors group-open:bg-base-content/10 group-open:text-base-content/80 list-none cursor-pointer [&::-webkit-details-marker]:hidden'
+      : `${headerMenuItemClass} font-normal`;
 
   const handleSelect = (next: LocaleCode) => {
     setLocale(next);
@@ -57,7 +68,7 @@ export default function LanguageSwitcher({ placement = 'bottom' }: LanguageSwitc
 
   return (
     <details ref={detailsRef} className={detailsClass}>
-      <summary className={`${headerMenuItemClass} font-normal`} aria-label={t('dashboard.common.language')}>
+      <summary className={`${summaryToneClass} ${summaryClassName}`.trim()} aria-label={t('dashboard.common.language')}>
         <FlagIcon option={active} />
         <span>{active.label}</span>
       </summary>

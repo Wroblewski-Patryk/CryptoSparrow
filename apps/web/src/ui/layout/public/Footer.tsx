@@ -12,7 +12,10 @@ export default function Footer() {
         <p className="text-sm">
           &copy; {new Date().getFullYear()} Soar. {t("dashboard.footer.rights")}
         </p>
-        <FooterPreferencesSwitchers />
+        <FooterPreferencesSwitchers
+          tone="footer"
+          summaryClassName="text-base-content/80 hover:text-base-content/80 group-open:text-base-content/80"
+        />
       </div>
     </footer>
   );

@@ -8,11 +8,11 @@ export default function PublicPage() {
         <div
           aria-hidden
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/hero-alpine-future.svg')" }}
+          style={{ backgroundImage: "url('/hero-sky.png')" }}
         />
         <div
           aria-hidden
-          className="absolute inset-0 bg-gradient-to-b from-base-100/55 via-base-100/75 to-base-100"
+          className="absolute inset-0 bg-gradient-to-b from-base-100/0 via-base-100/25 to-base-100"
         />
 
         <div className="relative mx-auto flex min-h-[100svh] max-w-7xl items-center px-4 py-20">

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
-import { LuChartCandlestick, LuPackageOpen } from "react-icons/lu";
+import { LuChartCandlestick, LuChevronLeft, LuChevronRight, LuPackageOpen } from "react-icons/lu";
 
 import { EmptyState, ErrorState, LoadingState } from "../../../ui/components/ViewState";
 import DataTable, { DataTableColumn } from "../../../ui/components/DataTable";
@@ -1006,21 +1006,27 @@ export default function HomeLiveWidgets() {
             <div className="space-y-6">
               <div>
                 {hasSignalOverflow ? (
-                  <div className="mb-2 flex items-center justify-end gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-outline btn-xs"
-                      onClick={() => scrollSignalRail("prev")}
-                    >
-                      {t("dashboard.home.runtime.signalRailPrev")}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-outline btn-xs"
-                      onClick={() => scrollSignalRail("next")}
-                    >
-                      {t("dashboard.home.runtime.signalRailNext")}
-                    </button>
+                  <div className="mb-2 flex items-center justify-end">
+                    <div className="join rounded-box border border-base-300/70 bg-base-100/70 p-0.5">
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-xs join-item gap-1 px-2"
+                        onClick={() => scrollSignalRail("prev")}
+                        aria-label={t("dashboard.home.runtime.signalRailPrev")}
+                      >
+                        <LuChevronLeft className="h-3.5 w-3.5" aria-hidden />
+                        <span className="hidden sm:inline">{t("dashboard.home.runtime.signalRailPrev")}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-xs join-item gap-1 px-2"
+                        onClick={() => scrollSignalRail("next")}
+                        aria-label={t("dashboard.home.runtime.signalRailNext")}
+                      >
+                        <span className="hidden sm:inline">{t("dashboard.home.runtime.signalRailNext")}</span>
+                        <LuChevronRight className="h-3.5 w-3.5" aria-hidden />
+                      </button>
+                    </div>
                   </div>
                 ) : null}
                 <div ref={signalRailRef} className="overflow-x-auto pb-1">

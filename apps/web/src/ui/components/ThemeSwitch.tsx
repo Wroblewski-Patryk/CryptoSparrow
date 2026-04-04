@@ -20,9 +20,12 @@ const themes = [
 
 type ThemePreference = (typeof themes)[number]['value'];
 type DropdownPlacement = 'top' | 'bottom';
+type ThemeSwitcherTone = 'header' | 'footer';
 
 type ThemeSwitcherProps = {
   placement?: DropdownPlacement;
+  summaryClassName?: string;
+  tone?: ThemeSwitcherTone;
 };
 
 const normalizeThemePreference = (value: string | null): ThemePreference => {
@@ -36,7 +39,11 @@ const resolveTheme = (preference: ThemePreference): string => {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 };
 
-export default function ThemeSwitcher({ placement = 'bottom' }: ThemeSwitcherProps) {
+export default function ThemeSwitcher({
+  placement = 'bottom',
+  summaryClassName = '',
+  tone = 'header',
+}: ThemeSwitcherProps) {
   const { locale } = useI18n();
   const [activeTheme, setActiveTheme] = useState<ThemePreference>('cryptosparrow');
   const [resolvedTheme, setResolvedTheme] = useState<string>('cryptosparrow');
@@ -47,6 +54,10 @@ export default function ThemeSwitcher({ placement = 'bottom' }: ThemeSwitcherPro
     placement === 'top'
       ? 'menu dropdown-content z-[60] mb-2 w-48 rounded-box bg-base-100 p-2 text-base-content shadow'
       : 'menu dropdown-content z-[60] mt-2 w-48 rounded-box bg-base-100 p-2 text-base-content shadow';
+  const summaryToneClass =
+    tone === 'footer'
+      ? 'inline-flex min-h-9 items-center gap-2 rounded-md px-3 py-2 text-base-content/80 hover:bg-base-content/10 hover:text-base-content/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content/35 transition-colors group-open:bg-base-content/10 group-open:text-base-content/80 list-none cursor-pointer [&::-webkit-details-marker]:hidden'
+      : `${headerMenuItemClass} font-normal`;
 
   const applyTheme = (theme: ThemePreference, persist = true) => {
     const normalized = normalizeThemePreference(theme);
@@ -94,7 +105,7 @@ export default function ThemeSwitcher({ placement = 'bottom' }: ThemeSwitcherPro
 
   return (
     <details ref={detailsRef} className={detailsClass}>
-      <summary className={`${headerMenuItemClass} font-normal`} aria-label={copy.selectorAria}>
+      <summary className={`${summaryToneClass} ${summaryClassName}`.trim()} aria-label={copy.selectorAria}>
         <span className="inline-flex items-center gap-1" aria-hidden="true">
           {activeThemeConfig.swatches.map((swatch) => (
             <span key={`summary-${activeThemeConfig.value}-${swatch}`} className={`inline-block h-2 w-2 rounded-full ${swatch}`} />
