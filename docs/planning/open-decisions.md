@@ -255,6 +255,16 @@ This file tracks intentionally unresolved architecture choices so implementation
 - Canonical reference:
   - `docs/architecture/dashboard-trade-history-financial-semantics-contract.md`
 
+## App-Shell Template Split (Public / Dashboard / Admin)
+- Decision state: resolved on 2026-04-04.
+- Product/IA decision:
+  - frontend shells are explicitly split into three route-scoped templates: `public`, `dashboard`, `admin`,
+  - `/dashboard/*` and `/admin/*` remain isolated surfaces with separate navigation trees and layout ownership,
+  - `/admin/*` requires strict admin authorization (not dashboard-level auth only),
+  - shared primitives (branding/theme/locale behavior) stay reusable across shells without collapsing shell boundaries.
+- Canonical reference:
+  - `docs/architecture/app-shell-template-split-contract.md`
+
 ## Numeric Locale Input Policy (Comma vs Dot)
 - Decision state: open (planned in Phase 21 `LFIN-09..LFIN-11`).
 - Open choice:

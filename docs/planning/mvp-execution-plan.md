@@ -469,9 +469,10 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `PEX-04 feat(runtime-watchdog): add explicit stall detector for NO_EVENT/NO_HEARTBEAT windows with classified failure reasons`
 - [x] `PEX-07 feat(obs-metrics): add production metrics for runtime lag, restart count, reconciliation delay, and execution error classes`
 - [x] `BOPS-60 docs(contract): lock dashboard trade-history action/fee semantics (OPEN -> realized blank, CLOSE -> realized value) and margin consistency`
-- [ ] `ADM-01 docs(contract): define third admin app-shell template contract and rollout tasks (public/dashboard/admin split)`
+- [x] `ADM-01 docs(contract): define third admin app-shell template contract and rollout tasks (public/dashboard/admin split)`
 
 ## Progress Log
+- 2026-04-04: Completed `ADM-01` by publishing `docs/architecture/app-shell-template-split-contract.md`, freezing the three-shell topology (`public` / `dashboard` / `admin`), guard boundaries (`auth` vs `auth+admin`), shared-vs-dedicated layout ownership rules, and the canonical rollout sequence for `ADM-02..ADM-06`.
 - 2026-04-04: Completed `BOPS-60` by publishing `docs/architecture/dashboard-trade-history-financial-semantics-contract.md`, freezing action-gated financial display rules in trade history (`OPEN/DCA -> Realized "-"`, `CLOSE -> Realized value`), canonical `Margin` capital semantics, and Dashboard/Bots parity invariants for action/fee/realized rendering.
 - 2026-04-04: Completed `PEX-07` by extending runtime observability metrics with production telemetry (`signalLag`, classified `restarts`, reconciliation delay including `pending` count, and `executionErrors` by class), wiring emissions from runtime signal loop, live order adapter, and execution worker bootstrap, and locking API contract coverage in `metrics.test.ts`.
 - 2026-04-04: Completed `PEX-04` by extending `RuntimeSignalLoop` with explicit stall detector windows for `NO_EVENT` and `NO_HEARTBEAT`, introducing classified stop reasons (`runtime_stall_no_event`, `runtime_stall_no_heartbeat`) that cancel stale running sessions and force clean loop resubscription, with dedicated regression coverage in `runtimeSignalLoop.service.test.ts`.
