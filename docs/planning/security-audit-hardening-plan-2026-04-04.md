@@ -119,9 +119,9 @@ Exit criteria:
 - `pnpm audit --prod --audit-level=high` returns no critical/high for app runtime packages.
 
 ## Phase B - Network/proxy trust hardening
-- [ ] `SEC-05 fix(api-ops-guard): stop trusting raw x-forwarded-for directly in requireOpsNetwork; use trusted proxy chain contract`
+- [x] `SEC-05 fix(api-ops-guard): stop trusting raw x-forwarded-for directly in requireOpsNetwork; use trusted proxy chain contract`
 - [ ] `SEC-06 docs(ops-proxy): document canonical proxy trust setup (Coolify/Traefik) and header overwrite requirements`
-- [ ] `SEC-07 test(api-ops-guard): add regression tests for spoofed forwarded headers`
+- [x] `SEC-07 test(api-ops-guard): add regression tests for spoofed forwarded headers`
 
 Exit criteria:
 - spoofed forwarded header cannot satisfy ops-network allow checks.
@@ -165,3 +165,4 @@ Exit criteria:
 - 2026-04-04: Completed `SEC-02` by upgrading `apps/web` to `axios@^1.14.0`; validated with `pnpm --filter web run typecheck` and targeted regressions `useLoginForm` + `ApiKeyForm`.
 - 2026-04-04: Completed `SEC-03` by upgrading `apps/api` to `multer@^2.1.1`; validated with `pnpm --filter api run typecheck` and auth/upload regression pack (`auth.*`, `requireAuth`, `upload.e2e`).
 - 2026-04-04: Completed `SEC-04` by refreshing lockfile and finalizing dependency wave (`express@^5.2.1`, `jsonwebtoken@^9.0.3`, `prisma/@prisma-client@^6.19.3`); validation: `pnpm --filter api run typecheck`, targeted auth/upload/strategies/backtests tests, `pnpm --filter web run typecheck`, auth web tests, and `pnpm audit --prod --audit-level=high` => **No known vulnerabilities found**.
+- 2026-04-04: Completed `SEC-05` + `SEC-07` by hardening `requireOpsNetwork` to trust `x-forwarded-for` only when socket peer is a trusted proxy (`OPS_TRUSTED_PROXY_IPS` or private ranges), and adding spoof-regression coverage (`requireOpsNetwork.test.ts`); validated with `pnpm --filter api run typecheck` + middleware tests.

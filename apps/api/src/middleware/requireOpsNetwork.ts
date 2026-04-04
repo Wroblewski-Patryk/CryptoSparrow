@@ -9,6 +9,13 @@ const normalizeIp = (raw: string | undefined): string | null => {
   return first;
 };
 
+const normalizeHeaderIp = (raw: string | string[] | undefined): string | null => {
+  if (Array.isArray(raw)) {
+    return normalizeIp(raw[0]);
+  }
+  return normalizeIp(raw);
+};
+
 const isPrivateIpv4 = (ip: string) => {
   const parts = ip.split('.').map((value) => Number.parseInt(value, 10));
   if (parts.length !== 4 || parts.some((part) => Number.isNaN(part) || part < 0 || part > 255)) {
@@ -24,6 +31,15 @@ const isPrivateIpv4 = (ip: string) => {
 
 const isPrivateIpv6 = (ip: string) => ip === '::1' || ip.toLowerCase().startsWith('fc') || ip.toLowerCase().startsWith('fd');
 
+const isTrustedProxy = (ip: string) => {
+  const explicit = (process.env.OPS_TRUSTED_PROXY_IPS ?? '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  if (explicit.includes(ip)) return true;
+  return isPrivateIpv4(ip) || isPrivateIpv6(ip);
+};
+
 const isAllowedByNetwork = (ip: string) => {
   const explicit = (process.env.OPS_ALLOWED_IPS ?? '')
     .split(',')
@@ -38,10 +54,20 @@ const isAllowedByNetwork = (ip: string) => {
   return false;
 };
 
+const resolveClientIp = (req: Request): string | null => {
+  const socketIp = normalizeIp(req.socket.remoteAddress);
+  const requestIp = normalizeIp(req.ip);
+  const forwardedIp = normalizeHeaderIp(req.headers['x-forwarded-for']);
+
+  if (socketIp && isTrustedProxy(socketIp)) {
+    return forwardedIp ?? requestIp ?? socketIp;
+  }
+
+  return socketIp ?? requestIp;
+};
+
 export const requireOpsNetwork = (req: Request, res: Response, next: NextFunction) => {
-  const ip = normalizeIp(req.headers['x-forwarded-for'] as string | undefined)
-    ?? normalizeIp(req.ip)
-    ?? normalizeIp(req.socket.remoteAddress);
+  const ip = resolveClientIp(req);
 
   if (!ip || !isAllowedByNetwork(ip)) {
     return sendError(res, 403, 'Forbidden');
