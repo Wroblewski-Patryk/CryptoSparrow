@@ -127,9 +127,9 @@ Exit criteria:
 - spoofed forwarded header cannot satisfy ops-network allow checks.
 
 ## Phase C - Security headers + CSP
-- [ ] `SEC-08 feat(api-security-headers): add helmet baseline on api (noSniff/frameguard/referrerPolicy etc.)`
-- [ ] `SEC-09 feat(web-security-headers): define Next headers() baseline with CSP/frame-ancestors/x-content-type-options`
-- [ ] `SEC-10 test(web-api-headers): add smoke assertions for security headers in prod-like runs`
+- [x] `SEC-08 feat(api-security-headers): add helmet baseline on api (noSniff/frameguard/referrerPolicy etc.)`
+- [x] `SEC-09 feat(web-security-headers): define Next headers() baseline with CSP/frame-ancestors/x-content-type-options`
+- [x] `SEC-10 test(web-api-headers): add smoke assertions for security headers in prod-like runs`
 
 Exit criteria:
 - dashboard/auth pages and API responses carry documented hardening headers.
@@ -167,3 +167,4 @@ Exit criteria:
 - 2026-04-04: Completed `SEC-04` by refreshing lockfile and finalizing dependency wave (`express@^5.2.1`, `jsonwebtoken@^9.0.3`, `prisma/@prisma-client@^6.19.3`); validation: `pnpm --filter api run typecheck`, targeted auth/upload/strategies/backtests tests, `pnpm --filter web run typecheck`, auth web tests, and `pnpm audit --prod --audit-level=high` => **No known vulnerabilities found**.
 - 2026-04-04: Completed `SEC-05` + `SEC-07` by hardening `requireOpsNetwork` to trust `x-forwarded-for` only when socket peer is a trusted proxy (`OPS_TRUSTED_PROXY_IPS` or private ranges), and adding spoof-regression coverage (`requireOpsNetwork.test.ts`); validated with `pnpm --filter api run typecheck` + middleware tests.
 - 2026-04-04: Completed `SEC-06` by documenting proxy trust contract and Coolify/Traefik header-overwrite requirements in `docs/operations/v1-ops-runbook.md` (`Ops Endpoint Proxy Trust Contract` section).
+- 2026-04-04: Completed `SEC-08..10` by adding `helmet` baseline headers in API, introducing web `headers()` security contract in `next.config.ts` (CSP + frame/content/referrer/permissions policies), and adding smoke regressions (`security-headers.test.ts`, `next.config.test.ts`); validated with API+web typecheck, targeted tests, and `pnpm --filter web run build`.
