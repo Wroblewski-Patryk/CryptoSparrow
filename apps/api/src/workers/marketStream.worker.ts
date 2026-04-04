@@ -222,6 +222,17 @@ let worker: BinanceMarketStreamWorker | null = null;
 let subscriptionFingerprint = '';
 let refreshTimer: NodeJS.Timeout | null = null;
 
+const logSubscriptionsRefreshFailure = (error: unknown) => {
+  console.error(
+    JSON.stringify({
+      level: 'error',
+      module: 'market-stream.bootstrap',
+      event: 'market_stream.subscriptions_refresh_failed',
+      error: error instanceof Error ? error.message : 'unknown_error',
+    })
+  );
+};
+
 const startOrReloadWorker = async () => {
   const subscriptions = await resolveDynamicSubscriptions();
   const nextFingerprint = buildSubscriptionFingerprint(subscriptions);
@@ -262,21 +273,11 @@ const shutdown = async () => {
   await prisma.$disconnect().catch(() => undefined);
 };
 
-void (async () => {
-  await startOrReloadWorker();
-  refreshTimer = setInterval(() => {
-    void startOrReloadWorker().catch((error) => {
-      console.error(
-        JSON.stringify({
-          level: 'error',
-          module: 'market-stream.bootstrap',
-          event: 'market_stream.subscriptions_refresh_failed',
-          error: error instanceof Error ? error.message : 'unknown_error',
-        })
-      );
-    });
-  }, refreshMs);
-})();
+refreshTimer = setInterval(() => {
+  void startOrReloadWorker().catch(logSubscriptionsRefreshFailure);
+}, refreshMs);
+
+void startOrReloadWorker().catch(logSubscriptionsRefreshFailure);
 
 process.on('SIGINT', () => {
   void shutdown().finally(() => process.exit(0));
