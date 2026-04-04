@@ -93,8 +93,9 @@ pnpm --filter web build
 
 ### 3) Start API in production mode (terminal #1, repo root)
 ```bash
-pnpm --filter api start
+pnpm --filter api run run
 ```
+Use `pnpm --filter api start` only for destructive local reset flow (Prisma reset + seed).
 
 ### 4) Start Web in production mode (terminal #2, repo root)
 ```bash
@@ -128,4 +129,5 @@ docker compose down
 ## Related Docs
 - `docs/operations/dev-stage-prod-environment-matrix.md`
 - `docs/planning/deployment-dev-prod-coolify-plan-2026-04-02.md`
+
 

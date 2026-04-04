@@ -19,7 +19,8 @@
     "test:load:assistant-profile": "tsx scripts/assistant-load-benchmark.ts",
     "test:load:stress": "node scripts/load-test.mjs stress",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "run": "node dist/index.js",
+    "start": "pnpm exec prisma migrate reset --force --skip-seed && pnpm exec prisma db seed && pnpm run run"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

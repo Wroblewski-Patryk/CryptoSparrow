@@ -41,8 +41,9 @@ pnpm --filter web build
 
 4. Start backend:
 ```bash
-pnpm --filter api start
+pnpm --filter api run run
 ```
+Use `pnpm --filter api start` only for destructive local reset + seed workflow.
 
 5. Start frontend (new terminal):
 ```bash
@@ -92,7 +93,7 @@ git checkout <good_commit_sha>
 ```bash
 pnpm --filter api build
 pnpm --filter web build
-pnpm --filter api start
+pnpm --filter api run run
 pnpm --filter web start
 ```
 
@@ -110,7 +111,7 @@ pnpm --filter web start
 1. Confirm process is running.
 2. Restart backend:
 ```bash
-pnpm --filter api start
+pnpm --filter api run run
 ```
 3. Recheck `/auth/me`.
 
@@ -155,4 +156,5 @@ Capture every deploy/recovery incident using:
 ## 8. Exchange API-Key Diagnostics
 For API-key onboarding and Binance permission troubleshooting, use:
 - `docs/operations/binance-api-key-onboarding-runbook.md`
+
 

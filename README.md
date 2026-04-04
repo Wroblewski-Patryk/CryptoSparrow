@@ -121,6 +121,12 @@ Server:
 
 ```bash
 pnpm --filter api build
+pnpm --filter api run run
+```
+
+Fresh local DB reset + seed (destructive):
+
+```bash
 pnpm --filter api start
 ```
 
@@ -199,4 +205,5 @@ Useful overrides:
 - Added spot-support groundwork on bots via `marketType` (`FUTURES`/`SPOT`) schema/API field.
 - Added `marketType` selection in dashboard bots create/edit flow.
 - Added Binance API-key onboarding and troubleshooting runbook: `docs/operations/binance-api-key-onboarding-runbook.md`.
+
 

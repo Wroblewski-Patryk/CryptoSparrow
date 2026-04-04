@@ -51,7 +51,7 @@ try {
 }
 
 const runtimeEntries = [
-  { name: 'api', command: 'pnpm', args: ['--filter', 'api', 'start'] },
+  { name: 'api', command: 'pnpm', args: ['--filter', 'api', 'run', 'run'] },
   { name: 'web', command: 'pnpm', args: ['--filter', 'web', 'start'] },
   { name: 'workers', command: 'pnpm', args: ['run', 'workers/prod'] },
 ];

@@ -49,7 +49,7 @@ Make startup and deployment predictable and low-friction in three modes:
 
 ### Local PROD-Like
 1. Infra: Postgres + Redis from `docker compose`.
-2. API: `pnpm --filter api build` then `pnpm --filter api start`.
+2. API: `pnpm --filter api build` then `pnpm --filter api run run`.
 3. Web: `pnpm --filter web build` then `pnpm --filter web start`.
 4. Workers: separate process in production mode (not coupled to API `start`).
 
@@ -233,3 +233,4 @@ Minimum required gate set:
   - Mitigation: migration guard strategy + rollback automation + backward-compatible migration policy.
 - Risk: global rename breaks routing/assets/contracts.
   - Mitigation: audit-first rename waves with rollback points.
+
