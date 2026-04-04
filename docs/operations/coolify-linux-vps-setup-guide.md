@@ -154,6 +154,35 @@ Shared worker env:
 3. Enable managed TLS in Coolify.
 4. Verify certificates issued and routing healthy.
 
+## Step 6A: Reverse-Proxy Cache Rules (Critical)
+
+Cache policy must be fail-closed for authenticated/runtime surfaces.
+
+Never cache (reverse proxy, CDN, edge):
+- `/auth/*`
+- `/dashboard/*`
+- `/admin/*`
+- API responses containing `Set-Cookie`
+- SSE/event streams (`/dashboard/market-stream/*`)
+
+Allowed cache scope (static only):
+- `/_next/static/*`
+- `/icons/*`
+- immutable static assets (`*.js`, `*.css`, `*.png`, `*.svg`, `*.webp`, `*.woff2`, etc.)
+
+Operational rules:
+1. Respect origin `Cache-Control` headers from API (especially `no-store` on sensitive namespaces).
+2. Do not override `no-store` with proxy defaults.
+3. Do not enable HTML/document caching for dashboard/auth/admin pages.
+4. Keep service-worker caching aligned to static-only contract (no runtime/API payload caching).
+
+Quick verification checklist:
+1. `curl -I https://api.<env-domain>/auth/me` should include `Cache-Control: no-store...`
+2. `curl -I https://api.<env-domain>/dashboard` should include `Cache-Control: no-store...`
+3. `curl -I https://api.<env-domain>/admin` should include `Cache-Control: no-store...`
+4. `curl -I https://<web-env-domain>/_next/static/...` should be cacheable (`public, max-age` or equivalent immutable policy)
+5. Dashboard runtime data should update after hard refresh without stale payload replay.
+
 ## Step 7: Migrations Before Go-Live
 
 Before first stage/prod release:

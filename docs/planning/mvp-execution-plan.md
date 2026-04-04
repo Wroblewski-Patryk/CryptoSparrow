@@ -462,8 +462,10 @@ Rule: fix/cleanup/update first, then feature delivery.
 ## Phase 27 - Cache Safety for Authenticated API Surfaces
 - [x] `CACHE-01 feat(api-headers): add authenticated no-store middleware for /auth, /dashboard, /admin responses`
 - [x] `CACHE-03 fix(web-sw): restrict service worker runtime caching to static assets only, bypass API/runtime payloads`
+- [x] `CACHE-06 docs(ops-coolify): document reverse-proxy cache rules (never cache /auth|/dashboard|/admin, cache static only)`
 
 ## Progress Log
+- 2026-04-04: Completed `CACHE-06` by extending `docs/operations/coolify-linux-vps-setup-guide.md` with explicit reverse-proxy cache contract for STAGE/PROD (`never cache /auth|/dashboard|/admin`, static-only cache allowlist, SSE no-cache, Set-Cookie no-cache) and operational `curl` verification checklist.
 - 2026-04-04: Completed `CACHE-03` by tightening `sw.js` runtime contract to cache only static assets, removing dynamic `/` from precache list, adding explicit API/runtime bypass (`/api|/auth|/dashboard|/admin` + `_rsc`) with `cache: 'no-store'`, and adding web regression coverage in `serviceWorkerCacheContract.test.ts`.
 - 2026-04-04: Completed `CACHE-01` by adding centralized `applyNoStoreHeaders` middleware on `/auth`, `/dashboard`, and `/admin` namespaces (`Cache-Control/Pragma/Expires/Surrogate-Control`), plus router regression tests that lock no-store behavior on all three sensitive API surfaces.
 - 2026-04-03: Completed `BOPS-59` by adding dedicated web regressions for bots route contract (`/dashboard/bots/new` redirect), create/edit route behavior (`/dashboard/bots/create` with `editId` flow), list page add-navigation, and table action links (`Podglad`, `Asystent`, `Edytuj`) plus vitest alias support for `@` imports in route/component tests.
