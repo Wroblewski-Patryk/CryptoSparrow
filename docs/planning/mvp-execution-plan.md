@@ -396,6 +396,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `LFIN-10 feat(web-utils): add shared number parser/normalizer and form-level validation contract`
 - [x] `LFIN-11 refactor(web-strategies): replace direct Number(...) parsing in strategy form sections with parser-driven handling + precision guards`
 - [x] `LFIN-12 test(api+web): add reconciliation, i18n, and numeric-input regression suites for new contracts`
+- [x] `LFIN-08 test(api-live-adapter): add regression coverage for LIVE fill fee persistence/fallback behavior and runtime serialization parity`
 
 ## Phase 22 - Dashboard Runtime Trades Table (Server-Side Operability)
 - [x] `DBRT-01 docs(contract): lock Dashboard runtime trade-history table contract (server-side pagination, sort, filters, response meta)`
@@ -932,3 +933,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-04-02: Completed LFIN-07A by migrating dashboard home/control-center copy (/dashboard page + HomeLiveWidgets) to canonical i18n keys (dashboard.home.*, dashboard.home.runtime.*) with EN/PL parity, plus component-test and web typecheck pass.
 - 2026-04-02: Completed `LFIN-12`: added API reconciliation regressions (fill dedupe, mixed-currency fee handling, no-order-id fetch guard), strengthened i18n regression coverage for critical nav/runtime keys in EN/PL, and added strategy numeric-input helper regressions with green targeted API/web test suites plus root typecheck.
 - 2026-04-03: Completed `LFIN-07`: moved LIVE fill commission ingestion into `LiveOrderAdapter` (`placeLiveOrderWithFees` with fill-first reconciliation), removed fee-reconciliation duplication from `orders.service`, and verified exact fee metadata propagation to order/trade persistence with targeted exchange/orders tests + API typecheck.
+- 2026-04-04: Completed `LFIN-08 test(api-live-adapter)` by adding regression coverage for adapter fallback chain (`inline -> fetchOrderWithFills -> fetchTradesForOrder`), LIVE fee+fills persistence in `openOrder`, and runtime trade serialization parity for `feeSource/feePending/feeCurrency` in bots monitoring API.

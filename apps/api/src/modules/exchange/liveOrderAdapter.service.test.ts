@@ -169,4 +169,70 @@ describe('LiveOrderAdapter', () => {
     expect(fetchOrderWithFills).not.toHaveBeenCalled();
     expect(fetchTradesForOrder).not.toHaveBeenCalled();
   });
+
+  it('falls back from inline/order snapshot to trades fetch and still returns exchange fee metadata', async () => {
+    const placeOrder = vi.fn().mockResolvedValue({
+      id: 'order-fee-2',
+      status: 'closed',
+      fills: [],
+      raw: {},
+    });
+    const fetchOrderWithFills = vi.fn().mockResolvedValue({
+      order: null,
+      fills: [
+        {
+          exchangeTradeId: 'trade-no-fee',
+          exchangeOrderId: 'order-fee-2',
+          symbol: 'BTC/USDT:USDT',
+          side: 'buy',
+          price: 101,
+          quantity: 0.1,
+          notional: 10.1,
+          feeCost: null,
+          feeCurrency: null,
+          feeRate: null,
+          executedAt: new Date('2026-04-02T10:02:00.000Z'),
+          source: 'fetchOrder',
+          raw: {},
+        },
+      ],
+    });
+    const fetchTradesForOrder = vi.fn().mockResolvedValue([
+      {
+        exchangeTradeId: 'trade-with-fee',
+        exchangeOrderId: 'order-fee-2',
+        symbol: 'BTC/USDT:USDT',
+        side: 'buy',
+        price: 101,
+        quantity: 0.1,
+        notional: 10.1,
+        feeCost: 0.0101,
+        feeCurrency: 'USDT',
+        feeRate: 0.001,
+        executedAt: new Date('2026-04-02T10:03:00.000Z'),
+        source: 'fetchMyTrades',
+        raw: {},
+      },
+    ]);
+    const connector = {
+      placeOrder,
+      fetchOrderWithFills,
+      fetchTradesForOrder,
+    } as unknown as CcxtFuturesConnector;
+    const adapter = new LiveOrderAdapter(connector);
+
+    const result = await adapter.placeLiveOrderWithFees({
+      order: liveOrder,
+      retryPolicy: { maxAttempts: 1, baseDelayMs: 0 },
+    });
+
+    expect(result.exchangeOrderId).toBe('order-fee-2');
+    expect(result.fee).toBeCloseTo(0.0101, 10);
+    expect(result.feeSource).toBe('EXCHANGE_FILL');
+    expect(result.feePending).toBe(false);
+    expect(result.feeCurrency).toBe('USDT');
+    expect(result.effectiveFeeRate).toBeCloseTo(0.0005, 10);
+    expect(fetchOrderWithFills).toHaveBeenCalledTimes(1);
+    expect(fetchTradesForOrder).toHaveBeenCalledTimes(1);
+  });
 });

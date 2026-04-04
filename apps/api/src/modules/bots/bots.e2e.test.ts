@@ -838,6 +838,9 @@ describe('Bots module contract', () => {
         price: 50000,
         quantity: 0.1,
         fee: 2.5,
+        feeSource: 'EXCHANGE_FILL',
+        feePending: false,
+        feeCurrency: 'USDT',
         realizedPnl: 25,
         executedAt: new Date('2026-03-31T00:02:00.000Z'),
       },
@@ -902,9 +905,9 @@ describe('Bots module contract', () => {
     expect(tradesRes.body.items[0].notional).toBe(5000);
     expect(tradesRes.body.items[0].margin).toBe(5000);
     expect(tradesRes.body.items[0].fee).toBe(2.5);
-    expect(tradesRes.body.items[0].feeSource).toBe('ESTIMATED');
+    expect(tradesRes.body.items[0].feeSource).toBe('EXCHANGE_FILL');
     expect(tradesRes.body.items[0].feePending).toBe(false);
-    expect(tradesRes.body.items[0].feeCurrency).toBeNull();
+    expect(tradesRes.body.items[0].feeCurrency).toBe('USDT');
     expect(tradesRes.body.items[0].realizedPnl).toBe(25);
 
     const positionsRes = await owner.get(`/dashboard/bots/${botId}/runtime-sessions/${session.id}/positions`);
