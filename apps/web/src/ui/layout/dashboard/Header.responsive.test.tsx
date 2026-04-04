@@ -32,8 +32,8 @@ describe("Header responsive smoke", () => {
     const desktopDashboardLink = dashboardLinks.find((item) => item.getAttribute("href") === "/dashboard");
     expect(desktopDashboardLink).toBeTruthy();
     expect(desktopDashboardLink?.className).toContain("focus-visible:outline");
-    const marketsLabels = screen.getAllByText("Markets");
-    expect(marketsLabels.some((item) => item.className.includes("font-semibold"))).toBe(true);
+    const marketsLinks = screen.getAllByRole("link", { name: "Markets" });
+    expect(marketsLinks.some((item) => item.className.includes("border-accent/45"))).toBe(true);
     const nav = screen.getByRole("navigation", { name: "Dashboard navigation" });
     expect(nav.className).toContain("justify-center");
   });

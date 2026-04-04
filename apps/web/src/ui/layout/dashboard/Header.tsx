@@ -260,32 +260,34 @@ export default function Header() {
         </div>
 
         {mobileMenuOpen && (
-          <div
-            id="dashboard-mobile-nav"
-            className="xl:hidden mt-2 w-full max-h-[calc(100vh-5.5rem)] space-y-2 overflow-y-auto overscroll-contain pr-1"
-          >
-            <nav aria-label="Dashboard navigation" className="w-full">
-              <ul className="menu rounded-box border border-base-300/60 bg-base-200/60 p-2 gap-1 w-full">
-                {allLinks.map((item, index) => {
-                  const ItemIcon = item.icon;
-                  return (
-                    <li key={`${item.href}-${index}`}>
-                    <Link
-                      href={item.href}
-                      aria-current={isActive(item) ? 'page' : undefined}
-                      className={getHeaderDropdownLinkClass(isActive(item))}
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      {ItemIcon ? <ItemIcon className='h-4 w-4 opacity-75' aria-hidden /> : null}
-                      {item.label}
-                    </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-            <div className="w-full">
-              <ProfileButton mobile onNavigate={() => setMobileMenuOpen(false)} />
+          <div className="fixed inset-x-0 bottom-0 top-[4.5rem] z-40 xl:hidden border-t border-base-300/60 bg-base-100/90 backdrop-blur supports-[backdrop-filter]:bg-base-100/85">
+            <div
+              id="dashboard-mobile-nav"
+              className="mx-auto h-full w-full max-w-7xl overflow-y-auto overscroll-contain px-4 py-2"
+            >
+              <nav aria-label="Dashboard navigation" className="w-full">
+                <ul className="menu rounded-box border border-base-300/60 bg-base-200/60 p-2 gap-1 w-full">
+                  {allLinks.map((item, index) => {
+                    const ItemIcon = item.icon;
+                    return (
+                      <li key={`${item.href}-${index}`}>
+                        <Link
+                          href={item.href}
+                          aria-current={isActive(item) ? 'page' : undefined}
+                          className={getHeaderDropdownLinkClass(isActive(item))}
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          {ItemIcon ? <ItemIcon className='h-4 w-4 opacity-75' aria-hidden /> : null}
+                          {item.label}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </nav>
+              <div className="w-full pb-4">
+                <ProfileButton mobile onNavigate={() => setMobileMenuOpen(false)} />
+              </div>
             </div>
           </div>
         )}
