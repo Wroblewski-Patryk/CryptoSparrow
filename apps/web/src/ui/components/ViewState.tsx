@@ -3,18 +3,47 @@ type BaseStateProps = {
   description?: string;
 };
 
+import {
+  SkeletonCardBlock,
+  SkeletonFormBlock,
+  SkeletonKpiRow,
+  SkeletonTableRows,
+} from './loading';
+
+type LoadingStateVariant = 'table' | 'cards' | 'form' | 'kpi';
+
+type LoadingStateProps = Partial<BaseStateProps> & {
+  variant?: LoadingStateVariant;
+};
+
 export function LoadingState({
   title = "Ladowanie danych",
   description = "Poczekaj chwile, przygotowujemy widok.",
-}: Partial<BaseStateProps>) {
+  variant = 'table',
+}: LoadingStateProps) {
+  const skeletonContent =
+    variant === 'cards' ? (
+      <SkeletonCardBlock cards={3} title={false} />
+    ) : variant === 'form' ? (
+      <SkeletonFormBlock fields={6} title={false} />
+    ) : variant === 'kpi' ? (
+      <SkeletonKpiRow items={4} />
+    ) : (
+      <SkeletonTableRows columns={7} rows={5} title={false} />
+    );
+
   return (
-    <div className="alert alert-info">
-      <span className="loading loading-spinner loading-sm" />
+    <section
+      aria-busy='true'
+      aria-label={title}
+      className='space-y-3 rounded-box border border-base-300/60 bg-base-100/80 p-4'
+    >
       <div>
-        <div className="font-semibold">{title}</div>
-        <div className="text-sm opacity-80">{description}</div>
+        <h3 className='text-base font-semibold'>{title}</h3>
+        <p className='text-sm opacity-70'>{description}</p>
       </div>
-    </div>
+      {skeletonContent}
+    </section>
   );
 }
 

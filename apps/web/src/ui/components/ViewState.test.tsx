@@ -10,7 +10,7 @@ import {
 
 describe("ViewState components", () => {
   it("renders loading, degraded and success states", () => {
-    render(
+    const { container } = render(
       <div>
         <LoadingState title="Ladowanie testowe" />
         <DegradedState title="Tryb ograniczony" />
@@ -21,6 +21,7 @@ describe("ViewState components", () => {
     expect(screen.getByText("Ladowanie testowe")).toBeInTheDocument();
     expect(screen.getByText("Tryb ograniczony")).toBeInTheDocument();
     expect(screen.getByText("Gotowe")).toBeInTheDocument();
+    expect(container.querySelectorAll(".skeleton").length).toBeGreaterThan(0);
   });
 
   it("fires action buttons for empty and error states", () => {
@@ -74,5 +75,18 @@ describe("ViewState components", () => {
 
     expect(screen.queryByRole("button", { name: "Dodaj" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Ponow" })).not.toBeInTheDocument();
+  });
+
+  it("renders loading variant skeleton compositions", () => {
+    const { container, rerender } = render(
+      <LoadingState title="Cards loading" variant="cards" />
+    );
+    expect(container.querySelectorAll(".skeleton").length).toBeGreaterThan(0);
+
+    rerender(<LoadingState title="Form loading" variant="form" />);
+    expect(container.querySelectorAll(".skeleton").length).toBeGreaterThan(0);
+
+    rerender(<LoadingState title="Kpi loading" variant="kpi" />);
+    expect(container.querySelectorAll(".skeleton").length).toBeGreaterThan(0);
   });
 });
