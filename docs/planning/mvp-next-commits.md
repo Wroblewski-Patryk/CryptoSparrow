@@ -8,7 +8,7 @@ Operational queue for one-task execution runs.
 
 ## NOW
 - [x] `LDUX-01 docs(contract): lock dashboard loading UX contract (skeleton-first + global progress bar under header)`
-- [ ] `LDUX-02 feat(web-ui): add shared DaisyUI skeleton primitives for table/card/form/kpi dashboard patterns`
+- [x] `LDUX-02 feat(web-ui): add shared DaisyUI skeleton primitives for table/card/form/kpi dashboard patterns`
 - [ ] `LDUX-03 feat(web-shell): add dashboard header-underbar navigation progress component with staged percent animation`
 - [ ] `LDUX-04 refactor(web-viewstate): make dashboard loading path skeleton-first while keeping alert states for error/degraded/success`
 - [ ] `LDUX-05 feat(web-dashboard-home+bots): replace loading alerts with section/page skeleton compositions`
@@ -60,6 +60,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `LDUX-02 feat(web-ui): add shared DaisyUI skeleton primitives for table/card/form/kpi dashboard patterns`
 - [x] `LDUX-01 docs(contract): lock dashboard loading UX contract (skeleton-first + global progress bar under header)`
 - [x] `BOPS-65 feat(web-dashboard): polish runtime signal cards UX (header counters + base currency + dual-column condition emphasis) and streamline dashboard trade/open-position table columns/time format`
 - [x] `ICN-06 test(api+web): add regression coverage for resolver collisions, cache fallback, and icon rendering states`
