@@ -498,6 +498,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARCH-10 chore(quality): add repository guardrail check for max-file-size budget + lockfile consistency`
 - [x] `ARCH-11 refactor(api-bots): extract strategy config parsing helpers (advanced close mode + TTP/TSL + DCA levels) from bots.service`
 - [x] `ARCH-12 refactor(api-bots): extract runtime market-data fallback fetchers (kline/ticker) from bots.service into dedicated module`
+- [x] `ARCH-13 refactor(api-bots): extract symbol-scoped strategy display resolvers (advanced close mode + DCA plan + TTP/TSL level maps) from bots.service into dedicated module`
+- [x] `ARCH-14 refactor(api-bots): extract runtime signal-condition summary formatter from bots.service into dedicated module`
 
 ## Phase 31 - Dashboard Mobile Navigation Stability
 - [x] `NAVM-01 docs(contract): lock mobile nav overlay contract (layering, offset, scroll, close behavior)`
@@ -507,6 +509,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 
 ## Progress Log
+- 2026-04-05: Completed `ARCH-14` by extracting runtime signal-condition summary formatter (`buildSignalConditionSummary` with indicator-specific rule formatting) from `bots.service.ts` into dedicated `runtimeSignalConditionSummary.service.ts`, wiring runtime symbol-stats path to the new module without behavior drift; validated via `pnpm --filter api typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
+- 2026-04-05: Completed `ARCH-13` by extracting symbol-scoped runtime strategy display resolvers (`resolveBotAdvancedCloseMode`, `resolveBotDcaPlanBySymbol`, `resolveBotTrailingStopLevelsBySymbol`, `resolveBotTrailingTakeProfitLevelsBySymbol`) from `bots.service.ts` into dedicated `runtimeStrategyDisplayBySymbol.service.ts`, then wiring existing runtime read call-sites to the new module without behavior drift; validated via `pnpm --filter api typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-12` by extracting runtime market-data fallback fetchers (`fetchFallbackKlineCloses`, `fetchFallbackTickerPrices`) and their cache/interval normalization helpers from `bots.service.ts` into dedicated `runtimeMarketDataFallback.service.ts`, wiring existing call-sites without behavior drift; validated via `pnpm --filter api typecheck` and targeted bots e2e invocation (suite skipped in local env due test gating).
 - 2026-04-05: Completed `BOPS-64` by implementing first-floor TTP disarm logic in engine/runtime flow: when favorable move drops below `first_ttp_arm - first_ttp_trail`, TTP tracking state is cleared (no forced close), then re-arms normally after crossing first arm again; mirrored same disarm semantics in web fallback display helper so UI does not keep stale TTP after deep pullback; validated with new/updated regressions in `positionManagement.service.test.ts` and `trailingStopDisplay.test.ts` plus API+Web typecheck.
 - 2026-04-05: Completed `BOPS-63` by normalizing trailing-level scale inside web TTP fallback helper (`trailingStopDisplay`): levels from API in decimal form (`0.05`) are auto-mapped to percent-space (`5`) while percent-native inputs remain unchanged, preventing false arming/protected-value inflation; added regression coverage for both representations in `trailingStopDisplay.test.ts` and validated with targeted web tests + `pnpm --filter web typecheck`.
