@@ -2046,17 +2046,44 @@ describe('Bots module contract', () => {
       expect(postArmItem.dynamicTtpStopLoss).toBeCloseTo(103, 6);
       expect(postArmItem.dynamicTslStopLoss).toBeNull();
 
-      expect(fallbackItem.dynamicTtpStopLoss).toBeNull();
+      expect(fallbackItem.dynamicTtpStopLoss).toBeCloseTo(102.5, 6);
       expect(fallbackItem.dynamicTslStopLoss).toBeCloseTo(102, 6);
 
       // No runtime snapshot: fallback to strategy thresholds + live mark price.
       expect(noSnapshotItem.dynamicTtpStopLoss).toBeCloseTo(105.5, 6);
+
+      await prisma.botRuntimeSymbolStat.updateMany({
+        where: {
+          sessionId: session.id,
+          symbol: 'BNBUSDT',
+        },
+        data: {
+          lastPrice: 101,
+          snapshotAt: new Date(snapshotAt.getTime() + 30_000),
+        },
+      });
+
+      const positionsResAfterPullback = await owner.get(
+        `/dashboard/bots/${botId}/runtime-sessions/${session.id}/positions`
+      );
+      expect(positionsResAfterPullback.status).toBe(200);
+      const afterPullbackItem = (
+        positionsResAfterPullback.body.openItems as Array<{
+          symbol: string;
+          dynamicTtpStopLoss: number | null;
+          dynamicTslStopLoss: number | null;
+        }>
+      ).find((item) => item.symbol === 'BNBUSDT');
+      expect(afterPullbackItem).toBeDefined();
+      if (!afterPullbackItem) throw new Error('Expected BNBUSDT item after pullback');
+      expect(afterPullbackItem.dynamicTtpStopLoss).toBeCloseTo(102.5, 6);
+      expect(afterPullbackItem.dynamicTslStopLoss).toBeCloseTo(102, 6);
     } finally {
       stateSpy.mockRestore();
     }
   });
 
-  it('computes live signal direction from latest candles when no signal event exists yet', async () => {
+  it('keeps signal direction neutral when no runtime signal decision event exists yet', async () => {
     const ownerEmail = 'bot-runtime-live-direction@example.com';
     const owner = await registerAndLogin(ownerEmail);
     const ownerUser = await prisma.user.findUniqueOrThrow({ where: { email: ownerEmail } });
@@ -2124,7 +2151,7 @@ describe('Bots module contract', () => {
     expect(symbolStatsRes.status).toBe(200);
     const btc = symbolStatsRes.body.items.find((item: { symbol: string }) => item.symbol === 'BTCUSDT');
     expect(btc).toBeTruthy();
-    expect(btc.lastSignalDirection).toBe('SHORT');
+    expect(btc.lastSignalDirection).toBeNull();
     expect(btc.totalSignals).toBe(0);
   });
 

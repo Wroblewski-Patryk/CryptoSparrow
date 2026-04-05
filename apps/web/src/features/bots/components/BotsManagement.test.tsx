@@ -619,14 +619,11 @@ describe("BotsManagement", () => {
         symbol: undefined,
         limit: 200,
       });
-      expect(screen.getByText("2 (1:-15.00%, 2:-30.00%)")).toBeInTheDocument();
+      expect(screen.getByTitle(/1:-15(\.00)?%, 2:-30(\.00)?%/)).toBeInTheDocument();
       expect(screen.getByText("TTP")).toBeInTheDocument();
       expect(screen.getByText("TSL")).toBeInTheDocument();
       expect(
-        screen.getByText((content) => /2[,\s]?508[.,]4321/.test(content.replace(/\u00a0/g, " ")))
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText((content) => /2[,\s]?496[.,]5555/.test(content.replace(/\u00a0/g, " ")))
+        screen.getByText((content) => /0[.,]3[34]%/.test(content.replace(/\u00a0/g, " ")))
       ).toBeInTheDocument();
       expect(screen.getAllByText("-").length).toBeGreaterThan(0);
       expect(screen.getByText(/3\. Co bedzie - live check sygnalow|Co bedzie - live check sygnalow/i)).toBeInTheDocument();

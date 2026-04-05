@@ -419,15 +419,12 @@ const toProtectedPnlPercentFromStopPrice = (
   return leveragedMovePercent;
 };
 
-const resolveDynamicTtpDisplay = (position: OpenPositionWithLive) => {
-  const mappedFromApi = toProtectedPnlPercentFromStopPrice(position, position.dynamicTtpStopLoss);
-  return mappedFromApi;
-};
+const resolveDynamicTtpDisplay = (position: OpenPositionWithLive) =>
+  toProtectedPnlPercentFromStopPrice(position, position.dynamicTtpStopLoss);
 
 const resolveDynamicTslDisplay = (position: OpenPositionWithLive) => {
   if (resolveDynamicTtpDisplay(position) != null) return null;
-  const mappedFromApi = toProtectedPnlPercentFromStopPrice(position, position.dynamicTslStopLoss);
-  return mappedFromApi;
+  return toProtectedPnlPercentFromStopPrice(position, position.dynamicTslStopLoss);
 };
 
 const buildLiveOpenPositions = (

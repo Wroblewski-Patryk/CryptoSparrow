@@ -218,52 +218,45 @@ export const evaluatePositionManagement = (
     : null;
 
   if (ttpConfigured) {
-    if (!dynamicTtpLevel) {
-      nextState.trailingTakeProfitHighPercent = undefined;
-      nextState.trailingTakeProfitStepPercent = undefined;
-    } else {
-      const ttpActivationFloor = dynamicTtpLevel.armPercent - dynamicTtpLevel.trailPercent;
-      if (favorableMove >= ttpActivationFloor) {
-        if (
-          typeof nextState.trailingTakeProfitHighPercent !== 'number' &&
-          favorableMove >= dynamicTtpLevel.armPercent
-        ) {
-          nextState.trailingTakeProfitHighPercent = favorableMove;
-          nextState.trailingTakeProfitStepPercent = dynamicTtpLevel.trailPercent;
-        }
-
-        const trackedHigh = nextState.trailingTakeProfitHighPercent;
-        const trackedStep = nextState.trailingTakeProfitStepPercent;
-        if (
-          typeof trackedHigh === 'number' &&
-          typeof trackedStep === 'number' &&
-          favorableMove - dynamicTtpLevel.trailPercent > trackedHigh - trackedStep
-        ) {
-          nextState.trailingTakeProfitHighPercent = favorableMove;
-          nextState.trailingTakeProfitStepPercent = dynamicTtpLevel.trailPercent;
-        }
-
-        const finalTrackedHigh = nextState.trailingTakeProfitHighPercent;
-        const finalTrackedStep = nextState.trailingTakeProfitStepPercent;
-        if (
-          typeof finalTrackedHigh === 'number' &&
-          typeof finalTrackedStep === 'number' &&
-          favorableMove <= finalTrackedHigh - finalTrackedStep
-        ) {
-          return {
-            shouldClose: true,
-            closeReason: 'trailing_take_profit',
-            dcaExecuted,
-            dcaAddedQuantity,
-            nextState,
-          };
-        }
-      } else {
-        // Legacy parity: if price falls below activation tunnel (start - step), reset TTP tracking.
-        nextState.trailingTakeProfitHighPercent = undefined;
-        nextState.trailingTakeProfitStepPercent = undefined;
-      }
+    if (
+      dynamicTtpLevel &&
+      typeof nextState.trailingTakeProfitHighPercent !== 'number' &&
+      favorableMove >= dynamicTtpLevel.armPercent
+    ) {
+      nextState.trailingTakeProfitHighPercent = favorableMove;
+      nextState.trailingTakeProfitStepPercent = dynamicTtpLevel.trailPercent;
     }
+
+    const trackedHigh = nextState.trailingTakeProfitHighPercent;
+    const trackedStep = nextState.trailingTakeProfitStepPercent;
+    if (
+      dynamicTtpLevel &&
+      typeof trackedHigh === 'number' &&
+      typeof trackedStep === 'number' &&
+      favorableMove - dynamicTtpLevel.trailPercent > trackedHigh - trackedStep
+    ) {
+      nextState.trailingTakeProfitHighPercent = favorableMove;
+      nextState.trailingTakeProfitStepPercent = dynamicTtpLevel.trailPercent;
+    }
+
+    const finalTrackedHigh = nextState.trailingTakeProfitHighPercent;
+    const finalTrackedStep = nextState.trailingTakeProfitStepPercent;
+    if (
+      typeof finalTrackedHigh === 'number' &&
+      typeof finalTrackedStep === 'number' &&
+      favorableMove <= finalTrackedHigh - finalTrackedStep
+    ) {
+      return {
+        shouldClose: true,
+        closeReason: 'trailing_take_profit',
+        dcaExecuted,
+        dcaAddedQuantity,
+        nextState,
+      };
+    }
+  } else {
+    nextState.trailingTakeProfitHighPercent = undefined;
+    nextState.trailingTakeProfitStepPercent = undefined;
   }
 
   const ttpTrackingActive =

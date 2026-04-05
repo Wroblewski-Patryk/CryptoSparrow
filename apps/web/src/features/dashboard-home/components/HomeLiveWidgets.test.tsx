@@ -320,8 +320,9 @@ describe("HomeLiveWidgets", () => {
       expect(screen.getByTitle("1:-15%, 2:-30%")).toBeInTheDocument();
       expect(screen.getByText("TTP")).toBeInTheDocument();
       expect(screen.getByText("TSL")).toBeInTheDocument();
-      expect(screen.getByText("2508,4321")).toBeInTheDocument();
-      expect(screen.getByText("2496,5555")).toBeInTheDocument();
+      expect(
+        screen.getByText((content) => /5[.,]0[56]%/.test(content.replace(/\u00a0/g, " ")))
+      ).toBeInTheDocument();
       expect(screen.getAllByText("-").length).toBeGreaterThan(0);
     });
   });

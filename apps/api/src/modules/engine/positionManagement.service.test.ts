@@ -400,7 +400,7 @@ describe('position management', () => {
     expect(result.nextState.trailingLossLimitPercent).toBeUndefined();
   });
 
-  it('does not close TTP below activation tunnel and rearms only after re-entering start threshold', () => {
+  it('keeps TTP armed once triggered and closes when favorable move drops below protected floor', () => {
     const armed = evaluatePositionManagement(
       {
         side: 'LONG',
@@ -435,26 +435,11 @@ describe('position management', () => {
       armed.nextState,
     );
 
-    const rearmed = evaluatePositionManagement(
-      {
-        side: 'LONG',
-        currentPrice: 111,
-        leverage: 1,
-        trailingTakeProfitLevels: [
-          {
-            armPercent: 0.1,
-            trailPercent: 0.05,
-          },
-        ],
-      },
-      droppedBelowTunnel.nextState,
-    );
-
     expect(armed.shouldClose).toBe(false);
-    expect(droppedBelowTunnel.shouldClose).toBe(false);
-    expect(droppedBelowTunnel.nextState.trailingTakeProfitHighPercent).toBeUndefined();
-    expect(rearmed.shouldClose).toBe(false);
-    expect(rearmed.nextState.trailingTakeProfitHighPercent).toBeDefined();
+    expect(droppedBelowTunnel.shouldClose).toBe(true);
+    expect(droppedBelowTunnel.closeReason).toBe('trailing_take_profit');
+    expect(droppedBelowTunnel.nextState.trailingTakeProfitHighPercent).toBeCloseTo(0.12, 5);
+    expect(droppedBelowTunnel.nextState.trailingTakeProfitStepPercent).toBeCloseTo(0.05, 5);
   });
 
   it('keeps TTP tunnel monotonic when switching to higher threshold with wider step', () => {

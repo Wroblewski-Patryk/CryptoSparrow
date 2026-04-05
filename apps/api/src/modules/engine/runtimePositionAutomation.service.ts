@@ -7,6 +7,7 @@ import { evaluatePositionManagement } from './positionManagement.service';
 import { PositionManagementInput, PositionManagementState } from './positionManagement.types';
 import { resolveRuntimeDcaFundsExhausted } from './runtimeCapitalContext.service';
 import { runtimeTelemetryService } from './runtimeTelemetry.service';
+import { runtimePositionStateStore } from './runtimePositionState.store';
 
 type RuntimeManagedPosition = Pick<
   Position,
@@ -559,10 +560,36 @@ export class RuntimePositionAutomationService {
 
   constructor(private readonly deps: RuntimePositionAutomationDeps = defaultDeps) {}
 
+  private cloneState(state: PositionManagementState): PositionManagementState {
+    return {
+      quantity: state.quantity,
+      averageEntryPrice: state.averageEntryPrice,
+      currentAdds: state.currentAdds,
+      trailingAnchorPrice: state.trailingAnchorPrice,
+      trailingLossLimitPercent: state.trailingLossLimitPercent,
+      trailingTakeProfitHighPercent: state.trailingTakeProfitHighPercent,
+      trailingTakeProfitStepPercent: state.trailingTakeProfitStepPercent,
+      lastDcaPrice: state.lastDcaPrice,
+    };
+  }
+
+  private statesEqual(left: PositionManagementState, right: PositionManagementState) {
+    return (
+      left.quantity === right.quantity &&
+      left.averageEntryPrice === right.averageEntryPrice &&
+      left.currentAdds === right.currentAdds &&
+      left.trailingAnchorPrice === right.trailingAnchorPrice &&
+      left.trailingLossLimitPercent === right.trailingLossLimitPercent &&
+      left.trailingTakeProfitHighPercent === right.trailingTakeProfitHighPercent &&
+      left.trailingTakeProfitStepPercent === right.trailingTakeProfitStepPercent &&
+      left.lastDcaPrice === right.lastDcaPrice
+    );
+  }
+
   getPositionStateSnapshot(positionId: string): PositionManagementState | null {
     const state = this.positionStates.get(positionId);
     if (!state) return null;
-    return { ...state };
+    return this.cloneState(state);
   }
 
   async handleTickerEvent(event: StreamTickerEvent) {
@@ -585,13 +612,18 @@ export class RuntimePositionAutomationService {
     const strategyConfig = await this.getStrategyConfig(position.strategyId ?? null);
     const input = buildPositionManagementInput(position, event.lastPrice, strategyConfig, runtimeConfig);
 
-    const previousState = this.positionStates.get(position.id) ?? {
+    const defaultState = {
       quantity: position.quantity,
       averageEntryPrice: position.entryPrice,
       currentAdds: 0,
       trailingAnchorPrice: position.entryPrice,
       lastDcaPrice: undefined,
-    };
+    } as PositionManagementState;
+    const previousState =
+      this.positionStates.get(position.id) ??
+      (await runtimePositionStateStore.getPositionRuntimeState(position.id)) ??
+      defaultState;
+    const previousStateSnapshot = this.cloneState(previousState);
 
     const mode = resolvePositionExecutionMode(position);
     const exchange = resolvePositionExchange(position);
@@ -687,6 +719,7 @@ export class RuntimePositionAutomationService {
     }
 
     if (result.shouldClose) {
+      await runtimePositionStateStore.deletePositionRuntimeState(position.id);
       await this.deps.closeByExitSignal({
         userId: position.userId,
         botId: position.botId ?? undefined,
@@ -697,6 +730,11 @@ export class RuntimePositionAutomationService {
         reason: result.closeReason,
       });
       this.positionStates.delete(position.id);
+      return;
+    }
+
+    if (!this.statesEqual(previousStateSnapshot, result.nextState)) {
+      await runtimePositionStateStore.setPositionRuntimeState(position.id, result.nextState);
     }
   }
 }
