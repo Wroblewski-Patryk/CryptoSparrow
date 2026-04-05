@@ -535,10 +535,11 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ICN-03 feat(api-icons): add deterministic icon lookup API for dashboard modules (symbol -> icon URL/placeholder metadata)`
 - [x] `ICN-04 feat(web-icons): render coin icons in dashboard tables/cards with loading/error fallback behavior`
 - [x] `ICN-05 ops(deploy): add CoinGecko-related env template + Coolify rollout checklist updates`
-- [ ] `ICN-06 test(api+web): add regression coverage for resolver collisions, cache fallback, and icon rendering states`
+- [x] `ICN-06 test(api+web): add regression coverage for resolver collisions, cache fallback, and icon rendering states`
 - [ ] `ICN-07 qa(web): run manual smoke for icons across Dashboard/Bots/Markets/Positions and attach evidence note`
 
 ## Progress Log
+- 2026-04-05: Completed `ICN-06` by validating icon resolver regressions (`icons.e2e` covers collision ranking + fail-soft cache/curated/placeholder fallback chain) and adding web rendering-state regressions (`AssetSymbol.test.tsx` for loading/image/error fallback), with green targeted suites on API and web.
 - 2026-04-05: Completed `ICN-04` by wiring icon rendering to dashboard runtime signals rail + open positions + trade history symbol columns via shared web icon lookup hook (`/dashboard/icons/lookup`), introducing reusable `AssetSymbol` component with loading/error fallback states, and adding focused icon UI regression coverage (`AssetSymbol.test.tsx`) plus dashboard mock integration updates.
 - 2026-04-05: Completed `ICN-05` by extending API env templates (`apps/api/.env.example`, `.env.vps.example`) with CoinGecko controls (`COINGECKO_API_BASE_URL`, optional `COINGECKO_API_KEY`, `COIN_ICON_CACHE_TTL_MINUTES`) and updating Coolify rollout checklist in `docs/operations/coolify-linux-vps-setup-guide.md` with icon endpoint validation gate.
 - 2026-04-05: Completed `ICN-03` by adding authenticated deterministic icon lookup endpoint `GET /dashboard/icons/lookup` (query `symbols`) returning stable per-symbol metadata (`symbol/baseAsset/iconUrl/source/placeholder/coinGeckoId/cacheHit/resolvedAt`) with fail-soft response contract.
