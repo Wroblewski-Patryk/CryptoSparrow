@@ -12,6 +12,7 @@ import backtestsRouter from '../modules/backtests/backtests.routes';
 import logsRouter from '../modules/logs/logs.routes';
 import marketStreamRouter from '../modules/market-stream/marketStream.routes';
 import reportsRouter from '../modules/reports/reports.routes';
+import iconsRouter from '../modules/icons/icons.routes';
 
 const router = Router();
 router.use(requireAuth);
@@ -46,5 +47,6 @@ router.use('/backtests', backtestsRouter);
 router.use('/reports', reportsRouter);
 router.use('/logs', logsRouter);
 router.use('/market-stream', marketStreamRouter);
+router.use('/icons', iconsRouter);
 
 export default router;

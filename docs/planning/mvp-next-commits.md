@@ -36,8 +36,8 @@ Operational queue for one-task execution runs.
 - [x] `ARCH-08 refactor(web-bots): split BotsManagement into route shell + runtime blocks/components`
 - [x] `ARCH-10 chore(quality): add repository guardrail check for max-file-size budget + lockfile consistency`
 ## NEXT
-- [ ] `ICN-02 feat(api-icons): add CoinGecko symbol/id resolver and icon metadata cache with TTL + fail-soft fallback chain`
-- [ ] `ICN-03 feat(api-icons): expose icon lookup endpoint for dashboard modules with deterministic placeholder response`
+- [x] `ICN-02 feat(api-icons): add CoinGecko symbol/id resolver and icon metadata cache with TTL + fail-soft fallback chain`
+- [x] `ICN-03 feat(api-icons): expose icon lookup endpoint for dashboard modules with deterministic placeholder response`
 - [ ] `ICN-04 feat(web-icons): render asset icons in key dashboard tables/cards with loading/error fallback states`
 - [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 - [x] `ARCH-04 cleanup(web): verify/remove dead UI helper files (TableToolbar/basic.service) with import-safety checks`
@@ -48,6 +48,8 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `ICN-03 feat(api-icons): expose icon lookup endpoint for dashboard modules with deterministic placeholder response`
+- [x] `ICN-02 feat(api-icons): add CoinGecko symbol/id resolver and icon metadata cache with TTL + fail-soft fallback chain`
 - [x] `ICN-01 docs(contract): publish coin icon source contract (CoinGecko primary, exchange-independent, fallback-first)`
 - [x] `ARCH-32 refactor(api-bots): extract runtime trade lifecycle mapping (OPEN/DCA/CLOSE inference per position trades) from bots.service into dedicated module`
 - [x] `ARCH-31 refactor(api-bots): extract runtime trade close-reason normalization/lookup from bots.service into dedicated runtimeTradeActionReason service`
