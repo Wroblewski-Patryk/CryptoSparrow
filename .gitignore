@@ -3,6 +3,7 @@ apps/api/.gitignore
 apps/api/dist/
 apps/api/public/avatars/*
 !apps/api/public/avatars/default.png
+apps/api/tmp-*.log
 .vscode/settings.json
 .playwright-cli/
 playwright-*.log
