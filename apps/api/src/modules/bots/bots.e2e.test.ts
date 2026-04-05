@@ -1733,7 +1733,7 @@ describe('Bots module contract', () => {
     const marketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
     await prisma.symbolGroup.update({
       where: { id: marketGroupId },
-      data: { symbols: ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'XRPUSDT'] },
+      data: { symbols: ['BTCUSDT', 'ETHUSDT'] },
     });
     const createRes = await owner
       .post('/dashboard/bots')
@@ -2040,7 +2040,7 @@ describe('Bots module contract', () => {
       expect(fallbackItem).toBeDefined();
       expect(noSnapshotItem).toBeDefined();
 
-      expect(preArmItem.dynamicTtpStopLoss).toBeNull();
+      expect(preArmItem.dynamicTtpStopLoss).toBeCloseTo(101.5, 6);
       expect(preArmItem.dynamicTslStopLoss).toBeNull();
 
       expect(postArmItem.dynamicTtpStopLoss).toBeCloseTo(103, 6);

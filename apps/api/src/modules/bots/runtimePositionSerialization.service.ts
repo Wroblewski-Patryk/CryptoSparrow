@@ -92,7 +92,7 @@ const selectActiveTrailingTakeProfitDisplayLevel = (
   if (favorableMovePercent == null || !Number.isFinite(favorableMovePercent)) return null;
   let active: TrailingTakeProfitDisplayLevel | null = null;
   for (const level of levels) {
-    if (favorableMovePercent > level.armPercent) active = level;
+    if (favorableMovePercent >= level.armPercent) active = level;
   }
   return active;
 };
