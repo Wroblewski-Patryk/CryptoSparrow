@@ -26,6 +26,11 @@ import {
   listBotRuntimeSessions,
 } from "../../../features/bots/services/bots.service";
 import { supportsExchangeCapability } from "../../../features/exchanges/exchangeCapabilities";
+import {
+  pruneStickyFavorableMoveMap,
+  resolveFallbackTtpProtectedPercent,
+  toProtectedPnlPercentFromStopPrice,
+} from "../../../features/bots/utils/trailingStopDisplay";
 import RuntimeDataSection from "./home-live-widgets/RuntimeDataSection";
 import RuntimeOnboardingSection from "./home-live-widgets/RuntimeOnboardingSection";
 import RuntimeSidebarSection from "./home-live-widgets/RuntimeSidebarSection";
@@ -389,28 +394,22 @@ const resolveUsedMargin = (positions: BotRuntimePositionsResponse | null) =>
     return sum + p.entryNotional / lev;
   }, 0);
 
-const toProtectedPnlPercentFromStopPrice = (
-  position: OpenPositionWithLive,
-  stopPrice: number | null | undefined
-) => {
-  if (stopPrice == null || !Number.isFinite(stopPrice) || stopPrice <= 0) return null;
-  if (!Number.isFinite(position.entryPrice) || position.entryPrice <= 0) return null;
-  const leverage = Number.isFinite(position.leverage) && position.leverage > 0 ? position.leverage : 1;
-  const spotMove =
-    position.side === "LONG"
-      ? (stopPrice - position.entryPrice) / position.entryPrice
-      : (position.entryPrice - stopPrice) / position.entryPrice;
-  const leveragedMovePercent = spotMove * leverage * 100;
-  if (!Number.isFinite(leveragedMovePercent)) return null;
-  return leveragedMovePercent;
-};
-
 const resolveDynamicTtpDisplay = (position: OpenPositionWithLive) =>
-  toProtectedPnlPercentFromStopPrice(position, position.dynamicTtpStopLoss);
+  toProtectedPnlPercentFromStopPrice({
+    side: position.side,
+    entryPrice: position.entryPrice,
+    leverage: position.leverage,
+    stopPrice: position.dynamicTtpStopLoss,
+  }) ?? position.fallbackTtpProtectedPercent ?? null;
 
 const resolveDynamicTslDisplay = (position: OpenPositionWithLive) => {
   if (resolveDynamicTtpDisplay(position) != null) return null;
-  return toProtectedPnlPercentFromStopPrice(position, position.dynamicTslStopLoss);
+  return toProtectedPnlPercentFromStopPrice({
+    side: position.side,
+    entryPrice: position.entryPrice,
+    leverage: position.leverage,
+    stopPrice: position.dynamicTslStopLoss,
+  });
 };
 
 const buildLiveOpenPositions = (
@@ -524,6 +523,7 @@ export default function HomeLiveWidgets() {
   const [refreshToken, setRefreshToken] = useState(0);
   const [liveTickerPrices, setLiveTickerPrices] = useState<Record<string, number>>({});
   const [viewportWidth, setViewportWidth] = useState(0);
+  const ttpStickyFavorableMoveByPositionRef = useRef<Map<string, number>>(new Map());
   const loadInFlightRef = useRef(false);
   const loadStartedAtRef = useRef<number | null>(null);
   const signalRailRef = useRef<HTMLDivElement | null>(null);
@@ -806,9 +806,23 @@ export default function HomeLiveWidgets() {
     );
     const streamPrices = new Map<string, number>(Object.entries(liveTickerPrices));
     const open = buildLiveOpenPositions(selected.positions, selected.symbolStats, streamPrices);
+    const stickyFavorableMoveByPosition = ttpStickyFavorableMoveByPositionRef.current;
+    pruneStickyFavorableMoveMap(
+      stickyFavorableMoveByPosition,
+      new Set(open.map((position) => position.id))
+    );
+    const openWithProtectedFallback = open.map((position) => ({
+      ...position,
+      fallbackTtpProtectedPercent: resolveFallbackTtpProtectedPercent({
+        positionId: position.id,
+        livePnlPercent: position.livePnlPct,
+        trailingTakeProfitLevels: position.trailingTakeProfitLevels,
+        stickyFavorableMoveByPosition,
+      }),
+    }));
     const openQtyBySymbol = new Map<string, number>();
     const openUnrealizedBySymbol = new Map<string, number>();
-    for (const row of open) {
+    for (const row of openWithProtectedFallback) {
       const key = normalizeSymbol(row.symbol);
       openQtyBySymbol.set(key, (openQtyBySymbol.get(key) ?? 0) + row.quantity);
       openUnrealizedBySymbol.set(key, (openUnrealizedBySymbol.get(key) ?? 0) + row.liveUnrealizedPnl);
@@ -825,7 +839,10 @@ export default function HomeLiveWidgets() {
       };
     });
     const usedMargin = resolveUsedMargin(selected.positions);
-    const unrealized = open.length > 0 ? open.reduce((sum, row) => sum + row.liveUnrealizedPnl, 0) : resolveUnrealized(selected);
+    const unrealized =
+      openWithProtectedFallback.length > 0
+        ? openWithProtectedFallback.reduce((sum, row) => sum + row.liveUnrealizedPnl, 0)
+        : resolveUnrealized(selected);
     const realized = session?.summary.realizedPnl ?? 0;
     const net = realized + unrealized;
     const wins = selected.symbolStats?.summary.winningTrades ?? 0;
@@ -839,7 +856,7 @@ export default function HomeLiveWidgets() {
     return {
       session,
       symbols,
-      open,
+      open: openWithProtectedFallback,
       usedMargin,
       unrealized,
       realized,

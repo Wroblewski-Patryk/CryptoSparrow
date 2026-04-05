@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { useI18n } from "../../../i18n/I18nProvider";
@@ -46,6 +46,11 @@ import { StrategyDto } from "../../strategies/types/StrategyForm.type";
 import { createMarketStreamEventSource } from "../../../lib/marketStream";
 import { supportsExchangeCapability } from "../../exchanges/exchangeCapabilities";
 import { LuChevronDown } from "react-icons/lu";
+import {
+  pruneStickyFavorableMoveMap,
+  resolveFallbackTtpProtectedPercent,
+  toProtectedPnlPercentFromStopPrice,
+} from "../utils/trailingStopDisplay";
 
 const LIVE_CONSENT_TEXT_VERSION = "mvp-v1";
 const DUPLICATE_ACTIVE_BOT_ERROR = "active bot already exists for this strategy + market group pair";
@@ -112,23 +117,6 @@ const formatDuration = (ms: number) => {
   const minutes = totalMinutes % 60;
   if (hours <= 0) return `${minutes}m`;
   return `${hours}h ${minutes}m`;
-};
-
-const toProtectedPnlPercentFromStopPrice = (params: {
-  side: "LONG" | "SHORT";
-  entryPrice: number;
-  leverage: number;
-  stopPrice: number | null | undefined;
-}) => {
-  const { side, entryPrice, leverage, stopPrice } = params;
-  if (stopPrice == null || !Number.isFinite(stopPrice) || stopPrice <= 0) return null;
-  if (!Number.isFinite(entryPrice) || entryPrice <= 0) return null;
-  const effectiveLeverage = Number.isFinite(leverage) && leverage > 0 ? leverage : 1;
-  const spotMove =
-    side === "LONG" ? (stopPrice - entryPrice) / entryPrice : (entryPrice - stopPrice) / entryPrice;
-  const leveragedMovePercent = spotMove * effectiveLeverage * 100;
-  if (!Number.isFinite(leveragedMovePercent)) return null;
-  return leveragedMovePercent;
 };
 
 const normalizeDcaLevels = (levels?: number[] | null) =>
@@ -567,6 +555,7 @@ export default function BotsManagement({
   const [monitorError, setMonitorError] = useState<string | null>(null);
   const [monitorAutoRefreshEnabled, setMonitorAutoRefreshEnabled] = useState(true);
   const [monitorLiveTickerPrices, setMonitorLiveTickerPrices] = useState<Record<string, number>>({});
+  const monitorTtpStickyFavorableMoveByPositionRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
     if (!lockedTab) return;
@@ -737,8 +726,14 @@ export default function BotsManagement({
       selectedMonitorBot?.mode === "PAPER" && selectedMonitorBot.paperStartBalance > 0
         ? selectedMonitorBot.paperStartBalance
         : null;
+    const openItems = monitorPositions?.openItems ?? [];
+    const stickyFavorableMoveByPosition = monitorTtpStickyFavorableMoveByPositionRef.current;
+    pruneStickyFavorableMoveMap(
+      stickyFavorableMoveByPosition,
+      new Set(openItems.map((position) => position.id))
+    );
 
-    return (monitorPositions?.openItems ?? []).map((position) => {
+    return openItems.map((position) => {
       const liveMarkPrice =
         monitorLiveTickerPrices[normalizeSymbol(position.symbol)] ?? position.markPrice ?? null;
       const openPnl =
@@ -752,13 +747,21 @@ export default function BotsManagement({
       const pnlNotionalPct = entryNotional > 0 ? (openPnl / entryNotional) * 100 : 0;
       const pnlMarginPct = marginUsed > 0 ? (openPnl / marginUsed) * 100 : 0;
       const marginInitPct = initBalance && initBalance > 0 ? (marginUsed / initBalance) * 100 : null;
-      const ttpProtectedPercent =
+      const ttpProtectedPercentFromStopPrice =
         toProtectedPnlPercentFromStopPrice({
           side: position.side,
           entryPrice: position.entryPrice,
           leverage: position.leverage,
           stopPrice: position.dynamicTtpStopLoss,
         }) ?? null;
+      const ttpProtectedPercentFallback = resolveFallbackTtpProtectedPercent({
+        positionId: position.id,
+        livePnlPercent: pnlMarginPct,
+        trailingTakeProfitLevels: position.trailingTakeProfitLevels,
+        stickyFavorableMoveByPosition,
+      });
+      const ttpProtectedPercent =
+        ttpProtectedPercentFromStopPrice ?? ttpProtectedPercentFallback ?? null;
       const tslProtectedPercent =
         ttpProtectedPercent != null
           ? null
@@ -1393,6 +1396,7 @@ export default function BotsManagement({
 
   useEffect(() => {
     setMonitorLiveTickerPrices({});
+    monitorTtpStickyFavorableMoveByPositionRef.current.clear();
   }, [monitorBotId, monitorSessionId, monitorViewMode]);
 
   useEffect(() => {

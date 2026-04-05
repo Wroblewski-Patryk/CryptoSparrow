@@ -24,6 +24,7 @@ export type OpenPositionWithLive = BotRuntimePositionItem & {
   liveUnrealizedPnl: number;
   livePnlPct: number | null;
   marginNotional: number;
+  fallbackTtpProtectedPercent?: number | null;
 };
 
 export type SignalPillValue = "LONG" | "SHORT" | "EXIT" | "NEUTRAL";

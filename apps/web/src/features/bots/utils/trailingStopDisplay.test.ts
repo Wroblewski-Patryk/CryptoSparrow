@@ -1,0 +1,38 @@
+import { describe, expect, it } from "vitest";
+import { resolveFallbackTtpProtectedPercent } from "./trailingStopDisplay";
+
+describe("trailingStopDisplay", () => {
+  it("arms and keeps sticky protected percent for TTP fallback", () => {
+    const sticky = new Map<string, number>();
+    const levels = [
+      { armPercent: 5, trailPercent: 2.5 },
+      { armPercent: 10, trailPercent: 5 },
+      { armPercent: 20, trailPercent: 10 },
+    ];
+
+    const first = resolveFallbackTtpProtectedPercent({
+      positionId: "pos-1",
+      livePnlPercent: 6.21,
+      trailingTakeProfitLevels: levels,
+      stickyFavorableMoveByPosition: sticky,
+    });
+    expect(first).toBeCloseTo(3.71, 2);
+
+    const second = resolveFallbackTtpProtectedPercent({
+      positionId: "pos-1",
+      livePnlPercent: 4.1,
+      trailingTakeProfitLevels: levels,
+      stickyFavorableMoveByPosition: sticky,
+    });
+    expect(second).toBeCloseTo(3.71, 2);
+
+    const third = resolveFallbackTtpProtectedPercent({
+      positionId: "pos-1",
+      livePnlPercent: 12,
+      trailingTakeProfitLevels: levels,
+      stickyFavorableMoveByPosition: sticky,
+    });
+    expect(third).toBeCloseTo(7, 2);
+  });
+});
+

@@ -7,6 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [x] `BOPS-62 fix(web-runtime): add sticky TTP display fallback from live PnL% + strategy levels when API dynamic stop is temporarily unavailable`
 - [x] `BOPS-61 fix(api-runtime): resolve per-position TTP/TSL display inputs from linked strategy config fallback and arm TTP at >= threshold`
 - [x] `ARCH-11 refactor(api-bots): extract strategy config parsing helpers (advanced close mode + TTP/TSL + DCA levels) from bots.service`
 - [x] `ARCH-07 refactor(web-dashboard): split HomeLiveWidgets into composable sections (signals, open positions, history, sidebar)`
