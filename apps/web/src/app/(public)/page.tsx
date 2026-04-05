@@ -7,7 +7,10 @@ export default function PublicPage() {
         <div
           aria-hidden
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/hero-sky.png')" }}
+          style={{
+            backgroundImage:
+              "image-set(url('/hero-sky.webp') type('image/webp'), url('/hero-sky.png') type('image/png'))",
+          }}
         />
         <div
           aria-hidden

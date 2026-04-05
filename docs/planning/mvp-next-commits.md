@@ -19,7 +19,7 @@ Operational queue for one-task execution runs.
 - [x] `ARCH-06 refactor(api-bots): extract session stats aggregation/query layer from bots.service into focused read-services`
 - [ ] `ARCH-07 refactor(web-dashboard): split HomeLiveWidgets into composable sections (signals, open positions, history, sidebar)`
 - [ ] `ARCH-08 refactor(web-bots): split BotsManagement into route shell + runtime blocks/components`
-- [ ] `ARCH-09 perf(web-assets): optimize oversized hero/avatar assets without visual contract drift`
+- [x] `ARCH-09 perf(web-assets): optimize oversized hero/avatar assets without visual contract drift`
 - [ ] `ARCH-10 chore(quality): add repository guardrail check for max-file-size budget + lockfile consistency`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
