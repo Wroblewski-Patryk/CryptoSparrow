@@ -7,6 +7,11 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [x] `LDUX-01 docs(contract): lock dashboard loading UX contract (skeleton-first + global progress bar under header)`
+- [ ] `LDUX-02 feat(web-ui): add shared DaisyUI skeleton primitives for table/card/form/kpi dashboard patterns`
+- [ ] `LDUX-03 feat(web-shell): add dashboard header-underbar navigation progress component with staged percent animation`
+- [ ] `LDUX-04 refactor(web-viewstate): make dashboard loading path skeleton-first while keeping alert states for error/degraded/success`
+- [ ] `LDUX-05 feat(web-dashboard-home+bots): replace loading alerts with section/page skeleton compositions`
 - [x] `ICN-01 docs(contract): publish coin icon source contract (CoinGecko primary, exchange-independent, fallback-first)`
 - [x] `ARCH-30 refactor(api-bots): extract assistant-config/subagent CRUD and dry-run orchestration from bots.service into dedicated module with re-export contract`
 - [x] `ARCH-29 refactor(api-bots): extract bot market-group and strategy-link CRUD block from bots.service into dedicated module and re-export contract`
@@ -36,6 +41,10 @@ Operational queue for one-task execution runs.
 - [x] `ARCH-08 refactor(web-bots): split BotsManagement into route shell + runtime blocks/components`
 - [x] `ARCH-10 chore(quality): add repository guardrail check for max-file-size budget + lockfile consistency`
 ## NEXT
+- [ ] `LDUX-06 feat(web-markets+strategies+logs): migrate loading views to skeleton compositions`
+- [ ] `LDUX-07 feat(web-backtests): migrate list/details loading states to skeletons and preserve timeline phase messaging`
+- [ ] `LDUX-08 test(web-loading-ux): add regression coverage for progress bar lifecycle and key skeleton rendering states`
+- [ ] `LDUX-09 qa(web-dashboard): run manual desktop/mobile smoke and capture evidence`
 - [x] `ICN-02 feat(api-icons): add CoinGecko symbol/id resolver and icon metadata cache with TTL + fail-soft fallback chain`
 - [x] `ICN-03 feat(api-icons): expose icon lookup endpoint for dashboard modules with deterministic placeholder response`
 - [x] `ICN-04 feat(web-icons): render asset icons in key dashboard tables/cards with loading/error fallback states`
@@ -51,6 +60,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `LDUX-01 docs(contract): lock dashboard loading UX contract (skeleton-first + global progress bar under header)`
 - [x] `BOPS-65 feat(web-dashboard): polish runtime signal cards UX (header counters + base currency + dual-column condition emphasis) and streamline dashboard trade/open-position table columns/time format`
 - [x] `ICN-06 test(api+web): add regression coverage for resolver collisions, cache fallback, and icon rendering states`
 - [x] `ICN-07 qa(web): run manual smoke for icons across Dashboard/Bots/Markets/Positions and attach evidence note`
