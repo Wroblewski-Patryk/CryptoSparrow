@@ -11,7 +11,7 @@ Operational queue for one-task execution runs.
 - [x] `NAVM-03 fix(web-header): enforce deterministic stacking and scroll-lock for open mobile menu`
 - [x] `NAVM-04 test(web-header): add interactive mobile menu open/close visibility regression test`
 - [x] `ARCH-02 chore(repo): remove accidental npm lockfile from apps/api and enforce pnpm-only lockfile policy`
-- [ ] `ARCH-03 chore(api-deps): remove unused api dependency 'prima' and revalidate api typecheck/tests`
+- [x] `ARCH-03 chore(api-deps): remove unused api dependency 'prima' and revalidate api typecheck/tests`
 ## NEXT
 - [ ] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 - [ ] `ARCH-04 cleanup(web): verify/remove dead UI helper files (TableToolbar/basic.service) with import-safety checks`
