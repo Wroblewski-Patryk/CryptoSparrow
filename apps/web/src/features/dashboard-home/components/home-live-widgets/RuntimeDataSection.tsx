@@ -27,6 +27,7 @@ type RuntimeDataSectionProps = {
   previousLabel: string;
   nextLabel: string;
   noOpenPositionsLabel: string;
+  openOrdersPlaceholderLabel: string;
   tradesLoading: boolean;
   loadingLabel: string;
   tradesRows: BotRuntimeTrade[];
@@ -91,6 +92,14 @@ export default function RuntimeDataSection(props: RuntimeDataSectionProps) {
             nextLabel={props.nextLabel}
             emptyText={props.noOpenPositionsLabel}
           />
+        </section>
+      ) : null}
+
+      {props.runtimeDataTab === "OPEN_ORDERS" ? (
+        <section>
+          <div className="rounded-box border border-dashed border-base-300/60 bg-base-100/40 px-4 py-6 text-center text-sm opacity-75">
+            {props.openOrdersPlaceholderLabel}
+          </div>
         </section>
       ) : null}
 

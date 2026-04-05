@@ -182,6 +182,7 @@ type TranslationSchema = {
         onboardingStepBotDescription: string;
         onboardingStepBotCta: string;
         openPositionsTitle: string;
+        openOrdersTitle: string;
         timeOpened: string;
         symbol: string;
         side: string;
@@ -192,6 +193,7 @@ type TranslationSchema = {
         slTtp: string;
         slTsl: string;
         noOpenPositions: string;
+        openOrdersPlaceholder: string;
         tradesHistoryTitlePaper: string;
         tradesHistoryTitleLive: string;
         filterSymbol: string;
@@ -448,6 +450,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           onboardingStepBotDescription: "Assign strategy + markets, then start bot session.",
           onboardingStepBotCta: "Open bot creator",
           openPositionsTitle: "Open positions",
+          openOrdersTitle: "Open orders",
           timeOpened: "Time",
           symbol: "Symbol",
           side: "Side",
@@ -458,6 +461,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           slTtp: "TTP",
           slTsl: "TSL",
           noOpenPositions: "No open positions.",
+          openOrdersPlaceholder: "Open orders tab is prepared and will be filled in upcoming runtime updates.",
           tradesHistoryTitlePaper: "Trade history",
           tradesHistoryTitleLive: "Orders and trade history",
           filterSymbol: "Symbol",
@@ -1040,6 +1044,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           onboardingStepBotDescription: "Podepnij strategie i rynki, potem uruchom sesje.",
           onboardingStepBotCta: "Otworz kreator bota",
           openPositionsTitle: "Otwarte pozycje",
+          openOrdersTitle: "Otwarte zlecenia",
           timeOpened: "Czas",
           symbol: "Symbol",
           side: "Side",
@@ -1050,6 +1055,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           slTtp: "TTP",
           slTsl: "TSL",
           noOpenPositions: "Brak otwartych pozycji.",
+          openOrdersPlaceholder: "Zakladka otwartych zlecen jest gotowa i bedzie uzupelniona w kolejnych aktualizacjach runtime.",
           tradesHistoryTitlePaper: "Historia transakcji",
           tradesHistoryTitleLive: "Zlecenia i historia transakcji",
           filterSymbol: "Symbol",

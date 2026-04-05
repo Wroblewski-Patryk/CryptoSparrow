@@ -135,9 +135,13 @@ const EMPTY_TRADE_FILTERS: TradeFiltersState = {
 const RUNTIME_DATA_TABS: {
   key: RuntimeDataTab;
   hash: string;
-  labelKey: "dashboard.home.runtime.openPositionsTitle" | "dashboard.home.runtime.tradesHistoryTitlePaper";
+  labelKey:
+    | "dashboard.home.runtime.openPositionsTitle"
+    | "dashboard.home.runtime.openOrdersTitle"
+    | "dashboard.home.runtime.tradesHistoryTitlePaper";
 }[] = [
   { key: "OPEN_POSITIONS", hash: "positions", labelKey: "dashboard.home.runtime.openPositionsTitle" },
+  { key: "OPEN_ORDERS", hash: "orders", labelKey: "dashboard.home.runtime.openOrdersTitle" },
   { key: "TRADE_HISTORY", hash: "history", labelKey: "dashboard.home.runtime.tradesHistoryTitlePaper" },
 ];
 
@@ -1268,12 +1272,17 @@ export default function HomeLiveWidgets() {
       RUNTIME_DATA_TABS.map((tab) => ({
         key: tab.key,
         hash: tab.hash,
-        icon:
-          tab.key === "TRADE_HISTORY" ? (
+        icon: tab.key === "TRADE_HISTORY"
+          ? (
             <LuChartCandlestick className="h-4 w-4" aria-hidden />
-          ) : (
-            <LuPackageOpen className="h-4 w-4" aria-hidden />
-          ),
+          )
+          : tab.key === "OPEN_ORDERS"
+            ? (
+              <LuListChecks className="h-4 w-4" aria-hidden />
+            )
+            : (
+              <LuPackageOpen className="h-4 w-4" aria-hidden />
+            ),
         label:
           tab.key === "TRADE_HISTORY"
             ? (selected?.bot.mode === "LIVE"
@@ -1387,6 +1396,7 @@ export default function HomeLiveWidgets() {
                 previousLabel={t("dashboard.home.runtime.previous")}
                 nextLabel={t("dashboard.home.runtime.next")}
                 noOpenPositionsLabel={t("dashboard.home.runtime.noOpenPositions")}
+                openOrdersPlaceholderLabel={t("dashboard.home.runtime.openOrdersPlaceholder")}
                 tradesLoading={selectedTradesLoading}
                 loadingLabel={t("dashboard.home.loadWidgets")}
                 tradesRows={selectedData?.trades ?? []}

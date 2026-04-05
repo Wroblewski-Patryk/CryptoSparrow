@@ -124,22 +124,22 @@ export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps)
             return (
               <article
                 key={signal.id}
-                className="rounded-box bg-gradient-to-r from-primary/60 via-secondary/45 to-primary/60 p-px"
+                className="rounded-box border-b-[3px] border-secondary/70 bg-gradient-to-r from-primary/70 to-secondary/70 p-px"
               >
-                <div className="rounded-box bg-base-200/35 px-3 py-2">
-                  <div className="flex items-center justify-between gap-2">
+                <div className="rounded-box bg-base-100 px-3.5 py-2.5">
+                  <div className="flex items-center justify-between gap-2.5">
                     <p className="min-w-0 font-semibold tracking-wide">
                       {props.renderSymbolLabel ? props.renderSymbolLabel(signal.symbol) : signal.symbol}
                     </p>
                     {props.renderSignalPill(signalDirection)}
                   </div>
-                  <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] leading-4">
+                  <div className="mt-2.5 grid grid-cols-2 gap-2.5 text-[11px] leading-4">
                     <div
-                      className={`space-y-1 rounded-box bg-base-100/70 px-2 py-1.5 transition-opacity duration-150 ${
+                      className={`space-y-1.5 rounded-box transition-opacity duration-150 ${
                         longActive ? "opacity-100" : "opacity-50 hover:opacity-100"
                       }`}
                     >
-                      <div className="mb-0.5 flex items-center gap-1">
+                      <div className="mb-1 flex items-center gap-1">
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium ${scopeLabelClass("LONG")}`}
                         >
@@ -151,22 +151,23 @@ export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps)
                         <p className="text-[10px] opacity-55">-</p>
                       ) : (
                         longLines.map((line, index) => (
-                          <p key={`${signal.id}-long-${index}`} className="font-mono text-[10px]">
-                            <span>{line.left}</span>
-                            <span className="mx-1">=</span>
-                            <span className="font-semibold">{line.value}</span>
-                            <span className="mx-1">{line.operator}</span>
-                            <span>{line.right}</span>
-                          </p>
+                          <div key={`${signal.id}-long-${index}`} className="space-y-1 font-mono text-[10px] leading-4">
+                            <p className="opacity-75">{line.left}</p>
+                            <p className="font-semibold">
+                              <span>{line.value}</span>
+                              <span className="mx-1">{line.operator}</span>
+                              <span>{line.right}</span>
+                            </p>
+                          </div>
                         ))
                       )}
                     </div>
                     <div
-                      className={`space-y-1 rounded-box bg-base-100/70 px-2 py-1.5 transition-opacity duration-150 ${
+                      className={`space-y-1.5 rounded-box transition-opacity duration-150 ${
                         shortActive ? "opacity-100" : "opacity-50 hover:opacity-100"
                       }`}
                     >
-                      <div className="mb-0.5 flex items-center gap-1">
+                      <div className="mb-1 flex items-center gap-1">
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium ${scopeLabelClass("SHORT")}`}
                         >
@@ -178,13 +179,14 @@ export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps)
                         <p className="text-[10px] opacity-55">-</p>
                       ) : (
                         shortLines.map((line, index) => (
-                          <p key={`${signal.id}-short-${index}`} className="font-mono text-[10px]">
-                            <span>{line.left}</span>
-                            <span className="mx-1">=</span>
-                            <span className="font-semibold">{line.value}</span>
-                            <span className="mx-1">{line.operator}</span>
-                            <span>{line.right}</span>
-                          </p>
+                          <div key={`${signal.id}-short-${index}`} className="space-y-1 font-mono text-[10px] leading-4">
+                            <p className="opacity-75">{line.left}</p>
+                            <p className="font-semibold">
+                              <span>{line.value}</span>
+                              <span className="mx-1">{line.operator}</span>
+                              <span>{line.right}</span>
+                            </p>
+                          </div>
                         ))
                       )}
                     </div>

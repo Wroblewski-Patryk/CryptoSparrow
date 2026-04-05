@@ -320,6 +320,8 @@ describe("HomeLiveWidgets", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("tab", { name: /Otwarte pozycje|Open positions/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /Otwarte zlecenia|Open orders/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /Historia transakcji|Trade history/i })).toBeInTheDocument();
       expect(screen.getByText(/Wybrany bot|Selected bot/i)).toBeInTheDocument();
       expect(screen.getByRole("option", { name: /Monitor Bot/i })).toBeInTheDocument();
       expect(screen.getAllByText("RUNNING").length).toBeGreaterThan(0);
@@ -336,6 +338,14 @@ describe("HomeLiveWidgets", () => {
       ).toBeInTheDocument();
       expect(screen.getAllByText("-").length).toBeGreaterThan(0);
     });
+    {
+      const openPositionsTab = screen.getByRole("tab", { name: /Otwarte pozycje|Open positions/i });
+      const openOrdersTab = screen.getByRole("tab", { name: /Otwarte zlecenia|Open orders/i });
+      const tradeHistoryTab = screen.getByRole("tab", { name: /Historia transakcji|Trade history/i });
+
+      expect(openPositionsTab.compareDocumentPosition(openOrdersTab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(openOrdersTab.compareDocumentPosition(tradeHistoryTab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
 
     expect(lookupCoinIconsMock).toHaveBeenCalledWith(expect.arrayContaining(["BTCUSDT", "ETHUSDT"]));
 

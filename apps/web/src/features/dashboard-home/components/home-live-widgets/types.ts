@@ -29,7 +29,7 @@ export type OpenPositionWithLive = BotRuntimePositionItem & {
 
 export type SignalPillValue = "LONG" | "SHORT" | "EXIT" | "NEUTRAL";
 
-export type RuntimeDataTab = "OPEN_POSITIONS" | "TRADE_HISTORY";
+export type RuntimeDataTab = "OPEN_POSITIONS" | "OPEN_ORDERS" | "TRADE_HISTORY";
 
 export type TradeSortBy =
   | "executedAt"
