@@ -500,6 +500,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARCH-12 refactor(api-bots): extract runtime market-data fallback fetchers (kline/ticker) from bots.service into dedicated module`
 - [x] `ARCH-13 refactor(api-bots): extract symbol-scoped strategy display resolvers (advanced close mode + DCA plan + TTP/TSL level maps) from bots.service into dedicated module`
 - [x] `ARCH-14 refactor(api-bots): extract runtime signal-condition summary formatter from bots.service into dedicated module`
+- [x] `ARCH-15 refactor(api-bots): extract runtime signal indicator helpers (EMA/RSI/Momentum + period/value formatting) from bots.service into dedicated module`
 
 ## Phase 31 - Dashboard Mobile Navigation Stability
 - [x] `NAVM-01 docs(contract): lock mobile nav overlay contract (layering, offset, scroll, close behavior)`
@@ -509,6 +510,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 
 ## Progress Log
+- 2026-04-05: Completed `ARCH-15` by extracting runtime signal indicator helpers (`clampPeriod`, EMA/RSI/Momentum series calculators, indicator value formatter) from `bots.service.ts` into dedicated `runtimeSignalIndicators.service.ts`, wiring live-signal condition/summary rendering paths to the new module without behavior drift; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-14` by extracting runtime signal-condition summary formatter (`buildSignalConditionSummary` with indicator-specific rule formatting) from `bots.service.ts` into dedicated `runtimeSignalConditionSummary.service.ts`, wiring runtime symbol-stats path to the new module without behavior drift; validated via `pnpm --filter api typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-13` by extracting symbol-scoped runtime strategy display resolvers (`resolveBotAdvancedCloseMode`, `resolveBotDcaPlanBySymbol`, `resolveBotTrailingStopLevelsBySymbol`, `resolveBotTrailingTakeProfitLevelsBySymbol`) from `bots.service.ts` into dedicated `runtimeStrategyDisplayBySymbol.service.ts`, then wiring existing runtime read call-sites to the new module without behavior drift; validated via `pnpm --filter api typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-12` by extracting runtime market-data fallback fetchers (`fetchFallbackKlineCloses`, `fetchFallbackTickerPrices`) and their cache/interval normalization helpers from `bots.service.ts` into dedicated `runtimeMarketDataFallback.service.ts`, wiring existing call-sites without behavior drift; validated via `pnpm --filter api typecheck` and targeted bots e2e invocation (suite skipped in local env due test gating).
