@@ -9,6 +9,7 @@ const listBotRuntimeSessionsMock = vi.hoisted(() => vi.fn());
 const listBotRuntimeSessionSymbolStatsMock = vi.hoisted(() => vi.fn());
 const listBotRuntimeSessionPositionsMock = vi.hoisted(() => vi.fn());
 const listBotRuntimeSessionTradesMock = vi.hoisted(() => vi.fn());
+const lookupCoinIconsMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../../../features/bots/services/bots.service", () => ({
   listBots: listBotsMock,
@@ -18,14 +19,20 @@ vi.mock("../../../features/bots/services/bots.service", () => ({
   listBotRuntimeSessionTrades: listBotRuntimeSessionTradesMock,
 }));
 
+vi.mock("../../../features/icons/services/icons.service", () => ({
+  lookupCoinIcons: lookupCoinIconsMock,
+}));
+
 describe("HomeLiveWidgets", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.clearAllMocks();
+    lookupCoinIconsMock.mockReset();
   });
 
   const renderSubject = () => {
     window.localStorage.setItem("cryptosparrow-locale", "pl");
+    lookupCoinIconsMock.mockResolvedValue(new Map());
     return render(
       <I18nProvider>
         <HomeLiveWidgets />
@@ -325,6 +332,8 @@ describe("HomeLiveWidgets", () => {
       ).toBeInTheDocument();
       expect(screen.getAllByText("-").length).toBeGreaterThan(0);
     });
+
+    expect(lookupCoinIconsMock).toHaveBeenCalledWith(expect.arrayContaining(["BTCUSDT", "ETHUSDT"]));
   });
 
   it("renders strategy signals above open positions and enables rail controls for larger symbol sets", async () => {

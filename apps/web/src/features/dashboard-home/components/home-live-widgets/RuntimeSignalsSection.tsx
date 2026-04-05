@@ -13,6 +13,7 @@ type RuntimeSignalsSectionProps = {
   longLabel: string;
   shortLabel: string;
   noSignalDataLabel: string;
+  renderSymbolLabel?: (symbol: string) => ReactNode;
   renderSignalPill: (value: SignalPillValue) => ReactNode;
 };
 
@@ -42,7 +43,9 @@ export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps)
             return (
               <article key={signal.id} className="rounded-box bg-base-200/35 px-3 py-2">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="font-semibold tracking-wide">{signal.symbol}</p>
+                  <p className="min-w-0 font-semibold tracking-wide">
+                    {props.renderSymbolLabel ? props.renderSymbolLabel(signal.symbol) : signal.symbol}
+                  </p>
                   {props.renderSignalPill(signalDirection)}
                 </div>
                 <div className="mt-2 space-y-2 text-[11px] leading-4">

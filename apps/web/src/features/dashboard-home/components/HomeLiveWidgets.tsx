@@ -5,7 +5,8 @@ import axios from "axios";
 import { LuBot, LuChartCandlestick, LuChartLine, LuChevronDown, LuListChecks, LuPackageOpen } from "react-icons/lu";
 
 import { ErrorState, LoadingState } from "../../../ui/components/ViewState";
-import DataTable, { DataTableColumn } from "../../../ui/components/DataTable";
+import { DataTableColumn } from "../../../ui/components/DataTable";
+import AssetSymbol from "../../../ui/components/AssetSymbol";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { createMarketStreamEventSource } from "../../../lib/marketStream";
@@ -26,6 +27,7 @@ import {
   listBotRuntimeSessions,
 } from "../../../features/bots/services/bots.service";
 import { supportsExchangeCapability } from "../../../features/exchanges/exchangeCapabilities";
+import { useCoinIconLookup } from "../../../features/icons/hooks/useCoinIconLookup";
 import {
   pruneStickyFavorableMoveMap,
   resolveFallbackTtpProtectedPercent,
@@ -898,6 +900,34 @@ export default function HomeLiveWidgets() {
     viewportWidth > 0 ? viewportWidth : SIGNAL_CARDS_DENSITY_BREAKPOINTS.desktopMinWidth
   );
   const signalSymbols = selectedData?.symbols ?? [];
+  const runtimeIconSymbols = useMemo(() => {
+    const symbols = new Set<string>();
+    for (const item of signalSymbols) symbols.add(normalizeSymbol(item.symbol));
+    for (const item of selectedData?.open ?? []) symbols.add(normalizeSymbol(item.symbol));
+    for (const item of selectedData?.trades ?? []) symbols.add(normalizeSymbol(item.symbol));
+    return [...symbols];
+  }, [selectedData?.open, selectedData?.trades, signalSymbols]);
+  const { iconMap: runtimeIconMap, loading: runtimeIconsLoading, error: runtimeIconsError } =
+    useCoinIconLookup(runtimeIconSymbols);
+  const resolveRuntimeIcon = useCallback(
+    (symbol: string) => runtimeIconMap[normalizeSymbol(symbol)] ?? null,
+    [runtimeIconMap]
+  );
+  const renderRuntimeSymbol = useCallback(
+    (symbol: string) => {
+      const icon = resolveRuntimeIcon(symbol);
+      return (
+        <AssetSymbol
+          symbol={symbol}
+          iconUrl={icon?.iconUrl ?? null}
+          loading={runtimeIconsLoading && !icon}
+          hasError={Boolean(runtimeIconsError)}
+          className="font-semibold"
+        />
+      );
+    },
+    [resolveRuntimeIcon, runtimeIconsError, runtimeIconsLoading]
+  );
   const hasSignalOverflow = signalSymbols.length > signalCardsPerView;
 
   const scrollSignalRail = (direction: "prev" | "next") => {
@@ -971,7 +1001,18 @@ export default function HomeLiveWidgets() {
         label: t("dashboard.home.runtime.symbol"),
         sortable: true,
         accessor: (row) => row.symbol,
-        className: "font-medium",
+        render: (row) => {
+          const icon = resolveRuntimeIcon(row.symbol);
+          return (
+            <AssetSymbol
+              symbol={row.symbol}
+              iconUrl={icon?.iconUrl ?? null}
+              loading={runtimeIconsLoading && !icon}
+              hasError={Boolean(runtimeIconsError)}
+              className="font-medium"
+            />
+          );
+        },
       },
       {
         key: "side",
@@ -1051,6 +1092,9 @@ export default function HomeLiveWidgets() {
     formatNumber,
     formatPercent,
     formatTime,
+    resolveRuntimeIcon,
+    runtimeIconsError,
+    runtimeIconsLoading,
     showDynamicStopColumns,
     t,
   ]);
@@ -1068,7 +1112,18 @@ export default function HomeLiveWidgets() {
       label: t("dashboard.home.runtime.symbol"),
       sortable: true,
       accessor: (row) => row.symbol,
-      className: "font-medium",
+      render: (row) => {
+        const icon = resolveRuntimeIcon(row.symbol);
+        return (
+          <AssetSymbol
+            symbol={row.symbol}
+            iconUrl={icon?.iconUrl ?? null}
+            loading={runtimeIconsLoading && !icon}
+            hasError={Boolean(runtimeIconsError)}
+            className="font-medium"
+          />
+        );
+      },
     },
     {
       key: "side",
@@ -1152,6 +1207,9 @@ export default function HomeLiveWidgets() {
     formatCurrency,
     formatDateTime,
     formatNumber,
+    resolveRuntimeIcon,
+    runtimeIconsError,
+    runtimeIconsLoading,
     t,
   ]);
 
@@ -1244,6 +1302,7 @@ export default function HomeLiveWidgets() {
                 longLabel={t("dashboard.home.runtime.long")}
                 shortLabel={t("dashboard.home.runtime.short")}
                 noSignalDataLabel={t("dashboard.home.runtime.noSignalData")}
+                renderSymbolLabel={renderRuntimeSymbol}
                 renderSignalPill={(value) => <SignalPill value={value} />}
               />
 
