@@ -73,8 +73,8 @@ import {
   fetchFallbackTickerPrices,
 } from './runtimeMarketDataFallback.service';
 import {
+  assertNoDuplicateActiveBotByStrategyAndSymbolGroup,
   deriveMaxOpenPositionsFromStrategy,
-  findDuplicateActiveBotByStrategyAndSymbolGroup,
   getOwnedStrategy,
   resolveCreateMarketGroupToSymbolGroup,
 } from './botWriteValidation.service';
@@ -244,18 +244,6 @@ const writeLiveConsentAudit = async (params: {
     });
   } catch {
     // Audit failures should not block core bot updates.
-  }
-};
-
-const assertNoDuplicateActiveBotByStrategyAndSymbolGroup = async (params: {
-  userId: string;
-  strategyId: string;
-  symbolGroupId: string;
-  excludeBotId?: string;
-}) => {
-  const duplicate = await findDuplicateActiveBotByStrategyAndSymbolGroup(params);
-  if (duplicate?.bot) {
-    throw new Error('ACTIVE_BOT_STRATEGY_MARKET_GROUP_DUPLICATE');
   }
 };
 

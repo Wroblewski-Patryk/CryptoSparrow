@@ -508,6 +508,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARCH-20 refactor(api-bots): extract bot create/update validation helpers (strategy lookup, market-group -> symbol-group resolver, max-open derivation, duplicate-active guard query) from bots.service into dedicated module`
 - [x] `ARCH-21 refactor(api-bots): extract ownership/session helper queries (owned bot, owned runtime session, session-window end, symbol-group compatibility validator) from bots.service into dedicated module`
 - [x] `ARCH-22 refactor(api-bots): extract API-key compatibility resolver (owned key lookup, latest-key fallback, exchange guard) from bots.service into dedicated module`
+- [x] `ARCH-23 refactor(api-bots): move duplicate-active strategy+market-group assertion helper from bots.service to botWriteValidation.service`
 
 ## Phase 31 - Dashboard Mobile Navigation Stability
 - [x] `NAVM-01 docs(contract): lock mobile nav overlay contract (layering, offset, scroll, close behavior)`
@@ -517,6 +518,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 
 ## Progress Log
+- 2026-04-05: Completed `ARCH-23` by moving duplicate-active strategy+market-group guard (`assertNoDuplicateActiveBotByStrategyAndSymbolGroup`) from `bots.service.ts` into `botWriteValidation.service.ts`, leaving call-sites unchanged while reducing local write-validation footprint in the monolith; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-22` by extracting bot API-key compatibility resolver (`resolveCompatibleBotApiKey` with owned-key lookup, exchange mismatch guard, and latest-by-exchange fallback) from `bots.service.ts` into dedicated `botApiKeyResolver.service.ts`, then wiring create/update bot activation paths to imported helper without behavior drift; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-21` by extracting ownership/session helper queries (`getOwnedBot`, `getOwnedBotRuntimeSession`, `resolveSessionWindowEnd`, `validateSymbolGroupForBot`) from `bots.service.ts` into dedicated `botOwnership.service.ts`, then wiring all runtime/session and bot-market-group call-sites to imported helpers without behavior drift; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-20` by extracting bot write-validation helpers (`getOwnedStrategy`, `deriveMaxOpenPositionsFromStrategy`, `resolveCreateMarketGroupToSymbolGroup`, `findDuplicateActiveBotByStrategyAndSymbolGroup`) from `bots.service.ts` into dedicated `botWriteValidation.service.ts`, then wiring existing create/update duplicate-guard flow to imported helpers without behavior drift; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
