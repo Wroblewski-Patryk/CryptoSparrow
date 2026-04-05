@@ -28,6 +28,13 @@ import {
   UpdateBotMarketGroupDto,
   UpdateMarketGroupStrategyDto,
 } from './bots.types';
+import {
+  cleanupStaleRuntimePositionSerializationState,
+  resolveDcaExecutedLevels,
+  resolveRuntimePositionDynamicStops,
+  TrailingStopDisplayLevel,
+  TrailingTakeProfitDisplayLevel,
+} from './runtimePositionSerialization.service';
 
 type BotConsentState = {
   mode: 'PAPER' | 'LIVE';
@@ -59,52 +66,6 @@ const klineFallbackCache = new Map<string, { fetchedAt: number; closes: number[]
 const KLINE_FALLBACK_TTL_MS = 10_000;
 const tickerPriceFallbackCache = new Map<string, { fetchedAt: number; prices: Map<string, number> }>();
 const TICKER_PRICE_FALLBACK_TTL_MS = 5_000;
-const favorableMoveFallbackHighByPositionId = new Map<
-  string,
-  { highPercent: number; lastSeenAt: number }
->();
-const FAVORABLE_MOVE_FALLBACK_TTL_MS = 6 * 60 * 60 * 1000;
-
-const cleanupStaleFavorableMoveFallbackHigh = (nowTs: number) => {
-  for (const [positionId, state] of favorableMoveFallbackHighByPositionId.entries()) {
-    if (nowTs - state.lastSeenAt > FAVORABLE_MOVE_FALLBACK_TTL_MS) {
-      favorableMoveFallbackHighByPositionId.delete(positionId);
-    }
-  }
-};
-
-const resolveStickyFavorableMovePercent = (params: {
-  positionId: string;
-  favorableMovePercent: number | null;
-  isOpen: boolean;
-  nowTs: number;
-}) => {
-  const { positionId, favorableMovePercent, isOpen, nowTs } = params;
-  const existing = favorableMoveFallbackHighByPositionId.get(positionId);
-  const hasCurrent =
-    favorableMovePercent != null &&
-    Number.isFinite(favorableMovePercent);
-
-  const nextHigh =
-    hasCurrent && existing
-      ? Math.max(existing.highPercent, favorableMovePercent as number)
-      : hasCurrent
-        ? (favorableMovePercent as number)
-        : existing?.highPercent ?? null;
-
-  if (isOpen && nextHigh != null && Number.isFinite(nextHigh)) {
-    favorableMoveFallbackHighByPositionId.set(positionId, {
-      highPercent: nextHigh,
-      lastSeenAt: nowTs,
-    });
-  } else if (!isOpen && existing) {
-    favorableMoveFallbackHighByPositionId.delete(positionId);
-  } else if (existing) {
-    existing.lastSeenAt = nowTs;
-  }
-
-  return nextHigh;
-};
 
 const fetchFallbackKlineCloses = async (params: {
   marketType: 'FUTURES' | 'SPOT';
@@ -581,38 +542,6 @@ const resolveEffectiveSymbolGroupSymbolsWithCatalog = async (
   );
 };
 
-const computePriceFromLeveragedMovePercent = (
-  side: 'LONG' | 'SHORT',
-  entryPrice: number,
-  movePercent: number,
-  leverage: number
-) => {
-  if (!Number.isFinite(entryPrice) || entryPrice <= 0) return null;
-  if (!Number.isFinite(movePercent)) return null;
-  const effectiveLeverage = Number.isFinite(leverage) && leverage > 0 ? leverage : 1;
-  const delta = movePercent / effectiveLeverage;
-  const raw =
-    side === 'LONG' ? entryPrice * (1 + delta) : entryPrice * (1 - delta);
-  if (!Number.isFinite(raw) || raw <= 0) return null;
-  return raw;
-};
-
-const computeTrailingStopPriceFromAnchor = (
-  side: 'LONG' | 'SHORT',
-  anchorPrice: number,
-  trailingPercent: number,
-  leverage: number
-) => {
-  if (!Number.isFinite(anchorPrice) || anchorPrice <= 0) return null;
-  if (!Number.isFinite(trailingPercent) || trailingPercent <= 0) return null;
-  const effectiveLeverage = Number.isFinite(leverage) && leverage > 0 ? leverage : 1;
-  const delta = trailingPercent / effectiveLeverage;
-  const raw =
-    side === 'LONG' ? anchorPrice * (1 - delta) : anchorPrice * (1 + delta);
-  if (!Number.isFinite(raw) || raw <= 0) return null;
-  return raw;
-};
-
 const asRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
 
@@ -673,16 +602,6 @@ const toFiniteInteger = (value: unknown) => {
   return Math.max(0, Math.floor(parsed));
 };
 
-type TrailingStopDisplayLevel = {
-  armPercent: number;
-  trailPercent: number;
-};
-
-type TrailingTakeProfitDisplayLevel = {
-  armPercent: number;
-  trailPercent: number;
-};
-
 const resolveTrailingTakeProfitLevelsFromStrategyConfig = (
   config: unknown
 ): TrailingTakeProfitDisplayLevel[] => {
@@ -731,30 +650,6 @@ const resolveTrailingStopLevelsFromStrategyConfig = (
         item.trailPercent > 0
     )
     .sort((left, right) => left.armPercent - right.armPercent);
-};
-
-const selectActiveTrailingStopDisplayLevel = (
-  favorableMovePercent: number | null,
-  levels: TrailingStopDisplayLevel[]
-) => {
-  if (favorableMovePercent == null || !Number.isFinite(favorableMovePercent)) return null;
-  let active: TrailingStopDisplayLevel | null = null;
-  for (const level of levels) {
-    if (favorableMovePercent >= level.armPercent) active = level;
-  }
-  return active;
-};
-
-const selectActiveTrailingTakeProfitDisplayLevel = (
-  favorableMovePercent: number | null,
-  levels: TrailingTakeProfitDisplayLevel[]
-) => {
-  if (favorableMovePercent == null || !Number.isFinite(favorableMovePercent)) return null;
-  let active: TrailingTakeProfitDisplayLevel | null = null;
-  for (const level of levels) {
-    if (favorableMovePercent >= level.armPercent) active = level;
-  }
-  return active;
 };
 
 const resolveDcaPlannedLevelsFromStrategyConfig = (config: unknown): number[] => {
@@ -3726,7 +3621,7 @@ export const listBotRuntimeSessionPositions = async (
   }
 
   const nowTs = Date.now();
-  cleanupStaleFavorableMoveFallbackHigh(nowTs);
+  cleanupStaleRuntimePositionSerializationState(nowTs);
 
   const mappedPositions = positions.map((position) => {
     const positionTrades = tradesByPosition.get(position.id) ?? [];
@@ -3742,144 +3637,36 @@ export const listBotRuntimeSessionPositions = async (
     const dcaPlannedLevels = dcaPlanBySymbol.get(position.symbol) ?? [];
     const trailingStopLevels = trailingStopLevelsBySymbol.get(position.symbol) ?? [];
     const trailingTakeProfitLevels = trailingTakeProfitLevelsBySymbol.get(position.symbol) ?? [];
-    const dcaExecutedLevels =
-      dcaCount <= dcaPlannedLevels.length
-        ? dcaPlannedLevels.slice(0, dcaCount)
-        : dcaPlannedLevels.length > 0
-          ? [
-              ...dcaPlannedLevels,
-              ...Array.from(
-                { length: dcaCount - dcaPlannedLevels.length },
-                () => dcaPlannedLevels[dcaPlannedLevels.length - 1]
-              ),
-            ]
-          : [];
+    const dcaExecutedLevels = resolveDcaExecutedLevels(dcaCount, dcaPlannedLevels);
 
     const marketPrice = lastPriceBySymbol.get(position.symbol);
     const runtimeState =
       runtimePositionAutomationService.getPositionStateSnapshot(position.id) ??
       persistedRuntimeStatesByPositionId.get(position.id) ??
       null;
-    const effectiveLeverage =
-      Number.isFinite(position.leverage) && position.leverage > 0 ? position.leverage : 1;
     const stateEntryPrice =
       runtimeState && Number.isFinite(runtimeState.averageEntryPrice) && runtimeState.averageEntryPrice > 0
         ? runtimeState.averageEntryPrice
         : position.entryPrice;
-    const ttpTriggerPercentFromState =
-      runtimeState &&
-      Number.isFinite(runtimeState.trailingTakeProfitHighPercent) &&
-      Number.isFinite(runtimeState.trailingTakeProfitStepPercent)
-        ? (runtimeState.trailingTakeProfitHighPercent as number) -
-          (runtimeState.trailingTakeProfitStepPercent as number)
-        : null;
-    const hasRuntimeTtpState = ttpTriggerPercentFromState != null;
-    const hasRuntimeTslState =
-      runtimeState && Number.isFinite(runtimeState.trailingLossLimitPercent);
-    const liveUnrealizedPnlFromPrice =
-      typeof marketPrice === 'number' && Number.isFinite(marketPrice)
-        ? (marketPrice - position.entryPrice) * position.quantity * (position.side === 'LONG' ? 1 : -1)
-        : null;
-    const marginUsed = position.entryPrice > 0 ? (position.entryPrice * position.quantity) / effectiveLeverage : null;
-    const favorableMovePercentFromLivePrice =
-      typeof marketPrice === 'number' && Number.isFinite(marketPrice) && stateEntryPrice > 0
-        ? position.side === 'LONG'
-          ? ((marketPrice - stateEntryPrice) / stateEntryPrice) * effectiveLeverage
-          : ((stateEntryPrice - marketPrice) / stateEntryPrice) * effectiveLeverage
-        : typeof liveUnrealizedPnlFromPrice === 'number' &&
-            Number.isFinite(liveUnrealizedPnlFromPrice) &&
-            marginUsed != null &&
-            Number.isFinite(marginUsed) &&
-            marginUsed > 0
-          ? liveUnrealizedPnlFromPrice / marginUsed
-          : typeof position.unrealizedPnl === 'number' &&
-              Number.isFinite(position.unrealizedPnl) &&
-              marginUsed != null &&
-              Number.isFinite(marginUsed) &&
-              marginUsed > 0
-            ? position.unrealizedPnl / marginUsed
-            : null;
-    const favorableMovePercentFromRuntimeState =
-      runtimeState && Number.isFinite(runtimeState.trailingTakeProfitHighPercent)
-        ? (runtimeState.trailingTakeProfitHighPercent as number)
-        : null;
-    const favorableMovePercentForStickyHigh =
-      favorableMovePercentFromRuntimeState != null &&
-      Number.isFinite(favorableMovePercentFromRuntimeState)
-        ? favorableMovePercentFromLivePrice != null &&
-            Number.isFinite(favorableMovePercentFromLivePrice)
-          ? Math.max(favorableMovePercentFromRuntimeState, favorableMovePercentFromLivePrice)
-          : favorableMovePercentFromRuntimeState
-        : favorableMovePercentFromLivePrice;
-    const stickyFavorableMovePercent = resolveStickyFavorableMovePercent({
+    const {
+      dynamicTtpStopLoss,
+      dynamicTslStopLoss,
+      liveUnrealizedPnl,
+    } = resolveRuntimePositionDynamicStops({
       positionId: position.id,
-      favorableMovePercent: favorableMovePercentForStickyHigh,
-      isOpen: position.status === 'OPEN',
+      positionStatus: position.status,
+      positionSide: position.side,
+      entryPrice: position.entryPrice,
+      quantity: position.quantity,
+      leverage: position.leverage,
+      unrealizedPnl: position.unrealizedPnl ?? null,
+      marketPrice,
+      stateEntryPrice,
+      runtimeState,
+      trailingStopLevels,
+      trailingTakeProfitLevels,
       nowTs,
     });
-    const fallbackTtpLevel =
-      !hasRuntimeTtpState
-        ? selectActiveTrailingTakeProfitDisplayLevel(
-            stickyFavorableMovePercent,
-            trailingTakeProfitLevels
-          )
-        : null;
-    const ttpTriggerPercentFromStrategyFallback =
-      fallbackTtpLevel &&
-      stickyFavorableMovePercent != null &&
-      Number.isFinite(stickyFavorableMovePercent)
-        ? stickyFavorableMovePercent - fallbackTtpLevel.trailPercent
-        : null;
-    const ttpTriggerPercent =
-      ttpTriggerPercentFromState != null && ttpTriggerPercentFromState > 0
-        ? ttpTriggerPercentFromState
-        : ttpTriggerPercentFromStrategyFallback != null &&
-            Number.isFinite(ttpTriggerPercentFromStrategyFallback) &&
-            ttpTriggerPercentFromStrategyFallback > 0
-          ? ttpTriggerPercentFromStrategyFallback
-          : null;
-    const fallbackTslLevel =
-      !hasRuntimeTslState && !hasRuntimeTtpState
-        ? selectActiveTrailingStopDisplayLevel(
-            stickyFavorableMovePercent,
-            trailingStopLevels
-          )
-        : null;
-    const tslTriggerPercentFromStrategyFallback =
-      fallbackTslLevel &&
-      stickyFavorableMovePercent != null &&
-      Number.isFinite(stickyFavorableMovePercent)
-        ? stickyFavorableMovePercent - fallbackTslLevel.trailPercent
-        : null;
-    const tslTriggerPercent =
-      hasRuntimeTslState
-        ? (runtimeState.trailingLossLimitPercent as number)
-        : tslTriggerPercentFromStrategyFallback != null &&
-            Number.isFinite(tslTriggerPercentFromStrategyFallback)
-          ? tslTriggerPercentFromStrategyFallback
-        : null;
-    const dynamicTtpStopLoss =
-      ttpTriggerPercent != null
-        ? computePriceFromLeveragedMovePercent(
-            position.side,
-            stateEntryPrice,
-            ttpTriggerPercent,
-            position.leverage
-          )
-        : null;
-    const dynamicTslStopLoss =
-      tslTriggerPercent != null
-        ? computePriceFromLeveragedMovePercent(
-            position.side,
-            stateEntryPrice,
-            tslTriggerPercent,
-            effectiveLeverage
-          )
-        : null;
-    const liveUnrealizedPnl =
-      typeof liveUnrealizedPnlFromPrice === 'number' && Number.isFinite(liveUnrealizedPnlFromPrice)
-        ? liveUnrealizedPnlFromPrice
-        : null;
 
     const holdUntil = position.closedAt ?? windowEnd;
     const holdMs = Math.max(0, holdUntil.getTime() - position.openedAt.getTime());
