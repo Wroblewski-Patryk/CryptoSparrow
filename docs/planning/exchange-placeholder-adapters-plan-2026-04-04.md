@@ -1,6 +1,6 @@
 # Exchange Placeholder Adapters Plan (EXPH) - 2026-04-04
 
-Status: planning only (no implementation in this step).
+Status: partially completed; remaining tasks tracked in canonical plan (reconciled 2026-04-05).
 
 ## Objective
 
@@ -83,16 +83,16 @@ Phase A - contract and schema
 
 Phase B - shared capability map
 - [x] `EXPH-03 feat(api-core): add centralized exchange capability registry (catalog/runtime/live flags)`
-- [ ] `EXPH-04 feat(api-errors): add EXCHANGE_NOT_IMPLEMENTED domain error mapping + controller responses`
+- [x] `EXPH-04 feat(api-errors): add EXCHANGE_NOT_IMPLEMENTED domain error mapping + controller responses`
 
 Phase C - API safety gates
-- [ ] `EXPH-05 feat(api-markets): route market-catalog by exchange and return not-implemented for non-Binance placeholders`
-- [ ] `EXPH-06 feat(api-bots): enforce fail-closed runtime/live guards for placeholder exchanges`
-- [ ] `EXPH-07 feat(api-profile): allow saving API keys for placeholder exchanges without enabling live execution paths`
+- [x] `EXPH-05 feat(api-markets): route market-catalog by exchange and return not-implemented for non-Binance placeholders`
+- [x] `EXPH-06 feat(api-bots): enforce fail-closed runtime/live guards for placeholder exchanges`
+- [x] `EXPH-07 feat(api-profile): allow saving API keys for placeholder exchanges without enabling live execution paths`
 
 Phase D - web wiring
-- [ ] `EXPH-08 feat(web-types): extend Exchange unions/options across Markets/Bots/Profile modules`
-- [ ] `EXPH-09 feat(web-ux): render placeholder badges/hints for unsupported exchange operations`
+- [x] `EXPH-08 feat(web-types): extend Exchange unions/options across Markets/Bots/Profile modules`
+- [x] `EXPH-09 feat(web-ux): render placeholder badges/hints for unsupported exchange operations`
 - [ ] `EXPH-10 test(web): add regression coverage for exchange select options and not-implemented UX states`
 
 Phase E - verification

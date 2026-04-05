@@ -1,6 +1,6 @@
 # Exchange Context Consistency Plan (EXCTX) - 2026-04-01
 
-Status: planning only (no implementation in this step).
+Status: partially completed; remaining tasks tracked in canonical plan (reconciled 2026-04-05).
 
 Related follow-up (2026-04-04):
 - Exchange placeholder rollout for `BYBIT/OKX/KRAKEN/COINBASE` is tracked in `docs/planning/exchange-placeholder-adapters-plan-2026-04-04.md`.
@@ -173,8 +173,8 @@ Phase A - contracts/docs
 - [ ] `EXCTX-02 docs(decisions): lock MarketUniverse as canonical exchange+marketType+base context owner`
 
 Phase B - schema + migration
-- [ ] `EXCTX-03 feat(db): add exchange field to MarketUniverse with BINANCE default`
-- [ ] `EXCTX-04 feat(db): add bot live apiKey binding field for explicit execution venue context`
+- [x] `EXCTX-03 feat(db): add exchange field to MarketUniverse with BINANCE default`
+- [x] `EXCTX-04 feat(db): add bot live apiKey binding field for explicit execution venue context`
 - [ ] `EXCTX-05 chore(data-migration): backfill existing universes/runs with exchange context snapshot`
 
 Phase C - API contract

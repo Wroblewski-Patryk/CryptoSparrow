@@ -1,6 +1,6 @@
 # LIVE Fee + i18n + Numeric Input Hardening Plan (LFIN) - 2026-04-02
 
-Status: planning only (no implementation in this step).
+Status: implemented and reconciled with canonical plan (2026-04-05); this file remains as detailed reference.
 
 ## Objective
 Deliver three consistency tracks that directly improve runtime trust:
@@ -176,28 +176,28 @@ Backward compatibility:
 ## Tiny-Commit Sequence (Proposed)
 
 ### Track A - LIVE Fee Exactness
-- [ ] `LFIN-01 docs(contract): lock LIVE fee source-of-truth and reconciliation fallback hierarchy`
-- [ ] `LFIN-02 feat(db): add fill-level persistence and fee-source fields for order/trade`
-- [ ] `LFIN-03 feat(exchange): extend ccxt connector with normalized fill/trade retrieval methods`
-- [ ] `LFIN-04 feat(runtime): add live fill reconciliation service and persist exchange fee totals`
-- [ ] `LFIN-05 feat(api): expose feeSource/feePending/feeCurrency in runtime history payloads`
-- [ ] `LFIN-06 feat(web): render fee source/pending state in dashboard+bots history tables`
-- [ ] `LFIN-07 test(api+runtime): add reconciliation success/delayed/error contract tests`
+- [x] `LFIN-01 docs(contract): lock LIVE fee source-of-truth and reconciliation fallback hierarchy`
+- [x] `LFIN-02 feat(db): add fill-level persistence and fee-source fields for order/trade`
+- [x] `LFIN-03 feat(exchange): extend ccxt connector with normalized fill/trade retrieval methods`
+- [x] `LFIN-04 feat(runtime): add live fill reconciliation service and persist exchange fee totals`
+- [x] `LFIN-05 feat(api): expose feeSource/feePending/feeCurrency in runtime history payloads`
+- [x] `LFIN-06 feat(web): render fee source/pending state in dashboard+bots history tables`
+- [x] `LFIN-07 test(api+runtime): add reconciliation success/delayed/error contract tests`
 
 ### Track B - i18n Dashboard/Bots/Menu
-- [ ] `LFIN-08 audit(i18n): produce hardcoded-copy inventory for dashboard-home+bots+header`
-- [ ] `LFIN-09 feat(i18n): extend translations schema/keys for bots dashboard and menu labels`
-- [ ] `LFIN-10 refactor(web): migrate dashboard-home strings to translation keys`
-- [ ] `LFIN-11 refactor(web): migrate bots module strings to translation keys`
-- [ ] `LFIN-12 refactor(web-nav): remove locale inline dictionaries in Header and use i18n keys only`
-- [ ] `LFIN-13 test(web-i18n): add EN/PL regression coverage for dashboard+bots+menu`
+- [x] `LFIN-08 audit(i18n): produce hardcoded-copy inventory for dashboard-home+bots+header`
+- [x] `LFIN-09 feat(i18n): extend translations schema/keys for bots dashboard and menu labels`
+- [x] `LFIN-10 refactor(web): migrate dashboard-home strings to translation keys`
+- [x] `LFIN-11 refactor(web): migrate bots module strings to translation keys`
+- [x] `LFIN-12 refactor(web-nav): remove locale inline dictionaries in Header and use i18n keys only`
+- [x] `LFIN-13 test(web-i18n): add EN/PL regression coverage for dashboard+bots+menu`
 
 ### Track C - Numeric Input Safety
-- [ ] `LFIN-14 docs(contract): lock numeric parsing and precision policy (comma/dot + decimals/int fields)`
-- [ ] `LFIN-15 feat(web-utils): add shared locale-safe numeric parser/validator utility`
-- [ ] `LFIN-16 refactor(web-strategy): replace direct Number(...) parsing in strategy form sections`
-- [ ] `LFIN-17 feat(web-validation): add field-level validation copy for decimal/int range and precision`
-- [ ] `LFIN-18 test(web): add parser and strategy-form numeric input regression tests`
+- [x] `LFIN-14 docs(contract): lock numeric parsing and precision policy (comma/dot + decimals/int fields)`
+- [x] `LFIN-15 feat(web-utils): add shared locale-safe numeric parser/validator utility`
+- [x] `LFIN-16 refactor(web-strategy): replace direct Number(...) parsing in strategy form sections`
+- [x] `LFIN-17 feat(web-validation): add field-level validation copy for decimal/int range and precision`
+- [x] `LFIN-18 test(web): add parser and strategy-form numeric input regression tests`
 
 ---
 

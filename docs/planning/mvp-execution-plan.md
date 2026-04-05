@@ -550,7 +550,57 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `LDUX-08 test(web-loading-ux): add regression coverage for progress bar lifecycle and key skeleton rendering states`
 - [x] `LDUX-09 qa(web-dashboard): run manual desktop/mobile smoke and capture evidence`
 
+## Phase 34 - Cache Runtime Hardening (Remaining)
+- [ ] `CACHE-02 test(api-headers): add route tests asserting no-store/vary headers on protected endpoints`
+- [ ] `CACHE-04 feat(web-sw-lifecycle): add service-worker update strategy (registration update + activation handoff) to reduce stale clients after deploy`
+- [ ] `CACHE-05 test(web-pwa): add regression checks for market/dashboard runtime requests not served from SW cache`
+- [ ] `CACHE-07 docs(runbook): add stale-cache incident playbook with clear verify/mitigate/rollback steps`
+- [ ] `CACHE-08 feat(web-runtime): add explicit stale-data guard in dashboard/bots runtime (age watchdog + transparent warning state)`
+- [ ] `CACHE-09 test(web-runtime): cover stale-age warning and recovery after fresh payload arrival`
+
+## Phase 35 - Production Excellence (Remaining)
+- [ ] `PEX-02 feat(api-runtime): enforce dedupe key persistence + replay-safe execution guards for side-effecting runtime actions`
+- [ ] `PEX-03 test(runtime): add crash/retry regression suite proving no duplicate open/close orders after restart`
+- [ ] `PEX-05 feat(runtime-recovery): implement bounded auto-restart policy with cooldown and max-attempt guardrails`
+- [ ] `PEX-06 test(runtime): add long-running soak test for session continuity (heartbeat freshness, auto-restart trace, no stuck CANCELED loop)`
+- [ ] `PEX-08 feat(obs-alerts): define alert thresholds for stale runtime, repeated restarts, and reconciliation drift`
+- [ ] `PEX-09 docs(runbook): publish incident triage matrix (symptoms -> checks -> mitigations -> rollback)`
+- [ ] `PEX-10 feat(ops-backup): add repeatable backup verification command set for target deployment profile`
+- [ ] `PEX-11 chore(ops-restore-drill): automate restore drill evidence generation with pass/fail contract`
+- [ ] `PEX-12 docs(ops-rto-rpo): document RTO/RPO targets and acceptable degradation windows`
+- [ ] `PEX-13 docs(secrets-inventory): publish canonical secret inventory + ownership + rotation cadence`
+- [ ] `PEX-14 feat(security-rotation): add rotation readiness checks and startup validation for critical secrets`
+- [ ] `PEX-15 test(security): add regression checks for invalid/expired secret combinations and fail-safe startup`
+- [ ] `PEX-16 feat(release-gates): add mandatory post-deploy runtime freshness check (bots/sessions/signals not stale)`
+- [ ] `PEX-17 feat(rollback-guard): define automatic rollback trigger conditions for runtime-critical regressions`
+- [ ] `PEX-18 docs(release-checklist): update deployment checklist with runtime+cache+stream validation sequence`
+
+## Phase 36 - Exchange Context and Placeholder Completion (Remaining)
+- [ ] `EXCTX-01 docs(contract): publish venue-context source-of-truth and invariants for creators/runtime`
+- [ ] `EXCTX-02 docs(decisions): lock MarketUniverse as canonical exchange+marketType+base context owner`
+- [x] `EXCTX-03 feat(db): add exchange field to MarketUniverse with BINANCE default`
+- [x] `EXCTX-04 feat(db): add bot live apiKey binding field for explicit execution venue context`
+- [ ] `EXCTX-05 chore(data-migration): backfill existing universes/runs with exchange context snapshot`
+- [ ] `EXCTX-06 feat(api-markets): extend market-universe and catalog contracts with exchange context`
+- [ ] `EXCTX-07 feat(api-backtests): derive and persist exchange context from selected market universe`
+- [ ] `EXCTX-08 feat(api-bots): enforce bot/group/apiKey venue-context compatibility on create/activate`
+- [ ] `EXCTX-09 refactor(engine): introduce venue-aware market data provider contract`
+- [ ] `EXCTX-10 refactor(runtime): add exchange to stream-event context and enforce exchange+marketType match`
+- [ ] `EXCTX-11 feat(execution): bind live execution account selection to bot venue context`
+- [ ] `EXCTX-12 feat(web-backtest-creator): show explicit exchange/marketType/base context bound to market group`
+- [ ] `EXCTX-13 feat(web-bot-creator): show explicit venue context and live api-key compatibility hints`
+- [ ] `EXCTX-14 test(web): add creator regression coverage for venue-context rendering and validation copy`
+- [ ] `EXCTX-15 test(api+runtime): add context mismatch contract tests for backtest/bot/live paths`
+- [ ] `EXCTX-16 test(e2e): add end-to-end venue consistency scenario (backtest->paper->live)`
+- [ ] `EXCTX-17 chore(qa): manual smoke checklist and evidence capture for creator/runtime consistency`
+- [x] `EXPH-07 feat(api-profile): allow saving API keys for placeholder exchanges without enabling live execution paths`
+- [ ] `EXPH-10 test(web): add regression coverage for exchange select options and not-implemented UX states`
+- [ ] `EXPH-11 test(api): add contract tests for placeholder exchange fail-closed responses`
+- [ ] `EXPH-12 chore(qa): manual smoke checklist for colleague exchange testing (create/save/read + blocked execute)`
+- [ ] `DBACT-10 qa(smoke): manual verification on real paper-session timeline (open -> dca -> close) including fee/pnl/margin coherence`
+
 ## Progress Log
+- 2026-04-05: Reconciled planning backlog across canonical/non-canonical docs by reintroducing open work into `mvp-execution-plan` (`Phase 34..36`), refreshing `mvp-next-commits` (`NOW/NEXT`) with executable unchecked tasks, and syncing completed checkboxes in detailed plans (`BMOD/CACHE/LFIN/EXPH/EXCTX`) plus resolved decision states in `open-decisions.md`.
 - 2026-04-05: Completed `LDUX-06` by migrating loading views in Markets/Strategies/Logs to skeleton compositions (`SkeletonTableRows`, `SkeletonFormBlock`, `SkeletonCardBlock`) and removing generic loading alerts from those paths; validated with `pnpm --filter web run typecheck` and `pnpm --filter web exec vitest run src/features/markets/components/MarketsFlow.test.tsx src/features/logs/components/AuditTrailView.test.tsx`.
 - 2026-04-05: Completed `LDUX-07` by migrating backtest list/details loading paths to skeleton compositions (`BacktestsListView`, `BacktestRunDetails`) while preserving timeline phase messaging (`timelineLoadingPrefix` + phase labels) in symbol timeline rendering.
 - 2026-04-05: Completed `LDUX-08` by adding regression coverage for dashboard route-progress lifecycle and backtest skeleton loading states (`DashboardRouteProgress.test.tsx`, `BacktestsListView.test.tsx`, `BacktestRunDetails.test.tsx`); validated with `pnpm --filter web run typecheck` and `pnpm --filter web exec -- vitest run src/features/backtest/components/BacktestsList.test.tsx src/features/backtest/components/BacktestsListView.test.tsx src/features/backtest/components/BacktestRunDetails.test.tsx src/ui/layout/dashboard/DashboardRouteProgress.test.tsx`.

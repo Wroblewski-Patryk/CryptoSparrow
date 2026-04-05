@@ -7,55 +7,17 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `LDUX-01 docs(contract): lock dashboard loading UX contract (skeleton-first + global progress bar under header)`
-- [x] `LDUX-02 feat(web-ui): add shared DaisyUI skeleton primitives for table/card/form/kpi dashboard patterns`
-- [x] `LDUX-03 feat(web-shell): add dashboard header-underbar navigation progress component with staged percent animation`
-- [x] `LDUX-04 refactor(web-viewstate): make dashboard loading path skeleton-first while keeping alert states for error/degraded/success`
-- [x] `LDUX-05 feat(web-dashboard-home+bots): replace loading alerts with section/page skeleton compositions`
-- [x] `ICN-01 docs(contract): publish coin icon source contract (CoinGecko primary, exchange-independent, fallback-first)`
-- [x] `ARCH-30 refactor(api-bots): extract assistant-config/subagent CRUD and dry-run orchestration from bots.service into dedicated module with re-export contract`
-- [x] `ARCH-29 refactor(api-bots): extract bot market-group and strategy-link CRUD block from bots.service into dedicated module and re-export contract`
-- [x] `ARCH-28 refactor(api-bots): extract shared bot read projection queries (list/get/by-id with strategy-link include) from bots.service into dedicated module`
-- [x] `ARCH-27 refactor(api-bots): extract bot response mapper (active strategy projection) from bots.service into dedicated module`
-- [x] `ARCH-26 refactor(api-bots): extract activation capability policy (paper/live exchange guard) from bots.service into dedicated module`
-- [x] `ARCH-25 refactor(api-bots): extract legacy bot-strategy upsert helpers (default symbol-group bootstrap + upsert flow) from bots.service into dedicated module`
-- [x] `ARCH-24 refactor(api-bots): extract live-consent helpers (version normalization, consent validation, consent audit write) from bots.service into dedicated module`
-- [x] `ARCH-23 refactor(api-bots): move duplicate-active strategy+market-group assertion helper from bots.service to botWriteValidation.service`
-- [x] `ARCH-22 refactor(api-bots): extract API-key compatibility resolver (owned key lookup, latest-key fallback, exchange guard) from bots.service into dedicated module`
-- [x] `ARCH-21 refactor(api-bots): extract ownership/session helper queries (owned bot, owned runtime session, session-window end, symbol-group compatibility validator) from bots.service into dedicated module`
-- [x] `ARCH-20 refactor(api-bots): extract bot create/update validation helpers (strategy lookup, market-group -> symbol-group resolver, max-open derivation, duplicate-active guard query) from bots.service into dedicated module`
-- [x] `ARCH-19 refactor(api-bots): extract symbol-catalog fallback resolver (volume filter + cache key + catalog lookup) from bots.service into dedicated module`
-- [x] `ARCH-18 refactor(api-bots): extract runtime signal-stats formatting helpers (record parsing, numeric coercion, merge-reason labels) from bots.service into dedicated module`
-- [x] `ARCH-17 refactor(api-bots): extract shared symbol-universe helpers and remove duplicated normalization logic across bots runtime modules`
-- [x] `ARCH-16 refactor(api-bots): extract runtime signal condition-lines and indicator-summary builders from bots.service into dedicated module`
-- [x] `ARCH-15 refactor(api-bots): extract runtime signal indicator helpers (EMA/RSI/Momentum + period/value formatting) from bots.service into dedicated module`
-- [x] `ARCH-14 refactor(api-bots): extract runtime signal-condition summary formatter from bots.service into dedicated module`
-- [x] `ARCH-13 refactor(api-bots): extract symbol-scoped strategy display resolvers (advanced close mode + DCA plan + TTP/TSL level maps) from bots.service into dedicated module`
-- [x] `ARCH-12 refactor(api-bots): extract runtime market-data fallback fetchers (kline/ticker) from bots.service into dedicated module`
-- [x] `BOPS-64 fix(engine+web-runtime): disarm TTP below first-floor threshold (first arm - first trail) and allow clean re-arm cycle`
-- [x] `BOPS-63 fix(web-runtime): normalize trailing-level scale in TTP fallback (decimal 0.05 and percent 5 inputs) to prevent false trigger math`
-- [x] `BOPS-62 fix(web-runtime): add sticky TTP display fallback from live PnL% + strategy levels when API dynamic stop is temporarily unavailable`
-- [x] `BOPS-61 fix(api-runtime): resolve per-position TTP/TSL display inputs from linked strategy config fallback and arm TTP at >= threshold`
-- [x] `ARCH-11 refactor(api-bots): extract strategy config parsing helpers (advanced close mode + TTP/TSL + DCA levels) from bots.service`
-- [x] `ARCH-07 refactor(web-dashboard): split HomeLiveWidgets into composable sections (signals, open positions, history, sidebar)`
-- [x] `ARCH-08 refactor(web-bots): split BotsManagement into route shell + runtime blocks/components`
-- [x] `ARCH-10 chore(quality): add repository guardrail check for max-file-size budget + lockfile consistency`
+- [ ] `CACHE-02 test(api-headers): add route tests asserting no-store/vary headers on protected endpoints`
+- [ ] `CACHE-04 feat(web-sw-lifecycle): add service-worker update strategy (registration update + activation handoff) to reduce stale clients after deploy`
+- [ ] `CACHE-05 test(web-pwa): add regression checks for market/dashboard runtime requests not served from SW cache`
+- [ ] `CACHE-08 feat(web-runtime): add explicit stale-data guard in dashboard/bots runtime (age watchdog + transparent warning state)`
+- [ ] `CACHE-09 test(web-runtime): cover stale-age warning and recovery after fresh payload arrival`
 ## NEXT
-- [x] `LDUX-06 feat(web-markets+strategies+logs): migrate loading views to skeleton compositions`
-- [x] `LDUX-07 feat(web-backtests): migrate list/details loading states to skeletons and preserve timeline phase messaging`
-- [x] `LDUX-08 test(web-loading-ux): add regression coverage for progress bar lifecycle and key skeleton rendering states`
-- [x] `LDUX-09 qa(web-dashboard): run manual desktop/mobile smoke and capture evidence`
-- [x] `ICN-02 feat(api-icons): add CoinGecko symbol/id resolver and icon metadata cache with TTL + fail-soft fallback chain`
-- [x] `ICN-03 feat(api-icons): expose icon lookup endpoint for dashboard modules with deterministic placeholder response`
-- [x] `ICN-04 feat(web-icons): render asset icons in key dashboard tables/cards with loading/error fallback states`
-- [x] `ICN-05 ops(deploy): add CoinGecko-related env template + Coolify rollout checklist updates`
-- [x] `ICN-06 test(api+web): add regression coverage for resolver collisions, cache fallback, and icon rendering states`
-- [x] `ICN-07 qa(web): run manual smoke for icons across Dashboard/Bots/Markets/Positions and attach evidence note`
-- [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
-- [x] `ARCH-04 cleanup(web): verify/remove dead UI helper files (TableToolbar/basic.service) with import-safety checks`
-- [x] `ARCH-05 refactor(api-bots): extract runtime position serialization (TTP/TSL/DCA mapping) from bots.service into dedicated module`
-- [x] `ARCH-06 refactor(api-bots): extract session stats aggregation/query layer from bots.service into focused read-services`
-- [x] `ARCH-09 perf(web-assets): optimize oversized hero/avatar assets without visual contract drift`
+- [ ] `CACHE-07 docs(runbook): add stale-cache incident playbook with clear verify/mitigate/rollback steps`
+- [ ] `PEX-02 feat(api-runtime): enforce dedupe key persistence + replay-safe execution guards for side-effecting runtime actions`
+- [ ] `PEX-03 test(runtime): add crash/retry regression suite proving no duplicate open/close orders after restart`
+- [ ] `PEX-05 feat(runtime-recovery): implement bounded auto-restart policy with cooldown and max-attempt guardrails`
+- [ ] `PEX-06 test(runtime): add long-running soak test for session continuity (heartbeat freshness, auto-restart trace, no stuck CANCELED loop)`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 

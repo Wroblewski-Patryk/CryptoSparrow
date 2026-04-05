@@ -51,10 +51,11 @@ This file tracks intentionally unresolved architecture choices so implementation
   - `docs/planning/deployment-dev-prod-coolify-plan-2026-04-02.md`
 
 ## Commit Promotion Policy (Automatic Update)
-- Decision state: open (planned on 2026-04-02).
-- Open choice:
-  - exact branch strategy for promotion (`develop -> main` vs same-branch staged promotion).
-- Current planning assumption:
+- Decision state: resolved on 2026-04-03.
+- Decision:
+  - immutable commit SHA promotion flow (`STAGE` gate pack -> `PROD`) remains canonical.
+  - branch strategy is operationally locked by deployment pipeline contracts and does not require additional planning decision.
+- Locked behavior:
   - immutable commit SHA promotion path:
     - local change and push,
     - automatic deploy to `STAGE`,
@@ -67,10 +68,10 @@ This file tracks intentionally unresolved architecture choices so implementation
   - `docs/planning/mvp-execution-plan.md` (`Phase 25`, tasks `DPL-13..DPL-20`)
 
 ## Global Brand Rename (`CryptoSparrow` -> `Soar`)
-- Decision state: open (planned on 2026-04-02).
-- Open choice:
-  - whether to execute rename in one global cut or phased waves (`docs`, `UI copy`, `domains`, `repo/package names`, `assets`, `operations`).
-- Current planning assumption:
+- Decision state: resolved on 2026-04-03.
+- Decision:
+  - execute phased rollout with explicit rollback points (`docs`, `UI copy`, `assets`, `operations`, then infra/domain follow-up).
+- Locked behavior:
   - perform audit-first phased rollout with explicit rollback points.
   - do not block deployment-simplicity track on rename completion.
   - preserve existing domains during deployment hardening; domain rename/redirect policy is separate follow-up.
@@ -226,11 +227,11 @@ This file tracks intentionally unresolved architecture choices so implementation
 - evaluate Nest migration only if clear pain appears (team velocity, maintainability, module ownership, framework-level needs).
 
 ## LIVE Fee Source-of-Truth Contract
-- Decision state: open (planned in Phase 21 `LFIN-01..LFIN-05`).
-- Open choice:
-  - whether LIVE runtime should always block on full fill-fee reconciliation before marking trade final,
-  - or allow `feePending` with bounded asynchronous reconciliation window.
-- Current planning assumption:
+- Decision state: resolved on 2026-04-04.
+- Decision:
+  - use non-blocking execution continuity with `feePending` and deterministic reconciliation retry path.
+  - exchange fills/trades are canonical fee source once available.
+- Locked behavior:
   - prefer non-blocking execution continuity (`feePending`) with deterministic retry/reconciliation,
   - use exchange fills/trades as canonical fee source once available,
   - estimator-derived fee allowed only as temporary placeholder in LIVE and must be traceable via `feeSource`.
@@ -276,10 +277,10 @@ This file tracks intentionally unresolved architecture choices so implementation
   - `docs/planning/exchange-placeholder-adapters-plan-2026-04-04.md`
 
 ## Numeric Locale Input Policy (Comma vs Dot)
-- Decision state: open (planned in Phase 21 `LFIN-09..LFIN-11`).
-- Open choice:
-  - strict dot-only decimal contract (`.`) vs locale-tolerant input (`.` and `,`).
-- Current planning assumption:
+- Decision state: resolved on 2026-04-02.
+- Decision:
+  - UI accepts both separators (`.` and `,`) and normalizes to canonical decimal values.
+- Locked behavior:
   - UI accepts both separators and normalizes to canonical decimal value,
   - parser enforces precision/range with explicit validation errors,
   - integer and decimal field classes are validated separately by policy matrix.

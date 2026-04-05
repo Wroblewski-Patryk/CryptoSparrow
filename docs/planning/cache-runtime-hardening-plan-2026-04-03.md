@@ -1,6 +1,6 @@
 # Cache / Runtime Hardening Plan (2026-04-03)
 
-Status: planned  
+Status: partially completed; remaining tasks tracked in canonical plan (reconciled 2026-04-05)  
 Owner: Web + API + Ops  
 Scope: eliminate stale session/runtime data in production (web + api + PWA + proxy) while preserving performance.
 
@@ -57,14 +57,14 @@ Expected headers:
 ## 4) Implementation plan (tiny commits)
 
 ## Phase A - Cache policy hardening on API
-- [ ] `CACHE-01 feat(api-headers): add authenticated no-store middleware for /auth, /dashboard, /admin responses`
+- [x] `CACHE-01 feat(api-headers): add authenticated no-store middleware for /auth, /dashboard, /admin responses`
 - [ ] `CACHE-02 test(api-headers): add route tests asserting no-store/vary headers on protected endpoints`
 
 Exit criteria:
 - All protected endpoints return anti-cache headers consistently.
 
 ## Phase B - Web/PWA runtime safety
-- [ ] `CACHE-03 fix(web-sw): restrict service worker runtime caching to static assets only, bypass API/runtime payloads`
+- [x] `CACHE-03 fix(web-sw): restrict service worker runtime caching to static assets only, bypass API/runtime payloads`
 - [ ] `CACHE-04 feat(web-sw-lifecycle): add service-worker update strategy (registration update + activation handoff) to reduce stale clients after deploy`
 - [ ] `CACHE-05 test(web-pwa): add regression checks for market/dashboard runtime requests not served from SW cache`
 
@@ -72,7 +72,7 @@ Exit criteria:
 - Bot list/session data refreshes without hard reload.
 
 ## Phase C - Edge/Proxy/Coolify contract
-- [ ] `CACHE-06 docs(ops-coolify): document reverse-proxy cache rules (never cache /auth|/dashboard|/admin, cache static only)`
+- [x] `CACHE-06 docs(ops-coolify): document reverse-proxy cache rules (never cache /auth|/dashboard|/admin, cache static only)`
 - [ ] `CACHE-07 docs(runbook): add stale-cache incident playbook with clear verify/mitigate/rollback steps`
 
 Exit criteria:
@@ -124,4 +124,3 @@ Rollback:
   - Mitigation: cache versioning + activation strategy + incident runbook.
 - Proxy-level hidden cache despite app headers.
   - Mitigation: explicit Coolify/proxy rules and smoke assertions.
-

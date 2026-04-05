@@ -1,6 +1,6 @@
 # Bot Module Implementation Plan (BMOD) - 2026-03-30
 
-Status: active implementation plan, tiny-commit mode.
+Status: reconciled with canonical plan (2026-04-05), tiny-commit mode.
 
 ## Objective
 Deliver a production-safe bot module that reuses shared backtest/runtime logic while simplifying bot creation and runtime monitoring.
@@ -112,8 +112,8 @@ Deliver a production-safe bot module that reuses shared backtest/runtime logic w
 - [x] `BOPS-32 chore(web-dashboard): prepare focused manual UX review checklist for dashboard+bots operational flow`
 - [x] `BOPS-33 feat(web-dashboard): apply checklist-driven final nits from manual dashboard+bots UX walk-through`
 - [x] `BOPS-34 chore(web-dashboard): run final responsive pass on dashboard+bots headers/cards after checklist nits and lock release screenshots`
-- [ ] `BOPS-35 chore(web-dashboard): execute final manual smoke of Dashboard->Bots UX flow and attach validation notes to planning log`
-- [ ] `BOPS-36 feat(web-dashboard): apply final fixes from manual smoke notes and freeze Dashboard->Bots UX for wider QA`
+- [x] `BOPS-35 chore(web-dashboard): execute final manual smoke of Dashboard->Bots UX flow and attach validation notes to planning log`
+- [x] `BOPS-36 feat(web-dashboard): apply final fixes from manual smoke notes and freeze Dashboard->Bots UX for wider QA`
 
 ## Test Command Map (per phase)
 - Phase A/B:
