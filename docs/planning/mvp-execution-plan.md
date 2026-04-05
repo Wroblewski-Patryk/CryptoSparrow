@@ -485,7 +485,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARCH-01 docs(contract): publish critical-refactor split contract (no behavior drift) for api/web monolith files`
 - [x] `ARCH-02 chore(repo): remove accidental npm lockfile from apps/api and enforce pnpm-only lockfile policy`
 - [x] `ARCH-03 chore(api-deps): remove unused api dependency 'prima' and revalidate api typecheck/tests`
-- [ ] `ARCH-04 cleanup(web): verify/remove dead UI helper files (TableToolbar/basic.service) with import-safety checks`
+- [x] `ARCH-04 cleanup(web): verify/remove dead UI helper files (TableToolbar/basic.service) with import-safety checks`
 - [ ] `ARCH-05 refactor(api-bots): extract runtime position serialization (TTP/TSL/DCA mapping) from bots.service into dedicated module`
 - [ ] `ARCH-06 refactor(api-bots): extract session stats aggregation/query layer from bots.service into focused read-services`
 - [ ] `ARCH-07 refactor(web-dashboard): split HomeLiveWidgets into composable sections (signals, open positions, history, sidebar)`
@@ -501,6 +501,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 
 ## Progress Log
+- 2026-04-05: Completed `ARCH-04` by verifying zero imports and removing dead web helpers `ui/components/TableToolbar.tsx` and `features/profile/services/basic.service.ts`; validated with `pnpm --filter web typecheck`.
 - 2026-04-05: Completed `ARCH-03` by removing unused API dev dependency `prima` from `apps/api/package.json` and revalidating with `pnpm --filter api typecheck` + targeted engine regression test (`positionManagement.service.test.ts`).
 - 2026-04-05: Completed `ARCH-02` by removing accidental `apps/api/package-lock.json` and enforcing pnpm-only lockfile policy via root `.npmrc` (`package-lock=false`) + `.gitignore` guard (`**/package-lock.json`).
 - 2026-04-05: Completed `NAVM-04` by extending `Header.responsive.test.tsx` with interactive mobile-menu open/close regression coverage (visibility of `#dashboard-mobile-nav`, `aria-expanded` transitions, and body scroll-lock style side effects cleanup).

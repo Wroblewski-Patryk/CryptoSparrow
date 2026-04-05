@@ -14,7 +14,7 @@ Operational queue for one-task execution runs.
 - [x] `ARCH-03 chore(api-deps): remove unused api dependency 'prima' and revalidate api typecheck/tests`
 ## NEXT
 - [ ] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
-- [ ] `ARCH-04 cleanup(web): verify/remove dead UI helper files (TableToolbar/basic.service) with import-safety checks`
+- [x] `ARCH-04 cleanup(web): verify/remove dead UI helper files (TableToolbar/basic.service) with import-safety checks`
 - [ ] `ARCH-05 refactor(api-bots): extract runtime position serialization (TTP/TSL/DCA mapping) from bots.service into dedicated module`
 - [ ] `ARCH-06 refactor(api-bots): extract session stats aggregation/query layer from bots.service into focused read-services`
 - [ ] `ARCH-07 refactor(web-dashboard): split HomeLiveWidgets into composable sections (signals, open positions, history, sidebar)`
