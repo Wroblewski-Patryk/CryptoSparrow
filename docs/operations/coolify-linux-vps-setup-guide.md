@@ -97,6 +97,11 @@ Required environment variables:
 - `COOKIE_SAME_SITE=<lax|strict|none>` (optional, default `lax`; use `none` only when web/api are cross-site)
 - `API_KEY_ENCRYPTION_KEYS=<versioned-keys>`
 - `API_KEY_ENCRYPTION_ACTIVE_VERSION=<active-version>`
+- `COINGECKO_API_BASE_URL=https://api.coingecko.com/api/v3`
+- `COIN_ICON_CACHE_TTL_MINUTES=360` (recommended baseline; tune per traffic profile)
+
+Optional but recommended in STAGE/PROD:
+- `COINGECKO_API_KEY=<secret>`
 
 Optional migration toggle:
 - `API_AUTO_MIGRATE=true` (default behavior in API image)
@@ -204,6 +209,9 @@ After STAGE deploy:
 3. Open stage web URL and login flow.
 4. Validate dashboard base data load.
 5. Validate workers heartbeat and runtime update path.
+6. Validate icon lookup endpoint for deterministic fallback behavior:
+   - `GET /dashboard/icons/lookup?symbols=BTCUSDT,UNKNOWNXYZ`
+   - verify response includes both `source: "coingecko"` and `source: "placeholder"` contracts when expected.
 
 Only promote same commit SHA to PROD after full pass.
 

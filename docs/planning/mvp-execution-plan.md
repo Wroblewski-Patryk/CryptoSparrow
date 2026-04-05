@@ -534,11 +534,12 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ICN-02 feat(api-icons): add CoinGecko symbol/id resolver with icon metadata cache (TTL) and rate-safe fetch strategy`
 - [x] `ICN-03 feat(api-icons): add deterministic icon lookup API for dashboard modules (symbol -> icon URL/placeholder metadata)`
 - [ ] `ICN-04 feat(web-icons): render coin icons in dashboard tables/cards with loading/error fallback behavior`
-- [ ] `ICN-05 ops(deploy): add CoinGecko-related env template + Coolify rollout checklist updates`
+- [x] `ICN-05 ops(deploy): add CoinGecko-related env template + Coolify rollout checklist updates`
 - [ ] `ICN-06 test(api+web): add regression coverage for resolver collisions, cache fallback, and icon rendering states`
 - [ ] `ICN-07 qa(web): run manual smoke for icons across Dashboard/Bots/Markets/Positions and attach evidence note`
 
 ## Progress Log
+- 2026-04-05: Completed `ICN-05` by extending API env templates (`apps/api/.env.example`, `.env.vps.example`) with CoinGecko controls (`COINGECKO_API_BASE_URL`, optional `COINGECKO_API_KEY`, `COIN_ICON_CACHE_TTL_MINUTES`) and updating Coolify rollout checklist in `docs/operations/coolify-linux-vps-setup-guide.md` with icon endpoint validation gate.
 - 2026-04-05: Completed `ICN-03` by adding authenticated deterministic icon lookup endpoint `GET /dashboard/icons/lookup` (query `symbols`) returning stable per-symbol metadata (`symbol/baseAsset/iconUrl/source/placeholder/coinGeckoId/cacheHit/resolvedAt`) with fail-soft response contract.
 - 2026-04-05: Completed `ICN-02` by implementing CoinGecko resolver service with symbol->base-asset normalization, deterministic collision handling (rank-first), sequential rate-safe fetch queue, timeout protection, TTL cache, and strict fallback chain (`coingecko -> curated map -> placeholder`); validated with `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/icons/icons.e2e.test.ts`.
 - 2026-04-05: Completed `ICN-01` by publishing canonical icon-source contract in `docs/architecture/coin-icon-source-contract.md` (CoinGecko primary, exchange-independent, strict fallback chain, deterministic API output, cache/TTL and fail-soft guarantees), and linking it from `open-decisions` rollout references.
