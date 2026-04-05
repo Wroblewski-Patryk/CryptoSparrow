@@ -311,8 +311,13 @@ export default function Header() {
 
         {mobileMenuOpen && (
           <div
-            className="fixed inset-x-0 bottom-0 z-[60] xl:hidden border-t border-base-300/60 bg-base-100/90 backdrop-blur supports-[backdrop-filter]:bg-base-100/85"
-            style={{ top: `${mobileOverlayTopPx}px` }}
+            className="fixed inset-x-0 z-[60] overflow-hidden xl:hidden border-t border-base-300/60 bg-base-100/90 backdrop-blur supports-[backdrop-filter]:bg-base-100/85"
+            style={{
+              top: `${mobileOverlayTopPx}px`,
+              height: `calc(100dvh - ${mobileOverlayTopPx}px)`,
+              maxHeight: `calc(100dvh - ${mobileOverlayTopPx}px)`,
+              minHeight: `calc(100vh - ${mobileOverlayTopPx}px)`,
+            }}
           >
             <div
               id="dashboard-mobile-nav"

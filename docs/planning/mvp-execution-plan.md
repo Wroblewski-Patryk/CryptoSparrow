@@ -185,6 +185,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 
 ## Phase 10 - Navigation, IA, Routing, and Auth Session Hardening (As of 2026-03-22)
 - [x] `fix(ui-header-nav): center desktop nav list, remove legacy visual utility clutter, and unify header hover/active/focus styles`
+- [x] `fix(ui-header-mobile): enforce full-viewport mobile menu overlay height with header-offset aware `dvh` sizing`
 - [x] `fix(ui-language-switcher): correct EN/PL flag visuals and lock language-switcher visual contract with regression tests`
 - [x] `audit(routing): create canonical route map and remove dashboard path inconsistencies (including legacy aliases)`
 - [x] `refactor(ia-profile): merge API keys and exchange connections under one settings domain model`
@@ -1055,3 +1056,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-04-03: Completed `LFIN-07`: moved LIVE fill commission ingestion into `LiveOrderAdapter` (`placeLiveOrderWithFees` with fill-first reconciliation), removed fee-reconciliation duplication from `orders.service`, and verified exact fee metadata propagation to order/trade persistence with targeted exchange/orders tests + API typecheck.
 - 2026-04-04: Completed `LFIN-08 test(api-live-adapter)` by adding regression coverage for adapter fallback chain (`inline -> fetchOrderWithFills -> fetchTradesForOrder`), LIVE fee+fills persistence in `openOrder`, and runtime trade serialization parity for `feeSource/feePending/feeCurrency` in bots monitoring API.
 - 2026-04-04: Completed EXPH-04 fail-closed hardening for runtime/live paths by filtering runtime signal-loop active bots through exchange capability gates (PAPER_PRICING_FEED/LIVE_EXECUTION), and added unit regression coverage for mode-aware exchange support mapping.
+- 2026-04-05: Added mobile dashboard menu overlay full-height fix (100dvh - headerOffset) in Header.tsx, preventing bottom-gap artifacts on taller mobile viewports and preserving scroll-lock behavior.
