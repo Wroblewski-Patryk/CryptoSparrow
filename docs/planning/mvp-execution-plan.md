@@ -187,6 +187,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 ## Phase 10 - Navigation, IA, Routing, and Auth Session Hardening (As of 2026-03-22)
 - [x] `fix(ui-header-nav): center desktop nav list, remove legacy visual utility clutter, and unify header hover/active/focus styles`
 - [x] `fix(ui-header-mobile): enforce full-viewport mobile menu overlay height with header-offset aware `dvh` sizing`
+- [x] `test(ui-header-mobile): lock mobile menu overlay sizing contract via responsive regression assertions`
 - [x] `fix(ui-language-switcher): correct EN/PL flag visuals and lock language-switcher visual contract with regression tests`
 - [x] `audit(routing): create canonical route map and remove dashboard path inconsistencies (including legacy aliases)`
 - [x] `refactor(ia-profile): merge API keys and exchange connections under one settings domain model`
@@ -1060,3 +1061,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-04-05: Added mobile dashboard menu overlay full-height fix (100dvh - headerOffset) in Header.tsx, preventing bottom-gap artifacts on taller mobile viewports and preserving scroll-lock behavior.
 - 2026-04-05: Migrated Prisma deprecated package.json#prisma seed config to pps/api/prisma.config.ts (migrations.seed), preserved VPS-friendly 
 ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma flow, and verified seed execution end-to-end.
+- 2026-04-05: Added responsive regression assertions for mobile dashboard menu overlay sizing (	op, height, maxHeight, minHeight) to preserve 100dvh - headerOffset contract after future header/layout edits.

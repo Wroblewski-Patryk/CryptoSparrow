@@ -54,6 +54,12 @@ describe("Header responsive smoke", () => {
     const mobileNav = document.getElementById("dashboard-mobile-nav");
     expect(mobileNav).toBeInTheDocument();
     expect(mobileNav?.className).toContain("overflow-y-auto");
+    const overlay = mobileNav?.parentElement;
+    expect(overlay?.className ?? "").toContain("overflow-hidden");
+    expect(overlay?.style.top).toBe("72px");
+    expect(overlay?.style.height).toBe("calc(100dvh - 72px)");
+    expect(overlay?.style.maxHeight).toBe("calc(100dvh - 72px)");
+    expect(overlay?.style.minHeight).toBe("calc(100vh - 72px)");
     expect(document.body.style.overflow).toBe("hidden");
     expect(document.body.style.touchAction).toBe("none");
     expect(document.body.style.overscrollBehavior).toBe("none");
