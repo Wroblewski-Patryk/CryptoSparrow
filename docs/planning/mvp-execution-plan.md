@@ -497,10 +497,11 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `NAVM-01 docs(contract): lock mobile nav overlay contract (layering, offset, scroll, close behavior)`
 - [x] `NAVM-02 fix(web-header): replace hardcoded mobile-menu offset with dynamic-safe overlay layout`
 - [x] `NAVM-03 fix(web-header): enforce deterministic stacking and scroll-lock for open mobile menu`
-- [ ] `NAVM-04 test(web-header): add interactive mobile menu open/close visibility regression test`
+- [x] `NAVM-04 test(web-header): add interactive mobile menu open/close visibility regression test`
 - [ ] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 
 ## Progress Log
+- 2026-04-05: Completed `NAVM-04` by extending `Header.responsive.test.tsx` with interactive mobile-menu open/close regression coverage (visibility of `#dashboard-mobile-nav`, `aria-expanded` transitions, and body scroll-lock style side effects cleanup).
 - 2026-04-05: Completed `NAVM-03` by enforcing deterministic mobile menu layering in `Header.tsx` (`isolate` on header + overlay `z-[60]`) and adding body scroll-lock side effects while mobile menu is open (`overflow/touchAction/overscrollBehavior` restore-on-close); verified with dashboard header responsive test.
 - 2026-04-05: Completed `NAVM-02` by replacing hardcoded dashboard mobile overlay offset (`top-[4.5rem]`) with dynamic header measurement in `Header.tsx` (`ResizeObserver` + resize/orientation listeners), so mobile menu overlay anchors to the actual sticky header height across breakpoints; verified via targeted dashboard layout tests.
 - 2026-04-05: Completed `NAVM-01` by publishing `docs/planning/dashboard-mobile-nav-stability-plan-2026-04-05.md` with root-cause analysis (`top-[4.5rem]` hardcoded offset + unsafe layering), target contract, and tiny-commit fix/test rollout (`NAVM-02..NAVM-05`).

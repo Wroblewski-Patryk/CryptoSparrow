@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import Header from "./Header";
 import { I18nProvider } from "../../../i18n/I18nProvider";
@@ -36,5 +36,34 @@ describe("Header responsive smoke", () => {
     expect(marketsLinks.some((item) => item.className.includes("border-accent/45"))).toBe(true);
     const nav = screen.getByRole("navigation", { name: "Dashboard navigation" });
     expect(nav.className).toContain("justify-center");
+  });
+
+  it("opens and closes mobile menu overlay with scroll lock side effects", () => {
+    render(
+      <I18nProvider>
+        <Header />
+      </I18nProvider>
+    );
+
+    const menuButton = screen.getByRole("button", { name: "Menu" });
+    expect(menuButton).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(menuButton);
+
+    expect(menuButton).toHaveAttribute("aria-expanded", "true");
+    const mobileNav = document.getElementById("dashboard-mobile-nav");
+    expect(mobileNav).toBeInTheDocument();
+    expect(mobileNav?.className).toContain("overflow-y-auto");
+    expect(document.body.style.overflow).toBe("hidden");
+    expect(document.body.style.touchAction).toBe("none");
+    expect(document.body.style.overscrollBehavior).toBe("none");
+
+    fireEvent.click(menuButton);
+
+    expect(menuButton).toHaveAttribute("aria-expanded", "false");
+    expect(document.getElementById("dashboard-mobile-nav")).not.toBeInTheDocument();
+    expect(document.body.style.overflow).toBe("");
+    expect(document.body.style.touchAction || "").toBe("");
+    expect(document.body.style.overscrollBehavior || "").toBe("");
   });
 });
