@@ -48,6 +48,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `ARCH-32 refactor(api-bots): extract runtime trade lifecycle mapping (OPEN/DCA/CLOSE inference per position trades) from bots.service into dedicated module`
 - [x] `ARCH-31 refactor(api-bots): extract runtime trade close-reason normalization/lookup from bots.service into dedicated runtimeTradeActionReason service`
 - [x] `NAVM-07 test(web-header): add regression assertions for mobile overlay `100dvh` sizing contract (top/height/max/min with header offset)`
 - [x] `OPS-33 chore(api-prisma): migrate deprecated package.json#prisma seed config to prisma.config.ts (migrations.seed) and keep VPS node-prisma seed path working`

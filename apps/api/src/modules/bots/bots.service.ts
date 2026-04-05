@@ -59,6 +59,10 @@ import {
   RuntimeTradeActionReason,
 } from './runtimeTradeActionReason.service';
 import {
+  buildLifecycleActionByTradeId,
+  toPositionMetaById,
+} from './runtimeTradeLifecycle.service';
+import {
   getRuntimeSessionSummaryMetrics,
   listRuntimeSessionsWithSummary,
 } from './runtimeSessionsRead.service';
@@ -1404,7 +1408,7 @@ export const listBotRuntimeSessionTrades = async (
     ...new Set(rows.map((trade) => trade.positionId).filter((value): value is string => Boolean(value))),
   ];
 
-  const positionMetaById = new Map<string, { side: 'LONG' | 'SHORT'; leverage: number; entryPrice: number }>();
+  let positionMetaById = new Map<string, { side: 'LONG' | 'SHORT'; leverage: number; entryPrice: number }>();
   const lifecycleActionByTradeId = new Map<string, 'OPEN' | 'DCA' | 'CLOSE' | 'UNKNOWN'>();
 
   if (positionIds.length > 0) {
@@ -1438,38 +1442,13 @@ export const listBotRuntimeSessionTrades = async (
       }),
     ]);
 
-    for (const row of positionMetaRows) {
-      positionMetaById.set(row.id, {
-        side: row.side,
-        leverage: row.leverage,
-        entryPrice: row.entryPrice,
-      });
-    }
-
-    const tradesByPosition = new Map<string, Array<{ id: string; side: 'BUY' | 'SELL' }>>();
-    for (const trade of allPositionTrades) {
-      if (!trade.positionId) continue;
-      const bucket = tradesByPosition.get(trade.positionId) ?? [];
-      bucket.push({
-        id: trade.id,
-        side: trade.side,
-      });
-      tradesByPosition.set(trade.positionId, bucket);
-    }
-
-    for (const [positionId, trades] of tradesByPosition.entries()) {
-      const positionMeta = positionMetaById.get(positionId);
-      if (!positionMeta) continue;
-      const entrySide: 'BUY' | 'SELL' = positionMeta.side === 'LONG' ? 'BUY' : 'SELL';
-      let entryLegs = 0;
-      for (const trade of trades) {
-        if (trade.side === entrySide) {
-          lifecycleActionByTradeId.set(trade.id, entryLegs === 0 ? 'OPEN' : 'DCA');
-          entryLegs += 1;
-          continue;
-        }
-        lifecycleActionByTradeId.set(trade.id, 'CLOSE');
-      }
+    positionMetaById = toPositionMetaById(positionMetaRows);
+    const lifecycleMap = buildLifecycleActionByTradeId({
+      positionMetaById,
+      positionTrades: allPositionTrades,
+    });
+    for (const [tradeId, lifecycleAction] of lifecycleMap.entries()) {
+      lifecycleActionByTradeId.set(tradeId, lifecycleAction);
     }
   }
 
