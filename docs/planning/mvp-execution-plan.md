@@ -513,6 +513,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARCH-25 refactor(api-bots): extract legacy bot-strategy upsert helpers (default symbol-group bootstrap + upsert flow) from bots.service into dedicated module`
 - [x] `ARCH-26 refactor(api-bots): extract activation capability policy (paper/live exchange guard) from bots.service into dedicated module`
 - [x] `ARCH-27 refactor(api-bots): extract bot response mapper (active strategy projection) from bots.service into dedicated module`
+- [x] `ARCH-28 refactor(api-bots): extract shared bot read projection queries (list/get/by-id with strategy-link include) from bots.service into dedicated module`
 
 ## Phase 31 - Dashboard Mobile Navigation Stability
 - [x] `NAVM-01 docs(contract): lock mobile nav overlay contract (layering, offset, scroll, close behavior)`
@@ -522,6 +523,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 
 ## Progress Log
+- 2026-04-05: Completed `ARCH-28` by extracting shared bot read projections (`listOwnedBotsWithStrategyProjection`, `getOwnedBotWithStrategyProjection`, `getBotWithStrategyProjectionById`) and canonical include payload into dedicated `botReadProjection.service.ts`, then wiring list/get/create/update readbacks in `bots.service.ts` to the shared query helpers without behavior drift; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-27` by extracting bot response projection mapper (`mapBotResponse`) from `bots.service.ts` into dedicated `botResponseMapper.service.ts`, preserving active-strategy resolution order (`enabled botStrategies -> first botStrategy -> enabled marketGroupStrategyLinks -> first marketGroupStrategyLink`) across list/get/create/update return paths; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-26` by extracting bot activation capability policy (`assertBotActivationExchangeCapability`) from `bots.service.ts` into dedicated `botActivationPolicy.service.ts`, preserving existing PAPER/LIVE exchange-capability guards at create/update call-sites; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-25` by extracting legacy bot-strategy helpers (`getOrCreateDefaultSymbolGroup`, `upsertBotStrategy`) from `bots.service.ts` into dedicated `botLegacyStrategyLink.service.ts`, then wiring update-flow call-sites to imported helper without behavior drift; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.

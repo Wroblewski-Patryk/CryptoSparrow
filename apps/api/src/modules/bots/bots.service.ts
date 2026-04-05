@@ -93,50 +93,25 @@ import {
 import { upsertBotStrategy } from './botLegacyStrategyLink.service';
 import { assertBotActivationExchangeCapability } from './botActivationPolicy.service';
 import { mapBotResponse } from './botResponseMapper.service';
+import {
+  getBotWithStrategyProjectionById,
+  getOwnedBotWithStrategyProjection,
+  listOwnedBotsWithStrategyProjection,
+} from './botReadProjection.service';
 
 export const listBots = async (userId: string, query: ListBotsQueryDto = {}) => {
-  const bots = await prisma.bot.findMany({
-    where: {
-      userId,
-      ...(query.marketType ? { marketType: query.marketType } : {}),
-    },
-    include: {
-      botStrategies: {
-        select: {
-          strategyId: true,
-          isEnabled: true,
-        },
-      },
-      marketGroupStrategyLinks: {
-        select: {
-          strategyId: true,
-          isEnabled: true,
-        },
-      },
-    },
-    orderBy: { createdAt: 'desc' },
+  const bots = await listOwnedBotsWithStrategyProjection({
+    userId,
+    marketType: query.marketType,
   });
 
   return bots.map((bot) => mapBotResponse(bot));
 };
 
 export const getBot = async (userId: string, id: string) => {
-  const bot = await prisma.bot.findFirst({
-    where: { id, userId },
-    include: {
-      botStrategies: {
-        select: {
-          strategyId: true,
-          isEnabled: true,
-        },
-      },
-      marketGroupStrategyLinks: {
-        select: {
-          strategyId: true,
-          isEnabled: true,
-        },
-      },
-    },
+  const bot = await getOwnedBotWithStrategyProjection({
+    userId,
+    botId: id,
   });
 
   return bot ? mapBotResponse(bot) : null;
@@ -238,23 +213,7 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
     });
   }
 
-  const withStrategy = await prisma.bot.findUnique({
-    where: { id: createdBotId },
-    include: {
-      botStrategies: {
-        select: {
-          strategyId: true,
-          isEnabled: true,
-        },
-      },
-      marketGroupStrategyLinks: {
-        select: {
-          strategyId: true,
-          isEnabled: true,
-        },
-      },
-    },
-  });
+  const withStrategy = await getBotWithStrategyProjectionById(createdBotId);
 
   if (!withStrategy) throw new Error('BOT_NOT_FOUND');
   return mapBotResponse(withStrategy);
@@ -414,23 +373,7 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
     });
   }
 
-  const withStrategy = await prisma.bot.findUnique({
-    where: { id: updated.id },
-    include: {
-      botStrategies: {
-        select: {
-          strategyId: true,
-          isEnabled: true,
-        },
-      },
-      marketGroupStrategyLinks: {
-        select: {
-          strategyId: true,
-          isEnabled: true,
-        },
-      },
-    },
-  });
+  const withStrategy = await getBotWithStrategyProjectionById(updated.id);
 
   return withStrategy ? mapBotResponse(withStrategy) : mapBotResponse(updated);
 };
