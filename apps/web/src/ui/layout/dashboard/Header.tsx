@@ -114,6 +114,25 @@ export default function Header() {
     };
   }, [mobileMenuOpen, pathname]);
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const { body } = document;
+    const previousOverflow = body.style.overflow;
+    const previousTouchAction = body.style.touchAction;
+    const previousOverscrollBehavior = body.style.overscrollBehavior;
+
+    body.style.overflow = 'hidden';
+    body.style.touchAction = 'none';
+    body.style.overscrollBehavior = 'none';
+
+    return () => {
+      body.style.overflow = previousOverflow;
+      body.style.touchAction = previousTouchAction;
+      body.style.overscrollBehavior = previousOverscrollBehavior;
+    };
+  }, [mobileMenuOpen]);
+
   const homeLink: NavItem = {
     href: dashboardRoutes.home,
     label: t('dashboard.nav.home'),
@@ -211,7 +230,7 @@ export default function Header() {
   return (
     <header
       ref={headerRef}
-      className="sticky top-0 z-50 border-b border-base-300/60 bg-base-100/85 backdrop-blur supports-[backdrop-filter]:bg-base-100/80"
+      className="sticky top-0 z-50 isolate border-b border-base-300/60 bg-base-100/85 backdrop-blur supports-[backdrop-filter]:bg-base-100/80"
     >
       <div className="max-w-7xl mx-auto px-4 py-2">
         <div className="navbar min-h-0 p-0 flex-nowrap justify-between gap-4">
@@ -292,7 +311,7 @@ export default function Header() {
 
         {mobileMenuOpen && (
           <div
-            className="fixed inset-x-0 bottom-0 z-40 xl:hidden border-t border-base-300/60 bg-base-100/90 backdrop-blur supports-[backdrop-filter]:bg-base-100/85"
+            className="fixed inset-x-0 bottom-0 z-[60] xl:hidden border-t border-base-300/60 bg-base-100/90 backdrop-blur supports-[backdrop-filter]:bg-base-100/85"
             style={{ top: `${mobileOverlayTopPx}px` }}
           >
             <div
