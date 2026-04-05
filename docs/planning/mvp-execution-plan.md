@@ -542,7 +542,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 ## Phase 33 - Dashboard Loading UX (Skeleton + Header Progress)
 - [x] `LDUX-01 docs(contract): lock dashboard loading UX contract (skeleton-first + global progress bar under header)`
 - [x] `LDUX-02 feat(web-ui): add shared DaisyUI skeleton primitives for table/card/form/kpi dashboard patterns`
-- [ ] `LDUX-03 feat(web-shell): add dashboard header-underbar navigation progress component with staged percent animation`
+- [x] `LDUX-03 feat(web-shell): add dashboard header-underbar navigation progress component with staged percent animation`
 - [ ] `LDUX-04 refactor(web-viewstate): make dashboard loading path skeleton-first while keeping alert states for error/degraded/success`
 - [ ] `LDUX-05 feat(web-dashboard-home+bots): replace loading alerts with section/page skeleton compositions`
 - [ ] `LDUX-06 feat(web-markets+strategies+logs): migrate loading views to skeleton compositions`
@@ -551,6 +551,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `LDUX-09 qa(web-dashboard): run manual desktop/mobile smoke and capture evidence`
 
 ## Progress Log
+- 2026-04-05: Completed `LDUX-03` by adding dashboard shell route-progress component `DashboardRouteProgress` under header (staged ramp + completion on route settle, with fallback timeout and subtle underbar rendering) and wiring it in `apps/web/src/app/dashboard/layout.tsx`; verified with green `pnpm --filter web run typecheck`.
 - 2026-04-05: Completed `LDUX-02` by adding shared dashboard-ready DaisyUI skeleton primitives (`SkeletonTableRows`, `SkeletonCardBlock`, `SkeletonFormBlock`, `SkeletonKpiRow`) under `apps/web/src/ui/components/loading/` plus barrel export, with green `pnpm --filter web run typecheck`.
 - 2026-04-05: Completed `LDUX-01` by publishing canonical dashboard loading UX contract in `docs/architecture/dashboard-loading-ux-contract.md` (skeleton-first policy, under-header route progress behavior, preserved error/degraded boundaries, and rollout discipline for tiny commits).
 - 2026-04-05: Completed `ICN-07` by executing Playwright manual smoke across `/dashboard`, `/dashboard/bots`, `/dashboard/markets/list`, `/dashboard/positions`, validating icon-selector behavior per view (`img[alt$=" icon"]`) and attaching evidence in `docs/operations/icons-smoke-2026-04-05.md` with captured screenshots under `output/playwright/icn07/`.
