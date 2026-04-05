@@ -481,7 +481,30 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `EXPH-08 feat(web-types): extend Exchange unions/options across Markets/Bots/Profile modules`
 - [x] `EXPH-09 feat(web-ux): add placeholder badges/hints for unsupported exchange operations in creators/runtime paths`
 
+## Phase 30 - Critical Maintainability Hardening (Monolith Split + Repo Hygiene)
+- [x] `ARCH-01 docs(contract): publish critical-refactor split contract (no behavior drift) for api/web monolith files`
+- [ ] `ARCH-02 chore(repo): remove accidental npm lockfile from apps/api and enforce pnpm-only lockfile policy`
+- [ ] `ARCH-03 chore(api-deps): remove unused api dependency 'prima' and revalidate api typecheck/tests`
+- [ ] `ARCH-04 cleanup(web): verify/remove dead UI helper files (TableToolbar/basic.service) with import-safety checks`
+- [ ] `ARCH-05 refactor(api-bots): extract runtime position serialization (TTP/TSL/DCA mapping) from bots.service into dedicated module`
+- [ ] `ARCH-06 refactor(api-bots): extract session stats aggregation/query layer from bots.service into focused read-services`
+- [ ] `ARCH-07 refactor(web-dashboard): split HomeLiveWidgets into composable sections (signals, open positions, history, sidebar)`
+- [ ] `ARCH-08 refactor(web-bots): split BotsManagement into route shell + runtime blocks/components`
+- [ ] `ARCH-09 perf(web-assets): optimize oversized hero/avatar assets without visual contract drift`
+- [ ] `ARCH-10 chore(quality): add repository guardrail check for max-file-size budget + lockfile consistency`
+
+## Phase 31 - Dashboard Mobile Navigation Stability
+- [x] `NAVM-01 docs(contract): lock mobile nav overlay contract (layering, offset, scroll, close behavior)`
+- [x] `NAVM-02 fix(web-header): replace hardcoded mobile-menu offset with dynamic-safe overlay layout`
+- [ ] `NAVM-03 fix(web-header): enforce deterministic stacking and scroll-lock for open mobile menu`
+- [ ] `NAVM-04 test(web-header): add interactive mobile menu open/close visibility regression test`
+- [ ] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
+
 ## Progress Log
+- 2026-04-05: Completed `NAVM-02` by replacing hardcoded dashboard mobile overlay offset (`top-[4.5rem]`) with dynamic header measurement in `Header.tsx` (`ResizeObserver` + resize/orientation listeners), so mobile menu overlay anchors to the actual sticky header height across breakpoints; verified via targeted dashboard layout tests.
+- 2026-04-05: Completed `NAVM-01` by publishing `docs/planning/dashboard-mobile-nav-stability-plan-2026-04-05.md` with root-cause analysis (`top-[4.5rem]` hardcoded offset + unsafe layering), target contract, and tiny-commit fix/test rollout (`NAVM-02..NAVM-05`).
+- 2026-04-05: Completed `ARCH-01` by publishing `docs/planning/critical-maintainability-hardening-plan-2026-04-05.md` with scoped no-drift split contract, rollback strategy, acceptance criteria, and tiny-commit execution map for `ARCH-02..ARCH-10`.
+- 2026-04-05: Added `Phase 30` critical maintainability hardening plan (`ARCH-01..ARCH-10`) to split largest runtime/ui monolith files safely, clean repo/dependency hygiene issues, and add guardrails preventing lockfile drift and oversized-file regressions.
 - 2026-04-04: Completed `EXPH-08` by tightening web exchange typing to canonical `ExchangeOption` across Profile contracts: `ApiKey.exchange`, API key connection-test payload, and ApiKeyForm save/default values now use union-based exchange types (no loose `string`), with targeted profile/bots/markets UI regression tests and web typecheck green.
 - 2026-04-04: Completed `EXPH-09` by adding explicit `PLACEHOLDER` badges/hints in creator/runtime UX paths (Dashboard Home runtime panel + sidebar, Bots runtime card, Bot creator, Markets creator, Profile API key form), hardening unsupported-capability checks against unknown exchanges (fail-safe `false`), and refreshing related dashboard runtime test assertions with targeted web regressions + typecheck passing.
 - 2026-04-04: Completed `EXPH-06` by extending placeholder regression coverage across API and web: Markets/API Keys persistence assertions for placeholder exchanges (`OKX`) in list/get flows, bot fail-closed activation test on update path (`501 EXCHANGE_NOT_IMPLEMENTED` with `PAPER_PRICING_FEED`), and web Bots table regression for placeholder badge rendering + exchange-name filtering.

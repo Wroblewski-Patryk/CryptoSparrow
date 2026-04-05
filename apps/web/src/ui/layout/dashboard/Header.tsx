@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { type IconType } from 'react-icons';
 import {
   LuBot,
@@ -85,6 +85,34 @@ export default function Header() {
   const { t } = useI18n();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const [mobileOverlayTopPx, setMobileOverlayTopPx] = useState(72);
+
+  useEffect(() => {
+    const updateOverlayTop = () => {
+      const header = headerRef.current;
+      if (!header) return;
+      const nextTop = Math.max(0, Math.round(header.getBoundingClientRect().bottom));
+      if (nextTop > 0) setMobileOverlayTopPx(nextTop);
+    };
+
+    updateOverlayTop();
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && headerRef.current) {
+      resizeObserver = new ResizeObserver(() => updateOverlayTop());
+      resizeObserver.observe(headerRef.current);
+    }
+
+    window.addEventListener('resize', updateOverlayTop);
+    window.addEventListener('orientationchange', updateOverlayTop);
+
+    return () => {
+      window.removeEventListener('resize', updateOverlayTop);
+      window.removeEventListener('orientationchange', updateOverlayTop);
+      resizeObserver?.disconnect();
+    };
+  }, [mobileMenuOpen, pathname]);
 
   const homeLink: NavItem = {
     href: dashboardRoutes.home,
@@ -181,7 +209,10 @@ export default function Header() {
   const HomeIcon = homeLink.icon;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-base-300/60 bg-base-100/85 backdrop-blur supports-[backdrop-filter]:bg-base-100/80">
+    <header
+      ref={headerRef}
+      className="sticky top-0 z-50 border-b border-base-300/60 bg-base-100/85 backdrop-blur supports-[backdrop-filter]:bg-base-100/80"
+    >
       <div className="max-w-7xl mx-auto px-4 py-2">
         <div className="navbar min-h-0 p-0 flex-nowrap justify-between gap-4">
           <div className="flex-none min-w-0 pr-2 xl:pr-4">
@@ -260,7 +291,10 @@ export default function Header() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="fixed inset-x-0 bottom-0 top-[4.5rem] z-40 xl:hidden border-t border-base-300/60 bg-base-100/90 backdrop-blur supports-[backdrop-filter]:bg-base-100/85">
+          <div
+            className="fixed inset-x-0 bottom-0 z-40 xl:hidden border-t border-base-300/60 bg-base-100/90 backdrop-blur supports-[backdrop-filter]:bg-base-100/85"
+            style={{ top: `${mobileOverlayTopPx}px` }}
+          >
             <div
               id="dashboard-mobile-nav"
               className="mx-auto h-full w-full max-w-7xl overflow-y-auto overscroll-contain px-4 py-2"
