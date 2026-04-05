@@ -8,7 +8,7 @@ Operational queue for one-task execution runs.
 
 ## NOW
 - [x] `ARCH-07 refactor(web-dashboard): split HomeLiveWidgets into composable sections (signals, open positions, history, sidebar)`
-- [ ] `ARCH-08 refactor(web-bots): split BotsManagement into route shell + runtime blocks/components`
+- [x] `ARCH-08 refactor(web-bots): split BotsManagement into route shell + runtime blocks/components`
 - [ ] `ARCH-10 chore(quality): add repository guardrail check for max-file-size budget + lockfile consistency`
 ## NEXT
 - [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
