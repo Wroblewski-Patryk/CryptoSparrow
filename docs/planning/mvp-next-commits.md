@@ -7,7 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `ICN-01 docs(contract): publish coin icon source contract (CoinGecko primary, exchange-independent, fallback-first)`
+- [x] `ICN-01 docs(contract): publish coin icon source contract (CoinGecko primary, exchange-independent, fallback-first)`
 - [x] `ARCH-30 refactor(api-bots): extract assistant-config/subagent CRUD and dry-run orchestration from bots.service into dedicated module with re-export contract`
 - [x] `ARCH-29 refactor(api-bots): extract bot market-group and strategy-link CRUD block from bots.service into dedicated module and re-export contract`
 - [x] `ARCH-28 refactor(api-bots): extract shared bot read projection queries (list/get/by-id with strategy-link include) from bots.service into dedicated module`
@@ -48,6 +48,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `ICN-01 docs(contract): publish coin icon source contract (CoinGecko primary, exchange-independent, fallback-first)`
 - [x] `ARCH-32 refactor(api-bots): extract runtime trade lifecycle mapping (OPEN/DCA/CLOSE inference per position trades) from bots.service into dedicated module`
 - [x] `ARCH-31 refactor(api-bots): extract runtime trade close-reason normalization/lookup from bots.service into dedicated runtimeTradeActionReason service`
 - [x] `NAVM-07 test(web-header): add regression assertions for mobile overlay `100dvh` sizing contract (top/height/max/min with header offset)`

@@ -530,7 +530,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 
 ## Phase 32 - Asset Icon Delivery (CoinGecko + Fallback + Deploy)
-- [ ] `ICN-01 docs(contract): publish coin icon source contract (CoinGecko primary, exchange-independent, fallback-first policy)`
+- [x] `ICN-01 docs(contract): publish coin icon source contract (CoinGecko primary, exchange-independent, fallback-first policy)`
 - [ ] `ICN-02 feat(api-icons): add CoinGecko symbol/id resolver with icon metadata cache (TTL) and rate-safe fetch strategy`
 - [ ] `ICN-03 feat(api-icons): add deterministic icon lookup API for dashboard modules (symbol -> icon URL/placeholder metadata)`
 - [ ] `ICN-04 feat(web-icons): render coin icons in dashboard tables/cards with loading/error fallback behavior`
@@ -539,6 +539,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `ICN-07 qa(web): run manual smoke for icons across Dashboard/Bots/Markets/Positions and attach evidence note`
 
 ## Progress Log
+- 2026-04-05: Completed `ICN-01` by publishing canonical icon-source contract in `docs/architecture/coin-icon-source-contract.md` (CoinGecko primary, exchange-independent, strict fallback chain, deterministic API output, cache/TTL and fail-soft guarantees), and linking it from `open-decisions` rollout references.
 - 2026-04-05: Completed `ARCH-32` by extracting runtime trade lifecycle mapping helpers (`toPositionMetaById`, `buildLifecycleActionByTradeId`) from `bots.service.ts` into `runtimeTradeLifecycle.service.ts`, preserving `listBotRuntimeSessionTrades` action inference contract; validated with `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Added `Phase 32` icon-delivery planning (`ICN-01..ICN-07`) to implement CoinGecko-based coin icons with exchange-independent fallback, API/web integration, deployment checklist updates, and dedicated regression + QA evidence tasks.
 - 2026-04-05: Completed `ARCH-31` by extracting runtime trade close-reason helpers (`RuntimeTradeActionReason`, reason normalization, close-event lookup maps) from `bots.service.ts` into dedicated `runtimeTradeActionReason.service.ts`, preserving `listBotRuntimeSessionTrades` output contract and validating with `pnpm --filter api run typecheck` plus `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.

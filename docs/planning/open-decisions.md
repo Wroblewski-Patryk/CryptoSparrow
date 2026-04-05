@@ -323,6 +323,7 @@ This file tracks intentionally unresolved architecture choices so implementation
 - Implementation rollout:
   - `docs/planning/mvp-execution-plan.md` (`Phase 32`, tasks `ICN-01..ICN-07`)
   - `docs/planning/coin-icons-coingecko-plan-2026-04-05.md`
+  - `docs/architecture/coin-icon-source-contract.md`
 
 ## Mode Entry Policy (PAPER vs LIVE)
 - Decision state: resolved on 2026-03-20.
