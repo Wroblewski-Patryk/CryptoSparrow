@@ -51,6 +51,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `BOPS-65 feat(web-dashboard): polish runtime signal cards UX (header counters + base currency + dual-column condition emphasis) and streamline dashboard trade/open-position table columns/time format`
 - [x] `ICN-06 test(api+web): add regression coverage for resolver collisions, cache fallback, and icon rendering states`
 - [x] `ICN-07 qa(web): run manual smoke for icons across Dashboard/Bots/Markets/Positions and attach evidence note`
 - [x] `ICN-04 feat(web-icons): render asset icons in key dashboard tables/cards with loading/error fallback states`

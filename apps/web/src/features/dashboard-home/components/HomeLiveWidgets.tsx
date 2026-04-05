@@ -75,6 +75,48 @@ const SIGNAL_CARDS_DENSITY_BREAKPOINTS = {
   tabletMinWidth: 768,
 } as const;
 const normalizeSymbol = (value: string) => value.trim().toUpperCase();
+const KNOWN_QUOTE_CURRENCIES = [
+  "USDT",
+  "USDC",
+  "BUSD",
+  "FDUSD",
+  "TUSD",
+  "USDP",
+  "DAI",
+  "USD",
+  "BTC",
+  "ETH",
+  "BNB",
+  "EUR",
+  "TRY",
+  "BRL",
+  "GBP",
+  "AUD",
+  "JPY",
+] as const;
+
+const resolveQuoteCurrency = (symbol: string) => {
+  const normalized = normalizeSymbol(symbol);
+  for (const quote of KNOWN_QUOTE_CURRENCIES) {
+    if (normalized.endsWith(quote) && normalized.length > quote.length) return quote;
+  }
+  return null;
+};
+
+const formatDateTimeYearToSecond = (value?: string | null) => {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "-";
+
+  const year = String(parsed.getFullYear());
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+  const hour = String(parsed.getHours()).padStart(2, "0");
+  const minute = String(parsed.getMinutes()).padStart(2, "0");
+  const second = String(parsed.getSeconds()).padStart(2, "0");
+
+  return `${year}.${month}.${day} ${hour}.${minute}.${second}`;
+};
 
 const resolveSignalCardsPerView = (width: number) => {
   if (width >= SIGNAL_CARDS_DENSITY_BREAKPOINTS.desktopMinWidth) return 4;
@@ -278,10 +320,10 @@ const DirectionPill = ({ value }: { value: DirectionPillValue }) => (
 );
 
 const signalPillClass = (value: SignalPillValue) => {
-  if (value === "LONG") return "border-success/40 bg-success/10 text-success";
-  if (value === "SHORT") return "border-error/40 bg-error/10 text-error";
-  if (value === "EXIT") return "border-warning/40 bg-warning/10 text-warning";
-  return "border-base-300 bg-base-100 text-base-content/70";
+  if (value === "LONG") return "text-success";
+  if (value === "SHORT") return "text-error";
+  if (value === "EXIT") return "text-warning";
+  return "text-base-content/70";
 };
 
 const SignalPillIcon = ({ value }: { value: SignalPillValue }) => {
@@ -322,9 +364,9 @@ const SignalPillIcon = ({ value }: { value: SignalPillValue }) => {
 };
 
 const SignalPill = ({ value }: { value: SignalPillValue }) => (
-  <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs ${signalPillClass(value)}`}>
+  <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${signalPillClass(value)}`}>
     <SignalPillIcon value={value} />
-    <span className="font-medium">{value}</span>
+    <span>{value}</span>
   </span>
 );
 
@@ -379,15 +421,6 @@ const tradeReasonLabelKey = (value: TradeActionReasonValue) => {
   if (value === "SIGNAL_EXIT") return "dashboard.home.runtime.reasonSignalExit";
   if (value === "MANUAL") return "dashboard.home.runtime.reasonManual";
   return "dashboard.home.runtime.reasonUnknown";
-};
-
-const formatTradeFeeMeta = (
-  trade: Pick<BotRuntimeTrade, "feeSource" | "feePending" | "feeCurrency">
-) => {
-  const currencySuffix = trade.feeCurrency ? ` ${trade.feeCurrency}` : "";
-  if (trade.feePending) return `PENDING${currencySuffix}`;
-  const sourceLabel = trade.feeSource === "EXCHANGE_FILL" ? "EXCHANGE" : "EST.";
-  return `${sourceLabel}${currencySuffix}`;
 };
 
 const resolveUsedMargin = (positions: BotRuntimePositionsResponse | null) =>
@@ -900,13 +933,35 @@ export default function HomeLiveWidgets() {
     viewportWidth > 0 ? viewportWidth : SIGNAL_CARDS_DENSITY_BREAKPOINTS.desktopMinWidth
   );
   const signalSymbols = selectedData?.symbols ?? [];
+  const signalHeaderStats = useMemo(() => {
+    const actionableSignalsCount = signalSymbols.reduce((count, item) => {
+      return item.lastSignalDirection === "LONG" || item.lastSignalDirection === "SHORT" ? count + 1 : count;
+    }, 0);
+
+    const quoteCounts = new Map<string, number>();
+    for (const item of signalSymbols) {
+      const quote = resolveQuoteCurrency(item.symbol);
+      if (!quote) continue;
+      quoteCounts.set(quote, (quoteCounts.get(quote) ?? 0) + 1);
+    }
+
+    const baseCurrencyCode =
+      [...quoteCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ?? null;
+
+    return {
+      marketsCount: signalSymbols.length,
+      actionableSignalsCount,
+      baseCurrencyCode,
+    };
+  }, [signalSymbols]);
   const runtimeIconSymbols = useMemo(() => {
     const symbols = new Set<string>();
     for (const item of signalSymbols) symbols.add(normalizeSymbol(item.symbol));
     for (const item of selectedData?.open ?? []) symbols.add(normalizeSymbol(item.symbol));
     for (const item of selectedData?.trades ?? []) symbols.add(normalizeSymbol(item.symbol));
+    if (signalHeaderStats.baseCurrencyCode) symbols.add(signalHeaderStats.baseCurrencyCode);
     return [...symbols];
-  }, [selectedData?.open, selectedData?.trades, signalSymbols]);
+  }, [selectedData?.open, selectedData?.trades, signalHeaderStats.baseCurrencyCode, signalSymbols]);
   const { iconMap: runtimeIconMap, loading: runtimeIconsLoading, error: runtimeIconsError } =
     useCoinIconLookup(runtimeIconSymbols);
   const resolveRuntimeIcon = useCallback(
@@ -923,6 +978,21 @@ export default function HomeLiveWidgets() {
           loading={runtimeIconsLoading && !icon}
           hasError={Boolean(runtimeIconsError)}
           className="font-semibold"
+        />
+      );
+    },
+    [resolveRuntimeIcon, runtimeIconsError, runtimeIconsLoading]
+  );
+  const renderBaseCurrencySymbol = useCallback(
+    (currency: string) => {
+      const icon = resolveRuntimeIcon(currency);
+      return (
+        <AssetSymbol
+          symbol={currency}
+          iconUrl={icon?.iconUrl ?? null}
+          loading={runtimeIconsLoading && !icon}
+          hasError={Boolean(runtimeIconsError)}
+          className="font-semibold text-[11px]"
         />
       );
     },
@@ -994,7 +1064,7 @@ export default function HomeLiveWidgets() {
         label: t("dashboard.home.runtime.timeOpened"),
         sortable: true,
         accessor: (row) => row.openedAt ?? "",
-        render: (row) => formatTime(row.openedAt),
+        render: (row) => formatDateTimeYearToSecond(row.openedAt),
       },
       {
         key: "symbol",
@@ -1089,9 +1159,7 @@ export default function HomeLiveWidgets() {
   }, [
     formatCurrency,
     formatDcaPercent,
-    formatNumber,
     formatPercent,
-    formatTime,
     resolveRuntimeIcon,
     runtimeIconsError,
     runtimeIconsLoading,
@@ -1175,18 +1243,6 @@ export default function HomeLiveWidgets() {
       render: (row) => formatCurrency(row.margin),
     },
     {
-      key: "fee",
-      label: t("dashboard.home.runtime.fee"),
-      sortable: true,
-      accessor: (row) => row.fee,
-      render: (row) => (
-        <div className="flex flex-col leading-tight">
-          <span>{formatCurrency(row.fee)}</span>
-          <span className="text-[10px] opacity-60">{formatTradeFeeMeta(row)}</span>
-        </div>
-      ),
-    },
-    {
       key: "realizedPnl",
       label: t("dashboard.home.runtime.realizedPnl"),
       sortable: true,
@@ -1196,12 +1252,6 @@ export default function HomeLiveWidgets() {
           {formatCurrency(row.realizedPnl)}
         </span>
       ),
-    },
-    {
-      key: "origin",
-      label: t("dashboard.home.runtime.origin"),
-      sortable: false,
-      accessor: (row) => row.origin,
     },
   ], [
     formatCurrency,
@@ -1302,6 +1352,14 @@ export default function HomeLiveWidgets() {
                 longLabel={t("dashboard.home.runtime.long")}
                 shortLabel={t("dashboard.home.runtime.short")}
                 noSignalDataLabel={t("dashboard.home.runtime.noSignalData")}
+                titleLabel={t("dashboard.home.runtime.liveChecksTitle")}
+                marketsLabel={t("dashboard.home.runtime.markets")}
+                signalsLabel={t("dashboard.home.runtime.signals")}
+                baseCurrencyLabel={t("dashboard.home.runtime.baseCurrency")}
+                marketsCount={signalHeaderStats.marketsCount}
+                actionableSignalsCount={signalHeaderStats.actionableSignalsCount}
+                baseCurrencyCode={signalHeaderStats.baseCurrencyCode}
+                renderBaseCurrency={renderBaseCurrencySymbol}
                 renderSymbolLabel={renderRuntimeSymbol}
                 renderSignalPill={(value) => <SignalPill value={value} />}
               />

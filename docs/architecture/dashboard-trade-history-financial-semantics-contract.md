@@ -1,8 +1,8 @@
 # Dashboard Trade-History Financial Semantics Contract
 
 Status: Canonical (BOPS-60)  
-Last updated: 2026-04-04  
-Scope: Dashboard Control Center + Bots runtime trade-history tables.
+Last updated: 2026-04-05  
+Scope: Dashboard Control Center + Bots runtime trade-history tables (shared action/margin/realized semantics, view-specific column visibility).
 
 ## Goal
 
@@ -31,8 +31,9 @@ Lock one deterministic UI/API interpretation for trade-history rows so operators
 
 ### `Fee`
 
-- `Fee` is always rendered as currency value when available (`$0.00` is valid zero).
-- If fee is truly unavailable/pending in payload, UI may show `"-"` (never fake non-zero value).
+- Dashboard Control Center trade-history table does not expose `Fee` column (intentionally hidden for compact UX).
+- Bots runtime table may render `Fee` as currency value when available (`$0.00` is valid zero).
+- If fee is truly unavailable/pending in views that render fee, UI may show `"-"` (never fake non-zero value).
 
 ### `Realized PnL`
 
@@ -42,6 +43,12 @@ Lock one deterministic UI/API interpretation for trade-history rows so operators
 - `UNKNOWN`: safe fallback `"-"`.
 
 This rule is mandatory for both Dashboard and Bots history views.
+
+## Column Visibility Contract
+
+- Dashboard Control Center trade history columns: `Time`, `Symbol`, `Side`, `Action`, `Reason`, `Qty`, `Price`, `Margin`, `Realized PnL`.
+- Dashboard Control Center must hide `Fee` and `Origin`.
+- Bots runtime may keep `Fee` and `Origin` for deeper operational diagnostics.
 
 ## API/UI Parity Rules
 
@@ -63,4 +70,5 @@ Keep/extend tests so both Dashboard and Bots assert:
 - `OPEN/DCA` rows render `Realized PnL` as `"-"`,
 - `CLOSE` renders payload value,
 - `Margin` remains the primary capital column,
-- action mapping and row semantics are identical across both modules.
+- action mapping and row semantics are identical across both modules,
+- dashboard view keeps `Fee/Origin` hidden while bots runtime retains optional diagnostic columns.

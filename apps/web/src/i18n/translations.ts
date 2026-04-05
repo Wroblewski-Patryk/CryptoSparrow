@@ -230,6 +230,9 @@ type TranslationSchema = {
         liveChecksTitle: string;
         liveChecksSubtitle: string;
         pairsCount: string;
+        markets: string;
+        signals: string;
+        baseCurrency: string;
         signalRailPrev: string;
         signalRailNext: string;
         noSignalConditions: string;
@@ -445,7 +448,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           onboardingStepBotDescription: "Assign strategy + markets, then start bot session.",
           onboardingStepBotCta: "Open bot creator",
           openPositionsTitle: "Open positions",
-          timeOpened: "Time opened",
+          timeOpened: "Time",
           symbol: "Symbol",
           side: "Side",
           margin: "Margin",
@@ -493,6 +496,9 @@ export const translations: Record<Locale, TranslationSchema> = {
           liveChecksTitle: "Strategy signals",
           liveChecksSubtitle: "Signals computed from latest market checks against active strategy rules.",
           pairsCount: "{count} pairs",
+          markets: "Markets",
+          signals: "Signals",
+          baseCurrency: "Base currency",
           signalRailPrev: "Prev",
           signalRailNext: "Next",
           noSignalConditions: "No signal, conditions not met.",
@@ -1034,7 +1040,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           onboardingStepBotDescription: "Podepnij strategie i rynki, potem uruchom sesje.",
           onboardingStepBotCta: "Otworz kreator bota",
           openPositionsTitle: "Otwarte pozycje",
-          timeOpened: "Czas otwarcia",
+          timeOpened: "Czas",
           symbol: "Symbol",
           side: "Side",
           margin: "Margin",
@@ -1082,6 +1088,9 @@ export const translations: Record<Locale, TranslationSchema> = {
           liveChecksTitle: "Sygnaly strategii",
           liveChecksSubtitle: "Sygnaly obliczone na podstawie najnowszych danych i warunkow aktywnej strategii.",
           pairsCount: "{count} par",
+          markets: "Rynki",
+          signals: "Sygnaly",
+          baseCurrency: "Base currency",
           signalRailPrev: "Wstecz",
           signalRailNext: "Dalej",
           noSignalConditions: "Brak sygnalu, warunki niespelnione.",

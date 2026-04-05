@@ -2,7 +2,7 @@
 
 Status: canonical (MVP/V1 runtime UI contract)  
 Owner: product + frontend  
-Last updated: 2026-04-03
+Last updated: 2026-04-05
 
 ## Purpose
 
@@ -55,6 +55,31 @@ Each symbol card must always show:
 - Evaluated condition lines for long/short context (with live indicator values)
 
 Neutral state is not treated as missing data; neutral cards are first-class runtime output.
+
+## Header Summary Contract
+
+The signal section header must expose compact runtime context before cards:
+- section title (`Strategy signals` / `Sygnaly strategii`),
+- `Markets` count = all markets currently evaluated by active strategy links,
+- `Signals` count = markets with directional signal (`LONG` or `SHORT`, neutral excluded),
+- `Base currency` = dominant quote/base currency derived from markets used by selected bot (icon + code, e.g. `USDT`).
+
+For large symbol sets, rail navigation controls (`Prev/Next`) stay on the same header row.
+
+## Card Visual Contract
+
+- Each market card uses theme-gradient border accents (same primary/secondary gradient family as brand header).
+- Top row keeps compact direction marker (icon + name), without oversized badge treatment.
+
+## Conditions Block Contract
+
+- Long/short condition blocks are rendered as **two columns** (not stacked rows).
+- Long/short labels use compact pill style with icon + text.
+- Opacity behavior:
+  - `LONG` signal: long column `100%`, short column `50%`.
+  - `SHORT` signal: short column `100%`, long column `50%`.
+  - `NEUTRAL/EXIT` (no directional signal): both columns `50%`.
+  - Hovering an inactive column lifts it to `100%` for quick read.
 
 ## Implementation Notes
 

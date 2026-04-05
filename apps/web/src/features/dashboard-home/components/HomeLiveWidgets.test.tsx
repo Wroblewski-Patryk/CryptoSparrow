@@ -324,6 +324,10 @@ describe("HomeLiveWidgets", () => {
       expect(screen.getByRole("option", { name: /Monitor Bot/i })).toBeInTheDocument();
       expect(screen.getAllByText("RUNNING").length).toBeGreaterThan(0);
       expect(screen.getAllByText("BTCUSDT").length).toBeGreaterThan(0);
+      expect(screen.getByText("Rynki:")).toBeInTheDocument();
+      expect(screen.getByText("Sygnaly:")).toBeInTheDocument();
+      expect(screen.getByText("Base currency:")).toBeInTheDocument();
+      expect(screen.getAllByText((content) => /^2026\.03\.31 \d{2}\.\d{2}\.\d{2}$/.test(content)).length).toBeGreaterThan(0);
       expect(screen.getByTitle("1:-15%, 2:-30%")).toBeInTheDocument();
       expect(screen.getByText("TTP")).toBeInTheDocument();
       expect(screen.getByText("TSL")).toBeInTheDocument();
@@ -334,6 +338,10 @@ describe("HomeLiveWidgets", () => {
     });
 
     expect(lookupCoinIconsMock).toHaveBeenCalledWith(expect.arrayContaining(["BTCUSDT", "ETHUSDT"]));
+
+    fireEvent.click(screen.getByRole("tab", { name: /Historia transakcji/i }));
+    expect(screen.queryByRole("columnheader", { name: /^Fee$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: /^Origin$/i })).not.toBeInTheDocument();
   });
 
   it("renders strategy signals above open positions and enables rail controls for larger symbol sets", async () => {

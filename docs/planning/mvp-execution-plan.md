@@ -456,6 +456,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `BOPS-52 feat(web-dashboard): rename 'Live checks' section to strategy-signal wording and move signal panel above open-positions block`
 - [x] `BOPS-53 feat(web-dashboard): implement scalable signal cards layout (desktop 4 / tablet 3 / mobile 2) with horizontal rail/slider support for very large symbol sets`
 - [x] `BOPS-54 test(web-dashboard): add regression coverage for signal-panel placement, heading copy, responsive card density, and overflow navigation controls`
+- [x] `BOPS-65 feat(web-dashboard): polish runtime signal cards UX (header counters + base currency + dual-column condition emphasis) and streamline dashboard trade/open-position table columns/time format`
 - [x] `BOPS-55 docs(contract): lock Bots IA split (/bots list, /bots/create form) and table-action navigation contract (Runtime + Assistant + Edit)`
 - [x] `BOPS-56 feat(web-routing+nav): switch bots create route to /dashboard/bots/create and align header/menu links + legacy /new redirect`
 - [x] `BOPS-57 feat(web-bots-list): redesign /bots into table-first list view (no inline create/edit form) with actions: Podglad(Runtime), Asystent, Edytuj`
@@ -1084,3 +1085,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma flow, and verified seed execution end-to-end.
 - 2026-04-05: Added responsive regression assertions for mobile dashboard menu overlay sizing (	op, height, maxHeight, minHeight) to preserve 100dvh - headerOffset contract after future header/layout edits.
 
+- 2026-04-05: Completed BOPS-65 dashboard runtime UX pass: removed Fee/Origin columns from dashboard trade history, renamed open-position time header to Time/Czas with fixed YYYY.MM.DD HH.mm.ss cell format, and redesigned strategy-signal cards with summary counters (Rynki, Sygnaly, Base currency), gradient border accents, dual-column LONG/SHORT condition layout, and directional opacity emphasis (inactive 50% -> hover 100%).
