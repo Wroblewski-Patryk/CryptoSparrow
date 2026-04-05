@@ -47,9 +47,7 @@ import type {
   RuntimeTabItem,
   RuntimeSymbolWithLive,
   SignalPillValue,
-  TradeActionFilter,
   TradeFiltersState,
-  TradeSideFilter,
   TradeSortBy,
   TradeSortDir,
 } from "./home-live-widgets/types";
@@ -959,6 +957,23 @@ export default function HomeLiveWidgets() {
       baseCurrencyCode,
     };
   }, [signalSymbols]);
+  const runtimeAmountUnit = signalHeaderStats.baseCurrencyCode?.toUpperCase() ?? null;
+  const formatRuntimeAmount = useCallback(
+    (value: number) =>
+      formatNumber(value, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    [formatNumber]
+  );
+  const formatRuntimeAmountWithUnit = useCallback(
+    (value: number) => (runtimeAmountUnit ? `${formatRuntimeAmount(value)} ${runtimeAmountUnit}` : formatRuntimeAmount(value)),
+    [formatRuntimeAmount, runtimeAmountUnit]
+  );
+  const withRuntimeUnit = useCallback(
+    (label: string) => (runtimeAmountUnit ? `${label} [${runtimeAmountUnit}]` : label),
+    [runtimeAmountUnit]
+  );
   const runtimeIconSymbols = useMemo(() => {
     const symbols = new Set<string>();
     for (const item of signalSymbols) symbols.add(normalizeSymbol(item.symbol));
@@ -1098,19 +1113,19 @@ export default function HomeLiveWidgets() {
       },
       {
         key: "margin",
-        label: t("dashboard.home.runtime.margin"),
+        label: withRuntimeUnit(t("dashboard.home.runtime.margin")),
         sortable: true,
         accessor: (row) => row.marginNotional,
-        render: (row) => formatCurrency(row.marginNotional),
+        render: (row) => formatRuntimeAmount(row.marginNotional),
       },
       {
         key: "pnl",
-        label: t("dashboard.home.runtime.pnl"),
+        label: withRuntimeUnit(t("dashboard.home.runtime.pnl")),
         sortable: true,
         accessor: (row) => row.liveUnrealizedPnl,
         render: (row) => (
           <span className={row.liveUnrealizedPnl >= 0 ? "text-success" : "text-error"}>
-            {formatCurrency(row.liveUnrealizedPnl)}
+            {formatRuntimeAmount(row.liveUnrealizedPnl)}
           </span>
         ),
       },
@@ -1162,14 +1177,15 @@ export default function HomeLiveWidgets() {
 
     return columns;
   }, [
-    formatCurrency,
     formatDcaPercent,
     formatPercent,
+    formatRuntimeAmount,
     resolveRuntimeIcon,
     runtimeIconsError,
     runtimeIconsLoading,
     showDynamicStopColumns,
     t,
+    withRuntimeUnit,
   ]);
 
   const tradesColumns = useMemo<DataTableColumn<BotRuntimeTrade>[]>(() => [
@@ -1242,30 +1258,31 @@ export default function HomeLiveWidgets() {
     },
     {
       key: "margin",
-      label: t("dashboard.home.runtime.margin"),
+      label: withRuntimeUnit(t("dashboard.home.runtime.margin")),
       sortable: true,
       accessor: (row) => row.margin,
-      render: (row) => formatCurrency(row.margin),
+      render: (row) => formatRuntimeAmount(row.margin),
     },
     {
       key: "realizedPnl",
-      label: t("dashboard.home.runtime.realizedPnl"),
+      label: withRuntimeUnit(t("dashboard.home.runtime.realizedPnl")),
       sortable: true,
       accessor: (row) => row.realizedPnl,
       render: (row) => (
         <span className={row.realizedPnl >= 0 ? "text-success" : "text-error"}>
-          {formatCurrency(row.realizedPnl)}
+          {formatRuntimeAmount(row.realizedPnl)}
         </span>
       ),
     },
   ], [
-    formatCurrency,
     formatDateTime,
     formatNumber,
+    formatRuntimeAmount,
     resolveRuntimeIcon,
     runtimeIconsError,
     runtimeIconsLoading,
     t,
+    withRuntimeUnit,
   ]);
 
   const runtimeTabItems = useMemo<RuntimeTabItem[]>(
@@ -1378,7 +1395,6 @@ export default function HomeLiveWidgets() {
                 longLabel={t("dashboard.home.runtime.long")}
                 shortLabel={t("dashboard.home.runtime.short")}
                 noSignalDataLabel={t("dashboard.home.runtime.noSignalData")}
-                titleLabel={t("dashboard.home.runtime.liveChecksTitle")}
                 marketsLabel={t("dashboard.home.runtime.markets")}
                 signalsLabel={t("dashboard.home.runtime.signals")}
                 baseCurrencyLabel={t("dashboard.home.runtime.baseCurrency")}
@@ -1387,7 +1403,6 @@ export default function HomeLiveWidgets() {
                 baseCurrencyCode={signalHeaderStats.baseCurrencyCode}
                 renderBaseCurrency={renderBaseCurrencySymbol}
                 renderSymbolLabel={renderRuntimeSymbol}
-                renderSignalPill={(value) => <SignalPill value={value} />}
               />
 
               {!selectedRuntimeCapabilityAvailable ? (
@@ -1468,10 +1483,12 @@ export default function HomeLiveWidgets() {
           formatTime={formatTime}
           formatNumber={formatNumber}
           formatCurrency={formatCurrency}
+          formatAmountWithUnit={formatRuntimeAmountWithUnit}
           formatPercent={formatPercent}
           formatDateTime={formatDateTime}
           sessionBadgeClassName={sessionBadge}
           text={{
+            walletTitle: t("dashboard.home.runtime.walletTitle"),
             selectedBot: t("dashboard.home.runtime.selectedBot"),
             status: t("dashboard.home.runtime.status"),
             mode: t("dashboard.home.runtime.mode"),
@@ -1486,6 +1503,7 @@ export default function HomeLiveWidgets() {
             deltaFromStart: t("dashboard.home.runtime.deltaFromStart"),
             freeFunds: t("dashboard.home.runtime.freeFunds"),
             fundsInPositions: t("dashboard.home.runtime.fundsInPositions"),
+            inPositionsShort: t("dashboard.home.runtime.inPositionsShort"),
             exposure: t("dashboard.home.runtime.exposure"),
             realizedOpen: t("dashboard.home.runtime.realizedOpen"),
             winRate: t("dashboard.home.runtime.winRate"),

@@ -27,6 +27,7 @@ type DataTableProps<T> = {
   compact?: boolean;
   framed?: boolean;
   showSearch?: boolean;
+  toolbarClassName?: string;
   query?: string;
   onQueryChange?: (query: string) => void;
   onSearch?: (query: string) => void;
@@ -57,6 +58,7 @@ type DataTableProps<T> = {
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
   paginationSummary?: (meta: { totalRows: number; page: number; totalPages: number }) => ReactNode;
+  paginationClassName?: string;
 };
 
 type SortDirection = 'asc' | 'desc';
@@ -83,6 +85,7 @@ export default function DataTable<T>({
   compact = false,
   framed = true,
   showSearch = true,
+  toolbarClassName = '',
   query,
   onQueryChange,
   onSearch,
@@ -113,6 +116,7 @@ export default function DataTable<T>({
   onPageChange,
   onPageSizeChange,
   paginationSummary,
+  paginationClassName = '',
 }: DataTableProps<T>) {
   const resolvedDefaultPageSize = defaultPageSize ?? pageSizeOptions[0] ?? 10;
   const [internalQuery, setInternalQuery] = useState('');
@@ -278,7 +282,11 @@ export default function DataTable<T>({
     : compact
       ? 'space-y-2'
       : 'space-y-3';
-  const tableClassName = compact ? 'table table-zebra table-sm w-full' : 'table table-zebra w-full';
+  const softZebraClassName =
+    '[&>tbody>tr:nth-child(odd)>td]:bg-base-100/5 [&>tbody>tr:nth-child(even)>td]:bg-base-200/18 [&>tbody>tr>td]:transition-colors';
+  const tableClassName = compact
+    ? `table table-sm w-full ${softZebraClassName}`
+    : `table w-full ${softZebraClassName}`;
 
   return (
     <section className={sectionClassName}>
@@ -286,7 +294,7 @@ export default function DataTable<T>({
       {description ? <p className='text-sm opacity-70'>{description}</p> : null}
 
       {showSearch || advancedFilters ? (
-        <div className='flex flex-wrap items-center gap-2'>
+        <div className={`flex flex-wrap items-center gap-2 ${toolbarClassName}`.trim()}>
           {showSearch ? (
             <div className='relative w-full md:max-w-sm'>
               <LuSearch className='pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 opacity-60' />
@@ -390,8 +398,8 @@ export default function DataTable<T>({
       {pagedRows.length === 0 ? <p className='text-sm opacity-70'>{emptyText}</p> : null}
 
       {paginationEnabled ? (
-        <div className='mt-2 flex flex-wrap items-center justify-between gap-3 border-t border-base-300/50 pt-2'>
-          <div className='flex flex-wrap items-center gap-2 text-xs text-base-content/70'>
+        <div className={`flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between ${paginationClassName}`.trim()}>
+          <div className='order-2 flex flex-wrap items-center gap-2 text-xs text-base-content/70 sm:order-1'>
             {paginationSummary ? (
               paginationSummary({ totalRows: totalRowsCount, page: effectivePage, totalPages })
             ) : (
@@ -402,7 +410,7 @@ export default function DataTable<T>({
               </>
             )}
           </div>
-          <div className='flex flex-wrap items-center justify-end gap-2'>
+          <div className='order-1 flex w-full flex-wrap items-center justify-between gap-2 sm:order-2 sm:w-auto sm:justify-end'>
             <label className='label cursor-pointer gap-2 py-0 text-xs'>
               <span className='label-text text-xs opacity-70'>{rowsPerPageLabel}</span>
               <select
@@ -419,6 +427,7 @@ export default function DataTable<T>({
             </label>
             <InlinePager
               size='sm'
+              className='shrink-0'
               previousLabel={previousLabel}
               nextLabel={nextLabel}
               previousDisabled={manualPagination ? !(externalHasPrev ?? effectivePage > 1) : effectivePage <= 1}

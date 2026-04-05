@@ -242,6 +242,7 @@ type TranslationSchema = {
         long: string;
         short: string;
         runtimeRiskTitle: string;
+        walletTitle: string;
         selectedBot: string;
         status: string;
         mode: string;
@@ -256,6 +257,7 @@ type TranslationSchema = {
         deltaFromStart: string;
         freeFunds: string;
         fundsInPositions: string;
+        inPositionsShort: string;
         exposure: string;
         realizedOpen: string;
         winRate: string;
@@ -510,6 +512,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           long: "LONG",
           short: "SHORT",
           runtimeRiskTitle: "Bot runtime and risk",
+          walletTitle: "Wallet",
           selectedBot: "Selected bot",
           status: "Status",
           mode: "Mode",
@@ -525,6 +528,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           deltaFromStart: "Delta from start",
           freeFunds: "Free funds",
           fundsInPositions: "Funds in positions",
+          inPositionsShort: "In positions",
           exposure: "Exposure",
           realizedOpen: "Realized / Open",
           winRate: "Win rate",
@@ -1104,6 +1108,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           long: "LONG",
           short: "SHORT",
           runtimeRiskTitle: "Bot runtime i ryzyko",
+          walletTitle: "Portfel",
           selectedBot: "Wybrany bot",
           status: "Status",
           mode: "Tryb",
@@ -1118,6 +1123,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           deltaFromStart: "Zmiana od startu",
           freeFunds: "Wolne srodki",
           fundsInPositions: "Srodki w pozycjach",
+          inPositionsShort: "W pozycjach",
           exposure: "Ekspozycja",
           realizedOpen: "Realized / Open",
           winRate: "Win rate",

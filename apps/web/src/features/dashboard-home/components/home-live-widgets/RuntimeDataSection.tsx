@@ -62,8 +62,11 @@ type RuntimeDataSectionProps = {
 };
 
 export default function RuntimeDataSection(props: RuntimeDataSectionProps) {
+  const tabFrameClassName =
+    "rounded-box border-b-[3px] border-secondary/70 bg-gradient-to-br from-primary/70 to-secondary/70 p-px";
+
   return (
-    <section className="border-t border-base-300/40 pt-4">
+    <section className="pt-3">
       <Tabs
         items={props.tabItems}
         value={props.runtimeDataTab}
@@ -74,151 +77,160 @@ export default function RuntimeDataSection(props: RuntimeDataSectionProps) {
       />
 
       {props.runtimeDataTab === "OPEN_POSITIONS" ? (
-        <section>
-          <DataTable
-            compact
-            framed={false}
-            rows={props.openRows}
-            columns={props.openPositionsColumns}
-            getRowId={(row) => row.id}
-            defaultSortKey="pnlPercent"
-            defaultSortDirection="desc"
-            persistSortKey={props.openPositionsSortStorageKey}
-            showSearch={false}
-            paginationEnabled
-            pageSizeOptions={[...props.openPositionsPageSizeOptions]}
-            defaultPageSize={props.openPositionsPageSizeOptions[0]}
-            rowsPerPageLabel={props.rowsPerPageLabel}
-            previousLabel={props.previousLabel}
-            nextLabel={props.nextLabel}
-            emptyText={props.noOpenPositionsLabel}
-          />
+        <section className={tabFrameClassName}>
+          <div className="rounded-box bg-base-100/85">
+            <DataTable
+              compact
+              framed={false}
+              rows={props.openRows}
+              columns={props.openPositionsColumns}
+              getRowId={(row) => row.id}
+              defaultSortKey="pnlPercent"
+              defaultSortDirection="desc"
+              persistSortKey={props.openPositionsSortStorageKey}
+              showSearch={false}
+              paginationEnabled
+              pageSizeOptions={[...props.openPositionsPageSizeOptions]}
+              defaultPageSize={props.openPositionsPageSizeOptions[0]}
+              rowsPerPageLabel={props.rowsPerPageLabel}
+              previousLabel={props.previousLabel}
+              nextLabel={props.nextLabel}
+              emptyText={props.noOpenPositionsLabel}
+              paginationClassName="p-3"
+            />
+          </div>
         </section>
       ) : null}
 
       {props.runtimeDataTab === "OPEN_ORDERS" ? (
-        <section>
-          <div className="rounded-box border border-dashed border-base-300/60 bg-base-100/40 px-4 py-6 text-center text-sm opacity-75">
-            {props.openOrdersPlaceholderLabel}
+        <section className={tabFrameClassName}>
+          <div className="rounded-box bg-base-100/85 p-3">
+            <div className="rounded-box border border-dashed border-base-300/60 bg-base-100/40 px-4 py-6 text-center text-sm opacity-75">
+              {props.openOrdersPlaceholderLabel}
+            </div>
           </div>
         </section>
       ) : null}
 
       {props.runtimeDataTab === "TRADE_HISTORY" ? (
-        <section>
-          {props.tradesLoading ? (
-            <SkeletonTableRows
-              title={false}
-              toolbar={false}
-              columns={9}
-              rows={4}
-              className="mb-3 border-base-300/40 bg-base-100/60 p-3"
-            />
-          ) : null}
-          <DataTable
-            compact
-            framed={false}
-            rows={props.tradesRows}
-            columns={props.tradesColumns}
-            getRowId={(row) => row.id}
-            filterPlaceholder="BTCUSDT"
-            query={props.tradeDraftFilters.symbol}
-            onQueryChange={(value) => props.onTradeDraftFiltersPatch({ symbol: value })}
-            onSearch={props.onApplyTradeFilters}
-            manualFiltering
-            manualSorting
-            sortKey={props.tradeSortBy}
-            sortDirection={props.tradeSortDir}
-            onSortChange={props.onTradeSortChange}
-            advancedToggleLabel={props.advancedOptionsLabel}
-            advancedFilters={
-              <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-5">
-                <label className="form-control gap-1">
-                  <span className="label-text text-xs opacity-70">{props.filterSideLabel}</span>
-                  <select
-                    className="select select-bordered select-sm h-9 min-h-9"
-                    value={props.tradeDraftFilters.side}
-                    onChange={(event) => {
-                      props.onTradeDraftFiltersPatch({ side: event.target.value as TradeSideFilter });
-                    }}
-                  >
-                    <option value="ALL">{props.allLabel}</option>
-                    <option value="BUY">BUY</option>
-                    <option value="SELL">SELL</option>
-                  </select>
-                </label>
-                <label className="form-control gap-1">
-                  <span className="label-text text-xs opacity-70">{props.filterActionLabel}</span>
-                  <select
-                    className="select select-bordered select-sm h-9 min-h-9"
-                    value={props.tradeDraftFilters.action}
-                    onChange={(event) => {
-                      props.onTradeDraftFiltersPatch({ action: event.target.value as TradeActionFilter });
-                    }}
-                  >
-                    <option value="ALL">{props.allLabel}</option>
-                    <option value="OPEN">{props.openActionLabel}</option>
-                    <option value="DCA">{props.dcaActionLabel}</option>
-                    <option value="CLOSE">{props.closeActionLabel}</option>
-                  </select>
-                </label>
-                <label className="form-control gap-1">
-                  <span className="label-text text-xs opacity-70">{props.filterFromLabel}</span>
-                  <input
-                    type="datetime-local"
-                    className="input input-bordered input-sm h-9 min-h-9"
-                    value={props.tradeDraftFilters.from}
-                    onChange={(event) => {
-                      props.onTradeDraftFiltersPatch({ from: event.target.value });
-                    }}
-                  />
-                </label>
-                <label className="form-control gap-1">
-                  <span className="label-text text-xs opacity-70">{props.filterToLabel}</span>
-                  <input
-                    type="datetime-local"
-                    className="input input-bordered input-sm h-9 min-h-9"
-                    value={props.tradeDraftFilters.to}
-                    onChange={(event) => {
-                      props.onTradeDraftFiltersPatch({ to: event.target.value });
-                    }}
-                  />
-                </label>
-                <div className="flex items-end justify-end">
-                  <div className="join">
-                    <button type="button" className="btn btn-primary btn-sm join-item" onClick={props.onApplyTradeFilters}>
-                      {props.applyLabel}
-                    </button>
-                    <button type="button" className="btn btn-outline btn-sm join-item" onClick={props.onResetTradeFilters}>
-                      {props.resetLabel}
-                    </button>
+        <section className={tabFrameClassName}>
+          <div className="rounded-box bg-base-100/85">
+            {props.tradesLoading ? (
+              <SkeletonTableRows
+                title={false}
+                toolbar={false}
+                columns={9}
+                rows={4}
+                className="mb-3 border-base-300/40 bg-base-100/60 p-3"
+              />
+            ) : null}
+            <DataTable
+              compact
+              framed={false}
+              rows={props.tradesRows}
+              columns={props.tradesColumns}
+              getRowId={(row) => row.id}
+              filterPlaceholder="BTCUSDT"
+              query={props.tradeDraftFilters.symbol}
+              onQueryChange={(value) => props.onTradeDraftFiltersPatch({ symbol: value })}
+              onSearch={props.onApplyTradeFilters}
+              manualFiltering
+              manualSorting
+              sortKey={props.tradeSortBy}
+              sortDirection={props.tradeSortDir}
+              onSortChange={props.onTradeSortChange}
+              toolbarClassName="p-3"
+              advancedToggleLabel={props.advancedOptionsLabel}
+              advancedFilters={
+                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-5">
+                  <label className="form-control gap-1">
+                    <span className="label-text text-xs opacity-70">{props.filterSideLabel}</span>
+                    <select
+                      className="select select-bordered select-sm h-9 min-h-9"
+                      value={props.tradeDraftFilters.side}
+                      onChange={(event) => {
+                        props.onTradeDraftFiltersPatch({ side: event.target.value as TradeSideFilter });
+                      }}
+                    >
+                      <option value="ALL">{props.allLabel}</option>
+                      <option value="BUY">BUY</option>
+                      <option value="SELL">SELL</option>
+                    </select>
+                  </label>
+                  <label className="form-control gap-1">
+                    <span className="label-text text-xs opacity-70">{props.filterActionLabel}</span>
+                    <select
+                      className="select select-bordered select-sm h-9 min-h-9"
+                      value={props.tradeDraftFilters.action}
+                      onChange={(event) => {
+                        props.onTradeDraftFiltersPatch({ action: event.target.value as TradeActionFilter });
+                      }}
+                    >
+                      <option value="ALL">{props.allLabel}</option>
+                      <option value="OPEN">{props.openActionLabel}</option>
+                      <option value="DCA">{props.dcaActionLabel}</option>
+                      <option value="CLOSE">{props.closeActionLabel}</option>
+                    </select>
+                  </label>
+                  <label className="form-control gap-1">
+                    <span className="label-text text-xs opacity-70">{props.filterFromLabel}</span>
+                    <input
+                      type="datetime-local"
+                      className="input input-bordered input-sm h-9 min-h-9"
+                      value={props.tradeDraftFilters.from}
+                      onChange={(event) => {
+                        props.onTradeDraftFiltersPatch({ from: event.target.value });
+                      }}
+                    />
+                  </label>
+                  <label className="form-control gap-1">
+                    <span className="label-text text-xs opacity-70">{props.filterToLabel}</span>
+                    <input
+                      type="datetime-local"
+                      className="input input-bordered input-sm h-9 min-h-9"
+                      value={props.tradeDraftFilters.to}
+                      onChange={(event) => {
+                        props.onTradeDraftFiltersPatch({ to: event.target.value });
+                      }}
+                    />
+                  </label>
+                  <div className="flex items-end justify-end">
+                    <div className="join">
+                      <button type="button" className="btn btn-primary btn-sm join-item" onClick={props.onApplyTradeFilters}>
+                        {props.applyLabel}
+                      </button>
+                      <button type="button" className="btn btn-outline btn-sm join-item" onClick={props.onResetTradeFilters}>
+                        {props.resetLabel}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            }
-            paginationEnabled
-            manualPagination
-            page={props.tradeMeta.page}
-            pageSize={props.tradePageSize}
-            totalRows={props.tradeMeta.total}
-            totalPages={props.tradeMeta.totalPages}
-            hasPrev={props.tradeMeta.hasPrev}
-            hasNext={props.tradeMeta.hasNext}
-            onPageChange={props.onTradePageChange}
-            onPageSizeChange={props.onTradePageSizeChange}
-            pageSizeOptions={[...props.tradePageSizeOptions]}
-            rowsPerPageLabel={props.rowsPerPageLabel}
-            previousLabel={props.previousLabel}
-            nextLabel={props.nextLabel}
-            emptyText={props.noTradeHistoryLabel}
-            paginationSummary={({ totalRows, page, totalPages }) => (
-              <>
-                <span>{props.recordsBadgeLabel(totalRows)}</span>
-                <span aria-hidden className="opacity-50">|</span>
-                <span>{props.pageBadgeLabel(page, Math.max(1, totalPages))}</span>
-              </>
-            )}
-          />
+              }
+              paginationEnabled
+              manualPagination
+              page={props.tradeMeta.page}
+              pageSize={props.tradePageSize}
+              totalRows={props.tradeMeta.total}
+              totalPages={props.tradeMeta.totalPages}
+              hasPrev={props.tradeMeta.hasPrev}
+              hasNext={props.tradeMeta.hasNext}
+              onPageChange={props.onTradePageChange}
+              onPageSizeChange={props.onTradePageSizeChange}
+              pageSizeOptions={[...props.tradePageSizeOptions]}
+              rowsPerPageLabel={props.rowsPerPageLabel}
+              previousLabel={props.previousLabel}
+              nextLabel={props.nextLabel}
+              emptyText={props.noTradeHistoryLabel}
+              paginationClassName="p-3"
+              paginationSummary={({ totalRows, page, totalPages }) => (
+                <>
+                  <span>{props.recordsBadgeLabel(totalRows)}</span>
+                  <span aria-hidden className="opacity-50">|</span>
+                  <span>{props.pageBadgeLabel(page, Math.max(1, totalPages))}</span>
+                </>
+              )}
+            />
+          </div>
         </section>
       ) : null}
     </section>

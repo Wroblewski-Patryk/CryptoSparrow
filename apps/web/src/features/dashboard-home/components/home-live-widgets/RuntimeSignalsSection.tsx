@@ -1,5 +1,5 @@
 import type { ReactNode, RefObject } from "react";
-import { LuActivity, LuCoins, LuListChecks, LuSignal } from "react-icons/lu";
+import { LuActivity, LuCoins, LuSignal } from "react-icons/lu";
 import InlinePager from "../../../../ui/components/InlinePager";
 import type { RuntimeSymbolWithLive, SignalPillValue } from "./types";
 
@@ -14,7 +14,6 @@ type RuntimeSignalsSectionProps = {
   longLabel: string;
   shortLabel: string;
   noSignalDataLabel: string;
-  titleLabel: string;
   marketsLabel: string;
   signalsLabel: string;
   baseCurrencyLabel: string;
@@ -23,7 +22,6 @@ type RuntimeSignalsSectionProps = {
   baseCurrencyCode: string | null;
   renderBaseCurrency?: (currency: string) => ReactNode;
   renderSymbolLabel?: (symbol: string) => ReactNode;
-  renderSignalPill: (value: SignalPillValue) => ReactNode;
 };
 
 const SignalScopeIcon = ({ scope }: { scope: "LONG" | "SHORT" }) =>
@@ -67,26 +65,22 @@ const scopeLabelClass = (scope: "LONG" | "SHORT") =>
 export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps) {
   return (
     <div>
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2 text-[11px] leading-4">
-          <span className="inline-flex items-center gap-1.5 font-semibold tracking-wide">
-            <LuListChecks className="h-3.5 w-3.5" aria-hidden />
-            {props.titleLabel}
-          </span>
-          <span className="opacity-40">|</span>
-          <span className="inline-flex items-center gap-1.5">
+      <div className="mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div className="flex w-full justify-center md:w-auto md:justify-start">
+          <div className="flex max-w-full items-center gap-2 overflow-x-auto whitespace-nowrap text-[11px] leading-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <span className="inline-flex items-center gap-1.5">
             <LuCoins className="h-3.5 w-3.5 opacity-70" aria-hidden />
             <span className="opacity-70">{props.marketsLabel}:</span>
             <span className="font-semibold">{props.marketsCount}</span>
           </span>
-          <span className="opacity-40">|</span>
-          <span className="inline-flex items-center gap-1.5">
+            <span className="opacity-40">|</span>
+            <span className="inline-flex items-center gap-1.5">
             <LuSignal className="h-3.5 w-3.5 opacity-70" aria-hidden />
             <span className="opacity-70">{props.signalsLabel}:</span>
             <span className="font-semibold">{props.actionableSignalsCount}</span>
           </span>
-          <span className="opacity-40">|</span>
-          <span className="inline-flex items-center gap-1.5">
+            <span className="opacity-40">|</span>
+            <span className="inline-flex items-center gap-1.5">
             <LuActivity className="h-3.5 w-3.5 opacity-70" aria-hidden />
             <span className="opacity-70">{props.baseCurrencyLabel}:</span>
             {props.baseCurrencyCode ? (
@@ -100,7 +94,9 @@ export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps)
             )}
           </span>
         </div>
-        {props.hasSignalOverflow ? (
+      </div>
+      {props.hasSignalOverflow ? (
+        <div className="flex justify-center md:justify-end">
           <InlinePager
             size="xs"
             hideLabelsOnMobile
@@ -109,10 +105,16 @@ export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps)
             onPrevious={props.onScrollPrevious}
             onNext={props.onScrollNext}
           />
-        ) : null}
+        </div>
+      ) : null}
       </div>
-      <div ref={props.signalRailRef} className="overflow-x-auto pb-1">
-        <div className="grid grid-flow-col auto-cols-[calc((100%-0.75rem)/2)] gap-3 md:auto-cols-[calc((100%-1rem)/3)] xl:auto-cols-[calc((100%-1.5rem)/4)]">
+      <div ref={props.signalRailRef} className="overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex min-w-full gap-3 pr-1">
+          {props.signalSymbols.length === 0 ? (
+            <div className="w-full rounded-box bg-base-200/35 p-4 text-center text-xs opacity-70">
+              {props.noSignalDataLabel}
+            </div>
+          ) : null}
           {props.signalSymbols.map((signal) => {
             const signalDirection: SignalPillValue = signal.lastSignalDirection ?? "NEUTRAL";
             const lines = signal.lastSignalConditionLines ?? [];
@@ -124,14 +126,13 @@ export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps)
             return (
               <article
                 key={signal.id}
-                className="rounded-box border-b-[3px] border-secondary/70 bg-gradient-to-r from-primary/70 to-secondary/70 p-px"
+                className="w-[calc((100%_-_0.75rem_-_1px)/2)] shrink-0 rounded-box border-b-[3px] border-secondary/70 bg-base-100 bg-gradient-to-br from-primary/70 to-secondary/70 p-px md:w-[calc((100%_-_1rem_-_1px)/3)] xl:w-[calc((100%_-_1.5rem_-_1px)/4)]"
               >
-                <div className="rounded-box bg-base-100 px-3.5 py-2.5">
-                  <div className="flex items-center justify-between gap-2.5">
+                <div className="rounded-box bg-base-100/85 px-3.5 py-2.5">
+                  <div className="flex items-center gap-2.5">
                     <p className="min-w-0 font-semibold tracking-wide">
                       {props.renderSymbolLabel ? props.renderSymbolLabel(signal.symbol) : signal.symbol}
                     </p>
-                    {props.renderSignalPill(signalDirection)}
                   </div>
                   <div className="mt-2.5 grid grid-cols-2 gap-2.5 text-[11px] leading-4">
                     <div
@@ -139,7 +140,7 @@ export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps)
                         longActive ? "opacity-100" : "opacity-50 hover:opacity-100"
                       }`}
                     >
-                      <div className="mb-1 flex items-center gap-1">
+                      <div className="mb-2 flex items-center gap-1">
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium ${scopeLabelClass("LONG")}`}
                         >
@@ -167,7 +168,7 @@ export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps)
                         shortActive ? "opacity-100" : "opacity-50 hover:opacity-100"
                       }`}
                     >
-                      <div className="mb-1 flex items-center gap-1">
+                      <div className="mb-2 flex items-center gap-1">
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium ${scopeLabelClass("SHORT")}`}
                         >
@@ -195,11 +196,6 @@ export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps)
               </article>
             );
           })}
-          {props.signalSymbols.length === 0 ? (
-            <div className="col-span-full rounded-box bg-base-200/35 p-4 text-center text-xs opacity-70">
-              {props.noSignalDataLabel}
-            </div>
-          ) : null}
         </div>
       </div>
     </div>
