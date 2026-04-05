@@ -6,9 +6,9 @@ import axios from "axios";
 import {
   EmptyState,
   ErrorState,
-  LoadingState,
   SuccessState,
 } from "../../../ui/components/ViewState";
+import { SkeletonCardBlock, SkeletonFormBlock, SkeletonTableRows } from "../../../ui/components/loading";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { listLogs } from "../services/logs.service";
@@ -98,7 +98,27 @@ export default function AuditTrailView() {
     return ["all", ...Array.from(unique)];
   }, [items]);
 
-  if (loading) return <LoadingState title={t("dashboard.logs.loading")} />;
+  if (loading) {
+    return (
+      <div className="space-y-4" aria-busy="true" aria-label={t("dashboard.logs.loading")}>
+        <SkeletonFormBlock
+          fields={3}
+          columns={2}
+          title={false}
+          submitButton={false}
+          className="border-base-300/40 bg-base-100/60 p-3"
+        />
+        <SkeletonTableRows
+          columns={7}
+          rows={6}
+          title={false}
+          toolbar={false}
+          className="border-base-300/40 bg-base-100/60 p-3"
+        />
+        <SkeletonCardBlock cards={1} linesPerCard={5} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
+      </div>
+    );
+  }
 
   if (error) {
     return (

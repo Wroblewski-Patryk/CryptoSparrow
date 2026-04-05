@@ -6,7 +6,8 @@ import axios from "axios";
 import { toast } from "sonner";
 import { deleteStrategy, listStrategies } from "../api/strategies.api";
 import { StrategyDto } from "../types/StrategyForm.type";
-import { EmptyState, ErrorState, LoadingState } from "@/ui/components/ViewState";
+import { EmptyState, ErrorState } from "@/ui/components/ViewState";
+import { SkeletonTableRows } from "@/ui/components/loading";
 import { useLocaleFormatting } from "@/i18n/useLocaleFormatting";
 import { useI18n } from "@/i18n/I18nProvider";
 import DataTable, { DataTableColumn } from "@/ui/components/DataTable";
@@ -176,7 +177,15 @@ export default function StrategiesList() {
 
   return (
     <div>
-      {loading && <LoadingState />}
+      {loading && (
+        <SkeletonTableRows
+          columns={5}
+          rows={6}
+          title={false}
+          toolbar
+          className="border-base-300/40 bg-base-100/60 p-3"
+        />
+      )}
       {!loading && loadError && (
         <ErrorState
           title={copy.loadFailedTitle}
@@ -233,4 +242,3 @@ export default function StrategiesList() {
     </div>
   );
 }
-

@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { EmptyState, ErrorState, LoadingState, SuccessState } from '../../../ui/components/ViewState';
+import { EmptyState, ErrorState, SuccessState } from '../../../ui/components/ViewState';
+import { SkeletonTableRows } from '../../../ui/components/loading';
 import { useLocaleFormatting } from '../../../i18n/useLocaleFormatting';
 import {
   EXCHANGE_OPTIONS,
@@ -394,7 +395,15 @@ export default function MarketsFlow() {
         </div>
       </form>
 
-      {loading && <LoadingState title='Ladowanie market universes' />}
+      {loading && (
+        <SkeletonTableRows
+          columns={8}
+          rows={4}
+          title={false}
+          toolbar={false}
+          className='border-base-300/40 bg-base-100/60 p-3'
+        />
+      )}
       {!loading && error && (
         <ErrorState
           title='Nie udalo sie pobrac market universes'
