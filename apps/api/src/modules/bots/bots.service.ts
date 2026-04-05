@@ -78,6 +78,12 @@ import {
   getOwnedStrategy,
   resolveCreateMarketGroupToSymbolGroup,
 } from './botWriteValidation.service';
+import {
+  getOwnedBot,
+  getOwnedBotRuntimeSession,
+  resolveSessionWindowEnd,
+  validateSymbolGroupForBot,
+} from './botOwnership.service';
 
 type BotConsentState = {
   mode: 'PAPER' | 'LIVE';
@@ -240,43 +246,6 @@ const writeLiveConsentAudit = async (params: {
   }
 };
 
-const getOwnedBot = async (userId: string, botId: string) =>
-  prisma.bot.findFirst({
-    where: { id: botId, userId },
-    select: { id: true, marketType: true, exchange: true, apiKeyId: true },
-  });
-
-const getOwnedBotRuntimeSession = async (userId: string, botId: string, sessionId: string) =>
-  prisma.botRuntimeSession.findFirst({
-    where: {
-      id: sessionId,
-      userId,
-      botId,
-    },
-  });
-
-const resolveSessionWindowEnd = (session: {
-  status: 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELED';
-  finishedAt: Date | null;
-  lastHeartbeatAt: Date | null;
-  startedAt: Date;
-}) => {
-  if (session.finishedAt) return session.finishedAt;
-  if (session.status === 'RUNNING') return new Date();
-  return session.lastHeartbeatAt ?? session.startedAt;
-};
-
-const getOwnedSymbolGroup = async (userId: string, symbolGroupId: string) =>
-  prisma.symbolGroup.findFirst({
-    where: { id: symbolGroupId, userId },
-    select: {
-      id: true,
-      marketUniverse: {
-        select: { marketType: true, exchange: true },
-      },
-    },
-  });
-
 const getOwnedApiKey = async (userId: string, apiKeyId: string) =>
   prisma.apiKey.findFirst({
     where: { id: apiKeyId, userId },
@@ -330,25 +299,6 @@ const assertNoDuplicateActiveBotByStrategyAndSymbolGroup = async (params: {
   const duplicate = await findDuplicateActiveBotByStrategyAndSymbolGroup(params);
   if (duplicate?.bot) {
     throw new Error('ACTIVE_BOT_STRATEGY_MARKET_GROUP_DUPLICATE');
-  }
-};
-
-const validateSymbolGroupForBot = async (params: {
-  userId: string;
-  botId: string;
-  symbolGroupId: string;
-}) => {
-  const bot = await getOwnedBot(params.userId, params.botId);
-  if (!bot) throw new Error('BOT_NOT_FOUND');
-
-  const symbolGroup = await getOwnedSymbolGroup(params.userId, params.symbolGroupId);
-  if (!symbolGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
-
-  if (symbolGroup.marketUniverse.marketType !== bot.marketType) {
-    throw new Error('BOT_MARKET_GROUP_MARKET_TYPE_MISMATCH');
-  }
-  if (symbolGroup.marketUniverse.exchange !== bot.exchange) {
-    throw new Error('BOT_MARKET_GROUP_EXCHANGE_MISMATCH');
   }
 };
 

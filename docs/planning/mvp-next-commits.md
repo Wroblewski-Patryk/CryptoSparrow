@@ -7,6 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [x] `ARCH-21 refactor(api-bots): extract ownership/session helper queries (owned bot, owned runtime session, session-window end, symbol-group compatibility validator) from bots.service into dedicated module`
 - [x] `ARCH-20 refactor(api-bots): extract bot create/update validation helpers (strategy lookup, market-group -> symbol-group resolver, max-open derivation, duplicate-active guard query) from bots.service into dedicated module`
 - [x] `ARCH-19 refactor(api-bots): extract symbol-catalog fallback resolver (volume filter + cache key + catalog lookup) from bots.service into dedicated module`
 - [x] `ARCH-18 refactor(api-bots): extract runtime signal-stats formatting helpers (record parsing, numeric coercion, merge-reason labels) from bots.service into dedicated module`
