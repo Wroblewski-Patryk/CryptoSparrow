@@ -1,4 +1,4 @@
-import { LuBot, LuShieldCheck, LuTrophy } from "react-icons/lu";
+import { LuBot, LuShieldCheck, LuTrophy, LuWallet } from "react-icons/lu";
 import type { RuntimeSelectedData, RuntimeSnapshot, RuntimeSummary } from "./types";
 
 type RuntimeSidebarSectionProps = {
@@ -64,7 +64,10 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
           <div className={`${panelBodyClassName} text-xs`}>
             <div className="space-y-1.5">
               <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">{props.text.portfolio}</span>
+                <span className="inline-flex items-center gap-1.5 opacity-65">
+                  <LuWallet className="h-3.5 w-3.5" aria-hidden />
+                  {props.text.portfolio}
+                </span>
                 <span className="font-semibold">
                   {props.summary.paperStart > 0 ? props.formatAmountWithUnit(walletTotal) : "-"}
                 </span>

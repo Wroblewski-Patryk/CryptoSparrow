@@ -232,7 +232,7 @@ export default function Header() {
       ref={headerRef}
       className="sticky top-0 z-50 isolate border-b border-base-300/60 bg-base-100/85 backdrop-blur supports-[backdrop-filter]:bg-base-100/80"
     >
-      <div className="max-w-7xl mx-auto px-4 py-2">
+      <div className="max-w-7xl mx-auto p-4">
         <div className="navbar min-h-0 p-0 flex-nowrap justify-between gap-4">
           <div className="flex-none min-w-0 pr-2 xl:pr-4">
             <AppLogoLink
@@ -297,7 +297,7 @@ export default function Header() {
             </nav>
             <button
               type="button"
-              className={`btn btn-sm btn-square btn-ghost xl:hidden text-base-content/85 hover:bg-base-200 hover:text-base-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content/35 transition-colors ${mobileMenuOpen ? headerMenuItemActiveClass : ''}`}
+              className={`btn btn-sm btn-square btn-ghost xl:hidden text-secondary hover:bg-base-200 hover:text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content/35 transition-colors ${mobileMenuOpen ? headerMenuItemActiveClass : ''}`}
               aria-expanded={mobileMenuOpen}
               aria-controls="dashboard-mobile-nav"
               aria-label={t('dashboard.nav.menu')}
@@ -311,7 +311,7 @@ export default function Header() {
 
         {mobileMenuOpen && (
           <div
-            className="fixed inset-x-0 z-[60] overflow-hidden xl:hidden border-t border-base-300/60 bg-base-100/90 backdrop-blur supports-[backdrop-filter]:bg-base-100/85"
+            className="fixed inset-x-0 z-[60] overflow-hidden xl:hidden border-t border-base-300/60 bg-base-100"
             style={{
               top: `${mobileOverlayTopPx}px`,
               height: `calc(100dvh - ${mobileOverlayTopPx}px)`,
@@ -321,10 +321,10 @@ export default function Header() {
           >
             <div
               id="dashboard-mobile-nav"
-              className="mx-auto h-full w-full max-w-7xl overflow-y-auto overscroll-contain px-4 py-2"
+              className="mx-auto h-full w-full max-w-7xl overflow-y-auto overscroll-contain p-4 space-y-4"
             >
               <nav aria-label="Dashboard navigation" className="w-full">
-                <ul className="menu rounded-box border border-base-300/60 bg-base-200/60 p-2 gap-1 w-full">
+                <ul className="menu rounded-box p-0 gap-1 w-full">
                   {allLinks.map((item, index) => {
                     const ItemIcon = item.icon;
                     return (
@@ -343,7 +343,7 @@ export default function Header() {
                   })}
                 </ul>
               </nav>
-              <div className="w-full pb-4">
+              <div className="w-full">
                 <ProfileButton mobile onNavigate={() => setMobileMenuOpen(false)} />
               </div>
             </div>

@@ -80,7 +80,7 @@ export default function ProfileButton({ mobile = false, onNavigate }: ProfileBut
 
   if (mobile) {
     return (
-      <div className="rounded-box border border-base-300/60 bg-base-200/55 p-2">
+      <div className="rounded-box p-0">
         <p className="px-3 py-1 text-xs font-semibold uppercase tracking-wide opacity-70">{copy.myAccount}</p>
         {user?.email ? <p className="px-3 pb-1 text-xs opacity-75 truncate">{user.email}</p> : null}
         <ul className="menu w-full p-0 gap-1">
