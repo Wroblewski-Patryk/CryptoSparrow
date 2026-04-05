@@ -17,6 +17,7 @@ export default function DashboardRouteProgress() {
   const [progress, setProgress] = useState(0);
 
   const routeRef = useRef<string | null>(null);
+  const activeRef = useRef(false);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -38,24 +39,27 @@ export default function DashboardRouteProgress() {
 
   const resetBar = useCallback(() => {
     clearTimers();
+    activeRef.current = false;
     setVisible(false);
     setProgress(0);
   }, [clearTimers]);
 
   const completeBar = useCallback(() => {
-    if (!visible) return;
+    if (!activeRef.current) return;
     clearTimers();
     setProgress(100);
     hideRef.current = setTimeout(() => {
+      activeRef.current = false;
       setVisible(false);
       setProgress(0);
       hideRef.current = null;
     }, 220);
-  }, [clearTimers, visible]);
+  }, [clearTimers]);
 
   const startBar = useCallback(() => {
     if (tickRef.current) return;
 
+    activeRef.current = true;
     setVisible(true);
     setProgress((previous) => (previous > 0 ? previous : 10));
 
@@ -102,6 +106,8 @@ export default function DashboardRouteProgress() {
     };
 
     const handlePopState = () => {
+      const nextKey = `${window.location.pathname}?${window.location.search.replace(/^\?/, '')}`;
+      if (routeRef.current === nextKey) return;
       startBar();
     };
 
@@ -138,7 +144,7 @@ export default function DashboardRouteProgress() {
       }`}
     >
       <div
-        className='h-full bg-accent transition-[width] duration-200 ease-out motion-reduce:transition-none'
+        className='h-full bg-gradient-to-r from-primary via-secondary to-accent transition-[width] duration-200 ease-out motion-reduce:transition-none'
         style={{ width: `${progress}%` }}
       />
     </div>
