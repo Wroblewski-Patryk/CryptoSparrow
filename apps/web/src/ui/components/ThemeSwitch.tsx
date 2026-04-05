@@ -22,6 +22,8 @@ const themes = [
   { value: 'luxury', label: 'Luxury' },
   { value: 'cyberpunk', label: 'Cyberpunk' },
 ] as const;
+const themeSwitcherHiddenValues = new Set(['cryptosparrow', 'luxury']);
+const themeSwitcherOptions = themes.filter((item) => !themeSwitcherHiddenValues.has(item.value));
 
 type ThemePreference = (typeof themes)[number]['value'];
 type DropdownPlacement = 'top' | 'bottom';
@@ -140,7 +142,7 @@ export default function ThemeSwitcher({
         <span className="sr-only">{copy.currentTheme}</span>
       </summary>
       <ul className={menuClass} aria-label={copy.optionsAria}>
-        {themes.map((theme) => (
+        {themeSwitcherOptions.map((theme) => (
           <li key={theme.value}>
             <button
               type="button"

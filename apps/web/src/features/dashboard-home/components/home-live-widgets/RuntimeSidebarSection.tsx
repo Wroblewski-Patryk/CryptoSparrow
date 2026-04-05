@@ -59,7 +59,7 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
 
   return (
     <aside className={props.asideClassName}>
-      <div className="space-y-3">
+      <div className="space-y-6">
         <section className={panelFrameClassName}>
           <div className={`${panelBodyClassName} text-xs`}>
             <div className="space-y-1.5">

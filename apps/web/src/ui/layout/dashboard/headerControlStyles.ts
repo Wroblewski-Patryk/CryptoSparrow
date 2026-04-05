@@ -1,17 +1,17 @@
 export const headerControlClass =
-  "inline-flex min-h-9 items-center gap-2 rounded-md border border-transparent px-3 py-2 text-base-content/80 hover:border-primary/35 hover:bg-primary/10 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/40 transition-colors group-open:border-primary/35 group-open:bg-primary/10 group-open:text-primary";
+  "inline-flex min-h-9 items-center gap-2 rounded-md px-3 py-2 text-base-content/80 hover:!bg-transparent focus:!bg-transparent active:!bg-transparent hover:text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/40 transition-colors group-open:text-secondary";
 
 export const headerMenuItemClass =
   `${headerControlClass} list-none cursor-pointer [&::-webkit-details-marker]:hidden`;
 
 export const headerMenuItemActiveClass =
-  "!border !border-accent/45 bg-transparent !text-accent [&>svg]:!text-accent [&>svg]:opacity-100";
+  "!text-primary [&>svg]:!text-primary [&>svg]:opacity-100";
 
 export const headerDropdownLinkClass =
-  "rounded-md border border-transparent transition-colors hover:border-primary/35 hover:bg-primary/10 hover:text-primary";
+  "rounded-md text-base-content/80 transition-colors hover:!bg-transparent focus:!bg-transparent active:!bg-transparent hover:text-secondary";
 
 export const headerDropdownLinkActiveClass =
-  "rounded-md !border !border-accent/45 bg-transparent !text-accent [&>svg]:!text-accent [&>svg]:opacity-100";
+  "rounded-md !text-primary [&>svg]:!text-primary [&>svg]:opacity-100";
 
 export const getHeaderMenuItemClass = (active: boolean) =>
   active ? `${headerMenuItemClass} ${headerMenuItemActiveClass}` : headerMenuItemClass;

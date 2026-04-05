@@ -40,11 +40,11 @@ export default function Tabs<T extends string>({
   iconClassName = "",
   activeIconClassName = "",
 }: TabsProps<T>) {
-  const containerClass = variant === "box" ? "tabs tabs-box gap-1.5" : "tabs gap-1.5";
+  const containerClass = variant === "box" ? "tabs tabs-box gap-1.5" : "tabs tabs-border";
   const tabBaseClass = variant === "box"
     ? "tab rounded-md border border-transparent text-base-content/80 hover:border-primary/35 hover:bg-primary/10 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/40 transition-colors"
-    : "tab rounded-md border border-transparent text-base-content/80 hover:border-primary/35 hover:bg-primary/10 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/40 transition-colors";
-  const defaultActiveClass = "!border !border-accent/45 !bg-transparent !text-accent hover:!text-accent shadow-none";
+    : "tab px-3 text-sm font-medium text-base-content/70 hover:text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/40 transition-colors";
+  const defaultActiveClass = variant === "box" ? "!border !border-accent/45 !bg-transparent !text-accent hover:!text-accent shadow-none" : "tab-active !text-primary hover:!text-primary";
   const defaultActiveIconClass = "opacity-100";
   const hashToTab = useMemo(() => {
     const map = new Map<string, T>();
@@ -82,7 +82,7 @@ export default function Tabs<T extends string>({
             type="button"
             disabled={item.disabled}
             aria-selected={isActive}
-            className={`${tabBaseClass} ${tabClassName} ${isActive ? `${defaultActiveClass} ${activeTabClassName}` : inactiveTabClassName}`.trim()}
+            className={`${tabBaseClass} ${item.disabled ? "tab-disabled opacity-45" : ""} ${tabClassName} ${isActive ? `${defaultActiveClass} ${activeTabClassName}` : inactiveTabClassName}`.trim()}
             onClick={() => {
               if (item.disabled) return;
               if (!syncWithHash || typeof window === "undefined") {

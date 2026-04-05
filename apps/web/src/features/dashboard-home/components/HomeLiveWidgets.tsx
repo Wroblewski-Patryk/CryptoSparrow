@@ -1315,7 +1315,7 @@ export default function HomeLiveWidgets() {
     return (
       <div className="space-y-4" aria-busy="true" aria-label={t("dashboard.home.runtime.loadingTitle")}>
         <SkeletonKpiRow items={3} />
-        <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="space-y-3">
             <SkeletonCardBlock cards={4} linesPerCard={4} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
             <SkeletonTableRows columns={8} rows={5} title={false} toolbar={false} className="border-base-300/40 bg-base-100/60 p-3" />
@@ -1380,7 +1380,7 @@ export default function HomeLiveWidgets() {
 
   return (
     <div className="space-y-4">
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0">
           <section className={CARD}>
             <div className="space-y-6">

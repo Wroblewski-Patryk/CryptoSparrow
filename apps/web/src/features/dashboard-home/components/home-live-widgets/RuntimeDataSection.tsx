@@ -66,15 +66,14 @@ export default function RuntimeDataSection(props: RuntimeDataSectionProps) {
     "rounded-box border-b-[3px] border-secondary/70 bg-gradient-to-br from-primary/70 to-secondary/70 p-px";
 
   return (
-    <section className="pt-3">
-      <Tabs
-        items={props.tabItems}
-        value={props.runtimeDataTab}
-        onChange={(value) => props.onRuntimeDataTabChange(value as RuntimeDataTab)}
-        variant="border"
-        className="mb-3"
-        syncWithHash
-      />
+    <section>
+        <Tabs
+          items={props.tabItems}
+          value={props.runtimeDataTab}
+          onChange={(value) => props.onRuntimeDataTabChange(value as RuntimeDataTab)}
+          variant="border"
+          syncWithHash
+        />
 
       {props.runtimeDataTab === "OPEN_POSITIONS" ? (
         <section className={tabFrameClassName}>
