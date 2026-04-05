@@ -491,7 +491,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARCH-07 refactor(web-dashboard): split HomeLiveWidgets into composable sections (signals, open positions, history, sidebar)`
 - [x] `ARCH-08 refactor(web-bots): split BotsManagement into route shell + runtime blocks/components`
 - [x] `ARCH-09 perf(web-assets): optimize oversized hero/avatar assets without visual contract drift`
-- [ ] `ARCH-10 chore(quality): add repository guardrail check for max-file-size budget + lockfile consistency`
+- [x] `ARCH-10 chore(quality): add repository guardrail check for max-file-size budget + lockfile consistency`
 
 ## Phase 31 - Dashboard Mobile Navigation Stability
 - [x] `NAVM-01 docs(contract): lock mobile nav overlay contract (layering, offset, scroll, close behavior)`
@@ -501,6 +501,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 
 ## Progress Log
+- 2026-04-05: Completed `ARCH-10` by adding repository guardrail automation (`scripts/repoGuardrails.mjs`) enforcing lockfile consistency (`pnpm-lock.yaml` only, no npm/yarn/bun lockfiles tracked or present on disk outside ignored dirs) and source-file size budgets (default + explicit overrides for known legacy large files), wiring it into root script `quality:guardrails` and CI pre-check job (`repo-guardrails`); validated via `pnpm run quality:guardrails`.
 - 2026-04-05: Completed `ARCH-08` by splitting `BotsManagement.tsx` into route-level shell and extracted runtime blocks/components (`bots-management/BotsManagementTabs.tsx`, `bots-management/BotsMonitoringTab.tsx`), wiring monitoring tab render via props while preserving existing runtime behavior and test expectations; validated via `pnpm --filter web typecheck` and `pnpm --filter web test -- src/features/bots/components/BotsManagement.test.tsx`.
 - 2026-04-05: Completed `ARCH-07` by splitting dashboard runtime monolith rendering from `HomeLiveWidgets.tsx` into composable section components (`RuntimeOnboardingSection`, `RuntimeSignalsSection`, `RuntimeDataSection`, `RuntimeSidebarSection`) with shared section types under `home-live-widgets/types.ts`, while preserving existing data/runtime behavior; validated via `pnpm --filter web typecheck` and `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx`.
 - 2026-04-05: Completed `NAVM-05` by executing manual mobile smoke across 10 dashboard routes (`/dashboard`, orders, positions, markets, strategies, backtests, bots, reports, logs, profile) in `390x844` viewport via Playwright CLI and recording route-level evidence in `docs/operations/dashboard-mobile-nav-smoke-2026-04-05.md`.
