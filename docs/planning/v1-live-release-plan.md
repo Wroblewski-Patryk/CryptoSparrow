@@ -70,7 +70,8 @@ Goal: move from MVP to a production-grade public release (V1.0) with reliable li
 - [x] `chore(release): 7-day launch review and v1.1 backlog cut`
 
 ## Exit Evidence Workpack (Open)
-- [ ] `ops(slo): define SLO targets and collect production observation window evidence`
+- [x] `ops(slo-catalog): define SLO targets and evidence-source mapping`
+- [ ] `ops(slo-production): collect production observation-window evidence and attach artifacts`
 - [x] `test(drill): execute incident drills in production-like environment and publish outcomes`
 - [x] `security(audit): complete final auth/ownership/key audit sign-off`
 - [x] `test(load): publish load/performance evidence against target thresholds`
@@ -167,6 +168,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `G10-23 web-build-stability: provide favicon asset required by Next.js production build pipeline`
 
 ## Progress Log
+- 2026-04-05: Synced Exit Evidence Workpack SLO status for plan truthfulness: catalog/targets are complete, remaining open item is production observation-window evidence collection.
 - 2026-04-04: Hardened `ops:slo:collect` output with profile-based thresholds (MVP/V1) and explicit objective-level PASS/FAIL/NO_DATA status in JSON + markdown evidence artifacts.
 - 2026-04-04: Extended `ops:slo:window-report` and `ops:rc:gates:status` to aggregate objective-level SLO outcomes across observation artifacts and reuse those statuses in external gate evaluation.
 - 2026-03-28: Added Phase G10 parity-closure workstream to finish deterministic strategy behavior across BACKTEST/PAPER/LIVE and support Binance side-by-side verification.
