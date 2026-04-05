@@ -7,6 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [x] `ARCH-26 refactor(api-bots): extract activation capability policy (paper/live exchange guard) from bots.service into dedicated module`
 - [x] `ARCH-25 refactor(api-bots): extract legacy bot-strategy upsert helpers (default symbol-group bootstrap + upsert flow) from bots.service into dedicated module`
 - [x] `ARCH-24 refactor(api-bots): extract live-consent helpers (version normalization, consent validation, consent audit write) from bots.service into dedicated module`
 - [x] `ARCH-23 refactor(api-bots): move duplicate-active strategy+market-group assertion helper from bots.service to botWriteValidation.service`

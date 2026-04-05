@@ -511,6 +511,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARCH-23 refactor(api-bots): move duplicate-active strategy+market-group assertion helper from bots.service to botWriteValidation.service`
 - [x] `ARCH-24 refactor(api-bots): extract live-consent helpers (version normalization, consent validation, consent audit write) from bots.service into dedicated module`
 - [x] `ARCH-25 refactor(api-bots): extract legacy bot-strategy upsert helpers (default symbol-group bootstrap + upsert flow) from bots.service into dedicated module`
+- [x] `ARCH-26 refactor(api-bots): extract activation capability policy (paper/live exchange guard) from bots.service into dedicated module`
 
 ## Phase 31 - Dashboard Mobile Navigation Stability
 - [x] `NAVM-01 docs(contract): lock mobile nav overlay contract (layering, offset, scroll, close behavior)`
@@ -520,6 +521,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 
 ## Progress Log
+- 2026-04-05: Completed `ARCH-26` by extracting bot activation capability policy (`assertBotActivationExchangeCapability`) from `bots.service.ts` into dedicated `botActivationPolicy.service.ts`, preserving existing PAPER/LIVE exchange-capability guards at create/update call-sites; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-25` by extracting legacy bot-strategy helpers (`getOrCreateDefaultSymbolGroup`, `upsertBotStrategy`) from `bots.service.ts` into dedicated `botLegacyStrategyLink.service.ts`, then wiring update-flow call-sites to imported helper without behavior drift; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-24` by extracting LIVE consent helpers (`normalizeConsentTextVersion`, `validateLiveConsentState`, `writeLiveConsentAudit` + `BotConsentState` type) from `bots.service.ts` into dedicated `botLiveConsent.service.ts`, then wiring create/update consent flow to imported module without behavior drift; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-23` by moving duplicate-active strategy+market-group guard (`assertNoDuplicateActiveBotByStrategyAndSymbolGroup`) from `bots.service.ts` into `botWriteValidation.service.ts`, leaving call-sites unchanged while reducing local write-validation footprint in the monolith; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
