@@ -310,6 +310,20 @@ This file tracks intentionally unresolved architecture choices so implementation
 - V2 direction:
   - expand exchange coverage by implementing new adapters on top of the Binance adapter pattern.
 
+## Coin Icon Source Policy (Dashboard/UI Assets)
+- Decision state: resolved on 2026-04-05.
+- Product/ops decision:
+  - coin/token icons for UI should use CoinGecko as the primary external source (symbol/id mapped catalog),
+  - do not depend on exchange-provided icon catalogs as canonical source for app UI,
+  - fail-soft fallback chain is required: `CoinGecko -> local curated symbol map -> generic placeholder icon`,
+  - icon lookup must be cache-backed (TTL) to reduce rate-limit pressure and keep dashboard rendering stable during upstream API issues.
+- Deployment assumptions:
+  - prefer configured CoinGecko API key when available; keep non-key fallback path for local/dev environments,
+  - expose env-driven controls for API base URL, API key, and cache TTL to support stage/prod tuning without code edits.
+- Implementation rollout:
+  - `docs/planning/mvp-execution-plan.md` (`Phase 32`, tasks `ICN-01..ICN-07`)
+  - `docs/planning/coin-icons-coingecko-plan-2026-04-05.md`
+
 ## Mode Entry Policy (PAPER vs LIVE)
 - Decision state: resolved on 2026-03-20.
 - V1 decision:
