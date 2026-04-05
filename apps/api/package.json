@@ -22,9 +22,6 @@
     "run": "node dist/index.js",
     "start": "pnpm exec prisma migrate reset --force --skip-seed && pnpm exec prisma db seed && pnpm run run"
   },
-  "prisma": {
-    "seed": "node --import tsx prisma/seed.ts"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",

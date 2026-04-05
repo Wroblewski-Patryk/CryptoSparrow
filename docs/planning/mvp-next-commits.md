@@ -44,6 +44,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `OPS-33 chore(api-prisma): migrate deprecated package.json#prisma seed config to prisma.config.ts (migrations.seed) and keep VPS node-prisma seed path working`
 - [x] `NAVM-06 fix(web-header): enforce full mobile dashboard menu viewport height via dynamic `dvh` overlay sizing (header-offset aware)`
 - [x] `NAVM-01 docs(contract): lock mobile nav overlay contract (layering, offset, scroll, close behavior)`
 - [x] `ARCH-01 docs(contract): publish critical-refactor split contract (no behavior drift) for api/web monolith files`

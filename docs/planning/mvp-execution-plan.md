@@ -46,6 +46,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `security(api-keys): verify encrypted-only storage and masked response`
 - [x] `security(rate-limit): add limiter for auth, market, and trading endpoints`
 - [x] `docs(cleanup): normalize encoding and Current/Planned consistency`
+- [x] `chore(api-prisma): migrate deprecated package.json#prisma seed config to prisma.config.ts (migrations.seed) with VPS-compatible db-seed invocation`
 
 ## Phase 1 - Data Model and Core API (MVP Foundation)
 - [x] `feat(db): add MarketUniverse model`
@@ -1057,3 +1058,5 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-04-04: Completed `LFIN-08 test(api-live-adapter)` by adding regression coverage for adapter fallback chain (`inline -> fetchOrderWithFills -> fetchTradesForOrder`), LIVE fee+fills persistence in `openOrder`, and runtime trade serialization parity for `feeSource/feePending/feeCurrency` in bots monitoring API.
 - 2026-04-04: Completed EXPH-04 fail-closed hardening for runtime/live paths by filtering runtime signal-loop active bots through exchange capability gates (PAPER_PRICING_FEED/LIVE_EXECUTION), and added unit regression coverage for mode-aware exchange support mapping.
 - 2026-04-05: Added mobile dashboard menu overlay full-height fix (100dvh - headerOffset) in Header.tsx, preventing bottom-gap artifacts on taller mobile viewports and preserving scroll-lock behavior.
+- 2026-04-05: Migrated Prisma deprecated package.json#prisma seed config to pps/api/prisma.config.ts (migrations.seed), preserved VPS-friendly 
+ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma flow, and verified seed execution end-to-end.
