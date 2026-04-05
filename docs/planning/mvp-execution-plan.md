@@ -505,6 +505,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARCH-17 refactor(api-bots): extract shared symbol-universe helpers and remove duplicated normalization logic across bots runtime modules`
 - [x] `ARCH-18 refactor(api-bots): extract runtime signal-stats formatting helpers (record parsing, numeric coercion, merge-reason labels) from bots.service into dedicated module`
 - [x] `ARCH-19 refactor(api-bots): extract symbol-catalog fallback resolver (volume filter + cache key + catalog lookup) from bots.service into dedicated module`
+- [x] `ARCH-20 refactor(api-bots): extract bot create/update validation helpers (strategy lookup, market-group -> symbol-group resolver, max-open derivation, duplicate-active guard query) from bots.service into dedicated module`
 
 ## Phase 31 - Dashboard Mobile Navigation Stability
 - [x] `NAVM-01 docs(contract): lock mobile nav overlay contract (layering, offset, scroll, close behavior)`
@@ -514,6 +515,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 
 ## Progress Log
+- 2026-04-05: Completed `ARCH-20` by extracting bot write-validation helpers (`getOwnedStrategy`, `deriveMaxOpenPositionsFromStrategy`, `resolveCreateMarketGroupToSymbolGroup`, `findDuplicateActiveBotByStrategyAndSymbolGroup`) from `bots.service.ts` into dedicated `botWriteValidation.service.ts`, then wiring existing create/update duplicate-guard flow to imported helpers without behavior drift; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-19` by extracting symbol-catalog fallback resolution (`resolveMinQuoteVolumeFilter`, catalog cache-key generation, filtered catalog fetch, `resolveEffectiveSymbolGroupSymbolsWithCatalog`) from `bots.service.ts` into dedicated `runtimeSymbolCatalogResolver.service.ts`, then wiring existing bots runtime call-sites to the module without behavior drift; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-18` by extracting runtime signal-stats formatting helpers (`asRecord`, `toFiniteNumber`, `humanizeMergeReason`) from `bots.service.ts` into dedicated `runtimeSignalStatsFormatting.service.ts`, wiring runtime event parsing/summary mapping to the shared module with no behavior drift; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-17` by extracting shared symbol-universe helpers (`normalizeSymbols`, `resolveUniverseSymbols`, `resolveEffectiveSymbolGroupSymbols`) into dedicated `runtimeSymbolUniverse.service.ts`, then removing duplicated logic from both `bots.service.ts` and `runtimeStrategyDisplayBySymbol.service.ts`; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
