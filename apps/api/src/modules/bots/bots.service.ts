@@ -85,23 +85,12 @@ import {
   resolveSessionWindowEnd,
   validateSymbolGroupForBot,
 } from './botOwnership.service';
-
-type BotConsentState = {
-  mode: 'PAPER' | 'LIVE';
-  liveOptIn: boolean;
-  consentTextVersion?: string | null;
-};
-
-const normalizeConsentTextVersion = (value?: string | null) => {
-  const trimmed = value?.trim();
-  return trimmed ? trimmed : null;
-};
-
-const validateLiveConsentState = (state: BotConsentState) => {
-  if (state.liveOptIn && !normalizeConsentTextVersion(state.consentTextVersion)) {
-    throw new Error('LIVE_CONSENT_VERSION_REQUIRED');
-  }
-};
+import {
+  BotConsentState,
+  normalizeConsentTextVersion,
+  validateLiveConsentState,
+  writeLiveConsentAudit,
+} from './botLiveConsent.service';
 
 const assertBotActivationExchangeCapability = (params: {
   exchange: Exchange;
@@ -213,38 +202,6 @@ const upsertBotStrategy = async (params: {
       },
     }),
   ]);
-};
-
-const writeLiveConsentAudit = async (params: {
-  userId: string;
-  botId: string;
-  mode: 'PAPER' | 'LIVE';
-  liveOptIn: boolean;
-  consentTextVersion: string;
-  action: 'bot.live_consent.accepted' | 'bot.live_consent.updated';
-}) => {
-  try {
-    await prisma.log.create({
-      data: {
-        userId: params.userId,
-        botId: params.botId,
-        action: params.action,
-        level: 'INFO',
-        source: 'bots.service',
-        message: `LIVE consent recorded (${params.consentTextVersion})`,
-        category: 'RISK_CONSENT',
-        entityType: 'BOT',
-        entityId: params.botId,
-        metadata: {
-          mode: params.mode,
-          liveOptIn: params.liveOptIn,
-          consentTextVersion: params.consentTextVersion,
-        },
-      },
-    });
-  } catch {
-    // Audit failures should not block core bot updates.
-  }
 };
 
 export const listBots = async (userId: string, query: ListBotsQueryDto = {}) => {
