@@ -7,6 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [x] `ARCH-12 refactor(api-bots): extract runtime market-data fallback fetchers (kline/ticker) from bots.service into dedicated module`
 - [x] `BOPS-64 fix(engine+web-runtime): disarm TTP below first-floor threshold (first arm - first trail) and allow clean re-arm cycle`
 - [x] `BOPS-63 fix(web-runtime): normalize trailing-level scale in TTP fallback (decimal 0.05 and percent 5 inputs) to prevent false trigger math`
 - [x] `BOPS-62 fix(web-runtime): add sticky TTP display fallback from live PnL% + strategy levels when API dynamic stop is temporarily unavailable`

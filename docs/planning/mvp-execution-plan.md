@@ -497,6 +497,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARCH-09 perf(web-assets): optimize oversized hero/avatar assets without visual contract drift`
 - [x] `ARCH-10 chore(quality): add repository guardrail check for max-file-size budget + lockfile consistency`
 - [x] `ARCH-11 refactor(api-bots): extract strategy config parsing helpers (advanced close mode + TTP/TSL + DCA levels) from bots.service`
+- [x] `ARCH-12 refactor(api-bots): extract runtime market-data fallback fetchers (kline/ticker) from bots.service into dedicated module`
 
 ## Phase 31 - Dashboard Mobile Navigation Stability
 - [x] `NAVM-01 docs(contract): lock mobile nav overlay contract (layering, offset, scroll, close behavior)`
@@ -506,6 +507,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 
 ## Progress Log
+- 2026-04-05: Completed `ARCH-12` by extracting runtime market-data fallback fetchers (`fetchFallbackKlineCloses`, `fetchFallbackTickerPrices`) and their cache/interval normalization helpers from `bots.service.ts` into dedicated `runtimeMarketDataFallback.service.ts`, wiring existing call-sites without behavior drift; validated via `pnpm --filter api typecheck` and targeted bots e2e invocation (suite skipped in local env due test gating).
 - 2026-04-05: Completed `BOPS-64` by implementing first-floor TTP disarm logic in engine/runtime flow: when favorable move drops below `first_ttp_arm - first_ttp_trail`, TTP tracking state is cleared (no forced close), then re-arms normally after crossing first arm again; mirrored same disarm semantics in web fallback display helper so UI does not keep stale TTP after deep pullback; validated with new/updated regressions in `positionManagement.service.test.ts` and `trailingStopDisplay.test.ts` plus API+Web typecheck.
 - 2026-04-05: Completed `BOPS-63` by normalizing trailing-level scale inside web TTP fallback helper (`trailingStopDisplay`): levels from API in decimal form (`0.05`) are auto-mapped to percent-space (`5`) while percent-native inputs remain unchanged, preventing false arming/protected-value inflation; added regression coverage for both representations in `trailingStopDisplay.test.ts` and validated with targeted web tests + `pnpm --filter web typecheck`.
 - 2026-04-05: Completed `BOPS-62` by adding shared web helper fallback for dynamic TTP display (`trailingStopDisplay`) using sticky per-position favorable `PnL%` highs + strategy trailing levels when API stop-price payload is temporarily missing; fixed percent-unit mismatch so TTP levels arm against real percent values (no `/100` drift) and added regression test `trailingStopDisplay.test.ts` to lock monotonic fallback behavior (`6.21% -> 3.71%`, no downshift on pullback, re-arm to higher level on new highs); validated via targeted web tests + typecheck.
