@@ -7,20 +7,15 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `NAVM-02 fix(web-header): replace hardcoded mobile-menu offset with dynamic-safe overlay layout`
-- [x] `NAVM-03 fix(web-header): enforce deterministic stacking and scroll-lock for open mobile menu`
-- [x] `NAVM-04 test(web-header): add interactive mobile menu open/close visibility regression test`
-- [x] `ARCH-02 chore(repo): remove accidental npm lockfile from apps/api and enforce pnpm-only lockfile policy`
-- [x] `ARCH-03 chore(api-deps): remove unused api dependency 'prima' and revalidate api typecheck/tests`
+- [ ] `ARCH-07 refactor(web-dashboard): split HomeLiveWidgets into composable sections (signals, open positions, history, sidebar)`
+- [ ] `ARCH-08 refactor(web-bots): split BotsManagement into route shell + runtime blocks/components`
+- [ ] `ARCH-10 chore(quality): add repository guardrail check for max-file-size budget + lockfile consistency`
 ## NEXT
-- [ ] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
+- [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 - [x] `ARCH-04 cleanup(web): verify/remove dead UI helper files (TableToolbar/basic.service) with import-safety checks`
 - [x] `ARCH-05 refactor(api-bots): extract runtime position serialization (TTP/TSL/DCA mapping) from bots.service into dedicated module`
 - [x] `ARCH-06 refactor(api-bots): extract session stats aggregation/query layer from bots.service into focused read-services`
-- [ ] `ARCH-07 refactor(web-dashboard): split HomeLiveWidgets into composable sections (signals, open positions, history, sidebar)`
-- [ ] `ARCH-08 refactor(web-bots): split BotsManagement into route shell + runtime blocks/components`
 - [x] `ARCH-09 perf(web-assets): optimize oversized hero/avatar assets without visual contract drift`
-- [ ] `ARCH-10 chore(quality): add repository guardrail check for max-file-size budget + lockfile consistency`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 

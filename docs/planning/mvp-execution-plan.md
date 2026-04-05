@@ -498,9 +498,10 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `NAVM-02 fix(web-header): replace hardcoded mobile-menu offset with dynamic-safe overlay layout`
 - [x] `NAVM-03 fix(web-header): enforce deterministic stacking and scroll-lock for open mobile menu`
 - [x] `NAVM-04 test(web-header): add interactive mobile menu open/close visibility regression test`
-- [ ] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
+- [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 
 ## Progress Log
+- 2026-04-05: Completed `NAVM-05` by executing manual mobile smoke across 10 dashboard routes (`/dashboard`, orders, positions, markets, strategies, backtests, bots, reports, logs, profile) in `390x844` viewport via Playwright CLI and recording route-level evidence in `docs/operations/dashboard-mobile-nav-smoke-2026-04-05.md`.
 - 2026-04-05: Completed `ARCH-09` by optimizing oversized assets without UX drift: generated `hero-sky.webp` (~67KB) from `hero-sky.png` and switched public hero background to `image-set` (webp + png fallback), plus re-encoded `apps/api/public/avatars/default.png` (1024px -> 512px optimized palette PNG, ~26KB); validated with `pnpm --filter web typecheck`.
 - 2026-04-05: Completed `ARCH-06` by extracting runtime session read/aggregation queries from `bots.service.ts` into dedicated `runtimeSessionsRead.service.ts` (`listRuntimeSessionsWithSummary`, `getRuntimeSessionSummaryMetrics`), keeping route contract unchanged; validated with `pnpm --filter api typecheck` and passing `bots.e2e` suite.
 - 2026-04-05: Completed `ARCH-05` by extracting runtime position serialization logic from `bots.service.ts` into dedicated `runtimePositionSerialization.service.ts` (DCA executed-level mapping, sticky favorable-move fallback, dynamic TTP/TSL stop derivation), then wiring service usage back in with behavior parity validated by `pnpm --filter api typecheck` + `pnpm --filter api test -- src/modules/bots/bots.e2e.test.ts`.
