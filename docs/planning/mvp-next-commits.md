@@ -42,8 +42,8 @@ Operational queue for one-task execution runs.
 - [x] `ARCH-10 chore(quality): add repository guardrail check for max-file-size budget + lockfile consistency`
 ## NEXT
 - [x] `LDUX-06 feat(web-markets+strategies+logs): migrate loading views to skeleton compositions`
-- [ ] `LDUX-07 feat(web-backtests): migrate list/details loading states to skeletons and preserve timeline phase messaging`
-- [ ] `LDUX-08 test(web-loading-ux): add regression coverage for progress bar lifecycle and key skeleton rendering states`
+- [x] `LDUX-07 feat(web-backtests): migrate list/details loading states to skeletons and preserve timeline phase messaging`
+- [x] `LDUX-08 test(web-loading-ux): add regression coverage for progress bar lifecycle and key skeleton rendering states`
 - [ ] `LDUX-09 qa(web-dashboard): run manual desktop/mobile smoke and capture evidence`
 - [x] `ICN-02 feat(api-icons): add CoinGecko symbol/id resolver and icon metadata cache with TTL + fail-soft fallback chain`
 - [x] `ICN-03 feat(api-icons): expose icon lookup endpoint for dashboard modules with deterministic placeholder response`
@@ -60,6 +60,8 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `LDUX-08 test(web-loading-ux): add regression coverage for progress bar lifecycle and key skeleton rendering states`
+- [x] `LDUX-07 feat(web-backtests): migrate list/details loading states to skeletons and preserve timeline phase messaging`
 - [x] `LDUX-06 feat(web-markets+strategies+logs): migrate loading views to skeleton compositions`
 - [x] `LDUX-05 feat(web-dashboard-home+bots): replace loading alerts with section/page skeleton compositions`
 - [x] `LDUX-04 refactor(web-viewstate): make dashboard loading path skeleton-first while keeping alert states for error/degraded/success`

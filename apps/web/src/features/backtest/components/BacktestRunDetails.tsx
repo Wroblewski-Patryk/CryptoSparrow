@@ -10,7 +10,8 @@ import {
   listBacktestRunTrades,
 } from '../services/backtests.service';
 import { BacktestReport, BacktestRun, BacktestTimeline, BacktestTimelineEvent, BacktestTrade } from '../types/backtest.type';
-import { EmptyState, ErrorState, LoadingState } from '@/ui/components/ViewState';
+import { EmptyState, ErrorState } from '@/ui/components/ViewState';
+import { SkeletonCardBlock, SkeletonKpiRow, SkeletonTableRows } from '@/ui/components/loading';
 import { useLocaleFormatting } from '@/i18n/useLocaleFormatting';
 import { getStrategy } from '../../strategies/api/strategies.api';
 import { StrategyDto } from '../../strategies/types/StrategyForm.type';
@@ -1907,7 +1908,16 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
     [copy.stageEngineRunning, copy.stageReportReady, copy.stageRunCreated, copy.stageRunFinished, copy.stageTradesReady, report, run, trades.length]
   );
 
-  if (loading) return <LoadingState title={copy.loadingTitle} />;
+  if (loading) {
+    return (
+      <div className='space-y-4'>
+        <span className='sr-only'>{copy.loadingTitle}</span>
+        <SkeletonKpiRow items={4} />
+        <SkeletonCardBlock cards={2} linesPerCard={4} title={false} className='border-base-300/40 bg-base-100/60 p-3' />
+        <SkeletonTableRows columns={8} rows={6} title={false} toolbar={false} className='border-base-300/40 bg-base-100/60 p-3' />
+      </div>
+    );
+  }
   if (error) {
     return (
       <ErrorState

@@ -2,7 +2,8 @@
 
 import { useCallback, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
-import { EmptyState, ErrorState, LoadingState } from '@/ui/components/ViewState';
+import { EmptyState, ErrorState } from '@/ui/components/ViewState';
+import { SkeletonKpiRow, SkeletonTableRows } from '@/ui/components/loading';
 import BacktestsRunsTable from './BacktestsRunsTable';
 import { listBacktestRuns } from '../services/backtests.service';
 import { BacktestRun } from '../types/backtest.type';
@@ -56,7 +57,15 @@ export default function BacktestsListView() {
     void loadData();
   }, [loadData]);
 
-  if (loading) return <LoadingState title={copy.loadingTitle} />;
+  if (loading) {
+    return (
+      <div className='space-y-3'>
+        <span className='sr-only'>{copy.loadingTitle}</span>
+        <SkeletonKpiRow items={3} />
+        <SkeletonTableRows columns={6} rows={7} title={false} className='border-base-300/40 bg-base-100/60 p-3' />
+      </div>
+    );
+  }
   if (error) {
     return (
       <ErrorState
