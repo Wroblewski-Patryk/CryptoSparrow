@@ -246,7 +246,7 @@ const runtimeSessionWatchdogIntervalMs = Math.max(
 const runtimeStallDetectorEnabled = process.env.RUNTIME_STALL_DETECTOR_ENABLED !== 'false';
 const runtimeStallNoEventMs = Math.max(
   60_000,
-  Number.parseInt(process.env.RUNTIME_STALL_NO_EVENT_MS ?? '180000', 10)
+  Number.parseInt(process.env.RUNTIME_STALL_NO_EVENT_MS ?? '300000', 10)
 );
 const runtimeStallNoHeartbeatMs = Math.max(
   runtimeSessionWatchdogIntervalMs * 2,
@@ -725,15 +725,17 @@ export class RuntimeSignalLoop {
     if (!this.unsubscribe) return;
     console.error(`RuntimeSignalLoop stall detected: ${reason}. Restart requested.`);
     metricsStore.recordRuntimeRestart(reason);
-    await Promise.all(
-      activeBotIds.map((botId) =>
-        this.deps.closeRuntimeSession?.({
-          botId,
-          status: 'CANCELED',
-          stopReason: reason,
-        })
-      )
-    );
+    if (reason === 'runtime_stall_no_heartbeat') {
+      await Promise.all(
+        activeBotIds.map((botId) =>
+          this.deps.closeRuntimeSession?.({
+            botId,
+            status: 'CANCELED',
+            stopReason: reason,
+          })
+        )
+      );
+    }
     await this.unsubscribe();
     this.unsubscribe = null;
     if (this.sessionWatchdogTimer) {

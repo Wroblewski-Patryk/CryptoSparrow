@@ -403,74 +403,31 @@ const resolveUsedMargin = (positions: BotRuntimePositionsResponse | null) =>
     return sum + p.entryNotional / lev;
   }, 0);
 
-const computePriceFromLeveragedMovePercent = (
-  side: "LONG" | "SHORT",
-  entryPrice: number,
-  leveragedMovePercent: number,
-  leverage: number
+const toProtectedPnlPercentFromStopPrice = (
+  position: OpenPositionWithLive,
+  stopPrice: number | null | undefined
 ) => {
-  if (!Number.isFinite(entryPrice) || entryPrice <= 0) return null;
+  if (stopPrice == null || !Number.isFinite(stopPrice) || stopPrice <= 0) return null;
+  if (!Number.isFinite(position.entryPrice) || position.entryPrice <= 0) return null;
+  const leverage = Number.isFinite(position.leverage) && position.leverage > 0 ? position.leverage : 1;
+  const spotMove =
+    position.side === "LONG"
+      ? (stopPrice - position.entryPrice) / position.entryPrice
+      : (position.entryPrice - stopPrice) / position.entryPrice;
+  const leveragedMovePercent = spotMove * leverage * 100;
   if (!Number.isFinite(leveragedMovePercent)) return null;
-  const effectiveLeverage = Number.isFinite(leverage) && leverage > 0 ? leverage : 1;
-  const spotMove = leveragedMovePercent / effectiveLeverage;
-  const multiplier = side === "LONG" ? 1 + spotMove : 1 - spotMove;
-  if (!Number.isFinite(multiplier) || multiplier <= 0) return null;
-  return entryPrice * multiplier;
-};
-
-const computeTrailingStopFromAnchor = (
-  side: "LONG" | "SHORT",
-  anchorPrice: number,
-  trailPercent: number,
-  leverage: number
-) => {
-  if (!Number.isFinite(anchorPrice) || anchorPrice <= 0) return null;
-  if (!Number.isFinite(trailPercent) || trailPercent <= 0) return null;
-  const effectiveLeverage = Number.isFinite(leverage) && leverage > 0 ? leverage : 1;
-  const spotTrail = trailPercent / effectiveLeverage;
-  const multiplier = side === "LONG" ? 1 - spotTrail : 1 + spotTrail;
-  if (!Number.isFinite(multiplier) || multiplier <= 0) return null;
-  return anchorPrice * multiplier;
+  return leveragedMovePercent;
 };
 
 const resolveDynamicTtpDisplay = (position: OpenPositionWithLive) => {
-  if (position.dynamicTtpStopLoss != null) return position.dynamicTtpStopLoss;
-  const levels = [...(position.trailingTakeProfitLevels ?? [])]
-    .filter((level) => Number.isFinite(level.armPercent) && Number.isFinite(level.trailPercent))
-    .sort((left, right) => left.armPercent - right.armPercent);
-  if (levels.length === 0) return null;
-  if (!Number.isFinite(position.livePnlPct as number)) return null;
-  const favorableMove = (position.livePnlPct as number) / 100;
-  let active: (typeof levels)[number] | null = null;
-  for (const level of levels) {
-    if (favorableMove > level.armPercent) active = level;
-  }
-  if (!active) return null;
-  const triggerPercent = favorableMove - active.trailPercent;
-  if (!Number.isFinite(triggerPercent) || triggerPercent <= 0) return null;
-  return computePriceFromLeveragedMovePercent(position.side, position.entryPrice, triggerPercent, position.leverage);
+  const mappedFromApi = toProtectedPnlPercentFromStopPrice(position, position.dynamicTtpStopLoss);
+  return mappedFromApi;
 };
 
 const resolveDynamicTslDisplay = (position: OpenPositionWithLive) => {
-  if (position.dynamicTslStopLoss != null) return position.dynamicTslStopLoss;
-  if (!Number.isFinite(position.liveMarkPrice as number) || (position.liveMarkPrice as number) <= 0) return null;
-  const levels = [...(position.trailingStopLevels ?? [])]
-    .filter((level) => Number.isFinite(level.armPercent) && Number.isFinite(level.trailPercent))
-    .sort((left, right) => left.armPercent - right.armPercent);
-  if (levels.length === 0) return null;
-  if (!Number.isFinite(position.livePnlPct as number)) return null;
-  const favorableMove = (position.livePnlPct as number) / 100;
-  let active: (typeof levels)[number] | null = null;
-  for (const level of levels) {
-    if (favorableMove >= level.armPercent) active = level;
-  }
-  if (!active) return null;
-  return computeTrailingStopFromAnchor(
-    position.side,
-    position.liveMarkPrice as number,
-    active.trailPercent,
-    position.leverage
-  );
+  if (resolveDynamicTtpDisplay(position) != null) return null;
+  const mappedFromApi = toProtectedPnlPercentFromStopPrice(position, position.dynamicTslStopLoss);
+  return mappedFromApi;
 };
 
 const buildLiveOpenPositions = (
@@ -1112,9 +1069,7 @@ export default function HomeLiveWidgets() {
           accessor: (row) => resolveDynamicTtpDisplay(row) ?? null,
           render: (row) => {
             const ttpDisplay = resolveDynamicTtpDisplay(row);
-            return ttpDisplay == null
-              ? "-"
-              : formatNumber(ttpDisplay, { maximumFractionDigits: 4 });
+            return ttpDisplay == null ? "-" : formatPercent(ttpDisplay);
           },
         },
         {
@@ -1124,9 +1079,7 @@ export default function HomeLiveWidgets() {
           accessor: (row) => resolveDynamicTslDisplay(row) ?? null,
           render: (row) => {
             const tslDisplay = resolveDynamicTslDisplay(row);
-            return tslDisplay == null
-              ? "-"
-              : formatNumber(tslDisplay, { maximumFractionDigits: 4 });
+            return tslDisplay == null ? "-" : formatPercent(tslDisplay);
           },
         }
       );

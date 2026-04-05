@@ -474,7 +474,7 @@ describe('RuntimeSignalLoop', () => {
     expect(deps.orchestrateFn).not.toHaveBeenCalled();
   });
 
-  it('cancels running sessions and drops subscription on NO_EVENT stall window', async () => {
+  it('restarts subscription without canceling sessions on NO_EVENT stall window', async () => {
     vi.useFakeTimers();
     const { deps } = createDeps();
     withStrategyBot(deps, { strategies: [] });
@@ -490,15 +490,9 @@ describe('RuntimeSignalLoop', () => {
 
     expect(loop.isRunning()).toBe(true);
     await vi.advanceTimersByTimeAsync(35_000);
-    await vi.waitFor(() => expect(deps.closeRuntimeSession).toHaveBeenCalled());
+    await vi.waitFor(() => expect(loop.isRunning()).toBe(false));
 
-    expect(deps.closeRuntimeSession).toHaveBeenCalledWith(
-      expect.objectContaining({
-        botId: 'bot-1',
-        status: 'CANCELED',
-        stopReason: 'runtime_stall_no_event',
-      })
-    );
+    expect(deps.closeRuntimeSession).not.toHaveBeenCalled();
     expect(loop.isRunning()).toBe(false);
     vi.useRealTimers();
   });

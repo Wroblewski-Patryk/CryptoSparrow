@@ -1950,6 +1950,28 @@ describe('Bots module contract', () => {
           lastPrice: 103,
           snapshotAt,
         },
+        {
+          userId: ownerUser.id,
+          botId,
+          sessionId: session.id,
+          symbol: 'XRPUSDT',
+          totalSignals: 0,
+          longEntries: 0,
+          shortEntries: 0,
+          exits: 0,
+          dcaCount: 0,
+          closedTrades: 0,
+          winningTrades: 0,
+          losingTrades: 0,
+          realizedPnl: 0,
+          grossProfit: 0,
+          grossLoss: 0,
+          feesPaid: 0,
+          openPositionCount: 1,
+          openPositionQty: 1,
+          lastPrice: 106,
+          snapshotAt,
+        },
       ],
     });
 
@@ -2022,14 +2044,13 @@ describe('Bots module contract', () => {
       expect(preArmItem.dynamicTslStopLoss).toBeNull();
 
       expect(postArmItem.dynamicTtpStopLoss).toBeCloseTo(103, 6);
-      expect(postArmItem.dynamicTslStopLoss).toBeCloseTo(104.94, 6);
+      expect(postArmItem.dynamicTslStopLoss).toBeNull();
 
-      expect(fallbackItem.dynamicTtpStopLoss).toBeCloseTo(102.5, 6);
-      expect(fallbackItem.dynamicTslStopLoss).toBeCloseTo(99, 6);
+      expect(fallbackItem.dynamicTtpStopLoss).toBeNull();
+      expect(fallbackItem.dynamicTslStopLoss).toBeCloseTo(102, 6);
 
-      // No runtime snapshot + no symbol-stat price still exposes TTP from stored unrealized PnL.
-      expect(noSnapshotItem.dynamicTtpStopLoss).toBeCloseTo(104.5, 6);
-      expect(noSnapshotItem.dynamicTslStopLoss).toBeNull();
+      // No runtime snapshot: fallback to strategy thresholds + live mark price.
+      expect(noSnapshotItem.dynamicTtpStopLoss).toBeCloseTo(105.5, 6);
     } finally {
       stateSpy.mockRestore();
     }

@@ -236,7 +236,11 @@ const logSubscriptionsRefreshFailure = (error: unknown) => {
 const startOrReloadWorker = async () => {
   const subscriptions = await resolveDynamicSubscriptions();
   const nextFingerprint = buildSubscriptionFingerprint(subscriptions);
-  if (subscriptionFingerprint === nextFingerprint && worker) return;
+  if (subscriptionFingerprint === nextFingerprint && worker) {
+    // Keep trying to reconnect when socket was closed but subscriptions did not change.
+    worker.start();
+    return;
+  }
 
   worker?.stop();
   worker = new BinanceMarketStreamWorker({

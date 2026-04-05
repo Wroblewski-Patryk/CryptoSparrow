@@ -11,6 +11,8 @@ const api = axios.create({
 });
 
 let hardRedirectInProgress = false;
+let authMeBackendFailureCount = 0;
+const AUTH_ME_BACKEND_FAILURE_LIMIT = 3;
 
 const isProtectedRoute = (pathname: string) =>
   pathname.startsWith('/dashboard') || pathname.startsWith('/admin');
@@ -24,10 +26,17 @@ const hardRedirect = (targetPath: string) => {
 };
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const requestUrl = typeof response?.config?.url === 'string' ? response.config.url : '';
+    if (requestUrl.includes('/auth/me')) {
+      authMeBackendFailureCount = 0;
+    }
+    return response;
+  },
   (error) => {
     if (typeof window !== 'undefined') {
       const pathname = window.location.pathname;
+      const requestUrl = typeof error?.config?.url === 'string' ? error.config.url : '';
       const status: number | undefined = error?.response?.status;
       const code: string | undefined = error?.code;
       const hasResponse = Boolean(error?.response);
@@ -37,12 +46,17 @@ api.interceptors.response.use(
         (typeof status === 'number' && status >= 500) ||
         code === 'ERR_NETWORK' ||
         code === 'ECONNABORTED';
+      const isAuthMeRequest = requestUrl.includes('/auth/me');
 
       if (isProtectedRoute(pathname)) {
         if (status === 401) {
           hardRedirect('/auth/login?session=expired');
-        } else if (backendUnavailable) {
-          hardRedirect('/');
+        } else if (backendUnavailable && isAuthMeRequest) {
+          authMeBackendFailureCount += 1;
+          // Keep user on dashboard for transient outages and only fallback after repeated auth-check failures.
+          if (authMeBackendFailureCount >= AUTH_ME_BACKEND_FAILURE_LIMIT) {
+            hardRedirect('/');
+          }
         }
       }
     }

@@ -112,6 +112,23 @@ const formatDuration = (ms: number) => {
   return `${hours}h ${minutes}m`;
 };
 
+const toProtectedPnlPercentFromStopPrice = (params: {
+  side: "LONG" | "SHORT";
+  entryPrice: number;
+  leverage: number;
+  stopPrice: number | null | undefined;
+}) => {
+  const { side, entryPrice, leverage, stopPrice } = params;
+  if (stopPrice == null || !Number.isFinite(stopPrice) || stopPrice <= 0) return null;
+  if (!Number.isFinite(entryPrice) || entryPrice <= 0) return null;
+  const effectiveLeverage = Number.isFinite(leverage) && leverage > 0 ? leverage : 1;
+  const spotMove =
+    side === "LONG" ? (stopPrice - entryPrice) / entryPrice : (entryPrice - stopPrice) / entryPrice;
+  const leveragedMovePercent = spotMove * effectiveLeverage * 100;
+  if (!Number.isFinite(leveragedMovePercent)) return null;
+  return leveragedMovePercent;
+};
+
 const normalizeDcaLevels = (levels?: number[] | null) =>
   (levels ?? []).filter((level) => Number.isFinite(level));
 
@@ -733,6 +750,22 @@ export default function BotsManagement({
       const pnlNotionalPct = entryNotional > 0 ? (openPnl / entryNotional) * 100 : 0;
       const pnlMarginPct = marginUsed > 0 ? (openPnl / marginUsed) * 100 : 0;
       const marginInitPct = initBalance && initBalance > 0 ? (marginUsed / initBalance) * 100 : null;
+      const ttpProtectedPercent =
+        toProtectedPnlPercentFromStopPrice({
+          side: position.side,
+          entryPrice: position.entryPrice,
+          leverage: position.leverage,
+          stopPrice: position.dynamicTtpStopLoss,
+        }) ?? null;
+      const tslProtectedPercent =
+        ttpProtectedPercent != null
+          ? null
+          : toProtectedPnlPercentFromStopPrice({
+              side: position.side,
+              entryPrice: position.entryPrice,
+              leverage: position.leverage,
+              stopPrice: position.dynamicTslStopLoss,
+            }) ?? null;
 
       return {
         ...position,
@@ -743,17 +776,25 @@ export default function BotsManagement({
         pnlNotionalPct,
         pnlMarginPct,
         marginInitPct,
+        ttpProtectedPercent,
+        tslProtectedPercent,
       };
     });
   }, [monitorLiveTickerPrices, monitorPositions?.openItems, selectedMonitorBot]);
 
   const monitorShowDynamicStopColumns = useMemo(
-    () =>
-      monitorOpenPositionRows.some(
+    () => {
+      const fromStrategyMode = monitorPositions?.showDynamicStopColumns;
+      if (typeof fromStrategyMode === "boolean") return fromStrategyMode;
+      return monitorOpenPositionRows.some(
         (position) =>
-          position.dynamicTtpStopLoss != null || position.dynamicTslStopLoss != null
-      ),
-    [monitorOpenPositionRows]
+          position.ttpProtectedPercent != null ||
+          position.tslProtectedPercent != null ||
+          (position.trailingTakeProfitLevels?.length ?? 0) > 0 ||
+          (position.trailingStopLevels?.length ?? 0) > 0
+      );
+    },
+    [monitorOpenPositionRows, monitorPositions?.showDynamicStopColumns]
   );
 
   const monitorOpenMarginSummary = useMemo(() => {
@@ -2264,16 +2305,16 @@ export default function BotsManagement({
                               </td>
                               {monitorShowDynamicStopColumns ? (
                                 <td>
-                                  {position.dynamicTtpStopLoss == null
+                                  {position.ttpProtectedPercent == null
                                     ? "-"
-                                    : formatNumber(position.dynamicTtpStopLoss, 4)}
+                                    : `${formatNumber(position.ttpProtectedPercent, 2)}%`}
                                 </td>
                               ) : null}
                               {monitorShowDynamicStopColumns ? (
                                 <td>
-                                  {position.dynamicTslStopLoss == null
+                                  {position.tslProtectedPercent == null
                                     ? "-"
-                                    : formatNumber(position.dynamicTslStopLoss, 4)}
+                                    : `${formatNumber(position.tslProtectedPercent, 2)}%`}
                                 </td>
                               ) : null}
                             </tr>

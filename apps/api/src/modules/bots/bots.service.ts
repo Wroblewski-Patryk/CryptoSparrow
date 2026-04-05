@@ -3729,35 +3729,6 @@ export const listBotRuntimeSessionPositions = async (
       runtimeState && Number.isFinite(runtimeState.averageEntryPrice) && runtimeState.averageEntryPrice > 0
         ? runtimeState.averageEntryPrice
         : position.entryPrice;
-    const positionMarginNotional = (position.entryPrice * position.quantity) / effectiveLeverage;
-    const favorableMovePercentFromStoredUnrealized =
-      Number.isFinite(position.unrealizedPnl) &&
-      Number.isFinite(positionMarginNotional) &&
-      positionMarginNotional > 0
-        ? (position.unrealizedPnl as number) / positionMarginNotional
-        : null;
-    const trailingAnchorPrice = runtimeState?.trailingAnchorPrice;
-    const stateAnchorPrice =
-      typeof trailingAnchorPrice === 'number' &&
-      Number.isFinite(trailingAnchorPrice) &&
-      trailingAnchorPrice > 0
-        ? trailingAnchorPrice
-        : null;
-    const favorableMovePercentFromMarket =
-      typeof marketPrice === 'number' && Number.isFinite(marketPrice)
-        ? position.side === 'LONG'
-          ? ((marketPrice - stateEntryPrice) / Math.max(stateEntryPrice, 1e-8)) * effectiveLeverage
-          : ((stateEntryPrice - marketPrice) / Math.max(stateEntryPrice, 1e-8)) * effectiveLeverage
-        : null;
-    const favorableMovePercent = favorableMovePercentFromMarket ?? favorableMovePercentFromStoredUnrealized;
-    const activeTrailingStopLevel = selectActiveTrailingStopDisplayLevel(
-      favorableMovePercent,
-      trailingStopLevelsBySymbol.get(position.symbol) ?? []
-    );
-    const activeTrailingTakeProfitLevel = selectActiveTrailingTakeProfitDisplayLevel(
-      favorableMovePercent,
-      trailingTakeProfitLevelsBySymbol.get(position.symbol) ?? []
-    );
     const ttpTriggerPercentFromState =
       runtimeState &&
       Number.isFinite(runtimeState.trailingTakeProfitHighPercent) &&
@@ -3765,21 +3736,52 @@ export const listBotRuntimeSessionPositions = async (
         ? (runtimeState.trailingTakeProfitHighPercent as number) -
           (runtimeState.trailingTakeProfitStepPercent as number)
         : null;
-    const ttpTriggerPercentFromFallback =
-      ttpTriggerPercentFromState == null &&
-      activeTrailingTakeProfitLevel &&
-      favorableMovePercent != null &&
-      Number.isFinite(favorableMovePercent)
-        ? favorableMovePercent - activeTrailingTakeProfitLevel.trailPercent
+    const favorableMovePercentFromLivePrice =
+      typeof marketPrice === 'number' && Number.isFinite(marketPrice) && stateEntryPrice > 0
+        ? position.side === 'LONG'
+          ? ((marketPrice - stateEntryPrice) / stateEntryPrice) * effectiveLeverage
+          : ((stateEntryPrice - marketPrice) / stateEntryPrice) * effectiveLeverage
+        : null;
+    const fallbackTtpLevel =
+      runtimeState == null
+        ? selectActiveTrailingTakeProfitDisplayLevel(
+            favorableMovePercentFromLivePrice,
+            trailingTakeProfitLevels
+          )
+        : null;
+    const ttpTriggerPercentFromStrategyFallback =
+      fallbackTtpLevel &&
+      favorableMovePercentFromLivePrice != null &&
+      Number.isFinite(favorableMovePercentFromLivePrice)
+        ? favorableMovePercentFromLivePrice - fallbackTtpLevel.trailPercent
         : null;
     const ttpTriggerPercent =
-      ttpTriggerPercentFromState ??
-      (ttpTriggerPercentFromFallback != null && ttpTriggerPercentFromFallback > 0
-        ? ttpTriggerPercentFromFallback
-        : null);
+      ttpTriggerPercentFromState != null && ttpTriggerPercentFromState > 0
+        ? ttpTriggerPercentFromState
+        : ttpTriggerPercentFromStrategyFallback != null &&
+            Number.isFinite(ttpTriggerPercentFromStrategyFallback) &&
+            ttpTriggerPercentFromStrategyFallback > 0
+          ? ttpTriggerPercentFromStrategyFallback
+        : null;
+    const fallbackTslLevel =
+      runtimeState == null
+        ? selectActiveTrailingStopDisplayLevel(
+            favorableMovePercentFromLivePrice,
+            trailingStopLevels
+          )
+        : null;
+    const tslTriggerPercentFromStrategyFallback =
+      fallbackTslLevel &&
+      favorableMovePercentFromLivePrice != null &&
+      Number.isFinite(favorableMovePercentFromLivePrice)
+        ? favorableMovePercentFromLivePrice - fallbackTslLevel.trailPercent
+        : null;
     const tslTriggerPercent =
       runtimeState && Number.isFinite(runtimeState.trailingLossLimitPercent)
         ? (runtimeState.trailingLossLimitPercent as number)
+        : tslTriggerPercentFromStrategyFallback != null &&
+            Number.isFinite(tslTriggerPercentFromStrategyFallback)
+          ? tslTriggerPercentFromStrategyFallback
         : null;
     const dynamicTtpStopLoss =
       ttpTriggerPercent != null
@@ -3790,30 +3792,15 @@ export const listBotRuntimeSessionPositions = async (
             position.leverage
           )
         : null;
-    const fallbackAnchorPrice =
-      stateAnchorPrice ??
-      (typeof marketPrice === 'number' && Number.isFinite(marketPrice) && marketPrice > 0
-        ? marketPrice
-        : null);
-    const dynamicTslStopLossFromAnchor =
-      activeTrailingStopLevel && fallbackAnchorPrice != null
-        ? computeTrailingStopPriceFromAnchor(
-            position.side,
-            fallbackAnchorPrice,
-            activeTrailingStopLevel.trailPercent,
-            effectiveLeverage
-          )
-        : null;
     const dynamicTslStopLoss =
-      dynamicTslStopLossFromAnchor ??
-      (tslTriggerPercent != null
+      tslTriggerPercent != null
         ? computePriceFromLeveragedMovePercent(
             position.side,
             stateEntryPrice,
             tslTriggerPercent,
             effectiveLeverage
           )
-        : null);
+        : null;
     const liveUnrealizedPnl =
       typeof marketPrice === 'number' && Number.isFinite(marketPrice)
         ? (marketPrice - position.entryPrice) * position.quantity * (position.side === 'LONG' ? 1 : -1)
