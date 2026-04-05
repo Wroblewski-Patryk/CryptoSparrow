@@ -1,4 +1,4 @@
-# MVP Execution Plan (Agent-Ready)
+﻿# MVP Execution Plan (Agent-Ready)
 
 Goal: deliver a stable MVP in tiny, safe commits.
 Rule: fix/cleanup/update first, then feature delivery.
@@ -8,7 +8,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - `docs/planning/mvp-next-commits.md` is the short operational queue (`NOW` max 5).
 - After each merged task: update checkbox + add one line in `Progress Log`.
 - If product docs scope changes, update this file before coding.
-- Any short "start work" nudge (`rob`, `r�b`, `dzialaj`, `start`, `go`, `next`) means: execute exactly one task from `NOW`.
+- Any short "start work" nudge (`rob`, `rób`, `dzialaj`, `start`, `go`, `next`) means: execute exactly one task from `NOW`.
 
 ## Global Commit Rules
 - One commit = one logical change (typically 1-3 files).
@@ -536,9 +536,10 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ICN-04 feat(web-icons): render coin icons in dashboard tables/cards with loading/error fallback behavior`
 - [x] `ICN-05 ops(deploy): add CoinGecko-related env template + Coolify rollout checklist updates`
 - [x] `ICN-06 test(api+web): add regression coverage for resolver collisions, cache fallback, and icon rendering states`
-- [ ] `ICN-07 qa(web): run manual smoke for icons across Dashboard/Bots/Markets/Positions and attach evidence note`
+- [x] `ICN-07 qa(web): run manual smoke for icons across Dashboard/Bots/Markets/Positions and attach evidence note`
 
 ## Progress Log
+- 2026-04-05: Completed `ICN-07` by executing Playwright manual smoke across `/dashboard`, `/dashboard/bots`, `/dashboard/markets/list`, `/dashboard/positions`, validating icon-selector behavior per view (`img[alt$=" icon"]`) and attaching evidence in `docs/operations/icons-smoke-2026-04-05.md` with captured screenshots under `output/playwright/icn07/`.
 - 2026-04-05: Completed `ICN-06` by validating icon resolver regressions (`icons.e2e` covers collision ranking + fail-soft cache/curated/placeholder fallback chain) and adding web rendering-state regressions (`AssetSymbol.test.tsx` for loading/image/error fallback), with green targeted suites on API and web.
 - 2026-04-05: Completed `ICN-04` by wiring icon rendering to dashboard runtime signals rail + open positions + trade history symbol columns via shared web icon lookup hook (`/dashboard/icons/lookup`), introducing reusable `AssetSymbol` component with loading/error fallback states, and adding focused icon UI regression coverage (`AssetSymbol.test.tsx`) plus dashboard mock integration updates.
 - 2026-04-05: Completed `ICN-05` by extending API env templates (`apps/api/.env.example`, `.env.vps.example`) with CoinGecko controls (`COINGECKO_API_BASE_URL`, optional `COINGECKO_API_KEY`, `COIN_ICON_CACHE_TTL_MINUTES`) and updating Coolify rollout checklist in `docs/operations/coolify-linux-vps-setup-guide.md` with icon endpoint validation gate.
@@ -1082,3 +1083,4 @@ Rule: fix/cleanup/update first, then feature delivery.
 - 2026-04-05: Migrated Prisma deprecated package.json#prisma seed config to pps/api/prisma.config.ts (migrations.seed), preserved VPS-friendly 
 ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma flow, and verified seed execution end-to-end.
 - 2026-04-05: Added responsive regression assertions for mobile dashboard menu overlay sizing (	op, height, maxHeight, minHeight) to preserve 100dvh - headerOffset contract after future header/layout edits.
+

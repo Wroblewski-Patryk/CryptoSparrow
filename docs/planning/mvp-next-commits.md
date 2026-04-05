@@ -41,6 +41,7 @@ Operational queue for one-task execution runs.
 - [x] `ICN-04 feat(web-icons): render asset icons in key dashboard tables/cards with loading/error fallback states`
 - [x] `ICN-05 ops(deploy): add CoinGecko-related env template + Coolify rollout checklist updates`
 - [x] `ICN-06 test(api+web): add regression coverage for resolver collisions, cache fallback, and icon rendering states`
+- [x] `ICN-07 qa(web): run manual smoke for icons across Dashboard/Bots/Markets/Positions and attach evidence note`
 - [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 - [x] `ARCH-04 cleanup(web): verify/remove dead UI helper files (TableToolbar/basic.service) with import-safety checks`
 - [x] `ARCH-05 refactor(api-bots): extract runtime position serialization (TTP/TSL/DCA mapping) from bots.service into dedicated module`
@@ -51,6 +52,7 @@ Operational queue for one-task execution runs.
 
 ## DONE
 - [x] `ICN-06 test(api+web): add regression coverage for resolver collisions, cache fallback, and icon rendering states`
+- [x] `ICN-07 qa(web): run manual smoke for icons across Dashboard/Bots/Markets/Positions and attach evidence note`
 - [x] `ICN-04 feat(web-icons): render asset icons in key dashboard tables/cards with loading/error fallback states`
 - [x] `ICN-05 ops(deploy): add CoinGecko-related env template + Coolify rollout checklist updates`
 - [x] `ICN-03 feat(api-icons): expose icon lookup endpoint for dashboard modules with deterministic placeholder response`
