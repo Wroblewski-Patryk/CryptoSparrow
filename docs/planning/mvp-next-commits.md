@@ -7,6 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [x] `ARCH-30 refactor(api-bots): extract assistant-config/subagent CRUD and dry-run orchestration from bots.service into dedicated module with re-export contract`
 - [x] `ARCH-29 refactor(api-bots): extract bot market-group and strategy-link CRUD block from bots.service into dedicated module and re-export contract`
 - [x] `ARCH-28 refactor(api-bots): extract shared bot read projection queries (list/get/by-id with strategy-link include) from bots.service into dedicated module`
 - [x] `ARCH-27 refactor(api-bots): extract bot response mapper (active strategy projection) from bots.service into dedicated module`

@@ -515,6 +515,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARCH-27 refactor(api-bots): extract bot response mapper (active strategy projection) from bots.service into dedicated module`
 - [x] `ARCH-28 refactor(api-bots): extract shared bot read projection queries (list/get/by-id with strategy-link include) from bots.service into dedicated module`
 - [x] `ARCH-29 refactor(api-bots): extract bot market-group and strategy-link CRUD block from bots.service into dedicated module and re-export contract`
+- [x] `ARCH-30 refactor(api-bots): extract assistant-config/subagent CRUD and dry-run orchestration from bots.service into dedicated module with re-export contract`
 
 ## Phase 31 - Dashboard Mobile Navigation Stability
 - [x] `NAVM-01 docs(contract): lock mobile nav overlay contract (layering, offset, scroll, close behavior)`
@@ -524,6 +525,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 
 ## Progress Log
+- 2026-04-05: Completed `ARCH-30` by extracting assistant stack operations (`getBotAssistantConfig`, `upsertBotAssistantConfig`, `upsertBotSubagentConfig`, `deleteBotSubagentConfig`, `runAssistantDryRun`) from `bots.service.ts` into dedicated `botAssistant.service.ts`, then re-exporting the same API from `bots.service.ts` to preserve route/controller contracts; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-29` by extracting bot market-group and strategy-link CRUD block (`list/get/create/update/delete market-group`, `list/attach/update/detach/reorder strategy-links`) from `bots.service.ts` into dedicated `botMarketGroups.service.ts`, then re-exporting the contract from `bots.service.ts` to preserve route imports and runtime behavior; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-28` by extracting shared bot read projections (`listOwnedBotsWithStrategyProjection`, `getOwnedBotWithStrategyProjection`, `getBotWithStrategyProjectionById`) and canonical include payload into dedicated `botReadProjection.service.ts`, then wiring list/get/create/update readbacks in `bots.service.ts` to the shared query helpers without behavior drift; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-27` by extracting bot response projection mapper (`mapBotResponse`) from `bots.service.ts` into dedicated `botResponseMapper.service.ts`, preserving active-strategy resolution order (`enabled botStrategies -> first botStrategy -> enabled marketGroupStrategyLinks -> first marketGroupStrategyLink`) across list/get/create/update return paths; validated via `pnpm --filter api run typecheck` and `pnpm --filter api run test -- src/modules/bots/bots.e2e.test.ts`.
