@@ -7,6 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [ ] `ICN-01 docs(contract): publish coin icon source contract (CoinGecko primary, exchange-independent, fallback-first)`
 - [x] `ARCH-30 refactor(api-bots): extract assistant-config/subagent CRUD and dry-run orchestration from bots.service into dedicated module with re-export contract`
 - [x] `ARCH-29 refactor(api-bots): extract bot market-group and strategy-link CRUD block from bots.service into dedicated module and re-export contract`
 - [x] `ARCH-28 refactor(api-bots): extract shared bot read projection queries (list/get/by-id with strategy-link include) from bots.service into dedicated module`
@@ -35,6 +36,9 @@ Operational queue for one-task execution runs.
 - [x] `ARCH-08 refactor(web-bots): split BotsManagement into route shell + runtime blocks/components`
 - [x] `ARCH-10 chore(quality): add repository guardrail check for max-file-size budget + lockfile consistency`
 ## NEXT
+- [ ] `ICN-02 feat(api-icons): add CoinGecko symbol/id resolver and icon metadata cache with TTL + fail-soft fallback chain`
+- [ ] `ICN-03 feat(api-icons): expose icon lookup endpoint for dashboard modules with deterministic placeholder response`
+- [ ] `ICN-04 feat(web-icons): render asset icons in key dashboard tables/cards with loading/error fallback states`
 - [x] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 - [x] `ARCH-04 cleanup(web): verify/remove dead UI helper files (TableToolbar/basic.service) with import-safety checks`
 - [x] `ARCH-05 refactor(api-bots): extract runtime position serialization (TTP/TSL/DCA mapping) from bots.service into dedicated module`
@@ -44,6 +48,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `ARCH-31 refactor(api-bots): extract runtime trade close-reason normalization/lookup from bots.service into dedicated runtimeTradeActionReason service`
 - [x] `NAVM-07 test(web-header): add regression assertions for mobile overlay `100dvh` sizing contract (top/height/max/min with header offset)`
 - [x] `OPS-33 chore(api-prisma): migrate deprecated package.json#prisma seed config to prisma.config.ts (migrations.seed) and keep VPS node-prisma seed path working`
 - [x] `NAVM-06 fix(web-header): enforce full mobile dashboard menu viewport height via dynamic `dvh` overlay sizing (header-offset aware)`
