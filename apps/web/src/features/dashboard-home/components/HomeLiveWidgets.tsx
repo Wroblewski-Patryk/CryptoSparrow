@@ -2,13 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import Link from "next/link";
 import { LuBot, LuChartCandlestick, LuChartLine, LuChevronDown, LuListChecks, LuPackageOpen } from "react-icons/lu";
 
 import { ErrorState, LoadingState } from "../../../ui/components/ViewState";
 import DataTable, { DataTableColumn } from "../../../ui/components/DataTable";
-import InlinePager from "../../../ui/components/InlinePager";
-import Tabs from "../../../ui/components/Tabs";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { createMarketStreamEventSource } from "../../../lib/marketStream";
@@ -29,23 +26,28 @@ import {
   listBotRuntimeSessions,
 } from "../../../features/bots/services/bots.service";
 import { supportsExchangeCapability } from "../../../features/exchanges/exchangeCapabilities";
-
-type RuntimeSnapshot = {
-  bot: Bot;
-  session: BotRuntimeSessionListItem | null;
-  symbolStats: BotRuntimeSymbolStatsResponse | null;
-  positions: BotRuntimePositionsResponse | null;
-  loadError?: string;
-};
+import RuntimeDataSection from "./home-live-widgets/RuntimeDataSection";
+import RuntimeOnboardingSection from "./home-live-widgets/RuntimeOnboardingSection";
+import RuntimeSidebarSection from "./home-live-widgets/RuntimeSidebarSection";
+import RuntimeSignalsSection from "./home-live-widgets/RuntimeSignalsSection";
+import type {
+  OpenPositionWithLive,
+  RuntimeDataTab,
+  RuntimeSelectedData,
+  RuntimeSnapshot,
+  RuntimeSummary,
+  RuntimeTabItem,
+  RuntimeSymbolWithLive,
+  SignalPillValue,
+  TradeActionFilter,
+  TradeFiltersState,
+  TradeSideFilter,
+  TradeSortBy,
+  TradeSortDir,
+} from "./home-live-widgets/types";
 type TickerEventPayload = {
   symbol: string;
   lastPrice: number;
-};
-type OpenPositionWithLive = BotRuntimePositionItem & {
-  liveMarkPrice: number | null;
-  liveUnrealizedPnl: number;
-  livePnlPct: number | null;
-  marginNotional: number;
 };
 type DirectionPillValue = "LONG" | "SHORT" | "BUY" | "SELL";
 
@@ -71,20 +73,6 @@ const resolveSignalCardsPerView = (width: number) => {
   if (width >= SIGNAL_CARDS_DENSITY_BREAKPOINTS.desktopMinWidth) return 4;
   if (width >= SIGNAL_CARDS_DENSITY_BREAKPOINTS.tabletMinWidth) return 3;
   return 2;
-};
-
-type TradeSortBy = "executedAt" | "symbol" | "side" | "lifecycleAction" | "margin" | "fee" | "realizedPnl";
-type TradeSortDir = "asc" | "desc";
-type TradeSideFilter = "ALL" | "BUY" | "SELL";
-type TradeActionFilter = "ALL" | "OPEN" | "DCA" | "CLOSE";
-type RuntimeDataTab = "OPEN_POSITIONS" | "TRADE_HISTORY";
-
-type TradeFiltersState = {
-  symbol: string;
-  side: TradeSideFilter;
-  action: TradeActionFilter;
-  from: string;
-  to: string;
 };
 
 const EMPTY_TRADE_FILTERS: TradeFiltersState = {
@@ -231,8 +219,6 @@ const renderDcaLadderCell = (params: {
     </details>
   );
 };
-
-type SignalPillValue = "LONG" | "SHORT" | "EXIT" | "NEUTRAL";
 
 const directionPillClass = (value: DirectionPillValue) => {
   if (value === "LONG" || value === "BUY") return "border-success/40 bg-success/10 text-success";
@@ -583,47 +569,6 @@ export default function HomeLiveWidgets() {
     [t]
   );
 
-  const renderRuntimeOnboarding = (options: { title: string; description: string }) => (
-    <section className={`${CARD} p-4 md:p-5`}>
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
-        <div className="space-y-1">
-          <h3 className="text-base font-semibold md:text-lg">{options.title}</h3>
-          <p className="text-sm opacity-70">{options.description}</p>
-        </div>
-        <span className="badge badge-outline badge-sm">{t("dashboard.home.runtime.onboardingBadge")}</span>
-      </div>
-
-      <ol className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {runtimeOnboardingSteps.map((step, index) => (
-          <li key={step.key}>
-            <article className="flex h-full flex-col gap-2 rounded-box border border-base-300/60 bg-base-200/40 p-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className={`inline-flex h-8 w-8 items-center justify-center rounded-box border ${step.toneClass}`}>
-                  {step.icon}
-                </span>
-                <span className="badge badge-ghost badge-xs">{index + 1}</span>
-              </div>
-              <p className="text-sm font-semibold">{step.title}</p>
-              <p className="text-xs opacity-70">{step.description}</p>
-              <Link href={step.href} className="mt-auto inline-flex items-center text-xs font-medium text-primary hover:underline">
-                {step.cta}
-              </Link>
-            </article>
-          </li>
-        ))}
-      </ol>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Link href="/dashboard/bots/create" className={BTN_PRIMARY}>
-          {t("dashboard.home.runtime.onboardingPrimaryCta")}
-        </Link>
-        <Link href="/dashboard/bots" className={BTN_SECONDARY}>
-          {t("dashboard.home.runtime.onboardingSecondaryCta")}
-        </Link>
-      </div>
-    </section>
-  );
-
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const silent = opts?.silent ?? false;
     if (silent && loadInFlightRef.current) {
@@ -827,7 +772,7 @@ export default function HomeLiveWidgets() {
     tradeAppliedFilters,
   ]);
 
-  const summary = useMemo(() => {
+  const summary = useMemo<RuntimeSummary>(() => {
     const openPositions = snapshots.reduce((acc, x) => acc + (x.positions?.openCount ?? 0), 0);
     const usedMargin = snapshots.reduce((acc, x) => acc + resolveUsedMargin(x.positions), 0);
     const realized = snapshots.reduce((acc, x) => acc + (x.session?.summary.realizedPnl ?? 0), 0);
@@ -853,7 +798,7 @@ export default function HomeLiveWidgets() {
     return { openPositions, usedMargin, realized, unrealized, totalSignals, dcaCount, paperStart, paperDelta, paperEquity };
   }, [snapshots, liveTickerPrices, selected?.bot.id]);
 
-  const selectedData = useMemo(() => {
+  const selectedData = useMemo<RuntimeSelectedData | null>(() => {
     if (!selected) return null;
     const session = selected.session;
     const symbolsBase = [...(selected.symbolStats?.items ?? [])].sort(
@@ -868,7 +813,7 @@ export default function HomeLiveWidgets() {
       openQtyBySymbol.set(key, (openQtyBySymbol.get(key) ?? 0) + row.quantity);
       openUnrealizedBySymbol.set(key, (openUnrealizedBySymbol.get(key) ?? 0) + row.liveUnrealizedPnl);
     }
-    const symbols = symbolsBase.map((item) => {
+    const symbols: RuntimeSymbolWithLive[] = symbolsBase.map((item) => {
       const symbolKey = normalizeSymbol(item.symbol);
       return {
         ...item,
@@ -1193,6 +1138,27 @@ export default function HomeLiveWidgets() {
     t,
   ]);
 
+  const runtimeTabItems = useMemo<RuntimeTabItem[]>(
+    () =>
+      RUNTIME_DATA_TABS.map((tab) => ({
+        key: tab.key,
+        hash: tab.hash,
+        icon:
+          tab.key === "TRADE_HISTORY" ? (
+            <LuChartCandlestick className="h-4 w-4" aria-hidden />
+          ) : (
+            <LuPackageOpen className="h-4 w-4" aria-hidden />
+          ),
+        label:
+          tab.key === "TRADE_HISTORY"
+            ? (selected?.bot.mode === "LIVE"
+              ? t("dashboard.home.runtime.tradesHistoryTitleLive")
+              : t("dashboard.home.runtime.tradesHistoryTitlePaper"))
+            : t(tab.labelKey),
+      })),
+    [selected?.bot.mode, t]
+  );
+
   if (loading) return <LoadingState title={t("dashboard.home.runtime.loadingTitle")} />;
   if (error) {
     return (
@@ -1207,10 +1173,19 @@ export default function HomeLiveWidgets() {
   if (bots.length === 0) {
     return (
       <div className="space-y-4">
-        {renderRuntimeOnboarding({
-          title: t("dashboard.home.runtime.noBotsTitle"),
-          description: t("dashboard.home.runtime.noBotsDescription"),
-        })}
+        <RuntimeOnboardingSection
+          cardClassName={CARD}
+          title={t("dashboard.home.runtime.noBotsTitle")}
+          description={t("dashboard.home.runtime.noBotsDescription")}
+          badgeLabel={t("dashboard.home.runtime.onboardingBadge")}
+          steps={runtimeOnboardingSteps}
+          primaryCtaLabel={t("dashboard.home.runtime.onboardingPrimaryCta")}
+          secondaryCtaLabel={t("dashboard.home.runtime.onboardingSecondaryCta")}
+          primaryHref="/dashboard/bots/create"
+          secondaryHref="/dashboard/bots"
+          primaryButtonClassName={BTN_PRIMARY}
+          secondaryButtonClassName={BTN_SECONDARY}
+        />
       </div>
     );
   }
@@ -1218,10 +1193,19 @@ export default function HomeLiveWidgets() {
   if (snapshots.length === 0) {
     return (
       <div className="space-y-4">
-        {renderRuntimeOnboarding({
-          title: t("dashboard.home.runtime.noActiveBotsTitle"),
-          description: t("dashboard.home.runtime.noActiveBotsDescription"),
-        })}
+        <RuntimeOnboardingSection
+          cardClassName={CARD}
+          title={t("dashboard.home.runtime.noActiveBotsTitle")}
+          description={t("dashboard.home.runtime.noActiveBotsDescription")}
+          badgeLabel={t("dashboard.home.runtime.onboardingBadge")}
+          steps={runtimeOnboardingSteps}
+          primaryCtaLabel={t("dashboard.home.runtime.onboardingPrimaryCta")}
+          secondaryCtaLabel={t("dashboard.home.runtime.onboardingSecondaryCta")}
+          primaryHref="/dashboard/bots/create"
+          secondaryHref="/dashboard/bots"
+          primaryButtonClassName={BTN_PRIMARY}
+          secondaryButtonClassName={BTN_SECONDARY}
+        />
       </div>
     );
   }
@@ -1232,86 +1216,19 @@ export default function HomeLiveWidgets() {
         <div className="min-w-0">
           <section className={CARD}>
             <div className="space-y-6">
-              <div>
-                {hasSignalOverflow ? (
-                  <div className="mb-2 flex items-center justify-end">
-                    <InlinePager
-                      size="xs"
-                      hideLabelsOnMobile
-                      previousLabel={t("dashboard.home.runtime.signalRailPrev")}
-                      nextLabel={t("dashboard.home.runtime.signalRailNext")}
-                      onPrevious={() => scrollSignalRail("prev")}
-                      onNext={() => scrollSignalRail("next")}
-                    />
-                  </div>
-                ) : null}
-                <div ref={signalRailRef} className="overflow-x-auto pb-1">
-                  <div className="grid grid-flow-col auto-cols-[calc((100%-0.75rem)/2)] gap-3 md:auto-cols-[calc((100%-1rem)/3)] xl:auto-cols-[calc((100%-1.5rem)/4)]">
-                    {signalSymbols.map((s) => {
-                      const signal: SignalPillValue = s.lastSignalDirection ?? "NEUTRAL";
-                      const lines = s.lastSignalConditionLines ?? [];
-                      const longLines = lines.filter((line) => line.scope === "LONG");
-                      const shortLines = lines.filter((line) => line.scope === "SHORT");
-
-                      return (
-                        <article key={s.id} className="rounded-box bg-base-200/35 px-3 py-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="font-semibold tracking-wide">{s.symbol}</p>
-                            <SignalPill value={signal} />
-                          </div>
-                          <div className="mt-2 space-y-2 text-[11px] leading-4">
-                            <div className="space-y-1 rounded-box bg-base-100/70 px-2 py-1.5">
-                              <div className="mb-0.5 flex items-center gap-1">
-                                <span className="inline-flex rounded-badge border border-success/40 bg-success/10 px-1 py-[1px] text-[10px] font-semibold text-success">
-                                  {t("dashboard.home.runtime.long")}
-                                </span>
-                              </div>
-                              {longLines.length === 0 ? (
-                                <p className="text-[10px] opacity-55">-</p>
-                              ) : (
-                                longLines.map((line, index) => (
-                                  <p key={`${s.id}-long-${index}`} className="font-mono text-[10px]">
-                                    <span>{line.left}</span>
-                                    <span className="mx-1">=</span>
-                                    <span className="font-semibold">{line.value}</span>
-                                    <span className="mx-1">{line.operator}</span>
-                                    <span>{line.right}</span>
-                                  </p>
-                                ))
-                              )}
-                            </div>
-                            <div className="space-y-1 rounded-box bg-base-100/70 px-2 py-1.5">
-                              <div className="mb-0.5 flex items-center gap-1">
-                                <span className="inline-flex rounded-badge border border-error/40 bg-error/10 px-1 py-[1px] text-[10px] font-semibold text-error">
-                                  {t("dashboard.home.runtime.short")}
-                                </span>
-                              </div>
-                              {shortLines.length === 0 ? (
-                                <p className="text-[10px] opacity-55">-</p>
-                              ) : (
-                                shortLines.map((line, index) => (
-                                  <p key={`${s.id}-short-${index}`} className="font-mono text-[10px]">
-                                    <span>{line.left}</span>
-                                    <span className="mx-1">=</span>
-                                    <span className="font-semibold">{line.value}</span>
-                                    <span className="mx-1">{line.operator}</span>
-                                    <span>{line.right}</span>
-                                  </p>
-                                ))
-                              )}
-                            </div>
-                          </div>
-                        </article>
-                      );
-                    })}
-                    {signalSymbols.length === 0 ? (
-                      <div className="col-span-full rounded-box bg-base-200/35 p-4 text-center text-xs opacity-70">
-                        {t("dashboard.home.runtime.noSignalData")}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
+              <RuntimeSignalsSection
+                signalSymbols={signalSymbols}
+                hasSignalOverflow={hasSignalOverflow}
+                signalRailRef={signalRailRef}
+                onScrollPrevious={() => scrollSignalRail("prev")}
+                onScrollNext={() => scrollSignalRail("next")}
+                previousLabel={t("dashboard.home.runtime.signalRailPrev")}
+                nextLabel={t("dashboard.home.runtime.signalRailNext")}
+                longLabel={t("dashboard.home.runtime.long")}
+                shortLabel={t("dashboard.home.runtime.short")}
+                noSignalDataLabel={t("dashboard.home.runtime.noSignalData")}
+                renderSignalPill={(value) => <SignalPill value={value} />}
+              />
 
               {!selectedRuntimeCapabilityAvailable ? (
                 <div className="rounded-box border border-warning/40 bg-warning/10 px-3 py-2 text-xs">
@@ -1324,299 +1241,97 @@ export default function HomeLiveWidgets() {
                 </div>
               ) : null}
 
-              <section className="border-t border-base-300/40 pt-4">
-                <Tabs
-                  items={RUNTIME_DATA_TABS.map((tab) => ({
-                    key: tab.key,
-                    hash: tab.hash,
-                    icon:
-                      tab.key === "TRADE_HISTORY" ? (
-                        <LuChartCandlestick className="h-4 w-4" aria-hidden />
-                      ) : (
-                        <LuPackageOpen className="h-4 w-4" aria-hidden />
-                      ),
-                    label: tab.key === "TRADE_HISTORY"
-                      ? (selected?.bot.mode === "LIVE"
-                        ? t("dashboard.home.runtime.tradesHistoryTitleLive")
-                        : t("dashboard.home.runtime.tradesHistoryTitlePaper"))
-                      : t(tab.labelKey),
-                  }))}
-                  value={runtimeDataTab}
-                  onChange={setRuntimeDataTab}
-                  variant="border"
-                  className="mb-3"
-                  syncWithHash
-                />
-
-                {runtimeDataTab === "OPEN_POSITIONS" ? (
-                  <section>
-                    <DataTable
-                      compact
-                      framed={false}
-                      rows={selectedData?.open ?? []}
-                      columns={openPositionsColumns}
-                      getRowId={(row) => row.id}
-                      defaultSortKey="pnlPercent"
-                      defaultSortDirection="desc"
-                      persistSortKey={DASHBOARD_OPEN_POSITIONS_SORT_STORAGE_KEY}
-                      showSearch={false}
-                      paginationEnabled
-                      pageSizeOptions={[...OPEN_POSITIONS_PAGE_SIZE_OPTIONS]}
-                      defaultPageSize={OPEN_POSITIONS_PAGE_SIZE_OPTIONS[0]}
-                      rowsPerPageLabel={t("dashboard.home.runtime.rows")}
-                      previousLabel={t("dashboard.home.runtime.previous")}
-                      nextLabel={t("dashboard.home.runtime.next")}
-                      emptyText={t("dashboard.home.runtime.noOpenPositions")}
-                    />
-                  </section>
-                ) : null}
-
-                {runtimeDataTab === "TRADE_HISTORY" ? (
-                  <section>
-                    {selectedTradesLoading ? (
-                      <div className="mb-2 text-xs opacity-60">{t("dashboard.home.loadWidgets")}</div>
-                    ) : null}
-                    <DataTable
-                      compact
-                      framed={false}
-                      rows={selectedData?.trades ?? []}
-                      columns={tradesColumns}
-                      getRowId={(row) => row.id}
-                      filterPlaceholder="BTCUSDT"
-                      query={tradeDraftFilters.symbol}
-                      onQueryChange={(value) => patchTradeDraftFilters({ symbol: value })}
-                      onSearch={applyTradeFilters}
-                      manualFiltering
-                      manualSorting
-                      sortKey={tradeSortBy}
-                      sortDirection={tradeSortDir}
-                      onSortChange={handleTradeSortChange}
-                      advancedToggleLabel={t("dashboard.bots.monitoring.advancedOptions")}
-                      advancedFilters={
-                        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-5">
-                          <label className="form-control gap-1">
-                            <span className="label-text text-xs opacity-70">{t("dashboard.home.runtime.filterSide")}</span>
-                            <select
-                              className="select select-bordered select-sm h-9 min-h-9"
-                              value={tradeDraftFilters.side}
-                              onChange={(event) => {
-                                patchTradeDraftFilters({ side: event.target.value as TradeSideFilter });
-                              }}
-                            >
-                              <option value="ALL">{t("dashboard.home.runtime.all")}</option>
-                              <option value="BUY">BUY</option>
-                              <option value="SELL">SELL</option>
-                            </select>
-                          </label>
-                          <label className="form-control gap-1">
-                            <span className="label-text text-xs opacity-70">{t("dashboard.home.runtime.filterAction")}</span>
-                            <select
-                              className="select select-bordered select-sm h-9 min-h-9"
-                              value={tradeDraftFilters.action}
-                              onChange={(event) => {
-                                patchTradeDraftFilters({ action: event.target.value as TradeActionFilter });
-                              }}
-                            >
-                              <option value="ALL">{t("dashboard.home.runtime.all")}</option>
-                              <option value="OPEN">{t("dashboard.home.runtime.actionOpen")}</option>
-                              <option value="DCA">DCA</option>
-                              <option value="CLOSE">{t("dashboard.home.runtime.actionClose")}</option>
-                            </select>
-                          </label>
-                          <label className="form-control gap-1">
-                            <span className="label-text text-xs opacity-70">{t("dashboard.home.runtime.filterFrom")}</span>
-                            <input
-                              type="datetime-local"
-                              className="input input-bordered input-sm h-9 min-h-9"
-                              value={tradeDraftFilters.from}
-                              onChange={(event) => {
-                                patchTradeDraftFilters({ from: event.target.value });
-                              }}
-                            />
-                          </label>
-                          <label className="form-control gap-1">
-                            <span className="label-text text-xs opacity-70">{t("dashboard.home.runtime.filterTo")}</span>
-                            <input
-                              type="datetime-local"
-                              className="input input-bordered input-sm h-9 min-h-9"
-                              value={tradeDraftFilters.to}
-                              onChange={(event) => {
-                                patchTradeDraftFilters({ to: event.target.value });
-                              }}
-                            />
-                          </label>
-                          <div className="flex items-end justify-end">
-                            <div className="join">
-                              <button type="button" className="btn btn-primary btn-sm join-item" onClick={applyTradeFilters}>
-                                {t("dashboard.home.runtime.apply")}
-                              </button>
-                              <button type="button" className="btn btn-outline btn-sm join-item" onClick={resetTradeFilters}>
-                                {t("dashboard.home.runtime.reset")}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      }
-                      paginationEnabled
-                      manualPagination
-                      page={tradeMeta.page}
-                      pageSize={tradePageSize}
-                      totalRows={tradeMeta.total}
-                      totalPages={tradeMeta.totalPages}
-                      hasPrev={tradeMeta.hasPrev}
-                      hasNext={tradeMeta.hasNext}
-                      onPageChange={(nextPage) => setTradePage(nextPage)}
-                      onPageSizeChange={(nextPageSize) => {
-                        setTradePageSize(nextPageSize);
-                        setTradePage(1);
-                      }}
-                      pageSizeOptions={[...TRADE_PAGE_SIZE_OPTIONS]}
-                      rowsPerPageLabel={t("dashboard.home.runtime.rows")}
-                      previousLabel={t("dashboard.home.runtime.previous")}
-                      nextLabel={t("dashboard.home.runtime.next")}
-                      emptyText={t("dashboard.home.runtime.noTradeHistory")}
-                      paginationSummary={({ totalRows, page, totalPages }) => (
-                        <>
-                          <span>{interpolateTemplate(t("dashboard.home.runtime.recordsBadge"), { total: totalRows })}</span>
-                          <span aria-hidden className="opacity-50">|</span>
-                          <span>
-                            {interpolateTemplate(t("dashboard.home.runtime.pageBadge"), {
-                              page,
-                              totalPages: Math.max(1, totalPages),
-                            })}
-                          </span>
-                        </>
-                      )}
-                    />
-                  </section>
-                ) : null}
-              </section>
+              <RuntimeDataSection
+                runtimeDataTab={runtimeDataTab}
+                onRuntimeDataTabChange={setRuntimeDataTab}
+                tabItems={runtimeTabItems}
+                openRows={selectedData?.open ?? []}
+                openPositionsColumns={openPositionsColumns}
+                openPositionsSortStorageKey={DASHBOARD_OPEN_POSITIONS_SORT_STORAGE_KEY}
+                openPositionsPageSizeOptions={OPEN_POSITIONS_PAGE_SIZE_OPTIONS}
+                rowsPerPageLabel={t("dashboard.home.runtime.rows")}
+                previousLabel={t("dashboard.home.runtime.previous")}
+                nextLabel={t("dashboard.home.runtime.next")}
+                noOpenPositionsLabel={t("dashboard.home.runtime.noOpenPositions")}
+                tradesLoading={selectedTradesLoading}
+                loadingLabel={t("dashboard.home.loadWidgets")}
+                tradesRows={selectedData?.trades ?? []}
+                tradesColumns={tradesColumns}
+                tradeDraftFilters={tradeDraftFilters}
+                onTradeDraftFiltersPatch={patchTradeDraftFilters}
+                onApplyTradeFilters={applyTradeFilters}
+                onResetTradeFilters={resetTradeFilters}
+                tradeSortBy={tradeSortBy}
+                tradeSortDir={tradeSortDir}
+                onTradeSortChange={handleTradeSortChange}
+                advancedOptionsLabel={t("dashboard.bots.monitoring.advancedOptions")}
+                allLabel={t("dashboard.home.runtime.all")}
+                openActionLabel={t("dashboard.home.runtime.actionOpen")}
+                dcaActionLabel="DCA"
+                closeActionLabel={t("dashboard.home.runtime.actionClose")}
+                filterSideLabel={t("dashboard.home.runtime.filterSide")}
+                filterActionLabel={t("dashboard.home.runtime.filterAction")}
+                filterFromLabel={t("dashboard.home.runtime.filterFrom")}
+                filterToLabel={t("dashboard.home.runtime.filterTo")}
+                applyLabel={t("dashboard.home.runtime.apply")}
+                resetLabel={t("dashboard.home.runtime.reset")}
+                tradeMeta={tradeMeta}
+                tradePageSize={tradePageSize}
+                onTradePageChange={(nextPage) => setTradePage(nextPage)}
+                onTradePageSizeChange={(nextPageSize) => {
+                  setTradePageSize(nextPageSize);
+                  setTradePage(1);
+                }}
+                tradePageSizeOptions={TRADE_PAGE_SIZE_OPTIONS}
+                noTradeHistoryLabel={t("dashboard.home.runtime.noTradeHistory")}
+                recordsBadgeLabel={(total) => interpolateTemplate(t("dashboard.home.runtime.recordsBadge"), { total })}
+                pageBadgeLabel={(page, totalPages) =>
+                  interpolateTemplate(t("dashboard.home.runtime.pageBadge"), { page, totalPages })
+                }
+              />
             </div>
           </section>
 
         </div>
 
-        <aside className={CARD_ASIDE}>
-          <div className="space-y-3">
-            <div className="rounded-box bg-base-200/35 p-3">
-              <label className="form-control gap-1">
-                <span className="text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.selectedBot")}</span>
-                <select
-                  className="select select-sm select-bordered"
-                  value={selected?.bot.id ?? ""}
-                  onChange={(event) => setSelectedBotId(event.target.value)}
-                >
-                  {snapshots.map((item) => (
-                    <option key={item.bot.id} value={item.bot.id}>
-                      {item.bot.name} ({item.bot.mode})
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              {!selectedRuntimeCapabilityAvailable ? (
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="badge badge-xs badge-warning badge-outline">
-                    {t("dashboard.bots.list.placeholderBadge")}
-                  </span>
-                </div>
-              ) : null}
-
-              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-box border border-base-300/50 bg-base-100/70 px-2 py-1.5">
-                  <p className="opacity-65">{t("dashboard.home.runtime.status")}</p>
-                  <p className="mt-1">
-                    <span className={`badge badge-xs ${sessionBadge(selectedData?.session?.status)}`}>
-                      {selectedData?.session?.status ?? t("dashboard.home.runtime.noSession")}
-                    </span>
-                  </p>
-                </div>
-                <div className="rounded-box border border-base-300/50 bg-base-100/70 px-2 py-1.5">
-                  <p className="opacity-65">{t("dashboard.home.runtime.mode")}</p>
-                  <p className="mt-1 font-semibold">{selected?.bot.mode ?? "-"}</p>
-                </div>
-                <div className="rounded-box border border-base-300/50 bg-base-100/70 px-2 py-1.5">
-                  <p className="opacity-65">{t("dashboard.home.runtime.heartbeat")}</p>
-                  <p className="mt-1 font-semibold">{formatTime(selectedData?.session?.lastHeartbeatAt)}</p>
-                </div>
-                <div className="rounded-box border border-base-300/50 bg-base-100/70 px-2 py-1.5">
-                  <p className="opacity-65">{t("dashboard.home.runtime.openPositions")}</p>
-                  <p className="mt-1 font-semibold">{formatNumber(selectedData?.open.length ?? 0)}</p>
-                </div>
-                <div className="rounded-box border border-base-300/50 bg-base-100/70 px-2 py-1.5">
-                  <p className="opacity-65">{t("dashboard.home.runtime.signalsDca")}</p>
-                  <p className="mt-1 font-semibold">
-                    {formatNumber(selectedData?.session?.summary.totalSignals ?? 0)} / {formatNumber(selectedData?.session?.summary.dcaCount ?? 0)}
-                  </p>
-                </div>
-                <div className="rounded-box border border-base-300/50 bg-base-100/70 px-2 py-1.5">
-                  <p className="opacity-65">{t("dashboard.home.runtime.netPnl")}</p>
-                  <p className={`mt-1 font-semibold ${(selectedData?.net ?? 0) >= 0 ? "text-success" : "text-error"}`}>
-                    {formatCurrency(selectedData?.net ?? 0)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {selectedData?.session?.status !== "RUNNING" ? (
-              <p className="text-[11px] rounded-box border border-warning/40 bg-warning/10 px-2 py-1 text-warning-content/80">
-                {t("dashboard.home.runtime.noActiveSessionWarning")}
-              </p>
-            ) : null}
-
-            <div className="rounded-box bg-base-200/35 p-3 text-xs">
-              <h4 className="mb-2 text-[11px] uppercase tracking-wide opacity-60">{t("dashboard.home.runtime.capitalRiskTitle")}</h4>
-              <div className="space-y-1.5">
-                <p className="flex items-center justify-between gap-2">
-                  <span className="opacity-65">{t("dashboard.home.runtime.portfolio")}</span>
-                  <span className={`font-semibold ${summary.paperDelta >= 0 ? "text-success" : "text-error"}`}>
-                    {summary.paperStart > 0 ? formatCurrency(summary.paperEquity) : "-"}
-                  </span>
-                </p>
-                <p className="flex items-center justify-between gap-2">
-                  <span className="opacity-65">{t("dashboard.home.runtime.deltaFromStart")}</span>
-                  <span className={`font-semibold ${summary.paperDelta >= 0 ? "text-success" : "text-error"}`}>
-                    {summary.paperStart > 0
-                      ? `${formatCurrency(summary.paperDelta)} (${formatPercent((summary.paperDelta / summary.paperStart) * 100)})`
-                      : "-"}
-                  </span>
-                </p>
-                <p className="flex items-center justify-between gap-2">
-                  <span className="opacity-65">{t("dashboard.home.runtime.freeFunds")}</span>
-                  <span className="font-semibold">{selectedData?.equity == null ? "-" : formatCurrency(selectedData.free)}</span>
-                </p>
-                <p className="flex items-center justify-between gap-2">
-                  <span className="opacity-65">{t("dashboard.home.runtime.fundsInPositions")}</span>
-                  <span className="font-semibold">{formatCurrency(summary.usedMargin)}</span>
-                </p>
-                <p className="flex items-center justify-between gap-2">
-                  <span className="opacity-65">{t("dashboard.home.runtime.exposure")}</span>
-                  <span className="font-semibold">{selectedData?.exposurePct != null ? formatPercent(selectedData.exposurePct) : "-"}</span>
-                </p>
-                <p className="flex items-center justify-between gap-2">
-                  <span className="opacity-65">{t("dashboard.home.runtime.realizedOpen")}</span>
-                  <span className="font-semibold">
-                    {formatCurrency(selectedData?.realized ?? 0)} / {formatCurrency(selectedData?.unrealized ?? 0)}
-                  </span>
-                </p>
-                <p className="flex items-center justify-between gap-2">
-                  <span className="opacity-65">{t("dashboard.home.runtime.winRate")}</span>
-                  <span className="font-semibold">{selectedData?.winRate == null ? "-" : formatPercent(selectedData.winRate)}</span>
-                </p>
-                <p className="flex items-center justify-between gap-2">
-                  <span className="opacity-65">{t("dashboard.home.runtime.maxDrawdown")}</span>
-                  <span className="font-semibold text-error">{formatCurrency(-(selectedData?.drawdown.abs ?? 0))}</span>
-                </p>
-              </div>
-            </div>
-
-            <p className="text-[11px] opacity-60">
-              {interpolateTemplate(t("dashboard.home.runtime.updatedAt"), {
-                value: lastUpdatedAt ? formatDateTime(lastUpdatedAt) : "-",
-              })}
-            </p>
-          </div>
-        </aside>
+        <RuntimeSidebarSection
+          asideClassName={CARD_ASIDE}
+          snapshots={snapshots}
+          selected={selected}
+          selectedData={selectedData}
+          selectedRuntimeCapabilityAvailable={selectedRuntimeCapabilityAvailable}
+          placeholderBadgeLabel={t("dashboard.bots.list.placeholderBadge")}
+          summary={summary}
+          lastUpdatedAt={lastUpdatedAt}
+          onSelectedBotIdChange={setSelectedBotId}
+          formatTime={formatTime}
+          formatNumber={formatNumber}
+          formatCurrency={formatCurrency}
+          formatPercent={formatPercent}
+          formatDateTime={formatDateTime}
+          sessionBadgeClassName={sessionBadge}
+          text={{
+            selectedBot: t("dashboard.home.runtime.selectedBot"),
+            status: t("dashboard.home.runtime.status"),
+            mode: t("dashboard.home.runtime.mode"),
+            heartbeat: t("dashboard.home.runtime.heartbeat"),
+            openPositions: t("dashboard.home.runtime.openPositions"),
+            signalsDca: t("dashboard.home.runtime.signalsDca"),
+            netPnl: t("dashboard.home.runtime.netPnl"),
+            noSession: t("dashboard.home.runtime.noSession"),
+            noActiveSessionWarning: t("dashboard.home.runtime.noActiveSessionWarning"),
+            capitalRiskTitle: t("dashboard.home.runtime.capitalRiskTitle"),
+            portfolio: t("dashboard.home.runtime.portfolio"),
+            deltaFromStart: t("dashboard.home.runtime.deltaFromStart"),
+            freeFunds: t("dashboard.home.runtime.freeFunds"),
+            fundsInPositions: t("dashboard.home.runtime.fundsInPositions"),
+            exposure: t("dashboard.home.runtime.exposure"),
+            realizedOpen: t("dashboard.home.runtime.realizedOpen"),
+            winRate: t("dashboard.home.runtime.winRate"),
+            maxDrawdown: t("dashboard.home.runtime.maxDrawdown"),
+            updatedAt: (value) => interpolateTemplate(t("dashboard.home.runtime.updatedAt"), { value }),
+          }}
+        />
       </section>
     </div>
   );

@@ -7,7 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `ARCH-07 refactor(web-dashboard): split HomeLiveWidgets into composable sections (signals, open positions, history, sidebar)`
+- [x] `ARCH-07 refactor(web-dashboard): split HomeLiveWidgets into composable sections (signals, open positions, history, sidebar)`
 - [ ] `ARCH-08 refactor(web-bots): split BotsManagement into route shell + runtime blocks/components`
 - [ ] `ARCH-10 chore(quality): add repository guardrail check for max-file-size budget + lockfile consistency`
 ## NEXT
