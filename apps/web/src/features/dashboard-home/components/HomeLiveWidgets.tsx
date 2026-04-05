@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { LuBot, LuChartCandlestick, LuChartLine, LuChevronDown, LuListChecks, LuPackageOpen } from "react-icons/lu";
 
-import { ErrorState, LoadingState } from "../../../ui/components/ViewState";
+import { ErrorState } from "../../../ui/components/ViewState";
+import { SkeletonCardBlock, SkeletonKpiRow, SkeletonTableRows } from "../../../ui/components/loading";
 import { DataTableColumn } from "../../../ui/components/DataTable";
 import AssetSymbol from "../../../ui/components/AssetSymbol";
 import { useI18n } from "../../../i18n/I18nProvider";
@@ -1293,7 +1294,23 @@ export default function HomeLiveWidgets() {
     [selected?.bot.mode, t]
   );
 
-  if (loading) return <LoadingState title={t("dashboard.home.runtime.loadingTitle")} />;
+  if (loading) {
+    return (
+      <div className="space-y-4" aria-busy="true" aria-label={t("dashboard.home.runtime.loadingTitle")}>
+        <SkeletonKpiRow items={3} />
+        <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="space-y-3">
+            <SkeletonCardBlock cards={4} linesPerCard={4} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
+            <SkeletonTableRows columns={8} rows={5} title={false} toolbar={false} className="border-base-300/40 bg-base-100/60 p-3" />
+          </div>
+          <div className="space-y-3">
+            <SkeletonCardBlock cards={1} linesPerCard={6} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
+            <SkeletonCardBlock cards={1} linesPerCard={7} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
+          </div>
+        </section>
+      </div>
+    );
+  }
   if (error) {
     return (
       <ErrorState

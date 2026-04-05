@@ -2,7 +2,8 @@
 
 import { ReactNode } from "react";
 import { TranslationKey } from "../../../../i18n/translations";
-import { EmptyState, ErrorState, LoadingState } from "../../../../ui/components/ViewState";
+import { EmptyState, ErrorState } from "../../../../ui/components/ViewState";
+import { SkeletonCardBlock, SkeletonKpiRow, SkeletonTableRows } from "../../../../ui/components/loading";
 import { supportsExchangeCapability } from "../../../exchanges/exchangeCapabilities";
 import {
   Bot,
@@ -473,7 +474,12 @@ export function BotsMonitoringTab(props: BotsMonitoringTabProps) {
                 </p>
               </div>
 
-              {monitorLoading ? <LoadingState title={t("dashboard.bots.monitoring.loadingSessions")} /> : null}
+              {monitorLoading ? (
+                <div className="space-y-3" aria-busy="true" aria-label={t("dashboard.bots.monitoring.loadingSessions")}>
+                  <SkeletonKpiRow items={4} />
+                  <SkeletonCardBlock cards={3} linesPerCard={3} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
+                </div>
+              ) : null}
               {!monitorLoading && monitorError ? (
                 <ErrorState
                   title={t("dashboard.bots.monitoring.loadErrorTitle")}
@@ -566,7 +572,15 @@ export function BotsMonitoringTab(props: BotsMonitoringTabProps) {
                     </div>
                   </div>
 
-                  {monitorSessionLoading ? <LoadingState title={t("dashboard.bots.monitoring.loadingSessionData")} /> : null}
+                  {monitorSessionLoading ? (
+                    <SkeletonTableRows
+                      columns={8}
+                      rows={4}
+                      title={false}
+                      toolbar={false}
+                      className="border-base-300/40 bg-base-100/60 p-3"
+                    />
+                  ) : null}
 
                   {monitorSessionDetail ? (
                     <div className="grid gap-3 lg:grid-cols-3">

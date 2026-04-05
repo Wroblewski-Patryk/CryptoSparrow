@@ -11,7 +11,7 @@ Operational queue for one-task execution runs.
 - [x] `LDUX-02 feat(web-ui): add shared DaisyUI skeleton primitives for table/card/form/kpi dashboard patterns`
 - [x] `LDUX-03 feat(web-shell): add dashboard header-underbar navigation progress component with staged percent animation`
 - [x] `LDUX-04 refactor(web-viewstate): make dashboard loading path skeleton-first while keeping alert states for error/degraded/success`
-- [ ] `LDUX-05 feat(web-dashboard-home+bots): replace loading alerts with section/page skeleton compositions`
+- [x] `LDUX-05 feat(web-dashboard-home+bots): replace loading alerts with section/page skeleton compositions`
 - [x] `ICN-01 docs(contract): publish coin icon source contract (CoinGecko primary, exchange-independent, fallback-first)`
 - [x] `ARCH-30 refactor(api-bots): extract assistant-config/subagent CRUD and dry-run orchestration from bots.service into dedicated module with re-export contract`
 - [x] `ARCH-29 refactor(api-bots): extract bot market-group and strategy-link CRUD block from bots.service into dedicated module and re-export contract`
@@ -60,6 +60,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `LDUX-05 feat(web-dashboard-home+bots): replace loading alerts with section/page skeleton compositions`
 - [x] `LDUX-04 refactor(web-viewstate): make dashboard loading path skeleton-first while keeping alert states for error/degraded/success`
 - [x] `LDUX-03 feat(web-shell): add dashboard header-underbar navigation progress component with staged percent animation`
 - [x] `LDUX-02 feat(web-ui): add shared DaisyUI skeleton primitives for table/card/form/kpi dashboard patterns`

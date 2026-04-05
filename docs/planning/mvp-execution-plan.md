@@ -544,13 +544,14 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `LDUX-02 feat(web-ui): add shared DaisyUI skeleton primitives for table/card/form/kpi dashboard patterns`
 - [x] `LDUX-03 feat(web-shell): add dashboard header-underbar navigation progress component with staged percent animation`
 - [x] `LDUX-04 refactor(web-viewstate): make dashboard loading path skeleton-first while keeping alert states for error/degraded/success`
-- [ ] `LDUX-05 feat(web-dashboard-home+bots): replace loading alerts with section/page skeleton compositions`
+- [x] `LDUX-05 feat(web-dashboard-home+bots): replace loading alerts with section/page skeleton compositions`
 - [ ] `LDUX-06 feat(web-markets+strategies+logs): migrate loading views to skeleton compositions`
 - [ ] `LDUX-07 feat(web-backtests): migrate list/details loading states to skeletons and preserve timeline phase messaging`
 - [ ] `LDUX-08 test(web-loading-ux): add regression coverage for progress bar lifecycle and key skeleton rendering states`
 - [ ] `LDUX-09 qa(web-dashboard): run manual desktop/mobile smoke and capture evidence`
 
 ## Progress Log
+- 2026-04-05: Completed `LDUX-05` by replacing generic loading alerts with skeleton-first section/page compositions in Dashboard Home and Bots (`HomeLiveWidgets`, runtime trade history section, bots management loading, monitoring loading, assistant loading), using shared loading primitives for card/form/kpi/table patterns; validated with `pnpm --filter web run typecheck` and `pnpm --filter web exec vitest run src/features/dashboard-home/components/HomeLiveWidgets.test.tsx src/features/bots/components/BotsManagement.test.tsx`.
 - 2026-04-05: Completed `LDUX-04` by refactoring shared `LoadingState` to skeleton-first rendering (table/cards/form/kpi variants backed by new loading primitives) while keeping alert semantics unchanged for `ErrorState`, `DegradedState`, and `SuccessState`; validated with `pnpm --filter web exec vitest run src/ui/components/ViewState.test.tsx` and `pnpm --filter web run typecheck`.
 - 2026-04-05: Completed `LDUX-03` by adding dashboard shell route-progress component `DashboardRouteProgress` under header (staged ramp + completion on route settle, with fallback timeout and subtle underbar rendering) and wiring it in `apps/web/src/app/dashboard/layout.tsx`; verified with green `pnpm --filter web run typecheck`.
 - 2026-04-05: Completed `LDUX-02` by adding shared dashboard-ready DaisyUI skeleton primitives (`SkeletonTableRows`, `SkeletonCardBlock`, `SkeletonFormBlock`, `SkeletonKpiRow`) under `apps/web/src/ui/components/loading/` plus barrel export, with green `pnpm --filter web run typecheck`.

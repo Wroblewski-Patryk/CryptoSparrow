@@ -1,5 +1,6 @@
 import DataTable from "../../../../ui/components/DataTable";
 import Tabs from "../../../../ui/components/Tabs";
+import { SkeletonTableRows } from "../../../../ui/components/loading";
 import type {
   OpenPositionWithLive,
   OpenPositionsTableColumn,
@@ -106,7 +107,13 @@ export default function RuntimeDataSection(props: RuntimeDataSectionProps) {
       {props.runtimeDataTab === "TRADE_HISTORY" ? (
         <section>
           {props.tradesLoading ? (
-            <div className="mb-2 text-xs opacity-60">{props.loadingLabel}</div>
+            <SkeletonTableRows
+              title={false}
+              toolbar={false}
+              columns={9}
+              rows={4}
+              className="mb-3 border-base-300/40 bg-base-100/60 p-3"
+            />
           ) : null}
           <DataTable
             compact

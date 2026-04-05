@@ -7,7 +7,8 @@ import { useI18n } from "../../../i18n/I18nProvider";
 import { TranslationKey } from "../../../i18n/translations";
 
 import StatusBadge from "../../../ui/components/StatusBadge";
-import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
+import { EmptyState, ErrorState, SuccessState } from "../../../ui/components/ViewState";
+import { SkeletonCardBlock, SkeletonFormBlock, SkeletonKpiRow, SkeletonTableRows } from "../../../ui/components/loading";
 import {
   createBot,
   deleteBot,
@@ -1571,7 +1572,13 @@ export default function BotsManagement({
         </div>
       </form>
 
-      {loading && <LoadingState title={t("dashboard.bots.states.loadingBots")} />}
+      {loading && (
+        <div className="space-y-3" aria-busy="true" aria-label={t("dashboard.bots.states.loadingBots")}>
+          <SkeletonFormBlock fields={8} columns={2} title={false} submitButton={false} className="border-base-300/40 bg-base-100/60 p-3" />
+          <SkeletonKpiRow items={4} />
+          <SkeletonTableRows columns={7} rows={5} title={false} toolbar={false} className="border-base-300/40 bg-base-100/60 p-3" />
+        </div>
+      )}
       {!loading && error && (
         <ErrorState
           title={t("dashboard.bots.states.loadBotsFailedTitle")}
@@ -1849,7 +1856,16 @@ export default function BotsManagement({
               </label>
 
               {assistantLoading ? (
-                <LoadingState title={t("dashboard.bots.assistant.loading")} />
+                <div className="space-y-3" aria-busy="true" aria-label={t("dashboard.bots.assistant.loading")}>
+                  <SkeletonFormBlock
+                    fields={7}
+                    columns={2}
+                    title={false}
+                    submitButton={false}
+                    className="border-base-300/40 bg-base-100/60 p-3"
+                  />
+                  <SkeletonCardBlock cards={4} linesPerCard={3} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
+                </div>
               ) : (
                 <div className="space-y-4">
                   <div className="grid gap-3 md:grid-cols-5">
