@@ -213,6 +213,14 @@ export const evaluatePositionManagement = (
         : []),
   );
   const ttpConfigured = trailingTakeProfitLevels.length > 0;
+  const firstTtpDisarmFloor =
+    ttpConfigured && trailingTakeProfitLevels[0]
+      ? Math.max(
+          0,
+          trailingTakeProfitLevels[0].armPercent -
+            trailingTakeProfitLevels[0].trailPercent
+        )
+      : null;
   const dynamicTtpLevel = ttpConfigured
     ? selectDynamicTrailingTakeProfit(favorableMove, trailingTakeProfitLevels)
     : null;
@@ -243,16 +251,25 @@ export const evaluatePositionManagement = (
     const finalTrackedStep = nextState.trailingTakeProfitStepPercent;
     if (
       typeof finalTrackedHigh === 'number' &&
-      typeof finalTrackedStep === 'number' &&
-      favorableMove <= finalTrackedHigh - finalTrackedStep
+      typeof finalTrackedStep === 'number'
     ) {
-      return {
-        shouldClose: true,
-        closeReason: 'trailing_take_profit',
-        dcaExecuted,
-        dcaAddedQuantity,
-        nextState,
-      };
+      const droppedBelowBaseFloor =
+        typeof firstTtpDisarmFloor === 'number' &&
+        Number.isFinite(firstTtpDisarmFloor) &&
+        favorableMove < firstTtpDisarmFloor;
+
+      if (droppedBelowBaseFloor) {
+        nextState.trailingTakeProfitHighPercent = undefined;
+        nextState.trailingTakeProfitStepPercent = undefined;
+      } else if (favorableMove <= finalTrackedHigh - finalTrackedStep) {
+        return {
+          shouldClose: true,
+          closeReason: 'trailing_take_profit',
+          dcaExecuted,
+          dcaAddedQuantity,
+          nextState,
+        };
+      }
     }
   } else {
     nextState.trailingTakeProfitHighPercent = undefined;

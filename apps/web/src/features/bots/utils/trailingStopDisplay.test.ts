@@ -48,4 +48,34 @@ describe("trailingStopDisplay", () => {
 
     expect(value).toBeCloseTo(3.71, 2);
   });
+
+  it("disarms fallback when live pnl% drops below first TTP floor", () => {
+    const sticky = new Map<string, number>();
+    const levels = [{ armPercent: 5, trailPercent: 2.5 }];
+
+    const armed = resolveFallbackTtpProtectedPercent({
+      positionId: "pos-3",
+      livePnlPercent: 6.21,
+      trailingTakeProfitLevels: levels,
+      stickyFavorableMoveByPosition: sticky,
+    });
+    expect(armed).toBeCloseTo(3.71, 2);
+
+    const disarmed = resolveFallbackTtpProtectedPercent({
+      positionId: "pos-3",
+      livePnlPercent: 1.78,
+      trailingTakeProfitLevels: levels,
+      stickyFavorableMoveByPosition: sticky,
+    });
+    expect(disarmed).toBeNull();
+    expect(sticky.has("pos-3")).toBe(false);
+
+    const rearmed = resolveFallbackTtpProtectedPercent({
+      positionId: "pos-3",
+      livePnlPercent: 5.4,
+      trailingTakeProfitLevels: levels,
+      stickyFavorableMoveByPosition: sticky,
+    });
+    expect(rearmed).toBeCloseTo(2.9, 2);
+  });
 });

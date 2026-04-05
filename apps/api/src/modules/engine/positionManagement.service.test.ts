@@ -400,7 +400,7 @@ describe('position management', () => {
     expect(result.nextState.trailingLossLimitPercent).toBeUndefined();
   });
 
-  it('keeps TTP armed once triggered and closes when favorable move drops below protected floor', () => {
+  it('keeps TTP armed once triggered and closes on pullback while still above base floor', () => {
     const armed = evaluatePositionManagement(
       {
         side: 'LONG',
@@ -420,10 +420,10 @@ describe('position management', () => {
       },
     );
 
-    const droppedBelowTunnel = evaluatePositionManagement(
+    const pulledBackWithinTunnel = evaluatePositionManagement(
       {
         side: 'LONG',
-        currentPrice: 104,
+        currentPrice: 106.8,
         leverage: 1,
         trailingTakeProfitLevels: [
           {
@@ -436,10 +436,56 @@ describe('position management', () => {
     );
 
     expect(armed.shouldClose).toBe(false);
-    expect(droppedBelowTunnel.shouldClose).toBe(true);
-    expect(droppedBelowTunnel.closeReason).toBe('trailing_take_profit');
-    expect(droppedBelowTunnel.nextState.trailingTakeProfitHighPercent).toBeCloseTo(0.12, 5);
-    expect(droppedBelowTunnel.nextState.trailingTakeProfitStepPercent).toBeCloseTo(0.05, 5);
+    expect(pulledBackWithinTunnel.shouldClose).toBe(true);
+    expect(pulledBackWithinTunnel.closeReason).toBe('trailing_take_profit');
+    expect(pulledBackWithinTunnel.nextState.trailingTakeProfitHighPercent).toBeCloseTo(0.12, 5);
+    expect(pulledBackWithinTunnel.nextState.trailingTakeProfitStepPercent).toBeCloseTo(0.05, 5);
+  });
+
+  it('disarms TTP when favorable move drops below first level base floor and allows re-arming', () => {
+    const levels = [{ armPercent: 0.1, trailPercent: 0.05 }];
+
+    const armed = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 112,
+        leverage: 1,
+        trailingTakeProfitLevels: levels,
+      },
+      {
+        averageEntryPrice: 100,
+        quantity: 1,
+        currentAdds: 0,
+      }
+    );
+
+    const disarmed = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 104,
+        leverage: 1,
+        trailingTakeProfitLevels: levels,
+      },
+      armed.nextState
+    );
+
+    const rearmed = evaluatePositionManagement(
+      {
+        side: 'LONG',
+        currentPrice: 111,
+        leverage: 1,
+        trailingTakeProfitLevels: levels,
+      },
+      disarmed.nextState
+    );
+
+    expect(armed.shouldClose).toBe(false);
+    expect(disarmed.shouldClose).toBe(false);
+    expect(disarmed.nextState.trailingTakeProfitHighPercent).toBeUndefined();
+    expect(disarmed.nextState.trailingTakeProfitStepPercent).toBeUndefined();
+    expect(rearmed.shouldClose).toBe(false);
+    expect(rearmed.nextState.trailingTakeProfitHighPercent).toBeCloseTo(0.11, 5);
+    expect(rearmed.nextState.trailingTakeProfitStepPercent).toBeCloseTo(0.05, 5);
   });
 
   it('keeps TTP tunnel monotonic when switching to higher threshold with wider step', () => {

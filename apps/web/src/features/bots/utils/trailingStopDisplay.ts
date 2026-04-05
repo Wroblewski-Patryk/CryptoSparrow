@@ -72,11 +72,24 @@ export const resolveFallbackTtpProtectedPercent = (params: {
 }) => {
   const levels = normalizeLevels(params.trailingTakeProfitLevels);
   if (levels.length === 0) return null;
+  const firstLevel = levels[0] ?? null;
+  const firstLevelDisarmFloor =
+    firstLevel != null
+      ? Math.max(0, firstLevel.armPercent - firstLevel.trailPercent)
+      : null;
 
   const favorableMovePercent =
     typeof params.livePnlPercent === "number" && Number.isFinite(params.livePnlPercent)
       ? params.livePnlPercent
       : null;
+  if (
+    favorableMovePercent != null &&
+    firstLevelDisarmFloor != null &&
+    favorableMovePercent < firstLevelDisarmFloor
+  ) {
+    params.stickyFavorableMoveByPosition.delete(params.positionId);
+    return null;
+  }
   const previousHigh = params.stickyFavorableMoveByPosition.get(params.positionId) ?? null;
   const stickyHigh =
     favorableMovePercent == null
