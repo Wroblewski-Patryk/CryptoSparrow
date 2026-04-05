@@ -58,6 +58,11 @@ import {
   SignalConditionLine,
 } from './runtimeSignalConditionLines.service';
 import {
+  normalizeSymbols,
+  resolveEffectiveSymbolGroupSymbols,
+  resolveUniverseSymbols,
+} from './runtimeSymbolUniverse.service';
+import {
   getRuntimeSessionSummaryMetrics,
   listRuntimeSessionsWithSummary,
 } from './runtimeSessionsRead.service';
@@ -321,17 +326,6 @@ const getOwnedMarketUniverse = async (userId: string, marketUniverseId: string) 
     },
   });
 
-const normalizeSymbols = (symbols: string[]) =>
-  [...new Set(symbols.map((item) => item.trim().toUpperCase()).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b)
-  );
-
-const resolveUniverseSymbols = (whitelist: string[], blacklist: string[]) => {
-  const normalizedWhitelist = normalizeSymbols(whitelist);
-  const blacklistSet = new Set(normalizeSymbols(blacklist));
-  return normalizedWhitelist.filter((symbol) => !blacklistSet.has(symbol));
-};
-
 const resolveMinQuoteVolumeFilter = (filterRules: unknown) => {
   const parsedRules =
     filterRules && typeof filterRules === 'object'
@@ -389,21 +383,6 @@ const resolveCatalogSymbolsForUniverse = async (
     cache.set(cacheKey, []);
     return [];
   }
-};
-
-const resolveEffectiveSymbolGroupSymbols = (params: {
-  symbols?: string[] | null;
-  marketUniverse?: { whitelist?: string[] | null; blacklist?: string[] | null } | null;
-}) => {
-  const whitelist = params.marketUniverse?.whitelist;
-  const blacklist = params.marketUniverse?.blacklist;
-  if (Array.isArray(whitelist) && Array.isArray(blacklist)) {
-    const universeSymbols = resolveUniverseSymbols(whitelist, blacklist);
-    if (universeSymbols.length > 0) {
-      return universeSymbols;
-    }
-  }
-  return normalizeSymbols(params.symbols ?? []);
 };
 
 const resolveEffectiveSymbolGroupSymbolsWithCatalog = async (

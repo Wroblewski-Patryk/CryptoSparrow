@@ -7,6 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [x] `ARCH-17 refactor(api-bots): extract shared symbol-universe helpers and remove duplicated normalization logic across bots runtime modules`
 - [x] `ARCH-16 refactor(api-bots): extract runtime signal condition-lines and indicator-summary builders from bots.service into dedicated module`
 - [x] `ARCH-15 refactor(api-bots): extract runtime signal indicator helpers (EMA/RSI/Momentum + period/value formatting) from bots.service into dedicated module`
 - [x] `ARCH-14 refactor(api-bots): extract runtime signal-condition summary formatter from bots.service into dedicated module`
