@@ -487,7 +487,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARCH-03 chore(api-deps): remove unused api dependency 'prima' and revalidate api typecheck/tests`
 - [x] `ARCH-04 cleanup(web): verify/remove dead UI helper files (TableToolbar/basic.service) with import-safety checks`
 - [x] `ARCH-05 refactor(api-bots): extract runtime position serialization (TTP/TSL/DCA mapping) from bots.service into dedicated module`
-- [ ] `ARCH-06 refactor(api-bots): extract session stats aggregation/query layer from bots.service into focused read-services`
+- [x] `ARCH-06 refactor(api-bots): extract session stats aggregation/query layer from bots.service into focused read-services`
 - [ ] `ARCH-07 refactor(web-dashboard): split HomeLiveWidgets into composable sections (signals, open positions, history, sidebar)`
 - [ ] `ARCH-08 refactor(web-bots): split BotsManagement into route shell + runtime blocks/components`
 - [ ] `ARCH-09 perf(web-assets): optimize oversized hero/avatar assets without visual contract drift`
@@ -501,6 +501,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `NAVM-05 qa(web-header): run manual mobile smoke across dashboard routes and record evidence`
 
 ## Progress Log
+- 2026-04-05: Completed `ARCH-06` by extracting runtime session read/aggregation queries from `bots.service.ts` into dedicated `runtimeSessionsRead.service.ts` (`listRuntimeSessionsWithSummary`, `getRuntimeSessionSummaryMetrics`), keeping route contract unchanged; validated with `pnpm --filter api typecheck` and passing `bots.e2e` suite.
 - 2026-04-05: Completed `ARCH-05` by extracting runtime position serialization logic from `bots.service.ts` into dedicated `runtimePositionSerialization.service.ts` (DCA executed-level mapping, sticky favorable-move fallback, dynamic TTP/TSL stop derivation), then wiring service usage back in with behavior parity validated by `pnpm --filter api typecheck` + `pnpm --filter api test -- src/modules/bots/bots.e2e.test.ts`.
 - 2026-04-05: Completed `ARCH-04` by verifying zero imports and removing dead web helpers `ui/components/TableToolbar.tsx` and `features/profile/services/basic.service.ts`; validated with `pnpm --filter web typecheck`.
 - 2026-04-05: Completed `ARCH-03` by removing unused API dev dependency `prima` from `apps/api/package.json` and revalidating with `pnpm --filter api typecheck` + targeted engine regression test (`positionManagement.service.test.ts`).
