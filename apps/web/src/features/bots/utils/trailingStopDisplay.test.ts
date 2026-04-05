@@ -34,5 +34,18 @@ describe("trailingStopDisplay", () => {
     });
     expect(third).toBeCloseTo(7, 2);
   });
-});
 
+  it("handles decimal strategy levels from API payload (0.05 = 5%)", () => {
+    const sticky = new Map<string, number>();
+    const levels = [{ armPercent: 0.05, trailPercent: 0.025 }];
+
+    const value = resolveFallbackTtpProtectedPercent({
+      positionId: "pos-2",
+      livePnlPercent: 6.21,
+      trailingTakeProfitLevels: levels,
+      stickyFavorableMoveByPosition: sticky,
+    });
+
+    expect(value).toBeCloseTo(3.71, 2);
+  });
+});

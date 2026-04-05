@@ -3,6 +3,19 @@ type TrailingPercentLevel = {
   trailPercent: number;
 };
 
+const normalizeLevelScaleToPercent = (level: TrailingPercentLevel): TrailingPercentLevel => {
+  const armPercent = Math.abs(level.armPercent);
+  const trailPercent = Math.abs(level.trailPercent);
+  const treatsAsFraction = armPercent <= 1 && trailPercent <= 1;
+  if (!treatsAsFraction) {
+    return { armPercent, trailPercent };
+  }
+  return {
+    armPercent: armPercent * 100,
+    trailPercent: trailPercent * 100,
+  };
+};
+
 const normalizeLevels = (levels?: TrailingPercentLevel[] | null) =>
   (levels ?? [])
     .filter(
@@ -12,6 +25,7 @@ const normalizeLevels = (levels?: TrailingPercentLevel[] | null) =>
         level.armPercent > 0 &&
         level.trailPercent > 0
     )
+    .map((level) => normalizeLevelScaleToPercent(level))
     .sort((left, right) => left.armPercent - right.armPercent);
 
 const selectActiveLevel = (favorableMovePercent: number, levels: TrailingPercentLevel[]) => {
