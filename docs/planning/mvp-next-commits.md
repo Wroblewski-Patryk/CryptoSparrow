@@ -10,7 +10,7 @@ Operational queue for one-task execution runs.
 - [x] `EXCTX-01 docs(contract): publish venue-context source-of-truth and invariants for creators/runtime`
 - [x] `EXCTX-02 docs(decisions): lock MarketUniverse as canonical exchange+marketType+base context owner`
 - [x] `EXCTX-05 chore(data-migration): backfill existing universes/runs with exchange context snapshot`
-- [ ] `EXCTX-06 feat(api-markets): extend market-universe and catalog contracts with exchange context`
+- [x] `EXCTX-06 feat(api-markets): extend market-universe and catalog contracts with exchange context`
 - [ ] `EXCTX-07 feat(api-backtests): derive and persist exchange context from selected market universe`
 ## NEXT
 - [ ] `EXCTX-08 feat(api-bots): enforce bot/group/apiKey venue-context compatibility on create/activate`

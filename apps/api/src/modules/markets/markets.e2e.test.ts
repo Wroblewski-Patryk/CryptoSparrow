@@ -86,6 +86,7 @@ describe('Markets module contract', () => {
     await prisma.symbolGroup.deleteMany();
     await prisma.strategy.deleteMany();
     await prisma.marketUniverse.deleteMany();
+    await prisma.runtimeExecutionDedupe.deleteMany();
     await prisma.apiKey.deleteMany();
     await prisma.user.deleteMany();
   });
@@ -123,10 +124,16 @@ describe('Markets module contract', () => {
 
     const updateRes = await agent.put(`/dashboard/markets/universes/${universeId}`).send({
       name: 'Top Liquid Futures',
+      exchange: 'KRAKEN',
+      marketType: 'SPOT',
+      baseCurrency: 'EUR',
       whitelist: ['BTCUSDT'],
     });
     expect(updateRes.status).toBe(200);
     expect(updateRes.body.name).toBe('Top Liquid Futures');
+    expect(updateRes.body.exchange).toBe('KRAKEN');
+    expect(updateRes.body.marketType).toBe('SPOT');
+    expect(updateRes.body.baseCurrency).toBe('EUR');
     expect(updateRes.body.whitelist).toEqual(['BTCUSDT']);
 
     const deleteRes = await agent.delete(`/dashboard/markets/universes/${universeId}`);
