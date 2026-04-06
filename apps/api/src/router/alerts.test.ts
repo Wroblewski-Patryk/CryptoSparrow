@@ -43,12 +43,18 @@ describe('alerts endpoint', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns alerts for failure spike, staleness, and missing heartbeat', async () => {
+  it('returns alerts for runtime staleness, repeated restarts, and reconciliation drift', async () => {
     const adminAgent = await createAdminAgent();
     metricsStore.recordExchangeOrderFailure();
     metricsStore.recordExchangeOrderFailure();
     metricsStore.recordExchangeOrderFailure();
     metricsStore.setWorkerQueueLag('marketData', 150);
+    metricsStore.recordRuntimeSignalLag(120_000);
+    metricsStore.recordRuntimeRestart('runtime_stall_no_event');
+    metricsStore.recordRuntimeRestart('runtime_stall_no_event');
+    metricsStore.recordRuntimeRestart('runtime_stall_no_heartbeat');
+    metricsStore.recordRuntimeReconciliationDelay(4 * 60 * 1000, true);
+    metricsStore.recordRuntimeReconciliationDelay(2 * 60 * 1000, true);
 
     process.env.WORKER_LAST_MARKET_DATA_AT = '2000-01-01T00:00:00.000Z';
     process.env.WORKER_LAST_HEARTBEAT_AT = '2000-01-01T00:00:00.000Z';
@@ -57,9 +63,20 @@ describe('alerts endpoint', () => {
     expect(res.status).toBe(200);
 
     const codes = (res.body.alerts as Array<{ code: string }>).map((item) => item.code);
+    const byCode = new Map(
+      (res.body.alerts as Array<{ code: string; severity: string }>).map((item) => [
+        item.code,
+        item.severity,
+      ])
+    );
     expect(codes).toContain('exchange_live_order_failures_spike');
     expect(codes).toContain('market_data_queue_lag_high');
     expect(codes).toContain('market_data_staleness');
     expect(codes).toContain('worker_heartbeat_missing');
+    expect(codes).toContain('runtime_signal_lag_stale');
+    expect(codes).toContain('runtime_restarts_repeated');
+    expect(codes).toContain('runtime_reconciliation_drift');
+    expect(byCode.get('runtime_restarts_repeated')).toBe('SEV-2');
+    expect(byCode.get('runtime_reconciliation_drift')).toBe('SEV-2');
   });
 });

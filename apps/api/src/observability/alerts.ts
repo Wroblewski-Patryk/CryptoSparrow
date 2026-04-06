@@ -16,6 +16,13 @@ type AlertInput = {
 
 const staleThresholdMs = 2 * 60 * 1000;
 const heartbeatThresholdMs = 60 * 1000;
+const runtimeSignalLagStaleThresholdMs = 90 * 1000;
+const runtimeRestartWarnThreshold = 3;
+const runtimeRestartCriticalThreshold = 6;
+const runtimeReconciliationPendingWarnThreshold = 2;
+const runtimeReconciliationPendingCriticalThreshold = 5;
+const runtimeReconciliationDelayWarnThresholdMs = 3 * 60 * 1000;
+const runtimeReconciliationDelayCriticalThresholdMs = 10 * 60 * 1000;
 
 export const evaluateRuntimeAlerts = (input: AlertInput): RuntimeAlert[] => {
   const alerts: RuntimeAlert[] = [];
@@ -59,6 +66,39 @@ export const evaluateRuntimeAlerts = (input: AlertInput): RuntimeAlert[] => {
     });
   }
 
+  if (snapshot.runtime.signalLag.lastMs >= runtimeSignalLagStaleThresholdMs) {
+    alerts.push({
+      code: 'runtime_signal_lag_stale',
+      severity: 'SEV-2',
+      message: `Runtime signal lag is ${snapshot.runtime.signalLag.lastMs}ms (threshold ${runtimeSignalLagStaleThresholdMs}ms).`,
+    });
+  }
+
+  if (snapshot.runtime.restarts.total >= runtimeRestartWarnThreshold) {
+    alerts.push({
+      code: 'runtime_restarts_repeated',
+      severity:
+        snapshot.runtime.restarts.total >= runtimeRestartCriticalThreshold ? 'SEV-1' : 'SEV-2',
+      message: `Runtime restart count reached ${snapshot.runtime.restarts.total}.`,
+    });
+  }
+
+  const reconciliationPending = snapshot.runtime.reconciliation.pending;
+  const reconciliationMaxDelayMs = snapshot.runtime.reconciliation.maxDelayMs;
+  const reconciliationDrift =
+    reconciliationPending >= runtimeReconciliationPendingWarnThreshold ||
+    reconciliationMaxDelayMs >= runtimeReconciliationDelayWarnThresholdMs;
+  if (reconciliationDrift) {
+    alerts.push({
+      code: 'runtime_reconciliation_drift',
+      severity:
+        reconciliationPending >= runtimeReconciliationPendingCriticalThreshold ||
+        reconciliationMaxDelayMs >= runtimeReconciliationDelayCriticalThresholdMs
+          ? 'SEV-1'
+          : 'SEV-2',
+      message: `Runtime reconciliation drift detected (pending=${reconciliationPending}, maxDelayMs=${reconciliationMaxDelayMs}).`,
+    });
+  }
+
   return alerts;
 };
-
