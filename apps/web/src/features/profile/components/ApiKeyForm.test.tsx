@@ -3,6 +3,7 @@ import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ApiKeyForm from "./ApiKeyForm";
 import { I18nProvider } from "../../../i18n/I18nProvider";
+import { EXCHANGE_OPTIONS } from "@/features/exchanges/exchangeCapabilities";
 
 const testApiKeyConnectionMock = vi.hoisted(() => vi.fn());
 
@@ -204,5 +205,24 @@ describe("ApiKeyForm", () => {
         "API key test is not available for this exchange yet (placeholder adapter). Saving is still allowed."
       )
     ).toBeInTheDocument();
+  });
+
+  it("renders all exchange options and blocks probe for placeholder exchanges", async () => {
+    renderForm({ onSave: vi.fn(), onCancel: vi.fn() });
+
+    const exchangeSelect = screen.getByLabelText("Exchange") as HTMLSelectElement;
+    const optionValues = Array.from(exchangeSelect.options).map((option) => option.value);
+    expect(optionValues).toEqual([...EXCHANGE_OPTIONS]);
+
+    fireEvent.change(exchangeSelect, {
+      target: { value: "BYBIT" },
+    });
+
+    expect(
+      await screen.findByText(
+        "API key test is not available for this exchange yet (placeholder adapter). Saving is still allowed."
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Test connection" })).toBeDisabled();
   });
 });

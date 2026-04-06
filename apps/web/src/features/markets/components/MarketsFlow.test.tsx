@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import MarketsFlow from './MarketsFlow';
+import { EXCHANGE_OPTIONS } from '@/features/exchanges/exchangeCapabilities';
 
 const listMock = vi.hoisted(() => vi.fn());
 const createMock = vi.hoisted(() => vi.fn());
@@ -75,6 +76,35 @@ describe('MarketsFlow', () => {
         whitelist: ['BTCUSDT', 'ETHUSDT'],
         blacklist: [],
       });
+    });
+  });
+
+  it('shows full exchange list and placeholder warning for unsupported exchange', async () => {
+    listMock.mockResolvedValue([]);
+    catalogMock.mockImplementation(async (params?: { exchange?: string }) => {
+      const selectedExchange = params?.exchange ?? 'BINANCE';
+      const unsupported = selectedExchange !== 'BINANCE';
+      return {
+        ...catalogFixture,
+        exchange: selectedExchange,
+        totalAvailable: unsupported ? 0 : catalogFixture.totalAvailable,
+        totalForBaseCurrency: unsupported ? 0 : catalogFixture.totalForBaseCurrency,
+        markets: unsupported ? [] : catalogFixture.markets,
+      };
+    });
+
+    render(<MarketsFlow />);
+
+    const exchangeSelect = (await screen.findByLabelText('Gielda')) as HTMLSelectElement;
+    const options = Array.from(exchangeSelect.options).map((option) => option.value);
+    expect(options).toEqual([...EXCHANGE_OPTIONS]);
+
+    fireEvent.change(exchangeSelect, { target: { value: 'OKX' } });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Placeholder exchange selected\. Public catalog for this exchange is not implemented yet\./i)
+      ).toBeInTheDocument();
     });
   });
 });

@@ -149,4 +149,37 @@ describe("BotCreateEditForm", () => {
     });
     expect(createBotMock).not.toHaveBeenCalled();
   });
+
+  it("shows placeholder activation hint and disables active toggle for unsupported exchange", async () => {
+    listStrategiesMock.mockResolvedValue([
+      { id: "s3", name: "Placeholder Strategy", interval: "1h", leverage: 2, config: {} },
+    ]);
+    listMarketUniversesMock.mockResolvedValue([
+      {
+        id: "g3",
+        name: "OKX Futures",
+        exchange: "OKX",
+        marketType: "FUTURES",
+        baseCurrency: "USDT",
+        whitelist: ["BTCUSDT"],
+        blacklist: [],
+      },
+    ]);
+    fetchApiKeysMock.mockResolvedValue([baseApiKey]);
+
+    renderWithI18n();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Bot mode")).toHaveValue("PAPER");
+    });
+
+    expect(screen.getByText("PLACEHOLDER")).toBeInTheDocument();
+    expect(
+      screen.getByText("Placeholder exchange selected. Runtime activation for PAPER mode is not implemented yet.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Selected exchange does not support LIVE execution yet (placeholder adapter).")
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Active")).toBeDisabled();
+  });
 });

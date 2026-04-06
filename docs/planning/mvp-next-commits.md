@@ -52,6 +52,7 @@ Operational queue for one-task execution runs.
 - [x] `NAVM-06 fix(web-header): enforce full mobile dashboard menu viewport height via dynamic `dvh` overlay sizing (header-offset aware)`
 - [x] `NAVM-01 docs(contract): lock mobile nav overlay contract (layering, offset, scroll, close behavior)`
 - [x] `ARCH-01 docs(contract): publish critical-refactor split contract (no behavior drift) for api/web monolith files`
+- [x] `EXPH-10 test(web): add regression coverage for exchange select options and not-implemented UX states`
 - [x] `EXPH-09 feat(web-ux): add placeholder badges/hints for unsupported exchange operations in creators/runtime paths`
 - [x] `EXPH-08 feat(web-types): extend Exchange unions/options across Markets/Bots/Profile modules`
 - [x] `EXPH-06 test(api+web): add regression coverage for placeholder persistence and fail-closed responses`
