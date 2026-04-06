@@ -621,6 +621,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `SUBS-12 docs(runbook): publish operator/admin guide for plan edits, manual assignments, and payment-provider switch strategy`
 
 ## Progress Log
+- 2026-04-07: Completed `EXIT-05` by hardening `ops:rc:gates:summary`: it now reports Gate2 policy from evidence artifact and returns `Strict passed: n/a` (instead of false) when no evidence JSON exists.
 - 2026-04-07: Completed `EXIT-04` by syncing `v1-rc-external-gates-status.md` required SLO collection command to explicitly use `--environment production`, keeping all RC gate handoff docs aligned with production-evidence policy.
 - 2026-04-07: Completed `EXIT-03` by adding production-only strict gate shortcuts (`ops:rc:gates:local-pipeline:strict:prod`, `ops:rc:gates:refresh:strict:prod`, `ops:rc:gates:refresh:summary:strict:prod`) wired to `--require-production-gate2`, plus runbook/checklist command sync for final release evidence closure.
 - 2026-04-07: Completed `EXIT-02` by adding SLO evidence truthfulness guardrails: `ops:slo:collect` now rejects `--environment production` for localhost/private hosts unless explicit `--allow-local-production-evidence` override is passed, and local external-gates pipeline/runbook were updated to expose this override only for intentional dry-runs.

@@ -63,7 +63,8 @@ const main = async () => {
     generatedAt: new Date().toISOString(),
     gates,
     missingEvidenceCount: Number.isFinite(evidence?.counts?.missing) ? evidence.counts.missing : null,
-    strictPassed: Boolean(evidence?.strictPassed),
+    strictPassed: evidence ? Boolean(evidence.strictPassed) : null,
+    gate2Policy: typeof evidence?.gate2Policy === 'string' ? evidence.gate2Policy : null,
     evidenceGeneratedAt: evidence?.generatedAt ?? null,
   };
 
@@ -78,7 +79,10 @@ const main = async () => {
   console.log(`- Gate 3: ${summary.gates.gate3}`);
   console.log(`- Gate 4: ${summary.gates.gate4}`);
   console.log(`- Missing evidence: ${summary.missingEvidenceCount ?? 'n/a'}`);
-  console.log(`- Strict passed: ${summary.strictPassed ? 'yes' : 'no'}`);
+  console.log(
+    `- Strict passed: ${summary.strictPassed == null ? 'n/a' : summary.strictPassed ? 'yes' : 'no'}`
+  );
+  console.log(`- Gate2 policy: ${summary.gate2Policy ?? 'n/a'}`);
   console.log(`- Evidence generated at: ${summary.evidenceGeneratedAt ?? 'n/a'}`);
 };
 
