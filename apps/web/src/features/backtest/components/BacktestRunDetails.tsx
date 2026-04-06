@@ -17,6 +17,7 @@ import { getStrategy } from '../../strategies/api/strategies.api';
 import { StrategyDto } from '../../strategies/types/StrategyForm.type';
 import { getMarketUniverse } from '../../markets/services/markets.service';
 import { buildNonOverlappingTradeSegments } from '../utils/nonOverlappingTradeSegments';
+import { buildPairStatsMetricDisplay } from '../utils/pairStatsMetricDisplay';
 import { I18nContext } from '../../../i18n/I18nProvider';
 
 const getAxiosMessage = (err: unknown) => {
@@ -1165,7 +1166,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
           zoom: 'Zoom',
           pairStatsTitle: 'Pair stats',
           parityFailed: 'Parity FAILED',
-          txInRangeTotal: 'in range / total',
+          chartWindowValue: 'Chart window',
           avgHold: 'Avg hold',
           pnl: 'PnL',
           dca: 'DCA',
@@ -1268,7 +1269,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
           zoom: 'Zoom',
           pairStatsTitle: 'Statystyki pary',
           parityFailed: 'Przetwarzanie pary nie powiodlo sie',
-          txInRangeTotal: 'w zakresie / lacznie',
+          chartWindowValue: 'Zakres wykresu',
           avgHold: 'Sredni hold',
           pnl: 'PnL',
           dca: 'DCA',
@@ -2207,7 +2208,18 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                           : [];
                       const visibleTradesForStats = timelineDerivedTrades.length > 0 ? timelineDerivedTrades : visibleTrades;
                       const visibleStats = buildSymbolStats(visibleTradesForStats, [stats.symbol])[0] ?? stats;
-                      const showVisibleSubset = visibleStats.tradesCount !== stats.tradesCount;
+                      const tradesMetricDisplay = buildPairStatsMetricDisplay({
+                        visibleValue: visibleStats.tradesCount,
+                        totalValue: stats.tradesCount,
+                        formatValue: formatNumber,
+                        differenceTolerance: 0,
+                      });
+                      const pnlMetricDisplay = buildPairStatsMetricDisplay({
+                        visibleValue: visibleStats.netPnl,
+                        totalValue: stats.netPnl,
+                        formatValue: formatCurrency,
+                        differenceTolerance: 0.000001,
+                      });
                       const visibleFinalCandleClosures = visibleTradesForStats.filter((trade) => trade.exitReason === 'FINAL_CANDLE').length;
                       const visibleLiquidations = visibleTradesForStats.filter(
                         (trade) => trade.exitReason === 'LIQUIDATION' || trade.liquidated,
@@ -2268,11 +2280,12 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                               <div className='mt-3 grid grid-cols-2 gap-2'>
                                 <div className='rounded-md border border-base-300 bg-base-100/70 p-2'>
                                   <p className='text-[10px] uppercase tracking-wide opacity-65'>{copy.trades}</p>
-                                  <p className='mt-1 text-base font-semibold'>
-                                    {formatNumber(visibleStats.tradesCount)}
-                                    {showVisibleSubset ? ` / ${formatNumber(stats.tradesCount)}` : ''}
-                                  </p>
-                                  {showVisibleSubset ? <p className='mt-0.5 text-[10px] opacity-60'>{copy.txInRangeTotal}</p> : null}
+                                  <p className='mt-1 text-base font-semibold'>{tradesMetricDisplay.primary}</p>
+                                  {tradesMetricDisplay.chartWindow ? (
+                                    <p className='mt-0.5 text-[10px] opacity-60'>
+                                      {copy.chartWindowValue}: {tradesMetricDisplay.chartWindow}
+                                    </p>
+                                  ) : null}
                                 </div>
                                 <div className='rounded-md border border-base-300 bg-base-100/70 p-2'>
                                   <p className='text-[10px] uppercase tracking-wide opacity-65'>{copy.winRate}</p>
@@ -2281,10 +2294,14 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                                 </div>
                                 <div className='rounded-md border border-base-300 bg-base-100/70 p-2'>
                                   <p className='text-[10px] uppercase tracking-wide opacity-65'>{copy.pnl}</p>
-                                  <p className={`mt-1 text-base font-semibold ${pnlClass(visibleStats.netPnl)}`}>
-                                    {formatCurrency(visibleStats.netPnl)}
-                                    {showVisibleSubset ? ` / ${formatCurrency(stats.netPnl)}` : ''}
+                                  <p className={`mt-1 text-base font-semibold ${pnlClass(stats.netPnl)}`}>
+                                    {pnlMetricDisplay.primary}
                                   </p>
+                                  {pnlMetricDisplay.chartWindow ? (
+                                    <p className='mt-0.5 text-[10px] opacity-60'>
+                                      {copy.chartWindowValue}: {pnlMetricDisplay.chartWindow}
+                                    </p>
+                                  ) : null}
                                 </div>
                                 <div className='rounded-md border border-base-300 bg-base-100/70 p-2'>
                                   <p className='text-[10px] uppercase tracking-wide opacity-65'>{copy.avgHold}</p>
