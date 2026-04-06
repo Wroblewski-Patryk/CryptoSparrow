@@ -168,6 +168,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `G10-23 web-build-stability: provide favicon asset required by Next.js production build pipeline`
 
 ## Progress Log
+- 2026-04-07: Synced RC external-gates status handoff template command so Gate2 collector instructions consistently require `--environment production`.
 - 2026-04-07: Added production-only strict external-gates shortcuts (`ops:rc:gates:local-pipeline:strict:prod`, `ops:rc:gates:refresh:strict:prod`, `ops:rc:gates:refresh:summary:strict:prod`) to enforce Gate2 `PASS` policy during final release closure runs.
 - 2026-04-07: Hardened production-evidence integrity for Exit Workpack by blocking `ops:slo:collect --environment production` on localhost/private hosts unless explicit `--allow-local-production-evidence` dry-run override is provided.
 - 2026-04-06: Added subscription + entitlement rollout baseline for collaborator testing readiness (`FREE/ADVANCED/PROFESSIONAL`, profile active-plan visibility, owner PROFESSIONAL bootstrap, admin-editable limits/pricing, and payment-gateway abstraction) via `docs/planning/subscription-entitlements-rollout-plan-2026-04-06.md`.

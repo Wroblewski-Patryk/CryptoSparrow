@@ -27,7 +27,7 @@ Source artifact: not provided (template-only mode)
 
 ## Required Inputs
 1. Run SLO collector:
-   - `pnpm run ops:slo:collect -- --base-url https://<target-api> --duration-minutes 30 --interval-seconds 30 --auth-token <ADMIN_JWT>`
+   - `pnpm run ops:slo:collect -- --base-url https://<target-api> --duration-minutes 30 --interval-seconds 30 --auth-token <ADMIN_JWT> --environment production`
 2. Rebuild status from latest artifact:
    - `pnpm run ops:rc:gates:status`
 
