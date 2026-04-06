@@ -609,7 +609,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 ## Phase 38 - Subscription + Entitlements Foundation (Active)
 - [x] `SUBS-01 docs(contract): freeze tier catalog (FREE/ADVANCED/PROFESSIONAL), default assignment rules, and entitlement payload schema`
 - [x] `SUBS-02 feat(db): add SubscriptionPlan + UserSubscription + PaymentIntent models with safe migration and indexes`
-- [ ] `SUBS-03 feat(seed): seed three plans; default new users to FREE; map owner account (wroblewskipatryk@gmail.com) to PROFESSIONAL`
+- [x] `SUBS-03 feat(seed): seed three plans; default new users to FREE; map owner account (wroblewskipatryk@gmail.com) to PROFESSIONAL`
 - [ ] `SUBS-04 feat(api-profile): expose subscription catalog + active subscription in profile endpoints (my-account ready)`
 - [ ] `SUBS-05 feat(web-profile): render subscription list with active-plan highlight in My Account -> Subscription`
 - [ ] `SUBS-06 feat(entitlements-core): add central entitlement resolver and enforce bot-count limits by active plan`
@@ -621,6 +621,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `SUBS-12 docs(runbook): publish operator/admin guide for plan edits, manual assignments, and payment-provider switch strategy`
 
 ## Progress Log
+- 2026-04-07: Completed `SUBS-03` by adding subscription seed/runtime bootstrap (`FREE/ADVANCED/PROFESSIONAL`) with shared `subscriptions.service` helpers, enforcing default `FREE` assignment on new registration, and owner bootstrap override to `PROFESSIONAL` in Prisma seed flow; validated with API typecheck, auth service tests, migration deploy, and seed execution.
 - 2026-04-07: Completed `SUBS-02` by adding Prisma subscription foundation (`SubscriptionPlan`, `UserSubscription`, `PaymentIntent`) with canonical enums, relations, safety-oriented indexes/unique constraints, and migration `20260407003500_add_subscription_foundation`; validated with `prisma validate` and API typecheck.
 - 2026-04-07: Completed `SUBS-01` by publishing canonical subscription contract `docs/architecture/subscription-tier-entitlements-contract.md` (tier catalog `FREE/ADVANCED/PROFESSIONAL`, default assignment rules including owner bootstrap, and stable entitlement payload schema), then syncing plan/decision references for next implementation tasks.
 - 2026-04-06: Added active subscription/entitlement rollout phase (`SUBS-01..SUBS-12`) and canonical plan `docs/planning/subscription-entitlements-rollout-plan-2026-04-06.md` to cover profile subscription list, FREE default onboarding, owner PROFESSIONAL bootstrap, admin-editable limits/pricing, and payment-gateway abstraction readiness.

@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { ensureSubscriptionCatalog, OWNER_ACCOUNT_EMAIL, setActiveSubscriptionForUser } from '../src/modules/subscriptions/subscriptions.service';
 
 const prisma = new PrismaClient();
 
@@ -150,15 +151,28 @@ const BOT_SEED = [
 async function main() {
   const password = await bcrypt.hash('Admin12#$', 10);
 
+  await ensureSubscriptionCatalog(prisma);
+
   const user = await prisma.user.upsert({
-    where: { email: 'wroblewskipatryk@gmail.com' },
+    where: { email: OWNER_ACCOUNT_EMAIL },
     update: {},
     create: {
-      email: 'wroblewskipatryk@gmail.com',
+      email: OWNER_ACCOUNT_EMAIL,
       password,
       role: 'ADMIN',
     },
     select: { id: true },
+  });
+
+  await setActiveSubscriptionForUser(prisma, {
+    userId: user.id,
+    planCode: 'PROFESSIONAL',
+    source: 'ADMIN_OVERRIDE',
+    autoRenew: false,
+    metadata: {
+      reason: 'seed_owner_bootstrap',
+      updatedBy: 'seed',
+    },
   });
 
   const marketUniverseIds = new Map<string, string>();

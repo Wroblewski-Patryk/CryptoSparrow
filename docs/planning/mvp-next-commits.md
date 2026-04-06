@@ -7,13 +7,12 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `SUBS-03 feat(seed): seed FREE/ADVANCED/PROFESSIONAL; default new users to FREE; owner to PROFESSIONAL`
 - [ ] `SUBS-04 feat(api-profile): return subscription catalog + active plan for My Account`
 - [ ] `SUBS-05 feat(web-profile): render subscription list and highlight active plan on profile`
 - [ ] `SUBS-06 feat(entitlements-core): add central entitlement resolver and enforce bot-count limits by active plan`
 - [ ] `SUBS-07 feat(api-admin): add admin CRUD for plan pricing + entitlement limits`
-## NEXT
 - [ ] `SUBS-08 feat(web-admin): add subscription-plan admin modal for price/limit editing`
+## NEXT
 - [ ] `SUBS-09 feat(payment-abstraction): add provider-agnostic checkout/payment-intent contract`
 - [ ] `SUBS-10 feat(payment-provider-stripe): add first Stripe adapter behind payment abstraction`
 - [ ] `SUBS-11 test(api+web): add regression coverage for assignment/highlight/enforcement flows`
@@ -22,6 +21,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `SUBS-03 feat(seed): seed FREE/ADVANCED/PROFESSIONAL; default new users to FREE; owner to PROFESSIONAL`
 - [x] `SUBS-02 feat(db): add subscription-plan/user-subscription/payment-intent tables with safe migration`
 - [x] `SUBS-01 docs(contract): freeze FREE/ADVANCED/PROFESSIONAL catalog + default assignment/entitlement schema`
 - [x] `CACHE-09 test(web-runtime): cover stale-age warning and recovery after fresh payload arrival`

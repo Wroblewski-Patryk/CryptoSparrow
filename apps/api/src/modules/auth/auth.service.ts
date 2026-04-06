@@ -5,6 +5,7 @@ import { serverUrl } from '../../config/runtime';
 import { getSessionJwtExpiresIn } from './auth.session';
 import { signAuthToken } from './auth.jwt';
 import { publicUserSelect } from '../users/publicUser';
+import { ensureDefaultSubscriptionForUser, ensureSubscriptionCatalog } from '../subscriptions/subscriptions.service';
 
 export const registerUser = async (
     input: RegisterInput
@@ -21,13 +22,20 @@ export const registerUser = async (
 
   const avatarUrl = `${serverUrl}/avatars/default.png`;
 
-  const user = await prisma.user.create({
-    data: {
-      email: input.email,
-      password: hashed,
-      avatarUrl: avatarUrl
-    },
-    select: publicUserSelect,
+  const user = await prisma.$transaction(async (tx) => {
+    const createdUser = await tx.user.create({
+      data: {
+        email: input.email,
+        password: hashed,
+        avatarUrl: avatarUrl
+      },
+      select: publicUserSelect,
+    });
+
+    await ensureSubscriptionCatalog(tx);
+    await ensureDefaultSubscriptionForUser(tx, createdUser.id);
+
+    return createdUser;
   });
 
   return user;

@@ -12,6 +12,10 @@ describe('registerUser', () => {
     await prisma.order.deleteMany();
     await prisma.position.deleteMany();
     await prisma.signal.deleteMany();
+    await prisma.runtimeExecutionDedupe.deleteMany();
+    await prisma.botRuntimeEvent.deleteMany();
+    await prisma.botRuntimeSymbolStat.deleteMany();
+    await prisma.botRuntimeSession.deleteMany();
     await prisma.botStrategy.deleteMany();
     await prisma.botSubagentConfig.deleteMany();
     await prisma.botAssistantConfig.deleteMany();
@@ -22,6 +26,8 @@ describe('registerUser', () => {
     await prisma.marketUniverse.deleteMany();
     await prisma.apiKey.deleteMany();
     await prisma.strategy.deleteMany();
+    await prisma.paymentIntent.deleteMany();
+    await prisma.userSubscription.deleteMany();
     await prisma.user.deleteMany();
   });
 
@@ -37,6 +43,20 @@ describe('registerUser', () => {
       where: { email: 'test@user.com' },
     });
     expect(dbUser.password).not.toBe('test123');
+
+    const activeSubscription = await prisma.userSubscription.findFirstOrThrow({
+      where: {
+        userId: user.id,
+        status: 'ACTIVE',
+      },
+      include: {
+        subscriptionPlan: {
+          select: { code: true },
+        },
+      },
+    });
+    expect(activeSubscription.subscriptionPlan.code).toBe('FREE');
+    expect(activeSubscription.source).toBe('DEFAULT');
   });
 
   it('should throw if user exists', async () => {
