@@ -562,7 +562,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `PEX-02 feat(api-runtime): enforce dedupe key persistence + replay-safe execution guards for side-effecting runtime actions`
 - [x] `PEX-03 test(runtime): add crash/retry regression suite proving no duplicate open/close orders after restart`
 - [x] `PEX-05 feat(runtime-recovery): implement bounded auto-restart policy with cooldown and max-attempt guardrails`
-- [ ] `PEX-06 test(runtime): add long-running soak test for session continuity (heartbeat freshness, auto-restart trace, no stuck CANCELED loop)`
+- [x] `PEX-06 test(runtime): add long-running soak test for session continuity (heartbeat freshness, auto-restart trace, no stuck CANCELED loop)`
 - [ ] `PEX-08 feat(obs-alerts): define alert thresholds for stale runtime, repeated restarts, and reconciliation drift`
 - [ ] `PEX-09 docs(runbook): publish incident triage matrix (symptoms -> checks -> mitigations -> rollback)`
 - [ ] `PEX-10 feat(ops-backup): add repeatable backup verification command set for target deployment profile`
@@ -1161,3 +1161,4 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-06: Completed `PEX-02` by introducing persistent runtime execution dedupe storage (`RuntimeExecutionDedupe` Prisma model + migration), adding canonical `v1` dedupe-key builders/service (`OPEN/DCA/CLOSE/CANCEL` with `PENDING/SUCCEEDED/FAILED` flow), and wiring replay-safe guards into runtime orchestrator/automation paths (OPEN/CLOSE/DCA/CANCEL) with targeted engine regression coverage.
 - 2026-04-06: Completed `PEX-03` by adding crash/retry regression tests (`runtimeCrashRetry.regression.test.ts`) proving replay-safe `OPEN` and `CLOSE` behavior after simulated restart (same dedupe key => reused result, no duplicate order/position side effects), with targeted engine test pass.
 - 2026-04-06: Completed `PEX-05` by adding bounded runtime auto-restart policy in `RuntimeSignalLoop` (configurable `cooldown`, `max attempts`, and `attempt window` guardrails), including restart scheduling after stall and regression coverage for cooldown restart plus max-attempt lockout behavior.
+- 2026-04-06: Completed `PEX-06` by adding long-running runtime soak coverage in `runtimeSignalLoop.service.test.ts` for session continuity under heartbeat failures, validating auto-restart trace/recovery and proving no stuck repeated `CANCELED` session loop after recovery.

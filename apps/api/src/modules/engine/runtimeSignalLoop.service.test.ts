@@ -598,6 +598,55 @@ describe('RuntimeSignalLoop', () => {
     vi.useRealTimers();
   });
 
+  it('keeps session continuity during long soak with heartbeat recovery and no stuck CANCELED loop', async () => {
+    vi.useFakeTimers();
+    const { deps } = createDeps();
+    withStrategyBot(deps, { strategies: [] });
+    deps.closeRuntimeSession = vi.fn(async () => undefined);
+    deps.closeInactiveRuntimeSessions = vi.fn(async () => undefined);
+    deps.stallNoEventMs = 300_000;
+    deps.stallNoHeartbeatMs = 20_000;
+    deps.stallDetectorEnabled = true;
+    deps.autoRestartEnabled = true;
+    deps.autoRestartCooldownMs = 2_000;
+    deps.autoRestartMaxAttempts = 5;
+    deps.autoRestartWindowMs = 120_000;
+
+    let ensureCalls = 0;
+    deps.ensureRuntimeSession = vi.fn(async () => {
+      ensureCalls += 1;
+      if (ensureCalls <= 1) return 'session-1';
+      if (ensureCalls <= 3) throw new Error('db_unavailable');
+      return 'session-1';
+    });
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+    expect(loop.isRunning()).toBe(true);
+    expect(deps.subscribe).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(45_000);
+    await vi.waitFor(() => expect(deps.closeRuntimeSession).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect((deps.subscribe as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThanOrEqual(2));
+    await vi.waitFor(() => expect(loop.isRunning()).toBe(true));
+
+    await vi.advanceTimersByTimeAsync(180_000);
+
+    expect(loop.isRunning()).toBe(true);
+    expect(deps.closeRuntimeSession).toHaveBeenCalledTimes(1);
+    expect(deps.closeRuntimeSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        botId: 'bot-1',
+        status: 'CANCELED',
+        stopReason: 'runtime_stall_no_heartbeat',
+      })
+    );
+    expect(ensureCalls).toBeGreaterThan(5);
+
+    await loop.stop();
+    vi.useRealTimers();
+  });
+
   it('keeps stream subscription alive when single event handler fails', async () => {
     const { deps, emit } = createDeps();
     withStrategyBot(deps, { strategies: [] });
