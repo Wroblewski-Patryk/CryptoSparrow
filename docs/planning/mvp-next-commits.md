@@ -11,13 +11,13 @@ Operational queue for one-task execution runs.
 - [x] `EXCTX-09 refactor(engine): introduce venue-aware market data provider contract`
 - [x] `EXCTX-10 refactor(runtime): add exchange to stream-event context and enforce exchange+marketType match`
 - [x] `EXCTX-11 feat(execution): bind live execution account selection to bot venue context`
-- [ ] `EXCTX-12 feat(web-backtest-creator): show explicit exchange/marketType/base context bound to market group`
-## NEXT
+- [x] `EXCTX-12 feat(web-backtest-creator): show explicit exchange/marketType/base context bound to market group`
 - [ ] `EXCTX-13 feat(web-bot-creator): show explicit venue context and live api-key compatibility hints`
 - [ ] `EXCTX-14 test(web): add creator regression coverage for venue-context rendering and validation copy`
 - [ ] `EXCTX-15 test(api+runtime): add context mismatch contract tests for backtest/bot/live paths`
 - [ ] `EXCTX-16 test(e2e): add end-to-end venue consistency scenario (backtest->paper->live)`
 - [ ] `EXCTX-17 chore(qa): manual smoke checklist and evidence capture for creator/runtime consistency`
+## NEXT
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 

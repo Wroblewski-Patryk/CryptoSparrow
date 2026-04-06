@@ -57,6 +57,13 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
           maxCandlesErrorPrefix: 'Provide a number in range',
           initialBalance: 'Initial portfolio balance (Backtest/Paper)',
           initialBalanceErrorPrefix: 'Provide a value in range',
+          venueContextTitle: 'Venue context (bound to selected market group)',
+          venueContextHint:
+            'Backtest execution context is derived from the selected market group and cannot diverge.',
+          venueContextAwaitingSelection: 'Select a market group to resolve context.',
+          venueContextExchange: 'Exchange',
+          venueContextMarketType: 'Market type',
+          venueContextBaseCurrency: 'Base currency',
           notes: 'Notes (optional)',
           notesPlaceholder: 'Assumptions, data version, comments...',
         }
@@ -78,6 +85,13 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
           maxCandlesErrorPrefix: 'Podaj liczbe z zakresu',
           initialBalance: 'Startowy balans portfela (Backtest/Paper)',
           initialBalanceErrorPrefix: 'Podaj wartosc z zakresu',
+          venueContextTitle: 'Kontekst venue (powiazany z wybrana grupa rynkow)',
+          venueContextHint:
+            'Kontekst wykonania backtestu jest dziedziczony z wybranej grupy rynkow i nie moze sie rozjechac.',
+          venueContextAwaitingSelection: 'Wybierz grupe rynkow, aby zobaczyc kontekst.',
+          venueContextExchange: 'Exchange',
+          venueContextMarketType: 'Market type',
+          venueContextBaseCurrency: 'Base currency',
           notes: 'Notatki (opcjonalnie)',
           notesPlaceholder: 'Opis zalozen runa, wersja danych, komentarz...',
         };
@@ -254,6 +268,31 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
                   ))}
                 </select>
               </FieldWrapper>
+
+              <div className='md:col-span-2 rounded-md border border-base-300/70 bg-base-200/40 px-3 py-2'>
+                <p className='text-[11px] font-semibold uppercase tracking-wide opacity-70'>
+                  {copy.venueContextTitle}
+                </p>
+                {selectedUniverse ? (
+                  <div className='mt-2 flex flex-wrap items-center gap-2 text-sm'>
+                    <span className='badge badge-outline gap-1'>
+                      <span className='opacity-70'>{copy.venueContextExchange}:</span>
+                      <span className='font-semibold'>{selectedUniverse.exchange ?? 'BINANCE'}</span>
+                    </span>
+                    <span className='badge badge-outline gap-1'>
+                      <span className='opacity-70'>{copy.venueContextMarketType}:</span>
+                      <span className='font-semibold'>{selectedUniverse.marketType}</span>
+                    </span>
+                    <span className='badge badge-outline gap-1'>
+                      <span className='opacity-70'>{copy.venueContextBaseCurrency}:</span>
+                      <span className='font-semibold'>{selectedUniverse.baseCurrency}</span>
+                    </span>
+                  </div>
+                ) : (
+                  <p className='mt-1 text-xs opacity-70'>{copy.venueContextAwaitingSelection}</p>
+                )}
+                <p className='mt-2 text-xs opacity-70'>{copy.venueContextHint}</p>
+              </div>
             </div>
           </section>
 
