@@ -117,6 +117,7 @@ Evidence to record:
     - command verifies Gate2 status from `v1-rc-external-gates-status.md`:
       - default policy: `PASS` or `LOCAL_PASS (...)` accepted,
       - production-only policy: `pnpm run ops:rc:gates:evidence:check -- --strict --require-production-gate2`.
+      - shortcut: `pnpm run ops:rc:gates:evidence:check:strict:prod`.
     - machine-readable output:
       - `pnpm run ops:rc:gates:evidence:check -- --json`
       - `pnpm run ops:rc:gates:evidence:check -- --json --output docs/operations/_artifacts-rc-evidence-check.json`

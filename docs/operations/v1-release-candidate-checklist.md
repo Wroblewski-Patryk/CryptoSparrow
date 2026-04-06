@@ -129,6 +129,7 @@
   - `pnpm run ops:rc:checklist:sync`
 - Check missing evidence fields before formal sign-off:
   - `pnpm run ops:rc:gates:evidence:check`
+  - strict production policy shortcut: `pnpm run ops:rc:gates:evidence:check:strict:prod`
 - Quick gate summary:
   - `pnpm run ops:rc:gates:summary`
 - Run local end-to-end helper pipeline:

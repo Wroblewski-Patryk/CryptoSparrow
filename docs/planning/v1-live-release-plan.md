@@ -168,6 +168,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `G10-23 web-build-stability: provide favicon asset required by Next.js production build pipeline`
 
 ## Progress Log
+- 2026-04-07: Added direct strict-production evidence-check shortcut (`ops:rc:gates:evidence:check:strict:prod`) and linked it in RC runbook/checklist for faster final gate validation.
 - 2026-04-07: Improved RC gates summary output by surfacing Gate2 policy and using nullable strict status (`n/a` when evidence artifact is absent) to avoid false-negative operator interpretation.
 - 2026-04-07: Synced RC external-gates status handoff template command so Gate2 collector instructions consistently require `--environment production`.
 - 2026-04-07: Added production-only strict external-gates shortcuts (`ops:rc:gates:local-pipeline:strict:prod`, `ops:rc:gates:refresh:strict:prod`, `ops:rc:gates:refresh:summary:strict:prod`) to enforce Gate2 `PASS` policy during final release closure runs.
