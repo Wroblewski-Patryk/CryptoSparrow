@@ -533,6 +533,13 @@ export default function DataTable<T>({
   const showAdvancedInFooter = Boolean(advancedFilters && advancedTogglePlacement === 'footer');
   const showSettingsControls = showSettingsGroup || showAdvancedInFooter;
   const showPagesGroup = totalPages > 1;
+  const desktopColumnsClass = showPagesGroup
+    ? showSettingsControls
+      ? 'lg:grid-cols-[auto_auto_auto]'
+      : 'lg:grid-cols-[auto_auto]'
+    : showSettingsControls
+      ? 'lg:grid-cols-[auto_auto]'
+      : 'lg:grid-cols-[auto]';
 
   return (
     <section className={sectionClassName}>
@@ -645,7 +652,7 @@ export default function DataTable<T>({
 
       {paginationEnabled ? (
         <div
-          className={`grid grid-cols-[auto_minmax(0,1fr)] gap-2 lg:flex lg:items-center lg:justify-between lg:gap-4 ${paginationClassName}`.trim()}
+          className={`grid grid-cols-[auto_minmax(0,1fr)] gap-2 lg:grid lg:items-center lg:justify-between lg:gap-4 ${desktopColumnsClass} ${paginationClassName}`.trim()}
         >
           {showSettingsControls ? (
             <div className='min-w-0 text-xs text-base-content/75'>
@@ -721,8 +728,8 @@ export default function DataTable<T>({
             </div>
           ) : null}
 
-          <div className={`min-w-0 w-full text-xs text-base-content/75 ${showSettingsControls ? '' : 'col-span-2'}`}>
-            <div className='flex items-center justify-end gap-6'>
+          <div className={`min-w-0 w-full lg:w-auto text-xs text-base-content/75 ${showSettingsControls ? '' : 'col-span-2'} lg:col-span-1`}>
+            <div className='flex items-center justify-end gap-6 lg:justify-start'>
               <span>{rowsTotalLabel}: {totalRowsCount}</span>
               <span className='inline-flex items-center gap-2'>
                 <span>{rowsPerPageLabel}</span>
@@ -748,7 +755,7 @@ export default function DataTable<T>({
           </div>
 
           {showPagesGroup ? (
-            <div className='col-span-2 min-w-0 w-full text-xs text-base-content/75'>
+            <div className='col-span-2 lg:col-span-1 min-w-0 w-full lg:w-auto text-xs text-base-content/75'>
               <div className='flex items-center justify-between gap-2 lg:gap-6'>
                 <span className='inline-flex items-center gap-2'>
                   <span>{pageLabel}</span>
