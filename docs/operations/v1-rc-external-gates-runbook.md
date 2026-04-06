@@ -38,7 +38,7 @@ Profile env contract:
 ## Gate 2: Queue-Lag Baseline Review
 1. Observe production-like telemetry window (minimum 30 minutes under normal load).
    - Recommended collector command:
-     - `pnpm run ops:slo:collect -- --base-url https://<target-api> --duration-minutes 30 --interval-seconds 30 --auth-token <ADMIN_JWT>`
+     - `pnpm run ops:slo:collect -- --base-url https://<target-api> --duration-minutes 30 --interval-seconds 30 --auth-token <ADMIN_JWT> --environment production`
    - Build rolling SLO window summary (for 7d/30d review cadence):
      - `pnpm run ops:slo:window-report -- --window-days 7`
      - `pnpm run ops:slo:window-report -- --window-days 30`
@@ -112,7 +112,9 @@ Evidence to record:
   - Check missing external evidence fields (Gate1/Gate3/Gate4):
     - `pnpm run ops:rc:gates:evidence:check`
     - strict mode (exit code 1 when evidence is incomplete): `pnpm run ops:rc:gates:evidence:check -- --strict`
-    - command also verifies Gate2 status (`PASS` required) from `v1-rc-external-gates-status.md`.
+    - command verifies Gate2 status from `v1-rc-external-gates-status.md`:
+      - default policy: `PASS` or `LOCAL_PASS (...)` accepted,
+      - production-only policy: `pnpm run ops:rc:gates:evidence:check -- --strict --require-production-gate2`.
     - machine-readable output:
       - `pnpm run ops:rc:gates:evidence:check -- --json`
       - `pnpm run ops:rc:gates:evidence:check -- --json --output docs/operations/_artifacts-rc-evidence-check.json`

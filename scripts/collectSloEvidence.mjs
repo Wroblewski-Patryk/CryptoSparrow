@@ -24,10 +24,18 @@ const TARGET_PROFILES = {
   },
 };
 
+const ALLOWED_ENVIRONMENTS = new Set(['local', 'stage', 'production']);
+
 const parseOptionalNumber = (value) => {
   if (value == null || value === '') return null;
   const parsed = Number.parseFloat(value);
   return Number.isFinite(parsed) ? parsed : null;
+};
+
+const normalizeEnvironment = (value) => {
+  const normalized = String(value ?? '').trim().toLowerCase();
+  if (ALLOWED_ENVIRONMENTS.has(normalized)) return normalized;
+  return 'local';
 };
 
 const normalizeTargetProfile = (value) => {
@@ -42,6 +50,7 @@ const parseArgs = () => {
     durationMinutes: Number.parseInt(process.env.SLO_DURATION_MINUTES ?? '30', 10),
     intervalSeconds: Number.parseInt(process.env.SLO_INTERVAL_SECONDS ?? '30', 10),
     authToken: process.env.SLO_AUTH_TOKEN ?? '',
+    environment: normalizeEnvironment(process.env.SLO_ENVIRONMENT ?? 'local'),
     targetProfile: normalizeTargetProfile(process.env.SLO_TARGET_PROFILE ?? 'V1'),
     apiAvailabilityPct: parseOptionalNumber(process.env.SLO_API_AVAILABILITY_PCT),
     workerAvailabilityPct: parseOptionalNumber(process.env.SLO_WORKER_AVAILABILITY_PCT),
@@ -62,6 +71,7 @@ const parseArgs = () => {
     if (arg === '--duration-minutes') options.durationMinutes = Number.parseInt(args[index + 1] ?? '', 10);
     if (arg === '--interval-seconds') options.intervalSeconds = Number.parseInt(args[index + 1] ?? '', 10);
     if (arg === '--auth-token') options.authToken = args[index + 1] ?? options.authToken;
+    if (arg === '--environment') options.environment = normalizeEnvironment(args[index + 1] ?? options.environment);
     if (arg === '--target-profile') options.targetProfile = normalizeTargetProfile(args[index + 1] ?? options.targetProfile);
     if (arg === '--api-availability-pct') options.apiAvailabilityPct = parseOptionalNumber(args[index + 1]);
     if (arg === '--worker-availability-pct') options.workerAvailabilityPct = parseOptionalNumber(args[index + 1]);
@@ -365,6 +375,7 @@ const renderMarkdown = ({ startedAt, endedAt, options, summary, artifacts }) => 
 - Duration target (minutes): ${options.durationMinutes}
 - Interval (seconds): ${options.intervalSeconds}
 - Auth token provided: ${options.authToken ? 'yes' : 'no'}
+- Environment: ${options.environment}
 - Target profile: ${summary.evaluation.targetProfile}
 - Raw artifact: \`${artifacts.jsonPath}\`
 
@@ -412,7 +423,7 @@ const main = async () => {
   const options = parseArgs();
   if (options.help) {
     console.log(
-      'Usage: node scripts/collectSloEvidence.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--target-profile <MVP|V1>] [--api-availability-pct <n>] [--worker-availability-pct <n>] [--api-5xx-ratio-pct <n>] [--api-avg-duration-ms <n>] [--queue-lag-exec-threshold <n>] [--queue-lag-exec-compliance-pct <n>] [--live-order-failure-ratio-pct <n>]'
+      'Usage: node scripts/collectSloEvidence.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--environment <local|stage|production>] [--target-profile <MVP|V1>] [--api-availability-pct <n>] [--worker-availability-pct <n>] [--api-5xx-ratio-pct <n>] [--api-avg-duration-ms <n>] [--queue-lag-exec-threshold <n>] [--queue-lag-exec-compliance-pct <n>] [--live-order-failure-ratio-pct <n>]'
     );
     process.exit(0);
   }
@@ -472,6 +483,7 @@ const main = async () => {
           durationMinutes: options.durationMinutes,
           intervalSeconds: options.intervalSeconds,
           authTokenProvided: Boolean(options.authToken),
+          environment: options.environment,
           targetProfile: options.targetProfile,
           thresholds: options.thresholds,
         },

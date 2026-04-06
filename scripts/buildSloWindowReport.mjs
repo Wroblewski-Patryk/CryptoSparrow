@@ -67,6 +67,7 @@ const loadArtifacts = async (inputDir) => {
       startedAtMs: parseIso(data.startedAt),
       endedAtMs: parseIso(data.endedAt),
       summary: data.summary ?? {},
+      environment: String(data?.options?.environment ?? 'unknown').trim().toLowerCase() || 'unknown',
       startedAt: data.startedAt ?? null,
       endedAt: data.endedAt ?? null,
     });
@@ -93,6 +94,7 @@ const summarize = (artifacts, options) => {
   const queueLagMax = [];
   const orderFailureRatios = [];
   const objectiveStats = new Map();
+  const environmentCounts = new Map();
 
   const breaches = [];
 
@@ -109,6 +111,8 @@ const summarize = (artifacts, options) => {
     const objectives = Array.isArray(summary?.evaluation?.objectives)
       ? summary.evaluation.objectives
       : [];
+    const environment = artifact.environment ?? 'unknown';
+    environmentCounts.set(environment, (environmentCounts.get(environment) ?? 0) + 1);
 
     if (health != null) probes.health.push(health);
     if (ready != null) probes.ready.push(ready);
@@ -170,6 +174,8 @@ const summarize = (artifacts, options) => {
       inputDir: path.relative(process.cwd(), options.inputDir),
       artifactsTotal: artifacts.length,
       artifactsInWindow: inWindow.length,
+      environmentSummary: Object.fromEntries(environmentCounts.entries()),
+      includesProductionEvidence: (environmentCounts.get('production') ?? 0) > 0,
     },
     aggregates: {
       probes: {
@@ -201,6 +207,7 @@ const summarize = (artifacts, options) => {
     queueLagBreaches: breaches,
     artifactRefs: inWindow.map((artifact) => ({
       file: artifact.fileName,
+      environment: artifact.environment ?? 'unknown',
       startedAt: artifact.startedAt,
       endedAt: artifact.endedAt,
       queueLagP95: asNumber(artifact.summary?.queueLagExecution?.p95),
@@ -213,7 +220,7 @@ const renderMarkdown = (report, jsonRelativePath) => {
   const rows = report.artifactRefs
     .map(
       (item) =>
-        `| ${item.file} | ${item.startedAt ?? 'n/a'} | ${item.endedAt ?? 'n/a'} | ${item.queueLagP95 ?? 'n/a'} | ${
+        `| ${item.file} | ${item.environment ?? 'unknown'} | ${item.startedAt ?? 'n/a'} | ${item.endedAt ?? 'n/a'} | ${item.queueLagP95 ?? 'n/a'} | ${
           item.queueLagMax ?? 'n/a'
         } |`
     )
@@ -238,6 +245,8 @@ const renderMarkdown = (report, jsonRelativePath) => {
 - Window: ${report.window.startUtc} -> ${report.window.endUtc}
 - Source directory: \`${report.source.inputDir}\`
 - Artifacts in window: ${report.source.artifactsInWindow}/${report.source.artifactsTotal}
+- Environment summary: ${JSON.stringify(report.source.environmentSummary ?? {})}
+- Includes production evidence: ${report.source.includesProductionEvidence ? 'yes' : 'no'}
 - Raw JSON: \`${jsonRelativePath}\`
 
 ## Aggregate Snapshot
@@ -261,9 +270,9 @@ ${breaches || '- none'}
 ${objectiveRows || '| n/a | n/a | 0 | 0 | 0 | 0 | n/a |'}
 
 ## Artifact Timeline
-| Artifact | Started (UTC) | Ended (UTC) | Queue p95 | Queue max |
-| --- | --- | --- | --- | --- |
-${rows || '| n/a | n/a | n/a | n/a | n/a |'}
+| Artifact | Environment | Started (UTC) | Ended (UTC) | Queue p95 | Queue max |
+| --- | --- | --- | --- | --- | --- |
+${rows || '| n/a | n/a | n/a | n/a | n/a | n/a |'}
 `;
 };
 

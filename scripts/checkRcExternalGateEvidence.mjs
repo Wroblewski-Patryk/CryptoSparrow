@@ -12,6 +12,7 @@ const parseArgs = () => {
     runbookPath: path.join(operationsDir, 'v1-rc-external-gates-runbook.md'),
     signoffPath: path.join(operationsDir, 'v1-rc-signoff-record.md'),
     strict: false,
+    requireProductionGate2: false,
     json: false,
     output: '',
   };
@@ -26,6 +27,7 @@ const parseArgs = () => {
     if (arg === '--runbook-path') options.runbookPath = args[index + 1] ?? options.runbookPath;
     if (arg === '--signoff-path') options.signoffPath = args[index + 1] ?? options.signoffPath;
     if (arg === '--strict') options.strict = true;
+    if (arg === '--require-production-gate2') options.requireProductionGate2 = true;
     if (arg === '--json') options.json = true;
     if (arg === '--output') options.output = args[index + 1] ?? options.output;
   }
@@ -80,7 +82,7 @@ const main = async () => {
   const options = parseArgs();
   if (options.help) {
     console.log(
-      'Usage: node scripts/checkRcExternalGateEvidence.mjs [--status-path <file>] [--runbook-path <file>] [--signoff-path <file>] [--json] [--output <file>] [--strict]'
+      'Usage: node scripts/checkRcExternalGateEvidence.mjs [--status-path <file>] [--runbook-path <file>] [--signoff-path <file>] [--json] [--output <file>] [--strict] [--require-production-gate2]'
     );
     process.exit(0);
   }
@@ -103,8 +105,17 @@ const main = async () => {
   const signoff = parseSignoffFields(rawSignoff);
 
   const missing = [];
-  if (gateLabels.gate2.toUpperCase() !== 'PASS') {
-    missing.push(`Gate2 status is not PASS (current: ${gateLabels.gate2})`);
+  const gate2LabelNormalized = gateLabels.gate2.toUpperCase();
+  const gate2AcceptedLabels = options.requireProductionGate2
+    ? ['PASS']
+    : ['PASS', 'LOCAL_PASS'];
+  const gate2Matched = gate2AcceptedLabels.some((label) => gate2LabelNormalized.startsWith(label));
+  if (!gate2Matched) {
+    missing.push(
+      options.requireProductionGate2
+        ? `Gate2 status is not PASS (current: ${gateLabels.gate2})`
+        : `Gate2 status is not PASS/LOCAL_PASS (current: ${gateLabels.gate2})`
+    );
   }
   for (const item of gate1Evidence) if (!item.filled) missing.push(`Gate1 evidence missing: ${item.label}`);
   for (const item of gate3Evidence) if (!item.filled) missing.push(`Gate3 evidence missing: ${item.label}`);
@@ -124,6 +135,7 @@ const main = async () => {
     },
     missing,
     strictPassed: missing.length === 0,
+    gate2Policy: options.requireProductionGate2 ? 'PASS_ONLY' : 'PASS_OR_LOCAL_PASS',
   };
 
   if (options.output) {

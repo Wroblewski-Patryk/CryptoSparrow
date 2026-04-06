@@ -34,6 +34,11 @@ const parseArgs = () => {
 const asNumber = (value) => (typeof value === 'number' && Number.isFinite(value) ? value : null);
 
 const pct = (value) => (value == null ? 'n/a' : `${value.toFixed(2)}%`);
+const normalizeEnvironment = (value) => {
+  const normalized = String(value ?? '').trim().toLowerCase();
+  if (normalized === 'production' || normalized === 'stage' || normalized === 'local') return normalized;
+  return 'unknown';
+};
 
 const findLatestSloArtifact = async () => {
   const entries = await readdir(operationsDir);
@@ -171,8 +176,14 @@ const evaluateGate4FromSignoffRecord = async (signoffPathInput) => {
 };
 
 const statusLabel = (passed) => (passed ? 'PASS' : 'OPEN');
+const gate2StatusLabel = (queueLagPass, productionEvidence, environmentLabel) => {
+  if (!queueLagPass) return 'OPEN';
+  if (productionEvidence) return 'PASS';
+  const env = environmentLabel || 'unknown';
+  return `LOCAL_PASS (${env} evidence; production pending)`;
+};
 
-const buildGateRowsFromObservation = (summary) => {
+const buildGateRowsFromObservation = (summary, environment) => {
   const objectives = Array.isArray(summary?.evaluation?.objectives)
     ? summary.evaluation.objectives
     : [];
@@ -213,13 +224,17 @@ const buildGateRowsFromObservation = (summary) => {
   const reliabilityPass = objectiveStatusById.has('SLO-2')
     ? reliabilityPassFromObjectives
     : reliabilityPassFallback;
+  const normalizedEnvironment = normalizeEnvironment(environment);
+  const productionEvidence = normalizedEnvironment === 'production';
 
   return {
     probePass,
     reliabilityPass,
     queueLagPass,
+    productionEvidence,
     sourceKind: 'slo_observation',
     details: {
+      environment: normalizedEnvironment,
       ready,
       workersReady,
       errorRatio,
@@ -245,13 +260,18 @@ const buildGateRowsFromWindowReport = (report) => {
   const queueLagPass = executionP95 != null && executionP95 <= p95Threshold && executionMax != null && executionMax <= maxThreshold;
   const probePass = ready != null && ready >= 99.9 && workersReady != null && workersReady >= 99.5;
   const reliabilityPass = errorRatio != null && errorRatio <= 0.5;
+  const productionEvidence = Boolean(report?.source?.includesProductionEvidence);
+  const environmentSummary = report?.source?.environmentSummary ?? {};
 
   return {
     probePass,
     reliabilityPass,
     queueLagPass,
+    productionEvidence,
     sourceKind: 'slo_window_report',
     details: {
+      environment: productionEvidence ? 'production' : 'mixed-or-non-production',
+      environmentSummary,
       ready,
       workersReady,
       errorRatio,
@@ -270,9 +290,10 @@ const loadGate2Evaluation = async (inputPath) => {
   const raw = await readFile(inputPath, 'utf8');
   const artifact = JSON.parse(raw);
   if (artifact?.summary) {
+    const environment = normalizeEnvironment(artifact?.options?.environment);
     return {
       artifact,
-      evaluation: buildGateRowsFromObservation(artifact.summary ?? {}),
+      evaluation: buildGateRowsFromObservation(artifact.summary ?? {}, environment),
     };
   }
 
@@ -298,6 +319,11 @@ const renderReport = ({
     : 'n/a';
   const runbookRel = path.relative(process.cwd(), gate3Runbook.runbookPath);
   const signoffRel = path.relative(process.cwd(), gate4Signoff.signoffPath);
+  const gate2Label = gate2StatusLabel(
+    evaluation.queueLagPass,
+    evaluation.productionEvidence,
+    evaluation.details.environment
+  );
   const gate1Label = gate1Runbook.evidenceComplete ? 'PASS' : backupGate.label;
   const output = `# V1 RC External Gates Status
 
@@ -310,7 +336,7 @@ Observation window:
 
 ## Gate Status Snapshot
 - Gate 1 (Backup snapshot + restore validation): ${gate1Label}
-- Gate 2 (Queue-lag baseline review): ${statusLabel(evaluation.queueLagPass)}
+- Gate 2 (Queue-lag baseline review): ${gate2Label}
 - Gate 3 (Incident contacts + escalation confirmation): ${gate3Runbook.label}
 - Gate 4 (Formal RC sign-offs): ${gate4Signoff.label}
 
@@ -331,6 +357,8 @@ Observation window:
 
 ## Derived Metrics (from SLO artifact)
 - source type: ${evaluation.sourceKind}
+- evidence environment: ${evaluation.details.environment ?? 'unknown'}
+- production evidence present: ${evaluation.productionEvidence ? 'yes' : 'no'}
 - /ready availability: ${pct(evaluation.details.ready)}
 - /workers/ready availability: ${pct(evaluation.details.workersReady)}
 - API 5xx ratio: ${pct(evaluation.details.errorRatio)}
@@ -343,10 +371,12 @@ Observation window:
 
 ## Suggested Checklist Updates
 - Runtime and Operations Gates:
-  - Queue lag metrics reviewed and within baseline -> ${statusLabel(evaluation.queueLagPass)}
+  - Queue lag metrics reviewed and within baseline -> ${gate2Label}
 - Exit Evidence Workpack:
-  - ops(slo): define SLO targets and collect production observation window evidence -> ${statusLabel(
-    evaluation.probePass && evaluation.reliabilityPass
+  - ops(slo): define SLO targets and collect production observation window evidence -> ${gate2StatusLabel(
+    evaluation.probePass && evaluation.reliabilityPass,
+    evaluation.productionEvidence,
+    evaluation.details.environment
   )}
 
 ## Manual Follow-ups (Required)
@@ -395,7 +425,7 @@ Source artifact: not provided (template-only mode)
 
 ## Required Inputs
 1. Run SLO collector:
-   - \`pnpm run ops:slo:collect -- --base-url https://<target-api> --duration-minutes 30 --interval-seconds 30 --auth-token <ADMIN_JWT>\`
+   - \`pnpm run ops:slo:collect -- --base-url https://<target-api> --duration-minutes 30 --interval-seconds 30 --auth-token <ADMIN_JWT> --environment production\`
 2. Rebuild status from latest artifact:
    - \`pnpm run ops:rc:gates:status\`
 
