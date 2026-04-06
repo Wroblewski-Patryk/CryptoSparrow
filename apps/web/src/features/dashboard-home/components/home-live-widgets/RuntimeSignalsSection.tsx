@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode, type RefObject } from "react";
-import { LuActivity, LuCoins, LuSignal } from "react-icons/lu";
+import { LuCoins, LuSignal } from "react-icons/lu";
 import InlinePager from "../../../../ui/components/InlinePager";
 import type { RuntimeSymbolWithLive, SignalPillValue } from "./types";
 
@@ -16,11 +16,8 @@ type RuntimeSignalsSectionProps = {
   noSignalDataLabel: string;
   marketsLabel: string;
   signalsLabel: string;
-  baseCurrencyLabel: string;
   marketsCount: number;
   actionableSignalsCount: number;
-  baseCurrencyCode: string | null;
-  renderBaseCurrency?: (currency: string) => ReactNode;
   renderSymbolLabel?: (symbol: string) => ReactNode;
 };
 
@@ -97,20 +94,6 @@ export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps)
             <LuSignal className="h-3.5 w-3.5 opacity-70" aria-hidden />
             <span className="opacity-70">{props.signalsLabel}:</span>
             <span className="font-semibold">{props.actionableSignalsCount}</span>
-          </span>
-            <span className="opacity-40">|</span>
-            <span className="inline-flex items-center gap-1.5">
-            <LuActivity className="h-3.5 w-3.5 opacity-70" aria-hidden />
-            <span className="opacity-70">{props.baseCurrencyLabel}:</span>
-            {props.baseCurrencyCode ? (
-              props.renderBaseCurrency ? (
-                props.renderBaseCurrency(props.baseCurrencyCode)
-              ) : (
-                <span className="font-semibold">{props.baseCurrencyCode}</span>
-              )
-            ) : (
-              <span className="font-semibold opacity-60">-</span>
-            )}
           </span>
         </div>
       </div>

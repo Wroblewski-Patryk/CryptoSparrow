@@ -117,13 +117,26 @@ export default function RuntimeDataSection(props: RuntimeDataSectionProps) {
         <section className={tabFrameClassName}>
           <div className="rounded-box bg-base-100/85">
             {props.tradesLoading ? (
-              <SkeletonTableRows
-                title={false}
-                toolbar={false}
-                columns={9}
-                rows={4}
-                className="mb-3 border-base-300/40 bg-base-100/60 p-3"
-              />
+              <>
+                <div className="hidden md:block">
+                  <SkeletonTableRows
+                    title={false}
+                    toolbar={false}
+                    columns={9}
+                    rows={4}
+                    className="mb-3 border-base-300/40 bg-base-100/60 p-3"
+                  />
+                </div>
+                <div className="md:hidden">
+                  <SkeletonTableRows
+                    title={false}
+                    toolbar={false}
+                    columns={4}
+                    rows={4}
+                    className="mb-3 border-base-300/40 bg-base-100/60 p-3"
+                  />
+                </div>
+              </>
             ) : null}
             <DataTable
               compact

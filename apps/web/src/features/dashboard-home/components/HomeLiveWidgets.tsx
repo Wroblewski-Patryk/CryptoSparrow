@@ -1038,22 +1038,9 @@ export default function HomeLiveWidgets() {
           iconUrl={icon?.iconUrl ?? null}
           loading={runtimeIconsLoading && !icon}
           hasError={Boolean(runtimeIconsError)}
-          className="font-semibold"
-        />
-      );
-    },
-    [resolveRuntimeIcon, runtimeIconsError, runtimeIconsLoading]
-  );
-  const renderBaseCurrencySymbol = useCallback(
-    (currency: string) => {
-      const icon = resolveRuntimeIcon(currency);
-      return (
-        <AssetSymbol
-          symbol={currency}
-          iconUrl={icon?.iconUrl ?? null}
-          loading={runtimeIconsLoading && !icon}
-          hasError={Boolean(runtimeIconsError)}
-          className="font-semibold text-[11px]"
+          className="font-[100]"
+          iconClassName="h-5 w-5"
+          labelClassName="leading-none"
         />
       );
     },
@@ -1355,15 +1342,33 @@ export default function HomeLiveWidgets() {
   if (loading) {
     return (
       <div className="space-y-4" aria-busy="true" aria-label={t("dashboard.home.runtime.loadingTitle")}>
-        <SkeletonKpiRow items={3} />
-          <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="hidden md:block">
+          <SkeletonKpiRow items={3} />
+        </div>
+        <div className="space-y-3 md:hidden">
+          <SkeletonKpiRow items={2} />
+          <SkeletonKpiRow items={1} />
+        </div>
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="order-2 space-y-3 xl:order-1">
-            <SkeletonCardBlock cards={4} linesPerCard={4} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
-            <SkeletonTableRows columns={8} rows={5} title={false} toolbar={false} className="border-base-300/40 bg-base-100/60 p-3" />
+            <div className="hidden md:block">
+              <SkeletonCardBlock cards={4} linesPerCard={4} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
+              <SkeletonTableRows columns={8} rows={5} title={false} toolbar={false} className="border-base-300/40 bg-base-100/60 p-3" />
+            </div>
+            <div className="space-y-3 md:hidden">
+              <SkeletonCardBlock cards={2} linesPerCard={3} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
+              <SkeletonTableRows columns={4} rows={4} title={false} toolbar={false} className="border-base-300/40 bg-base-100/60 p-3" />
+            </div>
           </div>
           <div className="order-1 space-y-3 xl:order-2">
-            <SkeletonCardBlock cards={1} linesPerCard={6} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
-            <SkeletonCardBlock cards={1} linesPerCard={7} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
+            <div className="hidden md:block">
+              <SkeletonCardBlock cards={1} linesPerCard={6} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
+              <SkeletonCardBlock cards={1} linesPerCard={7} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
+            </div>
+            <div className="space-y-3 md:hidden">
+              <SkeletonCardBlock cards={1} linesPerCard={4} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
+              <SkeletonCardBlock cards={1} linesPerCard={5} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
+            </div>
           </div>
         </section>
       </div>
@@ -1496,11 +1501,8 @@ export default function HomeLiveWidgets() {
                 noSignalDataLabel={t("dashboard.home.runtime.noSignalData")}
                 marketsLabel={t("dashboard.home.runtime.markets")}
                 signalsLabel={t("dashboard.home.runtime.signals")}
-                baseCurrencyLabel={t("dashboard.home.runtime.baseCurrency")}
                 marketsCount={signalHeaderStats.marketsCount}
                 actionableSignalsCount={signalHeaderStats.actionableSignalsCount}
-                baseCurrencyCode={signalHeaderStats.baseCurrencyCode}
-                renderBaseCurrency={renderBaseCurrencySymbol}
                 renderSymbolLabel={renderRuntimeSymbol}
               />
               {runtimeDataIsStale ? (

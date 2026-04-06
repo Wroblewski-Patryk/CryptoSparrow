@@ -66,6 +66,7 @@ type DataTableProps<T> = {
   columnsToggleLabel?: string;
   columnVisibilityEnabled?: boolean;
   columnVisibilityPreferenceKey?: string;
+  settingsGroupVisible?: boolean;
 };
 
 type SortDirection = 'asc' | 'desc';
@@ -175,8 +176,9 @@ export default function DataTable<T>({
   rowsTotalLabel = 'Rows',
   pageLabel = 'Page',
   columnsToggleLabel = 'Columns',
-  columnVisibilityEnabled = false,
+  columnVisibilityEnabled = true,
   columnVisibilityPreferenceKey,
+  settingsGroupVisible = true,
 }: DataTableProps<T>) {
   const resolvedDefaultPageSize = defaultPageSize ?? pageSizeOptions[0] ?? 10;
   const [internalQuery, setInternalQuery] = useState('');
@@ -520,8 +522,10 @@ export default function DataTable<T>({
   const softZebraClassName =
     '[&>tbody>tr:nth-child(odd)>td]:bg-base-100/5 [&>tbody>tr:nth-child(even)>td]:bg-base-200/18 [&>tbody>tr>td]:transition-colors';
   const tableClassName = compact
-    ? `table table-sm w-full ${softZebraClassName}`
-    : `table w-full ${softZebraClassName}`;
+    ? `table table-sm w-full [&>thead>tr>th]:align-middle [&>tbody>tr>td]:align-middle ${softZebraClassName}`
+    : `table w-full [&>thead>tr>th]:align-middle [&>tbody>tr>td]:align-middle ${softZebraClassName}`;
+  const showSettingsGroup = settingsGroupVisible && columnVisibilityEnabled;
+  const showPagesGroup = totalPages > 1;
 
   return (
     <section className={sectionClassName}>
@@ -633,99 +637,109 @@ export default function DataTable<T>({
       {pagedRows.length === 0 ? <p className='text-sm opacity-70'>{emptyText}</p> : null}
 
       {paginationEnabled ? (
-        <div className={`flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between ${paginationClassName}`.trim()}>
-          <div className='order-2 flex flex-wrap items-center gap-2 text-xs text-base-content/70 sm:order-1'>
-            {columnVisibilityEnabled ? (
-              <div
-                ref={columnsDropdownRef}
-                className={`dropdown dropdown-top ${columnsDropdownOpen ? 'dropdown-open' : ''}`}
-              >
-                <button
-                  type='button'
-                  className='btn btn-ghost btn-sm gap-1.5'
-                  onClick={() => setColumnsDropdownOpen((prev) => !prev)}
-                  aria-expanded={columnsDropdownOpen}
+        <div className={`grid grid-cols-1 gap-2 lg:grid-cols-3 ${paginationClassName}`.trim()}>
+          {showSettingsGroup ? (
+            <div className='rounded-box border border-base-300/60 bg-base-100/60 px-3 py-2 text-xs text-base-content/75'>
+              <div className='flex items-center justify-end gap-3'>
+                <div
+                  ref={columnsDropdownRef}
+                  className={`dropdown dropdown-top ${columnsDropdownOpen ? 'dropdown-open' : ''}`}
                 >
-                  <LuColumns3 className='h-4 w-4' />
-                  <span className='hidden sm:inline'>{columnsToggleLabel}</span>
-                </button>
-                {columnsDropdownOpen ? (
-                  <ul className='menu dropdown-content z-[40] mb-2 w-56 rounded-box border border-base-300/70 bg-base-100 p-2 shadow-lg'>
-                    {columns.map((column) => {
-                      const isVisible = resolvedColumnVisibility[column.key] !== false;
-                      const disableHide = isVisible && visibleColumnCount <= 1;
+                  <button
+                    type='button'
+                    className='btn btn-outline btn-sm h-8 min-h-8 gap-2 border-base-300 bg-base-100/90 px-3 shadow-sm hover:bg-base-200'
+                    onClick={() => setColumnsDropdownOpen((prev) => !prev)}
+                    aria-expanded={columnsDropdownOpen}
+                  >
+                    <LuColumns3 className='h-4 w-4' />
+                    <span>{columnsToggleLabel}</span>
+                  </button>
+                  {columnsDropdownOpen ? (
+                    <ul className='menu dropdown-content z-[40] mb-2 w-56 rounded-box border border-base-300/70 bg-base-100 p-2 shadow-lg'>
+                      {columns.map((column) => {
+                        const isVisible = resolvedColumnVisibility[column.key] !== false;
+                        const disableHide = isVisible && visibleColumnCount <= 1;
 
-                      return (
-                        <li key={`column-visibility-${column.key}`}>
-                          <label className='label cursor-pointer justify-start gap-2 px-2 py-1.5'>
-                            <input
-                              type='checkbox'
-                              className='checkbox checkbox-xs'
-                              checked={isVisible}
-                              disabled={disableHide}
-                              onChange={(event) => {
-                                const nextVisible = event.target.checked;
-                                setColumnVisibilityState((prev) => ({
-                                  ...mergeColumnVisibilityState(defaultColumnVisibility, prev),
-                                  [column.key]: nextVisible,
-                                }));
-                                setColumnsDropdownOpen(false);
-                              }}
-                            />
-                            <span className='label-text text-xs'>{column.label}</span>
-                          </label>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : null}
+                        return (
+                          <li key={`column-visibility-${column.key}`}>
+                            <label className='label cursor-pointer justify-start gap-2 px-2 py-1.5'>
+                              <input
+                                type='checkbox'
+                                className='checkbox checkbox-xs'
+                                checked={isVisible}
+                                disabled={disableHide}
+                                onChange={(event) => {
+                                  const nextVisible = event.target.checked;
+                                  setColumnVisibilityState((prev) => ({
+                                    ...mergeColumnVisibilityState(defaultColumnVisibility, prev),
+                                    [column.key]: nextVisible,
+                                  }));
+                                  setColumnsDropdownOpen(false);
+                                }}
+                              />
+                              <span className='label-text text-xs'>{column.label}</span>
+                            </label>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : null}
+                </div>
               </div>
-            ) : null}
-            <span>{rowsTotalLabel}: {totalRowsCount}</span>
-            <span aria-hidden className='opacity-50'>|</span>
-            <span className='inline-flex items-center gap-2'>
-              <span>{rowsPerPageLabel}</span>
-              <select
-                className='select select-bordered select-sm h-8 min-h-8 w-20'
-                value={effectivePageSize}
-                onChange={(event) => handlePageSizeChange(Number(event.target.value))}
-              >
-                {pageSizeOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              <span>{rowsPerPageSuffixLabel}</span>
-            </span>
+            </div>
+          ) : (
+            <div className='hidden lg:block' />
+          )}
+
+          <div className='rounded-box border border-base-300/60 bg-base-100/60 px-3 py-2 text-xs text-base-content/75'>
+            <div className='flex items-center justify-between gap-3'>
+              <span>{rowsTotalLabel}: {totalRowsCount}</span>
+              <span className='inline-flex items-center gap-2'>
+                <span>{rowsPerPageLabel}</span>
+                <select
+                  className='select select-bordered select-sm h-8 min-h-8 w-20'
+                  value={effectivePageSize}
+                  onChange={(event) => handlePageSizeChange(Number(event.target.value))}
+                >
+                  {pageSizeOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <span>{rowsPerPageSuffixLabel}</span>
+              </span>
+            </div>
             {paginationSummary ? (
-              <>
-                <span aria-hidden className='opacity-50'>|</span>
-                <span>{paginationSummary({ totalRows: totalRowsCount, page: effectivePage, totalPages })}</span>
-              </>
+              <p className='mt-1 text-[11px] opacity-70'>
+                {paginationSummary({ totalRows: totalRowsCount, page: effectivePage, totalPages })}
+              </p>
             ) : null}
           </div>
-          <div className='order-1 flex w-full flex-wrap items-center justify-center gap-2 sm:order-2 sm:w-auto sm:justify-end'>
-            <span className='inline-flex items-center gap-2 text-xs text-base-content/70'>
-              <span>{pageLabel}</span>
-              <input
-                type='number'
-                inputMode='numeric'
-                min={1}
-                max={totalPages}
-                className='input input-bordered input-xs h-8 min-h-8 w-16 text-center'
-                value={pageInputValue}
-                onChange={(event) => handlePageInputChange(event.target.value)}
-                onBlur={commitPageInput}
-                onKeyDown={(event) => {
-                  if (event.key !== 'Enter') return;
-                  event.preventDefault();
-                  commitPageInput();
-                }}
-                aria-label={`${pageLabel} input`}
-              />
-              <span>/ {totalPages}</span>
-              {totalPages > 1 ? (
+
+          {showPagesGroup ? (
+            <div className='rounded-box border border-base-300/60 bg-base-100/60 px-3 py-2 text-xs text-base-content/75'>
+              <div className='flex items-center justify-between gap-3'>
+                <span className='inline-flex items-center gap-2'>
+                  <span>{pageLabel}</span>
+                  <input
+                    type='number'
+                    inputMode='numeric'
+                    min={1}
+                    max={totalPages}
+                    className='input input-bordered input-xs h-8 min-h-8 w-16 text-center'
+                    value={pageInputValue}
+                    onChange={(event) => handlePageInputChange(event.target.value)}
+                    onBlur={commitPageInput}
+                    onKeyDown={(event) => {
+                      if (event.key !== 'Enter') return;
+                      event.preventDefault();
+                      commitPageInput();
+                    }}
+                    aria-label={`${pageLabel} input`}
+                  />
+                  <span>/ {totalPages}</span>
+                </span>
                 <InlinePager
                   size='sm'
                   className='shrink-0'
@@ -736,9 +750,11 @@ export default function DataTable<T>({
                   onPrevious={() => goToPage(effectivePage - 1)}
                   onNext={() => goToPage(effectivePage + 1)}
                 />
-              ) : null}
-            </span>
-          </div>
+              </div>
+            </div>
+          ) : (
+            <div className='hidden lg:block' />
+          )}
         </div>
       ) : null}
     </section>
