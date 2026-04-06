@@ -100,6 +100,7 @@ Recommended Coolify/Traefik practice:
 ## Alerting Reference
 - Use baseline alert definitions from `docs/operations/v1-alert-rules.md`.
 - Record and review drill outcomes in `docs/operations/v1-incident-drills.md`.
+- Use runtime symptom-first triage in `docs/operations/runtime-incident-triage-matrix.md`.
 - For assistant-specific incidents/fallback/recovery flow, use `docs/operations/v1-assistant-incident-runbook.md`.
 - For deploy-specific rollback and gates, use:
   - `docs/operations/deployment-rollback-playbook.md`

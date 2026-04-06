@@ -13,7 +13,7 @@ Operational queue for one-task execution runs.
 - [x] `PEX-06 test(runtime): add long-running soak test for session continuity (heartbeat freshness, auto-restart trace, no stuck CANCELED loop)`
 - [x] `PEX-08 feat(obs-alerts): define alert thresholds for stale runtime, repeated restarts, and reconciliation drift`
 ## NEXT
-- [ ] `PEX-09 docs(runbook): publish incident triage matrix (symptoms -> checks -> mitigations -> rollback)`
+- [x] `PEX-09 docs(runbook): publish incident triage matrix (symptoms -> checks -> mitigations -> rollback)`
 - [ ] `PEX-10 qa(manual-chaos): run controlled runtime failure drills (ws-drop, delayed exchange ack, stale heartbeat) and attach evidence`
 - [ ] `PEX-11 feat(obs-health): add runtime health endpoint contract for readiness/liveness with queue/backlog freshness`
 - [ ] `PEX-12 test(api-health): add regression coverage for health endpoint semantics under normal/degraded/stalled runtime`
