@@ -5,6 +5,10 @@ import { orchestrateRuntimeSignal } from './executionOrchestrator.service';
 
 describe('runtime orchestration smoke (stream -> signal -> order -> position)', () => {
   beforeEach(async () => {
+    await prisma.runtimeExecutionDedupe.deleteMany();
+    await prisma.botRuntimeSymbolStat.deleteMany();
+    await prisma.botRuntimeEvent.deleteMany();
+    await prisma.botRuntimeSession.deleteMany();
     await prisma.log.deleteMany();
     await prisma.backtestReport.deleteMany();
     await prisma.backtestTrade.deleteMany();
@@ -124,12 +128,77 @@ describe('runtime orchestration smoke (stream -> signal -> order -> position)', 
       where: { id: opened.positionId },
     });
     expect(closedPosition.status).toBe('CLOSED');
+    expect(closedPosition.managementMode).toBe('BOT_MANAGED');
+    expect(closedPosition.origin).toBe('BOT');
 
     const exitOrder = await prisma.order.findUniqueOrThrow({
       where: { id: closed.orderId },
     });
     expect(exitOrder.status).toBe('FILLED');
     expect(exitOrder.side).toBe('SELL');
+
+    const trades = await prisma.trade.findMany({
+      where: {
+        userId: user.id,
+        symbol: normalizedTicker.symbol,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    expect(trades).toHaveLength(2);
+    expect(trades[0]?.lifecycleAction).toBe('OPEN');
+    expect(trades[0]?.managementMode).toBe('BOT_MANAGED');
+    expect(trades[1]?.lifecycleAction).toBe('CLOSE');
+    expect(trades[1]?.managementMode).toBe('BOT_MANAGED');
+  });
+
+  it('ignores runtime signals for MANUAL_MANAGED open positions', async () => {
+    const user = await prisma.user.create({
+      data: { email: 'runtime-manual-managed@example.com', password: 'hashed-pass' },
+    });
+
+    await prisma.position.create({
+      data: {
+        userId: user.id,
+        symbol: 'ETHUSDT',
+        side: 'LONG',
+        status: 'OPEN',
+        entryPrice: 3000,
+        quantity: 0.2,
+        leverage: 3,
+        origin: 'EXCHANGE_SYNC',
+        managementMode: 'MANUAL_MANAGED',
+        syncState: 'IN_SYNC',
+        openedAt: new Date(),
+      },
+    });
+
+    const result = await orchestrateRuntimeSignal({
+      userId: user.id,
+      symbol: 'ETHUSDT',
+      direction: 'EXIT',
+      quantity: 0.2,
+      markPrice: 3010,
+      mode: 'LIVE',
+    });
+
+    expect(result).toEqual({ status: 'ignored', reason: 'manual_managed_symbol' });
+
+    const openPosition = await prisma.position.findFirstOrThrow({
+      where: {
+        userId: user.id,
+        symbol: 'ETHUSDT',
+        status: 'OPEN',
+      },
+    });
+    expect(openPosition.managementMode).toBe('MANUAL_MANAGED');
+
+    const createdOrders = await prisma.order.count({
+      where: {
+        userId: user.id,
+        symbol: 'ETHUSDT',
+      },
+    });
+    expect(createdOrders).toBe(0);
   });
 });
 
