@@ -637,10 +637,12 @@ export default function DataTable<T>({
       {pagedRows.length === 0 ? <p className='text-sm opacity-70'>{emptyText}</p> : null}
 
       {paginationEnabled ? (
-        <div className={`grid grid-cols-1 gap-2 lg:grid-cols-3 ${paginationClassName}`.trim()}>
+        <div
+          className={`grid grid-cols-2 gap-2 lg:flex lg:items-center lg:justify-between lg:gap-4 ${paginationClassName}`.trim()}
+        >
           {showSettingsGroup ? (
-            <div className='rounded-box border border-base-300/60 bg-base-100/60 px-3 py-2 text-xs text-base-content/75'>
-              <div className='flex items-center justify-end gap-3'>
+            <div className='min-w-0 text-xs text-base-content/75'>
+              <div className='flex items-center justify-start'>
                 <div
                   ref={columnsDropdownRef}
                   className={`dropdown dropdown-top ${columnsDropdownOpen ? 'dropdown-open' : ''}`}
@@ -687,11 +689,9 @@ export default function DataTable<T>({
                 </div>
               </div>
             </div>
-          ) : (
-            <div className='hidden lg:block' />
-          )}
+          ) : null}
 
-          <div className='rounded-box border border-base-300/60 bg-base-100/60 px-3 py-2 text-xs text-base-content/75'>
+          <div className={`min-w-0 text-xs text-base-content/75 ${showSettingsGroup ? '' : 'col-span-2'}`}>
             <div className='flex items-center justify-between gap-3'>
               <span>{rowsTotalLabel}: {totalRowsCount}</span>
               <span className='inline-flex items-center gap-2'>
@@ -718,7 +718,7 @@ export default function DataTable<T>({
           </div>
 
           {showPagesGroup ? (
-            <div className='rounded-box border border-base-300/60 bg-base-100/60 px-3 py-2 text-xs text-base-content/75'>
+            <div className='col-span-2 min-w-0 text-xs text-base-content/75'>
               <div className='flex items-center justify-between gap-3'>
                 <span className='inline-flex items-center gap-2'>
                   <span>{pageLabel}</span>
@@ -752,9 +752,7 @@ export default function DataTable<T>({
                 />
               </div>
             </div>
-          ) : (
-            <div className='hidden lg:block' />
-          )}
+          ) : null}
         </div>
       ) : null}
     </section>
