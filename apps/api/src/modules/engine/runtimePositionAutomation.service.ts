@@ -683,6 +683,11 @@ export class RuntimePositionAutomationService {
   ) {
     if (position.managementMode !== 'BOT_MANAGED') return;
 
+    const mode = resolvePositionExecutionMode(position);
+    const exchange = resolvePositionExchange(position);
+    const marketType = resolvePositionMarketType(position);
+    if (event.exchange !== exchange || event.marketType !== marketType) return;
+
     const runtimeConfig = getRuntimeConfig();
     const strategyConfig = await this.getStrategyConfig(position.strategyId ?? null);
     const input = buildPositionManagementInput(position, event.lastPrice, strategyConfig, runtimeConfig);
@@ -700,9 +705,6 @@ export class RuntimePositionAutomationService {
       defaultState;
     const previousStateSnapshot = this.cloneState(previousState);
 
-    const mode = resolvePositionExecutionMode(position);
-    const exchange = resolvePositionExchange(position);
-    const marketType = resolvePositionMarketType(position);
     const paperStartBalance = resolvePositionPaperStartBalance(position);
     const dcaLevelCount = resolveDcaLevelCount(input);
     const hasPendingDca = input.dca?.enabled && previousState.currentAdds < dcaLevelCount;

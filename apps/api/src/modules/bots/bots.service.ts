@@ -774,10 +774,12 @@ export const listBotRuntimeSessionSymbolStats = async (
         userId,
       },
       select: {
+        exchange: true,
         marketType: true,
       },
     }),
   ]);
+  const botExchange = botMarketTypeRow?.exchange ?? 'BINANCE';
   const botMarketType = botMarketTypeRow?.marketType ?? 'FUTURES';
 
   const catalogSymbolsCache = new Map<string, string[]>();
@@ -876,7 +878,10 @@ export const listBotRuntimeSessionSymbolStats = async (
 
   const lastPriceBySymbol = new Map(items.map((item) => [item.symbol, item.lastPrice]));
   for (const symbol of symbols) {
-    const ticker = getRuntimeTicker(symbol);
+    const ticker = getRuntimeTicker(symbol, {
+      exchange: botExchange,
+      marketType: botMarketType,
+    });
     if (ticker && Number.isFinite(ticker.lastPrice)) {
       lastPriceBySymbol.set(symbol, ticker.lastPrice);
     }
@@ -1778,11 +1783,19 @@ export const listBotRuntimeSessionPositions = async (
     tradesByPosition.set(trade.positionId, bucket);
   }
 
-  const lastPriceBySymbol = new Map(
-    lastSymbolPrices.map((row) => [row.symbol, row.lastPrice])
-  );
+  const botContext = await prisma.bot.findFirst({
+    where: { id: botId, userId },
+    select: { exchange: true, marketType: true },
+  });
+  const botExchange = botContext?.exchange ?? 'BINANCE';
+  const botMarketType = botContext?.marketType ?? 'FUTURES';
+
+  const lastPriceBySymbol = new Map(lastSymbolPrices.map((row) => [row.symbol, row.lastPrice]));
   for (const symbol of symbols) {
-    const ticker = getRuntimeTicker(symbol);
+    const ticker = getRuntimeTicker(symbol, {
+      exchange: botExchange,
+      marketType: botMarketType,
+    });
     if (ticker && Number.isFinite(ticker.lastPrice)) {
       lastPriceBySymbol.set(symbol, ticker.lastPrice);
     }
@@ -1792,13 +1805,9 @@ export const listBotRuntimeSessionPositions = async (
     return !Number.isFinite(current) || (current as number) <= 0;
   });
   if (missingPriceSymbols.length > 0) {
-    const bot = await prisma.bot.findFirst({
-      where: { id: botId, userId },
-      select: { exchange: true, marketType: true },
-    });
-    if (bot?.exchange === 'BINANCE') {
+    if (botExchange === 'BINANCE') {
       const fallbackPrices = await fetchFallbackTickerPrices({
-        marketType: bot.marketType === 'SPOT' ? 'SPOT' : 'FUTURES',
+        marketType: botMarketType === 'SPOT' ? 'SPOT' : 'FUTURES',
         symbols: missingPriceSymbols,
       });
       for (const [symbol, price] of fallbackPrices) {

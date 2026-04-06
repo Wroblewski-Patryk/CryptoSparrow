@@ -1605,7 +1605,10 @@ export class RuntimeSignalLoop {
   }
 
   private async processPositionAutomationFallbackFromCandle(event: StreamCandleEvent) {
-    const latestTicker = getRuntimeTicker(event.symbol);
+    const latestTicker = getRuntimeTicker(event.symbol, {
+      exchange: event.exchange,
+      marketType: event.marketType,
+    });
     const tickerIsFresh =
       latestTicker &&
       Math.abs(event.eventTime - latestTicker.eventTime) <= tickerFreshnessFallbackMs;

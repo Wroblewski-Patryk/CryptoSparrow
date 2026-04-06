@@ -1,12 +1,60 @@
+import { Exchange } from '@prisma/client';
 import { StreamTickerEvent } from '../market-stream/binanceStream.types';
 
-const tickerStore = new Map<string, StreamTickerEvent>();
+type TickerContext = {
+  exchange: Exchange;
+  marketType: StreamTickerEvent['marketType'];
+};
+
+const tickerStoreByContext = new Map<string, StreamTickerEvent>();
+const latestTickerBySymbol = new Map<string, StreamTickerEvent>();
+
+const toTickerKey = (params: {
+  symbol: string;
+  exchange: string;
+  marketType: StreamTickerEvent['marketType'];
+}) => `${params.exchange}|${params.marketType}|${params.symbol.toUpperCase()}`;
 
 export const upsertRuntimeTicker = (event: StreamTickerEvent) => {
-  tickerStore.set(event.symbol.toUpperCase(), event);
+  const normalizedSymbol = event.symbol.toUpperCase();
+  const normalizedEvent: StreamTickerEvent = {
+    ...event,
+    symbol: normalizedSymbol,
+  };
+
+  tickerStoreByContext.set(
+    toTickerKey({
+      symbol: normalizedSymbol,
+      exchange: normalizedEvent.exchange,
+      marketType: normalizedEvent.marketType,
+    }),
+    normalizedEvent
+  );
+
+  const existing = latestTickerBySymbol.get(normalizedSymbol);
+  if (!existing || normalizedEvent.eventTime >= existing.eventTime) {
+    latestTickerBySymbol.set(normalizedSymbol, normalizedEvent);
+  }
 };
 
-export const getRuntimeTicker = (symbol: string) => {
-  return tickerStore.get(symbol.toUpperCase()) ?? null;
+export const getRuntimeTicker = (symbol: string, context?: TickerContext) => {
+  const normalizedSymbol = symbol.toUpperCase();
+  if (context) {
+    return (
+      tickerStoreByContext.get(
+        toTickerKey({
+          symbol: normalizedSymbol,
+          exchange: context.exchange,
+          marketType: context.marketType,
+        })
+      ) ?? null
+    );
+  }
+
+  return latestTickerBySymbol.get(normalizedSymbol) ?? null;
 };
 
+export const clearRuntimeTickerStore = () => {
+  tickerStoreByContext.clear();
+  latestTickerBySymbol.clear();
+};

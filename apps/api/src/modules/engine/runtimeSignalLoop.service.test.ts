@@ -94,13 +94,21 @@ const createDeps = () => {
   };
 };
 
-const withStrategyBot = (deps: any, options?: { maxOpenPositions?: number; strategies?: any[]; marketType?: 'FUTURES' | 'SPOT' }) => {
+const withStrategyBot = (
+  deps: any,
+  options?: {
+    maxOpenPositions?: number;
+    strategies?: any[];
+    marketType?: 'FUTURES' | 'SPOT';
+    exchange?: 'BINANCE' | 'BYBIT' | 'OKX' | 'KRAKEN' | 'COINBASE';
+  }
+) => {
   deps.listActiveBots = vi.fn(async () => [
     {
       id: 'bot-1',
       userId: 'user-1',
       mode: 'PAPER' as const,
-      exchange: 'BINANCE' as const,
+      exchange: options?.exchange ?? ('BINANCE' as const),
       paperStartBalance: 1000,
       marketType: options?.marketType ?? ('FUTURES' as const),
       marketGroups: [
@@ -119,16 +127,23 @@ const withStrategyBot = (deps: any, options?: { maxOpenPositions?: number; strat
 
 const emitFinalCandleSeries = async (
   emit: (event: MarketStreamEvent) => Promise<void>,
-  options?: { symbol?: string; marketType?: 'FUTURES' | 'SPOT'; interval?: string; points?: number }
+  options?: {
+    symbol?: string;
+    exchange?: 'BINANCE';
+    marketType?: 'FUTURES' | 'SPOT';
+    interval?: string;
+    points?: number;
+  }
 ) => {
   const symbol = options?.symbol ?? 'BTCUSDT';
+  const exchange = options?.exchange ?? 'BINANCE';
   const marketType = options?.marketType ?? 'FUTURES';
   const interval = options?.interval ?? '1m';
   const points = options?.points ?? 8;
   for (let index = 0; index < points; index += 1) {
     await emit({
       type: 'candle',
-      exchange: 'BINANCE',
+      exchange,
       marketType,
       symbol,
       interval,
@@ -700,6 +715,18 @@ describe('RuntimeSignalLoop', () => {
     await loop.start();
 
     await emitFinalCandleSeries(emit, { marketType: 'FUTURES' });
+
+    expect(deps.createSignal).not.toHaveBeenCalled();
+    expect(deps.orchestrateFn).not.toHaveBeenCalled();
+  });
+
+  it('ignores final-candle decisions when bot exchange does not match stream exchange', async () => {
+    const { deps, emit } = createDeps();
+    withStrategyBot(deps, { exchange: 'BYBIT' });
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    await emitFinalCandleSeries(emit, { exchange: 'BINANCE' });
 
     expect(deps.createSignal).not.toHaveBeenCalled();
     expect(deps.orchestrateFn).not.toHaveBeenCalled();

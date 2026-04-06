@@ -96,6 +96,54 @@ describe('RuntimePositionAutomationService', () => {
     expect(deps.closeByExitSignal).not.toHaveBeenCalled();
   });
 
+  it('ignores ticker events when exchange or marketType does not match position context', async () => {
+    const deps: any = {
+      listOpenPositionsBySymbol: vi.fn(async () => [
+        {
+          id: 'pos-mismatch',
+          userId: 'user-mismatch',
+          botId: 'bot-mismatch',
+          strategyId: 'strat-mismatch',
+          symbol: 'BTCUSDT',
+          side: 'LONG' as const,
+          entryPrice: 60_000,
+          quantity: 0.5,
+          leverage: 5,
+          stopLoss: 58_000,
+          takeProfit: 61_000,
+          managementMode: 'BOT_MANAGED' as const,
+          bot: {
+            mode: 'LIVE' as const,
+            exchange: 'BYBIT' as const,
+            marketType: 'SPOT' as const,
+            paperStartBalance: 10_000,
+          },
+        },
+      ]),
+      getStrategyConfigById: vi.fn(async () => null),
+      executeDca: vi.fn(async () => ({ feePaid: 0, executed: true })),
+      closeByExitSignal: vi.fn(async () => undefined),
+      resolveDcaFundsExhausted: vi.fn(async () => false),
+      nowMs: vi.fn(() => Date.now()),
+    };
+
+    const service = new RuntimePositionAutomationService(deps);
+    await service.handleTickerEvent({
+      type: 'ticker',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      eventTime: 1_000,
+      lastPrice: 61_500,
+      priceChangePercent24h: 1.6,
+    });
+
+    expect(deps.getStrategyConfigById).not.toHaveBeenCalled();
+    expect(deps.resolveDcaFundsExhausted).not.toHaveBeenCalled();
+    expect(deps.executeDca).not.toHaveBeenCalled();
+    expect(deps.closeByExitSignal).not.toHaveBeenCalled();
+  });
+
   it('uses strategy config for management (without env switches)', async () => {
     process.env.RUNTIME_TRAILING_ENABLED = 'false';
     process.env.RUNTIME_DCA_ENABLED = 'false';
