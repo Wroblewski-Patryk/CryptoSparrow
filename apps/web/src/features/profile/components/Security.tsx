@@ -5,6 +5,7 @@ import { isAxiosError } from "axios";
 import { toast } from "sonner";
 
 import { useI18n } from "../../../i18n/I18nProvider";
+import PasswordVisibilityToggle from "../../auth/components/PasswordVisibilityToggle";
 import { changePassword, deleteAccount } from "../services/security.service";
 
 const mapApiError = (error: unknown, fallback: string) => {
@@ -68,9 +69,13 @@ export default function SecurityPanel() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const [deletePassword, setDeletePassword] = useState("");
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const canSubmitPasswordChange = useMemo(() => {
@@ -146,40 +151,61 @@ export default function SecurityPanel() {
         <form className="mt-4 grid gap-3" onSubmit={handlePasswordChange}>
           <label className="form-control w-full">
             <span className="label-text mb-1 block">{copy.currentPassword}</span>
-            <input
-              className="input input-bordered w-full"
-              type="password"
-              value={currentPassword}
-              onChange={(event) => setCurrentPassword(event.target.value)}
-              autoComplete="current-password"
-              required
-            />
+            <div className="join w-full">
+              <input
+                className="input input-bordered join-item w-full"
+                type={showCurrentPassword ? "text" : "password"}
+                value={currentPassword}
+                onChange={(event) => setCurrentPassword(event.target.value)}
+                autoComplete="current-password"
+                required
+              />
+              <PasswordVisibilityToggle
+                show={showCurrentPassword}
+                disabled={isChangingPassword}
+                onToggle={() => setShowCurrentPassword((prev) => !prev)}
+              />
+            </div>
           </label>
 
           <label className="form-control w-full">
             <span className="label-text mb-1 block">{copy.newPassword}</span>
-            <input
-              className="input input-bordered w-full"
-              type="password"
-              value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
-              autoComplete="new-password"
-              minLength={6}
-              required
-            />
+            <div className="join w-full">
+              <input
+                className="input input-bordered join-item w-full"
+                type={showNewPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                autoComplete="new-password"
+                minLength={6}
+                required
+              />
+              <PasswordVisibilityToggle
+                show={showNewPassword}
+                disabled={isChangingPassword}
+                onToggle={() => setShowNewPassword((prev) => !prev)}
+              />
+            </div>
           </label>
 
           <label className="form-control w-full">
             <span className="label-text mb-1 block">{copy.confirmPassword}</span>
-            <input
-              className="input input-bordered w-full"
-              type="password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              autoComplete="new-password"
-              minLength={6}
-              required
-            />
+            <div className="join w-full">
+              <input
+                className="input input-bordered join-item w-full"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                autoComplete="new-password"
+                minLength={6}
+                required
+              />
+              <PasswordVisibilityToggle
+                show={showConfirmPassword}
+                disabled={isChangingPassword}
+                onToggle={() => setShowConfirmPassword((prev) => !prev)}
+              />
+            </div>
           </label>
 
           <div>
@@ -197,14 +223,21 @@ export default function SecurityPanel() {
         <form className="mt-4 grid gap-3" onSubmit={handleDeleteAccount}>
           <label className="form-control w-full">
             <span className="label-text mb-1 block">{copy.deletePasswordLabel}</span>
-            <input
-              className="input input-bordered w-full"
-              type="password"
-              value={deletePassword}
-              onChange={(event) => setDeletePassword(event.target.value)}
-              autoComplete="current-password"
-              required
-            />
+            <div className="join w-full">
+              <input
+                className="input input-bordered join-item w-full"
+                type={showDeletePassword ? "text" : "password"}
+                value={deletePassword}
+                onChange={(event) => setDeletePassword(event.target.value)}
+                autoComplete="current-password"
+                required
+              />
+              <PasswordVisibilityToggle
+                show={showDeletePassword}
+                disabled={isDeletingAccount}
+                onToggle={() => setShowDeletePassword((prev) => !prev)}
+              />
+            </div>
           </label>
 
           <div>
