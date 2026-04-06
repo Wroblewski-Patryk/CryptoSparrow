@@ -530,6 +530,74 @@ describe('RuntimeSignalLoop', () => {
     vi.useRealTimers();
   });
 
+  it('auto-restarts runtime loop after stall with cooldown', async () => {
+    vi.useFakeTimers();
+    const { deps } = createDeps();
+    withStrategyBot(deps, { strategies: [] });
+    deps.ensureRuntimeSession = vi.fn(async () => 'session-1');
+    deps.closeInactiveRuntimeSessions = vi.fn(async () => undefined);
+    deps.stallNoEventMs = 20_000;
+    deps.stallNoHeartbeatMs = 300_000;
+    deps.stallDetectorEnabled = true;
+    deps.autoRestartEnabled = true;
+    deps.autoRestartCooldownMs = 5_000;
+    deps.autoRestartMaxAttempts = 3;
+    deps.autoRestartWindowMs = 60_000;
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+    expect(loop.isRunning()).toBe(true);
+    expect(deps.subscribe).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(31_000);
+    await vi.waitFor(() => expect(loop.isRunning()).toBe(false));
+
+    await vi.advanceTimersByTimeAsync(6_000);
+    await vi.waitFor(() => expect(loop.isRunning()).toBe(true));
+
+    expect((deps.subscribe as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThanOrEqual(2);
+    await loop.stop();
+    vi.useRealTimers();
+  });
+
+  it('stops auto-restart attempts after reaching max-attempt guardrail within window', async () => {
+    vi.useFakeTimers();
+    const { deps } = createDeps();
+    withStrategyBot(deps, { strategies: [] });
+    deps.ensureRuntimeSession = vi.fn(async () => 'session-1');
+    deps.closeInactiveRuntimeSessions = vi.fn(async () => undefined);
+    deps.stallNoEventMs = 20_000;
+    deps.stallNoHeartbeatMs = 300_000;
+    deps.stallDetectorEnabled = true;
+    deps.autoRestartEnabled = true;
+    deps.autoRestartCooldownMs = 2_000;
+    deps.autoRestartMaxAttempts = 1;
+    deps.autoRestartWindowMs = 60_000;
+
+    let subscribeCalls = 0;
+    deps.subscribe = vi.fn(async () => {
+      subscribeCalls += 1;
+      if (subscribeCalls === 1) {
+        return async () => undefined;
+      }
+      throw new Error('restart_subscribe_failure');
+    });
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+    expect(loop.isRunning()).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(31_000);
+    await vi.waitFor(() => expect(loop.isRunning()).toBe(false));
+
+    await vi.advanceTimersByTimeAsync(20_000);
+
+    expect(subscribeCalls).toBe(2);
+    expect(loop.isRunning()).toBe(false);
+    await loop.stop();
+    vi.useRealTimers();
+  });
+
   it('keeps stream subscription alive when single event handler fails', async () => {
     const { deps, emit } = createDeps();
     withStrategyBot(deps, { strategies: [] });

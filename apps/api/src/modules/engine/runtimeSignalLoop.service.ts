@@ -217,6 +217,10 @@ type RuntimeSignalLoopDeps = {
   stallDetectorEnabled?: boolean;
   stallNoEventMs?: number;
   stallNoHeartbeatMs?: number;
+  autoRestartEnabled?: boolean;
+  autoRestartCooldownMs?: number;
+  autoRestartMaxAttempts?: number;
+  autoRestartWindowMs?: number;
 };
 
 const runtimeSignalQuantity = Number.parseFloat(process.env.RUNTIME_SIGNAL_QUANTITY ?? '0.01');
@@ -251,6 +255,19 @@ const runtimeStallNoEventMs = Math.max(
 const runtimeStallNoHeartbeatMs = Math.max(
   runtimeSessionWatchdogIntervalMs * 2,
   Number.parseInt(process.env.RUNTIME_STALL_NO_HEARTBEAT_MS ?? '60000', 10)
+);
+const runtimeAutoRestartEnabled = process.env.RUNTIME_AUTO_RESTART_ENABLED !== 'false';
+const runtimeAutoRestartCooldownMs = Math.max(
+  5_000,
+  Number.parseInt(process.env.RUNTIME_AUTO_RESTART_COOLDOWN_MS ?? '30000', 10)
+);
+const runtimeAutoRestartMaxAttempts = Math.max(
+  1,
+  Number.parseInt(process.env.RUNTIME_AUTO_RESTART_MAX_ATTEMPTS ?? '5', 10)
+);
+const runtimeAutoRestartWindowMs = Math.max(
+  runtimeAutoRestartCooldownMs,
+  Number.parseInt(process.env.RUNTIME_AUTO_RESTART_WINDOW_MS ?? '300000', 10)
 );
 
 type RuntimeCandle = {
@@ -606,6 +623,8 @@ export const deriveRuntimeGroupMaxOpenPositions = (input: {
 export class RuntimeSignalLoop {
   private unsubscribe: (() => Promise<void>) | null = null;
   private sessionWatchdogTimer: NodeJS.Timeout | null = null;
+  private autoRestartTimer: NodeJS.Timeout | null = null;
+  private readonly autoRestartAttempts: number[] = [];
   private readonly processedDecisionWindows = new Map<string, number>();
   private readonly candleSeries = new Map<string, RuntimeCandle[]>();
   private readonly warmupLastAttemptAt = new Map<string, number>();
@@ -621,6 +640,10 @@ export class RuntimeSignalLoop {
 
   async start() {
     if (this.unsubscribe) return;
+    if (this.autoRestartTimer) {
+      clearTimeout(this.autoRestartTimer);
+      this.autoRestartTimer = null;
+    }
     const activeBots = await this.syncRuntimeSessions();
     const now = Date.now();
     this.lastSessionSyncSuccessAtMs = now;
@@ -638,6 +661,7 @@ export class RuntimeSignalLoop {
   }
 
   async stop() {
+    this.clearAutoRestartState();
     if (this.sessionWatchdogTimer) {
       clearInterval(this.sessionWatchdogTimer);
       this.sessionWatchdogTimer = null;
@@ -746,6 +770,7 @@ export class RuntimeSignalLoop {
     this.lastStreamEventAtMs = null;
     this.lastSessionSyncSuccessAtMs = null;
     this.lastKnownActiveBotIds.clear();
+    this.scheduleAutoRestart(reason);
   }
 
   private isStallDetectorEnabled() {
@@ -765,6 +790,83 @@ export class RuntimeSignalLoop {
       return Math.max(10_000, this.deps.stallNoHeartbeatMs as number);
     }
     return runtimeStallNoHeartbeatMs;
+  }
+
+  private clearAutoRestartState() {
+    if (this.autoRestartTimer) {
+      clearTimeout(this.autoRestartTimer);
+      this.autoRestartTimer = null;
+    }
+    this.autoRestartAttempts.length = 0;
+  }
+
+  private resolveAutoRestartEnabled() {
+    if (typeof this.deps.autoRestartEnabled === 'boolean') return this.deps.autoRestartEnabled;
+    return runtimeAutoRestartEnabled;
+  }
+
+  private resolveAutoRestartCooldownMs() {
+    if (Number.isFinite(this.deps.autoRestartCooldownMs as number)) {
+      return Math.max(1_000, this.deps.autoRestartCooldownMs as number);
+    }
+    return runtimeAutoRestartCooldownMs;
+  }
+
+  private resolveAutoRestartMaxAttempts() {
+    if (Number.isFinite(this.deps.autoRestartMaxAttempts as number)) {
+      return Math.max(1, Math.floor(this.deps.autoRestartMaxAttempts as number));
+    }
+    return runtimeAutoRestartMaxAttempts;
+  }
+
+  private resolveAutoRestartWindowMs() {
+    const minWindow = this.resolveAutoRestartCooldownMs();
+    if (Number.isFinite(this.deps.autoRestartWindowMs as number)) {
+      return Math.max(minWindow, this.deps.autoRestartWindowMs as number);
+    }
+    return Math.max(minWindow, runtimeAutoRestartWindowMs);
+  }
+
+  private pruneAutoRestartAttempts(now: number) {
+    const windowMs = this.resolveAutoRestartWindowMs();
+    for (let index = this.autoRestartAttempts.length - 1; index >= 0; index -= 1) {
+      if (now - this.autoRestartAttempts[index] > windowMs) {
+        this.autoRestartAttempts.splice(index, 1);
+      }
+    }
+  }
+
+  private scheduleAutoRestart(reason: 'runtime_stall_no_event' | 'runtime_stall_no_heartbeat') {
+    if (!this.resolveAutoRestartEnabled()) return;
+    if (this.unsubscribe) return;
+    if (this.autoRestartTimer) return;
+    const delayMs = this.resolveAutoRestartCooldownMs();
+    this.autoRestartTimer = setTimeout(() => {
+      this.autoRestartTimer = null;
+      void this.performAutoRestart(reason);
+    }, delayMs);
+    this.autoRestartTimer.unref?.();
+  }
+
+  private async performAutoRestart(reason: 'runtime_stall_no_event' | 'runtime_stall_no_heartbeat') {
+    if (!this.resolveAutoRestartEnabled()) return;
+    if (this.unsubscribe) return;
+    const now = Date.now();
+    this.pruneAutoRestartAttempts(now);
+    if (this.autoRestartAttempts.length >= this.resolveAutoRestartMaxAttempts()) {
+      metricsStore.recordRuntimeExecutionError('runtime_restart_guard_max_attempts');
+      this.scheduleAutoRestart(reason);
+      return;
+    }
+
+    this.autoRestartAttempts.push(now);
+    try {
+      await this.start();
+    } catch (error) {
+      console.error(`RuntimeSignalLoop auto-restart failed after ${reason}:`, error);
+      metricsStore.recordRuntimeExecutionError('runtime_auto_restart_failure');
+      this.scheduleAutoRestart(reason);
+    }
   }
 
   async processTickerEvent(event: StreamTickerEvent) {
