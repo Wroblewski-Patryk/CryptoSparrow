@@ -12,6 +12,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `EXIT-08 docs(ops): add production prerequisites + one-command closure pipeline instructions`
 - [x] `EXIT-07 ops(gates): add db-profile aware pipeline and true production strict alias (env+db-profile forced)`
 - [x] `EXIT-06 ops(gates): add direct strict-production evidence-check shortcut command`
 - [x] `EXIT-05 ops(gates-summary): expose Gate2 policy and nullable strict status when evidence artifact is missing`

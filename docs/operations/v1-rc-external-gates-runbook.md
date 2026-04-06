@@ -2,6 +2,24 @@
 
 Purpose: close the remaining release-candidate gates that require target-environment evidence and formal approvals.
 
+## Production Prerequisites
+Before final closure run, set/verify:
+- API access:
+  - target API base URL (`https://<target-api>`)
+  - admin JWT token for protected metrics/readiness endpoints
+- Production DB restore-check profile vars:
+  - `PROD_DB_CHECK_CONTAINER`
+  - `PROD_DB_CHECK_USER`
+  - `PROD_DB_CHECK_NAME`
+
+Recommended one-command production closure pipeline:
+- `pnpm run ops:rc:gates:prod-pipeline -- --base-url https://<target-api> --auth-token <ADMIN_JWT> --duration-minutes 30 --interval-seconds 30`
+- this command enforces:
+  - `environment=production`,
+  - `db-profile=prod`,
+  - strict evidence check,
+  - Gate2 `PASS` requirement (`--require-production-gate2`).
+
 ## Gate 1: Backup Snapshot and Restore Validation
 1. Take fresh database snapshot in target release environment.
    - Local dry-run helper (Docker postgres):

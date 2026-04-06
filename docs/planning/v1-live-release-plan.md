@@ -168,6 +168,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `G10-23 web-build-stability: provide favicon asset required by Next.js production build pipeline`
 
 ## Progress Log
+- 2026-04-07: Added explicit production prerequisites (target API + admin JWT + `PROD_DB_CHECK_*`) and one-command production closure instructions in RC runbook/checklist for final exit-gate execution.
 - 2026-04-07: Added db-profile aware external-gates pipeline (`--db-profile`) and corrected strict production aliases so production closure commands enforce both `environment=production` and `db-profile=prod`.
 - 2026-04-07: Added direct strict-production evidence-check shortcut (`ops:rc:gates:evidence:check:strict:prod`) and linked it in RC runbook/checklist for faster final gate validation.
 - 2026-04-07: Improved RC gates summary output by surfacing Gate2 policy and using nullable strict status (`n/a` when evidence artifact is absent) to avoid false-negative operator interpretation.

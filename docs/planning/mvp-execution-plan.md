@@ -621,6 +621,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `SUBS-12 docs(runbook): publish operator/admin guide for plan edits, manual assignments, and payment-provider switch strategy`
 
 ## Progress Log
+- 2026-04-07: Completed `EXIT-08` by adding explicit production prerequisites (API access + `PROD_DB_CHECK_*` vars) and one-command closure pipeline instructions to RC runbook/checklist (`ops:rc:gates:prod-pipeline`).
 - 2026-04-07: Completed `EXIT-07` by extending external-gates pipeline with `--db-profile <local|stage|prod>` and fixing strict production aliases to force both `--environment production` and `--db-profile prod` (`ops:rc:gates:local-pipeline:strict:prod`, `ops:rc:gates:prod-pipeline`).
 - 2026-04-07: Completed `EXIT-06` by adding direct strict-production evidence-check shortcut (`ops:rc:gates:evidence:check:strict:prod`) and syncing RC runbook/checklist references to this command.
 - 2026-04-07: Completed `EXIT-05` by hardening `ops:rc:gates:summary`: it now reports Gate2 policy from evidence artifact and returns `Strict passed: n/a` (instead of false) when no evidence JSON exists.
