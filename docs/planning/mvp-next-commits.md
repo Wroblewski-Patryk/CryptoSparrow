@@ -15,7 +15,7 @@ Operational queue for one-task execution runs.
 - [x] `EXCTX-13 feat(web-bot-creator): show explicit venue context and live api-key compatibility hints`
 - [x] `EXCTX-14 test(web): add creator regression coverage for venue-context rendering and validation copy`
 - [x] `EXCTX-15 test(api+runtime): add context mismatch contract tests for backtest/bot/live paths`
-- [ ] `EXCTX-16 test(e2e): add end-to-end venue consistency scenario (backtest->paper->live)`
+- [x] `EXCTX-16 test(e2e): add end-to-end venue consistency scenario (backtest->paper->live)`
 - [ ] `EXCTX-17 chore(qa): manual smoke checklist and evidence capture for creator/runtime consistency`
 ## NEXT
 ## BLOCKED

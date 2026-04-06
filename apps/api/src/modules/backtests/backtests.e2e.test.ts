@@ -495,6 +495,139 @@ describe('Backtests runs contract', () => {
     expect(liveAllowedOnFreeSymbol.allowed).toBe(true);
   });
 
+  it('keeps venue context consistent across backtest -> paper bot -> live order path', async () => {
+    const email = 'backtests-venue-consistency@example.com';
+    const agent = await registerAndLogin(email);
+
+    const strategyRes = await agent.post('/dashboard/strategies').send({
+      name: 'Venue consistency strategy',
+      interval: '5m',
+      leverage: 2,
+      walletRisk: 1,
+      config: {
+        open: { indicatorsLong: [], indicatorsShort: [] },
+        close: { mode: 'basic', tp: 2, sl: 1 },
+      },
+    });
+    expect(strategyRes.status).toBe(201);
+    const strategyId = strategyRes.body.id as string;
+
+    const catalogRes = await agent
+      .get('/dashboard/markets/catalog')
+      .query({ baseCurrency: 'USDT', marketType: 'FUTURES' });
+    expect(catalogRes.status).toBe(200);
+    const symbol = ((catalogRes.body.markets as Array<{ symbol: string }>)[0]?.symbol ?? 'BTCUSDT').toUpperCase();
+
+    const universeRes = await agent.post('/dashboard/markets/universes').send({
+      name: 'Venue consistency universe',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+      whitelist: [symbol],
+      blacklist: [],
+      filterRules: {},
+      autoExcludeRules: {},
+    });
+    expect(universeRes.status).toBe(201);
+    const marketUniverseId = universeRes.body.id as string;
+
+    const userId = await getUserIdByEmail(email);
+    const symbolGroup = await prisma.symbolGroup.create({
+      data: {
+        userId,
+        marketUniverseId,
+        name: 'Venue consistency group',
+        symbols: [symbol],
+      },
+    });
+
+    const runRes = await agent.post('/dashboard/backtests/runs').send({
+      name: 'Venue consistency run',
+      timeframe: '5m',
+      strategyId,
+      marketUniverseId,
+      seedConfig: {
+        initialBalance: 1000,
+      },
+    });
+    expect(runRes.status).toBe(201);
+    const runId = runRes.body.id as string;
+
+    const runDetailRes = await agent.get(`/dashboard/backtests/runs/${runId}`);
+    expect(runDetailRes.status).toBe(200);
+    expect(runDetailRes.body.seedConfig.exchange).toBe('BINANCE');
+    expect(runDetailRes.body.seedConfig.marketType).toBe('FUTURES');
+    expect(runDetailRes.body.seedConfig.baseCurrency).toBe('USDT');
+    expect(runDetailRes.body.seedConfig.marketUniverseId).toBe(marketUniverseId);
+
+    const createBotRes = await agent.post('/dashboard/bots').send({
+      name: 'Venue consistency bot',
+      mode: 'PAPER',
+      strategyId,
+      marketGroupId: symbolGroup.id,
+      isActive: true,
+      liveOptIn: false,
+      consentTextVersion: null,
+    });
+    expect(createBotRes.status).toBe(201);
+    const botId = createBotRes.body.id as string;
+    expect(createBotRes.body.exchange).toBe('BINANCE');
+    expect(createBotRes.body.marketType).toBe('FUTURES');
+
+    const paperDecision = await analyzePreTrade({
+      userId,
+      botId,
+      symbol,
+      mode: 'PAPER',
+    });
+    expect(paperDecision.allowed).toBe(true);
+
+    const liveApiKey = await prisma.apiKey.create({
+      data: {
+        userId,
+        label: 'Venue consistency BINANCE key',
+        exchange: 'BINANCE',
+        apiKey: 'VENUE_CONSISTENCY_KEY',
+        apiSecret: 'VENUE_CONSISTENCY_SECRET',
+        syncExternalPositions: false,
+        manageExternalPositions: false,
+      },
+    });
+
+    const activateLiveRes = await agent.put(`/dashboard/bots/${botId}`).send({
+      mode: 'LIVE',
+      isActive: true,
+      liveOptIn: true,
+      consentTextVersion: 'mvp-v1',
+      apiKeyId: liveApiKey.id,
+    });
+    expect(activateLiveRes.status).toBe(200);
+    expect(activateLiveRes.body.exchange).toBe('BINANCE');
+    expect(activateLiveRes.body.marketType).toBe('FUTURES');
+    expect(activateLiveRes.body.apiKeyId).toBe(liveApiKey.id);
+
+    const liveDecision = await analyzePreTrade({
+      userId,
+      botId,
+      symbol,
+      mode: 'LIVE',
+    });
+    expect(liveDecision.allowed).toBe(true);
+
+    const liveOrderRes = await agent.post('/dashboard/orders/open').send({
+      botId,
+      strategyId,
+      symbol,
+      side: 'BUY',
+      type: 'MARKET',
+      quantity: 0.001,
+      mode: 'LIVE',
+      riskAck: true,
+    });
+    expect(liveOrderRes.status).toBe(201);
+    expect(liveOrderRes.body.botId).toBe(botId);
+    expect(liveOrderRes.body.symbol).toBe(symbol);
+  });
+
   it('keeps strategy + 3-symbol market-group backtest trace aligned with paper decision contract', async () => {
     const ownerEmail = 'backtests-parity-3symbols@example.com';
     const agent = await registerAndLogin(ownerEmail);
