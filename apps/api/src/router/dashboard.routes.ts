@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/requireAuth';
 import apiKeyRouter from '../modules/profile/apiKey/apiKey.routes';
 import basicRouter from '../modules/profile/basic/basic.routes';
 import securityRouter from '../modules/profile/security/security.routes';
+import subscriptionRouter from '../modules/profile/subscription/subscription.routes';
 import strategiesRouter from '../modules/strategies/strategies.routes';
 import marketsRouter from '../modules/markets/markets.routes';
 import botsRouter from '../modules/bots/bots.routes';
@@ -27,6 +28,7 @@ router.use('/profile/security', securityRouter);
 // API Key management routes
 router.use('/profile/apiKeys', apiKeyRouter);
 // Subscription management routs
+router.use('/profile/subscription', subscriptionRouter);
 
 
 // Module - Strategies
