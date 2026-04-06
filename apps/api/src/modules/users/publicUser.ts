@@ -13,4 +13,3 @@ export const publicUserSelect = {
 export type PublicUser = Prisma.UserGetPayload<{
   select: typeof publicUserSelect;
 }>;
-
