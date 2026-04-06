@@ -60,6 +60,12 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           error: "Blad",
           save: "Zapisz",
           cancel: "Anuluj",
+          ipWhitelistTitle: "Whitelist IP (Binance)",
+          ipWhitelistLead: "Dodaj backendowe IP do whitelisty klucza API Binance:",
+          ipWhitelistMissing:
+            "Adres backendowego IP nie jest skonfigurowany. Ustaw NEXT_PUBLIC_BINANCE_IP_WHITELIST w srodowisku web.",
+          ipWhitelistHint:
+            "Jesli test zwroci IP_RESTRICTED, sprawdz whitelist Binance i sproboj ponownie po propagacji zmian.",
           placeholderProbeInfo:
             "Dla tej gieldy test API key nie jest jeszcze dostepny (placeholder adapter). Zapis jest dozwolony.",
         }
@@ -84,6 +90,12 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           error: "Error",
           save: "Save",
           cancel: "Cancel",
+          ipWhitelistTitle: "IP Whitelist (Binance)",
+          ipWhitelistLead: "Add backend egress IP(s) to your Binance API key whitelist:",
+          ipWhitelistMissing:
+            "Backend egress IP is not configured. Set NEXT_PUBLIC_BINANCE_IP_WHITELIST in web environment.",
+          ipWhitelistHint:
+            "If test returns IP_RESTRICTED, update Binance whitelist and retry after propagation.",
           placeholderProbeInfo:
             "API key test is not available for this exchange yet (placeholder adapter). Saving is still allowed.",
         };
@@ -101,6 +113,10 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
   const [testedFingerprint, setTestedFingerprint] = useState<string | null>(null);
 
   const currentFingerprint = `${exchange}::${apiKey}::${apiSecret}`;
+  const binanceWhitelistIps = (process.env.NEXT_PUBLIC_BINANCE_IP_WHITELIST ?? "")
+    .split(",")
+    .map((ip) => ip.trim())
+    .filter((ip) => ip.length > 0);
 
   const exchangeSupportsProbe = supportsExchangeCapability(exchange, "API_KEY_PROBE");
   const requiresConnectionTest = (!isEdit || Boolean(apiKey) || Boolean(apiSecret)) && exchangeSupportsProbe;
@@ -211,6 +227,26 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           ))}
         </select>
       </div>
+      {exchange === "BINANCE" ? (
+        <div className="alert alert-info text-sm">
+          <div className="space-y-2">
+            <span className="badge badge-xs badge-info badge-outline">{copy.ipWhitelistTitle}</span>
+            {binanceWhitelistIps.length > 0 ? (
+              <>
+                <p>{copy.ipWhitelistLead}</p>
+                <ul className="list-disc pl-5 font-mono">
+                  {binanceWhitelistIps.map((ip) => (
+                    <li key={ip}>{ip}</li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p>{copy.ipWhitelistMissing}</p>
+            )}
+            <p className="opacity-80">{copy.ipWhitelistHint}</p>
+          </div>
+        </div>
+      ) : null}
       {!exchangeSupportsProbe ? (
         <div className="alert alert-info text-sm">
           <div className="space-y-1">

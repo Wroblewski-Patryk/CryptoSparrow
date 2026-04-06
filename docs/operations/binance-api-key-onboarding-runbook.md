@@ -19,10 +19,11 @@ Scope: secure onboarding and diagnostics for `POST /dashboard/profile/apiKeys/te
 
 ## 3. In-App Onboarding Flow
 1. Open `/dashboard/profile`.
-2. Fill `Nazwa klucza`, `API Key`, `API Secret`.
-3. Click `Testuj polaczenie`.
-4. Continue only when status is `OK`.
-5. Click `Zapisz`.
+2. (Optional but recommended) configure `NEXT_PUBLIC_BINANCE_IP_WHITELIST` in `apps/web/.env.local` to display required Binance whitelist IP(s) directly in form.
+3. Fill `Nazwa klucza`, `API Key`, `API Secret`.
+4. Click `Testuj polaczenie`.
+5. Continue only when status is `OK`.
+6. Click `Zapisz`.
 
 Note: save is intentionally blocked unless connection test succeeds for current credentials in current form session.
 

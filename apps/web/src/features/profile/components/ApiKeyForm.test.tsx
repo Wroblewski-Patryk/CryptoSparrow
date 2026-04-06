@@ -1,11 +1,12 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ComponentProps } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ApiKeyForm from "./ApiKeyForm";
 import { I18nProvider } from "../../../i18n/I18nProvider";
 import { EXCHANGE_OPTIONS } from "@/features/exchanges/exchangeCapabilities";
 
 const testApiKeyConnectionMock = vi.hoisted(() => vi.fn());
+const originalBinanceWhitelist = process.env.NEXT_PUBLIC_BINANCE_IP_WHITELIST;
 
 vi.mock("../services/apiKeys.service", () => ({
   testApiKeyConnection: testApiKeyConnectionMock,
@@ -21,6 +22,15 @@ describe("ApiKeyForm", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    delete process.env.NEXT_PUBLIC_BINANCE_IP_WHITELIST;
+  });
+
+  afterEach(() => {
+    if (originalBinanceWhitelist) {
+      process.env.NEXT_PUBLIC_BINANCE_IP_WHITELIST = originalBinanceWhitelist;
+      return;
+    }
+    delete process.env.NEXT_PUBLIC_BINANCE_IP_WHITELIST;
   });
 
   it("shows validation error when test is started without credentials", async () => {
@@ -224,5 +234,16 @@ describe("ApiKeyForm", () => {
       )
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Test connection" })).toBeDisabled();
+  });
+
+  it("renders Binance whitelist IP hint from environment", async () => {
+    process.env.NEXT_PUBLIC_BINANCE_IP_WHITELIST = "203.0.113.10, 203.0.113.11";
+    renderForm({ onSave: vi.fn(), onCancel: vi.fn() });
+
+    expect(
+      screen.getByText("Add backend egress IP(s) to your Binance API key whitelist:")
+    ).toBeInTheDocument();
+    expect(screen.getByText("203.0.113.10")).toBeInTheDocument();
+    expect(screen.getByText("203.0.113.11")).toBeInTheDocument();
   });
 });
