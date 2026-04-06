@@ -604,9 +604,10 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `V1B-02 test(api-parity): add explicit regression asserting identical TTP/TSL config interpretation between replay parser and runtime automation parser`
 - [x] `V1B-03 test(api-runtime-live): extend runtime/positions e2e coverage for bot-managed lifecycle actions and manual-managed ignore behavior`
 - [x] `V1B-04 test(confidence-pack): run full backtest + runtime positions confidence pack (api+web) and capture fresh evidence`
-- [ ] `V1B-05 release(v1-exit-gates): refresh RC external-gates/sign-off artifacts and include Binance live-ops verification checklist`
+- [x] `V1B-05 release(v1-exit-gates): refresh RC external-gates/sign-off artifacts and include Binance live-ops verification checklist`
 
 ## Progress Log
+- 2026-04-06: Completed `V1B-05` by refreshing RC external-gates/sign-off artifacts (`v1-rc-external-gates-status.md`, `v1-rc-signoff-record.md`) and publishing Binance live verification checklist `docs/operations/binance-live-ops-verification-checklist-2026-04-06.md`, then linking it in RC checklist/runbook/sign-off docs for operator handoff.
 - 2026-04-06: Completed `V1B-04` by running full confidence packs for backtest + runtime/positions (API) and runtime/positions (Web), and publishing evidence artifact `docs/operations/v1b-confidence-pack-2026-04-06.md` (all targeted suites green in sequential execution mode).
 - 2026-04-06: Completed `V1B-03` by extending `runtime-orchestration-smoke.e2e` with explicit BOT-managed lifecycle assertions (`OPEN/CLOSE` trades + `managementMode`) and MANUAL-managed runtime ignore scenario (`manual_managed_symbol` with zero new orders), plus FK-safe cleanup for runtime session tables.
 - 2026-04-06: Completed `V1B-02` by adding runtime-vs-replay parser parity regression (`runtimeBacktestParserParity.test.ts`) locking identical `TTP/TSL` mapping and DCA level/fraction interpretation, plus basic-mode trailing disable parity; exported runtime parser helper for deterministic contract testing.

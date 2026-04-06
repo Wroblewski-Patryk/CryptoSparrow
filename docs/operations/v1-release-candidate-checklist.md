@@ -65,6 +65,8 @@
    - `pnpm run ops:deploy:smoke`
    - `pnpm run ops:deploy:runtime-freshness -- --base-url https://<target-api> --auth-token <ADMIN_JWT>`
    - `pnpm run ops:deploy:rollback-guard -- --base-url https://<target-api> --auth-token <ADMIN_JWT>`
+7. Binance live-ops verification:
+   - execute and fill `docs/operations/binance-live-ops-verification-checklist-2026-04-06.md`
 
 ## Security and Risk Gates
 - [x] JWT rotation window policy verified.
@@ -99,6 +101,7 @@
 - Formal sign-offs (Engineering/Product/Operations) and RC owner assignment.
 - Execution guide: `docs/operations/v1-rc-external-gates-runbook.md`.
 - SLO definitions and metric mapping: `docs/operations/v1-slo-catalog.md`.
+- Binance live bot-control verification checklist: `docs/operations/binance-live-ops-verification-checklist-2026-04-06.md`.
 
 ### External Gates Quick Commands
 - Collect SLO observation evidence:

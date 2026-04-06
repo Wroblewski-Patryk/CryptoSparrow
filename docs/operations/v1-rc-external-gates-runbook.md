@@ -56,6 +56,17 @@ Evidence to record:
 - Queue lag summary (p50/p95/max):
 - Reviewer:
 
+## Binance Live Ops Verification (Recommended Before Gate 4)
+1. Execute checklist:
+   - `docs/operations/binance-live-ops-verification-checklist-2026-04-06.md`
+2. Confirm recorded evidence for:
+   - connectivity and permission gate
+   - exchange snapshot trust
+   - manual-managed safety and bot-managed lifecycle behavior
+   - runtime freshness/alerts
+   - backtest/runtime alignment spot check
+3. If checklist has open mismatch or critical alert, keep RC blocked.
+
 ## Gate 3: Incident Contacts and Escalation Confirmation
 1. Confirm on-call roster for release window:
    - primary engineering on-call
@@ -94,6 +105,8 @@ Evidence to record:
   - Generate gate snapshot from latest SLO artifact:
     - `pnpm run ops:rc:gates:status`
     - gate snapshot prefers latest `v1-slo-window-report-*.json` (rolling review) and falls back to latest `_artifacts-slo-window-*.json`.
+  - Execute Binance live-ops verification checklist:
+    - `docs/operations/binance-live-ops-verification-checklist-2026-04-06.md`
   - Sync RC checklist checkboxes from current gate snapshot + sign-off record:
     - `pnpm run ops:rc:checklist:sync`
   - Check missing external evidence fields (Gate1/Gate3/Gate4):

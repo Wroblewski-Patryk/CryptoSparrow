@@ -26,7 +26,7 @@ Status: active planning baseline for final V1 closure.
 - [x] `V1B-02 test(api-parity): add explicit regression asserting identical TTP/TSL config interpretation between replay parser and runtime automation parser`
 - [x] `V1B-03 test(api-runtime-live): extend runtime/positions e2e coverage for bot-managed lifecycle actions and manual-managed ignore behavior`
 - [x] `V1B-04 test(confidence-pack): run full backtest + runtime positions confidence pack (api+web) and capture fresh evidence`
-- [ ] `V1B-05 release(v1-exit-gates): refresh RC external-gates/sign-off artifacts and include Binance live-ops verification checklist`
+- [x] `V1B-05 release(v1-exit-gates): refresh RC external-gates/sign-off artifacts and include Binance live-ops verification checklist`
 
 ## Verification Pack (Target)
 - Backtest/API:
@@ -53,3 +53,4 @@ Status: active planning baseline for final V1 closure.
 - Backtest and runtime/positions confidence packs green.
 - V1 external gates updated with fresh production evidence.
 - Formal release sign-off artifacts updated and complete.
+- Remaining blocker outside repository code/docs scope: target-environment evidence and formal approver names/timestamps are still required to move gate statuses from OPEN to PASS.

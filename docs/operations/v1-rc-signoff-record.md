@@ -1,12 +1,13 @@
 # V1 RC Sign-Off Record
 
 Release target: `v1.0.0`  
-Date (UTC): `2026-03-25T18:21:33.504Z`
+Date (UTC): `2026-04-06T19:28:41.635Z`
 
 ## Gate Evidence References
 - RC checklist: `docs/operations/v1-release-candidate-checklist.md`
 - External gates runbook: `docs/operations/v1-rc-external-gates-runbook.md`
 - External gates status source: `docs\operations\v1-rc-external-gates-status.md`
+- Binance live ops checklist: `docs/operations/binance-live-ops-verification-checklist-2026-04-06.md`
 
 ## Sign-Offs
 - Engineering sign-off:
