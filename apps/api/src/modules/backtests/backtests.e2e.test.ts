@@ -549,6 +549,9 @@ describe('Backtests runs contract', () => {
       marketUniverseId,
       seedConfig: {
         initialBalance: 1000,
+        exchange: 'OKX',
+        marketType: 'SPOT',
+        baseCurrency: 'EUR',
       },
     });
     expect(runRes.status).toBe(201);
@@ -569,6 +572,7 @@ describe('Backtests runs contract', () => {
     expect(runDetailRes.body.seedConfig.marketType).toBe('FUTURES');
     expect(runDetailRes.body.seedConfig.baseCurrency).toBe('USDT');
     expect(runDetailRes.body.seedConfig.marketUniverseId).toBe(marketUniverseId);
+    expect(runDetailRes.body.seedConfig.initialBalance).toBe(1000);
 
     const metrics = reportRes.body.metrics as {
       parityDiagnostics?: Array<{
