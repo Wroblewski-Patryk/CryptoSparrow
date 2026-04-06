@@ -7,17 +7,16 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `PEX-09 docs(runbook): publish incident triage matrix (symptoms -> checks -> mitigations -> rollback)`
-- [x] `PEX-10 feat(ops-backup): add repeatable backup verification command set for target deployment profile`
-- [x] `PEX-11 chore(ops-restore-drill): automate restore drill evidence generation with pass/fail contract`
-- [x] `PEX-12 docs(ops-rto-rpo): document RTO/RPO targets and acceptable degradation windows`
-- [x] `PEX-13 docs(secrets-inventory): publish canonical secret inventory + ownership + rotation cadence`
-- [x] `PEX-14 feat(security-rotation): add rotation readiness checks and startup validation for critical secrets`
+- [x] `EXCTX-01 docs(contract): publish venue-context source-of-truth and invariants for creators/runtime`
+- [ ] `EXCTX-02 docs(decisions): lock MarketUniverse as canonical exchange+marketType+base context owner`
+- [ ] `EXCTX-05 chore(data-migration): backfill existing universes/runs with exchange context snapshot`
+- [ ] `EXCTX-06 feat(api-markets): extend market-universe and catalog contracts with exchange context`
+- [ ] `EXCTX-07 feat(api-backtests): derive and persist exchange context from selected market universe`
 ## NEXT
-- [x] `PEX-15 test(security): add regression checks for invalid/expired secret combinations and fail-safe startup`
-- [x] `PEX-16 feat(release-gates): add mandatory post-deploy runtime freshness check (bots/sessions/signals not stale)`
-- [x] `PEX-17 feat(rollback-guard): define automatic rollback trigger conditions for runtime-critical regressions`
-- [x] `PEX-18 docs(release-checklist): update deployment checklist with runtime+cache+stream validation sequence`
+- [ ] `EXCTX-08 feat(api-bots): enforce bot/group/apiKey venue-context compatibility on create/activate`
+- [ ] `EXCTX-09 refactor(engine): introduce venue-aware market data provider contract`
+- [ ] `EXCTX-10 refactor(runtime): add exchange to stream-event context and enforce exchange+marketType match`
+- [ ] `EXCTX-11 feat(execution): bind live execution account selection to bot venue context`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 

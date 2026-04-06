@@ -576,7 +576,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `PEX-18 docs(release-checklist): update deployment checklist with runtime+cache+stream validation sequence`
 
 ## Phase 36 - Exchange Context and Placeholder Completion (Remaining)
-- [ ] `EXCTX-01 docs(contract): publish venue-context source-of-truth and invariants for creators/runtime`
+- [x] `EXCTX-01 docs(contract): publish venue-context source-of-truth and invariants for creators/runtime`
 - [ ] `EXCTX-02 docs(decisions): lock MarketUniverse as canonical exchange+marketType+base context owner`
 - [x] `EXCTX-03 feat(db): add exchange field to MarketUniverse with BINANCE default`
 - [x] `EXCTX-04 feat(db): add bot live apiKey binding field for explicit execution venue context`
@@ -600,6 +600,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `DBACT-10 qa(smoke): manual verification on real paper-session timeline (open -> dca -> close) including fee/pnl/margin coherence`
 
 ## Progress Log
+- 2026-04-06: Completed `EXCTX-01` by publishing `docs/architecture/venue-context-source-of-truth-contract.md` with canonical `VenueContext` ownership hierarchy (`MarketUniverse` as source-of-truth), creator/runtime invariants, fail-closed mismatch error contract, and operator observability requirements.
 - 2026-04-06: Completed `PEX-18` by updating release/deployment checklists with mandatory runtime+cache+stream validation sequence (baseline probes -> runtime freshness -> rollback-guard alert sanity -> cache contract checks), and aligning readiness gates to include explicit runtime-freshness gate in promotion/post-deploy rules.
 - 2026-04-06: Completed `PEX-17` by defining automatic rollback guard conditions in `ops:deploy:rollback-guard` (runtime freshness failure + critical alert codes/severity), wiring promote-prod to evaluate guard post-deploy, and auto-triggering production rollback webhook when runtime-critical regression conditions are detected.
 - 2026-04-06: Completed `PEX-16` by adding mandatory runtime freshness gate support: new admin endpoint `/workers/runtime-freshness` (worker/market freshness + runtime lag + running-session heartbeat + latest signal recency), post-deploy checker script `ops:deploy:runtime-freshness`, regression coverage, and production promotion workflow step with retry-based freshness enforcement.
