@@ -645,7 +645,7 @@ export default function DataTable<T>({
 
       {paginationEnabled ? (
         <div
-          className={`grid grid-cols-2 gap-2 lg:flex lg:items-center lg:justify-between lg:gap-4 ${paginationClassName}`.trim()}
+          className={`grid grid-cols-[auto_minmax(0,1fr)] gap-2 lg:flex lg:items-center lg:justify-between lg:gap-4 ${paginationClassName}`.trim()}
         >
           {showSettingsControls ? (
             <div className='min-w-0 text-xs text-base-content/75'>
