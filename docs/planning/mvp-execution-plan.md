@@ -606,7 +606,22 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `V1B-04 test(confidence-pack): run full backtest + runtime positions confidence pack (api+web) and capture fresh evidence`
 - [x] `V1B-05 release(v1-exit-gates): refresh RC external-gates/sign-off artifacts and include Binance live-ops verification checklist`
 
+## Phase 38 - Subscription + Entitlements Foundation (Active)
+- [ ] `SUBS-01 docs(contract): freeze tier catalog (FREE/ADVANCED/PROFESSIONAL), default assignment rules, and entitlement payload schema`
+- [ ] `SUBS-02 feat(db): add SubscriptionPlan + UserSubscription + PaymentIntent models with safe migration and indexes`
+- [ ] `SUBS-03 feat(seed): seed three plans; default new users to FREE; map owner account (wroblewskipatryk@gmail.com) to PROFESSIONAL`
+- [ ] `SUBS-04 feat(api-profile): expose subscription catalog + active subscription in profile endpoints (my-account ready)`
+- [ ] `SUBS-05 feat(web-profile): render subscription list with active-plan highlight in My Account -> Subscription`
+- [ ] `SUBS-06 feat(entitlements-core): add central entitlement resolver and enforce bot-count limits by active plan`
+- [ ] `SUBS-07 feat(api-admin): add admin CRUD for plan pricing + entitlement limits (editable without deploy)`
+- [ ] `SUBS-08 feat(web-admin): add admin UI modal for subscription price/limits editing`
+- [ ] `SUBS-09 feat(payment-abstraction): implement provider-agnostic payment gateway interface + checkout-intent API contract`
+- [ ] `SUBS-10 feat(payment-provider-stripe): add first provider adapter behind abstraction (toggleable, non-breaking)`
+- [ ] `SUBS-11 test(api+web): add regression suites for default FREE assignment, owner PROFESSIONAL mapping, plan highlighting, and entitlement enforcement`
+- [ ] `SUBS-12 docs(runbook): publish operator/admin guide for plan edits, manual assignments, and payment-provider switch strategy`
+
 ## Progress Log
+- 2026-04-06: Added active subscription/entitlement rollout phase (`SUBS-01..SUBS-12`) and canonical plan `docs/planning/subscription-entitlements-rollout-plan-2026-04-06.md` to cover profile subscription list, FREE default onboarding, owner PROFESSIONAL bootstrap, admin-editable limits/pricing, and payment-gateway abstraction readiness.
 - 2026-04-06: Completed `V1B-05` by refreshing RC external-gates/sign-off artifacts (`v1-rc-external-gates-status.md`, `v1-rc-signoff-record.md`) and publishing Binance live verification checklist `docs/operations/binance-live-ops-verification-checklist-2026-04-06.md`, then linking it in RC checklist/runbook/sign-off docs for operator handoff.
 - 2026-04-06: Completed `V1B-04` by running full confidence packs for backtest + runtime/positions (API) and runtime/positions (Web), and publishing evidence artifact `docs/operations/v1b-confidence-pack-2026-04-06.md` (all targeted suites green in sequential execution mode).
 - 2026-04-06: Completed `V1B-03` by extending `runtime-orchestration-smoke.e2e` with explicit BOT-managed lifecycle assertions (`OPEN/CLOSE` trades + `managementMode`) and MANUAL-managed runtime ignore scenario (`manual_managed_symbol` with zero new orders), plus FK-safe cleanup for runtime session tables.

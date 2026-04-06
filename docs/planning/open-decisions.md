@@ -404,6 +404,12 @@ This file tracks intentionally unresolved architecture choices so implementation
 
 ## Subscription and Admin Controls (V1 -> V2)
 - Decision state: resolved on 2026-03-20.
+- 2026-04-06 refinement (active implementation track):
+  - canonical tier catalog is now `FREE`, `ADVANCED`, `PROFESSIONAL`.
+  - registration default remains `FREE` for every new account.
+  - owner bootstrap override is required for `wroblewskipatryk@gmail.com` -> `PROFESSIONAL`.
+  - previous tier naming containing `simple` is treated as legacy terminology and should be migrated to current catalog before release.
+  - payment provider is intentionally undecided at decision level; implementation should use provider-agnostic gateway abstraction with Stripe as first adapter candidate.
 - V1 decision:
   - include an admin panel in V1 for critical business controls (plan pricing, bot limits, mode entitlements, sensitive app settings).
   - keep public and authenticated user dashboard separated from admin surface.

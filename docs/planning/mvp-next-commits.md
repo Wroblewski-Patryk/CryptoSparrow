@@ -13,6 +13,11 @@ Operational queue for one-task execution runs.
 - [x] `V1B-04 test(confidence-pack): run full backtest + runtime positions confidence pack (api+web) and capture fresh evidence`
 - [x] `V1B-05 release(v1-exit-gates): refresh RC external-gates/sign-off artifacts and include Binance live-ops verification checklist`
 ## NEXT
+- [ ] `SUBS-01 docs(contract): freeze FREE/ADVANCED/PROFESSIONAL catalog + default assignment/entitlement schema`
+- [ ] `SUBS-02 feat(db): add subscription-plan/user-subscription/payment-intent tables with safe migration`
+- [ ] `SUBS-03 feat(seed): seed FREE/ADVANCED/PROFESSIONAL; default new users to FREE; owner to PROFESSIONAL`
+- [ ] `SUBS-04 feat(api-profile): return subscription catalog + active plan for My Account`
+- [ ] `SUBS-05 feat(web-profile): render subscription list and highlight active plan on profile`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
