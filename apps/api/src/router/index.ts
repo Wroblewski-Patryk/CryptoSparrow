@@ -9,6 +9,7 @@ import { requireAuth } from '../middleware/requireAuth';
 import { requireRole } from '../middleware/requireRole';
 import { requireOpsNetwork } from '../middleware/requireOpsNetwork';
 import { applyNoStoreHeaders } from '../middleware/noStoreHeaders';
+import { evaluateCriticalSecretsReadiness } from '../config/criticalSecretsReadiness';
 
 const router = Router();
 
@@ -29,12 +30,13 @@ router.get('/health', (_req, res) => {
 });
 
 router.get('/ready', (_req, res) => {
-  const missing = [!process.env.JWT_SECRET && 'JWT_SECRET'].filter(Boolean);
-  if (missing.length > 0) {
+  const readiness = evaluateCriticalSecretsReadiness();
+  if (!readiness.ready) {
     return res.status(503).json({
       status: 'not_ready',
       service: 'api',
-      missing,
+      missing: readiness.missing,
+      issues: readiness.issues,
     });
   }
 

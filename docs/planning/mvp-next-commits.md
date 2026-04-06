@@ -12,7 +12,7 @@ Operational queue for one-task execution runs.
 - [x] `PEX-11 chore(ops-restore-drill): automate restore drill evidence generation with pass/fail contract`
 - [x] `PEX-12 docs(ops-rto-rpo): document RTO/RPO targets and acceptable degradation windows`
 - [x] `PEX-13 docs(secrets-inventory): publish canonical secret inventory + ownership + rotation cadence`
-- [ ] `PEX-14 feat(security-rotation): add rotation readiness checks and startup validation for critical secrets`
+- [x] `PEX-14 feat(security-rotation): add rotation readiness checks and startup validation for critical secrets`
 ## NEXT
 - [ ] `PEX-15 test(security): add regression checks for invalid/expired secret combinations and fail-safe startup`
 - [ ] `PEX-16 feat(release-gates): add mandatory post-deploy runtime freshness check (bots/sessions/signals not stale)`
