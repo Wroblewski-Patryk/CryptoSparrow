@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { prisma } from '../../prisma/client';
-import { openOrder } from './orders.service';
+import { openOrder, resolveLiveExecutionApiKey } from './orders.service';
 
 const cleanupDb = async () => {
   await prisma.log.deleteMany();
@@ -66,13 +66,24 @@ describe('openOrder live execution contract', () => {
     const user = await prisma.user.create({
       data: { email: 'orders-live@example.com', password: 'hashed' },
     });
+    const apiKey = await prisma.apiKey.create({
+      data: {
+        userId: user.id,
+        label: 'Binance Live Key',
+        exchange: 'BINANCE',
+        apiKey: 'encrypted_key',
+        apiSecret: 'encrypted_secret',
+      },
+    });
     const bot = await prisma.bot.create({
       data: {
         userId: user.id,
         name: 'Live Bot',
         mode: 'LIVE',
+        exchange: 'BINANCE',
         marketType: 'FUTURES',
         positionMode: 'ONE_WAY',
+        apiKeyId: apiKey.id,
         isActive: true,
         liveOptIn: true,
         consentTextVersion: 'mvp-v1',
@@ -104,6 +115,15 @@ describe('openOrder live execution contract', () => {
       );
 
       expect(executeLiveOrder).toHaveBeenCalledOnce();
+      expect(executeLiveOrder).toHaveBeenCalledWith(
+        expect.objectContaining({
+          bot: expect.objectContaining({
+            id: bot.id,
+            exchange: 'BINANCE',
+            apiKeyId: apiKey.id,
+          }),
+        })
+      );
       expect(order.exchangeOrderId).toBe('binance-order-123');
       expect(order.status).toBe('FILLED');
       expect(order.filledQuantity).toBe(2);
@@ -241,6 +261,106 @@ describe('openOrder live execution contract', () => {
     } finally {
       process.env.NODE_ENV = previousNodeEnv;
     }
+  });
+});
+
+describe('resolveLiveExecutionApiKey', () => {
+  beforeEach(async () => {
+    await cleanupDb();
+  });
+
+  it('uses bot-bound API key when ownership and exchange match bot context', async () => {
+    const user = await prisma.user.create({
+      data: { email: 'orders-resolver-bound@example.com', password: 'hashed' },
+    });
+    const key = await prisma.apiKey.create({
+      data: {
+        userId: user.id,
+        label: 'Bound key',
+        exchange: 'BINANCE',
+        apiKey: 'bound_key',
+        apiSecret: 'bound_secret',
+      },
+    });
+
+    const resolved = await resolveLiveExecutionApiKey({
+      userId: user.id,
+      bot: {
+        exchange: 'BINANCE',
+        apiKeyId: key.id,
+      },
+    });
+
+    expect(resolved.id).toBe(key.id);
+  });
+
+  it('falls back to latest key matching bot exchange when bound key is incompatible', async () => {
+    const user = await prisma.user.create({
+      data: { email: 'orders-resolver-fallback@example.com', password: 'hashed' },
+    });
+    const mismatch = await prisma.apiKey.create({
+      data: {
+        userId: user.id,
+        label: 'Mismatched key',
+        exchange: 'BYBIT',
+        apiKey: 'bybit_key',
+        apiSecret: 'bybit_secret',
+      },
+    });
+    await prisma.apiKey.create({
+      data: {
+        userId: user.id,
+        label: 'Old binance',
+        exchange: 'BINANCE',
+        apiKey: 'binance_old',
+        apiSecret: 'binance_old_secret',
+      },
+    });
+    const latest = await prisma.apiKey.create({
+      data: {
+        userId: user.id,
+        label: 'Latest binance',
+        exchange: 'BINANCE',
+        apiKey: 'binance_latest',
+        apiSecret: 'binance_latest_secret',
+      },
+    });
+
+    const resolved = await resolveLiveExecutionApiKey({
+      userId: user.id,
+      bot: {
+        exchange: 'BINANCE',
+        apiKeyId: mismatch.id,
+      },
+    });
+
+    expect(resolved.id).toBe(latest.id);
+    expect(resolved.exchange).toBe('BINANCE');
+  });
+
+  it('fails closed when no compatible API key exists for bot exchange', async () => {
+    const user = await prisma.user.create({
+      data: { email: 'orders-resolver-missing@example.com', password: 'hashed' },
+    });
+    const mismatch = await prisma.apiKey.create({
+      data: {
+        userId: user.id,
+        label: 'Only BYBIT key',
+        exchange: 'BYBIT',
+        apiKey: 'bybit_only',
+        apiSecret: 'bybit_only_secret',
+      },
+    });
+
+    await expect(
+      resolveLiveExecutionApiKey({
+        userId: user.id,
+        bot: {
+          exchange: 'BINANCE',
+          apiKeyId: mismatch.id,
+        },
+      })
+    ).rejects.toThrow('LIVE_API_KEY_REQUIRED');
   });
 });
 

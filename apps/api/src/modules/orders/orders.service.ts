@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Exchange, Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { CancelOrderDto, CloseOrderDto, ListOrdersQuery, OpenOrderDto } from './orders.types';
 import { decrypt } from '../../utils/crypto';
@@ -30,8 +30,10 @@ export const getOrder = async (userId: string, id: string) => {
 
 type LiveBotContext = {
   id: string;
+  exchange: Exchange;
   marketType: 'FUTURES' | 'SPOT';
   positionMode: 'ONE_WAY' | 'HEDGE';
+  apiKeyId: string | null;
 };
 
 type LiveExecutionResult = {
@@ -85,8 +87,10 @@ const ensureLiveOrderAllowed = async (
     select: {
       id: true,
       mode: true,
+      exchange: true,
       marketType: true,
       positionMode: true,
+      apiKeyId: true,
       liveOptIn: true,
       isActive: true,
       consentTextVersion: true,
@@ -100,23 +104,72 @@ const ensureLiveOrderAllowed = async (
 
   return {
     id: bot.id,
+    exchange: bot.exchange,
     marketType: bot.marketType,
     positionMode: bot.positionMode,
+    apiKeyId: bot.apiKeyId,
   };
 };
 
-const executeLiveOrderOnExchange: OpenOrderDeps['executeLiveOrder'] = async (params) => {
-  const apiKey = await prisma.apiKey.findFirst({
-    where: { userId: params.userId, exchange: 'BINANCE' },
+type LiveExecutionApiKey = {
+  id: string;
+  exchange: Exchange;
+  apiKey: string;
+  apiSecret: string;
+};
+
+export const resolveLiveExecutionApiKey = async (params: {
+  userId: string;
+  bot: Pick<LiveBotContext, 'exchange' | 'apiKeyId'>;
+}): Promise<LiveExecutionApiKey> => {
+  if (params.bot.apiKeyId) {
+    const botBoundApiKey = await prisma.apiKey.findFirst({
+      where: { id: params.bot.apiKeyId, userId: params.userId },
+      select: {
+        id: true,
+        exchange: true,
+        apiKey: true,
+        apiSecret: true,
+      },
+    });
+
+    if (botBoundApiKey && botBoundApiKey.exchange === params.bot.exchange) {
+      return botBoundApiKey;
+    }
+  }
+
+  const fallbackApiKey = await prisma.apiKey.findFirst({
+    where: {
+      userId: params.userId,
+      exchange: params.bot.exchange,
+    },
     orderBy: { updatedAt: 'desc' },
+    select: {
+      id: true,
+      exchange: true,
+      apiKey: true,
+      apiSecret: true,
+    },
   });
 
-  if (!apiKey) {
+  if (!fallbackApiKey) {
     throw new Error('LIVE_API_KEY_REQUIRED');
   }
 
+  return fallbackApiKey;
+};
+
+const executeLiveOrderOnExchange: OpenOrderDeps['executeLiveOrder'] = async (params) => {
+  const apiKey = await resolveLiveExecutionApiKey({
+    userId: params.userId,
+    bot: {
+      exchange: params.bot.exchange,
+      apiKeyId: params.bot.apiKeyId,
+    },
+  });
+
   const connector = new CcxtFuturesConnector({
-    exchangeId: 'binance',
+    exchangeId: apiKey.exchange.toLowerCase(),
     apiKey: decrypt(apiKey.apiKey),
     secret: decrypt(apiKey.apiSecret),
     marketType: params.bot.marketType,

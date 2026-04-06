@@ -586,7 +586,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `EXCTX-08 feat(api-bots): enforce bot/group/apiKey venue-context compatibility on create/activate`
 - [x] `EXCTX-09 refactor(engine): introduce venue-aware market data provider contract`
 - [x] `EXCTX-10 refactor(runtime): add exchange to stream-event context and enforce exchange+marketType match`
-- [ ] `EXCTX-11 feat(execution): bind live execution account selection to bot venue context`
+- [x] `EXCTX-11 feat(execution): bind live execution account selection to bot venue context`
 - [ ] `EXCTX-12 feat(web-backtest-creator): show explicit exchange/marketType/base context bound to market group`
 - [ ] `EXCTX-13 feat(web-bot-creator): show explicit venue context and live api-key compatibility hints`
 - [ ] `EXCTX-14 test(web): add creator regression coverage for venue-context rendering and validation copy`
@@ -600,6 +600,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `DBACT-10 qa(smoke): manual verification on real paper-session timeline (open -> dca -> close) including fee/pnl/margin coherence`
 
 ## Progress Log
+- 2026-04-06: Completed `EXCTX-11` by binding LIVE order execution account selection to bot venue context (bot-bound `apiKeyId` + `exchange` first, deterministic fallback to latest user key for bot exchange), removing hardcoded BINANCE account selection in orders live adapter path, and adding resolver regression coverage for bound-key, mismatch-fallback, and fail-closed missing-key scenarios; validated with `pnpm --filter api test -- src/modules/orders/orders.service.test.ts` and `pnpm --filter api run typecheck`.
 - 2026-04-06: Completed `EXCTX-10` by hardening runtime venue-context enforcement: ticker cache is now context-aware (`exchange+marketType+symbol`), signal-loop freshness checks read context-scoped tickers, bot runtime read-models query ticker by bot venue context, and position-automation ignores mismatched ticker events; validated with engine regressions (`runtimeTickerStore`, `runtimeSignalLoop`, `runtimePositionAutomation`) plus API typecheck.
 - 2026-04-06: Completed `EXCTX-09` by introducing venue-aware market-data contracts (`exchange` + `marketType`) for OHLCV/order-book/snapshot requests, isolating cache keys by venue context, and extending paper-runtime ingestion tasks to carry venue context with deterministic defaults; validated with `pnpm --filter api test -- src/modules/market-data/marketData.service.test.ts src/modules/engine/paperRuntime.service.test.ts` and `pnpm --filter api run typecheck`.
 - 2026-04-06: Completed `EXCTX-08` by adding explicit bots API regression for venue-context compatibility on create/activate (`apiKeyId` exchange mismatch hard-fail + activation failure when no compatible key exists, with success path for matching exchange key), and extending bots e2e cleanup with `RuntimeExecutionDedupe` FK-safe deletion; validated with `pnpm --filter api test -- src/modules/bots/bots.e2e.test.ts -t "enforces live api-key exchange compatibility on create and activation paths"` and `pnpm --filter api run typecheck`.
