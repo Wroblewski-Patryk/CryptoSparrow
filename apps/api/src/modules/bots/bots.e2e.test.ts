@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { app } from '../../index';
 import { prisma } from '../../prisma/client';
 import { runtimePositionAutomationService } from '../engine/runtimePositionAutomation.service';
+import { setActiveSubscriptionForUser } from '../subscriptions/subscriptions.service';
 
 const PLACEHOLDER_EXCHANGES = ['BYBIT', 'OKX', 'KRAKEN', 'COINBASE'] as const;
 
@@ -13,6 +14,16 @@ const registerAndLogin = async (email: string) => {
     password: 'test1234',
   });
   expect(res.status).toBe(201);
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { email },
+    select: { id: true },
+  });
+  await setActiveSubscriptionForUser(prisma, {
+    userId: user.id,
+    planCode: 'PROFESSIONAL',
+    source: 'ADMIN_OVERRIDE',
+    metadata: { reason: 'bots-e2e-plan-upgrade' },
+  });
   return agent;
 };
 

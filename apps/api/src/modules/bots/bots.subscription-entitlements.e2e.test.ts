@@ -11,16 +11,6 @@ const registerAndLogin = async (email: string) => {
     password: 'test1234',
   });
   expect(res.status).toBe(201);
-  const user = await prisma.user.findUniqueOrThrow({
-    where: { email },
-    select: { id: true },
-  });
-  await setActiveSubscriptionForUser(prisma, {
-    userId: user.id,
-    planCode: 'PROFESSIONAL',
-    source: 'ADMIN_OVERRIDE',
-    metadata: { reason: 'bots-duplicate-e2e-plan-upgrade' },
-  });
   return agent;
 };
 
@@ -44,7 +34,7 @@ const createMarketGroup = async (email: string) => {
   const marketUniverse = await prisma.marketUniverse.create({
     data: {
       userId: user.id,
-      name: `Duplicate Guard Universe ${Date.now()}`,
+      name: `Entitlements Universe ${Date.now()}`,
       marketType: 'FUTURES',
       baseCurrency: 'USDT',
       whitelist: ['BTCUSDT', 'ETHUSDT'],
@@ -55,7 +45,7 @@ const createMarketGroup = async (email: string) => {
     data: {
       userId: user.id,
       marketUniverseId: marketUniverse.id,
-      name: `Duplicate Guard Group ${Date.now()}`,
+      name: `Entitlements Group ${Date.now()}`,
       symbols: ['BTCUSDT', 'ETHUSDT'],
     },
   });
@@ -63,7 +53,16 @@ const createMarketGroup = async (email: string) => {
   return symbolGroup.id;
 };
 
-describe('Bots duplicate active guard', () => {
+const createPayload = (refs: { strategyId: string; marketGroupId: string }) => ({
+  name: 'Entitlements Runner',
+  mode: 'PAPER',
+  strategyId: refs.strategyId,
+  marketGroupId: refs.marketGroupId,
+  isActive: false,
+  liveOptIn: false,
+});
+
+describe('Bots subscription entitlements', () => {
   beforeEach(async () => {
     await prisma.log.deleteMany();
     await prisma.backtestReport.deleteMany();
@@ -81,91 +80,81 @@ describe('Bots duplicate active guard', () => {
     await prisma.botRuntimeEvent.deleteMany();
     await prisma.botRuntimeSymbolStat.deleteMany();
     await prisma.botRuntimeSession.deleteMany();
+    await prisma.marketCandleCache.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
     await prisma.strategy.deleteMany();
+    await prisma.runtimeExecutionDedupe.deleteMany();
     await prisma.apiKey.deleteMany();
+    await prisma.paymentIntent.deleteMany();
+    await prisma.userSubscription.deleteMany();
     await prisma.user.deleteMany();
   });
 
-  it('blocks creating second active bot for same strategy + market group pair', async () => {
-    const email = 'bots-duplicate-create@example.com';
+  it('blocks second bot on FREE plan with 409 entitlement error payload', async () => {
+    const email = 'bots-subscription-free-limit@example.com';
     const agent = await registerAndLogin(email);
-    const strategyId = await createStrategy(agent, 'Duplicate Create Strategy');
+    const strategyId = await createStrategy(agent, 'Entitlements Free Strategy');
     const marketGroupId = await createMarketGroup(email);
 
-    const firstCreate = await agent.post('/dashboard/bots').send({
-      name: 'Primary Active',
-      mode: 'PAPER',
-      paperStartBalance: 10_000,
-      strategyId,
-      marketGroupId,
-      isActive: true,
-      liveOptIn: false,
-    });
-    expect(firstCreate.status).toBe(201);
-
-    const duplicateActiveCreate = await agent.post('/dashboard/bots').send({
-      name: 'Duplicate Active',
-      mode: 'PAPER',
-      paperStartBalance: 10_000,
-      strategyId,
-      marketGroupId,
-      isActive: true,
-      liveOptIn: false,
-    });
-    expect(duplicateActiveCreate.status).toBe(409);
-    expect(duplicateActiveCreate.body.error.message).toBe(
-      'active bot already exists for this strategy + market group pair'
+    const firstCreate = await agent.post('/dashboard/bots').send(
+      createPayload({
+        strategyId,
+        marketGroupId,
+      }),
     );
-
-    const inactiveCreate = await agent.post('/dashboard/bots').send({
-      name: 'Duplicate Inactive',
-      mode: 'PAPER',
-      paperStartBalance: 10_000,
-      strategyId,
-      marketGroupId,
-      isActive: false,
-      liveOptIn: false,
-    });
-    expect(inactiveCreate.status).toBe(201);
-  });
-
-  it('blocks activating duplicate bot when same strategy + market group already active', async () => {
-    const email = 'bots-duplicate-update@example.com';
-    const agent = await registerAndLogin(email);
-    const strategyId = await createStrategy(agent, 'Duplicate Update Strategy');
-    const marketGroupId = await createMarketGroup(email);
-
-    const firstCreate = await agent.post('/dashboard/bots').send({
-      name: 'Primary Active',
-      mode: 'PAPER',
-      paperStartBalance: 10_000,
-      strategyId,
-      marketGroupId,
-      isActive: true,
-      liveOptIn: false,
-    });
     expect(firstCreate.status).toBe(201);
 
     const secondCreate = await agent.post('/dashboard/bots').send({
-      name: 'Secondary Inactive',
-      mode: 'PAPER',
-      paperStartBalance: 10_000,
-      strategyId,
-      marketGroupId,
-      isActive: false,
-      liveOptIn: false,
+      ...createPayload({
+        strategyId,
+        marketGroupId,
+      }),
+      name: 'Second bot should fail',
+    });
+    expect(secondCreate.status).toBe(409);
+    expect(secondCreate.body.error.message).toBe('bot limit for active subscription reached');
+    expect(secondCreate.body.error.details).toMatchObject({
+      planCode: 'FREE',
+      maxBotsTotal: 1,
+      currentBotsTotal: 1,
+      requestedBotsTotal: 2,
+    });
+  });
+
+  it('allows extra bot after subscription upgrade to ADVANCED', async () => {
+    const email = 'bots-subscription-upgrade@example.com';
+    const agent = await registerAndLogin(email);
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { email },
+      select: { id: true },
+    });
+    const strategyId = await createStrategy(agent, 'Entitlements Upgrade Strategy');
+    const marketGroupId = await createMarketGroup(email);
+
+    const firstCreate = await agent.post('/dashboard/bots').send(
+      createPayload({
+        strategyId,
+        marketGroupId,
+      }),
+    );
+    expect(firstCreate.status).toBe(201);
+
+    await setActiveSubscriptionForUser(prisma, {
+      userId: user.id,
+      planCode: 'ADVANCED',
+      source: 'ADMIN_OVERRIDE',
+      metadata: { reason: 'e2e-upgrade-allow-more-bots' },
+    });
+
+    const secondCreate = await agent.post('/dashboard/bots').send({
+      ...createPayload({
+        strategyId,
+        marketGroupId,
+      }),
+      name: 'Second bot should pass on ADVANCED',
     });
     expect(secondCreate.status).toBe(201);
-
-    const activateSecondary = await agent.put(`/dashboard/bots/${secondCreate.body.id}`).send({
-      isActive: true,
-    });
-    expect(activateSecondary.status).toBe(409);
-    expect(activateSecondary.body.error.message).toBe(
-      'active bot already exists for this strategy + market group pair'
-    );
   });
 });

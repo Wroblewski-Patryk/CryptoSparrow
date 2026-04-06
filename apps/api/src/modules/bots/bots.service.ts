@@ -96,6 +96,7 @@ import {
   getOwnedBotWithStrategyProjection,
   listOwnedBotsWithStrategyProjection,
 } from './botReadProjection.service';
+import { assertSubscriptionAllowsBotCreate } from '../subscriptions/subscriptionEntitlements.service';
 export {
   deleteBotSubagentConfig,
   getBotAssistantConfig,
@@ -156,6 +157,8 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
   }
 
   const createdBotId = await prisma.$transaction(async (tx) => {
+    await assertSubscriptionAllowsBotCreate(userId, botData.mode, tx);
+
     const createdBot = await tx.bot.create({
       data: {
         userId,

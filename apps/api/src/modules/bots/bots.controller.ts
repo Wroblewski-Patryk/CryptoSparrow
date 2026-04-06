@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { sendError } from '../../utils/apiError';
 import { sendValidationError } from '../../utils/formatZodError';
 import { ExchangeNotImplementedError } from '../exchange/exchangeCapabilities';
+import { SubscriptionBotLimitError } from '../subscriptions/subscriptionEntitlements.service';
 import * as botsService from './bots.service';
 import {
   AssistantDryRunSchema,
@@ -139,6 +140,9 @@ export const createBot = async (req: Request, res: Response) => {
   } catch (error) {
     if (error instanceof ExchangeNotImplementedError) {
       return sendError(res, error.status, error.message, error.toDetails());
+    }
+    if (error instanceof SubscriptionBotLimitError) {
+      return sendError(res, 409, 'bot limit for active subscription reached', error.details);
     }
     if (error instanceof Error && error.message === 'LIVE_CONSENT_VERSION_REQUIRED') {
       return sendError(res, 400, 'consentTextVersion is required when liveOptIn is enabled');
