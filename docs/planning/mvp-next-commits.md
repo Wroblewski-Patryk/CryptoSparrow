@@ -14,7 +14,7 @@ Operational queue for one-task execution runs.
 - [x] `PEX-13 docs(secrets-inventory): publish canonical secret inventory + ownership + rotation cadence`
 - [x] `PEX-14 feat(security-rotation): add rotation readiness checks and startup validation for critical secrets`
 ## NEXT
-- [ ] `PEX-15 test(security): add regression checks for invalid/expired secret combinations and fail-safe startup`
+- [x] `PEX-15 test(security): add regression checks for invalid/expired secret combinations and fail-safe startup`
 - [ ] `PEX-16 feat(release-gates): add mandatory post-deploy runtime freshness check (bots/sessions/signals not stale)`
 - [ ] `PEX-17 feat(rollback-guard): define automatic rollback trigger conditions for runtime-critical regressions`
 - [ ] `PEX-18 docs(release-checklist): update deployment checklist with runtime+cache+stream validation sequence`
