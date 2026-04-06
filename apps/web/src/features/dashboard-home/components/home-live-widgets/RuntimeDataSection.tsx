@@ -155,6 +155,8 @@ export default function RuntimeDataSection(props: RuntimeDataSectionProps) {
               onSortChange={props.onTradeSortChange}
               toolbarClassName="p-3"
               advancedToggleLabel={props.advancedOptionsLabel}
+              advancedTogglePlacement="footer"
+              settingsControlsIconOnly
               advancedFilters={
                 <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-5">
                   <label className="form-control gap-1">

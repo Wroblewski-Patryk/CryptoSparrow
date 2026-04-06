@@ -35,6 +35,7 @@ type DataTableProps<T> = {
   advancedFilters?: ReactNode;
   advancedToggleLabel?: string;
   advancedDefaultOpen?: boolean;
+  advancedTogglePlacement?: 'toolbar' | 'footer';
   manualFiltering?: boolean;
   manualSorting?: boolean;
   sortKey?: string | null;
@@ -67,6 +68,7 @@ type DataTableProps<T> = {
   columnVisibilityEnabled?: boolean;
   columnVisibilityPreferenceKey?: string;
   settingsGroupVisible?: boolean;
+  settingsControlsIconOnly?: boolean;
 };
 
 type SortDirection = 'asc' | 'desc';
@@ -147,6 +149,7 @@ export default function DataTable<T>({
   advancedFilters,
   advancedToggleLabel = 'Advanced',
   advancedDefaultOpen = false,
+  advancedTogglePlacement = 'toolbar',
   manualFiltering = false,
   manualSorting = false,
   sortKey: externalSortKey,
@@ -179,6 +182,7 @@ export default function DataTable<T>({
   columnVisibilityEnabled = true,
   columnVisibilityPreferenceKey,
   settingsGroupVisible = true,
+  settingsControlsIconOnly = false,
 }: DataTableProps<T>) {
   const resolvedDefaultPageSize = defaultPageSize ?? pageSizeOptions[0] ?? 10;
   const [internalQuery, setInternalQuery] = useState('');
@@ -525,6 +529,9 @@ export default function DataTable<T>({
     ? `table table-sm w-full [&>thead>tr>th]:align-middle [&>tbody>tr>td]:align-middle ${softZebraClassName}`
     : `table w-full [&>thead>tr>th]:align-middle [&>tbody>tr>td]:align-middle ${softZebraClassName}`;
   const showSettingsGroup = settingsGroupVisible && columnVisibilityEnabled;
+  const showAdvancedInToolbar = Boolean(advancedFilters && advancedTogglePlacement === 'toolbar');
+  const showAdvancedInFooter = Boolean(advancedFilters && advancedTogglePlacement === 'footer');
+  const showSettingsControls = showSettingsGroup || showAdvancedInFooter;
   const showPagesGroup = totalPages > 1;
 
   return (
@@ -532,7 +539,7 @@ export default function DataTable<T>({
       {title ? <h2 className='text-lg font-semibold'>{title}</h2> : null}
       {description ? <p className='text-sm opacity-70'>{description}</p> : null}
 
-      {showSearch || advancedFilters ? (
+      {showSearch || showAdvancedInToolbar ? (
         <div className={`flex flex-wrap items-center gap-2 ${toolbarClassName}`.trim()}>
           {showSearch ? (
             <div className='relative w-full md:max-w-sm'>
@@ -558,7 +565,7 @@ export default function DataTable<T>({
               </button>
             </div>
           ) : null}
-          {advancedFilters ? (
+          {showAdvancedInToolbar ? (
             <button
               type='button'
               className={`btn btn-outline btn-sm gap-1.5 ${
@@ -640,58 +647,81 @@ export default function DataTable<T>({
         <div
           className={`grid grid-cols-2 gap-2 lg:flex lg:items-center lg:justify-between lg:gap-4 ${paginationClassName}`.trim()}
         >
-          {showSettingsGroup ? (
+          {showSettingsControls ? (
             <div className='min-w-0 text-xs text-base-content/75'>
               <div className='flex items-center justify-start'>
-                <div
-                  ref={columnsDropdownRef}
-                  className={`dropdown dropdown-top ${columnsDropdownOpen ? 'dropdown-open' : ''}`}
-                >
-                  <button
-                    type='button'
-                    className='btn btn-outline btn-sm h-8 min-h-8 gap-2 border-base-300 bg-base-100/90 px-3 shadow-sm hover:bg-base-200'
-                    onClick={() => setColumnsDropdownOpen((prev) => !prev)}
-                    aria-expanded={columnsDropdownOpen}
-                  >
-                    <LuColumns3 className='h-4 w-4' />
-                    <span>{columnsToggleLabel}</span>
-                  </button>
-                  {columnsDropdownOpen ? (
-                    <ul className='menu dropdown-content z-[40] mb-2 w-56 rounded-box border border-base-300/70 bg-base-100 p-2 shadow-lg'>
-                      {columns.map((column) => {
-                        const isVisible = resolvedColumnVisibility[column.key] !== false;
-                        const disableHide = isVisible && visibleColumnCount <= 1;
+                <div className='inline-flex items-center gap-2'>
+                  {showSettingsGroup ? (
+                    <div
+                      ref={columnsDropdownRef}
+                      className={`dropdown dropdown-top ${columnsDropdownOpen ? 'dropdown-open' : ''}`}
+                    >
+                      <button
+                        type='button'
+                        className={`btn btn-outline btn-sm h-8 min-h-8 border-base-300 bg-base-100/90 shadow-sm hover:bg-base-200 ${
+                          settingsControlsIconOnly ? 'w-8 px-0' : 'gap-2 px-3'
+                        }`}
+                        onClick={() => setColumnsDropdownOpen((prev) => !prev)}
+                        aria-expanded={columnsDropdownOpen}
+                        aria-label={columnsToggleLabel}
+                      >
+                        <LuColumns3 className='h-4 w-4' />
+                        {settingsControlsIconOnly ? <span className='sr-only'>{columnsToggleLabel}</span> : <span>{columnsToggleLabel}</span>}
+                      </button>
+                      {columnsDropdownOpen ? (
+                        <ul className='menu dropdown-content z-[40] mb-2 w-56 rounded-box border border-base-300/70 bg-base-100 p-2 shadow-lg'>
+                          {columns.map((column) => {
+                            const isVisible = resolvedColumnVisibility[column.key] !== false;
+                            const disableHide = isVisible && visibleColumnCount <= 1;
 
-                        return (
-                          <li key={`column-visibility-${column.key}`}>
-                            <label className='label cursor-pointer justify-start gap-2 px-2 py-1.5'>
-                              <input
-                                type='checkbox'
-                                className='checkbox checkbox-xs'
-                                checked={isVisible}
-                                disabled={disableHide}
-                                onChange={(event) => {
-                                  const nextVisible = event.target.checked;
-                                  setColumnVisibilityState((prev) => ({
-                                    ...mergeColumnVisibilityState(defaultColumnVisibility, prev),
-                                    [column.key]: nextVisible,
-                                  }));
-                                  setColumnsDropdownOpen(false);
-                                }}
-                              />
-                              <span className='label-text text-xs'>{column.label}</span>
-                            </label>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                            return (
+                              <li key={`column-visibility-${column.key}`}>
+                                <label className='label cursor-pointer justify-start gap-2 px-2 py-1.5'>
+                                  <input
+                                    type='checkbox'
+                                    className='checkbox checkbox-xs'
+                                    checked={isVisible}
+                                    disabled={disableHide}
+                                    onChange={(event) => {
+                                      const nextVisible = event.target.checked;
+                                      setColumnVisibilityState((prev) => ({
+                                        ...mergeColumnVisibilityState(defaultColumnVisibility, prev),
+                                        [column.key]: nextVisible,
+                                      }));
+                                      setColumnsDropdownOpen(false);
+                                    }}
+                                  />
+                                  <span className='label-text text-xs'>{column.label}</span>
+                                </label>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {showAdvancedInFooter ? (
+                    <button
+                      type='button'
+                      className={`btn btn-outline btn-sm h-8 min-h-8 border-base-300 bg-base-100/90 shadow-sm hover:bg-base-200 ${
+                        settingsControlsIconOnly ? 'w-8 px-0' : 'gap-1.5 px-3'
+                      } ${
+                        advancedOpen ? 'border-base-content/25 bg-base-200 text-base-content hover:bg-base-200' : ''
+                      }`}
+                      onClick={() => setAdvancedOpen((prev) => !prev)}
+                      aria-expanded={advancedOpen}
+                      aria-label={advancedToggleLabel}
+                    >
+                      <LuSlidersHorizontal className='h-3.5 w-3.5' />
+                      {settingsControlsIconOnly ? <span className='sr-only'>{advancedToggleLabel}</span> : <span>{advancedToggleLabel}</span>}
+                    </button>
                   ) : null}
                 </div>
               </div>
             </div>
           ) : null}
 
-          <div className={`min-w-0 text-xs text-base-content/75 ${showSettingsGroup ? '' : 'col-span-2'}`}>
+          <div className={`min-w-0 text-xs text-base-content/75 ${showSettingsControls ? '' : 'col-span-2'}`}>
             <div className='flex items-center justify-between gap-3'>
               <span>{rowsTotalLabel}: {totalRowsCount}</span>
               <span className='inline-flex items-center gap-2'>
