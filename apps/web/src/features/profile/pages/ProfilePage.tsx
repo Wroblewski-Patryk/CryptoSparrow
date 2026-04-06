@@ -1,6 +1,6 @@
 'use client';
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { LuKey, LuSettings, LuSubscript, LuUser, LuUserRound } from "react-icons/lu";
 import { useI18n } from "../../../i18n/I18nProvider";
 
@@ -51,21 +51,7 @@ export default function ProfilePage() {
     { label: copy.tabs.security, key: "security", hash: "security", icon: <LuSettings className="h-4 w-4" aria-hidden /> },
   ];
 
-  const hashToTab = useMemo(() => {
-    const map = new Map<string, ProfileTabKey>();
-    for (const tab of tabs) {
-      map.set(tab.hash, tab.key);
-    }
-    return map;
-  }, [tabs]);
-
-  const [activeTab, setActiveTab] = useState<ProfileTabKey>(() => {
-    if (typeof window === "undefined") return "basic";
-    const hash = window.location.hash.replace(/^#/, "").trim();
-    return hashToTab.get(hash) ?? "basic";
-  });
-
-  if (!activeTab) return null;
+  const [activeTab, setActiveTab] = useState<ProfileTabKey>("basic");
 
   return (
     <section className="w-full">
