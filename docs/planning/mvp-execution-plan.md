@@ -550,13 +550,13 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `LDUX-08 test(web-loading-ux): add regression coverage for progress bar lifecycle and key skeleton rendering states`
 - [x] `LDUX-09 qa(web-dashboard): run manual desktop/mobile smoke and capture evidence`
 
-## Phase 34 - Cache Runtime Hardening (Remaining)
-- [ ] `CACHE-02 test(api-headers): add route tests asserting no-store/vary headers on protected endpoints`
-- [ ] `CACHE-04 feat(web-sw-lifecycle): add service-worker update strategy (registration update + activation handoff) to reduce stale clients after deploy`
-- [ ] `CACHE-05 test(web-pwa): add regression checks for market/dashboard runtime requests not served from SW cache`
-- [ ] `CACHE-07 docs(runbook): add stale-cache incident playbook with clear verify/mitigate/rollback steps`
-- [ ] `CACHE-08 feat(web-runtime): add explicit stale-data guard in dashboard/bots runtime (age watchdog + transparent warning state)`
-- [ ] `CACHE-09 test(web-runtime): cover stale-age warning and recovery after fresh payload arrival`
+## Phase 34 - Cache Runtime Hardening
+- [x] `CACHE-02 test(api-headers): add route tests asserting no-store/vary headers on protected endpoints`
+- [x] `CACHE-04 feat(web-sw-lifecycle): add service-worker update strategy (registration update + activation handoff) to reduce stale clients after deploy`
+- [x] `CACHE-05 test(web-pwa): add regression checks for market/dashboard runtime requests not served from SW cache`
+- [x] `CACHE-07 docs(runbook): add stale-cache incident playbook with clear verify/mitigate/rollback steps`
+- [x] `CACHE-08 feat(web-runtime): add explicit stale-data guard in dashboard/bots runtime (age watchdog + transparent warning state)`
+- [x] `CACHE-09 test(web-runtime): cover stale-age warning and recovery after fresh payload arrival`
 
 ## Phase 35 - Production Excellence (Remaining)
 - [ ] `PEX-02 feat(api-runtime): enforce dedupe key persistence + replay-safe execution guards for side-effecting runtime actions`
@@ -600,6 +600,8 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `DBACT-10 qa(smoke): manual verification on real paper-session timeline (open -> dca -> close) including fee/pnl/margin coherence`
 
 ## Progress Log
+- 2026-04-06: Completed `CACHE-04`, `CACHE-05`, `CACHE-07`, `CACHE-08`, and `CACHE-09` by implementing safe SW update/activation handoff (`sw.js` + `ServiceWorkerRegistration.tsx`), adding PWA cache-contract + SW registration regressions (`serviceWorkerCacheContract.test.ts`, `ServiceWorkerRegistration.test.tsx`), adding runtime stale-data guardrails for Dashboard/Bots (`HomeLiveWidgets.tsx`, `BotsManagement.tsx`, `BotsMonitoringTab.tsx`) with stale warning copy in translations, adding stale-cache incident runbook (`docs/operations/stale-cache-incident-playbook.md`), and extending stale warning/recovery tests in Dashboard/Bots suites; validated with `pnpm --filter web exec vitest run src/ui/pwa/serviceWorkerCacheContract.test.ts src/ui/pwa/ServiceWorkerRegistration.test.tsx src/features/dashboard-home/components/HomeLiveWidgets.test.tsx src/features/bots/components/BotsManagement.test.tsx` and `pnpm --filter api exec vitest run src/router/cacheHeaders.test.ts`.
+- 2026-04-06: Completed `CACHE-02` by extending `cacheHeaders` route regression tests to assert `Vary: Origin` alongside no-store headers on protected namespaces (`/auth`, `/dashboard`, `/admin`) using an allowed origin request context; validated with `pnpm --filter api run test -- src/router/cacheHeaders.test.ts`.
 - 2026-04-05: Reconciled planning backlog across canonical/non-canonical docs by reintroducing open work into `mvp-execution-plan` (`Phase 34..36`), refreshing `mvp-next-commits` (`NOW/NEXT`) with executable unchecked tasks, and syncing completed checkboxes in detailed plans (`BMOD/CACHE/LFIN/EXPH/EXCTX`) plus resolved decision states in `open-decisions.md`.
 - 2026-04-05: Completed `LDUX-06` by migrating loading views in Markets/Strategies/Logs to skeleton compositions (`SkeletonTableRows`, `SkeletonFormBlock`, `SkeletonCardBlock`) and removing generic loading alerts from those paths; validated with `pnpm --filter web run typecheck` and `pnpm --filter web exec vitest run src/features/markets/components/MarketsFlow.test.tsx src/features/logs/components/AuditTrailView.test.tsx`.
 - 2026-04-05: Completed `LDUX-07` by migrating backtest list/details loading paths to skeleton compositions (`BacktestsListView`, `BacktestRunDetails`) while preserving timeline phase messaging (`timelineLoadingPrefix` + phase labels) in symbol timeline rendering.

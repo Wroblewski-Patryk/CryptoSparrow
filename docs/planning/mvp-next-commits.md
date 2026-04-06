@@ -7,21 +7,27 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `CACHE-02 test(api-headers): add route tests asserting no-store/vary headers on protected endpoints`
-- [ ] `CACHE-04 feat(web-sw-lifecycle): add service-worker update strategy (registration update + activation handoff) to reduce stale clients after deploy`
-- [ ] `CACHE-05 test(web-pwa): add regression checks for market/dashboard runtime requests not served from SW cache`
-- [ ] `CACHE-08 feat(web-runtime): add explicit stale-data guard in dashboard/bots runtime (age watchdog + transparent warning state)`
-- [ ] `CACHE-09 test(web-runtime): cover stale-age warning and recovery after fresh payload arrival`
-## NEXT
-- [ ] `CACHE-07 docs(runbook): add stale-cache incident playbook with clear verify/mitigate/rollback steps`
 - [ ] `PEX-02 feat(api-runtime): enforce dedupe key persistence + replay-safe execution guards for side-effecting runtime actions`
 - [ ] `PEX-03 test(runtime): add crash/retry regression suite proving no duplicate open/close orders after restart`
 - [ ] `PEX-05 feat(runtime-recovery): implement bounded auto-restart policy with cooldown and max-attempt guardrails`
 - [ ] `PEX-06 test(runtime): add long-running soak test for session continuity (heartbeat freshness, auto-restart trace, no stuck CANCELED loop)`
+- [ ] `PEX-08 feat(obs-alerts): define alert thresholds for stale runtime, repeated restarts, and reconciliation drift`
+## NEXT
+- [ ] `PEX-09 docs(runbook): publish incident triage matrix (symptoms -> checks -> mitigations -> rollback)`
+- [ ] `PEX-10 qa(manual-chaos): run controlled runtime failure drills (ws-drop, delayed exchange ack, stale heartbeat) and attach evidence`
+- [ ] `PEX-11 feat(obs-health): add runtime health endpoint contract for readiness/liveness with queue/backlog freshness`
+- [ ] `PEX-12 test(api-health): add regression coverage for health endpoint semantics under normal/degraded/stalled runtime`
+- [ ] `PEX-13 feat(runtime-reconcile): add startup reconciliation pass for orphan runtime sessions/orders after unclean shutdown`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `CACHE-09 test(web-runtime): cover stale-age warning and recovery after fresh payload arrival`
+- [x] `CACHE-08 feat(web-runtime): add explicit stale-data guard in dashboard/bots runtime (age watchdog + transparent warning state)`
+- [x] `CACHE-07 docs(runbook): add stale-cache incident playbook with clear verify/mitigate/rollback steps`
+- [x] `CACHE-05 test(web-pwa): add regression checks for market/dashboard runtime requests not served from SW cache`
+- [x] `CACHE-04 feat(web-sw-lifecycle): add service-worker update strategy (registration update + activation handoff) to reduce stale clients after deploy`
+- [x] `CACHE-02 test(api-headers): add route tests asserting no-store/vary headers on protected endpoints`
 - [x] `LDUX-09 qa(web-dashboard): run manual desktop/mobile smoke and capture evidence`
 - [x] `LDUX-08 test(web-loading-ux): add regression coverage for progress bar lifecycle and key skeleton rendering states`
 - [x] `LDUX-07 feat(web-backtests): migrate list/details loading states to skeletons and preserve timeline phase messaging`
