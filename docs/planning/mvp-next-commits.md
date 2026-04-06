@@ -17,7 +17,7 @@ Operational queue for one-task execution runs.
 - [x] `PEX-15 test(security): add regression checks for invalid/expired secret combinations and fail-safe startup`
 - [x] `PEX-16 feat(release-gates): add mandatory post-deploy runtime freshness check (bots/sessions/signals not stale)`
 - [x] `PEX-17 feat(rollback-guard): define automatic rollback trigger conditions for runtime-critical regressions`
-- [ ] `PEX-18 docs(release-checklist): update deployment checklist with runtime+cache+stream validation sequence`
+- [x] `PEX-18 docs(release-checklist): update deployment checklist with runtime+cache+stream validation sequence`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 

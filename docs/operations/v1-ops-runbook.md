@@ -38,10 +38,13 @@ pnpm run workers/prod
    - VPS compose fallback: `docs/operations/vps-docker-compose-fallback-guide.md`
 7. Run smoke command pack:
    - `pnpm run ops:deploy:smoke`
-6. Validate post-deploy probes:
+8. Validate post-deploy probes:
    - `GET /health` returns `200`
    - `GET /ready` returns `200`
-7. Smoke test auth login and dashboard load.
+   - `GET /workers/runtime-freshness` returns `200` with `status=PASS`
+9. Evaluate rollback guard conditions:
+   - `pnpm run ops:deploy:rollback-guard -- --base-url https://<target-api> --auth-token <ADMIN_JWT>`
+10. Smoke test auth login and dashboard load.
 
 ## Ops Endpoint Proxy Trust Contract
 Operational endpoints (`/metrics`, `/alerts`, `/workers/*`) are protected by auth + role + network guard.

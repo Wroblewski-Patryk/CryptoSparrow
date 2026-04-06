@@ -62,14 +62,24 @@ Required minimal smoke:
 
 Failure effect: candidate blocked from promotion.
 
+### G7 - Runtime Freshness + Cache/Stream Gate
+Required:
+- `GET /workers/runtime-freshness` returns `200` with `status=PASS`,
+- no rollback-critical runtime alerts are active (`worker_heartbeat_missing`, `market_data_staleness`, `runtime_signal_lag_stale`, `runtime_restarts_repeated(SEV-1)`, `runtime_reconciliation_drift(SEV-1)`),
+- protected API routes maintain no-store cache contract (`/auth`, `/dashboard`, `/admin`),
+- market stream freshness remains within configured threshold.
+
+Failure effect: prod rollback trigger condition (runtime-critical regression).
+
 ## Stage Promotion Rule
-Promotion to PROD is allowed only when **all required gates G1..G6 pass** for the same candidate SHA.
+Promotion to PROD is allowed only when **all required gates G1..G7 pass** for the same candidate SHA.
 
 ## Prod Post-Deploy Rule
 After promotion, required post-deploy verification includes:
 - G3 API,
 - G4 Web,
-- G5 Workers.
+- G5 Workers,
+- G7 Runtime freshness + cache/stream.
 
 If any required post-deploy gate fails -> automatic rollback policy applies.
 

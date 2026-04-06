@@ -41,8 +41,30 @@
 - [x] Worker endpoints healthy:
   - `/workers/health`,
   - `/workers/ready`.
+- [x] Runtime freshness gate healthy:
+  - `/workers/runtime-freshness`.
 - [ ] Queue lag metrics reviewed and within baseline.
 - [ ] Incident contacts and escalation chain confirmed.
+
+### Mandatory Post-Deploy Validation Sequence (Runtime + Cache + Stream)
+1. API baseline:
+   - `GET /health` -> `200`
+   - `GET /ready` -> `200`
+2. Worker baseline:
+   - `GET /workers/health` -> `200`
+   - `GET /workers/ready` -> `200`
+3. Runtime freshness:
+   - `GET /workers/runtime-freshness` -> `200`, payload `status=PASS`
+4. Runtime alert sanity:
+   - `GET /alerts` and confirm no rollback-critical alerts (`worker_heartbeat_missing`, `market_data_staleness`, `runtime_signal_lag_stale`, `runtime_restarts_repeated(SEV-1)`, `runtime_reconciliation_drift(SEV-1)`).
+5. Cache and stream contract:
+   - protected routes return no-store headers (`/auth|/dashboard|/admin`),
+   - service worker runtime cache stays static-only (no API/runtime payload caching),
+   - stream freshness (`WORKER_LAST_MARKET_DATA_AT`) within threshold and no stale alert.
+6. Gate commands (recommended order):
+   - `pnpm run ops:deploy:smoke`
+   - `pnpm run ops:deploy:runtime-freshness -- --base-url https://<target-api> --auth-token <ADMIN_JWT>`
+   - `pnpm run ops:deploy:rollback-guard -- --base-url https://<target-api> --auth-token <ADMIN_JWT>`
 
 ## Security and Risk Gates
 - [x] JWT rotation window policy verified.
