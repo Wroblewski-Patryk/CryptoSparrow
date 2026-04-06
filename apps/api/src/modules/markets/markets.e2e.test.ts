@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { app } from '../../index';
 import { prisma } from '../../prisma/client';
 
+const PLACEHOLDER_EXCHANGES = ['BYBIT', 'OKX', 'KRAKEN', 'COINBASE'] as const;
+
 const registerAndLogin = async (email: string) => {
   const agent = request.agent(app);
   const res = await agent.post('/auth/register').send({
@@ -225,20 +227,23 @@ describe('Markets module contract', () => {
 
   it('returns explicit not-implemented contract for placeholder market catalog requests', async () => {
     const agent = await registerAndLogin('markets-placeholder-catalog@example.com');
+    for (const exchange of PLACEHOLDER_EXCHANGES) {
+      const res = await agent.get('/dashboard/markets/catalog').query({
+        exchange,
+        baseCurrency: 'USDT',
+        marketType: 'FUTURES',
+      });
 
-    const res = await agent.get('/dashboard/markets/catalog').query({
-      exchange: 'OKX',
-      baseCurrency: 'USDT',
-      marketType: 'FUTURES',
-    });
-
-    expect(res.status).toBe(501);
-    expect(res.body.error.message).toContain('Exchange OKX does not support MARKET_CATALOG');
-    expect(res.body.error.details).toEqual({
-      code: 'EXCHANGE_NOT_IMPLEMENTED',
-      exchange: 'OKX',
-      capability: 'MARKET_CATALOG',
-    });
+      expect(res.status).toBe(501);
+      expect(res.body.error.message).toContain(
+        `Exchange ${exchange} does not support MARKET_CATALOG`
+      );
+      expect(res.body.error.details).toEqual({
+        code: 'EXCHANGE_NOT_IMPLEMENTED',
+        exchange,
+        capability: 'MARKET_CATALOG',
+      });
+    }
   });
 
   it('blocks universe update/delete when linked symbol group is used by active bot', async () => {

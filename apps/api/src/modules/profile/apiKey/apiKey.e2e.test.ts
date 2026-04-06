@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { app } from "../../../index";
 import { prisma } from "../../../prisma/client";
 
+const PLACEHOLDER_EXCHANGES = ["BYBIT", "OKX", "KRAKEN", "COINBASE"] as const;
+
 const registerAndLogin = async (email: string) => {
   const agent = request.agent(app);
   const res = await agent.post("/auth/register").send({
@@ -301,20 +303,23 @@ describe("API Keys security contract", () => {
 
   it("returns explicit not-implemented contract for placeholder API key probes", async () => {
     const agent = await registerAndLogin("apikey-placeholder-probe@example.com");
+    for (const exchange of PLACEHOLDER_EXCHANGES) {
+      const res = await agent.post("/dashboard/profile/apiKeys/test").send({
+        exchange,
+        apiKey: `${exchange}KEY12345678`,
+        apiSecret: `${exchange}SECRET12345678`,
+      });
 
-    const res = await agent.post("/dashboard/profile/apiKeys/test").send({
-      exchange: "OKX",
-      apiKey: "OKXKEY12345678",
-      apiSecret: "OKXSECRET12345678",
-    });
-
-    expect(res.status).toBe(501);
-    expect(res.body.error.message).toContain("Exchange OKX does not support API_KEY_PROBE");
-    expect(res.body.error.details).toEqual({
-      code: "EXCHANGE_NOT_IMPLEMENTED",
-      exchange: "OKX",
-      capability: "API_KEY_PROBE",
-    });
+      expect(res.status).toBe(501);
+      expect(res.body.error.message).toContain(
+        `Exchange ${exchange} does not support API_KEY_PROBE`
+      );
+      expect(res.body.error.details).toEqual({
+        code: "EXCHANGE_NOT_IMPLEMENTED",
+        exchange,
+        capability: "API_KEY_PROBE",
+      });
+    }
   });
 
   it("enforces ownership on rotate and revoke actions", async () => {

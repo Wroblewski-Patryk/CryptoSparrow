@@ -4,6 +4,8 @@ import { app } from '../../index';
 import { prisma } from '../../prisma/client';
 import { runtimePositionAutomationService } from '../engine/runtimePositionAutomation.service';
 
+const PLACEHOLDER_EXCHANGES = ['BYBIT', 'OKX', 'KRAKEN', 'COINBASE'] as const;
+
 const registerAndLogin = async (email: string) => {
   const agent = request.agent(app);
   const res = await agent.post('/auth/register').send({
@@ -524,6 +526,49 @@ describe('Bots module contract', () => {
     });
     expect(persisted.exchange).toBe('OKX');
     expect(persisted.isActive).toBe(false);
+  });
+
+  it('keeps fail-closed PAPER activation contract across all placeholder exchanges', async () => {
+    const email = 'bots-placeholder-exchange-matrix@example.com';
+    const agent = await registerAndLogin(email);
+    const strategyId = await createStrategy(agent, 'Placeholder Exchange Matrix Strategy');
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+
+    for (const exchange of PLACEHOLDER_EXCHANGES) {
+      const marketUniverse = await prisma.marketUniverse.create({
+        data: {
+          userId: user.id,
+          name: `Placeholder Exchange Universe ${exchange}`,
+          exchange,
+          marketType: 'FUTURES',
+          baseCurrency: 'USDT',
+          whitelist: ['BTCUSDT'],
+          blacklist: [],
+        },
+      });
+      const symbolGroup = await prisma.symbolGroup.create({
+        data: {
+          userId: user.id,
+          marketUniverseId: marketUniverse.id,
+          name: `Placeholder Exchange Group ${exchange}`,
+          symbols: ['BTCUSDT'],
+        },
+      });
+
+      const activeCreateRes = await agent.post('/dashboard/bots').send({
+        ...createPayload({ strategyId, marketGroupId: symbolGroup.id }),
+        name: `Placeholder ${exchange} Bot`,
+        isActive: true,
+        mode: 'PAPER',
+      });
+
+      expect(activeCreateRes.status).toBe(501);
+      expect(activeCreateRes.body.error.details).toEqual({
+        code: 'EXCHANGE_NOT_IMPLEMENTED',
+        exchange,
+        capability: 'PAPER_PRICING_FEED',
+      });
+    }
   });
 
   it('accepts marketUniverse id in create payload and auto-creates symbol group when missing', async () => {
