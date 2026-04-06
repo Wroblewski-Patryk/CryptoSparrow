@@ -26,7 +26,7 @@ export default function DashboardPage() {
   return (
     <section className='w-full'>
       <PageTitle
-        title={t('dashboard.home.pageTitle')}
+        title={t('dashboard.common.dashboard')}
         icon={<LuHouse className='h-5 w-5' />}
         variant="flat"
         breadcrumb={[
