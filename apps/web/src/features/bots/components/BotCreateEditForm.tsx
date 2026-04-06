@@ -9,6 +9,8 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { EmptyState, ErrorState, LoadingState } from "@/ui/components/ViewState";
 import { listMarketUniverses } from "@/features/markets/services/markets.service";
 import { MarketUniverse } from "@/features/markets/types/marketUniverse.type";
+import { fetchApiKeys } from "@/features/profile/services/apiKeys.service";
+import type { ApiKey } from "@/features/profile/types/apiKey.type";
 import { listStrategies } from "@/features/strategies/api/strategies.api";
 import { StrategyDto } from "@/features/strategies/types/StrategyForm.type";
 import { supportsExchangeCapability } from "@/features/exchanges/exchangeCapabilities";
@@ -105,6 +107,7 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
   const [error, setError] = useState<string | null>(null);
   const [strategies, setStrategies] = useState<StrategyDto[]>([]);
   const [marketGroups, setMarketGroups] = useState<MarketUniverse[]>([]);
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [form, setForm] = useState<BotFormState>({
     name: "",
     mode: "PAPER",
@@ -119,12 +122,14 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
     setLoading(true);
     setError(null);
     try {
-      const [strategyRows, marketGroupRows] = await Promise.all([
+      const [strategyRows, marketGroupRows, apiKeyRows] = await Promise.all([
         listStrategies(),
         listMarketUniverses(),
+        fetchApiKeys().catch(() => [] as ApiKey[]),
       ]);
       setStrategies(strategyRows);
       setMarketGroups(marketGroupRows);
+      setApiKeys(apiKeyRows);
 
       if (!isEditMode || !editId) {
         setForm(buildDefaultForm({ strategies: strategyRows, marketGroups: marketGroupRows }));
@@ -179,12 +184,18 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
     [marketGroups, form.marketGroupId]
   );
   const selectedExchange = selectedMarketGroup?.exchange ?? "BINANCE";
+  const liveExecutionSupported = supportsExchangeCapability(selectedExchange, "LIVE_EXECUTION");
+  const compatibleLiveApiKeys = useMemo(
+    () => apiKeys.filter((key) => key.exchange === selectedExchange),
+    [apiKeys, selectedExchange]
+  );
+  const hasCompatibleLiveApiKey = compatibleLiveApiKeys.length > 0;
   const canActivateForMode = useMemo(() => {
     if (form.mode === "LIVE") {
-      return supportsExchangeCapability(selectedExchange, "LIVE_EXECUTION");
+      return liveExecutionSupported;
     }
     return supportsExchangeCapability(selectedExchange, "PAPER_PRICING_FEED");
-  }, [form.mode, selectedExchange]);
+  }, [form.mode, liveExecutionSupported, selectedExchange]);
 
   useEffect(() => {
     if (!form.isActive || canActivateForMode) return;
@@ -205,6 +216,10 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
     }
     if (form.isActive && !canActivateForMode) {
       toast.error(t("dashboard.bots.create.placeholderActivationBlocked"));
+      return;
+    }
+    if (form.mode === "LIVE" && form.isActive && liveExecutionSupported && !hasCompatibleLiveApiKey) {
+      toast.error(t("dashboard.bots.create.liveApiKeyMissingValidation"));
       return;
     }
 
@@ -382,6 +397,27 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
               {selectedMarketGroup?.whitelist.length ?? 0} | {t("dashboard.bots.create.blacklistLabel")}:{" "}
               {selectedMarketGroup?.blacklist.length ?? 0}
             </p>
+            <div className="mt-2 space-y-1 border-t border-base-300/60 pt-2">
+              <p className="opacity-70">{t("dashboard.bots.create.liveApiKeyCompatibilityLabel")}</p>
+              {!liveExecutionSupported ? (
+                <p className="text-xs">{t("dashboard.bots.create.liveApiKeyCompatibilityUnavailable")}</p>
+              ) : hasCompatibleLiveApiKey ? (
+                <p className="text-success">
+                  {t("dashboard.bots.create.liveApiKeyCompatibilityReady").replace(
+                    "{count}",
+                    String(compatibleLiveApiKeys.length)
+                  )}
+                </p>
+              ) : (
+                <p className="text-warning">
+                  {t("dashboard.bots.create.liveApiKeyCompatibilityMissing").replace(
+                    "{exchange}",
+                    selectedExchange
+                  )}
+                </p>
+              )}
+              <p className="text-xs opacity-70">{t("dashboard.bots.create.liveApiKeyCompatibilityAction")}</p>
+            </div>
             {!canActivateForMode ? (
               <div className="mt-2 space-y-1">
                 <span className="badge badge-xs badge-warning badge-outline">

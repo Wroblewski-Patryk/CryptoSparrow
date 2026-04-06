@@ -583,6 +583,15 @@ export const translations: Record<Locale, TranslationSchema> = {
           marketSummaryLabel: "Exchange / market",
           whitelistLabel: "Whitelist",
           blacklistLabel: "Blacklist",
+          liveApiKeyCompatibilityLabel: "LIVE API key compatibility",
+          liveApiKeyCompatibilityUnavailable:
+            "Selected exchange does not support LIVE execution yet (placeholder adapter).",
+          liveApiKeyCompatibilityReady: "Compatible LIVE keys found for this exchange: {count}.",
+          liveApiKeyCompatibilityMissing:
+            "No compatible LIVE API key found for exchange {exchange}. Active LIVE start would fail.",
+          liveApiKeyCompatibilityAction: "Manage keys in Exchanges -> Connections.",
+          liveApiKeyMissingValidation:
+            "Add at least one compatible LIVE API key for selected exchange before activating LIVE bot.",
           sectionStrategy: "3. Strategy context",
           strategyLabel: "Strategy",
           strategyAria: "Bot strategy",
@@ -1187,6 +1196,15 @@ export const translations: Record<Locale, TranslationSchema> = {
           marketSummaryLabel: "Gielda / rynek",
           whitelistLabel: "Whitelist",
           blacklistLabel: "Blacklist",
+          liveApiKeyCompatibilityLabel: "Zgodnosc kluczy LIVE API",
+          liveApiKeyCompatibilityUnavailable:
+            "Wybrana gielda nie wspiera jeszcze LIVE execution (adapter placeholder).",
+          liveApiKeyCompatibilityReady: "Znaleziono zgodne klucze LIVE dla tej gieldy: {count}.",
+          liveApiKeyCompatibilityMissing:
+            "Brak zgodnego klucza LIVE API dla gieldy {exchange}. Aktywacja LIVE sie nie powiedzie.",
+          liveApiKeyCompatibilityAction: "Zarzadzaj kluczami w Exchanges -> Connections.",
+          liveApiKeyMissingValidation:
+            "Dodaj co najmniej jeden zgodny klucz LIVE API dla wybranej gieldy przed aktywacja bota LIVE.",
           sectionStrategy: "3. Kontekst strategii",
           strategyLabel: "Strategia",
           strategyAria: "Strategia bota",
