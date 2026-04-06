@@ -25,6 +25,7 @@ pnpm run workers/prod
    - `JWT_SECRET_PREVIOUS` (optional during rotation)
    - `JWT_SECRET_PREVIOUS_UNTIL` (optional, ISO datetime)
    - database and redis connection settings
+   - canonical secret owners/cadence: `docs/security/v1-secrets-inventory.md`
 3. Run CI-equivalent checks:
    - `pnpm --filter api build`
    - `pnpm --filter web build`

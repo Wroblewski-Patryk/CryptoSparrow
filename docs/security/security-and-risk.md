@@ -15,6 +15,9 @@ For MVP user-facing wording (banner, modal, consent checkbox), use:
 For API-key handling policy (create/rotate/revoke cadence), use:
 - `docs/security/api-key-lifecycle-policy.md`
 
+For canonical runtime/ops secret owners and rotation cadence, use:
+- `docs/security/v1-secrets-inventory.md`
+
 For ownership-boundary coverage snapshot, use:
 - `docs/security/security-ownership-audit.md`
 
