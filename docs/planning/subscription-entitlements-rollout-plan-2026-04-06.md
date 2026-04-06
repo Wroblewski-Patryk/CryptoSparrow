@@ -25,6 +25,7 @@ Status: active implementation plan for collaborator-ready account limits and fut
 - Multi-gateway orchestration in first iteration.
 
 ## Domain Contract (Target)
+- Canonical contract: `docs/architecture/subscription-tier-entitlements-contract.md`.
 - `SubscriptionPlan` catalog entity:
   - slug/code, display name, active flag, sort order.
   - monthly price + currency.
@@ -37,7 +38,7 @@ Status: active implementation plan for collaborator-ready account limits and fut
   - metadata for idempotent reconciliation.
 
 ## Tiny-Commit Sequence
-- [ ] `SUBS-01 docs(contract): freeze tier catalog (FREE/ADVANCED/PROFESSIONAL), default assignment rules, and entitlement payload schema`
+- [x] `SUBS-01 docs(contract): freeze tier catalog (FREE/ADVANCED/PROFESSIONAL), default assignment rules, and entitlement payload schema`
 - [ ] `SUBS-02 feat(db): add SubscriptionPlan + UserSubscription + PaymentIntent models with safe migration and indexes`
 - [ ] `SUBS-03 feat(seed): seed three plans; default new users to FREE; map owner account (wroblewskipatryk@gmail.com) to PROFESSIONAL`
 - [ ] `SUBS-04 feat(api-profile): expose subscription catalog + active subscription in profile endpoints (my-account ready)`

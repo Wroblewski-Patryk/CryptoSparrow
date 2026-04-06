@@ -7,21 +7,23 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `V1B-01 fix(api-backtest-core): restore deterministic TTP event emission in replay core and align TTP field semantics with runtime parser contract`
-- [x] `V1B-02 test(api-parity): add explicit regression asserting identical TTP/TSL config interpretation between replay parser and runtime automation parser`
-- [x] `V1B-03 test(api-runtime-live): extend runtime/positions e2e coverage for bot-managed lifecycle actions and manual-managed ignore behavior`
-- [x] `V1B-04 test(confidence-pack): run full backtest + runtime positions confidence pack (api+web) and capture fresh evidence`
-- [x] `V1B-05 release(v1-exit-gates): refresh RC external-gates/sign-off artifacts and include Binance live-ops verification checklist`
-## NEXT
-- [ ] `SUBS-01 docs(contract): freeze FREE/ADVANCED/PROFESSIONAL catalog + default assignment/entitlement schema`
 - [ ] `SUBS-02 feat(db): add subscription-plan/user-subscription/payment-intent tables with safe migration`
 - [ ] `SUBS-03 feat(seed): seed FREE/ADVANCED/PROFESSIONAL; default new users to FREE; owner to PROFESSIONAL`
 - [ ] `SUBS-04 feat(api-profile): return subscription catalog + active plan for My Account`
 - [ ] `SUBS-05 feat(web-profile): render subscription list and highlight active plan on profile`
+- [ ] `SUBS-06 feat(entitlements-core): add central entitlement resolver and enforce bot-count limits by active plan`
+## NEXT
+- [ ] `SUBS-07 feat(api-admin): add admin CRUD for plan pricing + entitlement limits`
+- [ ] `SUBS-08 feat(web-admin): add subscription-plan admin modal for price/limit editing`
+- [ ] `SUBS-09 feat(payment-abstraction): add provider-agnostic checkout/payment-intent contract`
+- [ ] `SUBS-10 feat(payment-provider-stripe): add first Stripe adapter behind payment abstraction`
+- [ ] `SUBS-11 test(api+web): add regression coverage for assignment/highlight/enforcement flows`
+- [ ] `SUBS-12 docs(runbook): publish operator/admin guide for subscription edits and payment-provider switch`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `SUBS-01 docs(contract): freeze FREE/ADVANCED/PROFESSIONAL catalog + default assignment/entitlement schema`
 - [x] `CACHE-09 test(web-runtime): cover stale-age warning and recovery after fresh payload arrival`
 - [x] `CACHE-08 feat(web-runtime): add explicit stale-data guard in dashboard/bots runtime (age watchdog + transparent warning state)`
 - [x] `CACHE-07 docs(runbook): add stale-cache incident playbook with clear verify/mitigate/rollback steps`

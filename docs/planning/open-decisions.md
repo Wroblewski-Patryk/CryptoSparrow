@@ -23,15 +23,15 @@ This file tracks intentionally unresolved architecture choices so implementation
     - one global allowed interval catalog in V1 (shared across cadence and indicator/timeframe selectors): `1m`, `5m`, `15m`, `30m`, `1h`, `4h`, `8h`, `12h`, `1d`, `1w`, `1M`.
     - minimum allowed interval is `1m` (no sub-minute values in V1).
     - V1 default cadence profile by plan:
-      - `free`: market scan `5m`, position scan `5m`.
-      - `simple`: market scan `1h`, position scan `1h`.
-      - `advanced`: market scan `1m`, position scan `1m`.
+      - `FREE`: market scan `5m`, position scan `5m`.
+      - `ADVANCED`: market scan `1h`, position scan `1h`.
+      - `PROFESSIONAL`: market scan `1m`, position scan `1m`.
     - `free` plan allows only low-load cadence options: `5m` (default) and `15m`.
     - cadence selector UX uses that same global interval list for all plans; unavailable values are visible but disabled by entitlement.
     - in `free`, only low-load options are enabled (`5m`, `15m`); remaining options stay visible but disabled.
     - entitlement mapping for editable plans:
-      - `simple`: enabled `1m`, `5m`, `15m`, `30m`, `1h` (with `1h` default).
-      - `advanced`: enabled full global interval catalog (with `1m` default).
+      - `ADVANCED`: enabled `1m`, `5m`, `15m`, `30m`, `1h` (with `1h` default).
+      - `PROFESSIONAL`: enabled full global interval catalog (with `1m` default).
     - these are default plan baselines and may be tuned from admin controls if production load data requires adjustment.
 
 ## Deployment Topology and Domain Split (DEV/STAGE/PROD)
@@ -410,20 +410,21 @@ This file tracks intentionally unresolved architecture choices so implementation
   - owner bootstrap override is required for `wroblewskipatryk@gmail.com` -> `PROFESSIONAL`.
   - previous tier naming containing `simple` is treated as legacy terminology and should be migrated to current catalog before release.
   - payment provider is intentionally undecided at decision level; implementation should use provider-agnostic gateway abstraction with Stripe as first adapter candidate.
+  - canonical contract reference: `docs/architecture/subscription-tier-entitlements-contract.md`.
 - V1 decision:
   - include an admin panel in V1 for critical business controls (plan pricing, bot limits, mode entitlements, sensitive app settings).
   - keep public and authenticated user dashboard separated from admin surface.
   - launch with default plan presets:
-    - `free`: max 1 bot, PAPER only, max 1 strategy per bot, backtest history limited to last 30 days, max 1 concurrent backtest job.
+    - `FREE`: max 1 bot, PAPER only, max 1 strategy per bot, backtest history limited to last 30 days, max 1 concurrent backtest job.
       - seed split: `LIVE=0`, `PAPER=1`.
       - no LIVE entitlement and no temporary LIVE trial in V1.
-    - `simple`: fixed slot model: 1 LIVE bot slot + 1 PAPER bot slot.
-      - seed split: `LIVE=1`, `PAPER=1`.
-      - no mode-slot substitution in seed model (cannot use the LIVE seed slot as an additional PAPER seed slot).
-      - backtest concurrency is limited (max 3 concurrent backtest jobs).
-    - `advanced`: max 3 bots, PAPER + LIVE.
+    - `ADVANCED`: max 3 bots, PAPER + LIVE.
       - seed split: `LIVE=3`, `PAPER=3`.
       - all 3 seed LIVE bots may run concurrently when risk-consent and account safety checks pass.
+      - backtest concurrency is limited (max 3 concurrent backtest jobs).
+    - `PROFESSIONAL`: max 10 bots, PAPER + LIVE.
+      - seed split: `LIVE=10`, `PAPER=10`.
+      - all 10 seed LIVE bots may run concurrently when risk-consent and account safety checks pass.
       - backtest concurrency limit: max 10 concurrent backtest jobs.
 - Product rule:
   - all product capabilities should stay visible in UI across plans; entitlement controls usage (locked state), not feature discoverability.
@@ -431,9 +432,9 @@ This file tracks intentionally unresolved architecture choices so implementation
   - existing inactive bots already created before reaching or after later limit reductions remain visible/manageable (edit/delete), but do not grant extra creation capacity.
   - when bot-creation cap is reached, `Create bot` remains visible in disabled state with tooltip/helper context and one-plan `Upgrade to ...` CTA (no control hiding).
   - defaults are seed values; effective limits are managed from admin panel (no code deploy required for routine adjustments).
-  - for `simple`, `PAPER` and `LIVE` bot caps are configured independently by admin; seed defaults are `PAPER=1`, `LIVE=1`.
-  - for `advanced`, `PAPER` and `LIVE` bot caps are configured independently by admin; seed defaults are `PAPER=3`, `LIVE=3`.
-  - for `free`, `PAPER` and `LIVE` bot caps are configured independently by admin; seed defaults are `PAPER=1`, `LIVE=0`.
+  - for `ADVANCED`, `PAPER` and `LIVE` bot caps are configured independently by admin; seed defaults are `PAPER=3`, `LIVE=3`.
+  - for `PROFESSIONAL`, `PAPER` and `LIVE` bot caps are configured independently by admin; seed defaults are `PAPER=10`, `LIVE=10`.
+  - for `FREE`, `PAPER` and `LIVE` bot caps are configured independently by admin; seed defaults are `PAPER=1`, `LIVE=0`.
   - upgrade to a higher plan is immediate after paying only the price difference for the current billing period.
   - entitlement changes after successful upgrade payment must apply immediately in current user session (no forced logout/login).
   - failed upgrade payment must not change plan state or entitlements (no partial activation).
@@ -499,11 +500,11 @@ This file tracks intentionally unresolved architecture choices so implementation
   - send one centralized subscription-loss notification at T+1 minute after subscription expiry event (single event notification, no repeated spam loop).
   - in `PAST_DUE`, dashboard access remains available for history review and settings management; only paid runtime actions are blocked.
   - disabled LIVE actions should include concise contextual helper text (for example: "Oplac subskrypcje, aby ponownie wlaczyc LIVE"), without duplicating full billing banners.
-  - locked feature CTA pattern must include exactly one target plan hint: the lowest plan above current tier that unlocks the feature (for example: `Upgrade to: Simple`; if not enough, `Upgrade to: Advanced`).
+  - locked feature CTA pattern must include exactly one target plan hint: the lowest plan above current tier that unlocks the feature (for example: `Upgrade to: Advanced`; if not enough, `Upgrade to: Professional`).
   - CSV history export is available in active and `PAST_DUE` states with plan-based max export window:
-    - `free`: up to last 3 months.
-    - `simple`: up to last 6 months.
-    - `advanced`: up to last 12 months.
+    - `FREE`: up to last 3 months.
+    - `ADVANCED`: up to last 6 months.
+    - `PROFESSIONAL`: up to last 12 months.
   - CSV export request rate limit: default max 1 export per user per 10 minutes.
   - admin can tune this cooldown based on observed average report generation time and infrastructure load.
 - V2 direction:
