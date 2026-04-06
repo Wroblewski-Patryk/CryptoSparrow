@@ -567,7 +567,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `PEX-09 docs(runbook): publish incident triage matrix (symptoms -> checks -> mitigations -> rollback)`
 - [x] `PEX-10 feat(ops-backup): add repeatable backup verification command set for target deployment profile`
 - [x] `PEX-11 chore(ops-restore-drill): automate restore drill evidence generation with pass/fail contract`
-- [ ] `PEX-12 docs(ops-rto-rpo): document RTO/RPO targets and acceptable degradation windows`
+- [x] `PEX-12 docs(ops-rto-rpo): document RTO/RPO targets and acceptable degradation windows`
 - [ ] `PEX-13 docs(secrets-inventory): publish canonical secret inventory + ownership + rotation cadence`
 - [ ] `PEX-14 feat(security-rotation): add rotation readiness checks and startup validation for critical secrets`
 - [ ] `PEX-15 test(security): add regression checks for invalid/expired secret combinations and fail-safe startup`
@@ -600,6 +600,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `DBACT-10 qa(smoke): manual verification on real paper-session timeline (open -> dca -> close) including fee/pnl/margin coherence`
 
 ## Progress Log
+- 2026-04-06: Completed `PEX-12` by publishing `docs/operations/v1-rto-rpo-targets.md` with service-class RTO/RPO targets and acceptable degradation windows, then linking RTO/RPO validation into the canonical `v1-ops-runbook` rollback/alerting references.
 - 2026-04-06: Completed `PEX-11` by adding restore-drill evidence automation (`scripts/runRestoreDrillEvidence.mjs`) with explicit PASS/FAIL contract artifacts (`_artifacts-restore-drill-*.json` + `v1-restore-drill-*.md`), wiring profile commands (`ops:db:restore-drill:*`), and integrating local external-gates pipeline DB step with restore-drill evidence output.
 - 2026-04-06: Completed `PEX-10` by adding profile-driven backup verification command set (`ops:db:backup-verify` with `local/stage/prod` aliases), introducing `scripts/runBackupVerificationProfile.mjs` wrapper over restore-check automation, and documenting profile env contract + command usage in RC runbook/checklist docs.
 - 2026-04-06: Completed `PEX-09` by publishing runtime incident triage matrix in `docs/operations/runtime-incident-triage-matrix.md` (symptoms -> checks -> mitigations -> rollback triggers) and linking it from `v1-ops-runbook` as canonical first-response reference for runtime-critical incidents.

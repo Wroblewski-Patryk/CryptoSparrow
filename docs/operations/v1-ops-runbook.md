@@ -76,6 +76,8 @@ Recommended Coolify/Traefik practice:
    - dashboard list pages
    - exchange order path in paper mode
 6. Record rollback reason and owner in incident log.
+7. Validate incident against RTO/RPO targets:
+   - `docs/operations/v1-rto-rpo-targets.md`
 
 ## Incident Playbook
 ### Severity Levels
@@ -105,6 +107,8 @@ Recommended Coolify/Traefik practice:
 - For deploy-specific rollback and gates, use:
   - `docs/operations/deployment-rollback-playbook.md`
   - `docs/operations/deployment-readiness-gates.md`
+- RTO/RPO baseline and degradation windows:
+  - `docs/operations/v1-rto-rpo-targets.md`
 
 ## Ownership
 - Incident commander: backend on-call owner.
