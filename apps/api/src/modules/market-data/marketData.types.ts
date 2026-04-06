@@ -1,23 +1,32 @@
 import { z } from 'zod';
 
+const TradeExchangeSchema = z.enum(['BINANCE', 'BYBIT', 'OKX', 'KRAKEN', 'COINBASE']);
+const TradeMarketSchema = z.enum(['FUTURES', 'SPOT']);
+
 export const OhlcvRequestSchema = z.object({
+  exchange: TradeExchangeSchema.default('BINANCE'),
+  marketType: TradeMarketSchema.default('FUTURES'),
   symbol: z.string().trim().min(1),
   timeframe: z.string().trim().min(1),
   limit: z.number().int().min(1).max(1000).default(200),
 });
 
 export const MarketSnapshotRequestSchema = z.object({
+  exchange: TradeExchangeSchema.default('BINANCE'),
+  marketType: TradeMarketSchema.default('FUTURES'),
   symbol: z.string().trim().min(1),
 });
 
 export const OrderBookRequestSchema = z.object({
+  exchange: TradeExchangeSchema.default('BINANCE'),
+  marketType: TradeMarketSchema.default('FUTURES'),
   symbol: z.string().trim().min(1),
   limit: z.number().int().min(1).max(500).default(50),
 });
 
-export type OhlcvRequest = z.infer<typeof OhlcvRequestSchema>;
-export type MarketSnapshotRequest = z.infer<typeof MarketSnapshotRequestSchema>;
-export type OrderBookRequest = z.infer<typeof OrderBookRequestSchema>;
+export type OhlcvRequest = z.input<typeof OhlcvRequestSchema>;
+export type MarketSnapshotRequest = z.input<typeof MarketSnapshotRequestSchema>;
+export type OrderBookRequest = z.input<typeof OrderBookRequestSchema>;
 
 export interface OhlcvCandle {
   timestamp: number;

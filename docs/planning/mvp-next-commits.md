@@ -8,7 +8,7 @@ Operational queue for one-task execution runs.
 
 ## NOW
 - [x] `EXCTX-08 feat(api-bots): enforce bot/group/apiKey venue-context compatibility on create/activate`
-- [ ] `EXCTX-09 refactor(engine): introduce venue-aware market data provider contract`
+- [x] `EXCTX-09 refactor(engine): introduce venue-aware market data provider contract`
 - [ ] `EXCTX-10 refactor(runtime): add exchange to stream-event context and enforce exchange+marketType match`
 - [ ] `EXCTX-11 feat(execution): bind live execution account selection to bot venue context`
 - [ ] `EXCTX-12 feat(web-backtest-creator): show explicit exchange/marketType/base context bound to market group`

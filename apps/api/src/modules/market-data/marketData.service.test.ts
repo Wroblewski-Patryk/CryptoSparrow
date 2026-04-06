@@ -45,6 +45,30 @@ describe('MarketDataService cache behavior', () => {
     expect(provider.fetchOHLCV).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps OHLCV cache isolated by exchange and marketType', async () => {
+    const provider: MarketDataProvider = {
+      fetchOHLCV: vi.fn().mockResolvedValue(baseCandles),
+    };
+    const service = new MarketDataService(provider, { cacheTtlMs: 60_000 });
+
+    await service.ingestOHLCV({
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      timeframe: '1m',
+      limit: 100,
+    });
+    await service.ingestOHLCV({
+      exchange: 'BINANCE',
+      marketType: 'SPOT',
+      symbol: 'BTCUSDT',
+      timeframe: '1m',
+      limit: 100,
+    });
+
+    expect(provider.fetchOHLCV).toHaveBeenCalledTimes(2);
+  });
+
   it('refreshes cache after TTL expires', async () => {
     const provider: MarketDataProvider = {
       fetchOHLCV: vi
@@ -120,7 +144,12 @@ describe('MarketDataService cache behavior', () => {
     const orderBook = await service.getOrderBook({ symbol: 'BTCUSDT', limit: 20 });
 
     expect(orderBook.bids[0][0]).toBe(100);
-    expect(provider.fetchOrderBook).toHaveBeenCalledWith({ symbol: 'BTCUSDT', limit: 20 });
+    expect(provider.fetchOrderBook).toHaveBeenCalledWith({
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      limit: 20,
+    });
   });
 
   it('fetches funding rate and open interest snapshots from optional provider', async () => {
@@ -144,8 +173,16 @@ describe('MarketDataService cache behavior', () => {
 
     expect(funding.fundingRate).toBe(0.0005);
     expect(openInterest.openInterest).toBe(12_500_000);
-    expect(provider.fetchFundingRate).toHaveBeenCalledWith({ symbol: 'BTCUSDT' });
-    expect(provider.fetchOpenInterest).toHaveBeenCalledWith({ symbol: 'BTCUSDT' });
+    expect(provider.fetchFundingRate).toHaveBeenCalledWith({
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+    });
+    expect(provider.fetchOpenInterest).toHaveBeenCalledWith({
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+    });
   });
 
   it('returns explicit errors when optional data providers are not configured', async () => {

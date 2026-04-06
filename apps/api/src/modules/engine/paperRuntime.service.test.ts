@@ -37,7 +37,13 @@ describe('PaperRuntimeService', () => {
 
     expect(marketDataService.ingestOHLCV).toHaveBeenCalledTimes(3);
     expect(marketDataService.ingestOHLCV).toHaveBeenCalledWith(
-      { symbol: 'BTCUSDT', timeframe: '1m', limit: 200 },
+      {
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        symbol: 'BTCUSDT',
+        timeframe: '1m',
+        limit: 200,
+      },
       true
     );
     expect(onTick).toHaveBeenCalledTimes(3);

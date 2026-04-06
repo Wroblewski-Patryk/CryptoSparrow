@@ -584,7 +584,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `EXCTX-06 feat(api-markets): extend market-universe and catalog contracts with exchange context`
 - [x] `EXCTX-07 feat(api-backtests): derive and persist exchange context from selected market universe`
 - [x] `EXCTX-08 feat(api-bots): enforce bot/group/apiKey venue-context compatibility on create/activate`
-- [ ] `EXCTX-09 refactor(engine): introduce venue-aware market data provider contract`
+- [x] `EXCTX-09 refactor(engine): introduce venue-aware market data provider contract`
 - [ ] `EXCTX-10 refactor(runtime): add exchange to stream-event context and enforce exchange+marketType match`
 - [ ] `EXCTX-11 feat(execution): bind live execution account selection to bot venue context`
 - [ ] `EXCTX-12 feat(web-backtest-creator): show explicit exchange/marketType/base context bound to market group`
@@ -600,6 +600,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `DBACT-10 qa(smoke): manual verification on real paper-session timeline (open -> dca -> close) including fee/pnl/margin coherence`
 
 ## Progress Log
+- 2026-04-06: Completed `EXCTX-09` by introducing venue-aware market-data contracts (`exchange` + `marketType`) for OHLCV/order-book/snapshot requests, isolating cache keys by venue context, and extending paper-runtime ingestion tasks to carry venue context with deterministic defaults; validated with `pnpm --filter api test -- src/modules/market-data/marketData.service.test.ts src/modules/engine/paperRuntime.service.test.ts` and `pnpm --filter api run typecheck`.
 - 2026-04-06: Completed `EXCTX-08` by adding explicit bots API regression for venue-context compatibility on create/activate (`apiKeyId` exchange mismatch hard-fail + activation failure when no compatible key exists, with success path for matching exchange key), and extending bots e2e cleanup with `RuntimeExecutionDedupe` FK-safe deletion; validated with `pnpm --filter api test -- src/modules/bots/bots.e2e.test.ts -t "enforces live api-key exchange compatibility on create and activation paths"` and `pnpm --filter api run typecheck`.
 - 2026-04-06: Completed `EXCTX-07` by extending backtest run context derivation to persist full venue snapshot (`exchange`, `marketType`, `baseCurrency`, `marketUniverseId`) from selected market universe (with deterministic fallback for symbol-only runs), plus e2e assertions for both direct and market-universe run creation paths; validated with `pnpm --filter api test -- src/modules/backtests/backtests.e2e.test.ts` and `pnpm --filter api run typecheck`.
 - 2026-04-06: Completed `EXCTX-06` by locking exchange-context coverage in Markets API contracts: added regression assertions for universe update persistence of `exchange/marketType/baseCurrency` and refreshed test cleanup for `RuntimeExecutionDedupe` FK safety; validated with `pnpm --filter api test -- src/modules/markets/markets.e2e.test.ts`.

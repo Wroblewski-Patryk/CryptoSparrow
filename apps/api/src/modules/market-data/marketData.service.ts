@@ -143,7 +143,7 @@ export class MarketDataService {
   }
 
   private toCacheKey(input: OhlcvRequest) {
-    return `${input.symbol.toUpperCase()}|${input.timeframe}|${input.limit}`;
+    return `${input.exchange}|${input.marketType}|${input.symbol.toUpperCase()}|${input.timeframe}|${input.limit}`;
   }
 
   private pruneExpired(now: number) {

@@ -20,6 +20,8 @@ type WorkerRuntimeLogger = {
 };
 
 export type PaperRuntimeTask = {
+  exchange?: 'BINANCE' | 'BYBIT' | 'OKX' | 'KRAKEN' | 'COINBASE';
+  marketType?: 'FUTURES' | 'SPOT';
   symbol: string;
   timeframe: string;
   limit?: number;
@@ -106,7 +108,9 @@ export class PaperRuntimeService {
   }
 
   private async processTask(task: PaperRuntimeTask) {
-    const taskKey = `${task.symbol.toUpperCase()}|${task.timeframe}`;
+    const exchange = task.exchange ?? 'BINANCE';
+    const marketType = task.marketType ?? 'FUTURES';
+    const taskKey = `${exchange}|${marketType}|${task.symbol.toUpperCase()}|${task.timeframe}`;
     if (this.inFlightTaskKeys.has(taskKey)) {
       this.logger.warn({
         event: 'worker.paper_runtime.task_skipped_inflight',
@@ -122,6 +126,8 @@ export class PaperRuntimeService {
     try {
       const candles = await this.marketDataService.ingestOHLCV(
         {
+          exchange,
+          marketType,
           symbol: task.symbol,
           timeframe: task.timeframe,
           limit: task.limit ?? 200,
