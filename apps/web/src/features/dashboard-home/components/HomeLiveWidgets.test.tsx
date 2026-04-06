@@ -30,6 +30,8 @@ describe("HomeLiveWidgets", () => {
     vi.useRealTimers();
     vi.clearAllMocks();
     lookupCoinIconsMock.mockReset();
+    lookupCoinIconsMock.mockResolvedValue(new Map());
+    getBotRuntimeGraphMock.mockReset();
   });
 
   const renderSubject = () => {
