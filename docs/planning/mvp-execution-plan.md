@@ -603,10 +603,11 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `V1B-01 fix(api-backtest-core): restore deterministic TTP event emission in replay core and align TTP field semantics with runtime parser contract`
 - [x] `V1B-02 test(api-parity): add explicit regression asserting identical TTP/TSL config interpretation between replay parser and runtime automation parser`
 - [x] `V1B-03 test(api-runtime-live): extend runtime/positions e2e coverage for bot-managed lifecycle actions and manual-managed ignore behavior`
-- [ ] `V1B-04 test(confidence-pack): run full backtest + runtime positions confidence pack (api+web) and capture fresh evidence`
+- [x] `V1B-04 test(confidence-pack): run full backtest + runtime positions confidence pack (api+web) and capture fresh evidence`
 - [ ] `V1B-05 release(v1-exit-gates): refresh RC external-gates/sign-off artifacts and include Binance live-ops verification checklist`
 
 ## Progress Log
+- 2026-04-06: Completed `V1B-04` by running full confidence packs for backtest + runtime/positions (API) and runtime/positions (Web), and publishing evidence artifact `docs/operations/v1b-confidence-pack-2026-04-06.md` (all targeted suites green in sequential execution mode).
 - 2026-04-06: Completed `V1B-03` by extending `runtime-orchestration-smoke.e2e` with explicit BOT-managed lifecycle assertions (`OPEN/CLOSE` trades + `managementMode`) and MANUAL-managed runtime ignore scenario (`manual_managed_symbol` with zero new orders), plus FK-safe cleanup for runtime session tables.
 - 2026-04-06: Completed `V1B-02` by adding runtime-vs-replay parser parity regression (`runtimeBacktestParserParity.test.ts`) locking identical `TTP/TSL` mapping and DCA level/fraction interpretation, plus basic-mode trailing disable parity; exported runtime parser helper for deterministic contract testing.
 - 2026-04-06: Completed `V1B-01` by fixing trailing-state carryover in backtest replay/service lifecycle loop (`dcaProbe` no longer clears active TTP/TSL memory), restoring deterministic `TTP` emission in replay regression scenario and keeping lifecycle parity golden suite green.
