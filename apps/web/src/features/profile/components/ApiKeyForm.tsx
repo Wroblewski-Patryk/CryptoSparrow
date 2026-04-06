@@ -348,214 +348,222 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
 
   return (
     <form className="space-y-4 w-full" onSubmit={handleSubmit}>
-      <div className="form-control w-full">
-        <label className="label pl-0">
-          <span className="label-text text-left w-full">{copy.keyName}</span>
-        </label>
-        <input
-          className="input input-bordered w-full"
-          type="text"
-          aria-label={copy.keyName}
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          required
-        />
-      </div>
-      <div className="form-control w-full">
-        <label className="label pl-0">
-          <span className="label-text text-left w-full">{copy.exchange}</span>
-        </label>
-        <select
-          className="select select-bordered w-full"
-          aria-label={copy.exchange}
-          value={exchange}
-          onChange={(e) => setExchange((e.target.value as ExchangeOption) || "BINANCE")}
-        >
-          {EXCHANGES.map((ex) => (
-            <option key={ex} value={ex}>
-              {ex}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="alert alert-info text-sm">
-        <div className="space-y-2">
-          <span className="badge badge-sm badge-neutral">{copy.exchangeRequirementsTitle}</span>
-          <div className="space-y-1">
-            <p className="font-semibold">{copy.appSupportTitle}</p>
-            <ul className="list-disc pl-5">
-              <li>
-                {copy.supportApiProbe}:{" "}
-                <span className={exchangeSupportsProbe ? "text-success" : "text-warning"}>
-                  {exchangeSupportsProbe ? copy.supportAvailable : copy.supportUnavailable}
-                </span>
-              </li>
-              <li>
-                {copy.supportLiveExecution}:{" "}
-                <span className={exchangeSupportsLiveExecution ? "text-success" : "text-warning"}>
-                  {exchangeSupportsLiveExecution ? copy.supportAvailable : copy.supportUnavailable}
-                </span>
-              </li>
-            </ul>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
+        <div className="space-y-4">
+          <div className="form-control w-full">
+            <label className="label pl-0">
+              <span className="label-text text-left w-full">{copy.keyName}</span>
+            </label>
+            <input
+              className="input input-bordered w-full"
+              type="text"
+              aria-label={copy.keyName}
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              required
+            />
           </div>
-        </div>
-      </div>
-      {exchange === "BINANCE" ? (
-        <div className="alert alert-info text-sm">
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <p className="font-semibold">{copy.binancePermissionsTitle}</p>
-              <p>{copy.binancePermissionsLead}</p>
-              <ul className="list-disc pl-5">
-                <li>{copy.binancePermissionReading}</li>
-                <li>{copy.binancePermissionSpotMargin}</li>
-                <li>{copy.binancePermissionFutures}</li>
-              </ul>
-              <p className="opacity-80">{copy.binancePermissionsHint}</p>
-            </div>
+          <div className="form-control w-full">
+            <label className="label pl-0">
+              <span className="label-text text-left w-full">{copy.exchange}</span>
+            </label>
+            <select
+              className="select select-bordered w-full"
+              aria-label={copy.exchange}
+              value={exchange}
+              onChange={(e) => setExchange((e.target.value as ExchangeOption) || "BINANCE")}
+            >
+              {EXCHANGES.map((ex) => (
+                <option key={ex} value={ex}>
+                  {ex}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="alert alert-info text-sm">
             <div className="space-y-2">
-              <span className="badge badge-sm badge-neutral">{copy.ipWhitelistTitle}</span>
-            {binanceWhitelistIps.length > 0 ? (
-              <>
-                <p>{copy.ipWhitelistLead}</p>
-                <ul className="list-disc pl-5 font-mono">
-                  {binanceWhitelistIps.map((ip) => (
-                    <li key={ip}>{ip}</li>
+              <span className="badge badge-sm badge-neutral">{copy.exchangeRequirementsTitle}</span>
+              <div className="space-y-1">
+                <p className="font-semibold">{copy.appSupportTitle}</p>
+                <ul className="list-disc pl-5">
+                  <li>
+                    {copy.supportApiProbe}:{" "}
+                    <span className={exchangeSupportsProbe ? "text-success" : "text-warning"}>
+                      {exchangeSupportsProbe ? copy.supportAvailable : copy.supportUnavailable}
+                    </span>
+                  </li>
+                  <li>
+                    {copy.supportLiveExecution}:{" "}
+                    <span className={exchangeSupportsLiveExecution ? "text-success" : "text-warning"}>
+                      {exchangeSupportsLiveExecution ? copy.supportAvailable : copy.supportUnavailable}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          {exchange === "BINANCE" ? (
+            <div className="alert alert-info text-sm">
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <p className="font-semibold">{copy.binancePermissionsTitle}</p>
+                  <p>{copy.binancePermissionsLead}</p>
+                  <ul className="list-disc pl-5">
+                    <li>{copy.binancePermissionReading}</li>
+                    <li>{copy.binancePermissionSpotMargin}</li>
+                    <li>{copy.binancePermissionFutures}</li>
+                  </ul>
+                  <p className="opacity-80">{copy.binancePermissionsHint}</p>
+                </div>
+                <div className="space-y-2">
+                  <span className="badge badge-sm badge-neutral">{copy.ipWhitelistTitle}</span>
+                  {binanceWhitelistIps.length > 0 ? (
+                    <>
+                      <p>{copy.ipWhitelistLead}</p>
+                      <ul className="list-disc pl-5 font-mono">
+                        {binanceWhitelistIps.map((ip) => (
+                          <li key={ip}>{ip}</li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <p>{copy.ipWhitelistMissing}</p>
+                  )}
+                  <p className="opacity-80">{copy.ipWhitelistHint}</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+          {!exchangeSupportsProbe ? (
+            <div className="alert alert-info text-sm">
+              <div className="space-y-1">
+                <span className="badge badge-sm badge-warning badge-outline">PLACEHOLDER</span>
+                <span>{placeholderProbeInfo}</span>
+              </div>
+            </div>
+          ) : null}
+        </div>
+        <div className="space-y-4">
+          <div className="form-control w-full">
+            <label className="label pl-0">
+              <span className="label-text text-left w-full">{copy.apiKey}</span>
+            </label>
+            {isEdit && defaultValues?.maskedApiKey ? (
+              <div className="text-xs opacity-70 mb-1">
+                {copy.currentApiKey}: <span className="font-mono">{defaultValues.maskedApiKey}</span>
+              </div>
+            ) : null}
+            <input
+              className="input input-bordered w-full font-mono"
+              type="text"
+              aria-label={copy.apiKey}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder={isEdit ? copy.apiKeyPlaceholder : ""}
+              autoComplete="new-password"
+              data-form-type="other"
+              data-lpignore="true"
+              spellCheck={false}
+              required={!isEdit}
+            />
+          </div>
+          <div className="form-control w-full">
+            <label className="label pl-0">
+              <span className="label-text text-left w-full">{copy.apiSecret}</span>
+            </label>
+            <input
+              className="input input-bordered w-full font-mono"
+              type="password"
+              aria-label={copy.apiSecret}
+              value={apiSecret}
+              onChange={(e) => setApiSecret(e.target.value)}
+              placeholder={isEdit ? copy.apiSecretPlaceholder : ""}
+              autoComplete="new-password"
+              data-form-type="other"
+              data-lpignore="true"
+              spellCheck={false}
+              required={!isEdit}
+            />
+            {isEdit ? <p className="text-xs opacity-70 mt-1">{copy.editSecretHint}</p> : null}
+          </div>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-3">
+              <input
+                type="checkbox"
+                className="toggle toggle-primary"
+                checked={syncExternalPositions}
+                onChange={(e) => setSyncExternalPositions(e.target.checked)}
+              />
+              <span className="label-text">{copy.syncExternal}</span>
+            </label>
+          </div>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-3">
+              <input
+                type="checkbox"
+                className="toggle toggle-secondary"
+                checked={manageExternalPositions}
+                onChange={(e) => setManageExternalPositions(e.target.checked)}
+              />
+              <span className="label-text">{copy.manageExternal}</span>
+            </label>
+          </div>
+          {isManageBotListVisible ? (
+            <div className="rounded-box border border-base-300 bg-base-200/40 p-3 text-sm space-y-2">
+              <p className="font-semibold">{copy.manageBotsTitle}</p>
+              {manageBotsStatus === "loading" ? <p>{copy.manageBotsLoading}</p> : null}
+              {manageBotsStatus === "error" ? <p className="text-error">{copy.manageBotsLoadError}</p> : null}
+              {manageBotsStatus === "success" && manageableBotRows.length === 0 ? <p>{copy.manageBotsEmpty}</p> : null}
+              {manageBotsStatus === "success" && manageableBotRows.length > 0 ? (
+                <ul className="space-y-1.5">
+                  {manageableBotRows.map((bot) => (
+                    <li key={bot.id} className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium">{bot.name}</span>
+                      <span className="badge badge-outline badge-xs">{bot.marketType}</span>
+                      <span className={`badge badge-xs ${bot.bindingTone}`}>{bot.bindingLabel}</span>
+                    </li>
                   ))}
                 </ul>
-              </>
-            ) : (
-              <p>{copy.ipWhitelistMissing}</p>
-            )}
-            <p className="opacity-80">{copy.ipWhitelistHint}</p>
+              ) : null}
+              <p className="opacity-70">{copy.manageBotsHint}</p>
             </div>
-          </div>
-        </div>
-      ) : null}
-      {!exchangeSupportsProbe ? (
-        <div className="alert alert-info text-sm">
-          <div className="space-y-1">
-            <span className="badge badge-sm badge-warning badge-outline">PLACEHOLDER</span>
-            <span>{placeholderProbeInfo}</span>
-          </div>
-        </div>
-      ) : null}
-      <div className="form-control w-full">
-        <label className="label pl-0">
-          <span className="label-text text-left w-full">{copy.apiKey}</span>
-        </label>
-        {isEdit && defaultValues?.maskedApiKey ? (
-          <div className="text-xs opacity-70 mb-1">
-            {copy.currentApiKey}: <span className="font-mono">{defaultValues.maskedApiKey}</span>
-          </div>
-        ) : null}
-        <input
-          className="input input-bordered w-full font-mono"
-          type="text"
-          aria-label={copy.apiKey}
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          placeholder={isEdit ? copy.apiKeyPlaceholder : ""}
-          autoComplete="new-password"
-          data-form-type="other"
-          data-lpignore="true"
-          spellCheck={false}
-          required={!isEdit}
-        />
-      </div>
-      <div className="form-control w-full">
-        <label className="label pl-0">
-          <span className="label-text text-left w-full">{copy.apiSecret}</span>
-        </label>
-        <input
-          className="input input-bordered w-full font-mono"
-          type="password"
-          aria-label={copy.apiSecret}
-          value={apiSecret}
-          onChange={(e) => setApiSecret(e.target.value)}
-          placeholder={isEdit ? copy.apiSecretPlaceholder : ""}
-          autoComplete="new-password"
-          data-form-type="other"
-          data-lpignore="true"
-          spellCheck={false}
-          required={!isEdit}
-        />
-        {isEdit ? <p className="text-xs opacity-70 mt-1">{copy.editSecretHint}</p> : null}
-      </div>
-      <div className="form-control">
-        <label className="label cursor-pointer justify-start gap-3">
-          <input
-            type="checkbox"
-            className="toggle toggle-primary"
-            checked={syncExternalPositions}
-            onChange={(e) => setSyncExternalPositions(e.target.checked)}
-          />
-          <span className="label-text">{copy.syncExternal}</span>
-        </label>
-      </div>
-      <div className="form-control">
-        <label className="label cursor-pointer justify-start gap-3">
-          <input
-            type="checkbox"
-            className="toggle toggle-secondary"
-            checked={manageExternalPositions}
-            onChange={(e) => setManageExternalPositions(e.target.checked)}
-          />
-          <span className="label-text">{copy.manageExternal}</span>
-        </label>
-      </div>
-      {isManageBotListVisible ? (
-        <div className="rounded-box border border-base-300 bg-base-200/40 p-3 text-sm space-y-2">
-          <p className="font-semibold">{copy.manageBotsTitle}</p>
-          {manageBotsStatus === "loading" ? <p>{copy.manageBotsLoading}</p> : null}
-          {manageBotsStatus === "error" ? <p className="text-error">{copy.manageBotsLoadError}</p> : null}
-          {manageBotsStatus === "success" && manageableBotRows.length === 0 ? <p>{copy.manageBotsEmpty}</p> : null}
-          {manageBotsStatus === "success" && manageableBotRows.length > 0 ? (
-            <ul className="space-y-1.5">
-              {manageableBotRows.map((bot) => (
-                <li key={bot.id} className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium">{bot.name}</span>
-                  <span className="badge badge-outline badge-xs">{bot.marketType}</span>
-                  <span className={`badge badge-xs ${bot.bindingTone}`}>{bot.bindingLabel}</span>
-                </li>
-              ))}
-            </ul>
           ) : null}
-          <p className="opacity-70">{copy.manageBotsHint}</p>
         </div>
-      ) : null}
-      <div className="flex items-center gap-3 mt-2 min-h-8">
-        <button
-          className="btn btn-outline btn-info min-w-44 justify-center gap-2"
-          type="button"
-          onClick={handleTest}
-          disabled={testStatus === "loading" || !exchangeSupportsProbe}
-        >
-          {testStatus === "loading" ? (
-            <span className="loading loading-spinner loading-xs" aria-hidden="true" />
-          ) : null}
-          <span>
-            {testStatus === "loading"
-              ? copy.testing
-              : usesStoredTestMode
-                ? copy.testStoredConnection
-                : copy.testConnection}
-          </span>
-        </button>
-        {testStatus === "success" && <span className="text-success">{copy.ok}</span>}
-        {testStatus === "error" && <span className="text-error">{copy.error}</span>}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-h-8 items-center gap-3">
+          <button
+            className="btn btn-outline btn-info min-w-44 justify-center gap-2"
+            type="button"
+            onClick={handleTest}
+            disabled={testStatus === "loading" || !exchangeSupportsProbe}
+          >
+            {testStatus === "loading" ? (
+              <span className="loading loading-spinner loading-xs" aria-hidden="true" />
+            ) : null}
+            <span>
+              {testStatus === "loading"
+                ? copy.testing
+                : usesStoredTestMode
+                  ? copy.testStoredConnection
+                  : copy.testConnection}
+            </span>
+          </button>
+          {testStatus === "success" && <span className="text-success">{copy.ok}</span>}
+          {testStatus === "error" && <span className="text-error">{copy.error}</span>}
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="btn btn-primary" type="submit">
+            {copy.save}
+          </button>
+          <button className="btn btn-outline" type="button" onClick={onCancel}>
+            {copy.cancel}
+          </button>
+        </div>
       </div>
       {testMessage && (
         <p className={`text-sm ${testStatus === "error" ? "text-error" : "text-success"}`}>{testMessage}</p>
       )}
-      <div className="flex gap-2 mt-4">
-        <button className="btn btn-primary" type="submit">
-          {copy.save}
-        </button>
-        <button className="btn btn-outline" type="button" onClick={onCancel}>
-          {copy.cancel}
-        </button>
-      </div>
     </form>
   );
 }
