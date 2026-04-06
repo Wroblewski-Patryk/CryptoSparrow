@@ -22,6 +22,7 @@ model User {
   name      String?
   avatarUrl String?
   role      Role    @default(USER)
+  uiPreferences Json?
 
   apiKeys                  ApiKey[]
   strategies               Strategy[]
