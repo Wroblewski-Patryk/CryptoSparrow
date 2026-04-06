@@ -599,7 +599,15 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `EXPH-12 chore(qa): manual smoke checklist for colleague exchange testing (create/save/read + blocked execute)`
 - [x] `DBACT-10 qa(smoke): manual verification on real paper-session timeline (open -> dca -> close) including fee/pnl/margin coherence`
 
+## Phase 37 - V1 Live Stability Closure (Active)
+- [ ] `V1C-01 fix(api-backtest-core): restore deterministic TTP event emission in replay core and keep advanced close semantics stable`
+- [ ] `V1C-02 test(api-backtest): run full backtest parity/replay/e2e confidence pack and capture evidence`
+- [ ] `V1C-03 test(api+web-runtime): run runtime positions/live execution confidence pack (API + UI) and capture evidence`
+- [ ] `V1C-04 ops(v1-exit-gates): collect production SLO observation artifacts + queue-lag telemetry review + target backup/restore evidence`
+- [ ] `V1C-05 release(v1-signoff): refresh RC external-gates status/checklist and finalize formal sign-offs`
+
 ## Progress Log
+- 2026-04-06: Added active V1 closure phase (`V1C-01..V1C-05`) after stability verification pass: replay backtest regression on TTP path was confirmed as open issue, while runtime positions/live confidence pack stayed green; canonical closure sequence is documented in `docs/planning/v1-live-stability-closure-plan-2026-04-06.md`.
 - 2026-04-06: Completed `DBACT-10` by capturing paper-session timeline smoke evidence in `docs/operations/dbact-paper-session-timeline-smoke-2026-04-06.md`: verified `OPEN/DCA/CLOSE` monitoring timeline flow with focused bots API e2e filter scenario and confirmed Dashboard/Bots runtime history fee/pnl/margin coherence via targeted web regression suite (`HomeLiveWidgets` + `BotsManagement`).
 - 2026-04-06: Completed `EXPH-12` by publishing colleague-ready manual smoke checklist `docs/operations/exchange-placeholder-colleague-smoke-checklist-2026-04-06.md` covering placeholder exchange create/save/read paths in Markets/Profile and fail-closed blocked execution checks in Bots, with explicit expected `501 EXCHANGE_NOT_IMPLEMENTED` API contract and linked automated regression evidence commands.
 - 2026-04-06: Completed `EXPH-11` by extending API fail-closed contract coverage to full placeholder exchange matrix (`BYBIT/OKX/KRAKEN/COINBASE`): market catalog (`MARKET_CATALOG`), API key probe (`API_KEY_PROBE`), and bot active PAPER activation (`PAPER_PRICING_FEED`) now assert stable `501 + EXCHANGE_NOT_IMPLEMENTED` response details per exchange; validated with `pnpm --filter api test -- src/modules/markets/markets.e2e.test.ts src/modules/profile/apiKey/apiKey.e2e.test.ts src/modules/bots/bots.e2e.test.ts --testTimeout=30000`.

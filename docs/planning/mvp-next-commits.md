@@ -7,16 +7,11 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `EXCTX-08 feat(api-bots): enforce bot/group/apiKey venue-context compatibility on create/activate`
-- [x] `EXCTX-09 refactor(engine): introduce venue-aware market data provider contract`
-- [x] `EXCTX-10 refactor(runtime): add exchange to stream-event context and enforce exchange+marketType match`
-- [x] `EXCTX-11 feat(execution): bind live execution account selection to bot venue context`
-- [x] `EXCTX-12 feat(web-backtest-creator): show explicit exchange/marketType/base context bound to market group`
-- [x] `EXCTX-13 feat(web-bot-creator): show explicit venue context and live api-key compatibility hints`
-- [x] `EXCTX-14 test(web): add creator regression coverage for venue-context rendering and validation copy`
-- [x] `EXCTX-15 test(api+runtime): add context mismatch contract tests for backtest/bot/live paths`
-- [x] `EXCTX-16 test(e2e): add end-to-end venue consistency scenario (backtest->paper->live)`
-- [x] `EXCTX-17 chore(qa): manual smoke checklist and evidence capture for creator/runtime consistency`
+- [ ] `V1C-01 fix(api-backtest-core): restore deterministic TTP event emission in replay core and keep advanced close semantics stable`
+- [ ] `V1C-02 test(api-backtest): run full backtest parity/replay/e2e confidence pack and capture evidence`
+- [ ] `V1C-03 test(api+web-runtime): run runtime positions/live execution confidence pack (API + UI) and capture evidence`
+- [ ] `V1C-04 ops(v1-exit-gates): collect production SLO observation artifacts + queue-lag telemetry review + target backup/restore evidence`
+- [ ] `V1C-05 release(v1-signoff): refresh RC external-gates status/checklist and finalize formal sign-offs`
 ## NEXT
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
