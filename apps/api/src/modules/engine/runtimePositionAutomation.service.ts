@@ -124,7 +124,7 @@ type RuntimePositionAutomationDeps = {
   nowMs: () => number;
 };
 
-type RuntimeFallbackConfig = {
+export type RuntimeFallbackConfig = {
   dcaEnabled: boolean;
   dcaMaxAdds: number;
   dcaStepPercent: number;
@@ -478,7 +478,7 @@ const computePriceFromPercent = (
   return side === 'LONG' ? entryPrice * (1 - adjustedPct) : entryPrice * (1 + adjustedPct);
 };
 
-const buildPositionManagementInput = (
+export const buildPositionManagementInput = (
   position: Pick<
     Position,
     'side' | 'entryPrice' | 'leverage' | 'stopLoss' | 'takeProfit'
