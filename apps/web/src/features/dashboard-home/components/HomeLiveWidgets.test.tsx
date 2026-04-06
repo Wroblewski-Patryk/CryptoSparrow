@@ -5,6 +5,7 @@ import { I18nProvider } from "../../../i18n/I18nProvider";
 import HomeLiveWidgets from "./HomeLiveWidgets";
 
 const listBotsMock = vi.hoisted(() => vi.fn());
+const getBotRuntimeGraphMock = vi.hoisted(() => vi.fn());
 const listBotRuntimeSessionsMock = vi.hoisted(() => vi.fn());
 const listBotRuntimeSessionSymbolStatsMock = vi.hoisted(() => vi.fn());
 const listBotRuntimeSessionPositionsMock = vi.hoisted(() => vi.fn());
@@ -13,6 +14,7 @@ const lookupCoinIconsMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../../../features/bots/services/bots.service", () => ({
   listBots: listBotsMock,
+  getBotRuntimeGraph: getBotRuntimeGraphMock,
   listBotRuntimeSessions: listBotRuntimeSessionsMock,
   listBotRuntimeSessionSymbolStats: listBotRuntimeSessionSymbolStatsMock,
   listBotRuntimeSessionPositions: listBotRuntimeSessionPositionsMock,
@@ -33,6 +35,56 @@ describe("HomeLiveWidgets", () => {
   const renderSubject = () => {
     window.localStorage.setItem("cryptosparrow-locale", "pl");
     lookupCoinIconsMock.mockResolvedValue(new Map());
+    getBotRuntimeGraphMock.mockImplementation(async (botId: string) => ({
+      bot: {
+        id: botId,
+        userId: "u-1",
+        name: "Runtime bot",
+        mode: "PAPER",
+        marketType: "FUTURES",
+        positionMode: "ONE_WAY",
+        isActive: true,
+        liveOptIn: false,
+        maxOpenPositions: 3,
+        createdAt: "2026-03-31T10:00:00.000Z",
+        updatedAt: "2026-03-31T10:00:00.000Z",
+      },
+      marketGroups: [
+        {
+          id: "group-link-1",
+          botId,
+          symbolGroupId: "group-1",
+          lifecycleStatus: "ACTIVE",
+          executionOrder: 1,
+          isEnabled: true,
+          createdAt: "2026-03-31T10:00:00.000Z",
+          updatedAt: "2026-03-31T10:00:00.000Z",
+          symbolGroup: {
+            id: "group-1",
+            name: "Ulubione",
+            symbols: ["BTCUSDT", "ETHUSDT"],
+            marketUniverseId: "mu-1",
+          },
+          strategies: [
+            {
+              id: "group-strategy-1",
+              strategyId: "str-1",
+              priority: 1,
+              weight: 1,
+              isEnabled: true,
+              createdAt: "2026-03-31T10:00:00.000Z",
+              updatedAt: "2026-03-31T10:00:00.000Z",
+              strategy: {
+                id: "str-1",
+                name: "Test RSI",
+                interval: "5m",
+              },
+            },
+          ],
+        },
+      ],
+      legacyBotStrategies: [],
+    }));
     return render(
       <I18nProvider>
         <HomeLiveWidgets />
@@ -490,8 +542,150 @@ describe("HomeLiveWidgets", () => {
 
     const signalsAnchor = screen.getByText("SOLUSDT");
     const openPositionsTab = screen.getByRole("tab", { name: /Otwarte pozycje|Open positions/i });
-    expect(signalsAnchor.compareDocumentPosition(openPositionsTab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(openPositionsTab.compareDocumentPosition(signalsAnchor) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
+
+  it("shows stale-data warning after refresh gaps and clears it after fresh payload arrives", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    let shouldFailRefresh = false;
+
+    listBotsMock.mockResolvedValue([
+      {
+        id: "bot-stale",
+        name: "Stale Guard Bot",
+        mode: "PAPER",
+        paperStartBalance: 10000,
+        marketType: "FUTURES",
+        positionMode: "ONE_WAY",
+        strategyId: "str-stale",
+        isActive: true,
+        liveOptIn: false,
+        maxOpenPositions: 2,
+      },
+    ]);
+
+    listBotRuntimeSessionsMock.mockImplementation(async () => {
+      if (shouldFailRefresh) throw new Error("stale-refresh");
+      return [
+        {
+          id: "session-stale",
+          botId: "bot-stale",
+          mode: "PAPER",
+          status: "RUNNING",
+          startedAt: "2026-03-31T10:00:00.000Z",
+          finishedAt: null,
+          lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+          stopReason: null,
+          errorMessage: null,
+          createdAt: "2026-03-31T10:00:00.000Z",
+          updatedAt: "2026-03-31T10:05:00.000Z",
+          durationMs: 300000,
+          eventsCount: 4,
+          symbolsTracked: 1,
+          summary: {
+            totalSignals: 2,
+            dcaCount: 0,
+            closedTrades: 1,
+            realizedPnl: 10,
+          },
+        },
+      ];
+    });
+
+    listBotRuntimeSessionSymbolStatsMock.mockImplementation(async () => {
+      if (shouldFailRefresh) throw new Error("stale-refresh");
+      return {
+        sessionId: "session-stale",
+        items: [],
+        summary: {
+          totalSignals: 0,
+          longEntries: 0,
+          shortEntries: 0,
+          exits: 0,
+          dcaCount: 0,
+          closedTrades: 0,
+          winningTrades: 0,
+          losingTrades: 0,
+          realizedPnl: 0,
+          unrealizedPnl: 0,
+          totalPnl: 0,
+          grossProfit: 0,
+          grossLoss: 0,
+          feesPaid: 0,
+        },
+      };
+    });
+
+    listBotRuntimeSessionPositionsMock.mockImplementation(async () => {
+      if (shouldFailRefresh) throw new Error("stale-refresh");
+      return {
+        sessionId: "session-stale",
+        total: 0,
+        openCount: 0,
+        closedCount: 0,
+        openOrdersCount: 0,
+        showDynamicStopColumns: false,
+        window: {
+          startedAt: "2026-03-31T10:00:00.000Z",
+          finishedAt: "2026-03-31T10:05:00.000Z",
+        },
+        summary: {
+          realizedPnl: 0,
+          unrealizedPnl: 0,
+          feesPaid: 0,
+        },
+        openOrders: [],
+        openItems: [],
+        historyItems: [],
+      };
+    });
+
+    listBotRuntimeSessionTradesMock.mockImplementation(async () => {
+      if (shouldFailRefresh) throw new Error("stale-refresh");
+      return {
+        sessionId: "session-stale",
+        total: 0,
+        meta: {
+          page: 1,
+          pageSize: 25,
+          total: 0,
+          totalPages: 0,
+          hasPrev: false,
+          hasNext: false,
+        },
+        window: {
+          startedAt: "2026-03-31T10:00:00.000Z",
+          finishedAt: "2026-03-31T10:05:00.000Z",
+        },
+        items: [],
+      };
+    });
+
+    renderSubject();
+
+    await waitFor(() => {
+      expect(screen.getByText(/Aktualizacja:/i)).toBeInTheDocument();
+    });
+
+    shouldFailRefresh = true;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(21_000);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Dane runtime moga byc przestarzale/i)).toBeInTheDocument();
+    });
+
+    shouldFailRefresh = false;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(6_000);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Dane runtime moga byc przestarzale/i)).not.toBeInTheDocument();
+    });
+  }, 20_000);
 
   it("supports apply-based filters, tri-state sorting and preserves state on auto-refresh", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
