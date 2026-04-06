@@ -57,7 +57,8 @@
     "ops:rc:gates:refresh:summary": "pnpm run ops:rc:gates:refresh && pnpm run ops:rc:gates:summary",
     "ops:rc:gates:refresh:summary:strict": "node scripts/runRcRefreshSummaryStrict.mjs",
     "ops:deploy:smoke": "node scripts/deploySmokeCheck.mjs",
-    "ops:deploy:runtime-freshness": "node scripts/checkPostDeployRuntimeFreshness.mjs"
+    "ops:deploy:runtime-freshness": "node scripts/checkPostDeployRuntimeFreshness.mjs",
+    "ops:deploy:rollback-guard": "node scripts/evaluateRollbackGuard.mjs"
   },
   "keywords": [],
   "author": "",

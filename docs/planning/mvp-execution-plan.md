@@ -572,7 +572,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `PEX-14 feat(security-rotation): add rotation readiness checks and startup validation for critical secrets`
 - [x] `PEX-15 test(security): add regression checks for invalid/expired secret combinations and fail-safe startup`
 - [x] `PEX-16 feat(release-gates): add mandatory post-deploy runtime freshness check (bots/sessions/signals not stale)`
-- [ ] `PEX-17 feat(rollback-guard): define automatic rollback trigger conditions for runtime-critical regressions`
+- [x] `PEX-17 feat(rollback-guard): define automatic rollback trigger conditions for runtime-critical regressions`
 - [ ] `PEX-18 docs(release-checklist): update deployment checklist with runtime+cache+stream validation sequence`
 
 ## Phase 36 - Exchange Context and Placeholder Completion (Remaining)
@@ -600,6 +600,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `DBACT-10 qa(smoke): manual verification on real paper-session timeline (open -> dca -> close) including fee/pnl/margin coherence`
 
 ## Progress Log
+- 2026-04-06: Completed `PEX-17` by defining automatic rollback guard conditions in `ops:deploy:rollback-guard` (runtime freshness failure + critical alert codes/severity), wiring promote-prod to evaluate guard post-deploy, and auto-triggering production rollback webhook when runtime-critical regression conditions are detected.
 - 2026-04-06: Completed `PEX-16` by adding mandatory runtime freshness gate support: new admin endpoint `/workers/runtime-freshness` (worker/market freshness + runtime lag + running-session heartbeat + latest signal recency), post-deploy checker script `ops:deploy:runtime-freshness`, regression coverage, and production promotion workflow step with retry-based freshness enforcement.
 - 2026-04-06: Completed `PEX-15` by adding security regression coverage for critical-secret readiness (`criticalSecretsReadiness.test.ts`) and `/ready` behavior (`health-readiness.test.ts`) covering invalid/expired JWT rotation combinations, malformed keyring entries, and fail-safe startup assertion.
 - 2026-04-06: Completed `PEX-14` by adding critical secret rotation readiness validation (`criticalSecretsReadiness`) covering JWT rotation windows and API-key encryption keyring consistency, wiring fail-safe startup assertion (non-test mode), and extending `/ready` payload with readiness issues for operational diagnostics.

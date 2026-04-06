@@ -93,3 +93,43 @@ jobs:
             sleep "$delay_seconds"
             attempt=$((attempt + 1))
           done
+
+      - name: Evaluate rollback guard trigger conditions
+        env:
+          PROD_API_BASE_URL: ${{ secrets.PROD_API_BASE_URL }}
+          PROD_RUNTIME_FRESHNESS_TOKEN: ${{ secrets.PROD_RUNTIME_FRESHNESS_TOKEN }}
+        run: |
+          pnpm run ops:deploy:rollback-guard -- --base-url "$PROD_API_BASE_URL" --auth-token "$PROD_RUNTIME_FRESHNESS_TOKEN"
+
+      - name: Trigger automatic rollback on runtime-critical gate failure
+        if: failure()
+        env:
+          PROD_ROLLBACK_WEBHOOK_URL: ${{ secrets.COOLIFY_PROD_ROLLBACK_HOOK_URL }}
+          FAILED_SHA: ${{ github.sha }}
+          FAILED_WORKFLOW: promote-prod
+          FAILED_RUN_ID: ${{ github.run_id }}
+          REPOSITORY: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          if [ -z "$PROD_ROLLBACK_WEBHOOK_URL" ]; then
+            echo "::error::Missing required secret COOLIFY_PROD_ROLLBACK_HOOK_URL"
+            exit 1
+          fi
+
+          payload=$(cat <<EOF
+          {"failedSha":"$FAILED_SHA","failedWorkflow":"$FAILED_WORKFLOW","failedRunId":"$FAILED_RUN_ID","repository":"$REPOSITORY","actor":"$ACTOR","environment":"production","action":"rollback_to_previous_stable"}
+          EOF
+          )
+
+          http_code=$(curl -sS -o response.txt -w "%{http_code}" \
+            -X POST "$PROD_ROLLBACK_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            --data "$payload")
+
+          echo "Coolify rollback response code: $http_code"
+          cat response.txt || true
+
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "::error::Automatic rollback webhook failed with HTTP $http_code"
+            exit 1
+          fi
