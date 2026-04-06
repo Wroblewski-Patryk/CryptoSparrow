@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `SUBS-09 feat(payment-abstraction): add provider-agnostic checkout/payment-intent contract`
 - [ ] `SUBS-10 feat(payment-provider-stripe): add first Stripe adapter behind payment abstraction`
 ## NEXT
 - [ ] `SUBS-11 test(api+web): add regression coverage for assignment/highlight/enforcement flows`
@@ -16,6 +15,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `SUBS-09 feat(payment-abstraction): add provider-agnostic checkout/payment-intent contract`
 - [x] `SUBS-08 feat(web-admin): add subscription-plan admin modal for price/limit editing`
 - [x] `SUBS-07 feat(api-admin): add admin CRUD for plan pricing + entitlement limits`
 - [x] `SUBS-06 feat(entitlements-core): add central entitlement resolver and enforce bot-count limits by active plan`

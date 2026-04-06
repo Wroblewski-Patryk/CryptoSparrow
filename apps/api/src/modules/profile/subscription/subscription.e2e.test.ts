@@ -89,5 +89,55 @@ describe('Profile subscription contract', () => {
     const response = await request(app).get('/dashboard/profile/subscription');
     expect(response.status).toBe(401);
   });
-});
 
+  it('creates provider-agnostic checkout intent and persists payment intent record', async () => {
+    const { agent, userId } = await registerAndLogin('profile-subscription-checkout@example.com');
+
+    const response = await agent.post('/dashboard/profile/subscription/checkout-intents').send({
+      planCode: 'ADVANCED',
+      successUrl: 'https://soar.example/success',
+      cancelUrl: 'https://soar.example/cancel',
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({
+      planCode: 'ADVANCED',
+      provider: 'MANUAL',
+      status: 'REQUIRES_ACTION',
+      amountMinor: 4900,
+      currency: 'USD',
+    });
+    expect(typeof response.body.id).toBe('string');
+
+    const storedIntent = await prisma.paymentIntent.findUniqueOrThrow({
+      where: { id: response.body.id as string },
+      include: {
+        subscriptionPlan: {
+          select: { code: true },
+        },
+      },
+    });
+    expect(storedIntent.userId).toBe(userId);
+    expect(storedIntent.subscriptionPlan.code).toBe('ADVANCED');
+    expect(storedIntent.provider).toBe('MANUAL');
+    expect(storedIntent.amountMinor).toBe(4900);
+  });
+
+  it('rejects checkout intent creation for non-payable FREE plan', async () => {
+    const { agent } = await registerAndLogin('profile-subscription-checkout-free@example.com');
+
+    const response = await agent.post('/dashboard/profile/subscription/checkout-intents').send({
+      planCode: 'FREE',
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.message).toBe('selected subscription plan does not require checkout');
+  });
+
+  it('requires authentication for checkout intent creation', async () => {
+    const response = await request(app).post('/dashboard/profile/subscription/checkout-intents').send({
+      planCode: 'ADVANCED',
+    });
+    expect(response.status).toBe(401);
+  });
+});

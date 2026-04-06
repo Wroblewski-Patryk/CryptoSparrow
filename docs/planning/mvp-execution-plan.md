@@ -615,12 +615,13 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `SUBS-06 feat(entitlements-core): add central entitlement resolver and enforce bot-count limits by active plan`
 - [x] `SUBS-07 feat(api-admin): add admin CRUD for plan pricing + entitlement limits (editable without deploy)`
 - [x] `SUBS-08 feat(web-admin): add admin UI modal for subscription price/limits editing`
-- [ ] `SUBS-09 feat(payment-abstraction): implement provider-agnostic payment gateway interface + checkout-intent API contract`
+- [x] `SUBS-09 feat(payment-abstraction): implement provider-agnostic payment gateway interface + checkout-intent API contract`
 - [ ] `SUBS-10 feat(payment-provider-stripe): add first provider adapter behind abstraction (toggleable, non-breaking)`
 - [ ] `SUBS-11 test(api+web): add regression suites for default FREE assignment, owner PROFESSIONAL mapping, plan highlighting, and entitlement enforcement`
 - [ ] `SUBS-12 docs(runbook): publish operator/admin guide for plan edits, manual assignments, and payment-provider switch strategy`
 
 ## Progress Log
+- 2026-04-07: Completed `SUBS-09` by introducing provider-agnostic payment abstraction (`PaymentGatewayAdapter` + registry) with default `MANUAL` adapter, and shipping authenticated checkout-intent contract (`POST /dashboard/profile/subscription/checkout-intents`) that persists `PaymentIntent` records for paid plans and returns normalized checkout payload; validated with profile subscription e2e suite and API typecheck.
 - 2026-04-07: Completed `SUBS-08` by adding admin web subscriptions workspace (`/admin/subscriptions`) with plan table, edit modal for pricing + entitlement limits (`maxBotsTotal`, mode caps, backtest cap), local form validation, API integration to admin CRUD endpoints, and `web` typecheck verification.
 - 2026-04-07: Completed `SUBS-07` by adding admin-only subscription plan management API (`GET/PUT /admin/subscriptions/plans`) with role guard, validated entitlement payload schema reuse, editable pricing/currency/flags, and dedicated e2e coverage for auth/role/update/validation paths.
 - 2026-04-07: Completed `SUBS-06` by adding centralized subscription entitlement resolver (`subscriptionEntitlements.service`), enforcing plan-based bot create caps (`maxBotsTotal` + mode caps) in bots create flow, mapping deterministic `409` API error payload for over-limit requests, and validating with dedicated entitlement e2e suite plus updated bots e2e fixtures and API typecheck.

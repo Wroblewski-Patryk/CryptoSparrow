@@ -1,4 +1,10 @@
-import { SubscriptionPlanCode, UserSubscriptionSource, UserSubscriptionStatus } from '@prisma/client';
+import {
+  PaymentIntentStatus,
+  PaymentProvider,
+  SubscriptionPlanCode,
+  UserSubscriptionSource,
+  UserSubscriptionStatus,
+} from '@prisma/client';
 
 export type ProfileSubscriptionCatalogItem = {
   code: SubscriptionPlanCode;
@@ -28,3 +34,21 @@ export type ProfileSubscriptionResponse = {
   activePlanCode: SubscriptionPlanCode | null;
 };
 
+export type CreateSubscriptionCheckoutIntentRequest = {
+  planCode: SubscriptionPlanCode;
+  successUrl?: string;
+  cancelUrl?: string;
+};
+
+export type ProfileCheckoutIntentResponse = {
+  id: string;
+  planCode: SubscriptionPlanCode;
+  provider: PaymentProvider;
+  status: PaymentIntentStatus;
+  amountMinor: number;
+  currency: string;
+  checkoutUrl: string | null;
+  clientSecret: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+};
