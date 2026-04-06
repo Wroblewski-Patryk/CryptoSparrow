@@ -151,7 +151,7 @@ const BOT_SEED = [
 async function main() {
   const password = await bcrypt.hash('Admin12#$', 10);
 
-  await ensureSubscriptionCatalog(prisma);
+  await ensureSubscriptionCatalog(prisma, { seedDefaults: true });
 
   const user = await prisma.user.upsert({
     where: { email: OWNER_ACCOUNT_EMAIL },

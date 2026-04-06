@@ -617,10 +617,11 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `SUBS-08 feat(web-admin): add admin UI modal for subscription price/limits editing`
 - [x] `SUBS-09 feat(payment-abstraction): implement provider-agnostic payment gateway interface + checkout-intent API contract`
 - [x] `SUBS-10 feat(payment-provider-stripe): add first provider adapter behind abstraction (toggleable, non-breaking)`
-- [ ] `SUBS-11 test(api+web): add regression suites for default FREE assignment, owner PROFESSIONAL mapping, plan highlighting, and entitlement enforcement`
+- [x] `SUBS-11 test(api+web): add regression suites for default FREE assignment, owner PROFESSIONAL mapping, plan highlighting, and entitlement enforcement`
 - [ ] `SUBS-12 docs(runbook): publish operator/admin guide for plan edits, manual assignments, and payment-provider switch strategy`
 
 ## Progress Log
+- 2026-04-07: Completed `SUBS-11` by hardening subscription regression coverage across API and web: preserved admin-edited subscription plans by preventing catalog bootstrap overwrite outside explicit seed mode (`seedDefaults` opt-in), added API entitlement-enforcement regression proving bot limits read dynamic DB entitlements (no hardcoded FREE cap), and added admin subscriptions UI tests for load/edit/error flows; validated with API subscription/bot/admin e2e suites, web admin subscriptions test, and api+web typecheck.
 - 2026-04-07: Completed `SUBS-10` by adding first Stripe adapter behind payment abstraction (`stripePaymentGatewayProvider`) using Checkout Sessions in subscription mode with plan->price mapping, idempotent session creation, explicit config failure codes, and updated env template keys for Stripe secret/price IDs; validated with profile checkout e2e (including Stripe-misconfig path) and API typecheck.
 - 2026-04-07: Completed `SUBS-09` by introducing provider-agnostic payment abstraction (`PaymentGatewayAdapter` + registry) with default `MANUAL` adapter, and shipping authenticated checkout-intent contract (`POST /dashboard/profile/subscription/checkout-intents`) that persists `PaymentIntent` records for paid plans and returns normalized checkout payload; validated with profile subscription e2e suite and API typecheck.
 - 2026-04-07: Completed `SUBS-08` by adding admin web subscriptions workspace (`/admin/subscriptions`) with plan table, edit modal for pricing + entitlement limits (`maxBotsTotal`, mode caps, backtest cap), local form validation, API integration to admin CRUD endpoints, and `web` typecheck verification.

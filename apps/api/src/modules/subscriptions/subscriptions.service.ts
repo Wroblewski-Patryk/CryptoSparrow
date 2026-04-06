@@ -2,6 +2,9 @@ import { Prisma, PrismaClient, SubscriptionPlanCode, UserSubscriptionSource } fr
 import { prisma } from '../../prisma/client';
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
+type EnsureSubscriptionCatalogOptions = {
+  seedDefaults?: boolean;
+};
 
 type SetActiveSubscriptionInput = {
   userId: string;
@@ -104,19 +107,26 @@ export const SUBSCRIPTION_PLAN_SEED: SubscriptionPlanSeed[] = [
   },
 ];
 
-export const ensureSubscriptionCatalog = async (db: DbClient = prisma) => {
+export const ensureSubscriptionCatalog = async (
+  db: DbClient = prisma,
+  options: EnsureSubscriptionCatalogOptions = {},
+) => {
+  const shouldSeedDefaults = options.seedDefaults === true;
+
   for (const plan of SUBSCRIPTION_PLAN_SEED) {
     await db.subscriptionPlan.upsert({
       where: { code: plan.code },
-      update: {
-        slug: plan.slug,
-        displayName: plan.displayName,
-        isActive: true,
-        sortOrder: plan.sortOrder,
-        monthlyPriceMinor: plan.monthlyPriceMinor,
-        currency: plan.currency,
-        entitlements: plan.entitlements,
-      },
+      update: shouldSeedDefaults
+        ? {
+            slug: plan.slug,
+            displayName: plan.displayName,
+            isActive: true,
+            sortOrder: plan.sortOrder,
+            monthlyPriceMinor: plan.monthlyPriceMinor,
+            currency: plan.currency,
+            entitlements: plan.entitlements,
+          }
+        : {},
       create: {
         code: plan.code,
         slug: plan.slug,
@@ -199,4 +209,3 @@ export const ensureDefaultSubscriptionForUser = async (db: DbClient, userId: str
     autoRenew: true,
   });
 };
-

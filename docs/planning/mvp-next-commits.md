@@ -7,13 +7,13 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `SUBS-11 test(api+web): add regression coverage for assignment/highlight/enforcement flows`
 - [ ] `SUBS-12 docs(runbook): publish operator/admin guide for subscription edits and payment-provider switch`
 ## NEXT
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `SUBS-11 test(api+web): add regression coverage for assignment/highlight/enforcement flows`
 - [x] `SUBS-10 feat(payment-provider-stripe): add first Stripe adapter behind payment abstraction`
 - [x] `SUBS-09 feat(payment-abstraction): add provider-agnostic checkout/payment-intent contract`
 - [x] `SUBS-08 feat(web-admin): add subscription-plan admin modal for price/limit editing`

@@ -1,8 +1,13 @@
 import request from 'supertest';
+import { Prisma } from '@prisma/client';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { app } from '../../index';
 import { prisma } from '../../prisma/client';
-import { setActiveSubscriptionForUser } from '../subscriptions/subscriptions.service';
+import {
+  ensureSubscriptionCatalog,
+  setActiveSubscriptionForUser,
+} from '../subscriptions/subscriptions.service';
+import { SubscriptionEntitlementsSchema } from '../subscriptions/subscriptionEntitlements.service';
 
 const registerAndLogin = async (email: string) => {
   const agent = request.agent(app);
@@ -90,6 +95,7 @@ describe('Bots subscription entitlements', () => {
     await prisma.paymentIntent.deleteMany();
     await prisma.userSubscription.deleteMany();
     await prisma.user.deleteMany();
+    await ensureSubscriptionCatalog(prisma, { seedDefaults: true });
   });
 
   it('blocks second bot on FREE plan with 409 entitlement error payload', async () => {
@@ -154,6 +160,53 @@ describe('Bots subscription entitlements', () => {
         marketGroupId,
       }),
       name: 'Second bot should pass on ADVANCED',
+    });
+    expect(secondCreate.status).toBe(201);
+  });
+
+  it('enforces updated FREE plan limits from catalog (no hardcoded cap)', async () => {
+    const freePlan = await prisma.subscriptionPlan.findUniqueOrThrow({
+      where: { code: 'FREE' },
+      select: { entitlements: true },
+    });
+    const entitlements = SubscriptionEntitlementsSchema.parse(freePlan.entitlements);
+
+    await prisma.subscriptionPlan.update({
+      where: { code: 'FREE' },
+      data: {
+        entitlements: {
+          ...entitlements,
+          limits: {
+            ...entitlements.limits,
+            maxBotsTotal: 2,
+            maxBotsByMode: {
+              PAPER: 2,
+              LIVE: 0,
+            },
+          },
+        } as Prisma.InputJsonValue,
+      },
+    });
+
+    const email = 'bots-subscription-updated-free-plan@example.com';
+    const agent = await registerAndLogin(email);
+    const strategyId = await createStrategy(agent, 'Entitlements Updated Free Plan');
+    const marketGroupId = await createMarketGroup(email);
+
+    const firstCreate = await agent.post('/dashboard/bots').send(
+      createPayload({
+        strategyId,
+        marketGroupId,
+      }),
+    );
+    expect(firstCreate.status).toBe(201);
+
+    const secondCreate = await agent.post('/dashboard/bots').send({
+      ...createPayload({
+        strategyId,
+        marketGroupId,
+      }),
+      name: 'Second bot allowed by updated FREE plan',
     });
     expect(secondCreate.status).toBe(201);
   });

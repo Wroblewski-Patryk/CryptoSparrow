@@ -52,7 +52,7 @@ const createUserAgent = async () => {
 
 describe('Admin subscription plans API', () => {
   beforeEach(async () => {
-    await ensureSubscriptionCatalog(prisma);
+    await ensureSubscriptionCatalog(prisma, { seedDefaults: true });
   });
 
   it('rejects unauthenticated access', async () => {
