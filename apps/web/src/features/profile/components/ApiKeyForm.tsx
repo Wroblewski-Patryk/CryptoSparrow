@@ -66,12 +66,25 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           error: "Blad",
           save: "Zapisz",
           cancel: "Anuluj",
+          exchangeRequirementsTitle: "Wymagania tej gieldy",
+          appSupportTitle: "Wsparcie w aplikacji",
+          supportApiProbe: "Test API key",
+          supportLiveExecution: "Live trading bota",
+          supportAvailable: "Dostepne",
+          supportUnavailable: "Niedostepne",
           ipWhitelistTitle: "Whitelist IP (Binance)",
           ipWhitelistLead: "Dodaj backendowe IP do whitelisty klucza API Binance:",
           ipWhitelistMissing:
             "Adres backendowego IP nie jest skonfigurowany. Ustaw NEXT_PUBLIC_BINANCE_IP_WHITELIST w srodowisku web.",
           ipWhitelistHint:
             "Jesli test zwroci IP_RESTRICTED, sprawdz whitelist Binance i sproboj ponownie po propagacji zmian.",
+          binancePermissionsTitle: "Wymagane uprawnienia API (Binance)",
+          binancePermissionsLead: "Aby bot mogl handlowac, wlacz w Binance:",
+          binancePermissionReading: "Enable Reading",
+          binancePermissionSpotMargin: "Enable Spot & Margin Trading",
+          binancePermissionFutures: "Enable Futures",
+          binancePermissionsHint:
+            "Nazwy uprawnien sa zgodne z Binance API restrictions: enableReading, enableSpotAndMarginTrading, enableFutures.",
           manageBotsTitle: "Boty gotowe do przejecia pozycji",
           manageBotsHint:
             "Pokazujemy aktywne boty LIVE z opt-in dla tej gieldy. Upewnij sie, ze bot ma przypiety ten klucz API.",
@@ -84,7 +97,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           editSecretHint:
             "API Secret nie jest wyswietlany. Pozostaw pola puste, aby przetestowac zapisane polaczenie dla tego klucza.",
           placeholderProbeInfo:
-            "Dla tej gieldy test API key nie jest jeszcze dostepny (placeholder adapter). Zapis jest dozwolony.",
+            "Dla {exchange} test API key nie jest jeszcze dostepny (placeholder adapter). Zapis jest dozwolony.",
         }
       : {
           fillCredentialsBeforeTest: "Fill in API Key and API Secret before testing.",
@@ -109,12 +122,25 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           error: "Error",
           save: "Save",
           cancel: "Cancel",
+          exchangeRequirementsTitle: "Exchange requirements",
+          appSupportTitle: "App support status",
+          supportApiProbe: "API key probe",
+          supportLiveExecution: "Bot live trading",
+          supportAvailable: "Available",
+          supportUnavailable: "Unavailable",
           ipWhitelistTitle: "IP Whitelist (Binance)",
           ipWhitelistLead: "Add backend egress IP(s) to your Binance API key whitelist:",
           ipWhitelistMissing:
             "Backend egress IP is not configured. Set NEXT_PUBLIC_BINANCE_IP_WHITELIST in web environment.",
           ipWhitelistHint:
             "If test returns IP_RESTRICTED, update Binance whitelist and retry after propagation.",
+          binancePermissionsTitle: "Required API permissions (Binance)",
+          binancePermissionsLead: "To let the bot trade, enable in Binance:",
+          binancePermissionReading: "Enable Reading",
+          binancePermissionSpotMargin: "Enable Spot & Margin Trading",
+          binancePermissionFutures: "Enable Futures",
+          binancePermissionsHint:
+            "Permission names follow Binance API restrictions: enableReading, enableSpotAndMarginTrading, enableFutures.",
           manageBotsTitle: "Bots ready to take over positions",
           manageBotsHint:
             "Showing active LIVE bots with live opt-in for this exchange. Ensure bot is bound to this API key.",
@@ -127,7 +153,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           editSecretHint:
             "API Secret is never shown. Leave both fields empty to test stored connection for this key.",
           placeholderProbeInfo:
-            "API key test is not available for this exchange yet (placeholder adapter). Saving is still allowed.",
+            "API key test is not available for {exchange} yet (placeholder adapter). Saving is still allowed.",
         };
 
   const [label, setLabel] = useState(defaultValues?.label || "");
@@ -152,6 +178,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
     .filter((ip) => ip.length > 0);
 
   const exchangeSupportsProbe = supportsExchangeCapability(exchange, "API_KEY_PROBE");
+  const exchangeSupportsLiveExecution = supportsExchangeCapability(exchange, "LIVE_EXECUTION");
   const requiresConnectionTest = (!isEdit || Boolean(apiKey) || Boolean(apiSecret)) && exchangeSupportsProbe;
   const isManageBotListVisible = manageExternalPositions && exchange === "BINANCE";
   const usesStoredTestMode =
@@ -188,6 +215,8 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
     };
   }, [exchange, isManageBotListVisible]);
 
+  const placeholderProbeInfo = copy.placeholderProbeInfo.replace("{exchange}", exchange);
+
   const manageableBotRows = useMemo(
     () =>
       manageableBots.map((bot) => {
@@ -216,7 +245,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
   const handleTest = async () => {
     if (!exchangeSupportsProbe) {
       setTestStatus("idle");
-      setTestMessage(copy.placeholderProbeInfo);
+      setTestMessage(placeholderProbeInfo);
       setTestedFingerprint(null);
       return;
     }
@@ -349,10 +378,43 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           ))}
         </select>
       </div>
+      <div className="alert alert-info text-sm">
+        <div className="space-y-2">
+          <span className="badge badge-sm badge-neutral">{copy.exchangeRequirementsTitle}</span>
+          <div className="space-y-1">
+            <p className="font-semibold">{copy.appSupportTitle}</p>
+            <ul className="list-disc pl-5">
+              <li>
+                {copy.supportApiProbe}:{" "}
+                <span className={exchangeSupportsProbe ? "text-success" : "text-warning"}>
+                  {exchangeSupportsProbe ? copy.supportAvailable : copy.supportUnavailable}
+                </span>
+              </li>
+              <li>
+                {copy.supportLiveExecution}:{" "}
+                <span className={exchangeSupportsLiveExecution ? "text-success" : "text-warning"}>
+                  {exchangeSupportsLiveExecution ? copy.supportAvailable : copy.supportUnavailable}
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
       {exchange === "BINANCE" ? (
         <div className="alert alert-info text-sm">
-          <div className="space-y-2">
-            <span className="badge badge-xs badge-info badge-outline">{copy.ipWhitelistTitle}</span>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <p className="font-semibold">{copy.binancePermissionsTitle}</p>
+              <p>{copy.binancePermissionsLead}</p>
+              <ul className="list-disc pl-5">
+                <li>{copy.binancePermissionReading}</li>
+                <li>{copy.binancePermissionSpotMargin}</li>
+                <li>{copy.binancePermissionFutures}</li>
+              </ul>
+              <p className="opacity-80">{copy.binancePermissionsHint}</p>
+            </div>
+            <div className="space-y-2">
+              <span className="badge badge-sm badge-neutral">{copy.ipWhitelistTitle}</span>
             {binanceWhitelistIps.length > 0 ? (
               <>
                 <p>{copy.ipWhitelistLead}</p>
@@ -366,14 +428,15 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
               <p>{copy.ipWhitelistMissing}</p>
             )}
             <p className="opacity-80">{copy.ipWhitelistHint}</p>
+            </div>
           </div>
         </div>
       ) : null}
       {!exchangeSupportsProbe ? (
         <div className="alert alert-info text-sm">
           <div className="space-y-1">
-            <span className="badge badge-xs badge-warning badge-outline">PLACEHOLDER</span>
-            <span>{copy.placeholderProbeInfo}</span>
+            <span className="badge badge-sm badge-warning badge-outline">PLACEHOLDER</span>
+            <span>{placeholderProbeInfo}</span>
           </div>
         </div>
       ) : null}

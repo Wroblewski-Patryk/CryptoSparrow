@@ -257,7 +257,7 @@ describe("ApiKeyForm", () => {
     });
     expect(
       screen.getByText(
-        "API key test is not available for this exchange yet (placeholder adapter). Saving is still allowed."
+        "API key test is not available for OKX yet (placeholder adapter). Saving is still allowed."
       )
     ).toBeInTheDocument();
   });
@@ -275,7 +275,7 @@ describe("ApiKeyForm", () => {
 
     expect(
       await screen.findByText(
-        "API key test is not available for this exchange yet (placeholder adapter). Saving is still allowed."
+        "API key test is not available for BYBIT yet (placeholder adapter). Saving is still allowed."
       )
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Test connection" })).toBeDisabled();
@@ -290,6 +290,27 @@ describe("ApiKeyForm", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("203.0.113.10")).toBeInTheDocument();
     expect(screen.getByText("203.0.113.11")).toBeInTheDocument();
+    expect(screen.getByText("Required API permissions (Binance)")).toBeInTheDocument();
+    expect(screen.getByText("Enable Spot & Margin Trading")).toBeInTheDocument();
+    expect(screen.getByText("Enable Futures")).toBeInTheDocument();
+  });
+
+  it("shows exchange support status based on selected exchange", async () => {
+    renderForm({ onSave: vi.fn(), onCancel: vi.fn() });
+
+    expect(screen.getByText("API key probe:")).toBeInTheDocument();
+    expect(screen.getAllByText("Available").length).toBeGreaterThan(0);
+
+    fireEvent.change(screen.getByLabelText("Exchange"), {
+      target: { value: "KRAKEN" },
+    });
+
+    expect(
+      await screen.findByText(
+        "API key test is not available for KRAKEN yet (placeholder adapter). Saving is still allowed."
+      )
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Unavailable").length).toBeGreaterThan(0);
   });
 
   it("allows stored-credentials test in edit mode and keeps secret hidden", async () => {
