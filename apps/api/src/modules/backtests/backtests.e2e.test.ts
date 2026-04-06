@@ -77,6 +77,7 @@ describe('Backtests runs contract', () => {
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
     await prisma.strategy.deleteMany();
+    await prisma.runtimeExecutionDedupe.deleteMany();
     await prisma.apiKey.deleteMany();
     await prisma.user.deleteMany();
   });
@@ -106,6 +107,10 @@ describe('Backtests runs contract', () => {
     const getRes = await agent.get(`/dashboard/backtests/runs/${runId}`);
     expect(getRes.status).toBe(200);
     expect(getRes.body.id).toBe(runId);
+    expect(getRes.body.seedConfig.exchange).toBe('BINANCE');
+    expect(getRes.body.seedConfig.marketType).toBe('FUTURES');
+    expect(getRes.body.seedConfig.baseCurrency).toBe('USDT');
+    expect(getRes.body.seedConfig.marketUniverseId).toBeNull();
 
     await prisma.backtestTrade.createMany({
       data: [
@@ -560,6 +565,10 @@ describe('Backtests runs contract', () => {
       .map((symbol) => symbol.toUpperCase())
       .sort();
     expect(runSymbols).toEqual(selectedSymbols);
+    expect(runDetailRes.body.seedConfig.exchange).toBe('BINANCE');
+    expect(runDetailRes.body.seedConfig.marketType).toBe('FUTURES');
+    expect(runDetailRes.body.seedConfig.baseCurrency).toBe('USDT');
+    expect(runDetailRes.body.seedConfig.marketUniverseId).toBe(marketUniverseId);
 
     const metrics = reportRes.body.metrics as {
       parityDiagnostics?: Array<{

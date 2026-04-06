@@ -1,4 +1,4 @@
-import { PositionSide, Prisma } from '@prisma/client';
+import { Exchange, PositionSide, Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { getMarketCatalog } from '../markets/markets.service';
 import { decideExecutionAction } from '../engine/sharedExecutionCore';
@@ -212,6 +212,9 @@ const uniqueSorted = (values: string[]) =>
   [...new Set(values.map((value) => value.trim().toUpperCase()).filter(Boolean))].sort((a, b) =>
     a.localeCompare(b)
   );
+
+const inferBaseCurrencyFromSymbol = (symbol: string): string =>
+  (symbol.match(/(USDT|USDC|BUSD|FDUSD|BTC|ETH|EUR|USD)$/)?.[1] ?? 'USDT').toUpperCase();
 
 const getIntervalMs = (timeframe: string) => timeframeIntervalMs[normalizeTimeframe(timeframe)] ?? timeframeIntervalMs['5m'];
 
@@ -1570,11 +1573,22 @@ const runBacktestAsync = async (runId: string) => {
   }
 };
 
-const resolveSymbolsForRun = async (userId: string, data: CreateBacktestRunDto) => {
+type ResolvedRunContext = {
+  symbols: string[];
+  exchange: Exchange;
+  marketType: MarketType;
+  baseCurrency: string;
+  marketUniverseId: string | null;
+};
+
+const resolveSymbolsForRun = async (userId: string, data: CreateBacktestRunDto): Promise<ResolvedRunContext | null> => {
   if (!data.marketUniverseId) {
+    const symbols = uniqueSorted([data.symbol ?? 'BTCUSDT']);
     return {
-      symbols: uniqueSorted([data.symbol ?? 'BTCUSDT']),
+      symbols,
+      exchange: 'BINANCE',
       marketType: 'FUTURES' as MarketType,
+      baseCurrency: inferBaseCurrencyFromSymbol(symbols[0] ?? 'BTCUSDT'),
       marketUniverseId: null,
     };
   }
@@ -1612,6 +1626,7 @@ const resolveSymbolsForRun = async (userId: string, data: CreateBacktestRunDto) 
     symbols: uniqueSorted(resolved),
     exchange: universe.exchange,
     marketType: universe.marketType as MarketType,
+    baseCurrency: universe.baseCurrency,
     marketUniverseId: universe.id,
   };
 };
@@ -1706,6 +1721,7 @@ export const createRun = async (userId: string, data: CreateBacktestRunDto) => {
         symbols: resolved.symbols,
         exchange: resolved.exchange,
         marketType: resolved.marketType,
+        baseCurrency: resolved.baseCurrency,
         marketUniverseId: resolved.marketUniverseId,
         leverage: resolved.marketType === 'SPOT' ? 1 : (strategyDefaults?.leverage ?? 1),
         marginMode: resolved.marketType === 'SPOT' ? 'NONE' : (strategyDefaults?.marginMode ?? 'CROSSED'),

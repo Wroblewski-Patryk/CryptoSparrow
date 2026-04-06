@@ -7,16 +7,17 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `EXCTX-01 docs(contract): publish venue-context source-of-truth and invariants for creators/runtime`
-- [x] `EXCTX-02 docs(decisions): lock MarketUniverse as canonical exchange+marketType+base context owner`
-- [x] `EXCTX-05 chore(data-migration): backfill existing universes/runs with exchange context snapshot`
-- [x] `EXCTX-06 feat(api-markets): extend market-universe and catalog contracts with exchange context`
-- [ ] `EXCTX-07 feat(api-backtests): derive and persist exchange context from selected market universe`
-## NEXT
 - [ ] `EXCTX-08 feat(api-bots): enforce bot/group/apiKey venue-context compatibility on create/activate`
 - [ ] `EXCTX-09 refactor(engine): introduce venue-aware market data provider contract`
 - [ ] `EXCTX-10 refactor(runtime): add exchange to stream-event context and enforce exchange+marketType match`
 - [ ] `EXCTX-11 feat(execution): bind live execution account selection to bot venue context`
+- [ ] `EXCTX-12 feat(web-backtest-creator): show explicit exchange/marketType/base context bound to market group`
+## NEXT
+- [ ] `EXCTX-13 feat(web-bot-creator): show explicit venue context and live api-key compatibility hints`
+- [ ] `EXCTX-14 test(web): add creator regression coverage for venue-context rendering and validation copy`
+- [ ] `EXCTX-15 test(api+runtime): add context mismatch contract tests for backtest/bot/live paths`
+- [ ] `EXCTX-16 test(e2e): add end-to-end venue consistency scenario (backtest->paper->live)`
+- [ ] `EXCTX-17 chore(qa): manual smoke checklist and evidence capture for creator/runtime consistency`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 

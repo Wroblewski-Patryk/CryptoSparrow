@@ -582,7 +582,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `EXCTX-04 feat(db): add bot live apiKey binding field for explicit execution venue context`
 - [x] `EXCTX-05 chore(data-migration): backfill existing universes/runs with exchange context snapshot`
 - [x] `EXCTX-06 feat(api-markets): extend market-universe and catalog contracts with exchange context`
-- [ ] `EXCTX-07 feat(api-backtests): derive and persist exchange context from selected market universe`
+- [x] `EXCTX-07 feat(api-backtests): derive and persist exchange context from selected market universe`
 - [ ] `EXCTX-08 feat(api-bots): enforce bot/group/apiKey venue-context compatibility on create/activate`
 - [ ] `EXCTX-09 refactor(engine): introduce venue-aware market data provider contract`
 - [ ] `EXCTX-10 refactor(runtime): add exchange to stream-event context and enforce exchange+marketType match`
@@ -600,6 +600,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `DBACT-10 qa(smoke): manual verification on real paper-session timeline (open -> dca -> close) including fee/pnl/margin coherence`
 
 ## Progress Log
+- 2026-04-06: Completed `EXCTX-07` by extending backtest run context derivation to persist full venue snapshot (`exchange`, `marketType`, `baseCurrency`, `marketUniverseId`) from selected market universe (with deterministic fallback for symbol-only runs), plus e2e assertions for both direct and market-universe run creation paths; validated with `pnpm --filter api test -- src/modules/backtests/backtests.e2e.test.ts` and `pnpm --filter api run typecheck`.
 - 2026-04-06: Completed `EXCTX-06` by locking exchange-context coverage in Markets API contracts: added regression assertions for universe update persistence of `exchange/marketType/baseCurrency` and refreshed test cleanup for `RuntimeExecutionDedupe` FK safety; validated with `pnpm --filter api test -- src/modules/markets/markets.e2e.test.ts`.
 - 2026-04-06: Completed `EXCTX-05` by adding idempotent backfill automation `apps/api/scripts/backfillBacktestVenueContext.ts` and root commands `ops:data:backfill:venue-context` (`--dry-run` alias), which scan existing market universes and patch historical `BacktestRun.seedConfig` snapshots with normalized `exchange/marketType/baseCurrency` context.
 - 2026-04-06: Completed `EXCTX-02` by locking `MarketUniverse` as canonical `exchange+marketType+baseCurrency` context owner in `docs/planning/open-decisions.md`, explicitly enforcing derive-only behavior for `SymbolGroup`/`BacktestRun`/`Bot` context and fail-closed runtime/execution mismatch policy.
