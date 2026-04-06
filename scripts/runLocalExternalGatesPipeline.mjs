@@ -28,6 +28,7 @@ const parseArgs = () => {
     skipChecklistSync: false,
     skipEvidenceCheck: false,
     strictEvidenceCheck: false,
+    requireProductionGate2: false,
     evidenceOutput: 'docs/operations/_artifacts-rc-evidence-check-latest.json',
     windowDays: [7, 30],
   };
@@ -51,6 +52,7 @@ const parseArgs = () => {
     if (arg === '--skip-checklist-sync') options.skipChecklistSync = true;
     if (arg === '--skip-evidence-check') options.skipEvidenceCheck = true;
     if (arg === '--strict-evidence-check') options.strictEvidenceCheck = true;
+    if (arg === '--require-production-gate2') options.requireProductionGate2 = true;
     if (arg === '--evidence-output') options.evidenceOutput = args[index + 1] ?? options.evidenceOutput;
     if (arg === '--window-days') {
       const raw = args[index + 1] ?? '';
@@ -139,7 +141,7 @@ const main = () => {
   const options = parseArgs();
   if (options.help) {
     console.log(
-      'Usage: node scripts/runLocalExternalGatesPipeline.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--environment <local|stage|production>] [--allow-local-production-evidence] [--skip-db-check] [--skip-slo-collect] [--skip-window-report] [--skip-checklist-sync] [--skip-evidence-check] [--strict-evidence-check] [--evidence-output <file>] [--window-days <csv>] [--allow-offline]'
+      'Usage: node scripts/runLocalExternalGatesPipeline.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--environment <local|stage|production>] [--allow-local-production-evidence] [--skip-db-check] [--skip-slo-collect] [--skip-window-report] [--skip-checklist-sync] [--skip-evidence-check] [--strict-evidence-check] [--require-production-gate2] [--evidence-output <file>] [--window-days <csv>] [--allow-offline]'
     );
     process.exit(0);
   }
@@ -181,6 +183,9 @@ const main = () => {
             ];
             if (options.strictEvidenceCheck) {
               evidenceArgs.push('--strict');
+            }
+            if (options.requireProductionGate2) {
+              evidenceArgs.push('--require-production-gate2');
             }
             run('check missing external evidence', 'pnpm', evidenceArgs);
           }
@@ -237,6 +242,9 @@ const main = () => {
         ];
         if (options.strictEvidenceCheck) {
           evidenceArgs.push('--strict');
+        }
+        if (options.requireProductionGate2) {
+          evidenceArgs.push('--require-production-gate2');
         }
         run('check missing external evidence', 'pnpm', evidenceArgs);
       }

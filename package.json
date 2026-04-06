@@ -54,10 +54,13 @@
     "ops:data:backfill:venue-context:dry": "pnpm run ops:data:backfill:venue-context -- --dry-run",
     "ops:rc:gates:local-pipeline": "node scripts/runLocalExternalGatesPipeline.mjs",
     "ops:rc:gates:local-pipeline:strict": "node scripts/runLocalExternalGatesPipeline.mjs --strict-evidence-check",
+    "ops:rc:gates:local-pipeline:strict:prod": "node scripts/runLocalExternalGatesPipeline.mjs --strict-evidence-check --require-production-gate2",
     "ops:rc:gates:refresh": "node scripts/runLocalExternalGatesPipeline.mjs --skip-db-check --skip-slo-collect --skip-window-report --allow-offline",
     "ops:rc:gates:refresh:strict": "node scripts/runLocalExternalGatesPipeline.mjs --skip-db-check --skip-slo-collect --skip-window-report --allow-offline --strict-evidence-check",
+    "ops:rc:gates:refresh:strict:prod": "node scripts/runLocalExternalGatesPipeline.mjs --skip-db-check --skip-slo-collect --skip-window-report --allow-offline --strict-evidence-check --require-production-gate2",
     "ops:rc:gates:refresh:summary": "pnpm run ops:rc:gates:refresh && pnpm run ops:rc:gates:summary",
     "ops:rc:gates:refresh:summary:strict": "node scripts/runRcRefreshSummaryStrict.mjs",
+    "ops:rc:gates:refresh:summary:strict:prod": "node scripts/runRcRefreshSummaryStrict.mjs --require-production-gate2",
     "ops:deploy:smoke": "node scripts/deploySmokeCheck.mjs",
     "ops:deploy:runtime-freshness": "node scripts/checkPostDeployRuntimeFreshness.mjs",
     "ops:deploy:rollback-guard": "node scripts/evaluateRollbackGuard.mjs"

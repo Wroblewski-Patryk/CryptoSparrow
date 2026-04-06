@@ -105,7 +105,7 @@
 
 ### External Gates Quick Commands
 - Collect SLO observation evidence:
-  - `pnpm run ops:slo:collect -- --base-url https://<target-api> --duration-minutes 30 --interval-seconds 30 --auth-token <ADMIN_JWT>`
+  - `pnpm run ops:slo:collect -- --base-url https://<target-api> --duration-minutes 30 --interval-seconds 30 --auth-token <ADMIN_JWT> --environment production`
 - Run local backup/restore validation dry-run (Docker postgres):
   - `pnpm run ops:db:backup-restore:check-local`
   - profile command set:
@@ -136,13 +136,17 @@
   - Includes status rebuild + checklist sync + evidence diagnostics by default.
   - Use `--skip-checklist-sync` / `--skip-evidence-check` to disable selected steps.
   - Use `--strict-evidence-check` to fail pipeline when evidence is incomplete.
+  - Use `--require-production-gate2` to require Gate2=`PASS` (no `LOCAL_PASS` accepted).
   - Use `--evidence-output <file>` to override JSON evidence artifact path.
   - Shortcut strict mode: `pnpm run ops:rc:gates:local-pipeline:strict`
+  - Shortcut strict production mode: `pnpm run ops:rc:gates:local-pipeline:strict:prod`
   - Offline fallback: `pnpm run ops:rc:gates:local-pipeline -- --allow-offline`
   - Quick refresh (no DB/SLO collection): `pnpm run ops:rc:gates:refresh`
   - Quick refresh strict mode: `pnpm run ops:rc:gates:refresh:strict`
+  - Quick refresh strict production mode: `pnpm run ops:rc:gates:refresh:strict:prod`
   - Quick refresh with summary output: `pnpm run ops:rc:gates:refresh:summary`
   - Quick refresh strict with guaranteed summary output: `pnpm run ops:rc:gates:refresh:summary:strict`
+  - Quick refresh strict production with guaranteed summary output: `pnpm run ops:rc:gates:refresh:summary:strict:prod`
 - Run local cutover dry-run with structured artifact output:
   - `pnpm run ops:cutover:dry-run`
 - Expected outputs:

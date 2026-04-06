@@ -142,13 +142,17 @@ Evidence to record:
       - `pnpm run ops:rc:gates:local-pipeline -- --skip-checklist-sync`
       - `pnpm run ops:rc:gates:local-pipeline -- --skip-evidence-check`
       - `pnpm run ops:rc:gates:local-pipeline -- --strict-evidence-check`
+      - `pnpm run ops:rc:gates:local-pipeline -- --strict-evidence-check --require-production-gate2`
       - `pnpm run ops:rc:gates:local-pipeline -- --evidence-output docs/operations/_artifacts-rc-evidence-check-custom.json`
     - strict shortcut:
       - `pnpm run ops:rc:gates:local-pipeline:strict`
+      - `pnpm run ops:rc:gates:local-pipeline:strict:prod`
   - Offline fallback when API is unavailable (template status only):
     - `pnpm run ops:rc:gates:local-pipeline -- --allow-offline`
   - Quick refresh (status + checklist + evidence check, no DB/SLO collection):
     - `pnpm run ops:rc:gates:refresh`
     - strict quick refresh: `pnpm run ops:rc:gates:refresh:strict`
+    - strict quick refresh (production Gate2 only): `pnpm run ops:rc:gates:refresh:strict:prod`
     - refresh + instant summary: `pnpm run ops:rc:gates:refresh:summary`
     - strict refresh + always-print summary (returns strict exit code): `pnpm run ops:rc:gates:refresh:summary:strict`
+    - strict refresh + summary (production Gate2 only): `pnpm run ops:rc:gates:refresh:summary:strict:prod`
