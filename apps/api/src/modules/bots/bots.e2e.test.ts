@@ -93,6 +93,7 @@ describe('Bots module contract', () => {
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
     await prisma.strategy.deleteMany();
+    await prisma.runtimeExecutionDedupe.deleteMany();
     await prisma.apiKey.deleteMany();
     await prisma.user.deleteMany();
   });
@@ -342,6 +343,84 @@ describe('Bots module contract', () => {
     );
     expect(createRes.status).toBe(201);
     expect(createRes.body.marketType).toBe('SPOT');
+  });
+
+  it('enforces live api-key exchange compatibility on create and activation paths', async () => {
+    const email = 'bots-live-api-key-compat@example.com';
+    const agent = await registerAndLogin(email);
+    const strategyId = await createStrategy(agent, 'Live API Key Compatibility Strategy');
+    const marketGroupId = await createMarketGroup(email, 'FUTURES');
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+
+    const mismatchedApiKey = await prisma.apiKey.create({
+      data: {
+        userId: user.id,
+        label: 'Mismatched key',
+        exchange: 'OKX',
+        apiKey: 'MISMATCHED_KEY',
+        apiSecret: 'MISMATCHED_SECRET',
+        syncExternalPositions: false,
+        manageExternalPositions: false,
+      },
+    });
+
+    const createWithMismatchRes = await agent.post('/dashboard/bots').send({
+      ...createPayload({ strategyId, marketGroupId }),
+      mode: 'LIVE',
+      isActive: true,
+      liveOptIn: true,
+      consentTextVersion: 'mvp-v1',
+      apiKeyId: mismatchedApiKey.id,
+    });
+    expect(createWithMismatchRes.status).toBe(400);
+    expect(createWithMismatchRes.body.error.message).toBe(
+      'apiKeyId exchange must match bot exchange context'
+    );
+
+    const inactiveLiveCreateRes = await agent.post('/dashboard/bots').send({
+      ...createPayload({ strategyId, marketGroupId }),
+      mode: 'LIVE',
+      isActive: false,
+      liveOptIn: true,
+      consentTextVersion: 'mvp-v1',
+    });
+    expect(inactiveLiveCreateRes.status).toBe(201);
+    const botId = inactiveLiveCreateRes.body.id as string;
+
+    const activateWithoutCompatibleKeyRes = await agent.put(`/dashboard/bots/${botId}`).send({
+      mode: 'LIVE',
+      isActive: true,
+      liveOptIn: true,
+      consentTextVersion: 'mvp-v1',
+    });
+    expect(activateWithoutCompatibleKeyRes.status).toBe(400);
+    expect(activateWithoutCompatibleKeyRes.body.error.message).toBe(
+      'no compatible API key found for live bot exchange context'
+    );
+
+    const compatibleApiKey = await prisma.apiKey.create({
+      data: {
+        userId: user.id,
+        label: 'Binance key',
+        exchange: 'BINANCE',
+        apiKey: 'BINANCE_KEY',
+        apiSecret: 'BINANCE_SECRET',
+        syncExternalPositions: true,
+        manageExternalPositions: false,
+      },
+    });
+
+    const activateWithCompatibleKeyRes = await agent.put(`/dashboard/bots/${botId}`).send({
+      mode: 'LIVE',
+      isActive: true,
+      liveOptIn: true,
+      consentTextVersion: 'mvp-v1',
+      apiKeyId: compatibleApiKey.id,
+    });
+    expect(activateWithCompatibleKeyRes.status).toBe(200);
+    expect(activateWithCompatibleKeyRes.body.exchange).toBe('BINANCE');
+    expect(activateWithCompatibleKeyRes.body.apiKeyId).toBe(compatibleApiKey.id);
+    expect(activateWithCompatibleKeyRes.body.isActive).toBe(true);
   });
 
   it('blocks bot activation for placeholder exchanges and keeps inactive create path available', async () => {
