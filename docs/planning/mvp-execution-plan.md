@@ -613,7 +613,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `SUBS-04 feat(api-profile): expose subscription catalog + active subscription in profile endpoints (my-account ready)`
 - [x] `SUBS-05 feat(web-profile): render subscription list with active-plan highlight in My Account -> Subscription`
 - [x] `SUBS-06 feat(entitlements-core): add central entitlement resolver and enforce bot-count limits by active plan`
-- [ ] `SUBS-07 feat(api-admin): add admin CRUD for plan pricing + entitlement limits (editable without deploy)`
+- [x] `SUBS-07 feat(api-admin): add admin CRUD for plan pricing + entitlement limits (editable without deploy)`
 - [ ] `SUBS-08 feat(web-admin): add admin UI modal for subscription price/limits editing`
 - [ ] `SUBS-09 feat(payment-abstraction): implement provider-agnostic payment gateway interface + checkout-intent API contract`
 - [ ] `SUBS-10 feat(payment-provider-stripe): add first provider adapter behind abstraction (toggleable, non-breaking)`
@@ -621,6 +621,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `SUBS-12 docs(runbook): publish operator/admin guide for plan edits, manual assignments, and payment-provider switch strategy`
 
 ## Progress Log
+- 2026-04-07: Completed `SUBS-07` by adding admin-only subscription plan management API (`GET/PUT /admin/subscriptions/plans`) with role guard, validated entitlement payload schema reuse, editable pricing/currency/flags, and dedicated e2e coverage for auth/role/update/validation paths.
 - 2026-04-07: Completed `SUBS-06` by adding centralized subscription entitlement resolver (`subscriptionEntitlements.service`), enforcing plan-based bot create caps (`maxBotsTotal` + mode caps) in bots create flow, mapping deterministic `409` API error payload for over-limit requests, and validating with dedicated entitlement e2e suite plus updated bots e2e fixtures and API typecheck.
 - 2026-04-07: Completed `SUBS-05` by replacing My Account subscription placeholder with live profile-driven plan catalog cards, active-plan highlighting, entitlement summary fields, and retryable error/loading states in web profile UI; validated with new component regression tests and web typecheck.
 - 2026-04-07: Completed `SUBS-04` by adding authenticated profile subscription API (`GET /dashboard/profile/subscription`) that returns catalog (`FREE/ADVANCED/PROFESSIONAL`) plus active plan snapshot and auto-recovers legacy missing assignment to `FREE`; validated with new e2e contract suite and API typecheck.

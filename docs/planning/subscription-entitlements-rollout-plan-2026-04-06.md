@@ -44,7 +44,7 @@ Status: active implementation plan for collaborator-ready account limits and fut
 - [x] `SUBS-04 feat(api-profile): expose subscription catalog + active subscription in profile endpoints (my-account ready)`
 - [x] `SUBS-05 feat(web-profile): render subscription list with active-plan highlight in My Account -> Subscription`
 - [x] `SUBS-06 feat(entitlements-core): add central entitlement resolver and enforce bot-count limits by active plan`
-- [ ] `SUBS-07 feat(api-admin): add admin CRUD for plan pricing + entitlement limits (editable without deploy)`
+- [x] `SUBS-07 feat(api-admin): add admin CRUD for plan pricing + entitlement limits (editable without deploy)`
 - [ ] `SUBS-08 feat(web-admin): add admin UI modal for subscription price/limits editing`
 - [ ] `SUBS-09 feat(payment-abstraction): implement provider-agnostic payment gateway interface + checkout-intent API contract`
 - [ ] `SUBS-10 feat(payment-provider-stripe): add first provider adapter behind abstraction (toggleable, non-breaking)`

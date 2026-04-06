@@ -9,7 +9,7 @@ import {
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
-const subscriptionEntitlementsSchema = z
+export const SubscriptionEntitlementsSchema = z
   .object({
     version: z.number().int().min(1),
     limits: z.object({
@@ -55,14 +55,14 @@ const subscriptionEntitlementsSchema = z
     },
   );
 
-export type SubscriptionEntitlements = z.infer<typeof subscriptionEntitlementsSchema>;
+export type SubscriptionEntitlements = z.infer<typeof SubscriptionEntitlementsSchema>;
 
 const freeEntitlementsSeed = SUBSCRIPTION_PLAN_SEED.find((item) => item.code === 'FREE')?.entitlements;
 if (!freeEntitlementsSeed) {
   throw new Error('FREE_SUBSCRIPTION_ENTITLEMENTS_MISSING');
 }
 
-const fallbackEntitlements = subscriptionEntitlementsSchema.parse(freeEntitlementsSeed);
+const fallbackEntitlements = SubscriptionEntitlementsSchema.parse(freeEntitlementsSeed);
 
 export type UserEntitlementsContext = {
   planCode: SubscriptionPlanCode;
@@ -89,7 +89,7 @@ export class SubscriptionBotLimitError extends Error {
 }
 
 const coerceEntitlements = (raw: unknown): SubscriptionEntitlements => {
-  const parsed = subscriptionEntitlementsSchema.safeParse(raw);
+  const parsed = SubscriptionEntitlementsSchema.safeParse(raw);
   if (parsed.success) return parsed.data;
   return fallbackEntitlements;
 };
