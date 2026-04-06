@@ -10,6 +10,7 @@ import { requireRole } from '../middleware/requireRole';
 import { requireOpsNetwork } from '../middleware/requireOpsNetwork';
 import { applyNoStoreHeaders } from '../middleware/noStoreHeaders';
 import { evaluateCriticalSecretsReadiness } from '../config/criticalSecretsReadiness';
+import { buildRuntimeFreshnessSnapshot } from '../observability/runtimeFreshness';
 
 const router = Router();
 
@@ -120,6 +121,11 @@ router.get('/workers/ready', ...requireOpsAccess, (_req, res) => {
     service: 'workers',
     mode,
   });
+});
+
+router.get('/workers/runtime-freshness', ...requireOpsAccess, async (_req, res) => {
+  const snapshot = await buildRuntimeFreshnessSnapshot();
+  return res.status(snapshot.status === 'PASS' ? 200 : 503).json(snapshot);
 });
 
 router.use('/upload', uploadRouter);

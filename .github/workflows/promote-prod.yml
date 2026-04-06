@@ -16,6 +16,21 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Trigger Coolify PROD deploy webhook
         env:
           PROD_DEPLOY_WEBHOOK_URL: ${{ secrets.COOLIFY_PROD_DEPLOY_HOOK_URL }}
@@ -46,3 +61,35 @@ jobs:
             echo "::error::Production deploy webhook failed with HTTP $http_code"
             exit 1
           fi
+
+      - name: Mandatory post-deploy runtime freshness gate
+        env:
+          PROD_API_BASE_URL: ${{ secrets.PROD_API_BASE_URL }}
+          PROD_RUNTIME_FRESHNESS_TOKEN: ${{ secrets.PROD_RUNTIME_FRESHNESS_TOKEN }}
+        run: |
+          if [ -z "$PROD_API_BASE_URL" ]; then
+            echo "::error::Missing required secret PROD_API_BASE_URL"
+            exit 1
+          fi
+          if [ -z "$PROD_RUNTIME_FRESHNESS_TOKEN" ]; then
+            echo "::error::Missing required secret PROD_RUNTIME_FRESHNESS_TOKEN"
+            exit 1
+          fi
+
+          max_attempts=20
+          delay_seconds=30
+          attempt=1
+
+          while [ "$attempt" -le "$max_attempts" ]; do
+            echo "Runtime freshness check attempt $attempt/$max_attempts"
+            if pnpm run ops:deploy:runtime-freshness -- --base-url "$PROD_API_BASE_URL" --auth-token "$PROD_RUNTIME_FRESHNESS_TOKEN"; then
+              echo "Runtime freshness gate PASS"
+              exit 0
+            fi
+            if [ "$attempt" -eq "$max_attempts" ]; then
+              echo "::error::Runtime freshness gate failed after $max_attempts attempts"
+              exit 1
+            fi
+            sleep "$delay_seconds"
+            attempt=$((attempt + 1))
+          done
