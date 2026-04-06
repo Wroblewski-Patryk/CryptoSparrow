@@ -50,6 +50,8 @@
     "ops:db:restore-drill:local": "pnpm run ops:db:restore-drill -- --profile local",
     "ops:db:restore-drill:stage": "pnpm run ops:db:restore-drill -- --profile stage",
     "ops:db:restore-drill:prod": "pnpm run ops:db:restore-drill -- --profile prod",
+    "ops:data:backfill:venue-context": "pnpm --filter api exec tsx scripts/backfillBacktestVenueContext.ts",
+    "ops:data:backfill:venue-context:dry": "pnpm run ops:data:backfill:venue-context -- --dry-run",
     "ops:rc:gates:local-pipeline": "node scripts/runLocalExternalGatesPipeline.mjs",
     "ops:rc:gates:local-pipeline:strict": "node scripts/runLocalExternalGatesPipeline.mjs --strict-evidence-check",
     "ops:rc:gates:refresh": "node scripts/runLocalExternalGatesPipeline.mjs --skip-db-check --skip-slo-collect --skip-window-report --allow-offline",
