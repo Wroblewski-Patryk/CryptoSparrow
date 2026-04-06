@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cryptosparrow-pwa-v3';
+const CACHE_NAME = 'cryptosparrow-pwa-v4';
 const OFFLINE_URL = '/offline';
 const PRECACHE_URLS = ['/offline', '/manifest.webmanifest', '/logo.png'];
 const CACHE_PREFIX = 'cryptosparrow-pwa-';
@@ -32,9 +32,7 @@ const isApiOrRuntimeRequest = (url) => {
 };
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)).then(() => self.skipWaiting())
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)));
 });
 
 self.addEventListener('activate', (event) => {
@@ -47,6 +45,11 @@ self.addEventListener('activate', (event) => {
       )
     ).then(() => self.clients.claim())
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (!event.data || event.data.type !== 'SKIP_WAITING') return;
+  self.skipWaiting();
 });
 
 self.addEventListener('fetch', (event) => {
