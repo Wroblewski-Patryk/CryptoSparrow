@@ -83,6 +83,10 @@
   - `pnpm run ops:slo:collect -- --base-url https://<target-api> --duration-minutes 30 --interval-seconds 30 --auth-token <ADMIN_JWT>`
 - Run local backup/restore validation dry-run (Docker postgres):
   - `pnpm run ops:db:backup-restore:check-local`
+  - profile command set:
+    - `pnpm run ops:db:backup-verify:local`
+    - `pnpm run ops:db:backup-verify:stage`
+    - `pnpm run ops:db:backup-verify:prod`
 - Build RC external-gates status snapshot from latest SLO artifact:
   - `pnpm run ops:rc:gates:status`
 - Build rolling SLO summaries (for recurring 7d/30d review cadence):

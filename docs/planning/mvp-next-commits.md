@@ -7,17 +7,17 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `PEX-02 feat(api-runtime): enforce dedupe key persistence + replay-safe execution guards for side-effecting runtime actions`
-- [x] `PEX-03 test(runtime): add crash/retry regression suite proving no duplicate open/close orders after restart`
-- [x] `PEX-05 feat(runtime-recovery): implement bounded auto-restart policy with cooldown and max-attempt guardrails`
-- [x] `PEX-06 test(runtime): add long-running soak test for session continuity (heartbeat freshness, auto-restart trace, no stuck CANCELED loop)`
-- [x] `PEX-08 feat(obs-alerts): define alert thresholds for stale runtime, repeated restarts, and reconciliation drift`
-## NEXT
 - [x] `PEX-09 docs(runbook): publish incident triage matrix (symptoms -> checks -> mitigations -> rollback)`
-- [ ] `PEX-10 qa(manual-chaos): run controlled runtime failure drills (ws-drop, delayed exchange ack, stale heartbeat) and attach evidence`
-- [ ] `PEX-11 feat(obs-health): add runtime health endpoint contract for readiness/liveness with queue/backlog freshness`
-- [ ] `PEX-12 test(api-health): add regression coverage for health endpoint semantics under normal/degraded/stalled runtime`
-- [ ] `PEX-13 feat(runtime-reconcile): add startup reconciliation pass for orphan runtime sessions/orders after unclean shutdown`
+- [ ] `PEX-10 feat(ops-backup): add repeatable backup verification command set for target deployment profile`
+- [ ] `PEX-11 chore(ops-restore-drill): automate restore drill evidence generation with pass/fail contract`
+- [ ] `PEX-12 docs(ops-rto-rpo): document RTO/RPO targets and acceptable degradation windows`
+- [ ] `PEX-13 docs(secrets-inventory): publish canonical secret inventory + ownership + rotation cadence`
+- [ ] `PEX-14 feat(security-rotation): add rotation readiness checks and startup validation for critical secrets`
+## NEXT
+- [ ] `PEX-15 test(security): add regression checks for invalid/expired secret combinations and fail-safe startup`
+- [ ] `PEX-16 feat(release-gates): add mandatory post-deploy runtime freshness check (bots/sessions/signals not stale)`
+- [ ] `PEX-17 feat(rollback-guard): define automatic rollback trigger conditions for runtime-critical regressions`
+- [ ] `PEX-18 docs(release-checklist): update deployment checklist with runtime+cache+stream validation sequence`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 

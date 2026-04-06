@@ -6,6 +6,11 @@ Purpose: close the remaining release-candidate gates that require target-environ
 1. Take fresh database snapshot in target release environment.
    - Local dry-run helper (Docker postgres):
      - `pnpm run ops:db:backup-restore:check-local`
+   - Profiled command set (repeatable by deployment target):
+     - `pnpm run ops:db:backup-verify:local`
+     - `pnpm run ops:db:backup-verify:stage`
+     - `pnpm run ops:db:backup-verify:prod`
+     - optional overrides: `pnpm run ops:db:backup-verify -- --profile stage --container <name> --db-user <user> --db-name <name>`
 2. Record snapshot id, timestamp (UTC), and operator.
 3. Restore snapshot into isolated restore target (never production primary).
 4. Run minimum restore checks:
@@ -20,6 +25,11 @@ Evidence to record:
 - Restore target:
 - Restore verification command/output reference:
 - Operator:
+
+Profile env contract:
+- `DB_CHECK_CONTAINER`, `DB_CHECK_USER`, `DB_CHECK_NAME` for `local`
+- `STAGE_DB_CHECK_CONTAINER`, `STAGE_DB_CHECK_USER`, `STAGE_DB_CHECK_NAME` for `stage`
+- `PROD_DB_CHECK_CONTAINER`, `PROD_DB_CHECK_USER`, `PROD_DB_CHECK_NAME` for `prod`
 
 ## Gate 2: Queue-Lag Baseline Review
 1. Observe production-like telemetry window (minimum 30 minutes under normal load).
