@@ -2,11 +2,13 @@ import { PaymentProvider } from '@prisma/client';
 import { z } from 'zod';
 import { manualPaymentGatewayProvider } from './manualPaymentGateway.provider';
 import { PaymentGatewayAdapter } from './paymentGateway.types';
+import { stripePaymentGatewayProvider } from './stripePaymentGateway.provider';
 
 const configuredProviderSchema = z.nativeEnum(PaymentProvider);
 
 const providers = new Map<PaymentProvider, PaymentGatewayAdapter>([
   [manualPaymentGatewayProvider.provider, manualPaymentGatewayProvider],
+  [stripePaymentGatewayProvider.provider, stripePaymentGatewayProvider],
 ]);
 
 export const resolveConfiguredPaymentProvider = (): PaymentProvider => {

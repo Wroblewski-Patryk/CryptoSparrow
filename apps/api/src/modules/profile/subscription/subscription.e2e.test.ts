@@ -140,4 +140,34 @@ describe('Profile subscription contract', () => {
     });
     expect(response.status).toBe(401);
   });
+
+  it('returns explicit config error when STRIPE provider is selected without secret key', async () => {
+    const { agent } = await registerAndLogin('profile-subscription-checkout-stripe-missing@example.com');
+    const previousProvider = process.env.SUBSCRIPTION_PAYMENT_PROVIDER;
+    const previousStripeSecret = process.env.STRIPE_SECRET_KEY;
+
+    process.env.SUBSCRIPTION_PAYMENT_PROVIDER = 'STRIPE';
+    delete process.env.STRIPE_SECRET_KEY;
+
+    try {
+      const response = await agent.post('/dashboard/profile/subscription/checkout-intents').send({
+        planCode: 'ADVANCED',
+      });
+
+      expect(response.status).toBe(503);
+      expect(response.body.error.message).toBe('stripe provider is not configured');
+    } finally {
+      if (previousProvider === undefined) {
+        delete process.env.SUBSCRIPTION_PAYMENT_PROVIDER;
+      } else {
+        process.env.SUBSCRIPTION_PAYMENT_PROVIDER = previousProvider;
+      }
+
+      if (previousStripeSecret === undefined) {
+        delete process.env.STRIPE_SECRET_KEY;
+      } else {
+        process.env.STRIPE_SECRET_KEY = previousStripeSecret;
+      }
+    }
+  });
 });

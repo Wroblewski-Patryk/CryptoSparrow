@@ -44,6 +44,12 @@ export const createCheckoutIntent = async (req: ProfileRequest, res: Response) =
     if (error instanceof Error && error.message === 'PAYMENT_PROVIDER_NOT_SUPPORTED') {
       return sendError(res, 501, 'configured payment provider is not supported');
     }
+    if (error instanceof Error && error.message === 'PAYMENT_PROVIDER_STRIPE_NOT_CONFIGURED') {
+      return sendError(res, 503, 'stripe provider is not configured');
+    }
+    if (error instanceof Error && error.message === 'PAYMENT_PROVIDER_STRIPE_PRICE_NOT_CONFIGURED') {
+      return sendError(res, 503, 'stripe price id is not configured for selected plan');
+    }
     return sendValidationError(res, error);
   }
 };
