@@ -12,6 +12,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `EXIT-02 ops(slo-evidence): block production environment tagging for localhost/private hosts unless explicit dry-run override`
 - [x] `EXIT-01 ops(slo-evidence): tag SLO artifacts with environment and distinguish Gate2 PASS vs LOCAL_PASS`
 - [x] `SUBS-12 docs(runbook): publish operator/admin guide for subscription edits and payment-provider switch`
 - [x] `SUBS-11 test(api+web): add regression coverage for assignment/highlight/enforcement flows`

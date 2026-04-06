@@ -32,6 +32,14 @@ const parseOptionalNumber = (value) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+const parseBoolean = (value, fallback = false) => {
+  if (value == null || value === '') return fallback;
+  const normalized = String(value).trim().toLowerCase();
+  if (['1', 'true', 'yes', 'y', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'n', 'off'].includes(normalized)) return false;
+  return fallback;
+};
+
 const normalizeEnvironment = (value) => {
   const normalized = String(value ?? '').trim().toLowerCase();
   if (ALLOWED_ENVIRONMENTS.has(normalized)) return normalized;
@@ -59,6 +67,10 @@ const parseArgs = () => {
     queueLagExecutionThreshold: parseOptionalNumber(process.env.SLO_QUEUE_LAG_EXEC_THRESHOLD),
     queueLagExecutionCompliancePct: parseOptionalNumber(process.env.SLO_QUEUE_LAG_EXEC_COMPLIANCE_PCT),
     liveOrderFailureRatioPct: parseOptionalNumber(process.env.SLO_LIVE_ORDER_FAILURE_RATIO_PCT),
+    allowLocalProductionEvidence: parseBoolean(
+      process.env.SLO_ALLOW_LOCAL_PRODUCTION_EVIDENCE,
+      false
+    ),
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -84,6 +96,9 @@ const parseArgs = () => {
     if (arg === '--live-order-failure-ratio-pct') {
       options.liveOrderFailureRatioPct = parseOptionalNumber(args[index + 1]);
     }
+    if (arg === '--allow-local-production-evidence') {
+      options.allowLocalProductionEvidence = true;
+    }
   }
 
   const profileThresholds = TARGET_PROFILES[options.targetProfile] ?? TARGET_PROFILES.V1;
@@ -101,6 +116,38 @@ const parseArgs = () => {
   };
 
   return options;
+};
+
+const parseBaseUrl = (rawUrl) => {
+  try {
+    return new URL(rawUrl);
+  } catch {
+    throw new Error('base-url must be a valid absolute URL');
+  }
+};
+
+const isPrivateIpv4 = (hostname) => {
+  const parts = hostname.split('.').map((segment) => Number.parseInt(segment, 10));
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    return false;
+  }
+
+  if (parts[0] === 10) return true;
+  if (parts[0] === 127) return true;
+  if (parts[0] === 192 && parts[1] === 168) return true;
+  if (parts[0] === 169 && parts[1] === 254) return true;
+  if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
+  return false;
+};
+
+const isLocalOrPrivateHost = (hostnameInput) => {
+  const hostname = String(hostnameInput ?? '').trim().toLowerCase();
+  if (!hostname) return false;
+  if (hostname === 'localhost' || hostname.endsWith('.local')) return true;
+  if (hostname === '::1' || hostname === '[::1]') return true;
+  if (hostname.startsWith('fc') || hostname.startsWith('fd')) return true;
+  if (isPrivateIpv4(hostname)) return true;
+  return false;
 };
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -376,6 +423,7 @@ const renderMarkdown = ({ startedAt, endedAt, options, summary, artifacts }) => 
 - Interval (seconds): ${options.intervalSeconds}
 - Auth token provided: ${options.authToken ? 'yes' : 'no'}
 - Environment: ${options.environment}
+- Local production override: ${options.allowLocalProductionEvidence ? 'enabled' : 'disabled'}
 - Target profile: ${summary.evaluation.targetProfile}
 - Raw artifact: \`${artifacts.jsonPath}\`
 
@@ -423,7 +471,7 @@ const main = async () => {
   const options = parseArgs();
   if (options.help) {
     console.log(
-      'Usage: node scripts/collectSloEvidence.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--environment <local|stage|production>] [--target-profile <MVP|V1>] [--api-availability-pct <n>] [--worker-availability-pct <n>] [--api-5xx-ratio-pct <n>] [--api-avg-duration-ms <n>] [--queue-lag-exec-threshold <n>] [--queue-lag-exec-compliance-pct <n>] [--live-order-failure-ratio-pct <n>]'
+      'Usage: node scripts/collectSloEvidence.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--environment <local|stage|production>] [--target-profile <MVP|V1>] [--api-availability-pct <n>] [--worker-availability-pct <n>] [--api-5xx-ratio-pct <n>] [--api-avg-duration-ms <n>] [--queue-lag-exec-threshold <n>] [--queue-lag-exec-compliance-pct <n>] [--live-order-failure-ratio-pct <n>] [--allow-local-production-evidence]'
     );
     process.exit(0);
   }
@@ -433,6 +481,16 @@ const main = async () => {
   }
   if (!Number.isFinite(options.intervalSeconds) || options.intervalSeconds <= 0) {
     throw new Error('interval-seconds must be a positive number');
+  }
+  const parsedBaseUrl = parseBaseUrl(options.baseUrl);
+  if (
+    options.environment === 'production' &&
+    !options.allowLocalProductionEvidence &&
+    isLocalOrPrivateHost(parsedBaseUrl.hostname)
+  ) {
+    throw new Error(
+      `environment=production cannot be used with local/private base-url host (${parsedBaseUrl.hostname}). Use a public production endpoint or pass --allow-local-production-evidence for explicit dry-run override.`
+    );
   }
   const thresholdsToValidate = Object.entries(options.thresholds);
   for (const [key, value] of thresholdsToValidate) {
@@ -484,6 +542,7 @@ const main = async () => {
           intervalSeconds: options.intervalSeconds,
           authTokenProvided: Boolean(options.authToken),
           environment: options.environment,
+          allowLocalProductionEvidence: options.allowLocalProductionEvidence,
           targetProfile: options.targetProfile,
           thresholds: options.thresholds,
         },

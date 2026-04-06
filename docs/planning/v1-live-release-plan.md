@@ -168,6 +168,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `G10-23 web-build-stability: provide favicon asset required by Next.js production build pipeline`
 
 ## Progress Log
+- 2026-04-07: Hardened production-evidence integrity for Exit Workpack by blocking `ops:slo:collect --environment production` on localhost/private hosts unless explicit `--allow-local-production-evidence` dry-run override is provided.
 - 2026-04-06: Added subscription + entitlement rollout baseline for collaborator testing readiness (`FREE/ADVANCED/PROFESSIONAL`, profile active-plan visibility, owner PROFESSIONAL bootstrap, admin-editable limits/pricing, and payment-gateway abstraction) via `docs/planning/subscription-entitlements-rollout-plan-2026-04-06.md`.
 - 2026-04-06: Refreshed RC external-gates/sign-off artifacts (`v1-rc-external-gates-status.md`, `v1-rc-signoff-record.md`) and added Binance live-ops verification checklist (`docs/operations/binance-live-ops-verification-checklist-2026-04-06.md`) with links in RC checklist/runbook/sign-off references.
 - 2026-04-05: Synced Exit Evidence Workpack SLO status for plan truthfulness: catalog/targets are complete, remaining open item is production observation-window evidence collection.

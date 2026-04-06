@@ -39,6 +39,8 @@ Profile env contract:
 1. Observe production-like telemetry window (minimum 30 minutes under normal load).
    - Recommended collector command:
      - `pnpm run ops:slo:collect -- --base-url https://<target-api> --duration-minutes 30 --interval-seconds 30 --auth-token <ADMIN_JWT> --environment production`
+   - Guardrail:
+     - `--environment production` is blocked for `localhost`/private hosts unless explicit dry-run override is provided (`--allow-local-production-evidence`).
    - Build rolling SLO window summary (for 7d/30d review cadence):
      - `pnpm run ops:slo:window-report -- --window-days 7`
      - `pnpm run ops:slo:window-report -- --window-days 30`
@@ -129,6 +131,7 @@ Evidence to record:
     - `pnpm run ops:rc:gates:status -- --template-only`
   - Run local full helper pipeline (DB dry-run + SLO collect + status snapshot):
     - `pnpm run ops:rc:gates:local-pipeline -- --base-url http://localhost:4001 --duration-minutes 5 --interval-seconds 15`
+    - if you intentionally need `environment=production` in local dry-run: add `--allow-local-production-evidence`.
     - by default this pipeline also generates SLO rolling reports for `7d` and `30d`.
     - by default this pipeline also syncs `v1-release-candidate-checklist.md` checkbox states from status/sign-off artifacts.
     - by default this pipeline also prints missing evidence diagnostics (`ops:rc:gates:evidence:check`).

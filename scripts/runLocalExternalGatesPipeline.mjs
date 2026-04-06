@@ -4,6 +4,14 @@ import { spawnSync } from 'node:child_process';
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 
+const ALLOWED_ENVIRONMENTS = new Set(['local', 'stage', 'production']);
+
+const normalizeEnvironment = (value) => {
+  const normalized = String(value ?? '').trim().toLowerCase();
+  if (ALLOWED_ENVIRONMENTS.has(normalized)) return normalized;
+  return 'local';
+};
+
 const parseArgs = () => {
   const args = process.argv.slice(2);
   const options = {
@@ -11,7 +19,8 @@ const parseArgs = () => {
     durationMinutes: process.env.SLO_DURATION_MINUTES ?? '5',
     intervalSeconds: process.env.SLO_INTERVAL_SECONDS ?? '15',
     authToken: process.env.SLO_AUTH_TOKEN ?? '',
-    environment: process.env.SLO_ENVIRONMENT ?? 'local',
+    environment: normalizeEnvironment(process.env.SLO_ENVIRONMENT ?? 'local'),
+    allowLocalProductionEvidence: false,
     skipDbCheck: false,
     allowOffline: false,
     skipSloCollect: false,
@@ -33,7 +42,8 @@ const parseArgs = () => {
     if (arg === '--duration-minutes') options.durationMinutes = args[index + 1] ?? options.durationMinutes;
     if (arg === '--interval-seconds') options.intervalSeconds = args[index + 1] ?? options.intervalSeconds;
     if (arg === '--auth-token') options.authToken = args[index + 1] ?? options.authToken;
-    if (arg === '--environment') options.environment = args[index + 1] ?? options.environment;
+    if (arg === '--environment') options.environment = normalizeEnvironment(args[index + 1] ?? options.environment);
+    if (arg === '--allow-local-production-evidence') options.allowLocalProductionEvidence = true;
     if (arg === '--skip-db-check') options.skipDbCheck = true;
     if (arg === '--allow-offline') options.allowOffline = true;
     if (arg === '--skip-slo-collect') options.skipSloCollect = true;
@@ -129,7 +139,7 @@ const main = () => {
   const options = parseArgs();
   if (options.help) {
     console.log(
-      'Usage: node scripts/runLocalExternalGatesPipeline.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--environment <local|stage|production>] [--skip-db-check] [--skip-slo-collect] [--skip-window-report] [--skip-checklist-sync] [--skip-evidence-check] [--strict-evidence-check] [--evidence-output <file>] [--window-days <csv>] [--allow-offline]'
+      'Usage: node scripts/runLocalExternalGatesPipeline.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--environment <local|stage|production>] [--allow-local-production-evidence] [--skip-db-check] [--skip-slo-collect] [--skip-window-report] [--skip-checklist-sync] [--skip-evidence-check] [--strict-evidence-check] [--evidence-output <file>] [--window-days <csv>] [--allow-offline]'
     );
     process.exit(0);
   }
@@ -193,6 +203,9 @@ const main = () => {
         ];
         if (options.authToken) {
           sloArgs.push('--auth-token', options.authToken);
+        }
+        if (options.allowLocalProductionEvidence) {
+          sloArgs.push('--allow-local-production-evidence');
         }
         run('SLO observation collector', 'pnpm', sloArgs);
 
