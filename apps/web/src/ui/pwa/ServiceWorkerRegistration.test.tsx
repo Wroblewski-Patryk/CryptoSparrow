@@ -11,10 +11,27 @@ describe("ServiceWorkerRegistration", () => {
     env.NODE_ENV = originalNodeEnv;
     env.NEXT_PUBLIC_SW_TEST_MODE = originalSwTestMode;
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("registers service worker and performs update checks with activation handoff", async () => {
     env.NEXT_PUBLIC_SW_TEST_MODE = "1";
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ buildId: "build-a" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const deleteCache = vi.fn().mockResolvedValue(true);
+    const keys = vi.fn().mockResolvedValue(["cryptosparrow-pwa-v4"]);
+    Object.defineProperty(window, "caches", {
+      configurable: true,
+      value: {
+        keys,
+        delete: deleteCache,
+      },
+    });
 
     const postMessage = vi.fn();
     const update = vi.fn().mockResolvedValue(undefined);
@@ -79,6 +96,8 @@ describe("ServiceWorkerRegistration", () => {
     });
 
     expect(update.mock.calls.length).toBeGreaterThanOrEqual(3);
+    expect(fetchMock).toHaveBeenCalled();
+    expect(deleteCache).not.toHaveBeenCalled();
   });
 
   it("does not register service worker outside production mode", async () => {
@@ -98,5 +117,77 @@ describe("ServiceWorkerRegistration", () => {
     await act(async () => Promise.resolve());
 
     expect(register).not.toHaveBeenCalled();
+  });
+
+  it("purges pwa caches and reloads when build id changes", async () => {
+    env.NEXT_PUBLIC_SW_TEST_MODE = "1";
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ buildId: "build-a" }),
+      })
+      .mockResolvedValue({
+        ok: true,
+        json: async () => ({ buildId: "build-b" }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const deleteCache = vi.fn().mockResolvedValue(true);
+    const keys = vi.fn().mockResolvedValue(["cryptosparrow-pwa-v4", "some-other-cache"]);
+    Object.defineProperty(window, "caches", {
+      configurable: true,
+      value: {
+        keys,
+        delete: deleteCache,
+      },
+    });
+
+    const postMessage = vi.fn();
+    const update = vi.fn().mockResolvedValue(undefined);
+    const register = vi.fn();
+    const waitingWorker = { postMessage } as unknown as ServiceWorker;
+    const registration = {
+      waiting: waitingWorker,
+      installing: null,
+      update,
+      addEventListener: vi.fn(),
+    } as unknown as ServiceWorkerRegistration;
+    register.mockResolvedValue(registration);
+
+    Object.defineProperty(navigator, "serviceWorker", {
+      configurable: true,
+      value: {
+        register,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        controller: {} as ServiceWorker,
+      } as unknown as ServiceWorkerContainer,
+    });
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "visible",
+    });
+
+    render(<ServiceWorkerRegistration />);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"));
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(deleteCache).toHaveBeenCalledWith("cryptosparrow-pwa-v4");
+    });
+    expect(update).toHaveBeenCalled();
   });
 });
