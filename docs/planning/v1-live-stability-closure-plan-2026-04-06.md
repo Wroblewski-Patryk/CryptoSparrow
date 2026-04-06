@@ -22,11 +22,11 @@ Status: active planning baseline for final V1 closure.
 - No scope expansion to V2/agent rollout until this closure plan is complete.
 
 ## Tiny-Commit Sequence
-- [ ] `V1C-01 fix(api-backtest-core): restore deterministic TTP event emission in replay core and keep advanced close semantics stable`
-- [ ] `V1C-02 test(api-backtest): run full backtest parity/replay/e2e confidence pack and capture evidence`
-- [ ] `V1C-03 test(api+web-runtime): run runtime positions/live execution confidence pack (API + UI) and capture evidence`
-- [ ] `V1C-04 ops(v1-exit-gates): collect production SLO observation artifacts + queue-lag telemetry review + target backup/restore evidence`
-- [ ] `V1C-05 release(v1-signoff): refresh RC external-gates status/checklist and finalize formal sign-offs`
+- [ ] `V1B-01 fix(api-backtest-core): restore deterministic TTP event emission in replay core and align TTP field semantics with runtime parser contract`
+- [ ] `V1B-02 test(api-parity): add explicit regression asserting identical TTP/TSL config interpretation between replay parser and runtime automation parser`
+- [ ] `V1B-03 test(api-runtime-live): extend runtime/positions e2e coverage for bot-managed lifecycle actions and manual-managed ignore behavior`
+- [ ] `V1B-04 test(confidence-pack): run full backtest + runtime positions confidence pack (api+web) and capture fresh evidence`
+- [ ] `V1B-05 release(v1-exit-gates): refresh RC external-gates/sign-off artifacts and include Binance live-ops verification checklist`
 
 ## Verification Pack (Target)
 - Backtest/API:

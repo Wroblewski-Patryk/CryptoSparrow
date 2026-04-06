@@ -600,13 +600,14 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DBACT-10 qa(smoke): manual verification on real paper-session timeline (open -> dca -> close) including fee/pnl/margin coherence`
 
 ## Phase 37 - V1 Live Stability Closure (Active)
-- [ ] `V1C-01 fix(api-backtest-core): restore deterministic TTP event emission in replay core and keep advanced close semantics stable`
-- [ ] `V1C-02 test(api-backtest): run full backtest parity/replay/e2e confidence pack and capture evidence`
-- [ ] `V1C-03 test(api+web-runtime): run runtime positions/live execution confidence pack (API + UI) and capture evidence`
-- [ ] `V1C-04 ops(v1-exit-gates): collect production SLO observation artifacts + queue-lag telemetry review + target backup/restore evidence`
-- [ ] `V1C-05 release(v1-signoff): refresh RC external-gates status/checklist and finalize formal sign-offs`
+- [ ] `V1B-01 fix(api-backtest-core): restore deterministic TTP event emission in replay core and align TTP field semantics with runtime parser contract`
+- [ ] `V1B-02 test(api-parity): add explicit regression asserting identical TTP/TSL config interpretation between replay parser and runtime automation parser`
+- [ ] `V1B-03 test(api-runtime-live): extend runtime/positions e2e coverage for bot-managed lifecycle actions and manual-managed ignore behavior`
+- [ ] `V1B-04 test(confidence-pack): run full backtest + runtime positions confidence pack (api+web) and capture fresh evidence`
+- [ ] `V1B-05 release(v1-exit-gates): refresh RC external-gates/sign-off artifacts and include Binance live-ops verification checklist`
 
 ## Progress Log
+- 2026-04-06: Refined active V1 closure queue from `V1C` to `V1B` after focused Binance/live/backtest parity review; added explicit parser-semantics parity task and runtime manual-vs-bot-managed lifecycle coverage, and published canonical plan `docs/planning/v1-binance-live-backtest-alignment-plan-2026-04-06.md`.
 - 2026-04-06: Added active V1 closure phase (`V1C-01..V1C-05`) after stability verification pass: replay backtest regression on TTP path was confirmed as open issue, while runtime positions/live confidence pack stayed green; canonical closure sequence is documented in `docs/planning/v1-live-stability-closure-plan-2026-04-06.md`.
 - 2026-04-06: Completed `DBACT-10` by capturing paper-session timeline smoke evidence in `docs/operations/dbact-paper-session-timeline-smoke-2026-04-06.md`: verified `OPEN/DCA/CLOSE` monitoring timeline flow with focused bots API e2e filter scenario and confirmed Dashboard/Bots runtime history fee/pnl/margin coherence via targeted web regression suite (`HomeLiveWidgets` + `BotsManagement`).
 - 2026-04-06: Completed `EXPH-12` by publishing colleague-ready manual smoke checklist `docs/operations/exchange-placeholder-colleague-smoke-checklist-2026-04-06.md` covering placeholder exchange create/save/read paths in Markets/Profile and fail-closed blocked execution checks in Bots, with explicit expected `501 EXCHANGE_NOT_IMPLEMENTED` API contract and linked automated regression evidence commands.
