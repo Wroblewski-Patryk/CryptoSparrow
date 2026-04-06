@@ -141,6 +141,7 @@
   - Use `--evidence-output <file>` to override JSON evidence artifact path.
   - Shortcut strict mode: `pnpm run ops:rc:gates:local-pipeline:strict`
   - Shortcut strict production mode: `pnpm run ops:rc:gates:local-pipeline:strict:prod`
+  - Dedicated production pipeline alias: `pnpm run ops:rc:gates:prod-pipeline -- --base-url https://<target-api> --auth-token <ADMIN_JWT> --duration-minutes 30 --interval-seconds 30`
   - Offline fallback: `pnpm run ops:rc:gates:local-pipeline -- --allow-offline`
   - Quick refresh (no DB/SLO collection): `pnpm run ops:rc:gates:refresh`
   - Quick refresh strict mode: `pnpm run ops:rc:gates:refresh:strict`

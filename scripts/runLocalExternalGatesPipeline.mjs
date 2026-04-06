@@ -5,10 +5,17 @@ import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 
 const ALLOWED_ENVIRONMENTS = new Set(['local', 'stage', 'production']);
+const ALLOWED_DB_PROFILES = new Set(['local', 'stage', 'prod']);
 
 const normalizeEnvironment = (value) => {
   const normalized = String(value ?? '').trim().toLowerCase();
   if (ALLOWED_ENVIRONMENTS.has(normalized)) return normalized;
+  return 'local';
+};
+
+const normalizeDbProfile = (value) => {
+  const normalized = String(value ?? '').trim().toLowerCase();
+  if (ALLOWED_DB_PROFILES.has(normalized)) return normalized;
   return 'local';
 };
 
@@ -20,6 +27,7 @@ const parseArgs = () => {
     intervalSeconds: process.env.SLO_INTERVAL_SECONDS ?? '15',
     authToken: process.env.SLO_AUTH_TOKEN ?? '',
     environment: normalizeEnvironment(process.env.SLO_ENVIRONMENT ?? 'local'),
+    dbProfile: normalizeDbProfile(process.env.RC_GATES_DB_PROFILE ?? 'local'),
     allowLocalProductionEvidence: false,
     skipDbCheck: false,
     allowOffline: false,
@@ -44,6 +52,7 @@ const parseArgs = () => {
     if (arg === '--interval-seconds') options.intervalSeconds = args[index + 1] ?? options.intervalSeconds;
     if (arg === '--auth-token') options.authToken = args[index + 1] ?? options.authToken;
     if (arg === '--environment') options.environment = normalizeEnvironment(args[index + 1] ?? options.environment);
+    if (arg === '--db-profile') options.dbProfile = normalizeDbProfile(args[index + 1] ?? options.dbProfile);
     if (arg === '--allow-local-production-evidence') options.allowLocalProductionEvidence = true;
     if (arg === '--skip-db-check') options.skipDbCheck = true;
     if (arg === '--allow-offline') options.allowOffline = true;
@@ -141,7 +150,7 @@ const main = () => {
   const options = parseArgs();
   if (options.help) {
     console.log(
-      'Usage: node scripts/runLocalExternalGatesPipeline.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--environment <local|stage|production>] [--allow-local-production-evidence] [--skip-db-check] [--skip-slo-collect] [--skip-window-report] [--skip-checklist-sync] [--skip-evidence-check] [--strict-evidence-check] [--require-production-gate2] [--evidence-output <file>] [--window-days <csv>] [--allow-offline]'
+      'Usage: node scripts/runLocalExternalGatesPipeline.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--environment <local|stage|production>] [--db-profile <local|stage|prod>] [--allow-local-production-evidence] [--skip-db-check] [--skip-slo-collect] [--skip-window-report] [--skip-checklist-sync] [--skip-evidence-check] [--strict-evidence-check] [--require-production-gate2] [--evidence-output <file>] [--window-days <csv>] [--allow-offline]'
     );
     process.exit(0);
   }
@@ -149,7 +158,13 @@ const main = () => {
   Promise.resolve()
     .then(async () => {
       if (!options.skipDbCheck) {
-        run('restore-drill evidence (local profile)', 'pnpm', ['run', 'ops:db:restore-drill:local']);
+        run(`restore-drill evidence (${options.dbProfile} profile)`, 'pnpm', [
+          'run',
+          'ops:db:restore-drill',
+          '--',
+          '--profile',
+          options.dbProfile,
+        ]);
       }
 
       if (!options.skipSloCollect) {

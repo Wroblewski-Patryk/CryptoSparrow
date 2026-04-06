@@ -148,6 +148,7 @@ Evidence to record:
     - strict shortcut:
       - `pnpm run ops:rc:gates:local-pipeline:strict`
       - `pnpm run ops:rc:gates:local-pipeline:strict:prod`
+      - explicit production pipeline alias (same strict-prod behavior): `pnpm run ops:rc:gates:prod-pipeline -- --base-url https://<target-api> --auth-token <ADMIN_JWT> --duration-minutes 30 --interval-seconds 30`
   - Offline fallback when API is unavailable (template status only):
     - `pnpm run ops:rc:gates:local-pipeline -- --allow-offline`
   - Quick refresh (status + checklist + evidence check, no DB/SLO collection):
