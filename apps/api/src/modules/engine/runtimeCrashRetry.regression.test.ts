@@ -9,6 +9,11 @@ import {
 } from './executionOrchestrator.service';
 import { runtimeTelemetryService } from './runtimeTelemetry.service';
 
+type DedupeAcquireResult = Awaited<ReturnType<RuntimeExecutionDedupeGateway['acquire']>>;
+type OpenOrderResult = Awaited<ReturnType<OrderFlowGateway['openOrder']>>;
+type OpenPositionResult = Awaited<ReturnType<PositionFlowGateway['createPosition']>>;
+type ExistingPositionResult = Awaited<ReturnType<PositionFlowGateway['getOpenPositionBySymbol']>>;
+
 type MemoryDedupe = {
   status: 'PENDING' | 'SUCCEEDED' | 'FAILED';
   orderId?: string | null;
@@ -18,21 +23,30 @@ type MemoryDedupe = {
 const createMemoryDedupeGateway = (): RuntimeExecutionDedupeGateway => {
   const store = new Map<string, MemoryDedupe>();
   return {
-    acquire: vi.fn(async (input) => {
+    acquire: vi.fn(async (input): Promise<DedupeAcquireResult> => {
       const existing = store.get(input.dedupeKey);
       if (!existing) {
         store.set(input.dedupeKey, { status: 'PENDING' });
-        return { outcome: 'execute', dedupeKey: input.dedupeKey };
+        const executeResult: DedupeAcquireResult = {
+          outcome: 'execute',
+          dedupeKey: input.dedupeKey,
+        };
+        return executeResult;
       }
       if (existing.status === 'SUCCEEDED') {
-        return {
+        const reusedResult: DedupeAcquireResult = {
           outcome: 'reused',
           dedupeKey: input.dedupeKey,
           orderId: existing.orderId,
           positionId: existing.positionId,
         };
+        return reusedResult;
       }
-      return { outcome: 'inflight', dedupeKey: input.dedupeKey };
+      const inflightResult: DedupeAcquireResult = {
+        outcome: 'inflight',
+        dedupeKey: input.dedupeKey,
+      };
+      return inflightResult;
     }),
     markSucceeded: vi.fn(async (input) => {
       store.set(input.dedupeKey, {
@@ -71,9 +85,9 @@ describe('runtime crash/retry regression', () => {
 
     const createGateways = (): { orderGateway: OrderFlowGateway; positionGateway: PositionFlowGateway } => ({
       orderGateway: {
-        openOrder: vi.fn(async (_userId, input) => {
+        openOrder: vi.fn(async (_userId, input): Promise<OpenOrderResult> => {
           openOrderCalls += 1;
-          return {
+          const order: OpenOrderResult = {
             id: `open-order-${openOrderCalls}`,
             userId: 'u1',
             origin: 'BOT',
@@ -104,15 +118,16 @@ describe('runtime crash/retry regression', () => {
             exchangeTradeId: null,
             canceledAt: null,
           };
+          return order;
         }),
         closeOrder: vi.fn(async () => null),
         linkOrderToPosition: vi.fn(async () => undefined),
       },
       positionGateway: {
         getOpenPositionBySymbol: vi.fn(async () => null),
-        createPosition: vi.fn(async (input) => {
+        createPosition: vi.fn(async (input): Promise<OpenPositionResult> => {
           createPositionCalls += 1;
-          return {
+          const position: OpenPositionResult = {
             id: `open-position-${createPositionCalls}`,
             userId: input.userId,
             externalId: null,
@@ -136,6 +151,7 @@ describe('runtime crash/retry regression', () => {
             stopLoss: null,
             takeProfit: null,
           };
+          return position;
         }),
         closePosition: vi.fn(async () => undefined),
       },
@@ -210,9 +226,9 @@ describe('runtime crash/retry regression', () => {
 
     const createGateways = (): { orderGateway: OrderFlowGateway; positionGateway: PositionFlowGateway } => ({
       orderGateway: {
-        openOrder: vi.fn(async (_userId, input) => {
+        openOrder: vi.fn(async (_userId, input): Promise<OpenOrderResult> => {
           closeOpenOrderCalls += 1;
-          return {
+          const order: OpenOrderResult = {
             id: `close-order-${closeOpenOrderCalls}`,
             userId: 'u1',
             origin: 'BOT',
@@ -243,35 +259,39 @@ describe('runtime crash/retry regression', () => {
             exchangeTradeId: null,
             canceledAt: null,
           };
+          return order;
         }),
         closeOrder: vi.fn(async () => null),
         linkOrderToPosition: vi.fn(async () => undefined),
       },
       positionGateway: {
-        getOpenPositionBySymbol: vi.fn(async () => ({
-          id: 'position-open-1',
-          userId: 'u1',
-          externalId: null,
-          origin: 'BOT',
-          managementMode: 'BOT_MANAGED',
-          syncState: 'IN_SYNC',
-          symbol: 'BTCUSDT',
-          side: 'LONG',
-          status: 'OPEN',
-          entryPrice: 41_500,
-          quantity: 0.2,
-          leverage: 1,
-          openedAt: new Date(),
-          closedAt: null,
-          realizedPnl: null,
-          unrealizedPnl: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          botId: 'bot-1',
-          strategyId: 'strategy-1',
-          stopLoss: null,
-          takeProfit: null,
-        })),
+        getOpenPositionBySymbol: vi.fn(async (): Promise<ExistingPositionResult> => {
+          const position: NonNullable<ExistingPositionResult> = {
+            id: 'position-open-1',
+            userId: 'u1',
+            externalId: null,
+            origin: 'BOT',
+            managementMode: 'BOT_MANAGED',
+            syncState: 'IN_SYNC',
+            symbol: 'BTCUSDT',
+            side: 'LONG',
+            status: 'OPEN',
+            entryPrice: 41_500,
+            quantity: 0.2,
+            leverage: 1,
+            openedAt: new Date(),
+            closedAt: null,
+            realizedPnl: null,
+            unrealizedPnl: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            botId: 'bot-1',
+            strategyId: 'strategy-1',
+            stopLoss: null,
+            takeProfit: null,
+          };
+          return position;
+        }),
         createPosition: vi.fn(async () => {
           throw new Error('createPosition should not be called for EXIT');
         }),
