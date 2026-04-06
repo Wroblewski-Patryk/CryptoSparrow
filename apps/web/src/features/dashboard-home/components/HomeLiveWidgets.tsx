@@ -21,6 +21,7 @@ import {
   BotRuntimeTradesResponse,
 } from "../../../features/bots/types/bot.type";
 import {
+  getBotRuntimeGraph,
   listBots,
   listBotRuntimeSessionPositions,
   listBotRuntimeSessionSymbolStats,
@@ -64,9 +65,12 @@ const BTN_SECONDARY = "btn btn-outline btn-sm";
 const MAX_DASHBOARD_BOTS = 8;
 const AUTO_REFRESH_INTERVAL_MS = 5_000;
 const LOAD_STALE_AFTER_MS = 20_000;
+const RUNTIME_DATA_STALE_WARNING_AFTER_MS = 20_000;
 const SELECTED_BOT_STORAGE_KEY = "dashboard.home.selectedBotId";
 const DASHBOARD_OPEN_POSITIONS_SORT_STORAGE_KEY = "dashboard.home.openPositions.sort.v1";
+const DASHBOARD_OPEN_POSITIONS_COLUMNS_STORAGE_KEY = "dashboard.home.openPositions.columns.v1";
 const DASHBOARD_TRADE_HISTORY_SORT_STORAGE_KEY = "dashboard.home.tradeHistory.sort.v1";
+const DASHBOARD_TRADE_HISTORY_COLUMNS_STORAGE_KEY = "dashboard.home.tradeHistory.columns.v1";
 const TRADE_PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 const OPEN_POSITIONS_PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 const SIGNAL_CARDS_DENSITY_BREAKPOINTS = {
@@ -121,6 +125,16 @@ const resolveSignalCardsPerView = (width: number) => {
   if (width >= SIGNAL_CARDS_DENSITY_BREAKPOINTS.desktopMinWidth) return 4;
   if (width >= SIGNAL_CARDS_DENSITY_BREAKPOINTS.tabletMinWidth) return 3;
   return 2;
+};
+
+const formatAgeCompact = (ms: number) => {
+  if (!Number.isFinite(ms) || ms <= 0) return "0s";
+  if (ms < 60_000) return `${Math.max(1, Math.floor(ms / 1_000))}s`;
+  const totalMinutes = Math.floor(ms / 60_000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours <= 0) return `${minutes}m`;
+  return `${hours}h ${minutes}m`;
 };
 
 const EMPTY_TRADE_FILTERS: TradeFiltersState = {
@@ -561,6 +575,7 @@ export default function HomeLiveWidgets() {
   const [refreshToken, setRefreshToken] = useState(0);
   const [liveTickerPrices, setLiveTickerPrices] = useState<Record<string, number>>({});
   const [viewportWidth, setViewportWidth] = useState(0);
+  const [runtimeStaleWatchNowMs, setRuntimeStaleWatchNowMs] = useState(() => Date.now());
   const ttpStickyFavorableMoveByPositionRef = useRef<Map<string, number>>(new Map());
   const loadInFlightRef = useRef(false);
   const loadStartedAtRef = useRef<number | null>(null);
@@ -650,18 +665,22 @@ export default function HomeLiveWidgets() {
           try {
             const sessions = await listBotRuntimeSessions(bot.id, { limit: 20 });
             const primary = pickPrimarySession(sessions);
-            if (!primary) return { bot, session: null, symbolStats: null, positions: null };
+            const runtimeGraph = await getBotRuntimeGraph(bot.id).catch(() => null);
+            if (!primary) {
+              return { bot, session: null, symbolStats: null, positions: null, runtimeGraph };
+            }
             const [symbolStats, positions] = await Promise.all([
               listBotRuntimeSessionSymbolStats(bot.id, primary.id, { limit: 200 }),
               listBotRuntimeSessionPositions(bot.id, primary.id, { limit: 200 }),
             ]);
-            return { bot, session: primary, symbolStats, positions };
+            return { bot, session: primary, symbolStats, positions, runtimeGraph };
           } catch (err) {
             return {
               bot,
               session: null,
               symbolStats: null,
               positions: null,
+              runtimeGraph: null,
               loadError: getAxiosMessage(err) ?? t("dashboard.home.runtime.noSignalData"),
             };
           }
@@ -670,7 +689,10 @@ export default function HomeLiveWidgets() {
 
       setSnapshots(next);
       setSelectedBotId((prev) => (prev && next.some((x) => x.bot.id === prev) ? prev : next[0]?.bot.id ?? null));
-      setLastUpdatedAt(new Date().toISOString());
+      const hasFreshSnapshot = next.some((item) => !item.loadError);
+      if (hasFreshSnapshot) {
+        setLastUpdatedAt(new Date().toISOString());
+      }
       setRefreshToken((x) => x + 1);
     } catch (err) {
       if (!silent) {
@@ -705,6 +727,13 @@ export default function HomeLiveWidgets() {
     const timer = window.setInterval(() => void load({ silent: true }), AUTO_REFRESH_INTERVAL_MS);
     return () => window.clearInterval(timer);
   }, [load]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setRuntimeStaleWatchNowMs(Date.now());
+    }, 1_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const selected = useMemo(() => {
     if (snapshots.length === 0) return null;
@@ -926,6 +955,18 @@ export default function HomeLiveWidgets() {
       ? supportsExchangeCapability(selected.bot.exchange, "LIVE_EXECUTION")
       : supportsExchangeCapability(selected.bot.exchange, "PAPER_PRICING_FEED");
   }, [selected]);
+
+  const runtimeDataAgeMs = useMemo(() => {
+    if (!lastUpdatedAt) return null;
+    const timestamp = Date.parse(lastUpdatedAt);
+    if (!Number.isFinite(timestamp)) return null;
+    return Math.max(0, runtimeStaleWatchNowMs - timestamp);
+  }, [lastUpdatedAt, runtimeStaleWatchNowMs]);
+
+  const runtimeDataIsStale = useMemo(
+    () => runtimeDataAgeMs != null && runtimeDataAgeMs >= RUNTIME_DATA_STALE_WARNING_AFTER_MS,
+    [runtimeDataAgeMs]
+  );
 
   const selectedPlaceholderHint = useMemo(() => {
     if (!selected || !selected.bot.exchange) return "";
@@ -1316,11 +1357,11 @@ export default function HomeLiveWidgets() {
       <div className="space-y-4" aria-busy="true" aria-label={t("dashboard.home.runtime.loadingTitle")}>
         <SkeletonKpiRow items={3} />
           <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-          <div className="space-y-3">
+          <div className="order-2 space-y-3 xl:order-1">
             <SkeletonCardBlock cards={4} linesPerCard={4} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
             <SkeletonTableRows columns={8} rows={5} title={false} toolbar={false} className="border-base-300/40 bg-base-100/60 p-3" />
           </div>
-          <div className="space-y-3">
+          <div className="order-1 space-y-3 xl:order-2">
             <SkeletonCardBlock cards={1} linesPerCard={6} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
             <SkeletonCardBlock cards={1} linesPerCard={7} title={false} className="border-base-300/40 bg-base-100/60 p-3" />
           </div>
@@ -1381,30 +1422,9 @@ export default function HomeLiveWidgets() {
   return (
     <div className="space-y-4">
         <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="min-w-0">
+        <div className="order-2 min-w-0 xl:order-1">
           <section className={CARD}>
             <div className="space-y-6">
-              <RuntimeSignalsSection
-                signalSymbols={signalSymbols}
-                hasSignalOverflow={hasSignalOverflow}
-                signalRailRef={signalRailRef}
-                onScrollPrevious={() => scrollSignalRail("prev")}
-                onScrollNext={() => scrollSignalRail("next")}
-                previousLabel={t("dashboard.home.runtime.signalRailPrev")}
-                nextLabel={t("dashboard.home.runtime.signalRailNext")}
-                longLabel={t("dashboard.home.runtime.long")}
-                shortLabel={t("dashboard.home.runtime.short")}
-                noSignalDataLabel={t("dashboard.home.runtime.noSignalData")}
-                marketsLabel={t("dashboard.home.runtime.markets")}
-                signalsLabel={t("dashboard.home.runtime.signals")}
-                baseCurrencyLabel={t("dashboard.home.runtime.baseCurrency")}
-                marketsCount={signalHeaderStats.marketsCount}
-                actionableSignalsCount={signalHeaderStats.actionableSignalsCount}
-                baseCurrencyCode={signalHeaderStats.baseCurrencyCode}
-                renderBaseCurrency={renderBaseCurrencySymbol}
-                renderSymbolLabel={renderRuntimeSymbol}
-              />
-
               {!selectedRuntimeCapabilityAvailable ? (
                 <div className="rounded-box border border-warning/40 bg-warning/10 px-3 py-2 text-xs">
                   <div className="mb-1">
@@ -1423,6 +1443,7 @@ export default function HomeLiveWidgets() {
                 openRows={selectedData?.open ?? []}
                 openPositionsColumns={openPositionsColumns}
                 openPositionsSortStorageKey={DASHBOARD_OPEN_POSITIONS_SORT_STORAGE_KEY}
+                openPositionsColumnVisibilityKey={DASHBOARD_OPEN_POSITIONS_COLUMNS_STORAGE_KEY}
                 openPositionsPageSizeOptions={OPEN_POSITIONS_PAGE_SIZE_OPTIONS}
                 rowsPerPageLabel={t("dashboard.home.runtime.rows")}
                 previousLabel={t("dashboard.home.runtime.previous")}
@@ -1459,19 +1480,51 @@ export default function HomeLiveWidgets() {
                   setTradePage(1);
                 }}
                 tradePageSizeOptions={TRADE_PAGE_SIZE_OPTIONS}
+                tradesColumnVisibilityKey={DASHBOARD_TRADE_HISTORY_COLUMNS_STORAGE_KEY}
                 noTradeHistoryLabel={t("dashboard.home.runtime.noTradeHistory")}
-                recordsBadgeLabel={(total) => interpolateTemplate(t("dashboard.home.runtime.recordsBadge"), { total })}
-                pageBadgeLabel={(page, totalPages) =>
-                  interpolateTemplate(t("dashboard.home.runtime.pageBadge"), { page, totalPages })
-                }
               />
+              <RuntimeSignalsSection
+                signalSymbols={signalSymbols}
+                hasSignalOverflow={hasSignalOverflow}
+                signalRailRef={signalRailRef}
+                onScrollPrevious={() => scrollSignalRail("prev")}
+                onScrollNext={() => scrollSignalRail("next")}
+                previousLabel={t("dashboard.home.runtime.signalRailPrev")}
+                nextLabel={t("dashboard.home.runtime.signalRailNext")}
+                longLabel={t("dashboard.home.runtime.long")}
+                shortLabel={t("dashboard.home.runtime.short")}
+                noSignalDataLabel={t("dashboard.home.runtime.noSignalData")}
+                marketsLabel={t("dashboard.home.runtime.markets")}
+                signalsLabel={t("dashboard.home.runtime.signals")}
+                baseCurrencyLabel={t("dashboard.home.runtime.baseCurrency")}
+                marketsCount={signalHeaderStats.marketsCount}
+                actionableSignalsCount={signalHeaderStats.actionableSignalsCount}
+                baseCurrencyCode={signalHeaderStats.baseCurrencyCode}
+                renderBaseCurrency={renderBaseCurrencySymbol}
+                renderSymbolLabel={renderRuntimeSymbol}
+              />
+              {runtimeDataIsStale ? (
+                <p
+                  className="rounded-box border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-content/85"
+                  aria-live="polite"
+                >
+                  {interpolateTemplate(t("dashboard.home.runtime.staleDataWarning"), {
+                    age: formatAgeCompact(runtimeDataAgeMs ?? 0),
+                  })}
+                </p>
+              ) : null}
+              <p className="text-[11px] opacity-60">
+                {interpolateTemplate(t("dashboard.home.runtime.updatedAt"), {
+                  value: lastUpdatedAt ? formatDateTime(lastUpdatedAt) : "-",
+                })}
+              </p>
             </div>
           </section>
 
         </div>
 
         <RuntimeSidebarSection
-          asideClassName={CARD_ASIDE}
+          asideClassName={`${CARD_ASIDE} order-1 xl:order-2`}
           snapshots={snapshots}
           selected={selected}
           selectedData={selectedData}
@@ -1501,6 +1554,17 @@ export default function HomeLiveWidgets() {
             capitalRiskTitle: t("dashboard.home.runtime.capitalRiskTitle"),
             portfolio: t("dashboard.home.runtime.portfolio"),
             deltaFromStart: t("dashboard.home.runtime.deltaFromStart"),
+            marketContextTitle: t("dashboard.home.runtime.marketContextTitle"),
+            strategyContextTitle: t("dashboard.home.runtime.strategyContextTitle"),
+            marketGroup: t("dashboard.home.runtime.marketGroup"),
+            exchange: t("dashboard.home.runtime.exchange"),
+            market: t("dashboard.home.runtime.market"),
+            strategy: t("dashboard.bots.create.strategyLabel"),
+            interval: t("dashboard.home.runtime.interval"),
+            leverage: t("dashboard.home.runtime.leverage"),
+            markets: t("dashboard.home.runtime.markets"),
+            strategies: t("dashboard.nav.strategies"),
+            baseCurrency: t("dashboard.home.runtime.baseCurrency"),
             freeFunds: t("dashboard.home.runtime.freeFunds"),
             fundsInPositions: t("dashboard.home.runtime.fundsInPositions"),
             inPositionsShort: t("dashboard.home.runtime.inPositionsShort"),

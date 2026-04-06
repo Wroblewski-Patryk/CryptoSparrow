@@ -2,6 +2,7 @@ import type { DataTableColumn } from "../../../../ui/components/DataTable";
 import type { ReactNode } from "react";
 import type {
   Bot,
+  BotRuntimeGraph,
   BotRuntimePositionItem,
   BotRuntimePositionsResponse,
   BotRuntimeSessionListItem,
@@ -16,6 +17,7 @@ export type RuntimeSnapshot = {
   session: BotRuntimeSessionListItem | null;
   symbolStats: BotRuntimeSymbolStatsResponse | null;
   positions: BotRuntimePositionsResponse | null;
+  runtimeGraph: BotRuntimeGraph | null;
   loadError?: string;
 };
 

@@ -1,4 +1,4 @@
-import type { ReactNode, RefObject } from "react";
+import { useMemo, type ReactNode, type RefObject } from "react";
 import { LuActivity, LuCoins, LuSignal } from "react-icons/lu";
 import InlinePager from "../../../../ui/components/InlinePager";
 import type { RuntimeSymbolWithLive, SignalPillValue } from "./types";
@@ -63,6 +63,25 @@ const scopeLabelClass = (scope: "LONG" | "SHORT") =>
     : "border-error/40 bg-error/10 text-error";
 
 export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps) {
+  const sortedSignalSymbols = useMemo(() => {
+    return [...props.signalSymbols].sort((a, b) => {
+      const aHasSignal = a.lastSignalDirection === "LONG" || a.lastSignalDirection === "SHORT";
+      const bHasSignal = b.lastSignalDirection === "LONG" || b.lastSignalDirection === "SHORT";
+
+      if (aHasSignal !== bHasSignal) {
+        return aHasSignal ? -1 : 1;
+      }
+
+      const symbolCompare = a.symbol.localeCompare(b.symbol, undefined, {
+        sensitivity: "base",
+        numeric: true,
+      });
+      if (symbolCompare !== 0) return symbolCompare;
+
+      return a.id.localeCompare(b.id, undefined, { sensitivity: "base" });
+    });
+  }, [props.signalSymbols]);
+
   return (
     <div>
       <div className="mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -95,33 +114,22 @@ export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps)
           </span>
         </div>
       </div>
-      {props.hasSignalOverflow ? (
-        <div className="flex justify-center md:justify-end">
-          <InlinePager
-            size="xs"
-            hideLabelsOnMobile
-            previousLabel={props.previousLabel}
-            nextLabel={props.nextLabel}
-            onPrevious={props.onScrollPrevious}
-            onNext={props.onScrollNext}
-          />
-        </div>
-      ) : null}
       </div>
-      <div ref={props.signalRailRef} className="overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex min-w-full gap-3 pr-1">
+      <div ref={props.signalRailRef} className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex min-w-full gap-3 pr-4">
           {props.signalSymbols.length === 0 ? (
             <div className="w-full rounded-box bg-base-200/35 p-4 text-center text-xs opacity-70">
               {props.noSignalDataLabel}
             </div>
           ) : null}
-          {props.signalSymbols.map((signal) => {
+          {sortedSignalSymbols.map((signal) => {
             const signalDirection: SignalPillValue = signal.lastSignalDirection ?? "NEUTRAL";
             const lines = signal.lastSignalConditionLines ?? [];
             const longLines = lines.filter((line) => line.scope === "LONG");
             const shortLines = lines.filter((line) => line.scope === "SHORT");
             const longActive = signalDirection === "LONG";
             const shortActive = signalDirection === "SHORT";
+            const isNeutral = !longActive && !shortActive;
 
             return (
               <article
@@ -137,7 +145,7 @@ export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps)
                   <div className="mt-2.5 grid grid-cols-2 gap-2.5 text-[11px] leading-4">
                     <div
                       className={`space-y-1.5 rounded-box transition-opacity duration-150 ${
-                        longActive ? "opacity-100" : "opacity-50 hover:opacity-100"
+                        longActive ? "opacity-100" : isNeutral ? "opacity-25 hover:opacity-100" : "opacity-50 hover:opacity-100"
                       }`}
                     >
                       <div className="mb-2 flex items-center gap-1">
@@ -165,7 +173,7 @@ export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps)
                     </div>
                     <div
                       className={`space-y-1.5 rounded-box transition-opacity duration-150 ${
-                        shortActive ? "opacity-100" : "opacity-50 hover:opacity-100"
+                        shortActive ? "opacity-100" : isNeutral ? "opacity-25 hover:opacity-100" : "opacity-50 hover:opacity-100"
                       }`}
                     >
                       <div className="mb-2 flex items-center gap-1">
@@ -198,6 +206,18 @@ export default function RuntimeSignalsSection(props: RuntimeSignalsSectionProps)
           })}
         </div>
       </div>
+      {props.hasSignalOverflow ? (
+        <div className="mt-2 flex justify-center md:justify-start">
+          <InlinePager
+            size="xs"
+            hideLabelsOnMobile
+            previousLabel={props.previousLabel}
+            nextLabel={props.nextLabel}
+            onPrevious={props.onScrollPrevious}
+            onNext={props.onScrollNext}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

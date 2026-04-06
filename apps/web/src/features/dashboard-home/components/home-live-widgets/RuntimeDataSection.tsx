@@ -23,6 +23,7 @@ type RuntimeDataSectionProps = {
   openRows: OpenPositionWithLive[];
   openPositionsColumns: OpenPositionsTableColumn[];
   openPositionsSortStorageKey: string;
+  openPositionsColumnVisibilityKey: string;
   openPositionsPageSizeOptions: readonly number[];
   rowsPerPageLabel: string;
   previousLabel: string;
@@ -56,9 +57,8 @@ type RuntimeDataSectionProps = {
   onTradePageChange: (page: number) => void;
   onTradePageSizeChange: (pageSize: number) => void;
   tradePageSizeOptions: readonly number[];
+  tradesColumnVisibilityKey: string;
   noTradeHistoryLabel: string;
-  recordsBadgeLabel: (total: number) => string;
-  pageBadgeLabel: (page: number, totalPages: number) => string;
 };
 
 export default function RuntimeDataSection(props: RuntimeDataSectionProps) {
@@ -87,6 +87,8 @@ export default function RuntimeDataSection(props: RuntimeDataSectionProps) {
               defaultSortKey="pnlPercent"
               defaultSortDirection="desc"
               persistSortKey={props.openPositionsSortStorageKey}
+              columnVisibilityEnabled
+              columnVisibilityPreferenceKey={props.openPositionsColumnVisibilityKey}
               showSearch={false}
               paginationEnabled
               pageSizeOptions={[...props.openPositionsPageSizeOptions]}
@@ -216,18 +218,13 @@ export default function RuntimeDataSection(props: RuntimeDataSectionProps) {
               onPageChange={props.onTradePageChange}
               onPageSizeChange={props.onTradePageSizeChange}
               pageSizeOptions={[...props.tradePageSizeOptions]}
+              columnVisibilityEnabled
+              columnVisibilityPreferenceKey={props.tradesColumnVisibilityKey}
               rowsPerPageLabel={props.rowsPerPageLabel}
               previousLabel={props.previousLabel}
               nextLabel={props.nextLabel}
               emptyText={props.noTradeHistoryLabel}
               paginationClassName="p-3"
-              paginationSummary={({ totalRows, page, totalPages }) => (
-                <>
-                  <span>{props.recordsBadgeLabel(totalRows)}</span>
-                  <span aria-hidden className="opacity-50">|</span>
-                  <span>{props.pageBadgeLabel(page, Math.max(1, totalPages))}</span>
-                </>
-              )}
             />
           </div>
         </section>
