@@ -16,9 +16,16 @@ describe('service worker cache contract', () => {
 
   it('includes explicit runtime/api bypass guard and no-store fetch policy', () => {
     const source = loadServiceWorkerSource();
+    expect(source).toContain("const RUNTIME_BYPASS_PATH_PREFIXES = ['/api/', '/auth/', '/dashboard/', '/admin/'];");
     expect(source).toContain('const isApiOrRuntimeRequest = (url) => {');
     expect(source).toContain("url.searchParams.has('_rsc')");
     expect(source).toContain("event.respondWith(fetch(new Request(event.request, { cache: 'no-store' })));");
   });
-});
 
+  it('supports explicit skip-waiting activation handoff via postMessage', () => {
+    const source = loadServiceWorkerSource();
+    expect(source).toContain("self.addEventListener('message', (event) => {");
+    expect(source).toContain("if (!event.data || event.data.type !== 'SKIP_WAITING') return;");
+    expect(source).toContain('self.skipWaiting();');
+  });
+});
