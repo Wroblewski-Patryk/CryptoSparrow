@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { LuPencilLine, LuTrash2 } from "react-icons/lu";
 import ApiKeyForm, { ApiKeyFormSavePayload } from "./ApiKeyForm";
 import { useApiKeys } from "../hooks/useApiKeys";
-import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
+import { EmptyState, ErrorState, LoadingState } from "../../../ui/components/ViewState";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import DataTable, { DataTableColumn } from "../../../ui/components/DataTable";
@@ -33,9 +33,6 @@ export default function ApiKeysList() {
           refresh: "Odswiez",
           emptyTitle: "Brak kluczy API",
           emptyDescription: "Dodaj pierwszy klucz, aby polaczyc gielde i uruchomic tryb live.",
-          activeTitle: "Klucze API aktywne",
-          configuredCountOne: "Skonfigurowano 1 klucz.",
-          configuredCountMany: (count: number) => `Skonfigurowano ${count} klucze.`,
           searchPlaceholder: "Szukaj kluczy API (label, gielda)",
           emptyFilter: "Brak kluczy API dla wybranego filtra.",
           close: "zamknij",
@@ -62,9 +59,6 @@ export default function ApiKeysList() {
           refresh: "Refresh",
           emptyTitle: "No API keys",
           emptyDescription: "Add your first key to connect exchange and run live mode.",
-          activeTitle: "API keys active",
-          configuredCountOne: "Configured 1 key.",
-          configuredCountMany: (count: number) => `Configured ${count} keys.`,
           searchPlaceholder: "Search API keys (label, exchange)",
           emptyFilter: "No API keys for selected filter.",
           close: "close",
@@ -134,6 +128,7 @@ export default function ApiKeysList() {
   const selectedKey = editId ? keys.find((k) => k.id === editId) : undefined;
   const defaultValues = selectedKey
     ? {
+        id: selectedKey.id,
         label: selectedKey.label,
         exchange: selectedKey.exchange,
         syncExternalPositions: selectedKey.syncExternalPositions,
@@ -233,30 +228,24 @@ export default function ApiKeysList() {
         />
       )}
       {!loading && !error && keys.length > 0 && (
-        <div className="space-y-3">
-          <SuccessState
-            title={copy.activeTitle}
-            description={keys.length === 1 ? copy.configuredCountOne : copy.configuredCountMany(keys.length)}
-          />
-          <DataTable
-            compact
-            rows={keys}
-            columns={columns}
-            getRowId={(row) => row.id}
-            filterPlaceholder={copy.searchPlaceholder}
-            filterFn={(row, query) => {
-              const normalized = query.trim().toLowerCase();
-              return (
-                row.label.toLowerCase().includes(normalized) ||
-                row.exchange.toLowerCase().includes(normalized) ||
-                row.apiKey.toLowerCase().includes(normalized)
-              );
-            }}
-            emptyText={copy.emptyFilter}
-            paginationEnabled
-            defaultPageSize={10}
-          />
-        </div>
+        <DataTable
+          compact
+          rows={keys}
+          columns={columns}
+          getRowId={(row) => row.id}
+          filterPlaceholder={copy.searchPlaceholder}
+          filterFn={(row, query) => {
+            const normalized = query.trim().toLowerCase();
+            return (
+              row.label.toLowerCase().includes(normalized) ||
+              row.exchange.toLowerCase().includes(normalized) ||
+              row.apiKey.toLowerCase().includes(normalized)
+            );
+          }}
+          emptyText={copy.emptyFilter}
+          paginationEnabled
+          defaultPageSize={10}
+        />
       )}
 
       <dialog id="apiKeyModal" className={`modal ${showModal ? "modal-open" : ""}`}>

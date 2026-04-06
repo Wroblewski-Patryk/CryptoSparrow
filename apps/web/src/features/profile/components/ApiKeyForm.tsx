@@ -1,11 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ZodError } from "zod";
 import { isAxiosError } from "axios";
 import { apiKeySchema } from "../types/apiKeyForm.type";
 import { testApiKeyConnection } from "../services/apiKeys.service";
 import { useI18n } from "../../../i18n/I18nProvider";
+import { listBots } from "@/features/bots/services/bots.service";
+import type { Bot } from "@/features/bots/types/bot.type";
 import {
   EXCHANGE_OPTIONS,
   ExchangeOption,
@@ -25,6 +27,7 @@ export type ApiKeyFormSavePayload = {
 
 export type ApiKeyFormProps = {
   defaultValues?: {
+    id?: string;
     label: string;
     exchange: ExchangeOption;
     syncExternalPositions: boolean;
@@ -66,6 +69,15 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
             "Adres backendowego IP nie jest skonfigurowany. Ustaw NEXT_PUBLIC_BINANCE_IP_WHITELIST w srodowisku web.",
           ipWhitelistHint:
             "Jesli test zwroci IP_RESTRICTED, sprawdz whitelist Binance i sproboj ponownie po propagacji zmian.",
+          manageBotsTitle: "Boty gotowe do przejecia pozycji",
+          manageBotsHint:
+            "Pokazujemy aktywne boty LIVE z opt-in dla tej gieldy. Upewnij sie, ze bot ma przypiety ten klucz API.",
+          manageBotsLoading: "Ladowanie listy botow...",
+          manageBotsEmpty: "Brak aktywnych botow LIVE dla tej gieldy.",
+          manageBotsLoadError: "Nie udalo sie pobrac listy botow.",
+          botUsesThisKey: "Uzywa tego klucza",
+          botUsesAnotherKey: "Uzywa innego klucza",
+          botWithoutApiKey: "Brak przypietego klucza",
           placeholderProbeInfo:
             "Dla tej gieldy test API key nie jest jeszcze dostepny (placeholder adapter). Zapis jest dozwolony.",
         }
@@ -96,6 +108,15 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
             "Backend egress IP is not configured. Set NEXT_PUBLIC_BINANCE_IP_WHITELIST in web environment.",
           ipWhitelistHint:
             "If test returns IP_RESTRICTED, update Binance whitelist and retry after propagation.",
+          manageBotsTitle: "Bots ready to take over positions",
+          manageBotsHint:
+            "Showing active LIVE bots with live opt-in for this exchange. Ensure bot is bound to this API key.",
+          manageBotsLoading: "Loading bots list...",
+          manageBotsEmpty: "No active LIVE bots for this exchange.",
+          manageBotsLoadError: "Could not load bots list.",
+          botUsesThisKey: "Uses this key",
+          botUsesAnotherKey: "Uses another key",
+          botWithoutApiKey: "No API key assigned",
           placeholderProbeInfo:
             "API key test is not available for this exchange yet (placeholder adapter). Saving is still allowed.",
         };
@@ -111,8 +132,11 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
   const [testStatus, setTestStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [testMessage, setTestMessage] = useState<string | null>(null);
   const [testedFingerprint, setTestedFingerprint] = useState<string | null>(null);
+  const [manageableBots, setManageableBots] = useState<Bot[]>([]);
+  const [manageBotsStatus, setManageBotsStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   const currentFingerprint = `${exchange}::${apiKey}::${apiSecret}`;
+  const currentApiKeyId = defaultValues?.id ?? null;
   const binanceWhitelistIps = (process.env.NEXT_PUBLIC_BINANCE_IP_WHITELIST ?? "")
     .split(",")
     .map((ip) => ip.trim())
@@ -120,6 +144,61 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
 
   const exchangeSupportsProbe = supportsExchangeCapability(exchange, "API_KEY_PROBE");
   const requiresConnectionTest = (!isEdit || Boolean(apiKey) || Boolean(apiSecret)) && exchangeSupportsProbe;
+  const isManageBotListVisible = manageExternalPositions && exchange === "BINANCE";
+
+  useEffect(() => {
+    if (!isManageBotListVisible) {
+      setManageBotsStatus("idle");
+      return;
+    }
+
+    let isCanceled = false;
+    setManageBotsStatus("loading");
+
+    void listBots()
+      .then((bots) => {
+        if (isCanceled) return;
+        const eligibleBots = bots.filter(
+          (bot) => bot.exchange === exchange && bot.mode === "LIVE" && bot.isActive && bot.liveOptIn
+        );
+        setManageableBots(eligibleBots);
+        setManageBotsStatus("success");
+      })
+      .catch(() => {
+        if (isCanceled) return;
+        setManageableBots([]);
+        setManageBotsStatus("error");
+      });
+
+    return () => {
+      isCanceled = true;
+    };
+  }, [exchange, isManageBotListVisible]);
+
+  const manageableBotRows = useMemo(
+    () =>
+      manageableBots.map((bot) => {
+        let bindingLabel = copy.botWithoutApiKey;
+        let bindingTone = "badge-ghost";
+
+        if (bot.apiKeyId && currentApiKeyId && bot.apiKeyId === currentApiKeyId) {
+          bindingLabel = copy.botUsesThisKey;
+          bindingTone = "badge-success";
+        } else if (bot.apiKeyId) {
+          bindingLabel = copy.botUsesAnotherKey;
+          bindingTone = "badge-warning";
+        }
+
+        return {
+          id: bot.id,
+          name: bot.name,
+          marketType: bot.marketType,
+          bindingLabel,
+          bindingTone,
+        };
+      }),
+    [copy.botUsesAnotherKey, copy.botUsesThisKey, copy.botWithoutApiKey, currentApiKeyId, manageableBots]
+  );
 
   const handleTest = async () => {
     if (!exchangeSupportsProbe) {
@@ -305,14 +384,37 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           <span className="label-text">{copy.manageExternal}</span>
         </label>
       </div>
-      <div className="flex items-center gap-4 mt-2">
+      {isManageBotListVisible ? (
+        <div className="rounded-box border border-base-300 bg-base-200/40 p-3 text-sm space-y-2">
+          <p className="font-semibold">{copy.manageBotsTitle}</p>
+          {manageBotsStatus === "loading" ? <p>{copy.manageBotsLoading}</p> : null}
+          {manageBotsStatus === "error" ? <p className="text-error">{copy.manageBotsLoadError}</p> : null}
+          {manageBotsStatus === "success" && manageableBotRows.length === 0 ? <p>{copy.manageBotsEmpty}</p> : null}
+          {manageBotsStatus === "success" && manageableBotRows.length > 0 ? (
+            <ul className="space-y-1.5">
+              {manageableBotRows.map((bot) => (
+                <li key={bot.id} className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{bot.name}</span>
+                  <span className="badge badge-outline badge-xs">{bot.marketType}</span>
+                  <span className={`badge badge-xs ${bot.bindingTone}`}>{bot.bindingLabel}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <p className="opacity-70">{copy.manageBotsHint}</p>
+        </div>
+      ) : null}
+      <div className="flex items-center gap-3 mt-2 min-h-8">
         <button
-          className={`btn btn-outline btn-info ${testStatus === "loading" ? "loading" : ""}`}
+          className="btn btn-outline btn-info min-w-44 justify-center gap-2"
           type="button"
           onClick={handleTest}
           disabled={testStatus === "loading" || !exchangeSupportsProbe}
         >
-          {testStatus === "loading" ? copy.testing : copy.testConnection}
+          {testStatus === "loading" ? (
+            <span className="loading loading-spinner loading-xs" aria-hidden="true" />
+          ) : null}
+          <span>{testStatus === "loading" ? copy.testing : copy.testConnection}</span>
         </button>
         {testStatus === "success" && <span className="text-success">{copy.ok}</span>}
         {testStatus === "error" && <span className="text-error">{copy.error}</span>}

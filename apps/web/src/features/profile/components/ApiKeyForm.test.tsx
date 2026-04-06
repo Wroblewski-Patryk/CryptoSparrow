@@ -6,10 +6,15 @@ import { I18nProvider } from "../../../i18n/I18nProvider";
 import { EXCHANGE_OPTIONS } from "@/features/exchanges/exchangeCapabilities";
 
 const testApiKeyConnectionMock = vi.hoisted(() => vi.fn());
+const listBotsMock = vi.hoisted(() => vi.fn());
 const originalBinanceWhitelist = process.env.NEXT_PUBLIC_BINANCE_IP_WHITELIST;
 
 vi.mock("../services/apiKeys.service", () => ({
   testApiKeyConnection: testApiKeyConnectionMock,
+}));
+
+vi.mock("@/features/bots/services/bots.service", () => ({
+  listBots: listBotsMock,
 }));
 
 describe("ApiKeyForm", () => {
@@ -23,6 +28,7 @@ describe("ApiKeyForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delete process.env.NEXT_PUBLIC_BINANCE_IP_WHITELIST;
+    listBotsMock.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -180,6 +186,39 @@ describe("ApiKeyForm", () => {
       syncExternalPositions: false,
       manageExternalPositions: true,
     });
+  });
+
+  it("shows eligible live bots when external management is enabled", async () => {
+    listBotsMock.mockResolvedValueOnce([
+      {
+        id: "bot-live-1",
+        name: "Live BTC Bot",
+        exchange: "BINANCE",
+        mode: "LIVE",
+        isActive: true,
+        liveOptIn: true,
+        marketType: "FUTURES",
+        apiKeyId: null,
+      },
+      {
+        id: "bot-paper-1",
+        name: "Paper Bot",
+        exchange: "BINANCE",
+        mode: "PAPER",
+        isActive: true,
+        liveOptIn: false,
+        marketType: "FUTURES",
+        apiKeyId: null,
+      },
+    ]);
+
+    renderForm({ onSave: vi.fn(), onCancel: vi.fn() });
+
+    fireEvent.click(screen.getByLabelText("Allow bot to manage external positions"));
+
+    expect(await screen.findByText("Bots ready to take over positions")).toBeInTheDocument();
+    expect(screen.getByText("Live BTC Bot")).toBeInTheDocument();
+    expect(screen.queryByText("Paper Bot")).not.toBeInTheDocument();
   });
 
   it("allows saving placeholder exchange key without connection probe", async () => {

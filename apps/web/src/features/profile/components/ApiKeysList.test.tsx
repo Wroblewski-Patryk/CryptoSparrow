@@ -49,6 +49,8 @@ describe("ApiKeysList", () => {
       </I18nProvider>
     );
 
+    expect(screen.queryByText("API keys active")).not.toBeInTheDocument();
+
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 
     const riskLabel = screen.getByText("I understand the risk and want to continue");

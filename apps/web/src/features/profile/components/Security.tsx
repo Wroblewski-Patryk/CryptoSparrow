@@ -138,12 +138,12 @@ export default function SecurityPanel() {
   };
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-box border border-base-300 bg-base-100 p-4">
+    <div className="grid gap-6 lg:grid-cols-2">
+      <section className="rounded-box border border-base-300 bg-base-100 p-4 h-full">
         <h2 className="text-lg font-semibold">{copy.passwordSectionTitle}</h2>
         <p className="mt-1 text-sm opacity-70">{copy.passwordSectionDescription}</p>
 
-        <form className="mt-4 grid gap-3 md:max-w-xl" onSubmit={handlePasswordChange}>
+        <form className="mt-4 grid gap-3" onSubmit={handlePasswordChange}>
           <label className="form-control w-full">
             <span className="label-text mb-1 block">{copy.currentPassword}</span>
             <input
@@ -190,11 +190,11 @@ export default function SecurityPanel() {
         </form>
       </section>
 
-      <section className="rounded-box border border-error/40 bg-error/5 p-4">
+      <section className="rounded-box border border-error/40 bg-error/5 p-4 h-full">
         <h2 className="text-lg font-semibold text-error">{copy.deleteSectionTitle}</h2>
         <p className="mt-1 text-sm opacity-80">{copy.deleteSectionDescription}</p>
 
-        <form className="mt-4 grid gap-3 md:max-w-xl" onSubmit={handleDeleteAccount}>
+        <form className="mt-4 grid gap-3" onSubmit={handleDeleteAccount}>
           <label className="form-control w-full">
             <span className="label-text mb-1 block">{copy.deletePasswordLabel}</span>
             <input
