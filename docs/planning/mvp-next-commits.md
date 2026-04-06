@@ -57,6 +57,7 @@ Operational queue for one-task execution runs.
 - [x] `EXPH-10 test(web): add regression coverage for exchange select options and not-implemented UX states`
 - [x] `EXPH-09 feat(web-ux): add placeholder badges/hints for unsupported exchange operations in creators/runtime paths`
 - [x] `EXPH-08 feat(web-types): extend Exchange unions/options across Markets/Bots/Profile modules`
+- [x] `DBACT-10 qa(smoke): manual verification on real paper-session timeline (open -> dca -> close) including fee/pnl/margin coherence`
 - [x] `EXPH-06 test(api+web): add regression coverage for placeholder persistence and fail-closed responses`
 - [x] `EXPH-05 feat(web): expose exchange placeholders in Markets/Bots/Profile flows with explicit not-implemented hints`
 - [x] `EXPH-04 feat(api-markets+bots): enforce placeholder exchange fail-closed behavior on unsupported catalog/runtime/live paths`
