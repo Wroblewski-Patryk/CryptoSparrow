@@ -17,6 +17,10 @@ Purpose: close the remaining release-candidate gates that require target-environ
    - DB connection works.
    - key tables readable (`User`, `Bot`, `Order`, `Position`, `Log`).
    - row counts are non-zero where expected.
+   - evidence automation (PASS/FAIL contract artifact):
+     - `pnpm run ops:db:restore-drill:local`
+     - `pnpm run ops:db:restore-drill:stage`
+     - `pnpm run ops:db:restore-drill:prod`
 5. Mark gate complete in RC checklist only after restore checks pass.
 
 Evidence to record:

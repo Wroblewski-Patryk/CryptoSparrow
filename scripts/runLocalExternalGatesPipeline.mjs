@@ -135,7 +135,7 @@ const main = () => {
   Promise.resolve()
     .then(async () => {
       if (!options.skipDbCheck) {
-        run('backup/restore local check', 'pnpm', ['run', 'ops:db:backup-restore:check-local']);
+        run('restore-drill evidence (local profile)', 'pnpm', ['run', 'ops:db:restore-drill:local']);
       }
 
       if (!options.skipSloCollect) {

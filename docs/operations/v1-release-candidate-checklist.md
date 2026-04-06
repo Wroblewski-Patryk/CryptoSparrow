@@ -87,6 +87,10 @@
     - `pnpm run ops:db:backup-verify:local`
     - `pnpm run ops:db:backup-verify:stage`
     - `pnpm run ops:db:backup-verify:prod`
+- Generate restore drill evidence artifact (PASS/FAIL contract):
+  - `pnpm run ops:db:restore-drill:local`
+  - `pnpm run ops:db:restore-drill:stage`
+  - `pnpm run ops:db:restore-drill:prod`
 - Build RC external-gates status snapshot from latest SLO artifact:
   - `pnpm run ops:rc:gates:status`
 - Build rolling SLO summaries (for recurring 7d/30d review cadence):
@@ -118,6 +122,10 @@
   - `pnpm run ops:cutover:dry-run`
 - Expected outputs:
   - `docs/operations/_artifacts-slo-window-*.json`
+  - `docs/operations/_artifacts-db-restore-check-*.txt`
+  - `docs/operations/v1-db-restore-check-*.md`
+  - `docs/operations/_artifacts-restore-drill-*.json`
+  - `docs/operations/v1-restore-drill-*.md`
   - `docs/operations/v1-slo-observation-*.md`
   - `docs/operations/v1-slo-window-report-7d-*.md`
   - `docs/operations/v1-slo-window-report-30d-*.md`

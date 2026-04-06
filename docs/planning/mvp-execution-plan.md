@@ -566,7 +566,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `PEX-08 feat(obs-alerts): define alert thresholds for stale runtime, repeated restarts, and reconciliation drift`
 - [x] `PEX-09 docs(runbook): publish incident triage matrix (symptoms -> checks -> mitigations -> rollback)`
 - [x] `PEX-10 feat(ops-backup): add repeatable backup verification command set for target deployment profile`
-- [ ] `PEX-11 chore(ops-restore-drill): automate restore drill evidence generation with pass/fail contract`
+- [x] `PEX-11 chore(ops-restore-drill): automate restore drill evidence generation with pass/fail contract`
 - [ ] `PEX-12 docs(ops-rto-rpo): document RTO/RPO targets and acceptable degradation windows`
 - [ ] `PEX-13 docs(secrets-inventory): publish canonical secret inventory + ownership + rotation cadence`
 - [ ] `PEX-14 feat(security-rotation): add rotation readiness checks and startup validation for critical secrets`
@@ -600,6 +600,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `DBACT-10 qa(smoke): manual verification on real paper-session timeline (open -> dca -> close) including fee/pnl/margin coherence`
 
 ## Progress Log
+- 2026-04-06: Completed `PEX-11` by adding restore-drill evidence automation (`scripts/runRestoreDrillEvidence.mjs`) with explicit PASS/FAIL contract artifacts (`_artifacts-restore-drill-*.json` + `v1-restore-drill-*.md`), wiring profile commands (`ops:db:restore-drill:*`), and integrating local external-gates pipeline DB step with restore-drill evidence output.
 - 2026-04-06: Completed `PEX-10` by adding profile-driven backup verification command set (`ops:db:backup-verify` with `local/stage/prod` aliases), introducing `scripts/runBackupVerificationProfile.mjs` wrapper over restore-check automation, and documenting profile env contract + command usage in RC runbook/checklist docs.
 - 2026-04-06: Completed `PEX-09` by publishing runtime incident triage matrix in `docs/operations/runtime-incident-triage-matrix.md` (symptoms -> checks -> mitigations -> rollback triggers) and linking it from `v1-ops-runbook` as canonical first-response reference for runtime-critical incidents.
 - 2026-04-06: Completed `CACHE-04`, `CACHE-05`, `CACHE-07`, `CACHE-08`, and `CACHE-09` by implementing safe SW update/activation handoff (`sw.js` + `ServiceWorkerRegistration.tsx`), adding PWA cache-contract + SW registration regressions (`serviceWorkerCacheContract.test.ts`, `ServiceWorkerRegistration.test.tsx`), adding runtime stale-data guardrails for Dashboard/Bots (`HomeLiveWidgets.tsx`, `BotsManagement.tsx`, `BotsMonitoringTab.tsx`) with stale warning copy in translations, adding stale-cache incident runbook (`docs/operations/stale-cache-incident-playbook.md`), and extending stale warning/recovery tests in Dashboard/Bots suites; validated with `pnpm --filter web exec vitest run src/ui/pwa/serviceWorkerCacheContract.test.ts src/ui/pwa/ServiceWorkerRegistration.test.tsx src/features/dashboard-home/components/HomeLiveWidgets.test.tsx src/features/bots/components/BotsManagement.test.tsx` and `pnpm --filter api exec vitest run src/router/cacheHeaders.test.ts`.
