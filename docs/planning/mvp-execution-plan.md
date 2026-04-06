@@ -600,13 +600,14 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `DBACT-10 qa(smoke): manual verification on real paper-session timeline (open -> dca -> close) including fee/pnl/margin coherence`
 
 ## Phase 37 - V1 Live Stability Closure (Active)
-- [ ] `V1B-01 fix(api-backtest-core): restore deterministic TTP event emission in replay core and align TTP field semantics with runtime parser contract`
+- [x] `V1B-01 fix(api-backtest-core): restore deterministic TTP event emission in replay core and align TTP field semantics with runtime parser contract`
 - [ ] `V1B-02 test(api-parity): add explicit regression asserting identical TTP/TSL config interpretation between replay parser and runtime automation parser`
 - [ ] `V1B-03 test(api-runtime-live): extend runtime/positions e2e coverage for bot-managed lifecycle actions and manual-managed ignore behavior`
 - [ ] `V1B-04 test(confidence-pack): run full backtest + runtime positions confidence pack (api+web) and capture fresh evidence`
 - [ ] `V1B-05 release(v1-exit-gates): refresh RC external-gates/sign-off artifacts and include Binance live-ops verification checklist`
 
 ## Progress Log
+- 2026-04-06: Completed `V1B-01` by fixing trailing-state carryover in backtest replay/service lifecycle loop (`dcaProbe` no longer clears active TTP/TSL memory), restoring deterministic `TTP` emission in replay regression scenario and keeping lifecycle parity golden suite green.
 - 2026-04-06: Refined active V1 closure queue from `V1C` to `V1B` after focused Binance/live/backtest parity review; added explicit parser-semantics parity task and runtime manual-vs-bot-managed lifecycle coverage, and published canonical plan `docs/planning/v1-binance-live-backtest-alignment-plan-2026-04-06.md`.
 - 2026-04-06: Added active V1 closure phase (`V1C-01..V1C-05`) after stability verification pass: replay backtest regression on TTP path was confirmed as open issue, while runtime positions/live confidence pack stayed green; canonical closure sequence is documented in `docs/planning/v1-live-stability-closure-plan-2026-04-06.md`.
 - 2026-04-06: Completed `DBACT-10` by capturing paper-session timeline smoke evidence in `docs/operations/dbact-paper-session-timeline-smoke-2026-04-06.md`: verified `OPEN/DCA/CLOSE` monitoring timeline flow with focused bots API e2e filter scenario and confirmed Dashboard/Bots runtime history fee/pnl/margin coherence via targeted web regression suite (`HomeLiveWidgets` + `BotsManagement`).

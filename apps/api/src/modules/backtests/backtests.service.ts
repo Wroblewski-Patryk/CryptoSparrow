@@ -853,10 +853,12 @@ const simulateInterleavedPortfolio = (input: {
       averageEntryPrice: position.entryPrice,
       quantity: position.quantity,
       currentAdds: position.dcaCount,
-      trailingAnchorPrice: dcaProbeResult.nextState.trailingAnchorPrice ?? position.bestPrice,
-      trailingLossLimitPercent: dcaProbeResult.nextState.trailingLossLimitPercent,
-      trailingTakeProfitHighPercent: dcaProbeResult.nextState.trailingTakeProfitHighPercent,
-      trailingTakeProfitStepPercent: dcaProbeResult.nextState.trailingTakeProfitStepPercent,
+      // Keep trailing memory from runtime state; DCA probe runs with trailing
+      // disabled and cannot be allowed to wipe active trailing tracking.
+      trailingAnchorPrice: position.bestPrice,
+      trailingLossLimitPercent: position.trailingLossLimit,
+      trailingTakeProfitHighPercent: position.trailingTakeProfitHigh,
+      trailingTakeProfitStepPercent: position.trailingTakeProfitStep,
       lastDcaPrice: position.lastDcaPrice,
     });
 

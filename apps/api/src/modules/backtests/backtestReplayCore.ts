@@ -603,10 +603,12 @@ export const simulateTradesForSymbolReplay = (input: {
       averageEntryPrice: openPosition.entryPrice,
       quantity: openPosition.quantity,
       currentAdds: openPosition.dcaCount,
-      trailingAnchorPrice: dcaProbeResult.nextState.trailingAnchorPrice ?? openPosition.bestPrice,
-      trailingLossLimitPercent: dcaProbeResult.nextState.trailingLossLimitPercent,
-      trailingTakeProfitHighPercent: dcaProbeResult.nextState.trailingTakeProfitHighPercent,
-      trailingTakeProfitStepPercent: dcaProbeResult.nextState.trailingTakeProfitStepPercent,
+      // Preserve trailing state across candles. DCA probe intentionally disables
+      // trailing inputs and must not clear active TTP/TSL tracking.
+      trailingAnchorPrice: openPosition.bestPrice,
+      trailingLossLimitPercent: openPosition.trailingLossLimit,
+      trailingTakeProfitHighPercent: openPosition.trailingTakeProfitHigh,
+      trailingTakeProfitStepPercent: openPosition.trailingTakeProfitStep,
       lastDcaPrice: openPosition.lastDcaPrice,
     });
     openPosition.trailingLossLimit = managementResult.nextState.trailingLossLimitPercent;
