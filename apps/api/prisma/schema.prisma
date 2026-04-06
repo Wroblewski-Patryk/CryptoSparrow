@@ -16,13 +16,13 @@ datasource db {
 model User {
   id String @id @default(cuid())
 
-  email     String  @unique
-  password  String
-  sessionVersion Int @default(1)
-  name      String?
-  avatarUrl String?
-  role      Role    @default(USER)
-  uiPreferences Json?
+  email          String  @unique
+  password       String
+  sessionVersion Int     @default(1)
+  name           String?
+  avatarUrl      String?
+  role           Role    @default(USER)
+  uiPreferences  Json?
 
   apiKeys                  ApiKey[]
   strategies               Strategy[]
@@ -45,6 +45,8 @@ model User {
   backtestRuns             BacktestRun[]
   backtestTrades           BacktestTrade[]
   backtestReports          BacktestReport[]
+  subscriptionAssignments  UserSubscription[]
+  paymentIntents           PaymentIntent[]
   logs                     Log[]
 
   createdAt DateTime @default(now())
@@ -54,6 +56,120 @@ model User {
 enum Role {
   USER
   ADMIN
+}
+
+enum SubscriptionPlanCode {
+  FREE
+  ADVANCED
+  PROFESSIONAL
+}
+
+enum UserSubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum UserSubscriptionSource {
+  DEFAULT
+  ADMIN_OVERRIDE
+  CHECKOUT
+}
+
+enum PaymentProvider {
+  STRIPE
+  KLARNA
+  MANUAL
+  OTHER
+}
+
+enum PaymentIntentStatus {
+  CREATED
+  REQUIRES_ACTION
+  PROCESSING
+  SUCCEEDED
+  CANCELED
+  FAILED
+  EXPIRED
+}
+
+model SubscriptionPlan {
+  id String @id @default(uuid())
+
+  code        SubscriptionPlanCode @unique
+  slug        String               @unique
+  displayName String
+  isActive    Boolean              @default(true)
+  sortOrder   Int                  @default(0)
+
+  monthlyPriceMinor Int
+  currency          String @default("USD")
+  entitlements      Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions  UserSubscription[]
+  paymentIntents PaymentIntent[]
+
+  @@index([isActive, sortOrder])
+}
+
+model UserSubscription {
+  id String @id @default(uuid())
+
+  userId             String
+  subscriptionPlanId String
+
+  status    UserSubscriptionStatus @default(ACTIVE)
+  source    UserSubscriptionSource @default(DEFAULT)
+  autoRenew Boolean                @default(true)
+  startsAt  DateTime               @default(now())
+  endsAt    DateTime?
+  metadata  Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionPlan SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id], onDelete: Restrict)
+  paymentIntents   PaymentIntent[]
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([subscriptionPlanId, status])
+  @@index([startsAt, endsAt])
+}
+
+model PaymentIntent {
+  id String @id @default(uuid())
+
+  userId             String
+  subscriptionPlanId String
+  userSubscriptionId String?
+
+  provider          PaymentProvider
+  status            PaymentIntentStatus @default(CREATED)
+  providerReference String?
+  idempotencyKey    String?
+
+  amountMinor Int
+  currency    String
+  metadata    Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionPlan SubscriptionPlan  @relation(fields: [subscriptionPlanId], references: [id], onDelete: Restrict)
+  userSubscription UserSubscription? @relation(fields: [userSubscriptionId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, providerReference])
+  @@unique([idempotencyKey])
+  @@index([userId, status])
+  @@index([subscriptionPlanId, status])
+  @@index([status, createdAt])
 }
 
 model ApiKey {
@@ -491,20 +607,20 @@ model BotRuntimeSymbolStat {
 model RuntimeExecutionDedupe {
   id String @id @default(uuid())
 
-  dedupeKey         String                       @unique
-  dedupeVersion     String
-  commandType       RuntimeExecutionCommandType
-  userId            String
-  botId             String?
-  symbol            String?
-  status            RuntimeExecutionDedupeStatus @default(PENDING)
+  dedupeKey          String                       @unique
+  dedupeVersion      String
+  commandType        RuntimeExecutionCommandType
+  userId             String
+  botId              String?
+  symbol             String?
+  status             RuntimeExecutionDedupeStatus @default(PENDING)
   commandFingerprint Json
-  firstSeenAt       DateTime                     @default(now())
-  lastSeenAt        DateTime                     @default(now())
-  ttlExpiresAt      DateTime
-  orderId           String?
-  positionId        String?
-  errorClass        String?
+  firstSeenAt        DateTime                     @default(now())
+  lastSeenAt         DateTime                     @default(now())
+  ttlExpiresAt       DateTime
+  orderId            String?
+  positionId         String?
+  errorClass         String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
