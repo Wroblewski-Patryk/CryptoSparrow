@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import BotsManagement from "./BotsManagement";
@@ -47,6 +47,7 @@ vi.mock("../../markets/services/markets.service", () => ({
 }));
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   window.localStorage.clear();
   listStrategiesMock.mockReset();
@@ -631,6 +632,194 @@ describe("BotsManagement", () => {
       expect(screen.getByText("Historia - log operacyjny trade'ow")).toBeInTheDocument();
     });
   });
+
+  it("shows stale monitoring warning after refresh failures and clears it after successful refresh", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    let shouldFailRefresh = false;
+
+    listStrategiesMock.mockResolvedValue([{ id: "s-stale", name: "Stale Strategy", interval: "5m" }]);
+    listMarketUniversesMock.mockResolvedValue([
+      {
+        id: "g-stale",
+        name: "Stale Group",
+        marketType: "FUTURES",
+        baseCurrency: "USDT",
+        whitelist: [],
+        blacklist: [],
+      },
+    ]);
+    listMock.mockResolvedValue([
+      {
+        id: "b-stale",
+        name: "Stale Bot",
+        mode: "PAPER",
+        paperStartBalance: 10000,
+        marketType: "FUTURES",
+        positionMode: "ONE_WAY",
+        isActive: true,
+        liveOptIn: false,
+        maxOpenPositions: 1,
+      },
+    ]);
+
+    listRuntimeSessionsMock.mockImplementation(async () => {
+      if (shouldFailRefresh) throw new Error("stale-refresh");
+      return [
+        {
+          id: "session-stale",
+          botId: "b-stale",
+          mode: "PAPER",
+          status: "RUNNING",
+          startedAt: "2026-03-31T10:00:00.000Z",
+          finishedAt: null,
+          lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+          stopReason: null,
+          errorMessage: null,
+          createdAt: "2026-03-31T10:00:00.000Z",
+          updatedAt: "2026-03-31T10:05:00.000Z",
+          durationMs: 300000,
+          eventsCount: 1,
+          symbolsTracked: 1,
+          summary: {
+            totalSignals: 1,
+            dcaCount: 0,
+            closedTrades: 0,
+            realizedPnl: 0,
+          },
+        },
+      ];
+    });
+
+    getRuntimeSessionMock.mockImplementation(async () => {
+      if (shouldFailRefresh) throw new Error("stale-refresh");
+      return {
+        id: "session-stale",
+        botId: "b-stale",
+        mode: "PAPER",
+        status: "RUNNING",
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: null,
+        lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+        stopReason: null,
+        errorMessage: null,
+        metadata: null,
+        createdAt: "2026-03-31T10:00:00.000Z",
+        updatedAt: "2026-03-31T10:05:00.000Z",
+        durationMs: 300000,
+        eventsCount: 1,
+        symbolsTracked: 1,
+        summary: {
+          totalSignals: 1,
+          longEntries: 1,
+          shortEntries: 0,
+          exits: 0,
+          dcaCount: 0,
+          closedTrades: 0,
+          winningTrades: 0,
+          losingTrades: 0,
+          realizedPnl: 0,
+          grossProfit: 0,
+          grossLoss: 0,
+          feesPaid: 0,
+        },
+      };
+    });
+
+    listRuntimeSymbolStatsMock.mockImplementation(async () => {
+      if (shouldFailRefresh) throw new Error("stale-refresh");
+      return {
+        sessionId: "session-stale",
+        items: [],
+        summary: {
+          totalSignals: 0,
+          longEntries: 0,
+          shortEntries: 0,
+          exits: 0,
+          dcaCount: 0,
+          closedTrades: 0,
+          winningTrades: 0,
+          losingTrades: 0,
+          realizedPnl: 0,
+          grossProfit: 0,
+          grossLoss: 0,
+          feesPaid: 0,
+        },
+      };
+    });
+
+    listRuntimePositionsMock.mockImplementation(async () => {
+      if (shouldFailRefresh) throw new Error("stale-refresh");
+      return {
+        sessionId: "session-stale",
+        total: 0,
+        openCount: 0,
+        closedCount: 0,
+        openOrdersCount: 0,
+        window: {
+          startedAt: "2026-03-31T10:00:00.000Z",
+          finishedAt: "2026-03-31T10:05:00.000Z",
+        },
+        summary: {
+          realizedPnl: 0,
+          unrealizedPnl: 0,
+          feesPaid: 0,
+        },
+        openOrders: [],
+        openItems: [],
+        historyItems: [],
+      };
+    });
+
+    listRuntimeTradesMock.mockImplementation(async () => {
+      if (shouldFailRefresh) throw new Error("stale-refresh");
+      return {
+        sessionId: "session-stale",
+        total: 0,
+        meta: {
+          page: 1,
+          pageSize: 25,
+          total: 0,
+          totalPages: 0,
+          hasPrev: false,
+          hasNext: false,
+        },
+        window: {
+          startedAt: "2026-03-31T10:00:00.000Z",
+          finishedAt: "2026-03-31T10:05:00.000Z",
+        },
+        items: [],
+      };
+    });
+
+    renderWithI18n();
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Stale Bot")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("tab", { name: /Operacje runtime|Monitoring/i }));
+
+    await waitFor(() => {
+      expect(listRuntimeSessionsMock).toHaveBeenCalledTimes(1);
+    });
+
+    shouldFailRefresh = true;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(21_000);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Dane monitoringu moga byc przestarzale/i)).toBeInTheDocument();
+    });
+
+    shouldFailRefresh = false;
+    fireEvent.click(screen.getByRole("button", { name: "Odswiez" }));
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Dane monitoringu moga byc przestarzale/i)).not.toBeInTheDocument();
+    });
+  }, 20_000);
 
   it("enables monitoring auto-refresh interval for RUNNING sessions", async () => {
     const setIntervalSpy = vi.spyOn(window, "setInterval");
