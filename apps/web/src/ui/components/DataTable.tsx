@@ -721,8 +721,8 @@ export default function DataTable<T>({
             </div>
           ) : null}
 
-          <div className={`min-w-0 text-xs text-base-content/75 ${showSettingsControls ? '' : 'col-span-2'}`}>
-            <div className='flex items-center justify-between gap-6'>
+          <div className={`min-w-0 w-full text-xs text-base-content/75 ${showSettingsControls ? '' : 'col-span-2'}`}>
+            <div className='flex items-center justify-between gap-2 lg:gap-6'>
               <span>{rowsTotalLabel}: {totalRowsCount}</span>
               <span className='inline-flex items-center gap-2'>
                 <span>{rowsPerPageLabel}</span>
@@ -748,8 +748,8 @@ export default function DataTable<T>({
           </div>
 
           {showPagesGroup ? (
-            <div className='col-span-2 min-w-0 text-xs text-base-content/75'>
-              <div className='flex items-center justify-between gap-6'>
+            <div className='col-span-2 min-w-0 w-full text-xs text-base-content/75'>
+              <div className='flex items-center justify-between gap-2 lg:gap-6'>
                 <span className='inline-flex items-center gap-2'>
                   <span>{pageLabel}</span>
                   <input
