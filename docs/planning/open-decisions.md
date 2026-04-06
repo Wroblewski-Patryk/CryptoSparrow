@@ -276,6 +276,17 @@ This file tracks intentionally unresolved architecture choices so implementation
 - Canonical reference:
   - `docs/planning/exchange-placeholder-adapters-plan-2026-04-04.md`
 
+## MarketUniverse Venue-Context Ownership
+- Decision state: resolved on 2026-04-06.
+- Product/runtime decision:
+  - `MarketUniverse` is canonical source-of-truth owner for venue context (`exchange`, `marketType`, `baseCurrency`).
+  - `SymbolGroup`, `BacktestRun`, and `Bot` contexts are derived/inherited from selected universe context and must not drift.
+  - runtime stream processing and execution account selection must enforce context match (`exchange + marketType`) and fail closed on mismatch.
+  - creator-side optional context filters can narrow selectable groups but never override canonical context ownership.
+- Canonical references:
+  - `docs/architecture/venue-context-source-of-truth-contract.md`
+  - `docs/planning/exchange-context-consistency-plan-2026-04-01.md`
+
 ## Numeric Locale Input Policy (Comma vs Dot)
 - Decision state: resolved on 2026-04-02.
 - Decision:
