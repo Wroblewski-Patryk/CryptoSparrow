@@ -589,7 +589,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `EXCTX-11 feat(execution): bind live execution account selection to bot venue context`
 - [x] `EXCTX-12 feat(web-backtest-creator): show explicit exchange/marketType/base context bound to market group`
 - [x] `EXCTX-13 feat(web-bot-creator): show explicit venue context and live api-key compatibility hints`
-- [ ] `EXCTX-14 test(web): add creator regression coverage for venue-context rendering and validation copy`
+- [x] `EXCTX-14 test(web): add creator regression coverage for venue-context rendering and validation copy`
 - [ ] `EXCTX-15 test(api+runtime): add context mismatch contract tests for backtest/bot/live paths`
 - [ ] `EXCTX-16 test(e2e): add end-to-end venue consistency scenario (backtest->paper->live)`
 - [ ] `EXCTX-17 chore(qa): manual smoke checklist and evidence capture for creator/runtime consistency`
@@ -600,6 +600,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `DBACT-10 qa(smoke): manual verification on real paper-session timeline (open -> dca -> close) including fee/pnl/margin coherence`
 
 ## Progress Log
+- 2026-04-06: Completed `EXCTX-14` by adding web creator regression coverage for venue-context rendering and LIVE key-validation copy: backtest creator test now asserts explicit bound exchange/marketType/base context card, and new bot creator tests validate LIVE API key compatibility messaging plus fail-fast validation copy when active LIVE has no compatible key; validated with `pnpm --filter web exec vitest run src/features/backtest/components/BacktestCreateForm.test.tsx src/features/bots/components/BotCreateEditForm.test.tsx` and `pnpm --filter web run typecheck`.
 - 2026-04-06: Completed `EXCTX-13` by extending bot create/edit form with explicit venue-context + LIVE API-key compatibility hints: form now resolves compatible keys for selected exchange, surfaces readiness/missing/unavailable states in market context card, and blocks active LIVE submit when no compatible key is configured; validated with `pnpm --filter web exec vitest run src/i18n/translations.test.ts` and `pnpm --filter web run typecheck`.
 - 2026-04-06: Completed `EXCTX-12` by adding explicit venue-context block in backtest creator (`exchange`, `marketType`, `baseCurrency`) bound to selected market group with deterministic fallback labels and immutable-context guidance copy, so execution context is visible before submit; validated with `pnpm --filter web exec vitest run src/features/backtest/components/BacktestCreateForm.test.tsx` and `pnpm --filter web run typecheck`.
 - 2026-04-06: Completed `EXCTX-11` by binding LIVE order execution account selection to bot venue context (bot-bound `apiKeyId` + `exchange` first, deterministic fallback to latest user key for bot exchange), removing hardcoded BINANCE account selection in orders live adapter path, and adding resolver regression coverage for bound-key, mismatch-fallback, and fail-closed missing-key scenarios; validated with `pnpm --filter api test -- src/modules/orders/orders.service.test.ts` and `pnpm --filter api run typecheck`.

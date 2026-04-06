@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import BacktestCreateForm from './BacktestCreateForm';
@@ -104,5 +104,46 @@ describe('BacktestCreateForm', () => {
         notes: undefined,
       });
     });
+  });
+
+  it('renders explicit venue context summary bound to selected market group', async () => {
+    listStrategiesMock.mockResolvedValue([
+      {
+        id: 's3',
+        name: 'Venue Strategy',
+        interval: '1h',
+        leverage: 2,
+        config: { additional: { marginMode: 'CROSSED' } },
+      },
+    ]);
+    listMarketUniversesMock.mockResolvedValue([
+      {
+        id: 'm3',
+        name: 'Spot Context',
+        exchange: 'OKX',
+        marketType: 'SPOT',
+        baseCurrency: 'USDC',
+        whitelist: ['BTCUSDC'],
+        blacklist: [],
+      },
+    ]);
+
+    render(<BacktestCreateForm submitting={false} submitLabel='Utworz run' onSubmit={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Kontekst venue (powiazany z wybrana grupa rynkow)')).toBeInTheDocument();
+    });
+
+    const contextCard = screen.getByText('Kontekst venue (powiazany z wybrana grupa rynkow)').closest('div');
+    expect(contextCard).not.toBeNull();
+    const scope = within(contextCard as HTMLElement);
+    expect(scope.getByText('OKX')).toBeInTheDocument();
+    expect(scope.getByText('SPOT')).toBeInTheDocument();
+    expect(scope.getByText('USDC')).toBeInTheDocument();
+    expect(
+      scope.getByText(
+        'Kontekst wykonania backtestu jest dziedziczony z wybranej grupy rynkow i nie moze sie rozjechac.'
+      )
+    ).toBeInTheDocument();
   });
 });
