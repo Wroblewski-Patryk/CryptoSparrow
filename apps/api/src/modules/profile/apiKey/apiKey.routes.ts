@@ -10,6 +10,7 @@ apiKeyRouter.route('/')
   .get(controller.list)
   .post(controller.create);
 apiKeyRouter.post('/test', apiKeyTestLimiter, controller.testConnection);
+apiKeyRouter.post('/:id/test', apiKeyTestLimiter, controller.testStoredConnection);
 
 apiKeyRouter.route('/:id')
   .patch(controller.update) 

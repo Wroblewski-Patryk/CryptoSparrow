@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { ZodError } from "zod";
 import { isAxiosError } from "axios";
 import { apiKeySchema } from "../types/apiKeyForm.type";
-import { testApiKeyConnection } from "../services/apiKeys.service";
+import { testApiKeyConnection, testStoredApiKeyConnection } from "../services/apiKeys.service";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { listBots } from "@/features/bots/services/bots.service";
 import type { Bot } from "@/features/bots/types/bot.type";
@@ -30,6 +30,7 @@ export type ApiKeyFormProps = {
     id?: string;
     label: string;
     exchange: ExchangeOption;
+    maskedApiKey?: string;
     syncExternalPositions: boolean;
     manageExternalPositions: boolean;
   };
@@ -52,6 +53,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           keyName: "Nazwa klucza",
           exchange: "Gielda",
           apiKey: "API Key",
+          currentApiKey: "Aktualny API Key",
           apiSecret: "API Secret",
           apiKeyPlaceholder: "Podaj nowy API Key (opcjonalnie)",
           apiSecretPlaceholder: "Podaj nowy API Secret (opcjonalnie)",
@@ -59,6 +61,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           manageExternal: "Zarzadzaj zewnetrznymi pozycjami przez bota",
           testing: "Testowanie...",
           testConnection: "Testuj polaczenie",
+          testStoredConnection: "Testuj zapisane polaczenie",
           ok: "OK",
           error: "Blad",
           save: "Zapisz",
@@ -78,6 +81,8 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           botUsesThisKey: "Uzywa tego klucza",
           botUsesAnotherKey: "Uzywa innego klucza",
           botWithoutApiKey: "Brak przypietego klucza",
+          editSecretHint:
+            "API Secret nie jest wyswietlany. Pozostaw pola puste, aby przetestowac zapisane polaczenie dla tego klucza.",
           placeholderProbeInfo:
             "Dla tej gieldy test API key nie jest jeszcze dostepny (placeholder adapter). Zapis jest dozwolony.",
         }
@@ -91,6 +96,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           keyName: "Key name",
           exchange: "Exchange",
           apiKey: "API Key",
+          currentApiKey: "Current API Key",
           apiSecret: "API Secret",
           apiKeyPlaceholder: "Provide new API Key (optional)",
           apiSecretPlaceholder: "Provide new API Secret (optional)",
@@ -98,6 +104,7 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           manageExternal: "Allow bot to manage external positions",
           testing: "Testing...",
           testConnection: "Test connection",
+          testStoredConnection: "Test stored connection",
           ok: "OK",
           error: "Error",
           save: "Save",
@@ -117,6 +124,8 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           botUsesThisKey: "Uses this key",
           botUsesAnotherKey: "Uses another key",
           botWithoutApiKey: "No API key assigned",
+          editSecretHint:
+            "API Secret is never shown. Leave both fields empty to test stored connection for this key.",
           placeholderProbeInfo:
             "API key test is not available for this exchange yet (placeholder adapter). Saving is still allowed.",
         };
@@ -145,6 +154,10 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
   const exchangeSupportsProbe = supportsExchangeCapability(exchange, "API_KEY_PROBE");
   const requiresConnectionTest = (!isEdit || Boolean(apiKey) || Boolean(apiSecret)) && exchangeSupportsProbe;
   const isManageBotListVisible = manageExternalPositions && exchange === "BINANCE";
+  const usesStoredTestMode =
+    Boolean(isEdit && currentApiKeyId && exchange === defaultValues?.exchange) &&
+    apiKey.trim().length === 0 &&
+    apiSecret.trim().length === 0;
 
   useEffect(() => {
     if (!isManageBotListVisible) {
@@ -205,6 +218,36 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
       setTestStatus("idle");
       setTestMessage(copy.placeholderProbeInfo);
       setTestedFingerprint(null);
+      return;
+    }
+
+    const canTestStoredConnection =
+      usesStoredTestMode;
+
+    if (canTestStoredConnection) {
+      setTestStatus("loading");
+      setTestMessage(null);
+
+      try {
+        const result = await testStoredApiKeyConnection(currentApiKeyId as string);
+        if (result.ok) {
+          setTestStatus("success");
+          setTestMessage(result.message ?? copy.testConnectionOk);
+          setTestedFingerprint(null);
+          return;
+        }
+
+        setTestStatus("error");
+        setTestMessage(result.message ?? copy.testConnectionFailed);
+        setTestedFingerprint(null);
+      } catch (err: unknown) {
+        const message = isAxiosError<{ message?: string }>(err)
+          ? (err.response?.data?.message ?? copy.testConnectionFailed)
+          : copy.testConnectionFailed;
+        setTestStatus("error");
+        setTestMessage(message);
+        setTestedFingerprint(null);
+      }
       return;
     }
 
@@ -338,6 +381,11 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
         <label className="label pl-0">
           <span className="label-text text-left w-full">{copy.apiKey}</span>
         </label>
+        {isEdit && defaultValues?.maskedApiKey ? (
+          <div className="text-xs opacity-70 mb-1">
+            {copy.currentApiKey}: <span className="font-mono">{defaultValues.maskedApiKey}</span>
+          </div>
+        ) : null}
         <input
           className="input input-bordered w-full font-mono"
           type="text"
@@ -345,6 +393,10 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
           placeholder={isEdit ? copy.apiKeyPlaceholder : ""}
+          autoComplete="new-password"
+          data-form-type="other"
+          data-lpignore="true"
+          spellCheck={false}
           required={!isEdit}
         />
       </div>
@@ -359,8 +411,13 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           value={apiSecret}
           onChange={(e) => setApiSecret(e.target.value)}
           placeholder={isEdit ? copy.apiSecretPlaceholder : ""}
+          autoComplete="new-password"
+          data-form-type="other"
+          data-lpignore="true"
+          spellCheck={false}
           required={!isEdit}
         />
+        {isEdit ? <p className="text-xs opacity-70 mt-1">{copy.editSecretHint}</p> : null}
       </div>
       <div className="form-control">
         <label className="label cursor-pointer justify-start gap-3">
@@ -414,7 +471,13 @@ export default function ApiKeyForm({ defaultValues, isEdit, onSave, onCancel }: 
           {testStatus === "loading" ? (
             <span className="loading loading-spinner loading-xs" aria-hidden="true" />
           ) : null}
-          <span>{testStatus === "loading" ? copy.testing : copy.testConnection}</span>
+          <span>
+            {testStatus === "loading"
+              ? copy.testing
+              : usesStoredTestMode
+                ? copy.testStoredConnection
+                : copy.testConnection}
+          </span>
         </button>
         {testStatus === "success" && <span className="text-success">{copy.ok}</span>}
         {testStatus === "error" && <span className="text-error">{copy.error}</span>}

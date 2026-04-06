@@ -283,3 +283,25 @@ export const testApiKeyConnection = async (
 
   return result;
 };
+
+export const testStoredApiKeyConnection = async (
+  userId: string,
+  id: string
+): Promise<ApiKeyTestResult | null> => {
+  const existing = await prisma.apiKey.findFirst({
+    where: { id, userId },
+  });
+
+  if (!existing) {
+    return null;
+  }
+
+  const probePayload: ApiKeyTestPayload = {
+    exchange: existing.exchange,
+    apiKey: decrypt(existing.apiKey),
+    apiSecret: decrypt(existing.apiSecret),
+  };
+
+  const result = await testApiKeyConnection(userId, probePayload);
+  return result;
+};

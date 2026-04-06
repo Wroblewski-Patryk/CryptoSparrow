@@ -127,10 +127,11 @@ export default function ApiKeysList() {
 
   const selectedKey = editId ? keys.find((k) => k.id === editId) : undefined;
   const defaultValues = selectedKey
-    ? {
+      ? {
         id: selectedKey.id,
         label: selectedKey.label,
         exchange: selectedKey.exchange,
+        maskedApiKey: selectedKey.apiKey,
         syncExternalPositions: selectedKey.syncExternalPositions,
         manageExternalPositions: selectedKey.manageExternalPositions,
       }

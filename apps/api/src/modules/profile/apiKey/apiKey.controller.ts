@@ -140,3 +140,19 @@ export const testConnection = async (req: Request, res: Response) => {
     return sendError(res, 500, 'Internal server error');
   }
 };
+
+export const testStoredConnection = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const result = await apiKeyService.testStoredApiKeyConnection(userId, req.params.id);
+    if (!result) return sendError(res, 404, 'Not found');
+    return res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof ExchangeNotImplementedError) {
+      return sendError(res, error.status, error.message, error.toDetails());
+    }
+    return sendError(res, 500, 'Internal server error');
+  }
+};

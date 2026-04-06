@@ -40,3 +40,8 @@ export async function testApiKeyConnection(
   const res = await api.post(`${API}/test`, payload);
   return res.data;
 }
+
+export async function testStoredApiKeyConnection(id: string): Promise<ApiKeyConnectionTestResult> {
+  const res = await api.post(`${API}/${id}/test`);
+  return res.data;
+}

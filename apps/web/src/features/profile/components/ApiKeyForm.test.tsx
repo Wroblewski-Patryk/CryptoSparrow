@@ -6,11 +6,13 @@ import { I18nProvider } from "../../../i18n/I18nProvider";
 import { EXCHANGE_OPTIONS } from "@/features/exchanges/exchangeCapabilities";
 
 const testApiKeyConnectionMock = vi.hoisted(() => vi.fn());
+const testStoredApiKeyConnectionMock = vi.hoisted(() => vi.fn());
 const listBotsMock = vi.hoisted(() => vi.fn());
 const originalBinanceWhitelist = process.env.NEXT_PUBLIC_BINANCE_IP_WHITELIST;
 
 vi.mock("../services/apiKeys.service", () => ({
   testApiKeyConnection: testApiKeyConnectionMock,
+  testStoredApiKeyConnection: testStoredApiKeyConnectionMock,
 }));
 
 vi.mock("@/features/bots/services/bots.service", () => ({
@@ -29,6 +31,10 @@ describe("ApiKeyForm", () => {
     vi.clearAllMocks();
     delete process.env.NEXT_PUBLIC_BINANCE_IP_WHITELIST;
     listBotsMock.mockResolvedValue([]);
+    testStoredApiKeyConnectionMock.mockResolvedValue({
+      ok: true,
+      message: "Stored Binance connection OK",
+    });
   });
 
   afterEach(() => {
@@ -284,5 +290,35 @@ describe("ApiKeyForm", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("203.0.113.10")).toBeInTheDocument();
     expect(screen.getByText("203.0.113.11")).toBeInTheDocument();
+  });
+
+  it("allows stored-credentials test in edit mode and keeps secret hidden", async () => {
+    renderForm({
+      isEdit: true,
+      defaultValues: {
+        id: "key-1",
+        label: "Binance main",
+        exchange: "BINANCE",
+        maskedApiKey: "AB********YZ",
+        syncExternalPositions: true,
+        manageExternalPositions: false,
+      },
+      onSave: vi.fn(),
+      onCancel: vi.fn(),
+    });
+
+    expect(screen.getByText(/Current API Key/)).toBeInTheDocument();
+    expect(screen.getByText("AB********YZ")).toBeInTheDocument();
+    expect(
+      screen.getByText("API Secret is never shown. Leave both fields empty to test stored connection for this key.")
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Test stored connection" }));
+
+    await waitFor(() => {
+      expect(testStoredApiKeyConnectionMock).toHaveBeenCalledWith("key-1");
+    });
+    expect(testApiKeyConnectionMock).not.toHaveBeenCalled();
+    expect(await screen.findByText("Stored Binance connection OK")).toBeInTheDocument();
   });
 });

@@ -33,6 +33,7 @@ describe("API Keys security contract", () => {
     await prisma.botRuntimeSymbolStat.deleteMany();
     await prisma.botRuntimeEvent.deleteMany();
     await prisma.botRuntimeSession.deleteMany();
+    await prisma.runtimeExecutionDedupe.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
@@ -229,6 +230,49 @@ describe("API Keys security contract", () => {
     });
     expect(JSON.stringify(log?.metadata)).not.toContain(testPayload.apiKey);
     expect(JSON.stringify(log?.metadata)).not.toContain(testPayload.apiSecret);
+  });
+
+  it("tests stored encrypted credentials by api key id", async () => {
+    const agent = await registerAndLogin("apikey-test-stored-connection@example.com");
+    const createRes = await agent.post("/dashboard/profile/apiKeys").send({
+      label: "stored-main",
+      exchange: "BINANCE",
+      apiKey: "STOREDKEY12345678",
+      apiSecret: "STOREDSECRET12345678",
+    });
+    expect(createRes.status).toBe(201);
+    const keyId = createRes.body.id as string;
+
+    const testRes = await agent.post(`/dashboard/profile/apiKeys/${keyId}/test`).send({});
+
+    expect(testRes.status).toBe(200);
+    expect(testRes.body).toEqual({
+      ok: true,
+      code: "OK",
+      message: "Binance API key permissions validated.",
+      permissions: {
+        spot: true,
+        futures: true,
+      },
+    });
+  });
+
+  it("enforces ownership on stored api-key connection test", async () => {
+    const owner = await registerAndLogin("apikey-owner-stored-test@example.com");
+    const other = await registerAndLogin("apikey-other-stored-test@example.com");
+
+    const createRes = await owner.post("/dashboard/profile/apiKeys").send({
+      label: "owner-stored",
+      exchange: "BINANCE",
+      apiKey: "OWNERSTOREDKEY12",
+      apiSecret: "OWNERSTOREDSECRET12",
+    });
+    expect(createRes.status).toBe(201);
+    const keyId = createRes.body.id as string;
+
+    const testRes = await other.post(`/dashboard/profile/apiKeys/${keyId}/test`).send({});
+    expect(testRes.status).toBe(404);
+    expect(testRes.body.error.message).toBe("Not found");
   });
 
   it("returns invalid-key contract for failed credentials", async () => {
