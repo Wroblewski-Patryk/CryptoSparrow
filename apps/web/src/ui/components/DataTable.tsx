@@ -722,7 +722,7 @@ export default function DataTable<T>({
           ) : null}
 
           <div className={`min-w-0 w-full text-xs text-base-content/75 ${showSettingsControls ? '' : 'col-span-2'}`}>
-            <div className='flex items-center justify-between gap-2 lg:gap-6'>
+            <div className='flex items-center gap-6'>
               <span>{rowsTotalLabel}: {totalRowsCount}</span>
               <span className='inline-flex items-center gap-2'>
                 <span>{rowsPerPageLabel}</span>
