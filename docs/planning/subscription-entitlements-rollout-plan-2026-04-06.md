@@ -42,7 +42,7 @@ Status: active implementation plan for collaborator-ready account limits and fut
 - [x] `SUBS-02 feat(db): add SubscriptionPlan + UserSubscription + PaymentIntent models with safe migration and indexes`
 - [x] `SUBS-03 feat(seed): seed three plans; default new users to FREE; map owner account (wroblewskipatryk@gmail.com) to PROFESSIONAL`
 - [x] `SUBS-04 feat(api-profile): expose subscription catalog + active subscription in profile endpoints (my-account ready)`
-- [ ] `SUBS-05 feat(web-profile): render subscription list with active-plan highlight in My Account -> Subscription`
+- [x] `SUBS-05 feat(web-profile): render subscription list with active-plan highlight in My Account -> Subscription`
 - [ ] `SUBS-06 feat(entitlements-core): add central entitlement resolver and enforce bot-count limits by active plan`
 - [ ] `SUBS-07 feat(api-admin): add admin CRUD for plan pricing + entitlement limits (editable without deploy)`
 - [ ] `SUBS-08 feat(web-admin): add admin UI modal for subscription price/limits editing`
