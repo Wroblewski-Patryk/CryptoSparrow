@@ -93,6 +93,10 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
     primaryGroup?.symbolGroup?.name ??
     fallbackLegacyStrategy?.symbolGroup?.name ??
     "-";
+  const displayMarketGroupName =
+    selectedMarketGroupName === "-"
+      ? selectedMarketGroupName
+      : selectedMarketGroupName.replace(/\s+group$/i, "");
   const selectedStrategyName =
     primaryStrategyFromGroup?.strategy?.name ??
     fallbackLegacyStrategy?.strategy?.name ??
@@ -182,48 +186,48 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
               </div>
             </div>
 
-            <div className="mt-3 grid gap-2 text-[11px]">
-              <div className="rounded-box border border-base-300/45 bg-base-100/65 px-2.5 py-2">
-                <p className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wide opacity-60">
+            <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
+              <div className="rounded-box border border-base-300/45 bg-base-100/60 px-2.5 py-2.5">
+                <p className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide opacity-65">
                   <LuChartCandlestick className="h-3.5 w-3.5" aria-hidden />
                   {props.text.marketContextTitle}
                 </p>
-                <div className="mt-1.5 space-y-1">
-                  <p className="flex items-center justify-between gap-2">
+                <div className="mt-2 space-y-1.5">
+                  <p className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
                     <span className="opacity-65">{props.text.marketGroup}</span>
-                    <span className="font-medium">{selectedMarketGroupName}</span>
+                    <span className="min-w-0 break-words text-right font-semibold">{displayMarketGroupName}</span>
                   </p>
-                  <p className="flex items-center justify-between gap-2">
+                  <p className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
                     <span className="opacity-65">{props.text.exchange}</span>
-                    <span className="font-medium">{props.selected?.bot.exchange ?? "-"}</span>
+                    <span className="min-w-0 break-words text-right font-semibold">{props.selected?.bot.exchange ?? "-"}</span>
                   </p>
-                  <p className="flex items-center justify-between gap-2">
+                  <p className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
                     <span className="opacity-65">{props.text.market}</span>
-                    <span className="font-medium">{normalizedMarketType}</span>
+                    <span className="min-w-0 break-words text-right font-semibold">{normalizedMarketType}</span>
                   </p>
-                  <p className="flex items-center justify-between gap-2">
+                  <p className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
                     <span className="opacity-65">{props.text.baseCurrency}</span>
-                    <span className="font-medium">{selectedBaseCurrency}</span>
+                    <span className="min-w-0 break-words text-right font-semibold">{selectedBaseCurrency}</span>
                   </p>
                 </div>
               </div>
-              <div className="rounded-box border border-base-300/45 bg-base-100/65 px-2.5 py-2">
-                <p className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wide opacity-60">
+              <div className="rounded-box border border-base-300/45 bg-base-100/60 px-2.5 py-2.5">
+                <p className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide opacity-65">
                   <LuListChecks className="h-3.5 w-3.5" aria-hidden />
                   {props.text.strategyContextTitle}
                 </p>
-                <div className="mt-1.5 space-y-1">
-                  <p className="flex items-center justify-between gap-2">
+                <div className="mt-2 space-y-1.5">
+                  <p className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
                     <span className="opacity-65">{props.text.strategy}</span>
-                    <span className="font-medium">{selectedStrategyName}</span>
+                    <span className="min-w-0 break-words text-right font-semibold">{selectedStrategyName}</span>
                   </p>
-                  <p className="flex items-center justify-between gap-2">
+                  <p className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
                     <span className="opacity-65">{props.text.interval}</span>
-                    <span className="font-medium">{selectedStrategyInterval}</span>
+                    <span className="min-w-0 break-words text-right font-semibold">{selectedStrategyInterval}</span>
                   </p>
-                  <p className="flex items-center justify-between gap-2">
+                  <p className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
                     <span className="opacity-65">{props.text.leverage}</span>
-                    <span className="font-medium">{selectedStrategyLeverage}</span>
+                    <span className="min-w-0 break-words text-right font-semibold">{selectedStrategyLeverage}</span>
                   </p>
                 </div>
               </div>
