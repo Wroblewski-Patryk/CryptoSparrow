@@ -246,6 +246,13 @@ type TranslationSchema = {
         selectedBot: string;
         status: string;
         mode: string;
+        marketContextTitle: string;
+        strategyContextTitle: string;
+        marketGroup: string;
+        exchange: string;
+        market: string;
+        interval: string;
+        leverage: string;
         heartbeat: string;
         openPositions: string;
         signalsDca: string;
@@ -262,6 +269,7 @@ type TranslationSchema = {
         realizedOpen: string;
         winRate: string;
         maxDrawdown: string;
+        staleDataWarning: string;
         updatedAt: string;
       };
     };
@@ -516,6 +524,13 @@ export const translations: Record<Locale, TranslationSchema> = {
           selectedBot: "Selected bot",
           status: "Status",
           mode: "Mode",
+          marketContextTitle: "Market context",
+          strategyContextTitle: "Strategy context",
+          marketGroup: "Market group",
+          exchange: "Exchange",
+          market: "Market",
+          interval: "Interval",
+          leverage: "Leverage",
           heartbeat: "Heartbeat",
           openPositions: "Open positions",
           signalsDca: "Signals / DCA",
@@ -533,6 +548,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           realizedOpen: "Realized / Open",
           winRate: "Win rate",
           maxDrawdown: "Max drawdown",
+          staleDataWarning: "Runtime data may be stale (last good refresh {age} ago).",
           updatedAt: "Updated at: {value}",
         },
       },
@@ -681,6 +697,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           autoRefreshAggregate: "Auto-refresh active for aggregate view.",
           autoRefreshCurrentSession: "Auto-refresh active for current session.",
           autoRefreshSelectedSession: "Auto-refresh active for selected session.",
+          staleDataWarning: "Monitoring data may be stale (last successful refresh {age} ago).",
           advancedOptions: "Advanced options",
           botManualLabel: "Bot (manual select)",
           viewLabel: "View",
@@ -1112,6 +1129,13 @@ export const translations: Record<Locale, TranslationSchema> = {
           selectedBot: "Wybrany bot",
           status: "Status",
           mode: "Tryb",
+          marketContextTitle: "Kontekst rynku",
+          strategyContextTitle: "Kontekst strategii",
+          marketGroup: "Grupa rynkow",
+          exchange: "Gielda",
+          market: "Rynek",
+          interval: "Interwal",
+          leverage: "Dzwignia",
           heartbeat: "Heartbeat",
           openPositions: "Pozycje otwarte",
           signalsDca: "Sygnaly / DCA",
@@ -1128,6 +1152,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           realizedOpen: "Realized / Open",
           winRate: "Win rate",
           maxDrawdown: "Max drawdown",
+          staleDataWarning: "Dane runtime moga byc przestarzale (ostatnie poprawne odswiezenie {age} temu).",
           updatedAt: "Aktualizacja: {value}",
         },
       },
@@ -1276,6 +1301,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           autoRefreshAggregate: "Auto-refresh aktywny dla widoku zbiorczego.",
           autoRefreshCurrentSession: "Auto-refresh aktywny dla biezacej sesji.",
           autoRefreshSelectedSession: "Auto-refresh aktywny dla wybranej sesji.",
+          staleDataWarning: "Dane monitoringu moga byc przestarzale (ostatnie poprawne odswiezenie {age} temu).",
           advancedOptions: "Opcje zaawansowane",
           botManualLabel: "Bot (manualny wybor)",
           viewLabel: "Widok",

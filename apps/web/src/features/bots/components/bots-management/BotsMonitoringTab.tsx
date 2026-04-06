@@ -161,6 +161,8 @@ type BotsMonitoringTabProps = {
     lastTradeAt?: string | null;
   }>;
   monitorHeartbeatLagMs: number | null;
+  monitorDataIsStale: boolean;
+  monitorDataAgeLabel: string | null;
   monitorLastSignalAt: string | null;
   monitorLastTradeAt: string | null;
   formatDateTime: (value?: string | null) => string;
@@ -226,6 +228,8 @@ export function BotsMonitoringTab(props: BotsMonitoringTabProps) {
     monitorTrades,
     monitorSignalRows,
     monitorHeartbeatLagMs,
+    monitorDataIsStale,
+    monitorDataAgeLabel,
     monitorLastSignalAt,
     monitorLastTradeAt,
     formatDateTime,
@@ -394,6 +398,18 @@ export function BotsMonitoringTab(props: BotsMonitoringTabProps) {
                       ? t("dashboard.bots.monitoring.autoRefreshCurrentSession")
                       : t("dashboard.bots.monitoring.autoRefreshSelectedSession")}
                 </p>
+
+                {monitorDataIsStale ? (
+                  <p
+                    className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-content/85"
+                    aria-live="polite"
+                  >
+                    {t("dashboard.bots.monitoring.staleDataWarning").replace(
+                      "{age}",
+                      monitorDataAgeLabel ?? "-"
+                    )}
+                  </p>
+                ) : null}
 
                 <details className="rounded-md border border-base-300 bg-base-200">
                   <summary className="cursor-pointer px-3 py-2 text-xs font-semibold uppercase tracking-wide opacity-70">

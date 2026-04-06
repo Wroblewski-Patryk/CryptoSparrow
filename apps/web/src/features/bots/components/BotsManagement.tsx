@@ -56,6 +56,7 @@ import {
 const LIVE_CONSENT_TEXT_VERSION = "mvp-v1";
 const DUPLICATE_ACTIVE_BOT_ERROR = "active bot already exists for this strategy + market group pair";
 const MONITOR_AUTO_REFRESH_INTERVAL_MS = 5_000;
+const MONITOR_STALE_WARNING_AFTER_MS = 20_000;
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -118,6 +119,12 @@ const formatDuration = (ms: number) => {
   const minutes = totalMinutes % 60;
   if (hours <= 0) return `${minutes}m`;
   return `${hours}h ${minutes}m`;
+};
+
+const formatAgeCompact = (ms: number) => {
+  if (!Number.isFinite(ms) || ms <= 0) return "0s";
+  if (ms < 60_000) return `${Math.max(1, Math.floor(ms / 1_000))}s`;
+  return formatDuration(ms);
 };
 
 const normalizeDcaLevels = (levels?: number[] | null) =>
@@ -555,6 +562,8 @@ export default function BotsManagement({
   const [monitorSessionLoading, setMonitorSessionLoading] = useState(false);
   const [monitorError, setMonitorError] = useState<string | null>(null);
   const [monitorAutoRefreshEnabled, setMonitorAutoRefreshEnabled] = useState(true);
+  const [monitorLastUpdatedAt, setMonitorLastUpdatedAt] = useState<string | null>(null);
+  const [monitorStaleWatchNowMs, setMonitorStaleWatchNowMs] = useState(() => Date.now());
   const [monitorLiveTickerPrices, setMonitorLiveTickerPrices] = useState<Record<string, number>>({});
   const monitorTtpStickyFavorableMoveByPositionRef = useRef<Map<string, number>>(new Map());
 
@@ -857,6 +866,23 @@ export default function BotsManagement({
     return Math.max(0, Date.now() - heartbeatTs);
   }, [monitorSessionDetail?.lastHeartbeatAt]);
 
+  const monitorDataAgeMs = useMemo(() => {
+    if (!monitorLastUpdatedAt) return null;
+    const timestamp = Date.parse(monitorLastUpdatedAt);
+    if (!Number.isFinite(timestamp)) return null;
+    return Math.max(0, monitorStaleWatchNowMs - timestamp);
+  }, [monitorLastUpdatedAt, monitorStaleWatchNowMs]);
+
+  const monitorDataIsStale = useMemo(
+    () => monitorDataAgeMs != null && monitorDataAgeMs >= MONITOR_STALE_WARNING_AFTER_MS,
+    [monitorDataAgeMs]
+  );
+
+  const monitorDataAgeLabel = useMemo(
+    () => (monitorDataAgeMs == null ? null : formatAgeCompact(monitorDataAgeMs)),
+    [monitorDataAgeMs]
+  );
+
   const monitorChecklistItems = useMemo(() => {
     if (!monitorSessionDetail) return [];
 
@@ -927,7 +953,7 @@ export default function BotsManagement({
       botId: string,
       statusFilter: "ALL" | BotRuntimeSessionStatus,
       options?: { silent?: boolean }
-    ): Promise<BotRuntimeSessionListItem[]> => {
+    ): Promise<BotRuntimeSessionListItem[] | null> => {
       const silent = options?.silent ?? false;
       if (!botId) {
         setMonitorSessions([]);
@@ -936,6 +962,7 @@ export default function BotsManagement({
         setMonitorSymbolStats(null);
         setMonitorPositions(null);
         setMonitorTrades(null);
+        setMonitorLastUpdatedAt(null);
         return [];
       }
 
@@ -961,12 +988,13 @@ export default function BotsManagement({
           setMonitorPositions(null);
           setMonitorTrades(null);
         }
+        setMonitorLastUpdatedAt(new Date().toISOString());
         return sessions;
       } catch (err: unknown) {
         if (!silent) {
           setMonitorError(getAxiosMessage(err) ?? t("dashboard.bots.errors.loadRuntimeSessions"));
         }
-        return [];
+        return null;
       } finally {
         if (!silent) {
           setMonitorLoading(false);
@@ -989,6 +1017,7 @@ export default function BotsManagement({
         setMonitorSymbolStats(null);
         setMonitorPositions(null);
         setMonitorTrades(null);
+        setMonitorLastUpdatedAt(null);
         return;
       }
 
@@ -1017,6 +1046,7 @@ export default function BotsManagement({
         setMonitorSymbolStats(symbolStats);
         setMonitorPositions(positions);
         setMonitorTrades(trades);
+        setMonitorLastUpdatedAt(new Date().toISOString());
       } catch (err: unknown) {
         if (!silent) {
           setMonitorError(getAxiosMessage(err) ?? t("dashboard.bots.errors.loadRuntimeSessionData"));
@@ -1043,6 +1073,7 @@ export default function BotsManagement({
         setMonitorSymbolStats(null);
         setMonitorPositions(null);
         setMonitorTrades(null);
+        setMonitorLastUpdatedAt(null);
         return;
       }
 
@@ -1092,6 +1123,7 @@ export default function BotsManagement({
         setMonitorSymbolStats(aggregate.symbolStats);
         setMonitorPositions(aggregate.positions);
         setMonitorTrades(aggregate.trades);
+        setMonitorLastUpdatedAt(new Date().toISOString());
       } catch (err: unknown) {
         if (!silent) {
           setMonitorError(getAxiosMessage(err) ?? t("dashboard.bots.errors.loadAggregateMonitoring"));
@@ -1301,6 +1333,7 @@ export default function BotsManagement({
     async (options?: { silent?: boolean }) => {
       if (!monitorBotId) return;
       const sessions = await loadMonitorSessions(monitorBotId, monitorStatus, options);
+      if (sessions == null) return;
       if (monitorViewMode === "aggregate") {
         await loadMonitorAggregateData(monitorBotId, sessions, monitorAppliedSymbolFilter, options);
         return;
@@ -1394,6 +1427,17 @@ export default function BotsManagement({
     monitorBotId,
     refreshMonitoring,
   ]);
+
+  useEffect(() => {
+    if (activeTab !== "monitoring") return;
+    const intervalId = window.setInterval(() => {
+      setMonitorStaleWatchNowMs(Date.now());
+    }, 1_000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [activeTab]);
 
   useEffect(() => {
     setMonitorLiveTickerPrices({});
@@ -1811,6 +1855,8 @@ export default function BotsManagement({
           monitorTrades={monitorTrades}
           monitorSignalRows={monitorSignalRows}
           monitorHeartbeatLagMs={monitorHeartbeatLagMs}
+          monitorDataIsStale={monitorDataIsStale}
+          monitorDataAgeLabel={monitorDataAgeLabel}
           monitorLastSignalAt={monitorLastSignalAt}
           monitorLastTradeAt={monitorLastTradeAt}
           formatDateTime={formatDateTime}
