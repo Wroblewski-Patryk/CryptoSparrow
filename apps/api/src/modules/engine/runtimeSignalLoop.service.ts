@@ -1214,13 +1214,17 @@ export class RuntimeSignalLoop {
             await this.deps.orchestrateFn({
               userId: bot.userId,
               botId: bot.id,
+              botMarketGroupId: group.id,
               runtimeSessionId: sessionId,
               symbol: event.symbol,
               direction,
               strategyId: merged.strategyId,
+              strategyInterval: event.interval,
               quantity: orderQuantity,
               markPrice: event.close,
               mode: bot.mode,
+              candleOpenTime: event.openTime,
+              candleCloseTime: event.closeTime,
             });
             metricsStore.recordRuntimeMergeOutcome(direction);
             metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);

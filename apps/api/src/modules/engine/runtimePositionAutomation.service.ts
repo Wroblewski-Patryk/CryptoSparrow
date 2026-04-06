@@ -8,6 +8,11 @@ import { PositionManagementInput, PositionManagementState } from './positionMana
 import { resolveRuntimeDcaFundsExhausted } from './runtimeCapitalContext.service';
 import { runtimeTelemetryService } from './runtimeTelemetry.service';
 import { runtimePositionStateStore } from './runtimePositionState.store';
+import {
+  buildCancelExecutionDedupeKey,
+  buildDcaExecutionDedupeKey,
+  runtimeExecutionDedupeService,
+} from './runtimeExecutionDedupe.service';
 
 type RuntimeManagedPosition = Pick<
   Position,
@@ -39,12 +44,13 @@ type RuntimePositionAutomationDeps = {
     positionId: string;
     symbol: string;
     positionSide: PositionSide;
+    dcaLevelIndex: number;
     markPrice: number;
     mode: 'PAPER' | 'LIVE';
     addedQuantity: number;
     nextQuantity: number;
     nextEntryPrice: number;
-  }) => Promise<{ feePaid: number }>;
+  }) => Promise<{ feePaid: number; executed: boolean }>;
   closeByExitSignal: (input: {
     userId: string;
     botId?: string;
@@ -265,92 +271,161 @@ const defaultDeps: RuntimePositionAutomationDeps = {
   },
   executeDca: async (input) => {
     const dcaQuantity = Math.max(0, input.addedQuantity);
-    if (dcaQuantity <= 0) return { feePaid: 0 };
+    if (dcaQuantity <= 0) return { feePaid: 0, executed: false };
+    const dedupeKey = buildDcaExecutionDedupeKey({
+      userId: input.userId,
+      botId: input.botId,
+      symbol: input.symbol,
+      positionId: input.positionId,
+      dcaLevelIndex: input.dcaLevelIndex,
+      positionSide: input.positionSide,
+    });
+    const dedupe = await runtimeExecutionDedupeService.acquire({
+      dedupeKey,
+      commandType: 'DCA',
+      userId: input.userId,
+      botId: input.botId,
+      symbol: input.symbol,
+      commandFingerprint: {
+        positionId: input.positionId,
+        dcaLevelIndex: input.dcaLevelIndex,
+        positionSide: input.positionSide,
+      },
+    });
+    if (dedupe.outcome !== 'execute') {
+      return { feePaid: 0, executed: false };
+    }
 
     const orderSide = input.positionSide === 'LONG' ? 'BUY' : 'SELL';
     const estimatedFee = input.markPrice * dcaQuantity * resolveRuntimeTakerFeeRate(input.mode);
-    const opened = await openOrderLifecycle(input.userId, {
-      botId: input.botId ?? undefined,
-      strategyId: input.strategyId ?? undefined,
-      symbol: input.symbol,
-      side: orderSide,
-      type: 'MARKET',
-      quantity: dcaQuantity,
-      mode: input.mode,
-      riskAck: true,
-    });
-
-    let finalizedOrderId = opened.id;
-    if (opened.status === 'OPEN' || opened.status === 'PARTIALLY_FILLED') {
-      const closed = await closeOrderLifecycle(input.userId, opened.id, { riskAck: true });
-      finalizedOrderId = closed?.id ?? opened.id;
-    }
-
-    await prisma.$transaction(async (tx) => {
-      await tx.position.update({
-        where: { id: input.positionId },
-        data: {
-          quantity: input.nextQuantity,
-          entryPrice: input.nextEntryPrice,
-        },
+    try {
+      const opened = await openOrderLifecycle(input.userId, {
+        botId: input.botId ?? undefined,
+        strategyId: input.strategyId ?? undefined,
+        symbol: input.symbol,
+        side: orderSide,
+        type: 'MARKET',
+        quantity: dcaQuantity,
+        mode: input.mode,
+        riskAck: true,
       });
 
-      await tx.order.update({
-        where: { id: finalizedOrderId },
-        data: { positionId: input.positionId },
-      });
-
-      await tx.trade.create({
-        data: {
+      let finalizedOrderId = opened.id;
+      if (opened.status === 'OPEN' || opened.status === 'PARTIALLY_FILLED') {
+        const cancelDedupeKey = buildCancelExecutionDedupeKey({
           userId: input.userId,
-          botId: input.botId ?? undefined,
-          strategyId: input.strategyId ?? undefined,
-          orderId: finalizedOrderId,
-          positionId: input.positionId,
+          botId: input.botId,
           symbol: input.symbol,
-          side: orderSide,
-          lifecycleAction: 'DCA',
-          price: input.markPrice,
-          quantity: dcaQuantity,
-          fee: input.mode === 'LIVE' ? (opened.fee ?? estimatedFee) : estimatedFee,
-          feeSource: opened.feeSource,
-          feePending: opened.feePending,
-          feeCurrency: opened.feeCurrency,
-          effectiveFeeRate: opened.effectiveFeeRate,
-          exchangeTradeId: opened.exchangeTradeId,
-          realizedPnl: 0,
-          origin: 'BOT',
-          managementMode: 'BOT_MANAGED',
-        },
-      });
-
-      await tx.log.create({
-        data: {
+          orderId: opened.id,
+          reasonCode: 'runtime_dca_finalize',
+        });
+        const cancelDedupe = await runtimeExecutionDedupeService.acquire({
+          dedupeKey: cancelDedupeKey,
+          commandType: 'CANCEL',
           userId: input.userId,
-          botId: input.botId ?? undefined,
-          strategyId: input.strategyId ?? undefined,
-          action: 'runtime.dca',
-          level: 'INFO',
-          source: 'engine.runtimePositionAutomation',
-          message: `Runtime DCA executed for ${input.symbol}`,
-          category: 'runtime',
-          entityType: 'position',
-          entityId: input.positionId,
-          actor: 'runtime',
-          metadata: {
-            symbol: input.symbol,
-            side: input.positionSide,
-            mode: input.mode,
+          botId: input.botId,
+          symbol: input.symbol,
+          commandFingerprint: {
+            orderId: opened.id,
+            reasonCode: 'runtime_dca_finalize',
+          },
+        });
+        if (cancelDedupe.outcome === 'execute') {
+          try {
+            const closed = await closeOrderLifecycle(input.userId, opened.id, { riskAck: true });
+            finalizedOrderId = closed?.id ?? opened.id;
+            await runtimeExecutionDedupeService.markSucceeded({
+              dedupeKey: cancelDedupeKey,
+              orderId: finalizedOrderId,
+              positionId: input.positionId,
+            });
+          } catch (error) {
+            await runtimeExecutionDedupeService.markFailed({
+              dedupeKey: cancelDedupeKey,
+              errorClass: error instanceof Error && error.name ? error.name : 'runtime_cancel_error',
+            });
+            throw error;
+          }
+        }
+      }
+
+      await prisma.$transaction(async (tx) => {
+        await tx.position.update({
+          where: { id: input.positionId },
+          data: {
+            quantity: input.nextQuantity,
+            entryPrice: input.nextEntryPrice,
+          },
+        });
+
+        await tx.order.update({
+          where: { id: finalizedOrderId },
+          data: { positionId: input.positionId },
+        });
+
+        await tx.trade.create({
+          data: {
+            userId: input.userId,
+            botId: input.botId ?? undefined,
+            strategyId: input.strategyId ?? undefined,
             orderId: finalizedOrderId,
-            addedQuantity: dcaQuantity,
+            positionId: input.positionId,
+            symbol: input.symbol,
+            side: orderSide,
+            lifecycleAction: 'DCA',
+            price: input.markPrice,
+            quantity: dcaQuantity,
             fee: input.mode === 'LIVE' ? (opened.fee ?? estimatedFee) : estimatedFee,
-            nextQuantity: input.nextQuantity,
-            nextEntryPrice: input.nextEntryPrice,
-          } as Prisma.InputJsonValue,
-        },
+            feeSource: opened.feeSource,
+            feePending: opened.feePending,
+            feeCurrency: opened.feeCurrency,
+            effectiveFeeRate: opened.effectiveFeeRate,
+            exchangeTradeId: opened.exchangeTradeId,
+            realizedPnl: 0,
+            origin: 'BOT',
+            managementMode: 'BOT_MANAGED',
+          },
+        });
+
+        await tx.log.create({
+          data: {
+            userId: input.userId,
+            botId: input.botId ?? undefined,
+            strategyId: input.strategyId ?? undefined,
+            action: 'runtime.dca',
+            level: 'INFO',
+            source: 'engine.runtimePositionAutomation',
+            message: `Runtime DCA executed for ${input.symbol}`,
+            category: 'runtime',
+            entityType: 'position',
+            entityId: input.positionId,
+            actor: 'runtime',
+            metadata: {
+              symbol: input.symbol,
+              side: input.positionSide,
+              mode: input.mode,
+              orderId: finalizedOrderId,
+              addedQuantity: dcaQuantity,
+              fee: input.mode === 'LIVE' ? (opened.fee ?? estimatedFee) : estimatedFee,
+              nextQuantity: input.nextQuantity,
+              nextEntryPrice: input.nextEntryPrice,
+            } as Prisma.InputJsonValue,
+          },
+        });
       });
-    });
-    return { feePaid: input.mode === 'LIVE' ? (opened.fee ?? estimatedFee) : estimatedFee };
+      await runtimeExecutionDedupeService.markSucceeded({
+        dedupeKey,
+        orderId: finalizedOrderId,
+        positionId: input.positionId,
+      });
+      return { feePaid: input.mode === 'LIVE' ? (opened.fee ?? estimatedFee) : estimatedFee, executed: true };
+    } catch (error) {
+      await runtimeExecutionDedupeService.markFailed({
+        dedupeKey,
+        errorClass: error instanceof Error && error.name ? error.name : 'runtime_dca_error',
+      });
+      throw error;
+    }
   },
   closeByExitSignal: async (input) => {
     await orchestrateRuntimeSignal({
@@ -676,13 +751,14 @@ export class RuntimePositionAutomationService {
           positionId: position.id,
           symbol: position.symbol,
           positionSide: position.side,
+          dcaLevelIndex: previousState.currentAdds,
           markPrice: event.lastPrice,
           mode,
           addedQuantity: dcaAddedQuantity,
           nextQuantity: result.nextState.quantity,
           nextEntryPrice: result.nextState.averageEntryPrice,
         });
-        if (position.botId) {
+        if (position.botId && dcaResult.executed) {
           const eventAt = new Date(event.eventTime);
           await this.deps.recordRuntimeEvent?.({
             userId: position.userId,

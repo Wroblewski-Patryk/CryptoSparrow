@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   orchestrateRuntimeSignal,
   OrderFlowGateway,
+  RuntimeExecutionDedupeGateway,
   PositionFlowGateway,
   RuntimeExecutionEventGateway,
   RuntimeTradeGateway,
@@ -77,6 +78,12 @@ const createTradeGateway = (): RuntimeTradeGateway => ({
   createTrade: vi.fn().mockResolvedValue(undefined),
 });
 
+const createDedupeGateway = (): RuntimeExecutionDedupeGateway => ({
+  acquire: vi.fn().mockResolvedValue({ outcome: 'execute', dedupeKey: 'dedupe-1' }),
+  markSucceeded: vi.fn().mockResolvedValue(undefined),
+  markFailed: vi.fn().mockResolvedValue(undefined),
+});
+
 describe('orchestrateRuntimeSignal', () => {
   it('opens order and position for LONG signal', async () => {
     const orderGateway = createOrderGateway();
@@ -125,6 +132,88 @@ describe('orchestrateRuntimeSignal', () => {
     );
   });
 
+  it('reuses persisted OPEN execution result and skips duplicate side effects', async () => {
+    const orderGateway = createOrderGateway();
+    const positionGateway = createPositionGateway();
+    const eventGateway = createEventGateway();
+    const tradeGateway = createTradeGateway();
+    const dedupeGateway = createDedupeGateway();
+    (dedupeGateway.acquire as ReturnType<typeof vi.fn>).mockResolvedValue({
+      outcome: 'reused',
+      dedupeKey: 'v1|OPEN|...',
+      orderId: 'order-existing',
+      positionId: 'position-existing',
+    });
+
+    const result = await orchestrateRuntimeSignal(
+      {
+        userId: 'u1',
+        botId: 'bot-1',
+        botMarketGroupId: 'group-1',
+        symbol: 'BTCUSDT',
+        direction: 'LONG',
+        strategyInterval: '1m',
+        candleOpenTime: 1_000,
+        candleCloseTime: 59_000,
+        quantity: 0.1,
+        markPrice: 43000,
+        mode: 'PAPER',
+      },
+      orderGateway,
+      positionGateway,
+      eventGateway,
+      tradeGateway,
+      dedupeGateway
+    );
+
+    expect(result).toEqual({
+      status: 'opened',
+      orderId: 'order-existing',
+      positionId: 'position-existing',
+    });
+    expect(orderGateway.openOrder).not.toHaveBeenCalled();
+    expect(positionGateway.createPosition).not.toHaveBeenCalled();
+    expect(tradeGateway.createTrade).not.toHaveBeenCalled();
+  });
+
+  it('returns ignored when OPEN dedupe is still inflight', async () => {
+    const orderGateway = createOrderGateway();
+    const positionGateway = createPositionGateway();
+    const eventGateway = createEventGateway();
+    const tradeGateway = createTradeGateway();
+    const dedupeGateway = createDedupeGateway();
+    (dedupeGateway.acquire as ReturnType<typeof vi.fn>).mockResolvedValue({
+      outcome: 'inflight',
+      dedupeKey: 'v1|OPEN|...',
+    });
+
+    const result = await orchestrateRuntimeSignal(
+      {
+        userId: 'u1',
+        botId: 'bot-1',
+        botMarketGroupId: 'group-1',
+        symbol: 'BTCUSDT',
+        direction: 'LONG',
+        strategyInterval: '1m',
+        candleOpenTime: 1_000,
+        candleCloseTime: 59_000,
+        quantity: 0.1,
+        markPrice: 43000,
+        mode: 'PAPER',
+      },
+      orderGateway,
+      positionGateway,
+      eventGateway,
+      tradeGateway,
+      dedupeGateway
+    );
+
+    expect(result).toEqual({ status: 'ignored', reason: 'dedupe_inflight' });
+    expect(orderGateway.openOrder).not.toHaveBeenCalled();
+    expect(positionGateway.createPosition).not.toHaveBeenCalled();
+    expect(tradeGateway.createTrade).not.toHaveBeenCalled();
+  });
+
   it('returns ignored when EXIT arrives without open position', async () => {
     const orderGateway = createOrderGateway();
     const positionGateway = createPositionGateway();
@@ -162,6 +251,7 @@ describe('orchestrateRuntimeSignal', () => {
     const positionGateway = createPositionGateway();
     const eventGateway = createEventGateway();
     const tradeGateway = createTradeGateway();
+    const dedupeGateway = createDedupeGateway();
     (positionGateway.getOpenPositionBySymbol as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: 'position-open',
       userId: 'u1',
@@ -227,7 +317,8 @@ describe('orchestrateRuntimeSignal', () => {
       orderGateway,
       positionGateway,
       eventGateway,
-      tradeGateway
+      tradeGateway,
+      dedupeGateway
     );
 
     expect(result).toEqual({
@@ -374,5 +465,62 @@ describe('orchestrateRuntimeSignal', () => {
         reason: 'manual_managed_symbol',
       })
     );
+  });
+
+  it('returns ignored when CLOSE dedupe is still inflight', async () => {
+    const orderGateway = createOrderGateway();
+    const positionGateway = createPositionGateway();
+    const eventGateway = createEventGateway();
+    const tradeGateway = createTradeGateway();
+    const dedupeGateway = createDedupeGateway();
+    (positionGateway.getOpenPositionBySymbol as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: 'position-open',
+      userId: 'u1',
+      externalId: null,
+      origin: 'BOT',
+      managementMode: 'BOT_MANAGED',
+      syncState: 'IN_SYNC',
+      symbol: 'BTCUSDT',
+      side: 'LONG',
+      status: 'OPEN',
+      entryPrice: 43000,
+      quantity: 0.2,
+      leverage: 1,
+      openedAt: new Date(),
+      closedAt: null,
+      realizedPnl: null,
+      unrealizedPnl: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      botId: null,
+      strategyId: null,
+      stopLoss: null,
+      takeProfit: null,
+    });
+    (dedupeGateway.acquire as ReturnType<typeof vi.fn>).mockResolvedValue({
+      outcome: 'inflight',
+      dedupeKey: 'v1|CLOSE|...',
+    });
+
+    const result = await orchestrateRuntimeSignal(
+      {
+        userId: 'u1',
+        symbol: 'BTCUSDT',
+        direction: 'EXIT',
+        quantity: 0.2,
+        markPrice: 43000,
+        mode: 'PAPER',
+      },
+      orderGateway,
+      positionGateway,
+      eventGateway,
+      tradeGateway,
+      dedupeGateway
+    );
+
+    expect(result).toEqual({ status: 'ignored', reason: 'dedupe_inflight' });
+    expect(orderGateway.openOrder).not.toHaveBeenCalled();
+    expect(positionGateway.closePosition).not.toHaveBeenCalled();
+    expect(tradeGateway.createTrade).not.toHaveBeenCalled();
   });
 });

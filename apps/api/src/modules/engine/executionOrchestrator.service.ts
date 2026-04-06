@@ -3,6 +3,12 @@ import { prisma } from '../../prisma/client';
 import { closeOrder as closeOrderLifecycle, openOrder as openOrderLifecycle } from '../orders/orders.service';
 import { decideExecutionAction } from './sharedExecutionCore';
 import { runtimeTelemetryService } from './runtimeTelemetry.service';
+import {
+  buildCancelExecutionDedupeKey,
+  buildCloseExecutionDedupeKey,
+  buildOpenExecutionDedupeKey,
+  runtimeExecutionDedupeService,
+} from './runtimeExecutionDedupe.service';
 
 export type RuntimeSignalDirection = 'LONG' | 'SHORT' | 'EXIT';
 export type RuntimeExecutionMode = 'PAPER' | 'LIVE';
@@ -10,13 +16,17 @@ export type RuntimeExecutionMode = 'PAPER' | 'LIVE';
 export type RuntimeSignalInput = {
   userId: string;
   botId?: string;
+  botMarketGroupId?: string;
   runtimeSessionId?: string;
   strategyId?: string;
+  strategyInterval?: string;
   symbol: string;
   direction: RuntimeSignalDirection;
   quantity: number;
   markPrice: number;
   mode: RuntimeExecutionMode;
+  candleOpenTime?: number;
+  candleCloseTime?: number;
   reason?: string;
 };
 
@@ -29,7 +39,9 @@ type OrchestrationResult =
         | 'no_open_position'
         | 'no_flip_with_open_position'
         | 'already_open_same_side'
-        | 'manual_managed_symbol';
+        | 'manual_managed_symbol'
+        | 'dedupe_inflight'
+        | 'dedupe_reused';
     };
 
 export interface OrderFlowGateway {
@@ -100,6 +112,44 @@ export interface RuntimeTradeGateway {
     lifecycleAction?: 'OPEN' | 'DCA' | 'CLOSE' | 'UNKNOWN';
     origin?: 'BOT';
     managementMode?: 'BOT_MANAGED' | 'MANUAL_MANAGED';
+  }): Promise<void>;
+}
+
+export interface RuntimeExecutionDedupeGateway {
+  acquire(input: {
+    dedupeKey: string;
+    commandType: 'OPEN' | 'DCA' | 'CLOSE' | 'CANCEL';
+    userId: string;
+    botId?: string | null;
+    symbol?: string | null;
+    commandFingerprint: Record<string, unknown>;
+    now?: Date;
+  }): Promise<
+    | {
+        outcome: 'execute';
+        dedupeKey: string;
+      }
+    | {
+        outcome: 'reused';
+        dedupeKey: string;
+        orderId?: string | null;
+        positionId?: string | null;
+      }
+    | {
+        outcome: 'inflight';
+        dedupeKey: string;
+      }
+  >;
+  markSucceeded(input: {
+    dedupeKey: string;
+    orderId?: string | null;
+    positionId?: string | null;
+    now?: Date;
+  }): Promise<void>;
+  markFailed(input: {
+    dedupeKey: string;
+    errorClass: string;
+    now?: Date;
   }): Promise<void>;
 }
 
@@ -259,6 +309,12 @@ const defaultRuntimeTradeGateway: RuntimeTradeGateway = {
   },
 };
 
+const defaultRuntimeExecutionDedupeGateway: RuntimeExecutionDedupeGateway = {
+  acquire: (input) => runtimeExecutionDedupeService.acquire(input),
+  markSucceeded: (input) => runtimeExecutionDedupeService.markSucceeded(input),
+  markFailed: (input) => runtimeExecutionDedupeService.markFailed(input),
+};
+
 const parseFeeRate = (value: string | undefined) => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed < 0) return null;
@@ -281,12 +337,18 @@ const computeTradeFee = (price: number, quantity: number, feeRate: number) => {
   return price * quantity * feeRate;
 };
 
+const resolveErrorClass = (error: unknown) => {
+  if (error instanceof Error && error.name) return error.name;
+  return 'runtime_execution_error';
+};
+
 export const orchestrateRuntimeSignal = async (
   input: RuntimeSignalInput,
   orderGateway: OrderFlowGateway = defaultOrderGateway,
   positionGateway: PositionFlowGateway = defaultPositionGateway,
   runtimeEventGateway: RuntimeExecutionEventGateway = defaultRuntimeEventGateway,
-  runtimeTradeGateway: RuntimeTradeGateway = defaultRuntimeTradeGateway
+  runtimeTradeGateway: RuntimeTradeGateway = defaultRuntimeTradeGateway,
+  dedupeGateway: RuntimeExecutionDedupeGateway = defaultRuntimeExecutionDedupeGateway
 ): Promise<OrchestrationResult> => {
   const feeRate = resolveRuntimeTakerFeeRate(input.mode);
   const openPosition = await positionGateway.getOpenPositionBySymbol(input.userId, input.symbol);
@@ -331,6 +393,52 @@ export const orchestrateRuntimeSignal = async (
       });
       return { status: 'ignored', reason: 'no_open_position' };
     }
+    const closeDedupeKey = buildCloseExecutionDedupeKey({
+      userId: input.userId,
+      botId: input.botId,
+      symbol: input.symbol,
+      positionId: openPosition.id,
+      closeReason: input.reason,
+    });
+    const closeDedupe = await dedupeGateway.acquire({
+      dedupeKey: closeDedupeKey,
+      commandType: 'CLOSE',
+      userId: input.userId,
+      botId: input.botId,
+      symbol: input.symbol,
+      commandFingerprint: {
+        positionId: openPosition.id,
+        symbol: input.symbol.toUpperCase(),
+        closeReason: input.reason ?? 'EXIT',
+        direction: input.direction,
+      },
+    });
+    if (closeDedupe.outcome === 'inflight') {
+      await runtimeEventGateway.writeEvent({
+        userId: input.userId,
+        botId: input.botId,
+        strategyId: input.strategyId,
+        symbol: input.symbol,
+        direction: input.direction,
+        mode: input.mode,
+        runtimeSessionId: input.runtimeSessionId,
+        status: 'ignored',
+        reason: 'dedupe_inflight',
+      });
+      return { status: 'ignored', reason: 'dedupe_inflight' };
+    }
+    if (closeDedupe.outcome === 'reused') {
+      if (closeDedupe.orderId && closeDedupe.positionId) {
+        return {
+          status: 'closed',
+          orderId: closeDedupe.orderId,
+          positionId: closeDedupe.positionId,
+        };
+      }
+      return { status: 'ignored', reason: 'dedupe_reused' };
+    }
+
+    try {
     const closeEventAt = new Date();
     const estimatedExitFee = computeTradeFee(input.markPrice, openPosition.quantity, feeRate);
     const entryLegSide = openPosition.side === 'LONG' ? 'BUY' : 'SELL';
@@ -369,7 +477,40 @@ export const orchestrateRuntimeSignal = async (
       realizedPnl,
     });
     if (closeOrder.status === 'OPEN' || closeOrder.status === 'PARTIALLY_FILLED') {
-      await orderGateway.closeOrder(input.userId, closeOrder.id, { riskAck: true });
+      const cancelDedupeKey = buildCancelExecutionDedupeKey({
+        userId: input.userId,
+        botId: input.botId,
+        symbol: input.symbol,
+        orderId: closeOrder.id,
+        reasonCode: 'runtime_close_finalize',
+      });
+      const cancelDedupe = await dedupeGateway.acquire({
+        dedupeKey: cancelDedupeKey,
+        commandType: 'CANCEL',
+        userId: input.userId,
+        botId: input.botId,
+        symbol: input.symbol,
+        commandFingerprint: {
+          orderId: closeOrder.id,
+          reasonCode: 'runtime_close_finalize',
+        },
+      });
+      if (cancelDedupe.outcome === 'execute') {
+        try {
+          await orderGateway.closeOrder(input.userId, closeOrder.id, { riskAck: true });
+          await dedupeGateway.markSucceeded({
+            dedupeKey: cancelDedupeKey,
+            orderId: closeOrder.id,
+            positionId: openPosition.id,
+          });
+        } catch (error) {
+          await dedupeGateway.markFailed({
+            dedupeKey: cancelDedupeKey,
+            errorClass: resolveErrorClass(error),
+          });
+          throw error;
+        }
+      }
     }
     await runtimeTradeGateway.createTrade({
       userId: input.userId,
@@ -425,14 +566,86 @@ export const orchestrateRuntimeSignal = async (
       reason: input.reason,
       eventAt: closeEventAt,
     });
+    await dedupeGateway.markSucceeded({
+      dedupeKey: closeDedupeKey,
+      orderId: closeOrder.id,
+      positionId: openPosition.id,
+    });
 
     return {
       status: 'closed',
       orderId: closeOrder.id,
       positionId: openPosition.id,
     };
+    } catch (error) {
+      await dedupeGateway.markFailed({
+        dedupeKey: closeDedupeKey,
+        errorClass: resolveErrorClass(error),
+      });
+      throw error;
+    }
   }
 
+  const hasOpenDedupeContext =
+    Boolean(input.botId) &&
+    Boolean(input.botMarketGroupId) &&
+    Boolean(input.strategyInterval) &&
+    Number.isFinite(input.candleOpenTime as number) &&
+    Number.isFinite(input.candleCloseTime as number);
+  const openDedupeKey = hasOpenDedupeContext
+    ? buildOpenExecutionDedupeKey({
+        userId: input.userId,
+        botId: input.botId!,
+        botMarketGroupId: input.botMarketGroupId!,
+        symbol: input.symbol,
+        interval: input.strategyInterval!,
+        candleOpenTime: Number(input.candleOpenTime),
+        candleCloseTime: Number(input.candleCloseTime),
+        direction: input.direction as 'LONG' | 'SHORT',
+      })
+    : null;
+  if (openDedupeKey) {
+    const openDedupe = await dedupeGateway.acquire({
+      dedupeKey: openDedupeKey,
+      commandType: 'OPEN',
+      userId: input.userId,
+      botId: input.botId,
+      symbol: input.symbol,
+      commandFingerprint: {
+        botMarketGroupId: input.botMarketGroupId,
+        interval: input.strategyInterval,
+        candleOpenTime: input.candleOpenTime,
+        candleCloseTime: input.candleCloseTime,
+        direction: input.direction,
+      },
+    });
+    if (openDedupe.outcome === 'inflight') {
+      await runtimeEventGateway.writeEvent({
+        userId: input.userId,
+        botId: input.botId,
+        strategyId: input.strategyId,
+        symbol: input.symbol,
+        direction: input.direction,
+        mode: input.mode,
+        runtimeSessionId: input.runtimeSessionId,
+        status: 'ignored',
+        reason: 'dedupe_inflight',
+      });
+      return { status: 'ignored', reason: 'dedupe_inflight' };
+    }
+    if (openDedupe.outcome === 'reused') {
+      if (openDedupe.orderId && openDedupe.positionId) {
+        return {
+          status: 'opened',
+          orderId: openDedupe.orderId,
+          positionId: openDedupe.positionId,
+        };
+      }
+      return { status: 'ignored', reason: 'dedupe_reused' };
+    }
+  }
+
+  try {
   const openOrder = await orderGateway.openOrder(input.userId, {
     botId: input.botId,
     strategyId: input.strategyId,
@@ -518,10 +731,26 @@ export const orchestrateRuntimeSignal = async (
     lastPrice: input.markPrice,
     eventAt: openEventAt,
   });
+  if (openDedupeKey) {
+    await dedupeGateway.markSucceeded({
+      dedupeKey: openDedupeKey,
+      orderId: openOrder.id,
+      positionId: position.id,
+    });
+  }
 
   return {
     status: 'opened',
     orderId: openOrder.id,
     positionId: position.id,
   };
+  } catch (error) {
+    if (openDedupeKey) {
+      await dedupeGateway.markFailed({
+        dedupeKey: openDedupeKey,
+        errorClass: resolveErrorClass(error),
+      });
+    }
+    throw error;
+  }
 };

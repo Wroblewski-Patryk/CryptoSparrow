@@ -559,7 +559,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `CACHE-09 test(web-runtime): cover stale-age warning and recovery after fresh payload arrival`
 
 ## Phase 35 - Production Excellence (Remaining)
-- [ ] `PEX-02 feat(api-runtime): enforce dedupe key persistence + replay-safe execution guards for side-effecting runtime actions`
+- [x] `PEX-02 feat(api-runtime): enforce dedupe key persistence + replay-safe execution guards for side-effecting runtime actions`
 - [ ] `PEX-03 test(runtime): add crash/retry regression suite proving no duplicate open/close orders after restart`
 - [ ] `PEX-05 feat(runtime-recovery): implement bounded auto-restart policy with cooldown and max-attempt guardrails`
 - [ ] `PEX-06 test(runtime): add long-running soak test for session continuity (heartbeat freshness, auto-restart trace, no stuck CANCELED loop)`
@@ -1158,3 +1158,4 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-05: Added responsive regression assertions for mobile dashboard menu overlay sizing (	op, height, maxHeight, minHeight) to preserve 100dvh - headerOffset contract after future header/layout edits.
 
 - 2026-04-05: Completed BOPS-65 dashboard runtime UX pass: removed Fee/Origin columns from dashboard trade history, renamed open-position time header to Time/Czas with fixed YYYY.MM.DD HH.mm.ss cell format, and redesigned strategy-signal cards with summary counters (Rynki, Sygnaly, Base currency), gradient border accents, dual-column LONG/SHORT condition layout, and directional opacity emphasis (inactive 50% -> hover 100%).
+- 2026-04-06: Completed `PEX-02` by introducing persistent runtime execution dedupe storage (`RuntimeExecutionDedupe` Prisma model + migration), adding canonical `v1` dedupe-key builders/service (`OPEN/DCA/CLOSE/CANCEL` with `PENDING/SUCCEEDED/FAILED` flow), and wiring replay-safe guards into runtime orchestrator/automation paths (OPEN/CLOSE/DCA/CANCEL) with targeted engine regression coverage.

@@ -36,6 +36,7 @@ model User {
   botRuntimeSessions       BotRuntimeSession[]
   botRuntimeEvents         BotRuntimeEvent[]
   botRuntimeSymbolStats    BotRuntimeSymbolStat[]
+  runtimeExecutionDedupes  RuntimeExecutionDedupe[]
   positions                Position[]
   orders                   Order[]
   trades                   Trade[]
@@ -201,6 +202,7 @@ model Bot {
   runtimeSessions          BotRuntimeSession[]
   runtimeEvents            BotRuntimeEvent[]
   runtimeSymbolStats       BotRuntimeSymbolStat[]
+  runtimeExecutionDedupes  RuntimeExecutionDedupe[]
   positions                Position[]
   orders                   Order[]
   trades                   Trade[]
@@ -484,6 +486,50 @@ model BotRuntimeSymbolStat {
   @@index([userId, botId, sessionId])
   @@index([sessionId, realizedPnl])
   @@index([sessionId, closedTrades])
+}
+
+model RuntimeExecutionDedupe {
+  id String @id @default(uuid())
+
+  dedupeKey         String                       @unique
+  dedupeVersion     String
+  commandType       RuntimeExecutionCommandType
+  userId            String
+  botId             String?
+  symbol            String?
+  status            RuntimeExecutionDedupeStatus @default(PENDING)
+  commandFingerprint Json
+  firstSeenAt       DateTime                     @default(now())
+  lastSeenAt        DateTime                     @default(now())
+  ttlExpiresAt      DateTime
+  orderId           String?
+  positionId        String?
+  errorClass        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  bot  Bot? @relation(fields: [botId], references: [id], onDelete: SetNull)
+
+  @@index([userId, commandType, status])
+  @@index([botId])
+  @@index([ttlExpiresAt])
+  @@index([status, lastSeenAt])
+}
+
+enum RuntimeExecutionCommandType {
+  OPEN
+  DCA
+  CLOSE
+  CANCEL
+}
+
+enum RuntimeExecutionDedupeStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  EXPIRED
 }
 
 enum BotMode {
