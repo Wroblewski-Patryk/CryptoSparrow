@@ -49,7 +49,7 @@ Status: active implementation plan for collaborator-ready account limits and fut
 - [x] `SUBS-09 feat(payment-abstraction): implement provider-agnostic payment gateway interface + checkout-intent API contract`
 - [x] `SUBS-10 feat(payment-provider-stripe): add first provider adapter behind abstraction (toggleable, non-breaking)`
 - [x] `SUBS-11 test(api+web): add regression suites for default FREE assignment, owner PROFESSIONAL mapping, plan highlighting, and entitlement enforcement`
-- [ ] `SUBS-12 docs(runbook): publish operator/admin guide for plan edits, manual assignments, and payment-provider switch strategy`
+- [x] `SUBS-12 docs(runbook): publish operator/admin guide for plan edits, manual assignments, and payment-provider switch strategy`
 
 ## Done Criteria
 - Registration assigns `FREE` deterministically.
