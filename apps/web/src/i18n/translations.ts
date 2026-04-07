@@ -254,6 +254,7 @@ type TranslationSchema = {
         market: string;
         interval: string;
         leverage: string;
+        walletAllocation: string;
         heartbeat: string;
         openPositions: string;
         signalsDca: string;
@@ -533,6 +534,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           market: "Market",
           interval: "Interval",
           leverage: "Leverage",
+          walletAllocation: "Allocation",
           heartbeat: "Heartbeat",
           openPositions: "Open positions",
           signalsDca: "Signals / DCA",
@@ -1148,6 +1150,7 @@ export const translations: Record<Locale, TranslationSchema> = {
           market: "Rynek",
           interval: "Interwal",
           leverage: "Dzwignia",
+          walletAllocation: "Alokacja",
           heartbeat: "Heartbeat",
           openPositions: "Pozycje otwarte",
           signalsDca: "Sygnaly / DCA",

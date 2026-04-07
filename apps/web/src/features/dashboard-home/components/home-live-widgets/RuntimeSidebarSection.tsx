@@ -32,6 +32,7 @@ type RuntimeSidebarSectionProps = {
     strategy: string;
     interval: string;
     leverage: string;
+    walletAllocation: string;
     heartbeat: string;
     openPositions: string;
     signalsDca: string;
@@ -55,15 +56,43 @@ type RuntimeSidebarSectionProps = {
 };
 
 export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps) {
-  const walletTotal = Math.max(0, props.summary.paperEquity);
-  const walletInPositions = Math.max(0, props.summary.usedMargin);
-  const walletFree = Math.max(
-    0,
-    props.selectedData?.free ?? Math.max(0, walletTotal - walletInPositions)
-  );
-  const walletDenominator = Math.max(walletTotal, walletFree + walletInPositions, 1);
-  const walletInPositionsPct = Math.max(0, Math.min(100, (walletInPositions / walletDenominator) * 100));
-  const walletFreePct = Math.max(0, Math.min(100, (walletFree / walletDenominator) * 100));
+  const selectedWallet = props.selected?.bot.wallet ?? null;
+  const selectedWalletMode = selectedWallet?.mode ?? props.selected?.bot.mode ?? null;
+  const walletName = selectedWallet?.name ?? "-";
+  const selectedUsedMargin = Math.max(0, props.selectedData?.usedMargin ?? 0);
+  const selectedNet = props.selectedData?.net ?? 0;
+  const paperStartBalance =
+    selectedWalletMode === "PAPER"
+      ? (props.selectedData?.paperInit ??
+        selectedWallet?.paperInitialBalance ??
+        props.selected?.bot.paperStartBalance ??
+        null)
+      : null;
+  const liveFixedAllocation =
+    selectedWalletMode === "LIVE" && selectedWallet?.liveAllocationMode === "FIXED"
+      ? selectedWallet.liveAllocationValue ?? null
+      : null;
+  const walletBaseline = paperStartBalance ?? liveFixedAllocation;
+  const walletTotal = walletBaseline != null ? Math.max(0, walletBaseline + selectedNet) : null;
+  const walletFree = walletTotal != null ? Math.max(0, walletTotal - selectedUsedMargin) : props.selectedData?.free ?? null;
+  const canCalculatePortfolioSplit = walletTotal != null && walletFree != null;
+  const walletDenominator = canCalculatePortfolioSplit
+    ? Math.max(walletTotal, walletFree + selectedUsedMargin, 1)
+    : 1;
+  const walletInPositionsPct = canCalculatePortfolioSplit
+    ? Math.max(0, Math.min(100, (selectedUsedMargin / walletDenominator) * 100))
+    : null;
+  const walletFreePct = canCalculatePortfolioSplit
+    ? Math.max(0, Math.min(100, (walletFree / walletDenominator) * 100))
+    : null;
+  const walletAllocationLabel =
+    selectedWalletMode === "LIVE"
+      ? selectedWallet?.liveAllocationMode === "PERCENT"
+        ? `${selectedWallet.liveAllocationValue ?? 0}%`
+        : selectedWallet?.liveAllocationMode === "FIXED"
+          ? props.formatAmountWithUnit(selectedWallet.liveAllocationValue ?? 0)
+          : "-"
+      : "-";
   const panelFrameClassName =
     "rounded-box border-b-[3px] border-secondary/70 bg-gradient-to-br from-primary/70 to-secondary/70 p-px";
   const panelBodyClassName = "rounded-box bg-base-100/85 p-3";
@@ -115,6 +144,8 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
     return "-";
   })();
   const selectedBaseCurrency = (() => {
+    const fromWallet = selectedWallet?.baseCurrency;
+    if (fromWallet) return fromWallet.toUpperCase();
     const fromTrades = props.selectedData?.trades.find((item) => item.feeCurrency)?.feeCurrency;
     if (fromTrades) return fromTrades.toUpperCase();
     const symbol = props.selectedData?.symbols[0]?.symbol;
@@ -144,7 +175,7 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
               >
                 {props.snapshots.map((item) => (
                   <option key={item.bot.id} value={item.bot.id}>
-                    {item.bot.name} ({item.bot.mode})
+                    {item.bot.name} ({item.bot.mode} · {item.bot.wallet?.name ?? "no-wallet"})
                   </option>
                 ))}
               </select>
@@ -239,43 +270,65 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
           <div className={`${panelBodyClassName} text-xs`}>
             <div className="space-y-1.5">
               <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">{props.text.walletTitle}</span>
+                <span className="font-semibold">{walletName}</span>
+              </p>
+              <p className="flex items-center justify-between gap-2">
+                <span className="opacity-65">{props.text.mode}</span>
+                <span className="font-semibold">{selectedWalletMode ?? "-"}</span>
+              </p>
+              {selectedWalletMode === "LIVE" ? (
+                <p className="flex items-center justify-between gap-2">
+                  <span className="opacity-65">{props.text.walletAllocation}</span>
+                  <span className="font-semibold">{walletAllocationLabel}</span>
+                </p>
+              ) : null}
+              <p className="flex items-center justify-between gap-2">
                 <span className="inline-flex items-center gap-1.5 opacity-65">
                   <LuWallet className="h-3.5 w-3.5" aria-hidden />
                   {props.text.portfolio}
                 </span>
                 <span className="font-semibold">
-                  {props.summary.paperStart > 0 ? props.formatAmountWithUnit(walletTotal) : "-"}
+                  {walletTotal != null ? props.formatAmountWithUnit(walletTotal) : "-"}
                 </span>
               </p>
               <div className="space-y-2">
-                <div className="flex h-2 overflow-hidden rounded-full bg-base-300/30">
-                  <div
-                    className="h-full bg-primary/80 transition-all"
-                    style={{ width: `${walletFreePct}%` }}
-                  />
-                  <div
-                    className="h-full bg-secondary/80 transition-all"
-                    style={{ width: `${walletInPositionsPct}%` }}
-                  />
-                </div>
+                {walletFreePct != null && walletInPositionsPct != null ? (
+                  <div className="flex h-2 overflow-hidden rounded-full bg-base-300/30">
+                    <div
+                      className="h-full bg-primary/80 transition-all"
+                      style={{ width: `${walletFreePct}%` }}
+                    />
+                    <div
+                      className="h-full bg-secondary/80 transition-all"
+                      style={{ width: `${walletInPositionsPct}%` }}
+                    />
+                  </div>
+                ) : null}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-box py-1.5 text-left">
-                    <p className="text-xs font-semibold">{props.formatAmountWithUnit(walletFree)}</p>
+                    <p className="text-xs font-semibold">
+                      {walletFree != null ? props.formatAmountWithUnit(walletFree) : "-"}
+                    </p>
                     <p className="mt-0.5 text-[10px] uppercase tracking-wide opacity-65">{props.text.freeFunds}</p>
-                    <p className="mt-0.5 text-[11px] font-semibold text-primary">{props.formatPercent(walletFreePct)}</p>
+                    <p className="mt-0.5 text-[11px] font-semibold text-primary">
+                      {walletFreePct != null ? props.formatPercent(walletFreePct) : "-"}
+                    </p>
                   </div>
                   <div className="rounded-box py-1.5 text-right">
-                    <p className="text-xs font-semibold">{props.formatAmountWithUnit(walletInPositions)}</p>
+                    <p className="text-xs font-semibold">{props.formatAmountWithUnit(selectedUsedMargin)}</p>
                     <p className="mt-0.5 text-[10px] uppercase tracking-wide opacity-65">{props.text.inPositionsShort}</p>
-                    <p className="mt-0.5 text-[11px] font-semibold text-secondary">{props.formatPercent(walletInPositionsPct)}</p>
+                    <p className="mt-0.5 text-[11px] font-semibold text-secondary">
+                      {walletInPositionsPct != null ? props.formatPercent(walletInPositionsPct) : "-"}
+                    </p>
                   </div>
                 </div>
               </div>
               <p className="flex items-center justify-between gap-2">
                 <span className="opacity-65">{props.text.deltaFromStart}</span>
-                <span className={`font-semibold ${props.summary.paperDelta >= 0 ? "text-success" : "text-error"}`}>
-                  {props.summary.paperStart > 0
-                    ? `${props.formatPercent((props.summary.paperDelta / props.summary.paperStart) * 100)} | ${props.formatAmountWithUnit(props.summary.paperDelta)}`
+                <span className={`font-semibold ${selectedNet >= 0 ? "text-success" : "text-error"}`}>
+                  {walletBaseline != null && walletBaseline > 0
+                    ? `${props.formatPercent((selectedNet / walletBaseline) * 100)} | ${props.formatAmountWithUnit(selectedNet)}`
                     : "-"}
                 </span>
               </p>

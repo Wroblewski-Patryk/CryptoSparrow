@@ -1564,6 +1564,7 @@ export default function HomeLiveWidgets() {
             strategy: t("dashboard.bots.create.strategyLabel"),
             interval: t("dashboard.home.runtime.interval"),
             leverage: t("dashboard.home.runtime.leverage"),
+            walletAllocation: t("dashboard.home.runtime.walletAllocation"),
             markets: t("dashboard.home.runtime.markets"),
             strategies: t("dashboard.nav.strategies"),
             baseCurrency: t("dashboard.home.runtime.baseCurrency"),
