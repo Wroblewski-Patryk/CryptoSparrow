@@ -75,8 +75,35 @@ const buildReplayActions = (symbol: string, candles: ReplayCandle[], strategyCon
     }));
 };
 
+const scenarios: Array<{ symbol: string; candles: ReplayCandle[] }> = [
+  {
+    symbol: 'BTCUSDT',
+    candles: makeCandles([100, 101, 102, 103, 102, 101, 100, 99, 100, 101]),
+  },
+  {
+    symbol: 'ETHUSDT',
+    candles: makeCandles([200, 199, 198, 197, 198, 199, 200, 201, 200, 199]),
+  },
+  {
+    symbol: 'SOLUSDT',
+    candles: makeCandles([50, 50.5, 51, 50.7, 50.4, 50.1, 49.8, 49.5, 49.9, 50.3]),
+  },
+];
+
+const expectParityForThreeSymbols = (strategyConfig: Record<string, unknown>) => {
+  let totalExpectedActions = 0;
+  for (const scenario of scenarios) {
+    const expected = buildExpectedActions(scenario.candles, strategyConfig);
+    const replay = buildReplayActions(scenario.symbol, scenario.candles, strategyConfig);
+    totalExpectedActions += expected.length;
+    expect(replay).toEqual(expected);
+  }
+
+  expect(totalExpectedActions).toBeGreaterThan(0);
+};
+
 describe('backtest parity harness (3 symbols)', () => {
-  it('keeps decision trace aligned with shared strategy/runtime core for three symbols', () => {
+  it('keeps EMA decision trace aligned with shared strategy/runtime core for three symbols', () => {
     const strategyConfig = {
       open: {
         direction: 'both',
@@ -93,25 +120,46 @@ describe('backtest parity harness (3 symbols)', () => {
       },
     } satisfies Record<string, unknown>;
 
-    const scenarios: Array<{ symbol: string; candles: ReplayCandle[] }> = [
-      {
-        symbol: 'BTCUSDT',
-        candles: makeCandles([100, 101, 102, 103, 102, 101, 100, 99, 100, 101]),
-      },
-      {
-        symbol: 'ETHUSDT',
-        candles: makeCandles([200, 199, 198, 197, 198, 199, 200, 201, 200, 199]),
-      },
-      {
-        symbol: 'SOLUSDT',
-        candles: makeCandles([50, 50.5, 51, 50.7, 50.4, 50.1, 49.8, 49.5, 49.9, 50.3]),
-      },
-    ];
+    expectParityForThreeSymbols(strategyConfig);
+  });
 
-    for (const scenario of scenarios) {
-      const expected = buildExpectedActions(scenario.candles, strategyConfig);
-      const replay = buildReplayActions(scenario.symbol, scenario.candles, strategyConfig);
-      expect(replay).toEqual(expected);
-    }
+  it('keeps RSI decision trace aligned with shared strategy/runtime core for three symbols', () => {
+    const strategyConfig = {
+      open: {
+        direction: 'both',
+        indicatorsLong: [{ name: 'RSI', params: { period: 3 }, condition: '>', value: 52 }],
+        indicatorsShort: [{ name: 'RSI', params: { period: 3 }, condition: '<', value: 48 }],
+      },
+      close: {
+        tp: 99,
+        sl: 99,
+        tsl: [{ percent: 99, arm: 1 }],
+      },
+      additional: {
+        dcaTimes: 0,
+      },
+    } satisfies Record<string, unknown>;
+
+    expectParityForThreeSymbols(strategyConfig);
+  });
+
+  it('keeps MOMENTUM decision trace aligned with shared strategy/runtime core for three symbols', () => {
+    const strategyConfig = {
+      open: {
+        direction: 'both',
+        indicatorsLong: [{ name: 'MOMENTUM', params: { period: 1 }, condition: '>', value: 0 }],
+        indicatorsShort: [{ name: 'MOMENTUM', params: { period: 1 }, condition: '<', value: 0 }],
+      },
+      close: {
+        tp: 99,
+        sl: 99,
+        tsl: [{ percent: 99, arm: 1 }],
+      },
+      additional: {
+        dcaTimes: 0,
+      },
+    } satisfies Record<string, unknown>;
+
+    expectParityForThreeSymbols(strategyConfig);
   });
 });
