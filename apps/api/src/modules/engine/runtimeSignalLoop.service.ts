@@ -16,7 +16,7 @@ import {
   parseStrategySignalRules,
 } from './strategySignalEvaluator';
 import { computeRiskBasedOrderQuantity, normalizeWalletRiskPercent } from './positionSizing';
-import { resolveRuntimeReferenceBalance } from './runtimeCapitalContext.service';
+import { resolveRuntimeDcaFundsExhausted, resolveRuntimeReferenceBalance } from './runtimeCapitalContext.service';
 import { runtimeTelemetryService } from './runtimeTelemetry.service';
 import { supportsExchangeCapability } from '../exchange/exchangeCapabilities';
 import { getMarketCatalog } from '../markets/markets.service';
@@ -43,6 +43,7 @@ type ActiveBotMarketGroup = {
 type ActiveBot = {
   id: string;
   userId: string;
+  walletId: string | null;
   mode: 'PAPER' | 'LIVE';
   exchange: Exchange;
   paperStartBalance: number;
@@ -313,6 +314,7 @@ const defaultDeps: RuntimeSignalLoopDeps = {
       select: {
         id: true,
         userId: true,
+        walletId: true,
         mode: true,
         exchange: true,
         paperStartBalance: true,
@@ -420,6 +422,7 @@ const defaultDeps: RuntimeSignalLoopDeps = {
         return {
           id: bot.id,
           userId: bot.userId,
+          walletId: bot.walletId ?? null,
           mode: bot.mode as 'PAPER' | 'LIVE',
           exchange: bot.exchange,
           paperStartBalance: Number.isFinite(bot.paperStartBalance) ? Math.max(0, bot.paperStartBalance) : 10_000,
@@ -1300,6 +1303,7 @@ export class RuntimeSignalLoop {
             const referenceBalance = await resolveRuntimeReferenceBalance({
               userId: bot.userId,
               botId: bot.id,
+              walletId: bot.walletId,
               mode: bot.mode,
               exchange: bot.exchange,
               marketType: bot.marketType,
@@ -1312,10 +1316,49 @@ export class RuntimeSignalLoop {
               marketType: bot.marketType,
               referenceBalance,
             });
+            const leverage = Math.max(1, selectedStrategy?.strategyLeverage ?? 1);
+            const insufficientWalletFunds = await resolveRuntimeDcaFundsExhausted({
+              userId: bot.userId,
+              botId: bot.id,
+              walletId: bot.walletId,
+              mode: bot.mode,
+              exchange: bot.exchange,
+              marketType: bot.marketType,
+              paperStartBalance: bot.paperStartBalance,
+              markPrice: event.close,
+              addedQuantity: orderQuantity,
+              leverage,
+              nowMs: this.deps.nowMs(),
+            });
+            if (insufficientWalletFunds) {
+              await this.deps.recordRuntimeEvent?.({
+                userId: bot.userId,
+                botId: bot.id,
+                mode: bot.mode,
+                sessionId,
+                eventType: 'PRETRADE_BLOCKED',
+                level: 'WARN',
+                symbol: event.symbol,
+                strategyId: merged.strategyId,
+                signalDirection: direction,
+                message: `Signal blocked for ${event.symbol} due to insufficient wallet budget`,
+                payload: {
+                  reason: 'WALLET_INSUFFICIENT_FUNDS',
+                  quantity: orderQuantity,
+                  markPrice: event.close,
+                  leverage,
+                },
+                eventAt: signalEventAt,
+              });
+              metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
+              metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
+              return;
+            }
 
             await this.deps.orchestrateFn({
               userId: bot.userId,
               botId: bot.id,
+              walletId: bot.walletId ?? undefined,
               botMarketGroupId: group.id,
               runtimeSessionId: sessionId,
               symbol: event.symbol,

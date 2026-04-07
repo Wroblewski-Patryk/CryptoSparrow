@@ -14,6 +14,7 @@ export const OrderExecutionModeSchema = z.enum(['PAPER', 'LIVE']);
 
 export const OpenOrderSchema = z.object({
   botId: z.string().uuid().optional(),
+  walletId: z.string().trim().min(1).optional(),
   strategyId: z.string().uuid().optional(),
   symbol: z.string().trim().min(1),
   side: z.enum(['BUY', 'SELL']),

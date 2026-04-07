@@ -16,6 +16,7 @@ export type RuntimeExecutionMode = 'PAPER' | 'LIVE';
 export type RuntimeSignalInput = {
   userId: string;
   botId?: string;
+  walletId?: string;
   botMarketGroupId?: string;
   runtimeSessionId?: string;
   strategyId?: string;
@@ -47,6 +48,7 @@ type OrchestrationResult =
 export interface OrderFlowGateway {
   openOrder(userId: string, input: {
     botId?: string;
+    walletId?: string;
     strategyId?: string;
     symbol: string;
     side: 'BUY' | 'SELL';
@@ -95,6 +97,7 @@ export interface RuntimeTradeGateway {
   createTrade(input: {
     userId: string;
     botId?: string;
+    walletId?: string;
     strategyId?: string;
     orderId: string;
     positionId: string;
@@ -287,6 +290,7 @@ const defaultRuntimeTradeGateway: RuntimeTradeGateway = {
       data: {
         userId: input.userId,
         botId: input.botId,
+        walletId: input.walletId,
         strategyId: input.strategyId,
         orderId: input.orderId,
         positionId: input.positionId,
@@ -446,6 +450,7 @@ export const orchestrateRuntimeSignal = async (
       where: {
         userId: input.userId,
         botId: input.botId,
+        walletId: openPosition.walletId,
         positionId: openPosition.id,
         side: entryLegSide,
       },
@@ -515,6 +520,7 @@ export const orchestrateRuntimeSignal = async (
     await runtimeTradeGateway.createTrade({
       userId: input.userId,
       botId: input.botId,
+      walletId: openPosition.walletId ?? input.walletId,
       strategyId: input.strategyId,
       orderId: closeOrder.id,
       positionId: openPosition.id,
@@ -648,6 +654,7 @@ export const orchestrateRuntimeSignal = async (
   try {
   const openOrder = await orderGateway.openOrder(input.userId, {
     botId: input.botId,
+    walletId: input.walletId,
     strategyId: input.strategyId,
     symbol: input.symbol,
     side: decision.orderSide,
@@ -670,6 +677,7 @@ export const orchestrateRuntimeSignal = async (
   const position = await positionGateway.createPosition({
     userId: input.userId,
     botId: input.botId,
+    walletId: input.walletId,
     strategyId: input.strategyId,
     symbol: input.symbol,
     side: decision.positionSide as PositionSide,
@@ -686,6 +694,7 @@ export const orchestrateRuntimeSignal = async (
   await runtimeTradeGateway.createTrade({
     userId: input.userId,
     botId: input.botId,
+    walletId: input.walletId,
     strategyId: input.strategyId,
     orderId: openOrder.id,
     positionId: position.id,

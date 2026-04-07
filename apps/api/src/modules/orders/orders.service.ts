@@ -279,6 +279,7 @@ export const openOrder = async (
     data: {
       userId,
       botId: payload.botId,
+      walletId: payload.walletId,
       strategyId: payload.strategyId,
       symbol: payload.symbol.toUpperCase(),
       side: payload.side,

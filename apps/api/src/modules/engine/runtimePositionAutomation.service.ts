@@ -19,6 +19,7 @@ type RuntimeManagedPosition = Pick<
   | 'id'
   | 'userId'
   | 'botId'
+  | 'walletId'
   | 'strategyId'
   | 'symbol'
   | 'side'
@@ -29,7 +30,7 @@ type RuntimeManagedPosition = Pick<
   | 'takeProfit'
   | 'managementMode'
 > & {
-  bot: { mode: BotMode; marketType: TradeMarket; exchange: Exchange; paperStartBalance: number } | null;
+  bot: { mode: BotMode; marketType: TradeMarket; exchange: Exchange; paperStartBalance: number; walletId: string | null } | null;
 };
 
 type RuntimePositionAutomationDeps = {
@@ -40,6 +41,7 @@ type RuntimePositionAutomationDeps = {
   executeDca: (input: {
     userId: string;
     botId?: string | null;
+    walletId?: string | null;
     strategyId?: string | null;
     positionId: string;
     symbol: string;
@@ -54,6 +56,7 @@ type RuntimePositionAutomationDeps = {
   closeByExitSignal: (input: {
     userId: string;
     botId?: string;
+    walletId?: string | null;
     symbol: string;
     markPrice: number;
     mode: 'PAPER' | 'LIVE';
@@ -63,6 +66,7 @@ type RuntimePositionAutomationDeps = {
   resolveDcaFundsExhausted: (input: {
     userId: string;
     botId?: string | null;
+    walletId?: string | null;
     mode: 'PAPER' | 'LIVE';
     exchange: Exchange;
     marketType: TradeMarket;
@@ -242,6 +246,7 @@ const defaultDeps: RuntimePositionAutomationDeps = {
         id: true,
         userId: true,
         botId: true,
+        walletId: true,
         strategyId: true,
         symbol: true,
         side: true,
@@ -257,6 +262,7 @@ const defaultDeps: RuntimePositionAutomationDeps = {
             marketType: true,
             exchange: true,
             paperStartBalance: true,
+            walletId: true,
           },
         },
       },
@@ -301,6 +307,7 @@ const defaultDeps: RuntimePositionAutomationDeps = {
     try {
       const opened = await openOrderLifecycle(input.userId, {
         botId: input.botId ?? undefined,
+        walletId: input.walletId ?? undefined,
         strategyId: input.strategyId ?? undefined,
         symbol: input.symbol,
         side: orderSide,
@@ -367,6 +374,7 @@ const defaultDeps: RuntimePositionAutomationDeps = {
           data: {
             userId: input.userId,
             botId: input.botId ?? undefined,
+            walletId: input.walletId ?? undefined,
             strategyId: input.strategyId ?? undefined,
             orderId: finalizedOrderId,
             positionId: input.positionId,
@@ -431,6 +439,7 @@ const defaultDeps: RuntimePositionAutomationDeps = {
     await orchestrateRuntimeSignal({
       userId: input.userId,
       botId: input.botId,
+      walletId: input.walletId ?? undefined,
       symbol: input.symbol,
       direction: 'EXIT',
       quantity: input.quantity,
@@ -716,6 +725,7 @@ export class RuntimePositionAutomationService {
         ? await this.deps.resolveDcaFundsExhausted({
             userId: position.userId,
             botId: position.botId,
+            walletId: position.walletId ?? position.bot?.walletId ?? null,
             mode,
             exchange,
             marketType,
@@ -749,6 +759,7 @@ export class RuntimePositionAutomationService {
         const dcaResult = await this.deps.executeDca({
           userId: position.userId,
           botId: position.botId,
+          walletId: position.walletId ?? position.bot?.walletId ?? null,
           strategyId: position.strategyId,
           positionId: position.id,
           symbol: position.symbol,
@@ -801,6 +812,7 @@ export class RuntimePositionAutomationService {
       await this.deps.closeByExitSignal({
         userId: position.userId,
         botId: position.botId ?? undefined,
+        walletId: position.walletId ?? position.bot?.walletId ?? null,
         symbol: position.symbol,
         markPrice: event.lastPrice,
         mode,

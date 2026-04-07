@@ -7,11 +7,12 @@ import {
 
 describe('runtimeCapitalContext', () => {
   const buildDeps = (overrides?: Partial<any>) => ({
+    getWalletContext: async () => null,
     getBotPaperStartBalance: async ({ fallback }: { fallback: number }) => fallback,
     listOpenBotManagedPositions: async () => [],
     sumClosedBotManagedRealizedPnl: async () => 0,
     getLiveApiKeyContext: async () => null,
-    fetchLiveUsdtBalance: async () => null,
+    fetchLiveBalance: async () => null,
     ...overrides,
   });
 
