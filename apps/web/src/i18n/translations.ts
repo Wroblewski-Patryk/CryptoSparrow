@@ -13,6 +13,7 @@ type TranslationSchema = {
       reports: string;
       logs: string;
       exchanges: string;
+      wallets: string;
       connections: string;
       orders: string;
       positions: string;
@@ -291,6 +292,7 @@ export const translations: Record<Locale, TranslationSchema> = {
         reports: "Reports",
         logs: "Logs",
         exchanges: "Exchanges",
+        wallets: "Wallets",
         connections: "Connections",
         orders: "Orders",
         positions: "Positions",
@@ -904,6 +906,7 @@ export const translations: Record<Locale, TranslationSchema> = {
         reports: "Raporty",
         logs: "Logi",
         exchanges: "Gieldy",
+        wallets: "Portfele",
         connections: "Integracje",
         orders: "Zlecenia",
         positions: "Pozycje",

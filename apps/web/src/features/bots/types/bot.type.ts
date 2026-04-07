@@ -8,6 +8,7 @@ export type Exchange = ExchangeOption;
 export type Bot = {
   id: string;
   name: string;
+  walletId?: string | null;
   mode: BotMode;
   paperStartBalance: number;
   exchange: Exchange;
@@ -19,6 +20,17 @@ export type Bot = {
   liveOptIn: boolean;
   consentTextVersion?: string | null;
   maxOpenPositions: number;
+  wallet?: {
+    id: string;
+    name: string;
+    mode: BotMode;
+    exchange: Exchange;
+    marketType: TradeMarket;
+    baseCurrency: string;
+    paperInitialBalance: number;
+    liveAllocationMode?: "PERCENT" | "FIXED" | null;
+    liveAllocationValue?: number | null;
+  } | null;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -343,9 +355,7 @@ export type BotRuntimePositionsResponse = {
 
 export type CreateBotInput = {
   name: string;
-  mode: BotMode;
-  paperStartBalance: number;
-  apiKeyId?: string | null;
+  walletId: string;
   strategyId: string;
   marketGroupId: string;
   isActive: boolean;
@@ -355,9 +365,7 @@ export type CreateBotInput = {
 
 export type UpdateBotInput = Partial<{
   name: string;
-  mode: BotMode;
-  paperStartBalance: number;
-  apiKeyId: string | null;
+  walletId: string | null;
   strategyId: string | null;
   marketGroupId: string | null;
   isActive: boolean;

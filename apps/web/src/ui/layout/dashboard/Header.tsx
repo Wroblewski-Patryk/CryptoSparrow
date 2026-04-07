@@ -16,6 +16,7 @@ import {
   LuPackageOpen,
   LuShieldCheck,
   LuShoppingCart,
+  LuWallet,
   LuX,
 } from 'react-icons/lu';
 
@@ -155,6 +156,12 @@ export default function Header() {
   ];
 
   const directModuleLinks: NavItem[] = [
+    {
+      href: dashboardRoutes.wallets.list,
+      label: t('dashboard.nav.wallets'),
+      icon: LuWallet,
+      activePrefixes: [dashboardRoutes.wallets.root],
+    },
     {
       href: dashboardRoutes.markets.list,
       label: t('dashboard.nav.markets'),

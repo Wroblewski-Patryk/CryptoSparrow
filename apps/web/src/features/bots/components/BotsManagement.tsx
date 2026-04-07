@@ -44,6 +44,8 @@ import { listMarketUniverses } from "../../markets/services/markets.service";
 import { MarketUniverse } from "../../markets/types/marketUniverse.type";
 import { listStrategies } from "../../strategies/api/strategies.api";
 import { StrategyDto } from "../../strategies/types/StrategyForm.type";
+import { listWallets } from "../../wallets/services/wallets.service";
+import { Wallet } from "../../wallets/types/wallet.type";
 import { createMarketStreamEventSource } from "../../../lib/marketStream";
 import { supportsExchangeCapability } from "../../exchanges/exchangeCapabilities";
 import { LuChevronDown } from "react-icons/lu";
@@ -526,10 +528,10 @@ export default function BotsManagement({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [strategies, setStrategies] = useState<StrategyDto[]>([]);
   const [marketGroups, setMarketGroups] = useState<MarketUniverse[]>([]);
+  const [wallets, setWallets] = useState<Wallet[]>([]);
 
   const [name, setName] = useState("");
-  const [mode, setMode] = useState<BotMode>("PAPER");
-  const [paperStartBalance, setPaperStartBalance] = useState(10_000);
+  const [walletId, setWalletId] = useState<string>("");
   const [marketFilter, setMarketFilter] = useState<"ALL" | TradeMarket>("ALL");
   const [strategyId, setStrategyId] = useState<string>("");
   const [marketGroupId, setMarketGroupId] = useState<string>("");
@@ -630,15 +632,34 @@ export default function BotsManagement({
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    const loadWalletOptions = async () => {
+      try {
+        const items = await listWallets();
+        if (!mounted) return;
+        setWallets(items);
+        setWalletId((prev) => prev || items[0]?.id || "");
+      } catch (err: unknown) {
+        if (!mounted) return;
+        setWallets([]);
+        toast.error("Wallets load failed", { description: getAxiosMessage(err) });
+      }
+    };
+    void loadWalletOptions();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const canCreate = useMemo(
     () =>
       name.trim().length > 0 &&
+      walletId.trim().length > 0 &&
       strategyId.trim().length > 0 &&
       marketGroupId.trim().length > 0 &&
-      Number.isFinite(paperStartBalance) &&
-      paperStartBalance >= 0 &&
       !creating,
-    [creating, marketGroupId, name, paperStartBalance, strategyId]
+    [creating, marketGroupId, name, strategyId, walletId]
   );
 
   const selectedStrategy = useMemo(
@@ -648,6 +669,10 @@ export default function BotsManagement({
   const selectedMarketGroup = useMemo(
     () => marketGroups.find((group) => group.id === marketGroupId) ?? null,
     [marketGroupId, marketGroups]
+  );
+  const selectedWallet = useMemo(
+    () => wallets.find((wallet) => wallet.id === walletId) ?? null,
+    [walletId, wallets]
   );
   const selectedStrategyMaxOpenPositions = useMemo(
     () => deriveStrategyMaxOpenPositions(selectedStrategy),
@@ -1143,26 +1168,25 @@ export default function BotsManagement({
 
     setCreating(true);
     try {
-      if (mode === "LIVE") {
+      const createMode = selectedWallet?.mode ?? "PAPER";
+      if (createMode === "LIVE") {
         const accepted = confirmLiveRisk(t("dashboard.bots.confirms.liveCreate"));
         if (!accepted) return;
       }
 
       const created = await createBot({
         name: name.trim(),
-        mode,
-        paperStartBalance,
+        walletId,
         strategyId,
         marketGroupId,
-        isActive: mode === "PAPER",
+        isActive: createMode === "PAPER",
         liveOptIn: false,
         consentTextVersion: null,
       });
       setBots((prev) => [created, ...prev]);
       setServerSnapshot((prev) => ({ ...prev, [created.id]: created }));
       setName("");
-      setMode("PAPER");
-      setPaperStartBalance(10_000);
+      setWalletId((prev) => prev || wallets[0]?.id || "");
       setStrategyId((prev) => prev || strategies[0]?.id || "");
       setMarketGroupId((prev) => prev || marketGroups[0]?.id || "");
       toast.success(t("dashboard.bots.toasts.created"));
@@ -1205,11 +1229,10 @@ export default function BotsManagement({
     try {
       const updated = await updateBot(bot.id, {
         name: bot.name,
-        mode: bot.mode,
+        walletId: bot.walletId ?? null,
         isActive: bot.isActive,
         liveOptIn: effectiveLiveOptIn,
         consentTextVersion: effectiveLiveOptIn ? LIVE_CONSENT_TEXT_VERSION : null,
-        paperStartBalance: bot.paperStartBalance,
         strategyId: bot.strategyId ?? null,
       });
       patchBot(bot.id, updated);
@@ -1499,33 +1522,36 @@ export default function BotsManagement({
                 />
               </label>
               <label className={FIELD_WRAPPER_CLASS}>
-                <span className="label-text">{t("dashboard.bots.create.modeLabel")}</span>
+                <span className="label-text">Wallet</span>
                 <select
                   className="select select-bordered"
-                  aria-label={t("dashboard.bots.create.modeAria")}
-                  value={mode}
-                  onChange={(event) => setMode(event.target.value as BotMode)}
+                  aria-label="wallet"
+                  value={walletId}
+                  onChange={(event) => setWalletId(event.target.value)}
+                  disabled={wallets.length === 0}
                 >
-                  <option value="PAPER">PAPER</option>
-                  <option value="LIVE">LIVE</option>
+                  {wallets.length === 0 ? <option value="">No wallets</option> : null}
+                  {wallets.map((wallet) => (
+                    <option key={wallet.id} value={wallet.id}>
+                      {wallet.name} ({wallet.mode} · {wallet.exchange}/{wallet.marketType}/{wallet.baseCurrency})
+                    </option>
+                  ))}
                 </select>
               </label>
-              {mode === "PAPER" ? (
-                <label className={FIELD_WRAPPER_CLASS}>
-                  <span className="label-text">{t("dashboard.bots.create.paperBalanceLabel")}</span>
-                  <input
-                    type="number"
-                    min={0}
-                    max={100000000}
-                    className="input input-bordered"
-                    aria-label={t("dashboard.bots.create.paperBalanceAria")}
-                    value={paperStartBalance}
-                    onChange={(event) =>
-                      setPaperStartBalance(Number.isFinite(Number(event.target.value)) ? Number(event.target.value) : 0)
-                    }
-                  />
-                </label>
-              ) : null}
+              <div className="grid gap-2 text-xs sm:grid-cols-2">
+                <div className={META_CARD_CLASS}>
+                  <p className="uppercase tracking-wide opacity-60">{t("dashboard.bots.create.modeLabel")}</p>
+                  <p className="font-medium">{selectedWallet?.mode ?? "-"}</p>
+                </div>
+                <div className={META_CARD_CLASS}>
+                  <p className="uppercase tracking-wide opacity-60">{t("dashboard.bots.create.paperBalanceLabel")}</p>
+                  <p className="font-medium">
+                    {selectedWallet?.mode === "PAPER"
+                      ? formatCurrency(selectedWallet.paperInitialBalance ?? 0)
+                      : "-"}
+                  </p>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -1723,38 +1749,15 @@ export default function BotsManagement({
                             value={toModeBadge(bot.mode)}
                             label={interpolateTemplate(t("dashboard.bots.list.modeLabel"), { mode: bot.mode })}
                           />
-                          <select
-                            className="select select-bordered select-xs w-full"
-                            value={bot.mode}
-                            onChange={(event) => {
-                              const nextMode = event.target.value as BotMode;
-                              patchBot(bot.id, {
-                                mode: nextMode,
-                                liveOptIn: nextMode === "LIVE" ? bot.liveOptIn : false,
-                              });
-                            }}
-                          >
-                            <option value="PAPER">PAPER</option>
-                            <option value="LIVE">LIVE</option>
-                          </select>
+                          <span className="text-[11px] opacity-70">{bot.wallet?.name ?? bot.walletId ?? "-"}</span>
                         </div>
                       </td>
                       <td>
-                        <input
-                          type="number"
-                          min={0}
-                          max={100000000}
-                          className="input input-bordered input-sm w-28"
-                          value={bot.paperStartBalance}
-                          disabled={bot.mode === "LIVE"}
-                          onChange={(event) =>
-                            patchBot(bot.id, {
-                              paperStartBalance: Number.isFinite(Number(event.target.value))
-                                ? Number(event.target.value)
-                                : 0,
-                            })
-                          }
-                        />
+                        <span className="text-xs opacity-70">
+                          {bot.mode === "PAPER"
+                            ? formatCurrency(bot.wallet?.paperInitialBalance ?? bot.paperStartBalance)
+                            : "-"}
+                        </span>
                       </td>
                       <td>
                         <span className="text-xs opacity-70">{bot.maxOpenPositions}</span>

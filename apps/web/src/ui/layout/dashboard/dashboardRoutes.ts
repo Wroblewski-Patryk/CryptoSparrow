@@ -5,6 +5,11 @@ export const dashboardRoutes = {
     orders: "/dashboard/orders",
     positions: "/dashboard/positions",
   },
+  wallets: {
+    root: "/dashboard/wallets",
+    list: "/dashboard/wallets/list",
+    create: "/dashboard/wallets/create",
+  },
   markets: {
     root: "/dashboard/markets",
     list: "/dashboard/markets/list",
