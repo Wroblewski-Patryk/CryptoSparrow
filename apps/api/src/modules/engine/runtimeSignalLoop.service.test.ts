@@ -8,6 +8,7 @@ import { MarketStreamEvent } from '../market-stream/binanceStream.types';
 
 vi.mock('./runtimeCapitalContext.service', () => ({
   resolveRuntimeReferenceBalance: vi.fn(async () => 10_000),
+  resolveRuntimeDcaFundsExhausted: vi.fn(() => false),
 }));
 
 const strategyLong = {

@@ -15,6 +15,12 @@ import {
   evaluateStrategySignalAtIndex,
   parseStrategySignalRules,
 } from './strategySignalEvaluator';
+import {
+  clampPeriod,
+  computeEmaSeriesFromCloses,
+  computeMomentumSeriesFromCloses,
+  computeRsiSeriesFromCloses,
+} from './sharedIndicatorSeries';
 import { computeRiskBasedOrderQuantity, normalizeWalletRiskPercent } from './positionSizing';
 import { resolveRuntimeDcaFundsExhausted, resolveRuntimeReferenceBalance } from './runtimeCapitalContext.service';
 import { runtimeTelemetryService } from './runtimeTelemetry.service';
@@ -527,69 +533,6 @@ const formatIndicatorValue = (value: number | null | undefined) => {
 };
 
 const formatRuleTarget = (value: number) => Number(value.toFixed(6)).toString();
-
-const clampPeriod = (value: unknown, fallback: number) => {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return fallback;
-  return Math.max(2, Math.floor(parsed));
-};
-
-const computeEmaSeriesFromRuntimeCandles = (candles: RuntimeCandle[], period: number): Array<number | null> => {
-  const alpha = 2 / (period + 1);
-  let ema: number | null = null;
-  const output: Array<number | null> = [];
-  for (let index = 0; index < candles.length; index += 1) {
-    const price = candles[index].close;
-    if (!Number.isFinite(price)) {
-      output.push(null);
-      continue;
-    }
-    if (ema === null) ema = price;
-    else ema = alpha * price + (1 - alpha) * ema;
-    output.push(index + 1 >= period ? ema : null);
-  }
-  return output;
-};
-
-const computeRsiSeriesFromRuntimeCandles = (candles: RuntimeCandle[], period: number): Array<number | null> => {
-  const output: Array<number | null> = Array.from({ length: candles.length }, () => null);
-  if (candles.length <= period) return output;
-
-  let gains = 0;
-  let losses = 0;
-  for (let index = 1; index <= period; index += 1) {
-    const diff = candles[index].close - candles[index - 1].close;
-    if (diff >= 0) gains += diff;
-    else losses += Math.abs(diff);
-  }
-
-  let avgGain = gains / period;
-  let avgLoss = losses / period;
-  output[period] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
-
-  for (let index = period + 1; index < candles.length; index += 1) {
-    const diff = candles[index].close - candles[index - 1].close;
-    const gain = diff > 0 ? diff : 0;
-    const loss = diff < 0 ? Math.abs(diff) : 0;
-    avgGain = (avgGain * (period - 1) + gain) / period;
-    avgLoss = (avgLoss * (period - 1) + loss) / period;
-    output[index] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
-  }
-
-  return output;
-};
-
-const computeMomentumSeriesFromRuntimeCandles = (candles: RuntimeCandle[], period: number): Array<number | null> => {
-  const output: Array<number | null> = [];
-  for (let index = 0; index < candles.length; index += 1) {
-    if (index < period) {
-      output.push(null);
-      continue;
-    }
-    output.push(candles[index].close - candles[index - period].close);
-  }
-  return output;
-};
 
 const toPositiveInteger = (value: unknown): number | null => {
   const parsed = Number(value);
@@ -1533,27 +1476,28 @@ export class RuntimeSignalLoop {
       const index = candles.findIndex((candle) => candle.openTime === decisionOpenTime);
       return index >= 0 ? index : latestIndex;
     })();
+    const closes = candles.map((candle) => candle.close);
     const indicatorCache = new Map<string, Array<number | null>>();
     const direction = evaluateStrategySignalAtIndex(signalRules, candles, decisionIndex, indicatorCache);
 
     const ensureEma = (period: number) => {
       const key = `EMA_${period}`;
       if (!indicatorCache.has(key)) {
-        indicatorCache.set(key, computeEmaSeriesFromRuntimeCandles(candles, period));
+        indicatorCache.set(key, computeEmaSeriesFromCloses(closes, period));
       }
       return indicatorCache.get(key)!;
     };
     const ensureRsi = (period: number) => {
       const key = `RSI_${period}`;
       if (!indicatorCache.has(key)) {
-        indicatorCache.set(key, computeRsiSeriesFromRuntimeCandles(candles, period));
+        indicatorCache.set(key, computeRsiSeriesFromCloses(closes, period));
       }
       return indicatorCache.get(key)!;
     };
     const ensureMomentum = (period: number) => {
       const key = `MOMENTUM_${period}`;
       if (!indicatorCache.has(key)) {
-        indicatorCache.set(key, computeMomentumSeriesFromRuntimeCandles(candles, period));
+        indicatorCache.set(key, computeMomentumSeriesFromCloses(closes, period));
       }
       return indicatorCache.get(key)!;
     };

@@ -9,6 +9,11 @@ import {
   parseStrategySignalRules,
 } from '../engine/strategySignalEvaluator';
 import {
+  computeEmaSeriesFromCloses,
+  computeMomentumSeriesFromCloses,
+  computeRsiSeriesFromCloses,
+} from '../engine/sharedIndicatorSeries';
+import {
   computeRiskBasedOrderQuantity,
   normalizeWalletRiskPercent,
 } from '../engine/positionSizing';
@@ -1120,67 +1125,15 @@ const resolveIndicatorWarmupCandles = (strategyConfig: unknown) => {
   return specs.reduce((maxPeriod, spec) => Math.max(maxPeriod, spec.period), 0);
 };
 
-const buildEmaSeries = (candles: KlineCandle[], period: number) => {
-  const alpha = 2 / (period + 1);
-  const series: Array<number | null> = [];
-  let ema: number | null = null;
-  for (let index = 0; index < candles.length; index += 1) {
-    const price = candles[index].close;
-    if (ema === null) ema = price;
-    else ema = alpha * price + (1 - alpha) * ema;
-    series.push(index + 1 >= period ? ema : null);
-  }
-  return series;
-};
-
-const buildRsiSeries = (candles: KlineCandle[], period: number) => {
-  const series: Array<number | null> = Array.from({ length: candles.length }, () => null);
-  if (candles.length <= period) return series;
-
-  let gains = 0;
-  let losses = 0;
-  for (let index = 1; index <= period; index += 1) {
-    const diff = candles[index].close - candles[index - 1].close;
-    if (diff >= 0) gains += diff;
-    else losses += Math.abs(diff);
-  }
-
-  let avgGain = gains / period;
-  let avgLoss = losses / period;
-  series[period] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
-
-  for (let index = period + 1; index < candles.length; index += 1) {
-    const diff = candles[index].close - candles[index - 1].close;
-    const gain = diff > 0 ? diff : 0;
-    const loss = diff < 0 ? Math.abs(diff) : 0;
-    avgGain = (avgGain * (period - 1) + gain) / period;
-    avgLoss = (avgLoss * (period - 1) + loss) / period;
-    series[index] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
-  }
-
-  return series;
-};
-
-const buildMomentumSeries = (candles: KlineCandle[], period: number) => {
-  const series: Array<number | null> = [];
-  for (let index = 0; index < candles.length; index += 1) {
-    if (index < period) {
-      series.push(null);
-      continue;
-    }
-    series.push(candles[index].close - candles[index - period].close);
-  }
-  return series;
-};
-
 const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) => {
+  const closes = candles.map((candle) => candle.close);
   return specs.map((spec) => {
     const values =
       spec.name.includes('EMA')
-        ? buildEmaSeries(candles, spec.period)
+        ? computeEmaSeriesFromCloses(closes, spec.period)
         : spec.name.includes('RSI')
-          ? buildRsiSeries(candles, spec.period)
-          : buildMomentumSeries(candles, spec.period);
+          ? computeRsiSeriesFromCloses(closes, spec.period)
+          : computeMomentumSeriesFromCloses(closes, spec.period);
     return {
       key: spec.key,
       name: spec.name,

@@ -112,7 +112,7 @@ Replace current broad groups with explicit trader-facing groups:
 ### Phase A - Contract and Baseline Alignment
 - [x] `IND-01 docs(contract): publish canonical indicator registry + parity contract for builder/runtime/backtest`
 - [x] `IND-02 fix(api-indicators): remove/flag unsupported placeholders from default indicator catalog until implemented`
-- [ ] `IND-03 refactor(engine-indicators): extract shared indicator compute/evaluate module used by runtime + backtest`
+- [x] `IND-03 refactor(engine-indicators): extract shared indicator compute/evaluate module used by runtime + backtest`
 - [ ] `IND-04 test(parity-baseline): lock parity for existing EMA/RSI/MOMENTUM behavior across runtime/backtest`
 
 ### Phase B - Runtime Candle Model Upgrade (OHLCV Ready)

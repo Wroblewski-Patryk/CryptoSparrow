@@ -1,3 +1,10 @@
+import {
+  clampPeriod,
+  computeEmaSeriesFromCloses,
+  computeMomentumSeriesFromCloses,
+  computeRsiSeriesFromCloses,
+} from './sharedIndicatorSeries';
+
 export type StrategySignalDirection = 'LONG' | 'SHORT' | 'EXIT';
 
 type StrategyIndicatorCondition = '>' | '<' | '>=' | '<=' | '==' | '!=';
@@ -32,12 +39,6 @@ const compare = (left: number, operator: StrategyIndicatorCondition, right: numb
 const asFiniteNumber = (value: unknown): number | null => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
-};
-
-const clampPeriod = (value: unknown, fallback: number) => {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return fallback;
-  return Math.max(2, Math.floor(parsed));
 };
 
 const parseRule = (value: unknown): StrategyIndicatorRule | null => {
@@ -116,64 +117,9 @@ export const parseStrategySignalRules = (
   };
 };
 
-const computeEmaSeries = (candles: SignalCandle[], period: number): Array<number | null> => {
-  const alpha = 2 / (period + 1);
-  let ema: number | null = null;
-  const output: Array<number | null> = [];
-
-  for (let index = 0; index < candles.length; index += 1) {
-    const price = candles[index].close;
-    if (ema === null) ema = price;
-    else ema = alpha * price + (1 - alpha) * ema;
-    output.push(index + 1 >= period ? ema : null);
-  }
-
-  return output;
-};
-
-const computeRsiSeries = (candles: SignalCandle[], period: number): Array<number | null> => {
-  const output: Array<number | null> = Array.from({ length: candles.length }, () => null);
-  if (candles.length <= period) return output;
-
-  let gains = 0;
-  let losses = 0;
-  for (let index = 1; index <= period; index += 1) {
-    const diff = candles[index].close - candles[index - 1].close;
-    if (diff >= 0) gains += diff;
-    else losses += Math.abs(diff);
-  }
-
-  let avgGain = gains / period;
-  let avgLoss = losses / period;
-  output[period] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
-
-  for (let index = period + 1; index < candles.length; index += 1) {
-    const diff = candles[index].close - candles[index - 1].close;
-    const gain = diff > 0 ? diff : 0;
-    const loss = diff < 0 ? Math.abs(diff) : 0;
-    avgGain = (avgGain * (period - 1) + gain) / period;
-    avgLoss = (avgLoss * (period - 1) + loss) / period;
-    output[index] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
-  }
-
-  return output;
-};
-
-const computeMomentumSeries = (candles: SignalCandle[], period: number): Array<number | null> => {
-  const output: Array<number | null> = [];
-  for (let index = 0; index < candles.length; index += 1) {
-    if (index < period) {
-      output.push(null);
-      continue;
-    }
-    output.push(candles[index].close - candles[index - period].close);
-  }
-  return output;
-};
-
 const evaluateRuleAtIndex = (
   rule: StrategyIndicatorRule,
-  candles: SignalCandle[],
+  closes: number[],
   index: number,
   cache: Map<string, Array<number | null>>,
 ) => {
@@ -182,8 +128,8 @@ const evaluateRuleAtIndex = (
     const slow = clampPeriod(rule.params.slow, 21);
     const fastKey = `EMA_FAST_${fast}`;
     const slowKey = `EMA_SLOW_${slow}`;
-    const fastSeries = cache.get(fastKey) ?? computeEmaSeries(candles, fast);
-    const slowSeries = cache.get(slowKey) ?? computeEmaSeries(candles, slow);
+    const fastSeries = cache.get(fastKey) ?? computeEmaSeriesFromCloses(closes, fast);
+    const slowSeries = cache.get(slowKey) ?? computeEmaSeriesFromCloses(closes, slow);
     cache.set(fastKey, fastSeries);
     cache.set(slowKey, slowSeries);
     const fastValue = fastSeries[index];
@@ -195,7 +141,7 @@ const evaluateRuleAtIndex = (
   if (rule.name.includes('RSI')) {
     const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
     const key = `RSI_${period}`;
-    const series = cache.get(key) ?? computeRsiSeries(candles, period);
+    const series = cache.get(key) ?? computeRsiSeriesFromCloses(closes, period);
     cache.set(key, series);
     const value = series[index];
     if (typeof value !== 'number') return false;
@@ -205,7 +151,7 @@ const evaluateRuleAtIndex = (
   if (rule.name.includes('MOMENTUM')) {
     const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
     const key = `MOMENTUM_${period}`;
-    const series = cache.get(key) ?? computeMomentumSeries(candles, period);
+    const series = cache.get(key) ?? computeMomentumSeriesFromCloses(closes, period);
     cache.set(key, series);
     const value = series[index];
     if (typeof value !== 'number') return false;
@@ -221,16 +167,17 @@ export const evaluateStrategySignalAtIndex = (
   index: number,
   cache: Map<string, Array<number | null>>,
 ): StrategySignalDirection | null => {
+  const closes = candles.map((candle) => candle.close);
   const canLong = rules.direction !== 'short';
   const canShort = rules.direction !== 'long';
   const longMatched =
     canLong &&
     rules.longRules.length > 0 &&
-    rules.longRules.every((rule) => evaluateRuleAtIndex(rule, candles, index, cache));
+    rules.longRules.every((rule) => evaluateRuleAtIndex(rule, closes, index, cache));
   const shortMatched =
     canShort &&
     rules.shortRules.length > 0 &&
-    rules.shortRules.every((rule) => evaluateRuleAtIndex(rule, candles, index, cache));
+    rules.shortRules.every((rule) => evaluateRuleAtIndex(rule, closes, index, cache));
 
   if (longMatched && !shortMatched) return 'LONG';
   if (shortMatched && !longMatched) return 'SHORT';
