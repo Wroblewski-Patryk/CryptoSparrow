@@ -620,7 +620,47 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `SUBS-11 test(api+web): add regression suites for default FREE assignment, owner PROFESSIONAL mapping, plan highlighting, and entitlement enforcement`
 - [x] `SUBS-12 docs(runbook): publish operator/admin guide for plan edits, manual assignments, and payment-provider switch strategy`
 
+## Phase 39 - Strategy Indicator + Candle Pattern Expansion (Planned)
+- [x] `IND-01 docs(contract): publish canonical indicator registry + parity contract for builder/runtime/backtest`
+- [ ] `IND-02 fix(api-indicators): remove/flag unsupported placeholders from default indicator catalog until implemented`
+- [ ] `IND-03 refactor(engine-indicators): extract shared indicator compute/evaluate module used by runtime + backtest`
+- [ ] `IND-04 test(parity-baseline): lock parity for existing EMA/RSI/MOMENTUM behavior across runtime/backtest`
+- [ ] `IND-05 refactor(runtime-series): upgrade runtime candle buffer from close-only to OHLCV candle objects`
+- [ ] `IND-06 refactor(runtime-warmup): fetch/store OHLCV warmup candles and keep final-candle decision indexing deterministic`
+- [ ] `IND-07 test(runtime-series): add regression coverage for OHLCV buffer updates, dedupe, and interval matching`
+- [ ] `IND-08 feat(builder-operators): expose full operator set (including cross and range operators) in strategy form`
+- [ ] `IND-09 feat(config-parser): normalize operand contract (series/constant/band) for runtime + backtest`
+- [ ] `IND-10 test(config-contract): parser/evaluator regressions for new operators and invalid configs`
+- [ ] `IND-11 feat(indicator): add SMA end-to-end (catalog + evaluator + backtest timeline + tests)`
+- [ ] `IND-12 feat(indicator): add MACD end-to-end (line/signal/histogram + tests)`
+- [ ] `IND-13 feat(indicator): add ROC end-to-end (+ tests)`
+- [ ] `IND-14 feat(indicator): add StochRSI end-to-end (+ tests)`
+- [ ] `IND-15 feat(indicator): implement true Bollinger Bands end-to-end (upper/mid/lower, bandwidth, percentB)`
+- [ ] `IND-16 feat(indicator): add ATR end-to-end`
+- [ ] `IND-17 feat(indicator): add ADX + DI+/DI- end-to-end`
+- [ ] `IND-18 feat(indicator): add Stochastic (%K/%D) end-to-end`
+- [ ] `IND-19 feat(indicator): add CCI end-to-end`
+- [ ] `IND-20 feat(indicator): add Donchian Channels end-to-end`
+- [ ] `IND-21 feat(pattern-engine): add shared OHLC candle-pattern evaluation engine (boolean series contract)`
+- [ ] `IND-22 feat(patterns): add Bullish/Bearish Engulfing end-to-end`
+- [ ] `IND-23 feat(patterns): add Hammer/Shooting Star end-to-end`
+- [ ] `IND-24 feat(patterns): add Doji with threshold params end-to-end`
+- [ ] `IND-25 feat(patterns): add Morning Star / Evening Star end-to-end`
+- [ ] `IND-26 feat(patterns): add Inside Bar / Outside Bar end-to-end`
+- [ ] `IND-27 test(pattern-parity): deterministic fixtures for all patterns in runtime + backtest parity suite`
+- [ ] `IND-28 feat(futures-filter): add funding-rate filters (absolute + z-score) for futures strategies`
+- [ ] `IND-29 feat(futures-filter): add open-interest filters (delta/MA/z-score) for futures strategies`
+- [ ] `IND-30 feat(futures-filter): add order-book filters (imbalance/spread/depth ratio) for futures strategies`
+- [ ] `IND-31 test(futures-filters): add fail-closed fallback tests when derivatives snapshots are missing`
+- [ ] `IND-32 feat(web-groups): apply new indicator taxonomy groups in strategy creator with EN/PL labels`
+- [ ] `IND-33 feat(backtest-ui): support multi-line overlays and boolean pattern markers in timeline rendering`
+- [ ] `IND-34 feat(presets): add trader archetype presets (scalp/day trend/swing/mean reversion/breakout/perp bias)`
+- [ ] `IND-35 qa(parity): execute 3-symbol side-by-side parity checklist for new indicator families and attach evidence`
+- [ ] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
+
 ## Progress Log
+- 2026-04-07: Completed `IND-01` by publishing canonical indicator registry/parity contract in `docs/architecture/indicator-registry-parity-contract.md`, locking taxonomy groups (including Candle Patterns), data-dependency classes (CLOSE/OHLC/OHLCV/DERIVATIVES), and fail-closed runtime/backtest parity rules for Phase 39 rollout.
+- 2026-04-07: Added indicator expansion execution phase (`IND-01..IND-36`) and canonical implementation roadmap `docs/planning/indicator-expansion-implementation-plan-2026-04-07.md`, including new taxonomy groups (Trend/Momentum/Volatility/Volume/Price Action/Candle Patterns/Derivatives) and runtime/backtest parity-first sequencing.
 - 2026-04-07: Completed `EXIT-08` by adding explicit production prerequisites (API access + `PROD_DB_CHECK_*` vars) and one-command closure pipeline instructions to RC runbook/checklist (`ops:rc:gates:prod-pipeline`).
 - 2026-04-07: Completed `EXIT-07` by extending external-gates pipeline with `--db-profile <local|stage|prod>` and fixing strict production aliases to force both `--environment production` and `--db-profile prod` (`ops:rc:gates:local-pipeline:strict:prod`, `ops:rc:gates:prod-pipeline`).
 - 2026-04-07: Completed `EXIT-06` by adding direct strict-production evidence-check shortcut (`ops:rc:gates:evidence:check:strict:prod`) and syncing RC runbook/checklist references to this command.
