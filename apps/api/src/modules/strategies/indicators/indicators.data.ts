@@ -8,15 +8,15 @@ export const indicators = [
         name: "fast",
         default: 9,
         min: 2,
-        max: 255
+        max: 255,
       },
       {
         name: "slow",
         default: 21,
         min: 2,
-        max: 255
-      }
-    ]
+        max: 255,
+      },
+    ],
   },
   {
     name: "RSI",
@@ -27,34 +27,21 @@ export const indicators = [
         name: "period",
         default: 14,
         min: 2,
-        max: 255
-      }
-    ]
+        max: 255,
+      },
+    ],
   },
   {
-    name: "BollingerBands",
+    name: "MOMENTUM",
     group: "Analiza techniczna",
-    type: "volatility",
+    type: "momentum",
     params: [
       {
         name: "period",
-        default: 20,
+        default: 14,
         min: 2,
-        max: 255
+        max: 255,
       },
-      {
-        name: "stdDev",
-        default: 2,
-        min: 1,
-        max: 10
-      }
-    ]
-  }
-  // ... kolejne wskaźniki
-  , {
-    name: 'BullCandle',
-    group: 'Candle Pattern',
-    type: 'some type',
-    params: [],
-  }
+    ],
+  },
 ];

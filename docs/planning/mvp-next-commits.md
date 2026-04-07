@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `IND-02 fix(api-indicators): remove/flag unsupported placeholders from default indicator catalog until implemented`
 - [ ] `IND-03 refactor(engine-indicators): extract shared indicator compute/evaluate module used by runtime + backtest`
 - [ ] `IND-04 test(parity-baseline): lock parity for existing EMA/RSI/MOMENTUM behavior across runtime/backtest`
 - [ ] `IND-05 refactor(runtime-series): upgrade runtime candle buffer from close-only to OHLCV candle objects`
@@ -23,6 +22,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `IND-02 fix(api-indicators): remove/flag unsupported placeholders from default indicator catalog until implemented`
 - [x] `IND-01 docs(contract): publish canonical indicator registry + parity contract for builder/runtime/backtest`
 - [x] `EXIT-08 docs(ops): add production prerequisites + one-command closure pipeline instructions`
 - [x] `EXIT-07 ops(gates): add db-profile aware pipeline and true production strict alias (env+db-profile forced)`

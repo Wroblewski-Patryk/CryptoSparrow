@@ -622,7 +622,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 
 ## Phase 39 - Strategy Indicator + Candle Pattern Expansion (Planned)
 - [x] `IND-01 docs(contract): publish canonical indicator registry + parity contract for builder/runtime/backtest`
-- [ ] `IND-02 fix(api-indicators): remove/flag unsupported placeholders from default indicator catalog until implemented`
+- [x] `IND-02 fix(api-indicators): remove/flag unsupported placeholders from default indicator catalog until implemented`
 - [ ] `IND-03 refactor(engine-indicators): extract shared indicator compute/evaluate module used by runtime + backtest`
 - [ ] `IND-04 test(parity-baseline): lock parity for existing EMA/RSI/MOMENTUM behavior across runtime/backtest`
 - [ ] `IND-05 refactor(runtime-series): upgrade runtime candle buffer from close-only to OHLCV candle objects`
@@ -659,6 +659,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
 
 ## Progress Log
+- 2026-04-07: Completed `IND-02` by removing unsupported placeholder indicators (`BollingerBands`, `BullCandle`) from default API strategy catalog, adding supported `MOMENTUM`, and updating web presets to use only currently implemented indicators (RSI/MOMENTUM).
 - 2026-04-07: Completed `IND-01` by publishing canonical indicator registry/parity contract in `docs/architecture/indicator-registry-parity-contract.md`, locking taxonomy groups (including Candle Patterns), data-dependency classes (CLOSE/OHLC/OHLCV/DERIVATIVES), and fail-closed runtime/backtest parity rules for Phase 39 rollout.
 - 2026-04-07: Added indicator expansion execution phase (`IND-01..IND-36`) and canonical implementation roadmap `docs/planning/indicator-expansion-implementation-plan-2026-04-07.md`, including new taxonomy groups (Trend/Momentum/Volatility/Volume/Price Action/Candle Patterns/Derivatives) and runtime/backtest parity-first sequencing.
 - 2026-04-07: Completed `EXIT-08` by adding explicit production prerequisites (API access + `PROD_DB_CHECK_*` vars) and one-command closure pipeline instructions to RC runbook/checklist (`ops:rc:gates:prod-pipeline`).

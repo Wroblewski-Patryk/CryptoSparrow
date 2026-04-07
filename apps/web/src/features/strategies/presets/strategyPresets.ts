@@ -87,13 +87,13 @@ export const strategyPresets: StrategyPreset[] = [
   },
   {
     id: "mean-reversion-bb",
-    name: "Mean Reversion (BB)",
-    description: "Kontr-trend z Bollinger Bands i mniejsza dzwignia.",
-    tags: ["mean-reversion", "bollinger", "safe"],
+    name: "Mean Reversion (RSI)",
+    description: "Kontr-trend z RSI i mniejsza dzwignia.",
+    tags: ["mean-reversion", "rsi", "safe"],
     form: {
       ...baseForm,
-      name: "Mean Reversion BB",
-      description: "Bollinger mean reversion with conservative leverage.",
+      name: "Mean Reversion RSI",
+      description: "RSI mean reversion with conservative leverage.",
       leverage: 4,
       walletRisk: 0.8,
       openConditions: {
@@ -101,20 +101,20 @@ export const strategyPresets: StrategyPreset[] = [
         indicatorsLong: [
           {
             group: "Analiza techniczna",
-            name: "BollingerBands",
-            params: { period: 20, stdDev: 2 },
+            name: "RSI",
+            params: { period: 14 },
             condition: "<",
-            value: -1,
+            value: 30,
             weight: 1,
           },
         ],
         indicatorsShort: [
           {
             group: "Analiza techniczna",
-            name: "BollingerBands",
-            params: { period: 20, stdDev: 2 },
+            name: "RSI",
+            params: { period: 14 },
             condition: ">",
-            value: 1,
+            value: 70,
             weight: 1,
           },
         ],
@@ -135,28 +135,37 @@ export const strategyPresets: StrategyPreset[] = [
   },
   {
     id: "breakout-candle",
-    name: "Breakout (Candle)",
-    description: "Preset breakout oparty o sygnal swiecowy i dynamiczne wyjscie.",
-    tags: ["breakout", "candle", "volatility"],
+    name: "Breakout (Momentum)",
+    description: "Preset breakout oparty o momentum i dynamiczne wyjscie.",
+    tags: ["breakout", "momentum", "volatility"],
     form: {
       ...baseForm,
-      name: "Breakout Candle",
-      description: "Breakout setup using candle pattern trigger.",
+      name: "Breakout Momentum",
+      description: "Breakout setup using momentum trigger.",
       interval: "15m",
       leverage: 10,
       openConditions: {
-        direction: "long",
+        direction: "both",
         indicatorsLong: [
           {
-            group: "Candle Pattern",
-            name: "BullCandle",
-            params: {},
+            group: "Analiza techniczna",
+            name: "MOMENTUM",
+            params: { period: 3 },
             condition: ">",
             value: 0,
             weight: 1,
           },
         ],
-        indicatorsShort: [],
+        indicatorsShort: [
+          {
+            group: "Analiza techniczna",
+            name: "MOMENTUM",
+            params: { period: 3 },
+            condition: "<",
+            value: 0,
+            weight: 1,
+          },
+        ],
       },
       closeConditions: {
         mode: "advanced",

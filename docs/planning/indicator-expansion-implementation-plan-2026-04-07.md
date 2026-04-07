@@ -14,7 +14,7 @@ Deliver a broad, trader-friendly indicator and candle-pattern set that works end
 
 ## Current Repository Fact Check
 - Strategy indicator catalog endpoint currently exposes:
-  - `EMA`, `RSI`, `BollingerBands`, `BullCandle`
+  - `EMA`, `RSI`, `MOMENTUM`
   - source: `apps/api/src/modules/strategies/indicators/indicators.data.ts`
 - Shared signal evaluator currently supports:
   - `EMA`, `RSI`, `MOMENTUM`
@@ -111,7 +111,7 @@ Replace current broad groups with explicit trader-facing groups:
 
 ### Phase A - Contract and Baseline Alignment
 - [x] `IND-01 docs(contract): publish canonical indicator registry + parity contract for builder/runtime/backtest`
-- [ ] `IND-02 fix(api-indicators): remove/flag unsupported placeholders from default indicator catalog until implemented`
+- [x] `IND-02 fix(api-indicators): remove/flag unsupported placeholders from default indicator catalog until implemented`
 - [ ] `IND-03 refactor(engine-indicators): extract shared indicator compute/evaluate module used by runtime + backtest`
 - [ ] `IND-04 test(parity-baseline): lock parity for existing EMA/RSI/MOMENTUM behavior across runtime/backtest`
 
