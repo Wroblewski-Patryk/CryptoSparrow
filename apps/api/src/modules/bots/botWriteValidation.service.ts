@@ -11,6 +11,7 @@ type OwnedSymbolGroupWithMarketUniverse = {
   marketUniverse: {
     marketType: 'FUTURES' | 'SPOT';
     exchange: import('@prisma/client').Exchange;
+    baseCurrency: string;
   };
 };
 
@@ -20,7 +21,7 @@ const getOwnedSymbolGroup = async (userId: string, symbolGroupId: string) =>
     select: {
       id: true,
       marketUniverse: {
-        select: { marketType: true, exchange: true },
+        select: { marketType: true, exchange: true, baseCurrency: true },
       },
     },
   });
@@ -86,7 +87,7 @@ export const resolveCreateMarketGroupToSymbolGroup = async (
     select: {
       id: true,
       marketUniverse: {
-        select: { marketType: true, exchange: true },
+        select: { marketType: true, exchange: true, baseCurrency: true },
       },
     },
     orderBy: { createdAt: 'asc' },
@@ -107,7 +108,7 @@ export const resolveCreateMarketGroupToSymbolGroup = async (
     select: {
       id: true,
       marketUniverse: {
-        select: { marketType: true, exchange: true },
+        select: { marketType: true, exchange: true, baseCurrency: true },
       },
     },
   });

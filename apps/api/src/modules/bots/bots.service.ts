@@ -76,7 +76,6 @@ import {
   getOwnedStrategy,
   resolveCreateMarketGroupToSymbolGroup,
 } from './botWriteValidation.service';
-import { resolveCompatibleBotApiKey } from './botApiKeyResolver.service';
 import {
   getOwnedBot,
   getOwnedBotRuntimeSession,
@@ -97,6 +96,7 @@ import {
   listOwnedBotsWithStrategyProjection,
 } from './botReadProjection.service';
 import { assertSubscriptionAllowsBotCreate } from '../subscriptions/subscriptionEntitlements.service';
+import { getOwnedWalletForBotContext } from '../wallets/wallets.service';
 export {
   deleteBotSubagentConfig,
   getBotAssistantConfig,
@@ -124,29 +124,45 @@ export const getBot = async (userId: string, id: string) => {
 };
 
 export const createBot = async (userId: string, data: CreateBotDto) => {
-  validateLiveConsentState(data);
-
-  const { strategyId, marketGroupId, apiKeyId, ...botData } = data;
+  const { strategyId, marketGroupId, walletId, ...botData } = data;
   const strategy = await getOwnedStrategy(userId, strategyId);
   if (!strategy) throw new Error('BOT_STRATEGY_NOT_FOUND');
 
   const symbolGroup = await resolveCreateMarketGroupToSymbolGroup(userId, marketGroupId);
   if (!symbolGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
-  const derivedMarketType = symbolGroup.marketUniverse.marketType;
-  const derivedExchange = symbolGroup.marketUniverse.exchange;
+  const wallet = await getOwnedWalletForBotContext({ userId, walletId });
+  if (!wallet) throw new Error('WALLET_NOT_FOUND');
+  if (
+    symbolGroup.marketUniverse.exchange !== wallet.exchange ||
+    symbolGroup.marketUniverse.marketType !== wallet.marketType ||
+    symbolGroup.marketUniverse.baseCurrency.toUpperCase() !== wallet.baseCurrency.toUpperCase()
+  ) {
+    throw new Error('WALLET_MARKET_CONTEXT_MISMATCH');
+  }
+
+  const derivedMode = wallet.mode;
+  const derivedPaperStartBalance = Math.max(0, wallet.paperInitialBalance);
+  const derivedMarketType = wallet.marketType;
+  const derivedExchange = wallet.exchange;
+  const derivedApiKeyId = wallet.mode === 'LIVE' ? wallet.apiKeyId : null;
+  if (wallet.mode === 'LIVE' && !derivedApiKeyId) {
+    throw new Error('WALLET_LIVE_API_KEY_REQUIRED');
+  }
+
+  const nextState: BotConsentState = {
+    mode: derivedMode,
+    liveOptIn: derivedMode === 'LIVE' ? botData.liveOptIn : false,
+    consentTextVersion: botData.consentTextVersion,
+  };
+  validateLiveConsentState(nextState);
+
   const derivedMaxOpenPositions = deriveMaxOpenPositionsFromStrategy(strategy.config);
   if (botData.isActive) {
     assertBotActivationExchangeCapability({
       exchange: derivedExchange,
-      mode: botData.mode,
+      mode: derivedMode,
     });
   }
-  const resolvedApiKeyId = await resolveCompatibleBotApiKey({
-    userId,
-    exchange: derivedExchange,
-    requestedApiKeyId: apiKeyId,
-    requireForActivation: botData.mode === 'LIVE' && botData.isActive,
-  });
 
   if (botData.isActive) {
     await assertNoDuplicateActiveBotByStrategyAndSymbolGroup({
@@ -157,18 +173,23 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
   }
 
   const createdBotId = await prisma.$transaction(async (tx) => {
-    await assertSubscriptionAllowsBotCreate(userId, botData.mode, tx);
+    await assertSubscriptionAllowsBotCreate(userId, derivedMode, tx);
 
     const createdBot = await tx.bot.create({
       data: {
         userId,
-        ...botData,
-        apiKeyId: resolvedApiKeyId,
+        name: botData.name,
+        mode: derivedMode,
+        walletId: wallet.id,
+        paperStartBalance: derivedPaperStartBalance,
+        apiKeyId: derivedApiKeyId,
         exchange: derivedExchange,
         marketType: derivedMarketType,
         positionMode: 'ONE_WAY',
+        isActive: botData.isActive,
+        liveOptIn: derivedMode === 'LIVE' ? botData.liveOptIn : false,
         maxOpenPositions: derivedMaxOpenPositions,
-        consentTextVersion: botData.liveOptIn
+        consentTextVersion: derivedMode === 'LIVE' && botData.liveOptIn
           ? normalizeConsentTextVersion(botData.consentTextVersion)
           : null,
       },
@@ -210,11 +231,11 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
     return createdBot.id;
   });
 
-  if (botData.liveOptIn && botData.consentTextVersion) {
+  if (derivedMode === 'LIVE' && botData.liveOptIn && botData.consentTextVersion) {
     await writeLiveConsentAudit({
       userId,
       botId: createdBotId,
-      mode: botData.mode,
+      mode: derivedMode,
       liveOptIn: botData.liveOptIn,
       consentTextVersion: normalizeConsentTextVersion(botData.consentTextVersion)!,
       action: 'bot.live_consent.accepted',
@@ -231,36 +252,65 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
   const existing = await getBot(userId, id);
   if (!existing) return null;
 
+  const strategyIdUpdateRequested = Object.prototype.hasOwnProperty.call(data, 'strategyId');
+  const requestedStrategyId = strategyIdUpdateRequested ? (data.strategyId ?? null) : undefined;
+  const marketGroupIdUpdateRequested = Object.prototype.hasOwnProperty.call(data, 'marketGroupId');
+  const requestedMarketGroupId = marketGroupIdUpdateRequested ? (data.marketGroupId ?? null) : undefined;
+  const walletIdUpdateRequested = Object.prototype.hasOwnProperty.call(data, 'walletId');
+  const requestedWalletId = walletIdUpdateRequested ? (data.walletId ?? null) : undefined;
+
+  let targetWallet = existing.walletId
+    ? await getOwnedWalletForBotContext({ userId, walletId: existing.walletId })
+    : null;
+  if (walletIdUpdateRequested) {
+    if (!requestedWalletId) {
+      throw new Error('WALLET_NOT_FOUND');
+    }
+    targetWallet = await getOwnedWalletForBotContext({ userId, walletId: requestedWalletId });
+    if (!targetWallet) {
+      throw new Error('WALLET_NOT_FOUND');
+    }
+  }
+
+  const nextMode = targetWallet?.mode ?? existing.mode;
+  const nextLiveOptIn = nextMode === 'LIVE' ? (data.liveOptIn ?? existing.liveOptIn) : false;
   const nextState: BotConsentState = {
-    mode: data.mode ?? existing.mode,
-    liveOptIn: data.liveOptIn ?? existing.liveOptIn,
+    mode: nextMode,
+    liveOptIn: nextLiveOptIn,
     consentTextVersion:
       data.consentTextVersion !== undefined
         ? data.consentTextVersion
         : existing.consentTextVersion,
   };
   validateLiveConsentState(nextState);
-
   const nextConsentTextVersion = nextState.liveOptIn
     ? normalizeConsentTextVersion(nextState.consentTextVersion)
     : null;
 
-  const strategyIdUpdateRequested = Object.prototype.hasOwnProperty.call(data, 'strategyId');
-  const requestedStrategyId = strategyIdUpdateRequested ? (data.strategyId ?? null) : undefined;
-  const marketGroupIdUpdateRequested = Object.prototype.hasOwnProperty.call(data, 'marketGroupId');
-  const requestedMarketGroupId = marketGroupIdUpdateRequested ? (data.marketGroupId ?? null) : undefined;
-  const apiKeyIdUpdateRequested = Object.prototype.hasOwnProperty.call(data, 'apiKeyId');
-  const requestedApiKeyId = apiKeyIdUpdateRequested ? (data.apiKeyId ?? null) : undefined;
   const nextIsActive = data.isActive ?? existing.isActive;
-  const nextMode = nextState.mode;
-  let targetExchange = existing.exchange as Exchange;
-  let targetMarketType = existing.marketType as 'FUTURES' | 'SPOT';
+  const targetExchange = (targetWallet?.exchange ?? existing.exchange) as Exchange;
+  const targetMarketType = (targetWallet?.marketType ?? existing.marketType) as 'FUTURES' | 'SPOT';
+  const targetBaseCurrency = targetWallet?.baseCurrency?.toUpperCase() ?? 'USDT';
+  const targetPaperStartBalance = targetWallet
+    ? Math.max(0, targetWallet.paperInitialBalance)
+    : existing.paperStartBalance;
+  const resolvedApiKeyId =
+    nextMode === 'LIVE' ? (targetWallet?.apiKeyId ?? existing.apiKeyId ?? null) : null;
+
+  if (nextMode === 'LIVE' && !resolvedApiKeyId) {
+    throw new Error('WALLET_LIVE_API_KEY_REQUIRED');
+  }
 
   if (requestedMarketGroupId) {
     const resolvedGroup = await resolveCreateMarketGroupToSymbolGroup(userId, requestedMarketGroupId);
     if (!resolvedGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
-    targetExchange = resolvedGroup.marketUniverse.exchange;
-    targetMarketType = resolvedGroup.marketUniverse.marketType;
+    if (
+      resolvedGroup.marketUniverse.exchange !== targetExchange ||
+      resolvedGroup.marketUniverse.marketType !== targetMarketType ||
+      resolvedGroup.marketUniverse.baseCurrency.toUpperCase() !== targetBaseCurrency
+    ) {
+      throw new Error('WALLET_MARKET_CONTEXT_MISMATCH');
+    }
   }
 
   if (nextIsActive) {
@@ -305,32 +355,23 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
     }
   }
 
-  const shouldRequireLiveApiKey = nextMode === 'LIVE' && nextIsActive;
-  let resolvedApiKeyId = existing.apiKeyId ?? null;
-  if (shouldRequireLiveApiKey || apiKeyIdUpdateRequested) {
-    const desiredApiKeyId =
-      requestedApiKeyId !== undefined ? requestedApiKeyId : (existing.apiKeyId ?? null);
-    resolvedApiKeyId = await resolveCompatibleBotApiKey({
-      userId,
-      exchange: targetExchange,
-      requestedApiKeyId: desiredApiKeyId,
-      requireForActivation: shouldRequireLiveApiKey,
-    });
-  }
-
   const {
     strategyId: _ignoredStrategyId,
     marketGroupId: _ignoredMarketGroupId,
-    apiKeyId: _ignoredApiKeyId,
+    walletId: _ignoredWalletId,
     ...botData
   } = data;
   const updated = await prisma.bot.update({
     where: { id: existing.id },
     data: {
       ...botData,
+      mode: nextMode,
+      walletId: targetWallet?.id ?? existing.walletId ?? null,
+      paperStartBalance: targetPaperStartBalance,
       exchange: targetExchange,
       marketType: targetMarketType,
       apiKeyId: resolvedApiKeyId,
+      liveOptIn: nextLiveOptIn,
       consentTextVersion: nextConsentTextVersion,
     },
     include: {

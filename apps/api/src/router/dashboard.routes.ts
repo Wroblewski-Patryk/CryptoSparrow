@@ -14,6 +14,7 @@ import logsRouter from '../modules/logs/logs.routes';
 import marketStreamRouter from '../modules/market-stream/marketStream.routes';
 import reportsRouter from '../modules/reports/reports.routes';
 import iconsRouter from '../modules/icons/icons.routes';
+import walletsRouter from '../modules/wallets/wallets.routes';
 
 const router = Router();
 router.use(requireAuth);
@@ -36,6 +37,9 @@ router.use('/strategies', strategiesRouter)
 
 // Module - Markets
 router.use('/markets', marketsRouter);
+
+// Module - Wallets
+router.use('/wallets', walletsRouter);
 
 // Module - Bots
 router.use('/bots', botsRouter);

@@ -2,6 +2,19 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 
 const botWithStrategyInclude = Prisma.validator<Prisma.BotInclude>()({
+  wallet: {
+    select: {
+      id: true,
+      name: true,
+      mode: true,
+      exchange: true,
+      marketType: true,
+      baseCurrency: true,
+      paperInitialBalance: true,
+      liveAllocationMode: true,
+      liveAllocationValue: true,
+    },
+  },
   botStrategies: {
     select: {
       strategyId: true,

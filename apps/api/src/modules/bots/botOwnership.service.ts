@@ -3,7 +3,18 @@ import { prisma } from '../../prisma/client';
 export const getOwnedBot = async (userId: string, botId: string) =>
   prisma.bot.findFirst({
     where: { id: botId, userId },
-    select: { id: true, marketType: true, exchange: true, apiKeyId: true },
+    select: {
+      id: true,
+      marketType: true,
+      exchange: true,
+      apiKeyId: true,
+      walletId: true,
+      wallet: {
+        select: {
+          baseCurrency: true,
+        },
+      },
+    },
   });
 
 export const getOwnedBotRuntimeSession = async (
@@ -36,7 +47,7 @@ export const getOwnedSymbolGroup = async (userId: string, symbolGroupId: string)
     select: {
       id: true,
       marketUniverse: {
-        select: { marketType: true, exchange: true },
+        select: { marketType: true, exchange: true, baseCurrency: true },
       },
     },
   });
@@ -57,5 +68,11 @@ export const validateSymbolGroupForBot = async (params: {
   }
   if (symbolGroup.marketUniverse.exchange !== bot.exchange) {
     throw new Error('BOT_MARKET_GROUP_EXCHANGE_MISMATCH');
+  }
+  if (
+    bot.wallet &&
+    symbolGroup.marketUniverse.baseCurrency.toUpperCase() !== bot.wallet.baseCurrency.toUpperCase()
+  ) {
+    throw new Error('WALLET_MARKET_CONTEXT_MISMATCH');
   }
 };

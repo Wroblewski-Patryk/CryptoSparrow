@@ -117,11 +117,26 @@ const STRATEGY_SEED = [
   },
 ];
 
+const WALLET_SEED = [
+  {
+    name: 'Paper Core Wallet',
+    mode: 'PAPER' as const,
+    exchange: 'BINANCE' as const,
+    marketType: 'FUTURES' as const,
+    baseCurrency: 'USDT',
+    paperInitialBalance: 10_000,
+    liveAllocationMode: null as 'PERCENT' | 'FIXED' | null,
+    liveAllocationValue: null as number | null,
+    apiKeyId: null as string | null,
+  },
+];
+
 const BOT_SEED = [
   {
     name: 'Test Bot',
+    walletName: 'Paper Core Wallet',
     mode: 'PAPER' as const,
-    paperStartBalance: 10000,
+    paperStartBalance: 10_000,
     exchange: 'BINANCE' as const,
     marketType: 'FUTURES' as const,
     positionMode: 'ONE_WAY' as const,
@@ -276,7 +291,51 @@ async function main() {
     }
   }
 
+  const walletIds = new Map<string, string>();
+  for (const wallet of WALLET_SEED) {
+    const existing = await prisma.wallet.findFirst({
+      where: {
+        userId: user.id,
+        name: wallet.name,
+      },
+      select: { id: true },
+    });
+
+    const walletData = {
+      name: wallet.name,
+      mode: wallet.mode,
+      exchange: wallet.exchange,
+      marketType: wallet.marketType,
+      baseCurrency: wallet.baseCurrency,
+      paperInitialBalance: wallet.paperInitialBalance,
+      liveAllocationMode: wallet.liveAllocationMode,
+      liveAllocationValue: wallet.liveAllocationValue,
+      apiKeyId: wallet.apiKeyId,
+    };
+
+    if (existing) {
+      const updated = await prisma.wallet.update({
+        where: { id: existing.id },
+        data: walletData,
+      });
+      walletIds.set(wallet.name, updated.id);
+    } else {
+      const created = await prisma.wallet.create({
+        data: {
+          userId: user.id,
+          ...walletData,
+        },
+      });
+      walletIds.set(wallet.name, created.id);
+    }
+  }
+
   for (const botSeed of BOT_SEED) {
+    const walletId = walletIds.get(botSeed.walletName);
+    if (!walletId) {
+      continue;
+    }
+
     const existingBot = await prisma.bot.findFirst({
       where: {
         userId: user.id,
@@ -296,6 +355,7 @@ async function main() {
       liveOptIn: botSeed.liveOptIn,
       maxOpenPositions: botSeed.maxOpenPositions,
       apiKeyId: null,
+      walletId,
     };
 
     const bot = existingBot

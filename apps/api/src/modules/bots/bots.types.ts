@@ -7,9 +7,7 @@ export const AssistantSafetyModeSchema = z.enum(['STRICT', 'BALANCED', 'EXPERIME
 
 export const CreateBotSchema = z.object({
   name: z.string().trim().min(1),
-  mode: BotModeSchema.default('PAPER'),
-  paperStartBalance: z.number().min(0).max(100_000_000).default(10_000),
-  apiKeyId: z.string().trim().min(1).optional().nullable(),
+  walletId: z.string().trim().min(1),
   strategyId: z.string().trim().min(1),
   marketGroupId: z.string().trim().min(1),
   isActive: z.boolean().default(false),
@@ -29,6 +27,7 @@ export const UpdateBotSchema = CreateBotSchema.partial().extend({
   marketType: TradeMarketSchema.optional(),
   strategyId: z.string().trim().min(1).optional().nullable(),
   marketGroupId: z.string().trim().min(1).optional().nullable(),
+  walletId: z.string().trim().min(1).optional().nullable(),
 });
 export const ListBotsQuerySchema = z.object({
   marketType: TradeMarketSchema.optional(),

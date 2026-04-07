@@ -47,6 +47,7 @@ model User {
   backtestReports          BacktestReport[]
   subscriptionAssignments  UserSubscription[]
   paymentIntents           PaymentIntent[]
+  wallets                  Wallet[]
   logs                     Log[]
 
   createdAt DateTime @default(now())
@@ -188,6 +189,7 @@ model ApiKey {
   lastUsed  DateTime?
   user      User      @relation(fields: [userId], references: [id])
   bots      Bot[]
+  wallets   Wallet[]
 }
 
 enum Exchange {
@@ -304,12 +306,14 @@ model Bot {
   consentTextVersion String?
   maxOpenPositions   Int          @default(1)
   apiKeyId           String?
+  walletId           String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   user                     User                      @relation(fields: [userId], references: [id])
   apiKey                   ApiKey?                   @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  wallet                   Wallet?                   @relation(fields: [walletId], references: [id], onDelete: SetNull)
   botStrategies            BotStrategy[]
   botMarketGroups          BotMarketGroup[]
   marketGroupStrategyLinks MarketGroupStrategyLink[]
@@ -328,6 +332,7 @@ model Bot {
 
   @@index([userId])
   @@index([apiKeyId])
+  @@index([walletId])
   @@index([userId, exchange])
 }
 
@@ -653,11 +658,46 @@ enum BotMode {
   LIVE
 }
 
+enum WalletAllocationMode {
+  PERCENT
+  FIXED
+}
+
+model Wallet {
+  id     String @id @default(uuid())
+  userId String
+
+  name               String
+  mode               BotMode
+  exchange           Exchange    @default(BINANCE)
+  marketType         TradeMarket @default(FUTURES)
+  baseCurrency       String      @default("USDT")
+  paperInitialBalance Float      @default(10000)
+  liveAllocationMode WalletAllocationMode?
+  liveAllocationValue Float?
+  apiKeyId           String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  apiKey    ApiKey?   @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  bots      Bot[]
+  positions Position[]
+  orders    Order[]
+  trades    Trade[]
+
+  @@index([userId])
+  @@index([apiKeyId])
+  @@index([userId, exchange, marketType, baseCurrency])
+}
+
 model Position {
   id             String                 @id @default(uuid())
   userId         String
   botId          String?
   strategyId     String?
+  walletId       String?
   externalId     String?
   origin         TradingRecordOrigin    @default(BOT)
   managementMode PositionManagementMode @default(BOT_MANAGED)
@@ -682,6 +722,7 @@ model Position {
   user       User        @relation(fields: [userId], references: [id])
   bot        Bot?        @relation(fields: [botId], references: [id])
   strategy   Strategy?   @relation(fields: [strategyId], references: [id])
+  wallet     Wallet?     @relation(fields: [walletId], references: [id], onDelete: SetNull)
   orders     Order[]
   trades     Trade[]
   orderFills OrderFill[]
@@ -693,6 +734,7 @@ model Position {
   @@index([userId, origin, openedAt])
   @@index([userId, managementMode, openedAt])
   @@index([botId])
+  @@index([walletId])
   @@index([strategyId])
   @@index([externalId])
   @@index([symbol])
@@ -705,6 +747,7 @@ model Order {
   botId          String?
   strategyId     String?
   positionId     String?
+  walletId       String?
   origin         TradingRecordOrigin    @default(BOT)
   managementMode PositionManagementMode @default(BOT_MANAGED)
   syncState      SyncState              @default(IN_SYNC)
@@ -736,6 +779,7 @@ model Order {
   bot      Bot?        @relation(fields: [botId], references: [id])
   strategy Strategy?   @relation(fields: [strategyId], references: [id])
   position Position?   @relation(fields: [positionId], references: [id])
+  wallet   Wallet?     @relation(fields: [walletId], references: [id], onDelete: SetNull)
   trades   Trade[]
   fills    OrderFill[]
 
@@ -746,6 +790,7 @@ model Order {
   @@index([userId, origin, createdAt])
   @@index([userId, managementMode, createdAt])
   @@index([botId])
+  @@index([walletId])
   @@index([strategyId])
   @@index([positionId])
   @@index([exchangeOrderId])
@@ -762,6 +807,7 @@ model Trade {
   strategyId     String?
   orderId        String?
   positionId     String?
+  walletId       String?
   origin         TradingRecordOrigin    @default(BOT)
   managementMode PositionManagementMode @default(BOT_MANAGED)
 
@@ -787,10 +833,12 @@ model Trade {
   strategy Strategy?   @relation(fields: [strategyId], references: [id])
   order    Order?      @relation(fields: [orderId], references: [id])
   position Position?   @relation(fields: [positionId], references: [id])
+  wallet   Wallet?     @relation(fields: [walletId], references: [id], onDelete: SetNull)
   fills    OrderFill[]
 
   @@index([userId])
   @@index([botId])
+  @@index([walletId])
   @@index([strategyId])
   @@index([orderId])
   @@index([positionId])

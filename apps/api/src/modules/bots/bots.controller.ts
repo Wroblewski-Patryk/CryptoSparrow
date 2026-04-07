@@ -153,17 +153,14 @@ export const createBot = async (req: Request, res: Response) => {
     if (error instanceof Error && error.message === 'SYMBOL_GROUP_NOT_FOUND') {
       return sendError(res, 400, 'marketGroupId is invalid for current user');
     }
-    if (error instanceof Error && error.message === 'BOT_MARKET_GROUP_MARKET_TYPE_MISMATCH') {
-      return sendError(res, 400, 'marketGroup market type must match bot marketType');
+    if (error instanceof Error && error.message === 'WALLET_NOT_FOUND') {
+      return sendError(res, 400, 'walletId is invalid for current user');
     }
-    if (error instanceof Error && error.message === 'BOT_MARKET_GROUP_EXCHANGE_MISMATCH') {
-      return sendError(res, 400, 'marketGroup exchange must match bot exchange');
+    if (error instanceof Error && error.message === 'WALLET_MARKET_CONTEXT_MISMATCH') {
+      return sendError(res, 400, 'wallet exchange/market/baseCurrency must match selected market group context');
     }
-    if (error instanceof Error && error.message === 'BOT_LIVE_API_KEY_NOT_FOUND') {
-      return sendError(res, 400, 'no compatible API key found for live bot exchange context');
-    }
-    if (error instanceof Error && error.message === 'BOT_LIVE_API_KEY_EXCHANGE_MISMATCH') {
-      return sendError(res, 400, 'apiKeyId exchange must match bot exchange context');
+    if (error instanceof Error && error.message === 'WALLET_LIVE_API_KEY_REQUIRED') {
+      return sendError(res, 400, 'selected LIVE wallet requires linked exchange api key');
     }
     if (error instanceof Error && error.message === 'ACTIVE_BOT_STRATEGY_MARKET_GROUP_DUPLICATE') {
       return sendError(res, 409, 'active bot already exists for this strategy + market group pair');
@@ -196,14 +193,14 @@ export const updateBot = async (req: Request, res: Response) => {
     if (error instanceof Error && error.message === 'SYMBOL_GROUP_NOT_FOUND') {
       return sendError(res, 400, 'marketGroupId is invalid for current user');
     }
-    if (error instanceof Error && error.message === 'BOT_MARKET_GROUP_EXCHANGE_MISMATCH') {
-      return sendError(res, 400, 'marketGroup exchange must match bot exchange');
+    if (error instanceof Error && error.message === 'WALLET_NOT_FOUND') {
+      return sendError(res, 400, 'walletId is invalid for current user');
     }
-    if (error instanceof Error && error.message === 'BOT_LIVE_API_KEY_NOT_FOUND') {
-      return sendError(res, 400, 'no compatible API key found for live bot exchange context');
+    if (error instanceof Error && error.message === 'WALLET_MARKET_CONTEXT_MISMATCH') {
+      return sendError(res, 400, 'wallet exchange/market/baseCurrency must match selected market group context');
     }
-    if (error instanceof Error && error.message === 'BOT_LIVE_API_KEY_EXCHANGE_MISMATCH') {
-      return sendError(res, 400, 'apiKeyId exchange must match bot exchange context');
+    if (error instanceof Error && error.message === 'WALLET_LIVE_API_KEY_REQUIRED') {
+      return sendError(res, 400, 'selected LIVE wallet requires linked exchange api key');
     }
     if (error instanceof Error && error.message === 'ACTIVE_BOT_STRATEGY_MARKET_GROUP_DUPLICATE') {
       return sendError(res, 409, 'active bot already exists for this strategy + market group pair');
@@ -274,6 +271,9 @@ export const createBotMarketGroup = async (req: Request, res: Response) => {
     if (error instanceof Error && error.message === 'BOT_MARKET_GROUP_EXCHANGE_MISMATCH') {
       return sendError(res, 400, 'symbolGroup exchange must match bot exchange');
     }
+    if (error instanceof Error && error.message === 'WALLET_MARKET_CONTEXT_MISMATCH') {
+      return sendError(res, 400, 'wallet exchange/market/baseCurrency must match selected market group context');
+    }
     return sendValidationError(res, error);
   }
 };
@@ -297,6 +297,9 @@ export const updateBotMarketGroup = async (req: Request, res: Response) => {
     }
     if (error instanceof Error && error.message === 'BOT_MARKET_GROUP_EXCHANGE_MISMATCH') {
       return sendError(res, 400, 'symbolGroup exchange must match bot exchange');
+    }
+    if (error instanceof Error && error.message === 'WALLET_MARKET_CONTEXT_MISMATCH') {
+      return sendError(res, 400, 'wallet exchange/market/baseCurrency must match selected market group context');
     }
     return sendValidationError(res, error);
   }
