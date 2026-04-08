@@ -3,14 +3,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
+import { PAGE_TITLE_ACTION_SAVE_CLASS, PageTitle } from '@/ui/layout/dashboard/PageTitle';
 import StrategiesForm from '@/features/strategies/components/StrategyForm';
 import { getStrategy, updateStrategy } from '@/features/strategies/api/strategies.api';
 import { StrategyFormState } from '@/features/strategies/types/StrategyForm.type';
 import { dtoToForm } from '@/features/strategies/utils/StrategyForm.map';
 import { handleError } from '@/lib/handleError';
 import { ErrorState, LoadingState } from '@/ui/components/ViewState';
-import { LuListChecks } from 'react-icons/lu';
+import { LuListChecks, LuPencilLine, LuSave } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
 
 const STRATEGY_USED_BY_ACTIVE_BOT_ERROR = 'strategy is used by active bot and cannot be edited';
@@ -32,26 +32,28 @@ export default function StrategiesEditPage() {
             activeBotTitle: 'Strategia jest aktualnie uzywana przez aktywnego bota',
             activeBotDescription: 'Wylacz bota lub ustaw go jako nieaktywny przed edycja strategii.',
             saveFailed: 'Blad zapisu strategii',
-            save: 'Zapisz strategie',
-            titleFallback: 'Edycja strategii',
+            save: 'Save',
+            titleFallback: 'Strategie',
             breadcrumbStrategies: 'Strategie',
             breadcrumbEdit: 'Edycja',
             loading: 'Ladowanie strategii',
             errorTitle: 'Nie udalo sie pobrac strategii',
             backToList: 'Powrot do listy',
+            updatePrefix: 'Aktualizacja:',
           }
         : {
             updated: 'Strategy updated',
             activeBotTitle: 'Strategy is currently used by an active bot',
             activeBotDescription: 'Disable the bot or set it inactive before editing strategy.',
             saveFailed: 'Failed to save strategy',
-            save: 'Save strategy',
-            titleFallback: 'Edit strategy',
+            save: 'Save',
+            titleFallback: 'Strategies',
             breadcrumbStrategies: 'Strategies',
             breadcrumbEdit: 'Edit',
             loading: 'Loading strategy',
             errorTitle: 'Could not load strategy',
             backToList: 'Back to list',
+            updatePrefix: 'Update:',
           },
     [locale]
   );
@@ -91,19 +93,22 @@ export default function StrategiesEditPage() {
   return (
     <section className='w-full space-y-4'>
       <PageTitle
-        title={initial ? initial.name : copy.titleFallback}
+        title={copy.titleFallback}
         icon={<LuListChecks className='h-5 w-5' />}
         breadcrumb={[
           { label: t('dashboard.common.dashboard'), href: '/dashboard' },
           { label: copy.breadcrumbStrategies, href: '/dashboard/strategies/list' },
-          { label: copy.breadcrumbEdit },
+          {
+            label: initial ? `${copy.updatePrefix} ${initial.name}` : copy.breadcrumbEdit,
+            icon: <LuPencilLine className='h-3.5 w-3.5' />,
+          },
         ]}
-        onAdd={() => {
-          const form = document.getElementById(STRATEGY_FORM_ID);
-          if (form instanceof HTMLFormElement) form.requestSubmit();
-        }}
-        addLabel={copy.save}
-        addButtonClassName='btn btn-success mt-4 md:mt-0'
+        actions={
+          <button type='submit' form={STRATEGY_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS}>
+            <LuSave className='h-4 w-4' />
+            {copy.save}
+          </button>
+        }
       />
 
       {loading ? <LoadingState title={copy.loading} /> : null}

@@ -3,12 +3,12 @@
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 import { toast } from 'sonner';
-import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
+import { PAGE_TITLE_ACTION_SAVE_CLASS, PageTitle } from '@/ui/layout/dashboard/PageTitle';
 import StrategiesForm from '@/features/strategies/components/StrategyForm';
 import { StrategyFormState } from '@/features/strategies/types/StrategyForm.type';
 import { createStrategy } from '@/features/strategies/api/strategies.api';
 import { handleError } from '@/lib/handleError';
-import { LuListChecks } from 'react-icons/lu';
+import { LuListChecks, LuPlus, LuSave } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
 
 const STRATEGY_FORM_ID = 'strategy-form-create';
@@ -23,16 +23,16 @@ export default function StrategiesCreatePage() {
         ? {
             created: 'Strategia utworzona',
             createFailed: 'Blad tworzenia strategii',
-            title: 'Nowa strategia',
-            save: 'Zapisz strategie',
+            title: 'Strategie',
+            save: 'Save',
             breadcrumbStrategies: 'Strategie',
             breadcrumbCreate: 'Tworzenie',
           }
         : {
             created: 'Strategy created',
             createFailed: 'Failed to create strategy',
-            title: 'New strategy',
-            save: 'Save strategy',
+            title: 'Strategies',
+            save: 'Save',
             breadcrumbStrategies: 'Strategies',
             breadcrumbCreate: 'Create',
           },
@@ -57,14 +57,14 @@ export default function StrategiesCreatePage() {
         breadcrumb={[
           { label: t('dashboard.common.dashboard'), href: '/dashboard' },
           { label: copy.breadcrumbStrategies, href: '/dashboard/strategies/list' },
-          { label: copy.breadcrumbCreate },
+          { label: copy.breadcrumbCreate, icon: <LuPlus className='h-3.5 w-3.5' /> },
         ]}
-        onAdd={() => {
-          const form = document.getElementById(STRATEGY_FORM_ID);
-          if (form instanceof HTMLFormElement) form.requestSubmit();
-        }}
-        addLabel={copy.save}
-        addButtonClassName='btn btn-success mt-4 md:mt-0'
+        actions={
+          <button type='submit' form={STRATEGY_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS}>
+            <LuSave className='h-4 w-4' />
+            {copy.save}
+          </button>
+        }
       />
 
       <StrategiesForm formId={STRATEGY_FORM_ID} onSubmit={handleCreate} />

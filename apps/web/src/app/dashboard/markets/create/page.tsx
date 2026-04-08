@@ -3,13 +3,15 @@
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
+import { PAGE_TITLE_ACTION_SAVE_CLASS, PageTitle } from '@/ui/layout/dashboard/PageTitle';
 import MarketUniverseForm from '@/features/markets/components/MarketUniverseForm';
 import { createMarketUniverse } from '@/features/markets/services/markets.service';
 import { CreateMarketUniverseInput } from '@/features/markets/types/marketUniverse.type';
 import { handleError } from '@/lib/handleError';
-import { LuChartCandlestick } from 'react-icons/lu';
+import { LuChartCandlestick, LuPlus, LuSave } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
+
+const MARKET_FORM_ID = 'market-universe-form-create';
 
 export default function MarketsCreatePage() {
   const { locale } = useI18n();
@@ -22,18 +24,18 @@ export default function MarketsCreatePage() {
         ? {
             created: 'Grupa rynkow utworzona',
             createFailed: 'Nie udalo sie utworzyc grupy rynkow',
-            title: 'Dodaj grupe rynkow',
+            title: 'Rynki',
             breadcrumbMarkets: 'Rynki',
             breadcrumbCreate: 'Tworzenie',
-            submitLabel: 'Utworz grupe',
+            submitLabel: 'Save',
           }
         : {
             created: 'Market group created',
             createFailed: 'Could not create market group',
-            title: 'Add market group',
+            title: 'Markets',
             breadcrumbMarkets: 'Markets',
             breadcrumbCreate: 'Create',
-            submitLabel: 'Create group',
+            submitLabel: 'Save',
           },
     [locale]
   );
@@ -59,12 +61,17 @@ export default function MarketsCreatePage() {
         breadcrumb={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: copy.breadcrumbMarkets, href: '/dashboard/markets/list' },
-          { label: copy.breadcrumbCreate },
+          { label: copy.breadcrumbCreate, icon: <LuPlus className='h-3.5 w-3.5' /> },
         ]}
+        actions={
+          <button type='submit' form={MARKET_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS}>
+            <LuSave className='h-4 w-4' />
+            {copy.submitLabel}
+          </button>
+        }
       />
 
-      <MarketUniverseForm mode='create' submitLabel={copy.submitLabel} submitting={submitting} onSubmit={handleCreate} />
+      <MarketUniverseForm formId={MARKET_FORM_ID} mode='create' submitting={submitting} onSubmit={handleCreate} />
     </section>
   );
 }
-

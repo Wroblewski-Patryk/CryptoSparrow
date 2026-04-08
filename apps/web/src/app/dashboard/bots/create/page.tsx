@@ -1,6 +1,8 @@
-import { PageTitle } from "@/ui/layout/dashboard/PageTitle";
+import { PAGE_TITLE_ACTION_SAVE_CLASS, PageTitle } from "@/ui/layout/dashboard/PageTitle";
 import BotCreateEditForm from "@/features/bots/components/BotCreateEditForm";
-import { LuBot } from "react-icons/lu";
+import { LuBot, LuPencilLine, LuPlus, LuSave } from "react-icons/lu";
+
+const BOT_FORM_ID = "bot-form-create";
 
 type BotsCreatePageProps = {
   searchParams?: Promise<{
@@ -11,8 +13,9 @@ type BotsCreatePageProps = {
 export default async function BotsCreatePage({ searchParams }: BotsCreatePageProps) {
   const params = searchParams ? await searchParams : undefined;
   const editId = params?.editId?.trim() ? params.editId : null;
-  const pageTitle = editId ? "Edytuj bota" : "Nowy bot";
-  const breadcrumbLeaf = editId ? "Edit" : "Create";
+  const pageTitle = "Bots";
+  const breadcrumbLeaf = editId ? "Update" : "Create";
+  const breadcrumbIcon = editId ? <LuPencilLine className="h-3.5 w-3.5" /> : <LuPlus className="h-3.5 w-3.5" />;
 
   return (
     <section className="w-full space-y-4">
@@ -22,11 +25,17 @@ export default async function BotsCreatePage({ searchParams }: BotsCreatePagePro
         breadcrumb={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Bots", href: "/dashboard/bots" },
-          { label: breadcrumbLeaf },
+          { label: breadcrumbLeaf, icon: breadcrumbIcon },
         ]}
+        actions={
+          <button type="submit" form={BOT_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS}>
+            <LuSave className="h-4 w-4" />
+            Save
+          </button>
+        }
       />
 
-      <BotCreateEditForm editId={editId} />
+      <BotCreateEditForm formId={BOT_FORM_ID} editId={editId} />
     </section>
   );
 }

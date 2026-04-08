@@ -1,6 +1,6 @@
 import { PageTitle } from "@/ui/layout/dashboard/PageTitle";
 import BotsManagement from "@/features/bots/components/BotsManagement";
-import { LuBot } from "react-icons/lu";
+import { LuBot, LuList } from "react-icons/lu";
 
 type BotsRuntimePageProps = {
   searchParams?: Promise<{
@@ -15,12 +15,12 @@ export default async function BotsRuntimePage({ searchParams }: BotsRuntimePageP
   return (
     <section className="w-full space-y-4">
       <PageTitle
-        title="Operacje runtime"
+        title="Bots"
         icon={<LuBot className="h-5 w-5" />}
         breadcrumb={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Bots", href: "/dashboard/bots" },
-          { label: "Runtime" },
+          { label: "Runtime", icon: <LuList className="h-3.5 w-3.5" /> },
         ]}
       />
 

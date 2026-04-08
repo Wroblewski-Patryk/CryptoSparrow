@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { type ReactNode } from "react";
-import { LuHouse } from "react-icons/lu";
+import { LuHouse, LuPlus } from "react-icons/lu";
 import { useI18n } from "../../../i18n/I18nProvider";
 
 interface BreadcrumbItem {
   label: string;
   href?: string;
+  icon?: ReactNode;
 }
 
 interface NormalizedBreadcrumbItem extends BreadcrumbItem {
@@ -22,7 +23,13 @@ interface PageTitleProps {
   icon?: ReactNode;
   addButtonClassName?: string;
   variant?: "boxed" | "flat";
+  actions?: ReactNode;
 }
+
+export const PAGE_TITLE_ACTION_BASE_CLASS =
+  "btn btn-xs h-7 min-h-7 border transition-colors duration-150";
+export const PAGE_TITLE_ACTION_CREATE_CLASS = `${PAGE_TITLE_ACTION_BASE_CLASS} border-primary/45 bg-primary/10 text-primary hover:border-primary/70 hover:bg-primary/20`;
+export const PAGE_TITLE_ACTION_SAVE_CLASS = `${PAGE_TITLE_ACTION_BASE_CLASS} border-success/45 bg-success/10 text-success hover:border-success/70 hover:bg-success/20`;
 
 export function PageTitle({
   title,
@@ -32,6 +39,7 @@ export function PageTitle({
   icon,
   addButtonClassName,
   variant = "boxed",
+  actions,
 }: PageTitleProps) {
   const { t } = useI18n();
 
@@ -45,8 +53,8 @@ export function PageTitle({
 
   const isDashboardLandingView =
     variant === "flat" &&
-    normalizedBreadcrumb.length >= 2 &&
-    normalizedBreadcrumb[0]?.href === "/dashboard";
+    normalizedBreadcrumb[0]?.href === "/dashboard" &&
+    normalizedBreadcrumb.length <= 1;
 
   const renderedBreadcrumb: NormalizedBreadcrumbItem[] = isDashboardLandingView
     ? [{ label: "__dashboard-spacer__", hidden: true }, ...normalizedBreadcrumb]
@@ -62,9 +70,18 @@ export function PageTitle({
       : Math.max(0, renderedBreadcrumb.length - 1);
 
   const wrapperClassName =
-    variant === "flat"
-      ? "mb-6 md:flex md:items-center md:justify-between"
-      : "mb-6 rounded-box border border-base-300/60 bg-base-100/80 px-5 py-4 md:flex md:items-center md:justify-between";
+    "mb-6 rounded-box md:flex md:items-center md:justify-between";
+
+  const legacyAction = onAdd ? (
+    <button type="button" className={addButtonClassName ?? PAGE_TITLE_ACTION_CREATE_CLASS} onClick={onAdd}>
+      <span className="inline-flex items-center gap-1">
+        <LuPlus className="h-3.5 w-3.5" />
+        <span>{addLabel || t("dashboard.common.add")}</span>
+      </span>
+    </button>
+  ) : null;
+
+  const renderedActions = actions ?? legacyAction;
 
   return (
     <div className={wrapperClassName}>
@@ -118,10 +135,14 @@ export function PageTitle({
                 <li key={key}>
                   {item.href ? (
                     <Link href={item.href} className={crumbBaseClass}>
+                      {item.icon ? <span className="inline-flex h-3.5 w-3.5 items-center justify-center">{item.icon}</span> : null}
                       {item.label}
                     </Link>
                   ) : (
-                    <span className={crumbBaseClass}>{item.label}</span>
+                    <span className={crumbBaseClass}>
+                      {item.icon ? <span className="inline-flex h-3.5 w-3.5 items-center justify-center">{item.icon}</span> : null}
+                      {item.label}
+                    </span>
                   )}
                 </li>
               );
@@ -130,11 +151,7 @@ export function PageTitle({
         </div>
       </div>
 
-      {onAdd && (
-        <button type="button" className={addButtonClassName ?? "btn btn-primary mt-4 md:mt-0"} onClick={onAdd}>
-          {addLabel || t("dashboard.common.add")}
-        </button>
-      )}
+      {renderedActions ? <div className="mt-4 flex flex-wrap items-center gap-2 md:mt-0">{renderedActions}</div> : null}
     </div>
   );
 }

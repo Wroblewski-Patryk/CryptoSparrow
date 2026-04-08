@@ -17,8 +17,8 @@ const getAxiosMessage = (err: unknown) => {
 };
 
 type BacktestCreateFormProps = {
+  formId?: string;
   submitting: boolean;
-  submitLabel: string;
   onSubmit: (payload: CreateBacktestRunInput) => Promise<void>;
 };
 
@@ -34,7 +34,7 @@ const buildSuggestedRunName = (locale: 'pl' | 'en', strategyName?: string, unive
   return `Backtest ${strategy} | ${universe} (${tf})`;
 };
 
-export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }: BacktestCreateFormProps) {
+export default function BacktestCreateForm({ formId = 'backtest-form', submitting, onSubmit }: BacktestCreateFormProps) {
   const i18n = useContext(I18nContext);
   const locale = i18n?.locale === 'en' ? 'en' : 'pl';
   const copy =
@@ -211,16 +211,13 @@ export default function BacktestCreateForm({ submitting, submitLabel, onSubmit }
   };
 
   return (
-    <form onSubmit={handleSubmit} className='space-y-4'>
+    <form id={formId} onSubmit={handleSubmit} className='space-y-4'>
       <div className='rounded-box border border-base-300/60 bg-base-100/80 p-4 md:p-5 space-y-5'>
         <div className='flex flex-wrap items-start gap-3'>
           <div className='space-y-1'>
             <h2 className='text-2xl'>{copy.title}</h2>
             <p className='text-sm opacity-70'>{copy.subtitle}</p>
           </div>
-          <button type='submit' className='btn btn-success ml-auto btn-sm' disabled={!canSubmit}>
-            {submitting ? copy.creating : submitLabel}
-          </button>
         </div>
 
         <div className='space-y-4'>

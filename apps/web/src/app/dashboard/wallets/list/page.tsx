@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { LuWallet } from 'react-icons/lu';
+import { LuList, LuWallet } from 'react-icons/lu';
 
 import { useI18n } from '@/i18n/I18nProvider';
 import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
@@ -33,7 +33,7 @@ export default function WalletsListPage() {
             title: 'Portfele',
             breadcrumbWallets: 'Portfele',
             breadcrumbList: 'Lista',
-            addLabel: 'Dodaj portfel',
+            addLabel: 'Create',
             loading: 'Ladowanie portfeli',
             errorTitle: 'Nie udalo sie pobrac portfeli',
             retry: 'Sprobuj ponownie',
@@ -45,7 +45,7 @@ export default function WalletsListPage() {
             title: 'Wallets',
             breadcrumbWallets: 'Wallets',
             breadcrumbList: 'List',
-            addLabel: 'Add wallet',
+            addLabel: 'Create',
             loading: 'Loading wallets',
             errorTitle: 'Could not load wallets',
             retry: 'Try again',
@@ -80,7 +80,7 @@ export default function WalletsListPage() {
         breadcrumb={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: copy.breadcrumbWallets, href: '/dashboard/wallets/list' },
-          { label: copy.breadcrumbList },
+          { label: copy.breadcrumbList, icon: <LuList className='h-3.5 w-3.5' /> },
         ]}
         onAdd={() => router.push('/dashboard/wallets/create')}
         addLabel={copy.addLabel}

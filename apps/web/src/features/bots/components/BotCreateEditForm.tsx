@@ -93,9 +93,10 @@ const buildDefaultForm = (params: {
 
 type BotCreateEditFormProps = {
   editId?: string | null;
+  formId?: string;
 };
 
-export default function BotCreateEditForm({ editId = null }: BotCreateEditFormProps) {
+export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }: BotCreateEditFormProps) {
   const { t } = useI18n();
   const router = useRouter();
   const isEditMode = Boolean(editId);
@@ -208,12 +209,6 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
     setForm((prev) => ({ ...prev, isActive: false }));
   }, [canActivateForMode, form.isActive, walletContextMatches]);
 
-  const submitLabel = submitting
-    ? t('dashboard.bots.create.creatingCta')
-    : isEditMode
-      ? t('dashboard.bots.list.save')
-      : t('dashboard.bots.create.createCta');
-
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!form.name.trim() || !form.strategyId || !form.marketGroupId || !form.walletId) {
@@ -316,7 +311,7 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
   }
 
   return (
-    <form onSubmit={handleSubmit} className='space-y-4 rounded-box border border-base-300/60 bg-base-100/80 p-4'>
+    <form id={formId} onSubmit={handleSubmit} className='space-y-4 rounded-box border border-base-300/60 bg-base-100/80 p-4'>
       <section className='space-y-3 rounded-box border border-base-300/60 bg-base-200/55 p-3'>
         <h2 className='text-base font-semibold'>{t('dashboard.bots.create.sectionBasics')}</h2>
         <div className='grid gap-3 md:grid-cols-2'>
@@ -429,11 +424,6 @@ export default function BotCreateEditForm({ editId = null }: BotCreateEditFormPr
         ) : null}
       </section>
 
-      <div className='flex justify-end'>
-        <button type='submit' className='btn btn-primary' disabled={submitting}>
-          {submitLabel}
-        </button>
-      </div>
     </form>
   );
 }

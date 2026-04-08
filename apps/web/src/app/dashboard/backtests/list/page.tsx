@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
 import BacktestsListView from '@/features/backtest/components/BacktestsListView';
 import { I18nContext } from '../../../../i18n/I18nProvider';
-import { LuChartLine } from 'react-icons/lu';
+import { LuChartLine, LuList } from 'react-icons/lu';
 
 export default function BacktestsListPage() {
   const router = useRouter();
@@ -18,14 +18,14 @@ export default function BacktestsListPage() {
           breadcrumbDashboard: 'Dashboard',
           breadcrumbBacktests: 'Backtests',
           breadcrumbList: 'List',
-          add: 'New backtest',
+          add: 'Create',
         }
-      : {
+        : {
           title: 'Backtesty',
           breadcrumbDashboard: 'Dashboard',
           breadcrumbBacktests: 'Backtests',
           breadcrumbList: 'List',
-          add: 'Nowy backtest',
+          add: 'Create',
         };
 
   return (
@@ -36,7 +36,7 @@ export default function BacktestsListPage() {
         breadcrumb={[
           { label: copy.breadcrumbDashboard, href: '/dashboard' },
           { label: copy.breadcrumbBacktests, href: '/dashboard/backtests/list' },
-          { label: copy.breadcrumbList },
+          { label: copy.breadcrumbList, icon: <LuList className='h-3.5 w-3.5' /> },
         ]}
         onAdd={() => router.push('/dashboard/backtests/create')}
         addLabel={copy.add}

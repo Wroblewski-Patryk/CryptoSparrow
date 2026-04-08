@@ -1,6 +1,6 @@
 import { PageTitle } from "@/ui/layout/dashboard/PageTitle";
 import OrdersBoard from "@/features/orders/components/OrdersBoard";
-import { LuShoppingCart } from "react-icons/lu";
+import { LuList, LuShoppingCart } from "react-icons/lu";
 
 export default function OrdersPage() {
   return (
@@ -10,7 +10,8 @@ export default function OrdersPage() {
         icon={<LuShoppingCart className="h-5 w-5" />}
         breadcrumb={[
           { label: "Dashboard", href: "/dashboard" },
-          { label: "Orders" },
+          { label: "Orders", href: "/dashboard/orders" },
+          { label: "List", icon: <LuList className="h-3.5 w-3.5" /> },
         ]}
       />
       <OrdersBoard />

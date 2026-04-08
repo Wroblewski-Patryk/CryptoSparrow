@@ -31,7 +31,6 @@ export default function DashboardPage() {
         variant="flat"
         breadcrumb={[
           { label: t('dashboard.common.dashboard'), href: '/dashboard' },
-          { label: t('dashboard.home.pageBreadcrumb') },
         ]}
       />
 

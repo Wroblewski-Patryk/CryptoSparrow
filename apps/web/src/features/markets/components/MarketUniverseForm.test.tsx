@@ -49,7 +49,6 @@ describe('MarketUniverseForm', () => {
           whitelist: [],
           blacklist: [],
         }}
-        submitLabel='Zapisz zmiany'
         submitting={false}
         onSubmit={async () => undefined}
       />
@@ -83,10 +82,9 @@ describe('MarketUniverseForm', () => {
 
     const onSubmit = vi.fn().mockResolvedValue(undefined);
 
-    render(
+    const { container } = render(
       <MarketUniverseForm
         mode='create'
-        submitLabel='Utworz'
         submitting={false}
         onSubmit={onSubmit}
       />
@@ -112,7 +110,9 @@ describe('MarketUniverseForm', () => {
       ).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Utworz' }));
+    const form = container.querySelector('form');
+    expect(form).not.toBeNull();
+    fireEvent.submit(form as HTMLFormElement);
 
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith(

@@ -43,7 +43,7 @@ describe('BacktestCreateForm', () => {
     ]);
 
     const onSubmit = vi.fn().mockResolvedValue(undefined);
-    render(<BacktestCreateForm submitting={false} submitLabel='Utworz run' onSubmit={onSubmit} />);
+    const { container } = render(<BacktestCreateForm submitting={false} onSubmit={onSubmit} />);
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('Trend Pulse')).toBeInTheDocument();
@@ -52,7 +52,9 @@ describe('BacktestCreateForm', () => {
     fireEvent.change(screen.getByPlaceholderText('1200'), { target: { value: '10' } });
     expect(screen.getByText('Podaj liczbe z zakresu 100 - 10000.')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Utworz run' }));
+    const form = container.querySelector('form');
+    expect(form).not.toBeNull();
+    fireEvent.submit(form as HTMLFormElement);
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -78,7 +80,7 @@ describe('BacktestCreateForm', () => {
     ]);
 
     const onSubmit = vi.fn().mockResolvedValue(undefined);
-    render(<BacktestCreateForm submitting={false} submitLabel='Utworz run' onSubmit={onSubmit} />);
+    const { container } = render(<BacktestCreateForm submitting={false} onSubmit={onSubmit} />);
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('EMA Crossover')).toBeInTheDocument();
@@ -92,7 +94,9 @@ describe('BacktestCreateForm', () => {
     fireEvent.change(nameInput, { target: { value: 'Parity check run' } });
     fireEvent.change(screen.getByPlaceholderText('1200'), { target: { value: '800' } });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Utworz run' }));
+    const form = container.querySelector('form');
+    expect(form).not.toBeNull();
+    fireEvent.submit(form as HTMLFormElement);
 
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith({
@@ -128,7 +132,7 @@ describe('BacktestCreateForm', () => {
       },
     ]);
 
-    render(<BacktestCreateForm submitting={false} submitLabel='Utworz run' onSubmit={vi.fn()} />);
+    render(<BacktestCreateForm submitting={false} onSubmit={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Kontekst venue (powiazany z wybrana grupa rynkow)')).toBeInTheDocument();

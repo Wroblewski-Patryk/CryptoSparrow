@@ -1,32 +1,29 @@
 'use client';
 
 import { useContext } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
 import BacktestRunDetails from '@/features/backtest/components/BacktestRunDetails';
 import { I18nContext } from '../../../../i18n/I18nProvider';
-import { LuChartLine } from 'react-icons/lu';
+import { LuChartLine, LuList } from 'react-icons/lu';
 
 export default function BacktestsDetailsPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const i18n = useContext(I18nContext);
   const locale = i18n?.locale === 'en' ? 'en' : 'pl';
   const copy =
     locale === 'en'
       ? {
-          title: 'Backtest details',
+          title: 'Backtests',
           breadcrumbDashboard: 'Dashboard',
           breadcrumbBacktests: 'Backtests',
           breadcrumbDetails: 'Details',
-          add: 'New backtest',
         }
       : {
-          title: 'Podglad backtestu',
+          title: 'Backtesty',
           breadcrumbDashboard: 'Dashboard',
           breadcrumbBacktests: 'Backtests',
           breadcrumbDetails: 'Details',
-          add: 'Nowy backtest',
         };
 
   return (
@@ -37,10 +34,8 @@ export default function BacktestsDetailsPage() {
         breadcrumb={[
           { label: copy.breadcrumbDashboard, href: '/dashboard' },
           { label: copy.breadcrumbBacktests, href: '/dashboard/backtests/list' },
-          { label: copy.breadcrumbDetails },
+          { label: copy.breadcrumbDetails, icon: <LuList className='h-3.5 w-3.5' /> },
         ]}
-        onAdd={() => router.push('/dashboard/backtests/create')}
-        addLabel={copy.add}
       />
 
       <BacktestRunDetails runId={id} />

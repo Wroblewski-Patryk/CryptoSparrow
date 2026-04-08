@@ -1,7 +1,7 @@
 'use client';
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { LuKey, LuSettings, LuSubscript, LuUser, LuUserRound } from "react-icons/lu";
+import { LuKey, LuList, LuSettings, LuSubscript, LuUser, LuUserRound } from "react-icons/lu";
 import { useI18n } from "../../../i18n/I18nProvider";
 
 import BasicForm from "../components/BasicForm";
@@ -21,6 +21,7 @@ export default function ProfilePage() {
         title: "Moje konto",
         breadcrumbDashboard: "Dashboard",
         breadcrumbCurrent: "Moje konto",
+        breadcrumbAction: "Przeglad",
         tabs: {
           basic: "Profil uzytkownika",
           api: "Integracje i API keys",
@@ -32,6 +33,7 @@ export default function ProfilePage() {
         title: "My account",
         breadcrumbDashboard: "Dashboard",
         breadcrumbCurrent: "My account",
+        breadcrumbAction: "Overview",
         tabs: {
           basic: "User profile",
           api: "Integrations and API keys",
@@ -62,7 +64,8 @@ export default function ProfilePage() {
           icon={<LuUserRound className="h-5 w-5" />}
           breadcrumb={[
             { label: copy.breadcrumbDashboard, href: "/dashboard" },
-            { label: copy.breadcrumbCurrent },
+            { label: copy.breadcrumbCurrent, href: "/dashboard/profile" },
+            { label: copy.breadcrumbAction, icon: <LuList className="h-3.5 w-3.5" /> },
           ]}
         />
 

@@ -57,7 +57,7 @@ const resolveSavedVolumeEnabled = (initial?: MarketUniverse | null) => {
 type MarketUniverseFormProps = {
   mode: 'create' | 'edit';
   initial?: MarketUniverse | null;
-  submitLabel: string;
+  formId?: string;
   submitting: boolean;
   onSubmit: (payload: CreateMarketUniverseInput) => Promise<void>;
 };
@@ -65,7 +65,7 @@ type MarketUniverseFormProps = {
 export default function MarketUniverseForm({
   mode,
   initial,
-  submitLabel,
+  formId = 'market-universe-form',
   submitting,
   onSubmit,
 }: MarketUniverseFormProps) {
@@ -273,7 +273,7 @@ export default function MarketUniverseForm({
   ];
 
   return (
-    <form onSubmit={handleSubmit} className='grid grid-cols-1 gap-6 md:grid-cols-4'>
+    <form id={formId} onSubmit={handleSubmit} className='grid grid-cols-1 gap-6 md:grid-cols-4'>
       <aside className='md:col-span-1'>
         <h2 className='text-2xl font-semibold'>Kreator grup rynkow</h2>
         <ul className='steps steps-vertical mt-4'>
@@ -296,9 +296,6 @@ export default function MarketUniverseForm({
             <span className='text-primary'>{steps[currentStep].icon}</span>
             {steps[currentStep].label}
           </h2>
-          <button type='submit' className='btn btn-success ml-auto btn-sm' disabled={!canSubmit}>
-            {submitting ? 'Zapisywanie...' : submitLabel}
-          </button>
         </div>
         <hr className='border-t border-base-200' />
 

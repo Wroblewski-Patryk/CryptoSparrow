@@ -8,7 +8,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/ui/components/ViewState'
 import MarketUniversesTable from '@/features/markets/components/MarketUniversesTable';
 import { listMarketUniverses } from '@/features/markets/services/markets.service';
 import { MarketUniverse } from '@/features/markets/types/marketUniverse.type';
-import { LuChartCandlestick } from 'react-icons/lu';
+import { LuChartCandlestick, LuList } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
 
 const getAxiosMessage = (err: unknown) => {
@@ -29,10 +29,9 @@ export default function MarketsListPage() {
       locale === 'pl'
         ? {
             loadError: 'Nie udalo sie pobrac listy grup rynkow.',
-            title: 'Grupy rynkow',
             breadcrumbMarkets: 'Rynki',
             breadcrumbList: 'Lista',
-            addLabel: 'Dodaj grupe rynkow',
+            addLabel: 'Create',
             loading: 'Ladowanie grup rynkow',
             errorTitle: 'Nie udalo sie pobrac grup rynkow',
             retry: 'Sprobuj ponownie',
@@ -41,10 +40,9 @@ export default function MarketsListPage() {
           }
         : {
             loadError: 'Could not fetch market groups list.',
-            title: 'Market groups',
             breadcrumbMarkets: 'Markets',
             breadcrumbList: 'List',
-            addLabel: 'Add market group',
+            addLabel: 'Create',
             loading: 'Loading market groups',
             errorTitle: 'Could not load market groups',
             retry: 'Try again',
@@ -74,12 +72,12 @@ export default function MarketsListPage() {
   return (
     <section className='w-full space-y-4'>
       <PageTitle
-        title={copy.title}
+        title={copy.breadcrumbMarkets}
         icon={<LuChartCandlestick className='h-5 w-5' />}
         breadcrumb={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: copy.breadcrumbMarkets, href: '/dashboard/markets/list' },
-          { label: copy.breadcrumbList },
+          { label: copy.breadcrumbList, icon: <LuList className='h-3.5 w-3.5' /> },
         ]}
         onAdd={() => router.push('/dashboard/markets/create')}
         addLabel={copy.addLabel}
@@ -98,4 +96,3 @@ export default function MarketsListPage() {
     </section>
   );
 }
-

@@ -2,11 +2,13 @@
 
 import { Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { LuWallet } from 'react-icons/lu';
+import { LuPencilLine, LuPlus, LuSave, LuWallet } from 'react-icons/lu';
 
 import { useI18n } from '@/i18n/I18nProvider';
-import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
+import { PAGE_TITLE_ACTION_SAVE_CLASS, PageTitle } from '@/ui/layout/dashboard/PageTitle';
 import WalletCreateEditForm from '@/features/wallets/components/WalletCreateEditForm';
+
+const WALLET_FORM_ID = 'wallet-form-create';
 
 export default function WalletCreatePage() {
   return (
@@ -26,18 +28,18 @@ function WalletCreatePageContent() {
     () =>
       locale === 'pl'
         ? {
-            titleCreate: 'Dodaj portfel',
-            titleEdit: 'Edytuj portfel',
+            title: 'Portfele',
             breadcrumbWallets: 'Portfele',
             breadcrumbCreate: 'Dodaj',
             breadcrumbEdit: 'Edycja',
+            submitLabel: 'Save',
           }
         : {
-            titleCreate: 'Create wallet',
-            titleEdit: 'Edit wallet',
+            title: 'Wallets',
             breadcrumbWallets: 'Wallets',
             breadcrumbCreate: 'Create',
             breadcrumbEdit: 'Edit',
+            submitLabel: 'Save',
           },
     [locale]
   );
@@ -45,16 +47,25 @@ function WalletCreatePageContent() {
   return (
     <section className='w-full space-y-4'>
       <PageTitle
-        title={isEditMode ? copy.titleEdit : copy.titleCreate}
+        title={copy.title}
         icon={<LuWallet className='h-5 w-5' />}
         breadcrumb={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: copy.breadcrumbWallets, href: '/dashboard/wallets/list' },
-          { label: isEditMode ? copy.breadcrumbEdit : copy.breadcrumbCreate },
+          {
+            label: isEditMode ? copy.breadcrumbEdit : copy.breadcrumbCreate,
+            icon: isEditMode ? <LuPencilLine className='h-3.5 w-3.5' /> : <LuPlus className='h-3.5 w-3.5' />,
+          },
         ]}
+        actions={
+          <button type='submit' form={WALLET_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS}>
+            <LuSave className='h-4 w-4' />
+            {copy.submitLabel}
+          </button>
+        }
       />
 
-      <WalletCreateEditForm editId={editId} />
+      <WalletCreateEditForm formId={WALLET_FORM_ID} editId={editId} />
     </section>
   );
 }

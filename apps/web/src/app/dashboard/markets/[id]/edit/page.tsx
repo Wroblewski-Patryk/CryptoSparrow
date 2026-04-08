@@ -3,16 +3,17 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
+import { PAGE_TITLE_ACTION_SAVE_CLASS, PageTitle } from '@/ui/layout/dashboard/PageTitle';
 import { ErrorState, LoadingState } from '@/ui/components/ViewState';
 import MarketUniverseForm from '@/features/markets/components/MarketUniverseForm';
 import { getMarketUniverse, updateMarketUniverse } from '@/features/markets/services/markets.service';
 import { CreateMarketUniverseInput, MarketUniverse } from '@/features/markets/types/marketUniverse.type';
 import { handleError } from '@/lib/handleError';
-import { LuChartCandlestick } from 'react-icons/lu';
+import { LuChartCandlestick, LuPencilLine, LuSave } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
 
 const MARKET_UNIVERSE_ACTIVE_BOT_ERROR = 'market universe is used by active bot and cannot be edited';
+const MARKET_FORM_ID = 'market-universe-form-edit';
 
 export default function MarketsEditPage() {
   const { locale } = useI18n();
@@ -31,28 +32,28 @@ export default function MarketsEditPage() {
             activeBotTitle: 'Grupa rynkow jest aktualnie uzywana przez aktywnego bota',
             activeBotDescription: 'Wylacz bota, a potem zapisz zmiany.',
             saveFailed: 'Nie udalo sie zapisac zmian',
-            titleFallback: 'Edycja grupy rynkow',
-            titlePrefix: 'Edytuj:',
+            titleFallback: 'Rynki',
             breadcrumbMarkets: 'Rynki',
             breadcrumbEdit: 'Edycja',
             loading: 'Ladowanie grupy rynkow',
             errorTitle: 'Nie udalo sie pobrac grupy rynkow',
             backToList: 'Powrot do listy',
-            submitLabel: 'Zapisz zmiany',
+            submitLabel: 'Save',
+            updatePrefix: 'Aktualizacja:',
           }
         : {
             updated: 'Market group updated',
             activeBotTitle: 'Market group is currently used by an active bot',
             activeBotDescription: 'Disable the bot and then save changes.',
             saveFailed: 'Could not save changes',
-            titleFallback: 'Edit market group',
-            titlePrefix: 'Edit:',
+            titleFallback: 'Markets',
             breadcrumbMarkets: 'Markets',
             breadcrumbEdit: 'Edit',
             loading: 'Loading market group',
             errorTitle: 'Could not load market group',
             backToList: 'Back to list',
-            submitLabel: 'Save changes',
+            submitLabel: 'Save',
+            updatePrefix: 'Update:',
           },
     [locale]
   );
@@ -94,13 +95,22 @@ export default function MarketsEditPage() {
   return (
     <section className='w-full space-y-4'>
       <PageTitle
-        title={initial ? `${copy.titlePrefix} ${initial.name}` : copy.titleFallback}
+        title={copy.titleFallback}
         icon={<LuChartCandlestick className='h-5 w-5' />}
         breadcrumb={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: copy.breadcrumbMarkets, href: '/dashboard/markets/list' },
-          { label: copy.breadcrumbEdit },
+          {
+            label: initial ? `${copy.updatePrefix} ${initial.name}` : copy.breadcrumbEdit,
+            icon: <LuPencilLine className='h-3.5 w-3.5' />,
+          },
         ]}
+        actions={
+          <button type='submit' form={MARKET_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS}>
+            <LuSave className='h-4 w-4' />
+            {copy.submitLabel}
+          </button>
+        }
       />
 
       {loading ? <LoadingState title={copy.loading} /> : null}
@@ -114,9 +124,9 @@ export default function MarketsEditPage() {
       ) : null}
       {!loading && !error && initial ? (
         <MarketUniverseForm
+          formId={MARKET_FORM_ID}
           mode='edit'
           initial={initial}
-          submitLabel={copy.submitLabel}
           submitting={submitting}
           onSubmit={handleUpdate}
         />
@@ -124,4 +134,3 @@ export default function MarketsEditPage() {
     </section>
   );
 }
-

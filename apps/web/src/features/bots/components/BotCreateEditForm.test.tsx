@@ -6,6 +6,7 @@ import { I18nProvider } from "@/i18n/I18nProvider";
 
 const listStrategiesMock = vi.hoisted(() => vi.fn());
 const listMarketUniversesMock = vi.hoisted(() => vi.fn());
+const listWalletsMock = vi.hoisted(() => vi.fn());
 const fetchApiKeysMock = vi.hoisted(() => vi.fn());
 const createBotMock = vi.hoisted(() => vi.fn());
 const updateBotMock = vi.hoisted(() => vi.fn());
@@ -29,6 +30,10 @@ vi.mock("@/features/strategies/api/strategies.api", () => ({
 
 vi.mock("@/features/markets/services/markets.service", () => ({
   listMarketUniverses: listMarketUniversesMock,
+}));
+
+vi.mock("@/features/wallets/services/wallets.service", () => ({
+  listWallets: listWalletsMock,
 }));
 
 vi.mock("@/features/profile/services/apiKeys.service", () => ({
@@ -69,11 +74,27 @@ const baseApiKey = {
   createdAt: "2026-04-06T10:00:00.000Z",
 };
 
+const baseWallet = {
+  id: "w1",
+  name: "Paper wallet",
+  mode: "PAPER" as const,
+  exchange: "BINANCE" as const,
+  marketType: "FUTURES" as const,
+  baseCurrency: "USDT",
+  paperInitialBalance: 10000,
+  liveAllocationMode: null,
+  liveAllocationValue: null,
+  apiKeyId: null,
+  createdAt: "2026-04-06T10:00:00.000Z",
+  updatedAt: "2026-04-06T10:00:00.000Z",
+};
+
 afterEach(() => {
   vi.restoreAllMocks();
   window.localStorage.clear();
   listStrategiesMock.mockReset();
   listMarketUniversesMock.mockReset();
+  listWalletsMock.mockReset();
   fetchApiKeysMock.mockReset();
   createBotMock.mockReset();
   updateBotMock.mockReset();
@@ -86,7 +107,7 @@ afterEach(() => {
 });
 
 describe("BotCreateEditForm", () => {
-  it("shows LIVE API key compatibility hint for selected exchange", async () => {
+  it("shows LIVE mode controls when wallet is LIVE with linked API key", async () => {
     listStrategiesMock.mockResolvedValue([
       { id: "s1", name: "Momentum", interval: "5m", leverage: 2, config: {} },
     ]);
@@ -101,18 +122,24 @@ describe("BotCreateEditForm", () => {
         blacklist: [],
       },
     ]);
+    listWalletsMock.mockResolvedValue([
+      {
+        ...baseWallet,
+        id: "w-live",
+        mode: "LIVE",
+        apiKeyId: baseApiKey.id,
+      },
+    ]);
     fetchApiKeysMock.mockResolvedValue([baseApiKey]);
 
     renderWithI18n();
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Bot mode")).toHaveValue("PAPER");
+      expect(screen.getByText("Wallet mode:")).toBeInTheDocument();
     });
-
-    fireEvent.change(screen.getByLabelText("Bot mode"), { target: { value: "LIVE" } });
-
-    expect(screen.getByText("LIVE API key compatibility")).toBeInTheDocument();
-    expect(screen.getByText("Compatible LIVE keys found for this exchange: 1.")).toBeInTheDocument();
+    expect(screen.getByText("LIVE")).toBeInTheDocument();
+    expect(screen.queryByText("Selected LIVE wallet has no linked API key.")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("checkbox")).toHaveLength(2);
   });
 
   it("shows validation copy and blocks create when active LIVE has no compatible key", async () => {
@@ -130,27 +157,34 @@ describe("BotCreateEditForm", () => {
         blacklist: [],
       },
     ]);
+    listWalletsMock.mockResolvedValue([
+      {
+        ...baseWallet,
+        id: "w-live-missing-key",
+        mode: "LIVE",
+        apiKeyId: null,
+      },
+    ]);
     fetchApiKeysMock.mockResolvedValue([]);
 
-    renderWithI18n();
+    const { container } = renderWithI18n();
 
     await waitFor(() => {
       expect(screen.getByLabelText("Bot name")).toBeInTheDocument();
     });
 
     fireEvent.change(screen.getByLabelText("Bot name"), { target: { value: "Live Runner" } });
-    fireEvent.change(screen.getByLabelText("Bot mode"), { target: { value: "LIVE" } });
-    fireEvent.click(screen.getByRole("button", { name: "Add bot" }));
+    const form = container.querySelector("form");
+    expect(form).not.toBeNull();
+    fireEvent.submit(form as HTMLFormElement);
 
     await waitFor(() => {
-      expect(toastErrorMock).toHaveBeenCalledWith(
-        "Add at least one compatible LIVE API key for selected exchange before activating LIVE bot."
-      );
+      expect(toastErrorMock).toHaveBeenCalledWith("Selected LIVE wallet has no linked API key.");
     });
     expect(createBotMock).not.toHaveBeenCalled();
   });
 
-  it("shows placeholder activation hint and disables active toggle for unsupported exchange", async () => {
+  it("disables active toggle for unsupported exchange placeholder", async () => {
     listStrategiesMock.mockResolvedValue([
       { id: "s3", name: "Placeholder Strategy", interval: "1h", leverage: 2, config: {} },
     ]);
@@ -165,21 +199,21 @@ describe("BotCreateEditForm", () => {
         blacklist: [],
       },
     ]);
+    listWalletsMock.mockResolvedValue([
+      {
+        ...baseWallet,
+        id: "w-okx",
+        exchange: "OKX",
+      },
+    ]);
     fetchApiKeysMock.mockResolvedValue([baseApiKey]);
 
     renderWithI18n();
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Bot mode")).toHaveValue("PAPER");
+      expect(screen.getByLabelText("Bot name")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("PLACEHOLDER")).toBeInTheDocument();
-    expect(
-      screen.getByText("Placeholder exchange selected. Runtime activation for PAPER mode is not implemented yet.")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Selected exchange does not support LIVE execution yet (placeholder adapter).")
-    ).toBeInTheDocument();
     expect(screen.getByLabelText("Active")).toBeDisabled();
   });
 });

@@ -33,6 +33,7 @@ type WalletFormState = {
 
 type WalletCreateEditFormProps = {
   editId?: string | null;
+  formId?: string;
 };
 
 const buildDefaultForm = (): WalletFormState => ({
@@ -87,7 +88,7 @@ const toPayload = (form: WalletFormState): CreateWalletInput => {
   };
 };
 
-export default function WalletCreateEditForm({ editId = null }: WalletCreateEditFormProps) {
+export default function WalletCreateEditForm({ editId = null, formId = 'wallet-form' }: WalletCreateEditFormProps) {
   const { locale } = useI18n();
   const router = useRouter();
   const isEditMode = Boolean(editId);
@@ -208,12 +209,6 @@ export default function WalletCreateEditForm({ editId = null }: WalletCreateEdit
     ? supportsExchangeCapability(form.exchange, 'LIVE_EXECUTION')
     : supportsExchangeCapability(form.exchange, 'PAPER_PRICING_FEED');
 
-  const submitLabel = submitting
-    ? copy.creating
-    : isEditMode
-      ? copy.save
-      : copy.create;
-
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -276,7 +271,7 @@ export default function WalletCreateEditForm({ editId = null }: WalletCreateEdit
   }
 
   return (
-    <form onSubmit={handleSubmit} className='space-y-4 rounded-box border border-base-300/60 bg-base-100/80 p-4'>
+    <form id={formId} onSubmit={handleSubmit} className='space-y-4 rounded-box border border-base-300/60 bg-base-100/80 p-4'>
       <section className='space-y-3 rounded-box border border-base-300/60 bg-base-200/55 p-3'>
         <h2 className='text-base font-semibold'>{copy.sectionBasics}</h2>
         <div className='grid gap-3 md:grid-cols-2'>
@@ -414,11 +409,6 @@ export default function WalletCreateEditForm({ editId = null }: WalletCreateEdit
         </div>
       ) : null}
 
-      <div className='flex justify-end'>
-        <button type='submit' className='btn btn-primary' disabled={submitting}>
-          {submitLabel}
-        </button>
-      </div>
     </form>
   );
 }

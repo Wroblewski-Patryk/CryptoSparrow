@@ -24,7 +24,6 @@ export default function SubscriptionPanel() {
           liveTrading: "Live trading",
           yes: "Tak",
           no: "Nie",
-          noPlanDescription: "Brak aktywnej subskrypcji.",
         }
       : {
           title: "Subscription",
@@ -41,7 +40,6 @@ export default function SubscriptionPanel() {
           liveTrading: "Live trading",
           yes: "Yes",
           no: "No",
-          noPlanDescription: "No active subscription.",
         };
 
   const [data, setData] = useState<ProfileSubscriptionResponse | null>(null);
@@ -82,9 +80,6 @@ export default function SubscriptionPanel() {
     }).format(amount)} / ${copy.monthly}`;
   };
 
-  const activePlanDisplayName =
-    sortedCatalog.find((plan) => plan.code === activePlanCode)?.displayName ?? data?.activeSubscription?.planDisplayName ?? null;
-
   if (loading) {
     return <p className="text-sm opacity-70">{copy.loading}</p>;
   }
@@ -103,11 +98,6 @@ export default function SubscriptionPanel() {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-bold mb-4">{copy.title}</h2>
-
-      <div className="rounded-box border border-base-300/60 bg-base-200/50 p-3 text-sm">
-        <p className="text-[11px] uppercase tracking-wide opacity-70">{copy.activePlan}</p>
-        <p className="mt-1 text-base font-semibold">{activePlanDisplayName ?? copy.noPlanDescription}</p>
-      </div>
 
       <div className="grid gap-3 md:grid-cols-3">
         {sortedCatalog.map((plan) => {
