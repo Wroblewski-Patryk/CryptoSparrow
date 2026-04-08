@@ -140,7 +140,7 @@ Replace current broad groups with explicit trader-facing groups:
 - [x] `IND-20 feat(indicator): add Donchian Channels end-to-end`
 
 ### Phase F - Candle Pattern Engine
-- [ ] `IND-21 feat(pattern-engine): add shared OHLC candle-pattern evaluation engine (boolean series contract)`
+- [x] `IND-21 feat(pattern-engine): add shared OHLC candle-pattern evaluation engine (boolean series contract)`
 - [ ] `IND-22 feat(patterns): add Bullish/Bearish Engulfing end-to-end`
 - [ ] `IND-23 feat(patterns): add Hammer/Shooting Star end-to-end`
 - [ ] `IND-24 feat(patterns): add Doji with threshold params end-to-end`
