@@ -15,5 +15,6 @@ describe('indicators.service', () => {
     expect(names).toContain('CCI');
     expect(names).toContain('ADX');
     expect(names).toContain('STOCHASTIC');
+    expect(names).toContain('DONCHIAN_CHANNELS');
   });
 });

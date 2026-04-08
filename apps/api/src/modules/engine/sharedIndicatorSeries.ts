@@ -305,6 +305,42 @@ export const computeCciSeriesFromCandles = (
   return output;
 };
 
+export const computeDonchianSeriesFromCandles = (
+  highs: number[],
+  lows: number[],
+  period: number
+): {
+  upper: Array<number | null>;
+  middle: Array<number | null>;
+  lower: Array<number | null>;
+} => {
+  const length = Math.min(highs.length, lows.length);
+  const upper: Array<number | null> = Array.from({ length }, () => null);
+  const middle: Array<number | null> = Array.from({ length }, () => null);
+  const lower: Array<number | null> = Array.from({ length }, () => null);
+  if (length < period) return { upper, middle, lower };
+
+  for (let index = period - 1; index < length; index += 1) {
+    const highWindow = highs.slice(index - period + 1, index + 1);
+    const lowWindow = lows.slice(index - period + 1, index + 1);
+    if (highWindow.some((value) => !Number.isFinite(value)) || lowWindow.some((value) => !Number.isFinite(value))) {
+      continue;
+    }
+
+    const highest = Math.max(...highWindow);
+    const lowest = Math.min(...lowWindow);
+    upper[index] = highest;
+    lower[index] = lowest;
+    middle[index] = (highest + lowest) / 2;
+  }
+
+  return {
+    upper,
+    middle,
+    lower,
+  };
+};
+
 export const computeAdxSeriesFromCandles = (
   highs: number[],
   lows: number[],

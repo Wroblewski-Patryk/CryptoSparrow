@@ -20,6 +20,7 @@ import {
   computeAtrSeriesFromCandles,
   computeBollingerSeriesFromCloses,
   computeCciSeriesFromCandles,
+  computeDonchianSeriesFromCandles,
   clampPeriod,
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
@@ -1692,6 +1693,25 @@ export class RuntimeSignalLoop {
         percentB: indicatorCache.get(percentBKey)!,
       };
     };
+    const ensureDonchian = (period: number) => {
+      const baseKey = `DONCHIAN_${period}`;
+      const upperKey = `${baseKey}_UPPER`;
+      const middleKey = `${baseKey}_MIDDLE`;
+      const lowerKey = `${baseKey}_LOWER`;
+      if (!indicatorCache.has(upperKey) || !indicatorCache.has(middleKey) || !indicatorCache.has(lowerKey)) {
+        const highs = candles.map((candle) => candle.high);
+        const lows = candles.map((candle) => candle.low);
+        const donchian = computeDonchianSeriesFromCandles(highs, lows, period);
+        indicatorCache.set(upperKey, donchian.upper);
+        indicatorCache.set(middleKey, donchian.middle);
+        indicatorCache.set(lowerKey, donchian.lower);
+      }
+      return {
+        upper: indicatorCache.get(upperKey)!,
+        middle: indicatorCache.get(middleKey)!,
+        lower: indicatorCache.get(lowerKey)!,
+      };
+    };
 
     const conditionLines: RuntimeSignalConditionLine[] = [];
     const indicatorParts: string[] = [];
@@ -1946,6 +1966,33 @@ export class RuntimeSignalLoop {
         if (!indicatorKeys.has(`BOLLINGER_PERCENT_B(${period},${stdDev})`)) {
           indicatorKeys.add(`BOLLINGER_PERCENT_B(${period},${stdDev})`);
           indicatorParts.push(`BOLLINGER_PERCENT_B(${period},${stdDev})=${formatIndicatorValue(percentBValue)}`);
+        }
+        return;
+      }
+
+      if (indicator.includes('DONCHIAN')) {
+        const period = clampPeriod(rule.params.period ?? rule.params.length, 20);
+        const donchian = ensureDonchian(period);
+        const middleValue = donchian.middle[decisionIndex];
+
+        conditionLines.push({
+          scope,
+          left: `DONCHIAN_MIDDLE(${period})`,
+          value: formatIndicatorValue(middleValue),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has(`DONCHIAN_UPPER(${period})`)) {
+          indicatorKeys.add(`DONCHIAN_UPPER(${period})`);
+          indicatorParts.push(`DONCHIAN_UPPER(${period})=${formatIndicatorValue(donchian.upper[decisionIndex])}`);
+        }
+        if (!indicatorKeys.has(`DONCHIAN_MIDDLE(${period})`)) {
+          indicatorKeys.add(`DONCHIAN_MIDDLE(${period})`);
+          indicatorParts.push(`DONCHIAN_MIDDLE(${period})=${formatIndicatorValue(middleValue)}`);
+        }
+        if (!indicatorKeys.has(`DONCHIAN_LOWER(${period})`)) {
+          indicatorKeys.add(`DONCHIAN_LOWER(${period})`);
+          indicatorParts.push(`DONCHIAN_LOWER(${period})=${formatIndicatorValue(donchian.lower[decisionIndex])}`);
         }
         return;
       }

@@ -137,7 +137,7 @@ Replace current broad groups with explicit trader-facing groups:
 - [x] `IND-17 feat(indicator): add ADX + DI+/DI- end-to-end`
 - [x] `IND-18 feat(indicator): add Stochastic (%K/%D) end-to-end`
 - [x] `IND-19 feat(indicator): add CCI end-to-end`
-- [ ] `IND-20 feat(indicator): add Donchian Channels end-to-end`
+- [x] `IND-20 feat(indicator): add Donchian Channels end-to-end`
 
 ### Phase F - Candle Pattern Engine
 - [ ] `IND-21 feat(pattern-engine): add shared OHLC candle-pattern evaluation engine (boolean series contract)`

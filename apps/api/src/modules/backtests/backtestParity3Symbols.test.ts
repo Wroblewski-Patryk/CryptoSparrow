@@ -360,4 +360,24 @@ describe('backtest parity harness (3 symbols)', () => {
 
     expectParityForThreeSymbols(strategyConfig);
   });
+
+  it('keeps DONCHIAN decision trace aligned with shared strategy/runtime core for three symbols', () => {
+    const strategyConfig = {
+      open: {
+        direction: 'both',
+        indicatorsLong: [{ name: 'DONCHIAN_CHANNELS', params: { period: 3 }, condition: '>', value: 0 }],
+        indicatorsShort: [{ name: 'DONCHIAN_CHANNELS', params: { period: 3 }, condition: '<', value: 0 }],
+      },
+      close: {
+        tp: 99,
+        sl: 99,
+        tsl: [{ percent: 99, arm: 1 }],
+      },
+      additional: {
+        dcaTimes: 0,
+      },
+    } satisfies Record<string, unknown>;
+
+    expectParityForThreeSymbols(strategyConfig);
+  });
 });

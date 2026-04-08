@@ -3,6 +3,7 @@ import {
   computeAtrSeriesFromCandles,
   computeBollingerSeriesFromCloses,
   computeCciSeriesFromCandles,
+  computeDonchianSeriesFromCandles,
   clampPeriod,
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
@@ -426,6 +427,25 @@ const resolveSeries = (params: {
     const series = params.cache.get(key) ?? computeCciSeriesFromCandles(params.highs, params.lows, params.closes, period);
     params.cache.set(key, series);
     return series;
+  }
+
+  if (name.includes('DONCHIAN')) {
+    const period = clampPeriod(params.indicatorParams.period ?? params.indicatorParams.length, 20);
+    const baseKey = `DONCHIAN_${period}`;
+    const upperKey = `${baseKey}_UPPER`;
+    const middleKey = `${baseKey}_MIDDLE`;
+    const lowerKey = `${baseKey}_LOWER`;
+
+    if (!params.cache.has(upperKey) || !params.cache.has(middleKey) || !params.cache.has(lowerKey)) {
+      const donchian = computeDonchianSeriesFromCandles(params.highs, params.lows, period);
+      params.cache.set(upperKey, donchian.upper);
+      params.cache.set(middleKey, donchian.middle);
+      params.cache.set(lowerKey, donchian.lower);
+    }
+
+    if (name.includes('DONCHIAN_UPPER')) return params.cache.get(upperKey) ?? null;
+    if (name.includes('DONCHIAN_LOWER')) return params.cache.get(lowerKey) ?? null;
+    return params.cache.get(middleKey) ?? null;
   }
 
   if (name.includes('ADX') || name.includes('DI_PLUS') || name.includes('DI_MINUS')) {

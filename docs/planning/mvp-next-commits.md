@@ -7,14 +7,15 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `IND-20 feat(indicator): add Donchian Channels end-to-end`
-## NEXT
 - [ ] `IND-21 feat(pattern-engine): add shared OHLC candle-pattern evaluation engine (boolean series contract)`
+## NEXT
 - [ ] `IND-22 feat(patterns): add Bullish/Bearish Engulfing end-to-end`
+- [ ] `IND-23 feat(patterns): add Hammer/Shooting Star end-to-end`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `IND-20 feat(indicator): add Donchian Channels end-to-end`
 - [x] `IND-19 feat(indicator): add CCI end-to-end`
 - [x] `IND-18 feat(indicator): add Stochastic (%K/%D) end-to-end`
 - [x] `IND-17 feat(indicator): add ADX + DI+/DI- end-to-end`

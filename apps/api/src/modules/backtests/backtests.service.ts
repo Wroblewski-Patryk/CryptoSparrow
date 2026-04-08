@@ -13,6 +13,7 @@ import {
   computeAtrSeriesFromCandles,
   computeBollingerSeriesFromCloses,
   computeCciSeriesFromCandles,
+  computeDonchianSeriesFromCandles,
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
   computeMomentumSeriesFromCloses,
@@ -136,7 +137,7 @@ type IndicatorSpec = {
   name: string;
   period: number;
   panel: 'price' | 'oscillator';
-  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'STOCHASTIC' | 'BOLLINGER' | 'ATR' | 'CCI' | 'ADX';
+  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'STOCHASTIC' | 'BOLLINGER' | 'ATR' | 'CCI' | 'DONCHIAN' | 'ADX';
   params: Record<string, number>;
   channel?:
     | 'LINE'
@@ -1154,6 +1155,39 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
       ];
     }
 
+    if (name.includes('DONCHIAN') && params) {
+      const period = asPeriod(params.period ?? params.length, 20);
+      return [
+        {
+          key: `${name}_UPPER_${period}`,
+          name: `${name} UPPER`,
+          period,
+          panel: 'price' as const,
+          source: 'DONCHIAN' as const,
+          params: { period },
+          channel: 'UPPER' as const,
+        },
+        {
+          key: `${name}_MIDDLE_${period}`,
+          name: `${name} MIDDLE`,
+          period,
+          panel: 'price' as const,
+          source: 'DONCHIAN' as const,
+          params: { period },
+          channel: 'MIDDLE' as const,
+        },
+        {
+          key: `${name}_LOWER_${period}`,
+          name: `${name} LOWER`,
+          period,
+          panel: 'price' as const,
+          source: 'DONCHIAN' as const,
+          params: { period },
+          channel: 'LOWER' as const,
+        },
+      ];
+    }
+
     if (name.includes('ADX') && params) {
       const period = asPeriod(params.period ?? params.length, 14);
       return [
@@ -1346,6 +1380,8 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
           ? 'ATR'
         : name.includes('CCI')
           ? 'CCI'
+        : name.includes('DONCHIAN')
+          ? 'DONCHIAN'
         : name.includes('ADX')
           ? 'ADX'
         : name.includes('STOCHASTIC')
@@ -1427,6 +1463,14 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
       minusDi: Array<number | null>;
     }
   >();
+  const donchianCache = new Map<
+    string,
+    {
+      upper: Array<number | null>;
+      middle: Array<number | null>;
+      lower: Array<number | null>;
+    }
+  >();
   return specs.map((spec) => {
     const values = (() => {
       if (spec.source === 'EMA') {
@@ -1457,6 +1501,18 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
       if (spec.source === 'CCI') {
         const period = spec.params.period ?? spec.period;
         return computeCciSeriesFromCandles(highs, lows, closes, period);
+      }
+
+      if (spec.source === 'DONCHIAN') {
+        const period = spec.params.period ?? 20;
+        const key = `${period}`;
+        if (!donchianCache.has(key)) {
+          donchianCache.set(key, computeDonchianSeriesFromCandles(highs, lows, period));
+        }
+        const donchian = donchianCache.get(key)!;
+        if (spec.channel === 'UPPER') return donchian.upper;
+        if (spec.channel === 'LOWER') return donchian.lower;
+        return donchian.middle;
       }
 
       if (spec.source === 'ADX') {
@@ -1559,7 +1615,7 @@ export const buildIndicatorSeriesForTests = (
     name: string;
     period: number;
     panel: 'price' | 'oscillator';
-    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'STOCHASTIC' | 'BOLLINGER' | 'ATR' | 'CCI' | 'ADX';
+    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'STOCHASTIC' | 'BOLLINGER' | 'ATR' | 'CCI' | 'DONCHIAN' | 'ADX';
     params: Record<string, number>;
     channel?:
       | 'LINE'

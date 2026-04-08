@@ -209,4 +209,17 @@ export const indicators = [
       },
     ],
   },
+  {
+    name: "DONCHIAN_CHANNELS",
+    group: "Analiza techniczna",
+    type: "volatility",
+    params: [
+      {
+        name: "period",
+        default: 20,
+        min: 2,
+        max: 255,
+      },
+    ],
+  },
 ];

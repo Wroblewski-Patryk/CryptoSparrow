@@ -202,4 +202,22 @@ describe('backtest indicator timeline series', () => {
     const series = buildIndicatorSeriesForTests(candles, specs);
     expect(series.every((item) => item.panel === 'oscillator')).toBe(true);
   });
+
+  it('builds DONCHIAN upper/middle/lower channels for timeline overlays', () => {
+    const specs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'DONCHIAN_CHANNELS', params: { period: 3 }, condition: '>', value: 0 }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(specs).toHaveLength(3);
+    expect(specs.map((item) => item.key)).toEqual([
+      'DONCHIAN_CHANNELS_UPPER_3',
+      'DONCHIAN_CHANNELS_MIDDLE_3',
+      'DONCHIAN_CHANNELS_LOWER_3',
+    ]);
+    const series = buildIndicatorSeriesForTests(candles, specs);
+    expect(series.every((item) => item.panel === 'price')).toBe(true);
+  });
 });
