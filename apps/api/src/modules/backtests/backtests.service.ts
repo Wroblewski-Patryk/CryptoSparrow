@@ -12,6 +12,7 @@ import {
   computeAdxSeriesFromCandles,
   computeAtrSeriesFromCandles,
   computeBollingerSeriesFromCloses,
+  computeCciSeriesFromCandles,
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
   computeMomentumSeriesFromCloses,
@@ -135,7 +136,7 @@ type IndicatorSpec = {
   name: string;
   period: number;
   panel: 'price' | 'oscillator';
-  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'STOCHASTIC' | 'BOLLINGER' | 'ATR' | 'ADX';
+  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'STOCHASTIC' | 'BOLLINGER' | 'ATR' | 'CCI' | 'ADX';
   params: Record<string, number>;
   channel?:
     | 'LINE'
@@ -1139,6 +1140,20 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
       ];
     }
 
+    if (name.includes('CCI') && params) {
+      const period = asPeriod(params.period ?? params.length, 20);
+      return [
+        {
+          key: `${name}_${period}`,
+          name: `${name}`,
+          period,
+          panel: 'oscillator' as const,
+          source: 'CCI' as const,
+          params: { period },
+        },
+      ];
+    }
+
     if (name.includes('ADX') && params) {
       const period = asPeriod(params.period ?? params.length, 14);
       return [
@@ -1329,6 +1344,8 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
           ? 'BOLLINGER'
         : name.includes('ATR')
           ? 'ATR'
+        : name.includes('CCI')
+          ? 'CCI'
         : name.includes('ADX')
           ? 'ADX'
         : name.includes('STOCHASTIC')
@@ -1437,6 +1454,11 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
         return computeAtrSeriesFromCandles(highs, lows, closes, period);
       }
 
+      if (spec.source === 'CCI') {
+        const period = spec.params.period ?? spec.period;
+        return computeCciSeriesFromCandles(highs, lows, closes, period);
+      }
+
       if (spec.source === 'ADX') {
         const period = spec.params.period ?? 14;
         const key = `${period}`;
@@ -1537,7 +1559,7 @@ export const buildIndicatorSeriesForTests = (
     name: string;
     period: number;
     panel: 'price' | 'oscillator';
-    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'STOCHASTIC' | 'BOLLINGER' | 'ATR' | 'ADX';
+    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'STOCHASTIC' | 'BOLLINGER' | 'ATR' | 'CCI' | 'ADX';
     params: Record<string, number>;
     channel?:
       | 'LINE'

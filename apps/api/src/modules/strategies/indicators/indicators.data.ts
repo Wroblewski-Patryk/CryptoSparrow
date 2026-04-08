@@ -159,6 +159,19 @@ export const indicators = [
     ],
   },
   {
+    name: "CCI",
+    group: "Analiza techniczna",
+    type: "oscillator",
+    params: [
+      {
+        name: "period",
+        default: 20,
+        min: 2,
+        max: 255,
+      },
+    ],
+  },
+  {
     name: "ADX",
     group: "Analiza techniczna",
     type: "trend",

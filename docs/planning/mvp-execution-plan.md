@@ -639,7 +639,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `IND-16 feat(indicator): add ATR end-to-end`
 - [x] `IND-17 feat(indicator): add ADX + DI+/DI- end-to-end`
 - [x] `IND-18 feat(indicator): add Stochastic (%K/%D) end-to-end`
-- [ ] `IND-19 feat(indicator): add CCI end-to-end`
+- [x] `IND-19 feat(indicator): add CCI end-to-end`
 - [ ] `IND-20 feat(indicator): add Donchian Channels end-to-end`
 - [ ] `IND-21 feat(pattern-engine): add shared OHLC candle-pattern evaluation engine (boolean series contract)`
 - [ ] `IND-22 feat(patterns): add Bullish/Bearish Engulfing end-to-end`
@@ -659,6 +659,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
 
 ## Progress Log
+- 2026-04-08: Completed `IND-19` by adding CCI end-to-end across shared OHLC compute (`typicalPrice/SMA/meanDeviation`), evaluator/runtime series resolution and signal summary lines, backtest indicator timeline parsing/building, strategy catalog exposure, and parity/evaluator/timeline/catalog regression coverage.
 - 2026-04-08: Completed `IND-18` by adding Stochastic `%K/%D` end-to-end using shared OHLC compute, evaluator/runtime resolution, backtest timeline channels, catalog exposure, and parity/evaluator/timeline regression coverage.
 - 2026-04-08: Completed `IND-17` by adding ADX end-to-end with DI+/DI- companion channels across shared OHLC compute, evaluator/runtime resolution, backtest timeline overlays, catalog exposure, and parity/timeline/evaluator regressions.
 - 2026-04-08: Completed `IND-16` by adding ATR end-to-end over OHLC candles (shared ATR compute, evaluator/runtime series resolution, backtest timeline overlay support, catalog wiring, and parity/evaluator/timeline regression coverage), plus tightened indicator matching to avoid `STOCHRSI` falling into the generic `RSI` branch.

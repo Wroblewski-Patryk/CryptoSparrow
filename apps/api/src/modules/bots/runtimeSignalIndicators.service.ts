@@ -2,6 +2,7 @@ export {
   computeAdxSeriesFromCandles,
   computeAtrSeriesFromCandles,
   computeBollingerSeriesFromCloses,
+  computeCciSeriesFromCandles,
   clampPeriod,
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,

@@ -19,6 +19,7 @@ import {
   computeAdxSeriesFromCandles,
   computeAtrSeriesFromCandles,
   computeBollingerSeriesFromCloses,
+  computeCciSeriesFromCandles,
   clampPeriod,
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
@@ -1581,6 +1582,15 @@ export class RuntimeSignalLoop {
       }
       return indicatorCache.get(key)!;
     };
+    const ensureCci = (period: number) => {
+      const key = `CCI_${period}`;
+      if (!indicatorCache.has(key)) {
+        const highs = candles.map((candle) => candle.high);
+        const lows = candles.map((candle) => candle.low);
+        indicatorCache.set(key, computeCciSeriesFromCandles(highs, lows, closes, period));
+      }
+      return indicatorCache.get(key)!;
+    };
     const ensureAdx = (period: number) => {
       const baseKey = `ADX_${period}`;
       const adxKey = `${baseKey}_ADX`;
@@ -1795,6 +1805,23 @@ export class RuntimeSignalLoop {
         if (!indicatorKeys.has(`ATR(${period})`)) {
           indicatorKeys.add(`ATR(${period})`);
           indicatorParts.push(`ATR(${period})=${formatIndicatorValue(value)}`);
+        }
+        return;
+      }
+
+      if (indicator.includes('CCI')) {
+        const period = clampPeriod(rule.params.period ?? rule.params.length, 20);
+        const value = ensureCci(period)[decisionIndex];
+        conditionLines.push({
+          scope,
+          left: `CCI(${period})`,
+          value: formatIndicatorValue(value),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has(`CCI(${period})`)) {
+          indicatorKeys.add(`CCI(${period})`);
+          indicatorParts.push(`CCI(${period})=${formatIndicatorValue(value)}`);
         }
         return;
       }

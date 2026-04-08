@@ -148,6 +148,26 @@ describe('backtest indicator timeline series', () => {
     expect(series[0].values[1]).toBeNull();
   });
 
+  it('builds CCI oscillator series for timeline overlays', () => {
+    const specs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'CCI', params: { period: 3 }, condition: '>', value: 0 }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(specs).toHaveLength(1);
+    expect(specs[0]).toMatchObject({
+      key: 'CCI_3',
+      name: 'CCI',
+      panel: 'oscillator',
+      source: 'CCI',
+    });
+    const series = buildIndicatorSeriesForTests(candles, specs);
+    expect(series[0].values[0]).toBeNull();
+    expect(series[0].values[1]).toBeNull();
+  });
+
   it('builds ADX and DI channels for timeline overlays', () => {
     const specs = parseStrategyIndicatorsForTests({
       open: {

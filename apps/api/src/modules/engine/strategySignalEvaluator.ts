@@ -2,6 +2,7 @@ import {
   computeAdxSeriesFromCandles,
   computeAtrSeriesFromCandles,
   computeBollingerSeriesFromCloses,
+  computeCciSeriesFromCandles,
   clampPeriod,
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
@@ -415,6 +416,14 @@ const resolveSeries = (params: {
     const period = clampPeriod(params.indicatorParams.period ?? params.indicatorParams.length, 14);
     const key = `ATR_${period}`;
     const series = params.cache.get(key) ?? computeAtrSeriesFromCandles(params.highs, params.lows, params.closes, period);
+    params.cache.set(key, series);
+    return series;
+  }
+
+  if (name.includes('CCI')) {
+    const period = clampPeriod(params.indicatorParams.period ?? params.indicatorParams.length, 20);
+    const key = `CCI_${period}`;
+    const series = params.cache.get(key) ?? computeCciSeriesFromCandles(params.highs, params.lows, params.closes, period);
     params.cache.set(key, series);
     return series;
   }

@@ -273,6 +273,38 @@ export const computeAtrSeriesFromCandles = (
   return output;
 };
 
+export const computeCciSeriesFromCandles = (
+  highs: number[],
+  lows: number[],
+  closes: number[],
+  period: number
+): Array<number | null> => {
+  const length = Math.min(highs.length, lows.length, closes.length);
+  const output: Array<number | null> = Array.from({ length }, () => null);
+  if (length < period) return output;
+
+  const typicalPrices = Array.from({ length }, (_, index) => {
+    const high = highs[index];
+    const low = lows[index];
+    const close = closes[index];
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) return Number.NaN;
+    return (high + low + close) / 3;
+  });
+
+  for (let index = period - 1; index < length; index += 1) {
+    const window = typicalPrices.slice(index - period + 1, index + 1);
+    if (window.some((value) => !Number.isFinite(value))) continue;
+
+    const smaTp = window.reduce((acc, value) => acc + value, 0) / period;
+    const meanDeviation = window.reduce((acc, value) => acc + Math.abs(value - smaTp), 0) / period;
+    if (!Number.isFinite(meanDeviation) || meanDeviation === 0) continue;
+
+    output[index] = (typicalPrices[index] - smaTp) / (0.015 * meanDeviation);
+  }
+
+  return output;
+};
+
 export const computeAdxSeriesFromCandles = (
   highs: number[],
   lows: number[],
