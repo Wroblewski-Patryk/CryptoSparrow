@@ -18,6 +18,7 @@ import { StrategyDto } from '../../strategies/types/StrategyForm.type';
 import { getMarketUniverse } from '../../markets/services/markets.service';
 import { buildNonOverlappingTradeSegments } from '../utils/nonOverlappingTradeSegments';
 import { buildPairStatsMetricDisplay } from '../utils/pairStatsMetricDisplay';
+import { getPatternMarkerBias, splitTimelineIndicatorSeriesForRendering } from '../utils/timelineIndicatorOverlays';
 import { I18nContext } from '../../../i18n/I18nProvider';
 
 const getAxiosMessage = (err: unknown) => {
@@ -644,8 +645,11 @@ function TimelineCandlesChart({
   const timelineEvents = rawTimelineEvents.filter((event) => event.tradeId.includes(symbolEventKey));
   const lifecycleEvents = timelineEvents.filter((event) => event.type === 'DCA');
   const timelineIndicatorSeries = Array.isArray(timeline.indicatorSeries) ? timeline.indicatorSeries : [];
-  const priceIndicators = timelineIndicatorSeries.filter((series) => series.panel === 'price');
-  const oscillatorIndicators = timelineIndicatorSeries.filter((series) => series.panel === 'oscillator');
+  const {
+    priceSeries: priceIndicators,
+    oscillatorPanels: oscillatorOverlayPanels,
+    patternSeries: patternIndicatorSeries,
+  } = splitTimelineIndicatorSeriesForRendering(timelineIndicatorSeries);
   const tradeSegmentsFromEvents = (() => {
     if (timelineEvents.length === 0) return [] as ReturnType<typeof buildNonOverlappingTradeSegments>;
     const closeLike = new Set(['EXIT', 'TP', 'TTP', 'SL', 'TRAILING', 'LIQUIDATION']);
@@ -703,9 +707,9 @@ function TimelineCandlesChart({
         ? buildNonOverlappingTradeSegments(trades, candles)
         : [];
 
-  const oscillatorPanels = oscillatorIndicators.flatMap((series) => {
-    const values = series.points
-      .map((point) => point.value)
+  const oscillatorPanels = oscillatorOverlayPanels.flatMap((overlayPanel) => {
+    const values = overlayPanel.series
+      .flatMap((series) => series.points.map((point) => point.value))
       .filter((value): value is number => typeof value === 'number');
     if (values.length === 0) return [];
 
@@ -720,31 +724,71 @@ function TimelineCandlesChart({
     });
     const levelToY = (value: number) =>
       Math.max(0, Math.min(oscillatorPanelHeight, oscillatorPanelHeight - ((value - localMin) / localRange) * oscillatorPanelHeight));
-    const points = series.points
-      .map((point) => {
-        if (typeof point.value !== 'number') return null;
-        const localIndex = point.candleIndex - timeline.cursor;
-        if (localIndex < 0 || localIndex >= candles.length) return null;
-        const x = xAt(localIndex);
-        const y = oscillatorPanelHeight - ((point.value - localMin) / localRange) * oscillatorPanelHeight;
-        return `${x},${y}`;
+    const palette = ['text-info', 'text-warning', 'text-secondary', 'text-accent'];
+    const lines = overlayPanel.series
+      .map((series, seriesIndex) => {
+        const points = series.points
+          .map((point) => {
+            if (typeof point.value !== 'number') return null;
+            const localIndex = point.candleIndex - timeline.cursor;
+            if (localIndex < 0 || localIndex >= candles.length) return null;
+            const x = xAt(localIndex);
+            const y = oscillatorPanelHeight - ((point.value - localMin) / localRange) * oscillatorPanelHeight;
+            return `${x},${y}`;
+          })
+          .filter((point): point is string => Boolean(point))
+          .join(' ');
+        if (!points) return null;
+        const label = series.name.startsWith(overlayPanel.title)
+          ? series.name.slice(overlayPanel.title.length).trim() || overlayPanel.title
+          : series.name;
+        return {
+          key: series.key,
+          label,
+          className: palette[seriesIndex % palette.length],
+          points,
+        };
       })
-      .filter((point): point is string => Boolean(point))
-      .join(' ');
-    if (!points) return [];
+      .filter((line): line is { key: string; label: string; className: string; points: string } => Boolean(line));
+    if (lines.length === 0) return [];
 
-    const title = series.period != null ? `${series.name}(${series.period})` : series.name;
     return [
       {
-        key: series.key,
-        name: series.name,
-        title,
+        key: overlayPanel.key,
+        title: overlayPanel.title,
         localYTicks,
-        points,
         levelToY,
+        lines,
       },
     ];
   });
+
+  const patternMarkers = patternIndicatorSeries.flatMap((series, seriesIndex) =>
+    series.points
+      .map((point) => {
+        if (point.value !== 1) return null;
+        const localIndex = point.candleIndex - timeline.cursor;
+        if (localIndex < 0 || localIndex >= candles.length) return null;
+        const candle = candles[localIndex];
+        if (!candle) return null;
+        const bias = getPatternMarkerBias(series.name);
+        const stackOffset = (seriesIndex % 3) * 5;
+        const y =
+          bias === 'bullish'
+            ? yAt(candle.low) + 8 + stackOffset
+            : bias === 'bearish'
+              ? yAt(candle.high) - 8 - stackOffset
+              : yAt((candle.high + candle.low) / 2);
+        return {
+          key: `${series.key}-${point.candleIndex}`,
+          label: series.name,
+          x: xAt(localIndex),
+          y,
+          bias,
+        };
+      })
+      .filter((marker): marker is { key: string; label: string; x: number; y: number; bias: 'bullish' | 'bearish' | 'neutral' } => Boolean(marker)),
+  );
 
   const formatXAxisLabel = (index: number) => {
     const labelDate = new Date(candles[index].openTime);
@@ -883,6 +927,38 @@ function TimelineCandlesChart({
                 );
               })}
 
+              {patternMarkers.map((marker) => {
+                if (marker.bias === 'bullish') {
+                  return (
+                    <polygon
+                      key={marker.key}
+                      points={`${marker.x},${marker.y - 5} ${marker.x - 4},${marker.y + 3} ${marker.x + 4},${marker.y + 3}`}
+                      fill='currentColor'
+                      className='text-success'
+                    >
+                      <title>{marker.label}</title>
+                    </polygon>
+                  );
+                }
+                if (marker.bias === 'bearish') {
+                  return (
+                    <polygon
+                      key={marker.key}
+                      points={`${marker.x},${marker.y + 5} ${marker.x - 4},${marker.y - 3} ${marker.x + 4},${marker.y - 3}`}
+                      fill='currentColor'
+                      className='text-error'
+                    >
+                      <title>{marker.label}</title>
+                    </polygon>
+                  );
+                }
+                return (
+                  <circle key={marker.key} cx={marker.x} cy={marker.y} r={3.2} className='fill-warning' stroke='currentColor'>
+                    <title>{marker.label}</title>
+                  </circle>
+                );
+              })}
+
               {tradeSegments.map((segment, index) => {
                 const x1 = xAt(segment.start);
                 const y1 = yAt(segment.entryPrice);
@@ -1009,7 +1085,7 @@ function TimelineCandlesChart({
                   );
                 })}
 
-                {panel.name.includes('RSI') && rsiLongLevel != null ? (
+                {panel.title.includes('RSI') && rsiLongLevel != null ? (
                   <line
                     x1={padding.left}
                     x2={padding.left + innerWidth}
@@ -1019,7 +1095,7 @@ function TimelineCandlesChart({
                     strokeDasharray='3 3'
                   />
                 ) : null}
-                {panel.name.includes('RSI') && rsiShortLevel != null ? (
+                {panel.title.includes('RSI') && rsiShortLevel != null ? (
                   <line
                     x1={padding.left}
                     x2={padding.left + innerWidth}
@@ -1030,7 +1106,16 @@ function TimelineCandlesChart({
                   />
                 ) : null}
 
-                <polyline fill='none' stroke='currentColor' strokeWidth='1.6' className='text-info' points={panel.points} />
+                {panel.lines.map((line) => (
+                  <polyline
+                    key={line.key}
+                    fill='none'
+                    stroke='currentColor'
+                    strokeWidth='1.6'
+                    className={line.className}
+                    points={line.points}
+                  />
+                ))}
 
                 {playbackX != null ? (
                   <line

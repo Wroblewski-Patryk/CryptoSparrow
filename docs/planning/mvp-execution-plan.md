@@ -653,12 +653,13 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `IND-30 feat(futures-filter): add order-book filters (imbalance/spread/depth ratio) for futures strategies`
 - [x] `IND-31 test(futures-filters): add fail-closed fallback tests when derivatives snapshots are missing`
 - [x] `IND-32 feat(web-groups): apply new indicator taxonomy groups in strategy creator with EN/PL labels`
-- [ ] `IND-33 feat(backtest-ui): support multi-line overlays and boolean pattern markers in timeline rendering`
+- [x] `IND-33 feat(backtest-ui): support multi-line overlays and boolean pattern markers in timeline rendering`
 - [ ] `IND-34 feat(presets): add trader archetype presets (scalp/day trend/swing/mean reversion/breakout/perp bias)`
 - [ ] `IND-35 qa(parity): execute 3-symbol side-by-side parity checklist for new indicator families and attach evidence`
 - [ ] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
 
 ## Progress Log
+- 2026-04-08: Completed `IND-33` by extending backtest timeline rendering with grouped multi-line oscillator overlays (channel families rendered in one panel) and boolean candle-pattern markers plotted directly on price candles, with dedicated overlay-splitting utility coverage plus backtest details regression verification.
 - 2026-04-08: Completed `IND-32` by applying canonical indicator taxonomy grouping in strategy creator (`Trend`, `Momentum/Oscillator`, `Volatility`, `Volume`, `Price Action`, `Candle Patterns`, `Derivatives`), adding EN/PL group labels in UI, and covering taxonomy mapping + localized option labels with web regression tests.
 - 2026-04-08: Completed `IND-31` by adding fail-closed derivatives fallback regression coverage across shared evaluator, runtime strategy path, and backtest replay so missing futures snapshots (`funding/open-interest/order-book`) never trigger false LONG/SHORT entries.
 - 2026-04-08: Completed `IND-30` by adding order-book futures filters end-to-end (`ORDER_BOOK_IMBALANCE`, `ORDER_BOOK_SPREAD_BPS`, `ORDER_BOOK_DEPTH_RATIO`) across shared evaluator, runtime signal path (cached Binance futures depth snapshots), backtest parity/replay context, timeline indicator series, strategy indicator catalog, and regression suites.
