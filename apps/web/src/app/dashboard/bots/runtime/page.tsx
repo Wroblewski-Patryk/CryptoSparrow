@@ -1,6 +1,5 @@
-import { PageTitle } from "@/ui/layout/dashboard/PageTitle";
-import BotsManagement from "@/features/bots/components/BotsManagement";
-import { LuBot, LuList } from "react-icons/lu";
+import { redirect } from "next/navigation";
+import { dashboardRoutes } from "@/ui/layout/dashboard/dashboardRoutes";
 
 type BotsRuntimePageProps = {
   searchParams?: Promise<{
@@ -10,25 +9,11 @@ type BotsRuntimePageProps = {
 
 export default async function BotsRuntimePage({ searchParams }: BotsRuntimePageProps) {
   const params = searchParams ? await searchParams : undefined;
-  const preferredBotId = params?.botId?.trim() ? params.botId : null;
+  const botId = params?.botId?.trim();
 
-  return (
-    <section className="w-full space-y-4">
-      <PageTitle
-        title="Bots"
-        icon={<LuBot className="h-5 w-5" />}
-        breadcrumb={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Bots", href: "/dashboard/bots" },
-          { label: "Runtime", icon: <LuList className="h-3.5 w-3.5" /> },
-        ]}
-      />
+  if (botId) {
+    redirect(dashboardRoutes.bots.preview(botId));
+  }
 
-      <BotsManagement
-        initialTab="monitoring"
-        lockedTab="monitoring"
-        preferredBotId={preferredBotId}
-      />
-    </section>
-  );
+  redirect(dashboardRoutes.bots.list);
 }

@@ -29,6 +29,9 @@ export const dashboardRoutes = {
     root: "/dashboard/bots",
     list: "/dashboard/bots",
     create: "/dashboard/bots/create",
+    edit: (id: string) => `/dashboard/bots/${id}/edit`,
+    preview: (id: string) => `/dashboard/bots/${id}/preview`,
+    assistant: (id: string) => `/dashboard/bots/${id}/assistant`,
   },
   analytics: {
     reports: "/dashboard/reports",

@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
 import { useI18n } from '@/i18n/I18nProvider';
+import { dashboardRoutes } from '@/ui/layout/dashboard/dashboardRoutes';
 import { EmptyState, ErrorState, LoadingState } from '@/ui/components/ViewState';
 import { listMarketUniverses } from '@/features/markets/services/markets.service';
 import { MarketUniverse } from '@/features/markets/types/marketUniverse.type';
@@ -258,7 +259,7 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
       } else {
         const created = await createBot(payload);
         toast.success(t('dashboard.bots.toasts.created'));
-        router.replace(`/dashboard/bots/create?editId=${created.id}`);
+        router.replace(dashboardRoutes.bots.edit(created.id));
       }
     } catch (err: unknown) {
       const message = getAxiosMessage(err);

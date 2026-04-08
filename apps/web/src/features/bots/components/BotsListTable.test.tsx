@@ -63,9 +63,9 @@ describe("BotsListTable", () => {
     const assistantLink = screen.getByRole("link", { name: /asystent/i });
     const editLink = screen.getByRole("link", { name: /edytuj/i });
 
-    expect(runtimeLink).toHaveAttribute("href", "/dashboard/bots/runtime?botId=bot-1");
-    expect(assistantLink).toHaveAttribute("href", "/dashboard/bots/assistant?botId=bot-1");
-    expect(editLink).toHaveAttribute("href", "/dashboard/bots/create?editId=bot-1");
+    expect(runtimeLink).toHaveAttribute("href", "/dashboard/bots/bot-1/preview");
+    expect(assistantLink).toHaveAttribute("href", "/dashboard/bots/bot-1/assistant");
+    expect(editLink).toHaveAttribute("href", "/dashboard/bots/bot-1/edit");
   });
 
   it("shows placeholder badge for unsupported exchange and supports filtering by exchange name", async () => {

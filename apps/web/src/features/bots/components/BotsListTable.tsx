@@ -10,6 +10,7 @@ import ConfirmModal from "@/ui/components/ConfirmModal";
 import DataTable, { DataTableColumn } from "@/ui/components/DataTable";
 import { TableIconButtonAction, TableIconLinkAction, TableToneBadge } from "@/ui/components/TableUi";
 import { EmptyState, ErrorState, LoadingState } from "@/ui/components/ViewState";
+import { dashboardRoutes } from "@/ui/layout/dashboard/dashboardRoutes";
 import { useI18n } from "@/i18n/I18nProvider";
 import { listStrategies } from "@/features/strategies/api/strategies.api";
 import { StrategyDto } from "@/features/strategies/types/StrategyForm.type";
@@ -169,17 +170,17 @@ export default function BotsListTable() {
       render: (row) => (
         <div className="flex flex-wrap items-center justify-end gap-2">
           <TableIconLinkAction
-            href={`/dashboard/bots/runtime?botId=${row.id}`}
+            href={dashboardRoutes.bots.preview(row.id)}
             label={t("dashboard.bots.tabs.monitoring")}
             icon={<LuLayoutDashboard className="h-3.5 w-3.5" />}
           />
           <TableIconLinkAction
-            href={`/dashboard/bots/assistant?botId=${row.id}`}
+            href={dashboardRoutes.bots.assistant(row.id)}
             label={t("dashboard.bots.tabs.assistant")}
             icon={<LuBot className="h-3.5 w-3.5" />}
           />
           <TableIconLinkAction
-            href={`/dashboard/bots/create?editId=${row.id}`}
+            href={dashboardRoutes.bots.edit(row.id)}
             label={t("dashboard.bots.list.edit")}
             icon={<LuPencilLine className="h-3.5 w-3.5" />}
           />
@@ -215,7 +216,7 @@ export default function BotsListTable() {
         title={t("dashboard.bots.states.emptyTitle")}
         description={t("dashboard.bots.states.emptyDescription")}
         actionLabel={t("dashboard.nav.createBot")}
-        onAction={() => router.push("/dashboard/bots/create")}
+        onAction={() => router.push(dashboardRoutes.bots.create)}
       />
     );
   }
