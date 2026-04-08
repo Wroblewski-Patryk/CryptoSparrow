@@ -7,13 +7,13 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `IND-35 qa(parity): execute 3-symbol side-by-side parity checklist for new indicator families and attach evidence`
-## NEXT
 - [ ] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
+## NEXT
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `IND-35 qa(parity): execute 3-symbol side-by-side parity checklist for new indicator families and attach evidence`
 - [x] `IND-34 feat(presets): add trader archetype presets (scalp/day trend/swing/mean reversion/breakout/perp bias)`
 - [x] `IND-33 feat(backtest-ui): support multi-line overlays and boolean pattern markers in timeline rendering`
 - [x] `IND-32 feat(web-groups): apply new indicator taxonomy groups in strategy creator with EN/PL labels`
