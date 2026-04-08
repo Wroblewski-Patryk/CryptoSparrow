@@ -7,6 +7,7 @@ import { PositionManagementInput } from '../engine/positionManagement.types';
 import {
   evaluateStrategySignalAtIndex,
   parseStrategySignalRules,
+  type StrategySignalDerivativesSeries,
 } from '../engine/strategySignalEvaluator';
 import {
   computeAdxSeriesFromCandles,
@@ -17,12 +18,14 @@ import {
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
   computeMomentumSeriesFromCloses,
+  computeRollingZScoreSeriesFromNullableValues,
   computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
   computeStochasticSeriesFromCandles,
   computeStochRsiSeriesFromCloses,
 } from '../engine/sharedIndicatorSeries';
+import { alignTimedNumericPointsToCandles } from '../engine/sharedDerivativesSeries';
 import {
   CandlePatternParams,
   CandlePatternName,
@@ -143,7 +146,22 @@ type IndicatorSpec = {
   name: string;
   period: number;
   panel: 'price' | 'oscillator';
-  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'STOCHASTIC' | 'BOLLINGER' | 'ATR' | 'CCI' | 'DONCHIAN' | 'ADX' | 'PATTERN';
+  source:
+    | 'EMA'
+    | 'SMA'
+    | 'RSI'
+    | 'MOMENTUM'
+    | 'MACD'
+    | 'ROC'
+    | 'STOCHRSI'
+    | 'STOCHASTIC'
+    | 'BOLLINGER'
+    | 'ATR'
+    | 'CCI'
+    | 'DONCHIAN'
+    | 'ADX'
+    | 'PATTERN'
+    | 'FUNDING';
   params: Record<string, number>;
   patternName?: CandlePatternName;
   channel?:
@@ -159,7 +177,9 @@ type IndicatorSpec = {
     | 'PERCENT_B'
     | 'ADX'
     | 'DI_PLUS'
-    | 'DI_MINUS';
+    | 'DI_MINUS'
+    | 'RAW'
+    | 'ZSCORE';
 };
 
 const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
@@ -598,6 +618,22 @@ const fetchSupplementalSeries = async (
   return result;
 };
 
+const buildDerivativesSeriesForCandles = (
+  candles: KlineCandle[],
+  supplemental?: SupplementalSeries,
+): StrategySignalDerivativesSeries => {
+  if (!supplemental) return {};
+  return {
+    fundingRate: alignTimedNumericPointsToCandles(
+      candles,
+      supplemental.fundingRates.map((point) => ({
+        timestamp: point.timestamp,
+        value: point.fundingRate,
+      })),
+    ),
+  };
+};
+
 type InterleavedPortfolioSimulationResult = {
   perSymbol: Record<string, SymbolSimulationResult>;
   finalBalance: number;
@@ -606,6 +642,7 @@ type InterleavedPortfolioSimulationResult = {
 const simulateInterleavedPortfolio = (input: {
   symbols: string[];
   candlesBySymbol: Map<string, KlineCandle[]>;
+  supplementalBySymbol?: Map<string, SupplementalSeries>;
   analysisStartIndexBySymbol?: Map<string, number>;
   marketType: MarketType;
   leverage: number;
@@ -644,6 +681,12 @@ const simulateInterleavedPortfolio = (input: {
   );
 
   const indicatorCacheBySymbol = new Map<string, Map<string, Array<number | null>>>();
+  const derivativesSeriesBySymbol = new Map<string, StrategySignalDerivativesSeries>();
+  for (const symbol of input.symbols) {
+    const candles = input.candlesBySymbol.get(symbol) ?? [];
+    const supplemental = input.supplementalBySymbol?.get(symbol);
+    derivativesSeriesBySymbol.set(symbol, buildDerivativesSeriesForCandles(candles, supplemental));
+  }
   const tradeSequenceBySymbol = new Map<string, number>(input.symbols.map((symbol) => [symbol, 0]));
   const resolveStartIndex = (symbol: string) => {
     const candles = input.candlesBySymbol.get(symbol) ?? [];
@@ -720,9 +763,12 @@ const simulateInterleavedPortfolio = (input: {
     const bucket = perSymbol[symbol];
     const indicatorCache = indicatorCacheBySymbol.get(symbol) ?? new Map<string, Array<number | null>>();
     indicatorCacheBySymbol.set(symbol, indicatorCache);
+    const derivativesSeries = derivativesSeriesBySymbol.get(symbol);
     const direction = strategyModeEnabled
       ? rules
-        ? evaluateStrategySignalAtIndex(rules, candles, index, indicatorCache)
+        ? evaluateStrategySignalAtIndex(rules, candles, index, indicatorCache, {
+            derivatives: derivativesSeries,
+          })
         : null
       : (() => {
         const base = previous.close > 0 ? previous.close : 1;
@@ -1404,36 +1450,59 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
       ];
     }
 
+    if (name.includes('FUNDING_RATE_ZSCORE')) {
+      const zScorePeriod = asPeriod(
+        params?.zScorePeriod ?? params?.period ?? params?.length,
+        20,
+      );
+      return [
+        {
+          key: `${name}_ZSCORE_${zScorePeriod}`,
+          name: `${name} ZSCORE`,
+          period: zScorePeriod,
+          panel: 'oscillator' as const,
+          source: 'FUNDING' as const,
+          params: { zScorePeriod },
+          channel: 'ZSCORE' as const,
+        },
+      ];
+    }
+
+    if (name.includes('FUNDING_RATE')) {
+      return [
+        {
+          key: `${name}_RAW`,
+          name: 'FUNDING_RATE',
+          period: 2,
+          panel: 'oscillator' as const,
+          source: 'FUNDING' as const,
+          params: { period: 2 },
+          channel: 'RAW' as const,
+        },
+      ];
+    }
+
     const periodCandidate = params && typeof params.period !== 'undefined'
       ? Number(params.period)
       : params && typeof params.length !== 'undefined'
         ? Number(params.length)
         : 14;
     const period = clamp(Number.isFinite(periodCandidate) ? Math.floor(periodCandidate) : 14, 2, 300);
-    const source: IndicatorSpec['source'] =
-      name.includes('SMA')
-        ? 'SMA'
-        : name.includes('BOLLINGER')
-          ? 'BOLLINGER'
-        : name.includes('ATR')
-          ? 'ATR'
-        : name.includes('CCI')
-          ? 'CCI'
-        : name.includes('DONCHIAN')
-          ? 'DONCHIAN'
-        : name.includes('ADX')
-          ? 'ADX'
-        : name.includes('STOCHASTIC')
-          ? 'STOCHASTIC'
-        : name.includes('STOCHRSI')
-          ? 'STOCHRSI'
-        : name.includes('ROC')
-          ? 'ROC'
-        : name.includes('RSI')
-          ? 'RSI'
-          : name.includes('MOMENTUM')
-            ? 'MOMENTUM'
-            : 'MOMENTUM';
+    const source: IndicatorSpec['source'] = (() => {
+      if (name.includes('SMA')) return 'SMA';
+      if (name.includes('BOLLINGER')) return 'BOLLINGER';
+      if (name.includes('ATR')) return 'ATR';
+      if (name.includes('CCI')) return 'CCI';
+      if (name.includes('DONCHIAN')) return 'DONCHIAN';
+      if (name.includes('ADX')) return 'ADX';
+      if (name.includes('FUNDING_RATE')) return 'FUNDING';
+      if (name.includes('STOCHASTIC')) return 'STOCHASTIC';
+      if (name.includes('STOCHRSI')) return 'STOCHRSI';
+      if (name.includes('ROC')) return 'ROC';
+      if (name.includes('RSI')) return 'RSI';
+      if (name.includes('MOMENTUM')) return 'MOMENTUM';
+      return 'MOMENTUM';
+    })();
     const panel: 'price' | 'oscillator' = source === 'SMA' || source === 'BOLLINGER' ? 'price' : 'oscillator';
     return [{
       key: `${name}_${period}`,
@@ -1458,10 +1527,23 @@ const resolveIndicatorWarmupCandles = (strategyConfig: unknown) => {
   return specs.reduce((maxPeriod, spec) => Math.max(maxPeriod, spec.period), 0);
 };
 
-const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) => {
+const buildIndicatorSeries = (
+  candles: KlineCandle[],
+  specs: IndicatorSpec[],
+  supplemental?: SupplementalSeries,
+) => {
   const closes = candles.map((candle) => candle.close);
   const highs = candles.map((candle) => candle.high);
   const lows = candles.map((candle) => candle.low);
+  const fundingRawSeries = supplemental
+    ? alignTimedNumericPointsToCandles(
+        candles,
+        supplemental.fundingRates.map((point) => ({
+          timestamp: point.timestamp,
+          value: point.fundingRate,
+        })),
+      )
+    : Array.from({ length: closes.length }, () => null);
   const macdCache = new Map<
     string,
     {
@@ -1577,6 +1659,14 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
         return patternCache.get(key)!;
       }
 
+      if (spec.source === 'FUNDING') {
+        if (spec.channel === 'ZSCORE') {
+          const period = spec.params.zScorePeriod ?? spec.params.period ?? spec.period;
+          return computeRollingZScoreSeriesFromNullableValues(fundingRawSeries, period);
+        }
+        return fundingRawSeries;
+      }
+
       if (spec.source === 'ADX') {
         const period = spec.params.period ?? 14;
         const key = `${period}`;
@@ -1677,7 +1767,22 @@ export const buildIndicatorSeriesForTests = (
     name: string;
     period: number;
     panel: 'price' | 'oscillator';
-    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'STOCHASTIC' | 'BOLLINGER' | 'ATR' | 'CCI' | 'DONCHIAN' | 'ADX' | 'PATTERN';
+    source:
+      | 'EMA'
+      | 'SMA'
+      | 'RSI'
+      | 'MOMENTUM'
+      | 'MACD'
+      | 'ROC'
+      | 'STOCHRSI'
+      | 'STOCHASTIC'
+      | 'BOLLINGER'
+      | 'ATR'
+      | 'CCI'
+      | 'DONCHIAN'
+      | 'ADX'
+      | 'PATTERN'
+      | 'FUNDING';
     params: Record<string, number>;
     patternName?: CandlePatternName;
     channel?:
@@ -1693,9 +1798,20 @@ export const buildIndicatorSeriesForTests = (
       | 'PERCENT_B'
       | 'ADX'
       | 'DI_PLUS'
-      | 'DI_MINUS';
+      | 'DI_MINUS'
+      | 'RAW'
+      | 'ZSCORE';
   }>,
-) => buildIndicatorSeries(candles as KlineCandle[], specs as IndicatorSpec[]);
+  supplemental?: {
+    fundingRates: Array<{ timestamp: number; fundingRate: number }>;
+    openInterest: Array<{ timestamp: number; openInterest: number }>;
+  },
+) =>
+  buildIndicatorSeries(
+    candles as KlineCandle[],
+    specs as IndicatorSpec[],
+    supplemental as SupplementalSeries | undefined,
+  );
 
 const emptyLifecycleEventCounts = (): LifecycleEventCounts => ({
   ENTRY: 0,
@@ -1887,6 +2003,7 @@ const runBacktestAsync = async (runId: string) => {
       const simulation = simulateInterleavedPortfolio({
         symbols: loadedSymbols,
         candlesBySymbol,
+        supplementalBySymbol,
         analysisStartIndexBySymbol: new Map(
           loadedSymbols.map((symbol) => {
             const symbolCandles = candlesBySymbol.get(symbol) ?? [];
@@ -2336,10 +2453,21 @@ export const getRunTimeline = async (
       ? run.finishedAt.getTime()
       : undefined;
   const candlesBySymbol = new Map<string, KlineCandle[]>();
+  const supplementalBySymbol = new Map<string, SupplementalSeries>();
   for (const replaySymbol of replaySymbols) {
     candlesBySymbol.set(
       replaySymbol,
       await fetchKlines(
+        replaySymbol,
+        run.timeframe,
+        marketType,
+        maxCandles + indicatorWarmupCandles,
+        timelineEndTimeMs,
+      ),
+    );
+    supplementalBySymbol.set(
+      replaySymbol,
+      await fetchSupplementalSeries(
         replaySymbol,
         run.timeframe,
         marketType,
@@ -2356,13 +2484,7 @@ export const getRunTimeline = async (
   const fullCandles = candlesBySymbol.get(symbol) ?? [];
   const visibleStart = visibleStartBySymbol.get(symbol) ?? 0;
   const candles = fullCandles.slice(visibleStart);
-  const supplemental = await fetchSupplementalSeries(
-    symbol,
-    run.timeframe,
-    marketType,
-    maxCandles + indicatorWarmupCandles,
-    timelineEndTimeMs,
-  );
+  const supplemental = supplementalBySymbol.get(symbol) ?? { fundingRates: [], openInterest: [] };
   const total = candles.length;
   const requestedCursor = clamp(query.cursor, 0, total);
   const start =
@@ -2374,7 +2496,7 @@ export const getRunTimeline = async (
 
   const strategyWalletRisk = normalizeWalletRiskPercent(strategy?.walletRisk ?? 1, 1);
   const indicatorSeries = query.includeIndicators
-    ? buildIndicatorSeries(fullCandles, indicatorSpecs).map((series) => ({
+    ? buildIndicatorSeries(fullCandles, indicatorSpecs, supplemental).map((series) => ({
       key: series.key,
       name: series.name,
       period: series.period,
@@ -2394,6 +2516,7 @@ export const getRunTimeline = async (
   const replay = simulateInterleavedPortfolio({
     symbols: replaySymbols,
     candlesBySymbol,
+    supplementalBySymbol,
     analysisStartIndexBySymbol: new Map(
       replaySymbols.map((replaySymbol) => {
         const symbolVisibleStart = visibleStartBySymbol.get(replaySymbol) ?? 0;

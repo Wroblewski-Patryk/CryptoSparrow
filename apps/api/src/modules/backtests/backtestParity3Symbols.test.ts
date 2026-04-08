@@ -33,6 +33,7 @@ type ExpectedAction = {
 const buildExpectedActions = (
   candles: ReplayCandle[],
   strategyConfig: Record<string, unknown>,
+  derivativesSeries?: { fundingRate?: Array<number | null> },
 ): ExpectedAction[] => {
   const rules = parseStrategySignalRules(strategyConfig);
   if (!rules) return [];
@@ -42,7 +43,9 @@ const buildExpectedActions = (
   let openPosition: { side: 'LONG' | 'SHORT'; quantity: number; managementMode: 'BOT_MANAGED' } | null = null;
 
   for (let index = 1; index < candles.length; index += 1) {
-    const direction = evaluateStrategySignalAtIndex(rules, candles, index, cache);
+    const direction = evaluateStrategySignalAtIndex(rules, candles, index, cache, {
+      derivatives: derivativesSeries,
+    });
     if (!direction) continue;
     const decision = decideExecutionAction(direction, openPosition);
     if (decision.kind === 'open') {
@@ -68,7 +71,12 @@ const buildExpectedActions = (
   return actions;
 };
 
-const buildReplayActions = (symbol: string, candles: ReplayCandle[], strategyConfig: Record<string, unknown>) => {
+const buildReplayActions = (
+  symbol: string,
+  candles: ReplayCandle[],
+  strategyConfig: Record<string, unknown>,
+  derivativesSeries?: { fundingRate?: Array<number | null> },
+) => {
   const replay = simulateTradesForSymbolReplay({
     symbol,
     candles,
@@ -76,6 +84,7 @@ const buildReplayActions = (symbol: string, candles: ReplayCandle[], strategyCon
     leverage: 2,
     marginMode: 'CROSSED',
     strategyConfig,
+    derivativesSeries,
   });
 
   return replay.events
@@ -101,11 +110,15 @@ const scenarios: Array<{ symbol: string; candles: ReplayCandle[] }> = [
   },
 ];
 
-const expectParityForThreeSymbols = (strategyConfig: Record<string, unknown>) => {
+const expectParityForThreeSymbols = (
+  strategyConfig: Record<string, unknown>,
+  derivativesBySymbol?: Record<string, { fundingRate?: Array<number | null> }>,
+) => {
   let totalExpectedActions = 0;
   for (const scenario of scenarios) {
-    const expected = buildExpectedActions(scenario.candles, strategyConfig);
-    const replay = buildReplayActions(scenario.symbol, scenario.candles, strategyConfig);
+    const derivatives = derivativesBySymbol?.[scenario.symbol];
+    const expected = buildExpectedActions(scenario.candles, strategyConfig, derivatives);
+    const replay = buildReplayActions(scenario.symbol, scenario.candles, strategyConfig, derivatives);
     totalExpectedActions += expected.length;
     expect(replay).toEqual(expected);
   }
@@ -390,6 +403,36 @@ describe('backtest parity harness (3 symbols)', () => {
     } satisfies Record<string, unknown>;
 
     expectParityForThreeSymbols(strategyConfig);
+  });
+
+  it('keeps FUNDING_RATE and FUNDING_RATE_ZSCORE decision trace aligned for three symbols', () => {
+    const strategyConfig = {
+      open: {
+        direction: 'both',
+        indicatorsLong: [{ name: 'FUNDING_RATE', params: {}, condition: '<', value: 0 }],
+        indicatorsShort: [{ name: 'FUNDING_RATE_ZSCORE', params: { zScorePeriod: 3 }, condition: '>', value: 1 }],
+      },
+      close: {
+        tp: 99,
+        sl: 99,
+        tsl: [{ percent: 99, arm: 1 }],
+      },
+      additional: {
+        dcaTimes: 0,
+      },
+    } satisfies Record<string, unknown>;
+
+    expectParityForThreeSymbols(strategyConfig, {
+      BTCUSDT: {
+        fundingRate: [0.0001, 0.0001, 0.0001, -0.0002, -0.0003, -0.0002, -0.00015, -0.0001, 0.0002, 0.0015],
+      },
+      ETHUSDT: {
+        fundingRate: [0.0002, 0.0002, 0.0001, -0.0001, -0.0002, -0.0001, -0.00005, 0.0001, 0.0002, 0.0012],
+      },
+      SOLUSDT: {
+        fundingRate: [0.00005, 0.00005, 0.00004, -0.00008, -0.0001, -0.00008, -0.00003, 0.00005, 0.0001, 0.001],
+      },
+    });
   });
 
   it('keeps engulfing pattern decision trace aligned with shared strategy/runtime core for three symbols', () => {

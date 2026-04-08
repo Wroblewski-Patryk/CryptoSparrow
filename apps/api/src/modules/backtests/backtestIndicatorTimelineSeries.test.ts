@@ -221,6 +221,61 @@ describe('backtest indicator timeline series', () => {
     expect(series.every((item) => item.panel === 'price')).toBe(true);
   });
 
+  it('builds FUNDING_RATE raw series for timeline overlays', () => {
+    const specs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'FUNDING_RATE', params: {}, condition: '<', value: 0 }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(specs).toHaveLength(1);
+    expect(specs[0]).toMatchObject({
+      key: 'FUNDING_RATE_RAW',
+      source: 'FUNDING',
+      channel: 'RAW',
+      panel: 'oscillator',
+    });
+
+    const series = buildIndicatorSeriesForTests(candles, specs, {
+      fundingRates: [
+        { timestamp: candles[0].openTime, fundingRate: 0.0001 },
+        { timestamp: candles[2].openTime, fundingRate: -0.0002 },
+      ],
+      openInterest: [],
+    });
+    expect(series[0].values).toEqual([0.0001, 0.0001, -0.0002, -0.0002]);
+  });
+
+  it('builds FUNDING_RATE_ZSCORE series for timeline overlays', () => {
+    const specs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'FUNDING_RATE_ZSCORE', params: { zScorePeriod: 3 }, condition: '>', value: 1 }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(specs).toHaveLength(1);
+    expect(specs[0]).toMatchObject({
+      source: 'FUNDING',
+      channel: 'ZSCORE',
+      period: 3,
+    });
+
+    const series = buildIndicatorSeriesForTests(candles, specs, {
+      fundingRates: [
+        { timestamp: candles[0].openTime, fundingRate: 0.0001 },
+        { timestamp: candles[1].openTime, fundingRate: 0.00015 },
+        { timestamp: candles[2].openTime, fundingRate: 0.0002 },
+        { timestamp: candles[3].openTime, fundingRate: 0.0008 },
+      ],
+      openInterest: [],
+    });
+    expect(series[0].values[0]).toBeNull();
+    expect(series[0].values[1]).toBeNull();
+    expect(series[0].values[3]).toBeGreaterThan(1);
+  });
+
   it('builds engulfing pattern boolean series for timeline overlays', () => {
     const specs = parseStrategyIndicatorsForTests({
       open: {

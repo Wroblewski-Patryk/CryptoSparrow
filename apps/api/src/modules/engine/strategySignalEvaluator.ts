@@ -8,6 +8,7 @@ import {
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
   computeMomentumSeriesFromCloses,
+  computeRollingZScoreSeriesFromNullableValues,
   computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
@@ -70,6 +71,18 @@ export type SignalCandle = {
   close: number;
   high?: number;
   low?: number;
+};
+
+export type StrategySignalDerivativesSeries = {
+  fundingRate?: Array<number | null>;
+  openInterest?: Array<number | null>;
+  orderBookImbalance?: Array<number | null>;
+  orderBookSpreadBps?: Array<number | null>;
+  orderBookDepthRatio?: Array<number | null>;
+};
+
+export type StrategySignalEvaluationContext = {
+  derivatives?: StrategySignalDerivativesSeries;
 };
 
 const isComparatorCondition = (
@@ -344,8 +357,46 @@ const resolveSeries = (params: {
   highs: number[];
   lows: number[];
   cache: Map<string, Array<number | null>>;
+  derivatives?: StrategySignalDerivativesSeries;
 }): Array<number | null> | null => {
   const name = params.indicatorName.toUpperCase();
+
+  if (name.includes('FUNDING_RATE_ZSCORE')) {
+    const period = clampPeriod(
+      params.indicatorParams.zScorePeriod ??
+      params.indicatorParams.period ??
+      params.indicatorParams.length,
+      20,
+    );
+    const rawKey = 'FUNDING_RATE_RAW';
+    const zScoreKey = `FUNDING_RATE_ZSCORE_${period}`;
+    if (!params.cache.has(rawKey)) {
+      const fundingSeries = params.derivatives?.fundingRate ?? [];
+      const normalized = params.closes.map((_, index) => {
+        const value = fundingSeries[index];
+        return typeof value === 'number' && Number.isFinite(value) ? value : null;
+      });
+      params.cache.set(rawKey, normalized);
+    }
+    if (!params.cache.has(zScoreKey)) {
+      const raw = params.cache.get(rawKey) ?? [];
+      params.cache.set(zScoreKey, computeRollingZScoreSeriesFromNullableValues(raw, period));
+    }
+    return params.cache.get(zScoreKey) ?? null;
+  }
+
+  if (name.includes('FUNDING_RATE')) {
+    const rawKey = 'FUNDING_RATE_RAW';
+    if (!params.cache.has(rawKey)) {
+      const fundingSeries = params.derivatives?.fundingRate ?? [];
+      const normalized = params.closes.map((_, index) => {
+        const value = fundingSeries[index];
+        return typeof value === 'number' && Number.isFinite(value) ? value : null;
+      });
+      params.cache.set(rawKey, normalized);
+    }
+    return params.cache.get(rawKey) ?? null;
+  }
 
   if (name.includes('EMA')) {
     const period = clampPeriod(
@@ -601,6 +652,7 @@ const resolveRightSeries = (
   highs: number[],
   lows: number[],
   cache: Map<string, Array<number | null>>,
+  derivatives?: StrategySignalDerivativesSeries,
 ) => {
   if (operand.kind !== 'series') return null;
   return resolveSeries({
@@ -611,6 +663,7 @@ const resolveRightSeries = (
     highs,
     lows,
     cache,
+    derivatives,
   });
 };
 
@@ -622,6 +675,7 @@ const evaluateRuleAtIndex = (
   lows: number[],
   index: number,
   cache: Map<string, Array<number | null>>,
+  derivatives?: StrategySignalDerivativesSeries,
 ) => {
   const leftSeries = resolveSeries({
     indicatorName: rule.name,
@@ -631,6 +685,7 @@ const evaluateRuleAtIndex = (
     highs,
     lows,
     cache,
+    derivatives,
   });
   if (!leftSeries) return false;
 
@@ -650,7 +705,7 @@ const evaluateRuleAtIndex = (
 
     if (rule.operand.kind === 'band') return false;
 
-    const rightSeries = resolveRightSeries(rule.operand, closes, opens, highs, lows, cache);
+    const rightSeries = resolveRightSeries(rule.operand, closes, opens, highs, lows, cache, derivatives);
     const currentRight =
       rule.operand.kind === 'constant'
         ? rule.operand.value
@@ -675,7 +730,7 @@ const evaluateRuleAtIndex = (
 
   if (rule.operand.kind === 'band') return false;
 
-  const rightSeries = resolveRightSeries(rule.operand, closes, opens, highs, lows, cache);
+  const rightSeries = resolveRightSeries(rule.operand, closes, opens, highs, lows, cache, derivatives);
   const rightValue =
     rule.operand.kind === 'constant'
       ? rule.operand.value
@@ -692,6 +747,7 @@ export const evaluateStrategySignalAtIndex = (
   candles: SignalCandle[],
   index: number,
   cache: Map<string, Array<number | null>>,
+  context?: StrategySignalEvaluationContext,
 ): StrategySignalDirection | null => {
   const opens = candles.map((candle) =>
     typeof candle.open === 'number' && Number.isFinite(candle.open) ? candle.open : candle.close
@@ -708,11 +764,15 @@ export const evaluateStrategySignalAtIndex = (
   const longMatched =
     canLong &&
     rules.longRules.length > 0 &&
-    rules.longRules.every((rule) => evaluateRuleAtIndex(rule, closes, opens, highs, lows, index, cache));
+    rules.longRules.every((rule) =>
+      evaluateRuleAtIndex(rule, closes, opens, highs, lows, index, cache, context?.derivatives)
+    );
   const shortMatched =
     canShort &&
     rules.shortRules.length > 0 &&
-    rules.shortRules.every((rule) => evaluateRuleAtIndex(rule, closes, opens, highs, lows, index, cache));
+    rules.shortRules.every((rule) =>
+      evaluateRuleAtIndex(rule, closes, opens, highs, lows, index, cache, context?.derivatives)
+    );
 
   if (longMatched && !shortMatched) return 'LONG';
   if (shortMatched && !longMatched) return 'SHORT';

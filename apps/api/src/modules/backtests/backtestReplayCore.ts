@@ -5,6 +5,7 @@ import { PositionManagementInput } from '../engine/positionManagement.types';
 import {
   evaluateStrategySignalAtIndex,
   parseStrategySignalRules,
+  type StrategySignalDerivativesSeries,
 } from '../engine/strategySignalEvaluator';
 import { computeRiskBasedOrderQuantity, normalizeWalletRiskPercent } from '../engine/positionSizing';
 import { BacktestFillModelConfig, createHistoricalBacktestFillModel } from './backtestFillModel';
@@ -371,6 +372,7 @@ export const simulateTradesForSymbolReplay = (input: {
   config?: Partial<ReplayRuntimeConfig>;
   strategyConfig?: Record<string, unknown> | null;
   fillModelConfig?: BacktestFillModelConfig;
+  derivativesSeries?: StrategySignalDerivativesSeries;
   positionSizing?: {
     mode: 'fixed' | 'wallet_risk';
     fixedQuantity?: number;
@@ -466,7 +468,9 @@ export const simulateTradesForSymbolReplay = (input: {
     const current = candles[index];
     const direction = strategyModeEnabled
       ? strategyRules
-        ? evaluateStrategySignalAtIndex(strategyRules, candles, index, indicatorSeriesCache)
+        ? evaluateStrategySignalAtIndex(strategyRules, candles, index, indicatorSeriesCache, {
+            derivatives: input.derivativesSeries,
+          })
         : null
       : toSignalDirection(current, previous, config);
     const decision: ReturnType<typeof decideExecutionAction> | null = direction

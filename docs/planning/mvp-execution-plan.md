@@ -648,7 +648,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `IND-25 feat(patterns): add Morning Star / Evening Star end-to-end`
 - [x] `IND-26 feat(patterns): add Inside Bar / Outside Bar end-to-end`
 - [x] `IND-27 test(pattern-parity): deterministic fixtures for all patterns in runtime + backtest parity suite`
-- [ ] `IND-28 feat(futures-filter): add funding-rate filters (absolute + z-score) for futures strategies`
+- [x] `IND-28 feat(futures-filter): add funding-rate filters (absolute + z-score) for futures strategies`
 - [ ] `IND-29 feat(futures-filter): add open-interest filters (delta/MA/z-score) for futures strategies`
 - [ ] `IND-30 feat(futures-filter): add order-book filters (imbalance/spread/depth ratio) for futures strategies`
 - [ ] `IND-31 test(futures-filters): add fail-closed fallback tests when derivatives snapshots are missing`
@@ -659,6 +659,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
 
 ## Progress Log
+- 2026-04-08: Completed `IND-28` by adding futures funding-rate filters end-to-end (`FUNDING_RATE`, `FUNDING_RATE_ZSCORE`) across shared evaluator, runtime signal path (cached Binance futures funding snapshots), interleaved backtest replay parity context, timeline indicator series, strategy indicator catalog, and regression suites.
 - 2026-04-08: Completed `IND-27` by adding deterministic backtest parity fixtures that cover all implemented candle patterns (engulfing, hammer/shooting star, doji, morning/evening star, inside/outside bar) across 3 scaled symbol datasets and asserting runtime-evaluator vs replay action equivalence.
 - 2026-04-08: Completed `IND-26` by adding Inside Bar / Outside Bar end-to-end across evaluator/runtime/backtest pattern series, exposing both patterns in catalog, and extending evaluator/parity/timeline/catalog regressions.
 - 2026-04-08: Completed `IND-25` by adding Morning Star / Evening Star end-to-end across evaluator/runtime/backtest pattern series, exposing both patterns in catalog, and adding evaluator/parity/timeline/catalog regression fixtures.

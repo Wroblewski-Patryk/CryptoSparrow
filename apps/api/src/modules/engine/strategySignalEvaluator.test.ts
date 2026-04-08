@@ -345,6 +345,69 @@ describe('strategySignalEvaluator', () => {
     expect(direction).toBe('LONG');
   });
 
+  it('supports FUNDING_RATE comparator evaluation from derivatives context', () => {
+    const rules = parseStrategySignalRules({
+      open: {
+        direction: 'long',
+        indicatorsLong: [{ name: 'FUNDING_RATE', condition: '<', value: 0, params: {} }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(rules).not.toBeNull();
+    if (!rules) return;
+
+    const direction = evaluateStrategySignalAtIndex(
+      rules,
+      [
+        { close: 100 },
+        { close: 101 },
+        { close: 102 },
+        { close: 103 },
+      ],
+      3,
+      new Map(),
+      {
+        derivatives: {
+          fundingRate: [0.0002, 0.0001, -0.0001, -0.0002],
+        },
+      },
+    );
+    expect(direction).toBe('LONG');
+  });
+
+  it('supports FUNDING_RATE_ZSCORE comparator evaluation from derivatives context', () => {
+    const rules = parseStrategySignalRules({
+      open: {
+        direction: 'short',
+        indicatorsLong: [],
+        indicatorsShort: [{ name: 'FUNDING_RATE_ZSCORE', condition: '>', value: 1, params: { zScorePeriod: 3 } }],
+      },
+    });
+
+    expect(rules).not.toBeNull();
+    if (!rules) return;
+
+    const direction = evaluateStrategySignalAtIndex(
+      rules,
+      [
+        { close: 100 },
+        { close: 101 },
+        { close: 102 },
+        { close: 103 },
+        { close: 104 },
+      ],
+      4,
+      new Map(),
+      {
+        derivatives: {
+          fundingRate: [0.0001, 0.00012, 0.00011, 0.00015, 0.0012],
+        },
+      },
+    );
+    expect(direction).toBe('SHORT');
+  });
+
   it('supports engulfing candle-pattern comparator evaluation', () => {
     const longRules = parseStrategySignalRules({
       open: {

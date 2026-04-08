@@ -16,6 +16,8 @@ describe('indicators.service', () => {
     expect(names).toContain('ADX');
     expect(names).toContain('STOCHASTIC');
     expect(names).toContain('DONCHIAN_CHANNELS');
+    expect(names).toContain('FUNDING_RATE');
+    expect(names).toContain('FUNDING_RATE_ZSCORE');
     expect(names).toContain('BULLISH_ENGULFING');
     expect(names).toContain('BEARISH_ENGULFING');
     expect(names).toContain('HAMMER');

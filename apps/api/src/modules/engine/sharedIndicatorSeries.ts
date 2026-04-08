@@ -101,6 +101,40 @@ const computeEmaSeriesFromNullableValues = (
   return output;
 };
 
+export const computeRollingZScoreSeriesFromNullableValues = (
+  values: Array<number | null>,
+  period: number,
+): Array<number | null> => {
+  const output: Array<number | null> = [];
+  for (let index = 0; index < values.length; index += 1) {
+    if (index + 1 < period) {
+      output.push(null);
+      continue;
+    }
+
+    const window = values.slice(index - period + 1, index + 1);
+    if (window.some((item) => typeof item !== 'number' || !Number.isFinite(item))) {
+      output.push(null);
+      continue;
+    }
+
+    const numericWindow = window as number[];
+    const mean = numericWindow.reduce((sum, value) => sum + value, 0) / period;
+    const variance =
+      numericWindow.reduce((sum, value) => sum + (value - mean) ** 2, 0) / period;
+    const stdDev = Math.sqrt(variance);
+    if (!Number.isFinite(stdDev) || stdDev === 0) {
+      output.push(0);
+      continue;
+    }
+
+    const current = numericWindow[numericWindow.length - 1];
+    output.push((current - mean) / stdDev);
+  }
+
+  return output;
+};
+
 export const computeMacdSeriesFromCloses = (
   closes: number[],
   fastPeriod: number,

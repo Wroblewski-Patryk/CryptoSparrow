@@ -25,12 +25,17 @@ import {
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
   computeMomentumSeriesFromCloses,
+  computeRollingZScoreSeriesFromNullableValues,
   computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
   computeStochasticSeriesFromCandles,
   computeStochRsiSeriesFromCloses,
 } from './sharedIndicatorSeries';
+import {
+  alignTimedNumericPointsToCandles,
+  normalizeTimedNumericPoints,
+} from './sharedDerivativesSeries';
 import {
   CandlePatternParams,
   computeCandlePatternSeries,
@@ -291,6 +296,14 @@ const runtimeAutoRestartWindowMs = Math.max(
   runtimeAutoRestartCooldownMs,
   Number.parseInt(process.env.RUNTIME_AUTO_RESTART_WINDOW_MS ?? '300000', 10)
 );
+const runtimeFundingRefreshMs = Math.max(
+  30_000,
+  Number.parseInt(process.env.RUNTIME_FUNDING_REFRESH_MS ?? '180000', 10),
+);
+const runtimeFundingHistoryLimit = Math.max(
+  20,
+  Number.parseInt(process.env.RUNTIME_FUNDING_HISTORY_LIMIT ?? '200', 10),
+);
 
 type RuntimeCandle = {
   openTime: number;
@@ -300,6 +313,11 @@ type RuntimeCandle = {
   low: number;
   close: number;
   volume: number;
+};
+
+type FundingRatePoint = {
+  timestamp: number;
+  fundingRate: number;
 };
 
 type StrategyVote = {
@@ -619,6 +637,8 @@ export class RuntimeSignalLoop {
   private readonly processedDecisionWindows = new Map<string, number>();
   private readonly candleSeries = new Map<string, RuntimeCandle[]>();
   private readonly warmupLastAttemptAt = new Map<string, number>();
+  private readonly fundingRatePoints = new Map<string, FundingRatePoint[]>();
+  private readonly fundingLastFetchAt = new Map<string, number>();
   private lastStreamEventAtMs: number | null = null;
   private lastSessionSyncSuccessAtMs: number | null = null;
   private lastKnownActiveBotIds = new Set<string>();
@@ -906,6 +926,7 @@ export class RuntimeSignalLoop {
     }
     this.candleSeries.set(key, series);
     await this.ensureSeriesWarmup(event.marketType, event.symbol, event.interval, event.closeTime);
+    await this.ensureFundingRateSeriesForCandle(event);
     await this.processPositionAutomationFallbackFromCandle(event);
     await this.handleFinalCandleDecision(event);
   }
@@ -1024,6 +1045,131 @@ export class RuntimeSignalLoop {
       merged.splice(0, merged.length - maxCandlesPerSeries);
     }
     this.candleSeries.set(key, merged);
+  }
+
+  private getFundingKey(marketType: 'FUTURES' | 'SPOT', symbol: string) {
+    return `${marketType}|${symbol.toUpperCase()}`;
+  }
+
+  private mergeFundingRatePoints(
+    key: string,
+    incoming: FundingRatePoint[],
+  ) {
+    if (incoming.length === 0) return;
+    const existing = this.fundingRatePoints.get(key) ?? [];
+    const normalized = normalizeTimedNumericPoints(
+      [...existing, ...incoming].map((point) => ({
+        timestamp: point.timestamp,
+        value: point.fundingRate,
+      })),
+    ).map((point) => ({
+      timestamp: point.timestamp,
+      fundingRate: point.value,
+    }));
+
+    if (normalized.length > maxCandlesPerSeries) {
+      normalized.splice(0, normalized.length - maxCandlesPerSeries);
+    }
+    this.fundingRatePoints.set(key, normalized);
+  }
+
+  private async fetchFundingRateHistory(
+    symbol: string,
+    endTimeMs?: number,
+  ): Promise<FundingRatePoint[]> {
+    if (process.env.NODE_ENV === 'test') return [];
+    const base = process.env.BINANCE_FUTURES_REST_URL ?? 'https://fapi.binance.com';
+    const params = new URLSearchParams({
+      symbol: symbol.toUpperCase(),
+      limit: String(Math.min(1000, Math.max(20, runtimeFundingHistoryLimit))),
+    });
+    if (Number.isFinite(endTimeMs)) {
+      params.set('endTime', String(Math.floor(endTimeMs as number)));
+    }
+    const url = `${base}/fapi/v1/fundingRate?${params.toString()}`;
+
+    try {
+      const response = await fetch(url, { method: 'GET' });
+      if (!response.ok) return [];
+      const payload = (await response.json()) as unknown;
+      if (!Array.isArray(payload)) return [];
+      return payload
+        .map((item) => {
+          if (!item || typeof item !== 'object') return null;
+          const row = item as { fundingTime?: unknown; fundingRate?: unknown };
+          const timestamp = Number(row.fundingTime);
+          const fundingRate = Number(row.fundingRate);
+          if (!Number.isFinite(timestamp) || !Number.isFinite(fundingRate)) return null;
+          return { timestamp, fundingRate } satisfies FundingRatePoint;
+        })
+        .filter((item): item is FundingRatePoint => Boolean(item))
+        .sort((left, right) => left.timestamp - right.timestamp);
+    } catch {
+      return [];
+    }
+  }
+
+  private async fetchFundingRateSnapshot(
+    symbol: string,
+  ): Promise<FundingRatePoint | null> {
+    if (process.env.NODE_ENV === 'test') return null;
+    const base = process.env.BINANCE_FUTURES_REST_URL ?? 'https://fapi.binance.com';
+    const params = new URLSearchParams({ symbol: symbol.toUpperCase() });
+    const url = `${base}/fapi/v1/premiumIndex?${params.toString()}`;
+
+    try {
+      const response = await fetch(url, { method: 'GET' });
+      if (!response.ok) return null;
+      const payload = (await response.json()) as unknown;
+      if (!payload || typeof payload !== 'object') return null;
+      const row = payload as { time?: unknown; lastFundingRate?: unknown };
+      const timestamp = Number(row.time);
+      const fundingRate = Number(row.lastFundingRate);
+      if (!Number.isFinite(timestamp) || !Number.isFinite(fundingRate)) return null;
+      return { timestamp, fundingRate } satisfies FundingRatePoint;
+    } catch {
+      return null;
+    }
+  }
+
+  private async ensureFundingRateSeriesForCandle(event: StreamCandleEvent) {
+    if (event.marketType !== 'FUTURES') return;
+    const key = this.getFundingKey(event.marketType, event.symbol);
+    const now = this.deps.nowMs();
+    const existing = this.fundingRatePoints.get(key) ?? [];
+    const lastFetchAt = this.fundingLastFetchAt.get(key) ?? 0;
+    const shouldRefresh =
+      existing.length === 0 || now - lastFetchAt >= runtimeFundingRefreshMs;
+    if (!shouldRefresh) return;
+
+    const incoming: FundingRatePoint[] = [];
+    if (existing.length === 0) {
+      incoming.push(
+        ...(await this.fetchFundingRateHistory(event.symbol, event.closeTime)),
+      );
+    }
+    const snapshot = await this.fetchFundingRateSnapshot(event.symbol);
+    if (snapshot) incoming.push(snapshot);
+    this.mergeFundingRatePoints(key, incoming);
+    this.fundingLastFetchAt.set(key, now);
+  }
+
+  private resolveFundingRateSeriesForCandles(
+    marketType: 'FUTURES' | 'SPOT',
+    symbol: string,
+    candles: RuntimeCandle[],
+  ): Array<number | null> | null {
+    if (marketType !== 'FUTURES') return null;
+    const key = this.getFundingKey(marketType, symbol);
+    const points = this.fundingRatePoints.get(key) ?? [];
+    if (points.length === 0) return null;
+    return alignTimedNumericPointsToCandles(
+      candles,
+      points.map((point) => ({
+        timestamp: point.timestamp,
+        value: point.fundingRate,
+      })),
+    );
   }
 
   private getSeriesKey(marketType: 'FUTURES' | 'SPOT', symbol: string, interval: string) {
@@ -1566,8 +1712,19 @@ export class RuntimeSignalLoop {
       return latestIndex;
     })();
     const closes = candles.map((candle) => candle.close);
+    const fundingRateSeries = this.resolveFundingRateSeriesForCandles(
+      marketType,
+      symbol,
+      candles,
+    );
     const indicatorCache = new Map<string, Array<number | null>>();
-    const direction = evaluateStrategySignalAtIndex(signalRules, candles, decisionIndex, indicatorCache);
+    const direction = evaluateStrategySignalAtIndex(
+      signalRules,
+      candles,
+      decisionIndex,
+      indicatorCache,
+      fundingRateSeries ? { derivatives: { fundingRate: fundingRateSeries } } : undefined,
+    );
 
     const ensureEma = (period: number) => {
       const key = `EMA_${period}`;
@@ -1594,6 +1751,27 @@ export class RuntimeSignalLoop {
       const key = `MOMENTUM_${period}`;
       if (!indicatorCache.has(key)) {
         indicatorCache.set(key, computeMomentumSeriesFromCloses(closes, period));
+      }
+      return indicatorCache.get(key)!;
+    };
+    const ensureFundingRate = () => {
+      const key = 'FUNDING_RATE_RAW';
+      if (!indicatorCache.has(key)) {
+        const normalized = candles.map((_, index) => {
+          const value = fundingRateSeries?.[index];
+          return typeof value === 'number' && Number.isFinite(value) ? value : null;
+        });
+        indicatorCache.set(key, normalized);
+      }
+      return indicatorCache.get(key)!;
+    };
+    const ensureFundingRateZScore = (period: number) => {
+      const key = `FUNDING_RATE_ZSCORE_${period}`;
+      if (!indicatorCache.has(key)) {
+        indicatorCache.set(
+          key,
+          computeRollingZScoreSeriesFromNullableValues(ensureFundingRate(), period),
+        );
       }
       return indicatorCache.get(key)!;
     };
@@ -1768,6 +1946,44 @@ export class RuntimeSignalLoop {
       rule: { name: string; condition: string; value: number; params: Record<string, unknown> }
     ) => {
       const indicator = rule.name.toUpperCase();
+      if (indicator.includes('FUNDING_RATE_ZSCORE')) {
+        const period = clampPeriod(
+          rule.params.zScorePeriod ?? rule.params.period ?? rule.params.length,
+          20,
+        );
+        const value = ensureFundingRateZScore(period)[decisionIndex];
+        conditionLines.push({
+          scope,
+          left: `FUNDING_RATE_ZSCORE(${period})`,
+          value: formatIndicatorValue(value),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has(`FUNDING_RATE_ZSCORE(${period})`)) {
+          indicatorKeys.add(`FUNDING_RATE_ZSCORE(${period})`);
+          indicatorParts.push(
+            `FUNDING_RATE_ZSCORE(${period})=${formatIndicatorValue(value)}`,
+          );
+        }
+        return;
+      }
+
+      if (indicator.includes('FUNDING_RATE')) {
+        const value = ensureFundingRate()[decisionIndex];
+        conditionLines.push({
+          scope,
+          left: 'FUNDING_RATE',
+          value: formatIndicatorValue(value),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has('FUNDING_RATE')) {
+          indicatorKeys.add('FUNDING_RATE');
+          indicatorParts.push(`FUNDING_RATE=${formatIndicatorValue(value)}`);
+        }
+        return;
+      }
+
       if (indicator.includes('EMA')) {
         const fast = clampPeriod(rule.params.fast, 9);
         const slow = clampPeriod(rule.params.slow, 21);

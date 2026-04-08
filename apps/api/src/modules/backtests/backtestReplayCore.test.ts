@@ -85,6 +85,37 @@ describe('simulateTradesForSymbolReplay', () => {
     expect(result.eventCounts.LIQUIDATION).toBeGreaterThanOrEqual(1);
   });
 
+  it('supports FUNDING_RATE strategy rules via derivatives series input', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 101),
+      candle(2, 102),
+      candle(3, 103),
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 2,
+      marginMode: 'CROSSED',
+      strategyConfig: {
+        open: {
+          direction: 'long',
+          indicatorsLong: [{ name: 'FUNDING_RATE', condition: '<', value: 0, params: {} }],
+          indicatorsShort: [],
+        },
+        close: { tp: 99, sl: 99, tsl: [{ percent: 99, arm: 1 }] },
+        additional: { dcaTimes: 0 },
+      },
+      derivativesSeries: {
+        fundingRate: [0.0002, 0.0001, -0.0001, -0.0002],
+      },
+    });
+
+    expect(result.eventCounts.ENTRY).toBeGreaterThanOrEqual(1);
+  });
+
   it('emits lifecycle actions (DCA/TRAILING/EXIT) for timeline/reporting', () => {
     const candles = [
       candle(0, 100),

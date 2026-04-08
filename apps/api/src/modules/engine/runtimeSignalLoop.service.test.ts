@@ -60,6 +60,21 @@ const strategyShortMomentum = {
   weight: 1,
 };
 
+const strategyFundingLong = {
+  strategyId: 'strategy-funding-long',
+  strategyInterval: '1m',
+  strategyLeverage: 3,
+  walletRisk: 5,
+  strategyConfig: {
+    open: {
+      indicatorsLong: [{ name: 'FUNDING_RATE', params: {}, condition: '<', value: 0 }],
+      indicatorsShort: [],
+    },
+  },
+  priority: 10,
+  weight: 1,
+};
+
 const createDeps = () => {
   let handler: ((event: MarketStreamEvent) => void | Promise<void>) | null = null;
 
@@ -438,6 +453,33 @@ describe('RuntimeSignalLoop', () => {
     });
 
     expect(evaluation.direction).toBe('SHORT');
+  });
+
+  it('evaluates FUNDING_RATE rule from cached derivatives series in runtime strategy path', () => {
+    const { deps } = createDeps();
+    const loop = new RuntimeSignalLoop(deps);
+
+    const key = 'FUTURES|BTCUSDT|1m';
+    (loop as any).candleSeries.set(key, [
+      { openTime: 0, closeTime: 59_000, open: 100, high: 101, low: 99, close: 100, volume: 1000 },
+      { openTime: 60_000, closeTime: 119_000, open: 101, high: 102, low: 100, close: 101, volume: 1000 },
+      { openTime: 120_000, closeTime: 179_000, open: 102, high: 103, low: 101, close: 102, volume: 1000 },
+      { openTime: 180_000, closeTime: 239_000, open: 103, high: 104, low: 102, close: 103, volume: 1000 },
+    ]);
+    (loop as any).fundingRatePoints.set('FUTURES|BTCUSDT', [
+      { timestamp: 0, fundingRate: 0.0002 },
+      { timestamp: 120_000, fundingRate: -0.0003 },
+    ]);
+
+    const evaluation = (loop as any).evaluateStrategy({
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      strategy: strategyFundingLong,
+      decisionOpenTime: 180_000,
+    });
+
+    expect(evaluation.direction).toBe('LONG');
+    expect(evaluation.indicatorSummary).toContain('FUNDING_RATE');
   });
 
   it('deduplicates duplicate final-candle window events', async () => {

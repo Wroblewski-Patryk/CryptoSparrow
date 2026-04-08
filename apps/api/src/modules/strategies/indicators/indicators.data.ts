@@ -223,6 +223,25 @@ export const indicators = [
     ],
   },
   {
+    name: "FUNDING_RATE",
+    group: "Filtry derywatów",
+    type: "derivatives",
+    params: [],
+  },
+  {
+    name: "FUNDING_RATE_ZSCORE",
+    group: "Filtry derywatów",
+    type: "derivatives",
+    params: [
+      {
+        name: "zScorePeriod",
+        default: 20,
+        min: 2,
+        max: 500,
+      },
+    ],
+  },
+  {
     name: "BULLISH_ENGULFING",
     group: "Formacje świecowe",
     type: "pattern",
