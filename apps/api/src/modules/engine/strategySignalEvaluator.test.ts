@@ -345,6 +345,52 @@ describe('strategySignalEvaluator', () => {
     expect(direction).toBe('LONG');
   });
 
+  it('supports engulfing candle-pattern comparator evaluation', () => {
+    const longRules = parseStrategySignalRules({
+      open: {
+        direction: 'long',
+        indicatorsLong: [{ name: 'BULLISH_ENGULFING', condition: '>', value: 0.5, params: {} }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(longRules).not.toBeNull();
+    if (!longRules) return;
+
+    const longDirection = evaluateStrategySignalAtIndex(
+      longRules,
+      [
+        { open: 10, close: 9.2, high: 10.2, low: 9 },
+        { open: 9, close: 10.9, high: 11, low: 8.8 },
+      ],
+      1,
+      new Map(),
+    );
+    expect(longDirection).toBe('LONG');
+
+    const shortRules = parseStrategySignalRules({
+      open: {
+        direction: 'short',
+        indicatorsLong: [],
+        indicatorsShort: [{ name: 'BEARISH_ENGULFING', condition: '>', value: 0.5, params: {} }],
+      },
+    });
+
+    expect(shortRules).not.toBeNull();
+    if (!shortRules) return;
+
+    const shortDirection = evaluateStrategySignalAtIndex(
+      shortRules,
+      [
+        { open: 9.2, close: 10.1, high: 10.3, low: 9 },
+        { open: 10.4, close: 9.1, high: 10.5, low: 8.9 },
+      ],
+      1,
+      new Map(),
+    );
+    expect(shortDirection).toBe('SHORT');
+  });
+
   it('supports CROSS_ABOVE and CROSS_BELOW operators', () => {
     const crossAbove = parseStrategySignalRules({
       open: {

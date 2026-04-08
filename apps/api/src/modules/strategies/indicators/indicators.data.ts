@@ -222,4 +222,16 @@ export const indicators = [
       },
     ],
   },
+  {
+    name: "BULLISH_ENGULFING",
+    group: "Formacje świecowe",
+    type: "pattern",
+    params: [],
+  },
+  {
+    name: "BEARISH_ENGULFING",
+    group: "Formacje świecowe",
+    type: "pattern",
+    params: [],
+  },
 ];

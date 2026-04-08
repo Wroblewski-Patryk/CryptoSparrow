@@ -16,5 +16,7 @@ describe('indicators.service', () => {
     expect(names).toContain('ADX');
     expect(names).toContain('STOCHASTIC');
     expect(names).toContain('DONCHIAN_CHANNELS');
+    expect(names).toContain('BULLISH_ENGULFING');
+    expect(names).toContain('BEARISH_ENGULFING');
   });
 });

@@ -14,6 +14,7 @@ import {
   computeStochasticSeriesFromCandles,
   computeStochRsiSeriesFromCloses,
 } from './sharedIndicatorSeries';
+import { computeCandlePatternSeries, resolveCandlePatternName } from './sharedCandlePatternSeries';
 
 export type StrategySignalDirection = 'LONG' | 'SHORT' | 'EXIT';
 
@@ -61,6 +62,7 @@ export type StrategySignalRules = {
 };
 
 export type SignalCandle = {
+  open?: number;
   close: number;
   high?: number;
   low?: number;
@@ -313,6 +315,7 @@ export const parseStrategySignalRules = (
 const resolveSeries = (params: {
   indicatorName: string;
   indicatorParams: Record<string, unknown>;
+  opens: number[];
   closes: number[];
   highs: number[];
   lows: number[];
@@ -448,6 +451,22 @@ const resolveSeries = (params: {
     return params.cache.get(middleKey) ?? null;
   }
 
+  const pattern = resolveCandlePatternName(name);
+  if (pattern && (pattern === 'BULLISH_ENGULFING' || pattern === 'BEARISH_ENGULFING')) {
+    const key = `PATTERN_${pattern}`;
+    if (!params.cache.has(key)) {
+      const candles = params.closes.map((close, index) => ({
+        open: params.opens[index] ?? close,
+        high: params.highs[index] ?? close,
+        low: params.lows[index] ?? close,
+        close,
+      }));
+      const series = computeCandlePatternSeries(candles, pattern).map((value) => (value ? 1 : 0));
+      params.cache.set(key, series);
+    }
+    return params.cache.get(key) ?? null;
+  }
+
   if (name.includes('ADX') || name.includes('DI_PLUS') || name.includes('DI_MINUS')) {
     const period = clampPeriod(params.indicatorParams.period ?? params.indicatorParams.length, 14);
     const baseKey = `ADX_${period}`;
@@ -540,6 +559,7 @@ const resolveSeries = (params: {
 const resolveRightSeries = (
   operand: StrategyRuleOperand,
   closes: number[],
+  opens: number[],
   highs: number[],
   lows: number[],
   cache: Map<string, Array<number | null>>,
@@ -548,6 +568,7 @@ const resolveRightSeries = (
   return resolveSeries({
     indicatorName: operand.indicator,
     indicatorParams: operand.params,
+    opens,
     closes,
     highs,
     lows,
@@ -558,6 +579,7 @@ const resolveRightSeries = (
 const evaluateRuleAtIndex = (
   rule: StrategyIndicatorRule,
   closes: number[],
+  opens: number[],
   highs: number[],
   lows: number[],
   index: number,
@@ -566,6 +588,7 @@ const evaluateRuleAtIndex = (
   const leftSeries = resolveSeries({
     indicatorName: rule.name,
     indicatorParams: rule.params,
+    opens,
     closes,
     highs,
     lows,
@@ -589,7 +612,7 @@ const evaluateRuleAtIndex = (
 
     if (rule.operand.kind === 'band') return false;
 
-    const rightSeries = resolveRightSeries(rule.operand, closes, highs, lows, cache);
+    const rightSeries = resolveRightSeries(rule.operand, closes, opens, highs, lows, cache);
     const currentRight =
       rule.operand.kind === 'constant'
         ? rule.operand.value
@@ -614,7 +637,7 @@ const evaluateRuleAtIndex = (
 
   if (rule.operand.kind === 'band') return false;
 
-  const rightSeries = resolveRightSeries(rule.operand, closes, highs, lows, cache);
+  const rightSeries = resolveRightSeries(rule.operand, closes, opens, highs, lows, cache);
   const rightValue =
     rule.operand.kind === 'constant'
       ? rule.operand.value
@@ -632,6 +655,9 @@ export const evaluateStrategySignalAtIndex = (
   index: number,
   cache: Map<string, Array<number | null>>,
 ): StrategySignalDirection | null => {
+  const opens = candles.map((candle) =>
+    typeof candle.open === 'number' && Number.isFinite(candle.open) ? candle.open : candle.close
+  );
   const closes = candles.map((candle) => candle.close);
   const highs = candles.map((candle) =>
     typeof candle.high === 'number' && Number.isFinite(candle.high) ? candle.high : candle.close
@@ -644,11 +670,11 @@ export const evaluateStrategySignalAtIndex = (
   const longMatched =
     canLong &&
     rules.longRules.length > 0 &&
-    rules.longRules.every((rule) => evaluateRuleAtIndex(rule, closes, highs, lows, index, cache));
+    rules.longRules.every((rule) => evaluateRuleAtIndex(rule, closes, opens, highs, lows, index, cache));
   const shortMatched =
     canShort &&
     rules.shortRules.length > 0 &&
-    rules.shortRules.every((rule) => evaluateRuleAtIndex(rule, closes, highs, lows, index, cache));
+    rules.shortRules.every((rule) => evaluateRuleAtIndex(rule, closes, opens, highs, lows, index, cache));
 
   if (longMatched && !shortMatched) return 'LONG';
   if (shortMatched && !longMatched) return 'SHORT';

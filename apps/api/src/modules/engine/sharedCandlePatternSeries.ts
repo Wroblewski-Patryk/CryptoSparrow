@@ -27,6 +27,23 @@ export type OhlcPatternCandle = {
   close: number;
 };
 
+export const candlePatternNames: CandlePatternName[] = [
+  'BULLISH_ENGULFING',
+  'BEARISH_ENGULFING',
+  'HAMMER',
+  'SHOOTING_STAR',
+  'DOJI',
+  'MORNING_STAR',
+  'EVENING_STAR',
+  'INSIDE_BAR',
+  'OUTSIDE_BAR',
+];
+
+export const resolveCandlePatternName = (value: string): CandlePatternName | null => {
+  const normalized = value.toUpperCase();
+  return candlePatternNames.find((pattern) => normalized.includes(pattern)) ?? null;
+};
+
 const isFiniteCandle = (candle: OhlcPatternCandle | undefined) =>
   Boolean(
     candle &&

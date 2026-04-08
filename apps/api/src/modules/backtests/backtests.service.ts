@@ -24,6 +24,11 @@ import {
   computeStochRsiSeriesFromCloses,
 } from '../engine/sharedIndicatorSeries';
 import {
+  CandlePatternName,
+  computeCandlePatternSeries,
+  resolveCandlePatternName,
+} from '../engine/sharedCandlePatternSeries';
+import {
   computeRiskBasedOrderQuantity,
   normalizeWalletRiskPercent,
 } from '../engine/positionSizing';
@@ -137,8 +142,9 @@ type IndicatorSpec = {
   name: string;
   period: number;
   panel: 'price' | 'oscillator';
-  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'STOCHASTIC' | 'BOLLINGER' | 'ATR' | 'CCI' | 'DONCHIAN' | 'ADX';
+  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'STOCHASTIC' | 'BOLLINGER' | 'ATR' | 'CCI' | 'DONCHIAN' | 'ADX' | 'PATTERN';
   params: Record<string, number>;
+  patternName?: CandlePatternName;
   channel?:
     | 'LINE'
     | 'SIGNAL'
@@ -1221,6 +1227,21 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
       ];
     }
 
+    const pattern = resolveCandlePatternName(name);
+    if (pattern && (pattern === 'BULLISH_ENGULFING' || pattern === 'BEARISH_ENGULFING')) {
+      return [
+        {
+          key: `${name}`,
+          name: `${name}`,
+          period: 2,
+          panel: 'oscillator' as const,
+          source: 'PATTERN' as const,
+          params: {},
+          patternName: pattern,
+        },
+      ];
+    }
+
     if (name.includes('STOCHASTIC') && params) {
       const period = asPeriod(params.period ?? params.length, 14);
       const smoothK = asPeriod(params.smoothK, 3);
@@ -1471,6 +1492,7 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
       lower: Array<number | null>;
     }
   >();
+  const patternCache = new Map<string, Array<number | null>>();
   return specs.map((spec) => {
     const values = (() => {
       if (spec.source === 'EMA') {
@@ -1513,6 +1535,23 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
         if (spec.channel === 'UPPER') return donchian.upper;
         if (spec.channel === 'LOWER') return donchian.lower;
         return donchian.middle;
+      }
+
+      if (spec.source === 'PATTERN') {
+        const pattern = spec.patternName ?? resolveCandlePatternName(spec.name);
+        if (!pattern) return Array.from({ length: closes.length }, () => 0);
+        const key = pattern;
+        if (!patternCache.has(key)) {
+          const patternCandles = candles.map((candle) => ({
+            open: candle.open,
+            high: candle.high,
+            low: candle.low,
+            close: candle.close,
+          }));
+          const values = computeCandlePatternSeries(patternCandles, pattern).map((value) => (value ? 1 : 0));
+          patternCache.set(key, values);
+        }
+        return patternCache.get(key)!;
       }
 
       if (spec.source === 'ADX') {
@@ -1615,8 +1654,9 @@ export const buildIndicatorSeriesForTests = (
     name: string;
     period: number;
     panel: 'price' | 'oscillator';
-    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'STOCHASTIC' | 'BOLLINGER' | 'ATR' | 'CCI' | 'DONCHIAN' | 'ADX';
+    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'STOCHASTIC' | 'BOLLINGER' | 'ATR' | 'CCI' | 'DONCHIAN' | 'ADX' | 'PATTERN';
     params: Record<string, number>;
+    patternName?: CandlePatternName;
     channel?:
       | 'LINE'
       | 'SIGNAL'

@@ -14,7 +14,7 @@ export {
   computeStochasticSeriesFromCandles,
   computeStochRsiSeriesFromCloses,
 } from '../engine/sharedIndicatorSeries';
-export { computeCandlePatternSeries } from '../engine/sharedCandlePatternSeries';
+export { computeCandlePatternSeries, resolveCandlePatternName } from '../engine/sharedCandlePatternSeries';
 
 export const formatIndicatorValue = (value: number | null | undefined) => {
   if (value == null || !Number.isFinite(value)) return null;

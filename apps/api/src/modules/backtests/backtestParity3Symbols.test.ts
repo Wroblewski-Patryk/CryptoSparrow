@@ -14,6 +14,17 @@ const makeCandles = (prices: number[]): ReplayCandle[] =>
     volume: 1000 + index,
   }));
 
+const makePatternCandles = (rows: Array<{ open: number; high: number; low: number; close: number }>): ReplayCandle[] =>
+  rows.map((row, index) => ({
+    openTime: 1_710_000_000_000 + index * 60_000,
+    closeTime: 1_710_000_030_000 + index * 60_000,
+    open: row.open,
+    high: row.high,
+    low: row.low,
+    close: row.close,
+    volume: 2000 + index,
+  }));
+
 type ExpectedAction = {
   kind: 'open' | 'close';
   side: 'LONG' | 'SHORT';
@@ -379,5 +390,63 @@ describe('backtest parity harness (3 symbols)', () => {
     } satisfies Record<string, unknown>;
 
     expectParityForThreeSymbols(strategyConfig);
+  });
+
+  it('keeps engulfing pattern decision trace aligned with shared strategy/runtime core for three symbols', () => {
+    const strategyConfig = {
+      open: {
+        direction: 'both',
+        indicatorsLong: [{ name: 'BULLISH_ENGULFING', params: {}, condition: '>', value: 0.5 }],
+        indicatorsShort: [{ name: 'BEARISH_ENGULFING', params: {}, condition: '>', value: 0.5 }],
+      },
+      close: {
+        tp: 99,
+        sl: 99,
+        tsl: [{ percent: 99, arm: 1 }],
+      },
+      additional: {
+        dcaTimes: 0,
+      },
+    } satisfies Record<string, unknown>;
+
+    const patternScenarios: Array<{ symbol: string; candles: ReplayCandle[] }> = [
+      {
+        symbol: 'BTCUSDT',
+        candles: makePatternCandles([
+          { open: 10, high: 10.2, low: 9, close: 9.2 },
+          { open: 9, high: 11.1, low: 8.8, close: 10.9 },
+          { open: 10.8, high: 11.2, low: 10.5, close: 11 },
+          { open: 11.3, high: 11.4, low: 9.1, close: 9.4 },
+        ]),
+      },
+      {
+        symbol: 'ETHUSDT',
+        candles: makePatternCandles([
+          { open: 20, high: 20.2, low: 19.1, close: 19.2 },
+          { open: 19, high: 21.4, low: 18.8, close: 21.2 },
+          { open: 21.1, high: 21.3, low: 20.7, close: 21.25 },
+          { open: 21.5, high: 21.6, low: 19, close: 19.3 },
+        ]),
+      },
+      {
+        symbol: 'SOLUSDT',
+        candles: makePatternCandles([
+          { open: 30, high: 30.2, low: 29, close: 29.1 },
+          { open: 28.9, high: 31.3, low: 28.7, close: 31 },
+          { open: 31.1, high: 31.4, low: 30.8, close: 31.2 },
+          { open: 31.5, high: 31.6, low: 28.9, close: 29.2 },
+        ]),
+      },
+    ];
+
+    let totalExpectedActions = 0;
+    for (const scenario of patternScenarios) {
+      const expected = buildExpectedActions(scenario.candles, strategyConfig);
+      const replay = buildReplayActions(scenario.symbol, scenario.candles, strategyConfig);
+      totalExpectedActions += expected.length;
+      expect(replay).toEqual(expected);
+    }
+
+    expect(totalExpectedActions).toBeGreaterThan(0);
   });
 });

@@ -31,6 +31,7 @@ import {
   computeStochasticSeriesFromCandles,
   computeStochRsiSeriesFromCloses,
 } from './sharedIndicatorSeries';
+import { computeCandlePatternSeries, resolveCandlePatternName } from './sharedCandlePatternSeries';
 import { computeRiskBasedOrderQuantity, normalizeWalletRiskPercent } from './positionSizing';
 import { resolveRuntimeDcaFundsExhausted, resolveRuntimeReferenceBalance } from './runtimeCapitalContext.service';
 import { runtimeTelemetryService } from './runtimeTelemetry.service';
@@ -1712,6 +1713,22 @@ export class RuntimeSignalLoop {
         lower: indicatorCache.get(lowerKey)!,
       };
     };
+    const ensurePattern = (patternName: string) => {
+      const pattern = resolveCandlePatternName(patternName);
+      if (!pattern) return null;
+      const key = `PATTERN_${pattern}`;
+      if (!indicatorCache.has(key)) {
+        const patternCandles = candles.map((candle) => ({
+          open: candle.open,
+          high: candle.high,
+          low: candle.low,
+          close: candle.close,
+        }));
+        const values = computeCandlePatternSeries(patternCandles, pattern).map((value) => (value ? 1 : 0));
+        indicatorCache.set(key, values);
+      }
+      return indicatorCache.get(key) ?? null;
+    };
 
     const conditionLines: RuntimeSignalConditionLine[] = [];
     const indicatorParts: string[] = [];
@@ -1993,6 +2010,24 @@ export class RuntimeSignalLoop {
         if (!indicatorKeys.has(`DONCHIAN_LOWER(${period})`)) {
           indicatorKeys.add(`DONCHIAN_LOWER(${period})`);
           indicatorParts.push(`DONCHIAN_LOWER(${period})=${formatIndicatorValue(donchian.lower[decisionIndex])}`);
+        }
+        return;
+      }
+
+      const pattern = resolveCandlePatternName(indicator);
+      if (pattern && (pattern === 'BULLISH_ENGULFING' || pattern === 'BEARISH_ENGULFING')) {
+        const patternValues = ensurePattern(indicator);
+        const value = patternValues ? patternValues[decisionIndex] : null;
+        conditionLines.push({
+          scope,
+          left: pattern,
+          value: formatIndicatorValue(value),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has(pattern)) {
+          indicatorKeys.add(pattern);
+          indicatorParts.push(`${pattern}=${formatIndicatorValue(value)}`);
         }
         return;
       }
