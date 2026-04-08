@@ -3,6 +3,7 @@ import {
   computeEmaSeriesFromCloses,
   computeMomentumSeriesFromCloses,
   computeRsiSeriesFromCloses,
+  computeSmaSeriesFromCloses,
 } from './sharedIndicatorSeries';
 
 export type StrategySignalDirection = 'LONG' | 'SHORT' | 'EXIT';
@@ -313,6 +314,17 @@ const resolveSeries = (params: {
     );
     const key = `EMA_${period}`;
     const series = params.cache.get(key) ?? computeEmaSeriesFromCloses(params.closes, period);
+    params.cache.set(key, series);
+    return series;
+  }
+
+  if (name.includes('SMA')) {
+    const period = clampPeriod(
+      params.indicatorParams.period ?? params.indicatorParams.length ?? params.indicatorParams.fast ?? params.indicatorParams.slow,
+      14,
+    );
+    const key = `SMA_${period}`;
+    const series = params.cache.get(key) ?? computeSmaSeriesFromCloses(params.closes, period);
     params.cache.set(key, series);
     return series;
   }

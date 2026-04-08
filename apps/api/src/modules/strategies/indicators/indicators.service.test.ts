@@ -1,0 +1,12 @@
+import { describe, expect, it } from 'vitest';
+import { getIndicators } from './indicators.service';
+
+describe('indicators.service', () => {
+  it('exposes SMA in strategy indicator catalog', () => {
+    const indicators = getIndicators();
+    const names = indicators.map((indicator) => indicator.name);
+
+    expect(names).toContain('SMA');
+  });
+});
+

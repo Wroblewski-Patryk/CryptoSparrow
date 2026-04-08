@@ -24,6 +24,35 @@ export const computeEmaSeriesFromCloses = (
   return output;
 };
 
+export const computeSmaSeriesFromCloses = (
+  closes: number[],
+  period: number
+): Array<number | null> => {
+  const output: Array<number | null> = [];
+  let rollingSum = 0;
+
+  for (let index = 0; index < closes.length; index += 1) {
+    const price = closes[index];
+    if (!Number.isFinite(price)) {
+      output.push(null);
+      continue;
+    }
+
+    rollingSum += price;
+    if (index >= period) {
+      rollingSum -= closes[index - period];
+    }
+
+    if (index + 1 >= period) {
+      output.push(rollingSum / period);
+    } else {
+      output.push(null);
+    }
+  }
+
+  return output;
+};
+
 export const computeRsiSeriesFromCloses = (
   closes: number[],
   period: number

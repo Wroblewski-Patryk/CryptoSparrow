@@ -20,6 +20,7 @@ import {
   computeEmaSeriesFromCloses,
   computeMomentumSeriesFromCloses,
   computeRsiSeriesFromCloses,
+  computeSmaSeriesFromCloses,
 } from './sharedIndicatorSeries';
 import { computeRiskBasedOrderQuantity, normalizeWalletRiskPercent } from './positionSizing';
 import { resolveRuntimeDcaFundsExhausted, resolveRuntimeReferenceBalance } from './runtimeCapitalContext.service';
@@ -1543,6 +1544,13 @@ export class RuntimeSignalLoop {
       }
       return indicatorCache.get(key)!;
     };
+    const ensureSma = (period: number) => {
+      const key = `SMA_${period}`;
+      if (!indicatorCache.has(key)) {
+        indicatorCache.set(key, computeSmaSeriesFromCloses(closes, period));
+      }
+      return indicatorCache.get(key)!;
+    };
     const ensureMomentum = (period: number) => {
       const key = `MOMENTUM_${period}`;
       if (!indicatorCache.has(key)) {
@@ -1595,6 +1603,23 @@ export class RuntimeSignalLoop {
         if (!indicatorKeys.has(`RSI(${period})`)) {
           indicatorKeys.add(`RSI(${period})`);
           indicatorParts.push(`RSI(${period})=${formatIndicatorValue(value)}`);
+        }
+        return;
+      }
+
+      if (indicator.includes('SMA')) {
+        const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
+        const value = ensureSma(period)[decisionIndex];
+        conditionLines.push({
+          scope,
+          left: `SMA(${period})`,
+          value: formatIndicatorValue(value),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has(`SMA(${period})`)) {
+          indicatorKeys.add(`SMA(${period})`);
+          indicatorParts.push(`SMA(${period})=${formatIndicatorValue(value)}`);
         }
         return;
       }

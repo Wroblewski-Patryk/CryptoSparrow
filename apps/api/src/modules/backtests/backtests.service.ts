@@ -12,6 +12,7 @@ import {
   computeEmaSeriesFromCloses,
   computeMomentumSeriesFromCloses,
   computeRsiSeriesFromCloses,
+  computeSmaSeriesFromCloses,
 } from '../engine/sharedIndicatorSeries';
 import {
   computeRiskBasedOrderQuantity,
@@ -1131,6 +1132,8 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
     const values =
       spec.name.includes('EMA')
         ? computeEmaSeriesFromCloses(closes, spec.period)
+        : spec.name.includes('SMA')
+          ? computeSmaSeriesFromCloses(closes, spec.period)
         : spec.name.includes('RSI')
           ? computeRsiSeriesFromCloses(closes, spec.period)
           : computeMomentumSeriesFromCloses(closes, spec.period);
@@ -1143,6 +1146,27 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
     };
   });
 };
+
+export const parseStrategyIndicatorsForTests = (strategyConfig: unknown) =>
+  parseStrategyIndicators(strategyConfig);
+
+export const buildIndicatorSeriesForTests = (
+  candles: Array<{
+    openTime: number;
+    closeTime: number;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+  }>,
+  specs: Array<{
+    key: string;
+    name: string;
+    period: number;
+    panel: 'price' | 'oscillator';
+  }>,
+) => buildIndicatorSeries(candles as KlineCandle[], specs as IndicatorSpec[]);
 
 const emptyLifecycleEventCounts = (): LifecycleEventCounts => ({
   ENTRY: 0,

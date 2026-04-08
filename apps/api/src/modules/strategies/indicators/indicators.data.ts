@@ -19,6 +19,19 @@ export const indicators = [
     ],
   },
   {
+    name: "SMA",
+    group: "Analiza techniczna",
+    type: "trend",
+    params: [
+      {
+        name: "period",
+        default: 14,
+        min: 2,
+        max: 255,
+      },
+    ],
+  },
+  {
     name: "RSI",
     group: "Analiza techniczna",
     type: "oscillator",

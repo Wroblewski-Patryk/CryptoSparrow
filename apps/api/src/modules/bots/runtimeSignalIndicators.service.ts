@@ -3,6 +3,7 @@ export {
   computeEmaSeriesFromCloses,
   computeMomentumSeriesFromCloses,
   computeRsiSeriesFromCloses,
+  computeSmaSeriesFromCloses,
 } from '../engine/sharedIndicatorSeries';
 
 export const formatIndicatorValue = (value: number | null | undefined) => {

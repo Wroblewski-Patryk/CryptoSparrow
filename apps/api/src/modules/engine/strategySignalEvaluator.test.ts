@@ -77,6 +77,27 @@ describe('strategySignalEvaluator', () => {
     });
   });
 
+  it('supports SMA comparator evaluation', () => {
+    const rules = parseStrategySignalRules({
+      open: {
+        direction: 'long',
+        indicatorsLong: [{ name: 'SMA', condition: '>', value: 11, params: { period: 3 } }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(rules).not.toBeNull();
+    if (!rules) return;
+
+    const direction = evaluateStrategySignalAtIndex(
+      rules,
+      [{ close: 10 }, { close: 11 }, { close: 12 }, { close: 13 }],
+      3,
+      new Map(),
+    );
+    expect(direction).toBe('LONG');
+  });
+
   it('supports CROSS_ABOVE and CROSS_BELOW operators', () => {
     const crossAbove = parseStrategySignalRules({
       open: {
