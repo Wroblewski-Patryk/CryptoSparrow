@@ -10,5 +10,6 @@ describe('indicators.service', () => {
     expect(names).toContain('MACD');
     expect(names).toContain('ROC');
     expect(names).toContain('STOCHRSI');
+    expect(names).toContain('BOLLINGER_BANDS');
   });
 });

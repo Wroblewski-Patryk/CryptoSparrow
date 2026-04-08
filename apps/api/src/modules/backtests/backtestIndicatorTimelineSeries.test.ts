@@ -107,4 +107,24 @@ describe('backtest indicator timeline series', () => {
     const series = buildIndicatorSeriesForTests(candles, specs);
     expect(series.every((item) => item.panel === 'oscillator')).toBe(true);
   });
+
+  it('builds BOLLINGER upper/middle/lower/bandwidth/percentB channels for timeline overlays', () => {
+    const specs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [
+          { name: 'BOLLINGER_BANDS', params: { period: 3, stdDev: 2 }, condition: '>', value: 0 },
+        ],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(specs).toHaveLength(5);
+    expect(specs.map((item) => item.key)).toEqual([
+      'BOLLINGER_BANDS_UPPER_3_2',
+      'BOLLINGER_BANDS_MIDDLE_3_2',
+      'BOLLINGER_BANDS_LOWER_3_2',
+      'BOLLINGER_BANDS_BANDWIDTH_3_2',
+      'BOLLINGER_BANDS_PERCENT_B_3_2',
+    ]);
+  });
 });

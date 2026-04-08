@@ -126,4 +126,23 @@ export const indicators = [
       },
     ],
   },
+  {
+    name: "BOLLINGER_BANDS",
+    group: "Analiza techniczna",
+    type: "volatility",
+    params: [
+      {
+        name: "period",
+        default: 20,
+        min: 2,
+        max: 255,
+      },
+      {
+        name: "stdDev",
+        default: 2,
+        min: 1,
+        max: 10,
+      },
+    ],
+  },
 ];

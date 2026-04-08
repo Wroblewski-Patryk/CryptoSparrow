@@ -1,4 +1,5 @@
 import {
+  computeBollingerSeriesFromCloses,
   clampPeriod,
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
@@ -401,6 +402,40 @@ const resolveSeries = (params: {
     }
 
     return params.cache.get(kKey) ?? null;
+  }
+
+  if (name.includes('BOLLINGER')) {
+    const period = clampPeriod(params.indicatorParams.period ?? params.indicatorParams.length, 20);
+    const stdDev = asFiniteNumber(params.indicatorParams.stdDev ?? params.indicatorParams.deviation) ?? 2;
+    const baseKey = `BOLLINGER_${period}_${stdDev}`;
+    const upperKey = `${baseKey}_UPPER`;
+    const middleKey = `${baseKey}_MIDDLE`;
+    const lowerKey = `${baseKey}_LOWER`;
+    const bandwidthKey = `${baseKey}_BANDWIDTH`;
+    const percentBKey = `${baseKey}_PERCENT_B`;
+
+    if (
+      !params.cache.has(upperKey) ||
+      !params.cache.has(middleKey) ||
+      !params.cache.has(lowerKey) ||
+      !params.cache.has(bandwidthKey) ||
+      !params.cache.has(percentBKey)
+    ) {
+      const bollinger = computeBollingerSeriesFromCloses(params.closes, period, stdDev);
+      params.cache.set(upperKey, bollinger.upper);
+      params.cache.set(middleKey, bollinger.middle);
+      params.cache.set(lowerKey, bollinger.lower);
+      params.cache.set(bandwidthKey, bollinger.bandwidth);
+      params.cache.set(percentBKey, bollinger.percentB);
+    }
+
+    if (name.includes('BOLLINGER_UPPER')) return params.cache.get(upperKey) ?? null;
+    if (name.includes('BOLLINGER_MIDDLE')) return params.cache.get(middleKey) ?? null;
+    if (name.includes('BOLLINGER_LOWER')) return params.cache.get(lowerKey) ?? null;
+    if (name.includes('BOLLINGER_BANDWIDTH')) return params.cache.get(bandwidthKey) ?? null;
+    if (name.includes('BOLLINGER_PERCENT_B')) return params.cache.get(percentBKey) ?? null;
+
+    return params.cache.get(percentBKey) ?? null;
   }
 
   if (name.includes('MOMENTUM')) {

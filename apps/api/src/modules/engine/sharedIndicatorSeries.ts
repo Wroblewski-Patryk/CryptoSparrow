@@ -165,6 +165,57 @@ export const computeStochRsiSeriesFromCloses = (
   return { k, d };
 };
 
+export const computeBollingerSeriesFromCloses = (
+  closes: number[],
+  period: number,
+  stdDevMultiplier: number
+): {
+  upper: Array<number | null>;
+  middle: Array<number | null>;
+  lower: Array<number | null>;
+  bandwidth: Array<number | null>;
+  percentB: Array<number | null>;
+} => {
+  const upper: Array<number | null> = [];
+  const middle: Array<number | null> = [];
+  const lower: Array<number | null> = [];
+  const bandwidth: Array<number | null> = [];
+  const percentB: Array<number | null> = [];
+
+  for (let index = 0; index < closes.length; index += 1) {
+    if (index + 1 < period) {
+      upper.push(null);
+      middle.push(null);
+      lower.push(null);
+      bandwidth.push(null);
+      percentB.push(null);
+      continue;
+    }
+
+    const window = closes.slice(index - period + 1, index + 1);
+    const mean = window.reduce((acc, value) => acc + value, 0) / period;
+    const variance = window.reduce((acc, value) => acc + (value - mean) ** 2, 0) / period;
+    const stdDev = Math.sqrt(variance);
+    const upperBand = mean + stdDevMultiplier * stdDev;
+    const lowerBand = mean - stdDevMultiplier * stdDev;
+    const currentClose = closes[index];
+
+    upper.push(upperBand);
+    middle.push(mean);
+    lower.push(lowerBand);
+    bandwidth.push(mean !== 0 ? ((upperBand - lowerBand) / mean) * 100 : null);
+    percentB.push(upperBand !== lowerBand ? ((currentClose - lowerBand) / (upperBand - lowerBand)) * 100 : null);
+  }
+
+  return {
+    upper,
+    middle,
+    lower,
+    bandwidth,
+    percentB,
+  };
+};
+
 export const computeRsiSeriesFromCloses = (
   closes: number[],
   period: number

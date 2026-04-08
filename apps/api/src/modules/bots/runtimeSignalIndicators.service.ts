@@ -1,4 +1,5 @@
 export {
+  computeBollingerSeriesFromCloses,
   clampPeriod,
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,

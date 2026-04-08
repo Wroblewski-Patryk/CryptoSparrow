@@ -179,6 +179,34 @@ describe('strategySignalEvaluator', () => {
     expect(direction).toBe('LONG');
   });
 
+  it('supports BOLLINGER comparator evaluation via percentB default channel', () => {
+    const rules = parseStrategySignalRules({
+      open: {
+        direction: 'long',
+        indicatorsLong: [
+          {
+            name: 'BOLLINGER_BANDS',
+            condition: '>',
+            value: -1,
+            params: { period: 3, stdDev: 2 },
+          },
+        ],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(rules).not.toBeNull();
+    if (!rules) return;
+
+    const direction = evaluateStrategySignalAtIndex(
+      rules,
+      [{ close: 100 }, { close: 101 }, { close: 102 }, { close: 103 }, { close: 104 }],
+      4,
+      new Map(),
+    );
+    expect(direction).toBe('LONG');
+  });
+
   it('supports CROSS_ABOVE and CROSS_BELOW operators', () => {
     const crossAbove = parseStrategySignalRules({
       open: {

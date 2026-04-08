@@ -9,6 +9,7 @@ import {
   parseStrategySignalRules,
 } from '../engine/strategySignalEvaluator';
 import {
+  computeBollingerSeriesFromCloses,
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
   computeMomentumSeriesFromCloses,
@@ -131,9 +132,19 @@ type IndicatorSpec = {
   name: string;
   period: number;
   panel: 'price' | 'oscillator';
-  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI';
+  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'BOLLINGER';
   params: Record<string, number>;
-  channel?: 'LINE' | 'SIGNAL' | 'HISTOGRAM' | 'K' | 'D';
+  channel?:
+    | 'LINE'
+    | 'SIGNAL'
+    | 'HISTOGRAM'
+    | 'K'
+    | 'D'
+    | 'UPPER'
+    | 'MIDDLE'
+    | 'LOWER'
+    | 'BANDWIDTH'
+    | 'PERCENT_B';
 };
 
 const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
@@ -1108,6 +1119,59 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
       ];
     }
 
+    if (name.includes('BOLLINGER') && params) {
+      const period = asPeriod(params.period, 20);
+      const stdDevCandidate = Number(params.stdDev ?? params.deviation);
+      const stdDev = Number.isFinite(stdDevCandidate) ? stdDevCandidate : 2;
+      return [
+        {
+          key: `${name}_UPPER_${period}_${stdDev}`,
+          name: `${name} UPPER`,
+          period,
+          panel: 'price' as const,
+          source: 'BOLLINGER' as const,
+          params: { period, stdDev },
+          channel: 'UPPER' as const,
+        },
+        {
+          key: `${name}_MIDDLE_${period}_${stdDev}`,
+          name: `${name} MIDDLE`,
+          period,
+          panel: 'price' as const,
+          source: 'BOLLINGER' as const,
+          params: { period, stdDev },
+          channel: 'MIDDLE' as const,
+        },
+        {
+          key: `${name}_LOWER_${period}_${stdDev}`,
+          name: `${name} LOWER`,
+          period,
+          panel: 'price' as const,
+          source: 'BOLLINGER' as const,
+          params: { period, stdDev },
+          channel: 'LOWER' as const,
+        },
+        {
+          key: `${name}_BANDWIDTH_${period}_${stdDev}`,
+          name: `${name} BANDWIDTH`,
+          period,
+          panel: 'oscillator' as const,
+          source: 'BOLLINGER' as const,
+          params: { period, stdDev },
+          channel: 'BANDWIDTH' as const,
+        },
+        {
+          key: `${name}_PERCENT_B_${period}_${stdDev}`,
+          name: `${name} PERCENT_B`,
+          period,
+          panel: 'oscillator' as const,
+          source: 'BOLLINGER' as const,
+          params: { period, stdDev },
+          channel: 'PERCENT_B' as const,
+        },
+      ];
+    }
+
     if (name.includes('MACD') && params) {
       const fast = asPeriod(params.fast, 12);
       const slow = asPeriod(params.slow, 26);
@@ -1181,6 +1245,8 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
     const source: IndicatorSpec['source'] =
       name.includes('SMA')
         ? 'SMA'
+        : name.includes('BOLLINGER')
+          ? 'BOLLINGER'
         : name.includes('STOCHRSI')
           ? 'STOCHRSI'
         : name.includes('ROC')
@@ -1190,7 +1256,7 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
           : name.includes('MOMENTUM')
             ? 'MOMENTUM'
             : 'MOMENTUM';
-    const panel: 'price' | 'oscillator' = source === 'SMA' ? 'price' : 'oscillator';
+    const panel: 'price' | 'oscillator' = source === 'SMA' || source === 'BOLLINGER' ? 'price' : 'oscillator';
     return [{
       key: `${name}_${period}`,
       name,
@@ -1222,6 +1288,23 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
       line: Array<number | null>;
       signal: Array<number | null>;
       histogram: Array<number | null>;
+    }
+  >();
+  const stochRsiCache = new Map<
+    string,
+    {
+      k: Array<number | null>;
+      d: Array<number | null>;
+    }
+  >();
+  const bollingerCache = new Map<
+    string,
+    {
+      upper: Array<number | null>;
+      middle: Array<number | null>;
+      lower: Array<number | null>;
+      bandwidth: Array<number | null>;
+      percentB: Array<number | null>;
     }
   >();
   return specs.map((spec) => {
@@ -1266,16 +1349,26 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
         const smoothK = spec.params.smoothK ?? 3;
         const smoothD = spec.params.smoothD ?? 3;
         const key = `${period}_${stochPeriod}_${smoothK}_${smoothD}`;
-        if (!macdCache.has(`STOCHRSI_${key}`)) {
-          const stochRsi = computeStochRsiSeriesFromCloses(closes, period, stochPeriod, smoothK, smoothD);
-          macdCache.set(`STOCHRSI_${key}`, {
-            line: stochRsi.k,
-            signal: stochRsi.d,
-            histogram: [],
-          });
+        if (!stochRsiCache.has(key)) {
+          stochRsiCache.set(key, computeStochRsiSeriesFromCloses(closes, period, stochPeriod, smoothK, smoothD));
         }
-        const stochRsi = macdCache.get(`STOCHRSI_${key}`)!;
-        return spec.channel === 'D' ? stochRsi.signal : stochRsi.line;
+        const stochRsi = stochRsiCache.get(key)!;
+        return spec.channel === 'D' ? stochRsi.d : stochRsi.k;
+      }
+
+      if (spec.source === 'BOLLINGER') {
+        const period = spec.params.period ?? 20;
+        const stdDev = spec.params.stdDev ?? 2;
+        const key = `${period}_${stdDev}`;
+        if (!bollingerCache.has(key)) {
+          bollingerCache.set(key, computeBollingerSeriesFromCloses(closes, period, stdDev));
+        }
+        const bollinger = bollingerCache.get(key)!;
+        if (spec.channel === 'UPPER') return bollinger.upper;
+        if (spec.channel === 'MIDDLE') return bollinger.middle;
+        if (spec.channel === 'LOWER') return bollinger.lower;
+        if (spec.channel === 'BANDWIDTH') return bollinger.bandwidth;
+        return bollinger.percentB;
       }
 
       const period = spec.params.period ?? spec.period;
@@ -1309,9 +1402,19 @@ export const buildIndicatorSeriesForTests = (
     name: string;
     period: number;
     panel: 'price' | 'oscillator';
-    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI';
+    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'BOLLINGER';
     params: Record<string, number>;
-    channel?: 'LINE' | 'SIGNAL' | 'HISTOGRAM' | 'K' | 'D';
+    channel?:
+      | 'LINE'
+      | 'SIGNAL'
+      | 'HISTOGRAM'
+      | 'K'
+      | 'D'
+      | 'UPPER'
+      | 'MIDDLE'
+      | 'LOWER'
+      | 'BANDWIDTH'
+      | 'PERCENT_B';
   }>,
 ) => buildIndicatorSeries(candles as KlineCandle[], specs as IndicatorSpec[]);
 

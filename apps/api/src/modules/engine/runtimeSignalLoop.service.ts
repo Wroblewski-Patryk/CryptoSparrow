@@ -16,6 +16,7 @@ import {
   parseStrategySignalRules,
 } from './strategySignalEvaluator';
 import {
+  computeBollingerSeriesFromCloses,
   clampPeriod,
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
@@ -1603,6 +1604,37 @@ export class RuntimeSignalLoop {
         d: indicatorCache.get(dKey)!,
       };
     };
+    const ensureBollinger = (period: number, stdDev: number) => {
+      const baseKey = `BOLLINGER_${period}_${stdDev}`;
+      const upperKey = `${baseKey}_UPPER`;
+      const middleKey = `${baseKey}_MIDDLE`;
+      const lowerKey = `${baseKey}_LOWER`;
+      const bandwidthKey = `${baseKey}_BANDWIDTH`;
+      const percentBKey = `${baseKey}_PERCENT_B`;
+
+      if (
+        !indicatorCache.has(upperKey) ||
+        !indicatorCache.has(middleKey) ||
+        !indicatorCache.has(lowerKey) ||
+        !indicatorCache.has(bandwidthKey) ||
+        !indicatorCache.has(percentBKey)
+      ) {
+        const bollinger = computeBollingerSeriesFromCloses(closes, period, stdDev);
+        indicatorCache.set(upperKey, bollinger.upper);
+        indicatorCache.set(middleKey, bollinger.middle);
+        indicatorCache.set(lowerKey, bollinger.lower);
+        indicatorCache.set(bandwidthKey, bollinger.bandwidth);
+        indicatorCache.set(percentBKey, bollinger.percentB);
+      }
+
+      return {
+        upper: indicatorCache.get(upperKey)!,
+        middle: indicatorCache.get(middleKey)!,
+        lower: indicatorCache.get(lowerKey)!,
+        bandwidth: indicatorCache.get(bandwidthKey)!,
+        percentB: indicatorCache.get(percentBKey)!,
+      };
+    };
 
     const conditionLines: RuntimeSignalConditionLine[] = [];
     const indicatorParts: string[] = [];
@@ -1730,6 +1762,46 @@ export class RuntimeSignalLoop {
           indicatorParts.push(
             `STOCHRSI_D(${period},${stochPeriod},${smoothK},${smoothD})=${formatIndicatorValue(dValue)}`,
           );
+        }
+        return;
+      }
+
+      if (indicator.includes('BOLLINGER')) {
+        const period = clampPeriod(rule.params.period ?? rule.params.length, 20);
+        const stdDevCandidate = Number(rule.params.stdDev ?? rule.params.deviation);
+        const stdDev = Number.isFinite(stdDevCandidate) ? stdDevCandidate : 2;
+        const bollinger = ensureBollinger(period, stdDev);
+        const percentBValue = bollinger.percentB[decisionIndex];
+        const bandwidthValue = bollinger.bandwidth[decisionIndex];
+
+        conditionLines.push({
+          scope,
+          left: `BOLLINGER_PERCENT_B(${period},${stdDev})`,
+          value: formatIndicatorValue(percentBValue),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has(`BOLLINGER_UPPER(${period},${stdDev})`)) {
+          indicatorKeys.add(`BOLLINGER_UPPER(${period},${stdDev})`);
+          indicatorParts.push(`BOLLINGER_UPPER(${period},${stdDev})=${formatIndicatorValue(bollinger.upper[decisionIndex])}`);
+        }
+        if (!indicatorKeys.has(`BOLLINGER_MIDDLE(${period},${stdDev})`)) {
+          indicatorKeys.add(`BOLLINGER_MIDDLE(${period},${stdDev})`);
+          indicatorParts.push(
+            `BOLLINGER_MIDDLE(${period},${stdDev})=${formatIndicatorValue(bollinger.middle[decisionIndex])}`,
+          );
+        }
+        if (!indicatorKeys.has(`BOLLINGER_LOWER(${period},${stdDev})`)) {
+          indicatorKeys.add(`BOLLINGER_LOWER(${period},${stdDev})`);
+          indicatorParts.push(`BOLLINGER_LOWER(${period},${stdDev})=${formatIndicatorValue(bollinger.lower[decisionIndex])}`);
+        }
+        if (!indicatorKeys.has(`BOLLINGER_BANDWIDTH(${period},${stdDev})`)) {
+          indicatorKeys.add(`BOLLINGER_BANDWIDTH(${period},${stdDev})`);
+          indicatorParts.push(`BOLLINGER_BANDWIDTH(${period},${stdDev})=${formatIndicatorValue(bandwidthValue)}`);
+        }
+        if (!indicatorKeys.has(`BOLLINGER_PERCENT_B(${period},${stdDev})`)) {
+          indicatorKeys.add(`BOLLINGER_PERCENT_B(${period},${stdDev})`);
+          indicatorParts.push(`BOLLINGER_PERCENT_B(${period},${stdDev})=${formatIndicatorValue(percentBValue)}`);
         }
         return;
       }

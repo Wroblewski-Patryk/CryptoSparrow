@@ -256,4 +256,28 @@ describe('backtest parity harness (3 symbols)', () => {
 
     expectParityForThreeSymbols(strategyConfig);
   });
+
+  it('keeps BOLLINGER decision trace aligned with shared strategy/runtime core for three symbols', () => {
+    const strategyConfig = {
+      open: {
+        direction: 'both',
+        indicatorsLong: [
+          { name: 'BOLLINGER_BANDS', params: { period: 3, stdDev: 2 }, condition: '>', value: -1 },
+        ],
+        indicatorsShort: [
+          { name: 'BOLLINGER_BANDS', params: { period: 3, stdDev: 2 }, condition: '<', value: -1 },
+        ],
+      },
+      close: {
+        tp: 99,
+        sl: 99,
+        tsl: [{ percent: 99, arm: 1 }],
+      },
+      additional: {
+        dcaTimes: 0,
+      },
+    } satisfies Record<string, unknown>;
+
+    expectParityForThreeSymbols(strategyConfig);
+  });
 });
