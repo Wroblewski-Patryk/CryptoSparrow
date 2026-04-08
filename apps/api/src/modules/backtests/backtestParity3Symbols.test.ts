@@ -623,4 +623,59 @@ describe('backtest parity harness (3 symbols)', () => {
 
     expect(totalExpectedActions).toBeGreaterThan(0);
   });
+
+  it('keeps inside/outside-bar pattern decision trace aligned with shared strategy/runtime core for three symbols', () => {
+    const strategyConfig = {
+      open: {
+        direction: 'both',
+        indicatorsLong: [{ name: 'INSIDE_BAR', params: {}, condition: '>', value: 0.5 }],
+        indicatorsShort: [{ name: 'OUTSIDE_BAR', params: {}, condition: '>', value: 0.5 }],
+      },
+      close: {
+        tp: 99,
+        sl: 99,
+        tsl: [{ percent: 99, arm: 1 }],
+      },
+      additional: {
+        dcaTimes: 0,
+      },
+    } satisfies Record<string, unknown>;
+
+    const patternScenarios: Array<{ symbol: string; candles: ReplayCandle[] }> = [
+      {
+        symbol: 'BTCUSDT',
+        candles: makePatternCandles([
+          { open: 10, high: 11, low: 9, close: 10.3 },
+          { open: 10.2, high: 10.5, low: 9.5, close: 10.25 },
+          { open: 10.3, high: 11.2, low: 8.8, close: 9.7 },
+        ]),
+      },
+      {
+        symbol: 'ETHUSDT',
+        candles: makePatternCandles([
+          { open: 20, high: 21, low: 19, close: 20.3 },
+          { open: 20.2, high: 20.5, low: 19.5, close: 20.25 },
+          { open: 20.3, high: 21.2, low: 18.8, close: 19.7 },
+        ]),
+      },
+      {
+        symbol: 'SOLUSDT',
+        candles: makePatternCandles([
+          { open: 30, high: 31, low: 29, close: 30.3 },
+          { open: 30.2, high: 30.5, low: 29.5, close: 30.25 },
+          { open: 30.3, high: 31.2, low: 28.8, close: 29.7 },
+        ]),
+      },
+    ];
+
+    let totalExpectedActions = 0;
+    for (const scenario of patternScenarios) {
+      const expected = buildExpectedActions(scenario.candles, strategyConfig);
+      const replay = buildReplayActions(scenario.symbol, scenario.candles, strategyConfig);
+      totalExpectedActions += expected.length;
+      expect(replay).toEqual(expected);
+    }
+
+    expect(totalExpectedActions).toBeGreaterThan(0);
+  });
 });

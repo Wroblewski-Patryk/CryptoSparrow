@@ -271,4 +271,16 @@ export const indicators = [
     type: "pattern",
     params: [],
   },
+  {
+    name: "INSIDE_BAR",
+    group: "Formacje świecowe",
+    type: "pattern",
+    params: [],
+  },
+  {
+    name: "OUTSIDE_BAR",
+    group: "Formacje świecowe",
+    type: "pattern",
+    params: [],
+  },
 ];

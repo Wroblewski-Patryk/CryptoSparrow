@@ -281,4 +281,18 @@ describe('backtest indicator timeline series', () => {
     const series = buildIndicatorSeriesForTests(candles, specs);
     expect(series[0].values.every((value) => value === 0 || value === 1)).toBe(true);
   });
+
+  it('builds inside/outside-bar pattern boolean series for timeline overlays', () => {
+    const specs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'INSIDE_BAR', params: {}, condition: '>', value: 0.5 }],
+        indicatorsShort: [{ name: 'OUTSIDE_BAR', params: {}, condition: '>', value: 0.5 }],
+      },
+    });
+
+    expect(specs).toHaveLength(2);
+    expect(specs.map((item) => item.source)).toEqual(['PATTERN', 'PATTERN']);
+    const series = buildIndicatorSeriesForTests(candles, specs);
+    expect(series[0].values.every((value) => value === 0 || value === 1)).toBe(true);
+  });
 });

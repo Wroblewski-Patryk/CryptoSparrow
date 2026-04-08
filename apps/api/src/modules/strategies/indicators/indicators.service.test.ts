@@ -23,5 +23,7 @@ describe('indicators.service', () => {
     expect(names).toContain('DOJI');
     expect(names).toContain('MORNING_STAR');
     expect(names).toContain('EVENING_STAR');
+    expect(names).toContain('INSIDE_BAR');
+    expect(names).toContain('OUTSIDE_BAR');
   });
 });

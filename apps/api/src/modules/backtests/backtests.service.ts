@@ -1238,7 +1238,9 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
         pattern === 'SHOOTING_STAR' ||
         pattern === 'DOJI' ||
         pattern === 'MORNING_STAR' ||
-        pattern === 'EVENING_STAR'
+        pattern === 'EVENING_STAR' ||
+        pattern === 'INSIDE_BAR' ||
+        pattern === 'OUTSIDE_BAR'
       )
     ) {
       const dojiBodyToRangeMaxCandidate = Number(params?.dojiBodyToRangeMax ?? params?.bodyToRangeMax);
