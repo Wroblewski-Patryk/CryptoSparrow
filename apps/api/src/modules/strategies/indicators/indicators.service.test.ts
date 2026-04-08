@@ -13,5 +13,6 @@ describe('indicators.service', () => {
     expect(names).toContain('BOLLINGER_BANDS');
     expect(names).toContain('ATR');
     expect(names).toContain('ADX');
+    expect(names).toContain('STOCHASTIC');
   });
 });

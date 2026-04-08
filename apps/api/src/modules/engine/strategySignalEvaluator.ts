@@ -9,6 +9,7 @@ import {
   computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
+  computeStochasticSeriesFromCandles,
   computeStochRsiSeriesFromCloses,
 } from './sharedIndicatorSeries';
 
@@ -435,6 +436,31 @@ const resolveSeries = (params: {
     if (name.includes('DI_PLUS')) return params.cache.get(plusKey) ?? null;
     if (name.includes('DI_MINUS')) return params.cache.get(minusKey) ?? null;
     return params.cache.get(adxKey) ?? null;
+  }
+
+  if (name.includes('STOCHASTIC')) {
+    const period = clampPeriod(params.indicatorParams.period ?? params.indicatorParams.length, 14);
+    const smoothK = clampPeriod(params.indicatorParams.smoothK, 3);
+    const smoothD = clampPeriod(params.indicatorParams.smoothD, 3);
+    const baseKey = `STOCHASTIC_${period}_${smoothK}_${smoothD}`;
+    const kKey = `${baseKey}_K`;
+    const dKey = `${baseKey}_D`;
+    if (!params.cache.has(kKey) || !params.cache.has(dKey)) {
+      const stochastic = computeStochasticSeriesFromCandles(
+        params.highs,
+        params.lows,
+        params.closes,
+        period,
+        smoothK,
+        smoothD,
+      );
+      params.cache.set(kKey, stochastic.k);
+      params.cache.set(dKey, stochastic.d);
+    }
+    if (name.includes('STOCHASTIC_D') || name.includes('STOCHASTIC_SIGNAL')) {
+      return params.cache.get(dKey) ?? null;
+    }
+    return params.cache.get(kKey) ?? null;
   }
 
   if (name.includes('BOLLINGER')) {

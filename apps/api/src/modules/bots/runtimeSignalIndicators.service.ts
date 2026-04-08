@@ -9,6 +9,7 @@ export {
   computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
+  computeStochasticSeriesFromCandles,
   computeStochRsiSeriesFromCloses,
 } from '../engine/sharedIndicatorSeries';
 

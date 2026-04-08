@@ -26,6 +26,7 @@ import {
   computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
+  computeStochasticSeriesFromCandles,
   computeStochRsiSeriesFromCloses,
 } from './sharedIndicatorSeries';
 import { computeRiskBasedOrderQuantity, normalizeWalletRiskPercent } from './positionSizing';
@@ -1599,6 +1600,22 @@ export class RuntimeSignalLoop {
         minusDi: indicatorCache.get(minusKey)!,
       };
     };
+    const ensureStochastic = (period: number, smoothK: number, smoothD: number) => {
+      const baseKey = `STOCHASTIC_${period}_${smoothK}_${smoothD}`;
+      const kKey = `${baseKey}_K`;
+      const dKey = `${baseKey}_D`;
+      if (!indicatorCache.has(kKey) || !indicatorCache.has(dKey)) {
+        const highs = candles.map((candle) => candle.high);
+        const lows = candles.map((candle) => candle.low);
+        const stochastic = computeStochasticSeriesFromCandles(highs, lows, closes, period, smoothK, smoothD);
+        indicatorCache.set(kKey, stochastic.k);
+        indicatorCache.set(dKey, stochastic.d);
+      }
+      return {
+        k: indicatorCache.get(kKey)!,
+        d: indicatorCache.get(dKey)!,
+      };
+    };
     const ensureMacd = (fast: number, slow: number, signal: number) => {
       const baseKey = `MACD_${fast}_${slow}_${signal}`;
       const lineKey = `${baseKey}_LINE`;
@@ -1806,6 +1823,31 @@ export class RuntimeSignalLoop {
         if (!indicatorKeys.has(`DI_MINUS(${period})`)) {
           indicatorKeys.add(`DI_MINUS(${period})`);
           indicatorParts.push(`DI_MINUS(${period})=${formatIndicatorValue(minusValue)}`);
+        }
+        return;
+      }
+
+      if (indicator.includes('STOCHASTIC')) {
+        const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
+        const smoothK = clampPeriod(rule.params.smoothK, 3);
+        const smoothD = clampPeriod(rule.params.smoothD, 3);
+        const stochastic = ensureStochastic(period, smoothK, smoothD);
+        const kValue = stochastic.k[decisionIndex];
+        const dValue = stochastic.d[decisionIndex];
+        conditionLines.push({
+          scope,
+          left: `STOCHASTIC_K(${period},${smoothK},${smoothD})`,
+          value: formatIndicatorValue(kValue),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has(`STOCHASTIC_K(${period},${smoothK},${smoothD})`)) {
+          indicatorKeys.add(`STOCHASTIC_K(${period},${smoothK},${smoothD})`);
+          indicatorParts.push(`STOCHASTIC_K(${period},${smoothK},${smoothD})=${formatIndicatorValue(kValue)}`);
+        }
+        if (!indicatorKeys.has(`STOCHASTIC_D(${period},${smoothK},${smoothD})`)) {
+          indicatorKeys.add(`STOCHASTIC_D(${period},${smoothK},${smoothD})`);
+          indicatorParts.push(`STOCHASTIC_D(${period},${smoothK},${smoothD})=${formatIndicatorValue(dValue)}`);
         }
         return;
       }

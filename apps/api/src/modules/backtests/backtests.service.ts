@@ -18,6 +18,7 @@ import {
   computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
+  computeStochasticSeriesFromCandles,
   computeStochRsiSeriesFromCloses,
 } from '../engine/sharedIndicatorSeries';
 import {
@@ -134,7 +135,7 @@ type IndicatorSpec = {
   name: string;
   period: number;
   panel: 'price' | 'oscillator';
-  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'BOLLINGER' | 'ATR' | 'ADX';
+  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'STOCHASTIC' | 'BOLLINGER' | 'ATR' | 'ADX';
   params: Record<string, number>;
   channel?:
     | 'LINE'
@@ -1171,6 +1172,33 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
       ];
     }
 
+    if (name.includes('STOCHASTIC') && params) {
+      const period = asPeriod(params.period ?? params.length, 14);
+      const smoothK = asPeriod(params.smoothK, 3);
+      const smoothD = asPeriod(params.smoothD, 3);
+      const warmup = period + smoothK + smoothD;
+      return [
+        {
+          key: `${name}_K_${period}_${smoothK}_${smoothD}`,
+          name: `${name} K`,
+          period: warmup,
+          panel: 'oscillator' as const,
+          source: 'STOCHASTIC' as const,
+          params: { period, smoothK, smoothD },
+          channel: 'K' as const,
+        },
+        {
+          key: `${name}_D_${period}_${smoothK}_${smoothD}`,
+          name: `${name} D`,
+          period: warmup,
+          panel: 'oscillator' as const,
+          source: 'STOCHASTIC' as const,
+          params: { period, smoothK, smoothD },
+          channel: 'D' as const,
+        },
+      ];
+    }
+
     if (name.includes('BOLLINGER') && params) {
       const period = asPeriod(params.period, 20);
       const stdDevCandidate = Number(params.stdDev ?? params.deviation);
@@ -1303,6 +1331,8 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
           ? 'ATR'
         : name.includes('ADX')
           ? 'ADX'
+        : name.includes('STOCHASTIC')
+          ? 'STOCHASTIC'
         : name.includes('STOCHRSI')
           ? 'STOCHRSI'
         : name.includes('ROC')
@@ -1365,6 +1395,13 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
       percentB: Array<number | null>;
     }
   >();
+  const stochasticCache = new Map<
+    string,
+    {
+      k: Array<number | null>;
+      d: Array<number | null>;
+    }
+  >();
   const adxCache = new Map<
     string,
     {
@@ -1410,6 +1447,21 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
         if (spec.channel === 'DI_PLUS') return adx.plusDi;
         if (spec.channel === 'DI_MINUS') return adx.minusDi;
         return adx.adx;
+      }
+
+      if (spec.source === 'STOCHASTIC') {
+        const period = spec.params.period ?? 14;
+        const smoothK = spec.params.smoothK ?? 3;
+        const smoothD = spec.params.smoothD ?? 3;
+        const key = `${period}_${smoothK}_${smoothD}`;
+        if (!stochasticCache.has(key)) {
+          stochasticCache.set(
+            key,
+            computeStochasticSeriesFromCandles(highs, lows, closes, period, smoothK, smoothD),
+          );
+        }
+        const stochastic = stochasticCache.get(key)!;
+        return spec.channel === 'D' ? stochastic.d : stochastic.k;
       }
 
       if (spec.source === 'MACD') {
@@ -1485,7 +1537,7 @@ export const buildIndicatorSeriesForTests = (
     name: string;
     period: number;
     panel: 'price' | 'oscillator';
-    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'BOLLINGER' | 'ATR' | 'ADX';
+    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'STOCHASTIC' | 'BOLLINGER' | 'ATR' | 'ADX';
     params: Record<string, number>;
     channel?:
       | 'LINE'

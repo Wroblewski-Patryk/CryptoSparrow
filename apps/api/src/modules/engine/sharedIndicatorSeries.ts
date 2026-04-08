@@ -366,6 +366,42 @@ export const computeAdxSeriesFromCandles = (
   return { adx, plusDi, minusDi };
 };
 
+export const computeStochasticSeriesFromCandles = (
+  highs: number[],
+  lows: number[],
+  closes: number[],
+  period: number,
+  smoothK: number,
+  smoothD: number
+): {
+  k: Array<number | null>;
+  d: Array<number | null>;
+} => {
+  const length = Math.min(highs.length, lows.length, closes.length);
+  const rawK: Array<number | null> = Array.from({ length }, () => null);
+  for (let index = 0; index < length; index += 1) {
+    if (index + 1 < period) continue;
+    const highWindow = highs.slice(index - period + 1, index + 1);
+    const lowWindow = lows.slice(index - period + 1, index + 1);
+    if (
+      highWindow.some((value) => !Number.isFinite(value)) ||
+      lowWindow.some((value) => !Number.isFinite(value)) ||
+      !Number.isFinite(closes[index])
+    ) {
+      continue;
+    }
+
+    const highest = Math.max(...highWindow);
+    const lowest = Math.min(...lowWindow);
+    if (highest === lowest) continue;
+    rawK[index] = ((closes[index] - lowest) / (highest - lowest)) * 100;
+  }
+
+  const k = computeSmaSeriesFromNullableValues(rawK, smoothK);
+  const d = computeSmaSeriesFromNullableValues(k, smoothD);
+  return { k, d };
+};
+
 export const computeRsiSeriesFromCloses = (
   closes: number[],
   period: number

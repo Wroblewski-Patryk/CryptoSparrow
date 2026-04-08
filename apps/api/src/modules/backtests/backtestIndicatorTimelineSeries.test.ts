@@ -165,4 +165,21 @@ describe('backtest indicator timeline series', () => {
     const series = buildIndicatorSeriesForTests(candles, specs);
     expect(series.every((item) => item.panel === 'oscillator')).toBe(true);
   });
+
+  it('builds STOCHASTIC K/D channels for timeline overlays', () => {
+    const specs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'STOCHASTIC', params: { period: 3, smoothK: 2, smoothD: 2 }, condition: '>', value: 0 }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(specs).toHaveLength(2);
+    expect(specs.map((item) => item.key)).toEqual([
+      'STOCHASTIC_K_3_2_2',
+      'STOCHASTIC_D_3_2_2',
+    ]);
+    const series = buildIndicatorSeriesForTests(candles, specs);
+    expect(series.every((item) => item.panel === 'oscillator')).toBe(true);
+  });
 });
