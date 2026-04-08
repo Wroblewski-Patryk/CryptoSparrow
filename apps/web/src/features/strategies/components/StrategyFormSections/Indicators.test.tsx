@@ -38,13 +38,13 @@ describe("Indicators operators", () => {
 
     const conditionSelect = screen
       .getAllByRole("combobox")
-      .find((select) => within(select).queryByRole("option", { name: "CROSS_ABOVE" }));
+      .find((select) => within(select).queryByRole("option", { name: "Cross above" }));
 
     expect(conditionSelect).toBeDefined();
-    expect(within(conditionSelect!).getByRole("option", { name: ">=" })).toBeInTheDocument();
-    expect(within(conditionSelect!).getByRole("option", { name: "CROSS_BELOW" })).toBeInTheDocument();
-    expect(within(conditionSelect!).getByRole("option", { name: "IN_RANGE" })).toBeInTheDocument();
-    expect(within(conditionSelect!).getByRole("option", { name: "OUT_OF_RANGE" })).toBeInTheDocument();
+    expect(within(conditionSelect!).getByRole("option", { name: "Greater or equal (>=)" })).toBeInTheDocument();
+    expect(within(conditionSelect!).getByRole("option", { name: "Cross below" })).toBeInTheDocument();
+    expect(within(conditionSelect!).getByRole("option", { name: "In range" })).toBeInTheDocument();
+    expect(within(conditionSelect!).getByRole("option", { name: "Out of range" })).toBeInTheDocument();
 
     fireEvent.change(conditionSelect!, { target: { value: "CROSS_ABOVE" } });
 
@@ -84,7 +84,7 @@ describe("Indicators operators", () => {
         />
       );
 
-      expect(screen.getByRole("option", { name: "Momentum / Oscillators" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "Momentum" })).toBeInTheDocument();
       expect(screen.getByRole("option", { name: "Candle Patterns" })).toBeInTheDocument();
       unmount();
 
@@ -98,10 +98,120 @@ describe("Indicators operators", () => {
         />
       );
 
-      expect(screen.getByRole("option", { name: "Momentum / Oscylatory" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "Momentum" })).toBeInTheDocument();
       expect(screen.getByRole("option", { name: "Formacje swiecowe" })).toBeInTheDocument();
     } finally {
       document.documentElement.lang = previousLang;
     }
+  });
+
+  it("renders human-friendly indicator and parameter labels", () => {
+    const previousLang = document.documentElement.lang;
+    const setValue = vi.fn();
+    try {
+      document.documentElement.lang = "en";
+      render(
+        <Indicators
+          side="LONG"
+          indicators={indicators}
+          value={[{ ...value[0] }]}
+          setValue={setValue}
+        />
+      );
+
+      expect(screen.getAllByText("RSI(Relative Strength Index)").length).toBeGreaterThan(0);
+      expect(screen.getByText("Period")).toBeInTheDocument();
+    } finally {
+      document.documentElement.lang = previousLang;
+    }
+  });
+
+  it("supports band values for IN_RANGE and OUT_OF_RANGE", () => {
+    const setValue = vi.fn();
+    const rangeValue: UserIndicator[] = [
+      {
+        ...value[0],
+        condition: "IN_RANGE",
+        value: [45, 55],
+      },
+    ];
+
+    render(<Indicators side="LONG" indicators={indicators} value={rangeValue} setValue={setValue} />);
+
+    const fromLabel = screen.getByText("Wartosc od");
+    const toLabel = screen.getByText("Wartosc do");
+    expect(fromLabel).toBeInTheDocument();
+    expect(toLabel).toBeInTheDocument();
+    const fromInput = fromLabel.closest("div")?.querySelector("input");
+    expect(fromInput).toBeTruthy();
+    fireEvent.change(fromInput!, { target: { value: "46" } });
+
+    expect(setValue).toHaveBeenCalledWith([
+      expect.objectContaining({
+        condition: "IN_RANGE",
+        value: [46, 55],
+      }),
+    ]);
+  });
+
+  it("expands condition/value section when indicator has no params", () => {
+    const setValue = vi.fn();
+    const noParamIndicators: IndicatorMeta[] = [
+      {
+        name: "BULLISH_ENGULFING",
+        group: "Formacje swiecowe",
+        type: "pattern",
+        params: [],
+      },
+    ];
+    const noParamValue: UserIndicator[] = [
+      {
+        group: "Formacje swiecowe",
+        name: "BULLISH_ENGULFING",
+        params: {},
+        condition: ">",
+        value: 0.5,
+        weight: 1,
+        expanded: true,
+      },
+    ];
+
+    render(<Indicators side="LONG" indicators={noParamIndicators} value={noParamValue} setValue={setValue} />);
+
+    expect(screen.queryByText("Parametry wskaznika")).not.toBeInTheDocument();
+    expect(screen.getByTestId("indicator-layout-0").className.includes("md:grid-cols-2")).toBe(false);
+  });
+
+  it("limits pattern indicators to comparator conditions", () => {
+    const setValue = vi.fn();
+    const patternIndicators: IndicatorMeta[] = [
+      {
+        name: "HAMMER",
+        group: "Formacje swiecowe",
+        type: "pattern",
+        params: [],
+      },
+    ];
+    const patternValue: UserIndicator[] = [
+      {
+        group: "Formacje swiecowe",
+        name: "HAMMER",
+        params: {},
+        condition: ">",
+        value: 0.5,
+        weight: 1,
+        expanded: true,
+      },
+    ];
+
+    render(<Indicators side="LONG" indicators={patternIndicators} value={patternValue} setValue={setValue} />);
+
+    const conditionSelect = screen
+      .getAllByRole("combobox")
+      .find((select) => within(select).queryByRole("option", { name: "Greater than (>)" }));
+
+    expect(conditionSelect).toBeDefined();
+    expect(within(conditionSelect!).queryByRole("option", { name: "Cross above" })).not.toBeInTheDocument();
+    expect(within(conditionSelect!).queryByRole("option", { name: "In range" })).not.toBeInTheDocument();
   });
 });

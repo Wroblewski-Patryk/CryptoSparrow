@@ -7,24 +7,93 @@ import {
   resolveIndicatorGroupKey,
   sortIndicatorGroups,
 } from "../../utils/indicatorTaxonomy";
+import { getIndicatorDisplayName, getIndicatorParamLabel } from "../../utils/indicatorPresentation";
 
 const decimalInputProps = numericInputProps(strategyNumericContracts.decimal2);
-const conditionOptions: StrategyConditionOperator[] = [
+const comparatorConditions: StrategyConditionOperator[] = [
   ">",
   ">=",
   "<",
   "<=",
   "==",
   "!=",
+];
+const crossConditions: StrategyConditionOperator[] = [
   "CROSS_ABOVE",
   "CROSS_BELOW",
+];
+const rangeConditions: StrategyConditionOperator[] = [
   "IN_RANGE",
   "OUT_OF_RANGE",
 ];
+const allConditionOptions: StrategyConditionOperator[] = [
+  ...comparatorConditions,
+  ...crossConditions,
+  ...rangeConditions,
+];
+const conditionLabelMap: Record<StrategyConditionOperator, { en: string; pl: string }> = {
+  ">": { en: "Greater than (>)", pl: "Wieksze niz (>)" },
+  ">=": { en: "Greater or equal (>=)", pl: "Wieksze lub rowne (>=)" },
+  "<": { en: "Less than (<)", pl: "Mniejsze niz (<)" },
+  "<=": { en: "Less or equal (<=)", pl: "Mniejsze lub rowne (<=)" },
+  "==": { en: "Equal (==)", pl: "Rowne (==)" },
+  "!=": { en: "Not equal (!=)", pl: "Rozne (!=)" },
+  CROSS_ABOVE: { en: "Cross above", pl: "Przeciecie w gore" },
+  CROSS_BELOW: { en: "Cross below", pl: "Przeciecie w dol" },
+  IN_RANGE: { en: "In range", pl: "W zakresie" },
+  OUT_OF_RANGE: { en: "Out of range", pl: "Poza zakresem" },
+};
 
 const resolveLocale = (): "en" | "pl" => {
   if (typeof document === "undefined") return "en";
   return document.documentElement.lang === "pl" ? "pl" : "en";
+};
+
+const resolveConditionOptions = (
+  indicatorName: string,
+  indicatorType: string | undefined,
+): StrategyConditionOperator[] => {
+  const normalizedType = (indicatorType ?? "").trim().toLowerCase();
+  const normalizedName = indicatorName.trim().toUpperCase();
+
+  if (normalizedType === "pattern" || normalizedName.includes("ENGULFING") || normalizedName.includes("STAR") || normalizedName.includes("HAMMER") || normalizedName.includes("DOJI") || normalizedName.includes("INSIDE_BAR") || normalizedName.includes("OUTSIDE_BAR")) {
+    return comparatorConditions;
+  }
+  if (normalizedType === "trend") {
+    return [...comparatorConditions, ...crossConditions];
+  }
+  if (normalizedType === "oscillator" || normalizedType === "momentum") {
+    return [...comparatorConditions, ...crossConditions, ...rangeConditions];
+  }
+  if (normalizedType === "volatility" || normalizedType === "derivatives") {
+    return [...comparatorConditions, ...rangeConditions];
+  }
+  return allConditionOptions;
+};
+
+const resolveConditionLabel = (condition: StrategyConditionOperator, locale: "en" | "pl") =>
+  conditionLabelMap[condition][locale];
+
+const isRangeCondition = (condition: StrategyConditionOperator) =>
+  condition === "IN_RANGE" || condition === "OUT_OF_RANGE";
+
+const normalizeConditionValue = (
+  condition: StrategyConditionOperator,
+  rawValue: number | [number, number],
+): number | [number, number] => {
+  if (isRangeCondition(condition)) {
+    if (Array.isArray(rawValue)) {
+      const [first = 0, second = first] = rawValue;
+      return [first, second];
+    }
+    return [rawValue, rawValue];
+  }
+
+  if (Array.isArray(rawValue)) {
+    const [first = 0] = rawValue;
+    return first;
+  }
+  return rawValue;
 };
 
 export default function Indicators({ side, indicators, value, setValue }: IndicatorsProps) {
@@ -36,13 +105,24 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
       group: indicator.group,
     }),
   }));
-  const normalizedValue = value.map((indicator) => ({
-    ...indicator,
-    group: resolveIndicatorGroupKey({
+  const normalizedValue = value.map((indicator) => {
+    const normalizedGroup = resolveIndicatorGroupKey({
       indicatorName: indicator.name,
       group: indicator.group,
-    }),
-  }));
+    });
+    const meta = normalizedIndicators.find((entry) => entry.name === indicator.name);
+    const conditionOptions = resolveConditionOptions(indicator.name, meta?.type);
+    const condition = conditionOptions.includes(indicator.condition)
+      ? indicator.condition
+      : (conditionOptions[0] ?? ">");
+
+    return {
+      ...indicator,
+      group: normalizedGroup,
+      condition,
+      value: normalizeConditionValue(condition, indicator.value),
+    };
+  });
   const indicatorGroups = sortIndicatorGroups(
     Array.from(
       new Set<IndicatorGroupKey>([
@@ -59,14 +139,15 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
     const indicatorsInGroup = normalizedIndicators.filter((indicator) => indicator.group === group);
     const meta = indicatorsInGroup[0];
     if (!meta) return;
+    const defaultCondition = resolveConditionOptions(meta.name, meta.type)[0] ?? ">";
     setValue([
       ...normalizedValue,
       {
         group,
         name: meta.name,
         params: Object.fromEntries(meta.params.map((param) => [param.name, param.default])),
-        condition: ">",
-        value: 0,
+        condition: defaultCondition,
+        value: normalizeConditionValue(defaultCondition, 0),
         weight: 1,
         expanded: true,
       },
@@ -83,12 +164,20 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
     setValue(
       normalizedValue.map((entry, index) =>
         index === idx
-          ? {
-              ...entry,
-              group,
-              name: meta.name,
-              params: Object.fromEntries(meta.params.map((param) => [param.name, param.default])),
-            }
+          ? (() => {
+              const nextConditionOptions = resolveConditionOptions(meta.name, meta.type);
+              const nextCondition = nextConditionOptions.includes(entry.condition)
+                ? entry.condition
+                : (nextConditionOptions[0] ?? ">");
+              return {
+                ...entry,
+                group,
+                name: meta.name,
+                params: Object.fromEntries(meta.params.map((param) => [param.name, param.default])),
+                condition: nextCondition,
+                value: normalizeConditionValue(nextCondition, entry.value),
+              };
+            })()
           : entry,
       ),
     );
@@ -100,12 +189,20 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
     setValue(
       normalizedValue.map((entry, index) =>
         index === idx
-          ? {
-              ...entry,
-              group: meta.group,
-              name,
-              params: Object.fromEntries(meta.params.map((param) => [param.name, param.default])),
-            }
+          ? (() => {
+              const nextConditionOptions = resolveConditionOptions(meta.name, meta.type);
+              const nextCondition = nextConditionOptions.includes(entry.condition)
+                ? entry.condition
+                : (nextConditionOptions[0] ?? ">");
+              return {
+                ...entry,
+                group: meta.group,
+                name,
+                params: Object.fromEntries(meta.params.map((param) => [param.name, param.default])),
+                condition: nextCondition,
+                value: normalizeConditionValue(nextCondition, entry.value),
+              };
+            })()
           : entry,
       ),
     );
@@ -123,13 +220,35 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
 
   const updateCondition = (idx: number, condition: StrategyConditionOperator) => {
     setValue(
-      normalizedValue.map((entry, index) => (index === idx ? { ...entry, condition } : entry)),
+      normalizedValue.map((entry, index) =>
+        index === idx
+          ? {
+              ...entry,
+              condition,
+              value: normalizeConditionValue(condition, entry.value),
+            }
+          : entry,
+      ),
     );
   };
 
   const updateValue = (idx: number, nextValue: number) => {
     setValue(
       normalizedValue.map((entry, index) => (index === idx ? { ...entry, value: nextValue } : entry)),
+    );
+  };
+
+  const updateRangeValue = (idx: number, bound: "low" | "high", nextValue: number) => {
+    setValue(
+      normalizedValue.map((entry, index) => {
+        if (index !== idx) return entry;
+        const normalized = normalizeConditionValue(entry.condition, entry.value);
+        const [low = 0, high = low] = Array.isArray(normalized) ? normalized : [normalized, normalized];
+        return {
+          ...entry,
+          value: bound === "low" ? [nextValue, high] : [low, nextValue],
+        };
+      }),
     );
   };
 
@@ -180,6 +299,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
           indicatorsInGroup.length > 0
             ? indicatorsInGroup
             : [{ name: indicator.name, group: indicator.group, type: "custom", params: [] }];
+        const conditionOptions = resolveConditionOptions(indicator.name, meta?.type);
 
         return (
           <div key={idx} className="card bg-base-200 shadow-md mb-6">
@@ -197,10 +317,10 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                     <LuChevronDown className="w-4 h-4" />
                   )}
                 </button>
-                <div className="text-lg flex items-center gap-2">
+                <div className="text-sm flex items-center gap-2">
                   <span className="text-base-content/80">{getIndicatorGroupLabel(indicator.group, locale)}</span>
                   <LuChevronRight className="text-base-content/60" />
-                  <span className="text-base-content">{indicator.name}</span>
+                  <span className="text-base-content">{getIndicatorDisplayName(indicator.name, locale)}</span>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -260,47 +380,52 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                     >
                       {indicatorOptions.map((entry) => (
                         <option key={entry.name} value={entry.name}>
-                          {entry.name}
+                          {getIndicatorDisplayName(entry.name, locale)}
                         </option>
                       ))}
                     </select>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <div className="font-semibold text-base-content/80 mb-2 flex items-center gap-2">
-                      Parametry wskaznika
+                <div
+                  data-testid={`indicator-layout-${idx}`}
+                  className={`grid grid-cols-1 gap-6 ${meta?.params.length ? "md:grid-cols-2" : ""}`}
+                >
+                  {meta?.params.length ? (
+                    <div>
+                      <div className="font-semibold text-base-content/80 mb-2 flex items-center gap-2">
+                        Parametry wskaznika
+                      </div>
+                      <div className="space-y-2">
+                        {meta.params.map((param) => (
+                          <div key={param.name} className="form-control mb-4">
+                            <label className="label">
+                              <span className="label-text">{getIndicatorParamLabel(param.name, locale)}</span>
+                            </label>
+                            <input
+                              type="number"
+                              className="input input-bordered"
+                              min={param.min}
+                              max={param.max}
+                              inputMode={Number.isInteger(param.default) ? "numeric" : decimalInputProps.inputMode}
+                              step={Number.isInteger(param.default) ? "1" : decimalInputProps.step}
+                              value={indicator.params[param.name]}
+                              onChange={(event) => {
+                                const contract = Number.isInteger(param.default)
+                                  ? strategyNumericContracts.integer
+                                  : strategyNumericContracts.decimal2;
+                                const parsed = readNumericInputValue(event.target.value, contract);
+                                if (parsed == null) return;
+                                updateParam(idx, param.name, parsed);
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      {meta?.params.map((param) => (
-                        <div key={param.name} className="form-control mb-4">
-                          <label className="label">
-                            <span className="label-text">{param.name}</span>
-                          </label>
-                          <input
-                            type="number"
-                            className="input input-bordered"
-                            min={param.min}
-                            max={param.max}
-                            inputMode={Number.isInteger(param.default) ? "numeric" : decimalInputProps.inputMode}
-                            step={Number.isInteger(param.default) ? "1" : decimalInputProps.step}
-                            value={indicator.params[param.name]}
-                            onChange={(event) => {
-                              const contract = Number.isInteger(param.default)
-                                ? strategyNumericContracts.integer
-                                : strategyNumericContracts.decimal2;
-                              const parsed = readNumericInputValue(event.target.value, contract);
-                              if (parsed == null) return;
-                              updateParam(idx, param.name, parsed);
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  ) : null}
                   <div className="flex flex-col gap-6">
                     <div>
-                      <div className="grid grid-cols-2 gap-4 items-center">
+                      <div className={`grid gap-4 items-end ${isRangeCondition(indicator.condition) ? "grid-cols-1 md:grid-cols-3" : "grid-cols-2"}`}>
                         <div>
                           <label className="label mb-1 font-semibold">Warunek</label>
                           <select
@@ -310,29 +435,78 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                           >
                             {conditionOptions.map((operator) => (
                               <option key={operator} value={operator}>
-                                {operator}
+                                {resolveConditionLabel(operator, locale)}
                               </option>
                             ))}
                           </select>
                         </div>
-                        <div>
-                          <label className="label mb-1 font-semibold">Wartosc</label>
-                          <input
-                            type="number"
-                            inputMode={decimalInputProps.inputMode}
-                            step={decimalInputProps.step}
-                            className="input input-bordered w-full"
-                            value={indicator.value}
-                            onChange={(event) => {
-                              const parsed = readNumericInputValue(
-                                event.target.value,
-                                strategyNumericContracts.decimal2,
-                              );
-                              if (parsed == null) return;
-                              updateValue(idx, parsed);
-                            }}
-                          />
-                        </div>
+                        {isRangeCondition(indicator.condition) ? (
+                          <>
+                            <div>
+                              <label className="label mb-1 font-semibold">Wartosc od</label>
+                              <input
+                                type="number"
+                                inputMode={decimalInputProps.inputMode}
+                                step={decimalInputProps.step}
+                                className="input input-bordered w-full"
+                                value={
+                                  Array.isArray(indicator.value)
+                                    ? indicator.value[0]
+                                    : indicator.value
+                                }
+                                onChange={(event) => {
+                                  const parsed = readNumericInputValue(
+                                    event.target.value,
+                                    strategyNumericContracts.decimal2,
+                                  );
+                                  if (parsed == null) return;
+                                  updateRangeValue(idx, "low", parsed);
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <label className="label mb-1 font-semibold">Wartosc do</label>
+                              <input
+                                type="number"
+                                inputMode={decimalInputProps.inputMode}
+                                step={decimalInputProps.step}
+                                className="input input-bordered w-full"
+                                value={
+                                  Array.isArray(indicator.value)
+                                    ? indicator.value[1]
+                                    : indicator.value
+                                }
+                                onChange={(event) => {
+                                  const parsed = readNumericInputValue(
+                                    event.target.value,
+                                    strategyNumericContracts.decimal2,
+                                  );
+                                  if (parsed == null) return;
+                                  updateRangeValue(idx, "high", parsed);
+                                }}
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <div>
+                            <label className="label mb-1 font-semibold">Wartosc</label>
+                            <input
+                              type="number"
+                              inputMode={decimalInputProps.inputMode}
+                              step={decimalInputProps.step}
+                              className="input input-bordered w-full"
+                              value={Array.isArray(indicator.value) ? indicator.value[0] : indicator.value}
+                              onChange={(event) => {
+                                const parsed = readNumericInputValue(
+                                  event.target.value,
+                                  strategyNumericContracts.decimal2,
+                                );
+                                if (parsed == null) return;
+                                updateValue(idx, parsed);
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
 

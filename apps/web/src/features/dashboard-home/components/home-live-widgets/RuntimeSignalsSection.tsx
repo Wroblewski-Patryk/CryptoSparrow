@@ -33,9 +33,8 @@ const SignalScopeIcon = ({ scope }: { scope: "LONG" | "SHORT" }) =>
       className="h-3.5 w-3.5"
       aria-hidden="true"
     >
-      <path d="M7 17V9" />
-      <path d="m3 13 4-4 4 4" />
-      <path d="M14 17h7" />
+      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+      <polyline points="16 7 22 7 22 13" />
     </svg>
   ) : (
     <svg
@@ -48,9 +47,8 @@ const SignalScopeIcon = ({ scope }: { scope: "LONG" | "SHORT" }) =>
       className="h-3.5 w-3.5"
       aria-hidden="true"
     >
-      <path d="M7 7v8" />
-      <path d="m3 11 4 4 4-4" />
-      <path d="M14 7h7" />
+      <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" />
+      <polyline points="16 17 22 17 22 11" />
     </svg>
   );
 

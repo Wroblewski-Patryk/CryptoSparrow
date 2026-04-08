@@ -23,8 +23,8 @@ const groupLabels: Record<IndicatorGroupKey, { en: string; pl: string }> = {
     pl: "Trend",
   },
   MOMENTUM_OSCILLATOR: {
-    en: "Momentum / Oscillators",
-    pl: "Momentum / Oscylatory",
+    en: "Momentum",
+    pl: "Momentum",
   },
   VOLATILITY: {
     en: "Volatility",

@@ -56,7 +56,7 @@ export type UserIndicator = {
     name: string;
     params: Record<string, number>;
     condition: StrategyConditionOperator;
-    value: number;
+    value: number | [number, number];
     weight: number;
     expanded?: boolean;
 };

@@ -15,8 +15,8 @@ describe("indicatorTaxonomy", () => {
   });
 
   it("returns EN/PL labels and stable display order", () => {
-    expect(getIndicatorGroupLabel("MOMENTUM_OSCILLATOR", "en")).toBe("Momentum / Oscillators");
-    expect(getIndicatorGroupLabel("MOMENTUM_OSCILLATOR", "pl")).toBe("Momentum / Oscylatory");
+    expect(getIndicatorGroupLabel("MOMENTUM_OSCILLATOR", "en")).toBe("Momentum");
+    expect(getIndicatorGroupLabel("MOMENTUM_OSCILLATOR", "pl")).toBe("Momentum");
 
     expect(
       sortIndicatorGroups(["DERIVATIVES", "TREND", "CANDLE_PATTERNS"]),
