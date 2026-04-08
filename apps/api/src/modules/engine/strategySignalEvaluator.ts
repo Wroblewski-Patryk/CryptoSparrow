@@ -11,6 +11,7 @@ import {
   computeRollingZScoreSeriesFromNullableValues,
   computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
+  computeSmaSeriesFromNullableValues,
   computeSmaSeriesFromCloses,
   computeStochasticSeriesFromCandles,
   computeStochRsiSeriesFromCloses,
@@ -391,6 +392,89 @@ const resolveSeries = (params: {
       const fundingSeries = params.derivatives?.fundingRate ?? [];
       const normalized = params.closes.map((_, index) => {
         const value = fundingSeries[index];
+        return typeof value === 'number' && Number.isFinite(value) ? value : null;
+      });
+      params.cache.set(rawKey, normalized);
+    }
+    return params.cache.get(rawKey) ?? null;
+  }
+
+  if (name.includes('OPEN_INTEREST_ZSCORE')) {
+    const period = clampPeriod(
+      params.indicatorParams.zScorePeriod ??
+      params.indicatorParams.period ??
+      params.indicatorParams.length,
+      20,
+    );
+    const rawKey = 'OPEN_INTEREST_RAW';
+    const zScoreKey = `OPEN_INTEREST_ZSCORE_${period}`;
+    if (!params.cache.has(rawKey)) {
+      const openInterestSeries = params.derivatives?.openInterest ?? [];
+      const normalized = params.closes.map((_, index) => {
+        const value = openInterestSeries[index];
+        return typeof value === 'number' && Number.isFinite(value) ? value : null;
+      });
+      params.cache.set(rawKey, normalized);
+    }
+    if (!params.cache.has(zScoreKey)) {
+      const raw = params.cache.get(rawKey) ?? [];
+      params.cache.set(zScoreKey, computeRollingZScoreSeriesFromNullableValues(raw, period));
+    }
+    return params.cache.get(zScoreKey) ?? null;
+  }
+
+  if (name.includes('OPEN_INTEREST_MA')) {
+    const period = clampPeriod(
+      params.indicatorParams.period ?? params.indicatorParams.length,
+      20,
+    );
+    const rawKey = 'OPEN_INTEREST_RAW';
+    const maKey = `OPEN_INTEREST_MA_${period}`;
+    if (!params.cache.has(rawKey)) {
+      const openInterestSeries = params.derivatives?.openInterest ?? [];
+      const normalized = params.closes.map((_, index) => {
+        const value = openInterestSeries[index];
+        return typeof value === 'number' && Number.isFinite(value) ? value : null;
+      });
+      params.cache.set(rawKey, normalized);
+    }
+    if (!params.cache.has(maKey)) {
+      const raw = params.cache.get(rawKey) ?? [];
+      params.cache.set(maKey, computeSmaSeriesFromNullableValues(raw, period));
+    }
+    return params.cache.get(maKey) ?? null;
+  }
+
+  if (name.includes('OPEN_INTEREST_DELTA')) {
+    const rawKey = 'OPEN_INTEREST_RAW';
+    const deltaKey = 'OPEN_INTEREST_DELTA';
+    if (!params.cache.has(rawKey)) {
+      const openInterestSeries = params.derivatives?.openInterest ?? [];
+      const normalized = params.closes.map((_, index) => {
+        const value = openInterestSeries[index];
+        return typeof value === 'number' && Number.isFinite(value) ? value : null;
+      });
+      params.cache.set(rawKey, normalized);
+    }
+    if (!params.cache.has(deltaKey)) {
+      const raw = params.cache.get(rawKey) ?? [];
+      const delta = raw.map((value, index) => {
+        if (index === 0 || typeof value !== 'number') return null;
+        const previous = raw[index - 1];
+        if (typeof previous !== 'number') return null;
+        return value - previous;
+      });
+      params.cache.set(deltaKey, delta);
+    }
+    return params.cache.get(deltaKey) ?? null;
+  }
+
+  if (name.includes('OPEN_INTEREST')) {
+    const rawKey = 'OPEN_INTEREST_RAW';
+    if (!params.cache.has(rawKey)) {
+      const openInterestSeries = params.derivatives?.openInterest ?? [];
+      const normalized = params.closes.map((_, index) => {
+        const value = openInterestSeries[index];
         return typeof value === 'number' && Number.isFinite(value) ? value : null;
       });
       params.cache.set(rawKey, normalized);

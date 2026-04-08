@@ -28,6 +28,7 @@ import {
   computeRollingZScoreSeriesFromNullableValues,
   computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
+  computeSmaSeriesFromNullableValues,
   computeSmaSeriesFromCloses,
   computeStochasticSeriesFromCandles,
   computeStochRsiSeriesFromCloses,
@@ -304,6 +305,14 @@ const runtimeFundingHistoryLimit = Math.max(
   20,
   Number.parseInt(process.env.RUNTIME_FUNDING_HISTORY_LIMIT ?? '200', 10),
 );
+const runtimeOpenInterestRefreshMs = Math.max(
+  30_000,
+  Number.parseInt(process.env.RUNTIME_OPEN_INTEREST_REFRESH_MS ?? '180000', 10),
+);
+const runtimeOpenInterestHistoryLimit = Math.max(
+  20,
+  Number.parseInt(process.env.RUNTIME_OPEN_INTEREST_HISTORY_LIMIT ?? '200', 10),
+);
 
 type RuntimeCandle = {
   openTime: number;
@@ -318,6 +327,11 @@ type RuntimeCandle = {
 type FundingRatePoint = {
   timestamp: number;
   fundingRate: number;
+};
+
+type OpenInterestPoint = {
+  timestamp: number;
+  openInterest: number;
 };
 
 type StrategyVote = {
@@ -639,6 +653,8 @@ export class RuntimeSignalLoop {
   private readonly warmupLastAttemptAt = new Map<string, number>();
   private readonly fundingRatePoints = new Map<string, FundingRatePoint[]>();
   private readonly fundingLastFetchAt = new Map<string, number>();
+  private readonly openInterestPoints = new Map<string, OpenInterestPoint[]>();
+  private readonly openInterestLastFetchAt = new Map<string, number>();
   private lastStreamEventAtMs: number | null = null;
   private lastSessionSyncSuccessAtMs: number | null = null;
   private lastKnownActiveBotIds = new Set<string>();
@@ -927,6 +943,7 @@ export class RuntimeSignalLoop {
     this.candleSeries.set(key, series);
     await this.ensureSeriesWarmup(event.marketType, event.symbol, event.interval, event.closeTime);
     await this.ensureFundingRateSeriesForCandle(event);
+    await this.ensureOpenInterestSeriesForCandle(event);
     await this.processPositionAutomationFallbackFromCandle(event);
     await this.handleFinalCandleDecision(event);
   }
@@ -1168,6 +1185,140 @@ export class RuntimeSignalLoop {
       points.map((point) => ({
         timestamp: point.timestamp,
         value: point.fundingRate,
+      })),
+    );
+  }
+
+  private mergeOpenInterestPoints(
+    key: string,
+    incoming: OpenInterestPoint[],
+  ) {
+    if (incoming.length === 0) return;
+    const existing = this.openInterestPoints.get(key) ?? [];
+    const normalized = normalizeTimedNumericPoints(
+      [...existing, ...incoming].map((point) => ({
+        timestamp: point.timestamp,
+        value: point.openInterest,
+      })),
+    ).map((point) => ({
+      timestamp: point.timestamp,
+      openInterest: point.value,
+    }));
+
+    if (normalized.length > maxCandlesPerSeries) {
+      normalized.splice(0, normalized.length - maxCandlesPerSeries);
+    }
+    this.openInterestPoints.set(key, normalized);
+  }
+
+  private openInterestPeriodForInterval(interval: string) {
+    const normalized = normalizeInterval(interval);
+    const supported = new Set(['5m', '15m', '30m', '1h', '2h', '4h', '6h', '12h', '1d']);
+    if (supported.has(normalized)) return normalized;
+    return '5m';
+  }
+
+  private async fetchOpenInterestHistory(
+    symbol: string,
+    interval: string,
+    endTimeMs?: number,
+  ): Promise<OpenInterestPoint[]> {
+    if (process.env.NODE_ENV === 'test') return [];
+    const base = process.env.BINANCE_FUTURES_REST_URL ?? 'https://fapi.binance.com';
+    const params = new URLSearchParams({
+      symbol: symbol.toUpperCase(),
+      period: this.openInterestPeriodForInterval(interval),
+      limit: String(Math.min(500, Math.max(20, runtimeOpenInterestHistoryLimit))),
+    });
+    if (Number.isFinite(endTimeMs)) {
+      params.set('endTime', String(Math.floor(endTimeMs as number)));
+    }
+    const url = `${base}/futures/data/openInterestHist?${params.toString()}`;
+
+    try {
+      const response = await fetch(url, { method: 'GET' });
+      if (!response.ok) return [];
+      const payload = (await response.json()) as unknown;
+      if (!Array.isArray(payload)) return [];
+      return payload
+        .map((item) => {
+          if (!item || typeof item !== 'object') return null;
+          const row = item as { timestamp?: unknown; sumOpenInterest?: unknown };
+          const timestamp = Number(row.timestamp);
+          const openInterest = Number(row.sumOpenInterest);
+          if (!Number.isFinite(timestamp) || !Number.isFinite(openInterest)) return null;
+          return { timestamp, openInterest } satisfies OpenInterestPoint;
+        })
+        .filter((item): item is OpenInterestPoint => Boolean(item))
+        .sort((left, right) => left.timestamp - right.timestamp);
+    } catch {
+      return [];
+    }
+  }
+
+  private async fetchOpenInterestSnapshot(
+    symbol: string,
+  ): Promise<OpenInterestPoint | null> {
+    if (process.env.NODE_ENV === 'test') return null;
+    const base = process.env.BINANCE_FUTURES_REST_URL ?? 'https://fapi.binance.com';
+    const params = new URLSearchParams({ symbol: symbol.toUpperCase() });
+    const url = `${base}/fapi/v1/openInterest?${params.toString()}`;
+
+    try {
+      const response = await fetch(url, { method: 'GET' });
+      if (!response.ok) return null;
+      const payload = (await response.json()) as unknown;
+      if (!payload || typeof payload !== 'object') return null;
+      const row = payload as { time?: unknown; openInterest?: unknown };
+      const timestamp = Number(row.time);
+      const openInterest = Number(row.openInterest);
+      if (!Number.isFinite(timestamp) || !Number.isFinite(openInterest)) return null;
+      return { timestamp, openInterest } satisfies OpenInterestPoint;
+    } catch {
+      return null;
+    }
+  }
+
+  private async ensureOpenInterestSeriesForCandle(event: StreamCandleEvent) {
+    if (event.marketType !== 'FUTURES') return;
+    const key = this.getFundingKey(event.marketType, event.symbol);
+    const now = this.deps.nowMs();
+    const existing = this.openInterestPoints.get(key) ?? [];
+    const lastFetchAt = this.openInterestLastFetchAt.get(key) ?? 0;
+    const shouldRefresh =
+      existing.length === 0 || now - lastFetchAt >= runtimeOpenInterestRefreshMs;
+    if (!shouldRefresh) return;
+
+    const incoming: OpenInterestPoint[] = [];
+    if (existing.length === 0) {
+      incoming.push(
+        ...(await this.fetchOpenInterestHistory(
+          event.symbol,
+          event.interval,
+          event.closeTime,
+        )),
+      );
+    }
+    const snapshot = await this.fetchOpenInterestSnapshot(event.symbol);
+    if (snapshot) incoming.push(snapshot);
+    this.mergeOpenInterestPoints(key, incoming);
+    this.openInterestLastFetchAt.set(key, now);
+  }
+
+  private resolveOpenInterestSeriesForCandles(
+    marketType: 'FUTURES' | 'SPOT',
+    symbol: string,
+    candles: RuntimeCandle[],
+  ): Array<number | null> | null {
+    if (marketType !== 'FUTURES') return null;
+    const key = this.getFundingKey(marketType, symbol);
+    const points = this.openInterestPoints.get(key) ?? [];
+    if (points.length === 0) return null;
+    return alignTimedNumericPointsToCandles(
+      candles,
+      points.map((point) => ({
+        timestamp: point.timestamp,
+        value: point.openInterest,
       })),
     );
   }
@@ -1717,13 +1868,25 @@ export class RuntimeSignalLoop {
       symbol,
       candles,
     );
+    const openInterestSeries = this.resolveOpenInterestSeriesForCandles(
+      marketType,
+      symbol,
+      candles,
+    );
     const indicatorCache = new Map<string, Array<number | null>>();
     const direction = evaluateStrategySignalAtIndex(
       signalRules,
       candles,
       decisionIndex,
       indicatorCache,
-      fundingRateSeries ? { derivatives: { fundingRate: fundingRateSeries } } : undefined,
+      fundingRateSeries || openInterestSeries
+        ? {
+            derivatives: {
+              ...(fundingRateSeries ? { fundingRate: fundingRateSeries } : {}),
+              ...(openInterestSeries ? { openInterest: openInterestSeries } : {}),
+            },
+          }
+        : undefined,
     );
 
     const ensureEma = (period: number) => {
@@ -1771,6 +1934,50 @@ export class RuntimeSignalLoop {
         indicatorCache.set(
           key,
           computeRollingZScoreSeriesFromNullableValues(ensureFundingRate(), period),
+        );
+      }
+      return indicatorCache.get(key)!;
+    };
+    const ensureOpenInterest = () => {
+      const key = 'OPEN_INTEREST_RAW';
+      if (!indicatorCache.has(key)) {
+        const normalized = candles.map((_, index) => {
+          const value = openInterestSeries?.[index];
+          return typeof value === 'number' && Number.isFinite(value) ? value : null;
+        });
+        indicatorCache.set(key, normalized);
+      }
+      return indicatorCache.get(key)!;
+    };
+    const ensureOpenInterestDelta = () => {
+      const key = 'OPEN_INTEREST_DELTA';
+      if (!indicatorCache.has(key)) {
+        const delta = ensureOpenInterest().map((value, index, source) => {
+          if (index === 0 || typeof value !== 'number') return null;
+          const previous = source[index - 1];
+          if (typeof previous !== 'number') return null;
+          return value - previous;
+        });
+        indicatorCache.set(key, delta);
+      }
+      return indicatorCache.get(key)!;
+    };
+    const ensureOpenInterestMa = (period: number) => {
+      const key = `OPEN_INTEREST_MA_${period}`;
+      if (!indicatorCache.has(key)) {
+        indicatorCache.set(
+          key,
+          computeSmaSeriesFromNullableValues(ensureOpenInterest(), period),
+        );
+      }
+      return indicatorCache.get(key)!;
+    };
+    const ensureOpenInterestZScore = (period: number) => {
+      const key = `OPEN_INTEREST_ZSCORE_${period}`;
+      if (!indicatorCache.has(key)) {
+        indicatorCache.set(
+          key,
+          computeRollingZScoreSeriesFromNullableValues(ensureOpenInterest(), period),
         );
       }
       return indicatorCache.get(key)!;
@@ -1980,6 +2187,81 @@ export class RuntimeSignalLoop {
         if (!indicatorKeys.has('FUNDING_RATE')) {
           indicatorKeys.add('FUNDING_RATE');
           indicatorParts.push(`FUNDING_RATE=${formatIndicatorValue(value)}`);
+        }
+        return;
+      }
+
+      if (indicator.includes('OPEN_INTEREST_ZSCORE')) {
+        const period = clampPeriod(
+          rule.params.zScorePeriod ?? rule.params.period ?? rule.params.length,
+          20,
+        );
+        const value = ensureOpenInterestZScore(period)[decisionIndex];
+        conditionLines.push({
+          scope,
+          left: `OPEN_INTEREST_ZSCORE(${period})`,
+          value: formatIndicatorValue(value),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has(`OPEN_INTEREST_ZSCORE(${period})`)) {
+          indicatorKeys.add(`OPEN_INTEREST_ZSCORE(${period})`);
+          indicatorParts.push(
+            `OPEN_INTEREST_ZSCORE(${period})=${formatIndicatorValue(value)}`,
+          );
+        }
+        return;
+      }
+
+      if (indicator.includes('OPEN_INTEREST_MA')) {
+        const period = clampPeriod(rule.params.period ?? rule.params.length, 20);
+        const value = ensureOpenInterestMa(period)[decisionIndex];
+        conditionLines.push({
+          scope,
+          left: `OPEN_INTEREST_MA(${period})`,
+          value: formatIndicatorValue(value),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has(`OPEN_INTEREST_MA(${period})`)) {
+          indicatorKeys.add(`OPEN_INTEREST_MA(${period})`);
+          indicatorParts.push(
+            `OPEN_INTEREST_MA(${period})=${formatIndicatorValue(value)}`,
+          );
+        }
+        return;
+      }
+
+      if (indicator.includes('OPEN_INTEREST_DELTA')) {
+        const value = ensureOpenInterestDelta()[decisionIndex];
+        conditionLines.push({
+          scope,
+          left: 'OPEN_INTEREST_DELTA',
+          value: formatIndicatorValue(value),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has('OPEN_INTEREST_DELTA')) {
+          indicatorKeys.add('OPEN_INTEREST_DELTA');
+          indicatorParts.push(
+            `OPEN_INTEREST_DELTA=${formatIndicatorValue(value)}`,
+          );
+        }
+        return;
+      }
+
+      if (indicator.includes('OPEN_INTEREST')) {
+        const value = ensureOpenInterest()[decisionIndex];
+        conditionLines.push({
+          scope,
+          left: 'OPEN_INTEREST',
+          value: formatIndicatorValue(value),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has('OPEN_INTEREST')) {
+          indicatorKeys.add('OPEN_INTEREST');
+          indicatorParts.push(`OPEN_INTEREST=${formatIndicatorValue(value)}`);
         }
         return;
       }

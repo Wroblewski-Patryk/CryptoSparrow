@@ -33,7 +33,10 @@ type ExpectedAction = {
 const buildExpectedActions = (
   candles: ReplayCandle[],
   strategyConfig: Record<string, unknown>,
-  derivativesSeries?: { fundingRate?: Array<number | null> },
+  derivativesSeries?: {
+    fundingRate?: Array<number | null>;
+    openInterest?: Array<number | null>;
+  },
 ): ExpectedAction[] => {
   const rules = parseStrategySignalRules(strategyConfig);
   if (!rules) return [];
@@ -75,7 +78,10 @@ const buildReplayActions = (
   symbol: string,
   candles: ReplayCandle[],
   strategyConfig: Record<string, unknown>,
-  derivativesSeries?: { fundingRate?: Array<number | null> },
+  derivativesSeries?: {
+    fundingRate?: Array<number | null>;
+    openInterest?: Array<number | null>;
+  },
 ) => {
   const replay = simulateTradesForSymbolReplay({
     symbol,
@@ -112,7 +118,13 @@ const scenarios: Array<{ symbol: string; candles: ReplayCandle[] }> = [
 
 const expectParityForThreeSymbols = (
   strategyConfig: Record<string, unknown>,
-  derivativesBySymbol?: Record<string, { fundingRate?: Array<number | null> }>,
+  derivativesBySymbol?: Record<
+    string,
+    {
+      fundingRate?: Array<number | null>;
+      openInterest?: Array<number | null>;
+    }
+  >,
 ) => {
   let totalExpectedActions = 0;
   for (const scenario of scenarios) {
@@ -432,6 +444,30 @@ describe('backtest parity harness (3 symbols)', () => {
       SOLUSDT: {
         fundingRate: [0.00005, 0.00005, 0.00004, -0.00008, -0.0001, -0.00008, -0.00003, 0.00005, 0.0001, 0.001],
       },
+    });
+  });
+
+  it('keeps OPEN_INTEREST family decision trace aligned for three symbols', () => {
+    const strategyConfig = {
+      open: {
+        direction: 'both',
+        indicatorsLong: [{ name: 'OPEN_INTEREST_DELTA', params: {}, condition: '>', value: 200 }],
+        indicatorsShort: [{ name: 'OPEN_INTEREST_ZSCORE', params: { zScorePeriod: 3 }, condition: '>', value: 1 }],
+      },
+      close: {
+        tp: 99,
+        sl: 99,
+        tsl: [{ percent: 99, arm: 1 }],
+      },
+      additional: {
+        dcaTimes: 0,
+      },
+    } satisfies Record<string, unknown>;
+
+    expectParityForThreeSymbols(strategyConfig, {
+      BTCUSDT: { openInterest: [1000, 1100, 1300, 1700, 2100, 2600, 3100, 3700, 4400, 5200] },
+      ETHUSDT: { openInterest: [2000, 2200, 2500, 2900, 3400, 4000, 4700, 5500, 6400, 7400] },
+      SOLUSDT: { openInterest: [500, 550, 650, 800, 1000, 1250, 1550, 1900, 2300, 2750] },
     });
   });
 

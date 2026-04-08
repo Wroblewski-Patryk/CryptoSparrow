@@ -150,7 +150,7 @@ Replace current broad groups with explicit trader-facing groups:
 
 ### Phase G - Futures Derivatives Filters
 - [x] `IND-28 feat(futures-filter): add funding-rate filters (absolute + z-score) for futures strategies`
-- [ ] `IND-29 feat(futures-filter): add open-interest filters (delta/MA/z-score) for futures strategies`
+- [x] `IND-29 feat(futures-filter): add open-interest filters (delta/MA/z-score) for futures strategies`
 - [ ] `IND-30 feat(futures-filter): add order-book filters (imbalance/spread/depth ratio) for futures strategies`
 - [ ] `IND-31 test(futures-filters): add fail-closed fallback tests when derivatives snapshots are missing`
 

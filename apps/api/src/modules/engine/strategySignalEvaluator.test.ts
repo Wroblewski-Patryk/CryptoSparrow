@@ -408,6 +408,77 @@ describe('strategySignalEvaluator', () => {
     expect(direction).toBe('SHORT');
   });
 
+  it('supports OPEN_INTEREST raw/delta/ma/zscore comparator evaluation from derivatives context', () => {
+    const openInterestSeries = [1000, 1100, 1300, 1800, 2200];
+    const candlesForOi = [
+      { close: 100 },
+      { close: 101 },
+      { close: 102 },
+      { close: 103 },
+      { close: 104 },
+    ];
+
+    const rawRules = parseStrategySignalRules({
+      open: {
+        direction: 'long',
+        indicatorsLong: [{ name: 'OPEN_INTEREST', condition: '>', value: 1500, params: {} }],
+        indicatorsShort: [],
+      },
+    });
+    expect(rawRules).not.toBeNull();
+    if (!rawRules) return;
+    expect(
+      evaluateStrategySignalAtIndex(rawRules, candlesForOi, 4, new Map(), {
+        derivatives: { openInterest: openInterestSeries },
+      }),
+    ).toBe('LONG');
+
+    const deltaRules = parseStrategySignalRules({
+      open: {
+        direction: 'long',
+        indicatorsLong: [{ name: 'OPEN_INTEREST_DELTA', condition: '>', value: 300, params: {} }],
+        indicatorsShort: [],
+      },
+    });
+    expect(deltaRules).not.toBeNull();
+    if (!deltaRules) return;
+    expect(
+      evaluateStrategySignalAtIndex(deltaRules, candlesForOi, 4, new Map(), {
+        derivatives: { openInterest: openInterestSeries },
+      }),
+    ).toBe('LONG');
+
+    const maRules = parseStrategySignalRules({
+      open: {
+        direction: 'long',
+        indicatorsLong: [{ name: 'OPEN_INTEREST_MA', condition: '>', value: 1600, params: { period: 3 } }],
+        indicatorsShort: [],
+      },
+    });
+    expect(maRules).not.toBeNull();
+    if (!maRules) return;
+    expect(
+      evaluateStrategySignalAtIndex(maRules, candlesForOi, 4, new Map(), {
+        derivatives: { openInterest: openInterestSeries },
+      }),
+    ).toBe('LONG');
+
+    const zScoreRules = parseStrategySignalRules({
+      open: {
+        direction: 'short',
+        indicatorsLong: [],
+        indicatorsShort: [{ name: 'OPEN_INTEREST_ZSCORE', condition: '>', value: 1, params: { zScorePeriod: 3 } }],
+      },
+    });
+    expect(zScoreRules).not.toBeNull();
+    if (!zScoreRules) return;
+    expect(
+      evaluateStrategySignalAtIndex(zScoreRules, candlesForOi, 4, new Map(), {
+        derivatives: { openInterest: openInterestSeries },
+      }),
+    ).toBe('SHORT');
+  });
+
   it('supports engulfing candle-pattern comparator evaluation', () => {
     const longRules = parseStrategySignalRules({
       open: {

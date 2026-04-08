@@ -116,6 +116,38 @@ describe('simulateTradesForSymbolReplay', () => {
     expect(result.eventCounts.ENTRY).toBeGreaterThanOrEqual(1);
   });
 
+  it('supports OPEN_INTEREST strategy rules via derivatives series input', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 101),
+      candle(2, 102),
+      candle(3, 103),
+      candle(4, 104),
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 2,
+      marginMode: 'CROSSED',
+      strategyConfig: {
+        open: {
+          direction: 'long',
+          indicatorsLong: [{ name: 'OPEN_INTEREST_DELTA', condition: '>', value: 200, params: {} }],
+          indicatorsShort: [],
+        },
+        close: { tp: 99, sl: 99, tsl: [{ percent: 99, arm: 1 }] },
+        additional: { dcaTimes: 0 },
+      },
+      derivativesSeries: {
+        openInterest: [1000, 1100, 1300, 1700, 2400],
+      },
+    });
+
+    expect(result.eventCounts.ENTRY).toBeGreaterThanOrEqual(1);
+  });
+
   it('emits lifecycle actions (DCA/TRAILING/EXIT) for timeline/reporting', () => {
     const candles = [
       candle(0, 100),

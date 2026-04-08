@@ -53,7 +53,7 @@ export const computeSmaSeriesFromCloses = (
   return output;
 };
 
-const computeSmaSeriesFromNullableValues = (
+export const computeSmaSeriesFromNullableValues = (
   values: Array<number | null>,
   period: number
 ): Array<number | null> => {

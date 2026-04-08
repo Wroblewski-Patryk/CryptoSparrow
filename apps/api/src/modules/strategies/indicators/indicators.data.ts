@@ -242,6 +242,44 @@ export const indicators = [
     ],
   },
   {
+    name: "OPEN_INTEREST",
+    group: "Filtry derywatów",
+    type: "derivatives",
+    params: [],
+  },
+  {
+    name: "OPEN_INTEREST_DELTA",
+    group: "Filtry derywatów",
+    type: "derivatives",
+    params: [],
+  },
+  {
+    name: "OPEN_INTEREST_MA",
+    group: "Filtry derywatów",
+    type: "derivatives",
+    params: [
+      {
+        name: "period",
+        default: 20,
+        min: 2,
+        max: 500,
+      },
+    ],
+  },
+  {
+    name: "OPEN_INTEREST_ZSCORE",
+    group: "Filtry derywatów",
+    type: "derivatives",
+    params: [
+      {
+        name: "zScorePeriod",
+        default: 20,
+        min: 2,
+        max: 500,
+      },
+    ],
+  },
+  {
     name: "BULLISH_ENGULFING",
     group: "Formacje świecowe",
     type: "pattern",

@@ -21,6 +21,7 @@ import {
   computeRollingZScoreSeriesFromNullableValues,
   computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
+  computeSmaSeriesFromNullableValues,
   computeSmaSeriesFromCloses,
   computeStochasticSeriesFromCandles,
   computeStochRsiSeriesFromCloses,
@@ -161,7 +162,8 @@ type IndicatorSpec = {
     | 'DONCHIAN'
     | 'ADX'
     | 'PATTERN'
-    | 'FUNDING';
+    | 'FUNDING'
+    | 'OPEN_INTEREST';
   params: Record<string, number>;
   patternName?: CandlePatternName;
   channel?:
@@ -179,7 +181,9 @@ type IndicatorSpec = {
     | 'DI_PLUS'
     | 'DI_MINUS'
     | 'RAW'
-    | 'ZSCORE';
+    | 'ZSCORE'
+    | 'DELTA'
+    | 'MA';
 };
 
 const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
@@ -629,6 +633,13 @@ const buildDerivativesSeriesForCandles = (
       supplemental.fundingRates.map((point) => ({
         timestamp: point.timestamp,
         value: point.fundingRate,
+      })),
+    ),
+    openInterest: alignTimedNumericPointsToCandles(
+      candles,
+      supplemental.openInterest.map((point) => ({
+        timestamp: point.timestamp,
+        value: point.openInterest,
       })),
     ),
   };
@@ -1482,6 +1493,67 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
       ];
     }
 
+    if (name.includes('OPEN_INTEREST_ZSCORE')) {
+      const zScorePeriod = asPeriod(
+        params?.zScorePeriod ?? params?.period ?? params?.length,
+        20,
+      );
+      return [
+        {
+          key: `${name}_ZSCORE_${zScorePeriod}`,
+          name: `${name} ZSCORE`,
+          period: zScorePeriod,
+          panel: 'oscillator' as const,
+          source: 'OPEN_INTEREST' as const,
+          params: { zScorePeriod },
+          channel: 'ZSCORE' as const,
+        },
+      ];
+    }
+
+    if (name.includes('OPEN_INTEREST_MA')) {
+      const period = asPeriod(params?.period ?? params?.length, 20);
+      return [
+        {
+          key: `${name}_MA_${period}`,
+          name: `${name} MA`,
+          period,
+          panel: 'oscillator' as const,
+          source: 'OPEN_INTEREST' as const,
+          params: { period },
+          channel: 'MA' as const,
+        },
+      ];
+    }
+
+    if (name.includes('OPEN_INTEREST_DELTA')) {
+      return [
+        {
+          key: `${name}_DELTA`,
+          name: 'OPEN_INTEREST_DELTA',
+          period: 2,
+          panel: 'oscillator' as const,
+          source: 'OPEN_INTEREST' as const,
+          params: { period: 2 },
+          channel: 'DELTA' as const,
+        },
+      ];
+    }
+
+    if (name.includes('OPEN_INTEREST')) {
+      return [
+        {
+          key: `${name}_RAW`,
+          name: 'OPEN_INTEREST',
+          period: 2,
+          panel: 'oscillator' as const,
+          source: 'OPEN_INTEREST' as const,
+          params: { period: 2 },
+          channel: 'RAW' as const,
+        },
+      ];
+    }
+
     const periodCandidate = params && typeof params.period !== 'undefined'
       ? Number(params.period)
       : params && typeof params.length !== 'undefined'
@@ -1496,6 +1568,7 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
       if (name.includes('DONCHIAN')) return 'DONCHIAN';
       if (name.includes('ADX')) return 'ADX';
       if (name.includes('FUNDING_RATE')) return 'FUNDING';
+      if (name.includes('OPEN_INTEREST')) return 'OPEN_INTEREST';
       if (name.includes('STOCHASTIC')) return 'STOCHASTIC';
       if (name.includes('STOCHRSI')) return 'STOCHRSI';
       if (name.includes('ROC')) return 'ROC';
@@ -1541,6 +1614,15 @@ const buildIndicatorSeries = (
         supplemental.fundingRates.map((point) => ({
           timestamp: point.timestamp,
           value: point.fundingRate,
+        })),
+      )
+    : Array.from({ length: closes.length }, () => null);
+  const openInterestRawSeries = supplemental
+    ? alignTimedNumericPointsToCandles(
+        candles,
+        supplemental.openInterest.map((point) => ({
+          timestamp: point.timestamp,
+          value: point.openInterest,
         })),
       )
     : Array.from({ length: closes.length }, () => null);
@@ -1667,6 +1749,26 @@ const buildIndicatorSeries = (
         return fundingRawSeries;
       }
 
+      if (spec.source === 'OPEN_INTEREST') {
+        if (spec.channel === 'ZSCORE') {
+          const period = spec.params.zScorePeriod ?? spec.params.period ?? spec.period;
+          return computeRollingZScoreSeriesFromNullableValues(openInterestRawSeries, period);
+        }
+        if (spec.channel === 'MA') {
+          const period = spec.params.period ?? spec.period;
+          return computeSmaSeriesFromNullableValues(openInterestRawSeries, period);
+        }
+        if (spec.channel === 'DELTA') {
+          return openInterestRawSeries.map((value, index) => {
+            if (index === 0 || typeof value !== 'number') return null;
+            const previous = openInterestRawSeries[index - 1];
+            if (typeof previous !== 'number') return null;
+            return value - previous;
+          });
+        }
+        return openInterestRawSeries;
+      }
+
       if (spec.source === 'ADX') {
         const period = spec.params.period ?? 14;
         const key = `${period}`;
@@ -1782,7 +1884,8 @@ export const buildIndicatorSeriesForTests = (
       | 'DONCHIAN'
       | 'ADX'
       | 'PATTERN'
-      | 'FUNDING';
+      | 'FUNDING'
+      | 'OPEN_INTEREST';
     params: Record<string, number>;
     patternName?: CandlePatternName;
     channel?:
@@ -1800,7 +1903,9 @@ export const buildIndicatorSeriesForTests = (
       | 'DI_PLUS'
       | 'DI_MINUS'
       | 'RAW'
-      | 'ZSCORE';
+      | 'ZSCORE'
+      | 'DELTA'
+      | 'MA';
   }>,
   supplemental?: {
     fundingRates: Array<{ timestamp: number; fundingRate: number }>;

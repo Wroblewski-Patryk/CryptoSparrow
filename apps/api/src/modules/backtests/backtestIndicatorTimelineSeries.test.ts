@@ -276,6 +276,60 @@ describe('backtest indicator timeline series', () => {
     expect(series[0].values[3]).toBeGreaterThan(1);
   });
 
+  it('builds OPEN_INTEREST raw/delta/ma/zscore series for timeline overlays', () => {
+    const rawSpecs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'OPEN_INTEREST', params: {}, condition: '>', value: 0 }],
+        indicatorsShort: [],
+      },
+    });
+    const deltaSpecs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'OPEN_INTEREST_DELTA', params: {}, condition: '>', value: 0 }],
+        indicatorsShort: [],
+      },
+    });
+    const maSpecs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'OPEN_INTEREST_MA', params: { period: 3 }, condition: '>', value: 0 }],
+        indicatorsShort: [],
+      },
+    });
+    const zScoreSpecs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'OPEN_INTEREST_ZSCORE', params: { zScorePeriod: 3 }, condition: '>', value: 0 }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(rawSpecs[0]).toMatchObject({ source: 'OPEN_INTEREST', channel: 'RAW' });
+    expect(deltaSpecs[0]).toMatchObject({ source: 'OPEN_INTEREST', channel: 'DELTA' });
+    expect(maSpecs[0]).toMatchObject({ source: 'OPEN_INTEREST', channel: 'MA', period: 3 });
+    expect(zScoreSpecs[0]).toMatchObject({ source: 'OPEN_INTEREST', channel: 'ZSCORE', period: 3 });
+
+    const supplemental = {
+      fundingRates: [],
+      openInterest: [
+        { timestamp: candles[0].openTime, openInterest: 1000 },
+        { timestamp: candles[1].openTime, openInterest: 1100 },
+        { timestamp: candles[2].openTime, openInterest: 1300 },
+        { timestamp: candles[3].openTime, openInterest: 1800 },
+      ],
+    };
+
+    const rawSeries = buildIndicatorSeriesForTests(candles, rawSpecs, supplemental);
+    const deltaSeries = buildIndicatorSeriesForTests(candles, deltaSpecs, supplemental);
+    const maSeries = buildIndicatorSeriesForTests(candles, maSpecs, supplemental);
+    const zScoreSeries = buildIndicatorSeriesForTests(candles, zScoreSpecs, supplemental);
+
+    expect(rawSeries[0].values).toEqual([1000, 1100, 1300, 1800]);
+    expect(deltaSeries[0].values).toEqual([null, 100, 200, 500]);
+    expect(maSeries[0].values[0]).toBeNull();
+    expect(maSeries[0].values[2]).toBeCloseTo((1000 + 1100 + 1300) / 3, 10);
+    expect(zScoreSeries[0].values[0]).toBeNull();
+    expect(zScoreSeries[0].values[3]).toBeGreaterThan(1);
+  });
+
   it('builds engulfing pattern boolean series for timeline overlays', () => {
     const specs = parseStrategyIndicatorsForTests({
       open: {
