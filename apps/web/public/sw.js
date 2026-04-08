@@ -1,7 +1,8 @@
-const CACHE_NAME = 'cryptosparrow-pwa-v4';
+const CACHE_NAME = 'cryptosparrow-pwa-v5';
 const OFFLINE_URL = '/offline';
 const PRECACHE_URLS = ['/offline', '/manifest.webmanifest', '/logo.png'];
 const CACHE_PREFIX = 'cryptosparrow-pwa-';
+const NEXT_STATIC_PATH_PREFIX = '/_next/static/';
 const STATIC_PATH_PREFIXES = ['/_next/static/', '/icons/'];
 const RUNTIME_BYPASS_PATH_PREFIXES = ['/api/', '/auth/', '/dashboard/', '/admin/'];
 const STATIC_EXTENSIONS = [
@@ -72,6 +73,23 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (!isStaticAssetRequest(url)) {
+    return;
+  }
+
+  if (url.pathname.startsWith(NEXT_STATIC_PATH_PREFIX)) {
+    event.respondWith(
+      fetch(new Request(event.request, { cache: 'no-store' }))
+        .then((response) => {
+          if (!response || response.status !== 200) return response;
+          const cloned = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, cloned));
+          return response;
+        })
+        .catch(async () => {
+          const cached = await caches.match(event.request);
+          return cached || Response.error();
+        })
+    );
     return;
   }
 

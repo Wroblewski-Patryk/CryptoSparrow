@@ -138,7 +138,10 @@ export default function ServiceWorkerRegistration() {
 
     const register = async (): Promise<void> => {
       try {
-        const registration = await navigator.serviceWorker.register(SW_PATH, { scope: SW_SCOPE });
+        const registration = await navigator.serviceWorker.register(SW_PATH, {
+          scope: SW_SCOPE,
+          updateViaCache: "none",
+        });
         if (isDisposed) return;
 
         activeRegistration = registration;

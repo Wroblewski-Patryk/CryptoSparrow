@@ -24,7 +24,7 @@ describe("ServiceWorkerRegistration", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const deleteCache = vi.fn().mockResolvedValue(true);
-    const keys = vi.fn().mockResolvedValue(["cryptosparrow-pwa-v4"]);
+    const keys = vi.fn().mockResolvedValue(["cryptosparrow-pwa-v5"]);
     Object.defineProperty(window, "caches", {
       configurable: true,
       value: {
@@ -80,7 +80,7 @@ describe("ServiceWorkerRegistration", () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(register).toHaveBeenCalledWith("/sw.js", { scope: "/" });
+    expect(register).toHaveBeenCalledWith("/sw.js", { scope: "/", updateViaCache: "none" });
 
     await waitFor(() => {
       expect(update).toHaveBeenCalled();
@@ -135,7 +135,7 @@ describe("ServiceWorkerRegistration", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const deleteCache = vi.fn().mockResolvedValue(true);
-    const keys = vi.fn().mockResolvedValue(["cryptosparrow-pwa-v4", "some-other-cache"]);
+    const keys = vi.fn().mockResolvedValue(["cryptosparrow-pwa-v5", "some-other-cache"]);
     Object.defineProperty(window, "caches", {
       configurable: true,
       value: {
@@ -186,7 +186,7 @@ describe("ServiceWorkerRegistration", () => {
     });
 
     await waitFor(() => {
-      expect(deleteCache).toHaveBeenCalledWith("cryptosparrow-pwa-v4");
+      expect(deleteCache).toHaveBeenCalledWith("cryptosparrow-pwa-v5");
     });
     expect(update).toHaveBeenCalled();
   });

@@ -28,4 +28,11 @@ describe('service worker cache contract', () => {
     expect(source).toContain("if (!event.data || event.data.type !== 'SKIP_WAITING') return;");
     expect(source).toContain('self.skipWaiting();');
   });
+
+  it('uses network-first no-store policy for Next static assets to avoid stale client bundles', () => {
+    const source = loadServiceWorkerSource();
+    expect(source).toContain("const NEXT_STATIC_PATH_PREFIX = '/_next/static/';");
+    expect(source).toContain("if (url.pathname.startsWith(NEXT_STATIC_PATH_PREFIX)) {");
+    expect(source).toContain("fetch(new Request(event.request, { cache: 'no-store' }))");
+  });
 });
