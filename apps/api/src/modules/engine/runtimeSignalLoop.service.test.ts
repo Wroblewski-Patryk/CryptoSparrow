@@ -90,6 +90,21 @@ const strategyOpenInterestShort = {
   weight: 1,
 };
 
+const strategyOrderBookLong = {
+  strategyId: 'strategy-orderbook-long',
+  strategyInterval: '1m',
+  strategyLeverage: 3,
+  walletRisk: 5,
+  strategyConfig: {
+    open: {
+      indicatorsLong: [{ name: 'ORDER_BOOK_IMBALANCE', params: {}, condition: '>', value: 0.2 }],
+      indicatorsShort: [],
+    },
+  },
+  priority: 10,
+  weight: 1,
+};
+
 const createDeps = () => {
   let handler: ((event: MarketStreamEvent) => void | Promise<void>) | null = null;
 
@@ -526,6 +541,33 @@ describe('RuntimeSignalLoop', () => {
 
     expect(evaluation.direction).toBe('SHORT');
     expect(evaluation.indicatorSummary).toContain('OPEN_INTEREST');
+  });
+
+  it('evaluates ORDER_BOOK rules from cached derivatives series in runtime strategy path', () => {
+    const { deps } = createDeps();
+    const loop = new RuntimeSignalLoop(deps);
+
+    const key = 'FUTURES|BTCUSDT|1m';
+    (loop as any).candleSeries.set(key, [
+      { openTime: 0, closeTime: 59_000, open: 100, high: 101, low: 99, close: 100, volume: 1000 },
+      { openTime: 60_000, closeTime: 119_000, open: 101, high: 102, low: 100, close: 101, volume: 1000 },
+      { openTime: 120_000, closeTime: 179_000, open: 102, high: 103, low: 101, close: 102, volume: 1000 },
+      { openTime: 180_000, closeTime: 239_000, open: 103, high: 104, low: 102, close: 103, volume: 1000 },
+    ]);
+    (loop as any).orderBookPoints.set('FUTURES|BTCUSDT', [
+      { timestamp: 0, imbalance: 0.1, spreadBps: 8, depthRatio: 1.1 },
+      { timestamp: 120_000, imbalance: 0.3, spreadBps: 5, depthRatio: 1.8 },
+    ]);
+
+    const evaluation = (loop as any).evaluateStrategy({
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      strategy: strategyOrderBookLong,
+      decisionOpenTime: 180_000,
+    });
+
+    expect(evaluation.direction).toBe('LONG');
+    expect(evaluation.indicatorSummary).toContain('ORDER_BOOK_IMBALANCE');
   });
 
   it('deduplicates duplicate final-candle window events', async () => {

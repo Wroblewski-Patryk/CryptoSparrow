@@ -280,6 +280,24 @@ export const indicators = [
     ],
   },
   {
+    name: "ORDER_BOOK_IMBALANCE",
+    group: "Filtry derywatów",
+    type: "derivatives",
+    params: [],
+  },
+  {
+    name: "ORDER_BOOK_SPREAD_BPS",
+    group: "Filtry derywatów",
+    type: "derivatives",
+    params: [],
+  },
+  {
+    name: "ORDER_BOOK_DEPTH_RATIO",
+    group: "Filtry derywatów",
+    type: "derivatives",
+    params: [],
+  },
+  {
     name: "BULLISH_ENGULFING",
     group: "Formacje świecowe",
     type: "pattern",

@@ -482,6 +482,45 @@ const resolveSeries = (params: {
     return params.cache.get(rawKey) ?? null;
   }
 
+  if (name.includes('ORDER_BOOK_IMBALANCE')) {
+    const key = 'ORDER_BOOK_IMBALANCE';
+    if (!params.cache.has(key)) {
+      const series = params.derivatives?.orderBookImbalance ?? [];
+      const normalized = params.closes.map((_, index) => {
+        const value = series[index];
+        return typeof value === 'number' && Number.isFinite(value) ? value : null;
+      });
+      params.cache.set(key, normalized);
+    }
+    return params.cache.get(key) ?? null;
+  }
+
+  if (name.includes('ORDER_BOOK_SPREAD_BPS')) {
+    const key = 'ORDER_BOOK_SPREAD_BPS';
+    if (!params.cache.has(key)) {
+      const series = params.derivatives?.orderBookSpreadBps ?? [];
+      const normalized = params.closes.map((_, index) => {
+        const value = series[index];
+        return typeof value === 'number' && Number.isFinite(value) ? value : null;
+      });
+      params.cache.set(key, normalized);
+    }
+    return params.cache.get(key) ?? null;
+  }
+
+  if (name.includes('ORDER_BOOK_DEPTH_RATIO')) {
+    const key = 'ORDER_BOOK_DEPTH_RATIO';
+    if (!params.cache.has(key)) {
+      const series = params.derivatives?.orderBookDepthRatio ?? [];
+      const normalized = params.closes.map((_, index) => {
+        const value = series[index];
+        return typeof value === 'number' && Number.isFinite(value) ? value : null;
+      });
+      params.cache.set(key, normalized);
+    }
+    return params.cache.get(key) ?? null;
+  }
+
   if (name.includes('EMA')) {
     const period = clampPeriod(
       params.indicatorParams.period ?? params.indicatorParams.length ?? params.indicatorParams.fast ?? params.indicatorParams.slow,

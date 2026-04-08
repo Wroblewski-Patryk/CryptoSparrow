@@ -80,9 +80,17 @@ type OpenInterestPoint = {
   openInterest: number;
 };
 
+type OrderBookPoint = {
+  timestamp: number;
+  imbalance: number;
+  spreadBps: number;
+  depthRatio: number;
+};
+
 type SupplementalSeries = {
   fundingRates: FundingRatePoint[];
   openInterest: OpenInterestPoint[];
+  orderBook: OrderBookPoint[];
 };
 
 type TradeDraft = {
@@ -163,7 +171,8 @@ type IndicatorSpec = {
     | 'ADX'
     | 'PATTERN'
     | 'FUNDING'
-    | 'OPEN_INTEREST';
+    | 'OPEN_INTEREST'
+    | 'ORDER_BOOK';
   params: Record<string, number>;
   patternName?: CandlePatternName;
   channel?:
@@ -183,7 +192,10 @@ type IndicatorSpec = {
     | 'RAW'
     | 'ZSCORE'
     | 'DELTA'
-    | 'MA';
+    | 'MA'
+    | 'IMBALANCE'
+    | 'SPREAD_BPS'
+    | 'DEPTH_RATIO';
 };
 
 const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
@@ -541,7 +553,7 @@ const fetchSupplementalSeries = async (
   endTimeMs?: number,
 ): Promise<SupplementalSeries> => {
   if (marketType !== 'FUTURES') {
-    return { fundingRates: [], openInterest: [] };
+    return { fundingRates: [], openInterest: [], orderBook: [] };
   }
 
   pruneCandleCache();
@@ -578,7 +590,7 @@ const fetchSupplementalSeries = async (
       fetch(`https://fapi.binance.com/futures/data/openInterestHist?${oiQuery.toString()}`),
     ]);
   } catch {
-    const empty = { fundingRates: [], openInterest: [] };
+    const empty = { fundingRates: [], openInterest: [], orderBook: [] };
     supplementalCache.set(key, { cachedAt: Date.now(), data: empty });
     return empty;
   }
@@ -614,6 +626,7 @@ const fetchSupplementalSeries = async (
   const result: SupplementalSeries = {
     fundingRates,
     openInterest,
+    orderBook: [],
   };
   supplementalCache.set(key, {
     cachedAt: Date.now(),
@@ -640,6 +653,27 @@ const buildDerivativesSeriesForCandles = (
       supplemental.openInterest.map((point) => ({
         timestamp: point.timestamp,
         value: point.openInterest,
+      })),
+    ),
+    orderBookImbalance: alignTimedNumericPointsToCandles(
+      candles,
+      supplemental.orderBook.map((point) => ({
+        timestamp: point.timestamp,
+        value: point.imbalance,
+      })),
+    ),
+    orderBookSpreadBps: alignTimedNumericPointsToCandles(
+      candles,
+      supplemental.orderBook.map((point) => ({
+        timestamp: point.timestamp,
+        value: point.spreadBps,
+      })),
+    ),
+    orderBookDepthRatio: alignTimedNumericPointsToCandles(
+      candles,
+      supplemental.orderBook.map((point) => ({
+        timestamp: point.timestamp,
+        value: point.depthRatio,
       })),
     ),
   };
@@ -1554,6 +1588,48 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
       ];
     }
 
+    if (name.includes('ORDER_BOOK_IMBALANCE')) {
+      return [
+        {
+          key: `${name}_IMBALANCE`,
+          name: 'ORDER_BOOK_IMBALANCE',
+          period: 2,
+          panel: 'oscillator' as const,
+          source: 'ORDER_BOOK' as const,
+          params: { period: 2 },
+          channel: 'IMBALANCE' as const,
+        },
+      ];
+    }
+
+    if (name.includes('ORDER_BOOK_SPREAD_BPS')) {
+      return [
+        {
+          key: `${name}_SPREAD_BPS`,
+          name: 'ORDER_BOOK_SPREAD_BPS',
+          period: 2,
+          panel: 'oscillator' as const,
+          source: 'ORDER_BOOK' as const,
+          params: { period: 2 },
+          channel: 'SPREAD_BPS' as const,
+        },
+      ];
+    }
+
+    if (name.includes('ORDER_BOOK_DEPTH_RATIO')) {
+      return [
+        {
+          key: `${name}_DEPTH_RATIO`,
+          name: 'ORDER_BOOK_DEPTH_RATIO',
+          period: 2,
+          panel: 'oscillator' as const,
+          source: 'ORDER_BOOK' as const,
+          params: { period: 2 },
+          channel: 'DEPTH_RATIO' as const,
+        },
+      ];
+    }
+
     const periodCandidate = params && typeof params.period !== 'undefined'
       ? Number(params.period)
       : params && typeof params.length !== 'undefined'
@@ -1569,6 +1645,7 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
       if (name.includes('ADX')) return 'ADX';
       if (name.includes('FUNDING_RATE')) return 'FUNDING';
       if (name.includes('OPEN_INTEREST')) return 'OPEN_INTEREST';
+      if (name.includes('ORDER_BOOK')) return 'ORDER_BOOK';
       if (name.includes('STOCHASTIC')) return 'STOCHASTIC';
       if (name.includes('STOCHRSI')) return 'STOCHRSI';
       if (name.includes('ROC')) return 'ROC';
@@ -1623,6 +1700,33 @@ const buildIndicatorSeries = (
         supplemental.openInterest.map((point) => ({
           timestamp: point.timestamp,
           value: point.openInterest,
+        })),
+      )
+    : Array.from({ length: closes.length }, () => null);
+  const orderBookImbalanceSeries = supplemental
+    ? alignTimedNumericPointsToCandles(
+        candles,
+        supplemental.orderBook.map((point) => ({
+          timestamp: point.timestamp,
+          value: point.imbalance,
+        })),
+      )
+    : Array.from({ length: closes.length }, () => null);
+  const orderBookSpreadSeries = supplemental
+    ? alignTimedNumericPointsToCandles(
+        candles,
+        supplemental.orderBook.map((point) => ({
+          timestamp: point.timestamp,
+          value: point.spreadBps,
+        })),
+      )
+    : Array.from({ length: closes.length }, () => null);
+  const orderBookDepthRatioSeries = supplemental
+    ? alignTimedNumericPointsToCandles(
+        candles,
+        supplemental.orderBook.map((point) => ({
+          timestamp: point.timestamp,
+          value: point.depthRatio,
         })),
       )
     : Array.from({ length: closes.length }, () => null);
@@ -1769,6 +1873,12 @@ const buildIndicatorSeries = (
         return openInterestRawSeries;
       }
 
+      if (spec.source === 'ORDER_BOOK') {
+        if (spec.channel === 'SPREAD_BPS') return orderBookSpreadSeries;
+        if (spec.channel === 'DEPTH_RATIO') return orderBookDepthRatioSeries;
+        return orderBookImbalanceSeries;
+      }
+
       if (spec.source === 'ADX') {
         const period = spec.params.period ?? 14;
         const key = `${period}`;
@@ -1885,7 +1995,8 @@ export const buildIndicatorSeriesForTests = (
       | 'ADX'
       | 'PATTERN'
       | 'FUNDING'
-      | 'OPEN_INTEREST';
+      | 'OPEN_INTEREST'
+      | 'ORDER_BOOK';
     params: Record<string, number>;
     patternName?: CandlePatternName;
     channel?:
@@ -1905,17 +2016,27 @@ export const buildIndicatorSeriesForTests = (
       | 'RAW'
       | 'ZSCORE'
       | 'DELTA'
-      | 'MA';
+      | 'MA'
+      | 'IMBALANCE'
+      | 'SPREAD_BPS'
+      | 'DEPTH_RATIO';
   }>,
   supplemental?: {
     fundingRates: Array<{ timestamp: number; fundingRate: number }>;
     openInterest: Array<{ timestamp: number; openInterest: number }>;
+    orderBook?: Array<{ timestamp: number; imbalance: number; spreadBps: number; depthRatio: number }>;
   },
 ) =>
   buildIndicatorSeries(
     candles as KlineCandle[],
     specs as IndicatorSpec[],
-    supplemental as SupplementalSeries | undefined,
+    (supplemental
+      ? {
+          fundingRates: supplemental.fundingRates,
+          openInterest: supplemental.openInterest,
+          orderBook: supplemental.orderBook ?? [],
+        }
+      : undefined) as SupplementalSeries | undefined,
   );
 
 const emptyLifecycleEventCounts = (): LifecycleEventCounts => ({
@@ -2012,6 +2133,7 @@ const runBacktestAsync = async (runId: string) => {
     candles: number;
     fundingPoints: number;
     openInterestPoints: number;
+    orderBookPoints: number;
   }> = [];
   const parityDiagnostics: Array<{
     symbol: string;
@@ -2033,6 +2155,7 @@ const runBacktestAsync = async (runId: string) => {
     }>;
     fundingPoints: number;
     openInterestPoints: number;
+    orderBookPoints: number;
     error: string | null;
   }> = [];
 
@@ -2069,6 +2192,7 @@ const runBacktestAsync = async (runId: string) => {
           candles: candles.length,
           fundingPoints: supplemental.fundingRates.length,
           openInterestPoints: supplemental.openInterest.length,
+          orderBookPoints: supplemental.orderBook.length,
         });
         progress.totalCandlesForSymbol = candles.length;
         progress.currentCandleIndex = candles.length > 0 ? candles.length - 1 : 0;
@@ -2088,6 +2212,7 @@ const runBacktestAsync = async (runId: string) => {
           mismatchSamples: [],
           fundingPoints: 0,
           openInterestPoints: 0,
+          orderBookPoints: 0,
           error: error instanceof Error ? error.message : 'UNKNOWN_SYMBOL_PROCESSING_ERROR',
         });
       }
@@ -2128,7 +2253,7 @@ const runBacktestAsync = async (runId: string) => {
       for (const symbol of loadedSymbols) {
         const symbolSimulation = simulation.perSymbol[symbol];
         if (!symbolSimulation) continue;
-        const supplemental = supplementalBySymbol.get(symbol) ?? { fundingRates: [], openInterest: [] };
+        const supplemental = supplementalBySymbol.get(symbol) ?? { fundingRates: [], openInterest: [], orderBook: [] };
         const decisionTrace = Array.isArray(symbolSimulation.decisionTrace)
           ? symbolSimulation.decisionTrace
           : [];
@@ -2163,6 +2288,7 @@ const runBacktestAsync = async (runId: string) => {
             })),
           fundingPoints: supplemental.fundingRates.length,
           openInterestPoints: supplemental.openInterest.length,
+          orderBookPoints: supplemental.orderBook.length,
           error: null,
         });
 
@@ -2589,7 +2715,7 @@ export const getRunTimeline = async (
   const fullCandles = candlesBySymbol.get(symbol) ?? [];
   const visibleStart = visibleStartBySymbol.get(symbol) ?? 0;
   const candles = fullCandles.slice(visibleStart);
-  const supplemental = supplementalBySymbol.get(symbol) ?? { fundingRates: [], openInterest: [] };
+  const supplemental = supplementalBySymbol.get(symbol) ?? { fundingRates: [], openInterest: [], orderBook: [] };
   const total = candles.length;
   const requestedCursor = clamp(query.cursor, 0, total);
   const start =
@@ -2749,6 +2875,7 @@ export const getRunTimeline = async (
         })),
       fundingPoints: supplemental.fundingRates.length,
       openInterestPoints: supplemental.openInterest.length,
+      orderBookPoints: supplemental.orderBook.length,
     },
     positionStats: {
       closedOnFinalCandleCount: symbolReplay.trades.filter((trade) => trade.exitReason === 'FINAL_CANDLE').length,
@@ -2778,6 +2905,25 @@ export const getRunTimeline = async (
           };
         })
         .filter((point): point is { candleIndex: number; timestamp: string; value: number } => Boolean(point)),
+      orderBook: supplemental.orderBook
+        .map((point) => {
+          const candleIndex = candles.findIndex((candle) => candle.openTime >= point.timestamp);
+          if (candleIndex < start || candleIndex >= end || candleIndex < 0) return null;
+          return {
+            candleIndex,
+            timestamp: new Date(point.timestamp).toISOString(),
+            imbalance: point.imbalance,
+            spreadBps: point.spreadBps,
+            depthRatio: point.depthRatio,
+          };
+        })
+        .filter((point): point is {
+          candleIndex: number;
+          timestamp: string;
+          imbalance: number;
+          spreadBps: number;
+          depthRatio: number;
+        } => Boolean(point)),
     },
         supportedEventTypes: ['ENTRY', 'EXIT', 'DCA', 'TP', 'TTP', 'SL', 'TRAILING', 'LIQUIDATION'],
     unsupportedEventTypes: [],

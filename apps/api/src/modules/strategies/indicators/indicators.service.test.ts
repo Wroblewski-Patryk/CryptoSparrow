@@ -22,6 +22,9 @@ describe('indicators.service', () => {
     expect(names).toContain('OPEN_INTEREST_DELTA');
     expect(names).toContain('OPEN_INTEREST_MA');
     expect(names).toContain('OPEN_INTEREST_ZSCORE');
+    expect(names).toContain('ORDER_BOOK_IMBALANCE');
+    expect(names).toContain('ORDER_BOOK_SPREAD_BPS');
+    expect(names).toContain('ORDER_BOOK_DEPTH_RATIO');
     expect(names).toContain('BULLISH_ENGULFING');
     expect(names).toContain('BEARISH_ENGULFING');
     expect(names).toContain('HAMMER');

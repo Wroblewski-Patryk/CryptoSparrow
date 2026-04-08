@@ -479,6 +479,60 @@ describe('strategySignalEvaluator', () => {
     ).toBe('SHORT');
   });
 
+  it('supports ORDER_BOOK comparator evaluation from derivatives context', () => {
+    const candlesForOrderBook = [{ close: 100 }, { close: 101 }, { close: 102 }];
+    const derivatives = {
+      orderBookImbalance: [0.1, 0.15, 0.3],
+      orderBookSpreadBps: [8, 7, 5],
+      orderBookDepthRatio: [1.1, 1.2, 1.6],
+    };
+
+    const imbalanceRules = parseStrategySignalRules({
+      open: {
+        direction: 'long',
+        indicatorsLong: [{ name: 'ORDER_BOOK_IMBALANCE', condition: '>', value: 0.2, params: {} }],
+        indicatorsShort: [],
+      },
+    });
+    expect(imbalanceRules).not.toBeNull();
+    if (!imbalanceRules) return;
+    expect(
+      evaluateStrategySignalAtIndex(imbalanceRules, candlesForOrderBook, 2, new Map(), {
+        derivatives,
+      }),
+    ).toBe('LONG');
+
+    const spreadRules = parseStrategySignalRules({
+      open: {
+        direction: 'short',
+        indicatorsLong: [],
+        indicatorsShort: [{ name: 'ORDER_BOOK_SPREAD_BPS', condition: '<', value: 6, params: {} }],
+      },
+    });
+    expect(spreadRules).not.toBeNull();
+    if (!spreadRules) return;
+    expect(
+      evaluateStrategySignalAtIndex(spreadRules, candlesForOrderBook, 2, new Map(), {
+        derivatives,
+      }),
+    ).toBe('SHORT');
+
+    const depthRules = parseStrategySignalRules({
+      open: {
+        direction: 'long',
+        indicatorsLong: [{ name: 'ORDER_BOOK_DEPTH_RATIO', condition: '>', value: 1.5, params: {} }],
+        indicatorsShort: [],
+      },
+    });
+    expect(depthRules).not.toBeNull();
+    if (!depthRules) return;
+    expect(
+      evaluateStrategySignalAtIndex(depthRules, candlesForOrderBook, 2, new Map(), {
+        derivatives,
+      }),
+    ).toBe('LONG');
+  });
+
   it('supports engulfing candle-pattern comparator evaluation', () => {
     const longRules = parseStrategySignalRules({
       open: {

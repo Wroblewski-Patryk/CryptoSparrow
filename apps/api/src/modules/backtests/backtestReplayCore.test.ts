@@ -148,6 +148,37 @@ describe('simulateTradesForSymbolReplay', () => {
     expect(result.eventCounts.ENTRY).toBeGreaterThanOrEqual(1);
   });
 
+  it('supports ORDER_BOOK strategy rules via derivatives series input', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 101),
+      candle(2, 102),
+      candle(3, 103),
+    ];
+
+    const result = simulateTradesForSymbolReplay({
+      symbol: 'BTCUSDT',
+      candles,
+      marketType: 'FUTURES',
+      leverage: 2,
+      marginMode: 'CROSSED',
+      strategyConfig: {
+        open: {
+          direction: 'long',
+          indicatorsLong: [{ name: 'ORDER_BOOK_IMBALANCE', condition: '>', value: 0.2, params: {} }],
+          indicatorsShort: [],
+        },
+        close: { tp: 99, sl: 99, tsl: [{ percent: 99, arm: 1 }] },
+        additional: { dcaTimes: 0 },
+      },
+      derivativesSeries: {
+        orderBookImbalance: [0.1, 0.15, 0.22, 0.3],
+      },
+    });
+
+    expect(result.eventCounts.ENTRY).toBeGreaterThanOrEqual(1);
+  });
+
   it('emits lifecycle actions (DCA/TRAILING/EXIT) for timeline/reporting', () => {
     const candles = [
       candle(0, 100),

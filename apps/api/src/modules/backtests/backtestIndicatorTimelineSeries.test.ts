@@ -330,6 +330,48 @@ describe('backtest indicator timeline series', () => {
     expect(zScoreSeries[0].values[3]).toBeGreaterThan(1);
   });
 
+  it('builds ORDER_BOOK series for timeline overlays', () => {
+    const imbalanceSpecs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'ORDER_BOOK_IMBALANCE', params: {}, condition: '>', value: 0.2 }],
+        indicatorsShort: [],
+      },
+    });
+    const spreadSpecs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'ORDER_BOOK_SPREAD_BPS', params: {}, condition: '<', value: 6 }],
+        indicatorsShort: [],
+      },
+    });
+    const ratioSpecs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'ORDER_BOOK_DEPTH_RATIO', params: {}, condition: '>', value: 1.4 }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(imbalanceSpecs[0]).toMatchObject({ source: 'ORDER_BOOK', channel: 'IMBALANCE' });
+    expect(spreadSpecs[0]).toMatchObject({ source: 'ORDER_BOOK', channel: 'SPREAD_BPS' });
+    expect(ratioSpecs[0]).toMatchObject({ source: 'ORDER_BOOK', channel: 'DEPTH_RATIO' });
+
+    const supplemental = {
+      fundingRates: [],
+      openInterest: [],
+      orderBook: [
+        { timestamp: candles[0].openTime, imbalance: 0.1, spreadBps: 8, depthRatio: 1.1 },
+        { timestamp: candles[2].openTime, imbalance: 0.25, spreadBps: 5, depthRatio: 1.6 },
+      ],
+    };
+
+    const imbalanceSeries = buildIndicatorSeriesForTests(candles, imbalanceSpecs, supplemental);
+    const spreadSeries = buildIndicatorSeriesForTests(candles, spreadSpecs, supplemental);
+    const ratioSeries = buildIndicatorSeriesForTests(candles, ratioSpecs, supplemental);
+
+    expect(imbalanceSeries[0].values).toEqual([0.1, 0.1, 0.25, 0.25]);
+    expect(spreadSeries[0].values).toEqual([8, 8, 5, 5]);
+    expect(ratioSeries[0].values).toEqual([1.1, 1.1, 1.6, 1.6]);
+  });
+
   it('builds engulfing pattern boolean series for timeline overlays', () => {
     const specs = parseStrategyIndicatorsForTests({
       open: {

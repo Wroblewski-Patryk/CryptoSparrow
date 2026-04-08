@@ -36,6 +36,9 @@ const buildExpectedActions = (
   derivativesSeries?: {
     fundingRate?: Array<number | null>;
     openInterest?: Array<number | null>;
+    orderBookImbalance?: Array<number | null>;
+    orderBookSpreadBps?: Array<number | null>;
+    orderBookDepthRatio?: Array<number | null>;
   },
 ): ExpectedAction[] => {
   const rules = parseStrategySignalRules(strategyConfig);
@@ -81,6 +84,9 @@ const buildReplayActions = (
   derivativesSeries?: {
     fundingRate?: Array<number | null>;
     openInterest?: Array<number | null>;
+    orderBookImbalance?: Array<number | null>;
+    orderBookSpreadBps?: Array<number | null>;
+    orderBookDepthRatio?: Array<number | null>;
   },
 ) => {
   const replay = simulateTradesForSymbolReplay({
@@ -123,6 +129,9 @@ const expectParityForThreeSymbols = (
     {
       fundingRate?: Array<number | null>;
       openInterest?: Array<number | null>;
+      orderBookImbalance?: Array<number | null>;
+      orderBookSpreadBps?: Array<number | null>;
+      orderBookDepthRatio?: Array<number | null>;
     }
   >,
 ) => {
@@ -468,6 +477,39 @@ describe('backtest parity harness (3 symbols)', () => {
       BTCUSDT: { openInterest: [1000, 1100, 1300, 1700, 2100, 2600, 3100, 3700, 4400, 5200] },
       ETHUSDT: { openInterest: [2000, 2200, 2500, 2900, 3400, 4000, 4700, 5500, 6400, 7400] },
       SOLUSDT: { openInterest: [500, 550, 650, 800, 1000, 1250, 1550, 1900, 2300, 2750] },
+    });
+  });
+
+  it('keeps ORDER_BOOK family decision trace aligned for three symbols', () => {
+    const strategyConfig = {
+      open: {
+        direction: 'both',
+        indicatorsLong: [{ name: 'ORDER_BOOK_IMBALANCE', params: {}, condition: '>', value: 0.2 }],
+        indicatorsShort: [{ name: 'ORDER_BOOK_SPREAD_BPS', params: {}, condition: '<', value: 6 }],
+      },
+      close: {
+        tp: 99,
+        sl: 99,
+        tsl: [{ percent: 99, arm: 1 }],
+      },
+      additional: {
+        dcaTimes: 0,
+      },
+    } satisfies Record<string, unknown>;
+
+    expectParityForThreeSymbols(strategyConfig, {
+      BTCUSDT: {
+        orderBookImbalance: [0.1, 0.12, 0.14, 0.18, 0.25, 0.28, 0.3, 0.22, 0.19, 0.17],
+        orderBookSpreadBps: [8, 8, 7, 7, 5, 5, 4, 6, 7, 8],
+      },
+      ETHUSDT: {
+        orderBookImbalance: [0.05, 0.07, 0.09, 0.12, 0.21, 0.24, 0.27, 0.2, 0.16, 0.13],
+        orderBookSpreadBps: [9, 8, 8, 7, 5, 5, 4, 6, 7, 8],
+      },
+      SOLUSDT: {
+        orderBookImbalance: [0.03, 0.04, 0.06, 0.1, 0.22, 0.25, 0.26, 0.21, 0.18, 0.14],
+        orderBookSpreadBps: [10, 9, 8, 7, 5, 4, 4, 6, 7, 8],
+      },
     });
   });
 

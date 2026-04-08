@@ -313,6 +313,10 @@ const runtimeOpenInterestHistoryLimit = Math.max(
   20,
   Number.parseInt(process.env.RUNTIME_OPEN_INTEREST_HISTORY_LIMIT ?? '200', 10),
 );
+const runtimeOrderBookRefreshMs = Math.max(
+  10_000,
+  Number.parseInt(process.env.RUNTIME_ORDER_BOOK_REFRESH_MS ?? '60000', 10),
+);
 
 type RuntimeCandle = {
   openTime: number;
@@ -332,6 +336,13 @@ type FundingRatePoint = {
 type OpenInterestPoint = {
   timestamp: number;
   openInterest: number;
+};
+
+type OrderBookPoint = {
+  timestamp: number;
+  imbalance: number;
+  spreadBps: number;
+  depthRatio: number;
 };
 
 type StrategyVote = {
@@ -655,6 +666,8 @@ export class RuntimeSignalLoop {
   private readonly fundingLastFetchAt = new Map<string, number>();
   private readonly openInterestPoints = new Map<string, OpenInterestPoint[]>();
   private readonly openInterestLastFetchAt = new Map<string, number>();
+  private readonly orderBookPoints = new Map<string, OrderBookPoint[]>();
+  private readonly orderBookLastFetchAt = new Map<string, number>();
   private lastStreamEventAtMs: number | null = null;
   private lastSessionSyncSuccessAtMs: number | null = null;
   private lastKnownActiveBotIds = new Set<string>();
@@ -944,6 +957,7 @@ export class RuntimeSignalLoop {
     await this.ensureSeriesWarmup(event.marketType, event.symbol, event.interval, event.closeTime);
     await this.ensureFundingRateSeriesForCandle(event);
     await this.ensureOpenInterestSeriesForCandle(event);
+    await this.ensureOrderBookSeriesForCandle(event);
     await this.processPositionAutomationFallbackFromCandle(event);
     await this.handleFinalCandleDecision(event);
   }
@@ -1321,6 +1335,157 @@ export class RuntimeSignalLoop {
         value: point.openInterest,
       })),
     );
+  }
+
+  private mergeOrderBookPoints(
+    key: string,
+    incoming: OrderBookPoint[],
+  ) {
+    if (incoming.length === 0) return;
+    const merged = new Map<number, OrderBookPoint>();
+    for (const point of this.orderBookPoints.get(key) ?? []) {
+      merged.set(point.timestamp, point);
+    }
+    for (const point of incoming) {
+      if (
+        !Number.isFinite(point.timestamp) ||
+        !Number.isFinite(point.imbalance) ||
+        !Number.isFinite(point.spreadBps) ||
+        !Number.isFinite(point.depthRatio)
+      ) {
+        continue;
+      }
+      merged.set(point.timestamp, point);
+    }
+
+    const normalized = [...merged.values()].sort((left, right) => left.timestamp - right.timestamp);
+    if (normalized.length > maxCandlesPerSeries) {
+      normalized.splice(0, normalized.length - maxCandlesPerSeries);
+    }
+    this.orderBookPoints.set(key, normalized);
+  }
+
+  private async fetchOrderBookSnapshot(
+    symbol: string,
+  ): Promise<OrderBookPoint | null> {
+    if (process.env.NODE_ENV === 'test') return null;
+    const base = process.env.BINANCE_FUTURES_REST_URL ?? 'https://fapi.binance.com';
+    const params = new URLSearchParams({
+      symbol: symbol.toUpperCase(),
+      limit: '100',
+    });
+    const url = `${base}/fapi/v1/depth?${params.toString()}`;
+
+    try {
+      const response = await fetch(url, { method: 'GET' });
+      if (!response.ok) return null;
+      const payload = (await response.json()) as unknown;
+      if (!payload || typeof payload !== 'object') return null;
+      const row = payload as {
+        bids?: unknown;
+        asks?: unknown;
+        E?: unknown;
+        T?: unknown;
+      };
+
+      const bids = Array.isArray(row.bids) ? row.bids : [];
+      const asks = Array.isArray(row.asks) ? row.asks : [];
+      if (bids.length === 0 || asks.length === 0) return null;
+
+      const parseBookRow = (item: unknown) => {
+        if (!Array.isArray(item) || item.length < 2) return null;
+        const price = Number(item[0]);
+        const amount = Number(item[1]);
+        if (!Number.isFinite(price) || !Number.isFinite(amount) || price <= 0 || amount < 0) {
+          return null;
+        }
+        return { price, amount };
+      };
+
+      const parsedBids = bids
+        .map(parseBookRow)
+        .filter((item): item is { price: number; amount: number } => Boolean(item));
+      const parsedAsks = asks
+        .map(parseBookRow)
+        .filter((item): item is { price: number; amount: number } => Boolean(item));
+      if (parsedBids.length === 0 || parsedAsks.length === 0) return null;
+
+      const bidDepth = parsedBids.reduce((sum, item) => sum + item.amount, 0);
+      const askDepth = parsedAsks.reduce((sum, item) => sum + item.amount, 0);
+      const bestBid = parsedBids[0].price;
+      const bestAsk = parsedAsks[0].price;
+      const mid = (bestBid + bestAsk) / 2;
+      const spreadBps = mid > 0 ? ((bestAsk - bestBid) / mid) * 10_000 : Number.NaN;
+      const imbalance =
+        bidDepth + askDepth > 0 ? (bidDepth - askDepth) / (bidDepth + askDepth) : Number.NaN;
+      const depthRatio = askDepth > 0 ? bidDepth / askDepth : Number.NaN;
+      const timestampRaw = Number(row.E ?? row.T ?? Date.now());
+      const timestamp = Number.isFinite(timestampRaw) ? timestampRaw : Date.now();
+      if (!Number.isFinite(spreadBps) || !Number.isFinite(imbalance) || !Number.isFinite(depthRatio)) {
+        return null;
+      }
+
+      return {
+        timestamp,
+        imbalance,
+        spreadBps,
+        depthRatio,
+      } satisfies OrderBookPoint;
+    } catch {
+      return null;
+    }
+  }
+
+  private async ensureOrderBookSeriesForCandle(event: StreamCandleEvent) {
+    if (event.marketType !== 'FUTURES') return;
+    const key = this.getFundingKey(event.marketType, event.symbol);
+    const now = this.deps.nowMs();
+    const lastFetchAt = this.orderBookLastFetchAt.get(key) ?? 0;
+    if (now - lastFetchAt < runtimeOrderBookRefreshMs) return;
+
+    const snapshot = await this.fetchOrderBookSnapshot(event.symbol);
+    if (snapshot) {
+      this.mergeOrderBookPoints(key, [snapshot]);
+    }
+    this.orderBookLastFetchAt.set(key, now);
+  }
+
+  private resolveOrderBookSeriesForCandles(
+    marketType: 'FUTURES' | 'SPOT',
+    symbol: string,
+    candles: RuntimeCandle[],
+  ): {
+    orderBookImbalance: Array<number | null>;
+    orderBookSpreadBps: Array<number | null>;
+    orderBookDepthRatio: Array<number | null>;
+  } | null {
+    if (marketType !== 'FUTURES') return null;
+    const key = this.getFundingKey(marketType, symbol);
+    const points = this.orderBookPoints.get(key) ?? [];
+    if (points.length === 0) return null;
+    return {
+      orderBookImbalance: alignTimedNumericPointsToCandles(
+        candles,
+        points.map((point) => ({
+          timestamp: point.timestamp,
+          value: point.imbalance,
+        })),
+      ),
+      orderBookSpreadBps: alignTimedNumericPointsToCandles(
+        candles,
+        points.map((point) => ({
+          timestamp: point.timestamp,
+          value: point.spreadBps,
+        })),
+      ),
+      orderBookDepthRatio: alignTimedNumericPointsToCandles(
+        candles,
+        points.map((point) => ({
+          timestamp: point.timestamp,
+          value: point.depthRatio,
+        })),
+      ),
+    };
   }
 
   private getSeriesKey(marketType: 'FUTURES' | 'SPOT', symbol: string, interval: string) {
@@ -1873,17 +2038,29 @@ export class RuntimeSignalLoop {
       symbol,
       candles,
     );
+    const orderBookSeries = this.resolveOrderBookSeriesForCandles(
+      marketType,
+      symbol,
+      candles,
+    );
     const indicatorCache = new Map<string, Array<number | null>>();
     const direction = evaluateStrategySignalAtIndex(
       signalRules,
       candles,
       decisionIndex,
       indicatorCache,
-      fundingRateSeries || openInterestSeries
+      fundingRateSeries || openInterestSeries || orderBookSeries
         ? {
             derivatives: {
               ...(fundingRateSeries ? { fundingRate: fundingRateSeries } : {}),
               ...(openInterestSeries ? { openInterest: openInterestSeries } : {}),
+              ...(orderBookSeries
+                ? {
+                    orderBookImbalance: orderBookSeries.orderBookImbalance,
+                    orderBookSpreadBps: orderBookSeries.orderBookSpreadBps,
+                    orderBookDepthRatio: orderBookSeries.orderBookDepthRatio,
+                  }
+                : {}),
             },
           }
         : undefined,
@@ -1979,6 +2156,39 @@ export class RuntimeSignalLoop {
           key,
           computeRollingZScoreSeriesFromNullableValues(ensureOpenInterest(), period),
         );
+      }
+      return indicatorCache.get(key)!;
+    };
+    const ensureOrderBookImbalance = () => {
+      const key = 'ORDER_BOOK_IMBALANCE';
+      if (!indicatorCache.has(key)) {
+        const normalized = candles.map((_, index) => {
+          const value = orderBookSeries?.orderBookImbalance[index];
+          return typeof value === 'number' && Number.isFinite(value) ? value : null;
+        });
+        indicatorCache.set(key, normalized);
+      }
+      return indicatorCache.get(key)!;
+    };
+    const ensureOrderBookSpreadBps = () => {
+      const key = 'ORDER_BOOK_SPREAD_BPS';
+      if (!indicatorCache.has(key)) {
+        const normalized = candles.map((_, index) => {
+          const value = orderBookSeries?.orderBookSpreadBps[index];
+          return typeof value === 'number' && Number.isFinite(value) ? value : null;
+        });
+        indicatorCache.set(key, normalized);
+      }
+      return indicatorCache.get(key)!;
+    };
+    const ensureOrderBookDepthRatio = () => {
+      const key = 'ORDER_BOOK_DEPTH_RATIO';
+      if (!indicatorCache.has(key)) {
+        const normalized = candles.map((_, index) => {
+          const value = orderBookSeries?.orderBookDepthRatio[index];
+          return typeof value === 'number' && Number.isFinite(value) ? value : null;
+        });
+        indicatorCache.set(key, normalized);
       }
       return indicatorCache.get(key)!;
     };
@@ -2262,6 +2472,60 @@ export class RuntimeSignalLoop {
         if (!indicatorKeys.has('OPEN_INTEREST')) {
           indicatorKeys.add('OPEN_INTEREST');
           indicatorParts.push(`OPEN_INTEREST=${formatIndicatorValue(value)}`);
+        }
+        return;
+      }
+
+      if (indicator.includes('ORDER_BOOK_IMBALANCE')) {
+        const value = ensureOrderBookImbalance()[decisionIndex];
+        conditionLines.push({
+          scope,
+          left: 'ORDER_BOOK_IMBALANCE',
+          value: formatIndicatorValue(value),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has('ORDER_BOOK_IMBALANCE')) {
+          indicatorKeys.add('ORDER_BOOK_IMBALANCE');
+          indicatorParts.push(
+            `ORDER_BOOK_IMBALANCE=${formatIndicatorValue(value)}`,
+          );
+        }
+        return;
+      }
+
+      if (indicator.includes('ORDER_BOOK_SPREAD_BPS')) {
+        const value = ensureOrderBookSpreadBps()[decisionIndex];
+        conditionLines.push({
+          scope,
+          left: 'ORDER_BOOK_SPREAD_BPS',
+          value: formatIndicatorValue(value),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has('ORDER_BOOK_SPREAD_BPS')) {
+          indicatorKeys.add('ORDER_BOOK_SPREAD_BPS');
+          indicatorParts.push(
+            `ORDER_BOOK_SPREAD_BPS=${formatIndicatorValue(value)}`,
+          );
+        }
+        return;
+      }
+
+      if (indicator.includes('ORDER_BOOK_DEPTH_RATIO')) {
+        const value = ensureOrderBookDepthRatio()[decisionIndex];
+        conditionLines.push({
+          scope,
+          left: 'ORDER_BOOK_DEPTH_RATIO',
+          value: formatIndicatorValue(value),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has('ORDER_BOOK_DEPTH_RATIO')) {
+          indicatorKeys.add('ORDER_BOOK_DEPTH_RATIO');
+          indicatorParts.push(
+            `ORDER_BOOK_DEPTH_RATIO=${formatIndicatorValue(value)}`,
+          );
         }
         return;
       }
