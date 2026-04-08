@@ -483,7 +483,9 @@ const resolveSeries = (params: {
       pattern === 'BEARISH_ENGULFING' ||
       pattern === 'HAMMER' ||
       pattern === 'SHOOTING_STAR' ||
-      pattern === 'DOJI'
+      pattern === 'DOJI' ||
+      pattern === 'MORNING_STAR' ||
+      pattern === 'EVENING_STAR'
     )
   ) {
     const patternParams = resolvePatternParams(params.indicatorParams);

@@ -562,4 +562,65 @@ describe('backtest parity harness (3 symbols)', () => {
 
     expect(totalExpectedActions).toBeGreaterThan(0);
   });
+
+  it('keeps morning/evening-star pattern decision trace aligned with shared strategy/runtime core for three symbols', () => {
+    const strategyConfig = {
+      open: {
+        direction: 'both',
+        indicatorsLong: [{ name: 'MORNING_STAR', params: {}, condition: '>', value: 0.5 }],
+        indicatorsShort: [{ name: 'EVENING_STAR', params: {}, condition: '>', value: 0.5 }],
+      },
+      close: {
+        tp: 99,
+        sl: 99,
+        tsl: [{ percent: 99, arm: 1 }],
+      },
+      additional: {
+        dcaTimes: 0,
+      },
+    } satisfies Record<string, unknown>;
+
+    const patternScenarios: Array<{ symbol: string; candles: ReplayCandle[] }> = [
+      {
+        symbol: 'BTCUSDT',
+        candles: makePatternCandles([
+          { open: 10, high: 10.2, low: 8.8, close: 9 },
+          { open: 8.9, high: 9.1, low: 8.7, close: 8.95 },
+          { open: 9, high: 9.8, low: 8.9, close: 9.7 },
+          { open: 9.75, high: 9.85, low: 9.6, close: 9.7 },
+          { open: 9.68, high: 9.72, low: 9.1, close: 9.2 },
+        ]),
+      },
+      {
+        symbol: 'ETHUSDT',
+        candles: makePatternCandles([
+          { open: 20, high: 20.2, low: 18.8, close: 19 },
+          { open: 18.9, high: 19.1, low: 18.7, close: 18.95 },
+          { open: 19, high: 19.8, low: 18.9, close: 19.7 },
+          { open: 19.75, high: 19.85, low: 19.6, close: 19.7 },
+          { open: 19.68, high: 19.72, low: 19.1, close: 19.2 },
+        ]),
+      },
+      {
+        symbol: 'SOLUSDT',
+        candles: makePatternCandles([
+          { open: 30, high: 30.2, low: 28.8, close: 29 },
+          { open: 28.9, high: 29.1, low: 28.7, close: 28.95 },
+          { open: 29, high: 29.8, low: 28.9, close: 29.7 },
+          { open: 29.75, high: 29.85, low: 29.6, close: 29.7 },
+          { open: 29.68, high: 29.72, low: 29.1, close: 29.2 },
+        ]),
+      },
+    ];
+
+    let totalExpectedActions = 0;
+    for (const scenario of patternScenarios) {
+      const expected = buildExpectedActions(scenario.candles, strategyConfig);
+      const replay = buildReplayActions(scenario.symbol, scenario.candles, strategyConfig);
+      totalExpectedActions += expected.length;
+      expect(replay).toEqual(expected);
+    }
+
+    expect(totalExpectedActions).toBeGreaterThan(0);
+  });
 });

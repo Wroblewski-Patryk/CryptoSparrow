@@ -645,7 +645,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `IND-22 feat(patterns): add Bullish/Bearish Engulfing end-to-end`
 - [x] `IND-23 feat(patterns): add Hammer/Shooting Star end-to-end`
 - [x] `IND-24 feat(patterns): add Doji with threshold params end-to-end`
-- [ ] `IND-25 feat(patterns): add Morning Star / Evening Star end-to-end`
+- [x] `IND-25 feat(patterns): add Morning Star / Evening Star end-to-end`
 - [ ] `IND-26 feat(patterns): add Inside Bar / Outside Bar end-to-end`
 - [ ] `IND-27 test(pattern-parity): deterministic fixtures for all patterns in runtime + backtest parity suite`
 - [ ] `IND-28 feat(futures-filter): add funding-rate filters (absolute + z-score) for futures strategies`
@@ -659,6 +659,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
 
 ## Progress Log
+- 2026-04-08: Completed `IND-25` by adding Morning Star / Evening Star end-to-end across evaluator/runtime/backtest pattern series, exposing both patterns in catalog, and adding evaluator/parity/timeline/catalog regression fixtures.
 - 2026-04-08: Completed `IND-24` by adding Doji end-to-end with configurable threshold (`dojiBodyToRangeMax`) across evaluator/runtime/backtest pattern-series pipeline, parameter-aware cache keys, catalog exposure, and evaluator/parity/timeline/catalog regression coverage.
 - 2026-04-08: Completed `IND-23` by wiring Hammer/Shooting Star end-to-end (shared pattern engine -> evaluator/runtime -> backtest timeline), exposing both in indicator catalog, and adding evaluator/parity/timeline/catalog regressions with OHLC fixtures.
 - 2026-04-08: Completed `IND-22` by wiring Bullish/Bearish Engulfing end-to-end (shared pattern engine -> strategy evaluator/runtime -> backtest timeline spec builder), exposing both patterns in indicator catalog, and adding evaluator/parity/timeline/catalog regression coverage.

@@ -259,4 +259,16 @@ export const indicators = [
       },
     ],
   },
+  {
+    name: "MORNING_STAR",
+    group: "Formacje świecowe",
+    type: "pattern",
+    params: [],
+  },
+  {
+    name: "EVENING_STAR",
+    group: "Formacje świecowe",
+    type: "pattern",
+    params: [],
+  },
 ];

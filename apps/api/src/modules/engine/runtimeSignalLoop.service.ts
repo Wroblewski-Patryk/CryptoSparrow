@@ -2052,7 +2052,9 @@ export class RuntimeSignalLoop {
           pattern === 'BEARISH_ENGULFING' ||
           pattern === 'HAMMER' ||
           pattern === 'SHOOTING_STAR' ||
-          pattern === 'DOJI'
+          pattern === 'DOJI' ||
+          pattern === 'MORNING_STAR' ||
+          pattern === 'EVENING_STAR'
         )
       ) {
         const patternValues = ensurePattern(indicator, rule.params);
