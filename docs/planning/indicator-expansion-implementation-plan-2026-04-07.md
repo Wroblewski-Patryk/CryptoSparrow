@@ -146,7 +146,7 @@ Replace current broad groups with explicit trader-facing groups:
 - [x] `IND-24 feat(patterns): add Doji with threshold params end-to-end`
 - [x] `IND-25 feat(patterns): add Morning Star / Evening Star end-to-end`
 - [x] `IND-26 feat(patterns): add Inside Bar / Outside Bar end-to-end`
-- [ ] `IND-27 test(pattern-parity): deterministic fixtures for all patterns in runtime + backtest parity suite`
+- [x] `IND-27 test(pattern-parity): deterministic fixtures for all patterns in runtime + backtest parity suite`
 
 ### Phase G - Futures Derivatives Filters
 - [ ] `IND-28 feat(futures-filter): add funding-rate filters (absolute + z-score) for futures strategies`
