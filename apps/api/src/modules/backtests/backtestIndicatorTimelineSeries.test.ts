@@ -23,14 +23,15 @@ describe('backtest indicator timeline series', () => {
       },
     });
 
-    expect(specs).toEqual([
-      {
-        key: 'SMA_3',
-        name: 'SMA',
-        period: 3,
-        panel: 'price',
-      },
-    ]);
+    expect(specs).toHaveLength(1);
+    expect(specs[0]).toMatchObject({
+      key: 'SMA_3',
+      name: 'SMA',
+      period: 3,
+      panel: 'price',
+      source: 'SMA',
+      params: { period: 3 },
+    });
 
     const series = buildIndicatorSeriesForTests(candles, specs);
     expect(series).toHaveLength(1);
@@ -42,5 +43,24 @@ describe('backtest indicator timeline series', () => {
     });
     expect(series[0].values).toEqual([null, null, 11, 12]);
   });
-});
 
+  it('builds MACD line/signal/histogram channels for timeline overlays', () => {
+    const specs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [
+          { name: 'MACD', params: { fast: 2, slow: 4, signal: 3 }, condition: '>', value: 0 },
+        ],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(specs).toHaveLength(3);
+    const series = buildIndicatorSeriesForTests(candles, specs);
+    expect(series.map((item) => item.key)).toEqual([
+      'MACD_LINE_2_4_3',
+      'MACD_SIGNAL_2_4_3',
+      'MACD_HISTOGRAM_2_4_3',
+    ]);
+    expect(series.every((item) => item.panel === 'oscillator')).toBe(true);
+  });
+});

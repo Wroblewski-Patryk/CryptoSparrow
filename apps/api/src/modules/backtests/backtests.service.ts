@@ -10,6 +10,7 @@ import {
 } from '../engine/strategySignalEvaluator';
 import {
   computeEmaSeriesFromCloses,
+  computeMacdSeriesFromCloses,
   computeMomentumSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
@@ -128,6 +129,9 @@ type IndicatorSpec = {
   name: string;
   period: number;
   panel: 'price' | 'oscillator';
+  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD';
+  params: Record<string, number>;
+  channel?: 'LINE' | 'SIGNAL' | 'HISTOGRAM';
 };
 
 const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
@@ -1067,7 +1071,7 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
     ...(config.openConditions?.indicatorsShort ?? []),
   ];
 
-  const specs = flatten.flatMap((item) => {
+  const specs: IndicatorSpec[] = flatten.flatMap((item): IndicatorSpec[] => {
     if (!item || typeof item !== 'object') return [];
     const rawName = (item as { name?: unknown }).name;
     const params = (item as { params?: Record<string, unknown> }).params;
@@ -1088,12 +1092,52 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
           name: `${name} FAST`,
           period: fast,
           panel: 'price' as const,
+          source: 'EMA' as const,
+          params: { period: fast },
         },
         {
           key: `${name}_SLOW_${slow}`,
           name: `${name} SLOW`,
           period: slow,
           panel: 'price' as const,
+          source: 'EMA' as const,
+          params: { period: slow },
+        },
+      ];
+    }
+
+    if (name.includes('MACD') && params) {
+      const fast = asPeriod(params.fast, 12);
+      const slow = asPeriod(params.slow, 26);
+      const signal = asPeriod(params.signal, 9);
+      const warmup = slow + signal;
+      return [
+        {
+          key: `${name}_LINE_${fast}_${slow}_${signal}`,
+          name: `${name} LINE`,
+          period: warmup,
+          panel: 'oscillator' as const,
+          source: 'MACD' as const,
+          params: { fast, slow, signal },
+          channel: 'LINE' as const,
+        },
+        {
+          key: `${name}_SIGNAL_${fast}_${slow}_${signal}`,
+          name: `${name} SIGNAL`,
+          period: warmup,
+          panel: 'oscillator' as const,
+          source: 'MACD' as const,
+          params: { fast, slow, signal },
+          channel: 'SIGNAL' as const,
+        },
+        {
+          key: `${name}_HISTOGRAM_${fast}_${slow}_${signal}`,
+          name: `${name} HISTOGRAM`,
+          period: warmup,
+          panel: 'oscillator' as const,
+          source: 'MACD' as const,
+          params: { fast, slow, signal },
+          channel: 'HISTOGRAM' as const,
         },
       ];
     }
@@ -1104,12 +1148,22 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
         ? Number(params.length)
         : 14;
     const period = clamp(Number.isFinite(periodCandidate) ? Math.floor(periodCandidate) : 14, 2, 300);
-    const panel: 'price' | 'oscillator' = name.includes('EMA') || name.includes('SMA') ? 'price' : 'oscillator';
+    const source: IndicatorSpec['source'] =
+      name.includes('SMA')
+        ? 'SMA'
+        : name.includes('RSI')
+          ? 'RSI'
+          : name.includes('MOMENTUM')
+            ? 'MOMENTUM'
+            : 'MOMENTUM';
+    const panel: 'price' | 'oscillator' = source === 'SMA' ? 'price' : 'oscillator';
     return [{
       key: `${name}_${period}`,
       name,
       period,
       panel,
+      source,
+      params: { period },
     } satisfies IndicatorSpec];
   });
 
@@ -1128,15 +1182,48 @@ const resolveIndicatorWarmupCandles = (strategyConfig: unknown) => {
 
 const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) => {
   const closes = candles.map((candle) => candle.close);
+  const macdCache = new Map<
+    string,
+    {
+      line: Array<number | null>;
+      signal: Array<number | null>;
+      histogram: Array<number | null>;
+    }
+  >();
   return specs.map((spec) => {
-    const values =
-      spec.name.includes('EMA')
-        ? computeEmaSeriesFromCloses(closes, spec.period)
-        : spec.name.includes('SMA')
-          ? computeSmaSeriesFromCloses(closes, spec.period)
-        : spec.name.includes('RSI')
-          ? computeRsiSeriesFromCloses(closes, spec.period)
-          : computeMomentumSeriesFromCloses(closes, spec.period);
+    const values = (() => {
+      if (spec.source === 'EMA') {
+        const period = spec.params.period ?? spec.period;
+        return computeEmaSeriesFromCloses(closes, period);
+      }
+
+      if (spec.source === 'SMA') {
+        const period = spec.params.period ?? spec.period;
+        return computeSmaSeriesFromCloses(closes, period);
+      }
+
+      if (spec.source === 'RSI') {
+        const period = spec.params.period ?? spec.period;
+        return computeRsiSeriesFromCloses(closes, period);
+      }
+
+      if (spec.source === 'MACD') {
+        const fast = spec.params.fast ?? 12;
+        const slow = spec.params.slow ?? 26;
+        const signal = spec.params.signal ?? 9;
+        const key = `${fast}_${slow}_${signal}`;
+        if (!macdCache.has(key)) {
+          macdCache.set(key, computeMacdSeriesFromCloses(closes, fast, slow, signal));
+        }
+        const macd = macdCache.get(key)!;
+        if (spec.channel === 'SIGNAL') return macd.signal;
+        if (spec.channel === 'HISTOGRAM') return macd.histogram;
+        return macd.line;
+      }
+
+      const period = spec.params.period ?? spec.period;
+      return computeMomentumSeriesFromCloses(closes, period);
+    })();
     return {
       key: spec.key,
       name: spec.name,
@@ -1165,6 +1252,9 @@ export const buildIndicatorSeriesForTests = (
     name: string;
     period: number;
     panel: 'price' | 'oscillator';
+    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD';
+    params: Record<string, number>;
+    channel?: 'LINE' | 'SIGNAL' | 'HISTOGRAM';
   }>,
 ) => buildIndicatorSeries(candles as KlineCandle[], specs as IndicatorSpec[]);
 

@@ -53,6 +53,65 @@ export const computeSmaSeriesFromCloses = (
   return output;
 };
 
+const computeEmaSeriesFromNullableValues = (
+  values: Array<number | null>,
+  period: number
+): Array<number | null> => {
+  const alpha = 2 / (period + 1);
+  const output: Array<number | null> = [];
+  let ema: number | null = null;
+  let seenFinite = 0;
+
+  for (let index = 0; index < values.length; index += 1) {
+    const value = values[index];
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      output.push(null);
+      continue;
+    }
+
+    seenFinite += 1;
+    if (ema === null) ema = value;
+    else ema = alpha * value + (1 - alpha) * ema;
+    output.push(seenFinite >= period ? ema : null);
+  }
+
+  return output;
+};
+
+export const computeMacdSeriesFromCloses = (
+  closes: number[],
+  fastPeriod: number,
+  slowPeriod: number,
+  signalPeriod: number
+): {
+  line: Array<number | null>;
+  signal: Array<number | null>;
+  histogram: Array<number | null>;
+} => {
+  const fast = computeEmaSeriesFromCloses(closes, fastPeriod);
+  const slow = computeEmaSeriesFromCloses(closes, slowPeriod);
+
+  const line = closes.map((_, index) => {
+    const fastValue = fast[index];
+    const slowValue = slow[index];
+    if (typeof fastValue !== 'number' || typeof slowValue !== 'number') return null;
+    return fastValue - slowValue;
+  });
+
+  const signal = computeEmaSeriesFromNullableValues(line, signalPeriod);
+  const histogram = line.map((lineValue, index) => {
+    const signalValue = signal[index];
+    if (typeof lineValue !== 'number' || typeof signalValue !== 'number') return null;
+    return lineValue - signalValue;
+  });
+
+  return {
+    line,
+    signal,
+    histogram,
+  };
+};
+
 export const computeRsiSeriesFromCloses = (
   closes: number[],
   period: number

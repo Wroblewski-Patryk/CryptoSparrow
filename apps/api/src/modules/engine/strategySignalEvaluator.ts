@@ -1,6 +1,7 @@
 import {
   clampPeriod,
   computeEmaSeriesFromCloses,
+  computeMacdSeriesFromCloses,
   computeMomentumSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
@@ -316,6 +317,33 @@ const resolveSeries = (params: {
     const series = params.cache.get(key) ?? computeEmaSeriesFromCloses(params.closes, period);
     params.cache.set(key, series);
     return series;
+  }
+
+  if (name.includes('MACD')) {
+    const fast = clampPeriod(params.indicatorParams.fast, 12);
+    const slow = clampPeriod(params.indicatorParams.slow, 26);
+    const signal = clampPeriod(params.indicatorParams.signal, 9);
+    const baseKey = `MACD_${fast}_${slow}_${signal}`;
+    const lineKey = `${baseKey}_LINE`;
+    const signalKey = `${baseKey}_SIGNAL`;
+    const histogramKey = `${baseKey}_HISTOGRAM`;
+
+    if (!params.cache.has(lineKey) || !params.cache.has(signalKey) || !params.cache.has(histogramKey)) {
+      const macd = computeMacdSeriesFromCloses(params.closes, fast, slow, signal);
+      params.cache.set(lineKey, macd.line);
+      params.cache.set(signalKey, macd.signal);
+      params.cache.set(histogramKey, macd.histogram);
+    }
+
+    if (name.includes('MACD_SIGNAL')) {
+      return params.cache.get(signalKey) ?? null;
+    }
+
+    if (name.includes('MACD_HIST')) {
+      return params.cache.get(histogramKey) ?? null;
+    }
+
+    return params.cache.get(lineKey) ?? null;
   }
 
   if (name.includes('SMA')) {

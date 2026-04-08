@@ -98,6 +98,29 @@ describe('strategySignalEvaluator', () => {
     expect(direction).toBe('LONG');
   });
 
+  it('supports MACD comparator evaluation', () => {
+    const rules = parseStrategySignalRules({
+      open: {
+        direction: 'long',
+        indicatorsLong: [
+          { name: 'MACD', condition: '>', value: 0, params: { fast: 2, slow: 4, signal: 3 } },
+        ],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(rules).not.toBeNull();
+    if (!rules) return;
+
+    const direction = evaluateStrategySignalAtIndex(
+      rules,
+      [{ close: 10 }, { close: 11 }, { close: 12 }, { close: 13 }, { close: 14 }, { close: 15 }],
+      5,
+      new Map(),
+    );
+    expect(direction).toBe('LONG');
+  });
+
   it('supports CROSS_ABOVE and CROSS_BELOW operators', () => {
     const crossAbove = parseStrategySignalRules({
       open: {

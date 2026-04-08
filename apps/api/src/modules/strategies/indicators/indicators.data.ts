@@ -57,4 +57,29 @@ export const indicators = [
       },
     ],
   },
+  {
+    name: "MACD",
+    group: "Analiza techniczna",
+    type: "trend",
+    params: [
+      {
+        name: "fast",
+        default: 12,
+        min: 2,
+        max: 255,
+      },
+      {
+        name: "slow",
+        default: 26,
+        min: 2,
+        max: 255,
+      },
+      {
+        name: "signal",
+        default: 9,
+        min: 2,
+        max: 255,
+      },
+    ],
+  },
 ];

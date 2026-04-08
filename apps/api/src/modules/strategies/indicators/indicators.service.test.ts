@@ -7,6 +7,6 @@ describe('indicators.service', () => {
     const names = indicators.map((indicator) => indicator.name);
 
     expect(names).toContain('SMA');
+    expect(names).toContain('MACD');
   });
 });
-

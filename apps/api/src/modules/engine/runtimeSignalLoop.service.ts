@@ -18,6 +18,7 @@ import {
 import {
   clampPeriod,
   computeEmaSeriesFromCloses,
+  computeMacdSeriesFromCloses,
   computeMomentumSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
@@ -1558,6 +1559,25 @@ export class RuntimeSignalLoop {
       }
       return indicatorCache.get(key)!;
     };
+    const ensureMacd = (fast: number, slow: number, signal: number) => {
+      const baseKey = `MACD_${fast}_${slow}_${signal}`;
+      const lineKey = `${baseKey}_LINE`;
+      const signalKey = `${baseKey}_SIGNAL`;
+      const histogramKey = `${baseKey}_HISTOGRAM`;
+
+      if (!indicatorCache.has(lineKey) || !indicatorCache.has(signalKey) || !indicatorCache.has(histogramKey)) {
+        const macd = computeMacdSeriesFromCloses(closes, fast, slow, signal);
+        indicatorCache.set(lineKey, macd.line);
+        indicatorCache.set(signalKey, macd.signal);
+        indicatorCache.set(histogramKey, macd.histogram);
+      }
+
+      return {
+        line: indicatorCache.get(lineKey)!,
+        signal: indicatorCache.get(signalKey)!,
+        histogram: indicatorCache.get(histogramKey)!,
+      };
+    };
 
     const conditionLines: RuntimeSignalConditionLine[] = [];
     const indicatorParts: string[] = [];
@@ -1637,6 +1657,38 @@ export class RuntimeSignalLoop {
         if (!indicatorKeys.has(`MOMENTUM(${period})`)) {
           indicatorKeys.add(`MOMENTUM(${period})`);
           indicatorParts.push(`MOMENTUM(${period})=${formatIndicatorValue(value)}`);
+        }
+        return;
+      }
+
+      if (indicator.includes('MACD')) {
+        const fast = clampPeriod(rule.params.fast, 12);
+        const slow = clampPeriod(rule.params.slow, 26);
+        const signal = clampPeriod(rule.params.signal, 9);
+        const macd = ensureMacd(fast, slow, signal);
+        const lineValue = macd.line[decisionIndex];
+        const signalValue = macd.signal[decisionIndex];
+        const histogramValue = macd.histogram[decisionIndex];
+
+        conditionLines.push({
+          scope,
+          left: `MACD(${fast},${slow},${signal})`,
+          value: formatIndicatorValue(lineValue),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+
+        if (!indicatorKeys.has(`MACD(${fast},${slow},${signal})`)) {
+          indicatorKeys.add(`MACD(${fast},${slow},${signal})`);
+          indicatorParts.push(`MACD(${fast},${slow},${signal})=${formatIndicatorValue(lineValue)}`);
+        }
+        if (!indicatorKeys.has(`MACD_SIGNAL(${fast},${slow},${signal})`)) {
+          indicatorKeys.add(`MACD_SIGNAL(${fast},${slow},${signal})`);
+          indicatorParts.push(`MACD_SIGNAL(${fast},${slow},${signal})=${formatIndicatorValue(signalValue)}`);
+        }
+        if (!indicatorKeys.has(`MACD_HIST(${fast},${slow},${signal})`)) {
+          indicatorKeys.add(`MACD_HIST(${fast},${slow},${signal})`);
+          indicatorParts.push(`MACD_HIST(${fast},${slow},${signal})=${formatIndicatorValue(histogramValue)}`);
         }
         return;
       }

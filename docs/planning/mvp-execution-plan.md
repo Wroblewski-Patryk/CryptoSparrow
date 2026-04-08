@@ -632,7 +632,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `IND-09 feat(config-parser): normalize operand contract (series/constant/band) for runtime + backtest`
 - [x] `IND-10 test(config-contract): parser/evaluator regressions for new operators and invalid configs`
 - [x] `IND-11 feat(indicator): add SMA end-to-end (catalog + evaluator + backtest timeline + tests)`
-- [ ] `IND-12 feat(indicator): add MACD end-to-end (line/signal/histogram + tests)`
+- [x] `IND-12 feat(indicator): add MACD end-to-end (line/signal/histogram + tests)`
 - [ ] `IND-13 feat(indicator): add ROC end-to-end (+ tests)`
 - [ ] `IND-14 feat(indicator): add StochRSI end-to-end (+ tests)`
 - [ ] `IND-15 feat(indicator): implement true Bollinger Bands end-to-end (upper/mid/lower, bandwidth, percentB)`
@@ -659,6 +659,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
 
 ## Progress Log
+- 2026-04-08: Completed `IND-12` by implementing MACD end-to-end (indicator catalog, shared evaluator with `MACD/MACD_SIGNAL/MACD_HIST` series resolution, runtime signal-summary channels, and backtest timeline multi-channel overlays for line/signal/histogram) with dedicated parity/timeline/evaluator regressions.
 - 2026-04-08: Completed `IND-11` by adding SMA end-to-end across strategy indicator catalog, shared evaluator/runtime series resolution, runtime condition-line/signal-summary rendering, and backtest timeline indicator-series builder with dedicated SMA catalog/parity/timeline regression tests.
 - 2026-04-08: Completed `IND-10` by extending parser/evaluator regression coverage for operand/condition contract (`constant`, `series`, `band`) and new operators (`CROSS_ABOVE`, `CROSS_BELOW`, `IN_RANGE`, `OUT_OF_RANGE`), plus hardening parser normalization to fail-closed on invalid range operands.
 - 2026-04-08: Completed `IND-09` by refactoring strategy signal parser/evaluator to normalize rule operands into canonical `constant|series|band` forms and by adding evaluator support for `CROSS_ABOVE`, `CROSS_BELOW`, `IN_RANGE`, and `OUT_OF_RANGE` under one shared runtime/backtest contract.

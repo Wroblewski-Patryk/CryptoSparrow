@@ -1,6 +1,7 @@
 export {
   clampPeriod,
   computeEmaSeriesFromCloses,
+  computeMacdSeriesFromCloses,
   computeMomentumSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
