@@ -182,11 +182,17 @@ const normalizeOperand = (input: {
   rawOperand: unknown;
 }): StrategyRuleOperand | null => {
   const explicitOperand = parseOperand(input.rawOperand);
-  if (explicitOperand) return explicitOperand;
 
   if (input.condition === 'IN_RANGE' || input.condition === 'OUT_OF_RANGE') {
+    if (explicitOperand?.kind === 'band') return explicitOperand;
     const band = parseBandOperand(input.rawValue);
     if (band) return band;
+    return null;
+  }
+
+  if (explicitOperand) {
+    if (explicitOperand.kind === 'band') return null;
+    return explicitOperand;
   }
 
   if (input.rawValue && typeof input.rawValue === 'object') {

@@ -123,7 +123,7 @@ Replace current broad groups with explicit trader-facing groups:
 ### Phase C - Rule Operator and Config Contract
 - [x] `IND-08 feat(builder-operators): expose full operator set (including cross and range operators) in strategy form`
 - [x] `IND-09 feat(config-parser): normalize operand contract (series/constant/band) for runtime + backtest`
-- [ ] `IND-10 test(config-contract): parser/evaluator regressions for new operators and invalid configs`
+- [x] `IND-10 test(config-contract): parser/evaluator regressions for new operators and invalid configs`
 
 ### Phase D - Core Close-Based Indicator Expansion
 - [ ] `IND-11 feat(indicator): add SMA end-to-end (catalog + evaluator + backtest timeline + tests)`

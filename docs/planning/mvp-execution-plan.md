@@ -630,7 +630,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `IND-07 test(runtime-series): add regression coverage for OHLCV buffer updates, dedupe, and interval matching`
 - [x] `IND-08 feat(builder-operators): expose full operator set (including cross and range operators) in strategy form`
 - [x] `IND-09 feat(config-parser): normalize operand contract (series/constant/band) for runtime + backtest`
-- [ ] `IND-10 test(config-contract): parser/evaluator regressions for new operators and invalid configs`
+- [x] `IND-10 test(config-contract): parser/evaluator regressions for new operators and invalid configs`
 - [ ] `IND-11 feat(indicator): add SMA end-to-end (catalog + evaluator + backtest timeline + tests)`
 - [ ] `IND-12 feat(indicator): add MACD end-to-end (line/signal/histogram + tests)`
 - [ ] `IND-13 feat(indicator): add ROC end-to-end (+ tests)`
@@ -659,6 +659,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
 
 ## Progress Log
+- 2026-04-08: Completed `IND-10` by extending parser/evaluator regression coverage for operand/condition contract (`constant`, `series`, `band`) and new operators (`CROSS_ABOVE`, `CROSS_BELOW`, `IN_RANGE`, `OUT_OF_RANGE`), plus hardening parser normalization to fail-closed on invalid range operands.
 - 2026-04-08: Completed `IND-09` by refactoring strategy signal parser/evaluator to normalize rule operands into canonical `constant|series|band` forms and by adding evaluator support for `CROSS_ABOVE`, `CROSS_BELOW`, `IN_RANGE`, and `OUT_OF_RANGE` under one shared runtime/backtest contract.
 - 2026-04-08: Completed `IND-08` by extending strategy-builder condition operators to the full contract set (`>`, `>=`, `<`, `<=`, `==`, `!=`, `CROSS_ABOVE`, `CROSS_BELOW`, `IN_RANGE`, `OUT_OF_RANGE`) with form-level type updates and UI regression coverage.
 - 2026-04-08: Completed `IND-07` by extending runtime signal loop regression suite with OHLCV-series tests for `openTime` dedupe overwrite, per-interval candle storage isolation, and exact-interval close-series resolution.
