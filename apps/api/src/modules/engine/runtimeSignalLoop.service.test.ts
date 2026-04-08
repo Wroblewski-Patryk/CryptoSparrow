@@ -282,6 +282,115 @@ describe('RuntimeSignalLoop', () => {
     expect(deps.orchestrateFn).not.toHaveBeenCalled();
   });
 
+  it('deduplicates runtime candle buffer by openTime and keeps latest OHLCV payload', async () => {
+    const { deps } = createDeps();
+    const loop = new RuntimeSignalLoop(deps);
+
+    await loop.processCandleEvent({
+      type: 'candle',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      interval: '1m',
+      eventTime: 61_000,
+      openTime: 0,
+      closeTime: 59_000,
+      open: 100,
+      high: 101,
+      low: 99,
+      close: 100.5,
+      volume: 1000,
+      isFinal: true,
+    });
+
+    await loop.processCandleEvent({
+      type: 'candle',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      interval: '1m',
+      eventTime: 62_000,
+      openTime: 0,
+      closeTime: 59_000,
+      open: 100.2,
+      high: 102.4,
+      low: 98.7,
+      close: 101.3,
+      volume: 1250,
+      isFinal: true,
+    });
+
+    const key = 'FUTURES|BTCUSDT|1m';
+    const series = (loop as any).candleSeries.get(key);
+    expect(series).toHaveLength(1);
+    expect(series[0]).toEqual(
+      expect.objectContaining({
+        openTime: 0,
+        closeTime: 59_000,
+        open: 100.2,
+        high: 102.4,
+        low: 98.7,
+        close: 101.3,
+        volume: 1250,
+      })
+    );
+  });
+
+  it('stores runtime candles per interval and resolves closes by exact interval first', async () => {
+    const { deps } = createDeps();
+    const loop = new RuntimeSignalLoop(deps);
+
+    await loop.processCandleEvent({
+      type: 'candle',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      interval: '1m',
+      eventTime: 61_000,
+      openTime: 0,
+      closeTime: 59_000,
+      open: 100,
+      high: 101,
+      low: 99,
+      close: 100.5,
+      volume: 1000,
+      isFinal: true,
+    });
+
+    await loop.processCandleEvent({
+      type: 'candle',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      interval: '5m',
+      eventTime: 301_000,
+      openTime: 0,
+      closeTime: 299_000,
+      open: 100,
+      high: 106,
+      low: 98,
+      close: 104.2,
+      volume: 5000,
+      isFinal: true,
+    });
+
+    expect(
+      loop.getRecentCloses({
+        marketType: 'FUTURES',
+        symbol: 'BTCUSDT',
+        interval: '1m',
+      })
+    ).toEqual([100.5]);
+
+    expect(
+      loop.getRecentCloses({
+        marketType: 'FUTURES',
+        symbol: 'BTCUSDT',
+        interval: '5m',
+      })
+    ).toEqual([104.2]);
+  });
+
   it('creates signal and orchestrates from final candle when strategy votes LONG', async () => {
     const { deps, emit } = createDeps();
     withStrategyBot(deps);

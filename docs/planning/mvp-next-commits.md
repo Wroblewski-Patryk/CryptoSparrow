@@ -7,9 +7,8 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `IND-07 test(runtime-series): add regression coverage for OHLCV buffer updates, dedupe, and interval matching`
-## NEXT
 - [ ] `IND-08 feat(builder-operators): expose full operator set (including cross and range operators) in strategy form`
+## NEXT
 - [ ] `IND-09 feat(config-parser): normalize operand contract (series/constant/band) for runtime + backtest`
 - [ ] `IND-10 test(config-contract): parser/evaluator regressions for new operators and invalid configs`
 - [ ] `IND-11 feat(indicator): add SMA end-to-end (catalog + evaluator + backtest timeline + tests)`
@@ -18,6 +17,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `IND-07 test(runtime-series): add regression coverage for OHLCV buffer updates, dedupe, and interval matching`
 - [x] `IND-06 refactor(runtime-warmup): fetch/store OHLCV warmup candles and keep final-candle decision indexing deterministic`
 - [x] `IND-05 refactor(runtime-series): upgrade runtime candle buffer from close-only to OHLCV candle objects`
 - [x] `IND-04 test(parity-baseline): lock parity for existing EMA/RSI/MOMENTUM behavior across runtime/backtest`

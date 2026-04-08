@@ -118,7 +118,7 @@ Replace current broad groups with explicit trader-facing groups:
 ### Phase B - Runtime Candle Model Upgrade (OHLCV Ready)
 - [x] `IND-05 refactor(runtime-series): upgrade runtime candle buffer from close-only to OHLCV candle objects`
 - [x] `IND-06 refactor(runtime-warmup): fetch/store OHLCV warmup candles and keep final-candle decision indexing deterministic`
-- [ ] `IND-07 test(runtime-series): add regression coverage for OHLCV buffer updates, dedupe, and interval matching`
+- [x] `IND-07 test(runtime-series): add regression coverage for OHLCV buffer updates, dedupe, and interval matching`
 
 ### Phase C - Rule Operator and Config Contract
 - [ ] `IND-08 feat(builder-operators): expose full operator set (including cross and range operators) in strategy form`
