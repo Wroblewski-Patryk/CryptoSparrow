@@ -1,4 +1,5 @@
 import { StrategyFormState } from "../types/StrategyForm.type";
+import { Locale } from "@/i18n/translations";
 
 export type StrategyPreset = {
   id: string;
@@ -8,9 +9,17 @@ export type StrategyPreset = {
   form: StrategyFormState;
 };
 
+type LocalizedText = { en: string; pl: string };
+type LocalizedTags = { en: string[]; pl: string[] };
+export type StrategyPresetPresentation = {
+  name: string;
+  description: string;
+  tags: string[];
+};
+
 const baseForm: StrategyFormState = {
-  name: "New strategy",
-  description: "Preset strategy template",
+  name: "",
+  description: "",
   interval: "5m",
   leverage: 5,
   walletRisk: 1,
@@ -442,3 +451,95 @@ export const strategyPresets: StrategyPreset[] = [
     },
   },
 ];
+
+const localizedPresetCopy: Record<
+  StrategyPreset["id"],
+  { name: LocalizedText; description: LocalizedText; tags: LocalizedTags }
+> = {
+  "scalp-rsi-stochastic": {
+    name: { en: "Scalp (RSI + Stochastic)", pl: "Scalp (RSI + Stochastic)" },
+    description: {
+      en: "Very short-term setup for micro pullback entries on fast charts.",
+      pl: "Bardzo krotkoterminowy setup pod mikro cofniecia na szybkich wykresach.",
+    },
+    tags: {
+      en: ["scalp", "rsi", "stochastic", "fast"],
+      pl: ["scalp", "rsi", "stochastic", "szybki"],
+    },
+  },
+  "day-trend-ema-adx": {
+    name: { en: "Day Trend (EMA + ADX)", pl: "Day Trend (EMA + ADX)" },
+    description: {
+      en: "Intraday trend-follow setup with trend strength filter.",
+      pl: "Intraday trend-follow z filtrem sily trendu.",
+    },
+    tags: {
+      en: ["day-trend", "ema", "adx", "intraday"],
+      pl: ["day-trend", "ema", "adx", "intraday"],
+    },
+  },
+  "swing-macd-rsi": {
+    name: { en: "Swing (MACD + RSI)", pl: "Swing (MACD + RSI)" },
+    description: {
+      en: "Multi-session setup for larger directional moves.",
+      pl: "Wielosesyjny setup pod wieksze ruchy kierunkowe.",
+    },
+    tags: {
+      en: ["swing", "macd", "rsi", "higher-timeframe"],
+      pl: ["swing", "macd", "rsi", "wyzszy-interwal"],
+    },
+  },
+  "mean-reversion-rsi-bb": {
+    name: { en: "Mean Reversion (RSI + BB)", pl: "Mean Reversion (RSI + BB)" },
+    description: {
+      en: "Counter-trend setup using RSI extremes and Bollinger context.",
+      pl: "Counter-trend z ekstremami RSI i kontekstem Wsteg Bollingera.",
+    },
+    tags: {
+      en: ["mean-reversion", "rsi", "bollinger", "counter-trend"],
+      pl: ["mean-reversion", "rsi", "bollinger", "counter-trend"],
+    },
+  },
+  "breakout-roc-adx": {
+    name: { en: "Breakout (ROC + ADX)", pl: "Breakout (ROC + ADX)" },
+    description: {
+      en: "Breakout continuation preset for expansion phases.",
+      pl: "Preset breakout continuation pod fazy ekspansji.",
+    },
+    tags: {
+      en: ["breakout", "roc", "adx", "expansion"],
+      pl: ["breakout", "roc", "adx", "ekspansja"],
+    },
+  },
+  "perp-bias-derivatives": {
+    name: { en: "Perp Bias (Funding + OI + OB)", pl: "Perp Bias (Funding + OI + OB)" },
+    description: {
+      en: "Futures-only directional bias preset using derivatives filters.",
+      pl: "Preset futures-only z filtrem derywatow i biasem kierunkowym.",
+    },
+    tags: {
+      en: ["perp-bias", "funding", "open-interest", "orderbook"],
+      pl: ["perp-bias", "funding", "open-interest", "orderbook"],
+    },
+  },
+};
+
+export const getStrategyPresetPresentation = (
+  preset: StrategyPreset,
+  locale: Locale,
+): StrategyPresetPresentation => {
+  const localized = localizedPresetCopy[preset.id];
+  if (!localized) {
+    return {
+      name: preset.name,
+      description: preset.description,
+      tags: preset.tags,
+    };
+  }
+
+  return {
+    name: localized.name[locale],
+    description: localized.description[locale],
+    tags: localized.tags[locale],
+  };
+};

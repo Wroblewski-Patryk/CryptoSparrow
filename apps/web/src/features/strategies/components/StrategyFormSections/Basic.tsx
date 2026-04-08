@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { BasicProps } from "../../types/StrategyForm.type";
 import {
   clampToRange,
@@ -10,49 +12,82 @@ const leverageInputProps = numericInputProps(strategyNumericContracts.integer);
 const walletRiskInputProps = numericInputProps(strategyNumericContracts.decimal2);
 
 export function Basic({ data, setData }: BasicProps) {
+  const { locale } = useI18n();
+  const copy = useMemo(
+    () =>
+      locale === "pl"
+        ? {
+            name: "Nazwa",
+            namePlaceholder: "np. RSI+MACD 5m",
+            description: "Opis",
+            descriptionPlaceholder: "Opis strategii...",
+            interval: "Interwal",
+            intervalPlaceholder: "Wybierz interwal",
+            leverage: "Dzwignia",
+            walletRisk: "Ryzyko portfela (%)",
+            marginMode: "Tryb margin (Futures)",
+            marginCrossed: "Crossed",
+            marginIsolated: "Isolated",
+          }
+        : {
+            name: "Name",
+            namePlaceholder: "e.g. RSI+MACD 5m",
+            description: "Description",
+            descriptionPlaceholder: "Strategy description...",
+            interval: "Interval",
+            intervalPlaceholder: "Select interval",
+            leverage: "Leverage",
+            walletRisk: "Wallet risk (%)",
+            marginMode: "Margin mode (Futures)",
+            marginCrossed: "Crossed",
+            marginIsolated: "Isolated",
+          },
+    [locale],
+  );
+
   return (
-    <div className="flex flex-col md:flex-row gap-8">
-      <div className="w-full md:w-1/2 space-y-6">
+    <div className="flex flex-col gap-8 md:flex-row">
+      <div className="w-full space-y-6 md:w-1/2">
         <div className="form-control w-full">
           <label className="label" htmlFor="name">
-            <span className="label-text">Nazwa</span>
+            <span className="label-text">{copy.name}</span>
           </label>
           <input
             id="name"
             type="text"
             className="input input-bordered w-full"
-            placeholder="np. RSI+MACD 5m"
+            placeholder={copy.namePlaceholder}
             value={data.name}
-            onChange={(e) => setData((prev) => ({ ...prev, name: e.target.value }))}
+            onChange={(event) => setData((prev) => ({ ...prev, name: event.target.value }))}
           />
         </div>
 
         <div className="form-control w-full">
           <label className="label" htmlFor="description">
-            <span className="label-text">Opis</span>
+            <span className="label-text">{copy.description}</span>
           </label>
           <textarea
             id="description"
             className="textarea textarea-bordered w-full"
-            placeholder="Opis strategii..."
+            placeholder={copy.descriptionPlaceholder}
             rows={3}
             value={data.description}
-            onChange={(e) => setData((prev) => ({ ...prev, description: e.target.value }))}
+            onChange={(event) => setData((prev) => ({ ...prev, description: event.target.value }))}
           />
         </div>
       </div>
 
-      <div className="w-full md:w-1/2 space-y-6">
+      <div className="w-full space-y-6 md:w-1/2">
         <div className="form-control w-full">
           <label className="label">
-            <span className="label-text">Interwal</span>
+            <span className="label-text">{copy.interval}</span>
           </label>
           <select
             value={data.interval}
-            onChange={(e) => setData((prev) => ({ ...prev, interval: e.target.value }))}
+            onChange={(event) => setData((prev) => ({ ...prev, interval: event.target.value }))}
             className="select select-bordered w-full"
           >
-            <option value="">Wybierz interwal</option>
+            <option value="">{copy.intervalPlaceholder}</option>
             <option value="1m">1m</option>
             <option value="5m">5m</option>
             <option value="10m">10m</option>
@@ -65,8 +100,8 @@ export function Basic({ data, setData }: BasicProps) {
         </div>
 
         <div className="form-control w-full">
-          <label className="label">Dzwignia</label>
-          <div className="flex items-center w-full gap-4">
+          <label className="label">{copy.leverage}</label>
+          <div className="flex w-full items-center gap-4">
             <input
               type="range"
               min={1}
@@ -74,8 +109,8 @@ export function Basic({ data, setData }: BasicProps) {
               step={1}
               value={data.leverage}
               className="range w-full"
-              onChange={(e) => {
-                const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.integer);
+              onChange={(event) => {
+                const parsed = readNumericInputValue(event.target.value, strategyNumericContracts.integer);
                 if (parsed == null) return;
                 setData((prev) => ({ ...prev, leverage: clampToRange(parsed, 1, 75) }));
               }}
@@ -88,8 +123,8 @@ export function Basic({ data, setData }: BasicProps) {
               className="input input-bordered w-20"
               inputMode={leverageInputProps.inputMode}
               step={leverageInputProps.step}
-              onChange={(e) => {
-                const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.integer);
+              onChange={(event) => {
+                const parsed = readNumericInputValue(event.target.value, strategyNumericContracts.integer);
                 if (parsed == null) return;
                 setData((prev) => ({ ...prev, leverage: clampToRange(parsed, 1, 75) }));
               }}
@@ -99,8 +134,8 @@ export function Basic({ data, setData }: BasicProps) {
         </div>
 
         <div className="form-control w-full">
-          <label className="label">Ryzyko portfela (%)</label>
-          <div className="flex items-center w-full gap-4 ">
+          <label className="label">{copy.walletRisk}</label>
+          <div className="flex w-full items-center gap-4">
             <input
               type="range"
               min={0.1}
@@ -108,8 +143,8 @@ export function Basic({ data, setData }: BasicProps) {
               step={0.01}
               value={data.walletRisk}
               className="range w-full"
-              onChange={(e) => {
-                const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.decimal2);
+              onChange={(event) => {
+                const parsed = readNumericInputValue(event.target.value, strategyNumericContracts.decimal2);
                 if (parsed == null) return;
                 setData((prev) => ({ ...prev, walletRisk: parsed }));
               }}
@@ -122,8 +157,8 @@ export function Basic({ data, setData }: BasicProps) {
               inputMode={walletRiskInputProps.inputMode}
               className="input input-bordered w-20"
               value={data.walletRisk}
-              onChange={(e) => {
-                const parsed = readNumericInputValue(e.target.value, strategyNumericContracts.decimal2);
+              onChange={(event) => {
+                const parsed = readNumericInputValue(event.target.value, strategyNumericContracts.decimal2);
                 if (parsed == null) return;
                 setData((prev) => ({ ...prev, walletRisk: parsed }));
               }}
@@ -134,23 +169,23 @@ export function Basic({ data, setData }: BasicProps) {
 
         <div className="form-control w-full">
           <label className="label">
-            <span className="label-text">Margin mode (Futures)</span>
+            <span className="label-text">{copy.marginMode}</span>
           </label>
           <select
             value={data.additional.marginMode}
-            onChange={(e) =>
+            onChange={(event) =>
               setData((prev) => ({
                 ...prev,
                 additional: {
                   ...prev.additional,
-                  marginMode: e.target.value as "CROSSED" | "ISOLATED",
+                  marginMode: event.target.value as "CROSSED" | "ISOLATED",
                 },
               }))
             }
             className="select select-bordered w-full"
           >
-            <option value="CROSSED">CROSSED</option>
-            <option value="ISOLATED">ISOLATED</option>
+            <option value="CROSSED">{copy.marginCrossed}</option>
+            <option value="ISOLATED">{copy.marginIsolated}</option>
           </select>
         </div>
       </div>

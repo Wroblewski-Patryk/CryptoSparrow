@@ -2,8 +2,8 @@ import { useState } from "react";
 import { StrategyFormState, OpenConditions, CloseConditions, AdditionalState } from "../types/StrategyForm.type";
 
 const defaultState: StrategyFormState = {
-    name: "New strategy",
-    description: "Some description as indicators or what do you want.",
+    name: "",
+    description: "",
     interval: "5m",
     leverage: 10,
     walletRisk: 1,

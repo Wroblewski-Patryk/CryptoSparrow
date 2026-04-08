@@ -8,7 +8,7 @@ import { LuListChecks } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
 
 export default function StrategiesListPage() {
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const router = useRouter();
 
   const copy = useMemo(
@@ -35,7 +35,7 @@ export default function StrategiesListPage() {
         title={copy.title}
         icon={<LuListChecks className='h-5 w-5' />}
         breadcrumb={[
-          { label: 'Dashboard', href: '/dashboard' },
+          { label: t('dashboard.common.dashboard'), href: '/dashboard' },
           { label: copy.breadcrumbStrategies, href: '/dashboard/strategies/list' },
           { label: copy.breadcrumbList },
         ]}
@@ -47,4 +47,3 @@ export default function StrategiesListPage() {
     </section>
   );
 }
-

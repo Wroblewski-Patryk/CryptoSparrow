@@ -1,9 +1,23 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import StrategyPresetPicker from "./StrategyPresetPicker";
 import { strategyPresets } from "../presets/strategyPresets";
 
+let mockLocale: "en" | "pl" = "en";
+
+vi.mock("@/i18n/I18nProvider", () => ({
+  useI18n: () => ({
+    locale: mockLocale,
+    setLocale: vi.fn(),
+    t: vi.fn(),
+  }),
+}));
+
 describe("StrategyPresetPicker", () => {
+  beforeEach(() => {
+    mockLocale = "en";
+  });
+
   it("calls onSelect when user picks preset", () => {
     const onSelect = vi.fn();
     const onClear = vi.fn();
@@ -33,7 +47,7 @@ describe("StrategyPresetPicker", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: /Wyczysc/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Clear/i })).toBeDisabled();
 
     rerender(
       <StrategyPresetPicker
@@ -44,10 +58,29 @@ describe("StrategyPresetPicker", () => {
       />,
     );
 
-    const clearButton = screen.getByRole("button", { name: /Wyczysc/i });
+    const clearButton = screen.getByRole("button", { name: /Clear/i });
     expect(clearButton).not.toBeDisabled();
     fireEvent.click(clearButton);
     expect(onClear).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders localized content for polish locale", () => {
+    mockLocale = "pl";
+    const onSelect = vi.fn();
+    const onClear = vi.fn();
+
+    render(
+      <StrategyPresetPicker
+        presets={strategyPresets}
+        selectedPresetId={null}
+        onSelect={onSelect}
+        onClear={onClear}
+      />,
+    );
+
+    expect(screen.getByText("Presety strategii")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Wyczysc preset/i })).toBeInTheDocument();
+    expect(screen.getByText("Bardzo krotkoterminowy setup pod mikro cofniecia na szybkich wykresach.")).toBeInTheDocument();
   });
 
   it("renders all trader archetype presets", () => {

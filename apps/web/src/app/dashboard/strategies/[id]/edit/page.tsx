@@ -16,7 +16,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 const STRATEGY_USED_BY_ACTIVE_BOT_ERROR = 'strategy is used by active bot and cannot be edited';
 
 export default function StrategiesEditPage() {
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [initial, setInitial] = useState<StrategyFormState | null>(null);
@@ -93,7 +93,7 @@ export default function StrategiesEditPage() {
         title={initial ? initial.name : copy.titleFallback}
         icon={<LuListChecks className='h-5 w-5' />}
         breadcrumb={[
-          { label: 'Dashboard', href: '/dashboard' },
+          { label: t('dashboard.common.dashboard'), href: '/dashboard' },
           { label: copy.breadcrumbStrategies, href: '/dashboard/strategies/list' },
           { label: copy.breadcrumbEdit },
         ]}
@@ -114,4 +114,3 @@ export default function StrategiesEditPage() {
     </section>
   );
 }
-

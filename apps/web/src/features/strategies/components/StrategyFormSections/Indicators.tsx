@@ -1,4 +1,6 @@
 import { LuChevronDown, LuChevronRight, LuChevronUp, LuTrash2, LuTrendingDown, LuTrendingUp } from "react-icons/lu";
+import { useMemo } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { IndicatorsProps, StrategyConditionOperator } from "../../types/StrategyForm.type";
 import { numericInputProps, readNumericInputValue, strategyNumericContracts } from "../../utils/strategyNumericInput";
 import {
@@ -33,20 +35,15 @@ const allConditionOptions: StrategyConditionOperator[] = [
 ];
 const conditionLabelMap: Record<StrategyConditionOperator, { en: string; pl: string }> = {
   ">": { en: "Greater than (>)", pl: "Wieksze niz (>)" },
-  ">=": { en: "Greater or equal (>=)", pl: "Wieksze lub rowne (>=)" },
+  ">=": { en: "Greater than or equal (>=)", pl: "Wieksze lub rowne (>=)" },
   "<": { en: "Less than (<)", pl: "Mniejsze niz (<)" },
-  "<=": { en: "Less or equal (<=)", pl: "Mniejsze lub rowne (<=)" },
-  "==": { en: "Equal (==)", pl: "Rowne (==)" },
-  "!=": { en: "Not equal (!=)", pl: "Rozne (!=)" },
+  "<=": { en: "Less than or equal (<=)", pl: "Mniejsze lub rowne (<=)" },
+  "==": { en: "Equal to (==)", pl: "Rowne (==)" },
+  "!=": { en: "Not equal to (!=)", pl: "Rozne (!=)" },
   CROSS_ABOVE: { en: "Cross above", pl: "Przeciecie w gore" },
   CROSS_BELOW: { en: "Cross below", pl: "Przeciecie w dol" },
   IN_RANGE: { en: "In range", pl: "W zakresie" },
   OUT_OF_RANGE: { en: "Out of range", pl: "Poza zakresem" },
-};
-
-const resolveLocale = (): "en" | "pl" => {
-  if (typeof document === "undefined") return "en";
-  return document.documentElement.lang === "pl" ? "pl" : "en";
 };
 
 const resolveConditionOptions = (
@@ -97,7 +94,48 @@ const normalizeConditionValue = (
 };
 
 export default function Indicators({ side, indicators, value, setValue }: IndicatorsProps) {
-  const locale = resolveLocale();
+  const { locale } = useI18n();
+  const copy = useMemo(
+    () =>
+      locale === "pl"
+        ? {
+            collapse: "Zwin",
+            expand: "Rozwin",
+            moveUp: "Wyzej",
+            moveDown: "Nizej",
+            removeIndicator: "Usun wskaznik",
+            group: "Grupa",
+            indicator: "Wskaznik",
+            indicatorParams: "Parametry wskaznika",
+            condition: "Warunek",
+            value: "Wartosc",
+            valueFrom: "Wartosc od",
+            valueTo: "Wartosc do",
+            weight: "Waga",
+            addIndicator: "+ Dodaj wskaznik",
+            sideLong: "Long",
+            sideShort: "Short",
+          }
+        : {
+            collapse: "Collapse",
+            expand: "Expand",
+            moveUp: "Move up",
+            moveDown: "Move down",
+            removeIndicator: "Remove indicator",
+            group: "Group",
+            indicator: "Indicator",
+            indicatorParams: "Indicator parameters",
+            condition: "Condition",
+            value: "Value",
+            valueFrom: "Value from",
+            valueTo: "Value to",
+            weight: "Weight",
+            addIndicator: "+ Add indicator",
+            sideLong: "Long",
+            sideShort: "Short",
+          },
+    [locale],
+  );
   const normalizedIndicators = indicators.map((indicator) => ({
     ...indicator,
     group: resolveIndicatorGroupKey({
@@ -289,7 +327,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
         ) : (
           <LuTrendingDown className="w-4 h-4" />
         )}
-        {side}
+        {side === "LONG" ? copy.sideLong : copy.sideShort}
       </h3>
 
       {normalizedValue.map((indicator, idx) => {
@@ -309,7 +347,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                   type="button"
                   className="btn btn-xs btn-square"
                   onClick={() => toggleExpand(idx)}
-                  title={indicator.expanded ? "Zwin" : "Rozwin"}
+                  title={indicator.expanded ? copy.collapse : copy.expand}
                 >
                   {indicator.expanded ? (
                     <LuChevronUp className="w-4 h-4" />
@@ -330,7 +368,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                     className="btn btn-xs btn-square join-item"
                     disabled={idx === 0}
                     onClick={() => moveIndicator(idx, "up")}
-                    title="Wyzej"
+                    title={copy.moveUp}
                   >
                     <LuChevronUp className="w-4 h-4" />
                   </button>
@@ -339,7 +377,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                     className="btn btn-xs btn-square join-item"
                     disabled={idx === normalizedValue.length - 1}
                     onClick={() => moveIndicator(idx, "down")}
-                    title="Nizej"
+                    title={copy.moveDown}
                   >
                     <LuChevronDown className="w-4 h-4" />
                   </button>
@@ -348,7 +386,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                   type="button"
                   className="btn btn-xs btn-square text-error"
                   onClick={() => removeIndicator(idx)}
-                  title="Usun wskaznik"
+                  title={copy.removeIndicator}
                 >
                   <LuTrash2 className="w-4 h-4" />
                 </button>
@@ -358,7 +396,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
               <div className="card-body pt-2 pb-2">
                 <div className="flex flex-col md:flex-row gap-6 mb-2">
                   <div className="flex-1">
-                    <label className="label">Grupa</label>
+                    <label className="label">{copy.group}</label>
                     <select
                       className="select select-bordered w-full"
                       value={indicator.group}
@@ -372,7 +410,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                     </select>
                   </div>
                   <div className="flex-1">
-                    <label className="label">Wskaznik</label>
+                    <label className="label">{copy.indicator}</label>
                     <select
                       className="select select-bordered w-full"
                       value={indicator.name}
@@ -393,7 +431,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                   {meta?.params.length ? (
                     <div>
                       <div className="font-semibold text-base-content/80 mb-2 flex items-center gap-2">
-                        Parametry wskaznika
+                        {copy.indicatorParams}
                       </div>
                       <div className="space-y-2">
                         {meta.params.map((param) => (
@@ -427,7 +465,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                     <div>
                       <div className={`grid gap-4 items-end ${isRangeCondition(indicator.condition) ? "grid-cols-1 md:grid-cols-3" : "grid-cols-2"}`}>
                         <div>
-                          <label className="label mb-1 font-semibold">Warunek</label>
+                          <label className="label mb-1 font-semibold">{copy.condition}</label>
                           <select
                             className="select select-bordered w-full"
                             value={indicator.condition}
@@ -443,7 +481,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                         {isRangeCondition(indicator.condition) ? (
                           <>
                             <div>
-                              <label className="label mb-1 font-semibold">Wartosc od</label>
+                              <label className="label mb-1 font-semibold">{copy.valueFrom}</label>
                               <input
                                 type="number"
                                 inputMode={decimalInputProps.inputMode}
@@ -465,7 +503,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                               />
                             </div>
                             <div>
-                              <label className="label mb-1 font-semibold">Wartosc do</label>
+                              <label className="label mb-1 font-semibold">{copy.valueTo}</label>
                               <input
                                 type="number"
                                 inputMode={decimalInputProps.inputMode}
@@ -489,7 +527,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                           </>
                         ) : (
                           <div>
-                            <label className="label mb-1 font-semibold">Wartosc</label>
+                            <label className="label mb-1 font-semibold">{copy.value}</label>
                             <input
                               type="number"
                               inputMode={decimalInputProps.inputMode}
@@ -512,7 +550,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
 
                     <div>
                       <label className="label font-semibold">
-                        <span className="label-text flex items-center gap-1">Waga</span>
+                        <span className="label-text flex items-center gap-1">{copy.weight}</span>
                       </label>
                       <div className="flex items-center gap-4">
                         <div className="w-full max-w-xs">
@@ -552,8 +590,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
       })}
 
       <button type="button" className="btn btn-outline mt-2" onClick={addIndicator}>
-        {" "}
-        + Dodaj wskaznik
+        {copy.addIndicator}
       </button>
     </div>
   );

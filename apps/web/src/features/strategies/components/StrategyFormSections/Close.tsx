@@ -1,4 +1,6 @@
+import { useMemo } from "react";
 import { LuTrash2 } from "react-icons/lu";
+import { useI18n } from "@/i18n/I18nProvider";
 import { CloseConditions, CloseProps, Threshold } from "../../types/StrategyForm.type";
 import {
   numericInputProps,
@@ -9,7 +11,42 @@ import {
 const decimalInputProps = numericInputProps(strategyNumericContracts.decimal2);
 
 export function Close({ data, setData }: CloseProps) {
+  const { locale } = useI18n();
   const close = data;
+
+  const copy = useMemo(
+    () =>
+      locale === "pl"
+        ? {
+            modeBasic: "Podstawowe (TP/SL)",
+            modeAdvanced: "Zaawansowane (TTP/TSL)",
+            basicTitle: "Podstawowe ustawienia zamkniecia",
+            advancedTitle: "Zaawansowane ustawienia zamkniecia",
+            takeProfit: "Take Profit (%)",
+            stopLoss: "Stop Loss (%)",
+            ttp: "Trailing Take Profit",
+            tsl: "Trailing Stop Loss",
+            percent: "Procent (%)",
+            arm: "Ramie",
+            removeThreshold: "Usun prog",
+            addThreshold: "+ Dodaj prog",
+          }
+        : {
+            modeBasic: "Basic (TP/SL)",
+            modeAdvanced: "Advanced (TTP/TSL)",
+            basicTitle: "Basic close settings",
+            advancedTitle: "Advanced close settings",
+            takeProfit: "Take Profit (%)",
+            stopLoss: "Stop Loss (%)",
+            ttp: "Trailing Take Profit",
+            tsl: "Trailing Stop Loss",
+            percent: "Percent (%)",
+            arm: "Arm",
+            removeThreshold: "Remove threshold",
+            addThreshold: "+ Add threshold",
+          },
+    [locale],
+  );
 
   const setClose = (changes: Partial<CloseConditions>) =>
     setData((prev) => ({ ...prev, ...changes }));
@@ -30,11 +67,11 @@ export function Close({ data, setData }: CloseProps) {
     type: "ttp" | "tsl",
     idx: number,
     field: "percent" | "arm",
-    value: number
+    value: number,
   ) => {
     setClose({
       [type]: (close[type] as Threshold[]).map((threshold, i) =>
-        i === idx ? { ...threshold, [field]: value } : threshold
+        i === idx ? { ...threshold, [field]: value } : threshold,
       ),
     });
   };
@@ -42,7 +79,7 @@ export function Close({ data, setData }: CloseProps) {
   return (
     <div className="space-y-8">
       <div className="flex gap-8">
-        <label className="cursor-pointer flex items-center gap-2">
+        <label className="flex cursor-pointer items-center gap-2">
           <input
             type="radio"
             name="closeMode"
@@ -50,9 +87,9 @@ export function Close({ data, setData }: CloseProps) {
             checked={close.mode === "basic"}
             onChange={() => setClose({ mode: "basic" })}
           />
-          <span>Podstawowe (TP/SL)</span>
+          <span>{copy.modeBasic}</span>
         </label>
-        <label className="cursor-pointer flex items-center gap-2">
+        <label className="flex cursor-pointer items-center gap-2">
           <input
             type="radio"
             name="closeMode"
@@ -60,17 +97,17 @@ export function Close({ data, setData }: CloseProps) {
             checked={close.mode === "advanced"}
             onChange={() => setClose({ mode: "advanced" })}
           />
-          <span>Zaawansowane (TTP/TSL)</span>
+          <span>{copy.modeAdvanced}</span>
         </label>
       </div>
 
       {close.mode === "basic" && (
         <div className="card bg-base-200">
           <div className="card-body">
-            <h4 className="font-semibold mb-6 text-lg">Podstawowe ustawienia zamkniecia</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <h4 className="mb-6 text-lg font-semibold">{copy.basicTitle}</h4>
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
               <div className="form-control">
-                <label className="label">Take Profit (%)</label>
+                <label className="label">{copy.takeProfit}</label>
                 <input
                   type="number"
                   inputMode={decimalInputProps.inputMode}
@@ -85,7 +122,7 @@ export function Close({ data, setData }: CloseProps) {
                 />
               </div>
               <div className="form-control">
-                <label className="label">Stop Loss (%)</label>
+                <label className="label">{copy.stopLoss}</label>
                 <input
                   type="number"
                   inputMode={decimalInputProps.inputMode}
@@ -107,15 +144,15 @@ export function Close({ data, setData }: CloseProps) {
       {close.mode === "advanced" && (
         <div className="card bg-base-200">
           <div className="card-body">
-            <h4 className="font-semibold mb-6 text-lg">Zaawansowane ustawienia zamkniecia</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <h4 className="mb-6 text-lg font-semibold">{copy.advancedTitle}</h4>
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
               <div>
-                <div className="font-semibold mb-2">Trailing Take Profit</div>
+                <div className="mb-2 font-semibold">{copy.ttp}</div>
                 <div className="space-y-2">
                   {close.ttp.map((threshold, idx) => (
-                    <div key={`ttp-${idx}`} className="flex gap-2 items-end">
+                    <div key={`ttp-${idx}`} className="flex items-end gap-2">
                       <div>
-                        <label className="label">Procent (%)</label>
+                        <label className="label">{copy.percent}</label>
                         <input
                           type="number"
                           inputMode={decimalInputProps.inputMode}
@@ -130,7 +167,7 @@ export function Close({ data, setData }: CloseProps) {
                         />
                       </div>
                       <div>
-                        <label className="label">Ramie</label>
+                        <label className="label">{copy.arm}</label>
                         <input
                           type="number"
                           inputMode={decimalInputProps.inputMode}
@@ -147,7 +184,7 @@ export function Close({ data, setData }: CloseProps) {
                       <button
                         type="button"
                         className="btn btn-primary"
-                        title="Usun prog"
+                        title={copy.removeThreshold}
                         onClick={() => removeThreshold("ttp", idx)}
                       >
                         <LuTrash2 />
@@ -155,22 +192,18 @@ export function Close({ data, setData }: CloseProps) {
                     </div>
                   ))}
                 </div>
-                <button
-                  type="button"
-                  className="btn btn-outline mt-2"
-                  onClick={() => addThreshold("ttp")}
-                >
-                  + Dodaj prog
+                <button type="button" className="btn btn-outline mt-2" onClick={() => addThreshold("ttp")}>
+                  {copy.addThreshold}
                 </button>
               </div>
 
               <div>
-                <div className="font-semibold mb-2">Trailing Stop Loss</div>
+                <div className="mb-2 font-semibold">{copy.tsl}</div>
                 <div className="space-y-2">
                   {close.tsl.map((threshold, idx) => (
-                    <div key={`tsl-${idx}`} className="flex gap-2 items-end">
+                    <div key={`tsl-${idx}`} className="flex items-end gap-2">
                       <div>
-                        <label className="label">Procent (%)</label>
+                        <label className="label">{copy.percent}</label>
                         <input
                           type="number"
                           inputMode={decimalInputProps.inputMode}
@@ -185,7 +218,7 @@ export function Close({ data, setData }: CloseProps) {
                         />
                       </div>
                       <div>
-                        <label className="label">Ramie</label>
+                        <label className="label">{copy.arm}</label>
                         <input
                           type="number"
                           inputMode={decimalInputProps.inputMode}
@@ -202,7 +235,7 @@ export function Close({ data, setData }: CloseProps) {
                       <button
                         type="button"
                         className="btn btn-primary"
-                        title="Usun prog"
+                        title={copy.removeThreshold}
                         onClick={() => removeThreshold("tsl", idx)}
                       >
                         <LuTrash2 />
@@ -210,12 +243,8 @@ export function Close({ data, setData }: CloseProps) {
                     </div>
                   ))}
                 </div>
-                <button
-                  type="button"
-                  className="btn btn-outline mt-2"
-                  onClick={() => addThreshold("tsl")}
-                >
-                  + Dodaj prog
+                <button type="button" className="btn btn-outline mt-2" onClick={() => addThreshold("tsl")}>
+                  {copy.addThreshold}
                 </button>
               </div>
             </div>

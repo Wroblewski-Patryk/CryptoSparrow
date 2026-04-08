@@ -1,9 +1,23 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import Indicators from "./Indicators";
 import type { IndicatorMeta, UserIndicator } from "../../types/StrategyForm.type";
 
+let mockLocale: "en" | "pl" = "en";
+
+vi.mock("@/i18n/I18nProvider", () => ({
+  useI18n: () => ({
+    locale: mockLocale,
+    setLocale: vi.fn(),
+    t: vi.fn(),
+  }),
+}));
+
 describe("Indicators operators", () => {
+  beforeEach(() => {
+    mockLocale = "en";
+  });
+
   const indicators: IndicatorMeta[] = [
     {
       name: "RSI",
@@ -41,7 +55,7 @@ describe("Indicators operators", () => {
       .find((select) => within(select).queryByRole("option", { name: "Cross above" }));
 
     expect(conditionSelect).toBeDefined();
-    expect(within(conditionSelect!).getByRole("option", { name: "Greater or equal (>=)" })).toBeInTheDocument();
+    expect(within(conditionSelect!).getByRole("option", { name: "Greater than or equal (>=)" })).toBeInTheDocument();
     expect(within(conditionSelect!).getByRole("option", { name: "Cross below" })).toBeInTheDocument();
     expect(within(conditionSelect!).getByRole("option", { name: "In range" })).toBeInTheDocument();
     expect(within(conditionSelect!).getByRole("option", { name: "Out of range" })).toBeInTheDocument();
@@ -56,7 +70,6 @@ describe("Indicators operators", () => {
   });
 
   it("renders taxonomy group labels in EN and PL", () => {
-    const previousLang = document.documentElement.lang;
     const setValue = vi.fn();
     const taxonomyIndicators: IndicatorMeta[] = [
       {
@@ -73,60 +86,52 @@ describe("Indicators operators", () => {
       },
     ];
 
-    try {
-      document.documentElement.lang = "en";
-      const { unmount } = render(
-        <Indicators
-          side="LONG"
-          indicators={taxonomyIndicators}
-          value={[{ ...value[0] }]}
-          setValue={setValue}
-        />
-      );
+    mockLocale = "en";
+    const { unmount } = render(
+      <Indicators
+        side="LONG"
+        indicators={taxonomyIndicators}
+        value={[{ ...value[0] }]}
+        setValue={setValue}
+      />
+    );
 
-      expect(screen.getByRole("option", { name: "Momentum" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Candle Patterns" })).toBeInTheDocument();
-      unmount();
+    expect(screen.getByRole("option", { name: "Momentum" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Candle Patterns" })).toBeInTheDocument();
+    unmount();
 
-      document.documentElement.lang = "pl";
-      render(
-        <Indicators
-          side="LONG"
-          indicators={taxonomyIndicators}
-          value={[{ ...value[0] }]}
-          setValue={setValue}
-        />
-      );
+    mockLocale = "pl";
+    render(
+      <Indicators
+        side="LONG"
+        indicators={taxonomyIndicators}
+        value={[{ ...value[0] }]}
+        setValue={setValue}
+      />
+    );
 
-      expect(screen.getByRole("option", { name: "Momentum" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Formacje swiecowe" })).toBeInTheDocument();
-    } finally {
-      document.documentElement.lang = previousLang;
-    }
+    expect(screen.getByRole("option", { name: "Momentum" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Formacje swiecowe" })).toBeInTheDocument();
   });
 
   it("renders human-friendly indicator and parameter labels", () => {
-    const previousLang = document.documentElement.lang;
     const setValue = vi.fn();
-    try {
-      document.documentElement.lang = "en";
-      render(
-        <Indicators
-          side="LONG"
-          indicators={indicators}
-          value={[{ ...value[0] }]}
-          setValue={setValue}
-        />
-      );
+    mockLocale = "en";
+    render(
+      <Indicators
+        side="LONG"
+        indicators={indicators}
+        value={[{ ...value[0] }]}
+        setValue={setValue}
+      />
+    );
 
-      expect(screen.getAllByText("RSI(Relative Strength Index)").length).toBeGreaterThan(0);
-      expect(screen.getByText("Period")).toBeInTheDocument();
-    } finally {
-      document.documentElement.lang = previousLang;
-    }
+    expect(screen.getAllByText("RSI(Relative Strength Index)").length).toBeGreaterThan(0);
+    expect(screen.getByText("Period")).toBeInTheDocument();
   });
 
   it("supports band values for IN_RANGE and OUT_OF_RANGE", () => {
+    mockLocale = "pl";
     const setValue = vi.fn();
     const rangeValue: UserIndicator[] = [
       {
@@ -155,6 +160,7 @@ describe("Indicators operators", () => {
   });
 
   it("expands condition/value section when indicator has no params", () => {
+    mockLocale = "pl";
     const setValue = vi.fn();
     const noParamIndicators: IndicatorMeta[] = [
       {
@@ -183,6 +189,7 @@ describe("Indicators operators", () => {
   });
 
   it("limits pattern indicators to comparator conditions", () => {
+    mockLocale = "en";
     const setValue = vi.fn();
     const patternIndicators: IndicatorMeta[] = [
       {

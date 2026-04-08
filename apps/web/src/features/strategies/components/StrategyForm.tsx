@@ -1,87 +1,127 @@
 'use client';
-import { useEffect, useState } from "react";
-import { useStrategyForm } from "../hooks/useStrategyForm";
-import { Basic } from "./StrategyFormSections/Basic";
-import { Open } from "./StrategyFormSections/Open";
-import { Close } from "./StrategyFormSections/Close";
-import { Additional } from "./StrategyFormSections/Additional";
+
+import { useEffect, useMemo, useState } from "react";
 import { LuCog, LuDoorClosed, LuDoorOpen, LuPencilLine } from "react-icons/lu";
+import { useI18n } from "@/i18n/I18nProvider";
+import { useStrategyForm } from "../hooks/useStrategyForm";
 import { StrategyFormProps } from "../types/StrategyForm.type";
+import { Additional } from "./StrategyFormSections/Additional";
+import { Basic } from "./StrategyFormSections/Basic";
+import { Close } from "./StrategyFormSections/Close";
+import { Open } from "./StrategyFormSections/Open";
 
 export default function StrategyForm({ initial, onSubmit }: StrategyFormProps) {
-    const [currentStep, setCurrentStep] = useState(0);
-    const { form, setForm, setBasic, setOpenConditions, setCloseConditions, setAdditional } = useStrategyForm();
+  const { locale } = useI18n();
+  const [currentStep, setCurrentStep] = useState(0);
+  const { form, setForm, setBasic, setOpenConditions, setCloseConditions, setAdditional } = useStrategyForm();
 
-    useEffect(() => {
-        if (initial) setForm(prev => ({ ...prev, ...initial }));
-    }, [initial, setForm]);
+  useEffect(() => {
+    if (initial) setForm((prev) => ({ ...prev, ...initial }));
+  }, [initial, setForm]);
 
-    const steps = [
-        { label: 'Podstawowe informacje', icon: <LuPencilLine className="w-5 h-5" /> },
-        { label: 'Warunki otwarcia', icon: <LuDoorOpen className="w-5 h-5" /> },
-        { label: 'Warunki zamknięcia', icon: <LuDoorClosed className="w-5 h-5" /> },
-        { label: 'Dodatkowe ustawienia', icon: <LuCog className="w-5 h-5" /> },
-    ];
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (onSubmit) await onSubmit(form);
-    };
-    return (
-        <form onSubmit={handleSubmit}>
-            <div className="w-full grid grid-cols-1 md:grid-cols-4">
-                <div className="md:col-span-1">
-                    <h2 className="text-3xl flex items-center mb-4">Kreator strategii</h2>
-                    <ul className="steps steps-vertical">
-                        {steps.map((step, i) => (
-                            <li
-                                key={step.label}
-                                className={`step cursor-pointer ${i <= currentStep ? "step-primary" : ""}`}
-                                onClick={() => setCurrentStep(i)}
-                            >
-                                <span className="step-icon">{step.icon}</span>
-                                <span className="hidden md:inline">{step.label}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-                <div className="md:col-span-3">
-                    <div className="flex gap-2">
+  const copy = useMemo(
+    () =>
+      locale === "pl"
+        ? {
+            title: "Kreator strategii",
+            save: "Zapisz strategie",
+            back: "Wstecz",
+            next: "Dalej",
+            steps: {
+              basic: "Podstawowe informacje",
+              open: "Warunki otwarcia",
+              close: "Warunki zamkniecia",
+              additional: "Dodatkowe ustawienia",
+            },
+          }
+        : {
+            title: "Strategy builder",
+            save: "Save strategy",
+            back: "Back",
+            next: "Next",
+            steps: {
+              basic: "Basic information",
+              open: "Entry conditions",
+              close: "Exit conditions",
+              additional: "Additional settings",
+            },
+          },
+    [locale],
+  );
 
-                        <h2 className="text-2xl flex items-center gap-3">
-                            <span className="text-primary">{steps[currentStep].icon}</span>
-                            {steps[currentStep].label}
-                        </h2>
-                        <button
-                            type="submit"
-                            className="btn btn-success ml-auto"
-                        >
-                            Zapisz strategię
-                        </button>
-                    </div>
+  const steps = useMemo(
+    () => [
+      { label: copy.steps.basic, icon: <LuPencilLine className="h-5 w-5" /> },
+      { label: copy.steps.open, icon: <LuDoorOpen className="h-5 w-5" /> },
+      { label: copy.steps.close, icon: <LuDoorClosed className="h-5 w-5" /> },
+      { label: copy.steps.additional, icon: <LuCog className="h-5 w-5" /> },
+    ],
+    [copy.steps],
+  );
 
-                    <hr className="my-8 border-t border-base-200" />
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (onSubmit) await onSubmit(form);
+  };
 
-                    {currentStep === 0 && <Basic data={form} setData={setBasic} />}
-                    {currentStep === 1 && <Open data={form.openConditions} setData={setOpenConditions} />}
-                    {currentStep === 2 && <Close data={form.closeConditions} setData={setCloseConditions} />}
-                    {currentStep === 3 && <Additional data={form.additional} setData={setAdditional} />}
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="grid w-full grid-cols-1 md:grid-cols-4">
+        <div className="md:col-span-1">
+          <h2 className="mb-4 flex items-center text-3xl">{copy.title}</h2>
+          <ul className="steps steps-vertical">
+            {steps.map((step, index) => (
+              <li
+                key={step.label}
+                className={`step cursor-pointer ${index <= currentStep ? "step-primary" : ""}`}
+                onClick={() => setCurrentStep(index)}
+              >
+                <span className="step-icon">{step.icon}</span>
+                <span className="hidden md:inline">{step.label}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="md:col-span-3">
+          <div className="flex gap-2">
+            <h2 className="flex items-center gap-3 text-2xl">
+              <span className="text-primary">{steps[currentStep]?.icon}</span>
+              {steps[currentStep]?.label}
+            </h2>
+            <button type="submit" className="btn btn-success ml-auto">
+              {copy.save}
+            </button>
+          </div>
 
-                    <hr className="my-8 border-t border-base-200" />
+          <hr className="my-8 border-t border-base-200" />
 
-                    <div className="flex justify-between mt-8 mb-8">
-                        <button type="button" className="btn"
-                            disabled={currentStep === 0}
-                            onClick={() => setCurrentStep(currentStep - 1)}>
-                            Wstecz
-                        </button>
-                        <button type="button" className="btn btn-primary"
-                            disabled={currentStep === steps.length - 1}
-                            onClick={() => setCurrentStep(currentStep + 1)}>
-                            Dalej
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </form>
-    );
+          {currentStep === 0 && <Basic data={form} setData={setBasic} />}
+          {currentStep === 1 && <Open data={form.openConditions} setData={setOpenConditions} />}
+          {currentStep === 2 && <Close data={form.closeConditions} setData={setCloseConditions} />}
+          {currentStep === 3 && <Additional data={form.additional} setData={setAdditional} />}
+
+          <hr className="my-8 border-t border-base-200" />
+
+          <div className="mt-8 mb-8 flex justify-between">
+            <button
+              type="button"
+              className="btn"
+              disabled={currentStep === 0}
+              onClick={() => setCurrentStep(currentStep - 1)}
+            >
+              {copy.back}
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={currentStep === steps.length - 1}
+              onClick={() => setCurrentStep(currentStep + 1)}
+            >
+              {copy.next}
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  );
 }
