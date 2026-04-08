@@ -1,6 +1,6 @@
 # Indicator Expansion Implementation Plan (IND) - 2026-04-07
 
-Status: proposed, ready for tiny-commit execution.
+Status: completed (2026-04-08), all `IND-01..IND-36` tasks delivered.
 Scope: strategy builder + runtime bot + backtest parity.
 
 ## Objective
@@ -159,7 +159,7 @@ Replace current broad groups with explicit trader-facing groups:
 - [x] `IND-33 feat(backtest-ui): support multi-line overlays and boolean pattern markers in timeline rendering`
 - [x] `IND-34 feat(presets): add trader archetype presets (scalp/day trend/swing/mean reversion/breakout/perp bias)`
 - [x] `IND-35 qa(parity): execute 3-symbol side-by-side parity checklist for new indicator families and attach evidence`
-- [ ] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
+- [x] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
 
 ## Execution Protocol (for `pracuj dalej` / `start` Flow)
 1. Always execute exactly one unchecked `IND-*` task as a tiny commit.

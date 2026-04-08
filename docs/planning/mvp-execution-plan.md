@@ -656,9 +656,10 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `IND-33 feat(backtest-ui): support multi-line overlays and boolean pattern markers in timeline rendering`
 - [x] `IND-34 feat(presets): add trader archetype presets (scalp/day trend/swing/mean reversion/breakout/perp bias)`
 - [x] `IND-35 qa(parity): execute 3-symbol side-by-side parity checklist for new indicator families and attach evidence`
-- [ ] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
+- [x] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
 
 ## Progress Log
+- 2026-04-08: Completed `IND-36` by publishing `docs/operations/indicator-implementation-runbook.md` with a safe end-to-end extension protocol (registry update, shared evaluator/runtime/backtest wiring, required test pack, mandatory 3-symbol parity evidence, planning updates, and rollback steps) for future indicator delivery.
 - 2026-04-08: Completed `IND-35` by executing the deterministic 3-symbol parity harness for all expanded indicator/pattern families (`backtestParity3Symbols.test.ts`) and attaching evidence in `docs/operations/indicator-3symbol-parity-evidence-2026-04-08.md` (21/21 assertions passed).
 - 2026-04-08: Completed `IND-34` by expanding strategy presets to six trader archetypes (`scalp`, `day trend`, `swing`, `mean reversion`, `breakout`, `perp bias`) with updated indicator/risk templates and added web regression tests for picker rendering/selection and preset contract coverage (including derivatives-based perp-bias rules).
 - 2026-04-08: Completed `IND-33` by extending backtest timeline rendering with grouped multi-line oscillator overlays (channel families rendered in one panel) and boolean candle-pattern markers plotted directly on price candles, with dedicated overlay-splitting utility coverage plus backtest details regression verification.
