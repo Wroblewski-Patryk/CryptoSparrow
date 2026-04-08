@@ -273,6 +273,99 @@ export const computeAtrSeriesFromCandles = (
   return output;
 };
 
+export const computeAdxSeriesFromCandles = (
+  highs: number[],
+  lows: number[],
+  closes: number[],
+  period: number
+): {
+  adx: Array<number | null>;
+  plusDi: Array<number | null>;
+  minusDi: Array<number | null>;
+} => {
+  const length = Math.min(highs.length, lows.length, closes.length);
+  const adx: Array<number | null> = Array.from({ length }, () => null);
+  const plusDi: Array<number | null> = Array.from({ length }, () => null);
+  const minusDi: Array<number | null> = Array.from({ length }, () => null);
+  if (length <= period) return { adx, plusDi, minusDi };
+
+  const tr: number[] = Array.from({ length }, () => 0);
+  const plusDm: number[] = Array.from({ length }, () => 0);
+  const minusDm: number[] = Array.from({ length }, () => 0);
+
+  for (let index = 1; index < length; index += 1) {
+    const high = highs[index];
+    const low = lows[index];
+    const previousHigh = highs[index - 1];
+    const previousLow = lows[index - 1];
+    const previousClose = closes[index - 1];
+    if (
+      !Number.isFinite(high) ||
+      !Number.isFinite(low) ||
+      !Number.isFinite(previousHigh) ||
+      !Number.isFinite(previousLow) ||
+      !Number.isFinite(previousClose)
+    ) {
+      continue;
+    }
+
+    const upMove = high - previousHigh;
+    const downMove = previousLow - low;
+    plusDm[index] = upMove > downMove && upMove > 0 ? upMove : 0;
+    minusDm[index] = downMove > upMove && downMove > 0 ? downMove : 0;
+
+    const range1 = high - low;
+    const range2 = Math.abs(high - previousClose);
+    const range3 = Math.abs(low - previousClose);
+    tr[index] = Math.max(range1, range2, range3);
+  }
+
+  let smoothedTr = 0;
+  let smoothedPlusDm = 0;
+  let smoothedMinusDm = 0;
+  for (let index = 1; index <= period; index += 1) {
+    smoothedTr += tr[index];
+    smoothedPlusDm += plusDm[index];
+    smoothedMinusDm += minusDm[index];
+  }
+
+  const dx: Array<number | null> = Array.from({ length }, () => null);
+  for (let index = period; index < length; index += 1) {
+    if (index > period) {
+      smoothedTr = smoothedTr - (smoothedTr / period) + tr[index];
+      smoothedPlusDm = smoothedPlusDm - (smoothedPlusDm / period) + plusDm[index];
+      smoothedMinusDm = smoothedMinusDm - (smoothedMinusDm / period) + minusDm[index];
+    }
+
+    if (smoothedTr <= 0) continue;
+    const plus = (100 * smoothedPlusDm) / smoothedTr;
+    const minus = (100 * smoothedMinusDm) / smoothedTr;
+    plusDi[index] = plus;
+    minusDi[index] = minus;
+    const sum = plus + minus;
+    if (sum <= 0) continue;
+    dx[index] = (100 * Math.abs(plus - minus)) / sum;
+  }
+
+  const firstAdxIndex = (period * 2) - 1;
+  if (firstAdxIndex >= length) return { adx, plusDi, minusDi };
+  const seedDx = dx.slice(period, firstAdxIndex + 1);
+  if (seedDx.some((value) => typeof value !== 'number' || !Number.isFinite(value))) {
+    return { adx, plusDi, minusDi };
+  }
+
+  let currentAdx = (seedDx as number[]).reduce((acc, value) => acc + value, 0) / period;
+  adx[firstAdxIndex] = currentAdx;
+  for (let index = firstAdxIndex + 1; index < length; index += 1) {
+    const value = dx[index];
+    if (typeof value !== 'number' || !Number.isFinite(value)) continue;
+    currentAdx = ((currentAdx * (period - 1)) + value) / period;
+    adx[index] = currentAdx;
+  }
+
+  return { adx, plusDi, minusDi };
+};
+
 export const computeRsiSeriesFromCloses = (
   closes: number[],
   period: number

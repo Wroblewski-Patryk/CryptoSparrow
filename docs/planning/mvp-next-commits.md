@@ -7,14 +7,15 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `IND-17 feat(indicator): add ADX + DI+/DI- end-to-end`
-## NEXT
 - [ ] `IND-18 feat(indicator): add Stochastic (%K/%D) end-to-end`
+## NEXT
 - [ ] `IND-19 feat(indicator): add CCI end-to-end`
+- [ ] `IND-20 feat(indicator): add Donchian Channels end-to-end`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `IND-17 feat(indicator): add ADX + DI+/DI- end-to-end`
 - [x] `IND-16 feat(indicator): add ATR end-to-end`
 - [x] `IND-15 feat(indicator): implement true Bollinger Bands end-to-end (upper/mid/lower, bandwidth, percentB)`
 - [x] `IND-14 feat(indicator): add StochRSI end-to-end (+ tests)`

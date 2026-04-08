@@ -1,4 +1,5 @@
 export {
+  computeAdxSeriesFromCandles,
   computeAtrSeriesFromCandles,
   computeBollingerSeriesFromCloses,
   clampPeriod,

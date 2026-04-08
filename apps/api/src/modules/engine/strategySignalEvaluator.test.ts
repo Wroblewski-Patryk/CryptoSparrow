@@ -234,6 +234,35 @@ describe('strategySignalEvaluator', () => {
     expect(direction).toBe('LONG');
   });
 
+  it('supports ADX comparator evaluation with OHLC candles', () => {
+    const rules = parseStrategySignalRules({
+      open: {
+        direction: 'long',
+        indicatorsLong: [{ name: 'ADX', condition: '>', value: -1, params: { period: 3 } }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(rules).not.toBeNull();
+    if (!rules) return;
+
+    const direction = evaluateStrategySignalAtIndex(
+      rules,
+      [
+        { close: 100, high: 101, low: 99 },
+        { close: 102, high: 104, low: 100 },
+        { close: 101, high: 103, low: 99 },
+        { close: 103, high: 106, low: 101 },
+        { close: 104, high: 107, low: 102 },
+        { close: 106, high: 109, low: 104 },
+        { close: 107, high: 110, low: 105 },
+      ],
+      6,
+      new Map(),
+    );
+    expect(direction).toBe('LONG');
+  });
+
   it('supports CROSS_ABOVE and CROSS_BELOW operators', () => {
     const crossAbove = parseStrategySignalRules({
       open: {

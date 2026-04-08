@@ -1,4 +1,5 @@
 import {
+  computeAdxSeriesFromCandles,
   computeAtrSeriesFromCandles,
   computeBollingerSeriesFromCloses,
   clampPeriod,
@@ -415,6 +416,25 @@ const resolveSeries = (params: {
     const series = params.cache.get(key) ?? computeAtrSeriesFromCandles(params.highs, params.lows, params.closes, period);
     params.cache.set(key, series);
     return series;
+  }
+
+  if (name.includes('ADX') || name.includes('DI_PLUS') || name.includes('DI_MINUS')) {
+    const period = clampPeriod(params.indicatorParams.period ?? params.indicatorParams.length, 14);
+    const baseKey = `ADX_${period}`;
+    const adxKey = `${baseKey}_ADX`;
+    const plusKey = `${baseKey}_DI_PLUS`;
+    const minusKey = `${baseKey}_DI_MINUS`;
+
+    if (!params.cache.has(adxKey) || !params.cache.has(plusKey) || !params.cache.has(minusKey)) {
+      const adxSeries = computeAdxSeriesFromCandles(params.highs, params.lows, params.closes, period);
+      params.cache.set(adxKey, adxSeries.adx);
+      params.cache.set(plusKey, adxSeries.plusDi);
+      params.cache.set(minusKey, adxSeries.minusDi);
+    }
+
+    if (name.includes('DI_PLUS')) return params.cache.get(plusKey) ?? null;
+    if (name.includes('DI_MINUS')) return params.cache.get(minusKey) ?? null;
+    return params.cache.get(adxKey) ?? null;
   }
 
   if (name.includes('BOLLINGER')) {

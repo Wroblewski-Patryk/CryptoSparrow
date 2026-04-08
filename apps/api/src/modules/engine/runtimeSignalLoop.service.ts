@@ -16,6 +16,7 @@ import {
   parseStrategySignalRules,
 } from './strategySignalEvaluator';
 import {
+  computeAdxSeriesFromCandles,
   computeAtrSeriesFromCandles,
   computeBollingerSeriesFromCloses,
   clampPeriod,
@@ -1579,6 +1580,25 @@ export class RuntimeSignalLoop {
       }
       return indicatorCache.get(key)!;
     };
+    const ensureAdx = (period: number) => {
+      const baseKey = `ADX_${period}`;
+      const adxKey = `${baseKey}_ADX`;
+      const plusKey = `${baseKey}_DI_PLUS`;
+      const minusKey = `${baseKey}_DI_MINUS`;
+      if (!indicatorCache.has(adxKey) || !indicatorCache.has(plusKey) || !indicatorCache.has(minusKey)) {
+        const highs = candles.map((candle) => candle.high);
+        const lows = candles.map((candle) => candle.low);
+        const adx = computeAdxSeriesFromCandles(highs, lows, closes, period);
+        indicatorCache.set(adxKey, adx.adx);
+        indicatorCache.set(plusKey, adx.plusDi);
+        indicatorCache.set(minusKey, adx.minusDi);
+      }
+      return {
+        adx: indicatorCache.get(adxKey)!,
+        plusDi: indicatorCache.get(plusKey)!,
+        minusDi: indicatorCache.get(minusKey)!,
+      };
+    };
     const ensureMacd = (fast: number, slow: number, signal: number) => {
       const baseKey = `MACD_${fast}_${slow}_${signal}`;
       const lineKey = `${baseKey}_LINE`;
@@ -1758,6 +1778,34 @@ export class RuntimeSignalLoop {
         if (!indicatorKeys.has(`ATR(${period})`)) {
           indicatorKeys.add(`ATR(${period})`);
           indicatorParts.push(`ATR(${period})=${formatIndicatorValue(value)}`);
+        }
+        return;
+      }
+
+      if (indicator.includes('ADX')) {
+        const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
+        const adx = ensureAdx(period);
+        const adxValue = adx.adx[decisionIndex];
+        const plusValue = adx.plusDi[decisionIndex];
+        const minusValue = adx.minusDi[decisionIndex];
+        conditionLines.push({
+          scope,
+          left: `ADX(${period})`,
+          value: formatIndicatorValue(adxValue),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has(`ADX(${period})`)) {
+          indicatorKeys.add(`ADX(${period})`);
+          indicatorParts.push(`ADX(${period})=${formatIndicatorValue(adxValue)}`);
+        }
+        if (!indicatorKeys.has(`DI_PLUS(${period})`)) {
+          indicatorKeys.add(`DI_PLUS(${period})`);
+          indicatorParts.push(`DI_PLUS(${period})=${formatIndicatorValue(plusValue)}`);
+        }
+        if (!indicatorKeys.has(`DI_MINUS(${period})`)) {
+          indicatorKeys.add(`DI_MINUS(${period})`);
+          indicatorParts.push(`DI_MINUS(${period})=${formatIndicatorValue(minusValue)}`);
         }
         return;
       }

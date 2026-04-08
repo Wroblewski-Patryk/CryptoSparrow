@@ -158,4 +158,17 @@ export const indicators = [
       },
     ],
   },
+  {
+    name: "ADX",
+    group: "Analiza techniczna",
+    type: "trend",
+    params: [
+      {
+        name: "period",
+        default: 14,
+        min: 2,
+        max: 255,
+      },
+    ],
+  },
 ];

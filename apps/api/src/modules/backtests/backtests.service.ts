@@ -9,6 +9,7 @@ import {
   parseStrategySignalRules,
 } from '../engine/strategySignalEvaluator';
 import {
+  computeAdxSeriesFromCandles,
   computeAtrSeriesFromCandles,
   computeBollingerSeriesFromCloses,
   computeEmaSeriesFromCloses,
@@ -133,7 +134,7 @@ type IndicatorSpec = {
   name: string;
   period: number;
   panel: 'price' | 'oscillator';
-  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'BOLLINGER' | 'ATR';
+  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'BOLLINGER' | 'ATR' | 'ADX';
   params: Record<string, number>;
   channel?:
     | 'LINE'
@@ -145,7 +146,10 @@ type IndicatorSpec = {
     | 'MIDDLE'
     | 'LOWER'
     | 'BANDWIDTH'
-    | 'PERCENT_B';
+    | 'PERCENT_B'
+    | 'ADX'
+    | 'DI_PLUS'
+    | 'DI_MINUS';
 };
 
 const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
@@ -1134,6 +1138,39 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
       ];
     }
 
+    if (name.includes('ADX') && params) {
+      const period = asPeriod(params.period ?? params.length, 14);
+      return [
+        {
+          key: `${name}_ADX_${period}`,
+          name: `${name} ADX`,
+          period: period * 2,
+          panel: 'oscillator' as const,
+          source: 'ADX' as const,
+          params: { period },
+          channel: 'ADX' as const,
+        },
+        {
+          key: `${name}_DI_PLUS_${period}`,
+          name: `${name} DI+`,
+          period,
+          panel: 'oscillator' as const,
+          source: 'ADX' as const,
+          params: { period },
+          channel: 'DI_PLUS' as const,
+        },
+        {
+          key: `${name}_DI_MINUS_${period}`,
+          name: `${name} DI-`,
+          period,
+          panel: 'oscillator' as const,
+          source: 'ADX' as const,
+          params: { period },
+          channel: 'DI_MINUS' as const,
+        },
+      ];
+    }
+
     if (name.includes('BOLLINGER') && params) {
       const period = asPeriod(params.period, 20);
       const stdDevCandidate = Number(params.stdDev ?? params.deviation);
@@ -1264,6 +1301,8 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
           ? 'BOLLINGER'
         : name.includes('ATR')
           ? 'ATR'
+        : name.includes('ADX')
+          ? 'ADX'
         : name.includes('STOCHRSI')
           ? 'STOCHRSI'
         : name.includes('ROC')
@@ -1326,6 +1365,14 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
       percentB: Array<number | null>;
     }
   >();
+  const adxCache = new Map<
+    string,
+    {
+      adx: Array<number | null>;
+      plusDi: Array<number | null>;
+      minusDi: Array<number | null>;
+    }
+  >();
   return specs.map((spec) => {
     const values = (() => {
       if (spec.source === 'EMA') {
@@ -1351,6 +1398,18 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
       if (spec.source === 'ATR') {
         const period = spec.params.period ?? spec.period;
         return computeAtrSeriesFromCandles(highs, lows, closes, period);
+      }
+
+      if (spec.source === 'ADX') {
+        const period = spec.params.period ?? 14;
+        const key = `${period}`;
+        if (!adxCache.has(key)) {
+          adxCache.set(key, computeAdxSeriesFromCandles(highs, lows, closes, period));
+        }
+        const adx = adxCache.get(key)!;
+        if (spec.channel === 'DI_PLUS') return adx.plusDi;
+        if (spec.channel === 'DI_MINUS') return adx.minusDi;
+        return adx.adx;
       }
 
       if (spec.source === 'MACD') {
@@ -1426,7 +1485,7 @@ export const buildIndicatorSeriesForTests = (
     name: string;
     period: number;
     panel: 'price' | 'oscillator';
-    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'BOLLINGER' | 'ATR';
+    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'BOLLINGER' | 'ATR' | 'ADX';
     params: Record<string, number>;
     channel?:
       | 'LINE'
@@ -1438,7 +1497,10 @@ export const buildIndicatorSeriesForTests = (
       | 'MIDDLE'
       | 'LOWER'
       | 'BANDWIDTH'
-      | 'PERCENT_B';
+      | 'PERCENT_B'
+      | 'ADX'
+      | 'DI_PLUS'
+      | 'DI_MINUS';
   }>,
 ) => buildIndicatorSeries(candles as KlineCandle[], specs as IndicatorSpec[]);
 

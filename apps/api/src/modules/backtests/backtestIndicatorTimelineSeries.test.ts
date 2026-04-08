@@ -147,4 +147,22 @@ describe('backtest indicator timeline series', () => {
     expect(series[0].values[0]).toBeNull();
     expect(series[0].values[1]).toBeNull();
   });
+
+  it('builds ADX and DI channels for timeline overlays', () => {
+    const specs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'ADX', params: { period: 3 }, condition: '>', value: 0 }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(specs).toHaveLength(3);
+    expect(specs.map((item) => item.key)).toEqual([
+      'ADX_ADX_3',
+      'ADX_DI_PLUS_3',
+      'ADX_DI_MINUS_3',
+    ]);
+    const series = buildIndicatorSeriesForTests(candles, specs);
+    expect(series.every((item) => item.panel === 'oscillator')).toBe(true);
+  });
 });
