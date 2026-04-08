@@ -157,3 +157,24 @@ export const computeMomentumSeriesFromCloses = (
   }
   return output;
 };
+
+export const computeRocSeriesFromCloses = (
+  closes: number[],
+  period: number
+): Array<number | null> => {
+  const output: Array<number | null> = [];
+  for (let index = 0; index < closes.length; index += 1) {
+    if (index < period) {
+      output.push(null);
+      continue;
+    }
+
+    const previous = closes[index - period];
+    if (!Number.isFinite(previous) || previous === 0) {
+      output.push(null);
+      continue;
+    }
+    output.push(((closes[index] - previous) / previous) * 100);
+  }
+  return output;
+};

@@ -8,5 +8,6 @@ describe('indicators.service', () => {
 
     expect(names).toContain('SMA');
     expect(names).toContain('MACD');
+    expect(names).toContain('ROC');
   });
 });

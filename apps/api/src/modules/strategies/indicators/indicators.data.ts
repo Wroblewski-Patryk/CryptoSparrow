@@ -82,4 +82,17 @@ export const indicators = [
       },
     ],
   },
+  {
+    name: "ROC",
+    group: "Analiza techniczna",
+    type: "momentum",
+    params: [
+      {
+        name: "period",
+        default: 14,
+        min: 2,
+        max: 255,
+      },
+    ],
+  },
 ];

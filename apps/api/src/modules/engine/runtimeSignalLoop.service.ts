@@ -20,6 +20,7 @@ import {
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
   computeMomentumSeriesFromCloses,
+  computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
 } from './sharedIndicatorSeries';
@@ -1559,6 +1560,13 @@ export class RuntimeSignalLoop {
       }
       return indicatorCache.get(key)!;
     };
+    const ensureRoc = (period: number) => {
+      const key = `ROC_${period}`;
+      if (!indicatorCache.has(key)) {
+        indicatorCache.set(key, computeRocSeriesFromCloses(closes, period));
+      }
+      return indicatorCache.get(key)!;
+    };
     const ensureMacd = (fast: number, slow: number, signal: number) => {
       const baseKey = `MACD_${fast}_${slow}_${signal}`;
       const lineKey = `${baseKey}_LINE`;
@@ -1657,6 +1665,23 @@ export class RuntimeSignalLoop {
         if (!indicatorKeys.has(`MOMENTUM(${period})`)) {
           indicatorKeys.add(`MOMENTUM(${period})`);
           indicatorParts.push(`MOMENTUM(${period})=${formatIndicatorValue(value)}`);
+        }
+        return;
+      }
+
+      if (indicator.includes('ROC')) {
+        const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
+        const value = ensureRoc(period)[decisionIndex];
+        conditionLines.push({
+          scope,
+          left: `ROC(${period})`,
+          value: formatIndicatorValue(value),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has(`ROC(${period})`)) {
+          indicatorKeys.add(`ROC(${period})`);
+          indicatorParts.push(`ROC(${period})=${formatIndicatorValue(value)}`);
         }
         return;
       }

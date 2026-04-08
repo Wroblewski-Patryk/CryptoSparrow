@@ -3,6 +3,7 @@ import {
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
   computeMomentumSeriesFromCloses,
+  computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
 } from './sharedIndicatorSeries';
@@ -361,6 +362,14 @@ const resolveSeries = (params: {
     const period = clampPeriod(params.indicatorParams.period ?? params.indicatorParams.length, 14);
     const key = `RSI_${period}`;
     const series = params.cache.get(key) ?? computeRsiSeriesFromCloses(params.closes, period);
+    params.cache.set(key, series);
+    return series;
+  }
+
+  if (name.includes('ROC')) {
+    const period = clampPeriod(params.indicatorParams.period ?? params.indicatorParams.length, 14);
+    const key = `ROC_${period}`;
+    const series = params.cache.get(key) ?? computeRocSeriesFromCloses(params.closes, period);
     params.cache.set(key, series);
     return series;
   }

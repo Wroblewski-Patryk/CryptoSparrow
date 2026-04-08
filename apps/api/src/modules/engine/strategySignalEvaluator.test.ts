@@ -121,6 +121,27 @@ describe('strategySignalEvaluator', () => {
     expect(direction).toBe('LONG');
   });
 
+  it('supports ROC comparator evaluation', () => {
+    const rules = parseStrategySignalRules({
+      open: {
+        direction: 'long',
+        indicatorsLong: [{ name: 'ROC', condition: '>', value: 0.5, params: { period: 2 } }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(rules).not.toBeNull();
+    if (!rules) return;
+
+    const direction = evaluateStrategySignalAtIndex(
+      rules,
+      [{ close: 100 }, { close: 101 }, { close: 103 }, { close: 105 }],
+      3,
+      new Map(),
+    );
+    expect(direction).toBe('LONG');
+  });
+
   it('supports CROSS_ABOVE and CROSS_BELOW operators', () => {
     const crossAbove = parseStrategySignalRules({
       open: {

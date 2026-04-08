@@ -63,4 +63,24 @@ describe('backtest indicator timeline series', () => {
     ]);
     expect(series.every((item) => item.panel === 'oscillator')).toBe(true);
   });
+
+  it('builds ROC oscillator series for timeline overlays', () => {
+    const specs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'ROC', params: { period: 2 }, condition: '>', value: 0 }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(specs).toHaveLength(1);
+    expect(specs[0]).toMatchObject({
+      key: 'ROC_2',
+      name: 'ROC',
+      panel: 'oscillator',
+      source: 'ROC',
+    });
+
+    const series = buildIndicatorSeriesForTests(candles, specs);
+    expect(series[0].values).toEqual([null, null, 20, 18.181818181818183]);
+  });
 });

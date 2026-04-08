@@ -7,14 +7,15 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `IND-13 feat(indicator): add ROC end-to-end (+ tests)`
-## NEXT
 - [ ] `IND-14 feat(indicator): add StochRSI end-to-end (+ tests)`
+## NEXT
 - [ ] `IND-15 feat(indicator): implement true Bollinger Bands end-to-end (upper/mid/lower, bandwidth, percentB)`
+- [ ] `IND-16 feat(indicator): add ATR end-to-end`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `IND-13 feat(indicator): add ROC end-to-end (+ tests)`
 - [x] `IND-12 feat(indicator): add MACD end-to-end (line/signal/histogram + tests)`
 - [x] `IND-11 feat(indicator): add SMA end-to-end (catalog + evaluator + backtest timeline + tests)`
 - [x] `IND-10 test(config-contract): parser/evaluator regressions for new operators and invalid configs`

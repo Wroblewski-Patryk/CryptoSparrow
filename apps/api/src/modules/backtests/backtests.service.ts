@@ -12,6 +12,7 @@ import {
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
   computeMomentumSeriesFromCloses,
+  computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
 } from '../engine/sharedIndicatorSeries';
@@ -129,7 +130,7 @@ type IndicatorSpec = {
   name: string;
   period: number;
   panel: 'price' | 'oscillator';
-  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD';
+  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC';
   params: Record<string, number>;
   channel?: 'LINE' | 'SIGNAL' | 'HISTOGRAM';
 };
@@ -1151,6 +1152,8 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
     const source: IndicatorSpec['source'] =
       name.includes('SMA')
         ? 'SMA'
+        : name.includes('ROC')
+          ? 'ROC'
         : name.includes('RSI')
           ? 'RSI'
           : name.includes('MOMENTUM')
@@ -1207,6 +1210,11 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
         return computeRsiSeriesFromCloses(closes, period);
       }
 
+      if (spec.source === 'ROC') {
+        const period = spec.params.period ?? spec.period;
+        return computeRocSeriesFromCloses(closes, period);
+      }
+
       if (spec.source === 'MACD') {
         const fast = spec.params.fast ?? 12;
         const slow = spec.params.slow ?? 26;
@@ -1252,7 +1260,7 @@ export const buildIndicatorSeriesForTests = (
     name: string;
     period: number;
     panel: 'price' | 'oscillator';
-    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD';
+    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC';
     params: Record<string, number>;
     channel?: 'LINE' | 'SIGNAL' | 'HISTOGRAM';
   }>,

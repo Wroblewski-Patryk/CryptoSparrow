@@ -3,6 +3,7 @@ export {
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
   computeMomentumSeriesFromCloses,
+  computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
 } from '../engine/sharedIndicatorSeries';
