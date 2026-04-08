@@ -52,9 +52,9 @@ export function Open({ data, setData }: OpenProps) {
     setData((prev) => ({ ...prev, indicatorsShort: next }));
 
   const spans = {
-    both: { left: "col-span-6", right: "col-span-6" },
-    long: { left: "col-span-8", right: "col-span-4 opacity-20" },
-    short: { left: "col-span-4 opacity-20", right: "col-span-8" },
+    both: { left: "col-span-12 lg:col-span-6", right: "col-span-12 lg:col-span-6" },
+    long: { left: "col-span-12 lg:col-span-8", right: "col-span-12 lg:col-span-4 opacity-60 lg:opacity-20" },
+    short: { left: "col-span-12 lg:col-span-4 opacity-60 lg:opacity-20", right: "col-span-12 lg:col-span-8" },
   } as const;
 
   const layout = spans[data.direction];
@@ -65,7 +65,7 @@ export function Open({ data, setData }: OpenProps) {
         <label className="label mb-2">
           <span className="label-text">{copy.direction}</span>
         </label>
-        <div className="flex flex-row gap-4">
+        <div className="flex flex-row flex-wrap gap-4">
           <label className="flex cursor-pointer items-center gap-2">
             <input
               type="radio"
@@ -98,7 +98,7 @@ export function Open({ data, setData }: OpenProps) {
           </label>
         </div>
       </div>
-      <div className="grid grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
         <div className={`${layout.left} transition-all duration-500 ease-in-out`}>
           <Indicators
             side="LONG"

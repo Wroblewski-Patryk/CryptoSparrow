@@ -78,7 +78,7 @@ export function Close({ data, setData }: CloseProps) {
 
   return (
     <div className="space-y-8">
-      <div className="flex gap-8">
+      <div className="flex flex-wrap gap-6">
         <label className="flex cursor-pointer items-center gap-2">
           <input
             type="radio"
@@ -150,7 +150,7 @@ export function Close({ data, setData }: CloseProps) {
                 <div className="mb-2 font-semibold">{copy.ttp}</div>
                 <div className="space-y-2">
                   {close.ttp.map((threshold, idx) => (
-                    <div key={`ttp-${idx}`} className="flex items-end gap-2">
+                    <div key={`ttp-${idx}`} className="grid grid-cols-1 items-end gap-2 sm:grid-cols-[1fr_1fr_auto]">
                       <div>
                         <label className="label">{copy.percent}</label>
                         <input
@@ -183,7 +183,7 @@ export function Close({ data, setData }: CloseProps) {
                       </div>
                       <button
                         type="button"
-                        className="btn btn-primary"
+                        className="btn btn-primary w-full sm:w-auto"
                         title={copy.removeThreshold}
                         onClick={() => removeThreshold("ttp", idx)}
                       >
@@ -201,7 +201,7 @@ export function Close({ data, setData }: CloseProps) {
                 <div className="mb-2 font-semibold">{copy.tsl}</div>
                 <div className="space-y-2">
                   {close.tsl.map((threshold, idx) => (
-                    <div key={`tsl-${idx}`} className="flex items-end gap-2">
+                    <div key={`tsl-${idx}`} className="grid grid-cols-1 items-end gap-2 sm:grid-cols-[1fr_1fr_auto]">
                       <div>
                         <label className="label">{copy.percent}</label>
                         <input
@@ -234,7 +234,7 @@ export function Close({ data, setData }: CloseProps) {
                       </div>
                       <button
                         type="button"
-                        className="btn btn-primary"
+                        className="btn btn-primary w-full sm:w-auto"
                         title={copy.removeThreshold}
                         onClick={() => removeThreshold("tsl", idx)}
                       >

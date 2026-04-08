@@ -131,7 +131,7 @@ export function PageTitle({
       </div>
 
       {onAdd && (
-        <button className={addButtonClassName ?? "btn btn-primary mt-4 md:mt-0"} onClick={onAdd}>
+        <button type="button" className={addButtonClassName ?? "btn btn-primary mt-4 md:mt-0"} onClick={onAdd}>
           {addLabel || t("dashboard.common.add")}
         </button>
       )}

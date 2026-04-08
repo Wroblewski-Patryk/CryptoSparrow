@@ -14,6 +14,7 @@ import { LuListChecks } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
 
 const STRATEGY_USED_BY_ACTIVE_BOT_ERROR = 'strategy is used by active bot and cannot be edited';
+const STRATEGY_FORM_ID = 'strategy-form-edit';
 
 export default function StrategiesEditPage() {
   const { locale, t } = useI18n();
@@ -31,10 +32,10 @@ export default function StrategiesEditPage() {
             activeBotTitle: 'Strategia jest aktualnie uzywana przez aktywnego bota',
             activeBotDescription: 'Wylacz bota lub ustaw go jako nieaktywny przed edycja strategii.',
             saveFailed: 'Blad zapisu strategii',
+            save: 'Zapisz strategie',
             titleFallback: 'Edycja strategii',
             breadcrumbStrategies: 'Strategie',
             breadcrumbEdit: 'Edycja',
-            addLabel: 'Nowa strategia',
             loading: 'Ladowanie strategii',
             errorTitle: 'Nie udalo sie pobrac strategii',
             backToList: 'Powrot do listy',
@@ -44,10 +45,10 @@ export default function StrategiesEditPage() {
             activeBotTitle: 'Strategy is currently used by an active bot',
             activeBotDescription: 'Disable the bot or set it inactive before editing strategy.',
             saveFailed: 'Failed to save strategy',
+            save: 'Save strategy',
             titleFallback: 'Edit strategy',
             breadcrumbStrategies: 'Strategies',
             breadcrumbEdit: 'Edit',
-            addLabel: 'New strategy',
             loading: 'Loading strategy',
             errorTitle: 'Could not load strategy',
             backToList: 'Back to list',
@@ -97,8 +98,12 @@ export default function StrategiesEditPage() {
           { label: copy.breadcrumbStrategies, href: '/dashboard/strategies/list' },
           { label: copy.breadcrumbEdit },
         ]}
-        onAdd={() => router.push('/dashboard/strategies/create')}
-        addLabel={copy.addLabel}
+        onAdd={() => {
+          const form = document.getElementById(STRATEGY_FORM_ID);
+          if (form instanceof HTMLFormElement) form.requestSubmit();
+        }}
+        addLabel={copy.save}
+        addButtonClassName='btn btn-success mt-4 md:mt-0'
       />
 
       {loading ? <LoadingState title={copy.loading} /> : null}
@@ -110,7 +115,7 @@ export default function StrategiesEditPage() {
           onRetry={() => router.push('/dashboard/strategies/list')}
         />
       ) : null}
-      {!loading && !error && initial ? <StrategiesForm initial={initial} onSubmit={handleUpdate} /> : null}
+      {!loading && !error && initial ? <StrategiesForm formId={STRATEGY_FORM_ID} initial={initial} onSubmit={handleUpdate} /> : null}
     </section>
   );
 }

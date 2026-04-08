@@ -341,8 +341,8 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
 
         return (
           <div key={idx} className="card bg-base-200 shadow-md mb-6">
-            <div className="flex justify-between items-center pb-2 px-4 pt-3">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 pb-2 px-4 pt-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2 min-w-0">
                 <button
                   type="button"
                   className="btn btn-xs btn-square"
@@ -357,11 +357,11 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                 </button>
                 <div className="text-sm flex items-center gap-2">
                   <span className="text-base-content/80">{getIndicatorGroupLabel(indicator.group, locale)}</span>
-                  <LuChevronRight className="text-base-content/60" />
-                  <span className="text-base-content">{getIndicatorDisplayName(indicator.name, locale)}</span>
+                  <LuChevronRight className="text-base-content/60 shrink-0" />
+                  <span className="text-base-content break-words">{getIndicatorDisplayName(indicator.name, locale)}</span>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 self-end sm:self-auto">
                 <div className="join">
                   <button
                     type="button"
@@ -463,7 +463,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                   ) : null}
                   <div className="flex flex-col gap-6">
                     <div>
-                      <div className={`grid gap-4 items-end ${isRangeCondition(indicator.condition) ? "grid-cols-1 md:grid-cols-3" : "grid-cols-2"}`}>
+                      <div className={`grid gap-4 items-end ${isRangeCondition(indicator.condition) ? "grid-cols-1 md:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}`}>
                         <div>
                           <label className="label mb-1 font-semibold">{copy.condition}</label>
                           <select

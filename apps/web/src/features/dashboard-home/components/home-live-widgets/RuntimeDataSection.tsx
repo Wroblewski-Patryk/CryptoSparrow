@@ -1,6 +1,7 @@
 import DataTable from "../../../../ui/components/DataTable";
 import Tabs from "../../../../ui/components/Tabs";
 import { SkeletonTableRows } from "../../../../ui/components/loading";
+import { TAB_CONTENT_FRAME_CLASS, TAB_CONTENT_INNER_CLASS } from "../../../../ui/components/tabContentFrame";
 import type {
   OpenPositionWithLive,
   OpenPositionsTableColumn,
@@ -62,9 +63,6 @@ type RuntimeDataSectionProps = {
 };
 
 export default function RuntimeDataSection(props: RuntimeDataSectionProps) {
-  const tabFrameClassName =
-    "rounded-box border-b-[3px] border-secondary/70 bg-gradient-to-br from-primary/70 to-secondary/70 p-px";
-
   return (
     <section>
         <Tabs
@@ -72,12 +70,14 @@ export default function RuntimeDataSection(props: RuntimeDataSectionProps) {
           value={props.runtimeDataTab}
           onChange={(value) => props.onRuntimeDataTabChange(value as RuntimeDataTab)}
           variant="border"
+          className="overflow-x-auto whitespace-nowrap"
+          tabClassName="shrink-0"
           syncWithHash
         />
 
       {props.runtimeDataTab === "OPEN_POSITIONS" ? (
-        <section className={tabFrameClassName}>
-          <div className="rounded-box bg-base-100/85">
+        <section className={TAB_CONTENT_FRAME_CLASS}>
+          <div className={TAB_CONTENT_INNER_CLASS}>
             <DataTable
               compact
               framed={false}
@@ -104,8 +104,8 @@ export default function RuntimeDataSection(props: RuntimeDataSectionProps) {
       ) : null}
 
       {props.runtimeDataTab === "OPEN_ORDERS" ? (
-        <section className={tabFrameClassName}>
-          <div className="rounded-box bg-base-100/85 p-3">
+        <section className={TAB_CONTENT_FRAME_CLASS}>
+          <div className={`${TAB_CONTENT_INNER_CLASS} p-3`}>
             <div className="rounded-box border border-dashed border-base-300/60 bg-base-100/40 px-4 py-6 text-center text-sm opacity-75">
               {props.openOrdersPlaceholderLabel}
             </div>
@@ -114,8 +114,8 @@ export default function RuntimeDataSection(props: RuntimeDataSectionProps) {
       ) : null}
 
       {props.runtimeDataTab === "TRADE_HISTORY" ? (
-        <section className={tabFrameClassName}>
-          <div className="rounded-box bg-base-100/85">
+        <section className={TAB_CONTENT_FRAME_CLASS}>
+          <div className={TAB_CONTENT_INNER_CLASS}>
             {props.tradesLoading ? (
               <>
                 <div className="hidden md:block">

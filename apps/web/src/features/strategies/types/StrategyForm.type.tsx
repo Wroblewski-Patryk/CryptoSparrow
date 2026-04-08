@@ -13,6 +13,7 @@ export type StrategyFormProps = {
     initial?: StrategyFormState;
     onSubmit?: (data: StrategyFormState) => Promise<void>;
     mode?: "create" | "edit";
+    formId?: string;
 };
 
 export type StrategyFormState = {

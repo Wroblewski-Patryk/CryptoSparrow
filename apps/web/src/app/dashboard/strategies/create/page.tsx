@@ -11,6 +11,8 @@ import { handleError } from '@/lib/handleError';
 import { LuListChecks } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
 
+const STRATEGY_FORM_ID = 'strategy-form-create';
+
 export default function StrategiesCreatePage() {
   const { locale, t } = useI18n();
   const router = useRouter();
@@ -22,6 +24,7 @@ export default function StrategiesCreatePage() {
             created: 'Strategia utworzona',
             createFailed: 'Blad tworzenia strategii',
             title: 'Nowa strategia',
+            save: 'Zapisz strategie',
             breadcrumbStrategies: 'Strategie',
             breadcrumbCreate: 'Tworzenie',
           }
@@ -29,6 +32,7 @@ export default function StrategiesCreatePage() {
             created: 'Strategy created',
             createFailed: 'Failed to create strategy',
             title: 'New strategy',
+            save: 'Save strategy',
             breadcrumbStrategies: 'Strategies',
             breadcrumbCreate: 'Create',
           },
@@ -55,9 +59,15 @@ export default function StrategiesCreatePage() {
           { label: copy.breadcrumbStrategies, href: '/dashboard/strategies/list' },
           { label: copy.breadcrumbCreate },
         ]}
+        onAdd={() => {
+          const form = document.getElementById(STRATEGY_FORM_ID);
+          if (form instanceof HTMLFormElement) form.requestSubmit();
+        }}
+        addLabel={copy.save}
+        addButtonClassName='btn btn-success mt-4 md:mt-0'
       />
 
-      <StrategiesForm onSubmit={handleCreate} />
+      <StrategiesForm formId={STRATEGY_FORM_ID} onSubmit={handleCreate} />
     </section>
   );
 }

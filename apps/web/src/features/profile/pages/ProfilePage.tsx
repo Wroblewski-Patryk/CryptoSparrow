@@ -10,6 +10,7 @@ import Security from "../components/Security";
 import { PageTitle } from "@/ui/layout/dashboard/PageTitle";
 import ExchangeConnectionsView from "../../exchanges/components/ExchangeConnectionsView";
 import Tabs from "@/ui/components/Tabs";
+import { TAB_CONTENT_FRAME_CLASS, TAB_CONTENT_INNER_CLASS } from "@/ui/components/tabContentFrame";
 
 type ProfileTabKey = "basic" | "api" | "subscription" | "security";
 
@@ -70,16 +71,19 @@ export default function ProfilePage() {
           value={activeTab}
           onChange={setActiveTab}
           variant="border"
-          className="mb-4"
+          className="overflow-x-auto whitespace-nowrap"
+          tabClassName="shrink-0"
           syncWithHash
         />
 
-        <div className="rounded-box border border-base-300 bg-base-100 p-4">
-          {activeTab === "basic" && <BasicForm />}
-          {activeTab === "api" && <ExchangeConnectionsView />}
-          {activeTab === "subscription" && <Subscription />}
-          {activeTab === "security" && <Security />}
-        </div>
+        <section className={TAB_CONTENT_FRAME_CLASS}>
+          <div className={`${TAB_CONTENT_INNER_CLASS} p-4`}>
+            {activeTab === "basic" && <BasicForm />}
+            {activeTab === "api" && <ExchangeConnectionsView />}
+            {activeTab === "subscription" && <Subscription />}
+            {activeTab === "security" && <Security />}
+          </div>
+        </section>
       </div>
     </section>
   );

@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { LuCog, LuDoorClosed, LuDoorOpen, LuPencilLine } from "react-icons/lu";
 import { useI18n } from "@/i18n/I18nProvider";
+import Tabs from "@/ui/components/Tabs";
+import { TAB_CONTENT_FRAME_CLASS, TAB_CONTENT_INNER_CLASS } from "@/ui/components/tabContentFrame";
 import { useStrategyForm } from "../hooks/useStrategyForm";
 import { StrategyFormProps } from "../types/StrategyForm.type";
 import { Additional } from "./StrategyFormSections/Additional";
@@ -10,9 +12,11 @@ import { Basic } from "./StrategyFormSections/Basic";
 import { Close } from "./StrategyFormSections/Close";
 import { Open } from "./StrategyFormSections/Open";
 
-export default function StrategyForm({ initial, onSubmit }: StrategyFormProps) {
+type StrategyFormStep = "basic" | "open" | "close" | "additional";
+
+export default function StrategyForm({ initial, onSubmit, formId = "strategy-form" }: StrategyFormProps) {
   const { locale } = useI18n();
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState<StrategyFormStep>("basic");
   const { form, setForm, setBasic, setOpenConditions, setCloseConditions, setAdditional } = useStrategyForm();
 
   useEffect(() => {
@@ -23,10 +27,6 @@ export default function StrategyForm({ initial, onSubmit }: StrategyFormProps) {
     () =>
       locale === "pl"
         ? {
-            title: "Kreator strategii",
-            save: "Zapisz strategie",
-            back: "Wstecz",
-            next: "Dalej",
             steps: {
               basic: "Podstawowe informacje",
               open: "Warunki otwarcia",
@@ -35,10 +35,6 @@ export default function StrategyForm({ initial, onSubmit }: StrategyFormProps) {
             },
           }
         : {
-            title: "Strategy builder",
-            save: "Save strategy",
-            back: "Back",
-            next: "Next",
             steps: {
               basic: "Basic information",
               open: "Entry conditions",
@@ -51,10 +47,10 @@ export default function StrategyForm({ initial, onSubmit }: StrategyFormProps) {
 
   const steps = useMemo(
     () => [
-      { label: copy.steps.basic, icon: <LuPencilLine className="h-5 w-5" /> },
-      { label: copy.steps.open, icon: <LuDoorOpen className="h-5 w-5" /> },
-      { label: copy.steps.close, icon: <LuDoorClosed className="h-5 w-5" /> },
-      { label: copy.steps.additional, icon: <LuCog className="h-5 w-5" /> },
+      { key: "basic" as const, label: copy.steps.basic, icon: <LuPencilLine className="h-4 w-4" aria-hidden /> },
+      { key: "open" as const, label: copy.steps.open, icon: <LuDoorOpen className="h-4 w-4" aria-hidden /> },
+      { key: "close" as const, label: copy.steps.close, icon: <LuDoorClosed className="h-4 w-4" aria-hidden /> },
+      { key: "additional" as const, label: copy.steps.additional, icon: <LuCog className="h-4 w-4" aria-hidden /> },
     ],
     [copy.steps],
   );
@@ -65,62 +61,26 @@ export default function StrategyForm({ initial, onSubmit }: StrategyFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="grid w-full grid-cols-1 md:grid-cols-4">
-        <div className="md:col-span-1">
-          <h2 className="mb-4 flex items-center text-3xl">{copy.title}</h2>
-          <ul className="steps steps-vertical">
-            {steps.map((step, index) => (
-              <li
-                key={step.label}
-                className={`step cursor-pointer ${index <= currentStep ? "step-primary" : ""}`}
-                onClick={() => setCurrentStep(index)}
-              >
-                <span className="step-icon">{step.icon}</span>
-                <span className="hidden md:inline">{step.label}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="md:col-span-3">
-          <div className="flex gap-2">
-            <h2 className="flex items-center gap-3 text-2xl">
-              <span className="text-primary">{steps[currentStep]?.icon}</span>
-              {steps[currentStep]?.label}
-            </h2>
-            <button type="submit" className="btn btn-success ml-auto">
-              {copy.save}
-            </button>
+    <form id={formId} onSubmit={handleSubmit}>
+      <div className="w-full">
+        <Tabs
+          items={steps}
+          value={currentStep}
+          onChange={(value) => setCurrentStep(value as StrategyFormStep)}
+          variant="border"
+          className="overflow-x-auto whitespace-nowrap"
+          tabClassName="shrink-0"
+          syncWithHash
+        />
+
+        <section className={TAB_CONTENT_FRAME_CLASS}>
+          <div className={`${TAB_CONTENT_INNER_CLASS} p-4 sm:p-5`}>
+            {currentStep === "basic" && <Basic data={form} setData={setBasic} />}
+            {currentStep === "open" && <Open data={form.openConditions} setData={setOpenConditions} />}
+            {currentStep === "close" && <Close data={form.closeConditions} setData={setCloseConditions} />}
+            {currentStep === "additional" && <Additional data={form.additional} setData={setAdditional} />}
           </div>
-
-          <hr className="my-8 border-t border-base-200" />
-
-          {currentStep === 0 && <Basic data={form} setData={setBasic} />}
-          {currentStep === 1 && <Open data={form.openConditions} setData={setOpenConditions} />}
-          {currentStep === 2 && <Close data={form.closeConditions} setData={setCloseConditions} />}
-          {currentStep === 3 && <Additional data={form.additional} setData={setAdditional} />}
-
-          <hr className="my-8 border-t border-base-200" />
-
-          <div className="mt-8 mb-8 flex justify-between">
-            <button
-              type="button"
-              className="btn"
-              disabled={currentStep === 0}
-              onClick={() => setCurrentStep(currentStep - 1)}
-            >
-              {copy.back}
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={currentStep === steps.length - 1}
-              onClick={() => setCurrentStep(currentStep + 1)}
-            >
-              {copy.next}
-            </button>
-          </div>
-        </div>
+        </section>
       </div>
     </form>
   );
