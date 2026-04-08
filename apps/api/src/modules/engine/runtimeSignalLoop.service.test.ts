@@ -570,6 +570,43 @@ describe('RuntimeSignalLoop', () => {
     expect(evaluation.indicatorSummary).toContain('ORDER_BOOK_IMBALANCE');
   });
 
+  it('fails closed for derivatives rules when runtime derivative snapshots are missing', () => {
+    const { deps } = createDeps();
+    const loop = new RuntimeSignalLoop(deps);
+
+    const key = 'FUTURES|BTCUSDT|1m';
+    (loop as any).candleSeries.set(key, [
+      { openTime: 0, closeTime: 59_000, open: 100, high: 101, low: 99, close: 100, volume: 1000 },
+      { openTime: 60_000, closeTime: 119_000, open: 101, high: 102, low: 100, close: 101, volume: 1000 },
+      { openTime: 120_000, closeTime: 179_000, open: 102, high: 103, low: 101, close: 102, volume: 1000 },
+      { openTime: 180_000, closeTime: 239_000, open: 103, high: 104, low: 102, close: 103, volume: 1000 },
+      { openTime: 240_000, closeTime: 299_000, open: 104, high: 105, low: 103, close: 104, volume: 1000 },
+    ]);
+
+    const fundingEvaluation = (loop as any).evaluateStrategy({
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      strategy: strategyFundingLong,
+      decisionOpenTime: 240_000,
+    });
+    const openInterestEvaluation = (loop as any).evaluateStrategy({
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      strategy: strategyOpenInterestShort,
+      decisionOpenTime: 240_000,
+    });
+    const orderBookEvaluation = (loop as any).evaluateStrategy({
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      strategy: strategyOrderBookLong,
+      decisionOpenTime: 240_000,
+    });
+
+    expect(fundingEvaluation.direction).toBeNull();
+    expect(openInterestEvaluation.direction).toBeNull();
+    expect(orderBookEvaluation.direction).toBeNull();
+  });
+
   it('deduplicates duplicate final-candle window events', async () => {
     const { deps, emit } = createDeps();
     withStrategyBot(deps);

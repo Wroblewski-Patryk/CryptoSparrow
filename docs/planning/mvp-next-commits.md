@@ -7,14 +7,15 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `IND-31 test(futures-filters): add fail-closed fallback tests when derivatives snapshots are missing`
-## NEXT
 - [ ] `IND-32 feat(web-groups): apply new indicator taxonomy groups in strategy creator with EN/PL labels`
+## NEXT
 - [ ] `IND-33 feat(backtest-ui): support multi-line overlays and boolean pattern markers in timeline rendering`
+- [ ] `IND-34 feat(presets): add trader archetype presets (scalp/day trend/swing/mean reversion/breakout/perp bias)`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `IND-31 test(futures-filters): add fail-closed fallback tests when derivatives snapshots are missing`
 - [x] `IND-30 feat(futures-filter): add order-book filters (imbalance/spread/depth ratio) for futures strategies`
 - [x] `IND-29 feat(futures-filter): add open-interest filters (delta/MA/z-score) for futures strategies`
 - [x] `IND-28 feat(futures-filter): add funding-rate filters (absolute + z-score) for futures strategies`

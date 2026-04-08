@@ -533,6 +533,54 @@ describe('strategySignalEvaluator', () => {
     ).toBe('LONG');
   });
 
+  it('fails closed for derivatives indicators when snapshots are missing', () => {
+    const candlesForDerivatives = [{ close: 100 }, { close: 101 }, { close: 102 }, { close: 103 }, { close: 104 }];
+    const cases = [
+      {
+        strategy: {
+          open: {
+            direction: 'long',
+            indicatorsLong: [{ name: 'FUNDING_RATE', condition: '<', value: 0, params: {} }],
+            indicatorsShort: [],
+          },
+        },
+      },
+      {
+        strategy: {
+          open: {
+            direction: 'long',
+            indicatorsLong: [{ name: 'OPEN_INTEREST_DELTA', condition: '>', value: 200, params: {} }],
+            indicatorsShort: [],
+          },
+        },
+      },
+      {
+        strategy: {
+          open: {
+            direction: 'long',
+            indicatorsLong: [{ name: 'ORDER_BOOK_IMBALANCE', condition: '>', value: 0.2, params: {} }],
+            indicatorsShort: [],
+          },
+        },
+      },
+    ] as const;
+
+    for (const entry of cases) {
+      const rules = parseStrategySignalRules(entry.strategy);
+      expect(rules).not.toBeNull();
+      if (!rules) continue;
+
+      expect(
+        evaluateStrategySignalAtIndex(rules, candlesForDerivatives, 4, new Map()),
+      ).toBeNull();
+      expect(
+        evaluateStrategySignalAtIndex(rules, candlesForDerivatives, 4, new Map(), {
+          derivatives: {},
+        }),
+      ).toBeNull();
+    }
+  });
+
   it('supports engulfing candle-pattern comparator evaluation', () => {
     const longRules = parseStrategySignalRules({
       open: {

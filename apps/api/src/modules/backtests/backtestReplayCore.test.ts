@@ -179,6 +179,58 @@ describe('simulateTradesForSymbolReplay', () => {
     expect(result.eventCounts.ENTRY).toBeGreaterThanOrEqual(1);
   });
 
+  it('fails closed for derivatives strategies when derivatives snapshots are missing', () => {
+    const candles = [
+      candle(0, 100),
+      candle(1, 101),
+      candle(2, 102),
+      candle(3, 103),
+      candle(4, 104),
+    ];
+
+    const strategyConfigs = [
+      {
+        open: {
+          direction: 'long',
+          indicatorsLong: [{ name: 'FUNDING_RATE', condition: '<', value: 0, params: {} }],
+          indicatorsShort: [],
+        },
+      },
+      {
+        open: {
+          direction: 'long',
+          indicatorsLong: [{ name: 'OPEN_INTEREST_ZSCORE', condition: '>', value: 1, params: { zScorePeriod: 3 } }],
+          indicatorsShort: [],
+        },
+      },
+      {
+        open: {
+          direction: 'long',
+          indicatorsLong: [{ name: 'ORDER_BOOK_IMBALANCE', condition: '>', value: 0.2, params: {} }],
+          indicatorsShort: [],
+        },
+      },
+    ] as const;
+
+    for (const strategyConfig of strategyConfigs) {
+      const result = simulateTradesForSymbolReplay({
+        symbol: 'BTCUSDT',
+        candles,
+        marketType: 'FUTURES',
+        leverage: 2,
+        marginMode: 'CROSSED',
+        strategyConfig: {
+          ...strategyConfig,
+          close: { tp: 99, sl: 99, tsl: [{ percent: 99, arm: 1 }] },
+          additional: { dcaTimes: 0 },
+        },
+      });
+
+      expect(result.eventCounts.ENTRY).toBe(0);
+      expect(result.trades).toHaveLength(0);
+    }
+  });
+
   it('emits lifecycle actions (DCA/TRAILING/EXIT) for timeline/reporting', () => {
     const candles = [
       candle(0, 100),
