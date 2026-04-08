@@ -23,7 +23,7 @@ Deliver a broad, trader-friendly indicator and candle-pattern set that works end
   - `EMA`, `RSI`, fallback `MOMENTUM`
   - source: `apps/api/src/modules/backtests/backtests.service.ts`
 - Runtime final-candle evaluator currently stores candle series as:
-  - `openTime`, `close` only
+  - `openTime`, `closeTime`, `open`, `high`, `low`, `close`, `volume`
   - source: `apps/api/src/modules/engine/runtimeSignalLoop.service.ts`
 - Data sources already available in platform:
   - OHLCV + funding rate + open interest + order book snapshots
@@ -116,7 +116,7 @@ Replace current broad groups with explicit trader-facing groups:
 - [x] `IND-04 test(parity-baseline): lock parity for existing EMA/RSI/MOMENTUM behavior across runtime/backtest`
 
 ### Phase B - Runtime Candle Model Upgrade (OHLCV Ready)
-- [ ] `IND-05 refactor(runtime-series): upgrade runtime candle buffer from close-only to OHLCV candle objects`
+- [x] `IND-05 refactor(runtime-series): upgrade runtime candle buffer from close-only to OHLCV candle objects`
 - [ ] `IND-06 refactor(runtime-warmup): fetch/store OHLCV warmup candles and keep final-candle decision indexing deterministic`
 - [ ] `IND-07 test(runtime-series): add regression coverage for OHLCV buffer updates, dedupe, and interval matching`
 

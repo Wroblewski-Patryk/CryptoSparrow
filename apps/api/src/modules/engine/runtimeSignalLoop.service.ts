@@ -279,7 +279,12 @@ const runtimeAutoRestartWindowMs = Math.max(
 
 type RuntimeCandle = {
   openTime: number;
+  closeTime: number;
+  open: number;
+  high: number;
+  low: number;
   close: number;
+  volume: number;
 };
 
 type StrategyVote = {
@@ -842,7 +847,12 @@ export class RuntimeSignalLoop {
     const series = this.candleSeries.get(key) ?? [];
     const nextCandle = {
       openTime: event.openTime,
+      closeTime: event.closeTime,
+      open: event.open,
+      high: event.high,
+      low: event.low,
       close: event.close,
+      volume: event.volume,
     };
     const previousIndex = series.findIndex((candle) => candle.openTime === event.openTime);
     if (previousIndex >= 0) {
@@ -892,13 +902,31 @@ export class RuntimeSignalLoop {
         .map((item) => {
           if (!Array.isArray(item)) return null;
           const openTime = Number(item[0]);
+          const open = Number(item[1]);
+          const high = Number(item[2]);
+          const low = Number(item[3]);
           const close = Number(item[4]);
+          const volume = Number(item[5]);
           const closeTime = Number(item[6]);
-          if (!Number.isFinite(openTime) || !Number.isFinite(close)) return null;
+          if (!Number.isFinite(openTime) || !Number.isFinite(closeTime)) return null;
+          if (
+            !Number.isFinite(open) ||
+            !Number.isFinite(high) ||
+            !Number.isFinite(low) ||
+            !Number.isFinite(close) ||
+            !Number.isFinite(volume)
+          ) {
+            return null;
+          }
           if (Number.isFinite(closeTime) && closeTime > now) return null;
           return {
             openTime,
+            closeTime,
+            open,
+            high,
+            low,
             close,
+            volume,
           } satisfies RuntimeCandle;
         })
         .filter((item): item is RuntimeCandle => Boolean(item))
