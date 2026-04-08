@@ -23,6 +23,7 @@ import {
   computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
+  computeStochRsiSeriesFromCloses,
 } from './sharedIndicatorSeries';
 import { computeRiskBasedOrderQuantity, normalizeWalletRiskPercent } from './positionSizing';
 import { resolveRuntimeDcaFundsExhausted, resolveRuntimeReferenceBalance } from './runtimeCapitalContext.service';
@@ -1586,6 +1587,22 @@ export class RuntimeSignalLoop {
         histogram: indicatorCache.get(histogramKey)!,
       };
     };
+    const ensureStochRsi = (period: number, stochPeriod: number, smoothK: number, smoothD: number) => {
+      const baseKey = `STOCHRSI_${period}_${stochPeriod}_${smoothK}_${smoothD}`;
+      const kKey = `${baseKey}_K`;
+      const dKey = `${baseKey}_D`;
+
+      if (!indicatorCache.has(kKey) || !indicatorCache.has(dKey)) {
+        const stochRsi = computeStochRsiSeriesFromCloses(closes, period, stochPeriod, smoothK, smoothD);
+        indicatorCache.set(kKey, stochRsi.k);
+        indicatorCache.set(dKey, stochRsi.d);
+      }
+
+      return {
+        k: indicatorCache.get(kKey)!,
+        d: indicatorCache.get(dKey)!,
+      };
+    };
 
     const conditionLines: RuntimeSignalConditionLine[] = [];
     const indicatorParts: string[] = [];
@@ -1682,6 +1699,37 @@ export class RuntimeSignalLoop {
         if (!indicatorKeys.has(`ROC(${period})`)) {
           indicatorKeys.add(`ROC(${period})`);
           indicatorParts.push(`ROC(${period})=${formatIndicatorValue(value)}`);
+        }
+        return;
+      }
+
+      if (indicator.includes('STOCHRSI')) {
+        const period = clampPeriod(rule.params.period ?? rule.params.rsiPeriod, 14);
+        const stochPeriod = clampPeriod(rule.params.stochPeriod ?? period, 14);
+        const smoothK = clampPeriod(rule.params.smoothK, 3);
+        const smoothD = clampPeriod(rule.params.smoothD, 3);
+        const stochRsi = ensureStochRsi(period, stochPeriod, smoothK, smoothD);
+        const kValue = stochRsi.k[decisionIndex];
+        const dValue = stochRsi.d[decisionIndex];
+
+        conditionLines.push({
+          scope,
+          left: `STOCHRSI(${period},${stochPeriod},${smoothK},${smoothD})`,
+          value: formatIndicatorValue(kValue),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has(`STOCHRSI_K(${period},${stochPeriod},${smoothK},${smoothD})`)) {
+          indicatorKeys.add(`STOCHRSI_K(${period},${stochPeriod},${smoothK},${smoothD})`);
+          indicatorParts.push(
+            `STOCHRSI_K(${period},${stochPeriod},${smoothK},${smoothD})=${formatIndicatorValue(kValue)}`,
+          );
+        }
+        if (!indicatorKeys.has(`STOCHRSI_D(${period},${stochPeriod},${smoothK},${smoothD})`)) {
+          indicatorKeys.add(`STOCHRSI_D(${period},${stochPeriod},${smoothK},${smoothD})`);
+          indicatorParts.push(
+            `STOCHRSI_D(${period},${stochPeriod},${smoothK},${smoothD})=${formatIndicatorValue(dValue)}`,
+          );
         }
         return;
       }

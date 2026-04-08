@@ -129,7 +129,7 @@ Replace current broad groups with explicit trader-facing groups:
 - [x] `IND-11 feat(indicator): add SMA end-to-end (catalog + evaluator + backtest timeline + tests)`
 - [x] `IND-12 feat(indicator): add MACD end-to-end (line/signal/histogram + tests)`
 - [x] `IND-13 feat(indicator): add ROC end-to-end (+ tests)`
-- [ ] `IND-14 feat(indicator): add StochRSI end-to-end (+ tests)`
+- [x] `IND-14 feat(indicator): add StochRSI end-to-end (+ tests)`
 
 ### Phase E - OHLC Indicator Expansion
 - [ ] `IND-15 feat(indicator): implement true Bollinger Bands end-to-end (upper/mid/lower, bandwidth, percentB)`

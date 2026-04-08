@@ -83,4 +83,28 @@ describe('backtest indicator timeline series', () => {
     const series = buildIndicatorSeriesForTests(candles, specs);
     expect(series[0].values).toEqual([null, null, 20, 18.181818181818183]);
   });
+
+  it('builds STOCHRSI K/D channels for timeline overlays', () => {
+    const specs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [
+          {
+            name: 'STOCHRSI',
+            params: { period: 3, stochPeriod: 3, smoothK: 2, smoothD: 2 },
+            condition: '>',
+            value: 50,
+          },
+        ],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(specs).toHaveLength(2);
+    expect(specs.map((item) => item.key)).toEqual([
+      'STOCHRSI_K_3_3_2_2',
+      'STOCHRSI_D_3_3_2_2',
+    ]);
+    const series = buildIndicatorSeriesForTests(candles, specs);
+    expect(series.every((item) => item.panel === 'oscillator')).toBe(true);
+  });
 });

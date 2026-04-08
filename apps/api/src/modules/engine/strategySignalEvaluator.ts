@@ -6,6 +6,7 @@ import {
   computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
+  computeStochRsiSeriesFromCloses,
 } from './sharedIndicatorSeries';
 
 export type StrategySignalDirection = 'LONG' | 'SHORT' | 'EXIT';
@@ -372,6 +373,34 @@ const resolveSeries = (params: {
     const series = params.cache.get(key) ?? computeRocSeriesFromCloses(params.closes, period);
     params.cache.set(key, series);
     return series;
+  }
+
+  if (name.includes('STOCHRSI')) {
+    const period = clampPeriod(params.indicatorParams.period ?? params.indicatorParams.rsiPeriod, 14);
+    const stochPeriod = clampPeriod(params.indicatorParams.stochPeriod ?? period, 14);
+    const smoothK = clampPeriod(params.indicatorParams.smoothK, 3);
+    const smoothD = clampPeriod(params.indicatorParams.smoothD, 3);
+    const baseKey = `STOCHRSI_${period}_${stochPeriod}_${smoothK}_${smoothD}`;
+    const kKey = `${baseKey}_K`;
+    const dKey = `${baseKey}_D`;
+
+    if (!params.cache.has(kKey) || !params.cache.has(dKey)) {
+      const stochRsi = computeStochRsiSeriesFromCloses(
+        params.closes,
+        period,
+        stochPeriod,
+        smoothK,
+        smoothD,
+      );
+      params.cache.set(kKey, stochRsi.k);
+      params.cache.set(dKey, stochRsi.d);
+    }
+
+    if (name.includes('STOCHRSI_D') || name.includes('STOCHRSI_SIGNAL')) {
+      return params.cache.get(dKey) ?? null;
+    }
+
+    return params.cache.get(kKey) ?? null;
   }
 
   if (name.includes('MOMENTUM')) {

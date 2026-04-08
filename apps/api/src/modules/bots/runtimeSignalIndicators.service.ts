@@ -6,6 +6,7 @@ export {
   computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
+  computeStochRsiSeriesFromCloses,
 } from '../engine/sharedIndicatorSeries';
 
 export const formatIndicatorValue = (value: number | null | undefined) => {

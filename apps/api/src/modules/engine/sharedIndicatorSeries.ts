@@ -53,6 +53,29 @@ export const computeSmaSeriesFromCloses = (
   return output;
 };
 
+const computeSmaSeriesFromNullableValues = (
+  values: Array<number | null>,
+  period: number
+): Array<number | null> => {
+  const output: Array<number | null> = [];
+  for (let index = 0; index < values.length; index += 1) {
+    if (index + 1 < period) {
+      output.push(null);
+      continue;
+    }
+
+    const window = values.slice(index - period + 1, index + 1);
+    if (window.some((item) => typeof item !== 'number' || !Number.isFinite(item))) {
+      output.push(null);
+      continue;
+    }
+
+    const sum = window.reduce<number>((acc, item) => acc + (item as number), 0);
+    output.push(sum / period);
+  }
+  return output;
+};
+
 const computeEmaSeriesFromNullableValues = (
   values: Array<number | null>,
   period: number
@@ -110,6 +133,36 @@ export const computeMacdSeriesFromCloses = (
     signal,
     histogram,
   };
+};
+
+export const computeStochRsiSeriesFromCloses = (
+  closes: number[],
+  rsiPeriod: number,
+  stochPeriod: number,
+  smoothK: number,
+  smoothD: number
+): {
+  k: Array<number | null>;
+  d: Array<number | null>;
+} => {
+  const rsi = computeRsiSeriesFromCloses(closes, rsiPeriod);
+  const rawStoch = rsi.map((value, index) => {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+    if (index + 1 < stochPeriod) return null;
+
+    const window = rsi.slice(index - stochPeriod + 1, index + 1);
+    const numericWindow = window.filter((item): item is number => typeof item === 'number' && Number.isFinite(item));
+    if (numericWindow.length !== stochPeriod) return null;
+    const highest = Math.max(...numericWindow);
+    const lowest = Math.min(...numericWindow);
+    if (highest === lowest) return null;
+
+    return ((value - lowest) / (highest - lowest)) * 100;
+  });
+
+  const k = computeSmaSeriesFromNullableValues(rawStoch, smoothK);
+  const d = computeSmaSeriesFromNullableValues(k, smoothD);
+  return { k, d };
 };
 
 export const computeRsiSeriesFromCloses = (

@@ -95,4 +95,35 @@ export const indicators = [
       },
     ],
   },
+  {
+    name: "STOCHRSI",
+    group: "Analiza techniczna",
+    type: "oscillator",
+    params: [
+      {
+        name: "period",
+        default: 14,
+        min: 2,
+        max: 255,
+      },
+      {
+        name: "stochPeriod",
+        default: 14,
+        min: 2,
+        max: 255,
+      },
+      {
+        name: "smoothK",
+        default: 3,
+        min: 2,
+        max: 50,
+      },
+      {
+        name: "smoothD",
+        default: 3,
+        min: 2,
+        max: 50,
+      },
+    ],
+  },
 ];

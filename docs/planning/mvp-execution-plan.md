@@ -634,7 +634,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `IND-11 feat(indicator): add SMA end-to-end (catalog + evaluator + backtest timeline + tests)`
 - [x] `IND-12 feat(indicator): add MACD end-to-end (line/signal/histogram + tests)`
 - [x] `IND-13 feat(indicator): add ROC end-to-end (+ tests)`
-- [ ] `IND-14 feat(indicator): add StochRSI end-to-end (+ tests)`
+- [x] `IND-14 feat(indicator): add StochRSI end-to-end (+ tests)`
 - [ ] `IND-15 feat(indicator): implement true Bollinger Bands end-to-end (upper/mid/lower, bandwidth, percentB)`
 - [ ] `IND-16 feat(indicator): add ATR end-to-end`
 - [ ] `IND-17 feat(indicator): add ADX + DI+/DI- end-to-end`
@@ -659,6 +659,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
 
 ## Progress Log
+- 2026-04-08: Completed `IND-14` by adding StochRSI end-to-end with shared `%K/%D` compute channels, evaluator/runtime support (defaulting signal checks to `%K`), timeline overlay channels, and parity/catalog regression tests.
 - 2026-04-08: Completed `IND-13` by adding ROC as first-class indicator across catalog, shared evaluator/runtime resolution, runtime condition-line summary, and backtest timeline/parity channels with dedicated ROC regression coverage.
 - 2026-04-08: Completed `IND-12` by implementing MACD end-to-end (indicator catalog, shared evaluator with `MACD/MACD_SIGNAL/MACD_HIST` series resolution, runtime signal-summary channels, and backtest timeline multi-channel overlays for line/signal/histogram) with dedicated parity/timeline/evaluator regressions.
 - 2026-04-08: Completed `IND-11` by adding SMA end-to-end across strategy indicator catalog, shared evaluator/runtime series resolution, runtime condition-line/signal-summary rendering, and backtest timeline indicator-series builder with dedicated SMA catalog/parity/timeline regression tests.

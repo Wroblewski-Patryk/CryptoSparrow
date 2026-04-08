@@ -142,6 +142,43 @@ describe('strategySignalEvaluator', () => {
     expect(direction).toBe('LONG');
   });
 
+  it('supports STOCHRSI comparator evaluation', () => {
+    const rules = parseStrategySignalRules({
+      open: {
+        direction: 'long',
+        indicatorsLong: [
+          {
+            name: 'STOCHRSI',
+            condition: '>',
+            value: -1,
+            params: { period: 3, stochPeriod: 3, smoothK: 2, smoothD: 2 },
+          },
+        ],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(rules).not.toBeNull();
+    if (!rules) return;
+
+    const direction = evaluateStrategySignalAtIndex(
+      rules,
+      [
+        { close: 100 },
+        { close: 99 },
+        { close: 100 },
+        { close: 101 },
+        { close: 102 },
+        { close: 101 },
+        { close: 103 },
+        { close: 104 },
+      ],
+      7,
+      new Map(),
+    );
+    expect(direction).toBe('LONG');
+  });
+
   it('supports CROSS_ABOVE and CROSS_BELOW operators', () => {
     const crossAbove = parseStrategySignalRules({
       open: {

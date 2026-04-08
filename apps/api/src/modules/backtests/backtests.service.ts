@@ -15,6 +15,7 @@ import {
   computeRocSeriesFromCloses,
   computeRsiSeriesFromCloses,
   computeSmaSeriesFromCloses,
+  computeStochRsiSeriesFromCloses,
 } from '../engine/sharedIndicatorSeries';
 import {
   computeRiskBasedOrderQuantity,
@@ -130,9 +131,9 @@ type IndicatorSpec = {
   name: string;
   period: number;
   panel: 'price' | 'oscillator';
-  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC';
+  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI';
   params: Record<string, number>;
-  channel?: 'LINE' | 'SIGNAL' | 'HISTOGRAM';
+  channel?: 'LINE' | 'SIGNAL' | 'HISTOGRAM' | 'K' | 'D';
 };
 
 const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
@@ -1143,6 +1144,34 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
       ];
     }
 
+    if (name.includes('STOCHRSI') && params) {
+      const period = asPeriod(params.period ?? params.rsiPeriod, 14);
+      const stochPeriod = asPeriod(params.stochPeriod, period);
+      const smoothK = asPeriod(params.smoothK, 3);
+      const smoothD = asPeriod(params.smoothD, 3);
+      const warmup = period + stochPeriod + smoothK + smoothD;
+      return [
+        {
+          key: `${name}_K_${period}_${stochPeriod}_${smoothK}_${smoothD}`,
+          name: `${name} K`,
+          period: warmup,
+          panel: 'oscillator' as const,
+          source: 'STOCHRSI' as const,
+          params: { period, stochPeriod, smoothK, smoothD },
+          channel: 'K' as const,
+        },
+        {
+          key: `${name}_D_${period}_${stochPeriod}_${smoothK}_${smoothD}`,
+          name: `${name} D`,
+          period: warmup,
+          panel: 'oscillator' as const,
+          source: 'STOCHRSI' as const,
+          params: { period, stochPeriod, smoothK, smoothD },
+          channel: 'D' as const,
+        },
+      ];
+    }
+
     const periodCandidate = params && typeof params.period !== 'undefined'
       ? Number(params.period)
       : params && typeof params.length !== 'undefined'
@@ -1152,6 +1181,8 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
     const source: IndicatorSpec['source'] =
       name.includes('SMA')
         ? 'SMA'
+        : name.includes('STOCHRSI')
+          ? 'STOCHRSI'
         : name.includes('ROC')
           ? 'ROC'
         : name.includes('RSI')
@@ -1229,6 +1260,24 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
         return macd.line;
       }
 
+      if (spec.source === 'STOCHRSI') {
+        const period = spec.params.period ?? 14;
+        const stochPeriod = spec.params.stochPeriod ?? period;
+        const smoothK = spec.params.smoothK ?? 3;
+        const smoothD = spec.params.smoothD ?? 3;
+        const key = `${period}_${stochPeriod}_${smoothK}_${smoothD}`;
+        if (!macdCache.has(`STOCHRSI_${key}`)) {
+          const stochRsi = computeStochRsiSeriesFromCloses(closes, period, stochPeriod, smoothK, smoothD);
+          macdCache.set(`STOCHRSI_${key}`, {
+            line: stochRsi.k,
+            signal: stochRsi.d,
+            histogram: [],
+          });
+        }
+        const stochRsi = macdCache.get(`STOCHRSI_${key}`)!;
+        return spec.channel === 'D' ? stochRsi.signal : stochRsi.line;
+      }
+
       const period = spec.params.period ?? spec.period;
       return computeMomentumSeriesFromCloses(closes, period);
     })();
@@ -1260,9 +1309,9 @@ export const buildIndicatorSeriesForTests = (
     name: string;
     period: number;
     panel: 'price' | 'oscillator';
-    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC';
+    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI';
     params: Record<string, number>;
-    channel?: 'LINE' | 'SIGNAL' | 'HISTOGRAM';
+    channel?: 'LINE' | 'SIGNAL' | 'HISTOGRAM' | 'K' | 'D';
   }>,
 ) => buildIndicatorSeries(candles as KlineCandle[], specs as IndicatorSpec[]);
 
