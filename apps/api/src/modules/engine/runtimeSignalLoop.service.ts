@@ -865,12 +865,18 @@ export class RuntimeSignalLoop {
       series.splice(0, series.length - maxCandlesPerSeries);
     }
     this.candleSeries.set(key, series);
-    await this.ensureSeriesWarmup(event.marketType, event.symbol, event.interval);
+    await this.ensureSeriesWarmup(event.marketType, event.symbol, event.interval, event.closeTime);
     await this.processPositionAutomationFallbackFromCandle(event);
     await this.handleFinalCandleDecision(event);
   }
 
-  private warmupUrl(marketType: 'FUTURES' | 'SPOT', symbol: string, interval: string, limit: number) {
+  private warmupUrl(
+    marketType: 'FUTURES' | 'SPOT',
+    symbol: string,
+    interval: string,
+    limit: number,
+    endTimeMs?: number
+  ) {
     const base =
       marketType === 'SPOT'
         ? process.env.BINANCE_SPOT_REST_URL ?? 'https://api.binance.com'
@@ -881,6 +887,9 @@ export class RuntimeSignalLoop {
       interval: normalizeInterval(interval),
       limit: String(Math.min(1000, Math.max(20, limit))),
     });
+    if (Number.isFinite(endTimeMs)) {
+      params.set('endTime', String(Math.floor(endTimeMs as number)));
+    }
     return `${base}${endpoint}?${params.toString()}`;
   }
 
@@ -888,16 +897,20 @@ export class RuntimeSignalLoop {
     marketType: 'FUTURES' | 'SPOT',
     symbol: string,
     interval: string,
-    limit: number
+    limit: number,
+    endTimeMs?: number
   ): Promise<RuntimeCandle[]> {
     if (process.env.NODE_ENV === 'test') return [];
-    const url = this.warmupUrl(marketType, symbol, interval, limit);
+    const url = this.warmupUrl(marketType, symbol, interval, limit, endTimeMs);
     try {
       const response = await fetch(url, { method: 'GET' });
       if (!response.ok) return [];
       const payload = (await response.json()) as unknown;
       if (!Array.isArray(payload)) return [];
       const now = Date.now();
+      const closeTimeCutoff = Number.isFinite(endTimeMs)
+        ? Math.floor(endTimeMs as number)
+        : now;
       return payload
         .map((item) => {
           if (!Array.isArray(item)) return null;
@@ -918,7 +931,7 @@ export class RuntimeSignalLoop {
           ) {
             return null;
           }
-          if (Number.isFinite(closeTime) && closeTime > now) return null;
+          if (Number.isFinite(closeTime) && closeTime > closeTimeCutoff) return null;
           return {
             openTime,
             closeTime,
@@ -939,7 +952,8 @@ export class RuntimeSignalLoop {
   private async ensureSeriesWarmup(
     marketType: 'FUTURES' | 'SPOT',
     symbol: string,
-    interval: string
+    interval: string,
+    endTimeMs?: number
   ) {
     if (!runtimeSignalWarmupEnabled) return;
     const normalizedInterval = normalizeInterval(interval);
@@ -956,7 +970,8 @@ export class RuntimeSignalLoop {
       marketType,
       symbol,
       normalizedInterval,
-      runtimeSignalWarmupCandles
+      runtimeSignalWarmupCandles,
+      endTimeMs
     );
     if (fetched.length === 0) return;
 
@@ -1501,8 +1516,14 @@ export class RuntimeSignalLoop {
     }
     const latestIndex = candles.length - 1;
     const decisionIndex = (() => {
-      const index = candles.findIndex((candle) => candle.openTime === decisionOpenTime);
-      return index >= 0 ? index : latestIndex;
+      const exactIndex = candles.findIndex((candle) => candle.openTime === decisionOpenTime);
+      if (exactIndex >= 0) return exactIndex;
+
+      for (let index = candles.length - 1; index >= 0; index -= 1) {
+        if (candles[index].openTime <= decisionOpenTime) return index;
+      }
+
+      return latestIndex;
     })();
     const closes = candles.map((candle) => candle.close);
     const indicatorCache = new Map<string, Array<number | null>>();

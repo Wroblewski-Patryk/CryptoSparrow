@@ -626,7 +626,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `IND-03 refactor(engine-indicators): extract shared indicator compute/evaluate module used by runtime + backtest`
 - [x] `IND-04 test(parity-baseline): lock parity for existing EMA/RSI/MOMENTUM behavior across runtime/backtest`
 - [x] `IND-05 refactor(runtime-series): upgrade runtime candle buffer from close-only to OHLCV candle objects`
-- [ ] `IND-06 refactor(runtime-warmup): fetch/store OHLCV warmup candles and keep final-candle decision indexing deterministic`
+- [x] `IND-06 refactor(runtime-warmup): fetch/store OHLCV warmup candles and keep final-candle decision indexing deterministic`
 - [ ] `IND-07 test(runtime-series): add regression coverage for OHLCV buffer updates, dedupe, and interval matching`
 - [ ] `IND-08 feat(builder-operators): expose full operator set (including cross and range operators) in strategy form`
 - [ ] `IND-09 feat(config-parser): normalize operand contract (series/constant/band) for runtime + backtest`
@@ -659,6 +659,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
 
 ## Progress Log
+- 2026-04-08: Completed `IND-06` by anchoring runtime warmup fetch window to the processed candle close-time (`endTime`) and hardening decision-candle index fallback to deterministic `openTime <= decisionOpenTime` selection before last-candle fallback.
 - 2026-04-08: Completed `IND-05` by upgrading runtime candle-series buffer contract to OHLCV objects (`openTime`, `closeTime`, `open`, `high`, `low`, `close`, `volume`) for both stream-ingested final candles and warmup-candle parsing, while preserving existing signal-evaluation behavior.
 - 2026-04-07: Completed `IND-04` by extending the 3-symbol parity harness with explicit EMA, RSI, and MOMENTUM baseline suites to lock runtime-vs-backtest action parity for currently supported indicator families.
 - 2026-04-07: Completed `IND-03` by extracting shared indicator-series compute module (`engine/sharedIndicatorSeries.ts`) and wiring it into strategy evaluator, runtime signal loop, backtest timeline series builder, plus bot runtime indicator helpers to remove EMA/RSI/MOMENTUM logic duplication.
