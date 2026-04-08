@@ -155,7 +155,7 @@ Replace current broad groups with explicit trader-facing groups:
 - [x] `IND-31 test(futures-filters): add fail-closed fallback tests when derivatives snapshots are missing`
 
 ### Phase H - UI Grouping, Presets, and QA Closure
-- [ ] `IND-32 feat(web-groups): apply new indicator taxonomy groups in strategy creator with EN/PL labels`
+- [x] `IND-32 feat(web-groups): apply new indicator taxonomy groups in strategy creator with EN/PL labels`
 - [ ] `IND-33 feat(backtest-ui): support multi-line overlays and boolean pattern markers in timeline rendering`
 - [ ] `IND-34 feat(presets): add trader archetype presets (scalp/day trend/swing/mean reversion/breakout/perp bias)`
 - [ ] `IND-35 qa(parity): execute 3-symbol side-by-side parity checklist for new indicator families and attach evidence`

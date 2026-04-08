@@ -54,5 +54,54 @@ describe("Indicators operators", () => {
       }),
     ]);
   });
-});
 
+  it("renders taxonomy group labels in EN and PL", () => {
+    const previousLang = document.documentElement.lang;
+    const setValue = vi.fn();
+    const taxonomyIndicators: IndicatorMeta[] = [
+      {
+        name: "RSI",
+        group: "Analiza techniczna",
+        type: "oscillator",
+        params: [{ name: "period", default: 14, min: 2, max: 255 }],
+      },
+      {
+        name: "BULLISH_ENGULFING",
+        group: "Formacje swiecowe",
+        type: "pattern",
+        params: [],
+      },
+    ];
+
+    try {
+      document.documentElement.lang = "en";
+      const { unmount } = render(
+        <Indicators
+          side="LONG"
+          indicators={taxonomyIndicators}
+          value={[{ ...value[0] }]}
+          setValue={setValue}
+        />
+      );
+
+      expect(screen.getByRole("option", { name: "Momentum / Oscillators" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "Candle Patterns" })).toBeInTheDocument();
+      unmount();
+
+      document.documentElement.lang = "pl";
+      render(
+        <Indicators
+          side="LONG"
+          indicators={taxonomyIndicators}
+          value={[{ ...value[0] }]}
+          setValue={setValue}
+        />
+      );
+
+      expect(screen.getByRole("option", { name: "Momentum / Oscylatory" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "Formacje swiecowe" })).toBeInTheDocument();
+    } finally {
+      document.documentElement.lang = previousLang;
+    }
+  });
+});
