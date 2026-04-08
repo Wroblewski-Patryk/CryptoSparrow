@@ -14,7 +14,11 @@ import {
   computeStochasticSeriesFromCandles,
   computeStochRsiSeriesFromCloses,
 } from './sharedIndicatorSeries';
-import { computeCandlePatternSeries, resolveCandlePatternName } from './sharedCandlePatternSeries';
+import {
+  CandlePatternParams,
+  computeCandlePatternSeries,
+  resolveCandlePatternName,
+} from './sharedCandlePatternSeries';
 
 export type StrategySignalDirection = 'LONG' | 'SHORT' | 'EXIT';
 
@@ -90,6 +94,26 @@ const compare = (left: number, operator: '>' | '>=' | '<' | '<=' | '==' | '!=', 
 const asFiniteNumber = (value: unknown): number | null => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+};
+
+const resolvePatternParams = (params: Record<string, unknown>): CandlePatternParams => {
+  const dojiBodyToRangeMax = asFiniteNumber(params.dojiBodyToRangeMax ?? params.bodyToRangeMax);
+  const hammerBodyToRangeMax = asFiniteNumber(params.hammerBodyToRangeMax);
+  const hammerLowerShadowToBodyMin = asFiniteNumber(params.hammerLowerShadowToBodyMin);
+  const hammerUpperShadowToBodyMax = asFiniteNumber(params.hammerUpperShadowToBodyMax);
+  const shootingStarBodyToRangeMax = asFiniteNumber(params.shootingStarBodyToRangeMax);
+  const shootingStarUpperShadowToBodyMin = asFiniteNumber(params.shootingStarUpperShadowToBodyMin);
+  const shootingStarLowerShadowToBodyMax = asFiniteNumber(params.shootingStarLowerShadowToBodyMax);
+
+  return {
+    ...(dojiBodyToRangeMax !== null ? { dojiBodyToRangeMax } : {}),
+    ...(hammerBodyToRangeMax !== null ? { hammerBodyToRangeMax } : {}),
+    ...(hammerLowerShadowToBodyMin !== null ? { hammerLowerShadowToBodyMin } : {}),
+    ...(hammerUpperShadowToBodyMax !== null ? { hammerUpperShadowToBodyMax } : {}),
+    ...(shootingStarBodyToRangeMax !== null ? { shootingStarBodyToRangeMax } : {}),
+    ...(shootingStarUpperShadowToBodyMin !== null ? { shootingStarUpperShadowToBodyMin } : {}),
+    ...(shootingStarLowerShadowToBodyMax !== null ? { shootingStarLowerShadowToBodyMax } : {}),
+  };
 };
 
 const isStrategyCondition = (value: unknown): value is StrategyIndicatorCondition =>
@@ -458,10 +482,12 @@ const resolveSeries = (params: {
       pattern === 'BULLISH_ENGULFING' ||
       pattern === 'BEARISH_ENGULFING' ||
       pattern === 'HAMMER' ||
-      pattern === 'SHOOTING_STAR'
+      pattern === 'SHOOTING_STAR' ||
+      pattern === 'DOJI'
     )
   ) {
-    const key = `PATTERN_${pattern}`;
+    const patternParams = resolvePatternParams(params.indicatorParams);
+    const key = `PATTERN_${pattern}_${JSON.stringify(patternParams)}`;
     if (!params.cache.has(key)) {
       const candles = params.closes.map((close, index) => ({
         open: params.opens[index] ?? close,
@@ -469,7 +495,7 @@ const resolveSeries = (params: {
         low: params.lows[index] ?? close,
         close,
       }));
-      const series = computeCandlePatternSeries(candles, pattern).map((value) => (value ? 1 : 0));
+      const series = computeCandlePatternSeries(candles, pattern, patternParams).map((value) => (value ? 1 : 0));
       params.cache.set(key, series);
     }
     return params.cache.get(key) ?? null;

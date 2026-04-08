@@ -31,7 +31,11 @@ import {
   computeStochasticSeriesFromCandles,
   computeStochRsiSeriesFromCloses,
 } from './sharedIndicatorSeries';
-import { computeCandlePatternSeries, resolveCandlePatternName } from './sharedCandlePatternSeries';
+import {
+  CandlePatternParams,
+  computeCandlePatternSeries,
+  resolveCandlePatternName,
+} from './sharedCandlePatternSeries';
 import { computeRiskBasedOrderQuantity, normalizeWalletRiskPercent } from './positionSizing';
 import { resolveRuntimeDcaFundsExhausted, resolveRuntimeReferenceBalance } from './runtimeCapitalContext.service';
 import { runtimeTelemetryService } from './runtimeTelemetry.service';
@@ -549,6 +553,31 @@ const formatIndicatorValue = (value: number | null | undefined) => {
 };
 
 const formatRuleTarget = (value: number) => Number(value.toFixed(6)).toString();
+
+const resolvePatternParams = (params: Record<string, unknown>): CandlePatternParams => {
+  const asFinite = (value: unknown) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const dojiBodyToRangeMax = asFinite(params.dojiBodyToRangeMax ?? params.bodyToRangeMax);
+  const hammerBodyToRangeMax = asFinite(params.hammerBodyToRangeMax);
+  const hammerLowerShadowToBodyMin = asFinite(params.hammerLowerShadowToBodyMin);
+  const hammerUpperShadowToBodyMax = asFinite(params.hammerUpperShadowToBodyMax);
+  const shootingStarBodyToRangeMax = asFinite(params.shootingStarBodyToRangeMax);
+  const shootingStarUpperShadowToBodyMin = asFinite(params.shootingStarUpperShadowToBodyMin);
+  const shootingStarLowerShadowToBodyMax = asFinite(params.shootingStarLowerShadowToBodyMax);
+
+  return {
+    ...(dojiBodyToRangeMax !== null ? { dojiBodyToRangeMax } : {}),
+    ...(hammerBodyToRangeMax !== null ? { hammerBodyToRangeMax } : {}),
+    ...(hammerLowerShadowToBodyMin !== null ? { hammerLowerShadowToBodyMin } : {}),
+    ...(hammerUpperShadowToBodyMax !== null ? { hammerUpperShadowToBodyMax } : {}),
+    ...(shootingStarBodyToRangeMax !== null ? { shootingStarBodyToRangeMax } : {}),
+    ...(shootingStarUpperShadowToBodyMin !== null ? { shootingStarUpperShadowToBodyMin } : {}),
+    ...(shootingStarLowerShadowToBodyMax !== null ? { shootingStarLowerShadowToBodyMax } : {}),
+  };
+};
 
 const toPositiveInteger = (value: unknown): number | null => {
   const parsed = Number(value);
@@ -1713,10 +1742,11 @@ export class RuntimeSignalLoop {
         lower: indicatorCache.get(lowerKey)!,
       };
     };
-    const ensurePattern = (patternName: string) => {
+    const ensurePattern = (patternName: string, rawParams: Record<string, unknown>) => {
       const pattern = resolveCandlePatternName(patternName);
       if (!pattern) return null;
-      const key = `PATTERN_${pattern}`;
+      const patternParams = resolvePatternParams(rawParams);
+      const key = `PATTERN_${pattern}_${JSON.stringify(patternParams)}`;
       if (!indicatorCache.has(key)) {
         const patternCandles = candles.map((candle) => ({
           open: candle.open,
@@ -1724,7 +1754,7 @@ export class RuntimeSignalLoop {
           low: candle.low,
           close: candle.close,
         }));
-        const values = computeCandlePatternSeries(patternCandles, pattern).map((value) => (value ? 1 : 0));
+        const values = computeCandlePatternSeries(patternCandles, pattern, patternParams).map((value) => (value ? 1 : 0));
         indicatorCache.set(key, values);
       }
       return indicatorCache.get(key) ?? null;
@@ -2021,10 +2051,11 @@ export class RuntimeSignalLoop {
           pattern === 'BULLISH_ENGULFING' ||
           pattern === 'BEARISH_ENGULFING' ||
           pattern === 'HAMMER' ||
-          pattern === 'SHOOTING_STAR'
+          pattern === 'SHOOTING_STAR' ||
+          pattern === 'DOJI'
         )
       ) {
-        const patternValues = ensurePattern(indicator);
+        const patternValues = ensurePattern(indicator, rule.params);
         const value = patternValues ? patternValues[decisionIndex] : null;
         conditionLines.push({
           scope,

@@ -246,4 +246,17 @@ export const indicators = [
     type: "pattern",
     params: [],
   },
+  {
+    name: "DOJI",
+    group: "Formacje świecowe",
+    type: "pattern",
+    params: [
+      {
+        name: "dojiBodyToRangeMax",
+        default: 0.1,
+        min: 0.01,
+        max: 0.5,
+      },
+    ],
+  },
 ];

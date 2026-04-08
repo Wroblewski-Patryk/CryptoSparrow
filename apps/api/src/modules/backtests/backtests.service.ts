@@ -24,6 +24,7 @@ import {
   computeStochRsiSeriesFromCloses,
 } from '../engine/sharedIndicatorSeries';
 import {
+  CandlePatternParams,
   CandlePatternName,
   computeCandlePatternSeries,
   resolveCandlePatternName,
@@ -1234,17 +1235,22 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
         pattern === 'BULLISH_ENGULFING' ||
         pattern === 'BEARISH_ENGULFING' ||
         pattern === 'HAMMER' ||
-        pattern === 'SHOOTING_STAR'
+        pattern === 'SHOOTING_STAR' ||
+        pattern === 'DOJI'
       )
     ) {
+      const dojiBodyToRangeMaxCandidate = Number(params?.dojiBodyToRangeMax ?? params?.bodyToRangeMax);
+      const dojiBodyToRangeMax = Number.isFinite(dojiBodyToRangeMaxCandidate)
+        ? dojiBodyToRangeMaxCandidate
+        : 0.1;
       return [
         {
-          key: `${name}`,
+          key: pattern === 'DOJI' ? `${name}_${dojiBodyToRangeMax}` : `${name}`,
           name: `${name}`,
           period: 2,
           panel: 'oscillator' as const,
           source: 'PATTERN' as const,
-          params: {},
+          params: pattern === 'DOJI' ? { dojiBodyToRangeMax } : {},
           patternName: pattern,
         },
       ];
@@ -1548,7 +1554,12 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
       if (spec.source === 'PATTERN') {
         const pattern = spec.patternName ?? resolveCandlePatternName(spec.name);
         if (!pattern) return Array.from({ length: closes.length }, () => 0);
-        const key = pattern;
+        const patternParams: CandlePatternParams = {
+          ...(typeof spec.params.dojiBodyToRangeMax === 'number'
+            ? { dojiBodyToRangeMax: spec.params.dojiBodyToRangeMax }
+            : {}),
+        };
+        const key = `${pattern}_${JSON.stringify(patternParams)}`;
         if (!patternCache.has(key)) {
           const patternCandles = candles.map((candle) => ({
             open: candle.open,
@@ -1556,7 +1567,7 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
             low: candle.low,
             close: candle.close,
           }));
-          const values = computeCandlePatternSeries(patternCandles, pattern).map((value) => (value ? 1 : 0));
+          const values = computeCandlePatternSeries(patternCandles, pattern, patternParams).map((value) => (value ? 1 : 0));
           patternCache.set(key, values);
         }
         return patternCache.get(key)!;

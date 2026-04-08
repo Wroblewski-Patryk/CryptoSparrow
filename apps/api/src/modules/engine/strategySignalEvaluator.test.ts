@@ -437,6 +437,30 @@ describe('strategySignalEvaluator', () => {
     expect(shortDirection).toBe('SHORT');
   });
 
+  it('supports doji candle-pattern comparator evaluation with threshold params', () => {
+    const rules = parseStrategySignalRules({
+      open: {
+        direction: 'long',
+        indicatorsLong: [{ name: 'DOJI', condition: '>', value: 0.5, params: { dojiBodyToRangeMax: 0.2 } }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(rules).not.toBeNull();
+    if (!rules) return;
+
+    const direction = evaluateStrategySignalAtIndex(
+      rules,
+      [
+        { open: 10.2, close: 10, high: 10.3, low: 9.9 },
+        { open: 10, close: 10.01, high: 10.5, low: 9.5 },
+      ],
+      1,
+      new Map(),
+    );
+    expect(direction).toBe('LONG');
+  });
+
   it('supports CROSS_ABOVE and CROSS_BELOW operators', () => {
     const crossAbove = parseStrategySignalRules({
       open: {

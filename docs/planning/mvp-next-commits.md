@@ -7,14 +7,15 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `IND-24 feat(patterns): add Doji with threshold params end-to-end`
-## NEXT
 - [ ] `IND-25 feat(patterns): add Morning Star / Evening Star end-to-end`
+## NEXT
 - [ ] `IND-26 feat(patterns): add Inside Bar / Outside Bar end-to-end`
+- [ ] `IND-27 test(pattern-parity): deterministic fixtures for all patterns in runtime + backtest parity suite`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `IND-24 feat(patterns): add Doji with threshold params end-to-end`
 - [x] `IND-23 feat(patterns): add Hammer/Shooting Star end-to-end`
 - [x] `IND-22 feat(patterns): add Bullish/Bearish Engulfing end-to-end`
 - [x] `IND-21 feat(pattern-engine): add shared OHLC candle-pattern evaluation engine (boolean series contract)`

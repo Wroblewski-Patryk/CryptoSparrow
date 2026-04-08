@@ -249,4 +249,22 @@ describe('backtest indicator timeline series', () => {
     const series = buildIndicatorSeriesForTests(candles, specs);
     expect(series[1].values.every((value) => value === 0 || value === 1)).toBe(true);
   });
+
+  it('builds doji pattern boolean series with threshold params for timeline overlays', () => {
+    const specs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'DOJI', params: { dojiBodyToRangeMax: 0.2 }, condition: '>', value: 0.5 }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(specs).toHaveLength(1);
+    expect(specs[0]).toMatchObject({
+      key: 'DOJI_0.2',
+      source: 'PATTERN',
+      params: { dojiBodyToRangeMax: 0.2 },
+    });
+    const series = buildIndicatorSeriesForTests(candles, specs);
+    expect(series[0].values.every((value) => value === 0 || value === 1)).toBe(true);
+  });
 });

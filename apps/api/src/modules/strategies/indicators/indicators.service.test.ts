@@ -20,5 +20,6 @@ describe('indicators.service', () => {
     expect(names).toContain('BEARISH_ENGULFING');
     expect(names).toContain('HAMMER');
     expect(names).toContain('SHOOTING_STAR');
+    expect(names).toContain('DOJI');
   });
 });

@@ -507,4 +507,59 @@ describe('backtest parity harness (3 symbols)', () => {
 
     expect(totalExpectedActions).toBeGreaterThan(0);
   });
+
+  it('keeps doji pattern decision trace aligned with shared strategy/runtime core for three symbols', () => {
+    const strategyConfig = {
+      open: {
+        direction: 'long',
+        indicatorsLong: [{ name: 'DOJI', params: { dojiBodyToRangeMax: 0.2 }, condition: '>', value: 0.5 }],
+        indicatorsShort: [],
+      },
+      close: {
+        tp: 99,
+        sl: 99,
+        tsl: [{ percent: 99, arm: 1 }],
+      },
+      additional: {
+        dcaTimes: 0,
+      },
+    } satisfies Record<string, unknown>;
+
+    const patternScenarios: Array<{ symbol: string; candles: ReplayCandle[] }> = [
+      {
+        symbol: 'BTCUSDT',
+        candles: makePatternCandles([
+          { open: 10.4, high: 10.6, low: 9.8, close: 10 },
+          { open: 10, high: 10.5, low: 9.5, close: 10.01 },
+          { open: 10.05, high: 10.2, low: 9.9, close: 10.1 },
+        ]),
+      },
+      {
+        symbol: 'ETHUSDT',
+        candles: makePatternCandles([
+          { open: 20.5, high: 20.7, low: 19.8, close: 20 },
+          { open: 20, high: 20.6, low: 19.4, close: 20.03 },
+          { open: 20.02, high: 20.2, low: 19.9, close: 20.1 },
+        ]),
+      },
+      {
+        symbol: 'SOLUSDT',
+        candles: makePatternCandles([
+          { open: 30.6, high: 30.8, low: 29.8, close: 30.1 },
+          { open: 30.1, high: 30.7, low: 29.5, close: 30.08 },
+          { open: 30.15, high: 30.3, low: 30, close: 30.2 },
+        ]),
+      },
+    ];
+
+    let totalExpectedActions = 0;
+    for (const scenario of patternScenarios) {
+      const expected = buildExpectedActions(scenario.candles, strategyConfig);
+      const replay = buildReplayActions(scenario.symbol, scenario.candles, strategyConfig);
+      totalExpectedActions += expected.length;
+      expect(replay).toEqual(expected);
+    }
+
+    expect(totalExpectedActions).toBeGreaterThan(0);
+  });
 });
