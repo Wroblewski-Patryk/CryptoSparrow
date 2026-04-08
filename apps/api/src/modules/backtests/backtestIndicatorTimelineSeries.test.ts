@@ -235,4 +235,18 @@ describe('backtest indicator timeline series', () => {
     expect(series.every((item) => item.panel === 'oscillator')).toBe(true);
     expect(series[0].values.every((value) => value === 0 || value === 1)).toBe(true);
   });
+
+  it('builds hammer/shooting-star pattern boolean series for timeline overlays', () => {
+    const specs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'HAMMER', params: {}, condition: '>', value: 0.5 }],
+        indicatorsShort: [{ name: 'SHOOTING_STAR', params: {}, condition: '>', value: 0.5 }],
+      },
+    });
+
+    expect(specs).toHaveLength(2);
+    expect(specs.map((item) => item.source)).toEqual(['PATTERN', 'PATTERN']);
+    const series = buildIndicatorSeriesForTests(candles, specs);
+    expect(series[1].values.every((value) => value === 0 || value === 1)).toBe(true);
+  });
 });

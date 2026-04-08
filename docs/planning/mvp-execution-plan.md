@@ -643,7 +643,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `IND-20 feat(indicator): add Donchian Channels end-to-end`
 - [x] `IND-21 feat(pattern-engine): add shared OHLC candle-pattern evaluation engine (boolean series contract)`
 - [x] `IND-22 feat(patterns): add Bullish/Bearish Engulfing end-to-end`
-- [ ] `IND-23 feat(patterns): add Hammer/Shooting Star end-to-end`
+- [x] `IND-23 feat(patterns): add Hammer/Shooting Star end-to-end`
 - [ ] `IND-24 feat(patterns): add Doji with threshold params end-to-end`
 - [ ] `IND-25 feat(patterns): add Morning Star / Evening Star end-to-end`
 - [ ] `IND-26 feat(patterns): add Inside Bar / Outside Bar end-to-end`
@@ -659,6 +659,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
 
 ## Progress Log
+- 2026-04-08: Completed `IND-23` by wiring Hammer/Shooting Star end-to-end (shared pattern engine -> evaluator/runtime -> backtest timeline), exposing both in indicator catalog, and adding evaluator/parity/timeline/catalog regressions with OHLC fixtures.
 - 2026-04-08: Completed `IND-22` by wiring Bullish/Bearish Engulfing end-to-end (shared pattern engine -> strategy evaluator/runtime -> backtest timeline spec builder), exposing both patterns in indicator catalog, and adding evaluator/parity/timeline/catalog regression coverage.
 - 2026-04-08: Completed `IND-21` by adding shared OHLC candle-pattern engine (`sharedCandlePatternSeries`) with deterministic boolean-series contract, centralized pattern registry (engulfing/hammer/shooting-star/doji/morning/evening/inside/outside), and engine-level regression tests validating series length/type and baseline pattern fixtures.
 - 2026-04-08: Completed `IND-20` by adding Donchian Channels end-to-end (`upper/middle/lower`) across shared OHLC compute, evaluator/runtime resolution, runtime signal-summary lines, backtest timeline channels, strategy indicator catalog exposure, and parity/evaluator/timeline/catalog regression coverage.

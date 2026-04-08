@@ -452,7 +452,15 @@ const resolveSeries = (params: {
   }
 
   const pattern = resolveCandlePatternName(name);
-  if (pattern && (pattern === 'BULLISH_ENGULFING' || pattern === 'BEARISH_ENGULFING')) {
+  if (
+    pattern &&
+    (
+      pattern === 'BULLISH_ENGULFING' ||
+      pattern === 'BEARISH_ENGULFING' ||
+      pattern === 'HAMMER' ||
+      pattern === 'SHOOTING_STAR'
+    )
+  ) {
     const key = `PATTERN_${pattern}`;
     if (!params.cache.has(key)) {
       const candles = params.closes.map((close, index) => ({

@@ -449,4 +449,62 @@ describe('backtest parity harness (3 symbols)', () => {
 
     expect(totalExpectedActions).toBeGreaterThan(0);
   });
+
+  it('keeps hammer/shooting-star pattern decision trace aligned with shared strategy/runtime core for three symbols', () => {
+    const strategyConfig = {
+      open: {
+        direction: 'both',
+        indicatorsLong: [{ name: 'HAMMER', params: {}, condition: '>', value: 0.5 }],
+        indicatorsShort: [{ name: 'SHOOTING_STAR', params: {}, condition: '>', value: 0.5 }],
+      },
+      close: {
+        tp: 99,
+        sl: 99,
+        tsl: [{ percent: 99, arm: 1 }],
+      },
+      additional: {
+        dcaTimes: 0,
+      },
+    } satisfies Record<string, unknown>;
+
+    const patternScenarios: Array<{ symbol: string; candles: ReplayCandle[] }> = [
+      {
+        symbol: 'BTCUSDT',
+        candles: makePatternCandles([
+          { open: 10.6, high: 10.7, low: 10, close: 10.2 },
+          { open: 10, high: 10.25, low: 9.2, close: 10.2 },
+          { open: 10.2, high: 10.4, low: 10.1, close: 10.35 },
+          { open: 10.4, high: 11.2, low: 10.15, close: 10.2 },
+        ]),
+      },
+      {
+        symbol: 'ETHUSDT',
+        candles: makePatternCandles([
+          { open: 20.8, high: 20.9, low: 20, close: 20.3 },
+          { open: 20.1, high: 20.35, low: 19.2, close: 20.3 },
+          { open: 20.3, high: 20.5, low: 20.2, close: 20.45 },
+          { open: 20.5, high: 21.4, low: 20.3, close: 20.2 },
+        ]),
+      },
+      {
+        symbol: 'SOLUSDT',
+        candles: makePatternCandles([
+          { open: 30.9, high: 31, low: 30.1, close: 30.4 },
+          { open: 30.2, high: 30.45, low: 29.1, close: 30.4 },
+          { open: 30.4, high: 30.6, low: 30.3, close: 30.55 },
+          { open: 30.6, high: 31.5, low: 30.35, close: 30.25 },
+        ]),
+      },
+    ];
+
+    let totalExpectedActions = 0;
+    for (const scenario of patternScenarios) {
+      const expected = buildExpectedActions(scenario.candles, strategyConfig);
+      const replay = buildReplayActions(scenario.symbol, scenario.candles, strategyConfig);
+      totalExpectedActions += expected.length;
+      expect(replay).toEqual(expected);
+    }
+
+    expect(totalExpectedActions).toBeGreaterThan(0);
+  });
 });

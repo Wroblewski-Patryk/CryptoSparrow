@@ -234,4 +234,16 @@ export const indicators = [
     type: "pattern",
     params: [],
   },
+  {
+    name: "HAMMER",
+    group: "Formacje świecowe",
+    type: "pattern",
+    params: [],
+  },
+  {
+    name: "SHOOTING_STAR",
+    group: "Formacje świecowe",
+    type: "pattern",
+    params: [],
+  },
 ];

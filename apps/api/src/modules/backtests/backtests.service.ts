@@ -1228,7 +1228,15 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
     }
 
     const pattern = resolveCandlePatternName(name);
-    if (pattern && (pattern === 'BULLISH_ENGULFING' || pattern === 'BEARISH_ENGULFING')) {
+    if (
+      pattern &&
+      (
+        pattern === 'BULLISH_ENGULFING' ||
+        pattern === 'BEARISH_ENGULFING' ||
+        pattern === 'HAMMER' ||
+        pattern === 'SHOOTING_STAR'
+      )
+    ) {
       return [
         {
           key: `${name}`,

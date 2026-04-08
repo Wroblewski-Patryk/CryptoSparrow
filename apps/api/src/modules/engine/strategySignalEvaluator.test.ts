@@ -391,6 +391,52 @@ describe('strategySignalEvaluator', () => {
     expect(shortDirection).toBe('SHORT');
   });
 
+  it('supports hammer and shooting-star candle-pattern comparator evaluation', () => {
+    const longRules = parseStrategySignalRules({
+      open: {
+        direction: 'long',
+        indicatorsLong: [{ name: 'HAMMER', condition: '>', value: 0.5, params: {} }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(longRules).not.toBeNull();
+    if (!longRules) return;
+
+    const longDirection = evaluateStrategySignalAtIndex(
+      longRules,
+      [
+        { open: 10.5, close: 10.1, high: 10.55, low: 9.7 },
+        { open: 10, close: 10.2, high: 10.25, low: 9.2 },
+      ],
+      1,
+      new Map(),
+    );
+    expect(longDirection).toBe('LONG');
+
+    const shortRules = parseStrategySignalRules({
+      open: {
+        direction: 'short',
+        indicatorsLong: [],
+        indicatorsShort: [{ name: 'SHOOTING_STAR', condition: '>', value: 0.5, params: {} }],
+      },
+    });
+
+    expect(shortRules).not.toBeNull();
+    if (!shortRules) return;
+
+    const shortDirection = evaluateStrategySignalAtIndex(
+      shortRules,
+      [
+        { open: 10, close: 10.3, high: 10.5, low: 9.9 },
+        { open: 10.2, close: 10, high: 11.1, low: 9.95 },
+      ],
+      1,
+      new Map(),
+    );
+    expect(shortDirection).toBe('SHORT');
+  });
+
   it('supports CROSS_ABOVE and CROSS_BELOW operators', () => {
     const crossAbove = parseStrategySignalRules({
       open: {
