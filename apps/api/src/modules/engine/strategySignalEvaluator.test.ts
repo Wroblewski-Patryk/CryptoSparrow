@@ -207,6 +207,33 @@ describe('strategySignalEvaluator', () => {
     expect(direction).toBe('LONG');
   });
 
+  it('supports ATR comparator evaluation with OHLC candles', () => {
+    const rules = parseStrategySignalRules({
+      open: {
+        direction: 'long',
+        indicatorsLong: [{ name: 'ATR', condition: '>', value: 0.5, params: { period: 3 } }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(rules).not.toBeNull();
+    if (!rules) return;
+
+    const direction = evaluateStrategySignalAtIndex(
+      rules,
+      [
+        { close: 100, high: 101, low: 99 },
+        { close: 101, high: 103, low: 100 },
+        { close: 99, high: 102, low: 97 },
+        { close: 102, high: 104, low: 98 },
+        { close: 103, high: 105, low: 101 },
+      ],
+      4,
+      new Map(),
+    );
+    expect(direction).toBe('LONG');
+  });
+
   it('supports CROSS_ABOVE and CROSS_BELOW operators', () => {
     const crossAbove = parseStrategySignalRules({
       open: {

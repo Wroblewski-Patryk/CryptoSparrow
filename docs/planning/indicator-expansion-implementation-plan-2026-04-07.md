@@ -133,7 +133,7 @@ Replace current broad groups with explicit trader-facing groups:
 
 ### Phase E - OHLC Indicator Expansion
 - [x] `IND-15 feat(indicator): implement true Bollinger Bands end-to-end (upper/mid/lower, bandwidth, percentB)`
-- [ ] `IND-16 feat(indicator): add ATR end-to-end`
+- [x] `IND-16 feat(indicator): add ATR end-to-end`
 - [ ] `IND-17 feat(indicator): add ADX + DI+/DI- end-to-end`
 - [ ] `IND-18 feat(indicator): add Stochastic (%K/%D) end-to-end`
 - [ ] `IND-19 feat(indicator): add CCI end-to-end`

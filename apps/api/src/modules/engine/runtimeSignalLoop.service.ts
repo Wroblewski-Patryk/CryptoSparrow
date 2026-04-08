@@ -16,6 +16,7 @@ import {
   parseStrategySignalRules,
 } from './strategySignalEvaluator';
 import {
+  computeAtrSeriesFromCandles,
   computeBollingerSeriesFromCloses,
   clampPeriod,
   computeEmaSeriesFromCloses,
@@ -1569,6 +1570,15 @@ export class RuntimeSignalLoop {
       }
       return indicatorCache.get(key)!;
     };
+    const ensureAtr = (period: number) => {
+      const key = `ATR_${period}`;
+      if (!indicatorCache.has(key)) {
+        const highs = candles.map((candle) => candle.high);
+        const lows = candles.map((candle) => candle.low);
+        indicatorCache.set(key, computeAtrSeriesFromCandles(highs, lows, closes, period));
+      }
+      return indicatorCache.get(key)!;
+    };
     const ensureMacd = (fast: number, slow: number, signal: number) => {
       const baseKey = `MACD_${fast}_${slow}_${signal}`;
       const lineKey = `${baseKey}_LINE`;
@@ -1667,7 +1677,7 @@ export class RuntimeSignalLoop {
         return;
       }
 
-      if (indicator.includes('RSI')) {
+      if (indicator.includes('RSI') && !indicator.includes('STOCHRSI')) {
         const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
         const value = ensureRsi(period)[decisionIndex];
         conditionLines.push({
@@ -1731,6 +1741,23 @@ export class RuntimeSignalLoop {
         if (!indicatorKeys.has(`ROC(${period})`)) {
           indicatorKeys.add(`ROC(${period})`);
           indicatorParts.push(`ROC(${period})=${formatIndicatorValue(value)}`);
+        }
+        return;
+      }
+
+      if (indicator.includes('ATR')) {
+        const period = clampPeriod(rule.params.period ?? rule.params.length, 14);
+        const value = ensureAtr(period)[decisionIndex];
+        conditionLines.push({
+          scope,
+          left: `ATR(${period})`,
+          value: formatIndicatorValue(value),
+          operator: rule.condition,
+          right: formatRuleTarget(rule.value),
+        });
+        if (!indicatorKeys.has(`ATR(${period})`)) {
+          indicatorKeys.add(`ATR(${period})`);
+          indicatorParts.push(`ATR(${period})=${formatIndicatorValue(value)}`);
         }
         return;
       }

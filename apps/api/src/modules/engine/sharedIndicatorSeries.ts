@@ -216,6 +216,63 @@ export const computeBollingerSeriesFromCloses = (
   };
 };
 
+export const computeAtrSeriesFromCandles = (
+  highs: number[],
+  lows: number[],
+  closes: number[],
+  period: number
+): Array<number | null> => {
+  const length = Math.min(highs.length, lows.length, closes.length);
+  const output: Array<number | null> = Array.from({ length }, () => null);
+  if (length === 0) return output;
+
+  const trueRanges: number[] = [];
+  for (let index = 0; index < length; index += 1) {
+    const high = highs[index];
+    const low = lows[index];
+    const close = closes[index];
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      trueRanges.push(Number.NaN);
+      continue;
+    }
+
+    if (index === 0) {
+      trueRanges.push(Math.max(0, high - low));
+      continue;
+    }
+
+    const previousClose = closes[index - 1];
+    if (!Number.isFinite(previousClose)) {
+      trueRanges.push(Number.NaN);
+      continue;
+    }
+
+    const range1 = high - low;
+    const range2 = Math.abs(high - previousClose);
+    const range3 = Math.abs(low - previousClose);
+    trueRanges.push(Math.max(range1, range2, range3));
+  }
+
+  if (length < period) return output;
+  const seedRanges = trueRanges.slice(0, period);
+  if (seedRanges.some((value) => !Number.isFinite(value))) return output;
+
+  let atr = seedRanges.reduce((acc, value) => acc + value, 0) / period;
+  output[period - 1] = atr;
+
+  for (let index = period; index < length; index += 1) {
+    const tr = trueRanges[index];
+    if (!Number.isFinite(tr)) {
+      output[index] = null;
+      continue;
+    }
+    atr = ((atr * (period - 1)) + tr) / period;
+    output[index] = atr;
+  }
+
+  return output;
+};
+
 export const computeRsiSeriesFromCloses = (
   closes: number[],
   period: number

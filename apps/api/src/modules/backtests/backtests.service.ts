@@ -9,6 +9,7 @@ import {
   parseStrategySignalRules,
 } from '../engine/strategySignalEvaluator';
 import {
+  computeAtrSeriesFromCandles,
   computeBollingerSeriesFromCloses,
   computeEmaSeriesFromCloses,
   computeMacdSeriesFromCloses,
@@ -132,7 +133,7 @@ type IndicatorSpec = {
   name: string;
   period: number;
   panel: 'price' | 'oscillator';
-  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'BOLLINGER';
+  source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'BOLLINGER' | 'ATR';
   params: Record<string, number>;
   channel?:
     | 'LINE'
@@ -1119,6 +1120,20 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
       ];
     }
 
+    if (name.includes('ATR') && params) {
+      const period = asPeriod(params.period ?? params.length, 14);
+      return [
+        {
+          key: `${name}_${period}`,
+          name: `${name}`,
+          period,
+          panel: 'oscillator' as const,
+          source: 'ATR' as const,
+          params: { period },
+        },
+      ];
+    }
+
     if (name.includes('BOLLINGER') && params) {
       const period = asPeriod(params.period, 20);
       const stdDevCandidate = Number(params.stdDev ?? params.deviation);
@@ -1247,6 +1262,8 @@ const parseStrategyIndicators = (strategyConfig: unknown): IndicatorSpec[] => {
         ? 'SMA'
         : name.includes('BOLLINGER')
           ? 'BOLLINGER'
+        : name.includes('ATR')
+          ? 'ATR'
         : name.includes('STOCHRSI')
           ? 'STOCHRSI'
         : name.includes('ROC')
@@ -1282,6 +1299,8 @@ const resolveIndicatorWarmupCandles = (strategyConfig: unknown) => {
 
 const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) => {
   const closes = candles.map((candle) => candle.close);
+  const highs = candles.map((candle) => candle.high);
+  const lows = candles.map((candle) => candle.low);
   const macdCache = new Map<
     string,
     {
@@ -1327,6 +1346,11 @@ const buildIndicatorSeries = (candles: KlineCandle[], specs: IndicatorSpec[]) =>
       if (spec.source === 'ROC') {
         const period = spec.params.period ?? spec.period;
         return computeRocSeriesFromCloses(closes, period);
+      }
+
+      if (spec.source === 'ATR') {
+        const period = spec.params.period ?? spec.period;
+        return computeAtrSeriesFromCandles(highs, lows, closes, period);
       }
 
       if (spec.source === 'MACD') {
@@ -1402,7 +1426,7 @@ export const buildIndicatorSeriesForTests = (
     name: string;
     period: number;
     panel: 'price' | 'oscillator';
-    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'BOLLINGER';
+    source: 'EMA' | 'SMA' | 'RSI' | 'MOMENTUM' | 'MACD' | 'ROC' | 'STOCHRSI' | 'BOLLINGER' | 'ATR';
     params: Record<string, number>;
     channel?:
       | 'LINE'

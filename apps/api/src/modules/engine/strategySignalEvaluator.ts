@@ -1,4 +1,5 @@
 import {
+  computeAtrSeriesFromCandles,
   computeBollingerSeriesFromCloses,
   clampPeriod,
   computeEmaSeriesFromCloses,
@@ -57,6 +58,8 @@ export type StrategySignalRules = {
 
 export type SignalCandle = {
   close: number;
+  high?: number;
+  low?: number;
 };
 
 const isComparatorCondition = (
@@ -307,6 +310,8 @@ const resolveSeries = (params: {
   indicatorName: string;
   indicatorParams: Record<string, unknown>;
   closes: number[];
+  highs: number[];
+  lows: number[];
   cache: Map<string, Array<number | null>>;
 }): Array<number | null> | null => {
   const name = params.indicatorName.toUpperCase();
@@ -360,22 +365,6 @@ const resolveSeries = (params: {
     return series;
   }
 
-  if (name.includes('RSI')) {
-    const period = clampPeriod(params.indicatorParams.period ?? params.indicatorParams.length, 14);
-    const key = `RSI_${period}`;
-    const series = params.cache.get(key) ?? computeRsiSeriesFromCloses(params.closes, period);
-    params.cache.set(key, series);
-    return series;
-  }
-
-  if (name.includes('ROC')) {
-    const period = clampPeriod(params.indicatorParams.period ?? params.indicatorParams.length, 14);
-    const key = `ROC_${period}`;
-    const series = params.cache.get(key) ?? computeRocSeriesFromCloses(params.closes, period);
-    params.cache.set(key, series);
-    return series;
-  }
-
   if (name.includes('STOCHRSI')) {
     const period = clampPeriod(params.indicatorParams.period ?? params.indicatorParams.rsiPeriod, 14);
     const stochPeriod = clampPeriod(params.indicatorParams.stochPeriod ?? period, 14);
@@ -402,6 +391,30 @@ const resolveSeries = (params: {
     }
 
     return params.cache.get(kKey) ?? null;
+  }
+
+  if (name.includes('RSI')) {
+    const period = clampPeriod(params.indicatorParams.period ?? params.indicatorParams.length, 14);
+    const key = `RSI_${period}`;
+    const series = params.cache.get(key) ?? computeRsiSeriesFromCloses(params.closes, period);
+    params.cache.set(key, series);
+    return series;
+  }
+
+  if (name.includes('ROC')) {
+    const period = clampPeriod(params.indicatorParams.period ?? params.indicatorParams.length, 14);
+    const key = `ROC_${period}`;
+    const series = params.cache.get(key) ?? computeRocSeriesFromCloses(params.closes, period);
+    params.cache.set(key, series);
+    return series;
+  }
+
+  if (name.includes('ATR')) {
+    const period = clampPeriod(params.indicatorParams.period ?? params.indicatorParams.length, 14);
+    const key = `ATR_${period}`;
+    const series = params.cache.get(key) ?? computeAtrSeriesFromCandles(params.highs, params.lows, params.closes, period);
+    params.cache.set(key, series);
+    return series;
   }
 
   if (name.includes('BOLLINGER')) {
@@ -452,6 +465,8 @@ const resolveSeries = (params: {
 const resolveRightSeries = (
   operand: StrategyRuleOperand,
   closes: number[],
+  highs: number[],
+  lows: number[],
   cache: Map<string, Array<number | null>>,
 ) => {
   if (operand.kind !== 'series') return null;
@@ -459,6 +474,8 @@ const resolveRightSeries = (
     indicatorName: operand.indicator,
     indicatorParams: operand.params,
     closes,
+    highs,
+    lows,
     cache,
   });
 };
@@ -466,6 +483,8 @@ const resolveRightSeries = (
 const evaluateRuleAtIndex = (
   rule: StrategyIndicatorRule,
   closes: number[],
+  highs: number[],
+  lows: number[],
   index: number,
   cache: Map<string, Array<number | null>>,
 ) => {
@@ -473,6 +492,8 @@ const evaluateRuleAtIndex = (
     indicatorName: rule.name,
     indicatorParams: rule.params,
     closes,
+    highs,
+    lows,
     cache,
   });
   if (!leftSeries) return false;
@@ -493,7 +514,7 @@ const evaluateRuleAtIndex = (
 
     if (rule.operand.kind === 'band') return false;
 
-    const rightSeries = resolveRightSeries(rule.operand, closes, cache);
+    const rightSeries = resolveRightSeries(rule.operand, closes, highs, lows, cache);
     const currentRight =
       rule.operand.kind === 'constant'
         ? rule.operand.value
@@ -518,7 +539,7 @@ const evaluateRuleAtIndex = (
 
   if (rule.operand.kind === 'band') return false;
 
-  const rightSeries = resolveRightSeries(rule.operand, closes, cache);
+  const rightSeries = resolveRightSeries(rule.operand, closes, highs, lows, cache);
   const rightValue =
     rule.operand.kind === 'constant'
       ? rule.operand.value
@@ -537,16 +558,22 @@ export const evaluateStrategySignalAtIndex = (
   cache: Map<string, Array<number | null>>,
 ): StrategySignalDirection | null => {
   const closes = candles.map((candle) => candle.close);
+  const highs = candles.map((candle) =>
+    typeof candle.high === 'number' && Number.isFinite(candle.high) ? candle.high : candle.close
+  );
+  const lows = candles.map((candle) =>
+    typeof candle.low === 'number' && Number.isFinite(candle.low) ? candle.low : candle.close
+  );
   const canLong = rules.direction !== 'short';
   const canShort = rules.direction !== 'long';
   const longMatched =
     canLong &&
     rules.longRules.length > 0 &&
-    rules.longRules.every((rule) => evaluateRuleAtIndex(rule, closes, index, cache));
+    rules.longRules.every((rule) => evaluateRuleAtIndex(rule, closes, highs, lows, index, cache));
   const shortMatched =
     canShort &&
     rules.shortRules.length > 0 &&
-    rules.shortRules.every((rule) => evaluateRuleAtIndex(rule, closes, index, cache));
+    rules.shortRules.every((rule) => evaluateRuleAtIndex(rule, closes, highs, lows, index, cache));
 
   if (longMatched && !shortMatched) return 'LONG';
   if (shortMatched && !longMatched) return 'SHORT';

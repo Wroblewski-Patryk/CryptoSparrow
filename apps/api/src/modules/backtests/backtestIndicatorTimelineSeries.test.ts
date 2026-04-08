@@ -127,4 +127,24 @@ describe('backtest indicator timeline series', () => {
       'BOLLINGER_BANDS_PERCENT_B_3_2',
     ]);
   });
+
+  it('builds ATR oscillator series for timeline overlays', () => {
+    const specs = parseStrategyIndicatorsForTests({
+      open: {
+        indicatorsLong: [{ name: 'ATR', params: { period: 3 }, condition: '>', value: 0 }],
+        indicatorsShort: [],
+      },
+    });
+
+    expect(specs).toHaveLength(1);
+    expect(specs[0]).toMatchObject({
+      key: 'ATR_3',
+      name: 'ATR',
+      panel: 'oscillator',
+      source: 'ATR',
+    });
+    const series = buildIndicatorSeriesForTests(candles, specs);
+    expect(series[0].values[0]).toBeNull();
+    expect(series[0].values[1]).toBeNull();
+  });
 });

@@ -145,4 +145,17 @@ export const indicators = [
       },
     ],
   },
+  {
+    name: "ATR",
+    group: "Analiza techniczna",
+    type: "volatility",
+    params: [
+      {
+        name: "period",
+        default: 14,
+        min: 2,
+        max: 255,
+      },
+    ],
+  },
 ];
