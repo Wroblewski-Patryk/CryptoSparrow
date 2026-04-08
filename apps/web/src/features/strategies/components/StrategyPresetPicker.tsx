@@ -20,9 +20,7 @@ export default function StrategyPresetPicker({
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">Presety strategii</h2>
-          <p className="text-sm opacity-70">
-            MVP: presety sa tylko do odczytu i sa wersjonowane w kodzie.
-          </p>
+          <p className="text-sm opacity-70">MVP: presety sa tylko do odczytu i sa wersjonowane w kodzie.</p>
         </div>
         <button
           type="button"
@@ -30,7 +28,7 @@ export default function StrategyPresetPicker({
           onClick={onClear}
           disabled={!selectedPresetId}
         >
-          Wyczyść preset
+          Wyczysc preset
         </button>
       </div>
 
@@ -66,5 +64,3 @@ export default function StrategyPresetPicker({
     </div>
   );
 }
-
-
