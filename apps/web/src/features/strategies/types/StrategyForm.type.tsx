@@ -55,11 +55,23 @@ export type UserIndicator = {
     group: string;
     name: string;
     params: Record<string, number>;
-    condition: ">" | "<";
+    condition: StrategyConditionOperator;
     value: number;
     weight: number;
     expanded?: boolean;
 };
+
+export type StrategyConditionOperator =
+    | ">"
+    | ">="
+    | "<"
+    | "<="
+    | "=="
+    | "!="
+    | "CROSS_ABOVE"
+    | "CROSS_BELOW"
+    | "IN_RANGE"
+    | "OUT_OF_RANGE";
 
 export type IndicatorsProps = {
     side: "LONG" | "SHORT";

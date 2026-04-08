@@ -1,8 +1,20 @@
 import { LuChevronDown, LuChevronRight, LuChevronUp, LuTrash2, LuTrendingDown, LuTrendingUp } from "react-icons/lu";
-import { IndicatorsProps } from "../../types/StrategyForm.type";
+import { IndicatorsProps, StrategyConditionOperator } from "../../types/StrategyForm.type";
 import { numericInputProps, readNumericInputValue, strategyNumericContracts } from "../../utils/strategyNumericInput";
 
 const decimalInputProps = numericInputProps(strategyNumericContracts.decimal2);
+const conditionOptions: StrategyConditionOperator[] = [
+    ">",
+    ">=",
+    "<",
+    "<=",
+    "==",
+    "!=",
+    "CROSS_ABOVE",
+    "CROSS_BELOW",
+    "IN_RANGE",
+    "OUT_OF_RANGE",
+];
 
 export default function Indicators({ side, indicators, value, setValue }: IndicatorsProps) {
     const indicatorGroups = Array.from(
@@ -59,7 +71,7 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                 : el
         ));
     };
-    const updateCondition = (idx: number, cond: ">" | "<") => {
+    const updateCondition = (idx: number, cond: StrategyConditionOperator) => {
         setValue(value.map((el, i) =>
             i === idx ? { ...el, condition: cond } : el
         ));
@@ -238,24 +250,17 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
                                                 {/* Kolumna 1: Warunek */}
                                                 <div>
                                                     <label className="label mb-1 font-semibold">Warunek</label>
-                                                    <div className="join">
-                                                        <input
-                                                            name={`cond_${side}_${idx}`}
-                                                            className="join-item btn"
-                                                            type="radio"
-                                                            aria-label="<"
-                                                            checked={indicator.condition === "<"}
-                                                            onChange={() => updateCondition(idx, "<")}
-                                                        />
-                                                        <input
-                                                            name={`cond_${side}_${idx}`}
-                                                            className="join-item btn"
-                                                            type="radio"
-                                                            aria-label=">"
-                                                            checked={indicator.condition === ">"}
-                                                            onChange={() => updateCondition(idx, ">")}
-                                                        />
-                                                    </div>
+                                                    <select
+                                                        className="select select-bordered w-full"
+                                                        value={indicator.condition}
+                                                        onChange={(e) => updateCondition(idx, e.target.value as StrategyConditionOperator)}
+                                                    >
+                                                        {conditionOptions.map((operator) => (
+                                                            <option key={operator} value={operator}>
+                                                                {operator}
+                                                            </option>
+                                                        ))}
+                                                    </select>
                                                 </div>
                                                 {/* Kolumna 2: Wartość */}
                                                 <div>

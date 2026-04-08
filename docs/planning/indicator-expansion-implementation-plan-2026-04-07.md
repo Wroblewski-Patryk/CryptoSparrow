@@ -121,7 +121,7 @@ Replace current broad groups with explicit trader-facing groups:
 - [x] `IND-07 test(runtime-series): add regression coverage for OHLCV buffer updates, dedupe, and interval matching`
 
 ### Phase C - Rule Operator and Config Contract
-- [ ] `IND-08 feat(builder-operators): expose full operator set (including cross and range operators) in strategy form`
+- [x] `IND-08 feat(builder-operators): expose full operator set (including cross and range operators) in strategy form`
 - [ ] `IND-09 feat(config-parser): normalize operand contract (series/constant/band) for runtime + backtest`
 - [ ] `IND-10 test(config-contract): parser/evaluator regressions for new operators and invalid configs`
 
