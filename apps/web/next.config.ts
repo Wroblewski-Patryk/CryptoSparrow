@@ -1,10 +1,16 @@
 import type { NextConfig } from "next";
+import { createHash } from "node:crypto";
+import { themeBootstrapScript } from "./src/security/themeBootstrap";
+
+const themeBootstrapScriptSha256 = createHash("sha256")
+  .update(themeBootstrapScript)
+  .digest("base64");
 
 const buildCsp = (nodeEnv: string | undefined) => {
   const isDev = nodeEnv === "development";
   const scriptSources = isDev
     ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-    : "script-src 'self' 'unsafe-inline'";
+    : `script-src 'self' 'sha256-${themeBootstrapScriptSha256}'`;
   const connectSources = isDev
     ? "connect-src 'self' http: https: ws: wss:"
     : "connect-src 'self' https: ws: wss:";
@@ -45,4 +51,5 @@ const nextConfig: NextConfig = {
 };
 
 export { buildCsp };
+export { themeBootstrapScriptSha256 };
 export default nextConfig;

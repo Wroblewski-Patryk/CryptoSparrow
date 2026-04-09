@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import nextConfig, { buildCsp } from './next.config';
+import nextConfig, { buildCsp, themeBootstrapScriptSha256 } from './next.config';
 
 describe('next security headers', () => {
   it('exposes baseline security headers contract for all routes', async () => {
@@ -17,12 +17,15 @@ describe('next security headers', () => {
     expect(findHeader('Permissions-Policy')).toContain('camera=()');
   });
 
-  it('allows unsafe-eval only in development CSP', () => {
+  it('allows unsafe-eval only in development CSP and keeps production script policy strict', () => {
     const devCsp = buildCsp('development');
     const prodCsp = buildCsp('production');
 
     expect(devCsp).toContain("'unsafe-eval'");
     expect(prodCsp).not.toContain("'unsafe-eval'");
+    expect(devCsp).toContain("script-src 'self' 'unsafe-inline' 'unsafe-eval'");
+    expect(prodCsp).not.toMatch(/script-src[^;]*'unsafe-inline'/);
+    expect(prodCsp).toContain(`'sha256-${themeBootstrapScriptSha256}'`);
     expect(devCsp).toContain("connect-src 'self' http: https: ws: wss:");
     expect(prodCsp).toContain("connect-src 'self' https: ws: wss:");
   });

@@ -6,6 +6,7 @@ import { Lato, Titillium_Web } from 'next/font/google';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '../context/AuthContext';
 import ServiceWorkerRegistration from '../ui/pwa/ServiceWorkerRegistration';
+import { themeBootstrapScript } from '../security/themeBootstrap';
 
 const titilliumWeb = Titillium_Web({
   subsets: ['latin'],
@@ -62,26 +63,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <meta charSet="UTF-8" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `
-              (() => {
-                const fallback = 'system';
-                const normalize = (value) => {
-                  if (!value || value === 'default') return fallback;
-                  if (value === 'cryptosparrow') return fallback;
-                  return value;
-                };
-                const stored = normalize(localStorage.getItem('themePreference') || localStorage.getItem('theme'));
-                const preference = stored || fallback;
-                const resolved = preference === 'system'
-                  ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-                  : preference;
-                document.documentElement.setAttribute('data-theme', resolved);
-                const locale = localStorage.getItem('cryptosparrow-locale');
-                if (locale === 'pl' || locale === 'en') {
-                  document.documentElement.lang = locale;
-                }
-              })();
-            `,
+            __html: themeBootstrapScript,
           }}
         />
       </head>

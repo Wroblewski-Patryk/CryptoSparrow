@@ -665,7 +665,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `SAR-04 security(checkout): enforce allowlisted callback URLs for checkout intents with canonical fallback`
 - [x] `SAR-05 security(profile-throttle): add per-user throttling to checkout-intents and profile security-sensitive endpoints`
 - [x] `SAR-06 security(ready): expose only minimal public readiness signal and move detailed diagnostics to protected surface`
-- [ ] `SAR-07 security(csp): remove production script unsafe-inline via nonce/hash bootstrap approach`
+- [x] `SAR-07 security(csp): remove production script unsafe-inline via nonce/hash bootstrap approach`
 - [ ] `SAR-08 test(security-contracts): add regression coverage for proxy trust, public origin derivation, and checkout callback rejection`
 - [ ] `SAR-09 qa(stage-abuse): execute stage abuse-throttling verification for profile-sensitive routes and publish evidence`
 - [ ] `SAR-10 refactor(api-backtests): split oversized backtests service into smaller domain services to pass guardrails`
@@ -675,6 +675,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `SAR-14 ops(rollout): run DEV->STAGE->PROD remediation rollout checklist with smoke gates and rollback drill evidence`
 
 ## Progress Log
+- 2026-04-09: Completed `SAR-07` by replacing production CSP script policy from `unsafe-inline` to hash-based bootstrap allow (`script-src 'self' 'sha256-...'`) using shared theme bootstrap script constant, with CSP regression coverage in `apps/web/next.config.test.ts`; validated via `pnpm --filter web test -- next.config.test.ts` and `pnpm --filter web run typecheck` (PASS).
 - 2026-04-09: Completed `SAR-06` by minimizing public `/ready` response (no secret-gap details) and introducing protected admin-only `/ready/details` diagnostics behind auth+role+network guardrails; validated with `pnpm --filter api test -- src/router/health-readiness.test.ts src/router/metrics.test.ts` (PASS).
 - 2026-04-09: Completed `SAR-05` by adding user-scoped throttling middleware to `POST /dashboard/profile/subscription/checkout-intents`, `PATCH /dashboard/profile/security/password`, and `DELETE /dashboard/profile/security/account`; validated with `pnpm --filter api test -- src/modules/profile/subscription/subscription.e2e.test.ts src/modules/profile/security/security.e2e.test.ts` (PASS).
 - 2026-04-09: Completed `SAR-04` by introducing checkout callback allowlist sanitation (origins restricted to runtime trusted app/client/api origins) with canonical profile fallback URL and persisted sanitized metadata, plus e2e coverage for untrusted callback rejection/fallback; validated with `pnpm --filter api test -- src/modules/profile/subscription/subscription.e2e.test.ts` (PASS).
