@@ -8,7 +8,7 @@ Operational queue for one-task execution runs.
 
 ## NOW
 - [x] `ARM-09 refactor(api-bots): split bots.service.ts into command and runtime-read services`
-- [ ] `ARM-10 refactor(api-bots): extract symbol enrichment and runtime read-model composition modules`
+- [x] `ARM-10 refactor(api-bots): extract symbol enrichment and runtime read-model composition modules`
 - [ ] `ARM-11 refactor(api-data-boundary): reduce direct Prisma usage in orchestration-heavy services`
 - [ ] `ARM-12 refactor(web-backtest): split BacktestRunDetails into hooks and presentational sections`
 - [ ] `ARM-13 refactor(web-bots): continue BotsManagement decomposition by moving orchestration to feature hooks`

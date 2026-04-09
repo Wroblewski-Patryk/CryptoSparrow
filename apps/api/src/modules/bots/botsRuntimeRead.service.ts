@@ -28,11 +28,8 @@ import {
   resolveBotTrailingStopLevelsBySymbol,
   resolveBotTrailingTakeProfitLevelsBySymbol,
 } from './runtimeStrategyDisplayBySymbol.service';
-import { buildSignalConditionSummary } from './runtimeSignalConditionSummary.service';
 import { clampPeriod, formatIndicatorValue } from './runtimeSignalIndicators.service';
 import {
-  buildSignalConditionLines,
-  buildSignalIndicatorSummary,
   parseSignalConditionLines,
   SignalConditionLine,
 } from './runtimeSignalConditionLines.service';
@@ -48,6 +45,12 @@ import { buildLifecycleActionByTradeId, toPositionMetaById } from './runtimeTrad
 import { getRuntimeSessionSummaryMetrics, listRuntimeSessionsWithSummary } from './runtimeSessionsRead.service';
 import { fetchFallbackKlineCloses, fetchFallbackTickerPrices } from './runtimeMarketDataFallback.service';
 import { getOwnedBot, getOwnedBotRuntimeSession, resolveSessionWindowEnd } from './botOwnership.service';
+import {
+  buildConfiguredStrategyBySymbol,
+  buildLatestTradeAtBySymbol,
+  buildOpenPositionSymbolMetrics,
+} from './runtimeSymbolStatsEnrichment.service';
+import { composeRuntimeSymbolStatsReadModel } from './runtimeSymbolStatsReadModel.service';
 
 export const listBotRuntimeSessions = async (
   userId: string,
@@ -362,9 +365,7 @@ export const listBotRuntimeSessionSymbolStats = async (
       lastPriceBySymbol.set(symbol, ticker.lastPrice);
     }
   }
-  const latestTradeAtBySymbol = new Map(
-    latestTradeBySymbolRows.map((row) => [row.symbol, row._max.executedAt ?? null])
-  );
+  const latestTradeAtBySymbol = buildLatestTradeAtBySymbol(latestTradeBySymbolRows);
   const latestSignalBySymbol = new Map<
     string,
     {
@@ -483,7 +484,6 @@ export const listBotRuntimeSessionSymbolStats = async (
     }
   }
 
-  const configuredStrategyBySymbol = new Map<string, string>();
   const configuredBotStrategySymbolsResolved = await Promise.all(
     configuredBotStrategies.map(async (configuredBotStrategy) => ({
       strategyId: configuredBotStrategy.strategyId?.trim() ?? '',
@@ -493,17 +493,6 @@ export const listBotRuntimeSessionSymbolStats = async (
       ),
     }))
   );
-  for (const configuredBotStrategy of configuredBotStrategySymbolsResolved) {
-    const strategyId = configuredBotStrategy.strategyId?.trim();
-    if (!strategyId) continue;
-    const assignedSymbols = configuredBotStrategy.symbols;
-    const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : symbols;
-    for (const symbol of targetSymbols) {
-      if (!configuredStrategyBySymbol.has(symbol)) {
-        configuredStrategyBySymbol.set(symbol, strategyId);
-      }
-    }
-  }
   const configuredLinkSymbolsResolved = await Promise.all(
     configuredMarketGroupStrategyLinks.map(async (configuredLink) => ({
       strategyId: configuredLink.strategyId?.trim() ?? '',
@@ -513,25 +502,12 @@ export const listBotRuntimeSessionSymbolStats = async (
       ),
     }))
   );
-  for (const configuredLink of configuredLinkSymbolsResolved) {
-    const strategyId = configuredLink.strategyId?.trim();
-    if (!strategyId) continue;
-    const assignedSymbols = configuredLink.symbols;
-    const targetSymbols = assignedSymbols.length > 0 ? assignedSymbols : symbols;
-    for (const symbol of targetSymbols) {
-      if (!configuredStrategyBySymbol.has(symbol)) {
-        configuredStrategyBySymbol.set(symbol, strategyId);
-      }
-    }
-  }
-  if (configuredStrategyBySymbol.size === 0 && strategiesById.size > 0) {
-    const [fallbackStrategyId] = [...strategiesById.keys()];
-    for (const symbol of symbols) {
-      if (!configuredStrategyBySymbol.has(symbol)) {
-        configuredStrategyBySymbol.set(symbol, fallbackStrategyId);
-      }
-    }
-  }
+  const configuredStrategyBySymbol = buildConfiguredStrategyBySymbol({
+    configuredBotStrategies: configuredBotStrategySymbolsResolved,
+    configuredMarketGroupStrategyLinks: configuredLinkSymbolsResolved,
+    symbols,
+    strategiesById,
+  });
 
   const strategySeriesKeys = new Map<string, { symbol: string; interval: string }>();
   for (const symbol of symbols) {
@@ -601,148 +577,50 @@ export const listBotRuntimeSessionSymbolStats = async (
       candleClosesBySeries.set(row.key, fallbackCloses);
     }
   }
-  const openPositionCountBySymbol = new Map<string, number>();
-  const openPositionQtyBySymbol = new Map<string, number>();
-  const unrealizedPnlBySymbol = new Map<string, number>();
-
-  for (const position of openPositions) {
-    const lastPrice = lastPriceBySymbol.get(position.symbol);
-    if (typeof lastPrice === 'number' && Number.isFinite(lastPrice)) {
-      const sideMultiplier = position.side === 'LONG' ? 1 : -1;
-      const pnl = (lastPrice - position.entryPrice) * position.quantity * sideMultiplier;
-      unrealizedPnlBySymbol.set(
-        position.symbol,
-        (unrealizedPnlBySymbol.get(position.symbol) ?? 0) + pnl
-      );
-    }
-    openPositionCountBySymbol.set(
-      position.symbol,
-      (openPositionCountBySymbol.get(position.symbol) ?? 0) + 1
-    );
-    openPositionQtyBySymbol.set(
-      position.symbol,
-      (openPositionQtyBySymbol.get(position.symbol) ?? 0) + position.quantity
-    );
-  }
-
+  const { openPositionCountBySymbol, openPositionQtyBySymbol, unrealizedPnlBySymbol } =
+    buildOpenPositionSymbolMetrics({
+      openPositions,
+      lastPriceBySymbol,
+    });
   const statBySymbol = new Map(items.map((item) => [item.symbol, item]));
-  const itemsWithLivePnl = symbols.map((symbol) => {
-    const stat = statBySymbol.get(symbol) ?? null;
-    const openCount = openPositionCountBySymbol.get(symbol);
-    const openQty = openPositionQtyBySymbol.get(symbol);
-    const unrealizedPnl = unrealizedPnlBySymbol.get(symbol) ?? 0;
-    const latestSignal = latestSignalBySymbol.get(symbol);
-    const lastPrice = lastPriceBySymbol.get(symbol) ?? null;
-    const fallbackStrategyId = configuredStrategyBySymbol.get(symbol) ?? null;
-    const signalStrategyId = latestSignal?.strategyId ?? fallbackStrategyId;
-    const signalStrategy = signalStrategyId != null ? strategiesById.get(signalStrategyId) ?? null : null;
-    const signalSeriesKey =
-      signalStrategy?.interval != null ? `${symbol}|${signalStrategy.interval.trim().toLowerCase()}` : null;
-    const signalCloses = signalSeriesKey ? candleClosesBySeries.get(signalSeriesKey) ?? [] : [];
-    // Live checks should expose only runtime-decided signals (accepted decisions),
-    // not directional preview inferred from latest candles.
-    const effectiveSignalDirection = latestSignal?.signalDirection ?? null;
-    const signalConditionSummary = buildSignalConditionSummary(
-      signalStrategy?.config ?? null,
-      effectiveSignalDirection
-    );
-    const signalAnalysis =
-      signalStrategyId != null ? latestSignal?.analysisByStrategy?.[signalStrategyId] ?? null : null;
-    const signalIndicatorSummary = buildSignalIndicatorSummary({
-      strategyConfig: signalStrategy?.config ?? null,
-      direction: effectiveSignalDirection,
-      closes: signalCloses,
-    });
-    const signalConditionLines = buildSignalConditionLines({
-      strategyConfig: signalStrategy?.config ?? null,
-      direction: effectiveSignalDirection,
-      closes: signalCloses,
-    });
-    const useComputedSignalValues =
-      effectiveSignalDirection != null &&
-      signalCloses.length > 0 &&
-      signalAnalysis == null;
-    const signalScoreSummary =
-      latestSignal?.scoreLong != null || latestSignal?.scoreShort != null
-        ? {
-            longScore: latestSignal?.scoreLong ?? 0,
-            shortScore: latestSignal?.scoreShort ?? 0,
-          }
-        : null;
-
-    return {
-      id: stat?.id ?? `virtual-${sessionId}-${symbol}`,
-      userId,
-      botId,
-      sessionId,
-      symbol,
-      totalSignals: stat?.totalSignals ?? 0,
-      longEntries: stat?.longEntries ?? 0,
-      shortEntries: stat?.shortEntries ?? 0,
-      exits: stat?.exits ?? 0,
-      dcaCount: stat?.dcaCount ?? 0,
-      closedTrades: stat?.closedTrades ?? 0,
-      winningTrades: stat?.winningTrades ?? 0,
-      losingTrades: stat?.losingTrades ?? 0,
-      realizedPnl: stat?.realizedPnl ?? 0,
-      grossProfit: stat?.grossProfit ?? 0,
-      grossLoss: stat?.grossLoss ?? 0,
-      feesPaid: stat?.feesPaid ?? 0,
-      openPositionCount: openCount ?? stat?.openPositionCount ?? 0,
-      openPositionQty: openQty ?? stat?.openPositionQty ?? 0,
-      unrealizedPnl,
-      lastPrice,
-      lastSignalAt: stat?.lastSignalAt ?? null,
-      lastTradeAt: stat?.lastTradeAt ?? latestTradeAtBySymbol.get(symbol) ?? null,
-      lastSignalDirection: effectiveSignalDirection,
-      lastSignalDecisionAt: latestSignal?.eventAt ?? stat?.lastSignalAt ?? null,
-      lastSignalMessage: latestSignal?.message ?? null,
-      lastSignalReason: latestSignal?.mergeReason ?? null,
-      lastSignalStrategyId: latestSignal?.strategyId ?? null,
-      lastSignalStrategyName: signalStrategy?.name ?? null,
-      lastSignalConditionSummary: signalConditionSummary,
-      lastSignalIndicatorSummary: useComputedSignalValues
-        ? signalIndicatorSummary
-        : signalAnalysis?.indicatorSummary ?? signalIndicatorSummary,
-      lastSignalConditionLines: useComputedSignalValues
-        ? signalConditionLines
-        : signalAnalysis?.conditionLines ?? signalConditionLines,
-      lastSignalScoreSummary: signalScoreSummary,
-      snapshotAt: stat?.snapshotAt ?? session.startedAt,
-      createdAt: stat?.createdAt ?? session.createdAt,
-      updatedAt: stat?.updatedAt ?? session.updatedAt,
-    };
+  const readModel = composeRuntimeSymbolStatsReadModel({
+    userId,
+    botId,
+    sessionId,
+    sessionStartedAt: session.startedAt,
+    sessionCreatedAt: session.createdAt,
+    sessionUpdatedAt: session.updatedAt,
+    symbols,
+    statBySymbol,
+    aggregateSummary: {
+      totalSignals: summary._sum.totalSignals,
+      longEntries: summary._sum.longEntries,
+      shortEntries: summary._sum.shortEntries,
+      exits: summary._sum.exits,
+      dcaCount: summary._sum.dcaCount,
+      closedTrades: summary._sum.closedTrades,
+      winningTrades: summary._sum.winningTrades,
+      losingTrades: summary._sum.losingTrades,
+      realizedPnl: summary._sum.realizedPnl,
+      grossProfit: summary._sum.grossProfit,
+      grossLoss: summary._sum.grossLoss,
+      feesPaid: summary._sum.feesPaid,
+    },
+    openPositionCountBySymbol,
+    openPositionQtyBySymbol,
+    unrealizedPnlBySymbol,
+    lastPriceBySymbol,
+    latestTradeAtBySymbol,
+    latestSignalBySymbol,
+    configuredStrategyBySymbol,
+    strategiesById,
+    candleClosesBySeries,
   });
-
-  const summaryUnrealizedPnl = itemsWithLivePnl.reduce(
-    (acc, item) => acc + (Number.isFinite(item.unrealizedPnl) ? item.unrealizedPnl : 0),
-    0
-  );
-  const summaryOpenPositionCount = itemsWithLivePnl.reduce((acc, item) => acc + item.openPositionCount, 0);
-  const summaryOpenPositionQty = itemsWithLivePnl.reduce((acc, item) => acc + item.openPositionQty, 0);
-  const summaryRealizedPnl = summary._sum.realizedPnl ?? 0;
 
   return {
     sessionId,
-    items: itemsWithLivePnl,
-    summary: {
-      totalSignals: summary._sum.totalSignals ?? 0,
-      longEntries: summary._sum.longEntries ?? 0,
-      shortEntries: summary._sum.shortEntries ?? 0,
-      exits: summary._sum.exits ?? 0,
-      dcaCount: summary._sum.dcaCount ?? 0,
-      closedTrades: summary._sum.closedTrades ?? 0,
-      winningTrades: summary._sum.winningTrades ?? 0,
-      losingTrades: summary._sum.losingTrades ?? 0,
-      realizedPnl: summaryRealizedPnl,
-      unrealizedPnl: summaryUnrealizedPnl,
-      totalPnl: summaryRealizedPnl + summaryUnrealizedPnl,
-      grossProfit: summary._sum.grossProfit ?? 0,
-      grossLoss: summary._sum.grossLoss ?? 0,
-      feesPaid: summary._sum.feesPaid ?? 0,
-      openPositionCount: summaryOpenPositionCount,
-      openPositionQty: summaryOpenPositionQty,
-    },
+    items: readModel.items,
+    summary: readModel.summary,
   };
 };
 
