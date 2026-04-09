@@ -89,7 +89,10 @@ export const createRateLimiter = ({ windowMs, max, keyScope = 'user' }: RateLimi
   const buckets = new Map<string, Bucket>();
 
   return async (req: Request, res: Response, next: NextFunction) => {
-    if (process.env.NODE_ENV === 'test') {
+    if (
+      process.env.NODE_ENV === 'test' &&
+      process.env.RATE_LIMIT_ENABLE_TEST_MODE !== 'true'
+    ) {
       return next();
     }
 
