@@ -7,16 +7,12 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `ARM-05 refactor(api-backtests): extract BacktestDataGateway from backtests.service.ts`
-- [x] `ARM-06 refactor(api-backtests): extract BacktestRunJob progress/simulation orchestration from backtests.service.ts`
-- [x] `ARM-07 refactor(api-backtests): replace setTimeout backtest kickoff with queue-backed execution contract`
-- [x] `ARM-08 test(api-backtests): lock backtest report/trade parity after service decomposition`
-## NEXT
-- [ ] `ARM-09 refactor(api-bots): split bots.service.ts into command and runtime-read services`
+- [x] `ARM-09 refactor(api-bots): split bots.service.ts into command and runtime-read services`
 - [ ] `ARM-10 refactor(api-bots): extract symbol enrichment and runtime read-model composition modules`
 - [ ] `ARM-11 refactor(api-data-boundary): reduce direct Prisma usage in orchestration-heavy services`
 - [ ] `ARM-12 refactor(web-backtest): split BacktestRunDetails into hooks and presentational sections`
 - [ ] `ARM-13 refactor(web-bots): continue BotsManagement decomposition by moving orchestration to feature hooks`
+## NEXT
 - [ ] `ARM-14 refactor(web-dashboard): split HomeLiveWidgets into data/controller hooks and visual sections`
 - [ ] `ARM-15 refactor(web-i18n): remove duplicated inline locale dictionaries in dashboard route wrappers`
 - [ ] `ARM-16 chore(guardrails): remove architecture-related source file budget overrides`

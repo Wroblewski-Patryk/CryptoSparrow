@@ -681,8 +681,19 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARM-06 refactor(api-backtests): extract BacktestRunJob progress/simulation orchestration from backtests.service.ts`
 - [x] `ARM-07 refactor(api-backtests): replace setTimeout backtest kickoff with queue-backed execution contract`
 - [x] `ARM-08 test(api-backtests): lock backtest report/trade parity after service decomposition`
+- [x] `ARM-09 refactor(api-bots): split bots.service.ts into command and runtime-read services`
+- [ ] `ARM-10 refactor(api-bots): extract symbol enrichment and runtime read-model composition modules`
+- [ ] `ARM-11 refactor(api-data-boundary): reduce direct Prisma usage in orchestration-heavy services`
+- [ ] `ARM-12 refactor(web-backtest): split BacktestRunDetails into hooks and presentational sections`
+- [ ] `ARM-13 refactor(web-bots): continue BotsManagement decomposition by moving orchestration to feature hooks`
+- [ ] `ARM-14 refactor(web-dashboard): split HomeLiveWidgets into data/controller hooks and visual sections`
+- [ ] `ARM-15 refactor(web-i18n): remove duplicated inline locale dictionaries in dashboard route wrappers`
+- [ ] `ARM-16 chore(guardrails): remove architecture-related source file budget overrides`
+- [ ] `ARM-17 chore(quality): enforce updated file-size budgets in quality gate`
+- [ ] `ARM-18 docs(architecture): publish post-remediation architecture delta and residual-risk summary`
 
 ## Progress Log
+- 2026-04-09: Completed `ARM-09` by splitting `apps/api/src/modules/bots/bots.service.ts` into dedicated command/runtime-read modules (`botsCommand.service.ts`, `botsRuntimeRead.service.ts`) and reducing command-layer coupling by removing runtime-read imports from command service; validated with `pnpm --filter api typecheck` and `pnpm --filter api test -- src/modules/bots/runtimeStrategyConfigParser.service.test.ts` (PASS).
 - 2026-04-09: Completed `ARM-08` by adding decomposition-lock regressions for queue/job seams (`backtestRunQueue.test.ts`, `backtestRunJob.test.ts`) and running parity-critical backtest suites (`backtestReplayCore`, `backtestIndicatorTimelineSeries`) after service split; validated with `pnpm --filter api test -- src/modules/backtests/backtestRunQueue.test.ts src/modules/backtests/backtestRunJob.test.ts src/modules/backtests/backtestReplayCore.test.ts src/modules/backtests/backtestIndicatorTimelineSeries.test.ts` and `pnpm --filter api typecheck` (PASS).
 - 2026-04-09: Completed `ARM-07` by replacing ad-hoc `setTimeout` run kickoff with explicit queue contract (`backtestRunQueue.ts`) and routing `createRun` scheduling through queued execution (`enqueue`) for deduplicated serial processing and worker-ready boundary; validated with `pnpm --filter api test -- src/modules/backtests/backtestReplayCore.test.ts src/modules/backtests/backtestIndicatorTimelineSeries.test.ts` and `pnpm --filter api typecheck` (PASS).
 - 2026-04-09: Completed `ARM-06` by extracting async run orchestration (`status/liveProgress`, symbol-load loop, interleaved simulation/report persistence) into `backtestRunJob.ts` and wiring `backtests.service.ts` through a dedicated job factory without contract drift; validated with `pnpm --filter api test -- src/modules/backtests/backtestReplayCore.test.ts src/modules/backtests/backtestIndicatorTimelineSeries.test.ts` and `pnpm --filter api typecheck` (PASS).
