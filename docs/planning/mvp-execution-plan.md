@@ -668,13 +668,14 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `SAR-07 security(csp): remove production script unsafe-inline via nonce/hash bootstrap approach`
 - [x] `SAR-08 test(security-contracts): add regression coverage for proxy trust, public origin derivation, and checkout callback rejection`
 - [ ] `SAR-09 qa(stage-abuse): execute stage abuse-throttling verification for profile-sensitive routes and publish evidence`
-- [ ] `SAR-10 refactor(api-backtests): split oversized backtests service into smaller domain services to pass guardrails`
+- [x] `SAR-10 refactor(api-backtests): split oversized backtests service into smaller domain services to pass guardrails`
 - [ ] `SAR-11 refactor(api-runtime): split oversized runtime signal loop service into stream/watchdog/execution units to pass guardrails`
 - [ ] `SAR-12 refactor(web-bots): finish BotsManagement decomposition to pass file-size guardrails`
 - [ ] `SAR-13 refactor(api-data-boundary): introduce repository boundaries for bots/backtests/engine high-change modules`
 - [ ] `SAR-14 ops(rollout): run DEV->STAGE->PROD remediation rollout checklist with smoke gates and rollback drill evidence`
 
 ## Progress Log
+- 2026-04-09: Completed `SAR-10` by extracting backtest indicator parsing/warmup contracts from `backtests.service.ts` into `backtestIndicatorSpecs.ts`, reducing service size under guardrails budget and keeping behavior parity; validated with `pnpm --filter api test -- src/modules/backtests/backtestIndicatorTimelineSeries.test.ts`, `pnpm --filter api run typecheck`, and `pnpm run quality:guardrails` (PASS).
 - 2026-04-09: Completed `SAR-08` by locking regression coverage for all three trust controls: trusted-proxy matcher (`proxyTrust.test.ts`), forwarded-header ignore in avatar URL generation (`upload.e2e.test.ts`), and checkout callback-origin allowlist fallback (`subscription.e2e.test.ts`); validated with `pnpm --filter api test -- src/config/proxyTrust.test.ts src/modules/upload/upload.e2e.test.ts src/modules/profile/subscription/subscription.e2e.test.ts` (PASS).
 - 2026-04-09: Completed `SAR-07` by replacing production CSP script policy from `unsafe-inline` to hash-based bootstrap allow (`script-src 'self' 'sha256-...'`) using shared theme bootstrap script constant, with CSP regression coverage in `apps/web/next.config.test.ts`; validated via `pnpm --filter web test -- next.config.test.ts` and `pnpm --filter web run typecheck` (PASS).
 - 2026-04-09: Completed `SAR-06` by minimizing public `/ready` response (no secret-gap details) and introducing protected admin-only `/ready/details` diagnostics behind auth+role+network guardrails; validated with `pnpm --filter api test -- src/router/health-readiness.test.ts src/router/metrics.test.ts` (PASS).
