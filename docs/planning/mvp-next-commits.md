@@ -14,7 +14,7 @@ Operational queue for one-task execution runs.
 - [x] `ARM-13 refactor(web-bots): continue BotsManagement decomposition by moving orchestration to feature hooks`
 ## NEXT
 - [x] `ARM-14 refactor(web-dashboard): split HomeLiveWidgets into data/controller hooks and visual sections`
-- [ ] `ARM-15 refactor(web-i18n): remove duplicated inline locale dictionaries in dashboard route wrappers`
+- [x] `ARM-15 refactor(web-i18n): remove duplicated inline locale dictionaries in dashboard route wrappers`
 - [ ] `ARM-16 chore(guardrails): remove architecture-related source file budget overrides`
 - [ ] `ARM-17 chore(quality): enforce updated file-size budgets in quality gate`
 - [ ] `ARM-18 docs(architecture): publish post-remediation architecture delta and residual-risk summary`

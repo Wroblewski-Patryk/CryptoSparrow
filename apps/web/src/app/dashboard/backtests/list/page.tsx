@@ -1,45 +1,27 @@
 'use client';
 
-import { useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
 import BacktestsListView from '@/features/backtest/components/BacktestsListView';
-import { I18nContext } from '../../../../i18n/I18nProvider';
+import { useI18n } from '@/i18n/I18nProvider';
 import { LuChartLine, LuList } from 'react-icons/lu';
 
 export default function BacktestsListPage() {
   const router = useRouter();
-  const i18n = useContext(I18nContext);
-  const locale = i18n?.locale === 'en' ? 'en' : 'pl';
-  const copy =
-    locale === 'en'
-      ? {
-          title: 'Backtests',
-          breadcrumbDashboard: 'Dashboard',
-          breadcrumbBacktests: 'Backtests',
-          breadcrumbList: 'List',
-          add: 'Create',
-        }
-        : {
-          title: 'Backtesty',
-          breadcrumbDashboard: 'Dashboard',
-          breadcrumbBacktests: 'Backtests',
-          breadcrumbList: 'List',
-          add: 'Create',
-        };
+  const { t } = useI18n();
 
   return (
     <section className='w-full space-y-4'>
       <PageTitle
-        title={copy.title}
+        title={t('dashboard.nav.backtests')}
         icon={<LuChartLine className='h-5 w-5' />}
         breadcrumb={[
-          { label: copy.breadcrumbDashboard, href: '/dashboard' },
-          { label: copy.breadcrumbBacktests, href: '/dashboard/backtests/list' },
-          { label: copy.breadcrumbList, icon: <LuList className='h-3.5 w-3.5' /> },
+          { label: t('dashboard.common.dashboard'), href: '/dashboard' },
+          { label: t('dashboard.nav.backtests'), href: '/dashboard/backtests/list' },
+          { label: t('dashboard.nav.backtestsList'), icon: <LuList className='h-3.5 w-3.5' /> },
         ]}
         onAdd={() => router.push('/dashboard/backtests/create')}
-        addLabel={copy.add}
+        addLabel={t('dashboard.nav.createBacktest')}
       />
 
       <BacktestsListView />

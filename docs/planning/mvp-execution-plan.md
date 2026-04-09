@@ -687,12 +687,13 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARM-12 refactor(web-backtest): split BacktestRunDetails into hooks and presentational sections`
 - [x] `ARM-13 refactor(web-bots): continue BotsManagement decomposition by moving orchestration to feature hooks`
 - [x] `ARM-14 refactor(web-dashboard): split HomeLiveWidgets into data/controller hooks and visual sections`
-- [ ] `ARM-15 refactor(web-i18n): remove duplicated inline locale dictionaries in dashboard route wrappers`
+- [x] `ARM-15 refactor(web-i18n): remove duplicated inline locale dictionaries in dashboard route wrappers`
 - [ ] `ARM-16 chore(guardrails): remove architecture-related source file budget overrides`
 - [ ] `ARM-17 chore(quality): enforce updated file-size budgets in quality gate`
 - [ ] `ARM-18 docs(architecture): publish post-remediation architecture delta and residual-risk summary`
 
 ## Progress Log
+- 2026-04-09: Completed `ARM-15` by removing duplicated inline EN/PL dictionaries from dashboard backtests route wrappers (`list/create/details`) and switching breadcrumb/title/add-label copy to shared `useI18n().t(...)` keys (`dashboard.common.*`, `dashboard.nav.*`, `dashboard.logs.tableDetails`) while preserving route behavior and submit flow; validated with `pnpm --filter web run typecheck` (PASS).
 - 2026-04-09: Completed `ARM-14` by extracting dashboard runtime orchestration from `HomeLiveWidgets.tsx` into `useHomeLiveWidgetsController` (loading, auto-refresh, stream updates, selected bot/session handling, trade-history controller state) while keeping visual sections (`RuntimeDataSection`, `RuntimeSignalsSection`, `RuntimeSidebarSection`, `RuntimeOnboardingSection`) unchanged; validated with `pnpm --filter web run typecheck` and `pnpm --filter web exec vitest run src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` (PASS).
 - 2026-04-09: Completed `ARM-13` by extracting `BotsManagement` orchestration into dedicated feature hooks (`useBotsListController`, `useBotsAssistantController`, `useBotsMonitoringController`) so data loading, command handlers, and monitoring/assistant side effects are separated from JSX rendering while preserving behavior; validated with `pnpm --filter web exec vitest run src/features/bots/components/BotsManagement.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - 2026-04-09: Completed `ARM-12` by extracting core data orchestration from `BacktestRunDetails.tsx` into `useBacktestRunCoreData` hook and moving run-header/stages KPI shell into `BacktestRunHeaderSection` presentational component, keeping existing UI contract intact while reducing component coupling; validated with `pnpm --filter web test -- src/features/backtest/components/BacktestRunDetails.test.tsx` and `pnpm --filter web run typecheck` (PASS).
