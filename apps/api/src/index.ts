@@ -10,13 +10,14 @@ import helmet from 'helmet';
 import { clientUrl, corsOrigins, serverPort, serverUrl } from './config/runtime';
 import { requireTrustedOrigin } from './middleware/requireTrustedOrigin';
 import { assertCriticalSecretsReadiness } from './config/criticalSecretsReadiness';
+import { createTrustProxyMatcher } from './config/proxyTrust';
 
 if (process.env.NODE_ENV !== 'test') {
   assertCriticalSecretsReadiness();
 }
 
 const app = express();
-app.set('trust proxy', true);
+app.set('trust proxy', createTrustProxyMatcher());
 app.use(cookieParser());
 app.use(
   helmet({

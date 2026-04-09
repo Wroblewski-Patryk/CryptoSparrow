@@ -7,13 +7,12 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `SAR-02 security(proxy): replace global trust-proxy=true with explicit trusted proxy chain and forwarded-header hardening`
 - [ ] `SAR-03 security(upload-origin): derive avatar/public upload URLs from trusted config allowlist instead of request host headers`
 - [ ] `SAR-04 security(checkout): enforce allowlisted callback URLs for checkout intents with canonical fallback`
 - [ ] `SAR-05 security(profile-throttle): add per-user throttling to checkout-intents and profile security-sensitive endpoints`
 - [ ] `SAR-06 security(ready): expose only minimal public readiness signal and move detailed diagnostics to protected surface`
-## NEXT
 - [ ] `SAR-07 security(csp): remove production script unsafe-inline via nonce/hash bootstrap approach`
+## NEXT
 - [ ] `SAR-08 test(security-contracts): add regression coverage for proxy trust, public origin derivation, and checkout callback rejection`
 - [ ] `SAR-09 qa(stage-abuse): execute stage abuse-throttling verification for profile-sensitive routes and publish evidence`
 - [ ] `SAR-10 refactor(api-backtests): split oversized backtests service into smaller domain services to pass guardrails`
@@ -25,6 +24,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `SAR-02 security(proxy): replace global trust-proxy=true with explicit trusted proxy chain and forwarded-header hardening`
 - [x] `SAR-01 test(api-upload): restore upload security e2e cleanup order so security suite is green again`
 - [x] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
 - [x] `IND-35 qa(parity): execute 3-symbol side-by-side parity checklist for new indicator families and attach evidence`

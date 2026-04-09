@@ -17,11 +17,6 @@ type Bucket = {
 const normalizeToken = (value: unknown) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
 
 const getRequestIp = (req: Request) => {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string') {
-    const first = forwarded.split(',')[0]?.trim();
-    if (first) return first;
-  }
   return req.ip || req.socket.remoteAddress || 'unknown';
 };
 
