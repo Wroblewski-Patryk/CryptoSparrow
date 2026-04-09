@@ -17,7 +17,7 @@ Operational queue for one-task execution runs.
 - [x] `ARM-15 refactor(web-i18n): remove duplicated inline locale dictionaries in dashboard route wrappers`
 - [x] `ARM-16 chore(guardrails): remove architecture-related source file budget overrides`
 - [x] `ARM-17 chore(quality): enforce updated file-size budgets in quality gate`
-- [ ] `ARM-18 docs(architecture): publish post-remediation architecture delta and residual-risk summary`
+- [x] `ARM-18 docs(architecture): publish post-remediation architecture delta and residual-risk summary`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
