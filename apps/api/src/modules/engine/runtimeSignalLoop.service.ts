@@ -12,8 +12,6 @@ import { runtimePositionAutomationService } from './runtimePositionAutomation.se
 import { getRuntimeTicker, upsertRuntimeTicker } from './runtimeTickerStore';
 import { RuntimeSignalDecisionEngine } from './runtimeSignalDecisionEngine';
 import {
-  RuntimeCandle,
-  RuntimeOrderBookSeries,
   RuntimeSignalMarketDataGateway,
 } from './runtimeSignalMarketDataGateway';
 import { resolveRuntimeDcaFundsExhausted, resolveRuntimeReferenceBalance } from './runtimeCapitalContext.service';
@@ -207,13 +205,14 @@ export class RuntimeSignalLoop {
   private lastKnownActiveBotIds = new Set<string>();
 
   private readonly decisionEngine = new RuntimeSignalDecisionEngine({
-    getSeries: (marketType, symbol, interval) => this.getSeries(marketType, symbol, interval),
+    getSeries: (marketType, symbol, interval) =>
+      this.marketDataGateway.getSeries(marketType, symbol, interval),
     resolveFundingRateSeriesForCandles: (marketType, symbol, candles) =>
-      this.resolveFundingRateSeriesForCandles(marketType, symbol, candles),
+      this.marketDataGateway.resolveFundingRateSeriesForCandles(marketType, symbol, candles),
     resolveOpenInterestSeriesForCandles: (marketType, symbol, candles) =>
-      this.resolveOpenInterestSeriesForCandles(marketType, symbol, candles),
+      this.marketDataGateway.resolveOpenInterestSeriesForCandles(marketType, symbol, candles),
     resolveOrderBookSeriesForCandles: (marketType, symbol, candles) =>
-      this.resolveOrderBookSeriesForCandles(marketType, symbol, candles),
+      this.marketDataGateway.resolveOrderBookSeriesForCandles(marketType, symbol, candles),
   });
 
   constructor(private readonly deps: RuntimeSignalLoopDeps = defaultDeps) {}
@@ -495,38 +494,6 @@ export class RuntimeSignalLoop {
     await this.marketDataGateway.ingestCandleEvent(event);
     await this.processPositionAutomationFallbackFromCandle(event);
     await this.handleFinalCandleDecision(event);
-  }
-
-  private resolveFundingRateSeriesForCandles(
-    marketType: 'FUTURES' | 'SPOT',
-    symbol: string,
-    candles: RuntimeCandle[],
-  ): Array<number | null> | null {
-    return this.marketDataGateway.resolveFundingRateSeriesForCandles(marketType, symbol, candles);
-  }
-
-  private resolveOpenInterestSeriesForCandles(
-    marketType: 'FUTURES' | 'SPOT',
-    symbol: string,
-    candles: RuntimeCandle[],
-  ): Array<number | null> | null {
-    return this.marketDataGateway.resolveOpenInterestSeriesForCandles(marketType, symbol, candles);
-  }
-
-  private resolveOrderBookSeriesForCandles(
-    marketType: 'FUTURES' | 'SPOT',
-    symbol: string,
-    candles: RuntimeCandle[],
-  ): RuntimeOrderBookSeries | null {
-    return this.marketDataGateway.resolveOrderBookSeriesForCandles(marketType, symbol, candles);
-  }
-
-  private getSeries(
-    marketType: 'FUTURES' | 'SPOT',
-    symbol: string,
-    interval?: string | null,
-  ) {
-    return this.marketDataGateway.getSeries(marketType, symbol, interval);
   }
 
   getRecentCloses(input: {

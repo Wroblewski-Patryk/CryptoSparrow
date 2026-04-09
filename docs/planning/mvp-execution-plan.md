@@ -675,10 +675,11 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `SAR-14 ops(rollout): run DEV->STAGE->PROD remediation rollout checklist with smoke gates and rollback drill evidence`
 - [x] `ARM-01 refactor(api-runtime): extract runtime signal decision engine from runtimeSignalLoop.service.ts`
 - [x] `ARM-02 refactor(api-runtime): extract market-data gateway (warmup/funding/open-interest/order-book) from runtimeSignalLoop.service.ts`
-- [ ] `ARM-03 refactor(api-runtime): reduce runtimeSignalLoop to stream/session orchestration and execution coordination`
+- [x] `ARM-03 refactor(api-runtime): reduce runtimeSignalLoop to stream/session orchestration and execution coordination`
 - [ ] `ARM-04 test(api-runtime): lock runtime parity after ARM-01..ARM-03 extraction set`
 
 ## Progress Log
+- 2026-04-09: Completed `ARM-03` by reducing `runtimeSignalLoop.service.ts` to orchestration concerns (stream/session/watchdog/execution coordination) and wiring strategy evaluation dependencies directly through extracted gateway/decision-engine modules; validated with `pnpm --filter api test -- src/modules/engine/runtimeSignalLoop.service.test.ts` and `pnpm --filter api typecheck` (PASS).
 - 2026-04-09: Completed `ARM-02` by extracting warmup/funding/open-interest/order-book series ownership into `runtimeSignalMarketDataGateway.ts` and delegating runtime candle ingestion/series resolution from `runtimeSignalLoop.service.ts` to the gateway while preserving existing runtime/test seams; validated with `pnpm --filter api test -- src/modules/engine/runtimeSignalLoop.service.test.ts` and `pnpm --filter api typecheck` (PASS).
 - 2026-04-09: Completed `ARM-01` by extracting runtime strategy evaluation into `runtimeSignalDecisionEngine.ts` and delegating `runtimeSignalLoop.service.ts` decision paths through the dedicated engine without changing runtime contracts; validated with `pnpm --filter api test -- src/modules/engine/runtimeSignalLoop.service.test.ts` (PASS).
 - 2026-04-09: Completed `SAR-14` by executing DEV->STAGE->PROD remediation rollout checklist with smoke and external-gate rehearsal (`ops:rc:gates:refresh:summary`) plus rollback drill evidence (`ops:db:restore-drill:local`), then publishing gate decision and artifacts in `docs/operations/security-remediation-rollout-evidence-2026-04-09.md`; result: DEV PASS, rollback drill PASS, STAGE/PROD promotion held pending external evidence closure.

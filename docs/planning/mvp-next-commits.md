@@ -9,7 +9,7 @@ Operational queue for one-task execution runs.
 ## NOW
 - [x] `ARM-01 refactor(api-runtime): extract runtime signal decision engine from runtimeSignalLoop.service.ts`
 - [x] `ARM-02 refactor(api-runtime): extract market-data gateway (warmup/funding/open-interest/order-book) from runtimeSignalLoop.service.ts`
-- [ ] `ARM-03 refactor(api-runtime): reduce runtimeSignalLoop to stream/session orchestration and execution coordination`
+- [x] `ARM-03 refactor(api-runtime): reduce runtimeSignalLoop to stream/session orchestration and execution coordination`
 - [ ] `ARM-04 test(api-runtime): lock runtime parity after ARM-01..ARM-03 extraction set`
 ## NEXT
 - [ ] `ARM-05 refactor(api-backtests): extract BacktestDataGateway from backtests.service.ts`
