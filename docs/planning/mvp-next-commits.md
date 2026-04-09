@@ -7,7 +7,25 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [ ] `ARM-01 refactor(api-runtime): extract runtime signal decision engine from runtimeSignalLoop.service.ts`
+- [ ] `ARM-02 refactor(api-runtime): extract market-data gateway (warmup/funding/open-interest/order-book) from runtimeSignalLoop.service.ts`
+- [ ] `ARM-03 refactor(api-runtime): reduce runtimeSignalLoop to stream/session orchestration and execution coordination`
+- [ ] `ARM-04 test(api-runtime): lock runtime parity after ARM-01..ARM-03 extraction set`
 ## NEXT
+- [ ] `ARM-05 refactor(api-backtests): extract BacktestDataGateway from backtests.service.ts`
+- [ ] `ARM-06 refactor(api-backtests): extract BacktestRunJob progress/simulation orchestration from backtests.service.ts`
+- [ ] `ARM-07 refactor(api-backtests): replace setTimeout backtest kickoff with queue-backed execution contract`
+- [ ] `ARM-08 test(api-backtests): lock backtest report/trade parity after service decomposition`
+- [ ] `ARM-09 refactor(api-bots): split bots.service.ts into command and runtime-read services`
+- [ ] `ARM-10 refactor(api-bots): extract symbol enrichment and runtime read-model composition modules`
+- [ ] `ARM-11 refactor(api-data-boundary): reduce direct Prisma usage in orchestration-heavy services`
+- [ ] `ARM-12 refactor(web-backtest): split BacktestRunDetails into hooks and presentational sections`
+- [ ] `ARM-13 refactor(web-bots): continue BotsManagement decomposition by moving orchestration to feature hooks`
+- [ ] `ARM-14 refactor(web-dashboard): split HomeLiveWidgets into data/controller hooks and visual sections`
+- [ ] `ARM-15 refactor(web-i18n): remove duplicated inline locale dictionaries in dashboard route wrappers`
+- [ ] `ARM-16 chore(guardrails): remove architecture-related source file budget overrides`
+- [ ] `ARM-17 chore(quality): enforce updated file-size budgets in quality gate`
+- [ ] `ARM-18 docs(architecture): publish post-remediation architecture delta and residual-risk summary`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
