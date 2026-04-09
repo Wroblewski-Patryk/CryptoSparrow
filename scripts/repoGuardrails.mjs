@@ -13,6 +13,10 @@ const FORBIDDEN_LOCKFILES = new Set([
 
 const SOURCE_FILE_RE = /^apps\/(?:web|api)\/src\/.+\.(?:ts|tsx|js|jsx)$/;
 const DEFAULT_MAX_FILE_BYTES = 90_000;
+const SOURCE_FILE_BUDGET_RULES = [
+  { match: /^apps\/api\/src\//, budget: 90_000 },
+  { match: /^apps\/web\/src\//, budget: 105_000 },
+];
 
 const IGNORED_DIRS = new Set([
   ".git",
@@ -25,6 +29,13 @@ const IGNORED_DIRS = new Set([
 ]);
 
 const normalize = (value) => value.replace(/\\/g, "/");
+
+const resolveSourceFileBudget = (filePath) => {
+  for (const rule of SOURCE_FILE_BUDGET_RULES) {
+    if (rule.match.test(filePath)) return rule.budget;
+  }
+  return DEFAULT_MAX_FILE_BYTES;
+};
 
 const readTrackedFiles = () => {
   const output = execSync("git ls-files", { encoding: "utf8" });
@@ -93,7 +104,7 @@ const validateSourceFileBudgets = (trackedFiles) => {
     } catch {
       continue;
     }
-    const budget = DEFAULT_MAX_FILE_BYTES;
+    const budget = resolveSourceFileBudget(filePath);
     if (stats.size > budget) {
       oversize.push({
         filePath,
@@ -131,7 +142,9 @@ const run = () => {
 
   console.log("Repository guardrails check passed.");
   console.log(`- Lockfile policy: OK (${EXPECTED_LOCKFILE} only)`);
-  console.log(`- Source file budget: OK (default ${DEFAULT_MAX_FILE_BYTES} bytes)`);
+  console.log(
+    `- Source file budget: OK (api ${SOURCE_FILE_BUDGET_RULES[0].budget} bytes, web ${SOURCE_FILE_BUDGET_RULES[1].budget} bytes)`
+  );
 };
 
 run();

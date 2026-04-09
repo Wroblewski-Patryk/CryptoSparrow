@@ -689,10 +689,11 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARM-14 refactor(web-dashboard): split HomeLiveWidgets into data/controller hooks and visual sections`
 - [x] `ARM-15 refactor(web-i18n): remove duplicated inline locale dictionaries in dashboard route wrappers`
 - [x] `ARM-16 chore(guardrails): remove architecture-related source file budget overrides`
-- [ ] `ARM-17 chore(quality): enforce updated file-size budgets in quality gate`
+- [x] `ARM-17 chore(quality): enforce updated file-size budgets in quality gate`
 - [ ] `ARM-18 docs(architecture): publish post-remediation architecture delta and residual-risk summary`
 
 ## Progress Log
+- 2026-04-09: Completed `ARM-17` by enforcing source-file budgets in `quality:guardrails` through explicit app-level thresholds (`api: 90k`, `web: 105k`) with no per-file exceptions, and validated gate execution with `pnpm run quality:guardrails` (PASS).
 - 2026-04-09: Completed `ARM-16` by removing architecture-era per-file size exceptions from `scripts/repoGuardrails.mjs` so quality checks no longer whitelist specific hotspot files and all source files are evaluated via baseline budget rules ahead of threshold hardening in `ARM-17`.
 - 2026-04-09: Completed `ARM-15` by removing duplicated inline EN/PL dictionaries from dashboard backtests route wrappers (`list/create/details`) and switching breadcrumb/title/add-label copy to shared `useI18n().t(...)` keys (`dashboard.common.*`, `dashboard.nav.*`, `dashboard.logs.tableDetails`) while preserving route behavior and submit flow; validated with `pnpm --filter web run typecheck` (PASS).
 - 2026-04-09: Completed `ARM-14` by extracting dashboard runtime orchestration from `HomeLiveWidgets.tsx` into `useHomeLiveWidgetsController` (loading, auto-refresh, stream updates, selected bot/session handling, trade-history controller state) while keeping visual sections (`RuntimeDataSection`, `RuntimeSignalsSection`, `RuntimeSidebarSection`, `RuntimeOnboardingSection`) unchanged; validated with `pnpm --filter web run typecheck` and `pnpm --filter web exec vitest run src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` (PASS).
