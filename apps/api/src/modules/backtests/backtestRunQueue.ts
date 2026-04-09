@@ -23,12 +23,13 @@ export class BacktestRunQueue {
       while (this.pending.length > 0) {
         const runId = this.pending.shift();
         if (!runId) continue;
-        this.pendingSet.delete(runId);
         try {
           await this.worker(runId);
         } catch (error) {
           // Keep queue alive even when a single run fails.
           console.error('BacktestRunQueue worker failed:', error);
+        } finally {
+          this.pendingSet.delete(runId);
         }
       }
     } finally {

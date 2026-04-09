@@ -10,7 +10,7 @@ Operational queue for one-task execution runs.
 - [x] `ARM-05 refactor(api-backtests): extract BacktestDataGateway from backtests.service.ts`
 - [x] `ARM-06 refactor(api-backtests): extract BacktestRunJob progress/simulation orchestration from backtests.service.ts`
 - [x] `ARM-07 refactor(api-backtests): replace setTimeout backtest kickoff with queue-backed execution contract`
-- [ ] `ARM-08 test(api-backtests): lock backtest report/trade parity after service decomposition`
+- [x] `ARM-08 test(api-backtests): lock backtest report/trade parity after service decomposition`
 ## NEXT
 - [ ] `ARM-09 refactor(api-bots): split bots.service.ts into command and runtime-read services`
 - [ ] `ARM-10 refactor(api-bots): extract symbol enrichment and runtime read-model composition modules`
