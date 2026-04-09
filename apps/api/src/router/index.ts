@@ -36,8 +36,6 @@ router.get('/ready', (_req, res) => {
     return res.status(503).json({
       status: 'not_ready',
       service: 'api',
-      missing: readiness.missing,
-      issues: readiness.issues,
     });
   }
 
@@ -48,6 +46,25 @@ router.get('/ready', (_req, res) => {
 });
 
 const requireOpsAccess = [requireAuth, requireRole('ADMIN'), requireOpsNetwork] as const;
+
+router.get('/ready/details', ...requireOpsAccess, (_req, res) => {
+  const readiness = evaluateCriticalSecretsReadiness();
+  if (!readiness.ready) {
+    return res.status(503).json({
+      status: 'not_ready',
+      service: 'api',
+      missing: readiness.missing,
+      issues: readiness.issues,
+    });
+  }
+
+  return res.status(200).json({
+    status: 'ready',
+    service: 'api',
+    missing: [],
+    issues: [],
+  });
+});
 
 router.get('/metrics', ...requireOpsAccess, (_req, res) => {
   return res.status(200).json(metricsStore.snapshot());
