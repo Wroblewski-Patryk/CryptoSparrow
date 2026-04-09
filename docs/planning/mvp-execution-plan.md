@@ -677,8 +677,13 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARM-02 refactor(api-runtime): extract market-data gateway (warmup/funding/open-interest/order-book) from runtimeSignalLoop.service.ts`
 - [x] `ARM-03 refactor(api-runtime): reduce runtimeSignalLoop to stream/session orchestration and execution coordination`
 - [x] `ARM-04 test(api-runtime): lock runtime parity after ARM-01..ARM-03 extraction set`
+- [x] `ARM-05 refactor(api-backtests): extract BacktestDataGateway from backtests.service.ts`
+- [ ] `ARM-06 refactor(api-backtests): extract BacktestRunJob progress/simulation orchestration from backtests.service.ts`
+- [ ] `ARM-07 refactor(api-backtests): replace setTimeout backtest kickoff with queue-backed execution contract`
+- [ ] `ARM-08 test(api-backtests): lock backtest report/trade parity after service decomposition`
 
 ## Progress Log
+- 2026-04-09: Completed `ARM-05` by extracting historical candles/supplemental ingestion into `backtestDataGateway.ts` (`fetchKlines`, `fetchSupplementalSeries`, DB+memory cache policy) and wiring `backtests.service.ts` through gateway APIs without changing simulation/report contracts; validated with `pnpm --filter api test -- src/modules/backtests/backtestIndicatorTimelineSeries.test.ts src/modules/backtests/backtestReplayCore.test.ts` and `pnpm --filter api typecheck` (PASS).
 - 2026-04-09: Completed `ARM-04` by adding dedicated extraction-parity regressions for `RuntimeSignalDecisionEngine` and `RuntimeSignalMarketDataGateway`, then validating full runtime extraction set with `runtimeSignalLoop.service` coverage; validated with `pnpm --filter api test -- src/modules/engine/runtimeSignalDecisionEngine.test.ts src/modules/engine/runtimeSignalMarketDataGateway.test.ts src/modules/engine/runtimeSignalLoop.service.test.ts` and `pnpm --filter api typecheck` (PASS).
 - 2026-04-09: Completed `ARM-03` by reducing `runtimeSignalLoop.service.ts` to orchestration concerns (stream/session/watchdog/execution coordination) and wiring strategy evaluation dependencies directly through extracted gateway/decision-engine modules; validated with `pnpm --filter api test -- src/modules/engine/runtimeSignalLoop.service.test.ts` and `pnpm --filter api typecheck` (PASS).
 - 2026-04-09: Completed `ARM-02` by extracting warmup/funding/open-interest/order-book series ownership into `runtimeSignalMarketDataGateway.ts` and delegating runtime candle ingestion/series resolution from `runtimeSignalLoop.service.ts` to the gateway while preserving existing runtime/test seams; validated with `pnpm --filter api test -- src/modules/engine/runtimeSignalLoop.service.test.ts` and `pnpm --filter api typecheck` (PASS).

@@ -7,15 +7,11 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `ARM-01 refactor(api-runtime): extract runtime signal decision engine from runtimeSignalLoop.service.ts`
-- [x] `ARM-02 refactor(api-runtime): extract market-data gateway (warmup/funding/open-interest/order-book) from runtimeSignalLoop.service.ts`
-- [x] `ARM-03 refactor(api-runtime): reduce runtimeSignalLoop to stream/session orchestration and execution coordination`
-- [x] `ARM-04 test(api-runtime): lock runtime parity after ARM-01..ARM-03 extraction set`
-## NEXT
-- [ ] `ARM-05 refactor(api-backtests): extract BacktestDataGateway from backtests.service.ts`
+- [x] `ARM-05 refactor(api-backtests): extract BacktestDataGateway from backtests.service.ts`
 - [ ] `ARM-06 refactor(api-backtests): extract BacktestRunJob progress/simulation orchestration from backtests.service.ts`
 - [ ] `ARM-07 refactor(api-backtests): replace setTimeout backtest kickoff with queue-backed execution contract`
 - [ ] `ARM-08 test(api-backtests): lock backtest report/trade parity after service decomposition`
+## NEXT
 - [ ] `ARM-09 refactor(api-bots): split bots.service.ts into command and runtime-read services`
 - [ ] `ARM-10 refactor(api-bots): extract symbol enrichment and runtime read-model composition modules`
 - [ ] `ARM-11 refactor(api-data-boundary): reduce direct Prisma usage in orchestration-heavy services`
