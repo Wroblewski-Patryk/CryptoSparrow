@@ -61,6 +61,25 @@ import {
   parseStrategyIndicators,
   resolveIndicatorWarmupCandles,
 } from './backtestIndicatorSpecs';
+import {
+  countLosingBacktestTrades,
+  countWinningBacktestTrades,
+  createBacktestRun,
+  createBacktestTrades,
+  deleteOwnedBacktestRunCascade,
+  findBacktestRunById,
+  findOwnedBacktestReport,
+  findOwnedBacktestRun,
+  findOwnedBacktestRunId,
+  findOwnedBacktestRunTimelineSeed,
+  findOwnedMarketUniverseById,
+  findOwnedStrategyForBacktest,
+  findOwnedStrategySignalConfig,
+  listOwnedBacktestRuns,
+  listOwnedBacktestTrades,
+  updateBacktestRunById,
+  upsertBacktestReportForRun,
+} from './backtests.repository';
 
 type MarketType = 'SPOT' | 'FUTURES';
 type MarginMode = 'CROSSED' | 'ISOLATED';
@@ -343,10 +362,7 @@ const isMissingRunUpdateError = (error: unknown) =>
 
 const safeUpdateRun = async (runId: string, data: Prisma.BacktestRunUpdateInput) => {
   try {
-    await prisma.backtestRun.update({
-      where: { id: runId },
-      data,
-    });
+    await updateBacktestRunById(runId, data);
     return true;
   } catch (error) {
     if (isMissingRunUpdateError(error)) return false;
@@ -1496,7 +1512,7 @@ const emptyLifecycleEventCounts = (): LifecycleEventCounts => ({
 });
 
 const runBacktestAsync = async (runId: string) => {
-  const run = await prisma.backtestRun.findUnique({ where: { id: runId } });
+  const run = await findBacktestRunById(runId);
   if (!run) return;
 
   const seed = ((run.seedConfig ?? {}) as Record<string, unknown>) ?? {};
@@ -1550,10 +1566,7 @@ const runBacktestAsync = async (runId: string) => {
   const pnlSeries: number[] = [];
   const lifecycleEventCounts = emptyLifecycleEventCounts();
   const strategy = run.strategyId
-    ? await prisma.strategy.findFirst({
-      where: { id: run.strategyId, userId: run.userId },
-      select: { config: true, walletRisk: true },
-    })
+    ? await findOwnedStrategySignalConfig(run.userId, run.strategyId)
     : null;
   const strategyConfig = (strategy?.config as Record<string, unknown> | undefined) ?? null;
   const indicatorWarmupCandles = resolveIndicatorWarmupCandles(strategyConfig);
@@ -1739,8 +1752,8 @@ const runBacktestAsync = async (runId: string) => {
 
         const trades = symbolSimulation.trades;
         if (trades.length > 0) {
-          await prisma.backtestTrade.createMany({
-            data: trades.map((trade) => ({
+          await createBacktestTrades(
+            trades.map((trade) => ({
               userId: run.userId,
               strategyId: run.strategyId,
               backtestRunId: run.id,
@@ -1756,7 +1769,7 @@ const runBacktestAsync = async (runId: string) => {
               exitReason: trade.exitReason,
               liquidated: trade.liquidated,
             })),
-          });
+          );
 
           for (const trade of trades) {
             progress.totalTrades += 1;
@@ -1772,12 +1785,8 @@ const runBacktestAsync = async (runId: string) => {
     }
 
     const totalTrades = progress.totalTrades;
-    const winningTrades = await prisma.backtestTrade.count({
-      where: { backtestRunId: run.id, userId: run.userId, pnl: { gt: 0 } },
-    });
-    const losingTrades = await prisma.backtestTrade.count({
-      where: { backtestRunId: run.id, userId: run.userId, pnl: { lt: 0 } },
-    });
+    const winningTrades = await countWinningBacktestTrades(run.userId, run.id);
+    const losingTrades = await countLosingBacktestTrades(run.userId, run.id);
 
     const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : null;
     const sourceWindowDays = Math.max(
@@ -1785,8 +1794,8 @@ const runBacktestAsync = async (runId: string) => {
       Math.ceil(computeSourceWindowMs(run.timeframe, maxCandlesPerSymbol) / (24 * 60 * 60 * 1000)),
     );
 
-    await prisma.backtestReport.upsert({
-      where: { backtestRunId: run.id },
+    await upsertBacktestReportForRun({
+      backtestRunId: run.id,
       create: {
         userId: run.userId,
         backtestRunId: run.id,
@@ -1894,12 +1903,7 @@ const resolveSymbolsForRun = async (userId: string, data: CreateBacktestRunDto):
     };
   }
 
-  const universe = await prisma.marketUniverse.findFirst({
-    where: {
-      id: data.marketUniverseId,
-      userId,
-    },
-  });
+  const universe = await findOwnedMarketUniverseById(userId, data.marketUniverseId);
 
   if (!universe) return null;
 
@@ -1933,46 +1937,18 @@ const resolveSymbolsForRun = async (userId: string, data: CreateBacktestRunDto):
 };
 
 export const listRuns = async (userId: string, query: ListBacktestRunsQuery) => {
-  return prisma.backtestRun.findMany({
-    where: {
-      userId,
-      ...(query.status ? { status: query.status } : {}),
-    },
-    orderBy: { createdAt: 'desc' },
-    take: query.limit,
-  });
+  return listOwnedBacktestRuns(userId, query);
 };
 
 export const getRun = async (userId: string, id: string) => {
-  return prisma.backtestRun.findFirst({
-    where: { id, userId },
-  });
+  return findOwnedBacktestRun(userId, id);
 };
 
 export const deleteRun = async (userId: string, id: string) => {
-  const existing = await prisma.backtestRun.findFirst({
-    where: { id, userId },
-    select: { id: true },
-  });
+  const existing = await findOwnedBacktestRunId(userId, id);
   if (!existing) return false;
 
-  await prisma.$transaction([
-    prisma.backtestReport.deleteMany({
-      where: {
-        userId,
-        backtestRunId: existing.id,
-      },
-    }),
-    prisma.backtestTrade.deleteMany({
-      where: {
-        userId,
-        backtestRunId: existing.id,
-      },
-    }),
-    prisma.backtestRun.delete({
-      where: { id: existing.id },
-    }),
-  ]);
+  await deleteOwnedBacktestRunCascade(userId, existing.id);
 
   return true;
 };
@@ -1980,10 +1956,7 @@ export const deleteRun = async (userId: string, id: string) => {
 export const createRun = async (userId: string, data: CreateBacktestRunDto) => {
   let strategyDefaults: { leverage: number; marginMode: MarginMode } | null = null;
   if (data.strategyId) {
-    const strategy = await prisma.strategy.findFirst({
-      where: { id: data.strategyId, userId },
-      select: { id: true, leverage: true, config: true },
-    });
+    const strategy = await findOwnedStrategyForBacktest(userId, data.strategyId);
     if (!strategy) return null;
 
     const config = (strategy.config ?? {}) as { additional?: { marginMode?: unknown } };
@@ -2004,34 +1977,32 @@ export const createRun = async (userId: string, data: CreateBacktestRunDto) => {
       : undefined,
   );
 
-  const created = await prisma.backtestRun.create({
-    data: {
-      userId,
-      name: data.name,
-      symbol: resolved.symbols[0],
-      timeframe: data.timeframe,
-      strategyId: data.strategyId,
-      seedConfig: {
-        ...(typeof data.seedConfig === 'object' && data.seedConfig ? data.seedConfig : {}),
-        initialBalance:
-          typeof data.seedConfig === 'object' &&
-          data.seedConfig &&
-          typeof (data.seedConfig as { initialBalance?: unknown }).initialBalance === 'number'
-            ? (data.seedConfig as { initialBalance: number }).initialBalance
-            : 10_000,
-        symbols: resolved.symbols,
-        exchange: resolved.exchange,
-        marketType: resolved.marketType,
-        baseCurrency: resolved.baseCurrency,
-        marketUniverseId: resolved.marketUniverseId,
-        leverage: resolved.marketType === 'SPOT' ? 1 : (strategyDefaults?.leverage ?? 1),
-        marginMode: resolved.marketType === 'SPOT' ? 'NONE' : (strategyDefaults?.marginMode ?? 'CROSSED'),
-        maxCandles,
-        executionMode: 'interleaved_multi_market_portfolio_clock',
-      },
-      notes: data.notes,
-      status: 'PENDING',
+  const created = await createBacktestRun({
+    userId,
+    name: data.name,
+    symbol: resolved.symbols[0],
+    timeframe: data.timeframe,
+    strategyId: data.strategyId,
+    seedConfig: {
+      ...(typeof data.seedConfig === 'object' && data.seedConfig ? data.seedConfig : {}),
+      initialBalance:
+        typeof data.seedConfig === 'object' &&
+        data.seedConfig &&
+        typeof (data.seedConfig as { initialBalance?: unknown }).initialBalance === 'number'
+          ? (data.seedConfig as { initialBalance: number }).initialBalance
+          : 10_000,
+      symbols: resolved.symbols,
+      exchange: resolved.exchange,
+      marketType: resolved.marketType,
+      baseCurrency: resolved.baseCurrency,
+      marketUniverseId: resolved.marketUniverseId,
+      leverage: resolved.marketType === 'SPOT' ? 1 : (strategyDefaults?.leverage ?? 1),
+      marginMode: resolved.marketType === 'SPOT' ? 'NONE' : (strategyDefaults?.marginMode ?? 'CROSSED'),
+      maxCandles,
+      executionMode: 'interleaved_multi_market_portfolio_clock',
     },
+    notes: data.notes,
+    status: 'PENDING',
   });
 
   setTimeout(() => {
@@ -2046,29 +2017,17 @@ export const listRunTrades = async (
   runId: string,
   query: ListBacktestTradesQuery,
 ) => {
-  const run = await prisma.backtestRun.findFirst({
-    where: { id: runId, userId },
-    select: { id: true },
-  });
+  const run = await findOwnedBacktestRunId(userId, runId);
   if (!run) return null;
 
-  return prisma.backtestTrade.findMany({
-    where: { userId, backtestRunId: runId },
-    orderBy: { closedAt: 'desc' },
-    take: query.limit,
-  });
+  return listOwnedBacktestTrades(userId, runId, query);
 };
 
 export const getRunReport = async (userId: string, runId: string) => {
-  const run = await prisma.backtestRun.findFirst({
-    where: { id: runId, userId },
-    select: { id: true },
-  });
+  const run = await findOwnedBacktestRunId(userId, runId);
   if (!run) return undefined;
 
-  const report = await prisma.backtestReport.findFirst({
-    where: { userId, backtestRunId: runId },
-  });
+  const report = await findOwnedBacktestReport(userId, runId);
 
   return report ?? null;
 };
@@ -2078,18 +2037,7 @@ export const getRunTimeline = async (
   runId: string,
   query: GetBacktestTimelineQuery,
 ) => {
-  const run = await prisma.backtestRun.findFirst({
-    where: { id: runId, userId },
-    select: {
-      id: true,
-      strategyId: true,
-      timeframe: true,
-      symbol: true,
-      seedConfig: true,
-      status: true,
-      finishedAt: true,
-    },
-  });
+  const run = await findOwnedBacktestRunTimelineSeed(userId, runId);
   if (!run) return null;
 
   const seed = ((run.seedConfig ?? {}) as Record<string, unknown>) ?? {};
@@ -2106,10 +2054,7 @@ export const getRunTimeline = async (
     return null;
   }
   const strategy = run.strategyId
-    ? await prisma.strategy.findFirst({
-      where: { id: run.strategyId, userId },
-      select: { config: true, walletRisk: true },
-    })
+    ? await findOwnedStrategySignalConfig(userId, run.strategyId)
     : null;
   const strategyConfig = (strategy?.config as Record<string, unknown> | undefined) ?? null;
   const indicatorSpecs = parseStrategyIndicators(strategyConfig);

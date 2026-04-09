@@ -1,9 +1,14 @@
-import { Exchange, Prisma, SignalDirection } from '@prisma/client';
-import { prisma } from '../../prisma/client';
+import { Exchange, SignalDirection } from '@prisma/client';
 import { CandlePatternParams } from './sharedCandlePatternSeries';
 import { computeRiskBasedOrderQuantity, normalizeWalletRiskPercent } from './positionSizing';
 import { supportsExchangeCapability } from '../exchange/exchangeCapabilities';
 import { getMarketCatalog } from '../markets/markets.service';
+import {
+  countOpenPositionsForBotAndSymbolsRaw,
+  createRuntimeSignalRecord,
+  listActiveRuntimeBotsRaw,
+  listRuntimeManagedExternalPositionsRaw,
+} from './runtimeSignalLoop.repository';
 
 export type ActiveBotStrategy = {
   strategyId: string;
@@ -145,60 +150,7 @@ export const supportsRuntimeSignalLoopExchange = (bot: Pick<ActiveBot, 'exchange
   );
 
 export const listActiveRuntimeBots = async (): Promise<ActiveBot[]> => {
-  const bots = await prisma.bot.findMany({
-    where: {
-      isActive: true,
-      mode: { in: ['PAPER', 'LIVE'] },
-    },
-    select: {
-      id: true,
-      userId: true,
-      walletId: true,
-      mode: true,
-      exchange: true,
-      paperStartBalance: true,
-      marketType: true,
-      botMarketGroups: {
-        where: {
-          isEnabled: true,
-          lifecycleStatus: { in: ['ACTIVE', 'PAUSED'] },
-        },
-        include: {
-          symbolGroup: {
-            select: {
-              id: true,
-              symbols: true,
-              marketUniverse: {
-                select: {
-                  exchange: true,
-                  marketType: true,
-                  baseCurrency: true,
-                  filterRules: true,
-                  whitelist: true,
-                  blacklist: true,
-                },
-              },
-            },
-          },
-          strategyLinks: {
-            where: { isEnabled: true },
-            orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
-            include: {
-              strategy: {
-                select: {
-                  interval: true,
-                  config: true,
-                  leverage: true,
-                  walletRisk: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: [{ executionOrder: 'asc' }, { createdAt: 'asc' }],
-      },
-    },
-  });
+  const bots = await listActiveRuntimeBotsRaw();
   const activeBots = bots.filter(supportsRuntimeSignalLoopExchange);
   const catalogSymbolsCache = new Map<string, string[]>();
 
@@ -275,18 +227,7 @@ export const listActiveRuntimeBots = async (): Promise<ActiveBot[]> => {
 };
 
 export const listRuntimeManagedExternalPositions = async () => {
-  const positions = await prisma.position.findMany({
-    where: {
-      status: 'OPEN',
-      botId: null,
-      managementMode: 'BOT_MANAGED',
-    },
-    select: {
-      userId: true,
-      symbol: true,
-    },
-    distinct: ['userId', 'symbol'],
-  });
+  const positions = await listRuntimeManagedExternalPositionsRaw();
   return positions.map((position) => ({
     userId: position.userId,
     symbol: position.symbol,
@@ -303,13 +244,10 @@ export const countOpenPositionsForBotAndSymbols = async ({
   symbols: string[];
 }) => {
   const normalizedSymbols = [...new Set(symbols.map((symbol) => symbol.toUpperCase()))];
-  return prisma.position.count({
-    where: {
-      userId,
-      botId,
-      status: 'OPEN',
-      ...(normalizedSymbols.length > 0 ? { symbol: { in: normalizedSymbols } } : {}),
-    },
+  return countOpenPositionsForBotAndSymbolsRaw({
+    userId,
+    botId,
+    normalizedSymbols,
   });
 };
 
@@ -322,18 +260,7 @@ export const createRuntimeSignal = async (params: {
   confidence: number;
   payload: Record<string, unknown>;
 }) => {
-  await prisma.signal.create({
-    data: {
-      userId: params.userId,
-      botId: params.botId,
-      strategyId: params.strategyId,
-      symbol: params.symbol,
-      timeframe: '1m',
-      direction: params.direction,
-      confidence: params.confidence,
-      payload: params.payload as Prisma.InputJsonValue,
-    },
-  });
+  await createRuntimeSignalRecord(params);
 };
 
 export const resolveRuntimeOrderQuantity = (input: {
