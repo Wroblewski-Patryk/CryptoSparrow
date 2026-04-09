@@ -20,6 +20,19 @@ const listRuntimePositionsMock = vi.hoisted(() => vi.fn());
 const listRuntimeTradesMock = vi.hoisted(() => vi.fn());
 const listStrategiesMock = vi.hoisted(() => vi.fn());
 const listMarketUniversesMock = vi.hoisted(() => vi.fn());
+const listWalletsMock = vi.hoisted(() =>
+  vi.fn().mockResolvedValue([
+    {
+      id: "w-paper-default",
+      name: "Paper Wallet",
+      mode: "PAPER",
+      exchange: "BINANCE",
+      marketType: "FUTURES",
+      baseCurrency: "USDT",
+      paperInitialBalance: 10000,
+    },
+  ])
+);
 
 vi.mock("../services/bots.service", () => ({
   listBots: listMock,
@@ -46,9 +59,13 @@ vi.mock("../../markets/services/markets.service", () => ({
   listMarketUniverses: listMarketUniversesMock,
 }));
 
+vi.mock("../../wallets/services/wallets.service", () => ({
+  listWallets: listWalletsMock,
+}));
+
 afterEach(() => {
   vi.useRealTimers();
-  vi.restoreAllMocks();
+  vi.clearAllMocks();
   window.localStorage.clear();
   listStrategiesMock.mockReset();
   listMarketUniversesMock.mockReset();
@@ -62,6 +79,7 @@ afterEach(() => {
   listRuntimeSymbolStatsMock.mockReset();
   listRuntimePositionsMock.mockReset();
   listRuntimeTradesMock.mockReset();
+  listWalletsMock.mockClear();
 });
 
 const renderWithI18n = () => {
@@ -80,22 +98,39 @@ describe("BotsManagement", () => {
     listMarketUniversesMock.mockResolvedValue([
       { id: "g-mode", name: "Mode Group", marketType: "FUTURES", baseCurrency: "USDT", whitelist: [], blacklist: [] },
     ]);
+    listWalletsMock.mockResolvedValue([
+      {
+        id: "w-paper",
+        name: "Paper Wallet",
+        mode: "PAPER",
+        exchange: "BINANCE",
+        marketType: "FUTURES",
+        baseCurrency: "USDT",
+        paperInitialBalance: 12345,
+      },
+      {
+        id: "w-live",
+        name: "Live Wallet",
+        mode: "LIVE",
+        exchange: "BINANCE",
+        marketType: "FUTURES",
+        baseCurrency: "USDT",
+        paperInitialBalance: 0,
+      },
+    ]);
 
     renderWithI18n();
     await waitFor(() => {
-      expect(screen.getByLabelText("Tryb bota")).toHaveValue("PAPER");
-      expect(screen.getByLabelText("Paper start balance")).toBeInTheDocument();
+      expect(screen.getByLabelText("wallet")).toHaveValue("w-paper");
+      expect(screen.getByText("PAPER")).toBeInTheDocument();
+      expect(screen.getByText(/12.*345/)).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByLabelText("Tryb bota"), {
-      target: { value: "LIVE" },
+    fireEvent.change(screen.getByLabelText("wallet"), {
+      target: { value: "w-live" },
     });
-    expect(screen.queryByLabelText("Paper start balance")).not.toBeInTheDocument();
-
-    fireEvent.change(screen.getByLabelText("Tryb bota"), {
-      target: { value: "PAPER" },
-    });
-    expect(screen.getByLabelText("Paper start balance")).toBeInTheDocument();
+    expect(screen.getByText("LIVE")).toBeInTheDocument();
+    expect(screen.queryByText(/12.*345/)).not.toBeInTheDocument();
   });
 
   it("renders strategy-derived summary values for selected strategy", async () => {
@@ -145,6 +180,17 @@ describe("BotsManagement", () => {
     listMarketUniversesMock.mockResolvedValue([
       { id: "g-live", name: "Live Group", marketType: "FUTURES", baseCurrency: "USDT", whitelist: [], blacklist: [] },
     ]);
+    listWalletsMock.mockResolvedValue([
+      {
+        id: "w-live",
+        name: "Live Wallet",
+        mode: "LIVE",
+        exchange: "BINANCE",
+        marketType: "FUTURES",
+        baseCurrency: "USDT",
+        paperInitialBalance: 0,
+      },
+    ]);
     createMock.mockResolvedValue({
       id: "b-live",
       name: "Live Runner",
@@ -167,10 +213,7 @@ describe("BotsManagement", () => {
     fireEvent.change(screen.getByPlaceholderText("Momentum Runner"), {
       target: { value: "Live Runner" },
     });
-    fireEvent.change(screen.getByLabelText("Tryb bota"), {
-      target: { value: "LIVE" },
-    });
-    expect(screen.queryByLabelText("Paper start balance")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("wallet")).toHaveValue("w-live");
     fireEvent.click(screen.getByRole("button", { name: "Dodaj bota" }));
 
     await waitFor(() => {
@@ -197,6 +240,17 @@ describe("BotsManagement", () => {
     listStrategiesMock.mockResolvedValue([{ id: "s1", name: "Momentum Strategy", interval: "5m" }]);
     listMarketUniversesMock.mockResolvedValue([
       { id: "g1", name: "Core Group", marketType: "FUTURES", baseCurrency: "USDT", whitelist: [], blacklist: [] },
+    ]);
+    listWalletsMock.mockResolvedValue([
+      {
+        id: "w-paper",
+        name: "Paper Wallet",
+        mode: "PAPER",
+        exchange: "BINANCE",
+        marketType: "FUTURES",
+        baseCurrency: "USDT",
+        paperInitialBalance: 10000,
+      },
     ]);
     vi.spyOn(window, "confirm").mockReturnValue(true);
     createMock.mockResolvedValue({
@@ -225,8 +279,7 @@ describe("BotsManagement", () => {
     await waitFor(() => {
       expect(createMock).toHaveBeenCalledWith({
         name: "Momentum Runner",
-        mode: "PAPER",
-        paperStartBalance: 10000,
+        walletId: "w-paper",
         strategyId: "s1",
         marketGroupId: "g1",
         isActive: true,

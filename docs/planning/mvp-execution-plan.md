@@ -670,11 +670,12 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `SAR-09 qa(stage-abuse): execute stage abuse-throttling verification for profile-sensitive routes and publish evidence`
 - [x] `SAR-10 refactor(api-backtests): split oversized backtests service into smaller domain services to pass guardrails`
 - [x] `SAR-11 refactor(api-runtime): split oversized runtime signal loop service into stream/watchdog/execution units to pass guardrails`
-- [ ] `SAR-12 refactor(web-bots): finish BotsManagement decomposition to pass file-size guardrails`
+- [x] `SAR-12 refactor(web-bots): finish BotsManagement decomposition to pass file-size guardrails`
 - [ ] `SAR-13 refactor(api-data-boundary): introduce repository boundaries for bots/backtests/engine high-change modules`
 - [ ] `SAR-14 ops(rollout): run DEV->STAGE->PROD remediation rollout checklist with smoke gates and rollback drill evidence`
 
 ## Progress Log
+- 2026-04-09: Completed `SAR-12` by extracting DCA ladder cell rendering from `BotsManagement.tsx` into `bots-management/dcaLadderCell.tsx` and updating `BotsManagement.test.tsx` for the wallet-driven create contract (`wallet -> mode`) so guardrails and component regressions stay green; validated with `pnpm --filter web test -- src/features/bots/components/BotsManagement.test.tsx`, `pnpm --filter web run typecheck`, and `pnpm run quality:guardrails` (PASS).
 - 2026-04-09: Completed `SAR-11` by extracting runtime loop defaults/contracts into dedicated modules (`runtimeSignalLoopDefaults.ts`, `runtimeSignalMerge.ts`, `runtimeSignalEvaluationTypes.ts`, `runtimeSignalSeriesTypes.ts`) and reducing `runtimeSignalLoop.service.ts` below file-size guardrails without behavior drift; validated with `pnpm --filter api test -- src/modules/engine/runtimeSignalLoop.service.test.ts`, `pnpm --filter api run typecheck`, and `pnpm run quality:guardrails` (PASS).
 - 2026-04-09: Completed `SAR-10` by extracting backtest indicator parsing/warmup contracts from `backtests.service.ts` into `backtestIndicatorSpecs.ts`, reducing service size under guardrails budget and keeping behavior parity; validated with `pnpm --filter api test -- src/modules/backtests/backtestIndicatorTimelineSeries.test.ts`, `pnpm --filter api run typecheck`, and `pnpm run quality:guardrails` (PASS).
 - 2026-04-09: Completed `SAR-08` by locking regression coverage for all three trust controls: trusted-proxy matcher (`proxyTrust.test.ts`), forwarded-header ignore in avatar URL generation (`upload.e2e.test.ts`), and checkout callback-origin allowlist fallback (`subscription.e2e.test.ts`); validated with `pnpm --filter api test -- src/config/proxyTrust.test.ts src/modules/upload/upload.e2e.test.ts src/modules/profile/subscription/subscription.e2e.test.ts` (PASS).
