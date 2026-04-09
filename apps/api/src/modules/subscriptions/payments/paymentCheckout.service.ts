@@ -3,12 +3,49 @@ import { Prisma, SubscriptionPlanCode } from '@prisma/client';
 import { prisma } from '../../../prisma/client';
 import { ensureSubscriptionCatalog } from '../subscriptions.service';
 import { resolveConfiguredPaymentProvider, resolvePaymentGatewayAdapter } from './paymentGateway.registry';
+import { appUrl, clientUrl, corsOrigins, serverUrl } from '../../../config/runtime';
 
 type CreateSubscriptionCheckoutIntentInput = {
   userId: string;
   planCode: SubscriptionPlanCode;
   successUrl: string | null;
   cancelUrl: string | null;
+};
+
+const checkoutFallbackPath = '/dashboard/profile#subscription';
+
+const normalizeOrigin = (value: string | null | undefined): string | null => {
+  if (!value) return null;
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+};
+
+const allowedCheckoutOrigins = new Set(
+  [appUrl, clientUrl, serverUrl, ...corsOrigins]
+    .map((origin) => normalizeOrigin(origin))
+    .filter((origin): origin is string => Boolean(origin))
+);
+
+const defaultCheckoutUrl = `${appUrl}${checkoutFallbackPath}`;
+
+const sanitizeCheckoutUrl = (raw: string | null) => {
+  if (!raw) {
+    return defaultCheckoutUrl;
+  }
+
+  try {
+    const parsed = new URL(raw);
+    if (allowedCheckoutOrigins.has(parsed.origin)) {
+      return parsed.toString();
+    }
+  } catch {
+    // Invalid URL falls back to canonical profile page.
+  }
+
+  return defaultCheckoutUrl;
 };
 
 export const createSubscriptionCheckoutIntent = async (
@@ -45,13 +82,15 @@ export const createSubscriptionCheckoutIntent = async (
   const provider = resolveConfiguredPaymentProvider();
   const adapter = resolvePaymentGatewayAdapter(provider);
   const idempotencyKey = `subs_checkout:${input.userId}:${plan.code}:${Date.now()}:${randomUUID()}`;
+  const successUrl = sanitizeCheckoutUrl(input.successUrl);
+  const cancelUrl = sanitizeCheckoutUrl(input.cancelUrl);
 
   const providerIntent = await adapter.createCheckoutIntent({
     userId: input.userId,
     userSubscriptionId: activeSubscription?.id ?? null,
     idempotencyKey,
-    successUrl: input.successUrl,
-    cancelUrl: input.cancelUrl,
+    successUrl,
+    cancelUrl,
     plan: {
       id: plan.id,
       code: plan.code,
@@ -74,8 +113,8 @@ export const createSubscriptionCheckoutIntent = async (
       currency: plan.currency,
       metadata: {
         planCode: plan.code,
-        successUrl: input.successUrl,
-        cancelUrl: input.cancelUrl,
+        successUrl,
+        cancelUrl,
         provider: providerIntent.metadata ?? {},
       } as Prisma.InputJsonValue,
     },

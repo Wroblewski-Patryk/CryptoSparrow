@@ -662,7 +662,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `SAR-01 test(api-upload): restore upload security e2e cleanup order so security suite is green again`
 - [x] `SAR-02 security(proxy): replace global trust-proxy=true with explicit trusted proxy chain and forwarded-header hardening`
 - [x] `SAR-03 security(upload-origin): derive avatar/public upload URLs from trusted config allowlist instead of request host headers`
-- [ ] `SAR-04 security(checkout): enforce allowlisted callback URLs for checkout intents with canonical fallback`
+- [x] `SAR-04 security(checkout): enforce allowlisted callback URLs for checkout intents with canonical fallback`
 - [ ] `SAR-05 security(profile-throttle): add per-user throttling to checkout-intents and profile security-sensitive endpoints`
 - [ ] `SAR-06 security(ready): expose only minimal public readiness signal and move detailed diagnostics to protected surface`
 - [ ] `SAR-07 security(csp): remove production script unsafe-inline via nonce/hash bootstrap approach`
@@ -675,6 +675,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `SAR-14 ops(rollout): run DEV->STAGE->PROD remediation rollout checklist with smoke gates and rollback drill evidence`
 
 ## Progress Log
+- 2026-04-09: Completed `SAR-04` by introducing checkout callback allowlist sanitation (origins restricted to runtime trusted app/client/api origins) with canonical profile fallback URL and persisted sanitized metadata, plus e2e coverage for untrusted callback rejection/fallback; validated with `pnpm --filter api test -- src/modules/profile/subscription/subscription.e2e.test.ts` (PASS).
 - 2026-04-09: Completed `SAR-03` by removing header-derived avatar URL origin resolution (`x-forwarded-*`/`host`) and switching upload public-link generation to immutable runtime config origin (`UPLOAD_PUBLIC_ORIGIN` -> `APP_URL` -> `SERVER_URL`), with upload e2e contract updated to assert forwarded-header ignore behavior; validated with `pnpm --filter api test -- src/modules/upload/upload.e2e.test.ts` (PASS).
 - 2026-04-09: Completed `SAR-02` by replacing global `trust proxy=true` with env-driven trusted-proxy matcher (`TRUSTED_PROXY_IPS`/`TRUST_PROXY_ALLOW_PRIVATE`) and removing direct `x-forwarded-for` parsing from generic rate limiter in favor of Express-resolved `req.ip`; validated with `pnpm --filter api test -- src/config/proxyTrust.test.ts src/middleware/requireOpsNetwork.test.ts src/middleware/requireTrustedOrigin.test.ts` (PASS).
 - 2026-04-09: Completed `SAR-01` by extending upload e2e cleanup order with runtime bot relations (`orderFill`, `runtimeExecutionDedupe`, `botRuntimeSession`, `botRuntimeSymbolStat`, `botRuntimeEvent`) before bot/user deletion; validated with `pnpm --filter api test -- src/modules/upload/upload.e2e.test.ts` (PASS).

@@ -2,6 +2,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { app } from '../../../index';
 import { prisma } from '../../../prisma/client';
+import { appUrl, clientUrl } from '../../../config/runtime';
 
 const registerAndLogin = async (email: string) => {
   const agent = request.agent(app);
@@ -92,11 +93,13 @@ describe('Profile subscription contract', () => {
 
   it('creates provider-agnostic checkout intent and persists payment intent record', async () => {
     const { agent, userId } = await registerAndLogin('profile-subscription-checkout@example.com');
+    const successUrl = `${clientUrl}/dashboard/profile/subscription-success`;
+    const cancelUrl = `${clientUrl}/dashboard/profile/subscription-cancel`;
 
     const response = await agent.post('/dashboard/profile/subscription/checkout-intents').send({
       planCode: 'ADVANCED',
-      successUrl: 'https://soar.example/success',
-      cancelUrl: 'https://soar.example/cancel',
+      successUrl,
+      cancelUrl,
     });
 
     expect(response.status).toBe(201);
@@ -108,6 +111,7 @@ describe('Profile subscription contract', () => {
       currency: 'USD',
     });
     expect(typeof response.body.id).toBe('string');
+    expect(response.body.checkoutUrl).toBe(successUrl);
 
     const storedIntent = await prisma.paymentIntent.findUniqueOrThrow({
       where: { id: response.body.id as string },
@@ -121,6 +125,23 @@ describe('Profile subscription contract', () => {
     expect(storedIntent.subscriptionPlan.code).toBe('ADVANCED');
     expect(storedIntent.provider).toBe('MANUAL');
     expect(storedIntent.amountMinor).toBe(4900);
+    expect(storedIntent.metadata).toMatchObject({
+      successUrl,
+      cancelUrl,
+    });
+  });
+
+  it('falls back to canonical app URL when callback URLs use untrusted origin', async () => {
+    const { agent } = await registerAndLogin('profile-subscription-checkout-untrusted-origin@example.com');
+
+    const response = await agent.post('/dashboard/profile/subscription/checkout-intents').send({
+      planCode: 'ADVANCED',
+      successUrl: 'https://evil.example.com/callback',
+      cancelUrl: 'https://evil.example.com/cancel',
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.checkoutUrl).toBe(`${appUrl}/dashboard/profile#subscription`);
   });
 
   it('rejects checkout intent creation for non-payable FREE plan', async () => {

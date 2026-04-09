@@ -7,13 +7,12 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `SAR-04 security(checkout): enforce allowlisted callback URLs for checkout intents with canonical fallback`
 - [ ] `SAR-05 security(profile-throttle): add per-user throttling to checkout-intents and profile security-sensitive endpoints`
 - [ ] `SAR-06 security(ready): expose only minimal public readiness signal and move detailed diagnostics to protected surface`
 - [ ] `SAR-07 security(csp): remove production script unsafe-inline via nonce/hash bootstrap approach`
 - [ ] `SAR-08 test(security-contracts): add regression coverage for proxy trust, public origin derivation, and checkout callback rejection`
-## NEXT
 - [ ] `SAR-09 qa(stage-abuse): execute stage abuse-throttling verification for profile-sensitive routes and publish evidence`
+## NEXT
 - [ ] `SAR-10 refactor(api-backtests): split oversized backtests service into smaller domain services to pass guardrails`
 - [ ] `SAR-11 refactor(api-runtime): split oversized runtime signal loop service into stream/watchdog/execution units to pass guardrails`
 - [ ] `SAR-12 refactor(web-bots): finish BotsManagement decomposition to pass file-size guardrails`
@@ -23,6 +22,7 @@ Operational queue for one-task execution runs.
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `SAR-04 security(checkout): enforce allowlisted callback URLs for checkout intents with canonical fallback`
 - [x] `SAR-03 security(upload-origin): derive avatar/public upload URLs from trusted config allowlist instead of request host headers`
 - [x] `SAR-02 security(proxy): replace global trust-proxy=true with explicit trusted proxy chain and forwarded-header hardening`
 - [x] `SAR-01 test(api-upload): restore upload security e2e cleanup order so security suite is green again`
