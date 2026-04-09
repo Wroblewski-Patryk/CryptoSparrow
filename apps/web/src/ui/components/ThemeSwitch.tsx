@@ -13,7 +13,6 @@ import {
 } from '../layout/dashboard/headerControlStyles';
 
 const themes = [
-  { value: 'cryptosparrow', label: 'Soar' },
   { value: 'system', label: 'System' },
   { value: 'cupcake', label: 'Cupcake' },
   { value: 'dracula', label: 'Dracula' },
@@ -22,7 +21,7 @@ const themes = [
   { value: 'luxury', label: 'Luxury' },
   { value: 'cyberpunk', label: 'Cyberpunk' },
 ] as const;
-const themeSwitcherHiddenValues = new Set(['cryptosparrow', 'luxury']);
+const themeSwitcherHiddenValues = new Set(['luxury']);
 const themeSwitcherOptions = themes.filter((item) => !themeSwitcherHiddenValues.has(item.value));
 
 type ThemePreference = (typeof themes)[number]['value'];
@@ -36,9 +35,9 @@ type ThemeSwitcherProps = {
 };
 
 const normalizeThemePreference = (value: string | null): ThemePreference => {
-  if (!value || value === 'default') return 'cryptosparrow';
+  if (!value || value === 'default' || value === 'cryptosparrow') return 'system';
   if (themes.some((item) => item.value === value)) return value as ThemePreference;
-  return 'cryptosparrow';
+  return 'system';
 };
 
 const resolveTheme = (preference: ThemePreference): string => {
@@ -72,8 +71,8 @@ export default function ThemeSwitcher({
   tone = 'header',
 }: ThemeSwitcherProps) {
   const { locale } = useI18n();
-  const [activeTheme, setActiveTheme] = useState<ThemePreference>('cryptosparrow');
-  const [resolvedTheme, setResolvedTheme] = useState<string>('cryptosparrow');
+  const [activeTheme, setActiveTheme] = useState<ThemePreference>('system');
+  const [resolvedTheme, setResolvedTheme] = useState<string>('light');
   const [systemResolvedTheme, setSystemResolvedTheme] = useState<'light' | 'dark'>('light');
   const detailsRef = useRef<HTMLDetailsElement>(null);
   useDetailsDropdown(detailsRef);

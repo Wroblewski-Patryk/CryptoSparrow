@@ -121,11 +121,11 @@ export const me = async (req: Request, res: Response) => {
 
     const verifiedCandidates = getVerifiedAuthTokenCandidates(req);
     for (const candidate of verifiedCandidates) {
-      let user: { id: string; email: string; sessionVersion: number } | null = null;
+      let user: { id: string; email: string; role: 'USER' | 'ADMIN'; sessionVersion: number } | null = null;
       try {
         user = await prisma.user.findUnique({
           where: { id: candidate.claims.userId },
-          select: { id: true, email: true, sessionVersion: true },
+          select: { id: true, email: true, role: true, sessionVersion: true },
         });
       } catch {
         return sendError(res, 503, 'Auth service temporarily unavailable');
@@ -149,6 +149,7 @@ export const me = async (req: Request, res: Response) => {
       return res.status(200).json({
         id: user.id,
         email: user.email,
+        role: user.role,
       });
     }
 

@@ -22,6 +22,7 @@ const lato = Lato({
 });
 
 export const metadata: Metadata = {
+  applicationName: 'Soar',
   title: 'Soar',
   description: 'Twoj AI bot do handlu spot i futures',
   manifest: '/manifest.webmanifest',
@@ -31,8 +32,16 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
   },
   icons: {
-    icon: [{ url: '/logo.png', type: 'image/png' }],
-    apple: [{ url: '/logo.png', type: 'image/png' }],
+    icon: [
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    shortcut: [{ url: '/icons/icon-192.png', type: 'image/png' }],
+    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-capable': 'yes',
   },
 };
 
@@ -48,16 +57,17 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" data-theme="cryptosparrow" suppressHydrationWarning>
+    <html lang="en" data-theme="light" suppressHydrationWarning>
       <head>
         <meta charSet="UTF-8" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (() => {
-                const fallback = 'cryptosparrow';
+                const fallback = 'system';
                 const normalize = (value) => {
                   if (!value || value === 'default') return fallback;
+                  if (value === 'cryptosparrow') return fallback;
                   return value;
                 };
                 const stored = normalize(localStorage.getItem('themePreference') || localStorage.getItem('theme'));

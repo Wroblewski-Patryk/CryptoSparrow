@@ -3,7 +3,8 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import api from "../lib/api";
 import { toast } from "sonner";
 
-type User = { email: string; userId: string };
+type UserRole = 'USER' | 'ADMIN';
+type User = { email: string; userId: string; role?: UserRole };
 
 type FetchUserOptions = {
   notifyOnUnauthorized?: boolean;
@@ -32,7 +33,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const res = await api.get("/auth/me");
       const data = res.data;
-      setUser({ email: data.email, userId: data.id });
+      const role: UserRole | undefined =
+        data?.role === 'ADMIN' || data?.role === 'USER' ? data.role : undefined;
+      setUser({ email: data.email, userId: data.id, role });
       hadAuthenticatedSessionRef.current = true;
       return true;
     } catch (error) {

@@ -14,7 +14,7 @@ describe("I18nProvider", () => {
     );
 
     const toggle = screen.getByLabelText("Language");
-    expect(toggle).toHaveTextContent("EN");
+    expect(toggle).toHaveTextContent("English");
     expect(document.documentElement.lang).toBe("en");
 
     fireEvent.click(toggle);
@@ -23,7 +23,7 @@ describe("I18nProvider", () => {
     await waitFor(() => {
       expect(document.documentElement.lang).toBe("pl");
       expect(window.localStorage.getItem("cryptosparrow-locale")).toBe("pl");
-      expect(screen.getByLabelText(/language|jezyk/i)).toHaveTextContent("PL");
+      expect(screen.getByLabelText(/language|jezyk/i)).toHaveTextContent("Polski");
     });
   });
 });
