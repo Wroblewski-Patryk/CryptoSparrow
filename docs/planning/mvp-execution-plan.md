@@ -683,7 +683,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARM-08 test(api-backtests): lock backtest report/trade parity after service decomposition`
 - [x] `ARM-09 refactor(api-bots): split bots.service.ts into command and runtime-read services`
 - [x] `ARM-10 refactor(api-bots): extract symbol enrichment and runtime read-model composition modules`
-- [ ] `ARM-11 refactor(api-data-boundary): reduce direct Prisma usage in orchestration-heavy services`
+- [x] `ARM-11 refactor(api-data-boundary): reduce direct Prisma usage in orchestration-heavy services`
 - [ ] `ARM-12 refactor(web-backtest): split BacktestRunDetails into hooks and presentational sections`
 - [ ] `ARM-13 refactor(web-bots): continue BotsManagement decomposition by moving orchestration to feature hooks`
 - [ ] `ARM-14 refactor(web-dashboard): split HomeLiveWidgets into data/controller hooks and visual sections`
@@ -693,6 +693,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `ARM-18 docs(architecture): publish post-remediation architecture delta and residual-risk summary`
 
 ## Progress Log
+- 2026-04-09: Completed `ARM-11` by introducing `botsRuntimeRead.repository.ts` and routing runtime symbol-stats orchestration through repository boundaries (base stats snapshot, live symbol rows, fallback symbols, strategy hydration, candle cache reads) to reduce direct `prisma` usage in `botsRuntimeRead.service.ts`; validated with `pnpm --filter api typecheck` and `pnpm --filter api test -- src/modules/bots/runtimeStrategyConfigParser.service.test.ts` (PASS).
 - 2026-04-09: Completed `ARM-10` by extracting runtime symbol-stat enrichment helpers (`runtimeSymbolStatsEnrichment.service.ts`) and read-model composition (`runtimeSymbolStatsReadModel.service.ts`), then wiring `botsRuntimeRead.service.ts` through these modules to keep response contract unchanged while reducing in-function orchestration complexity; validated with `pnpm --filter api typecheck` and `pnpm --filter api test -- src/modules/bots/runtimeStrategyConfigParser.service.test.ts` (PASS).
 - 2026-04-09: Completed `ARM-09` by splitting `apps/api/src/modules/bots/bots.service.ts` into dedicated command/runtime-read modules (`botsCommand.service.ts`, `botsRuntimeRead.service.ts`) and reducing command-layer coupling by removing runtime-read imports from command service; validated with `pnpm --filter api typecheck` and `pnpm --filter api test -- src/modules/bots/runtimeStrategyConfigParser.service.test.ts` (PASS).
 - 2026-04-09: Completed `ARM-08` by adding decomposition-lock regressions for queue/job seams (`backtestRunQueue.test.ts`, `backtestRunJob.test.ts`) and running parity-critical backtest suites (`backtestReplayCore`, `backtestIndicatorTimelineSeries`) after service split; validated with `pnpm --filter api test -- src/modules/backtests/backtestRunQueue.test.ts src/modules/backtests/backtestRunJob.test.ts src/modules/backtests/backtestReplayCore.test.ts src/modules/backtests/backtestIndicatorTimelineSeries.test.ts` and `pnpm --filter api typecheck` (PASS).

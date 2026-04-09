@@ -51,6 +51,13 @@ import {
   buildOpenPositionSymbolMetrics,
 } from './runtimeSymbolStatsEnrichment.service';
 import { composeRuntimeSymbolStatsReadModel } from './runtimeSymbolStatsReadModel.service';
+import {
+  getRuntimeSymbolLiveRows,
+  getRuntimeSymbolStatsBaseData,
+  listMarketCandleCloses,
+  listRuntimeFallbackSymbolsFromEvents,
+  listStrategiesByIds,
+} from './botsRuntimeRead.repository';
 
 export const listBotRuntimeSessions = async (
   userId: string,
@@ -105,161 +112,24 @@ export const listBotRuntimeSessionSymbolStats = async (
   if (!session) return null;
 
   const normalizedSymbol = query.symbol?.trim().toUpperCase();
-  const where = {
-    userId,
-    botId,
-    sessionId,
-    ...(normalizedSymbol ? { symbol: normalizedSymbol } : {}),
-  };
   const windowEnd = resolveSessionWindowEnd(session);
 
-  const [
+  const {
     items,
     summary,
     configuredMarketGroups,
     configuredBotStrategies,
     configuredMarketGroupStrategyLinks,
-    botMarketTypeRow,
-  ] = await Promise.all([
-    prisma.botRuntimeSymbolStat.findMany({
-      where,
-      orderBy: [{ realizedPnl: 'desc' }, { updatedAt: 'desc' }],
-      take: query.limit,
-    }),
-    prisma.botRuntimeSymbolStat.aggregate({
-      where,
-      _sum: {
-        totalSignals: true,
-        longEntries: true,
-        shortEntries: true,
-        exits: true,
-        dcaCount: true,
-        closedTrades: true,
-        winningTrades: true,
-        losingTrades: true,
-        realizedPnl: true,
-        grossProfit: true,
-        grossLoss: true,
-        feesPaid: true,
-      },
-    }),
-    prisma.botMarketGroup.findMany({
-      where: {
-        userId,
-        botId,
-        isEnabled: true,
-        lifecycleStatus: {
-          in: ['ACTIVE', 'PAUSED'],
-        },
-      },
-      select: {
-        symbolGroup: {
-          select: {
-            symbols: true,
-            marketUniverse: {
-              select: {
-                exchange: true,
-                marketType: true,
-                baseCurrency: true,
-                filterRules: true,
-                whitelist: true,
-                blacklist: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: [{ executionOrder: 'asc' }, { createdAt: 'asc' }],
-    }),
-    prisma.botStrategy.findMany({
-      where: {
-        botId,
-        isEnabled: true,
-        bot: {
-          userId,
-        },
-      },
-      select: {
-        strategyId: true,
-        symbolGroup: {
-          select: {
-            symbols: true,
-            marketUniverse: {
-              select: {
-                whitelist: true,
-                blacklist: true,
-              },
-            },
-          },
-        },
-        strategy: {
-          select: {
-            id: true,
-            name: true,
-            interval: true,
-            config: true,
-          },
-        },
-      },
-      orderBy: [{ createdAt: 'asc' }],
-    }),
-    prisma.marketGroupStrategyLink.findMany({
-      where: {
-        userId,
-        botId,
-        isEnabled: true,
-        botMarketGroup: {
-          lifecycleStatus: {
-            in: ['ACTIVE', 'PAUSED'],
-          },
-          isEnabled: true,
-        },
-      },
-      select: {
-        strategyId: true,
-        strategy: {
-          select: {
-            id: true,
-            name: true,
-            interval: true,
-            config: true,
-          },
-        },
-        botMarketGroup: {
-          select: {
-            symbolGroup: {
-              select: {
-                symbols: true,
-                marketUniverse: {
-                  select: {
-                    exchange: true,
-                    marketType: true,
-                    baseCurrency: true,
-                    filterRules: true,
-                    whitelist: true,
-                    blacklist: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
-    }),
-    prisma.bot.findFirst({
-      where: {
-        id: botId,
-        userId,
-      },
-      select: {
-        exchange: true,
-        marketType: true,
-      },
-    }),
-  ]);
-  const botExchange = botMarketTypeRow?.exchange ?? 'BINANCE';
-  const botMarketType = botMarketTypeRow?.marketType ?? 'FUTURES';
+    botContext,
+  } = await getRuntimeSymbolStatsBaseData({
+    userId,
+    botId,
+    sessionId,
+    normalizedSymbol,
+    limit: query.limit,
+  });
+  const botExchange = botContext?.exchange ?? 'BINANCE';
+  const botMarketType = botContext?.marketType ?? 'FUTURES';
 
   const catalogSymbolsCache = new Map<string, string[]>();
   const [configuredMarketGroupSymbols, configuredBotStrategySymbols] = await Promise.all([
@@ -283,16 +153,11 @@ export const listBotRuntimeSessionSymbolStats = async (
       : normalizeSymbols([...configuredSymbols, ...items.map((item) => item.symbol)])
   ).slice(0, query.limit);
   if (!normalizedSymbol && symbols.length === 0) {
-    const fallbackEventRows = await prisma.botRuntimeEvent.findMany({
-      where: {
-        userId,
-        botId,
-        sessionId,
-        symbol: { not: null },
-      },
-      select: { symbol: true },
-      orderBy: [{ eventAt: 'desc' }, { createdAt: 'desc' }],
-      take: Math.max(50, query.limit * 10),
+    const fallbackEventRows = await listRuntimeFallbackSymbolsFromEvents({
+      userId,
+      botId,
+      sessionId,
+      limit: Math.max(50, query.limit * 10),
     });
     symbols = normalizeSymbols(
       fallbackEventRows
@@ -301,58 +166,14 @@ export const listBotRuntimeSessionSymbolStats = async (
     ).slice(0, query.limit);
   }
   const [openPositions, latestTradeBySymbolRows, latestSignalEvents] = symbols.length
-    ? await Promise.all([
-        prisma.position.findMany({
-          where: {
-            userId,
-            botId,
-            status: 'OPEN',
-            managementMode: 'BOT_MANAGED',
-            symbol: { in: symbols },
-            openedAt: {
-              gte: session.startedAt,
-              lte: windowEnd,
-            },
-          },
-          select: {
-            symbol: true,
-            side: true,
-            entryPrice: true,
-            quantity: true,
-          },
-        }),
-        prisma.trade.groupBy({
-          by: ['symbol'],
-          where: {
-            userId,
-            botId,
-            symbol: { in: symbols },
-            executedAt: {
-              gte: session.startedAt,
-              lte: windowEnd,
-            },
-          },
-          _max: {
-            executedAt: true,
-          },
-        }),
-        prisma.botRuntimeEvent.findMany({
-          where: {
-            sessionId,
-            eventType: 'SIGNAL_DECISION',
-            symbol: { in: symbols },
-          },
-          orderBy: [{ eventAt: 'desc' }, { createdAt: 'desc' }],
-          select: {
-            symbol: true,
-            signalDirection: true,
-            eventAt: true,
-            message: true,
-            strategyId: true,
-            payload: true,
-          },
-        }),
-      ])
+    ? await getRuntimeSymbolLiveRows({
+        userId,
+        botId,
+        sessionId,
+        symbols,
+        windowStart: session.startedAt,
+        windowEnd,
+      })
     : [[], [], []];
 
   const lastPriceBySymbol = new Map(items.map((item) => [item.symbol, item.lastPrice]));
@@ -463,17 +284,9 @@ export const listBotRuntimeSessionSymbolStats = async (
   }
   const missingStrategyIds = [...latestSignalStrategyIds].filter((strategyId) => !strategiesById.has(strategyId));
   if (missingStrategyIds.length > 0) {
-    const signalStrategies = await prisma.strategy.findMany({
-      where: {
-        userId,
-        id: { in: missingStrategyIds },
-      },
-      select: {
-        id: true,
-        name: true,
-        interval: true,
-        config: true,
-      },
+    const signalStrategies = await listStrategiesByIds({
+      userId,
+      strategyIds: missingStrategyIds,
     });
     for (const strategy of signalStrategies) {
       strategiesById.set(strategy.id, {
@@ -540,17 +353,11 @@ export const listBotRuntimeSessionSymbolStats = async (
           };
         }
 
-        const candles = await prisma.marketCandleCache.findMany({
-          where: {
-            marketType: botMarketType,
-            symbol,
-            timeframe: interval,
-          },
-          orderBy: [{ openTime: 'desc' }],
-          take: 300,
-          select: {
-            close: true,
-          },
+        const candles = await listMarketCandleCloses({
+          marketType: botMarketType,
+          symbol,
+          interval,
+          limit: 300,
         });
         return {
           key: `${symbol}|${interval}`,
