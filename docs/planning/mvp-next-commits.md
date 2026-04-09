@@ -13,7 +13,7 @@ Operational queue for one-task execution runs.
 - [x] `ARM-12 refactor(web-backtest): split BacktestRunDetails into hooks and presentational sections`
 - [x] `ARM-13 refactor(web-bots): continue BotsManagement decomposition by moving orchestration to feature hooks`
 ## NEXT
-- [ ] `ARM-14 refactor(web-dashboard): split HomeLiveWidgets into data/controller hooks and visual sections`
+- [x] `ARM-14 refactor(web-dashboard): split HomeLiveWidgets into data/controller hooks and visual sections`
 - [ ] `ARM-15 refactor(web-i18n): remove duplicated inline locale dictionaries in dashboard route wrappers`
 - [ ] `ARM-16 chore(guardrails): remove architecture-related source file budget overrides`
 - [ ] `ARM-17 chore(quality): enforce updated file-size budgets in quality gate`
