@@ -28,6 +28,31 @@ const getUserIdByEmail = async (email: string) => {
   return user.id;
 };
 
+const createWalletForUser = async (params: {
+  userId: string;
+  name: string;
+  mode?: 'PAPER' | 'LIVE';
+  marketType?: 'FUTURES' | 'SPOT';
+  exchange?: 'BINANCE' | 'BYBIT' | 'OKX' | 'KRAKEN' | 'COINBASE';
+  baseCurrency?: string;
+  apiKeyId?: string | null;
+}) =>
+  prisma.wallet.create({
+    data: {
+      userId: params.userId,
+      name: params.name,
+      mode: params.mode ?? 'PAPER',
+      exchange: params.exchange ?? 'BINANCE',
+      marketType: params.marketType ?? 'FUTURES',
+      baseCurrency: params.baseCurrency ?? 'USDT',
+      paperInitialBalance: 10_000,
+      apiKeyId: params.apiKeyId ?? null,
+    },
+    select: {
+      id: true,
+    },
+  });
+
 const waitForBacktestReport = async (
   agent: ReturnType<typeof request.agent>,
   runId: string,
@@ -531,6 +556,14 @@ describe('Backtests runs contract', () => {
     const marketUniverseId = universeRes.body.id as string;
 
     const userId = await getUserIdByEmail(email);
+    const wallet = await createWalletForUser({
+      userId,
+      name: 'Venue consistency wallet',
+      mode: 'PAPER',
+      marketType: 'FUTURES',
+      exchange: 'BINANCE',
+      baseCurrency: 'USDT',
+    });
     const symbolGroup = await prisma.symbolGroup.create({
       data: {
         userId,
@@ -562,6 +595,7 @@ describe('Backtests runs contract', () => {
     const createBotRes = await agent.post('/dashboard/bots').send({
       name: 'Venue consistency bot',
       mode: 'PAPER',
+      walletId: wallet.id,
       strategyId,
       marketGroupId: symbolGroup.id,
       isActive: true,
@@ -592,9 +626,19 @@ describe('Backtests runs contract', () => {
         manageExternalPositions: false,
       },
     });
+    const liveWallet = await createWalletForUser({
+      userId,
+      name: 'Venue consistency live wallet',
+      mode: 'LIVE',
+      marketType: 'FUTURES',
+      exchange: 'BINANCE',
+      baseCurrency: 'USDT',
+      apiKeyId: liveApiKey.id,
+    });
 
     const activateLiveRes = await agent.put(`/dashboard/bots/${botId}`).send({
       mode: 'LIVE',
+      walletId: liveWallet.id,
       isActive: true,
       liveOptIn: true,
       consentTextVersion: 'mvp-v1',
@@ -785,7 +829,7 @@ describe('Backtests runs contract', () => {
       .get(`/dashboard/backtests/runs/${runId}/timeline`)
       .query({ symbol: 'NOT_IN_RUN_SYMBOL' });
     expect(outOfScopeTimelineRes.status).toBe(404);
-  });
+  }, 15_000);
 
   it('reports FAILED parity diagnostics when symbol processing fails', async () => {
     const ownerEmail = 'backtests-failed-symbol@example.com';

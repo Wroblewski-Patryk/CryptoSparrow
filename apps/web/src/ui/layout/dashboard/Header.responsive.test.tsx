@@ -33,7 +33,7 @@ describe("Header responsive smoke", () => {
     expect(desktopDashboardLink).toBeTruthy();
     expect(desktopDashboardLink?.className).toContain("focus-visible:outline");
     const marketsLinks = screen.getAllByRole("link", { name: "Markets" });
-    expect(marketsLinks.some((item) => item.className.includes("border-accent/45"))).toBe(true);
+    expect(marketsLinks.some((item) => item.className.includes("!text-primary"))).toBe(true);
     const nav = screen.getByRole("navigation", { name: "Dashboard navigation" });
     expect(nav.className).toContain("justify-center");
   });

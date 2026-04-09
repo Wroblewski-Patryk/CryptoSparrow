@@ -54,6 +54,26 @@ const createMarketGroup = async (
   return symbolGroup.id;
 };
 
+const createWallet = async (
+  email: string,
+  marketType: 'FUTURES' | 'SPOT' = 'FUTURES'
+) => {
+  const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+  const wallet = await prisma.wallet.create({
+    data: {
+      userId: user.id,
+      name: `Strategies Guard Wallet ${marketType} ${Date.now()}`,
+      mode: 'PAPER',
+      exchange: 'BINANCE',
+      marketType,
+      baseCurrency: 'USDT',
+      paperInitialBalance: 10_000,
+    },
+  });
+
+  return wallet.id;
+};
+
 const createBotWithStrategy = async (params: {
   agent: ReturnType<typeof request.agent>;
   email: string;
@@ -61,9 +81,11 @@ const createBotWithStrategy = async (params: {
   isActive: boolean;
 }) => {
   const marketGroupId = await createMarketGroup(params.email, 'FUTURES');
+  const walletId = await createWallet(params.email, 'FUTURES');
   const createBotRes = await params.agent.post('/dashboard/bots').send({
     name: `Strategy Guard Bot ${Date.now()}`,
     mode: 'PAPER',
+    walletId,
     strategyId: params.strategyId,
     marketGroupId,
     isActive: params.isActive,

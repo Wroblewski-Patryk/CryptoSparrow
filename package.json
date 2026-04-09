@@ -25,7 +25,7 @@
     "build": "pnpm -r --if-present run build",
     "go-live:infra:up": "docker compose up -d postgres redis",
     "go-live:infra:down": "docker compose down",
-    "test:go-live:api": "pnpm --filter api test -- src/modules/auth/auth.e2e.test.ts src/modules/strategies/strategies.e2e.test.ts src/modules/backtests/backtests.e2e.test.ts src/modules/engine/preTrade.e2e.test.ts",
+    "test:go-live:api": "pnpm --filter api exec vitest run src/modules/auth/auth.e2e.test.ts src/modules/strategies/strategies.e2e.test.ts src/modules/backtests/backtests.e2e.test.ts src/modules/engine/preTrade.e2e.test.ts",
     "test:go-live:server": "pnpm run test:go-live:api",
     "test:go-live:api:with-infra": "node scripts/goLiveSmoke.mjs --target=api",
     "test:go-live:server:with-infra": "pnpm run test:go-live:api:with-infra",
