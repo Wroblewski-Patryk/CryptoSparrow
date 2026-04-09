@@ -4,22 +4,19 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import axios from 'axios';
 import { LuChartLine, LuCircleDot, LuDatabase, LuListChecks, LuLoaderCircle, LuShieldCheck, LuSquare } from 'react-icons/lu';
 import {
-  getBacktestRun,
-  getBacktestRunReport,
   getBacktestRunTimeline,
-  listBacktestRunTrades,
 } from '../services/backtests.service';
-import { BacktestReport, BacktestRun, BacktestTimeline, BacktestTimelineEvent, BacktestTrade } from '../types/backtest.type';
+import { BacktestRun, BacktestTimeline, BacktestTimelineEvent, BacktestTrade } from '../types/backtest.type';
 import { EmptyState, ErrorState } from '@/ui/components/ViewState';
 import { SkeletonCardBlock, SkeletonKpiRow, SkeletonTableRows } from '@/ui/components/loading';
 import { useLocaleFormatting } from '@/i18n/useLocaleFormatting';
-import { getStrategy } from '../../strategies/api/strategies.api';
 import { StrategyDto } from '../../strategies/types/StrategyForm.type';
-import { getMarketUniverse } from '../../markets/services/markets.service';
 import { buildNonOverlappingTradeSegments } from '../utils/nonOverlappingTradeSegments';
 import { buildPairStatsMetricDisplay } from '../utils/pairStatsMetricDisplay';
 import { getPatternMarkerBias, splitTimelineIndicatorSeriesForRendering } from '../utils/timelineIndicatorOverlays';
 import { I18nContext } from '../../../i18n/I18nProvider';
+import { useBacktestRunCoreData } from '../hooks/useBacktestRunCoreData';
+import BacktestRunHeaderSection from './BacktestRunHeaderSection';
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -1399,19 +1396,24 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
           dash: '-',
           custom: 'Niestandardowa',
         };
-  const [run, setRun] = useState<BacktestRun | null>(null);
-  const [report, setReport] = useState<BacktestReport | null>(null);
-  const [trades, setTrades] = useState<BacktestTrade[]>([]);
-  const [strategy, setStrategy] = useState<StrategyDto | null>(null);
-  const [marketUniverseName, setMarketUniverseName] = useState<string | null>(null);
   const [timelines, setTimelines] = useState<Record<string, TimelineState>>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'summary' | 'markets' | 'trades' | 'raw'>('markets');
   const symbolSectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const timelinesRef = useRef<Record<string, TimelineState>>({});
   const inFlightTimelineRequestsRef = useRef<Map<string, Promise<BacktestTimeline | undefined>>>(new Map());
-  const lastMarketUniverseIdRef = useRef<string | null>(null);
+  const {
+    run,
+    report,
+    trades,
+    strategy,
+    marketUniverseName,
+    loading,
+    error,
+    retry,
+  } = useBacktestRunCoreData({
+    runId,
+    loadErrorDefault: copy.loadErrorDefault,
+  });
 
   useEffect(() => {
     timelinesRef.current = timelines;
@@ -1422,75 +1424,8 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
     // to avoid rendering stale market charts from a previous run.
     inFlightTimelineRequestsRef.current.clear();
     timelinesRef.current = {};
-    lastMarketUniverseIdRef.current = null;
-    setMarketUniverseName(null);
     setTimelines({});
   }, [runId]);
-
-  const loadData = useCallback(async () => {
-    try {
-      const runData = await getBacktestRun(runId);
-      setRun(runData);
-
-      const [tradesData, reportData] = await Promise.all([
-        listBacktestRunTrades(runId),
-        getBacktestRunReport(runId),
-      ]);
-
-      setTrades(tradesData);
-      setReport(reportData);
-
-      if (runData.strategyId) {
-        try {
-          const strategyData = await getStrategy(runData.strategyId);
-          setStrategy(strategyData);
-        } catch {
-          setStrategy(null);
-        }
-      } else {
-        setStrategy(null);
-      }
-
-      const runSeedConfig = (runData.seedConfig as { marketUniverseId?: unknown } | null) ?? null;
-      const marketUniverseId =
-        runSeedConfig && typeof runSeedConfig.marketUniverseId === 'string' ? runSeedConfig.marketUniverseId : null;
-      if (marketUniverseId) {
-        if (lastMarketUniverseIdRef.current !== marketUniverseId) {
-          try {
-            const universe = await getMarketUniverse(marketUniverseId);
-            setMarketUniverseName(universe.name);
-            lastMarketUniverseIdRef.current = marketUniverseId;
-          } catch {
-            setMarketUniverseName(null);
-          }
-        }
-      } else {
-        lastMarketUniverseIdRef.current = null;
-        setMarketUniverseName(null);
-      }
-
-      setError(null);
-    } catch (err: unknown) {
-      setError(getAxiosMessage(err) ?? copy.loadErrorDefault);
-    } finally {
-      setLoading(false);
-    }
-  }, [copy.loadErrorDefault, runId]);
-
-  useEffect(() => {
-    setLoading(true);
-    void loadData();
-  }, [loadData]);
-
-  useEffect(() => {
-    if (!run || (run.status !== 'PENDING' && run.status !== 'RUNNING')) return;
-
-    const timer = setInterval(() => {
-      void loadData();
-    }, 4000);
-
-    return () => clearInterval(timer);
-  }, [loadData, run]);
 
   const liveProgress = ((run?.seedConfig as { liveProgress?: LiveProgress } | null)?.liveProgress ?? null) as LiveProgress | null;
   const seedConfig = (run?.seedConfig as {
@@ -2010,10 +1945,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
         title={copy.loadErrorTitle}
         description={error}
         retryLabel={copy.retry}
-        onRetry={() => {
-          setLoading(true);
-          void loadData();
-        }}
+        onRetry={retry}
       />
     );
   }
@@ -2064,75 +1996,27 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
   ];
   return (
     <div className='space-y-4'>
-      <section className='rounded-box border border-base-300/60 bg-base-100/80 p-4 space-y-4'>
-        <div className='flex flex-wrap items-start justify-between gap-3'>
-          <div className='space-y-1'>
-            <h2 className='text-lg font-semibold'>{run.name}</h2>
-            <p className='text-xs opacity-60'>{copy.runPreview}</p>
-          </div>
-          <span className={`badge ${runStatusBadgeClass(run.status)}`}>{runStatusLabel(run.status, locale)}</span>
-        </div>
-
-        <div className='rounded-lg border border-base-300 bg-base-200 px-3 py-2 text-xs'>
-          <div className='flex flex-wrap items-center gap-x-3 gap-y-1'>
-            <span className='opacity-70'>{copy.marketGroup}</span>
-            <span className='font-semibold text-sm tracking-wide'>{marketGroupLabel}</span>
-            <span className='opacity-40'>|</span>
-            <span className='opacity-70'>{copy.strategy}</span>
-            <span className='font-medium'>{strategy?.name ?? copy.dash}</span>
-            <span className='opacity-40'>|</span>
-            <span className='opacity-70'>{copy.calcStart}</span>
-            <span className='font-medium'>{formatDateTime(run.startedAt)}</span>
-            <span className='opacity-40'>|</span>
-            <span className='opacity-70'>{copy.calcEnd}</span>
-            <span className='font-medium'>{runEndLabel}</span>
-          </div>
-        </div>
-
-        {showProgress ? (
-          <div className='space-y-1'>
-            <div className='flex items-center justify-between text-xs opacity-70'>
-              <span>{copy.progressTitle}</span>
-              <span>{progress}%</span>
-            </div>
-            <progress className={`progress w-full ${runProgressClass(run.status)}`} value={progress} max={100} />
-          </div>
-        ) : null}
-
-        {liveProgress || report ? (
-          <div className='rounded-box border border-base-300/60 bg-base-200/55 p-3 text-sm'>
-            <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-4'>
-              {headlineMetrics.map((metric) => (
-                <div key={metric.key} className='rounded-md border border-base-300 bg-base-100 px-2 py-2'>
-                  <p className='text-[11px] uppercase tracking-wide opacity-60'>{metric.label}</p>
-                  <p className={`font-medium ${metric.valueClass}`}>{metric.value}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        <div className='rounded-lg border border-base-300 bg-base-200 px-3 py-2'>
-          <div className='flex flex-wrap items-center gap-2 text-xs'>
-            <span className='text-[11px] uppercase tracking-wide opacity-60'>{copy.stagesTitle}</span>
-          {stages.map((stage) => (
-            <span
-              key={stage.label}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 ${
-                stage.done
-                  ? 'border-success/40 bg-success/10 text-success'
-                  : stage.active
-                    ? 'border-info/40 bg-info/10 text-info'
-                    : 'border-base-300 bg-base-100 opacity-70'
-              }`}
-            >
-              <span className={stage.active ? 'animate-pulse' : ''}>{stage.icon}</span>
-              <span className='font-medium'>{stage.label}</span>
-            </span>
-          ))}
-          </div>
-        </div>
-      </section>
+      <BacktestRunHeaderSection
+        runName={run.name}
+        runPreviewLabel={copy.runPreview}
+        runStatusClassName={runStatusBadgeClass(run.status)}
+        runStatusLabel={runStatusLabel(run.status, locale)}
+        marketGroupLabelText={copy.marketGroup}
+        marketGroupValue={marketGroupLabel}
+        strategyLabelText={copy.strategy}
+        strategyValue={strategy?.name ?? copy.dash}
+        calcStartLabelText={copy.calcStart}
+        calcStartValue={formatDateTime(run.startedAt)}
+        calcEndLabelText={copy.calcEnd}
+        calcEndValue={runEndLabel}
+        showProgress={showProgress}
+        progressLabel={copy.progressTitle}
+        progressValue={progress}
+        progressClassName={runProgressClass(run.status)}
+        headlineMetrics={liveProgress || report ? headlineMetrics : []}
+        stagesLabel={copy.stagesTitle}
+        stages={stages}
+      />
 
       <section className='rounded-box border border-base-300/60 bg-base-100/80 p-4'>
         <div role='tablist' className='tabs tabs-boxed'>
