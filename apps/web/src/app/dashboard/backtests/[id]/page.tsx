@@ -14,13 +14,13 @@ export default function BacktestsDetailsPage() {
   const copy =
     locale === 'en'
       ? {
-          title: 'Backtests',
+          title: 'Backtest',
           breadcrumbDashboard: 'Dashboard',
           breadcrumbBacktests: 'Backtests',
           breadcrumbDetails: 'Details',
         }
       : {
-          title: 'Backtesty',
+          title: 'Backtest',
           breadcrumbDashboard: 'Dashboard',
           breadcrumbBacktests: 'Backtests',
           breadcrumbDetails: 'Details',

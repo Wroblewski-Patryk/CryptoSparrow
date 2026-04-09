@@ -11,6 +11,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/ui/components/ViewState'
 import WalletsListTable from '@/features/wallets/components/WalletsListTable';
 import { listWallets } from '@/features/wallets/services/wallets.service';
 import { Wallet } from '@/features/wallets/types/wallet.type';
+import { dashboardRoutes } from '@/ui/layout/dashboard/dashboardRoutes';
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -79,10 +80,10 @@ export default function WalletsListPage() {
         icon={<LuWallet className='h-5 w-5' />}
         breadcrumb={[
           { label: 'Dashboard', href: '/dashboard' },
-          { label: copy.breadcrumbWallets, href: '/dashboard/wallets/list' },
+          { label: copy.breadcrumbWallets, href: dashboardRoutes.wallets.list },
           { label: copy.breadcrumbList, icon: <LuList className='h-3.5 w-3.5' /> },
         ]}
-        onAdd={() => router.push('/dashboard/wallets/create')}
+        onAdd={() => router.push(dashboardRoutes.wallets.create)}
         addLabel={copy.addLabel}
       />
 

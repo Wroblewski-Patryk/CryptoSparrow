@@ -30,8 +30,8 @@ export default function MarketsCreatePage() {
             submitLabel: 'Save',
           }
         : {
-            created: 'Market group created',
-            createFailed: 'Could not create market group',
+            created: 'Markets entry created',
+            createFailed: 'Could not create markets entry',
             title: 'Markets',
             breadcrumbMarkets: 'Markets',
             breadcrumbCreate: 'Create',

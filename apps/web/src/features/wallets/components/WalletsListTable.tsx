@@ -8,6 +8,7 @@ import { LuPencil, LuTrash2 } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
 import { deleteWallet } from '../services/wallets.service';
 import { Wallet } from '../types/wallet.type';
+import { dashboardRoutes } from '@/ui/layout/dashboard/dashboardRoutes';
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
@@ -116,7 +117,7 @@ export default function WalletsListTable({ rows, onDeleted }: WalletsListTablePr
               <td>
                 <div className='flex items-center justify-end gap-2'>
                   <Link
-                    href={`/dashboard/wallets/create?editId=${wallet.id}`}
+                    href={dashboardRoutes.wallets.edit(wallet.id)}
                     className='btn btn-ghost btn-xs'
                   >
                     <LuPencil className='h-3.5 w-3.5' />

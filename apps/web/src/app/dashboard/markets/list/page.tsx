@@ -39,15 +39,15 @@ export default function MarketsListPage() {
             emptyDescription: 'Dodaj pierwsza grupe, aby wykorzystac ja w botach i backtestach.',
           }
         : {
-            loadError: 'Could not fetch market groups list.',
+            loadError: 'Could not fetch markets list.',
             breadcrumbMarkets: 'Markets',
             breadcrumbList: 'List',
             addLabel: 'Create',
-            loading: 'Loading market groups',
-            errorTitle: 'Could not load market groups',
+            loading: 'Loading markets',
+            errorTitle: 'Could not load markets',
             retry: 'Try again',
-            emptyTitle: 'No market groups',
-            emptyDescription: 'Add your first group to use it in bots and backtests.',
+            emptyTitle: 'No markets',
+            emptyDescription: 'Add your first market set to use it in bots and backtests.',
           },
     [locale]
   );
