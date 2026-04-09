@@ -48,5 +48,26 @@ describe("BacktestRunDetails loading UX", () => {
     expect(screen.getByLabelText("Loading cards")).toBeInTheDocument();
     expect(screen.getByLabelText("Loading table rows")).toBeInTheDocument();
   });
-});
 
+  it("renders not-found state when run endpoint responds with 404", async () => {
+    getBacktestRunMock.mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        status: 404,
+        data: {
+          error: { message: "Not found" },
+        },
+      },
+    });
+    getBacktestRunReportMock.mockResolvedValue(null);
+    getBacktestRunTimelineMock.mockResolvedValue(null);
+    listBacktestRunTradesMock.mockResolvedValue([]);
+    getStrategyMock.mockResolvedValue(null);
+    getMarketUniverseMock.mockResolvedValue(null);
+
+    render(<BacktestRunDetails runId="missing_run" />);
+
+    expect(await screen.findByText("Nie znaleziono runa")).toBeInTheDocument();
+    expect(screen.queryByText("Nie udalo sie pobrac szczegolow backtestu")).not.toBeInTheDocument();
+  });
+});

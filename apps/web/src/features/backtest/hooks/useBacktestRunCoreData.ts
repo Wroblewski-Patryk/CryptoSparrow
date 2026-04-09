@@ -14,7 +14,15 @@ import { getMarketUniverse } from '../../markets/services/markets.service';
 
 const getAxiosMessage = (err: unknown) => {
   if (!axios.isAxiosError(err)) return undefined;
-  return (err.response?.data as { message?: string } | undefined)?.message;
+  const payload = err.response?.data as
+    | {
+        message?: string;
+        error?: {
+          message?: string;
+        };
+      }
+    | undefined;
+  return payload?.error?.message ?? payload?.message;
 };
 
 type UseBacktestRunCoreDataParams = {
@@ -41,17 +49,33 @@ export const useBacktestRunCoreData = ({
   }, [runId]);
 
   const loadData = useCallback(async () => {
+    const normalizedRunId = runId.trim();
+    if (!normalizedRunId) {
+      setRun(null);
+      setReport(null);
+      setTrades([]);
+      setStrategy(null);
+      setMarketUniverseName(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const runData = await getBacktestRun(runId);
+      const runData = await getBacktestRun(normalizedRunId);
       setRun(runData);
 
-      const [tradesData, reportData] = await Promise.all([
-        listBacktestRunTrades(runId),
-        getBacktestRunReport(runId),
+      const [tradesResult, reportResult] = await Promise.allSettled([
+        listBacktestRunTrades(normalizedRunId),
+        getBacktestRunReport(normalizedRunId),
       ]);
 
-      setTrades(tradesData);
-      setReport(reportData);
+      if (tradesResult.status === 'fulfilled') {
+        setTrades(Array.isArray(tradesResult.value) ? tradesResult.value : []);
+      }
+      if (reportResult.status === 'fulfilled') {
+        setReport(reportResult.value);
+      }
 
       if (runData.strategyId) {
         try {
@@ -86,6 +110,16 @@ export const useBacktestRunCoreData = ({
 
       setError(null);
     } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response?.status === 404) {
+        // Run no longer exists or is not accessible for this user.
+        setRun(null);
+        setReport(null);
+        setTrades([]);
+        setStrategy(null);
+        setMarketUniverseName(null);
+        setError(null);
+        return;
+      }
       setError(getAxiosMessage(err) ?? loadErrorDefault);
     } finally {
       setLoading(false);
