@@ -143,6 +143,7 @@ const createDeps = () => {
 const withStrategyBot = (
   deps: any,
   options?: {
+    mode?: 'PAPER' | 'LIVE';
     maxOpenPositions?: number;
     strategies?: any[];
     marketType?: 'FUTURES' | 'SPOT';
@@ -153,7 +154,7 @@ const withStrategyBot = (
     {
       id: 'bot-1',
       userId: 'user-1',
-      mode: 'PAPER' as const,
+      mode: options?.mode ?? ('PAPER' as const),
       exchange: options?.exchange ?? ('BINANCE' as const),
       paperStartBalance: 1000,
       marketType: options?.marketType ?? ('FUTURES' as const),
@@ -658,6 +659,40 @@ describe('RuntimeSignalLoop', () => {
     expect(deps.analyzePreTradeFn).toHaveBeenCalled();
     expect(deps.createSignal).not.toHaveBeenCalled();
     expect(deps.orchestrateFn).not.toHaveBeenCalled();
+  });
+
+  it('blocks LIVE execution before orchestrator when exchange minimum constraints fail', async () => {
+    const { deps, emit } = createDeps();
+    withStrategyBot(deps, { mode: 'LIVE' });
+    deps.recordRuntimeEvent = vi.fn(async () => undefined);
+    deps.validateExchangeOrderFn = vi.fn(async () => ({
+      allowed: false,
+      reason: 'exchange_min_notional_not_met',
+      details: {
+        symbol: 'BTCUSDT',
+        quantity: 0.01,
+        price: 100,
+        notional: 1,
+        minQuantity: 0.001,
+        minNotional: 5,
+      },
+    }));
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+    await emitFinalCandleSeries(emit);
+
+    expect(deps.validateExchangeOrderFn).toHaveBeenCalled();
+    expect(deps.orchestrateFn).not.toHaveBeenCalled();
+    expect(deps.recordRuntimeEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'PRETRADE_BLOCKED',
+        payload: expect.objectContaining({
+          reason: 'EXCHANGE_MIN_ORDER_CONSTRAINT',
+          constraintReason: 'exchange_min_notional_not_met',
+        }),
+      })
+    );
   });
 
   it('skips final-candle LONG/SHORT execution when market-group maxOpenPositions is reached', async () => {

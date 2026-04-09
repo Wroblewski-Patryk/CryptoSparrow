@@ -18,6 +18,10 @@ import { resolveRuntimeDcaFundsExhausted, resolveRuntimeReferenceBalance } from 
 import { runtimeTelemetryService } from './runtimeTelemetry.service';
 import { mergeRuntimeStrategyVotes, StrategyVote } from './runtimeSignalMerge';
 import {
+  validateRuntimeExchangeOrder,
+  RuntimeExchangeOrderGuardResult,
+} from './runtimeExchangeOrderGuard.service';
+import {
   RuntimeSignalConditionLine,
   StrategyEvaluation,
 } from './runtimeSignalEvaluationTypes';
@@ -134,6 +138,13 @@ type RuntimeSignalLoopDeps = {
   autoRestartCooldownMs?: number;
   autoRestartMaxAttempts?: number;
   autoRestartWindowMs?: number;
+  validateExchangeOrderFn?: (input: {
+    exchange: ActiveBot['exchange'];
+    marketType: ActiveBot['marketType'];
+    symbol: string;
+    quantity: number;
+    price: number;
+  }) => Promise<RuntimeExchangeOrderGuardResult>;
 };
 
 const runtimeSignalQuantity = Number.parseFloat(process.env.RUNTIME_SIGNAL_QUANTITY ?? '0.01');
@@ -189,6 +200,7 @@ const defaultDeps: RuntimeSignalLoopDeps = {
     runtimeTelemetryService.closeInactiveRuntimeSessions(activeBotIds),
   recordRuntimeEvent: (params) => runtimeTelemetryService.recordRuntimeEvent(params),
   upsertRuntimeSymbolStat: (params) => runtimeTelemetryService.upsertRuntimeSymbolStat(params),
+  validateExchangeOrderFn: (params) => validateRuntimeExchangeOrder(params),
 };
 
 export class RuntimeSignalLoop {
@@ -790,6 +802,45 @@ export class RuntimeSignalLoop {
               runtimeSignalQuantity,
             });
             const leverage = Math.max(1, selectedStrategy?.strategyLeverage ?? 1);
+            if (bot.mode === 'LIVE') {
+              const exchangeOrderValidation = await this.deps.validateExchangeOrderFn?.({
+                exchange: bot.exchange,
+                marketType: bot.marketType,
+                symbol: event.symbol,
+                quantity: orderQuantity,
+                price: event.close,
+              });
+
+              if (exchangeOrderValidation && !exchangeOrderValidation.allowed) {
+                await this.deps.recordRuntimeEvent?.({
+                  userId: bot.userId,
+                  botId: bot.id,
+                  mode: bot.mode,
+                  sessionId,
+                  eventType: 'PRETRADE_BLOCKED',
+                  level: 'WARN',
+                  symbol: event.symbol,
+                  strategyId: merged.strategyId,
+                  signalDirection: direction,
+                  message: `Signal blocked for ${event.symbol} due to exchange order constraints`,
+                  payload: {
+                    reason: 'EXCHANGE_MIN_ORDER_CONSTRAINT',
+                    constraintReason: exchangeOrderValidation.reason,
+                    quantity: orderQuantity,
+                    markPrice: event.close,
+                    leverage,
+                    exchange: bot.exchange,
+                    marketType: bot.marketType,
+                    details: exchangeOrderValidation.details,
+                  },
+                  eventAt: signalEventAt,
+                });
+                metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
+                metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
+                return;
+              }
+            }
+
             const insufficientWalletFunds = await resolveRuntimeDcaFundsExhausted({
               userId: bot.userId,
               botId: bot.id,
