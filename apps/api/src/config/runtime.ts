@@ -32,6 +32,19 @@ const withPort = (url: URL, port: number) => {
 
 const toOrigin = (url: URL) => `${url.protocol}//${url.host}`;
 
+const parseOrigin = (value: string | undefined, fallbackOrigin: string) => {
+  const candidate = value?.trim();
+  if (!candidate) {
+    return fallbackOrigin;
+  }
+
+  try {
+    return new URL(candidate).origin;
+  } catch {
+    return new URL(`http://${candidate}`).origin;
+  }
+};
+
 export const serverPort = parsePort(process.env.SERVER_PORT, defaultServerPort);
 export const clientPort = parsePort(process.env.CLIENT_PORT, defaultClientPort);
 
@@ -40,6 +53,11 @@ export const serverUrl = toOrigin(
 );
 export const clientUrl = toOrigin(
   withPort(parseBaseUrl(process.env.CLIENT_URL, 'http://localhost'), clientPort)
+);
+export const appUrl = parseOrigin(process.env.APP_URL, clientUrl);
+export const uploadPublicOrigin = parseOrigin(
+  process.env.UPLOAD_PUBLIC_ORIGIN,
+  parseOrigin(process.env.APP_URL, serverUrl)
 );
 
 const corsOriginsFromEnv = process.env.CORS_ORIGINS?.split(',')

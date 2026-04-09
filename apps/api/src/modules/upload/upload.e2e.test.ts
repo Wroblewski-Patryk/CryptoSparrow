@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import sharp from 'sharp';
 import { app } from '../../index';
 import { prisma } from '../../prisma/client';
+import { uploadPublicOrigin } from '../../config/runtime';
 
 const registerAndLogin = async (email: string) => {
   const agent = request.agent(app);
@@ -16,6 +17,8 @@ const registerAndLogin = async (email: string) => {
 };
 
 describe('Avatar upload security contract', () => {
+  const escapedUploadPublicOrigin = uploadPublicOrigin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
   beforeEach(async () => {
     await prisma.orderFill.deleteMany();
     await prisma.trade.deleteMany();
@@ -108,7 +111,7 @@ describe('Avatar upload security contract', () => {
     expect(res.body.url).toMatch(/\/avatars\/.+\.jpg$/);
   });
 
-  it('uses forwarded origin for avatar URL behind proxy', async () => {
+  it('ignores forwarded origin headers when building avatar URL', async () => {
     const agent = await registerAndLogin('upload-user-proxy@example.com');
     const pngBuffer = await sharp({
       create: { width: 16, height: 16, channels: 3, background: '#0000ff' },
@@ -126,7 +129,7 @@ describe('Avatar upload security contract', () => {
       });
 
     expect(res.status).toBe(200);
-    expect(res.body.url).toMatch(/^https:\/\/app\.soar\.example\/avatars\/.+\.jpg$/);
+    expect(res.body.url).toMatch(new RegExp(`^${escapedUploadPublicOrigin}/avatars/.+\\.jpg$`));
   });
 });
 
