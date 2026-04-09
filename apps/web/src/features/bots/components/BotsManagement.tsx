@@ -1,52 +1,20 @@
 ﻿'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import axios from "axios";
-import { toast } from "sonner";
+import { useEffect, useMemo, useState } from "react";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { TranslationKey } from "../../../i18n/translations";
 
 import StatusBadge from "../../../ui/components/StatusBadge";
 import { EmptyState, ErrorState, SuccessState } from "../../../ui/components/ViewState";
 import { SkeletonCardBlock, SkeletonFormBlock, SkeletonKpiRow, SkeletonTableRows } from "../../../ui/components/loading";
-import {
-  createBot,
-  deleteBot,
-  deleteBotSubagentConfig,
-  getBotRuntimeSession,
-  getBotAssistantConfig,
-  listBots,
-  listBotRuntimeSessionSymbolStats,
-  listBotRuntimeSessionPositions,
-  listBotRuntimeSessionTrades,
-  listBotRuntimeSessions,
-  runBotAssistantDryRun,
-  updateBot,
-  upsertBotAssistantConfig,
-  upsertBotSubagentConfig,
-} from "../services/bots.service";
 import { BotsManagementTabs } from "./bots-management/BotsManagementTabs";
 import { BotsMonitoringTab } from "./bots-management/BotsMonitoringTab";
 import {
   Bot,
-  AssistantDecisionTrace,
   BotMode,
-  BotRuntimeSessionDetail,
-  BotRuntimeSessionListItem,
   BotRuntimeSessionStatus,
-  BotRuntimeSymbolStatsResponse,
-  BotRuntimePositionsResponse,
-  BotRuntimeTradesResponse,
-  BotSubagentConfig,
   TradeMarket,
 } from "../types/bot.type";
-import { listMarketUniverses } from "../../markets/services/markets.service";
-import { MarketUniverse } from "../../markets/types/marketUniverse.type";
-import { listStrategies } from "../../strategies/api/strategies.api";
-import { StrategyDto } from "../../strategies/types/StrategyForm.type";
-import { listWallets } from "../../wallets/services/wallets.service";
-import { Wallet } from "../../wallets/types/wallet.type";
-import { createMarketStreamEventSource } from "../../../lib/marketStream";
 import { supportsExchangeCapability } from "../../exchanges/exchangeCapabilities";
 import {
   pruneStickyFavorableMoveMap,
@@ -54,17 +22,11 @@ import {
   toProtectedPnlPercentFromStopPrice,
 } from "../utils/trailingStopDisplay";
 import { formatDcaLadderCell } from "./bots-management/dcaLadderCell";
+import { useBotsListController } from "../hooks/useBotsListController";
+import { useBotsAssistantController } from "../hooks/useBotsAssistantController";
+import { useBotsMonitoringController } from "../hooks/useBotsMonitoringController";
 
-const LIVE_CONSENT_TEXT_VERSION = "mvp-v1";
-const DUPLICATE_ACTIVE_BOT_ERROR = "active bot already exists for this strategy + market group pair";
-const MONITOR_AUTO_REFRESH_INTERVAL_MS = 5_000;
 const MONITOR_STALE_WARNING_AFTER_MS = 20_000;
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  const response = err.response?.data as { error?: { message?: string }; message?: string } | undefined;
-  return response?.error?.message ?? response?.message;
-};
 
 const toModeBadge = (mode: BotMode) => {
   if (mode === "LIVE") return "live";
@@ -81,18 +43,6 @@ const toRiskBadge = (bot: Bot) => {
   return { value: "safe", labelKey: "dashboard.bots.badges.safeMode" as TranslationKey } as const;
 };
 
-const deriveStrategyMaxOpenPositions = (strategy: StrategyDto | null): number => {
-  if (!strategy?.config || typeof strategy.config !== "object") return 1;
-  const config = strategy.config as {
-    additional?: {
-      maxPositions?: unknown;
-      maxOpenPositions?: unknown;
-    };
-  };
-  const raw = config.additional?.maxPositions ?? config.additional?.maxOpenPositions;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : 1;
-};
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("en-US", {
@@ -170,258 +120,14 @@ const formatTradeFeeMeta = (trade: {
   return `${sourceLabel}${currencySuffix}`;
 };
 
-type MonitorAggregateData = {
-  sessionDetail: BotRuntimeSessionDetail;
-  symbolStats: BotRuntimeSymbolStatsResponse;
-  positions: BotRuntimePositionsResponse;
-  trades: BotRuntimeTradesResponse;
-};
-
 const FIELD_WRAPPER_CLASS = "form-control gap-1";
 const META_CARD_CLASS = "rounded-box border border-base-300/60 bg-base-200/60 px-3 py-2";
 const normalizeSymbol = (value: string) => value.trim().toUpperCase();
-type TickerEventPayload = {
-  symbol: string;
-  lastPrice: number;
-};
 
 const toTimestamp = (value?: string | null) => {
   if (!value) return 0;
   const timestamp = new Date(value).getTime();
   return Number.isFinite(timestamp) ? timestamp : 0;
-};
-
-const uniqueById = <T extends { id: string }>(items: T[]) => {
-  const map = new Map<string, T>();
-  for (const item of items) {
-    if (!map.has(item.id)) {
-      map.set(item.id, item);
-    }
-  }
-  return [...map.values()];
-};
-
-const aggregateMonitorData = (params: {
-  sessions: BotRuntimeSessionListItem[];
-  symbolResponses: BotRuntimeSymbolStatsResponse[];
-  positionResponses: BotRuntimePositionsResponse[];
-  tradeResponses: BotRuntimeTradesResponse[];
-}): MonitorAggregateData => {
-  const sessions = params.sessions;
-  const mode: BotMode = sessions.some((session) => session.mode === "LIVE") ? "LIVE" : "PAPER";
-  const status: BotRuntimeSessionStatus = sessions.some((session) => session.status === "RUNNING")
-    ? "RUNNING"
-    : sessions.some((session) => session.status === "FAILED")
-      ? "FAILED"
-      : sessions.some((session) => session.status === "CANCELED")
-        ? "CANCELED"
-        : "COMPLETED";
-
-  const startedAt = sessions
-    .map((session) => session.startedAt)
-    .filter(Boolean)
-    .sort((a, b) => toTimestamp(a) - toTimestamp(b))[0] ?? new Date().toISOString();
-  const finishedAt = sessions
-    .map((session) => session.finishedAt)
-    .filter((value): value is string => Boolean(value))
-    .sort((a, b) => toTimestamp(b) - toTimestamp(a))[0] ?? null;
-  const lastHeartbeatAt = sessions
-    .map((session) => session.lastHeartbeatAt)
-    .filter((value): value is string => Boolean(value))
-    .sort((a, b) => toTimestamp(b) - toTimestamp(a))[0] ?? null;
-  const durationMs = Math.max(
-    0,
-    sessions.reduce((acc, session) => acc + Math.max(0, session.durationMs), 0)
-  );
-  const eventsCount = sessions.reduce((acc, session) => acc + session.eventsCount, 0);
-
-  const symbolMap = new Map<string, BotRuntimeSymbolStatsResponse["items"][number]>();
-  for (const response of params.symbolResponses) {
-    for (const item of response.items) {
-      const existing = symbolMap.get(item.symbol);
-      if (!existing) {
-        symbolMap.set(item.symbol, {
-          ...item,
-          id: `aggregate-${item.symbol}`,
-          sessionId: "AGGREGATE",
-        });
-        continue;
-      }
-
-      const currentSignalTs = Math.max(
-        toTimestamp(item.lastSignalDecisionAt),
-        toTimestamp(item.lastSignalAt)
-      );
-      const existingSignalTs = Math.max(
-        toTimestamp(existing.lastSignalDecisionAt),
-        toTimestamp(existing.lastSignalAt)
-      );
-      const currentTradeTs = toTimestamp(item.lastTradeAt);
-      const existingTradeTs = toTimestamp(existing.lastTradeAt);
-
-      symbolMap.set(item.symbol, {
-        ...existing,
-        totalSignals: existing.totalSignals + item.totalSignals,
-        longEntries: existing.longEntries + item.longEntries,
-        shortEntries: existing.shortEntries + item.shortEntries,
-        exits: existing.exits + item.exits,
-        dcaCount: existing.dcaCount + item.dcaCount,
-        closedTrades: existing.closedTrades + item.closedTrades,
-        winningTrades: existing.winningTrades + item.winningTrades,
-        losingTrades: existing.losingTrades + item.losingTrades,
-        realizedPnl: existing.realizedPnl + item.realizedPnl,
-        grossProfit: existing.grossProfit + item.grossProfit,
-        grossLoss: existing.grossLoss + item.grossLoss,
-        feesPaid: existing.feesPaid + item.feesPaid,
-        openPositionCount: existing.openPositionCount + item.openPositionCount,
-        openPositionQty: existing.openPositionQty + item.openPositionQty,
-        unrealizedPnl: (existing.unrealizedPnl ?? 0) + (item.unrealizedPnl ?? 0),
-        lastPrice: currentSignalTs >= existingSignalTs ? item.lastPrice : existing.lastPrice,
-        lastSignalAt: currentSignalTs >= existingSignalTs ? item.lastSignalAt : existing.lastSignalAt,
-        lastSignalDirection:
-          currentSignalTs >= existingSignalTs ? item.lastSignalDirection : existing.lastSignalDirection,
-        lastSignalDecisionAt:
-          currentSignalTs >= existingSignalTs ? item.lastSignalDecisionAt : existing.lastSignalDecisionAt,
-        lastTradeAt: currentTradeTs >= existingTradeTs ? item.lastTradeAt : existing.lastTradeAt,
-        snapshotAt: toTimestamp(item.snapshotAt) >= toTimestamp(existing.snapshotAt) ? item.snapshotAt : existing.snapshotAt,
-      });
-    }
-  }
-  const symbolItems = [...symbolMap.values()].sort((a, b) => a.symbol.localeCompare(b.symbol));
-  const symbolSummary = symbolItems.reduce(
-    (acc, item) => ({
-      totalSignals: acc.totalSignals + item.totalSignals,
-      longEntries: acc.longEntries + item.longEntries,
-      shortEntries: acc.shortEntries + item.shortEntries,
-      exits: acc.exits + item.exits,
-      dcaCount: acc.dcaCount + item.dcaCount,
-      closedTrades: acc.closedTrades + item.closedTrades,
-      winningTrades: acc.winningTrades + item.winningTrades,
-      losingTrades: acc.losingTrades + item.losingTrades,
-      realizedPnl: acc.realizedPnl + item.realizedPnl,
-      unrealizedPnl: acc.unrealizedPnl + (item.unrealizedPnl ?? 0),
-      totalPnl: acc.totalPnl + item.realizedPnl + (item.unrealizedPnl ?? 0),
-      grossProfit: acc.grossProfit + item.grossProfit,
-      grossLoss: acc.grossLoss + item.grossLoss,
-      feesPaid: acc.feesPaid + item.feesPaid,
-      openPositionCount: acc.openPositionCount + item.openPositionCount,
-      openPositionQty: acc.openPositionQty + item.openPositionQty,
-    }),
-    {
-      totalSignals: 0,
-      longEntries: 0,
-      shortEntries: 0,
-      exits: 0,
-      dcaCount: 0,
-      closedTrades: 0,
-      winningTrades: 0,
-      losingTrades: 0,
-      realizedPnl: 0,
-      unrealizedPnl: 0,
-      totalPnl: 0,
-      grossProfit: 0,
-      grossLoss: 0,
-      feesPaid: 0,
-      openPositionCount: 0,
-      openPositionQty: 0,
-    }
-  );
-
-  const openItems = uniqueById(
-    params.positionResponses.flatMap((response) => response.openItems)
-  ).sort((a, b) => toTimestamp(b.openedAt) - toTimestamp(a.openedAt));
-  const historyItems = uniqueById(
-    params.positionResponses.flatMap((response) => response.historyItems)
-  ).sort((a, b) => toTimestamp(b.closedAt) - toTimestamp(a.closedAt));
-  const openOrders = uniqueById(
-    params.positionResponses.flatMap((response) => response.openOrders)
-  ).sort((a, b) => toTimestamp(b.submittedAt ?? b.createdAt) - toTimestamp(a.submittedAt ?? a.createdAt));
-
-  const tradeItems = uniqueById(params.tradeResponses.flatMap((response) => response.items)).sort(
-    (a, b) => toTimestamp(b.executedAt) - toTimestamp(a.executedAt)
-  );
-
-  const positionsSummary = {
-    realizedPnl: historyItems.reduce((acc, item) => acc + item.realizedPnl, 0),
-    unrealizedPnl: openItems.reduce((acc, item) => acc + (item.unrealizedPnl ?? 0), 0),
-    feesPaid: [...openItems, ...historyItems].reduce((acc, item) => acc + item.feesPaid, 0),
-  };
-
-  return {
-    sessionDetail: {
-      id: "AGGREGATE",
-      botId: sessions[0]?.botId ?? "",
-      mode,
-      status,
-      startedAt,
-      finishedAt,
-      lastHeartbeatAt,
-      stopReason: null,
-      errorMessage: null,
-      metadata: {
-        aggregate: true,
-        sessionsCount: sessions.length,
-      },
-      createdAt: startedAt,
-      updatedAt: lastHeartbeatAt ?? finishedAt ?? startedAt,
-      durationMs,
-      eventsCount,
-      symbolsTracked: symbolItems.length,
-      summary: {
-        totalSignals: symbolSummary.totalSignals,
-        longEntries: symbolSummary.longEntries,
-        shortEntries: symbolSummary.shortEntries,
-        exits: symbolSummary.exits,
-        dcaCount: symbolSummary.dcaCount,
-        closedTrades: symbolSummary.closedTrades,
-        winningTrades: symbolSummary.winningTrades,
-        losingTrades: symbolSummary.losingTrades,
-        realizedPnl: tradeItems.reduce((acc, item) => acc + item.realizedPnl, 0),
-        grossProfit: symbolSummary.grossProfit,
-        grossLoss: symbolSummary.grossLoss,
-        feesPaid: tradeItems.reduce((acc, item) => acc + item.fee, 0),
-        openPositionCount: openItems.length,
-        openPositionQty: openItems.reduce((acc, item) => acc + item.quantity, 0),
-      },
-    },
-    symbolStats: {
-      sessionId: "AGGREGATE",
-      items: symbolItems,
-      summary: symbolSummary,
-    },
-    positions: {
-      sessionId: "AGGREGATE",
-      total: openItems.length + historyItems.length,
-      openCount: openItems.length,
-      closedCount: historyItems.length,
-      openOrdersCount: openOrders.length,
-      window: {
-        startedAt,
-        finishedAt: finishedAt ?? new Date().toISOString(),
-      },
-      summary: positionsSummary,
-      openOrders,
-      openItems,
-      historyItems,
-    },
-    trades: {
-      sessionId: "AGGREGATE",
-      total: tradeItems.length,
-      meta: {
-        page: 1,
-        pageSize: tradeItems.length || 1,
-        total: tradeItems.length,
-        totalPages: 1,
-        hasPrev: false,
-        hasNext: false,
-      },
-      window: {
-        startedAt,
-        finishedAt: finishedAt ?? new Date().toISOString(),
-      },
-      items: tradeItems,
-    },
-  };
 };
 
 type BotsManagementProps = {
@@ -439,186 +145,118 @@ export default function BotsManagement({
   const [activeTab, setActiveTab] = useState<"bots" | "monitoring" | "assistant">(
     lockedTab ?? initialTab
   );
-  const [bots, setBots] = useState<Bot[]>([]);
-  const [serverSnapshot, setServerSnapshot] = useState<Record<string, Bot>>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
-  const [savingId, setSavingId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [strategies, setStrategies] = useState<StrategyDto[]>([]);
-  const [marketGroups, setMarketGroups] = useState<MarketUniverse[]>([]);
-  const [wallets, setWallets] = useState<Wallet[]>([]);
-
-  const [name, setName] = useState("");
-  const [walletId, setWalletId] = useState<string>("");
-  const [marketFilter, setMarketFilter] = useState<"ALL" | TradeMarket>("ALL");
-  const [strategyId, setStrategyId] = useState<string>("");
-  const [marketGroupId, setMarketGroupId] = useState<string>("");
-  const [assistantBotId, setAssistantBotId] = useState<string>("");
-  const [assistantLoading, setAssistantLoading] = useState(false);
-  const [assistantSaving, setAssistantSaving] = useState(false);
-  const [assistantMainEnabled, setAssistantMainEnabled] = useState(false);
-  const [assistantMandate, setAssistantMandate] = useState("");
-  const [assistantModelProfile, setAssistantModelProfile] = useState("balanced");
-  const [assistantSafetyMode, setAssistantSafetyMode] = useState<"STRICT" | "BALANCED" | "EXPERIMENTAL">("STRICT");
-  const [assistantLatencyMs, setAssistantLatencyMs] = useState(2500);
-  const [assistantSubagents, setAssistantSubagents] = useState<BotSubagentConfig[]>([]);
-  const [assistantTrace, setAssistantTrace] = useState<AssistantDecisionTrace | null>(null);
-  const [assistantDryRunSymbol, setAssistantDryRunSymbol] = useState("BTCUSDT");
-  const [assistantDryRunInterval, setAssistantDryRunInterval] = useState("5m");
-  const [assistantDryRunRunning, setAssistantDryRunRunning] = useState(false);
-
-  const [monitorBotId, setMonitorBotId] = useState("");
-  const [monitorViewMode, setMonitorViewMode] = useState<"aggregate" | "session">("aggregate");
-  const [monitorStatus, setMonitorStatus] = useState<"ALL" | BotRuntimeSessionStatus>("ALL");
-  const [monitorSymbolFilter, setMonitorSymbolFilter] = useState("");
-  const [monitorAppliedSymbolFilter, setMonitorAppliedSymbolFilter] = useState("");
-  const [monitorSessions, setMonitorSessions] = useState<BotRuntimeSessionListItem[]>([]);
-  const [monitorSessionId, setMonitorSessionId] = useState("");
-  const [monitorSessionDetail, setMonitorSessionDetail] = useState<BotRuntimeSessionDetail | null>(null);
-  const [monitorSymbolStats, setMonitorSymbolStats] = useState<BotRuntimeSymbolStatsResponse | null>(null);
-  const [monitorPositions, setMonitorPositions] = useState<BotRuntimePositionsResponse | null>(null);
-  const [monitorTrades, setMonitorTrades] = useState<BotRuntimeTradesResponse | null>(null);
-  const [monitorLoading, setMonitorLoading] = useState(false);
-  const [monitorSessionLoading, setMonitorSessionLoading] = useState(false);
-  const [monitorError, setMonitorError] = useState<string | null>(null);
-  const [monitorAutoRefreshEnabled, setMonitorAutoRefreshEnabled] = useState(true);
-  const [monitorLastUpdatedAt, setMonitorLastUpdatedAt] = useState<string | null>(null);
-  const [monitorStaleWatchNowMs, setMonitorStaleWatchNowMs] = useState(() => Date.now());
-  const [monitorLiveTickerPrices, setMonitorLiveTickerPrices] = useState<Record<string, number>>({});
-  const monitorTtpStickyFavorableMoveByPositionRef = useRef<Map<string, number>>(new Map());
+  const confirmLiveRisk = (message: string) => window.confirm(message);
 
   useEffect(() => {
     if (!lockedTab) return;
     setActiveTab(lockedTab);
   }, [lockedTab]);
 
-  const loadBots = useCallback(async (filter: "ALL" | TradeMarket) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await listBots(filter === "ALL" ? undefined : filter);
-      setBots(data);
-      setServerSnapshot(Object.fromEntries(data.map((bot) => [bot.id, bot])));
-    } catch (err: unknown) {
-      setError(getAxiosMessage(err) ?? t("dashboard.bots.errors.loadBots"));
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
+  const {
+    bots,
+    canCreate,
+    creating,
+    deletingId,
+    error,
+    handleCreate,
+    handleDelete,
+    handleSave,
+    loadBots,
+    loading,
+    marketFilter,
+    marketGroupId,
+    marketGroups,
+    name,
+    patchBot,
+    savingId,
+    selectedMarketGroup,
+    selectedStrategy,
+    selectedStrategyMaxOpenPositions,
+    selectedWallet,
+    setMarketFilter,
+    setMarketGroupId,
+    setName,
+    setStrategyId,
+    setWalletId,
+    strategyId,
+    strategies,
+    walletId,
+    wallets,
+  } = useBotsListController({
+    confirmLiveRisk,
+    t,
+  });
 
-  useEffect(() => {
-    void loadBots(marketFilter);
-  }, [loadBots, marketFilter]);
+  const {
+    assistantBotId,
+    assistantDryRunInterval,
+    assistantDryRunRunning,
+    assistantDryRunSymbol,
+    assistantLatencyMs,
+    assistantLoading,
+    assistantMainEnabled,
+    assistantMandate,
+    assistantModelProfile,
+    assistantSafetyMode,
+    assistantSaving,
+    assistantSlots,
+    assistantSubagents,
+    assistantTrace,
+    handleClearSubagent,
+    handleRunAssistantDryRun,
+    handleSaveAssistantMain,
+    handleSaveSubagent,
+    setAssistantBotId,
+    setAssistantDryRunInterval,
+    setAssistantDryRunSymbol,
+    setAssistantLatencyMs,
+    setAssistantMainEnabled,
+    setAssistantMandate,
+    setAssistantModelProfile,
+    setAssistantSafetyMode,
+    setAssistantSubagents,
+  } = useBotsAssistantController({
+    activeTab,
+    bots,
+    preferredBotId,
+    t,
+  });
 
-  useEffect(() => {
-    let mounted = true;
-    const loadStrategyOptions = async () => {
-      try {
-        const items = await listStrategies();
-        if (!mounted) return;
-        setStrategies(items);
-        setStrategyId((prev) => prev || items[0]?.id || "");
-      } catch {
-        if (!mounted) return;
-        setStrategies([]);
-        setStrategyId("");
-      }
-    };
-    void loadStrategyOptions();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    const loadMarketGroupOptions = async () => {
-      try {
-        const items = await listMarketUniverses();
-        if (!mounted) return;
-        setMarketGroups(items);
-        setMarketGroupId((prev) => prev || items[0]?.id || "");
-      } catch (err: unknown) {
-        if (!mounted) return;
-        setMarketGroups([]);
-        toast.error(t("dashboard.bots.toasts.marketGroupsLoadFailed"), { description: getAxiosMessage(err) });
-      }
-    };
-    void loadMarketGroupOptions();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    const loadWalletOptions = async () => {
-      try {
-        const items = await listWallets();
-        if (!mounted) return;
-        setWallets(items);
-        setWalletId((prev) => prev || items[0]?.id || "");
-      } catch (err: unknown) {
-        if (!mounted) return;
-        setWallets([]);
-        toast.error("Wallets load failed", { description: getAxiosMessage(err) });
-      }
-    };
-    void loadWalletOptions();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const canCreate = useMemo(
-    () =>
-      name.trim().length > 0 &&
-      walletId.trim().length > 0 &&
-      strategyId.trim().length > 0 &&
-      marketGroupId.trim().length > 0 &&
-      !creating,
-    [creating, marketGroupId, name, strategyId, walletId]
-  );
-
-  const selectedStrategy = useMemo(
-    () => strategies.find((strategy) => strategy.id === strategyId) ?? null,
-    [strategies, strategyId]
-  );
-  const selectedMarketGroup = useMemo(
-    () => marketGroups.find((group) => group.id === marketGroupId) ?? null,
-    [marketGroupId, marketGroups]
-  );
-  const selectedWallet = useMemo(
-    () => wallets.find((wallet) => wallet.id === walletId) ?? null,
-    [walletId, wallets]
-  );
-  const selectedStrategyMaxOpenPositions = useMemo(
-    () => deriveStrategyMaxOpenPositions(selectedStrategy),
-    [selectedStrategy]
-  );
-
-  const assistantSlots = useMemo(
-    () =>
-      [1, 2, 3, 4].map((slotIndex) => {
-        const existing = assistantSubagents.find((slot) => slot.slotIndex === slotIndex);
-        return (
-          existing ?? {
-            id: `slot-${slotIndex}`,
-            userId: "",
-            botId: assistantBotId,
-            slotIndex,
-            role: "GENERAL",
-            enabled: false,
-            modelProfile: "balanced",
-            timeoutMs: 1200,
-            safetyMode: "STRICT" as const,
-          }
-        );
-      }),
-    [assistantBotId, assistantSubagents]
-  );
+  const {
+    handleApplyMonitoringFilter,
+    handleClearMonitoringFilter,
+    monitorAppliedSymbolFilter,
+    monitorAutoRefreshEnabled,
+    monitorBotId,
+    monitorError,
+    monitorLastUpdatedAt,
+    monitorLiveTickerPrices,
+    monitorLoading,
+    monitorPositions,
+    monitorSessionDetail,
+    monitorSessionId,
+    monitorSessionLoading,
+    monitorSessions,
+    monitorStaleWatchNowMs,
+    monitorStatus,
+    monitorSymbolFilter,
+    monitorSymbolStats,
+    monitorTtpStickyFavorableMoveByPositionRef,
+    monitorTrades,
+    monitorViewMode,
+    refreshMonitoring,
+    setMonitorAutoRefreshEnabled,
+    setMonitorBotId,
+    setMonitorSessionId,
+    setMonitorStatus,
+    setMonitorSymbolFilter,
+    setMonitorViewMode,
+  } = useBotsMonitoringController({
+    activeTab,
+    bots,
+    preferredBotId,
+    t,
+  });
 
   const selectedMonitorSession = useMemo(
     () => monitorSessions.find((session) => session.id === monitorSessionId) ?? null,
@@ -873,548 +511,11 @@ export default function BotsManagement({
     ];
   }, [monitorHeartbeatLagMs, monitorPositions, monitorSessionDetail, monitorSignalRows.length, t]);
 
-  const confirmLiveRisk = (message: string) => window.confirm(message);
-
-  const loadAssistant = useCallback(async (botId: string) => {
-    setAssistantLoading(true);
-    try {
-      const config = await getBotAssistantConfig(botId);
-      setAssistantMainEnabled(config.assistant?.mainAgentEnabled ?? false);
-      setAssistantMandate(config.assistant?.mandate ?? "");
-      setAssistantModelProfile(config.assistant?.modelProfile ?? "balanced");
-      setAssistantSafetyMode(config.assistant?.safetyMode ?? "STRICT");
-      setAssistantLatencyMs(config.assistant?.maxDecisionLatencyMs ?? 2500);
-      setAssistantSubagents(config.subagents ?? []);
-    } catch (err: unknown) {
-      toast.error(t("dashboard.bots.assistant.toasts.loadFailed"), { description: getAxiosMessage(err) });
-      setAssistantSubagents([]);
-    } finally {
-      setAssistantLoading(false);
-    }
-  }, [t]);
-
-  const loadMonitorSessions = useCallback(
-    async (
-      botId: string,
-      statusFilter: "ALL" | BotRuntimeSessionStatus,
-      options?: { silent?: boolean }
-    ): Promise<BotRuntimeSessionListItem[] | null> => {
-      const silent = options?.silent ?? false;
-      if (!botId) {
-        setMonitorSessions([]);
-        setMonitorSessionId("");
-        setMonitorSessionDetail(null);
-        setMonitorSymbolStats(null);
-        setMonitorPositions(null);
-        setMonitorTrades(null);
-        setMonitorLastUpdatedAt(null);
-        return [];
-      }
-
-      if (!silent) {
-        setMonitorLoading(true);
-        setMonitorError(null);
-      }
-      try {
-        const sessions = await listBotRuntimeSessions(botId, {
-          status: statusFilter === "ALL" ? undefined : statusFilter,
-          limit: 50,
-        });
-        setMonitorSessions(sessions);
-        setMonitorSessionId((prev) => {
-          const stillExists = sessions.some((item) => item.id === prev);
-          if (stillExists) return prev;
-          return sessions[0]?.id ?? "";
-        });
-
-        if (sessions.length === 0) {
-          setMonitorSessionDetail(null);
-          setMonitorSymbolStats(null);
-          setMonitorPositions(null);
-          setMonitorTrades(null);
-        }
-        setMonitorLastUpdatedAt(new Date().toISOString());
-        return sessions;
-      } catch (err: unknown) {
-        if (!silent) {
-          setMonitorError(getAxiosMessage(err) ?? t("dashboard.bots.errors.loadRuntimeSessions"));
-        }
-        return null;
-      } finally {
-        if (!silent) {
-          setMonitorLoading(false);
-        }
-      }
-    },
-    [t]
-  );
-
-  const loadMonitorSessionData = useCallback(
-    async (
-      botId: string,
-      sessionId: string,
-      symbolFilter: string,
-      options?: { silent?: boolean }
-    ) => {
-      const silent = options?.silent ?? false;
-      if (!botId || !sessionId) {
-        setMonitorSessionDetail(null);
-        setMonitorSymbolStats(null);
-        setMonitorPositions(null);
-        setMonitorTrades(null);
-        setMonitorLastUpdatedAt(null);
-        return;
-      }
-
-      const normalizedSymbol = symbolFilter.trim().toUpperCase();
-      if (!silent) {
-        setMonitorSessionLoading(true);
-        setMonitorError(null);
-      }
-      try {
-        const [session, symbolStats, positions, trades] = await Promise.all([
-          getBotRuntimeSession(botId, sessionId),
-          listBotRuntimeSessionSymbolStats(botId, sessionId, {
-            symbol: normalizedSymbol || undefined,
-            limit: 200,
-          }),
-          listBotRuntimeSessionPositions(botId, sessionId, {
-            symbol: normalizedSymbol || undefined,
-            limit: 200,
-          }),
-          listBotRuntimeSessionTrades(botId, sessionId, {
-            symbol: normalizedSymbol || undefined,
-            limit: 200,
-          }),
-        ]);
-        setMonitorSessionDetail(session);
-        setMonitorSymbolStats(symbolStats);
-        setMonitorPositions(positions);
-        setMonitorTrades(trades);
-        setMonitorLastUpdatedAt(new Date().toISOString());
-      } catch (err: unknown) {
-        if (!silent) {
-          setMonitorError(getAxiosMessage(err) ?? t("dashboard.bots.errors.loadRuntimeSessionData"));
-        }
-      } finally {
-        if (!silent) {
-          setMonitorSessionLoading(false);
-        }
-      }
-    },
-    [t]
-  );
-
-  const loadMonitorAggregateData = useCallback(
-    async (
-      botId: string,
-      sessions: BotRuntimeSessionListItem[],
-      symbolFilter: string,
-      options?: { silent?: boolean }
-    ) => {
-      const silent = options?.silent ?? false;
-      if (!botId || sessions.length === 0) {
-        setMonitorSessionDetail(null);
-        setMonitorSymbolStats(null);
-        setMonitorPositions(null);
-        setMonitorTrades(null);
-        setMonitorLastUpdatedAt(null);
-        return;
-      }
-
-      const normalizedSymbol = symbolFilter.trim().toUpperCase();
-      const scopedSessions = sessions.slice(0, 20);
-
-      if (!silent) {
-        setMonitorSessionLoading(true);
-        setMonitorError(null);
-      }
-
-      try {
-        const payloads = await Promise.all(
-          scopedSessions.map(async (session) => {
-            const [symbolStats, positions, trades] = await Promise.all([
-              listBotRuntimeSessionSymbolStats(botId, session.id, {
-                symbol: normalizedSymbol || undefined,
-                limit: 200,
-              }),
-              listBotRuntimeSessionPositions(botId, session.id, {
-                symbol: normalizedSymbol || undefined,
-                limit: 200,
-              }),
-              listBotRuntimeSessionTrades(botId, session.id, {
-                symbol: normalizedSymbol || undefined,
-                limit: 200,
-              }),
-            ]);
-
-            return {
-              session,
-              symbolStats,
-              positions,
-              trades,
-            };
-          })
-        );
-
-        const aggregate = aggregateMonitorData({
-          sessions: payloads.map((payload) => payload.session),
-          symbolResponses: payloads.map((payload) => payload.symbolStats),
-          positionResponses: payloads.map((payload) => payload.positions),
-          tradeResponses: payloads.map((payload) => payload.trades),
-        });
-
-        setMonitorSessionDetail(aggregate.sessionDetail);
-        setMonitorSymbolStats(aggregate.symbolStats);
-        setMonitorPositions(aggregate.positions);
-        setMonitorTrades(aggregate.trades);
-        setMonitorLastUpdatedAt(new Date().toISOString());
-      } catch (err: unknown) {
-        if (!silent) {
-          setMonitorError(getAxiosMessage(err) ?? t("dashboard.bots.errors.loadAggregateMonitoring"));
-        }
-      } finally {
-        if (!silent) {
-          setMonitorSessionLoading(false);
-        }
-      }
-    },
-    [t]
-  );
-
-  const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!canCreate) return;
-
-    setCreating(true);
-    try {
-      const createMode = selectedWallet?.mode ?? "PAPER";
-      if (createMode === "LIVE") {
-        const accepted = confirmLiveRisk(t("dashboard.bots.confirms.liveCreate"));
-        if (!accepted) return;
-      }
-
-      const created = await createBot({
-        name: name.trim(),
-        walletId,
-        strategyId,
-        marketGroupId,
-        isActive: createMode === "PAPER",
-        liveOptIn: false,
-        consentTextVersion: null,
-      });
-      setBots((prev) => [created, ...prev]);
-      setServerSnapshot((prev) => ({ ...prev, [created.id]: created }));
-      setName("");
-      setWalletId((prev) => prev || wallets[0]?.id || "");
-      setStrategyId((prev) => prev || strategies[0]?.id || "");
-      setMarketGroupId((prev) => prev || marketGroups[0]?.id || "");
-      toast.success(t("dashboard.bots.toasts.created"));
-      await loadBots(marketFilter);
-    } catch (err: unknown) {
-      const message = getAxiosMessage(err);
-      if (message === DUPLICATE_ACTIVE_BOT_ERROR) {
-        toast.error(t("dashboard.bots.toasts.duplicateActiveTitle"), {
-          description: t("dashboard.bots.toasts.duplicateActiveDescription"),
-        });
-      } else {
-        toast.error(t("dashboard.bots.toasts.createFailed"), { description: message });
-      }
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const patchBot = (id: string, patch: Partial<Bot>) => {
-    setBots((prev) => prev.map((bot) => (bot.id === id ? { ...bot, ...patch } : bot)));
-  };
-
-  const handleSave = async (bot: Bot) => {
-    const previous = serverSnapshot[bot.id];
-    const effectiveLiveOptIn = bot.mode === "LIVE" ? bot.liveOptIn : false;
-    const enteringLiveMode = !!previous && previous.mode !== "LIVE" && bot.mode === "LIVE";
-    const enablingLiveOptIn = !!previous && !previous.liveOptIn && effectiveLiveOptIn;
-    const activatingLiveBot =
-      !!previous && !previous.isActive && bot.isActive && (bot.mode === "LIVE" || effectiveLiveOptIn);
-
-    if (enteringLiveMode || enablingLiveOptIn || activatingLiveBot) {
-      const accepted = confirmLiveRisk(t("dashboard.bots.confirms.liveSave"));
-      if (!accepted) {
-        patchBot(bot.id, previous);
-        return;
-      }
-    }
-
-    setSavingId(bot.id);
-    try {
-      const updated = await updateBot(bot.id, {
-        name: bot.name,
-        walletId: bot.walletId ?? null,
-        isActive: bot.isActive,
-        liveOptIn: effectiveLiveOptIn,
-        consentTextVersion: effectiveLiveOptIn ? LIVE_CONSENT_TEXT_VERSION : null,
-        strategyId: bot.strategyId ?? null,
-      });
-      patchBot(bot.id, updated);
-      setServerSnapshot((prev) => ({ ...prev, [bot.id]: updated }));
-      toast.success(t("dashboard.bots.toasts.updated"));
-    } catch (err: unknown) {
-      const message = getAxiosMessage(err);
-      if (message === DUPLICATE_ACTIVE_BOT_ERROR) {
-        toast.error(t("dashboard.bots.toasts.activeConflictTitle"), {
-          description: t("dashboard.bots.toasts.activeConflictDescription"),
-        });
-      } else {
-        toast.error(t("dashboard.bots.toasts.saveFailed"), { description: message });
-      }
-      void loadBots(marketFilter);
-    } finally {
-      setSavingId(null);
-    }
-  };
-
-  const handleDelete = async (bot: Bot) => {
-    if (bot.mode === "LIVE" || bot.liveOptIn || bot.isActive) {
-      const accepted = confirmLiveRisk(t("dashboard.bots.confirms.liveDelete"));
-      if (!accepted) return;
-    }
-
-    setDeletingId(bot.id);
-    try {
-      await deleteBot(bot.id);
-      await loadBots(marketFilter);
-      toast.success(t("dashboard.bots.toasts.deleted"));
-    } catch (err: unknown) {
-      toast.error(t("dashboard.bots.toasts.deleteFailed"), { description: getAxiosMessage(err) });
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  const handleSaveAssistantMain = async () => {
-    if (!assistantBotId) return;
-    setAssistantSaving(true);
-    try {
-      await upsertBotAssistantConfig(assistantBotId, {
-        mainAgentEnabled: assistantMainEnabled,
-        mandate: assistantMandate || null,
-        modelProfile: assistantModelProfile,
-        safetyMode: assistantSafetyMode,
-        maxDecisionLatencyMs: assistantLatencyMs,
-      });
-      toast.success(t("dashboard.bots.assistant.toasts.mainSaved"));
-      await loadAssistant(assistantBotId);
-    } catch (err: unknown) {
-      toast.error(t("dashboard.bots.assistant.toasts.mainSaveFailed"), { description: getAxiosMessage(err) });
-    } finally {
-      setAssistantSaving(false);
-    }
-  };
-
-  const handleSaveSubagent = async (slot: BotSubagentConfig) => {
-    if (!assistantBotId) return;
-    setAssistantSaving(true);
-    try {
-      await upsertBotSubagentConfig(assistantBotId, slot.slotIndex, {
-        role: slot.role,
-        enabled: slot.enabled,
-        modelProfile: slot.modelProfile,
-        timeoutMs: slot.timeoutMs,
-        safetyMode: slot.safetyMode,
-      });
-      toast.success(interpolateTemplate(t("dashboard.bots.assistant.toasts.slotSaved"), { slot: slot.slotIndex }));
-      await loadAssistant(assistantBotId);
-    } catch (err: unknown) {
-      toast.error(t("dashboard.bots.assistant.toasts.slotSaveFailed"), { description: getAxiosMessage(err) });
-    } finally {
-      setAssistantSaving(false);
-    }
-  };
-
-  const handleClearSubagent = async (slotIndex: number) => {
-    if (!assistantBotId) return;
-    setAssistantSaving(true);
-    try {
-      await deleteBotSubagentConfig(assistantBotId, slotIndex);
-      toast.success(interpolateTemplate(t("dashboard.bots.assistant.toasts.slotDeleted"), { slot: slotIndex }));
-      await loadAssistant(assistantBotId);
-    } catch (err: unknown) {
-      toast.error(t("dashboard.bots.assistant.toasts.slotDeleteFailed"), { description: getAxiosMessage(err) });
-    } finally {
-      setAssistantSaving(false);
-    }
-  };
-
-  const handleRunAssistantDryRun = async () => {
-    if (!assistantBotId) return;
-    setAssistantDryRunRunning(true);
-    try {
-      const trace = await runBotAssistantDryRun(assistantBotId, {
-        symbol: assistantDryRunSymbol,
-        intervalWindow: assistantDryRunInterval,
-        mode: "PAPER",
-      });
-      setAssistantTrace(trace);
-      toast.success(t("dashboard.bots.assistant.toasts.dryRunReady"));
-    } catch (err: unknown) {
-      toast.error(t("dashboard.bots.assistant.toasts.dryRunFailed"), { description: getAxiosMessage(err) });
-    } finally {
-      setAssistantDryRunRunning(false);
-    }
-  };
-
-  const handleApplyMonitoringFilter = () => {
-    setMonitorAppliedSymbolFilter(monitorSymbolFilter.trim().toUpperCase());
-  };
-
-  const handleClearMonitoringFilter = () => {
-    setMonitorSymbolFilter("");
-    setMonitorAppliedSymbolFilter("");
-  };
-
-  const refreshMonitoring = useCallback(
-    async (options?: { silent?: boolean }) => {
-      if (!monitorBotId) return;
-      const sessions = await loadMonitorSessions(monitorBotId, monitorStatus, options);
-      if (sessions == null) return;
-      if (monitorViewMode === "aggregate") {
-        await loadMonitorAggregateData(monitorBotId, sessions, monitorAppliedSymbolFilter, options);
-        return;
-      }
-      const effectiveSessionId = monitorSessionId || sessions[0]?.id;
-      if (!effectiveSessionId) {
-        setMonitorSessionDetail(null);
-        setMonitorSymbolStats(null);
-        setMonitorPositions(null);
-        setMonitorTrades(null);
-        return;
-      }
-      await loadMonitorSessionData(monitorBotId, effectiveSessionId, monitorAppliedSymbolFilter, options);
-    },
-    [
-      loadMonitorAggregateData,
-      loadMonitorSessionData,
-      loadMonitorSessions,
-      monitorAppliedSymbolFilter,
-      monitorBotId,
-      monitorSessionId,
-      monitorStatus,
-      monitorViewMode,
-    ]
-  );
-
-  useEffect(() => {
-    if (bots.length === 0) return;
-    const preferredCandidate =
-      preferredBotId && bots.some((bot) => bot.id === preferredBotId) ? preferredBotId : null;
-    const fallbackBotId = preferredCandidate ?? bots[0].id;
-    if (!assistantBotId) {
-      setAssistantBotId(fallbackBotId);
-      return;
-    }
-    const exists = bots.some((bot) => bot.id === assistantBotId);
-    if (!exists || (preferredCandidate && assistantBotId !== preferredCandidate)) {
-      setAssistantBotId(fallbackBotId);
-    }
-  }, [bots, assistantBotId, preferredBotId]);
-
-  useEffect(() => {
-    if (!assistantBotId || activeTab !== "assistant") return;
-    void loadAssistant(assistantBotId);
-  }, [assistantBotId, activeTab, loadAssistant]);
-
-  useEffect(() => {
-    if (bots.length === 0) {
-      setMonitorBotId("");
-      return;
-    }
-    const preferredCandidate =
-      preferredBotId && bots.some((bot) => bot.id === preferredBotId) ? preferredBotId : null;
-    const fallbackBotId = preferredCandidate ?? bots[0].id;
-
-    if (!monitorBotId) {
-      setMonitorBotId(fallbackBotId);
-      return;
-    }
-
-    const exists = bots.some((bot) => bot.id === monitorBotId);
-    if (!exists || (preferredCandidate && monitorBotId !== preferredCandidate)) {
-      setMonitorBotId(fallbackBotId);
-    }
-  }, [bots, monitorBotId, preferredBotId]);
-
   useEffect(() => {
     if ((activeTab === "monitoring" || activeTab === "assistant") && marketFilter !== "ALL") {
       setMarketFilter("ALL");
     }
-  }, [activeTab, marketFilter]);
-
-  useEffect(() => {
-    if (activeTab !== "monitoring" || !monitorBotId) return;
-    void refreshMonitoring();
-  }, [activeTab, monitorBotId, refreshMonitoring]);
-
-  useEffect(() => {
-    if (activeTab !== "monitoring" || !monitorAutoRefreshEnabled || !monitorBotId) return;
-
-    const intervalId = window.setInterval(() => {
-      void refreshMonitoring({ silent: true });
-    }, MONITOR_AUTO_REFRESH_INTERVAL_MS);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [
-    activeTab,
-    monitorAutoRefreshEnabled,
-    monitorBotId,
-    refreshMonitoring,
-  ]);
-
-  useEffect(() => {
-    if (activeTab !== "monitoring") return;
-    const intervalId = window.setInterval(() => {
-      setMonitorStaleWatchNowMs(Date.now());
-    }, 1_000);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [activeTab]);
-
-  useEffect(() => {
-    setMonitorLiveTickerPrices({});
-    monitorTtpStickyFavorableMoveByPositionRef.current.clear();
-  }, [monitorBotId, monitorSessionId, monitorViewMode]);
-
-  useEffect(() => {
-    if (activeTab !== "monitoring" || !monitorBotId) return;
-    if (!monitorStreamSymbolsKey) return;
-    if (typeof window === "undefined" || typeof window.EventSource === "undefined") return;
-
-    const source = createMarketStreamEventSource({
-      symbols: monitorStreamSymbols,
-      interval: "1m",
-    });
-
-    source.addEventListener("ticker", (event) => {
-      try {
-        const data = JSON.parse((event as MessageEvent).data) as TickerEventPayload;
-        if (!data?.symbol || !Number.isFinite(data.lastPrice)) return;
-        const symbolKey = normalizeSymbol(data.symbol);
-        setMonitorLiveTickerPrices((prev) => {
-          if (prev[symbolKey] === data.lastPrice) return prev;
-          return { ...prev, [symbolKey]: data.lastPrice };
-        });
-      } catch {
-        // ignore malformed ticker payload
-      }
-    });
-
-    return () => {
-      source.close();
-    };
-  }, [activeTab, monitorBotId, monitorStreamSymbols, monitorStreamSymbolsKey]);
+  }, [activeTab, marketFilter, setMarketFilter]);
 
   return (
     <div className="space-y-5">

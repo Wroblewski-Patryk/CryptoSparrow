@@ -685,7 +685,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `ARM-10 refactor(api-bots): extract symbol enrichment and runtime read-model composition modules`
 - [x] `ARM-11 refactor(api-data-boundary): reduce direct Prisma usage in orchestration-heavy services`
 - [x] `ARM-12 refactor(web-backtest): split BacktestRunDetails into hooks and presentational sections`
-- [ ] `ARM-13 refactor(web-bots): continue BotsManagement decomposition by moving orchestration to feature hooks`
+- [x] `ARM-13 refactor(web-bots): continue BotsManagement decomposition by moving orchestration to feature hooks`
 - [ ] `ARM-14 refactor(web-dashboard): split HomeLiveWidgets into data/controller hooks and visual sections`
 - [ ] `ARM-15 refactor(web-i18n): remove duplicated inline locale dictionaries in dashboard route wrappers`
 - [ ] `ARM-16 chore(guardrails): remove architecture-related source file budget overrides`
@@ -693,6 +693,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `ARM-18 docs(architecture): publish post-remediation architecture delta and residual-risk summary`
 
 ## Progress Log
+- 2026-04-09: Completed `ARM-13` by extracting `BotsManagement` orchestration into dedicated feature hooks (`useBotsListController`, `useBotsAssistantController`, `useBotsMonitoringController`) so data loading, command handlers, and monitoring/assistant side effects are separated from JSX rendering while preserving behavior; validated with `pnpm --filter web exec vitest run src/features/bots/components/BotsManagement.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - 2026-04-09: Completed `ARM-12` by extracting core data orchestration from `BacktestRunDetails.tsx` into `useBacktestRunCoreData` hook and moving run-header/stages KPI shell into `BacktestRunHeaderSection` presentational component, keeping existing UI contract intact while reducing component coupling; validated with `pnpm --filter web test -- src/features/backtest/components/BacktestRunDetails.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - 2026-04-09: Completed `ARM-11` by introducing `botsRuntimeRead.repository.ts` and routing runtime symbol-stats orchestration through repository boundaries (base stats snapshot, live symbol rows, fallback symbols, strategy hydration, candle cache reads) to reduce direct `prisma` usage in `botsRuntimeRead.service.ts`; validated with `pnpm --filter api typecheck` and `pnpm --filter api test -- src/modules/bots/runtimeStrategyConfigParser.service.test.ts` (PASS).
 - 2026-04-09: Completed `ARM-10` by extracting runtime symbol-stat enrichment helpers (`runtimeSymbolStatsEnrichment.service.ts`) and read-model composition (`runtimeSymbolStatsReadModel.service.ts`), then wiring `botsRuntimeRead.service.ts` through these modules to keep response contract unchanged while reducing in-function orchestration complexity; validated with `pnpm --filter api typecheck` and `pnpm --filter api test -- src/modules/bots/runtimeStrategyConfigParser.service.test.ts` (PASS).

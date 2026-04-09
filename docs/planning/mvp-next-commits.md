@@ -11,7 +11,7 @@ Operational queue for one-task execution runs.
 - [x] `ARM-10 refactor(api-bots): extract symbol enrichment and runtime read-model composition modules`
 - [x] `ARM-11 refactor(api-data-boundary): reduce direct Prisma usage in orchestration-heavy services`
 - [x] `ARM-12 refactor(web-backtest): split BacktestRunDetails into hooks and presentational sections`
-- [ ] `ARM-13 refactor(web-bots): continue BotsManagement decomposition by moving orchestration to feature hooks`
+- [x] `ARM-13 refactor(web-bots): continue BotsManagement decomposition by moving orchestration to feature hooks`
 ## NEXT
 - [ ] `ARM-14 refactor(web-dashboard): split HomeLiveWidgets into data/controller hooks and visual sections`
 - [ ] `ARM-15 refactor(web-i18n): remove duplicated inline locale dictionaries in dashboard route wrappers`
