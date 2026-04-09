@@ -15,7 +15,7 @@ Operational queue for one-task execution runs.
 ## NEXT
 - [x] `ARM-14 refactor(web-dashboard): split HomeLiveWidgets into data/controller hooks and visual sections`
 - [x] `ARM-15 refactor(web-i18n): remove duplicated inline locale dictionaries in dashboard route wrappers`
-- [ ] `ARM-16 chore(guardrails): remove architecture-related source file budget overrides`
+- [x] `ARM-16 chore(guardrails): remove architecture-related source file budget overrides`
 - [ ] `ARM-17 chore(quality): enforce updated file-size budgets in quality gate`
 - [ ] `ARM-18 docs(architecture): publish post-remediation architecture delta and residual-risk summary`
 ## BLOCKED

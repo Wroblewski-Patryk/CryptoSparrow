@@ -13,10 +13,6 @@ const FORBIDDEN_LOCKFILES = new Set([
 
 const SOURCE_FILE_RE = /^apps\/(?:web|api)\/src\/.+\.(?:ts|tsx|js|jsx)$/;
 const DEFAULT_MAX_FILE_BYTES = 90_000;
-const FILE_SIZE_BUDGET_OVERRIDES = new Map([
-  ["apps/api/src/modules/bots/bots.service.ts", 125_000],
-  ["apps/web/src/features/backtest/components/BacktestRunDetails.tsx", 110_000],
-]);
 
 const IGNORED_DIRS = new Set([
   ".git",
@@ -97,7 +93,7 @@ const validateSourceFileBudgets = (trackedFiles) => {
     } catch {
       continue;
     }
-    const budget = FILE_SIZE_BUDGET_OVERRIDES.get(filePath) ?? DEFAULT_MAX_FILE_BYTES;
+    const budget = DEFAULT_MAX_FILE_BYTES;
     if (stats.size > budget) {
       oversize.push({
         filePath,
@@ -139,4 +135,3 @@ const run = () => {
 };
 
 run();
-
