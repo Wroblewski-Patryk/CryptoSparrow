@@ -71,6 +71,7 @@ import {
   fetchSupplementalSeries,
 } from './backtestDataGateway';
 import { createBacktestRunJob } from './backtestRunJob';
+import { BacktestRunQueue } from './backtestRunQueue';
 import {
   countLosingBacktestTrades,
   countWinningBacktestTrades,
@@ -1120,6 +1121,7 @@ const runBacktestAsync = createBacktestRunJob({
   computeSourceWindowMs,
   maxDrawdownFromPnlSeries,
 });
+const backtestRunQueue = new BacktestRunQueue(runBacktestAsync);
 
 type ResolvedRunContext = {
   symbols: string[];
@@ -1243,9 +1245,7 @@ export const createRun = async (userId: string, data: CreateBacktestRunDto) => {
     status: 'PENDING',
   });
 
-  setTimeout(() => {
-    void runBacktestAsync(created.id);
-  }, 0);
+  backtestRunQueue.enqueue(created.id);
 
   return created;
 };
