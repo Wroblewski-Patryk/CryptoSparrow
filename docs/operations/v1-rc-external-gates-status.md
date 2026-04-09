@@ -1,6 +1,6 @@
 # V1 RC External Gates Status
 
-Generated at (UTC): 2026-04-06T19:28:30.737Z
+Generated at (UTC): 2026-04-09T02:11:05.844Z
 
 Source artifact: not provided (template-only mode)
 
@@ -36,4 +36,3 @@ Source artifact: not provided (template-only mode)
 2. Fill on-call/escalation confirmation in runbook.
 3. Complete sign-offs in `docs/operations/v1-rc-signoff-record.md`.
 4. Reflect final gate states in `docs/operations/v1-release-candidate-checklist.md`.
-5. Execute Binance live-ops verification checklist: `docs/operations/binance-live-ops-verification-checklist-2026-04-06.md`.

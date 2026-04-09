@@ -1,0 +1,29 @@
+Container: cryptosparrow-postgres-1
+DB user: postgres
+Primary DB: cryptosparrow
+Restore DB: cryptosparrow_restore_check_20260409t0211
+
+[1/6] Creating compressed backup with pg_dump
+Backup created: /tmp/cryptosparrow_backup_2026-04-09T02-11-15-223Z.dump
+
+[2/6] Recreating restore database
+Restore database created.
+
+[3/6] Restoring backup into restore database
+Restore completed.
+
+[4/6] Running key table validation counts
+Validation counts (table,count):
+User,1
+Bot,0
+Order,0
+Position,0
+Log,0
+
+[5/6] Cleaning restore database
+Restore database dropped.
+
+[6/6] Cleaning backup artifact inside container
+Temporary backup file removed.
+
+RESULT: PASS
