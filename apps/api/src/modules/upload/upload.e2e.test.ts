@@ -17,6 +17,7 @@ const registerAndLogin = async (email: string) => {
 
 describe('Avatar upload security contract', () => {
   beforeEach(async () => {
+    await prisma.orderFill.deleteMany();
     await prisma.trade.deleteMany();
     await prisma.order.deleteMany();
     await prisma.position.deleteMany();
@@ -25,6 +26,10 @@ describe('Avatar upload security contract', () => {
     await prisma.backtestReport.deleteMany();
     await prisma.backtestRun.deleteMany();
     await prisma.log.deleteMany();
+    await prisma.runtimeExecutionDedupe.deleteMany();
+    await prisma.botRuntimeEvent.deleteMany();
+    await prisma.botRuntimeSymbolStat.deleteMany();
+    await prisma.botRuntimeSession.deleteMany();
     await prisma.botStrategy.deleteMany();
     await prisma.botSubagentConfig.deleteMany();
     await prisma.botAssistantConfig.deleteMany();

@@ -659,7 +659,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [x] `IND-36 docs(runbook): publish implementation runbook for adding next indicator safely (registry + tests + parity steps)`
 
 ## Phase 40 - Security + Architecture Remediation (Audit 2026-04-09)
-- [ ] `SAR-01 test(api-upload): restore upload security e2e cleanup order so security suite is green again`
+- [x] `SAR-01 test(api-upload): restore upload security e2e cleanup order so security suite is green again`
 - [ ] `SAR-02 security(proxy): replace global trust-proxy=true with explicit trusted proxy chain and forwarded-header hardening`
 - [ ] `SAR-03 security(upload-origin): derive avatar/public upload URLs from trusted config allowlist instead of request host headers`
 - [ ] `SAR-04 security(checkout): enforce allowlisted callback URLs for checkout intents with canonical fallback`
@@ -675,6 +675,7 @@ Rule: fix/cleanup/update first, then feature delivery.
 - [ ] `SAR-14 ops(rollout): run DEV->STAGE->PROD remediation rollout checklist with smoke gates and rollback drill evidence`
 
 ## Progress Log
+- 2026-04-09: Completed `SAR-01` by extending upload e2e cleanup order with runtime bot relations (`orderFill`, `runtimeExecutionDedupe`, `botRuntimeSession`, `botRuntimeSymbolStat`, `botRuntimeEvent`) before bot/user deletion; validated with `pnpm --filter api test -- src/modules/upload/upload.e2e.test.ts` (PASS).
 - 2026-04-09: Added `Phase 40` (`SAR-01..SAR-14`) and queued audit-driven remediation track for proxy/header hardening, callback URL trust constraints, CSP tightening, profile abuse throttling, and architecture decomposition guardrails based on `security_best_practices_report.md`.
 - 2026-04-08: Completed `IND-36` by publishing `docs/operations/indicator-implementation-runbook.md` with a safe end-to-end extension protocol (registry update, shared evaluator/runtime/backtest wiring, required test pack, mandatory 3-symbol parity evidence, planning updates, and rollback steps) for future indicator delivery.
 - 2026-04-08: Completed `IND-35` by executing the deterministic 3-symbol parity harness for all expanded indicator/pattern families (`backtestParity3Symbols.test.ts`) and attaching evidence in `docs/operations/indicator-3symbol-parity-evidence-2026-04-08.md` (21/21 assertions passed).
