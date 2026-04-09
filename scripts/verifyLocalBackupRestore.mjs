@@ -33,6 +33,7 @@ const run = (command, args) =>
   }).trim();
 
 const nowStamp = () => new Date().toISOString().replace(/[:.]/g, '-');
+const normalizeIdSuffix = (value) => value.replace(/[^a-z0-9]/gi, '').toLowerCase();
 
 const detectPostgresContainer = () => {
   const rows = run('docker', ['ps', '--format', '{{.Names}}']).split(/\r?\n/).filter(Boolean);
@@ -57,7 +58,8 @@ const main = async () => {
   }
 
   const stamp = nowStamp();
-  const restoreDb = `${options.dbName}_restore_check_${stamp.slice(0, 16).replace(/-/g, '').toLowerCase()}`;
+  // Use full timestamp precision to avoid collisions across consecutive or parallel checks.
+  const restoreDb = `${options.dbName}_restore_check_${normalizeIdSuffix(stamp)}`;
   const backupPath = `/tmp/${options.dbName}_backup_${stamp}.dump`;
 
   const operationsDir = path.resolve(process.cwd(), 'docs', 'operations');
@@ -155,4 +157,3 @@ main().catch((error) => {
   console.error('[ops:db:backup-restore:check-local] failed:', error instanceof Error ? error.message : String(error));
   process.exit(1);
 });
-

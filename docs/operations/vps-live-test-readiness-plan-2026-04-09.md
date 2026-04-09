@@ -2,6 +2,29 @@
 
 Goal: reach a controlled, low-risk state where LIVE mode can be tested on VPS with real exchange side effects and clear rollback path.
 
+## Execution Snapshot (2026-04-09)
+
+- [x] RC gates refresh and evidence summary executed (`ops:rc:gates:refresh:summary`).
+- [x] Local backup verification PASS (`ops:db:backup-verify:local`).
+- [x] Local restore drill PASS (`ops:db:restore-drill:local`).
+- [x] Backup/restore script hardening applied to avoid restore-DB name collisions in consecutive runs (`scripts/verifyLocalBackupRestore.mjs`).
+- [ ] Deploy smoke on target environment (`ops:deploy:smoke`) blocked: no reachable API/WEB target in current context.
+- [ ] Production Gate 2 (`SLO observation`) blocked: missing target URL + admin token for production collection.
+- [ ] Production Gate 3 (`incident contacts/escalation`) still open.
+- [ ] Production Gate 4 (`formal sign-offs`) still open.
+
+Latest generated evidence references:
+- `docs/operations/v1-rc-external-gates-status.md`
+- `docs/operations/_artifacts-rc-evidence-check-latest.json`
+- `docs/operations/v1-db-restore-check-2026-04-09T19-32-32-768Z.md`
+- `docs/operations/v1-restore-drill-local-2026-04-09T19-32-34-979Z.md`
+
+Inputs required to continue execution on target VPS/PROD:
+- target API base URL (`https://<target-api>`),
+- admin JWT for protected ops endpoints,
+- production DB check profile envs (`PROD_DB_CHECK_CONTAINER`, `PROD_DB_CHECK_USER`, `PROD_DB_CHECK_NAME`),
+- sign-off owners (Engineering/Product/Operations + RC owner).
+
 ## Current Starting Point
 
 - [x] Backtest details page resilience fix delivered (`404` run handling + partial fetch tolerance).

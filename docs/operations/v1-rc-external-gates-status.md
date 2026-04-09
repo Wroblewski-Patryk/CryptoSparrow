@@ -1,6 +1,6 @@
 # V1 RC External Gates Status
 
-Generated at (UTC): 2026-04-09T02:11:05.844Z
+Generated at (UTC): 2026-04-09T19:32:46.875Z
 
 Source artifact: not provided (template-only mode)
 
@@ -11,7 +11,7 @@ Source artifact: not provided (template-only mode)
 - Gate 4 (Formal RC sign-offs): OPEN
 
 ## Backup/Restore Evidence
-- Latest local artifact: `docs\operations\_artifacts-db-restore-check-2026-03-25T18-10-26-980Z.txt`
+- Latest local artifact: `docs\operations\_artifacts-db-restore-check-2026-04-09T19-32-32-792Z.txt`
 - Latest local result: PASS
 - Runbook source: `docs\operations\v1-rc-external-gates-runbook.md`
 - Gate 1 runbook evidence complete: no
