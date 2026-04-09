@@ -7,18 +7,18 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `SAR-08 test(security-contracts): add regression coverage for proxy trust, public origin derivation, and checkout callback rejection`
 - [ ] `SAR-09 qa(stage-abuse): execute stage abuse-throttling verification for profile-sensitive routes and publish evidence`
 - [ ] `SAR-10 refactor(api-backtests): split oversized backtests service into smaller domain services to pass guardrails`
 - [ ] `SAR-11 refactor(api-runtime): split oversized runtime signal loop service into stream/watchdog/execution units to pass guardrails`
 - [ ] `SAR-12 refactor(web-bots): finish BotsManagement decomposition to pass file-size guardrails`
-## NEXT
 - [ ] `SAR-13 refactor(api-data-boundary): introduce repository boundaries for bots/backtests/engine high-change modules`
+## NEXT
 - [ ] `SAR-14 ops(rollout): run DEV->STAGE->PROD remediation rollout checklist with smoke gates and rollback drill evidence`
 ## BLOCKED
 - [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
 
 ## DONE
+- [x] `SAR-08 test(security-contracts): add regression coverage for proxy trust, public origin derivation, and checkout callback rejection`
 - [x] `SAR-07 security(csp): remove production script unsafe-inline via nonce/hash bootstrap approach`
 - [x] `SAR-06 security(ready): expose only minimal public readiness signal and move detailed diagnostics to protected surface`
 - [x] `SAR-05 security(profile-throttle): add per-user throttling to checkout-intents and profile security-sensitive endpoints`
