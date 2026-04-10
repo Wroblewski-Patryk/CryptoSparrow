@@ -1,0 +1,473 @@
+{
+  "startedAt": "2026-04-10T15:03:07.417Z",
+  "endedAt": "2026-04-10T15:03:53.378Z",
+  "options": {
+    "baseUrl": "https://api.soar.luckysparrow.ch",
+    "durationMinutes": 1,
+    "intervalSeconds": 15,
+    "authTokenProvided": true,
+    "environment": "production",
+    "allowLocalProductionEvidence": false,
+    "targetProfile": "V1",
+    "thresholds": {
+      "apiAvailabilityPct": 99.9,
+      "workerAvailabilityPct": 99.5,
+      "api5xxRatioPct": 0.5,
+      "apiAvgDurationMs": 250,
+      "queueLagExecutionThreshold": 10,
+      "queueLagExecutionCompliancePct": 99,
+      "liveOrderFailureRatioPct": 1
+    }
+  },
+  "summary": {
+    "probes": {
+      "healthAvailabilityPct": 100,
+      "readyAvailabilityPct": 100,
+      "workersHealthAvailabilityPct": 0,
+      "workersReadyAvailabilityPct": 0
+    },
+    "http": {
+      "requestsDelta": null,
+      "status5xxDelta": null,
+      "errorRatioPct": null,
+      "averageDurationMs": null
+    },
+    "queueLagExecution": {
+      "sampleCount": 0,
+      "p50": null,
+      "p95": null,
+      "max": null,
+      "threshold": 10,
+      "withinThresholdPct": null
+    },
+    "liveOrderPath": {
+      "orderAttemptsDelta": null,
+      "orderFailuresDelta": null,
+      "failureRatioPct": null
+    },
+    "evaluation": {
+      "targetProfile": "V1",
+      "thresholds": {
+        "targetProfile": "V1",
+        "apiAvailabilityPct": 99.9,
+        "workerAvailabilityPct": 99.5,
+        "api5xxRatioPct": 0.5,
+        "apiAvgDurationMs": 250,
+        "queueLagExecutionThreshold": 10,
+        "queueLagExecutionCompliancePct": 99,
+        "liveOrderFailureRatioPct": 1
+      },
+      "objectives": [
+        {
+          "id": "SLO-1A",
+          "label": "/health availability",
+          "comparator": ">=",
+          "threshold": 99.9,
+          "observed": 100,
+          "unit": "%",
+          "status": "PASS",
+          "passed": true
+        },
+        {
+          "id": "SLO-1B",
+          "label": "/ready availability",
+          "comparator": ">=",
+          "threshold": 99.9,
+          "observed": 100,
+          "unit": "%",
+          "status": "PASS",
+          "passed": true
+        },
+        {
+          "id": "SLO-4A",
+          "label": "/workers/health availability",
+          "comparator": ">=",
+          "threshold": 99.5,
+          "observed": 0,
+          "unit": "%",
+          "status": "FAIL",
+          "passed": false
+        },
+        {
+          "id": "SLO-4B",
+          "label": "/workers/ready availability",
+          "comparator": ">=",
+          "threshold": 99.5,
+          "observed": 0,
+          "unit": "%",
+          "status": "FAIL",
+          "passed": false
+        },
+        {
+          "id": "SLO-2",
+          "label": "API 5xx ratio",
+          "comparator": "<=",
+          "threshold": 0.5,
+          "observed": null,
+          "unit": "%",
+          "status": "NO_DATA",
+          "passed": false
+        },
+        {
+          "id": "SLO-3",
+          "label": "API average duration",
+          "comparator": "<=",
+          "threshold": 250,
+          "observed": null,
+          "unit": "ms",
+          "status": "NO_DATA",
+          "passed": false
+        },
+        {
+          "id": "SLO-5",
+          "label": "Execution queue lag compliance",
+          "comparator": ">=",
+          "threshold": 99,
+          "observed": null,
+          "unit": "%",
+          "status": "NO_DATA",
+          "passed": false
+        },
+        {
+          "id": "SLO-6",
+          "label": "Live order failure ratio",
+          "comparator": "<=",
+          "threshold": 1,
+          "observed": null,
+          "unit": "%",
+          "status": "NO_DATA",
+          "passed": false
+        }
+      ],
+      "overallStatus": "FAIL",
+      "failedObjectiveIds": [
+        "SLO-4A",
+        "SLO-4B"
+      ],
+      "noDataObjectiveIds": [
+        "SLO-2",
+        "SLO-3",
+        "SLO-5",
+        "SLO-6"
+      ]
+    }
+  },
+  "samples": [
+    {
+      "/health": {
+        "endpoint": "/health",
+        "status": 200,
+        "ok": true,
+        "durationMs": 65,
+        "payload": {
+          "status": "ok",
+          "service": "api",
+          "timestamp": "2026-04-10T15:03:07.699Z"
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:07.484Z"
+      },
+      "/ready": {
+        "endpoint": "/ready",
+        "status": 200,
+        "ok": true,
+        "durationMs": 15,
+        "payload": {
+          "status": "ready",
+          "service": "api"
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:07.500Z"
+      },
+      "/workers/health": {
+        "endpoint": "/workers/health",
+        "status": 403,
+        "ok": false,
+        "durationMs": 19,
+        "payload": {
+          "error": {
+            "message": "Forbidden"
+          }
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:07.520Z"
+      },
+      "/workers/ready": {
+        "endpoint": "/workers/ready",
+        "status": 403,
+        "ok": false,
+        "durationMs": 22,
+        "payload": {
+          "error": {
+            "message": "Forbidden"
+          }
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:07.542Z"
+      },
+      "/metrics": {
+        "endpoint": "/metrics",
+        "status": 403,
+        "ok": false,
+        "durationMs": 17,
+        "payload": {
+          "error": {
+            "message": "Forbidden"
+          }
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:07.559Z"
+      },
+      "/alerts": {
+        "endpoint": "/alerts",
+        "status": 403,
+        "ok": false,
+        "durationMs": 22,
+        "payload": {
+          "error": {
+            "message": "Forbidden"
+          }
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:07.581Z"
+      }
+    },
+    {
+      "/health": {
+        "endpoint": "/health",
+        "status": 200,
+        "ok": true,
+        "durationMs": 83,
+        "payload": {
+          "status": "ok",
+          "service": "api",
+          "timestamp": "2026-04-10T15:03:22.890Z"
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:22.679Z"
+      },
+      "/ready": {
+        "endpoint": "/ready",
+        "status": 200,
+        "ok": true,
+        "durationMs": 73,
+        "payload": {
+          "status": "ready",
+          "service": "api"
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:22.752Z"
+      },
+      "/workers/health": {
+        "endpoint": "/workers/health",
+        "status": 403,
+        "ok": false,
+        "durationMs": 20,
+        "payload": {
+          "error": {
+            "message": "Forbidden"
+          }
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:22.773Z"
+      },
+      "/workers/ready": {
+        "endpoint": "/workers/ready",
+        "status": 403,
+        "ok": false,
+        "durationMs": 19,
+        "payload": {
+          "error": {
+            "message": "Forbidden"
+          }
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:22.792Z"
+      },
+      "/metrics": {
+        "endpoint": "/metrics",
+        "status": 403,
+        "ok": false,
+        "durationMs": 20,
+        "payload": {
+          "error": {
+            "message": "Forbidden"
+          }
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:22.812Z"
+      },
+      "/alerts": {
+        "endpoint": "/alerts",
+        "status": 403,
+        "ok": false,
+        "durationMs": 18,
+        "payload": {
+          "error": {
+            "message": "Forbidden"
+          }
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:22.831Z"
+      }
+    },
+    {
+      "/health": {
+        "endpoint": "/health",
+        "status": 200,
+        "ok": true,
+        "durationMs": 107,
+        "payload": {
+          "status": "ok",
+          "service": "api",
+          "timestamp": "2026-04-10T15:03:38.161Z"
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:37.946Z"
+      },
+      "/ready": {
+        "endpoint": "/ready",
+        "status": 200,
+        "ok": true,
+        "durationMs": 87,
+        "payload": {
+          "status": "ready",
+          "service": "api"
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:38.034Z"
+      },
+      "/workers/health": {
+        "endpoint": "/workers/health",
+        "status": 403,
+        "ok": false,
+        "durationMs": 21,
+        "payload": {
+          "error": {
+            "message": "Forbidden"
+          }
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:38.055Z"
+      },
+      "/workers/ready": {
+        "endpoint": "/workers/ready",
+        "status": 403,
+        "ok": false,
+        "durationMs": 18,
+        "payload": {
+          "error": {
+            "message": "Forbidden"
+          }
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:38.073Z"
+      },
+      "/metrics": {
+        "endpoint": "/metrics",
+        "status": 403,
+        "ok": false,
+        "durationMs": 21,
+        "payload": {
+          "error": {
+            "message": "Forbidden"
+          }
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:38.094Z"
+      },
+      "/alerts": {
+        "endpoint": "/alerts",
+        "status": 403,
+        "ok": false,
+        "durationMs": 20,
+        "payload": {
+          "error": {
+            "message": "Forbidden"
+          }
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:38.115Z"
+      }
+    },
+    {
+      "/health": {
+        "endpoint": "/health",
+        "status": 200,
+        "ok": true,
+        "durationMs": 90,
+        "payload": {
+          "status": "ok",
+          "service": "api",
+          "timestamp": "2026-04-10T15:03:53.426Z"
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:53.210Z"
+      },
+      "/ready": {
+        "endpoint": "/ready",
+        "status": 200,
+        "ok": true,
+        "durationMs": 76,
+        "payload": {
+          "status": "ready",
+          "service": "api"
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:53.286Z"
+      },
+      "/workers/health": {
+        "endpoint": "/workers/health",
+        "status": 403,
+        "ok": false,
+        "durationMs": 27,
+        "payload": {
+          "error": {
+            "message": "Forbidden"
+          }
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:53.313Z"
+      },
+      "/workers/ready": {
+        "endpoint": "/workers/ready",
+        "status": 403,
+        "ok": false,
+        "durationMs": 21,
+        "payload": {
+          "error": {
+            "message": "Forbidden"
+          }
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:53.334Z"
+      },
+      "/metrics": {
+        "endpoint": "/metrics",
+        "status": 403,
+        "ok": false,
+        "durationMs": 19,
+        "payload": {
+          "error": {
+            "message": "Forbidden"
+          }
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:53.353Z"
+      },
+      "/alerts": {
+        "endpoint": "/alerts",
+        "status": 403,
+        "ok": false,
+        "durationMs": 25,
+        "payload": {
+          "error": {
+            "message": "Forbidden"
+          }
+        },
+        "error": null,
+        "at": "2026-04-10T15:03:53.378Z"
+      }
+    }
+  ]
+}
