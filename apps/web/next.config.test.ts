@@ -25,7 +25,7 @@ describe('next security headers', () => {
     expect(prodCsp).not.toContain("'unsafe-eval'");
     expect(devCsp).toContain("script-src 'self' 'unsafe-inline' 'unsafe-eval'");
     expect(prodCsp).toContain("script-src 'self' 'unsafe-inline'");
-    expect(prodCsp).toContain(`'sha256-${themeBootstrapScriptSha256}'`);
+    expect(prodCsp).not.toContain(`'sha256-${themeBootstrapScriptSha256}'`);
     expect(devCsp).toContain("connect-src 'self' http: https: ws: wss:");
     expect(prodCsp).toContain("connect-src 'self' https: ws: wss:");
   });

@@ -10,7 +10,7 @@ const buildCsp = (nodeEnv: string | undefined) => {
   const isDev = nodeEnv === "development";
   const scriptSources = isDev
     ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-    : `script-src 'self' 'unsafe-inline' 'sha256-${themeBootstrapScriptSha256}'`;
+    : "script-src 'self' 'unsafe-inline'";
   const connectSources = isDev
     ? "connect-src 'self' http: https: ws: wss:"
     : "connect-src 'self' https: ws: wss:";
