@@ -1,10 +1,13 @@
 #!/usr/bin/env node
+import { resolveOpsAuthToken } from './resolveOpsAuthToken.mjs';
 
 const parseArgs = () => {
   const args = process.argv.slice(2);
   const options = {
     baseUrl: process.env.ROLLBACK_GUARD_API_BASE_URL ?? 'http://localhost:3001',
     authToken: process.env.ROLLBACK_GUARD_AUTH_TOKEN ?? '',
+    authEmail: process.env.ROLLBACK_GUARD_AUTH_EMAIL ?? '',
+    authPassword: process.env.ROLLBACK_GUARD_AUTH_PASSWORD ?? '',
     timeoutMs: Number.parseInt(process.env.ROLLBACK_GUARD_TIMEOUT_MS ?? '10000', 10),
   };
 
@@ -16,6 +19,8 @@ const parseArgs = () => {
     }
     if (arg === '--base-url') options.baseUrl = args[index + 1] ?? options.baseUrl;
     if (arg === '--auth-token') options.authToken = args[index + 1] ?? options.authToken;
+    if (arg === '--auth-email') options.authEmail = args[index + 1] ?? options.authEmail;
+    if (arg === '--auth-password') options.authPassword = args[index + 1] ?? options.authPassword;
     if (arg === '--timeout-ms') {
       options.timeoutMs = Number.parseInt(args[index + 1] ?? String(options.timeoutMs), 10);
     }
@@ -26,7 +31,7 @@ const parseArgs = () => {
 
 const printUsage = () => {
   console.log(
-    'Usage: node scripts/evaluateRollbackGuard.mjs [--base-url <url>] [--auth-token <token>] [--timeout-ms <ms>]'
+    'Usage: node scripts/evaluateRollbackGuard.mjs [--base-url <url>] [--auth-token <token>] [--auth-email <email>] [--auth-password <password>] [--timeout-ms <ms>]'
   );
 };
 
@@ -60,9 +65,17 @@ const main = async () => {
 
   const baseUrl = options.baseUrl.replace(/\/+$/, '');
   const timeoutMs = Number.isFinite(options.timeoutMs) && options.timeoutMs > 0 ? options.timeoutMs : 10000;
-  const headers = options.authToken
+  const resolvedAuth = await resolveOpsAuthToken({
+    baseUrl,
+    authToken: options.authToken,
+    authEmail: options.authEmail,
+    authPassword: options.authPassword,
+    contextLabel: 'ops:deploy:rollback-guard',
+  });
+  const headers = resolvedAuth.token
     ? {
-        Authorization: `Bearer ${options.authToken}`,
+        Authorization: `Bearer ${resolvedAuth.token}`,
+        Cookie: `token=${encodeURIComponent(resolvedAuth.token)}`,
       }
     : {};
 

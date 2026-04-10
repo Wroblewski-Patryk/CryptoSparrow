@@ -4,20 +4,30 @@ import { spawnSync } from 'node:child_process';
 
 const PROFILE_CONFIG = {
   local: {
-    envContainer: 'DB_CHECK_CONTAINER',
-    envUser: 'DB_CHECK_USER',
-    envName: 'DB_CHECK_NAME',
+    envContainers: ['DB_CHECK_CONTAINER'],
+    envUsers: ['DB_CHECK_USER'],
+    envNames: ['DB_CHECK_NAME'],
   },
   stage: {
-    envContainer: 'STAGE_DB_CHECK_CONTAINER',
-    envUser: 'STAGE_DB_CHECK_USER',
-    envName: 'STAGE_DB_CHECK_NAME',
+    envContainers: ['STAGE_DB_CHECK_CONTAINER'],
+    envUsers: ['STAGE_DB_CHECK_USER'],
+    envNames: ['STAGE_DB_CHECK_NAME'],
   },
   prod: {
-    envContainer: 'PROD_DB_CHECK_CONTAINER',
-    envUser: 'PROD_DB_CHECK_USER',
-    envName: 'PROD_DB_CHECK_NAME',
+    envContainers: ['PROD_DB_CHECK_CONTAINER', 'PRODUCTION_DB_CHECK_CONTAINER'],
+    envUsers: ['PROD_DB_CHECK_USER', 'PRODUCTION_DB_CHECK_USER'],
+    envNames: ['PROD_DB_CHECK_NAME', 'PRODUCTION_DB_CHECK_NAME'],
   },
+};
+
+const firstNonEmptyEnv = (keys) => {
+  for (const key of keys) {
+    const value = process.env[key];
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value;
+    }
+  }
+  return '';
 };
 
 const parseArgs = () => {
@@ -63,13 +73,13 @@ const resolveOptions = (input) => {
     throw new Error(`Unsupported profile: ${input.profile}. Expected one of: local, stage, prod.`);
   }
 
-  const container = input.container || process.env[profileConfig.envContainer] || '';
-  const dbUser = input.dbUser || process.env[profileConfig.envUser] || 'postgres';
-  const dbName = input.dbName || process.env[profileConfig.envName] || 'cryptosparrow';
+  const container = input.container || firstNonEmptyEnv(profileConfig.envContainers) || '';
+  const dbUser = input.dbUser || firstNonEmptyEnv(profileConfig.envUsers) || 'postgres';
+  const dbName = input.dbName || firstNonEmptyEnv(profileConfig.envNames) || 'cryptosparrow';
 
   if (input.profile !== 'local' && !container) {
     throw new Error(
-      `Missing container for profile "${input.profile}". Set --container or ${profileConfig.envContainer}.`
+      `Missing container for profile "${input.profile}". Set --container or one of: ${profileConfig.envContainers.join(', ')}.`
     );
   }
 

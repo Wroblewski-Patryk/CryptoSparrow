@@ -2,6 +2,7 @@
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { resolveOpsAuthToken } from './resolveOpsAuthToken.mjs';
 
 const TARGET_PROFILES = {
   MVP: {
@@ -58,6 +59,8 @@ const parseArgs = () => {
     durationMinutes: Number.parseInt(process.env.SLO_DURATION_MINUTES ?? '30', 10),
     intervalSeconds: Number.parseInt(process.env.SLO_INTERVAL_SECONDS ?? '30', 10),
     authToken: process.env.SLO_AUTH_TOKEN ?? '',
+    authEmail: process.env.SLO_AUTH_EMAIL ?? '',
+    authPassword: process.env.SLO_AUTH_PASSWORD ?? '',
     environment: normalizeEnvironment(process.env.SLO_ENVIRONMENT ?? 'local'),
     targetProfile: normalizeTargetProfile(process.env.SLO_TARGET_PROFILE ?? 'V1'),
     apiAvailabilityPct: parseOptionalNumber(process.env.SLO_API_AVAILABILITY_PCT),
@@ -83,6 +86,8 @@ const parseArgs = () => {
     if (arg === '--duration-minutes') options.durationMinutes = Number.parseInt(args[index + 1] ?? '', 10);
     if (arg === '--interval-seconds') options.intervalSeconds = Number.parseInt(args[index + 1] ?? '', 10);
     if (arg === '--auth-token') options.authToken = args[index + 1] ?? options.authToken;
+    if (arg === '--auth-email') options.authEmail = args[index + 1] ?? options.authEmail;
+    if (arg === '--auth-password') options.authPassword = args[index + 1] ?? options.authPassword;
     if (arg === '--environment') options.environment = normalizeEnvironment(args[index + 1] ?? options.environment);
     if (arg === '--target-profile') options.targetProfile = normalizeTargetProfile(args[index + 1] ?? options.targetProfile);
     if (arg === '--api-availability-pct') options.apiAvailabilityPct = parseOptionalNumber(args[index + 1]);
@@ -205,9 +210,13 @@ const evaluateObjective = ({ id, label, comparator, threshold, observed, unit = 
 const requestJson = async (baseUrl, endpoint, token) => {
   const startedAt = Date.now();
   try {
-    const response = await fetch(`${baseUrl}${endpoint}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    const authHeaders = token
+      ? {
+          Authorization: `Bearer ${token}`,
+          Cookie: `token=${encodeURIComponent(token)}`,
+        }
+      : {};
+    const response = await fetch(`${baseUrl}${endpoint}`, { headers: authHeaders });
     const durationMs = Date.now() - startedAt;
     const text = await response.text();
     let payload = null;
@@ -471,7 +480,7 @@ const main = async () => {
   const options = parseArgs();
   if (options.help) {
     console.log(
-      'Usage: node scripts/collectSloEvidence.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--environment <local|stage|production>] [--target-profile <MVP|V1>] [--api-availability-pct <n>] [--worker-availability-pct <n>] [--api-5xx-ratio-pct <n>] [--api-avg-duration-ms <n>] [--queue-lag-exec-threshold <n>] [--queue-lag-exec-compliance-pct <n>] [--live-order-failure-ratio-pct <n>] [--allow-local-production-evidence]'
+      'Usage: node scripts/collectSloEvidence.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--auth-email <email>] [--auth-password <password>] [--environment <local|stage|production>] [--target-profile <MVP|V1>] [--api-availability-pct <n>] [--worker-availability-pct <n>] [--api-5xx-ratio-pct <n>] [--api-avg-duration-ms <n>] [--queue-lag-exec-threshold <n>] [--queue-lag-exec-compliance-pct <n>] [--live-order-failure-ratio-pct <n>] [--allow-local-production-evidence]'
     );
     process.exit(0);
   }
@@ -499,6 +508,15 @@ const main = async () => {
       throw new Error(`${key} must be a positive number`);
     }
   }
+
+  const resolvedAuth = await resolveOpsAuthToken({
+    baseUrl: options.baseUrl,
+    authToken: options.authToken,
+    authEmail: options.authEmail,
+    authPassword: options.authPassword,
+    contextLabel: 'ops:slo:collect',
+  });
+  options.authToken = resolvedAuth.token;
 
   const startedAt = new Date().toISOString();
   const durationMs = options.durationMinutes * 60_000;

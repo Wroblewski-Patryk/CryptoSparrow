@@ -3,6 +3,7 @@
 import { spawnSync } from 'node:child_process';
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
+import { resolveOpsAuthToken } from './resolveOpsAuthToken.mjs';
 
 const ALLOWED_ENVIRONMENTS = new Set(['local', 'stage', 'production']);
 const ALLOWED_DB_PROFILES = new Set(['local', 'stage', 'prod']);
@@ -26,6 +27,8 @@ const parseArgs = () => {
     durationMinutes: process.env.SLO_DURATION_MINUTES ?? '5',
     intervalSeconds: process.env.SLO_INTERVAL_SECONDS ?? '15',
     authToken: process.env.SLO_AUTH_TOKEN ?? '',
+    authEmail: process.env.SLO_AUTH_EMAIL ?? '',
+    authPassword: process.env.SLO_AUTH_PASSWORD ?? '',
     environment: normalizeEnvironment(process.env.SLO_ENVIRONMENT ?? 'local'),
     dbProfile: normalizeDbProfile(process.env.RC_GATES_DB_PROFILE ?? 'local'),
     allowLocalProductionEvidence: false,
@@ -51,6 +54,8 @@ const parseArgs = () => {
     if (arg === '--duration-minutes') options.durationMinutes = args[index + 1] ?? options.durationMinutes;
     if (arg === '--interval-seconds') options.intervalSeconds = args[index + 1] ?? options.intervalSeconds;
     if (arg === '--auth-token') options.authToken = args[index + 1] ?? options.authToken;
+    if (arg === '--auth-email') options.authEmail = args[index + 1] ?? options.authEmail;
+    if (arg === '--auth-password') options.authPassword = args[index + 1] ?? options.authPassword;
     if (arg === '--environment') options.environment = normalizeEnvironment(args[index + 1] ?? options.environment);
     if (arg === '--db-profile') options.dbProfile = normalizeDbProfile(args[index + 1] ?? options.dbProfile);
     if (arg === '--allow-local-production-evidence') options.allowLocalProductionEvidence = true;
@@ -138,7 +143,12 @@ const buildStatusWithOfflineFallback = async (allowOffline) => {
 
 const canReachApi = async (baseUrl, authToken) => {
   try {
-    const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+    const headers = authToken
+      ? {
+          Authorization: `Bearer ${authToken}`,
+          Cookie: `token=${encodeURIComponent(authToken)}`,
+        }
+      : {};
     const res = await fetch(`${baseUrl}/health`, { headers });
     return res.ok;
   } catch {
@@ -150,13 +160,25 @@ const main = () => {
   const options = parseArgs();
   if (options.help) {
     console.log(
-      'Usage: node scripts/runLocalExternalGatesPipeline.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--environment <local|stage|production>] [--db-profile <local|stage|prod>] [--allow-local-production-evidence] [--skip-db-check] [--skip-slo-collect] [--skip-window-report] [--skip-checklist-sync] [--skip-evidence-check] [--strict-evidence-check] [--require-production-gate2] [--evidence-output <file>] [--window-days <csv>] [--allow-offline]'
+      'Usage: node scripts/runLocalExternalGatesPipeline.mjs [--base-url <url>] [--duration-minutes <n>] [--interval-seconds <n>] [--auth-token <token>] [--auth-email <email>] [--auth-password <password>] [--environment <local|stage|production>] [--db-profile <local|stage|prod>] [--allow-local-production-evidence] [--skip-db-check] [--skip-slo-collect] [--skip-window-report] [--skip-checklist-sync] [--skip-evidence-check] [--strict-evidence-check] [--require-production-gate2] [--evidence-output <file>] [--window-days <csv>] [--allow-offline]'
     );
     process.exit(0);
   }
 
   Promise.resolve()
     .then(async () => {
+      let resolvedAuthToken = String(options.authToken ?? '').trim();
+      if (!options.skipSloCollect) {
+        const resolvedAuth = await resolveOpsAuthToken({
+          baseUrl: options.baseUrl,
+          authToken: resolvedAuthToken,
+          authEmail: options.authEmail,
+          authPassword: options.authPassword,
+          contextLabel: 'ops:rc:gates:local-pipeline',
+        });
+        resolvedAuthToken = resolvedAuth.token;
+      }
+
       if (!options.skipDbCheck) {
         run(`restore-drill evidence (${options.dbProfile} profile)`, 'pnpm', [
           'run',
@@ -168,7 +190,7 @@ const main = () => {
       }
 
       if (!options.skipSloCollect) {
-        const reachable = await canReachApi(options.baseUrl, options.authToken);
+        const reachable = await canReachApi(options.baseUrl, resolvedAuthToken);
         if (!reachable) {
           if (!options.allowOffline) {
             throw new Error(
@@ -221,13 +243,12 @@ const main = () => {
           '--environment',
           String(options.environment),
         ];
-        if (options.authToken) {
-          sloArgs.push('--auth-token', options.authToken);
-        }
         if (options.allowLocalProductionEvidence) {
           sloArgs.push('--allow-local-production-evidence');
         }
-        run('SLO observation collector', 'pnpm', sloArgs);
+        run('SLO observation collector', 'pnpm', sloArgs, {
+          ...(resolvedAuthToken ? { SLO_AUTH_TOKEN: resolvedAuthToken } : {}),
+        });
 
         if (!options.skipWindowReport) {
           for (const days of options.windowDays) {

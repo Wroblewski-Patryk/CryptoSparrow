@@ -36,6 +36,12 @@ const tokenIssuedAt = (claims: AuthTokenClaims) =>
   typeof claims.iat === 'number' && Number.isFinite(claims.iat) ? claims.iat : 0;
 
 export const getCandidateTokensFromRequest = (req: Request): string[] => {
+  const authorizationHeader = Array.isArray(req.headers.authorization)
+    ? req.headers.authorization[0]
+    : req.headers.authorization;
+  const bearerTokenMatch = /^Bearer\s+(.+)$/i.exec(String(authorizationHeader ?? '').trim());
+  const bearerToken = bearerTokenMatch?.[1]?.trim() ?? '';
+
   const parsedToken = typeof req.cookies?.token === 'string' ? req.cookies.token : null;
   const rawCookieHeader = typeof req.headers.cookie === 'string' ? req.headers.cookie : '';
 
@@ -46,7 +52,13 @@ export const getCandidateTokensFromRequest = (req: Request): string[] => {
     .map((part) => decodeURIComponent(part.slice('token='.length)))
     .filter((value) => value.length > 0);
 
-  return [...new Set([...(parsedToken ? [parsedToken] : []), ...rawTokens])];
+  return [
+    ...new Set([
+      ...(bearerToken ? [bearerToken] : []),
+      ...(parsedToken ? [parsedToken] : []),
+      ...rawTokens,
+    ]),
+  ];
 };
 
 export const getVerifiedAuthTokenCandidates = (req: Request): VerifiedAuthTokenCandidate[] => {

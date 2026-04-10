@@ -17,6 +17,39 @@ afterEach(() => {
 });
 
 describe('requireAuth middleware', () => {
+  it('accepts Authorization Bearer token when cookie is missing', async () => {
+    process.env.JWT_SECRET = 'bearer-secret';
+    process.env.JWT_SECRET_PREVIOUS = '';
+    const email = `bearer-${Date.now()}@example.com`;
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: 'hashed-password',
+      },
+    });
+
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+        role: 'USER',
+        sessionVersion: 1,
+      },
+      'bearer-secret',
+      {
+        expiresIn: '1h',
+        algorithm: 'HS256',
+        issuer: 'cryptosparrow',
+        audience: 'cryptosparrow-app',
+      }
+    );
+
+    const res = await request(app).get('/dashboard').set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.user.id).toBe(user.id);
+    expect(res.body.user.email).toBe(user.email);
+  });
+
   it('accepts dashboard access for token signed with previous secret during rotation', async () => {
     process.env.JWT_SECRET = 'new-secret';
     process.env.JWT_SECRET_PREVIOUS = 'old-secret';
