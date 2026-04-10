@@ -92,17 +92,52 @@ export const buildRuntimeFreshnessSnapshot = async (
     process.env.RUNTIME_FRESHNESS_MAX_SIGNAL_AGE_MS,
     300_000
   );
+  const requireLatestSignalForRunningSessions =
+    process.env.RUNTIME_FRESHNESS_REQUIRE_SIGNAL_FOR_RUNNING_SESSIONS === 'true';
+
+  const [runningSessions, latestCandleCache] = await Promise.all([
+    prisma.botRuntimeSession.findMany({
+      where: {
+        status: 'RUNNING',
+      },
+      select: {
+        id: true,
+        lastHeartbeatAt: true,
+      },
+    }),
+    prisma.marketCandleCache.findFirst({
+      select: {
+        updatedAt: true,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    }),
+  ]);
+
+  const latestSessionHeartbeatMs = runningSessions.reduce<number | null>((current, session) => {
+    if (!session.lastHeartbeatAt) return current;
+    const next = session.lastHeartbeatAt.getTime();
+    if (current === null) return next;
+    return Math.max(current, next);
+  }, null);
+  const workerHeartbeatLastAtMs =
+    parseEnvDate(process.env.WORKER_LAST_HEARTBEAT_AT) ?? latestSessionHeartbeatMs;
+  const marketDataLastAtMs =
+    parseEnvDate(process.env.WORKER_LAST_MARKET_DATA_AT) ??
+    latestCandleCache?.updatedAt?.getTime() ??
+    latestSessionHeartbeatMs;
 
   const workerHeartbeatCheck = computeTimeCheck({
     label: 'worker heartbeat',
-    lastAtMs: parseEnvDate(process.env.WORKER_LAST_HEARTBEAT_AT),
+    lastAtMs: workerHeartbeatLastAtMs,
     nowMs,
     thresholdMs: workerHeartbeatThresholdMs,
   });
 
   const marketDataCheck = computeTimeCheck({
     label: 'market data',
-    lastAtMs: parseEnvDate(process.env.WORKER_LAST_MARKET_DATA_AT),
+    lastAtMs: marketDataLastAtMs,
     nowMs,
     thresholdMs: marketDataThresholdMs,
   });
@@ -117,16 +152,6 @@ export const buildRuntimeFreshnessSnapshot = async (
         ? 'runtime signal lag within threshold'
         : 'runtime signal lag exceeded threshold',
   };
-
-  const runningSessions = await prisma.botRuntimeSession.findMany({
-    where: {
-      status: 'RUNNING',
-    },
-    select: {
-      id: true,
-      lastHeartbeatAt: true,
-    },
-  });
 
   const staleSessionIds = runningSessions
     .filter((session) => {
@@ -156,7 +181,8 @@ export const buildRuntimeFreshnessSnapshot = async (
     },
   });
 
-  const requireSignalFreshness = runningSessions.length > 0;
+  const requireSignalFreshness =
+    requireLatestSignalForRunningSessions && runningSessions.length > 0;
   const latestSignalAgeMs = latestSignal ? Math.max(0, nowMs - latestSignal.triggeredAt.getTime()) : null;
   const latestSignalCheck: RuntimeFreshnessSnapshot['checks']['latestSignal'] = (() => {
     if (!requireSignalFreshness) {
@@ -165,7 +191,7 @@ export const buildRuntimeFreshnessSnapshot = async (
         thresholdMs: latestSignalThresholdMs,
         ageMs: latestSignalAgeMs,
         required: false,
-        detail: 'no running sessions; latest signal freshness not required',
+        detail: 'latest signal freshness check disabled for running sessions',
       };
     }
     if (latestSignalAgeMs === null) {

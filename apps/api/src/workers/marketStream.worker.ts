@@ -50,6 +50,9 @@ const resolveMinQuoteVolumeFilter = (filterRules: unknown) => {
   return { enabled, min };
 };
 
+const allowEmptyGroupCatalogFallback =
+  process.env.MARKET_STREAM_ALLOW_EMPTY_GROUP_CATALOG_FALLBACK === 'true';
+
 const resolveCatalogSymbolsForUniverse = async (
   universe: {
     exchange: Exchange;
@@ -165,6 +168,7 @@ const resolveDynamicSubscriptions = async (): Promise<StreamSubscriptions> => {
   for (const bot of bots) {
     for (const group of bot.botMarketGroups) {
       const symbolGroupSymbols = normalizeSymbols(group.symbolGroup.symbols ?? []);
+      const volumeFilter = resolveMinQuoteVolumeFilter(group.symbolGroup.marketUniverse?.filterRules);
       const universeSymbols =
         group.symbolGroup.marketUniverse != null
           ? resolveUniverseSymbols(
@@ -175,7 +179,8 @@ const resolveDynamicSubscriptions = async (): Promise<StreamSubscriptions> => {
       const catalogFallbackSymbols =
         group.symbolGroup.marketUniverse != null &&
         symbolGroupSymbols.length === 0 &&
-        universeSymbols.length === 0
+        universeSymbols.length === 0 &&
+        (allowEmptyGroupCatalogFallback || volumeFilter.enabled)
           ? await resolveCatalogSymbolsForUniverse(
               {
                 exchange: group.symbolGroup.marketUniverse.exchange,
@@ -193,6 +198,22 @@ const resolveDynamicSubscriptions = async (): Promise<StreamSubscriptions> => {
           : symbolGroupSymbols.length > 0
             ? symbolGroupSymbols
             : catalogFallbackSymbols;
+      if (
+        groupSymbols.length === 0 &&
+        symbolGroupSymbols.length === 0 &&
+        universeSymbols.length === 0 &&
+        group.symbolGroup.marketUniverse != null
+      ) {
+        console.warn(
+          JSON.stringify({
+            level: 'warn',
+            module: 'market-stream.bootstrap',
+            event: 'market_stream.group_skipped_empty_symbols',
+            reason: 'empty_symbol_group_or_whitelist',
+            fallbackAllowed: allowEmptyGroupCatalogFallback || volumeFilter.enabled,
+          })
+        );
+      }
       for (const symbol of groupSymbols) {
         if (typeof symbol !== 'string' || symbol.trim().length === 0) continue;
         symbols.add(symbol.trim().toUpperCase());
