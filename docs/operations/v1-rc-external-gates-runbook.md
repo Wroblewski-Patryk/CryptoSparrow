@@ -46,11 +46,11 @@ Recommended one-command production closure pipeline:
 5. Mark gate complete in RC checklist only after restore checks pass.
 
 Evidence to record:
-- Snapshot id:
-- Snapshot UTC timestamp:
-- Restore target:
-- Restore verification command/output reference:
-- Operator:
+- Snapshot id: `postgres_restore_check_20260410T021243Z` (restore-check drill identifier)
+- Snapshot UTC timestamp: `2026-04-10T02:12:43Z`
+- Restore target: isolated database `postgres_restore_check_20260410T021243Z` on production postgres service (`PRODUCTION_DB_CHECK_CONTAINER=x11cfnz1dd9x0yzccftqzcoe`)
+- Restore verification command/output reference: production restore-check run in postgres container (`POSTGRES_USER=postgres`, `POSTGRES_DB=postgres`) with key-table verification and cleanup (`DROP DATABASE postgres_restore_check_20260410T021243Z;`)
+- Operator: `Patryk Wroblewski <wroblewskipatryk@gmail.com>`
 
 Profile env contract:
 - `DB_CHECK_CONTAINER`, `DB_CHECK_USER`, `DB_CHECK_NAME` for `local`
@@ -104,11 +104,11 @@ Evidence to record:
 4. Record confirmation timestamp and approver.
 
 Evidence to record:
-- On-call roster reference:
-- Escalation channel:
-- SEV-1 commander:
-- Confirmation UTC timestamp:
-- Approver:
+- On-call roster reference: `Soar V1 live window (single-operator roster): primary engineering + operations + product escalation = Patryk Wroblewski`
+- Escalation channel: `wroblewskipatryk@gmail.com` (primary), Coolify production environment terminal/event logs (`Soar > production`) for incident execution trail
+- SEV-1 commander: `Patryk Wroblewski`
+- Confirmation UTC timestamp: `2026-04-10T17:10:00Z`
+- Approver: `Patryk Wroblewski`
 
 ## Gate 4: Formal RC Sign-Offs
 1. Engineering sign-off after technical gates are green.

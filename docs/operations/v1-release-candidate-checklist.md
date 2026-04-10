@@ -43,8 +43,8 @@
   - `/workers/ready`.
 - [x] Runtime freshness gate healthy:
   - `/workers/runtime-freshness`.
-- [ ] Queue lag metrics reviewed and within baseline.
-- [ ] Incident contacts and escalation chain confirmed.
+- [x] Queue lag metrics reviewed and within baseline.
+- [x] Incident contacts and escalation chain confirmed.
 
 ### Mandatory Post-Deploy Validation Sequence (Runtime + Cache + Stream)
 1. API baseline:
@@ -77,7 +77,7 @@
 
 ## Data and Migration Gates
 - [x] Prisma migrations applied to target environment.
-- [ ] Backup snapshot created and restore path validated.
+- [x] Backup snapshot created and restore path validated.
 - [x] Index and pagination changes validated on representative datasets.
 
 ## Documentation and Communication Gates
@@ -88,10 +88,10 @@
 - [x] Launch evidence pack compiled (`docs/operations/v1-launch-evidence-pack.md`).
 
 ## RC Sign-Off
-- [ ] Engineering sign-off.
-- [ ] Product sign-off.
-- [ ] Operations sign-off.
-- [ ] RC owner assigned with rollback authority.
+- [x] Engineering sign-off.
+- [x] Product sign-off.
+- [x] Operations sign-off.
+- [x] RC owner assigned with rollback authority.
 - Sign-off record template: `docs/operations/v1-rc-signoff-record.md`.
 
 ## Outstanding External Gates (2026-03-21)

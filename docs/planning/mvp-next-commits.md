@@ -19,10 +19,11 @@ Operational queue for one-task execution runs.
 - [x] `ARM-17 chore(quality): enforce updated file-size budgets in quality gate`
 - [x] `ARM-18 docs(architecture): publish post-remediation architecture delta and residual-risk summary`
 ## BLOCKED
-- [ ] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
-  - 2026-04-10: Collected first production SLO artifact from public network (`docs/operations/v1-slo-observation-2026-04-10T15-03-53-379Z.md`); ops-protected probes (`/workers/*`, `/metrics`) returned `403`, so final Gate2 closure still requires collector run from VPS/private ops network.
+- none
 
 ## DONE
+- [x] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
+  - 2026-04-10: Completed via VPS/private ops-network SLO collector path (`docs/operations/_artifacts-slo-window-2026-04-10T17-09-26-532Z.json`, `docs/operations/v1-slo-observation-2026-04-10T17-09-26-532Z.md`) and finalized gate artifacts (`docs/operations/v1-rc-external-gates-status.md`, `docs/operations/v1-rc-signoff-record.md`) with strict production evidence check PASS (`G1/G2/G3/G4 = PASS`).
 - [x] `SAR-14 ops(rollout): run DEV->STAGE->PROD remediation rollout checklist with smoke gates and rollback drill evidence`
 - [x] `SAR-09 qa(stage-abuse): execute stage abuse-throttling verification for profile-sensitive routes and publish evidence`
 - [x] `SAR-13 refactor(api-data-boundary): introduce repository boundaries for bots/backtests/engine high-change modules`
