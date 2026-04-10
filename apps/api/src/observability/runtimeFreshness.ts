@@ -121,12 +121,15 @@ export const buildRuntimeFreshnessSnapshot = async (
     if (current === null) return next;
     return Math.max(current, next);
   }, null);
+  const marketDataCandidates = [
+    parseEnvDate(process.env.WORKER_LAST_MARKET_DATA_AT),
+    latestCandleCache?.updatedAt?.getTime() ?? null,
+    latestSessionHeartbeatMs,
+  ].filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
   const workerHeartbeatLastAtMs =
     parseEnvDate(process.env.WORKER_LAST_HEARTBEAT_AT) ?? latestSessionHeartbeatMs;
   const marketDataLastAtMs =
-    parseEnvDate(process.env.WORKER_LAST_MARKET_DATA_AT) ??
-    latestCandleCache?.updatedAt?.getTime() ??
-    latestSessionHeartbeatMs;
+    marketDataCandidates.length > 0 ? Math.max(...marketDataCandidates) : null;
 
   const workerHeartbeatCheck = computeTimeCheck({
     label: 'worker heartbeat',
