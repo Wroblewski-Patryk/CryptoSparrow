@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import { Bot, BotRuntimeGraph, BotRuntimeSessionListItem, BotRuntimeTradesResponse } from "../../bots/types/bot.type";
+import {
+  Bot,
+  BotRuntimeGraph,
+  BotRuntimePositionsResponse,
+  BotRuntimeSessionListItem,
+  BotRuntimeSymbolStatsResponse,
+  BotRuntimeTradesResponse,
+} from "../../bots/types/bot.type";
 import { TranslationKey } from "../../../i18n/translations";
 import type {
   RuntimeDataTab,
@@ -82,12 +89,12 @@ type UseHomeLiveWidgetsControllerArgs = {
     botId: string,
     sessionId: string,
     query?: { limit?: number; symbol?: string }
-  ) => Promise<any>;
+  ) => Promise<BotRuntimePositionsResponse>;
   listBotRuntimeSessionSymbolStats: (
     botId: string,
     sessionId: string,
     query?: { limit?: number; symbol?: string }
-  ) => Promise<any>;
+  ) => Promise<BotRuntimeSymbolStatsResponse>;
   listBotRuntimeSessionTrades: (
     botId: string,
     sessionId: string,

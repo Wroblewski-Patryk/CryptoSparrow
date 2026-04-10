@@ -15,7 +15,7 @@ vi.mock('../../../i18n/I18nProvider', () => ({
 }));
 
 vi.mock('../../components/AppLogoLink', () => ({
-  default: () => <a href="/">Soar</a>,
+  default: () => <span>Soar</span>,
 }));
 
 describe('Public Header', () => {
