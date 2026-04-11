@@ -25,6 +25,7 @@ import { formatDcaLadderCell } from "./bots-management/dcaLadderCell";
 import { useBotsListController } from "../hooks/useBotsListController";
 import { useBotsAssistantController } from "../hooks/useBotsAssistantController";
 import { useBotsMonitoringController } from "../hooks/useBotsMonitoringController";
+import { normalizeSymbol } from "@/lib/symbols";
 
 const MONITOR_STALE_WARNING_AFTER_MS = 20_000;
 
@@ -122,7 +123,6 @@ const formatTradeFeeMeta = (trade: {
 
 const FIELD_WRAPPER_CLASS = "form-control gap-1";
 const META_CARD_CLASS = "rounded-box border border-base-300/60 bg-base-200/60 px-3 py-2";
-const normalizeSymbol = (value: string) => value.trim().toUpperCase();
 
 const toTimestamp = (value?: string | null) => {
   if (!value) return 0;

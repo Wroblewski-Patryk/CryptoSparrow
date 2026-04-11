@@ -11,6 +11,7 @@ import AssetSymbol from "../../../ui/components/AssetSymbol";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { createMarketStreamEventSource } from "../../../lib/marketStream";
+import { normalizeSymbol } from "@/lib/symbols";
 import {
   BotRuntimePositionItem,
   BotRuntimePositionsResponse,
@@ -63,7 +64,6 @@ const SIGNAL_CARDS_DENSITY_BREAKPOINTS = {
   desktopMinWidth: 1280,
   tabletMinWidth: 768,
 } as const;
-const normalizeSymbol = (value: string) => value.trim().toUpperCase();
 const KNOWN_QUOTE_CURRENCIES = [
   "USDT",
   "USDC",

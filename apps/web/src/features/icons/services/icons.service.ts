@@ -1,12 +1,9 @@
 import api from "../../../lib/api";
+import { normalizeSymbol, normalizeSymbolsUnique } from "@/lib/symbols";
 import { CoinIconLookupItem, CoinIconLookupResponse } from "../types/icon.type";
 
-const normalizeSymbol = (value: string) => value.trim().toUpperCase();
-
 export const lookupCoinIcons = async (symbols: string[]): Promise<Map<string, CoinIconLookupItem>> => {
-  const uniqueSymbols = Array.from(
-    new Set(symbols.map(normalizeSymbol).filter((value) => value.length > 0))
-  );
+  const uniqueSymbols = normalizeSymbolsUnique(symbols);
   if (uniqueSymbols.length === 0) return new Map();
 
   const res = await api.get<CoinIconLookupResponse>("/dashboard/icons/lookup", {

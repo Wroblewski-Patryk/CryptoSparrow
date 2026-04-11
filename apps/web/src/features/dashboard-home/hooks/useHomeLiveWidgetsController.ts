@@ -11,6 +11,7 @@ import {
 } from "../../bots/types/bot.type";
 import { TranslationKey } from "../../../i18n/translations";
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
+import { normalizeSymbol } from '@/lib/symbols';
 import type {
   RuntimeDataTab,
   RuntimeSnapshot,
@@ -39,8 +40,6 @@ const toTs = (v?: string | null) => {
   const ts = new Date(v).getTime();
   return Number.isNaN(ts) ? 0 : ts;
 };
-
-const normalizeSymbol = (value: string) => value.trim().toUpperCase();
 
 const pickPrimarySession = (sessions: BotRuntimeSessionListItem[]) => {
   if (sessions.length === 0) return null;

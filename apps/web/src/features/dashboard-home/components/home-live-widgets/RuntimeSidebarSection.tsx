@@ -1,4 +1,5 @@
 import { LuBot, LuChartCandlestick, LuChartLine, LuListChecks, LuShieldCheck, LuTrophy, LuWallet } from "react-icons/lu";
+import { normalizeSymbol } from "@/lib/symbols";
 import type { RuntimeSelectedData, RuntimeSnapshot, RuntimeSummary } from "./types";
 
 type RuntimeSidebarSectionProps = {
@@ -155,7 +156,7 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
     if (fromTrades) return fromTrades.toUpperCase();
     const symbol = props.selectedData?.symbols[0]?.symbol;
     if (!symbol) return "-";
-    const normalized = symbol.trim().toUpperCase();
+    const normalized = normalizeSymbol(symbol);
     const knownQuoteCurrencies = ["USDT", "USDC", "BUSD", "FDUSD", "TUSD", "USDP", "DAI", "USD", "BTC", "ETH", "BNB", "EUR", "TRY", "GBP", "JPY"];
     for (const quote of knownQuoteCurrencies) {
       if (normalized.endsWith(quote) && normalized.length > quote.length) return quote;

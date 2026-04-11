@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { normalizeSymbolsUniqueSorted } from "@/lib/symbols";
 import { lookupCoinIcons } from "../services/icons.service";
 import { CoinIconLookupItem } from "../types/icon.type";
 
-const normalizeSymbol = (value: string) => value.trim().toUpperCase();
-
-const toUniqueSymbols = (symbols: string[]) =>
-  Array.from(new Set(symbols.map(normalizeSymbol).filter((value) => value.length > 0))).sort();
+const toUniqueSymbols = (symbols: string[]) => normalizeSymbolsUniqueSorted(symbols);
 
 export const useCoinIconLookup = (symbols: string[]) => {
   const normalizedSymbols = useMemo(() => toUniqueSymbols(symbols), [symbols]);

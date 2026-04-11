@@ -1,16 +1,15 @@
+import { normalizeSymbolsUnique } from "./symbols";
+
 const normalizeBaseUrl = (value?: string) => {
   if (!value) return undefined;
   return value.replace(/\/+$/, "");
 };
 
-const normalizeSymbols = (symbols: string[]) =>
-  [...new Set(symbols.map((symbol) => symbol.trim().toUpperCase()).filter(Boolean))];
-
 export const buildMarketStreamEventsUrl = (params: {
   symbols: string[];
   interval: string;
 }) => {
-  const symbols = normalizeSymbols(params.symbols);
+  const symbols = normalizeSymbolsUnique(params.symbols);
   const query = new URLSearchParams({
     symbols: symbols.join(","),
     interval: params.interval,

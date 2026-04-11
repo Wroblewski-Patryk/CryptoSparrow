@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { normalizeSymbol } from "@/lib/symbols";
 
 type AssetSymbolProps = {
   symbol: string;
@@ -9,8 +10,6 @@ type AssetSymbolProps = {
   iconClassName?: string;
   labelClassName?: string;
 };
-
-const normalizeSymbol = (value: string) => value.trim().toUpperCase();
 
 const fallbackLabelFromSymbol = (symbol: string) => {
   const normalized = normalizeSymbol(symbol);

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TranslationKey } from "../../../i18n/translations";
 import { createMarketStreamEventSource } from "../../../lib/marketStream";
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
+import { normalizeSymbol } from "@/lib/symbols";
 import {
   getBotRuntimeSession,
   listBotRuntimeSessionPositions,
@@ -34,8 +35,6 @@ type MonitorAggregateData = {
   positions: BotRuntimePositionsResponse;
   trades: BotRuntimeTradesResponse;
 };
-
-const normalizeSymbol = (value: string) => value.trim().toUpperCase();
 
 const toTimestamp = (value?: string | null) => {
   if (!value) return 0;
@@ -392,7 +391,7 @@ export const useBotsMonitoringController = ({
         return;
       }
 
-      const normalizedSymbol = symbolFilter.trim().toUpperCase();
+      const normalizedSymbol = normalizeSymbol(symbolFilter);
       if (!silent) {
         setMonitorSessionLoading(true);
         setMonitorError(null);
@@ -448,7 +447,7 @@ export const useBotsMonitoringController = ({
         return;
       }
 
-      const normalizedSymbol = symbolFilter.trim().toUpperCase();
+      const normalizedSymbol = normalizeSymbol(symbolFilter);
       const scopedSessions = sessions.slice(0, 20);
 
       if (!silent) {
@@ -509,7 +508,7 @@ export const useBotsMonitoringController = ({
   );
 
   const handleApplyMonitoringFilter = () => {
-    setMonitorAppliedSymbolFilter(monitorSymbolFilter.trim().toUpperCase());
+    setMonitorAppliedSymbolFilter(normalizeSymbol(monitorSymbolFilter));
   };
 
   const handleClearMonitoringFilter = () => {
