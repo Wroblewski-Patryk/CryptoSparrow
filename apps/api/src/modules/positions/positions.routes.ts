@@ -6,6 +6,7 @@ import {
   getLiveReconciliationStatus,
   getPosition,
   listPositions,
+  postExternalTakeoverRebind,
   updatePositionManagementMode,
 } from './positions.controller';
 
@@ -16,6 +17,7 @@ positionsRouter.get('/', tradingReadLimiter, listPositions);
 positionsRouter.get('/live-status', tradingReadLimiter, getLiveReconciliationStatus);
 positionsRouter.get('/exchange-snapshot', tradingReadLimiter, getExchangeSnapshot);
 positionsRouter.get('/takeover-status', tradingReadLimiter, getExternalTakeoverStatus);
+positionsRouter.post('/takeover-rebind', tradingReadLimiter, postExternalTakeoverRebind);
 positionsRouter.patch('/:id/management-mode', tradingReadLimiter, updatePositionManagementMode);
 positionsRouter.get('/:id', tradingReadLimiter, getPosition);
 

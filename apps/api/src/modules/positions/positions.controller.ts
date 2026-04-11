@@ -66,6 +66,14 @@ export const getExternalTakeoverStatus = async (req: Request, res: Response) => 
   return res.json(takeoverStatus);
 };
 
+export const postExternalTakeoverRebind = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  const result = await positionsService.rebindExternalTakeoverOwnership(userId);
+  return res.status(200).json(result);
+};
+
 export const updatePositionManagementMode = async (req: Request, res: Response) => {
   const userId = req.user?.id;
   if (!userId) return sendError(res, 401, 'Unauthorized');

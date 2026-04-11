@@ -257,4 +257,186 @@ describe('Positions takeover status API', () => {
     expect(bySymbol.get('BNBUSDT')).toBe('AMBIGUOUS');
     expect(bySymbol.get('XRPUSDT')).toBe('MANUAL_ONLY');
   });
+
+  it('rebinds unowned BOT_MANAGED exchange-synced positions when exactly one LIVE owner exists', async () => {
+    const email = 'positions-takeover-rebind@example.com';
+    const agent = await registerAndLogin(email);
+    const owner = await prisma.user.findUniqueOrThrow({
+      where: { email },
+      select: { id: true },
+    });
+
+    const createApiKey = async (label: string) => {
+      const res = await agent.post('/dashboard/profile/apiKeys').send({
+        label,
+        exchange: 'BINANCE',
+        apiKey: `APIKEY_${label}_${Date.now()}`,
+        apiSecret: `APISECRET_${label}_${Date.now()}`,
+      });
+      expect(res.status).toBe(201);
+      return res.body.id as string;
+    };
+
+    const keyOwned = await createApiKey('owned-rebind');
+    const keyAmbiguous = await createApiKey('ambiguous-rebind');
+    const keyUnowned = await createApiKey('unowned-rebind');
+
+    const ownedWallet = await prisma.wallet.create({
+      data: {
+        userId: owner.id,
+        name: 'Owned rebind wallet',
+        mode: 'LIVE',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        paperInitialBalance: 10_000,
+        liveAllocationMode: 'PERCENT',
+        liveAllocationValue: 100,
+        apiKeyId: keyOwned,
+      },
+      select: { id: true },
+    });
+
+    await prisma.bot.create({
+      data: {
+        userId: owner.id,
+        name: 'Owned rebind bot',
+        mode: 'LIVE',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        positionMode: 'ONE_WAY',
+        isActive: true,
+        liveOptIn: true,
+        apiKeyId: keyOwned,
+        walletId: ownedWallet.id,
+      },
+    });
+
+    const ambiguousWalletA = await prisma.wallet.create({
+      data: {
+        userId: owner.id,
+        name: 'Ambiguous rebind wallet A',
+        mode: 'LIVE',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        paperInitialBalance: 10_000,
+        liveAllocationMode: 'PERCENT',
+        liveAllocationValue: 100,
+        apiKeyId: keyAmbiguous,
+      },
+      select: { id: true },
+    });
+    const ambiguousWalletB = await prisma.wallet.create({
+      data: {
+        userId: owner.id,
+        name: 'Ambiguous rebind wallet B',
+        mode: 'LIVE',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        paperInitialBalance: 10_000,
+        liveAllocationMode: 'PERCENT',
+        liveAllocationValue: 100,
+        apiKeyId: keyAmbiguous,
+      },
+      select: { id: true },
+    });
+
+    await prisma.bot.createMany({
+      data: [
+        {
+          userId: owner.id,
+          name: 'Ambiguous rebind bot A',
+          mode: 'LIVE',
+          exchange: 'BINANCE',
+          marketType: 'FUTURES',
+          positionMode: 'ONE_WAY',
+          isActive: true,
+          liveOptIn: true,
+          apiKeyId: keyAmbiguous,
+          walletId: ambiguousWalletA.id,
+        },
+        {
+          userId: owner.id,
+          name: 'Ambiguous rebind bot B',
+          mode: 'LIVE',
+          exchange: 'BINANCE',
+          marketType: 'FUTURES',
+          positionMode: 'ONE_WAY',
+          isActive: true,
+          liveOptIn: true,
+          apiKeyId: keyAmbiguous,
+          walletId: ambiguousWalletB.id,
+        },
+      ],
+    });
+
+    await prisma.position.createMany({
+      data: [
+        {
+          userId: owner.id,
+          externalId: `${keyOwned}:SOLUSDT:LONG`,
+          origin: 'EXCHANGE_SYNC',
+          managementMode: 'BOT_MANAGED',
+          syncState: 'DRIFT',
+          symbol: 'SOLUSDT',
+          side: 'LONG',
+          status: 'OPEN',
+          entryPrice: 100,
+          quantity: 1,
+          leverage: 2,
+        },
+        {
+          userId: owner.id,
+          externalId: `${keyAmbiguous}:BNBUSDT:SHORT`,
+          origin: 'EXCHANGE_SYNC',
+          managementMode: 'BOT_MANAGED',
+          syncState: 'DRIFT',
+          symbol: 'BNBUSDT',
+          side: 'SHORT',
+          status: 'OPEN',
+          entryPrice: 600,
+          quantity: 0.5,
+          leverage: 2,
+        },
+        {
+          userId: owner.id,
+          externalId: `${keyUnowned}:ADAUSDT:LONG`,
+          origin: 'EXCHANGE_SYNC',
+          managementMode: 'BOT_MANAGED',
+          syncState: 'DRIFT',
+          symbol: 'ADAUSDT',
+          side: 'LONG',
+          status: 'OPEN',
+          entryPrice: 1,
+          quantity: 100,
+          leverage: 1,
+        },
+      ],
+    });
+
+    const rebindRes = await agent.post('/dashboard/positions/takeover-rebind');
+    expect(rebindRes.status).toBe(200);
+    expect(rebindRes.body).toMatchObject({
+      scanned: 3,
+      rebound: 1,
+      ambiguous: 1,
+      unowned: 1,
+      skippedOwned: 0,
+    });
+
+    const statusRes = await agent.get('/dashboard/positions/takeover-status');
+    expect(statusRes.status).toBe(200);
+    const bySymbol = new Map(
+      (statusRes.body.items as Array<{ symbol: string; takeoverStatus: string; botId: string | null }>).map(
+        (item) => [item.symbol, item]
+      )
+    );
+
+    expect(bySymbol.get('SOLUSDT')?.takeoverStatus).toBe('OWNED_AND_MANAGED');
+    expect(bySymbol.get('SOLUSDT')?.botId).toBeTruthy();
+    expect(bySymbol.get('BNBUSDT')?.takeoverStatus).toBe('AMBIGUOUS');
+    expect(bySymbol.get('ADAUSDT')?.takeoverStatus).toBe('UNOWNED');
+  });
 });

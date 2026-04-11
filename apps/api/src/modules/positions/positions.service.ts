@@ -66,6 +66,14 @@ export type ExternalTakeoverStatusResponse = {
   items: ExternalTakeoverStatusItem[];
 };
 
+export type ExternalTakeoverRebindResponse = {
+  scanned: number;
+  rebound: number;
+  ambiguous: number;
+  unowned: number;
+  skippedOwned: number;
+};
+
 type ExchangePositionLike = {
   symbol?: string;
   side?: string;
@@ -410,6 +418,102 @@ const parseApiKeyIdFromExternalId = (externalId: string | null): string | null =
   const [apiKeyId] = externalId.split(':');
   if (!apiKeyId || apiKeyId.trim().length === 0) return null;
   return apiKeyId.trim();
+};
+
+export const rebindExternalTakeoverOwnership = async (
+  userId: string
+): Promise<ExternalTakeoverRebindResponse> => {
+  const [positions, eligibleBots] = await Promise.all([
+    prisma.position.findMany({
+      where: {
+        userId,
+        status: 'OPEN',
+        origin: 'EXCHANGE_SYNC',
+        managementMode: 'BOT_MANAGED',
+      },
+      select: {
+        id: true,
+        externalId: true,
+        botId: true,
+      },
+    }),
+    prisma.bot.findMany({
+      where: {
+        userId,
+        mode: 'LIVE',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        isActive: true,
+        liveOptIn: true,
+        walletId: { not: null },
+        apiKeyId: { not: null },
+      },
+      select: {
+        id: true,
+        walletId: true,
+        apiKeyId: true,
+      },
+    }),
+  ]);
+
+  const ownersByApiKeyId = new Map<string, Array<{ botId: string; walletId: string }>>();
+  for (const bot of eligibleBots) {
+    if (!bot.apiKeyId || !bot.walletId) continue;
+    const current = ownersByApiKeyId.get(bot.apiKeyId) ?? [];
+    current.push({ botId: bot.id, walletId: bot.walletId });
+    ownersByApiKeyId.set(bot.apiKeyId, current);
+  }
+
+  const result: ExternalTakeoverRebindResponse = {
+    scanned: positions.length,
+    rebound: 0,
+    ambiguous: 0,
+    unowned: 0,
+    skippedOwned: 0,
+  };
+
+  for (const position of positions) {
+    if (position.botId) {
+      result.skippedOwned += 1;
+      continue;
+    }
+
+    const apiKeyId = parseApiKeyIdFromExternalId(position.externalId);
+    if (!apiKeyId) {
+      result.unowned += 1;
+      continue;
+    }
+
+    const owners = ownersByApiKeyId.get(apiKeyId) ?? [];
+    if (owners.length === 0) {
+      result.unowned += 1;
+      continue;
+    }
+    if (owners.length > 1) {
+      result.ambiguous += 1;
+      continue;
+    }
+
+    const owner = owners[0];
+    const update = await prisma.position.updateMany({
+      where: {
+        id: position.id,
+        userId,
+        botId: null,
+      },
+      data: {
+        botId: owner.botId,
+        walletId: owner.walletId,
+        syncState: 'IN_SYNC',
+      },
+    });
+
+    if (update.count > 0) {
+      result.rebound += 1;
+    }
+  }
+
+  return result;
 };
 
 export const listExternalTakeoverStatuses = async (
