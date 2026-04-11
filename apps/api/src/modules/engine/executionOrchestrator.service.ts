@@ -62,7 +62,13 @@ export interface OrderFlowGateway {
 }
 
 export interface PositionFlowGateway {
-  getOpenPositionBySymbol(userId: string, symbol: string): Promise<Position | null>;
+  getOpenPositionBySymbol(input: {
+    userId: string;
+    symbol: string;
+    mode: RuntimeExecutionMode;
+    botId?: string;
+    walletId?: string;
+  }): Promise<Position | null>;
   createPosition(input: Prisma.PositionUncheckedCreateInput): Promise<Position>;
   closePosition(
     positionId: string,
@@ -73,6 +79,51 @@ export interface PositionFlowGateway {
     }
   ): Promise<void>;
 }
+
+export const buildOpenPositionLookupWhere = (input: {
+  userId: string;
+  symbol: string;
+  mode: RuntimeExecutionMode;
+  botId?: string;
+  walletId?: string;
+}): Prisma.PositionWhereInput => {
+  const normalizedSymbol = input.symbol.trim().toUpperCase();
+  const baseWhere: Prisma.PositionWhereInput = {
+    userId: input.userId,
+    symbol: normalizedSymbol,
+    status: 'OPEN',
+  };
+
+  if (input.mode === 'LIVE') {
+    if (input.walletId) {
+      return {
+        ...baseWhere,
+        walletId: input.walletId,
+      };
+    }
+    if (input.botId) {
+      return {
+        ...baseWhere,
+        botId: input.botId,
+      };
+    }
+    return baseWhere;
+  }
+
+  if (input.botId) {
+    return {
+      ...baseWhere,
+      botId: input.botId,
+    };
+  }
+  if (input.walletId) {
+    return {
+      ...baseWhere,
+      walletId: input.walletId,
+    };
+  }
+  return baseWhere;
+};
 
 export interface RuntimeExecutionEventGateway {
   writeEvent(input: {
@@ -172,9 +223,9 @@ const defaultOrderGateway: OrderFlowGateway = {
 };
 
 const defaultPositionGateway: PositionFlowGateway = {
-  getOpenPositionBySymbol: (userId, symbol) =>
+  getOpenPositionBySymbol: (input) =>
     prisma.position.findFirst({
-      where: { userId, symbol, status: 'OPEN' },
+      where: buildOpenPositionLookupWhere(input),
       orderBy: { openedAt: 'desc' },
     }),
   createPosition: (input) => prisma.position.create({ data: input }),
@@ -355,7 +406,13 @@ export const orchestrateRuntimeSignal = async (
   dedupeGateway: RuntimeExecutionDedupeGateway = defaultRuntimeExecutionDedupeGateway
 ): Promise<OrchestrationResult> => {
   const feeRate = resolveRuntimeTakerFeeRate(input.mode);
-  const openPosition = await positionGateway.getOpenPositionBySymbol(input.userId, input.symbol);
+  const openPosition = await positionGateway.getOpenPositionBySymbol({
+    userId: input.userId,
+    symbol: input.symbol,
+    mode: input.mode,
+    botId: input.botId,
+    walletId: input.walletId,
+  });
   const decision = decideExecutionAction(
     input.direction,
     openPosition

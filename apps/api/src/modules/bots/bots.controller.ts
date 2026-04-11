@@ -8,6 +8,7 @@ import * as botsService from './bots.service';
 import {
   AssistantDryRunSchema,
   AttachMarketGroupStrategySchema,
+  CloseBotRuntimePositionSchema,
   CreateBotMarketGroupSchema,
   ListBotRuntimePositionsQuerySchema,
   CreateBotSchema,
@@ -125,6 +126,30 @@ export const listBotRuntimeSessionPositions = async (req: Request, res: Response
     if (!positions) return sendError(res, 404, 'Not found');
     return res.json(positions);
   } catch (error) {
+    return sendValidationError(res, error);
+  }
+};
+
+export const closeBotRuntimeSessionPosition = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const payload = CloseBotRuntimePositionSchema.parse(req.body ?? {});
+    const { id, sessionId, positionId } = req.params;
+    const result = await botsService.closeBotRuntimeSessionPosition(
+      userId,
+      id,
+      sessionId,
+      positionId,
+      payload
+    );
+    if (!result) return sendError(res, 404, 'Not found');
+    return res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'POSITION_CLOSE_RISK_ACK_REQUIRED') {
+      return sendError(res, 400, 'riskAck must be true to close runtime position');
+    }
     return sendValidationError(res, error);
   }
 };

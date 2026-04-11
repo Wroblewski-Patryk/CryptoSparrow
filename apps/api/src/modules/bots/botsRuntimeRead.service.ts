@@ -4,8 +4,10 @@ import { runtimePositionAutomationService } from '../engine/runtimePositionAutom
 import { runtimePositionStateStore } from '../engine/runtimePositionState.store';
 import { resolveRuntimeReferenceBalance } from '../engine/runtimeCapitalContext.service';
 import { runtimeSignalLoop } from '../engine/runtimeSignalLoop.service';
+import { orchestrateRuntimeSignal } from '../engine/executionOrchestrator.service';
 import { getRuntimeTicker } from '../engine/runtimeTickerStore';
 import {
+  CloseBotRuntimePositionDto,
   ListBotRuntimeSymbolStatsQueryDto,
   ListBotRuntimePositionsQueryDto,
   ListBotRuntimeTradesQueryDto,
@@ -454,6 +456,18 @@ export const listBotRuntimeSessionTrades = async (
 ) => {
   const session = await getOwnedBotRuntimeSession(userId, botId, sessionId);
   if (!session) return null;
+  const botContext = await prisma.bot.findFirst({
+    where: { id: botId, userId },
+    select: {
+      mode: true,
+      walletId: true,
+    },
+  });
+  if (!botContext) return null;
+  const botScopedTradeWhere =
+    botContext.mode === 'LIVE' && botContext.walletId
+      ? { botId, walletId: botContext.walletId }
+      : { botId };
 
   const normalizedSymbol = query.symbol?.trim().toUpperCase();
   const normalizedSide = query.side?.trim().toUpperCase() as 'BUY' | 'SELL' | undefined;
@@ -515,7 +529,7 @@ export const listBotRuntimeSessionTrades = async (
           await prisma.position.findMany({
             where: {
               userId,
-              botId,
+              ...botScopedTradeWhere,
               managementMode: 'BOT_MANAGED',
               ...(normalizedSymbol ? { symbol: normalizedSymbol } : {}),
               openedAt: {
@@ -532,7 +546,7 @@ export const listBotRuntimeSessionTrades = async (
 
   const where = {
     userId,
-    botId,
+    ...botScopedTradeWhere,
     ...(normalizedSymbol ? { symbol: normalizedSymbol } : {}),
     ...(normalizedSide ? { side: normalizedSide } : {}),
     OR:
@@ -609,7 +623,7 @@ export const listBotRuntimeSessionTrades = async (
       prisma.trade.findMany({
         where: {
           userId,
-          botId,
+          ...botScopedTradeWhere,
           positionId: {
             in: positionIds,
           },
@@ -854,20 +868,6 @@ export const listBotRuntimeSessionPositions = async (
 
   const normalizedSymbol = query.symbol?.trim().toUpperCase();
   const windowEnd = resolveSessionWindowEnd(session);
-  const externalOwnerBySymbol = await resolveExternalPositionOwnerBySymbol(userId);
-  const ownedExternalSymbols = [...externalOwnerBySymbol.entries()]
-    .filter(([, ownerBotId]) => ownerBotId === botId)
-    .map(([symbol]) => symbol);
-  const externalOwnedWhere: Prisma.PositionWhereInput[] =
-    ownedExternalSymbols.length > 0
-      ? [
-          {
-            botId: null,
-            origin: 'EXCHANGE_SYNC',
-            symbol: { in: ownedExternalSymbols },
-          },
-        ]
-      : [];
   const botContext = await prisma.bot.findFirst({
     where: { id: botId, userId },
     select: {
@@ -879,6 +879,37 @@ export const listBotRuntimeSessionPositions = async (
     },
   });
   if (!botContext) return null;
+  const botScopedPositionWhere: Prisma.PositionWhereInput =
+    botContext.mode === 'LIVE' && botContext.walletId
+      ? { walletId: botContext.walletId }
+      : { botId };
+  const botScopedOrderWhere =
+    botContext.mode === 'LIVE' && botContext.walletId
+      ? { botId, walletId: botContext.walletId }
+      : { botId };
+  const botScopedTradeWhere =
+    botContext.mode === 'LIVE' && botContext.walletId
+      ? { botId, walletId: botContext.walletId }
+      : { botId };
+  const externalOwnerBySymbol = await resolveExternalPositionOwnerBySymbol(userId);
+  const ownedExternalSymbols = [...externalOwnerBySymbol.entries()]
+    .filter(([, ownerBotId]) => ownerBotId === botId)
+    .map(([symbol]) => symbol);
+  const externalOwnedWhere: Prisma.PositionWhereInput[] =
+    ownedExternalSymbols.length > 0
+      ? [
+          {
+            botId: null,
+            origin: 'EXCHANGE_SYNC',
+            symbol: { in: ownedExternalSymbols },
+            ...(botContext.mode === 'LIVE' && botContext.walletId
+              ? {
+                  OR: [{ walletId: botContext.walletId }, { walletId: null }],
+                }
+              : {}),
+          },
+        ]
+      : [];
   const botExchange = botContext.exchange ?? 'BINANCE';
   const botMarketType = botContext.marketType ?? 'FUTURES';
   const resolveRuntimeCapitalSummary = async (usedMargin: number) => {
@@ -913,7 +944,7 @@ export const listBotRuntimeSessionPositions = async (
         lte: windowEnd,
       },
       AND: [
-        { OR: [{ botId }, ...externalOwnedWhere] },
+        { OR: [botScopedPositionWhere, ...externalOwnedWhere] },
         { OR: [{ closedAt: null }, { closedAt: { gte: session.startedAt } }] },
       ],
     },
@@ -945,7 +976,7 @@ export const listBotRuntimeSessionPositions = async (
     const openOrders = await prisma.order.findMany({
       where: {
         userId,
-        botId,
+        ...botScopedOrderWhere,
         managementMode: 'BOT_MANAGED',
         status: {
           in: ['PENDING', 'OPEN', 'PARTIALLY_FILLED'],
@@ -1017,7 +1048,7 @@ export const listBotRuntimeSessionPositions = async (
     prisma.trade.findMany({
       where: {
         userId,
-        botId,
+        ...botScopedTradeWhere,
         positionId: { in: positionIds },
       },
       orderBy: [{ executedAt: 'asc' }, { createdAt: 'asc' }],
@@ -1044,7 +1075,7 @@ export const listBotRuntimeSessionPositions = async (
     prisma.order.findMany({
       where: {
         userId,
-        botId,
+        ...botScopedOrderWhere,
         managementMode: 'BOT_MANAGED',
         status: {
           in: ['PENDING', 'OPEN', 'PARTIALLY_FILLED'],
@@ -1273,4 +1304,87 @@ export const listBotRuntimeSessionPositions = async (
     openItems,
     historyItems,
   };
+};
+
+export const closeBotRuntimeSessionPosition = async (
+  userId: string,
+  botId: string,
+  sessionId: string,
+  positionId: string,
+  payload: CloseBotRuntimePositionDto
+): Promise<Awaited<ReturnType<typeof orchestrateRuntimeSignal>> | null> => {
+  const session = await getOwnedBotRuntimeSession(userId, botId, sessionId);
+  if (!session) return null;
+  if (!payload.riskAck) {
+    throw new Error('POSITION_CLOSE_RISK_ACK_REQUIRED');
+  }
+
+  const botContext = await prisma.bot.findFirst({
+    where: { id: botId, userId },
+    select: {
+      mode: true,
+      exchange: true,
+      marketType: true,
+      walletId: true,
+    },
+  });
+  if (!botContext) return null;
+
+  const position = await prisma.position.findFirst({
+    where: {
+      id: positionId,
+      userId,
+      status: 'OPEN',
+      managementMode: 'BOT_MANAGED',
+    },
+    select: {
+      id: true,
+      botId: true,
+      walletId: true,
+      strategyId: true,
+      symbol: true,
+      quantity: true,
+      entryPrice: true,
+      origin: true,
+    },
+  });
+  if (!position) return null;
+
+  if (botContext.walletId && position.walletId && position.walletId !== botContext.walletId) {
+    return null;
+  }
+
+  const directlyOwnedByBot = position.botId === botId;
+  let externallyOwnedByBot = false;
+  if (!directlyOwnedByBot && !position.botId && position.origin === 'EXCHANGE_SYNC') {
+    const externalOwnerBySymbol = await resolveExternalPositionOwnerBySymbol(userId);
+    externallyOwnedByBot = externalOwnerBySymbol.get(position.symbol) === botId;
+  }
+  if (!directlyOwnedByBot && !externallyOwnedByBot) return null;
+
+  const botExchange = botContext.exchange ?? 'BINANCE';
+  const botMarketType = botContext.marketType ?? 'FUTURES';
+  const liveTicker = getRuntimeTicker(position.symbol, {
+    exchange: botExchange,
+    marketType: botMarketType,
+  });
+  const fallbackMarkPrice = Number.isFinite(position.entryPrice) && position.entryPrice > 0 ? position.entryPrice : 1;
+  const markPrice =
+    liveTicker && Number.isFinite(liveTicker.lastPrice) && liveTicker.lastPrice > 0
+      ? liveTicker.lastPrice
+      : fallbackMarkPrice;
+
+  return orchestrateRuntimeSignal({
+    userId,
+    botId,
+    walletId: botContext.walletId ?? undefined,
+    runtimeSessionId: session.id,
+    strategyId: position.strategyId ?? undefined,
+    symbol: position.symbol,
+    direction: 'EXIT',
+    quantity: Math.max(0, position.quantity),
+    markPrice,
+    mode: botContext.mode,
+    reason: 'manual_dashboard_close_position',
+  });
 };

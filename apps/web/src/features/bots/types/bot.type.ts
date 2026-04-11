@@ -359,6 +359,13 @@ export type BotRuntimePositionsResponse = {
   historyItems: BotRuntimePositionItem[];
 };
 
+export type BotRuntimeClosePositionResponse = {
+  status: "closed" | "ignored";
+  reason?: string;
+  orderId?: string;
+  positionId?: string;
+};
+
 export type CreateBotInput = {
   name: string;
   walletId: string;

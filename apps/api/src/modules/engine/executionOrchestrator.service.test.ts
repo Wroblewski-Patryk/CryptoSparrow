@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  buildOpenPositionLookupWhere,
   orchestrateRuntimeSignal,
   OrderFlowGateway,
   RuntimeExecutionDedupeGateway,
@@ -84,6 +85,42 @@ const createDedupeGateway = (): RuntimeExecutionDedupeGateway => ({
   markFailed: vi.fn().mockResolvedValue(undefined),
 });
 
+describe('buildOpenPositionLookupWhere', () => {
+  it('scopes LIVE lookup by wallet when walletId is available', () => {
+    const where = buildOpenPositionLookupWhere({
+      userId: 'u1',
+      symbol: 'btcusdt',
+      mode: 'LIVE',
+      botId: 'bot-1',
+      walletId: 'wallet-live',
+    });
+
+    expect(where).toEqual({
+      userId: 'u1',
+      symbol: 'BTCUSDT',
+      status: 'OPEN',
+      walletId: 'wallet-live',
+    });
+  });
+
+  it('scopes PAPER lookup by bot id', () => {
+    const where = buildOpenPositionLookupWhere({
+      userId: 'u1',
+      symbol: 'ETHUSDT',
+      mode: 'PAPER',
+      botId: 'bot-paper',
+      walletId: 'wallet-paper',
+    });
+
+    expect(where).toEqual({
+      userId: 'u1',
+      symbol: 'ETHUSDT',
+      status: 'OPEN',
+      botId: 'bot-paper',
+    });
+  });
+});
+
 describe('orchestrateRuntimeSignal', () => {
   it('opens order and position for LONG signal', async () => {
     const orderGateway = createOrderGateway();
@@ -115,6 +152,13 @@ describe('orchestrateRuntimeSignal', () => {
       'u1',
       expect.objectContaining({ side: 'BUY', type: 'MARKET', riskAck: true })
     );
+    expect(positionGateway.getOpenPositionBySymbol).toHaveBeenCalledWith({
+      userId: 'u1',
+      symbol: 'BTCUSDT',
+      mode: 'PAPER',
+      botId: undefined,
+      walletId: undefined,
+    });
     expect(positionGateway.createPosition).toHaveBeenCalled();
     expect(orderGateway.linkOrderToPosition).toHaveBeenCalledWith('order-1', 'position-1');
     expect(tradeGateway.createTrade).toHaveBeenCalledWith(

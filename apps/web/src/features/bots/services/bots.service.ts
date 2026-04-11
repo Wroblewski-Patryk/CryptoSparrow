@@ -10,6 +10,7 @@ import {
   BotRuntimeSessionStatus,
   BotRuntimeSymbolStatsResponse,
   BotRuntimePositionsResponse,
+  BotRuntimeClosePositionResponse,
   BotRuntimeTradesResponse,
   BotSubagentConfig,
   CreateBotInput,
@@ -112,6 +113,19 @@ export const listBotRuntimeSessionPositions = async (
   const res = await api.get<BotRuntimePositionsResponse>(
     `/dashboard/bots/${botId}/runtime-sessions/${sessionId}/positions`,
     { params }
+  );
+  return res.data;
+};
+
+export const closeBotRuntimeSessionPosition = async (
+  botId: string,
+  sessionId: string,
+  positionId: string,
+  payload: { riskAck?: boolean } = { riskAck: true }
+): Promise<BotRuntimeClosePositionResponse> => {
+  const res = await api.post<BotRuntimeClosePositionResponse>(
+    `/dashboard/bots/${botId}/runtime-sessions/${sessionId}/positions/${positionId}/close`,
+    payload
   );
   return res.data;
 };

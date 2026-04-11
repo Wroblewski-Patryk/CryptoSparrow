@@ -10,6 +10,7 @@ const listBotRuntimeSessionsMock = vi.hoisted(() => vi.fn());
 const listBotRuntimeSessionSymbolStatsMock = vi.hoisted(() => vi.fn());
 const listBotRuntimeSessionPositionsMock = vi.hoisted(() => vi.fn());
 const listBotRuntimeSessionTradesMock = vi.hoisted(() => vi.fn());
+const closeBotRuntimeSessionPositionMock = vi.hoisted(() => vi.fn());
 const lookupCoinIconsMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../../../features/bots/services/bots.service", () => ({
@@ -19,6 +20,7 @@ vi.mock("../../../features/bots/services/bots.service", () => ({
   listBotRuntimeSessionSymbolStats: listBotRuntimeSessionSymbolStatsMock,
   listBotRuntimeSessionPositions: listBotRuntimeSessionPositionsMock,
   listBotRuntimeSessionTrades: listBotRuntimeSessionTradesMock,
+  closeBotRuntimeSessionPosition: closeBotRuntimeSessionPositionMock,
 }));
 
 vi.mock("../../../features/icons/services/icons.service", () => ({
@@ -32,6 +34,12 @@ describe("HomeLiveWidgets", () => {
     lookupCoinIconsMock.mockReset();
     lookupCoinIconsMock.mockResolvedValue(new Map());
     getBotRuntimeGraphMock.mockReset();
+    closeBotRuntimeSessionPositionMock.mockReset();
+    closeBotRuntimeSessionPositionMock.mockResolvedValue({
+      status: "closed",
+      positionId: "position-default",
+      orderId: "order-default",
+    });
   });
 
   const renderSubject = () => {
@@ -1037,6 +1045,158 @@ describe("HomeLiveWidgets", () => {
       expect(screen.getByRole("columnheader", { name: "Takeover" })).toBeInTheDocument();
       expect(screen.getByText("OWNED")).toBeInTheDocument();
       expect(screen.getAllByText("BNBUSDT").length).toBeGreaterThan(0);
+    });
+  });
+
+  it("closes open runtime position from dashboard table action", async () => {
+    listBotsMock.mockResolvedValue([
+      {
+        id: "bot-close-position",
+        name: "Close Position Bot",
+        mode: "LIVE",
+        paperStartBalance: 10000,
+        marketType: "FUTURES",
+        positionMode: "ONE_WAY",
+        strategyId: "str-close-position",
+        isActive: true,
+        liveOptIn: true,
+        maxOpenPositions: 2,
+      },
+    ]);
+
+    listBotRuntimeSessionsMock.mockResolvedValue([
+      {
+        id: "session-close-position",
+        botId: "bot-close-position",
+        mode: "LIVE",
+        status: "RUNNING",
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: null,
+        lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+        stopReason: null,
+        errorMessage: null,
+        createdAt: "2026-03-31T10:00:00.000Z",
+        updatedAt: "2026-03-31T10:05:00.000Z",
+        durationMs: 300000,
+        eventsCount: 1,
+        symbolsTracked: 1,
+        summary: {
+          totalSignals: 1,
+          dcaCount: 0,
+          closedTrades: 0,
+          realizedPnl: 0,
+        },
+      },
+    ]);
+
+    listBotRuntimeSessionSymbolStatsMock.mockResolvedValue({
+      sessionId: "session-close-position",
+      items: [],
+      summary: {
+        totalSignals: 0,
+        longEntries: 0,
+        shortEntries: 0,
+        exits: 0,
+        dcaCount: 0,
+        closedTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        totalPnl: 0,
+        grossProfit: 0,
+        grossLoss: 0,
+        feesPaid: 0,
+      },
+    });
+
+    listBotRuntimeSessionPositionsMock.mockResolvedValue({
+      sessionId: "session-close-position",
+      total: 1,
+      openCount: 1,
+      closedCount: 0,
+      openOrdersCount: 0,
+      showDynamicStopColumns: false,
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      summary: {
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        feesPaid: 0,
+        referenceBalance: 200,
+        freeCash: 194,
+      },
+      openOrders: [],
+      openItems: [
+        {
+          id: "pos-close-1",
+          origin: "BOT",
+          managementMode: "BOT_MANAGED",
+          syncState: "IN_SYNC",
+          takeoverStatus: "OWNED_AND_MANAGED",
+          symbol: "BTCUSDT",
+          side: "LONG",
+          status: "OPEN",
+          quantity: 0.01,
+          leverage: 10,
+          entryPrice: 68000,
+          entryNotional: 68,
+          exitPrice: null,
+          stopLoss: null,
+          takeProfit: null,
+          openedAt: "2026-03-31T10:03:00.000Z",
+          closedAt: null,
+          holdMs: 120000,
+          dcaCount: 0,
+          dcaPlannedLevels: [],
+          dcaExecutedLevels: [],
+          feesPaid: 0,
+          realizedPnl: 0,
+          unrealizedPnl: 0,
+          markPrice: 68000,
+          dynamicTtpStopLoss: null,
+          dynamicTslStopLoss: null,
+          firstTradeAt: "2026-03-31T10:03:00.000Z",
+          lastTradeAt: "2026-03-31T10:03:00.000Z",
+          tradesCount: 1,
+        },
+      ],
+      historyItems: [],
+    });
+
+    listBotRuntimeSessionTradesMock.mockResolvedValue({
+      sessionId: "session-close-position",
+      total: 0,
+      meta: {
+        page: 1,
+        pageSize: 25,
+        total: 0,
+        totalPages: 0,
+        hasPrev: false,
+        hasNext: false,
+      },
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      items: [],
+    });
+
+    renderSubject();
+    const openPositionsTab = await screen.findByRole("tab", { name: /Otwarte pozycje|Open positions/i });
+    fireEvent.click(openPositionsTab);
+    const closeButton = await screen.findByRole("button", { name: /Zamknij pozycje|Close position/i });
+    fireEvent.click(closeButton);
+
+    await waitFor(() => {
+      expect(closeBotRuntimeSessionPositionMock).toHaveBeenCalledWith(
+        "bot-close-position",
+        "session-close-position",
+        "pos-close-1",
+        { riskAck: true }
+      );
     });
   });
 

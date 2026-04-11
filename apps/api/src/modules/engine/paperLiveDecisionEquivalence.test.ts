@@ -66,7 +66,7 @@ const createInMemoryGateways = (mode: RuntimeExecutionMode) => {
   };
 
   const positionGateway: PositionFlowGateway = {
-    getOpenPositionBySymbol: async (_userId, symbol) => {
+    getOpenPositionBySymbol: async ({ symbol }) => {
       const found = positions.find((position) => position.symbol === symbol && position.status === 'OPEN');
       if (!found) return null;
       return {

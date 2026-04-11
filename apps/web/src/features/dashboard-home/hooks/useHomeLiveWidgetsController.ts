@@ -190,14 +190,16 @@ export const useHomeLiveWidgetsController = ({
       }
 
       const active = ordered.filter((x) => x.isActive);
-      if (active.length === 0) {
+      const liveActive = active.filter((x) => x.mode === "LIVE");
+      const activeScope = liveActive.length > 0 ? liveActive : active;
+      if (activeScope.length === 0) {
         setSnapshots([]);
         setSelectedBotId(null);
         setLastUpdatedAt(new Date().toISOString());
         setRefreshToken((x) => x + 1);
         return;
       }
-      const scope = active.slice(0, MAX_DASHBOARD_BOTS);
+      const scope = activeScope.slice(0, MAX_DASHBOARD_BOTS);
       const next = await Promise.all(
         scope.map(async (bot): Promise<RuntimeSnapshot> => {
           try {

@@ -3,6 +3,7 @@ import { createRateLimiter } from '../../middleware/rateLimit';
 import {
   createBot,
   createBotMarketGroup,
+  closeBotRuntimeSessionPosition,
   attachMarketGroupStrategy,
   deleteBot,
   deleteBotMarketGroup,
@@ -40,6 +41,11 @@ botsRouter.get('/:id/runtime-sessions', tradingReadLimiter, listBotRuntimeSessio
 botsRouter.get('/:id/runtime-sessions/:sessionId', tradingReadLimiter, getBotRuntimeSession);
 botsRouter.get('/:id/runtime-sessions/:sessionId/symbol-stats', tradingReadLimiter, listBotRuntimeSessionSymbolStats);
 botsRouter.get('/:id/runtime-sessions/:sessionId/positions', tradingReadLimiter, listBotRuntimeSessionPositions);
+botsRouter.post(
+  '/:id/runtime-sessions/:sessionId/positions/:positionId/close',
+  tradingWriteLimiter,
+  closeBotRuntimeSessionPosition
+);
 botsRouter.get('/:id/runtime-sessions/:sessionId/trades', tradingReadLimiter, listBotRuntimeSessionTrades);
 botsRouter.post('/', tradingWriteLimiter, createBot);
 botsRouter.put('/:id', tradingWriteLimiter, updateBot);

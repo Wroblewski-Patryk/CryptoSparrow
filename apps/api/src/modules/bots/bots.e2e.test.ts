@@ -1448,6 +1448,177 @@ describe('Bots module contract', () => {
     expect(positionsBRes.body.openItems).toHaveLength(0);
   });
 
+  it('isolates LIVE runtime positions by active wallet context to avoid paper/live mixing', async () => {
+    const ownerEmail = 'bot-runtime-live-wallet-scope@example.com';
+    const owner = await registerAndLogin(ownerEmail);
+    const ownerUser = await prisma.user.findUniqueOrThrow({ where: { email: ownerEmail } });
+
+    const liveApiKey = await prisma.apiKey.create({
+      data: {
+        userId: ownerUser.id,
+        label: 'Live Runtime Scope Key',
+        exchange: 'BINANCE',
+        apiKey: 'k',
+        apiSecret: 's',
+      },
+      select: { id: true },
+    });
+
+    const liveWalletId = await createWalletForContext(ownerEmail, {
+      mode: 'LIVE',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+      apiKeyId: liveApiKey.id,
+    });
+    const paperWalletId = await createWalletForContext(ownerEmail, {
+      mode: 'PAPER',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+    });
+
+    const strategyId = await createStrategy(owner, 'Runtime Live Wallet Scope Strategy');
+    const marketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
+    const botRes = await owner.post('/dashboard/bots').send(
+      createPayload({
+        strategyId,
+        marketGroupId,
+        walletId: liveWalletId,
+      })
+    );
+    expect(botRes.status).toBe(201);
+    const botId = botRes.body.id as string;
+
+    const session = await prisma.botRuntimeSession.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        mode: 'LIVE',
+        status: 'RUNNING',
+        startedAt: new Date('2026-04-10T02:00:00.000Z'),
+        lastHeartbeatAt: new Date('2026-04-10T02:05:00.000Z'),
+      },
+      select: { id: true },
+    });
+
+    await prisma.position.createMany({
+      data: [
+        {
+          userId: ownerUser.id,
+          botId,
+          walletId: paperWalletId,
+          strategyId,
+          symbol: 'ETHUSDT',
+          side: 'LONG',
+          status: 'OPEN',
+          entryPrice: 3000,
+          quantity: 0.2,
+          leverage: 2,
+          openedAt: new Date('2026-04-10T02:01:00.000Z'),
+          origin: 'BOT',
+          managementMode: 'BOT_MANAGED',
+          syncState: 'IN_SYNC',
+        },
+        {
+          userId: ownerUser.id,
+          botId,
+          walletId: liveWalletId,
+          strategyId,
+          symbol: 'BTCUSDT',
+          side: 'LONG',
+          status: 'OPEN',
+          entryPrice: 68000,
+          quantity: 0.01,
+          leverage: 2,
+          openedAt: new Date('2026-04-10T02:02:00.000Z'),
+          origin: 'BOT',
+          managementMode: 'BOT_MANAGED',
+          syncState: 'IN_SYNC',
+        },
+      ],
+    });
+
+    const positionsRes = await owner.get(
+      `/dashboard/bots/${botId}/runtime-sessions/${session.id}/positions`
+    );
+    expect(positionsRes.status).toBe(200);
+    expect(positionsRes.body.openItems).toHaveLength(1);
+    expect(positionsRes.body.openItems[0].symbol).toBe('BTCUSDT');
+    expect(positionsRes.body.openItems[0].origin).toBe('BOT');
+  });
+
+  it('closes open runtime position from dashboard endpoint and enforces risk acknowledgement', async () => {
+    const ownerEmail = 'bot-runtime-close-position-owner@example.com';
+    const owner = await registerAndLogin(ownerEmail);
+    const ownerUser = await prisma.user.findUniqueOrThrow({ where: { email: ownerEmail } });
+
+    const strategyId = await createStrategy(owner, 'Runtime Close Position Strategy');
+    const marketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
+    const botRes = await owner.post('/dashboard/bots').send(
+      createPayload({
+        strategyId,
+        marketGroupId,
+      })
+    );
+    expect(botRes.status).toBe(201);
+    const botId = botRes.body.id as string;
+    const walletId = botRes.body.walletId as string;
+
+    const session = await prisma.botRuntimeSession.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        mode: 'PAPER',
+        status: 'RUNNING',
+        startedAt: new Date('2026-04-10T03:00:00.000Z'),
+        lastHeartbeatAt: new Date('2026-04-10T03:05:00.000Z'),
+      },
+      select: { id: true },
+    });
+
+    const position = await prisma.position.create({
+      data: {
+        userId: ownerUser.id,
+        botId,
+        walletId,
+        strategyId,
+        symbol: 'BTCUSDT',
+        side: 'LONG',
+        status: 'OPEN',
+        entryPrice: 68000,
+        quantity: 0.01,
+        leverage: 2,
+        openedAt: new Date('2026-04-10T03:02:00.000Z'),
+        origin: 'BOT',
+        managementMode: 'BOT_MANAGED',
+        syncState: 'IN_SYNC',
+      },
+      select: { id: true },
+    });
+
+    const missingAckRes = await owner
+      .post(`/dashboard/bots/${botId}/runtime-sessions/${session.id}/positions/${position.id}/close`)
+      .send({ riskAck: false });
+    expect(missingAckRes.status).toBe(400);
+    expect(missingAckRes.body.error.message).toBe('riskAck must be true to close runtime position');
+
+    const closeRes = await owner
+      .post(`/dashboard/bots/${botId}/runtime-sessions/${session.id}/positions/${position.id}/close`)
+      .send({ riskAck: true });
+    expect(closeRes.status).toBe(200);
+    expect(closeRes.body.status).toBe('closed');
+    expect(closeRes.body.positionId).toBe(position.id);
+    expect(typeof closeRes.body.orderId).toBe('string');
+
+    const closedPosition = await prisma.position.findUniqueOrThrow({
+      where: { id: position.id },
+      select: { status: true, closedAt: true },
+    });
+    expect(closedPosition.status).toBe('CLOSED');
+    expect(closedPosition.closedAt).not.toBeNull();
+  });
+
   it('supports monitoring query filters for status/symbol/limit and enforces session time window', async () => {
     const ownerEmail = 'bot-runtime-monitoring-filters-owner@example.com';
     const owner = await registerAndLogin(ownerEmail);

@@ -136,6 +136,10 @@ export const ListBotRuntimePositionsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).default(200),
 });
 
+export const CloseBotRuntimePositionSchema = z.object({
+  riskAck: z.boolean().default(true),
+});
+
 export type CreateBotDto = z.infer<typeof CreateBotSchema>;
 export type UpdateBotDto = z.infer<typeof UpdateBotSchema>;
 export type ListBotsQueryDto = z.infer<typeof ListBotsQuerySchema>;
@@ -151,3 +155,4 @@ export type ListBotRuntimeSessionsQueryDto = z.infer<typeof ListBotRuntimeSessio
 export type ListBotRuntimeSymbolStatsQueryDto = z.infer<typeof ListBotRuntimeSymbolStatsQuerySchema>;
 export type ListBotRuntimeTradesQueryDto = z.infer<typeof ListBotRuntimeTradesQuerySchema>;
 export type ListBotRuntimePositionsQueryDto = z.infer<typeof ListBotRuntimePositionsQuerySchema>;
+export type CloseBotRuntimePositionDto = z.infer<typeof CloseBotRuntimePositionSchema>;

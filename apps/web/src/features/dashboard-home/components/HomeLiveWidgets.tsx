@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { LuBot, LuChartCandlestick, LuChartLine, LuChevronDown, LuListChecks, LuPackageOpen } from "react-icons/lu";
+import { toast } from "sonner";
 
 import { ErrorState } from "../../../ui/components/ViewState";
 import { SkeletonCardBlock, SkeletonKpiRow, SkeletonTableRows } from "../../../ui/components/loading";
@@ -18,6 +19,7 @@ import {
 } from "../../../features/bots/types/bot.type";
 import {
   getBotRuntimeGraph,
+  closeBotRuntimeSessionPosition,
   listBots,
   listBotRuntimeSessionPositions,
   listBotRuntimeSessionSymbolStats,
@@ -445,6 +447,7 @@ const maxDrawdown = (trades: BotRuntimeTrade[]) => {
 
 export default function HomeLiveWidgets() {
   const { t } = useI18n();
+  const [closingPositionId, setClosingPositionId] = useState<string | null>(null);
   const { formatCurrency, formatDateTime, formatNumber, formatPercent, formatTime } = useLocaleFormatting();
   const formatDcaPercent = useCallback(
     (value: number) => `${formatNumber(value, { maximumFractionDigits: 2 })}%`,
@@ -785,6 +788,52 @@ export default function HomeLiveWidgets() {
     hasPrev: false,
     hasNext: false,
   };
+  const closeActionBaseLabel = t("dashboard.home.runtime.actionClose");
+  const closePositionButtonLabel = closeActionBaseLabel === "Close" ? "Close position" : "Zamknij pozycje";
+  const closePositionPendingLabel = closeActionBaseLabel === "Close" ? "Closing..." : "Zamykanie...";
+  const closePositionNoSessionLabel =
+    closeActionBaseLabel === "Close" ? "No active runtime session selected." : "Brak aktywnej sesji runtime.";
+  const closePositionSuccessLabel = closeActionBaseLabel === "Close" ? "Position closed." : "Pozycja zamknieta.";
+  const closePositionIgnoredLabel =
+    closeActionBaseLabel === "Close"
+      ? "Position was not closed (already closed or not eligible)."
+      : "Pozycja nie zostala zamknieta (jest juz zamknieta lub nie kwalifikuje sie).";
+  const closePositionErrorLabel = closeActionBaseLabel === "Close" ? "Failed to close position." : "Nie udalo sie zamknac pozycji.";
+
+  const handleCloseRuntimePosition = useCallback(
+    async (position: OpenPositionWithLive) => {
+      const botId = selected?.bot.id;
+      const sessionId = selected?.session?.id;
+      if (!botId || !sessionId) {
+        toast.error(closePositionNoSessionLabel);
+        return;
+      }
+
+      setClosingPositionId(position.id);
+      try {
+        const result = await closeBotRuntimeSessionPosition(botId, sessionId, position.id, { riskAck: true });
+        if (result.status === "closed") {
+          toast.success(closePositionSuccessLabel);
+        } else {
+          toast.error(closePositionIgnoredLabel);
+        }
+        await load({ silent: true });
+      } catch {
+        toast.error(closePositionErrorLabel);
+      } finally {
+        setClosingPositionId((current) => (current === position.id ? null : current));
+      }
+    },
+    [
+      closePositionErrorLabel,
+      closePositionIgnoredLabel,
+      closePositionNoSessionLabel,
+      closePositionSuccessLabel,
+      load,
+      selected?.bot.id,
+      selected?.session?.id,
+    ]
+  );
 
   const openPositionsColumns = useMemo<DataTableColumn<OpenPositionWithLive>[]>(() => {
     const columns: DataTableColumn<OpenPositionWithLive>[] = [
@@ -875,6 +924,21 @@ export default function HomeLiveWidgets() {
         className: "text-[11px]",
         render: (row) => renderDcaLadderCell({ position: row, formatPercent: formatDcaPercent }),
       },
+      {
+        key: "actionClosePosition",
+        label: closePositionButtonLabel,
+        className: "text-right",
+        render: (row) => (
+          <button
+            type="button"
+            className="btn btn-error btn-outline btn-xs whitespace-nowrap"
+            onClick={() => void handleCloseRuntimePosition(row)}
+            disabled={closingPositionId === row.id}
+          >
+            {closingPositionId === row.id ? closePositionPendingLabel : closePositionButtonLabel}
+          </button>
+        ),
+      },
     ];
 
     if (showDynamicStopColumns) {
@@ -904,9 +968,13 @@ export default function HomeLiveWidgets() {
 
     return columns;
   }, [
+    closePositionButtonLabel,
+    closePositionPendingLabel,
+    closingPositionId,
     formatDcaPercent,
     formatPercent,
     formatRuntimeAmount,
+    handleCloseRuntimePosition,
     hasExternalTakeoverRows,
     resolveRuntimeIcon,
     runtimeIconsError,
