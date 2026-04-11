@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { LuActivity, LuBadgeCheck, LuWallet } from 'react-icons/lu';
@@ -11,6 +10,7 @@ import { EXCHANGE_OPTIONS, supportsExchangeCapability } from '@/features/exchang
 import { fetchApiKeys } from '@/features/profile/services/apiKeys.service';
 import type { ApiKey } from '@/features/profile/types/apiKey.type';
 import { ErrorState, LoadingState } from '@/ui/components/ViewState';
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 import { createWallet, getWallet, previewWalletBalance, updateWallet } from '../services/wallets.service';
 import type {
   CreateWalletInput,
@@ -19,12 +19,6 @@ import type {
   WalletBalancePreview,
   WalletMode,
 } from '../types/wallet.type';
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  const payload = err.response?.data as { error?: { message?: string }; message?: string } | undefined;
-  return payload?.error?.message ?? payload?.message;
-};
 
 type WalletFormState = {
   name: string;

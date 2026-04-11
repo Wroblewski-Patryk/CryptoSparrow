@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import axios from 'axios';
 import { LuChartLine, LuCircleDot, LuDatabase, LuListChecks, LuLoaderCircle, LuShieldCheck, LuSquare } from 'react-icons/lu';
 import {
   getBacktestRunTimeline,
@@ -17,11 +16,7 @@ import { getPatternMarkerBias, splitTimelineIndicatorSeriesForRendering } from '
 import { I18nContext } from '../../../i18n/I18nProvider';
 import { useBacktestRunCoreData } from '../hooks/useBacktestRunCoreData';
 import BacktestRunHeaderSection from './BacktestRunHeaderSection';
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  return (err.response?.data as { message?: string } | undefined)?.message;
-};
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 const pnlClass = (value: number | null) => {
   if (value == null) return '';

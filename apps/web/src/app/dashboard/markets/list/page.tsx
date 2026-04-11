@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
 import { PageTitle } from '@/ui/layout/dashboard/PageTitle';
 import { EmptyState, ErrorState, LoadingState } from '@/ui/components/ViewState';
 import MarketUniversesTable from '@/features/markets/components/MarketUniversesTable';
@@ -10,12 +9,7 @@ import { listMarketUniverses } from '@/features/markets/services/markets.service
 import { MarketUniverse } from '@/features/markets/types/marketUniverse.type';
 import { LuChartCandlestick, LuList } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  const response = err.response?.data as { error?: { message?: string }; message?: string } | undefined;
-  return response?.error?.message ?? response?.message;
-};
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 export default function MarketsListPage() {
   const { locale } = useI18n();

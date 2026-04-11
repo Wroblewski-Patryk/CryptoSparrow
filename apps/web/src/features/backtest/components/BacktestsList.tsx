@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
 import { toast } from "sonner";
 
 import {
@@ -21,13 +20,9 @@ import {
   listBacktestRunTrades,
 } from "../services/backtests.service";
 import { BacktestReport, BacktestRun, BacktestStatus, BacktestTrade } from "../types/backtest.type";
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 const statuses: Array<BacktestStatus | "ALL"> = ["ALL", "PENDING", "RUNNING", "COMPLETED", "FAILED", "CANCELED"];
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  return (err.response?.data as { message?: string } | undefined)?.message;
-};
 
 const pnlClass = (value: number | null) => {
   if (value == null) return "";

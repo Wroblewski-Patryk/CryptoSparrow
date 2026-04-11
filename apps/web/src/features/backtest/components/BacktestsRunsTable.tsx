@@ -1,7 +1,6 @@
 'use client';
 
 import { useContext, useMemo, useState } from 'react';
-import axios from 'axios';
 import { toast } from 'sonner';
 import { LuPencilLine, LuTrash2 } from 'react-icons/lu';
 import DataTable, { DataTableColumn } from '@/ui/components/DataTable';
@@ -11,6 +10,7 @@ import { useLocaleFormatting } from '@/i18n/useLocaleFormatting';
 import { BacktestRun, BacktestStatus } from '../types/backtest.type';
 import { I18nContext } from '../../../i18n/I18nProvider';
 import { deleteBacktestRun } from '../services/backtests.service';
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 type BacktestsRunsTableProps = {
   rows: BacktestRun[];
@@ -30,12 +30,6 @@ const getStatusLabel = (status: BacktestStatus, locale: 'pl' | 'en') => {
   if (status === 'COMPLETED') return locale === 'en' ? 'Completed' : 'Zakonczony';
   if (status === 'FAILED') return locale === 'en' ? 'Failed' : 'Niepowodzenie';
   return locale === 'en' ? 'Canceled' : 'Anulowany';
-};
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  const response = err.response?.data as { error?: { message?: string }; message?: string } | undefined;
-  return response?.error?.message ?? response?.message;
 };
 
 export default function BacktestsRunsTable({ rows, onDeleted }: BacktestsRunsTableProps) {

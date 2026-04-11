@@ -6,7 +6,8 @@ import { FieldWrapper, SelectField, TextInputField } from './FieldControls';
 import SearchableMultiSelect, { MultiSelectOption } from './SearchableMultiSelect';
 import { fetchMarketCatalog } from '../services/markets.service';
 import { CreateMarketUniverseInput, MarketCatalogEntry, MarketUniverse } from '../types/marketUniverse.type';
-import { getAxiosMessage, uniqueSortedSymbols } from '../utils/marketUniverseHelpers';
+import { uniqueSortedSymbols } from '../utils/marketUniverseHelpers';
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 import {
   EXCHANGE_OPTIONS,
   ExchangeOption,

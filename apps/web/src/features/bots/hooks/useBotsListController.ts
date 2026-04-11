@@ -1,7 +1,6 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
 import { toast } from "sonner";
 import { TranslationKey } from "../../../i18n/translations";
 import { listMarketUniverses } from "../../markets/services/markets.service";
@@ -12,15 +11,10 @@ import { listWallets } from "../../wallets/services/wallets.service";
 import { Wallet } from "../../wallets/types/wallet.type";
 import { createBot, deleteBot, listBots, updateBot } from "../services/bots.service";
 import { Bot, TradeMarket } from "../types/bot.type";
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 const LIVE_CONSENT_TEXT_VERSION = "mvp-v1";
 const DUPLICATE_ACTIVE_BOT_ERROR = "active bot already exists for this strategy + market group pair";
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  const response = err.response?.data as { error?: { message?: string }; message?: string } | undefined;
-  return response?.error?.message ?? response?.message;
-};
 
 const deriveStrategyMaxOpenPositions = (strategy: StrategyDto | null): number => {
   if (!strategy?.config || typeof strategy.config !== "object") return 1;

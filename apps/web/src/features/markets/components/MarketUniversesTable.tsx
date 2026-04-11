@@ -11,7 +11,8 @@ import ConfirmModal from '../../../ui/components/ConfirmModal';
 import { TableIconButtonAction, TableToneBadge } from '../../../ui/components/TableUi';
 import { deleteMarketUniverse, fetchMarketCatalog } from '../services/markets.service';
 import { MarketUniverse } from '../types/marketUniverse.type';
-import { getAxiosMessage, uniqueSortedSymbols } from '../utils/marketUniverseHelpers';
+import { uniqueSortedSymbols } from '../utils/marketUniverseHelpers';
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 const MARKET_UNIVERSE_ACTIVE_BOT_DELETE_ERROR =
   'market universe is used by active bot and cannot be deleted';

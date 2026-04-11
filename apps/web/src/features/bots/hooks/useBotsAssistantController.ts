@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
 import { toast } from "sonner";
 import { TranslationKey } from "../../../i18n/translations";
 import {
@@ -12,12 +11,7 @@ import {
   upsertBotSubagentConfig,
 } from "../services/bots.service";
 import { AssistantDecisionTrace, Bot, BotSubagentConfig } from "../types/bot.type";
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  const response = err.response?.data as { error?: { message?: string }; message?: string } | undefined;
-  return response?.error?.message ?? response?.message;
-};
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 const interpolateTemplate = (template: string, values: Record<string, string | number>) =>
   template.replace(/\{(\w+)\}/g, (_, token) => String(values[token] ?? ""));

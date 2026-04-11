@@ -1,7 +1,6 @@
 'use client';
 
 import { type FormEvent, useContext, useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
 import { toast } from 'sonner';
 import { listStrategies } from '../../strategies/api/strategies.api';
 import { StrategyDto } from '../../strategies/types/StrategyForm.type';
@@ -10,11 +9,7 @@ import { FieldWrapper, TextInputField } from '../../markets/components/FieldCont
 import { listMarketUniverses } from '../../markets/services/markets.service';
 import { MarketUniverse } from '../../markets/types/marketUniverse.type';
 import { I18nContext } from '../../../i18n/I18nProvider';
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  return (err.response?.data as { message?: string } | undefined)?.message;
-};
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 type BacktestCreateFormProps = {
   formId?: string;

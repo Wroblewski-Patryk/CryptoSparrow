@@ -1,19 +1,13 @@
 'use client';
 
 import { useCallback, useContext, useEffect, useState } from 'react';
-import axios from 'axios';
 import { EmptyState, ErrorState } from '@/ui/components/ViewState';
 import { SkeletonKpiRow, SkeletonTableRows } from '@/ui/components/loading';
 import BacktestsRunsTable from './BacktestsRunsTable';
 import { listBacktestRuns } from '../services/backtests.service';
 import { BacktestRun } from '../types/backtest.type';
 import { I18nContext } from '../../../i18n/I18nProvider';
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  const response = err.response?.data as { error?: { message?: string }; message?: string } | undefined;
-  return response?.error?.message ?? response?.message;
-};
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 export default function BacktestsListView() {
   const i18n = useContext(I18nContext);

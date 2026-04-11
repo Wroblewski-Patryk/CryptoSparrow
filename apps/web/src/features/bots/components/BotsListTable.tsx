@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
 import { toast } from "sonner";
 import { LuBot, LuLayoutDashboard, LuPencilLine, LuTrash2 } from "react-icons/lu";
 import { useRouter } from "next/navigation";
@@ -17,12 +16,7 @@ import { StrategyDto } from "@/features/strategies/types/StrategyForm.type";
 import { supportsExchangeCapability } from "@/features/exchanges/exchangeCapabilities";
 import { deleteBot, listBots } from "../services/bots.service";
 import { Bot } from "../types/bot.type";
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  const response = err.response?.data as { error?: { message?: string }; message?: string } | undefined;
-  return response?.error?.message ?? response?.message;
-};
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 export default function BotsListTable() {
   const { t } = useI18n();

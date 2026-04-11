@@ -2,19 +2,13 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import axios from 'axios';
 import { toast } from 'sonner';
 import { LuPencil, LuTrash2 } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
 import { deleteWallet } from '../services/wallets.service';
 import { Wallet } from '../types/wallet.type';
 import { dashboardRoutes } from '@/ui/layout/dashboard/dashboardRoutes';
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  const payload = err.response?.data as { message?: string } | undefined;
-  return payload?.message;
-};
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 type WalletsListTableProps = {
   rows: Wallet[];

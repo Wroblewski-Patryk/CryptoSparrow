@@ -1,22 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
 
 import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { getBacktestRunReport, listBacktestRuns } from "../../backtest/services/backtests.service";
 import { BacktestReport, BacktestRun } from "../../backtest/types/backtest.type";
 import { CrossModePerformanceRow, getCrossModePerformance } from "../services/reports.service";
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 type RunReportRow = {
   run: BacktestRun;
   report: BacktestReport;
-};
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  return (err.response?.data as { message?: string } | undefined)?.message;
 };
 
 const avg = (values: number[]) => {

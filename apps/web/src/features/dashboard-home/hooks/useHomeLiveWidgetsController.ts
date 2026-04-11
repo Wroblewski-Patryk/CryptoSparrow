@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import axios from "axios";
 import {
   Bot,
   BotRuntimeGraph,
@@ -11,6 +10,7 @@ import {
   BotRuntimeTradesResponse,
 } from "../../bots/types/bot.type";
 import { TranslationKey } from "../../../i18n/translations";
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 import type {
   RuntimeDataTab,
   RuntimeSnapshot,
@@ -33,9 +33,6 @@ const EMPTY_TRADE_FILTERS: TradeFiltersState = {
   from: "",
   to: "",
 };
-
-const getAxiosMessage = (err: unknown) =>
-  axios.isAxiosError(err) ? (err.response?.data as { message?: string } | undefined)?.message : undefined;
 
 const toTs = (v?: string | null) => {
   if (!v) return 0;

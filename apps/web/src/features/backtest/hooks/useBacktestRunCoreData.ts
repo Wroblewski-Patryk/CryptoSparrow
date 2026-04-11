@@ -11,19 +11,7 @@ import { BacktestReport, BacktestRun, BacktestTrade } from '../types/backtest.ty
 import { getStrategy } from '../../strategies/api/strategies.api';
 import { StrategyDto } from '../../strategies/types/StrategyForm.type';
 import { getMarketUniverse } from '../../markets/services/markets.service';
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  const payload = err.response?.data as
-    | {
-        message?: string;
-        error?: {
-          message?: string;
-        };
-      }
-    | undefined;
-  return payload?.error?.message ?? payload?.message;
-};
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 const BOOTSTRAP_RETRY_DELAY_MS = 1500;
 const MAX_BOOTSTRAP_RETRIES = 8;

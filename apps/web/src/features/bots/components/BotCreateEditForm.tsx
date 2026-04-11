@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
@@ -15,6 +14,7 @@ import { StrategyDto } from '@/features/strategies/types/StrategyForm.type';
 import { supportsExchangeCapability } from '@/features/exchanges/exchangeCapabilities';
 import { listWallets } from '@/features/wallets/services/wallets.service';
 import { Wallet } from '@/features/wallets/types/wallet.type';
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 import {
   createBot,
   getBot,
@@ -24,38 +24,6 @@ import {
 
 const LIVE_CONSENT_TEXT_VERSION = 'mvp-v1';
 const DUPLICATE_ACTIVE_BOT_ERROR = 'active bot already exists for this strategy + market group pair';
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  const payload = err.response?.data as
-    | {
-        message?: string;
-        error?: { message?: string; details?: Array<{ message?: string }> | unknown };
-      }
-    | undefined;
-
-  if (typeof payload?.message === 'string' && payload.message.trim()) {
-    return payload.message.trim();
-  }
-  if (typeof payload?.error?.message === 'string' && payload.error.message.trim()) {
-    return payload.error.message.trim();
-  }
-
-  if (Array.isArray(payload?.error?.details)) {
-    const detailMessages = payload.error.details
-      .map((item) =>
-        item && typeof item === 'object' && 'message' in item
-          ? (item as { message?: unknown }).message
-          : undefined
-      )
-      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
-    if (detailMessages.length > 0) {
-      return detailMessages.join('; ');
-    }
-  }
-
-  return undefined;
-};
 
 const deriveStrategyMaxOpenPositions = (strategy: StrategyDto | null): number => {
   if (!strategy?.config || typeof strategy.config !== 'object') return 1;

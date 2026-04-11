@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
 
 import {
   EmptyState,
@@ -13,6 +12,7 @@ import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { listLogs } from "../services/logs.service";
 import { AuditLogEntry } from "../types/log.type";
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 type AuditItem = {
   id: string;
@@ -23,11 +23,6 @@ type AuditItem = {
   details: string;
   actor?: string | null;
   metadata?: unknown;
-};
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  return (err.response?.data as { message?: string } | undefined)?.message;
 };
 
 const toAuditItem = (entry: AuditLogEntry): AuditItem => ({

@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import axios from "axios";
 import { TranslationKey } from "../../../i18n/translations";
 import { createMarketStreamEventSource } from "../../../lib/marketStream";
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 import {
   getBotRuntimeSession,
   listBotRuntimeSessionPositions,
@@ -33,12 +33,6 @@ type MonitorAggregateData = {
   symbolStats: BotRuntimeSymbolStatsResponse;
   positions: BotRuntimePositionsResponse;
   trades: BotRuntimeTradesResponse;
-};
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  const response = err.response?.data as { error?: { message?: string }; message?: string } | undefined;
-  return response?.error?.message ?? response?.message;
 };
 
 const normalizeSymbol = (value: string) => value.trim().toUpperCase();

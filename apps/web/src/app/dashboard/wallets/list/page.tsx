@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { LuList, LuWallet } from 'react-icons/lu';
 
@@ -12,12 +11,7 @@ import WalletsListTable from '@/features/wallets/components/WalletsListTable';
 import { listWallets } from '@/features/wallets/services/wallets.service';
 import { Wallet } from '@/features/wallets/types/wallet.type';
 import { dashboardRoutes } from '@/ui/layout/dashboard/dashboardRoutes';
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  const payload = err.response?.data as { message?: string } | undefined;
-  return payload?.message;
-};
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 export default function WalletsListPage() {
   const { locale } = useI18n();

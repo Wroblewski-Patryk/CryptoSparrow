@@ -2,7 +2,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LuTrash2, LuPencilLine } from "react-icons/lu";
-import axios from "axios";
 import { toast } from "sonner";
 import { deleteStrategy, listStrategies } from "../api/strategies.api";
 import { StrategyDto } from "../types/StrategyForm.type";
@@ -13,12 +12,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import DataTable, { DataTableColumn } from "@/ui/components/DataTable";
 import ConfirmModal from "@/ui/components/ConfirmModal";
 import { TableIconButtonAction } from "@/ui/components/TableUi";
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  const response = err.response?.data as { error?: { message?: string }; message?: string } | undefined;
-  return response?.error?.message ?? response?.message;
-};
+import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 export default function StrategiesList() {
   const { locale } = useI18n();
