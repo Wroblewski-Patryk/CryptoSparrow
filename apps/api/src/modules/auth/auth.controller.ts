@@ -4,6 +4,7 @@ import { RegisterSchema, LoginSchema } from './auth.types';
 import { sendValidationError } from '../../utils/formatZodError';
 import { sendError } from '../../utils/apiError';
 import { prisma } from '../../prisma/client';
+import { mapLoginError } from './auth.errors';
 import {
   getSessionJwtExpiresIn,
   getSessionTtlMs,
@@ -98,12 +99,8 @@ export const login = async (req: Request, res: Response) => {
       return sendValidationError(res, error);
     }
 
-    const errorMessage =
-      typeof error === 'object' && error !== null && 'message' in error
-        ? (error as { message?: string }).message
-        : 'Login failed';
-
-    return sendError(res, 401, errorMessage || 'Login failed');
+    const mapped = mapLoginError(error);
+    return sendError(res, mapped.status, mapped.message);
   }
 };
 

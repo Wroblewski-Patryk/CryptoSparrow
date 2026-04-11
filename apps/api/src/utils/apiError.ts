@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import { sanitizeErrorMessageForClient } from './errorExposure';
 
 type ErrorDetails = unknown;
 
@@ -8,11 +9,13 @@ export const sendError = (
   message: string,
   details?: ErrorDetails
 ) => {
+  const { message: safeMessage, redacted } = sanitizeErrorMessageForClient(status, message);
+
   const payload: { error: { message: string; details?: ErrorDetails } } = {
-    error: { message },
+    error: { message: safeMessage },
   };
 
-  if (details !== undefined) {
+  if (details !== undefined && !redacted) {
     payload.error.details = details;
   }
 
