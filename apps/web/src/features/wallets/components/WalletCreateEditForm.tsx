@@ -250,12 +250,10 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
     let cancelled = false;
 
     const loadBaseCurrencies = async () => {
-      const fallbackOptions = [...new Set(['USDT', normalizeSymbol(form.baseCurrency)].filter(Boolean))].sort((a, b) =>
-        a.localeCompare(b)
-      );
+      const fallbackOptions = ['USDT'];
 
       if (!supportsExchangeCapability(form.exchange, 'MARKET_CATALOG')) {
-        setBaseCurrencyOptions(fallbackOptions.length > 0 ? fallbackOptions : ['USDT']);
+        setBaseCurrencyOptions(fallbackOptions);
         setBaseCurrencyOptionsLoading(false);
         setBaseCurrencyOptionsError(null);
         return;
@@ -275,7 +273,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
         );
         const options = normalizedOptions.length > 0 ? normalizedOptions : fallbackOptions;
         const defaultBase = normalizeSymbol(catalog.baseCurrency) || options[0] || 'USDT';
-        setBaseCurrencyOptions(options.length > 0 ? options : ['USDT']);
+        setBaseCurrencyOptions(options);
         setForm((prev) => {
           const normalizedCurrent = normalizeSymbol(prev.baseCurrency);
           const nextBase = options.includes(normalizedCurrent) ? normalizedCurrent : defaultBase;
@@ -284,7 +282,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
         });
       } catch (err) {
         if (cancelled) return;
-        setBaseCurrencyOptions(fallbackOptions.length > 0 ? fallbackOptions : ['USDT']);
+        setBaseCurrencyOptions(fallbackOptions);
         setBaseCurrencyOptionsError(getAxiosMessage(err) ?? copy.baseCurrencyCatalogError);
       } finally {
         if (!cancelled) {

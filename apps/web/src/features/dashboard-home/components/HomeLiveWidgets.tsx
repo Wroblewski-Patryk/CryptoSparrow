@@ -914,6 +914,7 @@ export default function HomeLiveWidgets() {
     closePositionButtonLabel,
     closePositionPendingLabel,
     closingPositionId,
+    formatDateTimeWithSeconds,
     formatDcaPercent,
     formatPercent,
     formatRuntimeAmount,
