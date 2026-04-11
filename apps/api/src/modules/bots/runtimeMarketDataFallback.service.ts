@@ -1,7 +1,4 @@
-const normalizeSymbols = (symbols: string[]) =>
-  [...new Set(symbols.map((item) => item.trim().toUpperCase()).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b)
-  );
+import { normalizeSymbols } from '../../lib/symbols';
 
 const normalizeKlineInterval = (value?: string | null) => {
   if (!value) return '1m';
@@ -134,4 +131,3 @@ export const fetchFallbackTickerPrices = async (params: {
     return new Map<string, number>();
   }
 };
-

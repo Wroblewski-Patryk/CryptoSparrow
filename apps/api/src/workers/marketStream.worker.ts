@@ -1,9 +1,9 @@
 import { BinanceMarketStreamWorker } from '../modules/market-stream/binanceStream.service';
 import { publishMarketStreamEvent } from '../modules/market-stream/marketStreamFanout';
-import { getMarketCatalog } from '../modules/markets/markets.service';
-import { Exchange } from '@prisma/client';
 import { prisma } from '../prisma/client';
 import { bootstrapWorker } from './workerBootstrap';
+import { normalizeSymbols, resolveUniverseSymbols } from '../lib/symbols';
+import { resolveCatalogSymbolsForUniverse } from '../modules/markets/marketCatalogSymbolResolver.service';
 
 const parseCsv = (value: string | undefined, fallback: string[]) => {
   const items = value
@@ -24,78 +24,8 @@ const normalizeInterval = (value: string | null | undefined) => {
   return value.trim().toLowerCase();
 };
 
-const normalizeSymbols = (symbols: string[]) =>
-  [...new Set(symbols.map((item) => item.trim().toUpperCase()).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b)
-  );
-
-const resolveUniverseSymbols = (whitelist: string[], blacklist: string[]) => {
-  const normalizedWhitelist = normalizeSymbols(whitelist);
-  const blacklistSet = new Set(normalizeSymbols(blacklist));
-  return normalizedWhitelist.filter((symbol) => !blacklistSet.has(symbol));
-};
-
-const resolveMinQuoteVolumeFilter = (filterRules: unknown) => {
-  const parsedRules =
-    filterRules && typeof filterRules === 'object'
-      ? (filterRules as {
-          minQuoteVolumeEnabled?: unknown;
-          minQuoteVolume24h?: unknown;
-          minVolume24h?: unknown;
-        })
-      : null;
-  const enabled = parsedRules?.minQuoteVolumeEnabled === true;
-  const minRaw = Number(parsedRules?.minQuoteVolume24h ?? parsedRules?.minVolume24h ?? 0);
-  const min = Number.isFinite(minRaw) && minRaw > 0 ? minRaw : 0;
-  return { enabled, min };
-};
-
 const allowEmptyGroupCatalogFallback =
   process.env.MARKET_STREAM_ALLOW_EMPTY_GROUP_CATALOG_FALLBACK === 'true';
-
-const resolveCatalogSymbolsForUniverse = async (
-  universe: {
-    exchange: Exchange;
-    marketType: 'FUTURES' | 'SPOT';
-    baseCurrency: string;
-    filterRules: unknown;
-    blacklist: string[];
-  },
-  cache: Map<string, string[]>
-) => {
-  const volumeFilter = resolveMinQuoteVolumeFilter(universe.filterRules);
-  const cacheKey = [
-    universe.exchange,
-    universe.marketType,
-    universe.baseCurrency.toUpperCase(),
-    volumeFilter.enabled ? '1' : '0',
-    volumeFilter.min.toString(),
-    normalizeSymbols(universe.blacklist).join(','),
-  ].join('|');
-  const cached = cache.get(cacheKey);
-  if (cached) return cached;
-
-  try {
-    const catalog = await getMarketCatalog(
-      universe.baseCurrency,
-      universe.marketType,
-      universe.exchange
-    );
-    const blacklistSet = new Set(normalizeSymbols(universe.blacklist));
-    const symbols = normalizeSymbols(
-      catalog.markets
-        .filter((market) =>
-          volumeFilter.enabled ? (market.quoteVolume24h ?? 0) >= volumeFilter.min : true
-        )
-        .map((market) => market.symbol)
-    ).filter((symbol) => !blacklistSet.has(symbol));
-    cache.set(cacheKey, symbols);
-    return symbols;
-  } catch {
-    cache.set(cacheKey, []);
-    return [];
-  }
-};
 
 type StreamSubscriptions = {
   symbols: string[];
