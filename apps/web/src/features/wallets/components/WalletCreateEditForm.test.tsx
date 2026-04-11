@@ -8,6 +8,7 @@ const createWalletMock = vi.hoisted(() => vi.fn());
 const getWalletMock = vi.hoisted(() => vi.fn());
 const updateWalletMock = vi.hoisted(() => vi.fn());
 const previewWalletBalanceMock = vi.hoisted(() => vi.fn());
+const fetchMarketCatalogMock = vi.hoisted(() => vi.fn());
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -21,6 +22,10 @@ vi.mock('@/i18n/I18nProvider', () => ({
 
 vi.mock('@/features/profile/services/apiKeys.service', () => ({
   fetchApiKeys: fetchApiKeysMock,
+}));
+
+vi.mock('@/features/markets/services/markets.service', () => ({
+  fetchMarketCatalog: fetchMarketCatalogMock,
 }));
 
 vi.mock('../services/wallets.service', () => ({
@@ -38,6 +43,11 @@ describe('WalletCreateEditForm', () => {
     getWalletMock.mockReset();
     updateWalletMock.mockReset();
     previewWalletBalanceMock.mockReset();
+    fetchMarketCatalogMock.mockReset();
+    fetchMarketCatalogMock.mockResolvedValue({
+      baseCurrencies: ['USDT', 'USDC'],
+      baseCurrency: 'USDT',
+    });
   });
 
   it('loads live balance preview for selected API key in LIVE mode', async () => {
@@ -66,9 +76,7 @@ describe('WalletCreateEditForm', () => {
       expect(fetchApiKeysMock).toHaveBeenCalled();
     });
 
-    fireEvent.change(screen.getByLabelText('Tryb'), {
-      target: { value: 'LIVE' },
-    });
+    fireEvent.click(screen.getByRole('button', { name: 'LIVE' }));
 
     await waitFor(() => {
       expect(previewWalletBalanceMock).toHaveBeenCalledWith(

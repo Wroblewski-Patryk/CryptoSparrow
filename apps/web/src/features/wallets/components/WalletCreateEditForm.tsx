@@ -8,9 +8,11 @@ import { LuActivity, LuBadgeCheck, LuWallet } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
 import { EXCHANGE_OPTIONS, supportsExchangeCapability } from '@/features/exchanges/exchangeCapabilities';
 import { fetchApiKeys } from '@/features/profile/services/apiKeys.service';
+import { fetchMarketCatalog } from '@/features/markets/services/markets.service';
 import type { ApiKey } from '@/features/profile/types/apiKey.type';
 import { ErrorState, LoadingState } from '@/ui/components/ViewState';
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
+import { normalizeSymbol } from '@/lib/symbols';
 import { createWallet, getWallet, previewWalletBalance, updateWallet } from '../services/wallets.service';
 import type {
   CreateWalletInput,
@@ -62,13 +64,15 @@ const mapWalletToForm = (wallet: Wallet): WalletFormState => ({
 });
 
 const toPayload = (form: WalletFormState): CreateWalletInput => {
+  const baseCurrency = normalizeSymbol(form.baseCurrency) || 'USDT';
+
   if (form.mode === 'PAPER') {
     return {
       name: form.name.trim(),
       mode: form.mode,
       exchange: form.exchange,
       marketType: form.marketType,
-      baseCurrency: form.baseCurrency.trim().toUpperCase(),
+      baseCurrency,
       paperInitialBalance: form.paperInitialBalance,
       liveAllocationMode: null,
       liveAllocationValue: null,
@@ -81,7 +85,7 @@ const toPayload = (form: WalletFormState): CreateWalletInput => {
     mode: form.mode,
     exchange: form.exchange,
     marketType: form.marketType,
-    baseCurrency: form.baseCurrency.trim().toUpperCase(),
+    baseCurrency,
     paperInitialBalance: form.paperInitialBalance,
     liveAllocationMode: form.liveAllocationMode,
     liveAllocationValue: form.liveAllocationValue,
@@ -105,6 +109,9 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
   const [error, setError] = useState<string | null>(null);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [form, setForm] = useState<WalletFormState>(buildDefaultForm());
+  const [baseCurrencyOptions, setBaseCurrencyOptions] = useState<string[]>(['USDT']);
+  const [baseCurrencyOptionsLoading, setBaseCurrencyOptionsLoading] = useState(false);
+  const [baseCurrencyOptionsError, setBaseCurrencyOptionsError] = useState<string | null>(null);
   const [showValidation, setShowValidation] = useState(false);
 
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -129,9 +136,12 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
             exchange: 'Gielda',
             marketType: 'Rynek',
             baseCurrency: 'Waluta bazowa',
+            baseCurrencyLoading: 'Ladowanie walut bazowych...',
+            baseCurrencyCatalogError: 'Nie udalo sie pobrac walut bazowych z katalogu gieldy.',
             paperInitialBalance: 'Kwota startowa paper',
             liveAllocationMode: 'Tryb limitu LIVE',
             liveAllocationValue: 'Wartosc limitu LIVE',
+            liveAllocation: 'Alokacja LIVE',
             apiKey: 'Klucz API',
             selectedKey: 'Wybrany klucz',
             notSelected: 'Nie wybrano',
@@ -174,9 +184,12 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
             exchange: 'Exchange',
             marketType: 'Market type',
             baseCurrency: 'Base currency',
+            baseCurrencyLoading: 'Loading base currencies...',
+            baseCurrencyCatalogError: 'Could not fetch base currencies from exchange catalog.',
             paperInitialBalance: 'Paper start balance',
             liveAllocationMode: 'LIVE allocation mode',
             liveAllocationValue: 'LIVE allocation value',
+            liveAllocation: 'LIVE allocation',
             apiKey: 'API key',
             selectedKey: 'Selected key',
             notSelected: 'Not selected',
@@ -233,6 +246,68 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
     void loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadBaseCurrencies = async () => {
+      const fallbackOptions = [...new Set(['USDT', normalizeSymbol(form.baseCurrency)].filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b)
+      );
+
+      if (!supportsExchangeCapability(form.exchange, 'MARKET_CATALOG')) {
+        setBaseCurrencyOptions(fallbackOptions.length > 0 ? fallbackOptions : ['USDT']);
+        setBaseCurrencyOptionsLoading(false);
+        setBaseCurrencyOptionsError(null);
+        return;
+      }
+
+      setBaseCurrencyOptionsLoading(true);
+      setBaseCurrencyOptionsError(null);
+      try {
+        const catalog = await fetchMarketCatalog({
+          exchange: form.exchange,
+          marketType: form.marketType,
+        });
+        if (cancelled) return;
+
+        const normalizedOptions = [...new Set((catalog.baseCurrencies ?? []).map(normalizeSymbol).filter(Boolean))].sort(
+          (a, b) => a.localeCompare(b)
+        );
+        const options = normalizedOptions.length > 0 ? normalizedOptions : fallbackOptions;
+        const defaultBase = normalizeSymbol(catalog.baseCurrency) || options[0] || 'USDT';
+        setBaseCurrencyOptions(options.length > 0 ? options : ['USDT']);
+        setForm((prev) => {
+          const normalizedCurrent = normalizeSymbol(prev.baseCurrency);
+          const nextBase = options.includes(normalizedCurrent) ? normalizedCurrent : defaultBase;
+          if (normalizedCurrent === nextBase && prev.baseCurrency === nextBase) return prev;
+          return { ...prev, baseCurrency: nextBase };
+        });
+      } catch (err) {
+        if (cancelled) return;
+        setBaseCurrencyOptions(fallbackOptions.length > 0 ? fallbackOptions : ['USDT']);
+        setBaseCurrencyOptionsError(getAxiosMessage(err) ?? copy.baseCurrencyCatalogError);
+      } finally {
+        if (!cancelled) {
+          setBaseCurrencyOptionsLoading(false);
+        }
+      }
+    };
+
+    void loadBaseCurrencies();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [copy.baseCurrencyCatalogError, form.exchange, form.marketType]);
+
+  const resolvedBaseCurrencyOptions = useMemo(() => {
+    const current = normalizeSymbol(form.baseCurrency);
+    const options = [...new Set([...baseCurrencyOptions, current].filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b)
+    );
+    return options.length > 0 ? options : ['USDT'];
+  }, [baseCurrencyOptions, form.baseCurrency]);
+
   const compatibleApiKeys = useMemo(
     () => apiKeys.filter((item) => item.exchange === form.exchange),
     [apiKeys, form.exchange]
@@ -264,7 +339,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
     if (!form.name.trim()) {
       errors.name = copy.validationName;
     }
-    if (!form.baseCurrency.trim()) {
+    if (!normalizeSymbol(form.baseCurrency)) {
       errors.baseCurrency = copy.validationBaseCurrency;
     }
 
@@ -296,7 +371,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
       const data = await previewWalletBalance({
         exchange: form.exchange,
         marketType: form.marketType,
-        baseCurrency: form.baseCurrency.trim().toUpperCase(),
+        baseCurrency: normalizeSymbol(form.baseCurrency) || 'USDT',
         apiKeyId: form.apiKeyId,
       });
       setPreview(data);
@@ -394,17 +469,25 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
               {showValidation && fieldErrors.name ? <span className='text-xs text-error'>{fieldErrors.name}</span> : null}
             </label>
 
-            <label className='form-control gap-1'>
+            <div className='form-control gap-1'>
               <span className='label-text'>{copy.mode}</span>
-              <select
-                className='select select-bordered'
-                value={form.mode}
-                onChange={(event) => setForm((prev) => ({ ...prev, mode: event.target.value as WalletMode }))}
-              >
-                <option value='PAPER'>{copy.modePaper}</option>
-                <option value='LIVE'>{copy.modeLive}</option>
-              </select>
-            </label>
+              <div className='join'>
+                <button
+                  type='button'
+                  className={`btn join-item ${form.mode === 'PAPER' ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => setForm((prev) => ({ ...prev, mode: 'PAPER' }))}
+                >
+                  {copy.modePaper}
+                </button>
+                <button
+                  type='button'
+                  className={`btn join-item ${form.mode === 'LIVE' ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => setForm((prev) => ({ ...prev, mode: 'LIVE' }))}
+                >
+                  {copy.modeLive}
+                </button>
+              </div>
+            </div>
 
             <label className='form-control gap-1'>
               <span className='label-text'>{copy.exchange}</span>
@@ -439,29 +522,44 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
 
             <label className='form-control gap-1'>
               <span className='label-text'>{copy.baseCurrency}</span>
-              <input
-                className='input input-bordered'
+              <select
+                className='select select-bordered'
                 value={form.baseCurrency}
-                onChange={(event) => setForm((prev) => ({ ...prev, baseCurrency: event.target.value }))}
-              />
+                onChange={(event) => setForm((prev) => ({ ...prev, baseCurrency: normalizeSymbol(event.target.value) }))}
+                disabled={baseCurrencyOptionsLoading}
+              >
+                {resolvedBaseCurrencyOptions.map((currency) => (
+                  <option key={currency} value={currency}>
+                    {currency}
+                  </option>
+                ))}
+              </select>
+              {baseCurrencyOptionsLoading ? (
+                <span className='text-xs opacity-70'>{copy.baseCurrencyLoading}</span>
+              ) : null}
+              {baseCurrencyOptionsError ? (
+                <span className='text-xs text-warning'>{baseCurrencyOptionsError}</span>
+              ) : null}
               {showValidation && fieldErrors.baseCurrency ? (
                 <span className='text-xs text-error'>{fieldErrors.baseCurrency}</span>
               ) : null}
             </label>
 
-            <label className='form-control gap-1'>
-              <span className='label-text'>{copy.paperInitialBalance}</span>
-              <input
-                type='number'
-                min={0}
-                step={0.01}
-                className='input input-bordered'
-                value={form.paperInitialBalance}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, paperInitialBalance: Number(event.target.value) || 0 }))
-                }
-              />
-            </label>
+            {form.mode === 'PAPER' ? (
+              <label className='form-control gap-1'>
+                <span className='label-text'>{copy.paperInitialBalance}</span>
+                <input
+                  type='number'
+                  min={0}
+                  step={0.01}
+                  className='input input-bordered'
+                  value={form.paperInitialBalance}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, paperInitialBalance: Number(event.target.value) || 0 }))
+                  }
+                />
+              </label>
+            ) : null}
           </div>
         </section>
 
@@ -469,32 +567,30 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
           <section className='space-y-3 rounded-box border border-base-300/60 bg-base-100/80 p-4'>
             <h2 className='text-base font-semibold'>{copy.sectionLive}</h2>
             <div className='grid gap-3 md:grid-cols-2'>
-              <label className='form-control gap-1'>
-                <span className='label-text'>{copy.liveAllocationMode}</span>
-                <select
-                  className='select select-bordered'
-                  value={form.liveAllocationMode}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, liveAllocationMode: event.target.value as WalletAllocationMode }))
-                  }
-                >
-                  <option value='PERCENT'>{copy.allocPercent}</option>
-                  <option value='FIXED'>{copy.allocFixed}</option>
-                </select>
-              </label>
-
-              <label className='form-control gap-1'>
-                <span className='label-text'>{copy.liveAllocationValue}</span>
-                <input
-                  type='number'
-                  min={0.01}
-                  step={0.01}
-                  className='input input-bordered'
-                  value={form.liveAllocationValue}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, liveAllocationValue: Number(event.target.value) || 0 }))
-                  }
-                />
+              <label className='form-control gap-1 md:col-span-2'>
+                <span className='label-text'>{copy.liveAllocation}</span>
+                <div className='join'>
+                  <input
+                    type='number'
+                    min={0.01}
+                    step={0.01}
+                    className='input input-bordered join-item w-full'
+                    value={form.liveAllocationValue}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, liveAllocationValue: Number(event.target.value) || 0 }))
+                    }
+                  />
+                  <select
+                    className='select select-bordered join-item w-40'
+                    value={form.liveAllocationMode}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, liveAllocationMode: event.target.value as WalletAllocationMode }))
+                    }
+                  >
+                    <option value='PERCENT'>%</option>
+                    <option value='FIXED'>{normalizeSymbol(form.baseCurrency) || 'USDT'}</option>
+                  </select>
+                </div>
                 {showValidation && fieldErrors.liveAllocationValue ? (
                   <span className='text-xs text-error'>{fieldErrors.liveAllocationValue}</span>
                 ) : null}
@@ -556,17 +652,16 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
             </p>
             <p className='flex items-center justify-between gap-2'>
               <span className='opacity-65'>{copy.baseCurrency}</span>
-              <span className='font-semibold'>{form.baseCurrency.trim().toUpperCase() || '-'}</span>
+              <span className='font-semibold'>{normalizeSymbol(form.baseCurrency) || '-'}</span>
             </p>
             {form.mode === 'LIVE' ? (
               <>
                 <p className='flex items-center justify-between gap-2'>
-                  <span className='opacity-65'>{copy.liveAllocationMode}</span>
-                  <span className='font-semibold'>{form.liveAllocationMode}</span>
-                </p>
-                <p className='flex items-center justify-between gap-2'>
-                  <span className='opacity-65'>{copy.liveAllocationValue}</span>
-                  <span className='font-semibold'>{form.liveAllocationValue || '-'}</span>
+                  <span className='opacity-65'>{copy.liveAllocation}</span>
+                  <span className='font-semibold'>
+                    {form.liveAllocationValue || '-'}{' '}
+                    {form.liveAllocationMode === 'PERCENT' ? '%' : normalizeSymbol(form.baseCurrency) || 'USDT'}
+                  </span>
                 </p>
                 <p className='flex items-center justify-between gap-2'>
                   <span className='opacity-65'>{copy.selectedKey}</span>
