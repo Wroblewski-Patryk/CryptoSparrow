@@ -1,4 +1,5 @@
 import { prisma } from '../../prisma/client';
+import { getTimeframeIntervalMs, normalizeTimeframe } from './backtestTimeframe';
 
 export type BacktestMarketType = 'SPOT' | 'FUTURES';
 
@@ -39,21 +40,6 @@ const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
 const CANDLE_CACHE_TTL_MS = 20 * 60 * 1000;
 const useDbCandleCache = (process.env.BACKTEST_USE_DB_CANDLE_CACHE ?? 'true').toLowerCase() !== 'false';
 
-const timeframeIntervalMs: Record<string, number> = {
-  '1m': 60_000,
-  '3m': 180_000,
-  '5m': 300_000,
-  '15m': 900_000,
-  '30m': 1_800_000,
-  '1h': 3_600_000,
-  '2h': 7_200_000,
-  '4h': 14_400_000,
-  '6h': 21_600_000,
-  '8h': 28_800_000,
-  '12h': 43_200_000,
-  '1d': 86_400_000,
-};
-
 const candleCache = new Map<
   string,
   {
@@ -88,27 +74,10 @@ const getDbCandleDelegate = () =>
     };
   }).marketCandleCache;
 
-const normalizeTimeframe = (value: string) => {
-  const raw = value.trim().toLowerCase();
-  const aliases: Record<string, string> = {
-    '1 min': '1m',
-    '3 min': '3m',
-    '5 min': '5m',
-    '10 min': '10m',
-    '15 min': '15m',
-    '30 min': '30m',
-    '60 min': '1h',
-  };
-  return aliases[raw] ?? raw;
-};
-
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
-const getIntervalMs = (timeframe: string) =>
-  timeframeIntervalMs[normalizeTimeframe(timeframe)] ?? timeframeIntervalMs['5m'];
-
 const computeSourceWindowMs = (timeframe: string, maxCandles: number) => {
-  const intervalMs = getIntervalMs(timeframe);
+  const intervalMs = getTimeframeIntervalMs(timeframe);
   const requestedWindowMs = intervalMs * Math.max(1, maxCandles);
   const bufferedWindowMs = Math.ceil(requestedWindowMs * 1.15);
   return Math.max(TWO_WEEKS_MS, bufferedWindowMs);
@@ -228,7 +197,7 @@ export const fetchKlines = async (
       ? 'https://fapi.binance.com/fapi/v1/klines'
       : 'https://api.binance.com/api/v3/klines';
 
-  const intervalMs = getIntervalMs(timeframe);
+  const intervalMs = getTimeframeIntervalMs(timeframe);
   const candles: BacktestKlineCandle[] = [];
   let nextStartTime = startTimeByRange;
   let remaining = clamp(maxCandles, 1, 10_000);
