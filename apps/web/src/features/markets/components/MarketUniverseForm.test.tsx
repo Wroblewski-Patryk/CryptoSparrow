@@ -71,6 +71,52 @@ describe('MarketUniverseForm', () => {
     });
   });
 
+  it('keeps initial whitelist/blacklist selections visible in edit mode before user changes context', async () => {
+    fetchCatalogMock.mockResolvedValue({
+      source: 'BINANCE_PUBLIC',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+      baseCurrencies: ['USDT'],
+      totalAvailable: 1,
+      totalForBaseCurrency: 1,
+      markets: [
+        {
+          symbol: 'BTCUSDT',
+          displaySymbol: 'BTC/USDT',
+          baseAsset: 'BTC',
+          quoteAsset: 'USDT',
+          quoteVolume24h: 1000,
+          lastPrice: 68000,
+        },
+      ],
+    });
+
+    render(
+      <MarketUniverseForm
+        mode='edit'
+        initial={{
+          id: 'u-edit-1',
+          name: 'Ulubione',
+          marketType: 'FUTURES',
+          baseCurrency: 'USDT',
+          filterRules: { minQuoteVolumeEnabled: false },
+          whitelist: ['BTCUSDT'],
+          blacklist: ['ETHUSDT'],
+        }}
+        submitting={false}
+        onSubmit={async () => undefined}
+      />
+    );
+
+    await waitFor(() => {
+      expect(fetchCatalogMock).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Wybrano: 1').length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
   it('allows submitting placeholder exchange context without catalog symbols', async () => {
     fetchCatalogMock.mockRejectedValue({
       response: {

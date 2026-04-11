@@ -139,6 +139,19 @@ export default function MarketUniverseForm({
     () => supportsExchangeCapability(exchange, 'MARKET_CATALOG'),
     [exchange]
   );
+  const initialContextKey = useMemo(() => {
+    if (!initial) return null;
+    const exchangeKey = initial.exchange ?? 'BINANCE';
+    const marketTypeKey = initial.marketType ?? 'FUTURES';
+    const baseCurrencyKey = initial.baseCurrency?.trim().toUpperCase() ?? '';
+    return `${exchangeKey}|${marketTypeKey}|${baseCurrencyKey}`;
+  }, [initial]);
+  const currentContextKey = useMemo(
+    () => `${exchange}|${marketType}|${baseCurrency.trim().toUpperCase()}`,
+    [baseCurrency, exchange, marketType]
+  );
+  const shouldPreserveInitialSelections =
+    mode === 'edit' && initialContextKey != null && initialContextKey === currentContextKey;
 
   const maxQuoteVolume = useMemo(
     () => Math.max(...catalogMarkets.map((market) => market.quoteVolume24h ?? 0), 0),
@@ -172,10 +185,12 @@ export default function MarketUniverseForm({
   );
 
   useEffect(() => {
+    if (catalogLoading) return;
+    if (shouldPreserveInitialSelections) return;
     const valid = new Set(marketOptions.map((item) => item.value));
     setWhitelistSymbols((prev) => prev.filter((item) => valid.has(item)));
     setBlacklistSymbols((prev) => prev.filter((item) => valid.has(item)));
-  }, [marketOptions]);
+  }, [catalogLoading, marketOptions, shouldPreserveInitialSelections]);
 
   const availableSymbols = useMemo(() => marketOptions.map((option) => option.value), [marketOptions]);
 

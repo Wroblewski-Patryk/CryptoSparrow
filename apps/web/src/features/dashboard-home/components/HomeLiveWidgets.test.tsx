@@ -903,7 +903,7 @@ describe("HomeLiveWidgets", () => {
     });
   });
 
-  it("renders takeover badge column for imported exchange positions in runtime table", async () => {
+  it("does not render takeover column for imported exchange positions in runtime table", async () => {
     listBotsMock.mockResolvedValue([
       {
         id: "bot-takeover",
@@ -1042,8 +1042,8 @@ describe("HomeLiveWidgets", () => {
     renderSubject();
 
     await waitFor(() => {
-      expect(screen.getByRole("columnheader", { name: "Takeover" })).toBeInTheDocument();
-      expect(screen.getByText("OWNED")).toBeInTheDocument();
+      expect(screen.queryByRole("columnheader", { name: "Takeover" })).not.toBeInTheDocument();
+      expect(screen.queryByText("OWNED")).not.toBeInTheDocument();
       expect(screen.getAllByText("BNBUSDT").length).toBeGreaterThan(0);
     });
   });

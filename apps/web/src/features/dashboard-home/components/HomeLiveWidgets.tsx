@@ -162,22 +162,6 @@ const sessionBadge = (status?: string | null) => {
   return "badge-ghost";
 };
 
-const takeoverBadgeClass = (status?: string | null) => {
-  if (status === "OWNED_AND_MANAGED") return "badge-success badge-outline";
-  if (status === "MANUAL_ONLY") return "badge-secondary badge-outline";
-  if (status === "AMBIGUOUS") return "badge-warning badge-outline";
-  if (status === "UNOWNED") return "badge-error badge-outline";
-  return "badge-ghost";
-};
-
-const takeoverBadgeLabel = (status?: string | null) => {
-  if (status === "OWNED_AND_MANAGED") return "OWNED";
-  if (status === "MANUAL_ONLY") return "MANUAL";
-  if (status === "AMBIGUOUS") return "AMBIGUOUS";
-  if (status === "UNOWNED") return "UNOWNED";
-  return "-";
-};
-
 const normalizeDcaLevels = (levels?: number[] | null) =>
   (levels ?? []).filter((level) => Number.isFinite(level));
 
@@ -581,6 +565,8 @@ export default function HomeLiveWidgets() {
         trailingTakeProfitLevels: position.trailingTakeProfitLevels,
         stickyFavorableMoveByPosition,
       }),
+      runtimeBotId: selected.bot.id,
+      runtimeSessionId: selected.session?.id ?? null,
     }));
     const openQtyBySymbol = new Map<string, number>();
     const openUnrealizedBySymbol = new Map<string, number>();
@@ -667,11 +653,6 @@ export default function HomeLiveWidgets() {
       (row) => row.dynamicTtpStopLoss != null || row.dynamicTslStopLoss != null
     );
   }, [selected?.positions?.showDynamicStopColumns, selectedData?.open]);
-
-  const hasExternalTakeoverRows = useMemo(
-    () => (selectedData?.open ?? []).some((row) => row.origin === "EXCHANGE_SYNC"),
-    [selectedData?.open]
-  );
 
   const selectedRuntimeCapabilityAvailable = useMemo(() => {
     if (!selected) return true;
@@ -802,8 +783,8 @@ export default function HomeLiveWidgets() {
 
   const handleCloseRuntimePosition = useCallback(
     async (position: OpenPositionWithLive) => {
-      const botId = selected?.bot.id;
-      const sessionId = selected?.session?.id;
+      const botId = position.runtimeBotId ?? selected?.bot.id;
+      const sessionId = position.runtimeSessionId ?? selected?.session?.id;
       if (!botId || !sessionId) {
         toast.error(closePositionNoSessionLabel);
         return;
@@ -869,24 +850,6 @@ export default function HomeLiveWidgets() {
         accessor: (row) => row.side,
         render: (row) => <DirectionPill value={row.side} />,
       },
-      ...(hasExternalTakeoverRows
-        ? [
-            {
-              key: "takeoverStatus",
-              label: "Takeover",
-              sortable: true,
-              accessor: (row: OpenPositionWithLive) => row.takeoverStatus ?? "",
-              render: (row: OpenPositionWithLive) =>
-                row.origin === "EXCHANGE_SYNC" ? (
-                  <span className={`badge badge-xs ${takeoverBadgeClass(row.takeoverStatus ?? null)}`}>
-                    {takeoverBadgeLabel(row.takeoverStatus ?? null)}
-                  </span>
-                ) : (
-                  "-"
-                ),
-            } satisfies DataTableColumn<OpenPositionWithLive>,
-          ]
-        : []),
       {
         key: "margin",
         label: withRuntimeUnit(t("dashboard.home.runtime.margin")),
@@ -975,7 +938,6 @@ export default function HomeLiveWidgets() {
     formatPercent,
     formatRuntimeAmount,
     handleCloseRuntimePosition,
-    hasExternalTakeoverRows,
     resolveRuntimeIcon,
     runtimeIconsError,
     runtimeIconsLoading,

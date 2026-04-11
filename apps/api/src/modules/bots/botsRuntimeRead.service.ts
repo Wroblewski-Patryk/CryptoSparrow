@@ -881,7 +881,10 @@ export const listBotRuntimeSessionPositions = async (
   if (!botContext) return null;
   const botScopedPositionWhere: Prisma.PositionWhereInput =
     botContext.mode === 'LIVE' && botContext.walletId
-      ? { walletId: botContext.walletId }
+      ? {
+          botId,
+          OR: [{ walletId: botContext.walletId }, { walletId: null }],
+        }
       : { botId };
   const botScopedOrderWhere =
     botContext.mode === 'LIVE' && botContext.walletId
@@ -1348,10 +1351,12 @@ export const closeBotRuntimeSessionPosition = async (
       origin: true,
     },
   });
-  if (!position) return null;
+  if (!position) {
+    return { status: 'ignored', reason: 'no_open_position' };
+  }
 
   if (botContext.walletId && position.walletId && position.walletId !== botContext.walletId) {
-    return null;
+    return { status: 'ignored', reason: 'no_open_position' };
   }
 
   const directlyOwnedByBot = position.botId === botId;
@@ -1360,7 +1365,9 @@ export const closeBotRuntimeSessionPosition = async (
     const externalOwnerBySymbol = await resolveExternalPositionOwnerBySymbol(userId);
     externallyOwnedByBot = externalOwnerBySymbol.get(position.symbol) === botId;
   }
-  if (!directlyOwnedByBot && !externallyOwnedByBot) return null;
+  if (!directlyOwnedByBot && !externallyOwnedByBot) {
+    return { status: 'ignored', reason: 'no_open_position' };
+  }
 
   const botExchange = botContext.exchange ?? 'BINANCE';
   const botMarketType = botContext.marketType ?? 'FUTURES';

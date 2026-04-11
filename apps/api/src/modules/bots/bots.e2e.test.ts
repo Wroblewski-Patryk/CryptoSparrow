@@ -1570,7 +1570,9 @@ describe('Bots module contract', () => {
     });
 
     const strategyId = await createStrategy(owner, 'Runtime Live Wallet Scope Strategy');
+    const secondaryStrategyId = await createStrategy(owner, 'Runtime Live Wallet Scope Strategy B');
     const marketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
+    const secondaryMarketGroupId = await createMarketGroup(ownerEmail, 'FUTURES');
     const botRes = await owner.post('/dashboard/bots').send(
       createPayload({
         strategyId,
@@ -1580,6 +1582,15 @@ describe('Bots module contract', () => {
     );
     expect(botRes.status).toBe(201);
     const botId = botRes.body.id as string;
+    const secondaryBotRes = await owner.post('/dashboard/bots').send(
+      createPayload({
+        strategyId: secondaryStrategyId,
+        marketGroupId: secondaryMarketGroupId,
+        walletId: liveWalletId,
+      })
+    );
+    expect(secondaryBotRes.status).toBe(201);
+    const secondaryBotId = secondaryBotRes.body.id as string;
 
     const session = await prisma.botRuntimeSession.create({
       data: {
@@ -1607,6 +1618,22 @@ describe('Bots module contract', () => {
           quantity: 0.2,
           leverage: 2,
           openedAt: new Date('2026-04-10T02:01:00.000Z'),
+          origin: 'BOT',
+          managementMode: 'BOT_MANAGED',
+          syncState: 'IN_SYNC',
+        },
+        {
+          userId: ownerUser.id,
+          botId: secondaryBotId,
+          walletId: liveWalletId,
+          strategyId: secondaryStrategyId,
+          symbol: 'BNBUSDT',
+          side: 'LONG',
+          status: 'OPEN',
+          entryPrice: 580,
+          quantity: 0.2,
+          leverage: 2,
+          openedAt: new Date('2026-04-10T02:02:30.000Z'),
           origin: 'BOT',
           managementMode: 'BOT_MANAGED',
           syncState: 'IN_SYNC',
