@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import axios from 'axios';
 import { LuPencilLine, LuTrash2 } from 'react-icons/lu';
 import { useLocaleFormatting } from '../../../i18n/useLocaleFormatting';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -12,12 +11,7 @@ import ConfirmModal from '../../../ui/components/ConfirmModal';
 import { TableIconButtonAction, TableToneBadge } from '../../../ui/components/TableUi';
 import { deleteMarketUniverse, fetchMarketCatalog } from '../services/markets.service';
 import { MarketUniverse } from '../types/marketUniverse.type';
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  const response = err.response?.data as { error?: { message?: string }; message?: string } | undefined;
-  return response?.error?.message ?? response?.message;
-};
+import { getAxiosMessage, uniqueSortedSymbols } from '../utils/marketUniverseHelpers';
 
 const MARKET_UNIVERSE_ACTIVE_BOT_DELETE_ERROR =
   'market universe is used by active bot and cannot be deleted';
@@ -26,11 +20,6 @@ type MarketUniversesTableProps = {
   rows: MarketUniverse[];
   onDeleted: (id: string) => void;
 };
-
-const uniqueSorted = (values: string[]) =>
-  [...new Set(values.map((item) => item.trim().toUpperCase()).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b)
-  );
 
 type ResolvedTickers = {
   tickers: string[];
@@ -167,7 +156,7 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
           ? row.whitelist.filter((symbol) => availableSet.has(symbol))
           : availableSymbols;
         const blacklistSet = new Set(row.blacklist);
-        const tickers = uniqueSorted(include).filter((symbol) => !blacklistSet.has(symbol));
+        const tickers = uniqueSortedSymbols(include).filter((symbol) => !blacklistSet.has(symbol));
 
         nextMap[row.id] = { tickers, loading: false };
       }

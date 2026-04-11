@@ -1,12 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
 import { LuCheck, LuFilter, LuList } from 'react-icons/lu';
 import { FieldWrapper, SelectField, TextInputField } from './FieldControls';
 import SearchableMultiSelect, { MultiSelectOption } from './SearchableMultiSelect';
 import { fetchMarketCatalog } from '../services/markets.service';
 import { CreateMarketUniverseInput, MarketCatalogEntry, MarketUniverse } from '../types/marketUniverse.type';
+import { getAxiosMessage, uniqueSortedSymbols } from '../utils/marketUniverseHelpers';
 import {
   EXCHANGE_OPTIONS,
   ExchangeOption,
@@ -15,17 +15,6 @@ import {
 
 const MARKET_TYPES: Array<'SPOT' | 'FUTURES'> = ['SPOT', 'FUTURES'];
 const EXCHANGES: ExchangeOption[] = [...EXCHANGE_OPTIONS];
-
-const uniqueSorted = (values: string[]) =>
-  [...new Set(values.map((item) => item.trim().toUpperCase()).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b)
-  );
-
-const getAxiosMessage = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return undefined;
-  const response = err.response?.data as { error?: { message?: string }; message?: string } | undefined;
-  return response?.error?.message ?? response?.message;
-};
 
 const formatVolumeLabel = (value: number) => {
   if (!Number.isFinite(value) || value <= 0) return 'vol 24h: 0';
@@ -189,7 +178,7 @@ export default function MarketUniverseForm({
     [marketOptions]
   );
   const persistedSelectionOptions = useMemo<MultiSelectOption[]>(() => {
-    const savedSymbols = uniqueSorted([...whitelistSymbols, ...blacklistSymbols]);
+    const savedSymbols = uniqueSortedSymbols([...whitelistSymbols, ...blacklistSymbols]);
     return savedSymbols
       .filter((symbol) => !marketOptionSymbols.has(symbol))
       .map((symbol) => ({
@@ -216,7 +205,7 @@ export default function MarketUniverseForm({
   const previewSymbols = useMemo(() => {
     const include = whitelistSymbols.length > 0 ? whitelistSymbols : availableSymbols;
     const blacklistSet = new Set(blacklistSymbols);
-    return uniqueSorted(include).filter((symbol) => !blacklistSet.has(symbol));
+    return uniqueSortedSymbols(include).filter((symbol) => !blacklistSet.has(symbol));
   }, [availableSymbols, blacklistSymbols, whitelistSymbols]);
 
   const previewFiltered = useMemo(() => {
@@ -279,8 +268,8 @@ export default function MarketUniverseForm({
     setShowValidation(true);
     if (!canSubmit) return;
 
-    const mergedWhitelist = uniqueSorted(whitelistSymbols);
-    const mergedBlacklistSet = new Set(uniqueSorted(blacklistSymbols));
+    const mergedWhitelist = uniqueSortedSymbols(whitelistSymbols);
+    const mergedBlacklistSet = new Set(uniqueSortedSymbols(blacklistSymbols));
     const payloadWhitelist = mergedWhitelist.filter((symbol) => !mergedBlacklistSet.has(symbol));
     const payloadBlacklist = [...mergedBlacklistSet].sort((a, b) => a.localeCompare(b));
 
