@@ -12,6 +12,7 @@ import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { createMarketStreamEventSource } from "../../../lib/marketStream";
 import { normalizeSymbol } from "@/lib/symbols";
+import { toTimestamp } from "@/lib/time";
 import {
   BotRuntimePositionItem,
   BotRuntimePositionsResponse,
@@ -144,12 +145,6 @@ const RUNTIME_DATA_TABS: {
   { key: "OPEN_ORDERS", hash: "orders", labelKey: "dashboard.home.runtime.openOrdersTitle" },
   { key: "TRADE_HISTORY", hash: "history", labelKey: "dashboard.home.runtime.tradesHistoryTitlePaper" },
 ];
-
-const toTs = (v?: string | null) => {
-  if (!v) return 0;
-  const ts = new Date(v).getTime();
-  return Number.isNaN(ts) ? 0 : ts;
-};
 
 const interpolateTemplate = (template: string, values: Record<string, string | number>) =>
   template.replace(/\{(\w+)\}/g, (_, token) => String(values[token] ?? ""));
@@ -416,7 +411,7 @@ const resolveUnrealized = (item: RuntimeSnapshot | null) => {
 
 const maxDrawdown = (trades: BotRuntimeTrade[]) => {
   if (trades.length === 0) return { abs: 0, pct: null as number | null };
-  const sorted = [...trades].sort((a, b) => toTs(a.executedAt) - toTs(b.executedAt));
+  const sorted = [...trades].sort((a, b) => toTimestamp(a.executedAt) - toTimestamp(b.executedAt));
   let running = 0;
   let peak = 0;
   let dd = 0;
@@ -548,7 +543,7 @@ export default function HomeLiveWidgets() {
     if (!selected) return null;
     const session = selected.session;
     const symbolsBase = [...(selected.symbolStats?.items ?? [])].sort(
-      (a, b) => Math.max(toTs(b.lastSignalDecisionAt), toTs(b.lastSignalAt)) - Math.max(toTs(a.lastSignalDecisionAt), toTs(a.lastSignalAt))
+      (a, b) => Math.max(toTimestamp(b.lastSignalDecisionAt), toTimestamp(b.lastSignalAt)) - Math.max(toTimestamp(a.lastSignalDecisionAt), toTimestamp(a.lastSignalAt))
     );
     const streamPrices = new Map<string, number>(Object.entries(liveTickerPrices));
     const open = buildLiveOpenPositions(selected.positions, selected.symbolStats, streamPrices);

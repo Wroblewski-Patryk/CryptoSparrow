@@ -26,6 +26,7 @@ import { useBotsListController } from "../hooks/useBotsListController";
 import { useBotsAssistantController } from "../hooks/useBotsAssistantController";
 import { useBotsMonitoringController } from "../hooks/useBotsMonitoringController";
 import { normalizeSymbol } from "@/lib/symbols";
+import { toTimestamp } from "@/lib/time";
 
 const MONITOR_STALE_WARNING_AFTER_MS = 20_000;
 
@@ -123,12 +124,6 @@ const formatTradeFeeMeta = (trade: {
 
 const FIELD_WRAPPER_CLASS = "form-control gap-1";
 const META_CARD_CLASS = "rounded-box border border-base-300/60 bg-base-200/60 px-3 py-2";
-
-const toTimestamp = (value?: string | null) => {
-  if (!value) return 0;
-  const timestamp = new Date(value).getTime();
-  return Number.isFinite(timestamp) ? timestamp : 0;
-};
 
 type BotsManagementProps = {
   initialTab?: "bots" | "monitoring" | "assistant";
@@ -284,7 +279,7 @@ export default function BotsManagement({
 
   const monitorOperationalTrades = useMemo(() => {
     const items = [...(monitorTrades?.items ?? [])].sort(
-      (a, b) => new Date(a.executedAt).getTime() - new Date(b.executedAt).getTime()
+      (a, b) => toTimestamp(a.executedAt) - toTimestamp(b.executedAt)
     );
     let cumulativePnl = 0;
     return items.map((trade, index) => {

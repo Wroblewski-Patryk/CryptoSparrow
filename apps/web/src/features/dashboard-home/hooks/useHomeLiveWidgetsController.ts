@@ -12,6 +12,7 @@ import {
 import { TranslationKey } from "../../../i18n/translations";
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
 import { normalizeSymbol } from '@/lib/symbols';
+import { toTimestamp } from '@/lib/time';
 import type {
   RuntimeDataTab,
   RuntimeSnapshot,
@@ -35,18 +36,12 @@ const EMPTY_TRADE_FILTERS: TradeFiltersState = {
   to: "",
 };
 
-const toTs = (v?: string | null) => {
-  if (!v) return 0;
-  const ts = new Date(v).getTime();
-  return Number.isNaN(ts) ? 0 : ts;
-};
-
 const pickPrimarySession = (sessions: BotRuntimeSessionListItem[]) => {
   if (sessions.length === 0) return null;
   const byFreshestHeartbeat = (a: BotRuntimeSessionListItem, b: BotRuntimeSessionListItem) => {
-    const heartbeatDiff = toTs(b.lastHeartbeatAt) - toTs(a.lastHeartbeatAt);
+    const heartbeatDiff = toTimestamp(b.lastHeartbeatAt) - toTimestamp(a.lastHeartbeatAt);
     if (heartbeatDiff !== 0) return heartbeatDiff;
-    const startedDiff = toTs(b.startedAt) - toTs(a.startedAt);
+    const startedDiff = toTimestamp(b.startedAt) - toTimestamp(a.startedAt);
     if (startedDiff !== 0) return startedDiff;
     return b.id.localeCompare(a.id);
   };

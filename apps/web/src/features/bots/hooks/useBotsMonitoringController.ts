@@ -5,6 +5,7 @@ import { TranslationKey } from "../../../i18n/translations";
 import { createMarketStreamEventSource } from "../../../lib/marketStream";
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
 import { normalizeSymbol } from "@/lib/symbols";
+import { toTimestamp } from "@/lib/time";
 import {
   getBotRuntimeSession,
   listBotRuntimeSessionPositions,
@@ -34,12 +35,6 @@ type MonitorAggregateData = {
   symbolStats: BotRuntimeSymbolStatsResponse;
   positions: BotRuntimePositionsResponse;
   trades: BotRuntimeTradesResponse;
-};
-
-const toTimestamp = (value?: string | null) => {
-  if (!value) return 0;
-  const timestamp = new Date(value).getTime();
-  return Number.isFinite(timestamp) ? timestamp : 0;
 };
 
 const uniqueById = <T extends { id: string }>(items: T[]) => {
