@@ -439,4 +439,95 @@ describe('Positions takeover status API', () => {
     expect(bySymbol.get('BNBUSDT')?.takeoverStatus).toBe('AMBIGUOUS');
     expect(bySymbol.get('ADAUSDT')?.takeoverStatus).toBe('UNOWNED');
   });
+
+  it('rebinds BOT-origin open positions without owner when exactly one LIVE owner exists', async () => {
+    const email = 'positions-bot-origin-rebind@example.com';
+    const agent = await registerAndLogin(email);
+    const owner = await prisma.user.findUniqueOrThrow({
+      where: { email },
+      select: { id: true },
+    });
+
+    const createApiKeyRes = await agent.post('/dashboard/profile/apiKeys').send({
+      label: 'bot-origin-rebind',
+      exchange: 'BINANCE',
+      apiKey: `APIKEY_BOT_ORIGIN_${Date.now()}`,
+      apiSecret: `APISECRET_BOT_ORIGIN_${Date.now()}`,
+    });
+    expect(createApiKeyRes.status).toBe(201);
+    const apiKeyId = createApiKeyRes.body.id as string;
+
+    const wallet = await prisma.wallet.create({
+      data: {
+        userId: owner.id,
+        name: 'bot-origin-live-wallet',
+        mode: 'LIVE',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        paperInitialBalance: 10_000,
+        liveAllocationMode: 'PERCENT',
+        liveAllocationValue: 100,
+        apiKeyId,
+      },
+      select: { id: true },
+    });
+
+    const bot = await prisma.bot.create({
+      data: {
+        userId: owner.id,
+        name: 'bot-origin-live-bot',
+        mode: 'LIVE',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        positionMode: 'ONE_WAY',
+        isActive: true,
+        liveOptIn: true,
+        apiKeyId,
+        walletId: wallet.id,
+      },
+      select: { id: true },
+    });
+
+    const position = await prisma.position.create({
+      data: {
+        userId: owner.id,
+        origin: 'BOT',
+        managementMode: 'BOT_MANAGED',
+        syncState: 'IN_SYNC',
+        symbol: 'DOGEUSDT',
+        side: 'LONG',
+        status: 'OPEN',
+        entryPrice: 0.2,
+        quantity: 100,
+        leverage: 1,
+      },
+      select: { id: true },
+    });
+
+    const rebindRes = await agent.post('/dashboard/positions/takeover-rebind');
+    expect(rebindRes.status).toBe(200);
+    expect(rebindRes.body).toMatchObject({
+      scanned: 1,
+      rebound: 1,
+      ambiguous: 0,
+      unowned: 0,
+      skippedOwned: 0,
+      scannedByOrigin: {
+        EXCHANGE_SYNC: 0,
+        BOT: 1,
+      },
+      reboundByOrigin: {
+        EXCHANGE_SYNC: 0,
+        BOT: 1,
+      },
+    });
+
+    const updatedPosition = await prisma.position.findUniqueOrThrow({
+      where: { id: position.id },
+      select: { botId: true, walletId: true },
+    });
+    expect(updatedPosition.botId).toBe(bot.id);
+    expect(updatedPosition.walletId).toBe(wallet.id);
+  });
 });

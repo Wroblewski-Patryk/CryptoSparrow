@@ -72,6 +72,14 @@ export type ExternalTakeoverRebindResponse = {
   ambiguous: number;
   unowned: number;
   skippedOwned: number;
+  scannedByOrigin: {
+    EXCHANGE_SYNC: number;
+    BOT: number;
+  };
+  reboundByOrigin: {
+    EXCHANGE_SYNC: number;
+    BOT: number;
+  };
 };
 
 type ExchangePositionLike = {
@@ -428,13 +436,14 @@ export const rebindExternalTakeoverOwnership = async (
       where: {
         userId,
         status: 'OPEN',
-        origin: 'EXCHANGE_SYNC',
         managementMode: 'BOT_MANAGED',
+        origin: { in: ['EXCHANGE_SYNC', 'BOT'] },
       },
       select: {
         id: true,
         externalId: true,
         botId: true,
+        origin: true,
       },
     }),
     prisma.bot.findMany({
@@ -470,21 +479,42 @@ export const rebindExternalTakeoverOwnership = async (
     ambiguous: 0,
     unowned: 0,
     skippedOwned: 0,
+    scannedByOrigin: {
+      EXCHANGE_SYNC: 0,
+      BOT: 0,
+    },
+    reboundByOrigin: {
+      EXCHANGE_SYNC: 0,
+      BOT: 0,
+    },
   };
 
   for (const position of positions) {
+    if (position.origin === 'EXCHANGE_SYNC') {
+      result.scannedByOrigin.EXCHANGE_SYNC += 1;
+    } else if (position.origin === 'BOT') {
+      result.scannedByOrigin.BOT += 1;
+    }
+
     if (position.botId) {
       result.skippedOwned += 1;
       continue;
     }
 
-    const apiKeyId = parseApiKeyIdFromExternalId(position.externalId);
-    if (!apiKeyId) {
-      result.unowned += 1;
-      continue;
+    let owners: Array<{ botId: string; walletId: string }> = [];
+    if (position.origin === 'EXCHANGE_SYNC') {
+      const apiKeyId = parseApiKeyIdFromExternalId(position.externalId);
+      if (!apiKeyId) {
+        result.unowned += 1;
+        continue;
+      }
+      owners = ownersByApiKeyId.get(apiKeyId) ?? [];
+    } else if (position.origin === 'BOT') {
+      owners = eligibleBots
+        .filter((bot): bot is { id: string; walletId: string; apiKeyId: string | null } => Boolean(bot.walletId))
+        .map((bot) => ({ botId: bot.id, walletId: bot.walletId as string }));
     }
 
-    const owners = ownersByApiKeyId.get(apiKeyId) ?? [];
     if (owners.length === 0) {
       result.unowned += 1;
       continue;
@@ -510,6 +540,11 @@ export const rebindExternalTakeoverOwnership = async (
 
     if (update.count > 0) {
       result.rebound += 1;
+      if (position.origin === 'EXCHANGE_SYNC') {
+        result.reboundByOrigin.EXCHANGE_SYNC += 1;
+      } else if (position.origin === 'BOT') {
+        result.reboundByOrigin.BOT += 1;
+      }
     }
   }
 
