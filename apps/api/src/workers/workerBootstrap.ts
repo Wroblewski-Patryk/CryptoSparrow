@@ -1,4 +1,6 @@
 import type { QueueTuning } from '../queue/queueTuning';
+import { createModuleLogger } from '../lib/logger';
+
 type WorkerName = 'market-data' | 'backtest' | 'execution' | 'market-stream';
 
 type WorkerBootstrapConfig = {
@@ -8,17 +10,15 @@ type WorkerBootstrapConfig = {
   queueTuning?: QueueTuning;
 };
 
+const workerLoggers: Record<WorkerName, ReturnType<typeof createModuleLogger>> = {
+  'market-data': createModuleLogger('worker.market-data'),
+  backtest: createModuleLogger('worker.backtest'),
+  execution: createModuleLogger('worker.execution'),
+  'market-stream': createModuleLogger('worker.market-stream'),
+};
+
 const logWorkerEvent = (worker: WorkerName, event: string, extra?: Record<string, unknown>) => {
-  if (process.env.NODE_ENV === 'test') return;
-  console.log(
-    JSON.stringify({
-      level: 'info',
-      module: `worker.${worker}`,
-      event,
-      timestamp: new Date().toISOString(),
-      ...extra,
-    })
-  );
+  workerLoggers[worker].info(event, extra);
 };
 
 export const bootstrapWorker = (config: WorkerBootstrapConfig) => {

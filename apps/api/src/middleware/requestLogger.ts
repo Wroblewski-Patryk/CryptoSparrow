@@ -1,5 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { metricsStore } from '../observability/metrics';
+import { createModuleLogger } from '../lib/logger';
+
+const logger = createModuleLogger('http.request');
 
 export const requestLogger = (req: Request, res: Response, next: NextFunction) => {
   const startedAt = Date.now();
@@ -11,18 +14,12 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
       durationMs,
     });
 
-    const payload = {
-      event: 'http_request',
+    logger.info('http_request', {
       method: req.method,
       path: req.originalUrl,
       statusCode: res.statusCode,
       durationMs,
-      timestamp: new Date().toISOString(),
-    };
-
-    if (process.env.NODE_ENV !== 'test') {
-      console.log(JSON.stringify(payload));
-    }
+    });
   });
 
   return next();

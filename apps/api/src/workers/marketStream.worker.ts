@@ -4,6 +4,9 @@ import { prisma } from '../prisma/client';
 import { bootstrapWorker } from './workerBootstrap';
 import { normalizeSymbols, resolveUniverseSymbols } from '../lib/symbols';
 import { resolveCatalogSymbolsForUniverse } from '../modules/markets/marketCatalogSymbolResolver.service';
+import { createModuleLogger } from '../lib/logger';
+
+const logger = createModuleLogger('market-stream.bootstrap');
 
 const parseCsv = (value: string | undefined, fallback: string[]) => {
   const items = value
@@ -133,15 +136,10 @@ const resolveDynamicSubscriptions = async (): Promise<StreamSubscriptions> => {
         universeSymbols.length === 0 &&
         group.symbolGroup.marketUniverse != null
       ) {
-        console.warn(
-          JSON.stringify({
-            level: 'warn',
-            module: 'market-stream.bootstrap',
-            event: 'market_stream.group_skipped_empty_symbols',
-            reason: 'empty_symbol_group_or_whitelist',
-            fallbackAllowed: allowEmptyGroupCatalogFallback,
-          })
-        );
+        logger.warn('market_stream.group_skipped_empty_symbols', {
+          reason: 'empty_symbol_group_or_whitelist',
+          fallbackAllowed: allowEmptyGroupCatalogFallback,
+        });
       }
       for (const symbol of groupSymbols) {
         if (typeof symbol !== 'string' || symbol.trim().length === 0) continue;
@@ -173,14 +171,9 @@ let subscriptionFingerprint = '';
 let refreshTimer: NodeJS.Timeout | null = null;
 
 const logSubscriptionsRefreshFailure = (error: unknown) => {
-  console.error(
-    JSON.stringify({
-      level: 'error',
-      module: 'market-stream.bootstrap',
-      event: 'market_stream.subscriptions_refresh_failed',
-      error: error instanceof Error ? error.message : 'unknown_error',
-    })
-  );
+  logger.error('market_stream.subscriptions_refresh_failed', {
+    error: error instanceof Error ? error.message : 'unknown_error',
+  });
 };
 
 const startOrReloadWorker = async () => {
@@ -203,18 +196,13 @@ const startOrReloadWorker = async () => {
   worker.start();
   subscriptionFingerprint = nextFingerprint;
 
-  console.log(
-    JSON.stringify({
-      level: 'info',
-      module: 'market-stream.bootstrap',
-      event: 'market_stream.subscriptions_updated',
-      marketType,
-      symbolsCount: subscriptions.symbols.length,
-      intervalsCount: subscriptions.candleIntervals.length,
-      symbols: subscriptions.symbols,
-      intervals: subscriptions.candleIntervals,
-    })
-  );
+  logger.info('market_stream.subscriptions_updated', {
+    marketType,
+    symbolsCount: subscriptions.symbols.length,
+    intervalsCount: subscriptions.candleIntervals.length,
+    symbols: subscriptions.symbols,
+    intervals: subscriptions.candleIntervals,
+  });
 };
 
 const shutdown = async () => {

@@ -11,6 +11,9 @@ import { clientUrl, corsOrigins, serverPort, serverUrl } from './config/runtime'
 import { requireTrustedOrigin } from './middleware/requireTrustedOrigin';
 import { assertCriticalSecretsReadiness } from './config/criticalSecretsReadiness';
 import { createTrustProxyMatcher } from './config/proxyTrust';
+import { createModuleLogger } from './lib/logger';
+
+const logger = createModuleLogger('api.server');
 
 if (process.env.NODE_ENV !== 'test') {
   assertCriticalSecretsReadiness();
@@ -47,7 +50,12 @@ app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(serverPort, () => {
-    console.log(`Server running on ${serverUrl} (CORS: ${clientUrl})`);
+    logger.info('server_started', {
+      serverPort,
+      serverUrl,
+      corsClientUrl: clientUrl,
+      corsOriginsCount: corsOrigins.length,
+    });
   });
 }
 
