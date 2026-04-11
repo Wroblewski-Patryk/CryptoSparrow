@@ -37,6 +37,13 @@ export {
   upsertBotSubagentConfig,
 } from './botAssistant.service';
 
+export class BotModeSwitchBlockedError extends Error {
+  constructor(public readonly openPaperPositions: number) {
+    super('BOT_MODE_SWITCH_REQUIRES_CLOSED_PAPER_POSITIONS');
+    this.name = 'BotModeSwitchBlockedError';
+  }
+}
+
 export const listBots = async (userId: string, query: ListBotsQueryDto = {}) => {
   const bots = await listOwnedBotsWithStrategyProjection({
     userId,
@@ -231,6 +238,21 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
 
   if (nextMode === 'LIVE' && !resolvedApiKeyId) {
     throw new Error('WALLET_LIVE_API_KEY_REQUIRED');
+  }
+
+  const switchingPaperToLive = existing.mode === 'PAPER' && nextMode === 'LIVE';
+  if (switchingPaperToLive) {
+    const openPaperPositions = await prisma.position.count({
+      where: {
+        userId,
+        botId: existing.id,
+        status: 'OPEN',
+        managementMode: 'BOT_MANAGED',
+      },
+    });
+    if (openPaperPositions > 0) {
+      throw new BotModeSwitchBlockedError(openPaperPositions);
+    }
   }
 
   if (requestedMarketGroupId) {

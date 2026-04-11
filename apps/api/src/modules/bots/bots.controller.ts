@@ -227,6 +227,14 @@ export const updateBot = async (req: Request, res: Response) => {
     if (error instanceof Error && error.message === 'WALLET_LIVE_API_KEY_REQUIRED') {
       return sendError(res, 400, 'selected LIVE wallet requires linked exchange api key');
     }
+    if (error instanceof botsService.BotModeSwitchBlockedError) {
+      return sendError(
+        res,
+        409,
+        'cannot switch bot from PAPER to LIVE while paper positions are open; close them first',
+        { openPaperPositions: error.openPaperPositions }
+      );
+    }
     if (error instanceof Error && error.message === 'ACTIVE_BOT_STRATEGY_MARKET_GROUP_DUPLICATE') {
       return sendError(res, 409, 'active bot already exists for this strategy + market group pair');
     }
