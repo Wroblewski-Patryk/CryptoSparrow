@@ -1,5 +1,6 @@
 import { Exchange, PositionSide, Prisma } from '@prisma/client';
 import { getMarketCatalog } from '../markets/markets.service';
+import { normalizeSymbols } from '../../lib/symbols';
 import { decideExecutionAction } from '../engine/sharedExecutionCore';
 import { evaluatePositionManagement } from '../engine/positionManagement.service';
 import { PositionManagementInput } from '../engine/positionManagement.types';
@@ -123,11 +124,6 @@ type SymbolSimulationResult = {
 const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
-
-const uniqueSorted = (values: string[]) =>
-  [...new Set(values.map((value) => value.trim().toUpperCase()).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b)
-  );
 
 const inferBaseCurrencyFromSymbol = (symbol: string): string =>
   (symbol.match(/(USDT|USDC|BUSD|FDUSD|BTC|ETH|EUR|USD)$/)?.[1] ?? 'USDT').toUpperCase();
@@ -1059,7 +1055,7 @@ export const buildIndicatorSeriesForTests = (
 const runBacktestAsync = createBacktestRunJob({
   findBacktestRunById,
   safeUpdateRun,
-  uniqueSorted,
+  uniqueSorted: normalizeSymbols,
   computeAdaptiveMaxCandles,
   resolveIndicatorWarmupCandles,
   normalizeWalletRiskPercent,
@@ -1087,7 +1083,7 @@ type ResolvedRunContext = {
 
 const resolveSymbolsForRun = async (userId: string, data: CreateBacktestRunDto): Promise<ResolvedRunContext | null> => {
   if (!data.marketUniverseId) {
-    const symbols = uniqueSorted([data.symbol ?? 'BTCUSDT']);
+    const symbols = normalizeSymbols([data.symbol ?? 'BTCUSDT']);
     return {
       symbols,
       exchange: 'BINANCE',
@@ -1116,13 +1112,13 @@ const resolveSymbolsForRun = async (userId: string, data: CreateBacktestRunDto):
     : availableByRules;
   const blacklist = new Set(universe.blacklist);
 
-  const resolved = uniqueSorted(include).filter((symbol) => !blacklist.has(symbol));
+  const resolved = normalizeSymbols(include).filter((symbol) => !blacklist.has(symbol));
   if (resolved.length === 0 && data.symbol) {
     resolved.push(data.symbol.trim().toUpperCase());
   }
 
   return {
-    symbols: uniqueSorted(resolved),
+    symbols: normalizeSymbols(resolved),
     exchange: universe.exchange,
     marketType: universe.marketType as MarketType,
     baseCurrency: universe.baseCurrency,
@@ -1234,7 +1230,7 @@ export const getRunTimeline = async (
 
   const seed = ((run.seedConfig ?? {}) as Record<string, unknown>) ?? {};
   const runSymbols = Array.isArray(seed.symbols)
-    ? uniqueSorted((seed.symbols as string[]).map((item) => item.trim().toUpperCase()))
+    ? normalizeSymbols((seed.symbols as string[]).map((item) => item.trim().toUpperCase()))
     : [];
   const marketType = (seed.marketType === 'SPOT' ? 'SPOT' : 'FUTURES') as MarketType;
   const maxCandles = typeof seed.maxCandles === 'number'
