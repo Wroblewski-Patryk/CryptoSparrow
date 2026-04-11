@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { getLocalStorageItem, setLocalStorageItem } from '@/lib/storage';
 
 type IsometricModeToggleProps = {
   compact?: boolean;
@@ -13,7 +14,7 @@ export default function IsometricModeToggle({ compact = false }: IsometricModeTo
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = getLocalStorageItem(STORAGE_KEY);
     const initial = raw === 'true';
     setEnabled(initial);
     document.documentElement.classList.toggle(CLASS_NAME, initial);
@@ -22,7 +23,7 @@ export default function IsometricModeToggle({ compact = false }: IsometricModeTo
   const handleToggle = () => {
     setEnabled((current) => {
       const next = !current;
-      window.localStorage.setItem(STORAGE_KEY, `${next}`);
+      setLocalStorageItem(STORAGE_KEY, `${next}`);
       document.documentElement.classList.toggle(CLASS_NAME, next);
       return next;
     });

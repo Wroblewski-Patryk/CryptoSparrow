@@ -13,7 +13,12 @@ import { TranslationKey } from "../../../i18n/translations";
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
 import { normalizeSymbol } from '@/lib/symbols';
 import { toTimestamp } from '@/lib/time';
-import { getLocalStorageItem, setLocalStorageItem } from '@/lib/storage';
+import {
+  getLocalStorageItem,
+  getLocalStorageJsonItem,
+  setLocalStorageItem,
+  setLocalStorageJsonItem,
+} from '@/lib/storage';
 import type {
   RuntimeDataTab,
   RuntimeSnapshot,
@@ -41,20 +46,16 @@ const readStoredTradeSortPreference = (): {
   sortBy: TradeSortBy | null;
   sortDir: TradeSortDir;
 } => {
-  const raw = getLocalStorageItem(DASHBOARD_TRADE_HISTORY_SORT_STORAGE_KEY);
-  if (!raw) {
+  const parsed = getLocalStorageJsonItem<{ sortBy?: unknown; sortDir?: unknown }>(
+    DASHBOARD_TRADE_HISTORY_SORT_STORAGE_KEY
+  );
+  if (!parsed) {
     return { sortBy: null as TradeSortBy | null, sortDir: "asc" as TradeSortDir };
   }
-
-  try {
-    const parsed = JSON.parse(raw) as { sortBy?: unknown; sortDir?: unknown };
-    return {
-      sortBy: typeof parsed.sortBy === "string" ? (parsed.sortBy as TradeSortBy) : null,
-      sortDir: parsed.sortDir === "desc" ? "desc" : "asc",
-    };
-  } catch {
-    return { sortBy: null as TradeSortBy | null, sortDir: "asc" as TradeSortDir };
-  }
+  return {
+    sortBy: typeof parsed.sortBy === "string" ? (parsed.sortBy as TradeSortBy) : null,
+    sortDir: parsed.sortDir === "desc" ? "desc" : "asc",
+  };
 };
 
 const pickPrimarySession = (sessions: BotRuntimeSessionListItem[]) => {
@@ -417,13 +418,10 @@ export const useHomeLiveWidgetsController = ({
   };
 
   useEffect(() => {
-    setLocalStorageItem(
-      DASHBOARD_TRADE_HISTORY_SORT_STORAGE_KEY,
-      JSON.stringify({
-        sortBy: tradeSortBy,
-        sortDir: tradeSortDir,
-      })
-    );
+    setLocalStorageJsonItem(DASHBOARD_TRADE_HISTORY_SORT_STORAGE_KEY, {
+      sortBy: tradeSortBy,
+      sortDir: tradeSortDir,
+    });
   }, [tradeSortBy, tradeSortDir]);
 
   return {

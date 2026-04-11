@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import { HiOutlineMoon, HiOutlineSun } from 'react-icons/hi2';
 import { LuCheck } from 'react-icons/lu';
 import { useI18n } from '../../i18n/I18nProvider';
+import { getLocalStorageItem, setLocalStorageItem } from '../../lib/storage';
 import { useDetailsDropdown } from '../hooks/useDetailsDropdown';
 import {
   getHeaderDropdownLinkClass,
@@ -90,15 +91,15 @@ export default function ThemeSwitcher({
     setActiveTheme(normalized);
     setResolvedTheme(resolved);
     if (persist) {
-      window.localStorage.setItem('themePreference', normalized);
-      window.localStorage.setItem('theme', normalized);
+      setLocalStorageItem('themePreference', normalized);
+      setLocalStorageItem('theme', normalized);
     }
     if (detailsRef.current) detailsRef.current.open = false;
   };
 
   useEffect(() => {
     const fromStorage = normalizeThemePreference(
-      window.localStorage.getItem('themePreference') || window.localStorage.getItem('theme')
+      getLocalStorageItem('themePreference') || getLocalStorageItem('theme')
     );
     applyTheme(fromStorage, false);
   }, []);

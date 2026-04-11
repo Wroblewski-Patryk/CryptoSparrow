@@ -26,3 +26,21 @@ export const removeLocalStorageItem = (key: string): boolean => {
     return false;
   }
 };
+
+export const getLocalStorageJsonItem = <T>(key: string): T | null => {
+  const raw = getLocalStorageItem(key);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+};
+
+export const setLocalStorageJsonItem = (key: string, value: unknown): boolean => {
+  try {
+    return setLocalStorageItem(key, JSON.stringify(value));
+  } catch {
+    return false;
+  }
+};

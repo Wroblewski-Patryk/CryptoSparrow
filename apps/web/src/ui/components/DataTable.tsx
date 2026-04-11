@@ -3,6 +3,11 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { LuArrowDown, LuArrowUp, LuArrowUpDown, LuColumns3, LuSearch, LuSlidersHorizontal } from 'react-icons/lu';
 import api from '../../lib/api';
+import {
+  getLocalStorageJsonItem,
+  setLocalStorageItem,
+  setLocalStorageJsonItem,
+} from '../../lib/storage';
 import InlinePager from './InlinePager';
 
 export type DataTableColumn<T> = {
@@ -362,32 +367,20 @@ export default function DataTable<T>({
 
   useEffect(() => {
     if (manualSorting || !persistSortKey || typeof window === 'undefined') return;
-    try {
-      const raw = window.localStorage.getItem(persistSortKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as { sortKey?: unknown; sortDirection?: unknown };
-      const nextSortKey = typeof parsed.sortKey === 'string' ? parsed.sortKey : null;
-      const nextSortDirection = parsed.sortDirection === 'desc' ? 'desc' : 'asc';
-      setInternalSortKey(nextSortKey);
-      setInternalSortDirection(nextSortDirection);
-    } catch {
-      // Ignore malformed localStorage payloads.
-    }
+    const parsed = getLocalStorageJsonItem<{ sortKey?: unknown; sortDirection?: unknown }>(persistSortKey);
+    if (!parsed) return;
+    const nextSortKey = typeof parsed.sortKey === 'string' ? parsed.sortKey : null;
+    const nextSortDirection = parsed.sortDirection === 'desc' ? 'desc' : 'asc';
+    setInternalSortKey(nextSortKey);
+    setInternalSortDirection(nextSortDirection);
   }, [manualSorting, persistSortKey]);
 
   useEffect(() => {
     if (manualSorting || !persistSortKey || typeof window === 'undefined') return;
-    try {
-      window.localStorage.setItem(
-        persistSortKey,
-        JSON.stringify({
-          sortKey: internalSortKey,
-          sortDirection: internalSortDirection,
-        })
-      );
-    } catch {
-      // Ignore localStorage write failures.
-    }
+    setLocalStorageJsonItem(persistSortKey, {
+      sortKey: internalSortKey,
+      sortDirection: internalSortDirection,
+    });
   }, [internalSortDirection, internalSortKey, manualSorting, persistSortKey]);
 
   useEffect(() => {
@@ -401,16 +394,10 @@ export default function DataTable<T>({
     setColumnVisibilityReady(false);
 
     const localStorageKey = `datatable.columns.${columnVisibilityPreferenceKey}`;
-    const localPayload =
-      typeof window === 'undefined' ? null : window.localStorage.getItem(localStorageKey);
-    const parsedLocalPayload = (() => {
-      if (!localPayload) return null;
-      try {
-        return normalizeColumnVisibilityState(JSON.parse(localPayload), columnKeys);
-      } catch {
-        return null;
-      }
-    })();
+    const parsedLocalPayload = normalizeColumnVisibilityState(
+      getLocalStorageJsonItem(localStorageKey),
+      columnKeys
+    );
 
     const localResolved = mergeColumnVisibilityState(defaultColumnVisibility, parsedLocalPayload);
     setColumnVisibilityState(localResolved);
@@ -428,9 +415,7 @@ export default function DataTable<T>({
         setColumnVisibilityState(remoteResolved);
         lastSerializedColumnVisibilityRef.current = JSON.stringify(remoteResolved);
 
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem(localStorageKey, JSON.stringify(remoteResolved));
-        }
+        setLocalStorageJsonItem(localStorageKey, remoteResolved);
       } catch {
         // Ignore profile preference hydration failures.
       }
@@ -459,13 +444,7 @@ export default function DataTable<T>({
     if (serialized === lastSerializedColumnVisibilityRef.current) return;
 
     const localStorageKey = `datatable.columns.${columnVisibilityPreferenceKey}`;
-    try {
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(localStorageKey, serialized);
-      }
-    } catch {
-      // Ignore localStorage write failures.
-    }
+    setLocalStorageItem(localStorageKey, serialized);
 
     const timeout = window.setTimeout(async () => {
       try {
