@@ -1,0 +1,89 @@
+{
+  "checkedAt": "2026-04-11T14:48:55.096Z",
+  "scope": "LBT-15 local + VPS confidence pack",
+  "local": {
+    "apiTakeoverPack": {
+      "command": "pnpm --filter api test -- src/modules/positions/livePositionReconciliation.service.test.ts src/modules/positions/positions.takeover-status.e2e.test.ts src/modules/orders/orders.service.test.ts src/modules/engine/runtimeSignalLoop.service.test.ts",
+      "status": "PASS",
+      "testsPassed": 49,
+      "testFilesPassed": 4
+    },
+    "apiTypecheck": {
+      "command": "pnpm --filter api run typecheck",
+      "status": "PASS"
+    },
+    "webDashboardPack": {
+      "command": "pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx",
+      "status": "PASS",
+      "testsPassed": 9,
+      "testFilesPassed": 1
+    },
+    "webBuild": {
+      "command": "pnpm --filter web run build",
+      "status": "PASS"
+    }
+  },
+  "vpsPublic": {
+    "deploySmoke": {
+      "command": "pnpm run ops:deploy:smoke (api=https://api.soar.luckysparrow.ch, web=https://soar.luckysparrow.ch)",
+      "status": "FAIL",
+      "checks": {
+        "apiHealth": 200,
+        "apiReady": 200,
+        "webRoot": 200,
+        "workersHealth": 403
+      }
+    },
+    "runtimeFreshness": {
+      "command": "pnpm run ops:deploy:runtime-freshness -- --base-url https://api.soar.luckysparrow.ch --auth-email <provided> --auth-password <provided>",
+      "status": "FAIL",
+      "httpStatus": 403
+    },
+    "rollbackGuard": {
+      "command": "pnpm run ops:deploy:rollback-guard -- --base-url https://api.soar.luckysparrow.ch --auth-email <provided> --auth-password <provided>",
+      "status": "FAIL",
+      "decision": {
+        "shouldRollback": true,
+        "reasons": [
+          "runtime_freshness_endpoint_http_403",
+          "alerts_endpoint_http_403"
+        ]
+      }
+    }
+  },
+  "vpsApiContract": {
+    "takeoverStatus": {
+      "endpoint": "/dashboard/positions/takeover-status",
+      "httpStatus": 404
+    },
+    "runtimeSessions": {
+      "endpoint": "/dashboard/bots/runtime-sessions",
+      "httpStatus": 404
+    },
+    "openPositions": {
+      "endpoint": "/dashboard/positions?status=OPEN&page=1&limit=50",
+      "httpStatus": 200,
+      "rows": 10,
+      "sample": {
+        "origin": "EXCHANGE_SYNC",
+        "managementMode": "BOT_MANAGED",
+        "botId": null,
+        "walletId": null
+      }
+    }
+  },
+  "overall": {
+    "localConfidence": "PASS",
+    "vpsStrictGate": "FAIL",
+    "blockers": [
+      "Protected ops endpoints are not reachable from public route (403).",
+      "Takeover status API endpoint returns 404 on production target.",
+      "Imported OPEN exchange-synced rows visible in production sample still have null owner linkage."
+    ],
+    "recommendedAction": "Run Gate 3 checks from VPS private path and deploy API revision exposing takeover-status endpoint before final LIVE sign-off."
+  },
+  "relatedArtifacts": [
+    "docs/operations/binance-live-ops-verification-2026-04-10T17-58-18-111Z.md",
+    "docs/operations/_artifacts-binance-live-ops-check-2026-04-10T17-58-18-111Z.json"
+  ]
+}

@@ -75,6 +75,7 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
   const walletBaseline = paperStartBalance ?? liveFixedAllocation;
   const walletTotal =
     props.selectedData?.equity ??
+    (props.selectedData?.free != null ? Math.max(0, props.selectedData.free + selectedUsedMargin) : null) ??
     (walletBaseline != null ? Math.max(0, walletBaseline + selectedNet) : null);
   const walletFree =
     props.selectedData?.free ??

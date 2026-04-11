@@ -121,6 +121,15 @@ const formatAgeCompact = (ms: number) => {
   return `${hours}h ${minutes}m`;
 };
 
+const readFiniteNumber = (value: unknown) => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
 const RUNTIME_DATA_TABS: {
   key: RuntimeDataTab;
   hash: string;
@@ -149,6 +158,22 @@ const sessionBadge = (status?: string | null) => {
   if (status === "FAILED") return "badge-error";
   if (status === "CANCELED") return "badge-warning";
   return "badge-ghost";
+};
+
+const takeoverBadgeClass = (status?: string | null) => {
+  if (status === "OWNED_AND_MANAGED") return "badge-success badge-outline";
+  if (status === "MANUAL_ONLY") return "badge-secondary badge-outline";
+  if (status === "AMBIGUOUS") return "badge-warning badge-outline";
+  if (status === "UNOWNED") return "badge-error badge-outline";
+  return "badge-ghost";
+};
+
+const takeoverBadgeLabel = (status?: string | null) => {
+  if (status === "OWNED_AND_MANAGED") return "OWNED";
+  if (status === "MANUAL_ONLY") return "MANUAL";
+  if (status === "AMBIGUOUS") return "AMBIGUOUS";
+  if (status === "UNOWNED") return "UNOWNED";
+  return "-";
 };
 
 const normalizeDcaLevels = (levels?: number[] | null) =>
@@ -584,19 +609,31 @@ export default function HomeLiveWidgets() {
     const winRate = wins + losses > 0 ? (wins / (wins + losses)) * 100 : null;
     const paperInit = selected.bot.mode === "PAPER" ? selected.bot.paperStartBalance : null;
     const paperEquity = paperInit != null ? paperInit + net : null;
-    const liveReferenceBalanceRaw = selected.positions?.summary.referenceBalance;
+    const runtimeCapitalSummary = (selected.positions?.summary ?? {}) as Record<string, unknown>;
+    const liveReferenceBalanceRaw =
+      readFiniteNumber(runtimeCapitalSummary.referenceBalance) ??
+      readFiniteNumber(runtimeCapitalSummary.allocatedBalance) ??
+      readFiniteNumber(runtimeCapitalSummary.accountBalance) ??
+      readFiniteNumber(runtimeCapitalSummary.walletBalance);
     const liveReferenceBalance =
       selected.bot.mode === "LIVE" &&
-      typeof liveReferenceBalanceRaw === "number" &&
+      liveReferenceBalanceRaw != null &&
       Number.isFinite(liveReferenceBalanceRaw)
         ? Math.max(0, liveReferenceBalanceRaw)
         : null;
-    const equity = selected.bot.mode === "LIVE" ? liveReferenceBalance : paperEquity;
-    const liveFreeCashRaw = selected.positions?.summary.freeCash;
+    const liveFreeCashRaw =
+      readFiniteNumber(runtimeCapitalSummary.freeCash) ??
+      readFiniteNumber(runtimeCapitalSummary.availableBalance) ??
+      readFiniteNumber(runtimeCapitalSummary.freeBalance);
     const liveFreeCash =
-      selected.bot.mode === "LIVE" && typeof liveFreeCashRaw === "number" && Number.isFinite(liveFreeCashRaw)
+      selected.bot.mode === "LIVE" && liveFreeCashRaw != null && Number.isFinite(liveFreeCashRaw)
         ? Math.max(0, liveFreeCashRaw)
         : null;
+    const equityFromFreeAndUsedMargin =
+      selected.bot.mode === "LIVE" && liveReferenceBalance == null && liveFreeCash != null
+        ? Math.max(0, liveFreeCash + usedMargin)
+        : null;
+    const equity = selected.bot.mode === "LIVE" ? (liveReferenceBalance ?? equityFromFreeAndUsedMargin) : paperEquity;
     const free = liveFreeCash ?? (equity != null ? Math.max(0, equity - usedMargin) : null);
     const exposurePct = equity && equity > 0 ? (usedMargin / equity) * 100 : null;
     const trades = selectedTrades?.items ?? [];
@@ -627,6 +664,11 @@ export default function HomeLiveWidgets() {
       (row) => row.dynamicTtpStopLoss != null || row.dynamicTslStopLoss != null
     );
   }, [selected?.positions?.showDynamicStopColumns, selectedData?.open]);
+
+  const hasExternalTakeoverRows = useMemo(
+    () => (selectedData?.open ?? []).some((row) => row.origin === "EXCHANGE_SYNC"),
+    [selectedData?.open]
+  );
 
   const selectedRuntimeCapabilityAvailable = useMemo(() => {
     if (!selected) return true;
@@ -778,6 +820,24 @@ export default function HomeLiveWidgets() {
         accessor: (row) => row.side,
         render: (row) => <DirectionPill value={row.side} />,
       },
+      ...(hasExternalTakeoverRows
+        ? [
+            {
+              key: "takeoverStatus",
+              label: "Takeover",
+              sortable: true,
+              accessor: (row: OpenPositionWithLive) => row.takeoverStatus ?? "",
+              render: (row: OpenPositionWithLive) =>
+                row.origin === "EXCHANGE_SYNC" ? (
+                  <span className={`badge badge-xs ${takeoverBadgeClass(row.takeoverStatus ?? null)}`}>
+                    {takeoverBadgeLabel(row.takeoverStatus ?? null)}
+                  </span>
+                ) : (
+                  "-"
+                ),
+            } satisfies DataTableColumn<OpenPositionWithLive>,
+          ]
+        : []),
       {
         key: "margin",
         label: withRuntimeUnit(t("dashboard.home.runtime.margin")),
@@ -847,6 +907,7 @@ export default function HomeLiveWidgets() {
     formatDcaPercent,
     formatPercent,
     formatRuntimeAmount,
+    hasExternalTakeoverRows,
     resolveRuntimeIcon,
     runtimeIconsError,
     runtimeIconsLoading,

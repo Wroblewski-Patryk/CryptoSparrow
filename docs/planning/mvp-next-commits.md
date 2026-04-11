@@ -7,21 +7,29 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `LIV-08 refactor(web-markets): replace 3-step tabs in MarketUniverse form with single-view layout`
-- [x] `LIV-09 feat(web-markets-ux): improve MarketUniverse single-view UX/UI hierarchy and validation clarity`
-- [x] `LIV-10 chore(web-table): add px-3 empty-state padding in shared table no-data message`
-- [x] `LIV-11 feat(api-wallet): add authenticated wallet balance preview endpoint for configured exchange key`
-- [x] `LIV-12 feat(web-wallet): redesign wallet create/edit UX and show live balance preview when key is linked`
-- [x] `LIV-24 test(api-bots): finish walletId-first migration for full bots.e2e suite (remaining create/get/runtime assertions)`
+- none
 ## NEXT
-- [x] `LIV-13 audit(ia-exchanges): map Orders/Positions module parity against Bots Runtime capabilities and identify blocking gaps`
-- [x] `LIV-14 refactor(web-ia): remove Exchanges Orders/Positions module from dashboard menu after parity confirmation`
-- [x] `LIV-15 chore(web-cleanup): remove obsolete Exchanges Orders/Positions route files and dead frontend modules`
-- [x] `LIV-16 test(web-runtime-ia): add regression coverage for updated nav, runtime positions visibility, and wallet widgets`
+- none
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `LBT-15 qa(evidence): execute local + VPS confidence pack and attach artifacts`
+  - 2026-04-11: Executed fresh local confidence pack (`api` takeover/runtime tests + `api` typecheck + `web` dashboard regression + `web` production build) and attached artifact/report (`docs/operations/_artifacts-live-takeover-confidence-2026-04-11T14-48-55-096Z.json`, `docs/operations/live-takeover-confidence-pack-2026-04-11.md`). Local status PASS; strict VPS gate explicitly marked FAIL due protected ops `403` on public path and `takeover-status` route `404` on production target.
+- [x] `LBT-14 ops(runbook): publish local+VPS takeover verification checklist with strict smoke gates`
+  - 2026-04-11: Added strict fail-closed verification runbook for local + VPS takeover rollout (`docs/operations/live-takeover-local-vps-strict-smoke-checklist-2026-04-11.md`) with five mandatory gates and explicit private-route requirement for `/workers/*` and `/alerts`.
+- [x] `LBT-12 test(web): add dashboard/runtime regression coverage for imported position visibility and takeover state`
+  - 2026-04-11: Added/validated dashboard runtime regressions in `HomeLiveWidgets.test.tsx` for imported `EXCHANGE_SYNC` visibility, takeover badge rendering, and compatibility wallet fields; validated with `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` and `pnpm --filter web run build` (PASS).
+- [x] `LBT-11 fix(web-dashboard): ensure imported LIVE positions + wallet metrics render from owned runtime source (no '-' placeholders when data exists)`
+  - 2026-04-11: Hardened runtime wallet value fallbacks in `HomeLiveWidgets.tsx` + `RuntimeSidebarSection.tsx` (`referenceBalance/allocated/account/wallet`, `freeCash/available/freeBalance`, equity fallback from free+margin), eliminating placeholder drift when data is present.
+- [x] `LBT-09 feat(api-sync): add open-order reconciliation for BOT_MANAGED external lifecycle`
+  - 2026-04-11: Extended live reconciliation loop with exchange open-order sync for owned takeover contexts (`EXCHANGE_SYNC` + `BOT_MANAGED`): upsert open exchange orders into local synced order rows and close stale local synced opens (`syncState=ORPHAN_LOCAL`), validated with `pnpm --filter api test -- src/modules/positions/livePositionReconciliation.service.test.ts src/modules/positions/positions.takeover-status.e2e.test.ts` + `pnpm --filter api run typecheck` (PASS).
+- [x] `LBT-08 feat(api-live-exec): add optional per-symbol leverage/margin convergence before first live order`
+  - 2026-04-11: Added optional futures convergence in live order path (`setMarginMode`/`setLeverage`) with env kill-switch + strict mode + TTL convergence cache, plus connector-level open-order helper and regression tests (`ccxtFuturesConnector.service.test.ts`), validated with `pnpm --filter api test -- src/modules/exchange/ccxtFuturesConnector.service.test.ts src/modules/orders/orders.service.test.ts` + `pnpm --filter api run typecheck` (PASS).
+- [x] `LBT-10 feat(api-positions): add /dashboard/positions/takeover-status with deterministic OWNED/UNOWNED/AMBIGUOUS/MANUAL classification`
+  - 2026-04-11: Added authenticated takeover-status endpoint for open `EXCHANGE_SYNC` positions with per-status summary and item-level classification, including new e2e contract `positions.takeover-status.e2e.test.ts`; validated with `pnpm --filter api test -- src/modules/positions/positions.takeover-status.e2e.test.ts` and `pnpm --filter api run typecheck` (PASS).
+- [x] `LBT-10 feat(web-runtime): show takeover badge for exchange-synced positions in dashboard open-positions table`
+  - 2026-04-11: Extended runtime positions payload (`origin`, `managementMode`, `syncState`, `takeoverStatus`) and rendered takeover pill in `HomeLiveWidgets` open positions table for `EXCHANGE_SYNC` rows; validated with `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx`, `pnpm --filter web run typecheck`, and `pnpm --filter web run build` (PASS).
 - [x] `LIV-24 test(api-bots): complete walletId-first migration for full bots.e2e contract suite (mode/live-consent/api-key paths)`
   - 2026-04-11: Updated `bots.e2e` wallet provisioning and create/update payloads to wallet-first semantics (including LIVE wallet transitions, consent audit flow, and exchange/api-key compatibility assertions), then validated with `pnpm --filter api test -- src/modules/bots/bots.e2e.test.ts src/modules/bots/bots.duplicate-guard.e2e.test.ts src/modules/bots/bots.subscription-entitlements.e2e.test.ts src/modules/wallets/wallets.e2e.test.ts src/modules/positions/livePositionReconciliation.service.test.ts src/modules/engine/runtimeSignalLoop.service.test.ts` (PASS, 74 tests).
 - [x] `LIV-23 test(api-bots): migrate duplicate-guard and subscription-entitlements e2e suites to walletId-first bot contract`

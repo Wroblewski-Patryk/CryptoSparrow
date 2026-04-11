@@ -729,6 +729,317 @@ describe("HomeLiveWidgets", () => {
     });
   });
 
+  it("renders LIVE wallet metrics from compatibility capital fields when referenceBalance/freeCash are absent", async () => {
+    listBotsMock.mockResolvedValue([
+      {
+        id: "bot-live-wallet-compat",
+        name: "Live Wallet Compat",
+        mode: "LIVE",
+        paperStartBalance: 10000,
+        marketType: "FUTURES",
+        positionMode: "ONE_WAY",
+        strategyId: "str-live-wallet-compat",
+        isActive: true,
+        liveOptIn: true,
+        maxOpenPositions: 2,
+        wallet: {
+          id: "wallet-live-compat-1",
+          name: "Glowny",
+          mode: "LIVE",
+          exchange: "BINANCE",
+          marketType: "FUTURES",
+          baseCurrency: "USDT",
+          paperInitialBalance: 10000,
+          liveAllocationMode: "PERCENT",
+          liveAllocationValue: 100,
+        },
+      },
+    ]);
+
+    listBotRuntimeSessionsMock.mockResolvedValue([
+      {
+        id: "session-live-wallet-compat",
+        botId: "bot-live-wallet-compat",
+        mode: "LIVE",
+        status: "RUNNING",
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: null,
+        lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+        stopReason: null,
+        errorMessage: null,
+        createdAt: "2026-03-31T10:00:00.000Z",
+        updatedAt: "2026-03-31T10:05:00.000Z",
+        durationMs: 300000,
+        eventsCount: 2,
+        symbolsTracked: 1,
+        summary: {
+          totalSignals: 1,
+          dcaCount: 0,
+          closedTrades: 0,
+          realizedPnl: 0,
+        },
+      },
+    ]);
+
+    listBotRuntimeSessionSymbolStatsMock.mockResolvedValue({
+      sessionId: "session-live-wallet-compat",
+      items: [],
+      summary: {
+        totalSignals: 0,
+        longEntries: 0,
+        shortEntries: 0,
+        exits: 0,
+        dcaCount: 0,
+        closedTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        totalPnl: 0,
+        grossProfit: 0,
+        grossLoss: 0,
+        feesPaid: 0,
+      },
+    });
+
+    listBotRuntimeSessionPositionsMock.mockResolvedValue({
+      sessionId: "session-live-wallet-compat",
+      total: 1,
+      openCount: 1,
+      closedCount: 0,
+      openOrdersCount: 0,
+      showDynamicStopColumns: false,
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      summary: {
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        feesPaid: 0,
+        accountBalance: 200,
+        availableBalance: 194.2,
+      },
+      openOrders: [],
+      openItems: [
+        {
+          id: "pos-live-wallet-compat",
+          symbol: "BTCUSDT",
+          side: "LONG",
+          status: "OPEN",
+          quantity: 0.01,
+          leverage: 10,
+          entryPrice: 5800,
+          entryNotional: 58,
+          exitPrice: null,
+          stopLoss: null,
+          takeProfit: null,
+          openedAt: "2026-03-31T10:03:00.000Z",
+          closedAt: null,
+          holdMs: 120000,
+          dcaCount: 0,
+          dcaPlannedLevels: [],
+          dcaExecutedLevels: [],
+          feesPaid: 0,
+          realizedPnl: 0,
+          unrealizedPnl: 0,
+          markPrice: 5800,
+          dynamicTtpStopLoss: null,
+          dynamicTslStopLoss: null,
+          firstTradeAt: "2026-03-31T10:03:00.000Z",
+          lastTradeAt: "2026-03-31T10:03:00.000Z",
+          tradesCount: 1,
+        },
+      ],
+      historyItems: [],
+    });
+
+    listBotRuntimeSessionTradesMock.mockResolvedValue({
+      sessionId: "session-live-wallet-compat",
+      total: 0,
+      meta: {
+        page: 1,
+        pageSize: 25,
+        total: 0,
+        totalPages: 0,
+        hasPrev: false,
+        hasNext: false,
+      },
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      items: [],
+    });
+
+    renderSubject();
+
+    await waitFor(() => {
+      const portfolioLabel = screen
+        .getAllByText(/Portfel|Portfolio/i)
+        .find((node) => node.className.includes("inline-flex"));
+      const portfolioRow = portfolioLabel?.closest("p");
+      const portfolioValue = portfolioRow?.querySelector("span:last-child")?.textContent ?? "";
+      expect(portfolioValue).toMatch(/200/);
+      expect(portfolioValue.trim()).not.toBe("-");
+
+      const freeFundsCard = screen.getByText(/Wolne srodki|Free funds/i).closest("div");
+      const freeFundsValue = freeFundsCard?.querySelector("p.text-xs.font-semibold")?.textContent ?? "";
+      expect(freeFundsValue).toMatch(/194/);
+      expect(freeFundsValue.trim()).not.toBe("-");
+
+      const inPositionsCard = screen.getByText(/W pozycjach|In positions/i).closest("div");
+      const inPositionsValue = inPositionsCard?.querySelector("p.text-xs.font-semibold")?.textContent ?? "";
+      expect(inPositionsValue).toMatch(/5/);
+      expect(inPositionsValue.trim()).not.toBe("-");
+    });
+  });
+
+  it("renders takeover badge column for imported exchange positions in runtime table", async () => {
+    listBotsMock.mockResolvedValue([
+      {
+        id: "bot-takeover",
+        name: "Takeover Bot",
+        mode: "LIVE",
+        paperStartBalance: 10000,
+        marketType: "FUTURES",
+        positionMode: "ONE_WAY",
+        strategyId: "str-takeover",
+        isActive: true,
+        liveOptIn: true,
+        maxOpenPositions: 2,
+      },
+    ]);
+
+    listBotRuntimeSessionsMock.mockResolvedValue([
+      {
+        id: "session-takeover",
+        botId: "bot-takeover",
+        mode: "LIVE",
+        status: "RUNNING",
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: null,
+        lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+        stopReason: null,
+        errorMessage: null,
+        createdAt: "2026-03-31T10:00:00.000Z",
+        updatedAt: "2026-03-31T10:05:00.000Z",
+        durationMs: 300000,
+        eventsCount: 2,
+        symbolsTracked: 1,
+        summary: {
+          totalSignals: 1,
+          dcaCount: 0,
+          closedTrades: 0,
+          realizedPnl: 0,
+        },
+      },
+    ]);
+
+    listBotRuntimeSessionSymbolStatsMock.mockResolvedValue({
+      sessionId: "session-takeover",
+      items: [],
+      summary: {
+        totalSignals: 0,
+        longEntries: 0,
+        shortEntries: 0,
+        exits: 0,
+        dcaCount: 0,
+        closedTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        totalPnl: 0,
+        grossProfit: 0,
+        grossLoss: 0,
+        feesPaid: 0,
+      },
+    });
+
+    listBotRuntimeSessionPositionsMock.mockResolvedValue({
+      sessionId: "session-takeover",
+      total: 1,
+      openCount: 1,
+      closedCount: 0,
+      openOrdersCount: 0,
+      showDynamicStopColumns: false,
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      summary: {
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        feesPaid: 0,
+        referenceBalance: 100,
+        freeCash: 94.2,
+      },
+      openOrders: [],
+      openItems: [
+        {
+          id: "pos-takeover",
+          origin: "EXCHANGE_SYNC",
+          managementMode: "BOT_MANAGED",
+          syncState: "IN_SYNC",
+          takeoverStatus: "OWNED_AND_MANAGED",
+          symbol: "BNBUSDT",
+          side: "LONG",
+          status: "OPEN",
+          quantity: 0.1,
+          leverage: 10,
+          entryPrice: 580,
+          entryNotional: 58,
+          exitPrice: null,
+          stopLoss: null,
+          takeProfit: null,
+          openedAt: "2026-03-31T10:03:00.000Z",
+          closedAt: null,
+          holdMs: 120000,
+          dcaCount: 0,
+          dcaPlannedLevels: [],
+          dcaExecutedLevels: [],
+          feesPaid: 0,
+          realizedPnl: 0,
+          unrealizedPnl: 0,
+          markPrice: 580,
+          dynamicTtpStopLoss: null,
+          dynamicTslStopLoss: null,
+          firstTradeAt: "2026-03-31T10:03:00.000Z",
+          lastTradeAt: "2026-03-31T10:03:00.000Z",
+          tradesCount: 1,
+        },
+      ],
+      historyItems: [],
+    });
+
+    listBotRuntimeSessionTradesMock.mockResolvedValue({
+      sessionId: "session-takeover",
+      total: 0,
+      meta: {
+        page: 1,
+        pageSize: 25,
+        total: 0,
+        totalPages: 0,
+        hasPrev: false,
+        hasNext: false,
+      },
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      items: [],
+    });
+
+    renderSubject();
+
+    await waitFor(() => {
+      expect(screen.getByRole("columnheader", { name: "Takeover" })).toBeInTheDocument();
+      expect(screen.getByText("OWNED")).toBeInTheDocument();
+      expect(screen.getAllByText("BNBUSDT").length).toBeGreaterThan(0);
+    });
+  });
+
   it("renders runtime open positions even when symbol stats are temporarily empty", async () => {
     listBotsMock.mockResolvedValue([
       {
