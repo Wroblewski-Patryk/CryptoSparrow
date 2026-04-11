@@ -5,6 +5,7 @@ import {
   CcxtFetchTradesForOrderInputSchema,
   CcxtFuturesConnectorConfig,
   CcxtFuturesConnectorConfigSchema,
+  CcxtFuturesOpenOrder,
   CcxtFuturesOrderFill,
   CcxtFuturesOrderRequest,
   CcxtFuturesOrderRequestSchema,
@@ -48,9 +49,21 @@ type CcxtTradeLike = {
   info?: Record<string, unknown>;
 };
 
+type CcxtPositionLike = {
+  symbol?: string;
+  contracts?: number;
+  amount?: number;
+  positionAmt?: number;
+  info?: Record<string, unknown>;
+};
+
 export interface CcxtExchangeLikeClient {
   setSandboxMode?: (enabled: boolean) => void;
   loadMarkets: () => Promise<unknown>;
+  fetchPositions?: (
+    symbols?: string[],
+    params?: Record<string, unknown>
+  ) => Promise<CcxtPositionLike[]>;
   fetchTicker: (symbol: string) => Promise<{ last?: number | null }>;
   fetchOrder?: (
     id: string,
@@ -63,6 +76,22 @@ export interface CcxtExchangeLikeClient {
     limit?: number,
     params?: Record<string, unknown>
   ) => Promise<CcxtTradeLike[]>;
+  fetchOpenOrders?: (
+    symbol?: string,
+    since?: number,
+    limit?: number,
+    params?: Record<string, unknown>
+  ) => Promise<CcxtOrderLike[]>;
+  setLeverage?: (
+    leverage: number,
+    symbol?: string,
+    params?: Record<string, unknown>
+  ) => Promise<unknown>;
+  setMarginMode?: (
+    marginMode: string,
+    symbol?: string,
+    params?: Record<string, unknown>
+  ) => Promise<unknown>;
   createOrder: (
     symbol: string,
     type: string,
@@ -119,6 +148,94 @@ export class CcxtFuturesConnector {
     }
 
     return markPrice;
+  }
+
+  async hasOpenPosition(symbol: string): Promise<boolean> {
+    const client = await this.getOrCreateClient();
+    if (typeof client.fetchPositions !== 'function') return false;
+
+    const normalize = (value: string) =>
+      value
+        .trim()
+        .toUpperCase()
+        .replace(/[/:]/g, '');
+    const normalizedTarget = normalize(symbol);
+    if (!normalizedTarget) return false;
+
+    const extractContracts = (position: CcxtPositionLike) => {
+      const info = position.info ?? {};
+      const candidates: unknown[] = [
+        position.contracts,
+        position.amount,
+        position.positionAmt,
+        info.positionAmt,
+        info.contracts,
+      ];
+      for (const candidate of candidates) {
+        if (typeof candidate === 'number' && Number.isFinite(candidate)) return candidate;
+        if (typeof candidate === 'string' && candidate.trim().length > 0) {
+          const parsed = Number(candidate);
+          if (Number.isFinite(parsed)) return parsed;
+        }
+      }
+      return 0;
+    };
+
+    const positions =
+      (await client.fetchPositions([symbol]).catch(async () => {
+        if (typeof client.fetchPositions !== 'function') return [];
+        return client.fetchPositions();
+      })) ?? [];
+
+    for (const position of positions) {
+      const rawSymbol =
+        (typeof position.symbol === 'string' && position.symbol.trim().length > 0
+          ? position.symbol
+          : (position.info?.symbol as string | undefined)) ?? '';
+      if (!rawSymbol) continue;
+      if (normalize(rawSymbol) !== normalizedTarget) continue;
+      if (Math.abs(extractContracts(position)) > 0) return true;
+    }
+    return false;
+  }
+
+  async getSymbolTradingRules(symbol: string): Promise<{
+    minAmount: number | null;
+    minNotional: number | null;
+    amountPrecision: number | null;
+  }> {
+    const client = await this.getOrCreateClient();
+    await client.loadMarkets();
+
+    const anyClient = client as unknown as {
+      market?: (id: string) => Record<string, unknown> | undefined;
+      markets?: Record<string, Record<string, unknown>>;
+    };
+
+    const market =
+      (typeof anyClient.market === 'function' ? anyClient.market(symbol) : undefined) ??
+      anyClient.markets?.[symbol] ??
+      null;
+
+    const readNumber = (value: unknown): number | null => {
+      if (typeof value === 'number' && Number.isFinite(value)) return value;
+      if (typeof value === 'string' && value.trim().length > 0) {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+      }
+      return null;
+    };
+
+    const limits = (market?.limits as Record<string, unknown> | undefined) ?? {};
+    const amountLimits = (limits.amount as Record<string, unknown> | undefined) ?? {};
+    const costLimits = (limits.cost as Record<string, unknown> | undefined) ?? {};
+    const precision = (market?.precision as Record<string, unknown> | undefined) ?? {};
+
+    return {
+      minAmount: readNumber(amountLimits.min),
+      minNotional: readNumber(costLimits.min),
+      amountPrecision: readNumber(precision.amount),
+    };
   }
 
   async placeOrder(input: CcxtFuturesOrderRequest): Promise<CcxtFuturesOrderResult> {
@@ -212,6 +329,58 @@ export class CcxtFuturesConnector {
       .map((trade) => this.normalizeTradeFill(trade, request.symbol, 'fetchMyTrades'));
   }
 
+  async fetchOpenOrders(input?: { symbol?: string }): Promise<CcxtFuturesOpenOrder[]> {
+    const client = await this.getOrCreateClient();
+    if (typeof client.fetchOpenOrders !== 'function') {
+      throw new Error('fetchOpenOrders is not supported by this CCXT connector');
+    }
+
+    const orders = await client.fetchOpenOrders(input?.symbol);
+    return orders.map((order) => this.normalizeOpenOrder(order, input?.symbol ?? order.symbol ?? ''));
+  }
+
+  async convergeFuturesLeverageAndMargin(input: {
+    symbol: string;
+    leverage?: number | null;
+    marginMode?: 'cross' | 'isolated' | null;
+  }): Promise<{ leverageApplied: boolean; marginModeApplied: boolean }> {
+    if (this.config.marketType !== 'future') {
+      return { leverageApplied: false, marginModeApplied: false };
+    }
+
+    const client = await this.getOrCreateClient();
+    const symbol = input.symbol.trim();
+    const targetLeverage = Number.isFinite(input.leverage) ? Math.max(1, Math.floor(input.leverage!)) : null;
+    const targetMarginMode = input.marginMode?.trim().toLowerCase() as 'cross' | 'isolated' | undefined;
+
+    let leverageApplied = false;
+    let marginModeApplied = false;
+
+    if (targetMarginMode && typeof client.setMarginMode === 'function') {
+      try {
+        await client.setMarginMode(targetMarginMode, symbol);
+        marginModeApplied = true;
+      } catch (error) {
+        if (!this.isBenignConvergenceError(error)) {
+          throw error;
+        }
+      }
+    }
+
+    if (typeof targetLeverage === 'number' && typeof client.setLeverage === 'function') {
+      try {
+        await client.setLeverage(targetLeverage, symbol);
+        leverageApplied = true;
+      } catch (error) {
+        if (!this.isBenignConvergenceError(error)) {
+          throw error;
+        }
+      }
+    }
+
+    return { leverageApplied, marginModeApplied };
+  }
+
   async disconnect() {
     if (!this.client) return;
 
@@ -274,6 +443,35 @@ export class CcxtFuturesConnector {
     return merged
       .map((entry) => this.normalizeTradeFill(entry, order.symbol ?? fallbackSymbol, source, order.id))
       .filter((fill) => fill.quantity > 0);
+  }
+
+  private normalizeOpenOrder(order: CcxtOrderLike, fallbackSymbol: string): CcxtFuturesOpenOrder {
+    const filled = this.readNumber(order.filled) ?? 0;
+    const amount = this.readNumber(order.amount) ?? filled;
+    const remainingCandidate = this.readNumber(order.info?.remaining) ?? this.readNumber(order.info?.origQty);
+    const remaining =
+      this.readNumber((order as Record<string, unknown>).remaining) ??
+      (typeof remainingCandidate === 'number' && Number.isFinite(remainingCandidate)
+        ? Math.max(0, remainingCandidate - filled)
+        : null);
+    const timestampMs =
+      this.readNumber((order as Record<string, unknown>).timestamp) ??
+      this.readNumber(order.info?.time) ??
+      this.readNumber(order.info?.transactTime);
+
+    return {
+      id: order.id ?? '',
+      symbol: this.readString(order.symbol) ?? fallbackSymbol,
+      side: this.readString(order.side),
+      type: this.readString(order.type),
+      status: this.readString(order.status),
+      amount,
+      filled,
+      remaining,
+      price: this.readNumber(order.price),
+      timestamp: typeof timestampMs === 'number' ? new Date(timestampMs) : null,
+      raw: order,
+    };
   }
 
   private normalizeTradeFill(
@@ -393,5 +591,10 @@ export class CcxtFuturesConnector {
   private readRecord(value: unknown): Record<string, unknown> | null {
     if (typeof value !== 'object' || value === null) return null;
     return value as Record<string, unknown>;
+  }
+
+  private isBenignConvergenceError(error: unknown): boolean {
+    if (!(error instanceof Error)) return false;
+    return /(already|no need|not modified|same|unchanged|exists)/i.test(error.message);
   }
 }

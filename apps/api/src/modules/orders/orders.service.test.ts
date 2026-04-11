@@ -262,6 +262,51 @@ describe('openOrder live execution contract', () => {
       process.env.NODE_ENV = previousNodeEnv;
     }
   });
+
+  it('propagates LIVE pretrade guard errors without masking', async () => {
+    const user = await prisma.user.create({
+      data: { email: 'orders-live-pretrade@example.com', password: 'hashed' },
+    });
+    const bot = await prisma.bot.create({
+      data: {
+        userId: user.id,
+        name: 'Live Bot Pretrade',
+        mode: 'LIVE',
+        marketType: 'FUTURES',
+        positionMode: 'ONE_WAY',
+        isActive: true,
+        liveOptIn: true,
+        consentTextVersion: 'mvp-v1',
+        maxOpenPositions: 3,
+      },
+    });
+
+    const executeLiveOrder = vi
+      .fn()
+      .mockRejectedValue(new Error('LIVE_PRETRADE_EXTERNAL_POSITION_OPEN'));
+    const previousNodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
+
+    try {
+      await expect(
+        openOrder(
+          user.id,
+          {
+            botId: bot.id,
+            symbol: 'BNBUSDT',
+            side: 'BUY',
+            type: 'MARKET',
+            quantity: 1,
+            mode: 'LIVE',
+            riskAck: true,
+          },
+          { executeLiveOrder }
+        )
+      ).rejects.toThrow('LIVE_PRETRADE_EXTERNAL_POSITION_OPEN');
+    } finally {
+      process.env.NODE_ENV = previousNodeEnv;
+    }
+  });
 });
 
 describe('resolveLiveExecutionApiKey', () => {

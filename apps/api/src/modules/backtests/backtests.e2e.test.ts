@@ -449,6 +449,20 @@ describe('Backtests runs contract', () => {
     });
     expect(createKeyRes.status).toBe(201);
     const apiKeyId = createKeyRes.body.id as string;
+    const liveWallet = await createWalletForUser({
+      userId,
+      name: 'Parity takeover wallet',
+      mode: 'LIVE',
+      apiKeyId,
+    });
+
+    await prisma.bot.update({
+      where: { id: bot.id },
+      data: {
+        apiKeyId,
+        walletId: liveWallet.id,
+      },
+    });
 
     const firstReconcile = await reconcileExternalPositionsFromExchange();
     expect(firstReconcile.openPositionsSeen).toBeGreaterThan(0);

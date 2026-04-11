@@ -59,6 +59,20 @@ export type CcxtFuturesOrderFill = {
   raw: unknown;
 };
 
+export type CcxtFuturesOpenOrder = {
+  id: string;
+  symbol: string;
+  side: string | null;
+  type: string | null;
+  status: string | null;
+  amount: number;
+  filled: number;
+  remaining: number | null;
+  price: number | null;
+  timestamp: Date | null;
+  raw: unknown;
+};
+
 export type CcxtFuturesOrderResult = {
   id: string;
   status?: string;

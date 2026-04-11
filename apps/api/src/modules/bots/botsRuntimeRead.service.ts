@@ -60,6 +60,20 @@ import {
   listStrategiesByIds,
 } from './botsRuntimeRead.repository';
 
+type RuntimeTakeoverStatus = 'OWNED_AND_MANAGED' | 'UNOWNED' | 'AMBIGUOUS' | 'MANUAL_ONLY';
+
+const resolveRuntimeTakeoverStatus = (input: {
+  origin: string;
+  managementMode: 'BOT_MANAGED' | 'MANUAL_MANAGED';
+  syncState: string;
+  botId: string | null;
+}): RuntimeTakeoverStatus | null => {
+  if (input.origin !== 'EXCHANGE_SYNC') return null;
+  if (input.managementMode === 'MANUAL_MANAGED') return 'MANUAL_ONLY';
+  if (input.botId) return 'OWNED_AND_MANAGED';
+  return input.syncState === 'DRIFT' ? 'AMBIGUOUS' : 'UNOWNED';
+};
+
 export const listBotRuntimeSessions = async (
   userId: string,
   botId: string,
@@ -907,6 +921,10 @@ export const listBotRuntimeSessionPositions = async (
     take: query.limit,
     select: {
       id: true,
+      origin: true,
+      managementMode: true,
+      syncState: true,
+      botId: true,
       symbol: true,
       strategyId: true,
       side: true,
@@ -1183,6 +1201,15 @@ export const listBotRuntimeSessionPositions = async (
 
     return {
       id: position.id,
+      origin: position.origin,
+      managementMode: position.managementMode,
+      syncState: position.syncState,
+      takeoverStatus: resolveRuntimeTakeoverStatus({
+        origin: position.origin,
+        managementMode: position.managementMode,
+        syncState: position.syncState,
+        botId: position.botId,
+      }),
       symbol: position.symbol,
       side: position.side,
       status: position.status,

@@ -21,6 +21,51 @@ export type ExchangePositionSnapshot = {
   positions: ExchangePositionSnapshotItem[];
 };
 
+export type ExchangeOpenOrderSnapshotItem = {
+  exchangeOrderId: string | null;
+  symbol: string;
+  side: string | null;
+  type: string | null;
+  status: string | null;
+  amount: number;
+  filled: number;
+  remaining: number | null;
+  price: number | null;
+  timestamp: string | null;
+};
+
+export type ExchangeOpenOrderSnapshot = {
+  source: 'BINANCE';
+  syncedAt: string;
+  orders: ExchangeOpenOrderSnapshotItem[];
+};
+
+export type ExternalTakeoverStatus =
+  | 'OWNED_AND_MANAGED'
+  | 'UNOWNED'
+  | 'AMBIGUOUS'
+  | 'MANUAL_ONLY';
+
+export type ExternalTakeoverStatusItem = {
+  positionId: string;
+  symbol: string;
+  side: 'LONG' | 'SHORT';
+  openedAt: string;
+  externalId: string | null;
+  apiKeyId: string | null;
+  managementMode: 'BOT_MANAGED' | 'MANUAL_MANAGED';
+  syncState: 'IN_SYNC' | 'DRIFT' | 'ORPHAN_LOCAL' | 'ORPHAN_EXCHANGE';
+  botId: string | null;
+  walletId: string | null;
+  takeoverStatus: ExternalTakeoverStatus;
+};
+
+export type ExternalTakeoverStatusResponse = {
+  total: number;
+  summary: Record<ExternalTakeoverStatus, number>;
+  items: ExternalTakeoverStatusItem[];
+};
+
 type ExchangePositionLike = {
   symbol?: string;
   side?: string;
@@ -36,6 +81,12 @@ type ExchangePositionLike = {
 
 type BinanceClientLike = {
   fetchPositions: () => Promise<ExchangePositionLike[]>;
+  fetchOpenOrders?: (
+    symbol?: string,
+    since?: number,
+    limit?: number,
+    params?: Record<string, unknown>
+  ) => Promise<Array<Record<string, unknown>>>;
   close?: () => Promise<void>;
 };
 
@@ -82,6 +133,49 @@ const normalizeExchangePosition = (position: ExchangePositionLike): ExchangePosi
   liquidationPrice: typeof position.liquidationPrice === 'number' ? position.liquidationPrice : null,
   timestamp: typeof position.timestamp === 'number' ? new Date(position.timestamp).toISOString() : null,
 });
+
+const readNumber = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const readString = (value: unknown): string | null => {
+  if (typeof value === 'string' && value.trim().length > 0) return value.trim();
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return null;
+};
+
+const normalizeExchangeOpenOrder = (order: Record<string, unknown>): ExchangeOpenOrderSnapshotItem => {
+  const info = (order.info ?? {}) as Record<string, unknown>;
+  const timestampMs =
+    readNumber(order.timestamp) ?? readNumber(info.time) ?? readNumber(info.transactTime);
+  const amount = readNumber(order.amount) ?? readNumber(info.origQty) ?? 0;
+  const filled = readNumber(order.filled) ?? readNumber(info.executedQty) ?? 0;
+  const explicitRemaining = readNumber(order.remaining);
+  const remaining =
+    typeof explicitRemaining === 'number'
+      ? explicitRemaining
+      : Number.isFinite(amount) && Number.isFinite(filled)
+        ? Math.max(0, amount - filled)
+        : null;
+
+  return {
+    exchangeOrderId: readString(order.id) ?? readString(info.orderId) ?? null,
+    symbol: readString(order.symbol) ?? readString(info.symbol) ?? 'UNKNOWN',
+    side: readString(order.side) ?? readString(info.side) ?? null,
+    type: readString(order.type) ?? readString(info.type) ?? null,
+    status: readString(order.status) ?? readString(info.status) ?? null,
+    amount,
+    filled,
+    remaining,
+    price: readNumber(order.price) ?? readNumber(info.price),
+    timestamp: typeof timestampMs === 'number' ? new Date(timestampMs).toISOString() : null,
+  };
+};
 
 const buildSnapshotForApiKey = async (apiKey: ApiKeyRecordForSnapshot): Promise<ExchangePositionSnapshot> => {
   if (process.env.NODE_ENV === 'test') {
@@ -137,6 +231,73 @@ const buildSnapshotForApiKey = async (apiKey: ApiKeyRecordForSnapshot): Promise<
     };
   } catch {
     throw new ExchangeSnapshotError('EXCHANGE_FETCH_FAILED', 'Unable to fetch exchange positions snapshot.');
+  } finally {
+    if (typeof client.close === 'function') {
+      await client.close();
+    }
+  }
+};
+
+const buildOpenOrdersSnapshotForApiKey = async (
+  apiKey: ApiKeyRecordForSnapshot
+): Promise<ExchangeOpenOrderSnapshot> => {
+  if (process.env.NODE_ENV === 'test') {
+    await prisma.apiKey.update({
+      where: { id: apiKey.id },
+      data: { lastUsed: new Date() },
+    });
+
+    return {
+      source: 'BINANCE',
+      syncedAt: new Date().toISOString(),
+      orders: [
+        {
+          exchangeOrderId: 'test-open-order-1',
+          symbol: 'BTC/USDT:USDT',
+          side: 'buy',
+          type: 'limit',
+          status: 'open',
+          amount: 0.01,
+          filled: 0,
+          remaining: 0.01,
+          price: 50000,
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    };
+  }
+
+  const decryptedKey = decrypt(apiKey.apiKey);
+  const decryptedSecret = decrypt(apiKey.apiSecret);
+
+  const client = await defaultBinanceClientFactory({
+    apiKey: decryptedKey,
+    secret: decryptedSecret,
+  });
+
+  try {
+    if (typeof client.fetchOpenOrders !== 'function') {
+      return {
+        source: 'BINANCE',
+        syncedAt: new Date().toISOString(),
+        orders: [],
+      };
+    }
+
+    const rawOrders = await client.fetchOpenOrders();
+
+    await prisma.apiKey.update({
+      where: { id: apiKey.id },
+      data: { lastUsed: new Date() },
+    });
+
+    return {
+      source: 'BINANCE',
+      syncedAt: new Date().toISOString(),
+      orders: rawOrders.map(normalizeExchangeOpenOrder),
+    };
+  } catch {
+    throw new ExchangeSnapshotError('EXCHANGE_FETCH_FAILED', 'Unable to fetch exchange open orders snapshot.');
   } finally {
     if (typeof client.close === 'function') {
       await client.close();
@@ -218,4 +379,139 @@ export const fetchExchangePositionsSnapshotByApiKeyId = async (
   }
 
   return buildSnapshotForApiKey(apiKey);
+};
+
+export const fetchExchangeOpenOrdersSnapshotByApiKeyId = async (
+  userId: string,
+  apiKeyId: string
+): Promise<ExchangeOpenOrderSnapshot> => {
+  const apiKey = await prisma.apiKey.findFirst({
+    where: {
+      id: apiKeyId,
+      userId,
+      exchange: 'BINANCE',
+    },
+    select: {
+      id: true,
+      apiKey: true,
+      apiSecret: true,
+    },
+  });
+
+  if (!apiKey) {
+    throw new ExchangeSnapshotError('API_KEY_NOT_FOUND', 'No Binance API key configured.');
+  }
+
+  return buildOpenOrdersSnapshotForApiKey(apiKey);
+};
+
+const parseApiKeyIdFromExternalId = (externalId: string | null): string | null => {
+  if (!externalId) return null;
+  const [apiKeyId] = externalId.split(':');
+  if (!apiKeyId || apiKeyId.trim().length === 0) return null;
+  return apiKeyId.trim();
+};
+
+export const listExternalTakeoverStatuses = async (
+  userId: string
+): Promise<ExternalTakeoverStatusResponse> => {
+  const positions = await prisma.position.findMany({
+    where: {
+      userId,
+      status: 'OPEN',
+      origin: 'EXCHANGE_SYNC',
+    },
+    orderBy: [{ openedAt: 'desc' }, { createdAt: 'desc' }],
+    select: {
+      id: true,
+      symbol: true,
+      side: true,
+      openedAt: true,
+      externalId: true,
+      managementMode: true,
+      syncState: true,
+      botId: true,
+      walletId: true,
+    },
+  });
+
+  const apiKeyIds = [
+    ...new Set(
+      positions
+        .map((position) => parseApiKeyIdFromExternalId(position.externalId))
+        .filter((apiKeyId): apiKeyId is string => Boolean(apiKeyId))
+    ),
+  ];
+
+  const eligibleBots =
+    apiKeyIds.length === 0
+      ? []
+      : await prisma.bot.findMany({
+          where: {
+            userId,
+            apiKeyId: { in: apiKeyIds },
+            mode: 'LIVE',
+            exchange: 'BINANCE',
+            marketType: 'FUTURES',
+            isActive: true,
+            liveOptIn: true,
+            walletId: { not: null },
+          },
+          select: {
+            apiKeyId: true,
+            id: true,
+          },
+        });
+
+  const eligibleCountByApiKeyId = new Map<string, number>();
+  for (const bot of eligibleBots) {
+    if (!bot.apiKeyId) continue;
+    eligibleCountByApiKeyId.set(bot.apiKeyId, (eligibleCountByApiKeyId.get(bot.apiKeyId) ?? 0) + 1);
+  }
+
+  const items: ExternalTakeoverStatusItem[] = positions.map((position) => {
+    const apiKeyId = parseApiKeyIdFromExternalId(position.externalId);
+    const eligibleOwnerCount = apiKeyId ? (eligibleCountByApiKeyId.get(apiKeyId) ?? 0) : 0;
+
+    let takeoverStatus: ExternalTakeoverStatus;
+    if (position.managementMode === 'MANUAL_MANAGED') {
+      takeoverStatus = 'MANUAL_ONLY';
+    } else if (position.botId) {
+      takeoverStatus = 'OWNED_AND_MANAGED';
+    } else if (eligibleOwnerCount > 1) {
+      takeoverStatus = 'AMBIGUOUS';
+    } else {
+      takeoverStatus = 'UNOWNED';
+    }
+
+    return {
+      positionId: position.id,
+      symbol: position.symbol,
+      side: position.side,
+      openedAt: position.openedAt.toISOString(),
+      externalId: position.externalId,
+      apiKeyId,
+      managementMode: position.managementMode,
+      syncState: position.syncState,
+      botId: position.botId,
+      walletId: position.walletId,
+      takeoverStatus,
+    };
+  });
+
+  const summary: Record<ExternalTakeoverStatus, number> = {
+    OWNED_AND_MANAGED: 0,
+    UNOWNED: 0,
+    AMBIGUOUS: 0,
+    MANUAL_ONLY: 0,
+  };
+  for (const item of items) {
+    summary[item.takeoverStatus] += 1;
+  }
+
+  return {
+    total: items.length,
+    summary,
+    items,
+  };
 };

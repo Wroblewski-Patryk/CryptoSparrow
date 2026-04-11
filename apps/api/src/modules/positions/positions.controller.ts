@@ -58,6 +58,14 @@ export const getExchangeSnapshot = async (req: Request, res: Response) => {
   }
 };
 
+export const getExternalTakeoverStatus = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  const takeoverStatus = await positionsService.listExternalTakeoverStatuses(userId);
+  return res.json(takeoverStatus);
+};
+
 export const updatePositionManagementMode = async (req: Request, res: Response) => {
   const userId = req.user?.id;
   if (!userId) return sendError(res, 401, 'Unauthorized');

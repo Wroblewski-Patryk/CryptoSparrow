@@ -29,6 +29,7 @@ type RuntimeManagedPosition = Pick<
   | 'stopLoss'
   | 'takeProfit'
   | 'managementMode'
+  | 'origin'
 > & {
   bot: { mode: BotMode; marketType: TradeMarket; exchange: Exchange; paperStartBalance: number; walletId: string | null } | null;
 };
@@ -256,6 +257,7 @@ const defaultDeps: RuntimePositionAutomationDeps = {
         stopLoss: true,
         takeProfit: true,
         managementMode: true,
+        origin: true,
         bot: {
           select: {
             mode: true,
@@ -691,6 +693,12 @@ export class RuntimePositionAutomationService {
     position: RuntimeManagedPosition
   ) {
     if (position.managementMode !== 'BOT_MANAGED') return;
+    if (!position.botId && position.origin === 'EXCHANGE_SYNC') {
+      console.warn(
+        `[RuntimePositionAutomation] position=${position.id} symbol=${position.symbol} skipped: BOT_MANAGED position without bot ownership`
+      );
+      return;
+    }
 
     const mode = resolvePositionExecutionMode(position);
     const exchange = resolvePositionExchange(position);

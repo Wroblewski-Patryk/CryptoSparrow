@@ -168,7 +168,6 @@ const resolveDynamicSubscriptions = async (): Promise<StreamSubscriptions> => {
   for (const bot of bots) {
     for (const group of bot.botMarketGroups) {
       const symbolGroupSymbols = normalizeSymbols(group.symbolGroup.symbols ?? []);
-      const volumeFilter = resolveMinQuoteVolumeFilter(group.symbolGroup.marketUniverse?.filterRules);
       const universeSymbols =
         group.symbolGroup.marketUniverse != null
           ? resolveUniverseSymbols(
@@ -180,7 +179,7 @@ const resolveDynamicSubscriptions = async (): Promise<StreamSubscriptions> => {
         group.symbolGroup.marketUniverse != null &&
         symbolGroupSymbols.length === 0 &&
         universeSymbols.length === 0 &&
-        (allowEmptyGroupCatalogFallback || volumeFilter.enabled)
+        allowEmptyGroupCatalogFallback
           ? await resolveCatalogSymbolsForUniverse(
               {
                 exchange: group.symbolGroup.marketUniverse.exchange,
@@ -210,7 +209,7 @@ const resolveDynamicSubscriptions = async (): Promise<StreamSubscriptions> => {
             module: 'market-stream.bootstrap',
             event: 'market_stream.group_skipped_empty_symbols',
             reason: 'empty_symbol_group_or_whitelist',
-            fallbackAllowed: allowEmptyGroupCatalogFallback || volumeFilter.enabled,
+            fallbackAllowed: allowEmptyGroupCatalogFallback,
           })
         );
       }

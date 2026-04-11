@@ -70,6 +70,103 @@ const mapLiveOrderStatus = (status: string | undefined, fallbackType: OpenOrderD
   return fallbackType === 'MARKET' ? ('FILLED' as const) : ('OPEN' as const);
 };
 
+type SymbolTradingRules = {
+  minAmount: number | null;
+  minNotional: number | null;
+  amountPrecision: number | null;
+};
+
+type CachedRules = {
+  expiresAtMs: number;
+  rules: SymbolTradingRules;
+};
+
+type CachedExposure = {
+  expiresAtMs: number;
+  hasOpenPosition: boolean;
+};
+
+const symbolRulesCache = new Map<string, CachedRules>();
+const symbolExposureCache = new Map<string, CachedExposure>();
+const liveMarginLeverageConvergenceCache = new Map<string, { expiresAtMs: number }>();
+
+const parsePositiveInt = (raw: string | undefined, fallback: number) => {
+  const parsed = Number.parseInt(raw ?? '', 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
+};
+
+const parseBoolean = (raw: string | undefined, fallback: boolean) => {
+  if (typeof raw !== 'string') return fallback;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === 'true') return true;
+  if (normalized === 'false') return false;
+  return fallback;
+};
+
+const parseMarginMode = (raw: string | undefined): 'cross' | 'isolated' | null => {
+  if (typeof raw !== 'string') return null;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === 'cross' || normalized === 'crossed') return 'cross';
+  if (normalized === 'isolated' || normalized === 'isolate') return 'isolated';
+  return null;
+};
+
+const RULES_CACHE_TTL_MS = parsePositiveInt(process.env.LIVE_PRETRADE_RULES_CACHE_TTL_MS, 5 * 60_000);
+const EXPOSURE_CACHE_TTL_MS = parsePositiveInt(
+  process.env.LIVE_PRETRADE_EXPOSURE_CACHE_TTL_MS,
+  5_000
+);
+const LIVE_CONVERGENCE_CACHE_TTL_MS = parsePositiveInt(
+  process.env.LIVE_PRETRADE_MARGIN_LEVERAGE_CACHE_TTL_MS,
+  6 * 60 * 60_000
+);
+const LIVE_CONVERGENCE_ENABLED = parseBoolean(
+  process.env.LIVE_PRETRADE_MARGIN_LEVERAGE_CONVERGENCE_ENABLED,
+  true
+);
+const LIVE_CONVERGENCE_STRICT = parseBoolean(
+  process.env.LIVE_PRETRADE_MARGIN_LEVERAGE_CONVERGENCE_STRICT,
+  false
+);
+const LIVE_TARGET_MARGIN_MODE = parseMarginMode(process.env.LIVE_PRETRADE_MARGIN_MODE);
+
+const getRulesCacheKey = (params: {
+  exchange: Exchange;
+  marketType: 'FUTURES' | 'SPOT';
+  symbol: string;
+}) => `${params.exchange}:${params.marketType}:${params.symbol.toUpperCase()}`;
+
+const getExposureCacheKey = (params: {
+  apiKeyId: string;
+  symbol: string;
+}) => `${params.apiKeyId}:${params.symbol.toUpperCase()}`;
+
+const getLiveConvergenceCacheKey = (params: {
+  apiKeyId: string;
+  symbol: string;
+  leverage: number | null;
+  marginMode: 'cross' | 'isolated' | null;
+}) =>
+  `${params.apiKeyId}:${params.symbol.toUpperCase()}:${params.leverage ?? 'na'}:${params.marginMode ?? 'na'}`;
+
+const normalizeAmountByPrecision = (value: number, precision: number | null) => {
+  if (!Number.isFinite(value)) return value;
+  if (precision == null || !Number.isFinite(precision)) return value;
+  if (precision >= 1) {
+    const factor = 10 ** Math.trunc(precision);
+    return Math.round(value * factor) / factor;
+  }
+  if (precision > 0 && precision < 1) {
+    const steps = Math.round(value / precision);
+    return steps * precision;
+  }
+  return value;
+};
+
+const approxGreaterThan = (left: number, right: number, eps = 1e-12) => left - right > eps;
+const approxLessThan = (left: number, right: number, eps = 1e-12) => right - left > eps;
+
 const ensureLiveOrderAllowed = async (
   userId: string,
   payload: OpenOrderDto
@@ -159,6 +256,171 @@ export const resolveLiveExecutionApiKey = async (params: {
   return fallbackApiKey;
 };
 
+const getSymbolTradingRulesCached = async (params: {
+  connector: CcxtFuturesConnector;
+  exchange: Exchange;
+  marketType: 'FUTURES' | 'SPOT';
+  symbol: string;
+}) => {
+  const cacheKey = getRulesCacheKey({
+    exchange: params.exchange,
+    marketType: params.marketType,
+    symbol: params.symbol,
+  });
+  const nowMs = Date.now();
+  const cached = symbolRulesCache.get(cacheKey);
+  if (cached && cached.expiresAtMs > nowMs) {
+    return cached.rules;
+  }
+
+  const rules = await params.connector.getSymbolTradingRules(params.symbol);
+  symbolRulesCache.set(cacheKey, {
+    expiresAtMs: nowMs + RULES_CACHE_TTL_MS,
+    rules,
+  });
+  return rules;
+};
+
+const hasOpenExposureCached = async (params: {
+  connector: CcxtFuturesConnector;
+  apiKeyId: string;
+  symbol: string;
+}) => {
+  const cacheKey = getExposureCacheKey({
+    apiKeyId: params.apiKeyId,
+    symbol: params.symbol,
+  });
+  const nowMs = Date.now();
+  const cached = symbolExposureCache.get(cacheKey);
+  if (cached && cached.expiresAtMs > nowMs) {
+    return cached.hasOpenPosition;
+  }
+
+  const hasOpenPosition = await params.connector.hasOpenPosition(params.symbol);
+  symbolExposureCache.set(cacheKey, {
+    expiresAtMs: nowMs + EXPOSURE_CACHE_TTL_MS,
+    hasOpenPosition,
+  });
+  return hasOpenPosition;
+};
+
+const resolveLiveTargetLeverage = async (params: {
+  userId: string;
+  marketType: 'FUTURES' | 'SPOT';
+  payload: OpenOrderDto;
+}): Promise<number | null> => {
+  if (params.marketType !== 'FUTURES') return null;
+  if (!params.payload.strategyId) return null;
+
+  const strategy = await prisma.strategy.findFirst({
+    where: {
+      id: params.payload.strategyId,
+      userId: params.userId,
+    },
+    select: {
+      leverage: true,
+    },
+  });
+
+  if (!strategy || !Number.isFinite(strategy.leverage)) return null;
+  return Math.max(1, Math.floor(strategy.leverage));
+};
+
+const convergeLiveMarginAndLeverageIfNeeded = async (params: {
+  connector: CcxtFuturesConnector;
+  apiKeyId: string;
+  symbol: string;
+  targetLeverage: number | null;
+}) => {
+  if (!LIVE_CONVERGENCE_ENABLED) return;
+  if (params.targetLeverage == null && LIVE_TARGET_MARGIN_MODE == null) return;
+
+  const cacheKey = getLiveConvergenceCacheKey({
+    apiKeyId: params.apiKeyId,
+    symbol: params.symbol,
+    leverage: params.targetLeverage,
+    marginMode: LIVE_TARGET_MARGIN_MODE,
+  });
+  const nowMs = Date.now();
+  const cached = liveMarginLeverageConvergenceCache.get(cacheKey);
+  if (cached && cached.expiresAtMs > nowMs) {
+    return;
+  }
+
+  try {
+    await params.connector.convergeFuturesLeverageAndMargin({
+      symbol: params.symbol,
+      leverage: params.targetLeverage,
+      marginMode: LIVE_TARGET_MARGIN_MODE,
+    });
+    liveMarginLeverageConvergenceCache.set(cacheKey, {
+      expiresAtMs: nowMs + LIVE_CONVERGENCE_CACHE_TTL_MS,
+    });
+  } catch (error) {
+    if (LIVE_CONVERGENCE_STRICT) {
+      throw new Error('LIVE_PRETRADE_MARGIN_LEVERAGE_CONVERGENCE_FAILED');
+    }
+    const message = error instanceof Error ? error.message : 'unknown_error';
+    console.warn(
+      `[OrdersService] live_margin_leverage_convergence_failed symbol=${params.symbol} apiKey=${params.apiKeyId} error=${message}`
+    );
+  }
+};
+
+const enforceLivePretradeGuards = async (params: {
+  connector: CcxtFuturesConnector;
+  apiKeyId: string;
+  exchange: Exchange;
+  marketType: 'FUTURES' | 'SPOT';
+  payload: OpenOrderDto;
+}) => {
+  const normalizedSymbol = params.payload.symbol.toUpperCase();
+  const quantity = Number(params.payload.quantity);
+  if (!Number.isFinite(quantity) || quantity <= 0) {
+    throw new Error('LIVE_PRETRADE_INVALID_QUANTITY');
+  }
+
+  const hasExposure = await hasOpenExposureCached({
+    connector: params.connector,
+    apiKeyId: params.apiKeyId,
+    symbol: normalizedSymbol,
+  });
+  if (hasExposure) {
+    throw new Error('LIVE_PRETRADE_EXTERNAL_POSITION_OPEN');
+  }
+
+  const rules = await getSymbolTradingRulesCached({
+    connector: params.connector,
+    exchange: params.exchange,
+    marketType: params.marketType,
+    symbol: normalizedSymbol,
+  });
+
+  if (typeof rules.minAmount === 'number' && approxLessThan(quantity, rules.minAmount)) {
+    throw new Error('LIVE_PRETRADE_AMOUNT_BELOW_MIN');
+  }
+
+  const normalizedByPrecision = normalizeAmountByPrecision(quantity, rules.amountPrecision);
+  if (Number.isFinite(normalizedByPrecision) && approxGreaterThan(Math.abs(quantity - normalizedByPrecision), 1e-12)) {
+    throw new Error('LIVE_PRETRADE_AMOUNT_PRECISION');
+  }
+
+  if (typeof rules.minNotional === 'number') {
+    let priceForNotional: number | null = null;
+    if (typeof params.payload.price === 'number' && Number.isFinite(params.payload.price)) {
+      priceForNotional = params.payload.price;
+    } else {
+      priceForNotional = await params.connector.fetchMarkPrice(normalizedSymbol).catch(() => null);
+    }
+    if (typeof priceForNotional === 'number' && Number.isFinite(priceForNotional)) {
+      const notional = quantity * priceForNotional;
+      if (approxLessThan(notional, rules.minNotional)) {
+        throw new Error('LIVE_PRETRADE_NOTIONAL_BELOW_MIN');
+      }
+    }
+  }
+};
+
 const executeLiveOrderOnExchange: OpenOrderDeps['executeLiveOrder'] = async (params) => {
   const apiKey = await resolveLiveExecutionApiKey({
     userId: params.userId,
@@ -177,6 +439,25 @@ const executeLiveOrderOnExchange: OpenOrderDeps['executeLiveOrder'] = async (par
 
   const liveAdapter = createLiveOrderAdapter(connector);
   try {
+    const targetLeverage = await resolveLiveTargetLeverage({
+      userId: params.userId,
+      marketType: params.bot.marketType,
+      payload: params.payload,
+    });
+    await enforceLivePretradeGuards({
+      connector,
+      apiKeyId: apiKey.id,
+      exchange: apiKey.exchange,
+      marketType: params.bot.marketType,
+      payload: params.payload,
+    });
+    await convergeLiveMarginAndLeverageIfNeeded({
+      connector,
+      apiKeyId: apiKey.id,
+      symbol: params.payload.symbol.toUpperCase(),
+      targetLeverage,
+    });
+
     const result = await liveAdapter.placeLiveOrderWithFees({
       order: {
         symbol: params.payload.symbol.toUpperCase(),
@@ -199,7 +480,13 @@ const executeLiveOrderOnExchange: OpenOrderDeps['executeLiveOrder'] = async (par
       exchangeTradeId: result.exchangeTradeId,
       fills: result.fills,
     };
-  } catch {
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.startsWith('LIVE_PRETRADE_')
+    ) {
+      throw error;
+    }
     throw new Error('LIVE_EXECUTION_FAILED');
   } finally {
     await connector.disconnect().catch(() => undefined);

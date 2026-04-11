@@ -282,6 +282,10 @@ export type BotRuntimeTradesResponse = {
 
 export type BotRuntimePositionItem = {
   id: string;
+  origin?: "BOT" | "MANUAL" | "EXCHANGE_SYNC" | "BACKTEST";
+  managementMode?: "BOT_MANAGED" | "MANUAL_MANAGED";
+  syncState?: "IN_SYNC" | "DRIFT" | "ORPHAN_LOCAL" | "ORPHAN_EXCHANGE";
+  takeoverStatus?: "OWNED_AND_MANAGED" | "UNOWNED" | "AMBIGUOUS" | "MANUAL_ONLY" | null;
   symbol: string;
   side: "LONG" | "SHORT";
   status: "OPEN" | "CLOSED";

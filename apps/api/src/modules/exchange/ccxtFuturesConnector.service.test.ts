@@ -22,6 +22,9 @@ const createMockClient = (): CcxtExchangeLikeClient => ({
     trades: [],
   }),
   fetchMyTrades: vi.fn().mockResolvedValue([]),
+  fetchOpenOrders: vi.fn().mockResolvedValue([]),
+  setLeverage: vi.fn().mockResolvedValue(undefined),
+  setMarginMode: vi.fn().mockResolvedValue(undefined),
   createOrder: vi.fn().mockResolvedValue({
     id: 'order-1',
     status: 'open',
@@ -413,5 +416,65 @@ describe('CcxtFuturesConnector scaffold', () => {
         orderId: 'order-1',
       })
     ).rejects.toThrow('fetchMyTrades is not supported by this CCXT connector');
+  });
+
+  it('fetches and normalizes open orders from exchange connector', async () => {
+    const client = createMockClient();
+    client.fetchOpenOrders = vi.fn().mockResolvedValue([
+      {
+        id: 'open-1',
+        symbol: 'BTC/USDT:USDT',
+        side: 'buy',
+        type: 'limit',
+        status: 'open',
+        amount: 0.2,
+        filled: 0.05,
+        price: 60000,
+        timestamp: 1_714_100_000_000,
+      },
+    ]);
+    const connector = new CcxtFuturesConnector(
+      { exchangeId: 'binanceusdm' },
+      vi.fn().mockResolvedValue(client)
+    );
+
+    const openOrders = await connector.fetchOpenOrders({
+      symbol: 'BTC/USDT:USDT',
+    });
+
+    expect(client.fetchOpenOrders).toHaveBeenCalledWith('BTC/USDT:USDT');
+    expect(openOrders).toHaveLength(1);
+    expect(openOrders[0]).toEqual(
+      expect.objectContaining({
+        id: 'open-1',
+        symbol: 'BTC/USDT:USDT',
+        side: 'buy',
+        type: 'limit',
+        status: 'open',
+        amount: 0.2,
+        filled: 0.05,
+      })
+    );
+  });
+
+  it('converges futures margin mode and leverage when setter methods are available', async () => {
+    const client = createMockClient();
+    const connector = new CcxtFuturesConnector(
+      { exchangeId: 'binanceusdm', marketType: 'future' },
+      vi.fn().mockResolvedValue(client)
+    );
+
+    const result = await connector.convergeFuturesLeverageAndMargin({
+      symbol: 'BTC/USDT:USDT',
+      leverage: 7,
+      marginMode: 'isolated',
+    });
+
+    expect(client.setMarginMode).toHaveBeenCalledWith('isolated', 'BTC/USDT:USDT');
+    expect(client.setLeverage).toHaveBeenCalledWith(7, 'BTC/USDT:USDT');
+    expect(result).toEqual({
+      leverageApplied: true,
+      marginModeApplied: true,
+    });
   });
 });

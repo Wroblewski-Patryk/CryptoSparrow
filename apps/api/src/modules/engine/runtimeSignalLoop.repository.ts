@@ -61,7 +61,7 @@ export const listRuntimeManagedExternalPositionsRaw = () =>
   prisma.position.findMany({
     where: {
       status: 'OPEN',
-      botId: null,
+      origin: 'EXCHANGE_SYNC',
       managementMode: 'BOT_MANAGED',
     },
     select: {
