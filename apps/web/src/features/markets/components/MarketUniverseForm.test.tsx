@@ -117,6 +117,53 @@ describe('MarketUniverseForm', () => {
     });
   });
 
+  it('shows saved symbols that are missing in current catalog so they can still be edited', async () => {
+    fetchCatalogMock.mockResolvedValue({
+      source: 'BINANCE_PUBLIC',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+      baseCurrencies: ['USDT'],
+      totalAvailable: 1,
+      totalForBaseCurrency: 1,
+      markets: [
+        {
+          symbol: 'BTCUSDT',
+          displaySymbol: 'BTC/USDT',
+          baseAsset: 'BTC',
+          quoteAsset: 'USDT',
+          quoteVolume24h: 1000,
+          lastPrice: 68000,
+        },
+      ],
+    });
+
+    render(
+      <MarketUniverseForm
+        mode='edit'
+        initial={{
+          id: 'u-edit-legacy',
+          name: 'Legacy symbols',
+          marketType: 'FUTURES',
+          baseCurrency: 'USDT',
+          filterRules: { minQuoteVolumeEnabled: false },
+          whitelist: ['XRPUSDT'],
+          blacklist: [],
+        }}
+        submitting={false}
+        onSubmit={async () => undefined}
+      />
+    );
+
+    await waitFor(() => {
+      expect(fetchCatalogMock).toHaveBeenCalled();
+    });
+
+    const selectedSummary = screen.getByText('Wybrano: 1');
+    fireEvent.click(selectedSummary.closest('summary') as HTMLElement);
+
+    expect(screen.getAllByText('Poza aktualnym katalogiem (zapisane w grupie)').length).toBeGreaterThan(0);
+  });
+
   it('allows submitting placeholder exchange context without catalog symbols', async () => {
     fetchCatalogMock.mockRejectedValue({
       response: {

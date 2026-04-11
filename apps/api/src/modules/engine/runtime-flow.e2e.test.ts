@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { app } from '../../index';
 import { prisma } from '../../prisma/client';
 import { RuntimeSignalLoop } from './runtimeSignalLoop.service';
+import { setActiveSubscriptionForUser } from '../subscriptions/subscriptions.service';
 
 const registerAndLogin = async (email: string) => {
   const agent = request.agent(app);
@@ -33,6 +34,7 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
     await prisma.botRuntimeSymbolStat.deleteMany();
     await prisma.botRuntimeSession.deleteMany();
     await prisma.bot.deleteMany();
+    await prisma.wallet.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
     await prisma.strategy.deleteMany();
@@ -44,6 +46,16 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
     const runtimeSignalLoop = new RuntimeSignalLoop();
     const email = 'runtime-flow@example.com';
     const agent = await registerAndLogin(email);
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { email },
+      select: { id: true },
+    });
+    await setActiveSubscriptionForUser(prisma, {
+      userId: user.id,
+      planCode: 'PROFESSIONAL',
+      source: 'ADMIN_OVERRIDE',
+      metadata: { reason: 'runtime-flow-e2e-plan-upgrade' },
+    });
 
     const strategyRes = await agent.post('/dashboard/strategies').send({
       name: 'Runtime Strategy',
@@ -69,7 +81,6 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
     });
     expect(strategyRes.status).toBe(201);
     const strategyId = strategyRes.body.id as string;
-    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
     const createMarketUniverse = await prisma.marketUniverse.create({
       data: {
         userId: user.id,
@@ -106,15 +117,29 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
       manageExternalPositions: false,
     });
     expect(apiKeyRes.status).toBe(201);
+    const wallet = await prisma.wallet.create({
+      data: {
+        userId: user.id,
+        name: 'Runtime Flow Live Wallet',
+        mode: 'LIVE',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        paperInitialBalance: 10_000,
+        liveAllocationMode: 'PERCENT',
+        liveAllocationValue: 100,
+        apiKeyId: apiKeyRes.body.id as string,
+      },
+      select: {
+        id: true,
+      },
+    });
 
     const botRes = await agent.post('/dashboard/bots').send({
       name: 'Runtime Live Bot',
-      mode: 'LIVE',
-      apiKeyId: apiKeyRes.body.id,
+      walletId: wallet.id,
       strategyId,
       marketGroupId: createSymbolGroup.id,
-      marketType: 'FUTURES',
-      positionMode: 'ONE_WAY',
       isActive: true,
       liveOptIn: true,
       consentTextVersion: 'mvp-v1',

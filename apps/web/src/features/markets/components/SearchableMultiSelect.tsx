@@ -63,7 +63,7 @@ export default function SearchableMultiSelect({
       <details ref={detailsRef} className="dropdown w-full">
         <summary className="btn btn-outline btn-sm w-full justify-between">
           <span className="truncate">{selectedValues.length > 0 ? `Wybrano: ${selectedValues.length}` : 'Wybierz...'}</span>
-          <span className="opacity-60">⌄</span>
+          <span className="opacity-60">v</span>
         </summary>
         <div className="dropdown-content z-[70] mt-2 w-full rounded-box border border-base-300 bg-base-100 p-3 shadow-xl">
           <div className="mb-2">
@@ -79,7 +79,7 @@ export default function SearchableMultiSelect({
               Zaznacz znalezione
             </button>
             <button type="button" className="btn btn-xs btn-ghost" onClick={clearAll}>
-              Wyczyść
+              Wyczysc
             </button>
           </div>
           <ul

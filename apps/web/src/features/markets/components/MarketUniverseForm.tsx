@@ -34,6 +34,7 @@ const formatVolumeLabel = (value: number) => {
   if (value >= 1_000) return `vol 24h: ${(value / 1_000).toFixed(2)}K`;
   return `vol 24h: ${value.toFixed(0)}`;
 };
+const LEGACY_SYMBOL_DESCRIPTION = 'Poza aktualnym katalogiem (zapisane w grupie)';
 
 const resolveSavedMinVolume = (initial?: MarketUniverse | null) => {
   const rules = (initial?.filterRules ?? null) as
@@ -182,6 +183,24 @@ export default function MarketUniverseForm({
         description: formatVolumeLabel(market.quoteVolume24h),
       })),
     [filteredCatalogMarkets]
+  );
+  const marketOptionSymbols = useMemo(
+    () => new Set(marketOptions.map((option) => option.value)),
+    [marketOptions]
+  );
+  const persistedSelectionOptions = useMemo<MultiSelectOption[]>(() => {
+    const savedSymbols = uniqueSorted([...whitelistSymbols, ...blacklistSymbols]);
+    return savedSymbols
+      .filter((symbol) => !marketOptionSymbols.has(symbol))
+      .map((symbol) => ({
+        value: symbol,
+        label: symbol,
+        description: LEGACY_SYMBOL_DESCRIPTION,
+      }));
+  }, [blacklistSymbols, marketOptionSymbols, whitelistSymbols]);
+  const selectionOptions = useMemo<MultiSelectOption[]>(
+    () => [...marketOptions, ...persistedSelectionOptions],
+    [marketOptions, persistedSelectionOptions]
   );
 
   useEffect(() => {
@@ -407,7 +426,7 @@ export default function MarketUniverseForm({
         <div className='grid gap-3 xl:grid-cols-2'>
           <SearchableMultiSelect
             label='Whitelist'
-            options={marketOptions}
+            options={selectionOptions}
             selectedValues={whitelistSymbols}
             onChange={setWhitelistSymbols}
             emptyText='Brak whitelist.'
@@ -415,7 +434,7 @@ export default function MarketUniverseForm({
           />
           <SearchableMultiSelect
             label='Blacklist'
-            options={marketOptions}
+            options={selectionOptions}
             selectedValues={blacklistSymbols}
             onChange={setBlacklistSymbols}
             emptyText='Brak blacklist.'

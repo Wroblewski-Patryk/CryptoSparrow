@@ -114,6 +114,7 @@ describe('Strategies CRUD contract', () => {
     await prisma.marketGroupStrategyLink.deleteMany();
     await prisma.botMarketGroup.deleteMany();
     await prisma.bot.deleteMany();
+    await prisma.runtimeExecutionDedupe.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
     await prisma.apiKey.deleteMany();
