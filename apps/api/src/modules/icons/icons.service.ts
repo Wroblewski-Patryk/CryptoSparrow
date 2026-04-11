@@ -1,3 +1,5 @@
+import { parsePositiveInt } from '../../lib/env';
+
 type CoinIconSource = 'coingecko' | 'curated' | 'placeholder';
 
 type CoinGeckoSearchCoin = {
@@ -107,11 +109,6 @@ const QUOTE_SUFFIXES = [
   'IDRT',
   'PLN',
 ];
-
-const parsePositiveInt = (value: string | undefined, fallback: number) => {
-  const parsed = Number.parseInt(value ?? '', 10);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
-};
 
 const CACHE_TTL_MS = parsePositiveInt(process.env.COIN_ICON_CACHE_TTL_MINUTES, DEFAULT_CACHE_TTL_MINUTES) * 60_000;
 const REQUEST_TIMEOUT_MS = parsePositiveInt(process.env.COIN_ICON_REQUEST_TIMEOUT_MS, DEFAULT_REQUEST_TIMEOUT_MS);

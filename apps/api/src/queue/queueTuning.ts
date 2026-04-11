@@ -1,3 +1,5 @@
+import { parsePositiveInt } from '../lib/env';
+
 export type QueueProfile = 'market-data' | 'backtest' | 'execution';
 
 export type QueueTuning = {
@@ -38,14 +40,6 @@ const envPrefixes: Record<QueueProfile, string> = {
   execution: 'WORKER_EXECUTION',
 };
 
-const parsePositiveInteger = (rawValue: string | undefined, fallback: number): number => {
-  const parsed = Number.parseInt(rawValue ?? '', 10);
-  if (Number.isNaN(parsed) || parsed <= 0) {
-    return fallback;
-  }
-  return parsed;
-};
-
 type QueueTuningEnv = Partial<Record<string, string | undefined>>;
 
 const readOverridesFromEnv = (profile: QueueProfile, env: QueueTuningEnv): QueueTuning => {
@@ -53,14 +47,14 @@ const readOverridesFromEnv = (profile: QueueProfile, env: QueueTuningEnv): Queue
   const prefix = envPrefixes[profile];
 
   return {
-    concurrency: parsePositiveInteger(env[`${prefix}_CONCURRENCY`], base.concurrency),
-    attempts: parsePositiveInteger(env[`${prefix}_ATTEMPTS`], base.attempts),
-    backoffMs: parsePositiveInteger(env[`${prefix}_BACKOFF_MS`], base.backoffMs),
-    removeOnComplete: parsePositiveInteger(
+    concurrency: parsePositiveInt(env[`${prefix}_CONCURRENCY`], base.concurrency),
+    attempts: parsePositiveInt(env[`${prefix}_ATTEMPTS`], base.attempts),
+    backoffMs: parsePositiveInt(env[`${prefix}_BACKOFF_MS`], base.backoffMs),
+    removeOnComplete: parsePositiveInt(
       env[`${prefix}_REMOVE_ON_COMPLETE`],
       base.removeOnComplete
     ),
-    removeOnFail: parsePositiveInteger(env[`${prefix}_REMOVE_ON_FAIL`], base.removeOnFail),
+    removeOnFail: parsePositiveInt(env[`${prefix}_REMOVE_ON_FAIL`], base.removeOnFail),
   };
 };
 

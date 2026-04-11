@@ -5,6 +5,7 @@ import { decrypt } from '../../utils/crypto';
 import { CcxtFuturesConnector } from '../exchange/ccxtFuturesConnector.service';
 import { createLiveOrderAdapter } from '../exchange/liveOrderAdapter.service';
 import { CcxtFuturesOrderFill } from '../exchange/ccxtFuturesConnector.types';
+import { parsePositiveInt } from '../../lib/env';
 
 export const listOrders = async (userId: string, query: ListOrdersQuery) => {
   const skip = (query.page - 1) * query.limit;
@@ -89,12 +90,6 @@ type CachedExposure = {
 const symbolRulesCache = new Map<string, CachedRules>();
 const symbolExposureCache = new Map<string, CachedExposure>();
 const liveMarginLeverageConvergenceCache = new Map<string, { expiresAtMs: number }>();
-
-const parsePositiveInt = (raw: string | undefined, fallback: number) => {
-  const parsed = Number.parseInt(raw ?? '', 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
-  return parsed;
-};
 
 const parseBoolean = (raw: string | undefined, fallback: boolean) => {
   if (typeof raw !== 'string') return fallback;

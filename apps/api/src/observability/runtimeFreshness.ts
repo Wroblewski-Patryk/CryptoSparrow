@@ -1,5 +1,6 @@
 import { prisma } from '../prisma/client';
 import { metricsStore } from './metrics';
+import { parsePositiveInt } from '../lib/env';
 
 type FreshnessStatus = 'PASS' | 'FAIL' | 'SKIP';
 
@@ -32,12 +33,6 @@ const parseEnvDate = (raw: string | undefined) => {
   if (!normalized) return null;
   const parsed = Date.parse(normalized);
   if (Number.isNaN(parsed)) return null;
-  return parsed;
-};
-
-const parsePositiveInt = (raw: string | undefined, fallback: number) => {
-  const parsed = Number.parseInt(raw ?? '', 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
   return parsed;
 };
 
