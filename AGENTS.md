@@ -47,3 +47,9 @@ If the user sends a short "start work" nudge (for example: `start`, `go`, `next`
 - Respect docs as source of truth.
 - For risky changes: run QA/Test + Security review before finalizing.
 
+## Learning Loop
+- Review `.codex/context/LEARNING_JOURNAL.md` before running multi-step shell commands.
+- When a recurring or environment-specific pitfall is identified, add or update one concise journal entry.
+- Apply the new guardrail in the same task (do not defer).
+- Keep journal entries in English and never log secrets.
+
