@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '../../../prisma/client';
 import { UpdateUserPayload } from './basic.types';
 import { publicUserSelect } from '../../users/publicUser';
@@ -6,6 +7,11 @@ type TableColumnVisibilityMap = Record<string, Record<string, boolean>>;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value != null && !Array.isArray(value);
+
+const toJsonObject = (value: unknown): Prisma.JsonObject => {
+  if (!isRecord(value)) return {};
+  return value as Prisma.JsonObject;
+};
 
 const normalizeColumnVisibilityMap = (value: unknown): TableColumnVisibilityMap => {
   if (!isRecord(value)) return {};
@@ -27,7 +33,7 @@ const normalizeColumnVisibilityMap = (value: unknown): TableColumnVisibilityMap 
 const profileUserSelect = {
   ...publicUserSelect,
   uiPreferences: true,
-} as any;
+} satisfies Prisma.UserSelect;
 
 export const getUser = async (id: string) => {
   return prisma.user.findUnique({
@@ -49,11 +55,11 @@ export const updateUser = async (id: string, data: UpdateUserPayload) => {
 
   const existingUser = await prisma.user.findUnique({
     where: { id },
-    select: { uiPreferences: true } as any,
+    select: { uiPreferences: true } satisfies Prisma.UserSelect,
   });
 
-  const existingPreferencesSource = (existingUser as { uiPreferences?: unknown } | null)?.uiPreferences;
-  const existingPreferences = isRecord(existingPreferencesSource) ? existingPreferencesSource : {};
+  const existingPreferences = toJsonObject(existingUser?.uiPreferences);
+  const incomingPreferences = toJsonObject(uiPreferences);
   const existingTableColumnVisibility = normalizeColumnVisibilityMap(
     existingPreferences.tableColumnVisibility
   );
@@ -64,18 +70,20 @@ export const updateUser = async (id: string, data: UpdateUserPayload) => {
     ...existingTableColumnVisibility,
     ...incomingTableColumnVisibility,
   };
-  const mergedUiPreferences = {
+  const mergedUiPreferences: Prisma.InputJsonValue = {
     ...existingPreferences,
-    ...uiPreferences,
+    ...incomingPreferences,
     tableColumnVisibility: mergedTableColumnVisibility,
+  };
+
+  const updateData: Prisma.UserUpdateInput = {
+    ...basicData,
+    uiPreferences: mergedUiPreferences,
   };
 
   return prisma.user.update({
     where: { id },
-    data: {
-      ...basicData,
-      uiPreferences: mergedUiPreferences,
-    } as any,
+    data: updateData,
     select: profileUserSelect,
   });
 };

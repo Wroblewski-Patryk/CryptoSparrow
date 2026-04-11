@@ -7,13 +7,21 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- none
+- [x] `QH-01 refactor(api-profile): remove production as-any casts in profile basic service with Prisma-safe typing`
+- [ ] `QH-02 refactor(api-logging): introduce shared structured logger and migrate API entrypoints/workers`
+- [ ] `QH-03 refactor(web-theme): harden theme bootstrap script contract and maintainability`
+- [ ] `QH-04 refactor(api-normalization): centralize symbol/baseCurrency normalization in bots/backtests hot paths`
+- [ ] `QH-05 refactor(web-backtest): split oversized BacktestRunDetails into modular units under guardrails budget`
 ## NEXT
-- none
+- [ ] `QH-06 test(api-bots): split oversized bots.e2e suite into focused scenario files`
+- [ ] `QH-07 refactor(web-normalization): replace remaining local uppercase normalization variants in backtest/markets/strategies`
+- [ ] `QH-08 quality(repo): execute final lint/typecheck/guardrails sweep and publish evidence snapshot`
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `QH-01 refactor(api-profile): remove production as-any casts in profile basic service with Prisma-safe typing`
+  - 2026-04-12: Replaced `as any` with Prisma-safe typing in `apps/api/src/modules/profile/basic/basic.service.ts` (`Prisma.UserSelect`, `Prisma.JsonObject`, `Prisma.InputJsonValue`, `Prisma.UserUpdateInput`) and validated with `pnpm --filter api run typecheck` + `pnpm --filter api test -- src/modules/profile/basic/basic.e2e.test.ts` (PASS).
 - [x] `LBT-15 qa(evidence): execute local + VPS confidence pack and attach artifacts`
   - 2026-04-11: Executed fresh local confidence pack (`api` takeover/runtime tests + `api` typecheck + `web` dashboard regression + `web` production build) and attached artifact/report (`docs/operations/_artifacts-live-takeover-confidence-2026-04-11T14-48-55-096Z.json`, `docs/operations/live-takeover-confidence-pack-2026-04-11.md`). Local status PASS; strict VPS gate explicitly marked FAIL due protected ops `403` on public path and `takeover-status` route `404` on production target.
 - [x] `LBT-14 ops(runbook): publish local+VPS takeover verification checklist with strict smoke gates`
