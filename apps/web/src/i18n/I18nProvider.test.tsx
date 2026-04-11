@@ -6,6 +6,7 @@ import LanguageSwitcher from "../ui/layout/dashboard/LanguageSwitcher";
 describe("I18nProvider", () => {
   it("uses EN by default and allows switching to PL", async () => {
     window.localStorage.removeItem("cryptosparrow-locale");
+    window.localStorage.removeItem("cryptosparrow-timezone");
 
     render(
       <I18nProvider>

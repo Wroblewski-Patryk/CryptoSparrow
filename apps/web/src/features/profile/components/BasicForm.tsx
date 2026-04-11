@@ -8,8 +8,27 @@ import api from "../../../lib/api";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { useUser } from "../hooks/useUser";
 
+const COMMON_TIME_ZONES = [
+  "UTC",
+  "Europe/Warsaw",
+  "Europe/Berlin",
+  "Europe/London",
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Sao_Paulo",
+  "Asia/Dubai",
+  "Asia/Kolkata",
+  "Asia/Singapore",
+  "Asia/Tokyo",
+  "Australia/Sydney",
+];
+
+const formatTimeZoneLabel = (value: string) => value.replaceAll("_", " ");
+
 export default function ProfileForm() {
-  const { locale } = useI18n();
+  const { locale, timeZone, timeZonePreference, setTimeZonePreference } = useI18n();
   const { user, updateUser, loading } = useUser();
   const copy =
     locale === "pl"
@@ -23,6 +42,9 @@ export default function ProfileForm() {
           changeAvatar: "Zmien avatar",
           nameLabel: "Imie / Nick",
           emailLabel: "Email",
+          timeZoneLabel: "Strefa czasowa",
+          timeZoneAuto: "Auto (system)",
+          timeZoneHint: "Ustawienie wplywa na format dat i godzin zdarzen w calej aplikacji.",
           saveChanges: "Zapisz zmiany",
         }
       : {
@@ -35,6 +57,9 @@ export default function ProfileForm() {
           changeAvatar: "Change avatar",
           nameLabel: "Name / Nickname",
           emailLabel: "Email",
+          timeZoneLabel: "Time zone",
+          timeZoneAuto: "Auto (system)",
+          timeZoneHint: "This setting affects date/time rendering across the application.",
           saveChanges: "Save changes",
         };
 
@@ -139,6 +164,25 @@ export default function ProfileForm() {
               value={email}
               disabled
             />
+          </div>
+
+          <div className="form-control mb-4">
+            <label className="label">
+              <span className="label-text">{copy.timeZoneLabel}</span>
+            </label>
+            <select
+              className="select select-bordered w-full"
+              value={timeZonePreference}
+              onChange={(event) => setTimeZonePreference(event.target.value)}
+            >
+              <option value="auto">{`${copy.timeZoneAuto} (${timeZone})`}</option>
+              {[...new Set([...COMMON_TIME_ZONES, timeZone])].sort((a, b) => a.localeCompare(b)).map((zone) => (
+                <option key={zone} value={zone}>
+                  {formatTimeZoneLabel(zone)}
+                </option>
+              ))}
+            </select>
+            <span className="mt-1 text-xs opacity-70">{copy.timeZoneHint}</span>
           </div>
 
           <button

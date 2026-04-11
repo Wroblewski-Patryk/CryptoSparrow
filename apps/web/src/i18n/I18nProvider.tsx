@@ -2,16 +2,45 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { DEFAULT_LOCALE, Locale, TranslationKey, translations } from "./translations";
+import { getLocalStorageItem, setLocalStorageItem } from "@/lib/storage";
 
 export type I18nContextValue = {
   locale: Locale;
   setLocale: (next: Locale) => void;
+  timeZone: string;
+  timeZonePreference: string;
+  setTimeZonePreference: (next: string) => void;
   t: (key: TranslationKey) => string;
 };
 
 export const I18nContext = createContext<I18nContextValue | null>(null);
 
-const STORAGE_KEY = "cryptosparrow-locale";
+const LOCALE_STORAGE_KEY = "cryptosparrow-locale";
+const TIMEZONE_STORAGE_KEY = "cryptosparrow-timezone";
+const AUTO_TIMEZONE = "auto";
+
+const detectSystemTimeZone = () => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  } catch {
+    return "UTC";
+  }
+};
+
+const isValidTimeZone = (value: string) => {
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const normalizeTimeZonePreference = (value: string | null | undefined) => {
+  const normalized = value?.trim();
+  if (!normalized || normalized === AUTO_TIMEZONE) return AUTO_TIMEZONE;
+  return isValidTimeZone(normalized) ? normalized : AUTO_TIMEZONE;
+};
 
 const resolveKey = (obj: unknown, path: TranslationKey): string | undefined => {
   const value = path.split(".").reduce<unknown>((acc, chunk) => {
@@ -26,21 +55,37 @@ const resolveKey = (obj: unknown, path: TranslationKey): string | undefined => {
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
+  const [timeZonePreference, setTimeZonePreferenceState] = useState<string>(AUTO_TIMEZONE);
+  const [timeZone, setTimeZoneState] = useState<string>(detectSystemTimeZone());
 
   useEffect(() => {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = getLocalStorageItem(LOCALE_STORAGE_KEY);
     if (raw === "en" || raw === "pl") {
       setLocaleState(raw);
     }
+
+    const storedTimeZone = normalizeTimeZonePreference(getLocalStorageItem(TIMEZONE_STORAGE_KEY));
+    setTimeZonePreferenceState(storedTimeZone);
+    setTimeZoneState(storedTimeZone === AUTO_TIMEZONE ? detectSystemTimeZone() : storedTimeZone);
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, locale);
+    setLocalStorageItem(LOCALE_STORAGE_KEY, locale);
     document.documentElement.lang = locale;
   }, [locale]);
 
+  useEffect(() => {
+    setLocalStorageItem(TIMEZONE_STORAGE_KEY, timeZonePreference);
+    setTimeZoneState(
+      timeZonePreference === AUTO_TIMEZONE ? detectSystemTimeZone() : timeZonePreference
+    );
+  }, [timeZonePreference]);
+
   const setLocale = (next: Locale) => {
     setLocaleState(next);
+  };
+  const setTimeZonePreference = (next: string) => {
+    setTimeZonePreferenceState(normalizeTimeZonePreference(next));
   };
 
   const t = useCallback((key: TranslationKey) => {
@@ -54,9 +99,12 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     () => ({
       locale,
       setLocale,
+      timeZone,
+      timeZonePreference,
+      setTimeZonePreference,
       t,
     }),
-    [locale, t]
+    [locale, t, timeZone, timeZonePreference]
   );
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;

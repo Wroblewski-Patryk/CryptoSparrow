@@ -32,6 +32,8 @@ type TranslationSchema = {
       dashboard: string;
       add: string;
       language: string;
+      timeZone: string;
+      timeZoneAuto: string;
       english: string;
       polish: string;
     };
@@ -312,6 +314,8 @@ export const translations: Record<Locale, TranslationSchema> = {
         dashboard: "Dashboard",
         add: "Add",
         language: "Language",
+        timeZone: "Time zone",
+        timeZoneAuto: "Auto (System)",
         english: "English",
         polish: "Polish",
       },
@@ -927,6 +931,8 @@ export const translations: Record<Locale, TranslationSchema> = {
         dashboard: "Dashboard",
         add: "Dodaj",
         language: "Jezyk",
+        timeZone: "Strefa czasowa",
+        timeZoneAuto: "Auto (system)",
         english: "Angielski",
         polish: "Polski",
       },

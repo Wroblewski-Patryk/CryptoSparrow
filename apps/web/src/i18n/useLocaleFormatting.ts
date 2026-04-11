@@ -15,6 +15,7 @@ const toNumber = (value: number | null | undefined) => (value == null ? null : N
 export function useLocaleFormatting() {
   const i18n = useContext(I18nContext);
   const locale = i18n?.locale ?? DEFAULT_LOCALE;
+  const timeZone = i18n?.timeZone ?? "UTC";
   const intlLocale = localeToIntl[locale];
 
   return useMemo(() => {
@@ -26,6 +27,7 @@ export function useLocaleFormatting() {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
+        timeZone,
       }).format(date);
     };
 
@@ -39,6 +41,22 @@ export function useLocaleFormatting() {
         day: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
+        timeZone,
+      }).format(date);
+    };
+
+    const formatDateTimeWithSeconds = (value?: string | null) => {
+      if (!value) return "-";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "-";
+      return new Intl.DateTimeFormat(intlLocale, {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        timeZone,
       }).format(date);
     };
 
@@ -49,6 +67,7 @@ export function useLocaleFormatting() {
       return new Intl.DateTimeFormat(intlLocale, {
         hour: "2-digit",
         minute: "2-digit",
+        timeZone,
       }).format(date);
     };
 
@@ -79,12 +98,14 @@ export function useLocaleFormatting() {
 
     return {
       locale: intlLocale,
+      timeZone,
       formatDate,
       formatDateTime,
+      formatDateTimeWithSeconds,
       formatTime,
       formatNumber,
       formatCurrency,
       formatPercent,
     };
-  }, [intlLocale]);
+  }, [intlLocale, timeZone]);
 }

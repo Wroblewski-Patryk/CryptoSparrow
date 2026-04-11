@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useI18n } from "../../../i18n/I18nProvider";
+import { useLocaleFormatting } from "@/i18n/useLocaleFormatting";
 import { TranslationKey } from "../../../i18n/translations";
 
 import StatusBadge from "../../../ui/components/StatusBadge";
@@ -58,13 +59,6 @@ const formatNumber = (value: number, digits = 2) =>
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   }).format(value);
-
-const formatDateTime = (value?: string | null) => {
-  if (!value) return "-";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "-";
-  return parsed.toLocaleString();
-};
 
 const formatDuration = (ms: number) => {
   if (!Number.isFinite(ms) || ms <= 0) return "0m";
@@ -137,6 +131,7 @@ export default function BotsManagement({
   preferredBotId = null,
 }: BotsManagementProps) {
   const { t } = useI18n();
+  const { formatDateTime } = useLocaleFormatting();
   const [activeTab, setActiveTab] = useState<"bots" | "monitoring" | "assistant">(
     lockedTab ?? initialTab
   );

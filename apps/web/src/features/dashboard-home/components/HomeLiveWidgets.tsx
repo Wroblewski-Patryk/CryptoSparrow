@@ -93,21 +93,6 @@ const resolveQuoteCurrency = (symbol: string) => {
   return null;
 };
 
-const formatDateTimeYearToSecond = (value?: string | null) => {
-  if (!value) return "-";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "-";
-
-  const year = String(parsed.getFullYear());
-  const month = String(parsed.getMonth() + 1).padStart(2, "0");
-  const day = String(parsed.getDate()).padStart(2, "0");
-  const hour = String(parsed.getHours()).padStart(2, "0");
-  const minute = String(parsed.getMinutes()).padStart(2, "0");
-  const second = String(parsed.getSeconds()).padStart(2, "0");
-
-  return `${year}.${month}.${day} ${hour}.${minute}.${second}`;
-};
-
 const resolveSignalCardsPerView = (width: number) => {
   if (width >= SIGNAL_CARDS_DENSITY_BREAKPOINTS.desktopMinWidth) return 4;
   if (width >= SIGNAL_CARDS_DENSITY_BREAKPOINTS.tabletMinWidth) return 3;
@@ -427,7 +412,7 @@ const maxDrawdown = (trades: BotRuntimeTrade[]) => {
 export default function HomeLiveWidgets() {
   const { t } = useI18n();
   const [closingPositionId, setClosingPositionId] = useState<string | null>(null);
-  const { formatCurrency, formatDateTime, formatNumber, formatPercent, formatTime } = useLocaleFormatting();
+  const { formatCurrency, formatDateTime, formatDateTimeWithSeconds, formatNumber, formatPercent, formatTime } = useLocaleFormatting();
   const formatDcaPercent = useCallback(
     (value: number) => `${formatNumber(value, { maximumFractionDigits: 2 })}%`,
     [formatNumber]
@@ -818,7 +803,7 @@ export default function HomeLiveWidgets() {
         label: t("dashboard.home.runtime.timeOpened"),
         sortable: true,
         accessor: (row) => row.openedAt ?? "",
-        render: (row) => formatDateTimeYearToSecond(row.openedAt),
+        render: (row) => formatDateTimeWithSeconds(row.openedAt),
       },
       {
         key: "symbol",

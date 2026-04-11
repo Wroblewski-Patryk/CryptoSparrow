@@ -13,6 +13,7 @@ import { TranslationKey } from "../../../i18n/translations";
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
 import { normalizeSymbol } from '@/lib/symbols';
 import { toTimestamp } from '@/lib/time';
+import { getLocalStorageItem, setLocalStorageItem } from '@/lib/storage';
 import type {
   RuntimeDataTab,
   RuntimeSnapshot,
@@ -34,6 +35,26 @@ const EMPTY_TRADE_FILTERS: TradeFiltersState = {
   action: "ALL",
   from: "",
   to: "",
+};
+
+const readStoredTradeSortPreference = (): {
+  sortBy: TradeSortBy | null;
+  sortDir: TradeSortDir;
+} => {
+  const raw = getLocalStorageItem(DASHBOARD_TRADE_HISTORY_SORT_STORAGE_KEY);
+  if (!raw) {
+    return { sortBy: null as TradeSortBy | null, sortDir: "asc" as TradeSortDir };
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as { sortBy?: unknown; sortDir?: unknown };
+    return {
+      sortBy: typeof parsed.sortBy === "string" ? (parsed.sortBy as TradeSortBy) : null,
+      sortDir: parsed.sortDir === "desc" ? "desc" : "asc",
+    };
+  } catch {
+    return { sortBy: null as TradeSortBy | null, sortDir: "asc" as TradeSortDir };
+  }
 };
 
 const pickPrimarySession = (sessions: BotRuntimeSessionListItem[]) => {
@@ -116,28 +137,12 @@ export const useHomeLiveWidgetsController = ({
   const [selectedTradesLoading, setSelectedTradesLoading] = useState(false);
   const [tradePage, setTradePage] = useState(1);
   const [tradePageSize, setTradePageSize] = useState<number>(TRADE_PAGE_SIZE_OPTIONS[0]);
-  const [tradeSortBy, setTradeSortBy] = useState<TradeSortBy | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      const raw = window.localStorage.getItem(DASHBOARD_TRADE_HISTORY_SORT_STORAGE_KEY);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw) as { sortBy?: unknown };
-      return typeof parsed.sortBy === "string" ? (parsed.sortBy as TradeSortBy) : null;
-    } catch {
-      return null;
-    }
-  });
-  const [tradeSortDir, setTradeSortDir] = useState<TradeSortDir>(() => {
-    if (typeof window === "undefined") return "asc";
-    try {
-      const raw = window.localStorage.getItem(DASHBOARD_TRADE_HISTORY_SORT_STORAGE_KEY);
-      if (!raw) return "asc";
-      const parsed = JSON.parse(raw) as { sortDir?: unknown };
-      return parsed.sortDir === "desc" ? "desc" : "asc";
-    } catch {
-      return "asc";
-    }
-  });
+  const [tradeSortBy, setTradeSortBy] = useState<TradeSortBy | null>(
+    () => readStoredTradeSortPreference().sortBy
+  );
+  const [tradeSortDir, setTradeSortDir] = useState<TradeSortDir>(
+    () => readStoredTradeSortPreference().sortDir
+  );
   const [runtimeDataTab, setRuntimeDataTab] = useState<RuntimeDataTab>("OPEN_POSITIONS");
   const [tradeDraftFilters, setTradeDraftFilters] = useState<TradeFiltersState>(EMPTY_TRADE_FILTERS);
   const [tradeAppliedFilters, setTradeAppliedFilters] = useState<TradeFiltersState>(EMPTY_TRADE_FILTERS);
@@ -244,8 +249,7 @@ export const useHomeLiveWidgetsController = ({
   ]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = window.localStorage.getItem(SELECTED_BOT_STORAGE_KEY);
+    const saved = getLocalStorageItem(SELECTED_BOT_STORAGE_KEY);
     if (saved) setSelectedBotId(saved);
   }, []);
 
@@ -280,9 +284,8 @@ export const useHomeLiveWidgetsController = ({
   }, [snapshots, selectedBotId]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
     if (!selected?.bot.id) return;
-    window.localStorage.setItem(SELECTED_BOT_STORAGE_KEY, selected.bot.id);
+    setLocalStorageItem(SELECTED_BOT_STORAGE_KEY, selected.bot.id);
   }, [selected?.bot.id]);
 
   useEffect(() => {
@@ -414,18 +417,13 @@ export const useHomeLiveWidgetsController = ({
   };
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(
-        DASHBOARD_TRADE_HISTORY_SORT_STORAGE_KEY,
-        JSON.stringify({
-          sortBy: tradeSortBy,
-          sortDir: tradeSortDir,
-        })
-      );
-    } catch {
-      // Ignore localStorage write failures.
-    }
+    setLocalStorageItem(
+      DASHBOARD_TRADE_HISTORY_SORT_STORAGE_KEY,
+      JSON.stringify({
+        sortBy: tradeSortBy,
+        sortDir: tradeSortDir,
+      })
+    );
   }, [tradeSortBy, tradeSortDir]);
 
   return {

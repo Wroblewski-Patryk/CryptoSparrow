@@ -390,7 +390,11 @@ describe("HomeLiveWidgets", () => {
       expect(screen.getAllByText("BTCUSDT").length).toBeGreaterThan(0);
       expect(screen.getByText("Rynki:")).toBeInTheDocument();
       expect(screen.getByText("Sygnaly:")).toBeInTheDocument();
-      expect(screen.getAllByText((content) => /^2026\.03\.31 \d{2}\.\d{2}\.\d{2}$/.test(content)).length).toBeGreaterThan(0);
+      expect(
+        screen.getAllByText(
+          (content) => /\d{2}\.\d{2}\.\d{4}/.test(content) && /\d{2}:\d{2}:\d{2}/.test(content)
+        ).length
+      ).toBeGreaterThan(0);
       expect(screen.getByTitle("1:-15%, 2:-30%")).toBeInTheDocument();
       expect(screen.getByText("TTP")).toBeInTheDocument();
       expect(screen.getByText("TSL")).toBeInTheDocument();

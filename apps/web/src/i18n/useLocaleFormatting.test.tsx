@@ -4,10 +4,13 @@ import { describe, expect, it } from "vitest";
 import { I18nContext, I18nContextValue } from "./I18nProvider";
 import { useLocaleFormatting } from "./useLocaleFormatting";
 
-const createWrapper = (locale: "en" | "pl") => {
+const createWrapper = (locale: "en" | "pl", timeZone = "UTC") => {
   const context: I18nContextValue = {
     locale,
     setLocale: () => undefined,
+    timeZone,
+    timeZonePreference: timeZone,
+    setTimeZonePreference: () => undefined,
     t: (key) => key,
   };
 
@@ -43,5 +46,13 @@ describe("useLocaleFormatting", () => {
     expect(result.current.formatDate(null)).toBe("-");
     expect(result.current.formatDate("invalid-date")).toBe("-");
     expect(result.current.formatTime(undefined)).toBe("--:--");
+  });
+
+  it("applies selected time zone to date-time formatting", () => {
+    const utc = renderHook(() => useLocaleFormatting(), { wrapper: createWrapper("en", "UTC") });
+    const tokyo = renderHook(() => useLocaleFormatting(), { wrapper: createWrapper("en", "Asia/Tokyo") });
+
+    const value = "2026-01-01T00:00:00.000Z";
+    expect(utc.result.current.formatDateTime(value)).not.toBe(tokyo.result.current.formatDateTime(value));
   });
 });
