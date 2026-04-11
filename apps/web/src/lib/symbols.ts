@@ -1,4 +1,4 @@
-export const normalizeSymbol = (value: string) => value.trim().toUpperCase();
+export const normalizeSymbol = (value: string | null | undefined) => (value ?? "").trim().toUpperCase();
 
 export const normalizeSymbolsUnique = (symbols: string[]) =>
   [...new Set(symbols.map(normalizeSymbol).filter(Boolean))];

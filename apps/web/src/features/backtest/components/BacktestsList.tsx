@@ -21,6 +21,7 @@ import {
 } from "../services/backtests.service";
 import { BacktestReport, BacktestRun, BacktestStatus, BacktestTrade } from "../types/backtest.type";
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
+import { normalizeSymbol } from '@/lib/symbols';
 
 const statuses: Array<BacktestStatus | "ALL"> = ["ALL", "PENDING", "RUNNING", "COMPLETED", "FAILED", "CANCELED"];
 
@@ -156,13 +157,14 @@ export function BacktestsList() {
 
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!name.trim() || !symbol.trim() || !timeframe.trim()) return;
+    const normalizedSymbol = normalizeSymbol(symbol);
+    if (!name.trim() || !normalizedSymbol || !timeframe.trim()) return;
 
     setCreating(true);
     try {
       const created = await createBacktestRun({
         name: name.trim(),
-        symbol: symbol.trim().toUpperCase(),
+        symbol: normalizedSymbol,
         timeframe: timeframe.trim(),
         strategyId: strategyId.trim() || undefined,
         notes: notes.trim() || undefined,

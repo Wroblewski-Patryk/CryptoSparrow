@@ -15,6 +15,7 @@ import { supportsExchangeCapability } from '@/features/exchanges/exchangeCapabil
 import { listWallets } from '@/features/wallets/services/wallets.service';
 import { Wallet } from '@/features/wallets/types/wallet.type';
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
+import { normalizeSymbol } from '@/lib/symbols';
 import {
   createBot,
   getBot,
@@ -162,7 +163,7 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
     return (
       selectedWallet.exchange === selectedMarketGroup.exchange &&
       selectedWallet.marketType === selectedMarketGroup.marketType &&
-      selectedWallet.baseCurrency.toUpperCase() === selectedMarketGroup.baseCurrency.toUpperCase()
+      normalizeSymbol(selectedWallet.baseCurrency) === normalizeSymbol(selectedMarketGroup.baseCurrency)
     );
   }, [selectedMarketGroup, selectedWallet]);
 

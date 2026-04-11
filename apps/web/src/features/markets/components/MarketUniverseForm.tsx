@@ -8,6 +8,7 @@ import { fetchMarketCatalog } from '../services/markets.service';
 import { CreateMarketUniverseInput, MarketCatalogEntry, MarketUniverse } from '../types/marketUniverse.type';
 import { uniqueSortedSymbols } from '../utils/marketUniverseHelpers';
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
+import { normalizeSymbol } from '@/lib/symbols';
 import {
   EXCHANGE_OPTIONS,
   ExchangeOption,
@@ -64,13 +65,13 @@ export default function MarketUniverseForm({
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [exchange, setExchange] = useState<ExchangeOption>(initial?.exchange ?? 'BINANCE');
   const [marketType, setMarketType] = useState<'SPOT' | 'FUTURES'>(initial?.marketType ?? 'FUTURES');
-  const [baseCurrency, setBaseCurrency] = useState(initial?.baseCurrency ?? 'USDT');
+  const [baseCurrency, setBaseCurrency] = useState(normalizeSymbol(initial?.baseCurrency) || 'USDT');
   const [baseCurrencies, setBaseCurrencies] = useState<string[]>([]);
   const [catalogMarkets, setCatalogMarkets] = useState<MarketCatalogEntry[]>([]);
 
   const [name, setName] = useState(initial?.name ?? '');
-  const [whitelistSymbols, setWhitelistSymbols] = useState<string[]>(initial?.whitelist ?? []);
-  const [blacklistSymbols, setBlacklistSymbols] = useState<string[]>(initial?.blacklist ?? []);
+  const [whitelistSymbols, setWhitelistSymbols] = useState<string[]>(uniqueSortedSymbols(initial?.whitelist ?? []));
+  const [blacklistSymbols, setBlacklistSymbols] = useState<string[]>(uniqueSortedSymbols(initial?.blacklist ?? []));
   const [previewQuery, setPreviewQuery] = useState('');
   const [minQuoteVolumeEnabled, setMinQuoteVolumeEnabled] = useState(resolveSavedVolumeEnabled(initial));
   const [minQuoteVolume, setMinQuoteVolume] = useState(resolveSavedMinVolume(initial));
@@ -81,9 +82,9 @@ export default function MarketUniverseForm({
     setName(initial.name);
     setExchange(initial.exchange ?? 'BINANCE');
     setMarketType(initial.marketType);
-    setBaseCurrency(initial.baseCurrency);
-    setWhitelistSymbols(initial.whitelist);
-    setBlacklistSymbols(initial.blacklist);
+    setBaseCurrency(normalizeSymbol(initial.baseCurrency) || 'USDT');
+    setWhitelistSymbols(uniqueSortedSymbols(initial.whitelist));
+    setBlacklistSymbols(uniqueSortedSymbols(initial.blacklist));
     setMinQuoteVolumeEnabled(resolveSavedVolumeEnabled(initial));
     setMinQuoteVolume(resolveSavedMinVolume(initial));
   }, [initial]);
@@ -103,11 +104,25 @@ export default function MarketUniverseForm({
           marketType: params?.requestedMarketType ?? marketType,
         });
 
+        const normalizedBaseCurrency = normalizeSymbol(catalog.baseCurrency) || 'USDT';
+        const normalizedBaseCurrencies = uniqueSortedSymbols([
+          normalizedBaseCurrency,
+          ...(catalog.baseCurrencies ?? []),
+        ]);
+
         setExchange((catalog.exchange ?? 'BINANCE') as ExchangeOption);
         setMarketType(catalog.marketType);
-        setBaseCurrency(catalog.baseCurrency);
-        setBaseCurrencies(catalog.baseCurrencies);
-        setCatalogMarkets(catalog.markets.sort((a, b) => a.symbol.localeCompare(b.symbol)));
+        setBaseCurrency(normalizedBaseCurrency);
+        setBaseCurrencies(normalizedBaseCurrencies);
+        setCatalogMarkets(
+          catalog.markets
+            .map((market) => ({
+              ...market,
+              symbol: normalizeSymbol(market.symbol),
+              displaySymbol: market.displaySymbol || normalizeSymbol(market.symbol),
+            }))
+            .sort((a, b) => a.symbol.localeCompare(b.symbol))
+        );
       } catch (err: unknown) {
         const message = getAxiosMessage(err) ?? 'Nie udalo sie pobrac katalogu rynkow z gieldy.';
         setCatalogError(message);
@@ -121,7 +136,7 @@ export default function MarketUniverseForm({
   useEffect(() => {
     void loadCatalog({
       requestedExchange: initial?.exchange ?? 'BINANCE',
-      requestedBaseCurrency: initial?.baseCurrency,
+      requestedBaseCurrency: normalizeSymbol(initial?.baseCurrency) || undefined,
       requestedMarketType: initial?.marketType,
     });
   }, [initial?.baseCurrency, initial?.exchange, initial?.marketType, loadCatalog]);
@@ -134,11 +149,11 @@ export default function MarketUniverseForm({
     if (!initial) return null;
     const exchangeKey = initial.exchange ?? 'BINANCE';
     const marketTypeKey = initial.marketType ?? 'FUTURES';
-    const baseCurrencyKey = initial.baseCurrency?.trim().toUpperCase() ?? '';
+    const baseCurrencyKey = normalizeSymbol(initial.baseCurrency);
     return `${exchangeKey}|${marketTypeKey}|${baseCurrencyKey}`;
   }, [initial]);
   const currentContextKey = useMemo(
-    () => `${exchange}|${marketType}|${baseCurrency.trim().toUpperCase()}`,
+    () => `${exchange}|${marketType}|${normalizeSymbol(baseCurrency)}`,
     [baseCurrency, exchange, marketType]
   );
   const shouldPreserveInitialSelections =
@@ -210,7 +225,7 @@ export default function MarketUniverseForm({
   }, [availableSymbols, blacklistSymbols, whitelistSymbols]);
 
   const previewFiltered = useMemo(() => {
-    const q = previewQuery.trim().toUpperCase();
+    const q = normalizeSymbol(previewQuery);
     if (!q) return previewSymbols;
     return previewSymbols.filter((symbol) => symbol.includes(q));
   }, [previewQuery, previewSymbols]);
@@ -224,10 +239,11 @@ export default function MarketUniverseForm({
   );
 
   const handleBaseCurrencyChange = async (nextBaseCurrency: string) => {
-    setBaseCurrency(nextBaseCurrency);
+    const normalizedBaseCurrency = normalizeSymbol(nextBaseCurrency) || 'USDT';
+    setBaseCurrency(normalizedBaseCurrency);
     await loadCatalog({
       requestedExchange: exchange,
-      requestedBaseCurrency: nextBaseCurrency,
+      requestedBaseCurrency: normalizedBaseCurrency,
       requestedMarketType: marketType,
     });
   };
@@ -278,7 +294,7 @@ export default function MarketUniverseForm({
       name: name.trim(),
       exchange,
       marketType,
-      baseCurrency: baseCurrency.trim().toUpperCase(),
+      baseCurrency: normalizeSymbol(baseCurrency) || 'USDT',
       filterRules: {
         minQuoteVolumeEnabled,
         ...(minQuoteVolumeEnabled ? { minQuoteVolume24h: minQuoteVolume } : {}),

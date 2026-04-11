@@ -56,7 +56,7 @@ const mapWalletToForm = (wallet: Wallet): WalletFormState => ({
   mode: wallet.mode,
   exchange: wallet.exchange,
   marketType: wallet.marketType,
-  baseCurrency: wallet.baseCurrency,
+  baseCurrency: normalizeSymbol(wallet.baseCurrency) || 'USDT',
   paperInitialBalance: wallet.paperInitialBalance,
   liveAllocationMode: wallet.liveAllocationMode ?? 'PERCENT',
   liveAllocationValue: wallet.liveAllocationValue ?? 100,
@@ -97,7 +97,7 @@ const formatAmount = (value: number, currency: string) =>
   new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(value) + ` ${currency.toUpperCase()}`;
+  }).format(value) + ` ${normalizeSymbol(currency)}`;
 
 export default function WalletCreateEditForm({ editId = null, formId = 'wallet-form' }: WalletCreateEditFormProps) {
   const { locale } = useI18n();
