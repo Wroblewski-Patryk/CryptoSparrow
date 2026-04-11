@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { fetchApiKeys, addApiKey, editApiKey, deleteApiKey } from "../services/apiKeys.service";
 import { ApiKey } from "../types/apiKey.type";
@@ -43,7 +43,7 @@ export function useApiKeys() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     setLoading(true);
     try {
       const data = await fetchApiKeys();
@@ -51,13 +51,14 @@ export function useApiKeys() {
       setError(null);
     } catch (err: unknown) {
       setError(getErrorMessage(err, copy.fetchFallback));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }, [copy.fetchFallback]);
 
   useEffect(() => {
-    refresh();
-  }, []);
+    void refresh();
+  }, [refresh]);
 
   const handleAdd = async (payload: Partial<ApiKey>) => {
     try {

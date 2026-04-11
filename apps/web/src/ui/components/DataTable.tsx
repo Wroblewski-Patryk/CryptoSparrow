@@ -648,7 +648,7 @@ export default function DataTable<T>({
         </table>
       </div>
 
-      {pagedRows.length === 0 ? <p className='text-sm opacity-70'>{emptyText}</p> : null}
+      {pagedRows.length === 0 ? <p className='px-3 text-sm opacity-70'>{emptyText}</p> : null}
 
       {paginationEnabled ? (
         <div

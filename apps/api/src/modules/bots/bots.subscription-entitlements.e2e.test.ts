@@ -9,6 +9,28 @@ import {
 } from '../subscriptions/subscriptions.service';
 import { SubscriptionEntitlementsSchema } from '../subscriptions/subscriptionEntitlements.service';
 
+const walletIdByMarketGroupId = new Map<string, string>();
+
+const createWalletForContext = async (email: string) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { email },
+    select: { id: true },
+  });
+  const created = await prisma.wallet.create({
+    data: {
+      userId: user.id,
+      name: `Entitlements Wallet ${Date.now()}`,
+      mode: 'PAPER',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+      paperInitialBalance: 10_000,
+    },
+    select: { id: true },
+  });
+  return created.id;
+};
+
 const registerAndLogin = async (email: string) => {
   const agent = request.agent(app);
   const res = await agent.post('/auth/register').send({
@@ -54,21 +76,32 @@ const createMarketGroup = async (email: string) => {
       symbols: ['BTCUSDT', 'ETHUSDT'],
     },
   });
+  const walletId = await createWalletForContext(email);
+  walletIdByMarketGroupId.set(symbolGroup.id, walletId);
+  walletIdByMarketGroupId.set(marketUniverse.id, walletId);
 
   return symbolGroup.id;
 };
 
-const createPayload = (refs: { strategyId: string; marketGroupId: string }) => ({
-  name: 'Entitlements Runner',
-  mode: 'PAPER',
-  strategyId: refs.strategyId,
-  marketGroupId: refs.marketGroupId,
-  isActive: false,
-  liveOptIn: false,
-});
+const createPayload = (refs: { strategyId: string; marketGroupId: string; walletId?: string }) => {
+  const walletId = refs.walletId ?? walletIdByMarketGroupId.get(refs.marketGroupId);
+  if (!walletId) {
+    throw new Error(`Missing wallet mapping for marketGroupId=${refs.marketGroupId}`);
+  }
+
+  return {
+    name: 'Entitlements Runner',
+    strategyId: refs.strategyId,
+    marketGroupId: refs.marketGroupId,
+    walletId,
+    isActive: false,
+    liveOptIn: false,
+  };
+};
 
 describe('Bots subscription entitlements', () => {
   beforeEach(async () => {
+    walletIdByMarketGroupId.clear();
     await prisma.log.deleteMany();
     await prisma.backtestReport.deleteMany();
     await prisma.backtestTrade.deleteMany();

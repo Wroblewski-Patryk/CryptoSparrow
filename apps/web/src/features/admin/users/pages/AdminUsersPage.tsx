@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { getAdminSubscriptionPlans } from "../../subscriptions/services/adminSubscriptionPlan.service";
 import { useAuth } from "@/context/AuthContext";
 import { getAdminUsers, updateAdminUser } from "../services/adminUsers.service";
@@ -60,7 +60,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  const loadPlans = async () => {
+  const loadPlans = useCallback(async () => {
     try {
       const plans = await getAdminSubscriptionPlans();
       const codes = plans.map((plan) => plan.code);
@@ -79,11 +79,11 @@ export default function AdminUsersPage() {
       // Plans are optional for listing users; assignment controls stay disabled without catalog.
       setPlanCodes([]);
     }
-  };
+  }, [users]);
 
   useEffect(() => {
     void loadPlans();
-  }, []);
+  }, [loadPlans]);
 
   useEffect(() => {
     void loadUsers();
@@ -295,4 +295,3 @@ export default function AdminUsersPage() {
     </section>
   );
 }
-

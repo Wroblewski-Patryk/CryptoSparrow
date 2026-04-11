@@ -1,7 +1,13 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { assertExchangeCapability } from '../exchange/exchangeCapabilities';
-import { CreateWalletDto, ListWalletsQueryDto, UpdateWalletDto } from './wallets.types';
+import { decrypt } from '../../utils/crypto';
+import {
+  CreateWalletDto,
+  ListWalletsQueryDto,
+  UpdateWalletDto,
+  WalletBalancePreviewDto,
+} from './wallets.types';
 
 const normalizeBaseCurrency = (value: string | undefined) =>
   (value?.trim().toUpperCase() || 'USDT');
@@ -206,3 +212,154 @@ export const getOwnedWalletForBotContext = async (params: {
       apiKeyId: true,
     },
   });
+
+const extractBalanceForCurrency = (payload: unknown, currency: string) => {
+  if (!payload || typeof payload !== 'object') return null;
+  const normalizedCurrency = currency.toUpperCase();
+  const parsed = payload as { total?: Record<string, unknown>; free?: Record<string, unknown> };
+
+  const total = Number(parsed.total?.[normalizedCurrency]);
+  const free = Number(parsed.free?.[normalizedCurrency]);
+
+  const normalizedTotal = Number.isFinite(total) && total >= 0 ? total : null;
+  const normalizedFree = Number.isFinite(free) && free >= 0 ? free : null;
+
+  return {
+    accountBalance: normalizedTotal ?? normalizedFree,
+    freeBalance: normalizedFree ?? normalizedTotal,
+  };
+};
+
+const resolveReferenceBalanceFromAllocation = (params: {
+  accountBalance: number;
+  liveAllocationMode?: 'PERCENT' | 'FIXED' | null;
+  liveAllocationValue?: number | null;
+}) => {
+  if (!Number.isFinite(params.accountBalance) || params.accountBalance <= 0) return 0;
+
+  if (params.liveAllocationMode === 'PERCENT' && Number.isFinite(params.liveAllocationValue)) {
+    const percent = Math.max(0, Math.min(100, params.liveAllocationValue ?? 0));
+    return params.accountBalance * (percent / 100);
+  }
+
+  if (params.liveAllocationMode === 'FIXED' && Number.isFinite(params.liveAllocationValue)) {
+    const fixed = Math.max(0, params.liveAllocationValue ?? 0);
+    return Math.min(params.accountBalance, fixed);
+  }
+
+  return params.accountBalance;
+};
+
+const fetchBinanceBalancePreview = async (params: {
+  apiKey: string;
+  apiSecret: string;
+  marketType: 'FUTURES' | 'SPOT';
+  baseCurrency: string;
+}) => {
+  if (process.env.NODE_ENV === 'test') {
+    const account = Number.parseFloat(process.env.WALLET_PREVIEW_TEST_ACCOUNT_BALANCE ?? '1000');
+    const free = Number.parseFloat(process.env.WALLET_PREVIEW_TEST_FREE_BALANCE ?? String(account));
+    if (!Number.isFinite(account) || account <= 0) return null;
+    const normalizedFree = Number.isFinite(free) && free >= 0 ? Math.min(free, account) : account;
+    return {
+      accountBalance: account,
+      freeBalance: normalizedFree,
+    };
+  }
+
+  const ccxtModule = (await import('ccxt')) as unknown as {
+    binance: new (config: Record<string, unknown>) => {
+      fetchBalance: () => Promise<unknown>;
+      close?: () => Promise<void>;
+    };
+  };
+
+  const client = new ccxtModule.binance({
+    apiKey: params.apiKey,
+    secret: params.apiSecret,
+    enableRateLimit: true,
+    options: {
+      defaultType: params.marketType === 'FUTURES' ? 'future' : 'spot',
+    },
+  });
+
+  try {
+    const balancePayload = await client.fetchBalance();
+    return extractBalanceForCurrency(balancePayload, params.baseCurrency);
+  } finally {
+    if (typeof client.close === 'function') {
+      await client.close().catch(() => undefined);
+    }
+  }
+};
+
+export const previewWalletBalance = async (userId: string, payload: WalletBalancePreviewDto) => {
+  assertExchangeCapability(payload.exchange, 'LIVE_EXECUTION');
+
+  const apiKey = await prisma.apiKey.findFirst({
+    where: {
+      id: payload.apiKeyId,
+      userId,
+      exchange: payload.exchange,
+    },
+    select: {
+      id: true,
+      apiKey: true,
+      apiSecret: true,
+    },
+  });
+
+  if (!apiKey) {
+    throw new Error('WALLET_PREVIEW_API_KEY_NOT_FOUND');
+  }
+
+  const decodedApiKey = decrypt(apiKey.apiKey);
+  const decodedApiSecret = decrypt(apiKey.apiSecret);
+
+  try {
+    const snapshot = await fetchBinanceBalancePreview({
+      apiKey: decodedApiKey,
+      apiSecret: decodedApiSecret,
+      marketType: payload.marketType,
+      baseCurrency: payload.baseCurrency.trim().toUpperCase(),
+    });
+
+    if (snapshot?.accountBalance == null) {
+      throw new Error('WALLET_PREVIEW_FETCH_FAILED');
+    }
+
+    const referenceBalance = resolveReferenceBalanceFromAllocation({
+      accountBalance: snapshot.accountBalance,
+      liveAllocationMode: payload.liveAllocationMode,
+      liveAllocationValue: payload.liveAllocationValue,
+    });
+
+    await prisma.apiKey.update({
+      where: { id: apiKey.id },
+      data: { lastUsed: new Date() },
+    });
+
+    return {
+      exchange: payload.exchange,
+      marketType: payload.marketType,
+      baseCurrency: payload.baseCurrency.trim().toUpperCase(),
+      accountBalance: snapshot.accountBalance,
+      freeBalance: snapshot.freeBalance,
+      referenceBalance,
+      allocationApplied:
+        payload.liveAllocationMode && typeof payload.liveAllocationValue === 'number'
+          ? {
+              mode: payload.liveAllocationMode,
+              value: payload.liveAllocationValue,
+            }
+          : null,
+      fetchedAt: new Date().toISOString(),
+      source: 'BINANCE' as const,
+    };
+  } catch (error) {
+    if (error instanceof Error && error.message === 'WALLET_PREVIEW_FETCH_FAILED') {
+      throw error;
+    }
+    throw new Error('WALLET_PREVIEW_FETCH_FAILED');
+  }
+};

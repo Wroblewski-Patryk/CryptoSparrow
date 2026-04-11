@@ -155,6 +155,7 @@ export const useHomeLiveWidgetsController = ({
   const [viewportWidth, setViewportWidth] = useState(0);
   const [runtimeStaleWatchNowMs, setRuntimeStaleWatchNowMs] = useState(() => Date.now());
   const ttpStickyFavorableMoveByPositionRef = useRef<Map<string, number>>(new Map());
+  const hasLoadedTradesRef = useRef(false);
   const loadInFlightRef = useRef(false);
   const loadStartedAtRef = useRef<number | null>(null);
   const signalRailRef = useRef<HTMLDivElement | null>(null);
@@ -240,7 +241,14 @@ export const useHomeLiveWidgetsController = ({
       loadStartedAtRef.current = null;
       if (!silent) setLoading(false);
     }
-  }, [t]);
+  }, [
+    getBotRuntimeGraph,
+    listBotRuntimeSessionPositions,
+    listBotRuntimeSessionSymbolStats,
+    listBotRuntimeSessions,
+    listBots,
+    t,
+  ]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -322,7 +330,13 @@ export const useHomeLiveWidgetsController = ({
     return () => {
       source.close();
     };
-  }, [selected?.session?.id, selected?.session?.status, streamSymbols, streamSymbolsKey]);
+  }, [createMarketStreamEventSource, selected?.session?.id, selected?.session?.status, streamSymbols, streamSymbolsKey]);
+
+  useEffect(() => {
+    hasLoadedTradesRef.current = false;
+    setSelectedTrades(null);
+    setSelectedTradesLoading(false);
+  }, [selected?.bot.id, selected?.session?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -331,7 +345,7 @@ export const useHomeLiveWidgetsController = ({
         setSelectedTrades(null);
         return;
       }
-      const shouldShowLoading = selectedTrades == null;
+      const shouldShowLoading = !hasLoadedTradesRef.current;
       if (shouldShowLoading) setSelectedTradesLoading(true);
       try {
         const query: Record<string, unknown> = {
@@ -358,7 +372,10 @@ export const useHomeLiveWidgetsController = ({
       } catch {
         if (!cancelled) setSelectedTrades(null);
       } finally {
-        if (!cancelled && shouldShowLoading) setSelectedTradesLoading(false);
+        if (!cancelled) {
+          hasLoadedTradesRef.current = true;
+          if (shouldShowLoading) setSelectedTradesLoading(false);
+        }
       }
     };
     void run();
@@ -374,6 +391,7 @@ export const useHomeLiveWidgetsController = ({
     tradeSortBy,
     tradeSortDir,
     tradeAppliedFilters,
+    listBotRuntimeSessionTrades,
   ]);
 
   const patchTradeDraftFilters = (patch: Partial<TradeFiltersState>) => {

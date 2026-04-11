@@ -1,7 +1,8 @@
-import { Exchange } from '@prisma/client';
+import { Exchange, Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { runtimePositionAutomationService } from '../engine/runtimePositionAutomation.service';
 import { runtimePositionStateStore } from '../engine/runtimePositionState.store';
+import { resolveRuntimeReferenceBalance } from '../engine/runtimeCapitalContext.service';
 import { runtimeSignalLoop } from '../engine/runtimeSignalLoop.service';
 import { getRuntimeTicker } from '../engine/runtimeTickerStore';
 import {
@@ -733,6 +734,100 @@ export const listBotRuntimeSessionTrades = async (
   };
 };
 
+const resolveExternalPositionOwnerBySymbol = async (
+  userId: string
+): Promise<Map<string, string>> => {
+  const bots = await prisma.bot.findMany({
+    where: {
+      userId,
+      mode: { in: ['PAPER', 'LIVE'] },
+    },
+    select: {
+      id: true,
+      isActive: true,
+      createdAt: true,
+      botMarketGroups: {
+        where: {
+          isEnabled: true,
+          lifecycleStatus: { in: ['ACTIVE', 'PAUSED'] },
+        },
+        select: {
+          executionOrder: true,
+          symbolGroup: {
+            select: {
+              symbols: true,
+              marketUniverse: {
+                select: {
+                  whitelist: true,
+                  blacklist: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const ownerBySymbol = new Map<
+    string,
+    {
+      botId: string;
+      isActive: boolean;
+      executionOrder: number;
+      createdAtMs: number;
+    }
+  >();
+
+  for (const bot of bots) {
+    for (const group of bot.botMarketGroups) {
+      const symbols = resolveEffectiveSymbolGroupSymbols({
+        symbols: group.symbolGroup.symbols,
+        marketUniverse: group.symbolGroup.marketUniverse,
+      });
+      if (symbols.length === 0) continue;
+
+      const executionOrder = Number.isFinite(group.executionOrder)
+        ? group.executionOrder
+        : Number.MAX_SAFE_INTEGER;
+      const createdAtMs = bot.createdAt.getTime();
+      for (const symbol of symbols) {
+        const existing = ownerBySymbol.get(symbol);
+        if (!existing) {
+          ownerBySymbol.set(symbol, {
+            botId: bot.id,
+            isActive: bot.isActive,
+            executionOrder,
+            createdAtMs,
+          });
+          continue;
+        }
+
+        const preferCandidate =
+          (bot.isActive ? 1 : 0) > (existing.isActive ? 1 : 0) ||
+          ((bot.isActive ? 1 : 0) === (existing.isActive ? 1 : 0) &&
+            (executionOrder < existing.executionOrder ||
+              (executionOrder === existing.executionOrder &&
+                (createdAtMs < existing.createdAtMs ||
+                  (createdAtMs === existing.createdAtMs && bot.id.localeCompare(existing.botId) < 0)))));
+
+        if (preferCandidate) {
+          ownerBySymbol.set(symbol, {
+            botId: bot.id,
+            isActive: bot.isActive,
+            executionOrder,
+            createdAtMs,
+          });
+        }
+      }
+    }
+  }
+
+  return new Map(
+    [...ownerBySymbol.entries()].map(([symbol, owner]) => [symbol, owner.botId])
+  );
+};
+
 export const listBotRuntimeSessionPositions = async (
   userId: string,
   botId: string,
@@ -745,17 +840,68 @@ export const listBotRuntimeSessionPositions = async (
 
   const normalizedSymbol = query.symbol?.trim().toUpperCase();
   const windowEnd = resolveSessionWindowEnd(session);
+  const externalOwnerBySymbol = await resolveExternalPositionOwnerBySymbol(userId);
+  const ownedExternalSymbols = [...externalOwnerBySymbol.entries()]
+    .filter(([, ownerBotId]) => ownerBotId === botId)
+    .map(([symbol]) => symbol);
+  const externalOwnedWhere: Prisma.PositionWhereInput[] =
+    ownedExternalSymbols.length > 0
+      ? [
+          {
+            botId: null,
+            origin: 'EXCHANGE_SYNC',
+            symbol: { in: ownedExternalSymbols },
+          },
+        ]
+      : [];
+  const botContext = await prisma.bot.findFirst({
+    where: { id: botId, userId },
+    select: {
+      mode: true,
+      exchange: true,
+      marketType: true,
+      walletId: true,
+      paperStartBalance: true,
+    },
+  });
+  if (!botContext) return null;
+  const botExchange = botContext.exchange ?? 'BINANCE';
+  const botMarketType = botContext.marketType ?? 'FUTURES';
+  const resolveRuntimeCapitalSummary = async (usedMargin: number) => {
+    try {
+      const referenceBalanceRaw = await resolveRuntimeReferenceBalance({
+        userId,
+        botId,
+        walletId: botContext.walletId,
+        mode: botContext.mode,
+        exchange: botExchange,
+        marketType: botMarketType,
+        paperStartBalance: botContext.paperStartBalance,
+        nowMs: Date.now(),
+      });
+      if (!Number.isFinite(referenceBalanceRaw)) {
+        return { referenceBalance: null, freeCash: null };
+      }
+      const referenceBalance = Math.max(0, referenceBalanceRaw);
+      const freeCash = Math.max(0, referenceBalance - Math.max(0, usedMargin));
+      return { referenceBalance, freeCash };
+    } catch {
+      return { referenceBalance: null, freeCash: null };
+    }
+  };
 
   const positions = await prisma.position.findMany({
     where: {
       userId,
-      botId,
       managementMode: 'BOT_MANAGED',
       ...(normalizedSymbol ? { symbol: normalizedSymbol } : {}),
       openedAt: {
         lte: windowEnd,
       },
-      OR: [{ closedAt: null }, { closedAt: { gte: session.startedAt } }],
+      AND: [
+        { OR: [{ botId }, ...externalOwnedWhere] },
+        { OR: [{ closedAt: null }, { closedAt: { gte: session.startedAt } }] },
+      ],
     },
     orderBy: [{ openedAt: 'desc' }, { createdAt: 'desc' }],
     take: query.limit,
@@ -825,6 +971,7 @@ export const listBotRuntimeSessionPositions = async (
         realizedPnl: 0,
         unrealizedPnl: 0,
         feesPaid: 0,
+        ...(await resolveRuntimeCapitalSummary(0)),
       },
       openOrders: openOrders,
       openItems: [],
@@ -943,13 +1090,6 @@ export const listBotRuntimeSessionPositions = async (
     bucket.push(trade);
     tradesByPosition.set(trade.positionId, bucket);
   }
-
-  const botContext = await prisma.bot.findFirst({
-    where: { id: botId, userId },
-    select: { exchange: true, marketType: true },
-  });
-  const botExchange = botContext?.exchange ?? 'BINANCE';
-  const botMarketType = botContext?.marketType ?? 'FUTURES';
 
   const lastPriceBySymbol = new Map(lastSymbolPrices.map((row) => [row.symbol, row.lastPrice]));
   for (const symbol of symbols) {
@@ -1079,6 +1219,11 @@ export const listBotRuntimeSessionPositions = async (
   const historyItems = mappedPositions
     .filter((position) => position.status === 'CLOSED')
     .sort((left, right) => (right.closedAt?.getTime() ?? 0) - (left.closedAt?.getTime() ?? 0));
+  const usedMargin = openItems.reduce((sum, position) => {
+    const leverage = Math.max(1, position.leverage || 1);
+    return sum + position.entryNotional / leverage;
+  }, 0);
+  const capitalSummary = await resolveRuntimeCapitalSummary(usedMargin);
 
   return {
     sessionId,
@@ -1095,6 +1240,7 @@ export const listBotRuntimeSessionPositions = async (
       realizedPnl: mappedPositions.reduce((acc, position) => acc + (position.realizedPnl ?? 0), 0),
       unrealizedPnl: openItems.reduce((acc, position) => acc + (position.unrealizedPnl ?? 0), 0),
       feesPaid: mappedPositions.reduce((acc, position) => acc + position.feesPaid, 0),
+      ...capitalSummary,
     },
     openOrders,
     openItems,

@@ -347,6 +347,8 @@ export type BotRuntimePositionsResponse = {
     realizedPnl: number;
     unrealizedPnl: number;
     feesPaid: number;
+    referenceBalance?: number | null;
+    freeCash?: number | null;
   };
   openOrders: BotRuntimeOpenOrderItem[];
   openItems: BotRuntimePositionItem[];

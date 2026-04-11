@@ -25,6 +25,9 @@ const getAxiosMessage = (err: unknown) => {
   return payload?.error?.message ?? payload?.message;
 };
 
+const BOOTSTRAP_RETRY_DELAY_MS = 1500;
+const MAX_BOOTSTRAP_RETRIES = 8;
+
 type UseBacktestRunCoreDataParams = {
   runId: string;
   loadErrorDefault: string;
@@ -41,17 +44,43 @@ export const useBacktestRunCoreData = ({
   const [marketUniverseName, setMarketUniverseName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const runRef = useRef<BacktestRun | null>(null);
   const lastMarketUniverseIdRef = useRef<string | null>(null);
+  const bootstrapRetryAttemptsRef = useRef(0);
+  const bootstrapRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isTransientBootstrapError = useCallback((err: unknown) => {
+    if (!axios.isAxiosError(err)) return false;
+    const statusCode = err.response?.status;
+    if (statusCode == null) return true;
+    return [408, 425, 429, 500, 502, 503, 504].includes(statusCode);
+  }, []);
+
+  const clearBootstrapRetryTimer = useCallback(() => {
+    if (bootstrapRetryTimerRef.current) {
+      clearTimeout(bootstrapRetryTimerRef.current);
+      bootstrapRetryTimerRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
+    runRef.current = null;
     lastMarketUniverseIdRef.current = null;
+    bootstrapRetryAttemptsRef.current = 0;
+    clearBootstrapRetryTimer();
     setMarketUniverseName(null);
-  }, [runId]);
+    return () => {
+      clearBootstrapRetryTimer();
+    };
+  }, [clearBootstrapRetryTimer, runId]);
 
   const loadData = useCallback(async () => {
     const normalizedRunId = runId.trim();
+    clearBootstrapRetryTimer();
     if (!normalizedRunId) {
+      bootstrapRetryAttemptsRef.current = 0;
       setRun(null);
+      runRef.current = null;
       setReport(null);
       setTrades([]);
       setStrategy(null);
@@ -61,9 +90,12 @@ export const useBacktestRunCoreData = ({
       return;
     }
 
+    let keepLoading = false;
     try {
       const runData = await getBacktestRun(normalizedRunId);
+      bootstrapRetryAttemptsRef.current = 0;
       setRun(runData);
+      runRef.current = runData;
 
       const [tradesResult, reportResult] = await Promise.allSettled([
         listBacktestRunTrades(normalizedRunId),
@@ -112,7 +144,9 @@ export const useBacktestRunCoreData = ({
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.status === 404) {
         // Run no longer exists or is not accessible for this user.
+        bootstrapRetryAttemptsRef.current = 0;
         setRun(null);
+        runRef.current = null;
         setReport(null);
         setTrades([]);
         setStrategy(null);
@@ -120,11 +154,32 @@ export const useBacktestRunCoreData = ({
         setError(null);
         return;
       }
+
+      if (isTransientBootstrapError(err) && !runRef.current) {
+        if (
+          bootstrapRetryAttemptsRef.current < MAX_BOOTSTRAP_RETRIES
+        ) {
+          bootstrapRetryAttemptsRef.current += 1;
+          keepLoading = true;
+          setError(null);
+          bootstrapRetryTimerRef.current = setTimeout(() => {
+            void loadData();
+          }, BOOTSTRAP_RETRY_DELAY_MS);
+          return;
+        }
+      }
+      if (runRef.current) {
+        // Keep already-loaded run data visible on refresh errors.
+        setError(null);
+        return;
+      }
       setError(getAxiosMessage(err) ?? loadErrorDefault);
     } finally {
-      setLoading(false);
+      if (!keepLoading) {
+        setLoading(false);
+      }
     }
-  }, [loadErrorDefault, runId]);
+  }, [clearBootstrapRetryTimer, isTransientBootstrapError, loadErrorDefault, runId]);
 
   useEffect(() => {
     setLoading(true);
@@ -142,9 +197,11 @@ export const useBacktestRunCoreData = ({
   }, [loadData, run]);
 
   const retry = useCallback(() => {
+    bootstrapRetryAttemptsRef.current = 0;
+    clearBootstrapRetryTimer();
     setLoading(true);
     void loadData();
-  }, [loadData]);
+  }, [clearBootstrapRetryTimer, loadData]);
 
   return {
     run,

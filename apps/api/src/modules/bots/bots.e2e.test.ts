@@ -6,6 +6,47 @@ import { runtimePositionAutomationService } from '../engine/runtimePositionAutom
 import { setActiveSubscriptionForUser } from '../subscriptions/subscriptions.service';
 
 const PLACEHOLDER_EXCHANGES = ['BYBIT', 'OKX', 'KRAKEN', 'COINBASE'] as const;
+const walletIdByMarketGroupId = new Map<string, string>();
+
+type WalletContext = {
+  mode?: 'PAPER' | 'LIVE';
+  exchange?: 'BINANCE' | 'BYBIT' | 'OKX' | 'KRAKEN' | 'COINBASE';
+  marketType?: 'FUTURES' | 'SPOT';
+  baseCurrency?: string;
+  apiKeyId?: string | null;
+};
+
+const createWalletForContext = async (
+  email: string,
+  context: WalletContext = {}
+) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { email },
+    select: { id: true },
+  });
+  const mode = context.mode ?? 'PAPER';
+  const exchange = context.exchange ?? 'BINANCE';
+  const marketType = context.marketType ?? 'FUTURES';
+  const baseCurrency = (context.baseCurrency ?? 'USDT').toUpperCase();
+
+  const created = await prisma.wallet.create({
+    data: {
+      userId: user.id,
+      name: `Auto Wallet ${mode} ${exchange} ${marketType} ${Date.now()}`,
+      mode,
+      exchange,
+      marketType,
+      baseCurrency,
+      paperInitialBalance: 10_000,
+      liveAllocationMode: mode === 'LIVE' ? 'PERCENT' : null,
+      liveAllocationValue: mode === 'LIVE' ? 100 : null,
+      apiKeyId: mode === 'LIVE' ? (context.apiKeyId ?? null) : null,
+    },
+    select: { id: true },
+  });
+
+  return created.id;
+};
 
 const registerAndLogin = async (email: string) => {
   const agent = request.agent(app);
@@ -49,15 +90,18 @@ const createStrategy = async (
 
 const createMarketGroup = async (
   email: string,
-  marketType: 'FUTURES' | 'SPOT' = 'FUTURES'
+  marketType: 'FUTURES' | 'SPOT' = 'FUTURES',
+  exchange: 'BINANCE' | 'BYBIT' | 'OKX' | 'KRAKEN' | 'COINBASE' = 'BINANCE',
+  baseCurrency = 'USDT'
 ) => {
   const user = await prisma.user.findUniqueOrThrow({ where: { email } });
   const marketUniverse = await prisma.marketUniverse.create({
     data: {
       userId: user.id,
       name: `Auto Universe ${marketType} ${Date.now()}`,
+      exchange,
       marketType,
-      baseCurrency: 'USDT',
+      baseCurrency,
       whitelist: [],
       blacklist: [],
     },
@@ -71,20 +115,41 @@ const createMarketGroup = async (
     },
   });
 
+  const paperWalletId = await createWalletForContext(email, {
+    mode: 'PAPER',
+    exchange,
+    marketType,
+    baseCurrency,
+  });
+  walletIdByMarketGroupId.set(symbolGroup.id, paperWalletId);
+  walletIdByMarketGroupId.set(marketUniverse.id, paperWalletId);
+
   return symbolGroup.id;
 };
 
-const createPayload = (refs: { strategyId: string; marketGroupId: string }) => ({
-  name: 'Momentum Runner',
-  mode: 'PAPER',
-  strategyId: refs.strategyId,
-  marketGroupId: refs.marketGroupId,
-  isActive: false,
-  liveOptIn: false,
-});
+const createPayload = (refs: {
+  strategyId: string;
+  marketGroupId: string;
+  walletId?: string;
+}) => {
+  const walletId = refs.walletId ?? walletIdByMarketGroupId.get(refs.marketGroupId);
+  if (!walletId) {
+    throw new Error(`Missing wallet mapping for marketGroupId=${refs.marketGroupId}`);
+  }
+
+  return {
+    name: 'Momentum Runner',
+    strategyId: refs.strategyId,
+    marketGroupId: refs.marketGroupId,
+    walletId,
+    isActive: false,
+    liveOptIn: false,
+  };
+};
 
 describe('Bots module contract', () => {
   beforeEach(async () => {
+    walletIdByMarketGroupId.clear();
     await prisma.log.deleteMany();
     await prisma.backtestReport.deleteMany();
     await prisma.backtestTrade.deleteMany();
@@ -151,6 +216,7 @@ describe('Bots module contract', () => {
     const strategyId = await createStrategy(agent, 'Bots Strategy Link');
     const futuresMarketGroupId = await createMarketGroup(email, 'FUTURES');
     const spotMarketGroupId = await createMarketGroup(email, 'SPOT');
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
 
     const createRes = await agent.post('/dashboard/bots').send({
       ...createPayload({ strategyId, marketGroupId: futuresMarketGroupId }),
@@ -208,10 +274,27 @@ describe('Bots module contract', () => {
     });
     expect(strategyLinksAfterCreate).toHaveLength(1);
     expect(strategyLinksAfterCreate[0].strategyId).toBe(strategyId);
+    const liveApiKey = await prisma.apiKey.create({
+      data: {
+        userId: user.id,
+        label: 'Live migration key',
+        exchange: 'BINANCE',
+        apiKey: 'LIVE_MIGRATION_KEY',
+        apiSecret: 'LIVE_MIGRATION_SECRET',
+        syncExternalPositions: true,
+        manageExternalPositions: false,
+      },
+    });
+    const liveWalletId = await createWalletForContext(email, {
+      mode: 'LIVE',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+      apiKeyId: liveApiKey.id,
+    });
 
     const updateRes = await agent.put(`/dashboard/bots/${botId}`).send({
-      mode: 'LIVE',
-      marketType: 'SPOT',
+      walletId: liveWalletId,
       liveOptIn: true,
       consentTextVersion: 'mvp-v1',
       strategyId: null,
@@ -365,34 +448,25 @@ describe('Bots module contract', () => {
     const marketGroupId = await createMarketGroup(email, 'FUTURES');
     const user = await prisma.user.findUniqueOrThrow({ where: { email } });
 
-    const mismatchedApiKey = await prisma.apiKey.create({
-      data: {
-        userId: user.id,
-        label: 'Mismatched key',
-        exchange: 'OKX',
-        apiKey: 'MISMATCHED_KEY',
-        apiSecret: 'MISMATCHED_SECRET',
-        syncExternalPositions: false,
-        manageExternalPositions: false,
-      },
+    const mismatchedWalletId = await createWalletForContext(email, {
+      mode: 'PAPER',
+      exchange: 'OKX',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
     });
-
     const createWithMismatchRes = await agent.post('/dashboard/bots').send({
-      ...createPayload({ strategyId, marketGroupId }),
-      mode: 'LIVE',
+      ...createPayload({ strategyId, marketGroupId, walletId: mismatchedWalletId }),
       isActive: true,
       liveOptIn: true,
       consentTextVersion: 'mvp-v1',
-      apiKeyId: mismatchedApiKey.id,
     });
     expect(createWithMismatchRes.status).toBe(400);
     expect(createWithMismatchRes.body.error.message).toBe(
-      'apiKeyId exchange must match bot exchange context'
+      'wallet exchange/market/baseCurrency must match selected market group context'
     );
 
     const inactiveLiveCreateRes = await agent.post('/dashboard/bots').send({
       ...createPayload({ strategyId, marketGroupId }),
-      mode: 'LIVE',
       isActive: false,
       liveOptIn: true,
       consentTextVersion: 'mvp-v1',
@@ -400,15 +474,22 @@ describe('Bots module contract', () => {
     expect(inactiveLiveCreateRes.status).toBe(201);
     const botId = inactiveLiveCreateRes.body.id as string;
 
-    const activateWithoutCompatibleKeyRes = await agent.put(`/dashboard/bots/${botId}`).send({
+    const liveWalletWithoutApiKeyId = await createWalletForContext(email, {
       mode: 'LIVE',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+      apiKeyId: null,
+    });
+    const activateWithoutCompatibleKeyRes = await agent.put(`/dashboard/bots/${botId}`).send({
+      walletId: liveWalletWithoutApiKeyId,
       isActive: true,
       liveOptIn: true,
       consentTextVersion: 'mvp-v1',
     });
     expect(activateWithoutCompatibleKeyRes.status).toBe(400);
     expect(activateWithoutCompatibleKeyRes.body.error.message).toBe(
-      'no compatible API key found for live bot exchange context'
+      'selected LIVE wallet requires linked exchange api key'
     );
 
     const compatibleApiKey = await prisma.apiKey.create({
@@ -423,12 +504,18 @@ describe('Bots module contract', () => {
       },
     });
 
-    const activateWithCompatibleKeyRes = await agent.put(`/dashboard/bots/${botId}`).send({
+    const compatibleLiveWalletId = await createWalletForContext(email, {
       mode: 'LIVE',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+      apiKeyId: compatibleApiKey.id,
+    });
+    const activateWithCompatibleKeyRes = await agent.put(`/dashboard/bots/${botId}`).send({
+      walletId: compatibleLiveWalletId,
       isActive: true,
       liveOptIn: true,
       consentTextVersion: 'mvp-v1',
-      apiKeyId: compatibleApiKey.id,
     });
     expect(activateWithCompatibleKeyRes.status).toBe(200);
     expect(activateWithCompatibleKeyRes.body.exchange).toBe('BINANCE');
@@ -461,6 +548,14 @@ describe('Bots module contract', () => {
         symbols: ['BTCUSDT'],
       },
     });
+    const placeholderWalletId = await createWalletForContext(email, {
+      mode: 'PAPER',
+      exchange: 'OKX',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+    });
+    walletIdByMarketGroupId.set(symbolGroup.id, placeholderWalletId);
+    walletIdByMarketGroupId.set(marketUniverse.id, placeholderWalletId);
 
     const activeCreateRes = await agent.post('/dashboard/bots').send({
       ...createPayload({ strategyId, marketGroupId: symbolGroup.id }),
@@ -509,6 +604,14 @@ describe('Bots module contract', () => {
         symbols: ['BTCUSDT'],
       },
     });
+    const placeholderWalletId = await createWalletForContext(email, {
+      mode: 'PAPER',
+      exchange: 'OKX',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+    });
+    walletIdByMarketGroupId.set(symbolGroup.id, placeholderWalletId);
+    walletIdByMarketGroupId.set(marketUniverse.id, placeholderWalletId);
 
     const createRes = await agent.post('/dashboard/bots').send({
       ...createPayload({ strategyId, marketGroupId: symbolGroup.id }),
@@ -565,6 +668,14 @@ describe('Bots module contract', () => {
           symbols: ['BTCUSDT'],
         },
       });
+      const placeholderWalletId = await createWalletForContext(email, {
+        mode: 'PAPER',
+        exchange,
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+      });
+      walletIdByMarketGroupId.set(symbolGroup.id, placeholderWalletId);
+      walletIdByMarketGroupId.set(marketUniverse.id, placeholderWalletId);
 
       const activeCreateRes = await agent.post('/dashboard/bots').send({
         ...createPayload({ strategyId, marketGroupId: symbolGroup.id }),
@@ -598,6 +709,13 @@ describe('Bots module contract', () => {
         blacklist: ['ethusdt'],
       },
     });
+    const walletId = await createWalletForContext(email, {
+      mode: 'PAPER',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+    });
+    walletIdByMarketGroupId.set(marketUniverse.id, walletId);
 
     const createRes = await agent.post('/dashboard/bots').send(
       createPayload({
@@ -644,6 +762,7 @@ describe('Bots module contract', () => {
     const agent = await registerAndLogin(email);
     const strategyId = await createStrategy(agent, 'Consent Strategy');
     const marketGroupId = await createMarketGroup(email, 'FUTURES');
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
 
     const createRes = await agent
       .post('/dashboard/bots')
@@ -651,8 +770,27 @@ describe('Bots module contract', () => {
     expect(createRes.status).toBe(201);
     const botId = createRes.body.id as string;
 
-    const missingConsentRes = await agent.put(`/dashboard/bots/${botId}`).send({
+    const liveApiKey = await prisma.apiKey.create({
+      data: {
+        userId: user.id,
+        label: 'Consent live key',
+        exchange: 'BINANCE',
+        apiKey: 'CONSENT_LIVE_KEY',
+        apiSecret: 'CONSENT_LIVE_SECRET',
+        syncExternalPositions: true,
+        manageExternalPositions: false,
+      },
+    });
+    const liveWalletId = await createWalletForContext(email, {
       mode: 'LIVE',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+      apiKeyId: liveApiKey.id,
+    });
+
+    const missingConsentRes = await agent.put(`/dashboard/bots/${botId}`).send({
+      walletId: liveWalletId,
       liveOptIn: true,
     });
     expect(missingConsentRes.status).toBe(400);
@@ -661,7 +799,7 @@ describe('Bots module contract', () => {
     );
 
     const withConsentRes = await agent.put(`/dashboard/bots/${botId}`).send({
-      mode: 'LIVE',
+      walletId: liveWalletId,
       liveOptIn: true,
       consentTextVersion: 'mvp-v1',
     });
@@ -684,10 +822,28 @@ describe('Bots module contract', () => {
     const agent = await registerAndLogin(email);
     const strategyId = await createStrategy(agent, 'Consent Persist Strategy');
     const marketGroupId = await createMarketGroup(email, 'FUTURES');
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+    const liveApiKey = await prisma.apiKey.create({
+      data: {
+        userId: user.id,
+        label: 'Consent persist key',
+        exchange: 'BINANCE',
+        apiKey: 'CONSENT_PERSIST_KEY',
+        apiSecret: 'CONSENT_PERSIST_SECRET',
+        syncExternalPositions: true,
+        manageExternalPositions: false,
+      },
+    });
+    const liveWalletId = await createWalletForContext(email, {
+      mode: 'LIVE',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+      apiKeyId: liveApiKey.id,
+    });
 
     const createLiveRes = await agent.post('/dashboard/bots').send({
-      ...createPayload({ strategyId, marketGroupId }),
-      mode: 'LIVE',
+      ...createPayload({ strategyId, marketGroupId, walletId: liveWalletId }),
       liveOptIn: true,
       consentTextVersion: '  mvp-v1  ',
     });
@@ -1160,6 +1316,12 @@ describe('Bots module contract', () => {
     expect(positionsRes.body.historyItems).toHaveLength(1);
     expect(positionsRes.body.openItems[0].symbol).toBe('BTCUSDT');
     expect(positionsRes.body.historyItems[0].symbol).toBe('ETHUSDT');
+    expect(positionsRes.body.summary).toEqual(
+      expect.objectContaining({
+        referenceBalance: expect.any(Number),
+        freeCash: expect.any(Number),
+      })
+    );
 
     const filteredListRes = await owner.get(`/dashboard/bots/${botId}/runtime-sessions`).query({
       status: 'RUNNING',
@@ -1183,6 +1345,107 @@ describe('Bots module contract', () => {
 
     const otherPositionsRes = await other.get(`/dashboard/bots/${botId}/runtime-sessions/${session.id}/positions`);
     expect(otherPositionsRes.status).toBe(404);
+  });
+
+  it('maps exchange-synced bot-managed positions to a deterministic runtime bot owner per symbol', async () => {
+    const ownerEmail = 'bot-runtime-external-position-owner@example.com';
+    const owner = await registerAndLogin(ownerEmail);
+    const ownerUser = await prisma.user.findUniqueOrThrow({ where: { email: ownerEmail } });
+    const wallet = await prisma.wallet.create({
+      data: {
+        userId: ownerUser.id,
+        name: 'External Runtime Wallet',
+        mode: 'PAPER',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        paperInitialBalance: 10000,
+      },
+    });
+
+    const strategyA = await createStrategy(owner, 'Runtime External Strategy A');
+    const strategyB = await createStrategy(owner, 'Runtime External Strategy B');
+    const marketGroupA = await createMarketGroup(ownerEmail, 'FUTURES');
+    const marketGroupB = await createMarketGroup(ownerEmail, 'FUTURES');
+
+    const botARes = await owner.post('/dashboard/bots').send({
+      ...createPayload({
+        strategyId: strategyA,
+        marketGroupId: marketGroupA,
+      }),
+      name: 'External Owner A',
+      walletId: wallet.id,
+    });
+    expect(botARes.status).toBe(201);
+    const botAId = botARes.body.id as string;
+
+    const botBRes = await owner.post('/dashboard/bots').send({
+      ...createPayload({
+        strategyId: strategyB,
+        marketGroupId: marketGroupB,
+      }),
+      name: 'External Owner B',
+      walletId: wallet.id,
+    });
+    expect(botBRes.status).toBe(201);
+    const botBId = botBRes.body.id as string;
+
+    const startedAt = new Date('2026-04-10T01:00:00.000Z');
+
+    const sessionA = await prisma.botRuntimeSession.create({
+      data: {
+        userId: ownerUser.id,
+        botId: botAId,
+        mode: 'PAPER',
+        status: 'RUNNING',
+        startedAt,
+        lastHeartbeatAt: new Date('2026-04-10T01:05:00.000Z'),
+      },
+    });
+    const sessionB = await prisma.botRuntimeSession.create({
+      data: {
+        userId: ownerUser.id,
+        botId: botBId,
+        mode: 'PAPER',
+        status: 'RUNNING',
+        startedAt,
+        lastHeartbeatAt: new Date('2026-04-10T01:05:00.000Z'),
+      },
+    });
+
+    await prisma.position.create({
+      data: {
+        userId: ownerUser.id,
+        botId: null,
+        strategyId: null,
+        symbol: 'BTCUSDT',
+        side: 'LONG',
+        status: 'OPEN',
+        entryPrice: 68000,
+        quantity: 0.02,
+        leverage: 2,
+        openedAt: new Date('2026-04-10T01:02:00.000Z'),
+        origin: 'EXCHANGE_SYNC',
+        managementMode: 'BOT_MANAGED',
+        syncState: 'IN_SYNC',
+        externalId: 'external:btcusdt:long',
+      },
+    });
+
+    const positionsARes = await owner.get(
+      `/dashboard/bots/${botAId}/runtime-sessions/${sessionA.id}/positions`
+    );
+    expect(positionsARes.status).toBe(200);
+    expect(positionsARes.body.total).toBe(1);
+    expect(positionsARes.body.openItems).toHaveLength(1);
+    expect(positionsARes.body.openItems[0].symbol).toBe('BTCUSDT');
+
+    const positionsBRes = await owner.get(
+      `/dashboard/bots/${botBId}/runtime-sessions/${sessionB.id}/positions`
+    );
+    expect(positionsBRes.status).toBe(200);
+    expect(positionsBRes.body.total).toBe(0);
+    expect(positionsBRes.body.openItems).toHaveLength(0);
   });
 
   it('supports monitoring query filters for status/symbol/limit and enforces session time window', async () => {
@@ -1403,6 +1666,13 @@ describe('Bots module contract', () => {
         blacklist: ['SOLUSDT'],
       },
     });
+    const walletId = await createWalletForContext(ownerEmail, {
+      mode: 'PAPER',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+    });
+    walletIdByMarketGroupId.set(marketUniverse.id, walletId);
 
     // Simulate stale snapshot in symbolGroup (older list) while market universe already has a newer list.
     await prisma.symbolGroup.create({
@@ -1460,6 +1730,13 @@ describe('Bots module contract', () => {
         blacklist: ['SOLUSDT'],
       },
     });
+    const walletId = await createWalletForContext(ownerEmail, {
+      mode: 'PAPER',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+    });
+    walletIdByMarketGroupId.set(marketUniverse.id, walletId);
 
     await prisma.symbolGroup.create({
       data: {

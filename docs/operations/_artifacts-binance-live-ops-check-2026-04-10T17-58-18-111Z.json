@@ -1,0 +1,87 @@
+{
+  "checkedAt": "2026-04-10T17:58:18.111Z",
+  "executionPath": "VPS private ops route (https://127.0.0.1 + Host: api.soar.luckysparrow.ch)",
+  "step1": {
+    "apiKeysStatus": 200,
+    "apiKeysCount": 1,
+    "key": {
+      "id": "4c7dd2b4-6d1d-4de0-a9ba-ce30f0f0d4c4",
+      "label": "Binance Soar",
+      "exchange": "BINANCE",
+      "syncExternalPositions": true,
+      "manageExternalPositions": false,
+      "testStatus": 200,
+      "testPayload": {
+        "ok": true,
+        "code": "OK",
+        "message": "Binance API key permissions validated."
+      }
+    }
+  },
+  "step2": {
+    "snapshotStatus": 200,
+    "snapshotSource": "BINANCE",
+    "snapshotCount": 8,
+    "appOpenCount": 6,
+    "status": "BLOCKED",
+    "reason": "Snapshot and app-open positions still not aligned; /dashboard/positions/live-status remains running=false."
+  },
+  "step3": {
+    "status": "PARTIAL",
+    "liveBot": {
+      "id": "b38bfa7b-3d47-4134-9a04-601ee9d5cc34",
+      "name": "Test bot",
+      "mode": "LIVE",
+      "isActive": true,
+      "liveOptIn": true,
+      "walletId": "47046959-2da5-4fe5-9590-5f5c68d5b176"
+    },
+    "runtimeSession": {
+      "id": "f5757541-9b00-489d-9f5d-7ec85ca3bdf2",
+      "mode": "LIVE",
+      "status": "RUNNING",
+      "startedAt": "2026-04-10T17:52:49.715Z",
+      "lastHeartbeatAt": "2026-04-10T17:58:05.243Z"
+    },
+    "livePretradeBlocks": [
+      {
+        "symbol": "BTCUSDT",
+        "reason": "open_position_on_symbol_exists"
+      },
+      {
+        "symbol": "SOLUSDT",
+        "reason": "open_position_on_symbol_exists"
+      },
+      {
+        "symbol": "XRPUSDT",
+        "reason": "open_position_on_symbol_exists"
+      },
+      {
+        "symbol": "ETHUSDT",
+        "reason": "open_position_on_symbol_exists"
+      }
+    ]
+  },
+  "step4": {
+    "status": "BLOCKED",
+    "reason": "LIVE runtime session is healthy but has not produced OPEN/DCA/CLOSE events yet in this window.",
+    "sessionId": "f5757541-9b00-489d-9f5d-7ec85ca3bdf2",
+    "tradeCount": 0
+  },
+  "step5": {
+    "health": 200,
+    "ready": 200,
+    "workersHealth": 200,
+    "workersReady": 200,
+    "runtimeFreshnessStatusCode": 200,
+    "runtimeFreshnessPayload": {
+      "status": "PASS"
+    },
+    "alertsStatusCode": 200,
+    "alertsCount": 0
+  },
+  "step6": {
+    "status": "BLOCKED",
+    "reason": "Cannot run backtest-vs-runtime lifecycle parity until step4 records LIVE OPEN/DCA/CLOSE evidence."
+  }
+}

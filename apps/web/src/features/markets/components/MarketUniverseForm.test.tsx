@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MarketUniverseForm from './MarketUniverseForm';
 
 const fetchCatalogMock = vi.hoisted(() => vi.fn());
@@ -9,6 +9,11 @@ vi.mock('../services/markets.service', () => ({
 }));
 
 describe('MarketUniverseForm', () => {
+  beforeEach(() => {
+    fetchCatalogMock.mockReset();
+    window.location.hash = '';
+  });
+
   it('loads saved volume filter value in edit mode and uses it in preview', async () => {
     fetchCatalogMock.mockResolvedValue({
       source: 'BINANCE_PUBLIC',
@@ -60,9 +65,6 @@ describe('MarketUniverseForm', () => {
 
     const slider = screen.getByRole('slider');
     expect(slider).toHaveValue('500');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
 
     await waitFor(() => {
       expect(screen.getByText('Liczba rynkow: 1')).toBeInTheDocument();
@@ -122,5 +124,42 @@ describe('MarketUniverseForm', () => {
         })
       );
     });
+  });
+
+  it('shows validation helper when form is submitted without name', async () => {
+    fetchCatalogMock.mockResolvedValue({
+      source: 'BINANCE_PUBLIC',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+      baseCurrencies: ['USDT'],
+      totalAvailable: 1,
+      totalForBaseCurrency: 1,
+      markets: [
+        {
+          symbol: 'BTCUSDT',
+          displaySymbol: 'BTC/USDT',
+          baseAsset: 'BTC',
+          quoteAsset: 'USDT',
+          quoteVolume24h: 1000,
+          lastPrice: 68000,
+        },
+      ],
+    });
+
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const { container } = render(
+      <MarketUniverseForm mode='create' submitting={false} onSubmit={onSubmit} />
+    );
+
+    await waitFor(() => {
+      expect(fetchCatalogMock).toHaveBeenCalled();
+    });
+
+    const form = container.querySelector('form');
+    expect(form).not.toBeNull();
+    fireEvent.submit(form as HTMLFormElement);
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText('Podaj nazwe grupy rynkow.')).toBeInTheDocument();
   });
 });

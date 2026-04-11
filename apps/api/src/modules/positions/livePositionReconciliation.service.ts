@@ -190,64 +190,71 @@ export const reconcileExternalPositionsFromExchange = async (
   let openPositionsSeen = 0;
 
   for (const apiKey of apiKeys) {
-    const snapshot = await deps.fetchPositionsForApiKey(apiKey);
-    const seenExternalIds = new Set<string>();
-    const openedAtFallback = deps.now();
-    const managementMode = apiKey.manageExternalPositions ? 'BOT_MANAGED' : 'MANUAL_MANAGED';
+    try {
+      const snapshot = await deps.fetchPositionsForApiKey(apiKey);
+      const seenExternalIds = new Set<string>();
+      const openedAtFallback = deps.now();
+      const managementMode = apiKey.manageExternalPositions ? 'BOT_MANAGED' : 'MANUAL_MANAGED';
 
-    for (const position of snapshot.positions) {
-      const size = Math.abs(position.contracts ?? 0);
-      if (size <= 0) continue;
-      const side = toPositionSide(position.side, position.contracts);
-      if (!side) continue;
+      for (const position of snapshot.positions) {
+        const size = Math.abs(position.contracts ?? 0);
+        if (size <= 0) continue;
+        const side = toPositionSide(position.side, position.contracts);
+        if (!side) continue;
 
-      const normalizedSymbol = normalizeSymbol(position.symbol);
-      if (!normalizedSymbol) continue;
+        const normalizedSymbol = normalizeSymbol(position.symbol);
+        if (!normalizedSymbol) continue;
 
-      openPositionsSeen += 1;
-      const externalId = `${apiKey.id}:${normalizedSymbol}:${side}`;
-      seenExternalIds.add(externalId);
+        openPositionsSeen += 1;
+        const externalId = `${apiKey.id}:${normalizedSymbol}:${side}`;
+        seenExternalIds.add(externalId);
 
-      const existing = await deps.findOpenSyncedPositionByExternalId({
-        userId: apiKey.userId,
-        externalId,
-      });
-
-      if (existing) {
-        await deps.updateSyncedPosition(existing.id, {
-          symbol: normalizedSymbol,
-          side,
-          quantity: size,
-          entryPrice: position.entryPrice ?? position.markPrice ?? 0,
-          unrealizedPnl: position.unrealizedPnl ?? null,
-          leverage: Math.max(1, Math.floor(position.leverage ?? 1)),
-          managementMode,
-        });
-      } else {
-        const openedAt = position.timestamp ? new Date(position.timestamp) : openedAtFallback;
-        await deps.createSyncedPosition({
+        const existing = await deps.findOpenSyncedPositionByExternalId({
           userId: apiKey.userId,
           externalId,
-          symbol: normalizedSymbol,
-          side,
-          quantity: size,
-          entryPrice: position.entryPrice ?? position.markPrice ?? 0,
-          unrealizedPnl: position.unrealizedPnl ?? null,
-          leverage: Math.max(1, Math.floor(position.leverage ?? 1)),
-          managementMode,
-          openedAt,
         });
+
+        if (existing) {
+          await deps.updateSyncedPosition(existing.id, {
+            symbol: normalizedSymbol,
+            side,
+            quantity: size,
+            entryPrice: position.entryPrice ?? position.markPrice ?? 0,
+            unrealizedPnl: position.unrealizedPnl ?? null,
+            leverage: Math.max(1, Math.floor(position.leverage ?? 1)),
+            managementMode,
+          });
+        } else {
+          const openedAt = position.timestamp ? new Date(position.timestamp) : openedAtFallback;
+          await deps.createSyncedPosition({
+            userId: apiKey.userId,
+            externalId,
+            symbol: normalizedSymbol,
+            side,
+            quantity: size,
+            entryPrice: position.entryPrice ?? position.markPrice ?? 0,
+            unrealizedPnl: position.unrealizedPnl ?? null,
+            leverage: Math.max(1, Math.floor(position.leverage ?? 1)),
+            managementMode,
+            openedAt,
+          });
+        }
       }
-    }
 
-    const currentOpen = await deps.listOpenSyncedPositionsForApiKey({
-      userId: apiKey.userId,
-      apiKeyId: apiKey.id,
-    });
+      const currentOpen = await deps.listOpenSyncedPositionsForApiKey({
+        userId: apiKey.userId,
+        apiKeyId: apiKey.id,
+      });
 
-    for (const stale of currentOpen) {
-      if (stale.externalId && seenExternalIds.has(stale.externalId)) continue;
-      await deps.closeStaleSyncedPosition(stale.id, deps.now());
+      for (const stale of currentOpen) {
+        if (stale.externalId && seenExternalIds.has(stale.externalId)) continue;
+        await deps.closeStaleSyncedPosition(stale.id, deps.now());
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'unknown_error';
+      console.error(
+        `[LivePositionReconciliation] apiKey=${apiKey.id} user=${apiKey.userId} failed: ${errorMessage}`
+      );
     }
   }
 

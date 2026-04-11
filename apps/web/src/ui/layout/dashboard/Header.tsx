@@ -13,9 +13,7 @@ import {
   LuMenu,
   LuChartLine,
   LuListChecks,
-  LuPackageOpen,
   LuShieldCheck,
-  LuShoppingCart,
   LuWallet,
   LuX,
 } from 'react-icons/lu';
@@ -140,21 +138,6 @@ export default function Header() {
     icon: LuHouse,
   };
 
-  const exchangesLinks: NavItem[] = [
-    {
-      href: dashboardRoutes.exchanges.orders,
-      label: t('dashboard.nav.orders'),
-      icon: LuShoppingCart,
-      activePrefixes: [dashboardRoutes.exchanges.orders],
-    },
-    {
-      href: dashboardRoutes.exchanges.positions,
-      label: t('dashboard.nav.positions'),
-      icon: LuPackageOpen,
-      activePrefixes: [dashboardRoutes.exchanges.positions],
-    },
-  ];
-
   const directModuleLinks: NavItem[] = [
     {
       href: dashboardRoutes.wallets.list,
@@ -203,18 +186,6 @@ export default function Header() {
     },
   ];
 
-  const exchangeGroup = {
-    id: 'exchanges',
-    label: t('dashboard.nav.exchanges'),
-    icon: LuShoppingCart,
-    links: exchangesLinks,
-    activePrefixes: [
-      dashboardRoutes.exchanges.root,
-      dashboardRoutes.exchanges.orders,
-      dashboardRoutes.exchanges.positions,
-    ],
-  } as const;
-
   const analyticsGroup = {
     id: 'analytics',
     label: t('dashboard.nav.analytics'),
@@ -223,7 +194,7 @@ export default function Header() {
     activePrefixes: [dashboardRoutes.analytics.reports, dashboardRoutes.analytics.logs],
   } as const;
 
-  const allLinks = [homeLink, ...exchangesLinks, ...directModuleLinks, ...analyticsLinks];
+  const allLinks = [homeLink, ...directModuleLinks, ...analyticsLinks];
 
   const isActive = (item: NavItem) =>
     item.activePrefixes && item.activePrefixes.length > 0
@@ -261,14 +232,6 @@ export default function Header() {
                   {homeLink.label}
                 </Link>
               </li>
-              <NavGroup
-                key={exchangeGroup.id}
-                active={isGroupActive(exchangeGroup.activePrefixes)}
-                label={exchangeGroup.label}
-                icon={exchangeGroup.icon}
-                links={exchangeGroup.links}
-                pathname={pathname}
-              />
               {directModuleLinks.map((item) => {
                 const ItemIcon = item.icon;
                 const itemClass = getHeaderMenuItemClass(isActive(item));

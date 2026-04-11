@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { LuPencilLine, LuTrash2 } from "react-icons/lu";
 import ApiKeyForm, { ApiKeyFormSavePayload } from "./ApiKeyForm";
 import { useApiKeys } from "../hooks/useApiKeys";
@@ -77,17 +77,17 @@ export default function ApiKeysList() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteRiskAccepted, setDeleteRiskAccepted] = useState(false);
 
-  const handleAddKey = () => {
+  const handleAddKey = useCallback(() => {
     setEditId(null);
     setModalTitle(copy.addApiKeyTitle);
     setShowModal(true);
-  };
+  }, [copy.addApiKeyTitle]);
 
-  const handleEditKey = (id: string) => {
+  const handleEditKey = useCallback((id: string) => {
     setEditId(id);
     setModalTitle(copy.editApiKeyTitle);
     setShowModal(true);
-  };
+  }, [copy.editApiKeyTitle]);
 
   const handleSave = async (data: ApiKeyFormSavePayload) => {
     if (editId) {
@@ -99,11 +99,11 @@ export default function ApiKeysList() {
     setEditId(null);
   };
 
-  const handleDeleteKey = (id: string) => {
+  const handleDeleteKey = useCallback((id: string) => {
     setDeleteId(id);
     setDeleteRiskAccepted(false);
     setShowDeleteModal(true);
-  };
+  }, []);
 
   const confirmDelete = async () => {
     if (deleteId) {
@@ -200,7 +200,18 @@ export default function ApiKeysList() {
         ),
       },
     ],
-    [copy.edit, copy.remove, copy.tableActions, copy.tableCreatedAt, copy.tableExchange, copy.tableLabel, copy.tableLastUsed, formatDate]
+    [
+      copy.edit,
+      copy.remove,
+      copy.tableActions,
+      copy.tableCreatedAt,
+      copy.tableExchange,
+      copy.tableLabel,
+      copy.tableLastUsed,
+      formatDate,
+      handleDeleteKey,
+      handleEditKey,
+    ]
   );
 
   return (

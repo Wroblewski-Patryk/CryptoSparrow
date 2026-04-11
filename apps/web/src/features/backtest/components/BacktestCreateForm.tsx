@@ -107,6 +107,8 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
   const [marketUniverses, setMarketUniverses] = useState<MarketUniverse[]>([]);
   const [strategiesLoading, setStrategiesLoading] = useState(true);
   const [universesLoading, setUniversesLoading] = useState(true);
+  const strategyLoadErrorText = copy.strategyLoadError;
+  const universesLoadErrorText = copy.universesLoadError;
 
   useEffect(() => {
     const loadStrategies = async () => {
@@ -116,7 +118,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
         setStrategies(data);
         setStrategyId((prev) => prev || data[0]?.id || '');
       } catch (error: unknown) {
-        toast.error(copy.strategyLoadError, {
+        toast.error(strategyLoadErrorText, {
           description: getAxiosMessage(error),
         });
         setStrategies([]);
@@ -126,7 +128,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
     };
 
     void loadStrategies();
-  }, []);
+  }, [strategyLoadErrorText]);
 
   useEffect(() => {
     const loadUniverses = async () => {
@@ -136,7 +138,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
         setMarketUniverses(data);
         setMarketUniverseId((prev) => prev || data[0]?.id || '');
       } catch (error: unknown) {
-        toast.error(copy.universesLoadError, {
+        toast.error(universesLoadErrorText, {
           description: getAxiosMessage(error),
         });
         setMarketUniverses([]);
@@ -146,7 +148,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
     };
 
     void loadUniverses();
-  }, []);
+  }, [universesLoadErrorText]);
 
   const selectedStrategy = useMemo(
     () => strategies.find((strategy) => strategy.id === strategyId) ?? null,

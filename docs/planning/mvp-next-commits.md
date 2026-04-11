@@ -7,21 +7,37 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `ARM-09 refactor(api-bots): split bots.service.ts into command and runtime-read services`
-- [x] `ARM-10 refactor(api-bots): extract symbol enrichment and runtime read-model composition modules`
-- [x] `ARM-11 refactor(api-data-boundary): reduce direct Prisma usage in orchestration-heavy services`
-- [x] `ARM-12 refactor(web-backtest): split BacktestRunDetails into hooks and presentational sections`
-- [x] `ARM-13 refactor(web-bots): continue BotsManagement decomposition by moving orchestration to feature hooks`
+- [x] `LIV-08 refactor(web-markets): replace 3-step tabs in MarketUniverse form with single-view layout`
+- [x] `LIV-09 feat(web-markets-ux): improve MarketUniverse single-view UX/UI hierarchy and validation clarity`
+- [x] `LIV-10 chore(web-table): add px-3 empty-state padding in shared table no-data message`
+- [x] `LIV-11 feat(api-wallet): add authenticated wallet balance preview endpoint for configured exchange key`
+- [x] `LIV-12 feat(web-wallet): redesign wallet create/edit UX and show live balance preview when key is linked`
+- [x] `LIV-24 test(api-bots): finish walletId-first migration for full bots.e2e suite (remaining create/get/runtime assertions)`
 ## NEXT
-- [x] `ARM-14 refactor(web-dashboard): split HomeLiveWidgets into data/controller hooks and visual sections`
-- [x] `ARM-15 refactor(web-i18n): remove duplicated inline locale dictionaries in dashboard route wrappers`
-- [x] `ARM-16 chore(guardrails): remove architecture-related source file budget overrides`
-- [x] `ARM-17 chore(quality): enforce updated file-size budgets in quality gate`
-- [x] `ARM-18 docs(architecture): publish post-remediation architecture delta and residual-risk summary`
+- [x] `LIV-13 audit(ia-exchanges): map Orders/Positions module parity against Bots Runtime capabilities and identify blocking gaps`
+- [x] `LIV-14 refactor(web-ia): remove Exchanges Orders/Positions module from dashboard menu after parity confirmation`
+- [x] `LIV-15 chore(web-cleanup): remove obsolete Exchanges Orders/Positions route files and dead frontend modules`
+- [x] `LIV-16 test(web-runtime-ia): add regression coverage for updated nav, runtime positions visibility, and wallet widgets`
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `LIV-24 test(api-bots): complete walletId-first migration for full bots.e2e contract suite (mode/live-consent/api-key paths)`
+  - 2026-04-11: Updated `bots.e2e` wallet provisioning and create/update payloads to wallet-first semantics (including LIVE wallet transitions, consent audit flow, and exchange/api-key compatibility assertions), then validated with `pnpm --filter api test -- src/modules/bots/bots.e2e.test.ts src/modules/bots/bots.duplicate-guard.e2e.test.ts src/modules/bots/bots.subscription-entitlements.e2e.test.ts src/modules/wallets/wallets.e2e.test.ts src/modules/positions/livePositionReconciliation.service.test.ts src/modules/engine/runtimeSignalLoop.service.test.ts` (PASS, 74 tests).
+- [x] `LIV-23 test(api-bots): migrate duplicate-guard and subscription-entitlements e2e suites to walletId-first bot contract`
+  - 2026-04-11: Added deterministic test wallet provisioning/mapping in `bots.duplicate-guard.e2e.test.ts` and `bots.subscription-entitlements.e2e.test.ts`, removed legacy mode/paperStartBalance payload fields from create requests, and validated with `pnpm --filter api test -- src/modules/bots/bots.duplicate-guard.e2e.test.ts src/modules/bots/bots.subscription-entitlements.e2e.test.ts` + `pnpm --filter api run typecheck` (PASS).
+- [x] `LIV-22 chore(web-build-hygiene): remove final MarketUniverseForm lint warning and keep full web build clean`
+  - 2026-04-11: Replaced unused `mode` prop alias with explicit mode badge (`Tworzenie`/`Edycja`) in MarketUniverse form header and validated with `pnpm --filter web test -- src/features/markets/components/MarketUniverseForm.test.tsx` + `pnpm --filter web run build` (PASS, no warnings).
+- [x] `LIV-21 fix(web-dashboard-runtime): resolve HomeLiveWidgets hook-dependency warnings for selected-data and signal-symbol memo paths`
+  - 2026-04-11: Updated `HomeLiveWidgets` memo dependencies (`ttpStickyFavorableMoveByPositionRef`) and stabilized `signalSymbols` with dedicated `useMemo` to remove remaining hook warnings in this component; validated with `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` and `pnpm --filter web run build` (PASS).
+- [x] `LIV-20 chore(web-dashboard-runtime): remove dead signal-pill helpers and unused imports in HomeLiveWidgets`
+  - 2026-04-11: Cleaned `HomeLiveWidgets` dead signal-pill rendering helpers and unused `Bot` import, reducing runtime widget lint noise without behavior drift; validated with `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` and `pnpm --filter web run build` (PASS).
+- [x] `LIV-19 fix(web-backtest-details): align hook dependencies in timeline loaders to remove stale-copy warnings`
+  - 2026-04-11: Updated `BacktestRunDetails` callback/effect dependency arrays to include timeline i18n fallback copy keys used inside closures, validated with `pnpm --filter web test -- src/features/backtest/components/BacktestRunDetails.test.tsx src/features/backtest/hooks/useBacktestRunCoreData.test.tsx src/features/backtest/components/BacktestCreateForm.test.tsx` and `pnpm --filter web run build` (PASS).
+- [x] `LIV-18 fix(web-backtest-form): stabilize create-form data-loading effects for i18n-safe hook dependencies`
+  - 2026-04-11: Updated `BacktestCreateForm` effects to use explicit i18n-safe dependency values for strategy/universe load error toasts (no stale closure warnings), validated with `pnpm --filter web test -- src/features/backtest/components/BacktestCreateForm.test.tsx src/features/backtest/components/BacktestRunDetails.test.tsx src/features/backtest/hooks/useBacktestRunCoreData.test.tsx` and `pnpm --filter web run build` (PASS).
+- [x] `LIV-17 test(web-backtest): add component-level regression to prevent transient hard-error flash in create->details flow`
+  - 2026-04-11: Hardened backtest details regression coverage with transient-bootstrap retry assertion in `BacktestRunDetails.test.tsx` (no hard error flash while retrying), validated with `pnpm --filter web test -- src/features/backtest/hooks/useBacktestRunCoreData.test.tsx src/features/backtest/components/BacktestRunDetails.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - [x] `exit-gates(v1-production): production SLO observation window + target-env backup/restore + queue-lag telemetry review + formal release sign-offs`
   - 2026-04-10: Completed via VPS/private ops-network SLO collector path (`docs/operations/_artifacts-slo-window-2026-04-10T17-09-26-532Z.json`, `docs/operations/v1-slo-observation-2026-04-10T17-09-26-532Z.md`) and finalized gate artifacts (`docs/operations/v1-rc-external-gates-status.md`, `docs/operations/v1-rc-signoff-record.md`) with strict production evidence check PASS (`G1/G2/G3/G4 = PASS`).
 - [x] `SAR-14 ops(rollout): run DEV->STAGE->PROD remediation rollout checklist with smoke gates and rollback drill evidence`

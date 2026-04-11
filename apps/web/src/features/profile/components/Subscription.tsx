@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { getProfileSubscription } from "../services/subscription.service";
 import { ProfileSubscriptionResponse, SubscriptionCatalogItem } from "../types/subscription.type";
@@ -46,7 +46,7 @@ export default function SubscriptionPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadSubscription = async () => {
+  const loadSubscription = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -57,11 +57,11 @@ export default function SubscriptionPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [copy.loadError]);
 
   useEffect(() => {
     void loadSubscription();
-  }, [locale]);
+  }, [loadSubscription]);
 
   const activePlanCode = data?.activePlanCode ?? null;
 

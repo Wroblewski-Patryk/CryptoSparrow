@@ -709,6 +709,32 @@ describe('RuntimeSignalLoop', () => {
     expect(deps.orchestrateFn).not.toHaveBeenCalled();
   });
 
+  it('skips final-candle LONG/SHORT execution when managed external position already exists on symbol', async () => {
+    const { deps, emit } = createDeps();
+    withStrategyBot(deps, { maxOpenPositions: 5 });
+    deps.listRuntimeManagedExternalPositions = vi.fn(async () => [
+      { userId: 'user-1', symbol: 'BTCUSDT' },
+    ]);
+    deps.recordRuntimeEvent = vi.fn(async () => undefined);
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    await emitFinalCandleSeries(emit);
+
+    expect(deps.countOpenPositionsForBotAndSymbols).not.toHaveBeenCalled();
+    expect(deps.analyzePreTradeFn).not.toHaveBeenCalled();
+    expect(deps.createSignal).not.toHaveBeenCalled();
+    expect(deps.orchestrateFn).not.toHaveBeenCalled();
+    expect(deps.recordRuntimeEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'PRETRADE_BLOCKED',
+        payload: expect.objectContaining({
+          reason: 'EXTERNAL_POSITION_ALREADY_OPEN',
+        }),
+      })
+    );
+  });
+
   it('does not evaluate strategy decisions on ticker events', async () => {
     const { deps, emit } = createDeps();
     withStrategyBot(deps);

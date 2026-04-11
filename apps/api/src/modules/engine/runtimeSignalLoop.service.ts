@@ -560,6 +560,18 @@ export class RuntimeSignalLoop {
   private async handleFinalCandleDecision(event: StreamCandleEvent) {
     const bots = await this.deps.listActiveBots();
     await this.deps.closeInactiveRuntimeSessions?.(bots.map((bot) => bot.id));
+    const managedExternalSymbolKeys = new Set<string>();
+    try {
+      const managedExternalPositions = await this.deps.listRuntimeManagedExternalPositions();
+      for (const position of managedExternalPositions) {
+        const normalizedSymbol = position.symbol.trim().toUpperCase();
+        if (!normalizedSymbol) continue;
+        managedExternalSymbolKeys.add(`${position.userId}:${normalizedSymbol}`);
+      }
+    } catch (error) {
+      console.error('RuntimeSignalLoop managed external positions lookup failed:', error);
+      metricsStore.recordRuntimeExecutionError('runtime_external_positions_lookup_failure');
+    }
     await Promise.all(
       bots.map(async (bot) => {
         if (bot.marketType !== event.marketType) return;
@@ -662,6 +674,30 @@ export class RuntimeSignalLoop {
             this.processedDecisionWindows.set(decisionWindowKey, now);
 
             if (direction === 'LONG' || direction === 'SHORT') {
+              const managedExternalKey = `${bot.userId}:${event.symbol.toUpperCase()}`;
+              if (managedExternalSymbolKeys.has(managedExternalKey)) {
+                await this.deps.recordRuntimeEvent?.({
+                  userId: bot.userId,
+                  botId: bot.id,
+                  mode: bot.mode,
+                  sessionId,
+                  eventType: 'PRETRADE_BLOCKED',
+                  level: 'WARN',
+                  symbol: event.symbol,
+                  botMarketGroupId: group.id,
+                  strategyId: merged.strategyId,
+                  signalDirection: direction,
+                  message: 'Signal blocked due to managed external position on symbol',
+                  payload: {
+                    reason: 'EXTERNAL_POSITION_ALREADY_OPEN',
+                  },
+                  eventAt: new Date(event.eventTime),
+                });
+                metricsStore.recordRuntimeMergeOutcome('NO_TRADE');
+                metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
+                return;
+              }
+
               const openPositionsInGroup = await this.deps.countOpenPositionsForBotAndSymbols({
                 userId: bot.userId,
                 botId: bot.id,

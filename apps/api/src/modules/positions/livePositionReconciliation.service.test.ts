@@ -138,4 +138,69 @@ describe('reconcileExternalPositionsFromExchange', () => {
       })
     );
   });
+
+  it('continues syncing healthy api keys when one api key fetch fails', async () => {
+    const createSyncedPosition = vi.fn(async () => undefined);
+    const listOpenSyncedPositionsForApiKey = vi.fn(async () => []);
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const result = await reconcileExternalPositionsFromExchange({
+      listSyncedApiKeys: vi.fn(async () => [
+        {
+          id: 'key-failing',
+          userId: 'user-1',
+          manageExternalPositions: true,
+        },
+        {
+          id: 'key-healthy',
+          userId: 'user-2',
+          manageExternalPositions: true,
+        },
+      ]),
+      fetchPositionsForApiKey: vi.fn(async (apiKey) => {
+        if (apiKey.id === 'key-failing') {
+          throw new Error('exchange_timeout');
+        }
+        return {
+          positions: [
+            {
+              symbol: 'BTC/USDT:USDT',
+              side: 'long',
+              contracts: 0.05,
+              entryPrice: 60000,
+              markPrice: 60010,
+              unrealizedPnl: 2,
+              leverage: 2,
+              timestamp: null,
+            },
+          ],
+        };
+      }),
+      findOpenSyncedPositionByExternalId: vi.fn(async () => null),
+      updateSyncedPosition: vi.fn(async () => undefined),
+      createSyncedPosition,
+      listOpenSyncedPositionsForApiKey,
+      closeStaleSyncedPosition: vi.fn(async () => undefined),
+      now: () => new Date('2026-03-23T00:10:00.000Z'),
+    });
+
+    expect(result.openPositionsSeen).toBe(1);
+    expect(createSyncedPosition).toHaveBeenCalledTimes(1);
+    expect(createSyncedPosition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-2',
+        externalId: 'key-healthy:BTCUSDT:LONG',
+      })
+    );
+    expect(listOpenSyncedPositionsForApiKey).toHaveBeenCalledTimes(1);
+    expect(listOpenSyncedPositionsForApiKey).toHaveBeenCalledWith({
+      userId: 'user-2',
+      apiKeyId: 'key-healthy',
+    });
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      '[LivePositionReconciliation] apiKey=key-failing user=user-1 failed: exchange_timeout'
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
 });

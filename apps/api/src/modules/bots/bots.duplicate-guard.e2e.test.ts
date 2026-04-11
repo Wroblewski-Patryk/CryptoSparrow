@@ -4,6 +4,28 @@ import { app } from '../../index';
 import { prisma } from '../../prisma/client';
 import { setActiveSubscriptionForUser } from '../subscriptions/subscriptions.service';
 
+const walletIdByMarketGroupId = new Map<string, string>();
+
+const createWalletForContext = async (email: string) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { email },
+    select: { id: true },
+  });
+  const created = await prisma.wallet.create({
+    data: {
+      userId: user.id,
+      name: `Duplicate Guard Wallet ${Date.now()}`,
+      mode: 'PAPER',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+      paperInitialBalance: 10_000,
+    },
+    select: { id: true },
+  });
+  return created.id;
+};
+
 const registerAndLogin = async (email: string) => {
   const agent = request.agent(app);
   const res = await agent.post('/auth/register').send({
@@ -59,12 +81,16 @@ const createMarketGroup = async (email: string) => {
       symbols: ['BTCUSDT', 'ETHUSDT'],
     },
   });
+  const walletId = await createWalletForContext(email);
+  walletIdByMarketGroupId.set(symbolGroup.id, walletId);
+  walletIdByMarketGroupId.set(marketUniverse.id, walletId);
 
   return symbolGroup.id;
 };
 
 describe('Bots duplicate active guard', () => {
   beforeEach(async () => {
+    walletIdByMarketGroupId.clear();
     await prisma.log.deleteMany();
     await prisma.backtestReport.deleteMany();
     await prisma.backtestTrade.deleteMany();
@@ -97,10 +123,9 @@ describe('Bots duplicate active guard', () => {
 
     const firstCreate = await agent.post('/dashboard/bots').send({
       name: 'Primary Active',
-      mode: 'PAPER',
-      paperStartBalance: 10_000,
       strategyId,
       marketGroupId,
+      walletId: walletIdByMarketGroupId.get(marketGroupId),
       isActive: true,
       liveOptIn: false,
     });
@@ -108,10 +133,9 @@ describe('Bots duplicate active guard', () => {
 
     const duplicateActiveCreate = await agent.post('/dashboard/bots').send({
       name: 'Duplicate Active',
-      mode: 'PAPER',
-      paperStartBalance: 10_000,
       strategyId,
       marketGroupId,
+      walletId: walletIdByMarketGroupId.get(marketGroupId),
       isActive: true,
       liveOptIn: false,
     });
@@ -122,10 +146,9 @@ describe('Bots duplicate active guard', () => {
 
     const inactiveCreate = await agent.post('/dashboard/bots').send({
       name: 'Duplicate Inactive',
-      mode: 'PAPER',
-      paperStartBalance: 10_000,
       strategyId,
       marketGroupId,
+      walletId: walletIdByMarketGroupId.get(marketGroupId),
       isActive: false,
       liveOptIn: false,
     });
@@ -140,10 +163,9 @@ describe('Bots duplicate active guard', () => {
 
     const firstCreate = await agent.post('/dashboard/bots').send({
       name: 'Primary Active',
-      mode: 'PAPER',
-      paperStartBalance: 10_000,
       strategyId,
       marketGroupId,
+      walletId: walletIdByMarketGroupId.get(marketGroupId),
       isActive: true,
       liveOptIn: false,
     });
@@ -151,10 +173,9 @@ describe('Bots duplicate active guard', () => {
 
     const secondCreate = await agent.post('/dashboard/bots').send({
       name: 'Secondary Inactive',
-      mode: 'PAPER',
-      paperStartBalance: 10_000,
       strategyId,
       marketGroupId,
+      walletId: walletIdByMarketGroupId.get(marketGroupId),
       isActive: false,
       liveOptIn: false,
     });

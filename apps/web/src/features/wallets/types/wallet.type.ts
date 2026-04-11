@@ -31,3 +31,27 @@ export type CreateWalletInput = {
 };
 
 export type UpdateWalletInput = Partial<CreateWalletInput>;
+
+export type WalletBalancePreviewInput = {
+  exchange: ExchangeOption;
+  marketType: 'FUTURES' | 'SPOT';
+  baseCurrency: string;
+  apiKeyId: string;
+  liveAllocationMode?: WalletAllocationMode | null;
+  liveAllocationValue?: number | null;
+};
+
+export type WalletBalancePreview = {
+  exchange: ExchangeOption;
+  marketType: 'FUTURES' | 'SPOT';
+  baseCurrency: string;
+  accountBalance: number;
+  freeBalance: number | null;
+  referenceBalance: number;
+  allocationApplied: {
+    mode: WalletAllocationMode;
+    value: number;
+  } | null;
+  fetchedAt: string;
+  source: 'BINANCE';
+};

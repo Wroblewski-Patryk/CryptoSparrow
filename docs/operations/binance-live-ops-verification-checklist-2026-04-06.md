@@ -21,9 +21,9 @@ Scope:
 3. Record result and UTC timestamp.
 
 Evidence:
-- Connection test result:
-- UTC timestamp:
-- Operator:
+- Connection test result: PASS (`/dashboard/profile/apiKeys/:id/test` -> `{"ok":true,"code":"OK","message":"Binance API key permissions validated."}`)
+- UTC timestamp: `2026-04-10T17:27:06.817390Z`
+- Operator: `Patryk Wroblewski`
 
 ## Step 2 - Exchange Snapshot Trust Gate
 1. Load exchange live positions snapshot from positions module.
@@ -35,10 +35,10 @@ Evidence:
 3. Confirm `lastSync` is present and recent.
 
 Evidence:
-- Snapshot command/view:
-- Symbols checked:
-- Sync timestamp observed:
-- Operator:
+- Snapshot command/view: `GET /dashboard/positions/exchange-snapshot` and `GET /dashboard/positions?status=OPEN` (executed from VPS private ops route)
+- Symbols checked: snapshot (`1000PEPEUSDT, ADAUSDT, AVAXUSDT, BNBUSDT, DOGEUSDT, LINKUSDT, SOLUSDT, XRPUSDT`) vs app-open (`BTCUSDT, DOGEUSDT, ETHUSDT, SOLUSDT, XRPUSDT, ZECUSDT`)
+- Sync timestamp observed: `2026-04-10T17:27:16.604Z`
+- Operator: `Patryk Wroblewski` (status: BLOCKED - symbol/count mismatch, reconciliation loop not running)
 
 ## Step 3 - Management Mode Safety Gate
 1. Mark at least one synced symbol as `MANUAL_MANAGED`.
@@ -47,10 +47,10 @@ Evidence:
 4. Mark one symbol as `BOT_MANAGED` and confirm runtime is allowed to automate lifecycle.
 
 Evidence:
-- Manual-managed symbol:
-- Bot-managed symbol:
-- Orders blocked on manual-managed symbol:
-- UTC timestamp:
+- Manual-managed symbol: not validated (BLOCKED)
+- Bot-managed symbol: not validated (BLOCKED)
+- Orders blocked on manual-managed symbol: not validated (BLOCKED)
+- UTC timestamp: `2026-04-10T17:27:06.817390Z` (blocked because `syncExternalPositions/manageExternalPositions` are currently false and active bots have no runtime sessions)
 
 ## Step 4 - Runtime Lifecycle Gate (`BOT_MANAGED`)
 1. Run controlled scenario where bot opens a position.
@@ -62,11 +62,11 @@ Evidence:
 4. Confirm no opposite-side flip action while position is open (`no-flip` guard).
 
 Evidence:
-- Session/bot id:
-- Symbols checked:
-- Lifecycle events observed:
-- No-flip behavior:
-- Operator:
+- Session/bot id: not validated (BLOCKED)
+- Symbols checked: not validated (BLOCKED)
+- Lifecycle events observed: not validated (BLOCKED)
+- No-flip behavior: not validated (BLOCKED)
+- Operator: `Patryk Wroblewski` (blocked - no runtime sessions on active tested bots)
 
 ## Step 5 - Runtime Health and Alert Gate
 1. Verify:
@@ -78,10 +78,10 @@ Evidence:
 2. Verify `/alerts` has no rollback-critical runtime alerts for current window.
 
 Evidence:
-- Endpoint check timestamp:
-- Runtime freshness status:
-- Alert summary:
-- Operator:
+- Endpoint check timestamp: `2026-04-10T17:27:16.699Z`
+- Runtime freshness status: PASS (`GET /workers/runtime-freshness` -> `200`, payload `status=PASS`)
+- Alert summary: PASS (`GET /alerts` -> `200`, `alerts=[]`)
+- Operator: `Patryk Wroblewski`
 
 ## Step 6 - Backtest vs Runtime Alignment Spot Check
 1. Use the same strategy + market group + symbol set used by live bot.
@@ -92,11 +92,35 @@ Evidence:
 3. If mismatch is found, open incident and keep release gate blocked until triage.
 
 Evidence:
-- Backtest run id:
-- Runtime session id:
-- Symbols compared:
-- Alignment result:
-- Follow-up ticket (if mismatch):
+- Backtest run id: not validated (BLOCKED)
+- Runtime session id: not validated (BLOCKED)
+- Symbols compared: not validated (BLOCKED)
+- Alignment result: not validated (BLOCKED; Step 4 lifecycle evidence missing)
+- Follow-up ticket (if mismatch): open required before RC if runtime/backtest mismatch is confirmed
+
+## Update 2026-04-10 (Canary LIVE Window)
+
+Reference:
+- `docs/operations/_artifacts-binance-live-ops-check-2026-04-10T17-58-18-111Z.json`
+- `docs/operations/binance-live-ops-verification-2026-04-10T17-58-18-111Z.md`
+
+Observed progress:
+- Step 1 remains PASS:
+  - API key test OK.
+  - Key flags now: `syncExternalPositions=true`, `manageExternalPositions=false`.
+- Step 3 is PARTIAL:
+  - Canary wallet created (`FIXED 2 USDT`) and one bot switched to LIVE:
+    - Bot: `b38bfa7b-3d47-4134-9a04-601ee9d5cc34`
+    - LIVE session: `f5757541-9b00-489d-9f5d-7ec85ca3bdf2` (`RUNNING`)
+  - LIVE guard confirmed blocking entries on occupied symbols with reason `open_position_on_symbol_exists` (e.g. `BTCUSDT`, `SOLUSDT`, `XRPUSDT`, `ETHUSDT`).
+- Step 5 remains PASS:
+  - `/workers/runtime-freshness=200` with `status=PASS`
+  - `/alerts=200` with empty alerts list.
+
+Still blocked:
+- Step 2 BLOCKED: exchange snapshot and app-open positions are still not aligned; `/dashboard/positions/live-status` reports `running=false`.
+- Step 4 BLOCKED: LIVE session healthy, but no `OPEN -> DCA -> CLOSE` lifecycle events were produced in this observation window.
+- Step 6 BLOCKED: parity spot-check cannot proceed before Step 4 lifecycle evidence exists.
 
 ## Exit Rule
 - This checklist is considered pass only when all six steps have recorded evidence and no unresolved mismatch/critical runtime alert remains.

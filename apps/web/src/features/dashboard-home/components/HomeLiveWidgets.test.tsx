@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { I18nProvider } from "../../../i18n/I18nProvider";
@@ -544,6 +544,328 @@ describe("HomeLiveWidgets", () => {
     const signalsAnchor = screen.getByText("SOLUSDT");
     const openPositionsTab = screen.getByRole("tab", { name: /Otwarte pozycje|Open positions/i });
     expect(openPositionsTab.compareDocumentPosition(signalsAnchor) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("renders LIVE wallet metrics from runtime capital snapshot in sidebar widget", async () => {
+    listBotsMock.mockResolvedValue([
+      {
+        id: "bot-live-wallet",
+        name: "Live Wallet Bot",
+        mode: "LIVE",
+        paperStartBalance: 10000,
+        marketType: "FUTURES",
+        positionMode: "ONE_WAY",
+        strategyId: "str-live-wallet",
+        isActive: true,
+        liveOptIn: true,
+        maxOpenPositions: 2,
+        wallet: {
+          id: "wallet-live-1",
+          name: "Glowny",
+          mode: "LIVE",
+          exchange: "BINANCE",
+          marketType: "FUTURES",
+          baseCurrency: "USDT",
+          paperInitialBalance: 10000,
+          liveAllocationMode: "PERCENT",
+          liveAllocationValue: 100,
+        },
+      },
+    ]);
+
+    listBotRuntimeSessionsMock.mockResolvedValue([
+      {
+        id: "session-live-wallet",
+        botId: "bot-live-wallet",
+        mode: "LIVE",
+        status: "RUNNING",
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: null,
+        lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+        stopReason: null,
+        errorMessage: null,
+        createdAt: "2026-03-31T10:00:00.000Z",
+        updatedAt: "2026-03-31T10:05:00.000Z",
+        durationMs: 300000,
+        eventsCount: 2,
+        symbolsTracked: 1,
+        summary: {
+          totalSignals: 1,
+          dcaCount: 0,
+          closedTrades: 0,
+          realizedPnl: 0,
+        },
+      },
+    ]);
+
+    listBotRuntimeSessionSymbolStatsMock.mockResolvedValue({
+      sessionId: "session-live-wallet",
+      items: [
+        {
+          id: "stat-live-wallet",
+          userId: "u-live",
+          botId: "bot-live-wallet",
+          sessionId: "session-live-wallet",
+          symbol: "BTCUSDT",
+          totalSignals: 1,
+          longEntries: 1,
+          shortEntries: 0,
+          exits: 0,
+          dcaCount: 0,
+          closedTrades: 0,
+          winningTrades: 0,
+          losingTrades: 0,
+          realizedPnl: 0,
+          grossProfit: 0,
+          grossLoss: 0,
+          feesPaid: 0,
+          openPositionCount: 1,
+          openPositionQty: 0.01,
+          unrealizedPnl: 0,
+          lastPrice: 70000,
+          lastSignalAt: "2026-03-31T10:04:00.000Z",
+          lastSignalDirection: "LONG",
+          lastSignalDecisionAt: "2026-03-31T10:04:00.000Z",
+          lastTradeAt: "2026-03-31T10:03:00.000Z",
+          snapshotAt: "2026-03-31T10:05:00.000Z",
+          createdAt: "2026-03-31T10:05:00.000Z",
+          updatedAt: "2026-03-31T10:05:00.000Z",
+        },
+      ],
+      summary: {
+        totalSignals: 1,
+        longEntries: 1,
+        shortEntries: 0,
+        exits: 0,
+        dcaCount: 0,
+        closedTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        totalPnl: 0,
+        grossProfit: 0,
+        grossLoss: 0,
+        feesPaid: 0,
+      },
+    });
+
+    listBotRuntimeSessionPositionsMock.mockResolvedValue({
+      sessionId: "session-live-wallet",
+      total: 1,
+      openCount: 1,
+      closedCount: 0,
+      openOrdersCount: 0,
+      showDynamicStopColumns: false,
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      summary: {
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        feesPaid: 0,
+        referenceBalance: 100,
+        freeCash: 98.84,
+      },
+      openOrders: [],
+      openItems: [
+        {
+          id: "pos-live-wallet",
+          symbol: "BTCUSDT",
+          side: "LONG",
+          status: "OPEN",
+          quantity: 0.01,
+          leverage: 10,
+          entryPrice: 1160,
+          entryNotional: 11.6,
+          exitPrice: null,
+          stopLoss: null,
+          takeProfit: null,
+          openedAt: "2026-03-31T10:03:00.000Z",
+          closedAt: null,
+          holdMs: 120000,
+          dcaCount: 0,
+          dcaPlannedLevels: [],
+          dcaExecutedLevels: [],
+          feesPaid: 0,
+          realizedPnl: 0,
+          unrealizedPnl: 0,
+          markPrice: 1160,
+          dynamicTtpStopLoss: null,
+          dynamicTslStopLoss: null,
+          firstTradeAt: "2026-03-31T10:03:00.000Z",
+          lastTradeAt: "2026-03-31T10:03:00.000Z",
+          tradesCount: 1,
+        },
+      ],
+      historyItems: [],
+    });
+
+    listBotRuntimeSessionTradesMock.mockResolvedValue({
+      sessionId: "session-live-wallet",
+      total: 0,
+      meta: {
+        page: 1,
+        pageSize: 25,
+        total: 0,
+        totalPages: 0,
+        hasPrev: false,
+        hasNext: false,
+      },
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      items: [],
+    });
+
+    renderSubject();
+
+    await waitFor(() => {
+      expect(screen.getByText(/100[,.]00\s*USDT/)).toBeInTheDocument();
+      expect(screen.getByText(/98[,.]84\s*USDT/)).toBeInTheDocument();
+      expect(screen.getByText(/1[,.]16\s*USDT/)).toBeInTheDocument();
+    });
+  });
+
+  it("renders runtime open positions even when symbol stats are temporarily empty", async () => {
+    listBotsMock.mockResolvedValue([
+      {
+        id: "bot-external-runtime",
+        name: "External Runtime Bot",
+        mode: "LIVE",
+        paperStartBalance: 10000,
+        marketType: "FUTURES",
+        positionMode: "ONE_WAY",
+        strategyId: "str-external-runtime",
+        isActive: true,
+        liveOptIn: true,
+        maxOpenPositions: 2,
+      },
+    ]);
+
+    listBotRuntimeSessionsMock.mockResolvedValue([
+      {
+        id: "session-external-runtime",
+        botId: "bot-external-runtime",
+        mode: "LIVE",
+        status: "RUNNING",
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: null,
+        lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+        stopReason: null,
+        errorMessage: null,
+        createdAt: "2026-03-31T10:00:00.000Z",
+        updatedAt: "2026-03-31T10:05:00.000Z",
+        durationMs: 300000,
+        eventsCount: 0,
+        symbolsTracked: 0,
+        summary: {
+          totalSignals: 0,
+          dcaCount: 0,
+          closedTrades: 0,
+          realizedPnl: 0,
+        },
+      },
+    ]);
+
+    listBotRuntimeSessionSymbolStatsMock.mockResolvedValue({
+      sessionId: "session-external-runtime",
+      items: [],
+      summary: {
+        totalSignals: 0,
+        longEntries: 0,
+        shortEntries: 0,
+        exits: 0,
+        dcaCount: 0,
+        closedTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        totalPnl: 0,
+        grossProfit: 0,
+        grossLoss: 0,
+        feesPaid: 0,
+      },
+    });
+
+    listBotRuntimeSessionPositionsMock.mockResolvedValue({
+      sessionId: "session-external-runtime",
+      total: 1,
+      openCount: 1,
+      closedCount: 0,
+      openOrdersCount: 0,
+      showDynamicStopColumns: false,
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      summary: {
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        feesPaid: 0,
+        referenceBalance: 200,
+        freeCash: 198,
+      },
+      openOrders: [],
+      openItems: [
+        {
+          id: "pos-external-runtime",
+          symbol: "BNBUSDT",
+          side: "LONG",
+          status: "OPEN",
+          quantity: 0.1,
+          leverage: 10,
+          entryPrice: 580,
+          entryNotional: 58,
+          exitPrice: null,
+          stopLoss: null,
+          takeProfit: null,
+          openedAt: "2026-03-31T10:03:00.000Z",
+          closedAt: null,
+          holdMs: 120000,
+          dcaCount: 0,
+          dcaPlannedLevels: [],
+          dcaExecutedLevels: [],
+          feesPaid: 0,
+          realizedPnl: 0,
+          unrealizedPnl: 0,
+          markPrice: 580,
+          dynamicTtpStopLoss: null,
+          dynamicTslStopLoss: null,
+          firstTradeAt: "2026-03-31T10:03:00.000Z",
+          lastTradeAt: "2026-03-31T10:03:00.000Z",
+          tradesCount: 1,
+        },
+      ],
+      historyItems: [],
+    });
+
+    listBotRuntimeSessionTradesMock.mockResolvedValue({
+      sessionId: "session-external-runtime",
+      total: 0,
+      meta: {
+        page: 1,
+        pageSize: 25,
+        total: 0,
+        totalPages: 0,
+        hasPrev: false,
+        hasNext: false,
+      },
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      items: [],
+    });
+
+    renderSubject();
+
+    await waitFor(() => {
+      expect(screen.getAllByText("BNBUSDT").length).toBeGreaterThan(0);
+    });
   });
 
   it("shows stale-data warning after refresh gaps and clears it after fresh payload arrives", async () => {

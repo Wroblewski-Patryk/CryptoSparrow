@@ -1,5 +1,11 @@
 import api from '@/lib/api';
-import { CreateWalletInput, UpdateWalletInput, Wallet } from '../types/wallet.type';
+import {
+  CreateWalletInput,
+  UpdateWalletInput,
+  Wallet,
+  WalletBalancePreview,
+  WalletBalancePreviewInput,
+} from '../types/wallet.type';
 import type { ExchangeOption } from '@/features/exchanges/exchangeCapabilities';
 
 export const listWallets = async (params?: {
@@ -28,4 +34,9 @@ export const updateWallet = async (id: string, payload: UpdateWalletInput): Prom
 
 export const deleteWallet = async (id: string): Promise<void> => {
   await api.delete(`/dashboard/wallets/${id}`);
+};
+
+export const previewWalletBalance = async (payload: WalletBalancePreviewInput): Promise<WalletBalancePreview> => {
+  const res = await api.post<WalletBalancePreview>('/dashboard/wallets/preview-balance', payload);
+  return res.data;
 };

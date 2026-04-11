@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import BacktestRunDetails from "./BacktestRunDetails";
 
@@ -69,5 +69,55 @@ describe("BacktestRunDetails loading UX", () => {
 
     expect(await screen.findByText("Nie znaleziono runa")).toBeInTheDocument();
     expect(screen.queryByText("Nie udalo sie pobrac szczegolow backtestu")).not.toBeInTheDocument();
+  });
+
+  it("keeps bootstrap loading without flashing hard error on transient fetch failure", async () => {
+    vi.useFakeTimers();
+    getBacktestRunMock
+      .mockRejectedValueOnce({
+        isAxiosError: true,
+        response: {
+          status: 503,
+          data: {
+            error: { message: "Service unavailable" },
+          },
+        },
+      })
+      .mockResolvedValue({
+        id: "run_retry",
+        strategyId: null,
+        name: "Retry run",
+        symbol: "BTCUSDT",
+        timeframe: "1m",
+        status: "COMPLETED",
+        seedConfig: null,
+        startedAt: "2026-04-10T10:00:00.000Z",
+        finishedAt: "2026-04-10T10:10:00.000Z",
+        notes: null,
+        createdAt: "2026-04-10T10:00:00.000Z",
+      });
+    getBacktestRunReportMock.mockResolvedValue(null);
+    getBacktestRunTimelineMock.mockResolvedValue(null);
+    listBacktestRunTradesMock.mockResolvedValue([]);
+    getStrategyMock.mockResolvedValue(null);
+    getMarketUniverseMock.mockResolvedValue(null);
+
+    render(<BacktestRunDetails runId="run_retry" />);
+
+    expect(screen.queryByText("Nie udalo sie pobrac szczegolow backtestu")).not.toBeInTheDocument();
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(getBacktestRunMock.mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText("Nie udalo sie pobrac szczegolow backtestu")).not.toBeInTheDocument();
+    vi.useRealTimers();
   });
 });

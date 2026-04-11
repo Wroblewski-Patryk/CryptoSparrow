@@ -66,6 +66,48 @@ export const ListWalletsQuerySchema = z.object({
   exchange: z.enum(['BINANCE', 'BYBIT', 'OKX', 'KRAKEN', 'COINBASE']).optional(),
 });
 
+export const WalletBalancePreviewSchema = z
+  .object({
+    exchange: z.enum(['BINANCE', 'BYBIT', 'OKX', 'KRAKEN', 'COINBASE']).default('BINANCE'),
+    marketType: z.enum(['FUTURES', 'SPOT']).default('FUTURES'),
+    baseCurrency: z.string().trim().min(2).max(16).default('USDT'),
+    apiKeyId: z.string().trim().min(1),
+    liveAllocationMode: WalletAllocationModeSchema.optional().nullable(),
+    liveAllocationValue: z.number().positive().max(1_000_000_000).optional().nullable(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.liveAllocationMode && value.liveAllocationValue == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'liveAllocationValue is required when liveAllocationMode is provided',
+        path: ['liveAllocationValue'],
+      });
+      return;
+    }
+
+    if (!value.liveAllocationMode && value.liveAllocationValue != null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'liveAllocationMode is required when liveAllocationValue is provided',
+        path: ['liveAllocationMode'],
+      });
+      return;
+    }
+
+    if (
+      value.liveAllocationMode === 'PERCENT' &&
+      typeof value.liveAllocationValue === 'number' &&
+      value.liveAllocationValue > 100
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'liveAllocationValue cannot exceed 100 for PERCENT mode',
+        path: ['liveAllocationValue'],
+      });
+    }
+  });
+
 export type CreateWalletDto = z.infer<typeof CreateWalletSchema>;
 export type UpdateWalletDto = z.infer<typeof UpdateWalletSchema>;
 export type ListWalletsQueryDto = z.infer<typeof ListWalletsQuerySchema>;
+export type WalletBalancePreviewDto = z.infer<typeof WalletBalancePreviewSchema>;

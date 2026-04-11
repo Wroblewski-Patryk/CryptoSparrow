@@ -1777,7 +1777,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
       inFlightTimelineRequestsRef.current.set(lockKey, requestPromise);
       return requestPromise;
     },
-    [runId],
+    [copy.timelineLoadErrorDefault, runId],
   );
 
   useEffect(() => {
@@ -1878,7 +1878,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, loadSymbolTimelineChunk, parityDiagnosticsBySymbol, symbolStats]);
+  }, [activeTab, copy.timelineParityFailedDefault, loadSymbolTimelineChunk, parityDiagnosticsBySymbol, symbolStats]);
 
   const progress = useMemo(() => {
     if (!run) return 0;

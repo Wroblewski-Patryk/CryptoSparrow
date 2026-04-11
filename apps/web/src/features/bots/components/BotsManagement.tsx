@@ -200,7 +200,6 @@ export default function BotsManagement({
     assistantSafetyMode,
     assistantSaving,
     assistantSlots,
-    assistantSubagents,
     assistantTrace,
     handleClearSubagent,
     handleRunAssistantDryRun,
@@ -276,16 +275,6 @@ export default function BotsManagement({
       ? supportsExchangeCapability(selectedMonitorBot.exchange, "LIVE_EXECUTION")
       : supportsExchangeCapability(selectedMonitorBot.exchange, "PAPER_PRICING_FEED");
   }, [selectedMonitorBot]);
-  const monitorStreamSymbols = useMemo(() => {
-    const fromStats = monitorSymbolStats?.items?.map((item) => item.symbol) ?? [];
-    const fromPositions = monitorPositions?.openItems?.map((item) => item.symbol) ?? [];
-    return [...new Set([...fromStats, ...fromPositions].map((symbol) => normalizeSymbol(symbol)))];
-  }, [monitorPositions?.openItems, monitorSymbolStats?.items]);
-  const monitorStreamSymbolsKey = useMemo(
-    () => monitorStreamSymbols.join(","),
-    [monitorStreamSymbols]
-  );
-
   const monitorWinRate = useMemo(() => {
     const closedTrades = monitorSessionDetail?.summary.closedTrades ?? 0;
     if (closedTrades <= 0) return 0;
@@ -378,7 +367,7 @@ export default function BotsManagement({
         tslProtectedPercent,
       };
     });
-  }, [monitorLiveTickerPrices, monitorPositions?.openItems, selectedMonitorBot]);
+  }, [monitorLiveTickerPrices, monitorPositions?.openItems, monitorTtpStickyFavorableMoveByPositionRef, selectedMonitorBot]);
 
   const monitorShowDynamicStopColumns = useMemo(
     () => {

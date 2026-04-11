@@ -2,8 +2,6 @@ export const dashboardRoutes = {
   home: "/dashboard",
   exchanges: {
     root: "/dashboard/exchanges",
-    orders: "/dashboard/orders",
-    positions: "/dashboard/positions",
   },
   wallets: {
     root: "/dashboard/wallets",

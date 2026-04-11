@@ -11,7 +11,6 @@ import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { createMarketStreamEventSource } from "../../../lib/marketStream";
 import {
-  Bot,
   BotRuntimePositionItem,
   BotRuntimePositionsResponse,
   BotRuntimeSymbolStatsResponse,
@@ -45,7 +44,6 @@ import type {
   RuntimeSummary,
   RuntimeTabItem,
   RuntimeSymbolWithLive,
-  SignalPillValue,
 } from "./home-live-widgets/types";
 type DirectionPillValue = "LONG" | "SHORT" | "BUY" | "SELL";
 
@@ -274,57 +272,6 @@ const DirectionPill = ({ value }: { value: DirectionPillValue }) => (
   <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs ${directionPillClass(value)}`}>
     <DirectionPillIcon value={value} />
     <span className="font-medium">{value}</span>
-  </span>
-);
-
-const signalPillClass = (value: SignalPillValue) => {
-  if (value === "LONG") return "text-success";
-  if (value === "SHORT") return "text-error";
-  if (value === "EXIT") return "text-warning";
-  return "text-base-content/70";
-};
-
-const SignalPillIcon = ({ value }: { value: SignalPillValue }) => {
-  if (value === "LONG") return <DirectionPillIcon value="LONG" />;
-  if (value === "SHORT") return <DirectionPillIcon value="SHORT" />;
-  if (value === "EXIT") {
-    return (
-      <svg
-        stroke="currentColor"
-        fill="none"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="h-3.5 w-3.5"
-        aria-hidden="true"
-      >
-        <path d="M7 12h10" />
-        <path d="m13 8 4 4-4 4" />
-        <path d="M3 12h4" />
-      </svg>
-    );
-  }
-  return (
-    <svg
-      stroke="currentColor"
-      fill="none"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-3.5 w-3.5"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="4" />
-    </svg>
-  );
-};
-
-const SignalPill = ({ value }: { value: SignalPillValue }) => (
-  <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${signalPillClass(value)}`}>
-    <SignalPillIcon value={value} />
-    <span>{value}</span>
   </span>
 );
 
@@ -636,8 +583,21 @@ export default function HomeLiveWidgets() {
     const losses = selected.symbolStats?.summary.losingTrades ?? 0;
     const winRate = wins + losses > 0 ? (wins / (wins + losses)) * 100 : null;
     const paperInit = selected.bot.mode === "PAPER" ? selected.bot.paperStartBalance : null;
-    const equity = paperInit != null ? paperInit + net : null;
-    const free = equity != null ? Math.max(0, equity - usedMargin) : null;
+    const paperEquity = paperInit != null ? paperInit + net : null;
+    const liveReferenceBalanceRaw = selected.positions?.summary.referenceBalance;
+    const liveReferenceBalance =
+      selected.bot.mode === "LIVE" &&
+      typeof liveReferenceBalanceRaw === "number" &&
+      Number.isFinite(liveReferenceBalanceRaw)
+        ? Math.max(0, liveReferenceBalanceRaw)
+        : null;
+    const equity = selected.bot.mode === "LIVE" ? liveReferenceBalance : paperEquity;
+    const liveFreeCashRaw = selected.positions?.summary.freeCash;
+    const liveFreeCash =
+      selected.bot.mode === "LIVE" && typeof liveFreeCashRaw === "number" && Number.isFinite(liveFreeCashRaw)
+        ? Math.max(0, liveFreeCashRaw)
+        : null;
+    const free = liveFreeCash ?? (equity != null ? Math.max(0, equity - usedMargin) : null);
     const exposurePct = equity && equity > 0 ? (usedMargin / equity) * 100 : null;
     const trades = selectedTrades?.items ?? [];
     return {
@@ -658,7 +618,7 @@ export default function HomeLiveWidgets() {
       trades,
       drawdown: maxDrawdown(trades),
     };
-  }, [selected, selectedTrades, liveTickerPrices]);
+  }, [liveTickerPrices, selected, selectedTrades, ttpStickyFavorableMoveByPositionRef]);
 
   const showDynamicStopColumns = useMemo(() => {
     const fromStrategyMode = selected?.positions?.showDynamicStopColumns;
@@ -696,7 +656,7 @@ export default function HomeLiveWidgets() {
   const signalCardsPerView = resolveSignalCardsPerView(
     viewportWidth > 0 ? viewportWidth : SIGNAL_CARDS_DENSITY_BREAKPOINTS.desktopMinWidth
   );
-  const signalSymbols = selectedData?.symbols ?? [];
+  const signalSymbols = useMemo(() => selectedData?.symbols ?? [], [selectedData?.symbols]);
   const signalHeaderStats = useMemo(() => {
     const actionableSignalsCount = signalSymbols.reduce((count, item) => {
       return item.lastSignalDirection === "LONG" || item.lastSignalDirection === "SHORT" ? count + 1 : count;

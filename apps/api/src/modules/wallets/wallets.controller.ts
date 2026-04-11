@@ -3,7 +3,12 @@ import { ExchangeNotImplementedError } from '../exchange/exchangeCapabilities';
 import { sendError } from '../../utils/apiError';
 import { sendValidationError } from '../../utils/formatZodError';
 import * as walletsService from './wallets.service';
-import { CreateWalletSchema, ListWalletsQuerySchema, UpdateWalletSchema } from './wallets.types';
+import {
+  CreateWalletSchema,
+  ListWalletsQuerySchema,
+  UpdateWalletSchema,
+  WalletBalancePreviewSchema,
+} from './wallets.types';
 
 export const listWallets = async (req: Request, res: Response) => {
   const userId = req.user?.id;
@@ -89,5 +94,27 @@ export const deleteWallet = async (req: Request, res: Response) => {
       return sendError(res, 409, 'wallet is used by at least one bot and cannot be deleted');
     }
     return sendError(res, 500, 'Internal server error');
+  }
+};
+
+export const previewBalance = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const payload = WalletBalancePreviewSchema.parse(req.body);
+    const preview = await walletsService.previewWalletBalance(userId, payload);
+    return res.status(200).json(preview);
+  } catch (error) {
+    if (error instanceof ExchangeNotImplementedError) {
+      return sendError(res, error.status, error.message, error.toDetails());
+    }
+    if (error instanceof Error && error.message === 'WALLET_PREVIEW_API_KEY_NOT_FOUND') {
+      return sendError(res, 404, 'api key not found for selected exchange context');
+    }
+    if (error instanceof Error && error.message === 'WALLET_PREVIEW_FETCH_FAILED') {
+      return sendError(res, 502, 'Unable to fetch exchange wallet balance preview');
+    }
+    return sendValidationError(res, error);
   }
 };

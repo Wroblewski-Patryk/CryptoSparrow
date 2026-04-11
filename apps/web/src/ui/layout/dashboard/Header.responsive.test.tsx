@@ -21,11 +21,13 @@ describe("Header responsive smoke", () => {
 
     expect(screen.getByRole("navigation", { name: "Dashboard navigation" })).toBeInTheDocument();
     expect(screen.getAllByText("Markets").length).toBeGreaterThan(0);
-    expect(screen.getByText("Exchanges")).toBeInTheDocument();
+    expect(screen.queryByText("Exchanges")).not.toBeInTheDocument();
     expect(screen.getAllByText("Bots").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Bots" })).toHaveAttribute("href", "/dashboard/bots");
     expect(screen.queryByRole("link", { name: "Create bot" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Connections" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Orders" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Positions" })).not.toBeInTheDocument();
     expect(screen.getByText("Analytics")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "false");
     const dashboardLinks = screen.getAllByRole("link", { name: "Dashboard" });
@@ -54,6 +56,8 @@ describe("Header responsive smoke", () => {
     const mobileNav = document.getElementById("dashboard-mobile-nav");
     expect(mobileNav).toBeInTheDocument();
     expect(mobileNav?.className).toContain("overflow-y-auto");
+    expect(screen.queryByRole("link", { name: "Orders" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Positions" })).not.toBeInTheDocument();
     const overlay = mobileNav?.parentElement;
     expect(overlay?.className ?? "").toContain("overflow-hidden");
     expect(overlay?.style.top).toBe("72px");
