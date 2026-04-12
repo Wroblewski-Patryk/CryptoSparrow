@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `QH-07 refactor(web-normalization): replace remaining local uppercase normalization variants in backtest/markets/strategies`
 - [ ] `QH-08 quality(repo): execute final lint/typecheck/guardrails sweep and publish evidence snapshot`
 ## NEXT
 - none
@@ -27,6 +26,8 @@ Operational queue for one-task execution runs.
   - 2026-04-12: Extracted localized `copy` dictionary from `BacktestRunDetails.tsx` into dedicated module `backtestRunDetails.copy.ts`, reducing component size below guardrails budget (97,801 bytes); validated with `pnpm --filter web run typecheck` + `pnpm --filter web test -- src/features/backtest/components/BacktestRunDetails.test.tsx src/features/backtest/hooks/useBacktestRunCoreData.test.tsx src/features/backtest/components/BacktestCreateForm.test.tsx` (PASS). Root `quality:guardrails` remains blocked by pending `QH-06` (`apps/api/src/modules/bots/bots.e2e.test.ts` over budget).
 - [x] `QH-06 test(api-bots): split oversized bots.e2e suite into focused scenario files`
   - 2026-04-12: Split large bots contract suite by introducing shared helpers (`bots.e2e.shared.ts`), extracted heavy fixture payloads (`bots.e2e.fixtures.ts`), and moved orchestration scenarios to dedicated file (`bots.orchestration.e2e.test.ts`), reducing `bots.e2e.test.ts` to 85,749 bytes (below 90,000-byte API budget). Validated with `pnpm --filter api run typecheck`, `pnpm --filter api test -- src/modules/bots/bots.e2e.test.ts src/modules/bots/bots.orchestration.e2e.test.ts src/modules/bots/bots.duplicate-guard.e2e.test.ts src/modules/bots/bots.subscription-entitlements.e2e.test.ts`, and `pnpm run quality:guardrails` (PASS).
+- [x] `QH-07 refactor(web-normalization): replace remaining local uppercase normalization variants in backtest/markets/strategies`
+  - 2026-04-12: Added shared `normalizeUppercaseToken` (`apps/web/src/lib/text.ts`) + `normalizeBaseCurrency` (`apps/web/src/lib/symbols.ts`) and replaced ad-hoc uppercase normalization in backtest/markets/strategies hotspots (`BacktestRunDetails.tsx`, `BacktestsRunsTable.tsx`, `timelineIndicatorOverlays.ts`, `MarketUniversesTable.tsx`, `StrategyFormSections/Indicators.tsx`, `indicatorPresentation.ts`). Validated with `pnpm --filter web run typecheck`, `pnpm --filter web test -- src/features/backtest/components/BacktestRunDetails.test.tsx src/features/backtest/components/BacktestCreateForm.test.tsx src/features/strategies/components/StrategyFormSections/Indicators.test.tsx`, and `pnpm run quality:guardrails` (PASS).
 - [x] `LBT-15 qa(evidence): execute local + VPS confidence pack and attach artifacts`
   - 2026-04-11: Executed fresh local confidence pack (`api` takeover/runtime tests + `api` typecheck + `web` dashboard regression + `web` production build) and attached artifact/report (`docs/operations/_artifacts-live-takeover-confidence-2026-04-11T14-48-55-096Z.json`, `docs/operations/live-takeover-confidence-pack-2026-04-11.md`). Local status PASS; strict VPS gate explicitly marked FAIL due protected ops `403` on public path and `takeover-status` route `404` on production target.
 - [x] `LBT-14 ops(runbook): publish local+VPS takeover verification checklist with strict smoke gates`

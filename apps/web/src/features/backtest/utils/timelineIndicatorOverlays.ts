@@ -1,4 +1,5 @@
 import { BacktestTimelineIndicatorSeries } from "../types/backtest.type";
+import { normalizeUppercaseToken } from "@/lib/text";
 
 type OscillatorOverlayPanel = {
   key: string;
@@ -33,11 +34,11 @@ const isBooleanPatternPoints = (series: BacktestTimelineIndicatorSeries): boolea
 };
 
 export const isPatternSeries = (series: BacktestTimelineIndicatorSeries): boolean => {
-  return patternNames.has(series.name.trim().toUpperCase()) && isBooleanPatternPoints(series);
+  return patternNames.has(normalizeUppercaseToken(series.name)) && isBooleanPatternPoints(series);
 };
 
 const resolveOscillatorOverlayGroupKey = (series: BacktestTimelineIndicatorSeries): string => {
-  const key = series.key.toUpperCase();
+  const key = normalizeUppercaseToken(series.key);
   if (/_LINE_|_SIGNAL_|_HISTOGRAM_/.test(key)) return key.replace(/_(LINE|SIGNAL|HISTOGRAM)_/, "_OVERLAY_");
   if (/_K_|_D_/.test(key)) return key.replace(/_(K|D)_/, "_OVERLAY_");
   if (/_ADX_|_DI_PLUS_|_DI_MINUS_/.test(key)) return key.replace(/_(ADX|DI_PLUS|DI_MINUS)_/, "_OVERLAY_");
@@ -86,7 +87,7 @@ export const splitTimelineIndicatorSeriesForRendering = (
 export const getPatternMarkerBias = (
   name: string,
 ): "bullish" | "bearish" | "neutral" => {
-  const normalized = name.trim().toUpperCase();
+  const normalized = normalizeUppercaseToken(name);
   if (normalized === "BULLISH_ENGULFING" || normalized === "HAMMER" || normalized === "MORNING_STAR") {
     return "bullish";
   }

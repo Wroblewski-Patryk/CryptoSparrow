@@ -1,3 +1,5 @@
+import { normalizeUppercaseToken } from "@/lib/text";
+
 const indicatorLabels: Record<string, { en: string; pl: string }> = {
   EMA: { en: "EMA(Exponential Moving Average)", pl: "EMA(wykladnicza srednia kroczaca)" },
   SMA: { en: "SMA(Simple Moving Average)", pl: "SMA(prosta srednia kroczaca)" },
@@ -55,14 +57,14 @@ const toStartCase = (value: string) =>
     .split(/\s+/)
     .filter(Boolean)
     .map((token) => {
-      const upper = token.toUpperCase();
+      const upper = normalizeUppercaseToken(token);
       if (acronyms.has(upper)) return upper;
       return `${token[0]?.toUpperCase() ?? ""}${token.slice(1).toLowerCase()}`;
     })
     .join(" ");
 
 export const getIndicatorDisplayName = (name: string, locale: "en" | "pl"): string => {
-  const normalized = name.trim().toUpperCase();
+  const normalized = normalizeUppercaseToken(name);
   const direct = indicatorLabels[normalized];
   if (direct) return direct[locale];
   return toStartCase(name);

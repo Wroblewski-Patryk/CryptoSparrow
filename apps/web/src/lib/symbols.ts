@@ -1,4 +1,8 @@
-export const normalizeSymbol = (value: string | null | undefined) => (value ?? "").trim().toUpperCase();
+import { normalizeUppercaseToken } from './text';
+
+export const normalizeSymbol = (value: string | null | undefined) => normalizeUppercaseToken(value);
+
+export const normalizeBaseCurrency = (value: string | null | undefined) => normalizeUppercaseToken(value);
 
 export const normalizeSymbolsUnique = (symbols: string[]) =>
   [...new Set(symbols.map(normalizeSymbol).filter(Boolean))];

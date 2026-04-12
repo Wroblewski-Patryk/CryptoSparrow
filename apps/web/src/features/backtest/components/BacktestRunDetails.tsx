@@ -18,6 +18,7 @@ import { useBacktestRunCoreData } from '../hooks/useBacktestRunCoreData';
 import BacktestRunHeaderSection from './BacktestRunHeaderSection';
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
 import { getBacktestRunDetailsCopy } from './backtestRunDetails.copy';
+import { normalizeSymbol } from '@/lib/symbols';
 
 const pnlClass = (value: number | null) => {
   if (value == null) return '';
@@ -204,7 +205,7 @@ const extractStrategyIndicatorMeta = (strategy: StrategyDto | null): StrategyInd
       params?: Record<string, unknown>;
       value?: unknown;
     };
-    const rawName = typeof obj.name === 'string' ? obj.name.trim().toUpperCase() : '';
+    const rawName = typeof obj.name === 'string' ? normalizeSymbol(obj.name) : '';
     if (!rawName) return;
 
     if (rawName.includes('EMA') && obj.params) {
@@ -1239,7 +1240,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
   const configuredRunSymbols = useMemo(() => {
     const symbols = ((run?.seedConfig as { symbols?: unknown } | null)?.symbols ?? null) as string[] | null;
     if (!Array.isArray(symbols)) return [];
-    return [...new Set(symbols.map((symbol) => symbol.trim().toUpperCase()).filter(Boolean))].sort((a, b) =>
+    return [...new Set(symbols.map((symbol) => normalizeSymbol(symbol)).filter(Boolean))].sort((a, b) =>
       a.localeCompare(b),
     );
   }, [run?.seedConfig]);
@@ -1326,7 +1327,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
     const map = new Map<string, { status: 'PROCESSED' | 'FAILED'; error: string | null }>();
     for (const item of summaryMetrics?.parityDiagnostics ?? []) {
       if (!item?.symbol || !item?.status) continue;
-      map.set(item.symbol.toUpperCase(), {
+      map.set(normalizeSymbol(item.symbol), {
         status: item.status,
         error: item.error ?? null,
       });
@@ -1579,7 +1580,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
       for (const stats of symbolStats) {
         if (cancelled) return;
         const symbol = stats.symbol;
-        const parity = parityDiagnosticsBySymbol.get(symbol.toUpperCase());
+        const parity = parityDiagnosticsBySymbol.get(normalizeSymbol(symbol));
         if (parity?.status === 'FAILED') {
           setTimelines((prev) => ({
             ...prev,
@@ -1992,7 +1993,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                       const timelineMaxPrice = candlePrices.length > 0 ? Math.max(...candlePrices) : null;
                       const timelineWindowStart = timelineCandles.length > 0 ? timelineCandles[0].openTime : null;
                       const timelineWindowEnd = timelineCandles.length > 0 ? timelineCandles[timelineCandles.length - 1].closeTime : null;
-                      const parity = parityDiagnosticsBySymbol.get(stats.symbol.toUpperCase());
+                      const parity = parityDiagnosticsBySymbol.get(normalizeSymbol(stats.symbol));
                       const parityFailed = Boolean(parity && parity.status !== 'PROCESSED');
                       return (
                         <>

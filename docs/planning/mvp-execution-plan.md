@@ -1443,9 +1443,10 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `QH-04 refactor(api-normalization): centralize symbol/baseCurrency normalization in bots/backtests hot paths`
 - [x] `QH-05 refactor(web-backtest): split oversized BacktestRunDetails into modular units under guardrails budget`
 - [x] `QH-06 test(api-bots): split oversized bots.e2e suite into focused scenario files`
-- [ ] `QH-07 refactor(web-normalization): replace remaining local uppercase normalization variants in backtest/markets/strategies`
+- [x] `QH-07 refactor(web-normalization): replace remaining local uppercase normalization variants in backtest/markets/strategies`
 - [ ] `QH-08 quality(repo): execute final lint/typecheck/guardrails sweep and publish evidence snapshot`
 
 ### Progress Log (Repo Quality Hardening)
 - 2026-04-12: Completed `QH-05` by extracting locale copy dictionary from `BacktestRunDetails.tsx` into `backtestRunDetails.copy.ts`, reducing component size to 97,801 bytes (below 105,000-byte web budget); validated with `pnpm --filter web run typecheck` and targeted backtest test pack (`BacktestRunDetails`, `BacktestCreateForm`, `useBacktestRunCoreData`) PASS.
 - 2026-04-12: Completed `QH-06` by splitting oversized bots contract coverage into focused modules (`bots.e2e.test.ts`, `bots.orchestration.e2e.test.ts`) with shared setup helper (`bots.e2e.shared.ts`) and extracted heavy fixtures (`bots.e2e.fixtures.ts`); validated with `pnpm --filter api run typecheck`, focused bots e2e pack, and root `pnpm run quality:guardrails` (PASS).
+- 2026-04-12: Completed `QH-07` by introducing shared uppercase-token normalization (`apps/web/src/lib/text.ts`) and replacing local symbol/baseCurrency uppercase variants across backtest/markets/strategies surfaces; validated with web typecheck + targeted backtest/strategies test pack + root `pnpm run quality:guardrails` (PASS).

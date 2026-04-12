@@ -13,6 +13,8 @@ import { deleteMarketUniverse, fetchMarketCatalog } from '../services/markets.se
 import { MarketUniverse } from '../types/marketUniverse.type';
 import { uniqueSortedSymbols } from '../utils/marketUniverseHelpers';
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
+import { normalizeBaseCurrency } from '@/lib/symbols';
+import { normalizeUppercaseToken } from '@/lib/text';
 
 const MARKET_UNIVERSE_ACTIVE_BOT_DELETE_ERROR =
   'market universe is used by active bot and cannot be deleted';
@@ -42,6 +44,9 @@ const resolveMinVolumeRules = (row: MarketUniverse) => {
 
   return { enabled, min };
 };
+
+const buildCatalogKey = (row: MarketUniverse) =>
+  `${normalizeUppercaseToken(row.exchange ?? 'BINANCE')}|${row.marketType}|${normalizeBaseCurrency(row.baseCurrency)}`;
 
 export default function MarketUniversesTable({ rows, onDeleted }: MarketUniversesTableProps) {
   const { locale } = useI18n();
@@ -130,12 +135,12 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
 
       const catalogByKey = new Map<string, Awaited<ReturnType<typeof fetchMarketCatalog>>>();
       for (const row of rows) {
-        const key = `${row.exchange ?? 'BINANCE'}|${row.marketType}|${row.baseCurrency}`;
+        const key = buildCatalogKey(row);
         if (!catalogByKey.has(key)) {
           const catalog = await fetchMarketCatalog({
             exchange: row.exchange ?? 'BINANCE',
             marketType: row.marketType,
-            baseCurrency: row.baseCurrency,
+            baseCurrency: normalizeBaseCurrency(row.baseCurrency),
           });
           catalogByKey.set(key, catalog);
         }
@@ -145,7 +150,7 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
 
       const nextMap: Record<string, ResolvedTickers> = {};
       for (const row of rows) {
-        const key = `${row.exchange ?? 'BINANCE'}|${row.marketType}|${row.baseCurrency}`;
+        const key = buildCatalogKey(row);
         const catalog = catalogByKey.get(key);
         const rules = resolveMinVolumeRules(row);
         const filteredByVolume = (catalog?.markets ?? []).filter((market) =>
@@ -279,12 +284,12 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
         getRowId={(row) => row.id}
         filterPlaceholder={copy.filterPlaceholder}
         filterFn={(row, query) => {
-          const normalized = query.trim().toUpperCase();
+          const normalized = normalizeUppercaseToken(query);
           return (
-            row.name.toUpperCase().includes(normalized) ||
-            (row.exchange ?? 'BINANCE').toUpperCase().includes(normalized) ||
-            row.baseCurrency.toUpperCase().includes(normalized) ||
-            row.marketType.toUpperCase().includes(normalized)
+            normalizeUppercaseToken(row.name).includes(normalized) ||
+            normalizeUppercaseToken(row.exchange ?? 'BINANCE').includes(normalized) ||
+            normalizeBaseCurrency(row.baseCurrency).includes(normalized) ||
+            normalizeUppercaseToken(row.marketType).includes(normalized)
           );
         }}
         emptyText={copy.empty}

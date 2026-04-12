@@ -10,6 +10,7 @@ import {
   sortIndicatorGroups,
 } from "../../utils/indicatorTaxonomy";
 import { getIndicatorDisplayName, getIndicatorParamLabel } from "../../utils/indicatorPresentation";
+import { normalizeUppercaseToken } from "@/lib/text";
 
 const decimalInputProps = numericInputProps(strategyNumericContracts.decimal2);
 const comparatorConditions: StrategyConditionOperator[] = [
@@ -51,7 +52,7 @@ const resolveConditionOptions = (
   indicatorType: string | undefined,
 ): StrategyConditionOperator[] => {
   const normalizedType = (indicatorType ?? "").trim().toLowerCase();
-  const normalizedName = indicatorName.trim().toUpperCase();
+  const normalizedName = normalizeUppercaseToken(indicatorName);
 
   if (normalizedType === "pattern" || normalizedName.includes("ENGULFING") || normalizedName.includes("STAR") || normalizedName.includes("HAMMER") || normalizedName.includes("DOJI") || normalizedName.includes("INSIDE_BAR") || normalizedName.includes("OUTSIDE_BAR")) {
     return comparatorConditions;

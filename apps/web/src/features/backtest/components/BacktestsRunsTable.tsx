@@ -11,6 +11,7 @@ import { BacktestRun, BacktestStatus } from '../types/backtest.type';
 import { I18nContext } from '../../../i18n/I18nProvider';
 import { deleteBacktestRun } from '../services/backtests.service';
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
+import { normalizeUppercaseToken } from '@/lib/text';
 
 type BacktestsRunsTableProps = {
   rows: BacktestRun[];
@@ -160,12 +161,12 @@ export default function BacktestsRunsTable({ rows, onDeleted }: BacktestsRunsTab
         getRowId={(row) => row.id}
         filterPlaceholder={copy.filterPlaceholder}
         filterFn={(row, query) => {
-          const normalized = query.trim().toUpperCase();
+          const normalized = normalizeUppercaseToken(query);
           return (
-            row.name.toUpperCase().includes(normalized) ||
-            row.symbol.toUpperCase().includes(normalized) ||
-            row.timeframe.toUpperCase().includes(normalized) ||
-            row.status.toUpperCase().includes(normalized)
+            normalizeUppercaseToken(row.name).includes(normalized) ||
+            normalizeUppercaseToken(row.symbol).includes(normalized) ||
+            normalizeUppercaseToken(row.timeframe).includes(normalized) ||
+            normalizeUppercaseToken(row.status).includes(normalized)
           );
         }}
         emptyText={copy.emptyText}
