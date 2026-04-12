@@ -13,10 +13,10 @@ Status legend:
 
 | Layer | Module | Source Path | Target Deep-Dive File | Status | Planned Task |
 |---|---|---|---|---|---|
-| api | admin | `apps/api/src/modules/admin` | `docs/modules/api-admin.md` | Planned | DCP-04 |
-| api | auth | `apps/api/src/modules/auth` | `docs/modules/api-auth.md` | Planned | DCP-04 |
-| api | profile | `apps/api/src/modules/profile` | `docs/modules/api-profile.md` | Planned | DCP-04 |
-| api | users | `apps/api/src/modules/users` | `docs/modules/api-users.md` | Planned | DCP-04 |
+| api | admin | `apps/api/src/modules/admin` | `docs/modules/api-admin.md` | Published | DCP-04 |
+| api | auth | `apps/api/src/modules/auth` | `docs/modules/api-auth.md` | Published | DCP-04 |
+| api | profile | `apps/api/src/modules/profile` | `docs/modules/api-profile.md` | Published | DCP-04 |
+| api | users | `apps/api/src/modules/users` | `docs/modules/api-users.md` | Published | DCP-04 |
 | api | engine | `apps/api/src/modules/engine` | `docs/modules/api-engine.md` | Planned | DCP-05 |
 | api | exchange | `apps/api/src/modules/exchange` | `docs/modules/api-exchange.md` | Planned | DCP-05 |
 | api | market-data | `apps/api/src/modules/market-data` | `docs/modules/api-market-data.md` | Planned | DCP-05 |
