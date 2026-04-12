@@ -72,7 +72,11 @@ export default function ProfileForm() {
     setName(user?.name || "");
     setEmail(user?.email || "");
     setAvatarUrl(user?.avatarUrl || "");
-  }, [user]);
+    const preferredTimeZone = user?.uiPreferences?.timeZonePreference;
+    if (preferredTimeZone) {
+      setTimeZonePreference(preferredTimeZone);
+    }
+  }, [setTimeZonePreference, user]);
 
   const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -98,6 +102,9 @@ export default function ProfileForm() {
       await updateUser({
         name,
         avatarUrl,
+        uiPreferences: {
+          timeZonePreference,
+        },
       });
       toast.success(copy.profileSaved);
     } catch {

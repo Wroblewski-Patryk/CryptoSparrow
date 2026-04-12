@@ -1451,3 +1451,13 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-12: Completed `QH-06` by splitting oversized bots contract coverage into focused modules (`bots.e2e.test.ts`, `bots.orchestration.e2e.test.ts`) with shared setup helper (`bots.e2e.shared.ts`) and extracted heavy fixtures (`bots.e2e.fixtures.ts`); validated with `pnpm --filter api run typecheck`, focused bots e2e pack, and root `pnpm run quality:guardrails` (PASS).
 - 2026-04-12: Completed `QH-07` by introducing shared uppercase-token normalization (`apps/web/src/lib/text.ts`) and replacing local symbol/baseCurrency uppercase variants across backtest/markets/strategies surfaces; validated with web typecheck + targeted backtest/strategies test pack + root `pnpm run quality:guardrails` (PASS).
 - 2026-04-12: Completed `QH-08` with final repo sweep (`pnpm run lint`, API+web typecheck, root guardrails) and published artifact `docs/operations/repo-quality-hardening-sweep-2026-04-12T02-24-34.md` confirming all quality gates PASS.
+
+## Next Quality & UX Wave (2026-04-12)
+- [x] `NX-01 feat(profile-timezone): persist user timezone preference in profile basic settings and validate on API boundary`
+- [ ] `NX-02 ux(wallet-form): redesign create/edit wallet form mode flow (LIVE/PAPER switch + deterministic conditional fields)`
+- [ ] `NX-03 feat(wallet-metadata): source baseCurrency/marketType options from exchange capabilities instead of free-text assumptions`
+- [ ] `NX-04 refactor(forms-core): unify shared form normalization/error wiring across wallets/markets/backtests`
+- [ ] `NX-05 hardening(web-runtime): add reusable async-state/retry helpers for profile+wallet critical flows`
+
+### Progress Log (Next Quality & UX Wave)
+- 2026-04-12: Completed `NX-01` by extending profile basic API validation contract to support `uiPreferences.timeZonePreference` (`auto` or valid IANA timezone), persisting this preference through profile update flow, and wiring profile form save to store timezone in user account settings; validated with API/web typecheck and profile/i18n regression tests.

@@ -5,6 +5,7 @@ export type User = {
   avatarUrl?: string;
   uiPreferences?: {
     tableColumnVisibility?: Record<string, Record<string, boolean>>;
+    timeZonePreference?: string;
   };
   createdAt: Date;
   updatedAt: Date;

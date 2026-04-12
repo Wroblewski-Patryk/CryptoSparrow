@@ -81,12 +81,13 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     );
   }, [timeZonePreference]);
 
-  const setLocale = (next: Locale) => {
+  const setLocale = useCallback((next: Locale) => {
     setLocaleState(next);
-  };
-  const setTimeZonePreference = (next: string) => {
+  }, []);
+
+  const setTimeZonePreference = useCallback((next: string) => {
     setTimeZonePreferenceState(normalizeTimeZonePreference(next));
-  };
+  }, []);
 
   const t = useCallback((key: TranslationKey) => {
     const localized = resolveKey(translations[locale], key);
@@ -104,7 +105,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       setTimeZonePreference,
       t,
     }),
-    [locale, t, timeZone, timeZonePreference]
+    [locale, setLocale, setTimeZonePreference, t, timeZone, timeZonePreference]
   );
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;

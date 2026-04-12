@@ -7,7 +7,10 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- none
+- [ ] `NX-02 ux(wallet-form): redesign create/edit wallet form mode flow (LIVE/PAPER switch + deterministic conditional fields)`
+- [ ] `NX-03 feat(wallet-metadata): source baseCurrency/marketType options from exchange capabilities instead of free-text assumptions`
+- [ ] `NX-04 refactor(forms-core): unify shared form normalization/error wiring across wallets/markets/backtests`
+- [ ] `NX-05 hardening(web-runtime): add reusable async-state/retry helpers for profile+wallet critical flows`
 ## NEXT
 - none
 ## BLOCKED
@@ -30,6 +33,8 @@ Operational queue for one-task execution runs.
   - 2026-04-12: Added shared `normalizeUppercaseToken` (`apps/web/src/lib/text.ts`) + `normalizeBaseCurrency` (`apps/web/src/lib/symbols.ts`) and replaced ad-hoc uppercase normalization in backtest/markets/strategies hotspots (`BacktestRunDetails.tsx`, `BacktestsRunsTable.tsx`, `timelineIndicatorOverlays.ts`, `MarketUniversesTable.tsx`, `StrategyFormSections/Indicators.tsx`, `indicatorPresentation.ts`). Validated with `pnpm --filter web run typecheck`, `pnpm --filter web test -- src/features/backtest/components/BacktestRunDetails.test.tsx src/features/backtest/components/BacktestCreateForm.test.tsx src/features/strategies/components/StrategyFormSections/Indicators.test.tsx`, and `pnpm run quality:guardrails` (PASS).
 - [x] `QH-08 quality(repo): execute final lint/typecheck/guardrails sweep and publish evidence snapshot`
   - 2026-04-12: Executed final quality sweep (`pnpm run lint`, `pnpm --filter api run typecheck`, `pnpm --filter web run typecheck`, `pnpm run quality:guardrails`) with full PASS and published evidence snapshot `docs/operations/repo-quality-hardening-sweep-2026-04-12T02-24-34.md`.
+- [x] `NX-01 feat(profile-timezone): persist user timezone preference in profile basic settings and validate on API boundary`
+  - 2026-04-12: Extended profile basic contract with validated `uiPreferences.timeZonePreference` (IANA or `auto`) and wired profile form save flow to persist this preference on user profile update (`apps/api/modules/profile/basic/*`, `apps/web/features/profile/components/BasicForm.tsx`); validated with `pnpm --filter api run typecheck`, `pnpm --filter api test -- src/modules/profile/basic/basic.e2e.test.ts`, `pnpm --filter web run typecheck`, and `pnpm --filter web test -- src/i18n/I18nProvider.test.tsx` (PASS).
 - [x] `LBT-15 qa(evidence): execute local + VPS confidence pack and attach artifacts`
   - 2026-04-11: Executed fresh local confidence pack (`api` takeover/runtime tests + `api` typecheck + `web` dashboard regression + `web` production build) and attached artifact/report (`docs/operations/_artifacts-live-takeover-confidence-2026-04-11T14-48-55-096Z.json`, `docs/operations/live-takeover-confidence-pack-2026-04-11.md`). Local status PASS; strict VPS gate explicitly marked FAIL due protected ops `403` on public path and `takeover-status` route `404` on production target.
 - [x] `LBT-14 ops(runbook): publish local+VPS takeover verification checklist with strict smoke gates`

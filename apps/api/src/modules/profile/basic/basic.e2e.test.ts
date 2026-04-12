@@ -47,6 +47,35 @@ describe('Profile basic contract', () => {
     const deleteRes = await agent.delete('/dashboard/profile/basic/some-id');
     expect(deleteRes.status).toBe(404);
   });
+
+  it('persists valid uiPreferences.timeZonePreference in profile basic update', async () => {
+    const agent = await registerAndLogin('profile-timezone-valid@example.com');
+
+    const updateRes = await agent.patch('/dashboard/profile/basic').send({
+      uiPreferences: {
+        timeZonePreference: 'Europe/Warsaw',
+      },
+    });
+
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.uiPreferences?.timeZonePreference).toBe('Europe/Warsaw');
+
+    const getRes = await agent.get('/dashboard/profile/basic');
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.uiPreferences?.timeZonePreference).toBe('Europe/Warsaw');
+  });
+
+  it('rejects invalid uiPreferences.timeZonePreference in profile basic update', async () => {
+    const agent = await registerAndLogin('profile-timezone-invalid@example.com');
+
+    const updateRes = await agent.patch('/dashboard/profile/basic').send({
+      uiPreferences: {
+        timeZonePreference: 'Invalid/Timezone',
+      },
+    });
+
+    expect(updateRes.status).toBe(400);
+  });
 });
 
 
