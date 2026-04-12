@@ -1468,7 +1468,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 
 ## Documentation Knowledge Hardening Wave (2026-04-12)
 - [x] `DCP-01 docs(governance): lock documentation parity policy and mandatory update triggers`
-- [ ] `DCP-02 docs(template): publish canonical module deep-dive template + authoring checklist`
+- [x] `DCP-02 docs(template): publish canonical module deep-dive template + authoring checklist`
 - [ ] `DCP-03 docs(index): create docs/modules index table mapping every active module to doc status`
 - [ ] `DCP-04 docs(api-identity): author deep-dives for admin/auth/profile/users modules`
 - [ ] `DCP-05 docs(api-trading-core): author deep-dives for engine/exchange/market-data/market-stream`
@@ -1483,6 +1483,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 ### Progress Log (Documentation Knowledge Hardening)
 - 2026-04-12: Initialized wave plan and canonical references in `docs/planning/documentation-knowledge-hardening-plan-2026-04-12.md` after code-vs-docs audit; execution queue `DCP-01..DCP-12` added for tiny-commit delivery.
 - 2026-04-12: Completed `DCP-01` by locking mandatory documentation parity trigger rules in `docs/governance/working-agreements.md` for backend/frontend module inventories, app route inventory, canonical docs index updates, and queue-plan synchronization.
+- 2026-04-12: Completed `DCP-02` by publishing canonical deep-dive template and mandatory checklist in `docs/modules/module-deep-dive-template.md`, plus discoverability links in modules/docs indexes.
 
 ## Engineering Optimization Wave (2026-04-12)
 - [ ] `OPT-01 error-taxonomy(api): replace string-code Error.message flow with typed domain errors + central mapper`

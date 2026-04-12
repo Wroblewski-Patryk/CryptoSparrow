@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `DCP-02 docs(template): publish canonical module deep-dive template + authoring checklist`
 - [ ] `DCP-03 docs(index): create docs/modules index table mapping every active module to doc status`
 ## NEXT
 - [ ] `DCP-04 docs(api-identity): author deep-dives for admin/auth/profile/users modules`
@@ -24,6 +23,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `DCP-02 docs(template): publish canonical module deep-dive template + authoring checklist`
+  - 2026-04-12: Published canonical module deep-dive template with mandatory authoring checklist in `docs/modules/module-deep-dive-template.md`, then linked it from `docs/modules/README.md` and `docs/README.md`.
 - [x] `DCP-01 docs(governance): lock documentation parity policy and mandatory update triggers`
   - 2026-04-12: Added mandatory documentation parity trigger rules to `docs/governance/working-agreements.md` (module inventory, route inventory, canonical docs index, and planning queue sync requirements) to enforce same-change doc updates.
 - [x] `NX-05 hardening(web-runtime): add reusable async-state/retry helpers for profile+wallet critical flows`
