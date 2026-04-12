@@ -1,6 +1,6 @@
 import { Exchange, PositionSide, Prisma } from '@prisma/client';
 import { getMarketCatalog } from '../markets/markets.service';
-import { normalizeSymbols } from '../../lib/symbols';
+import { normalizeSymbol, normalizeSymbols } from '../../lib/symbols';
 import { decideExecutionAction } from '../engine/sharedExecutionCore';
 import { evaluatePositionManagement } from '../engine/positionManagement.service';
 import { PositionManagementInput } from '../engine/positionManagement.types';
@@ -1110,11 +1110,12 @@ const resolveSymbolsForRun = async (userId: string, data: CreateBacktestRunDto):
   const include = universe.whitelist.length > 0
     ? universe.whitelist.filter((symbol) => availableSet.has(symbol))
     : availableByRules;
-  const blacklist = new Set(universe.blacklist);
+  const blacklist = new Set(normalizeSymbols(universe.blacklist));
 
   const resolved = normalizeSymbols(include).filter((symbol) => !blacklist.has(symbol));
-  if (resolved.length === 0 && data.symbol) {
-    resolved.push(data.symbol.trim().toUpperCase());
+  const fallbackSymbol = normalizeSymbol(data.symbol);
+  if (resolved.length === 0 && fallbackSymbol) {
+    resolved.push(fallbackSymbol);
   }
 
   return {
@@ -1230,14 +1231,14 @@ export const getRunTimeline = async (
 
   const seed = ((run.seedConfig ?? {}) as Record<string, unknown>) ?? {};
   const runSymbols = Array.isArray(seed.symbols)
-    ? normalizeSymbols((seed.symbols as string[]).map((item) => item.trim().toUpperCase()))
+    ? normalizeSymbols(seed.symbols as string[])
     : [];
   const marketType = (seed.marketType === 'SPOT' ? 'SPOT' : 'FUTURES') as MarketType;
   const maxCandles = typeof seed.maxCandles === 'number'
     ? clamp(Math.floor(seed.maxCandles), 100, 10_000)
     : computeAdaptiveMaxCandles(run.timeframe, 1, undefined);
 
-  const symbol = query.symbol.trim().toUpperCase();
+  const symbol = normalizeSymbol(query.symbol);
   if (runSymbols.length > 0 && !runSymbols.includes(symbol)) {
     return null;
   }

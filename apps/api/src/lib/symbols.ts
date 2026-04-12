@@ -1,5 +1,7 @@
+export const normalizeSymbol = (value: string | null | undefined) => (value ?? '').trim().toUpperCase();
+
 export const normalizeSymbols = (symbols: string[]) =>
-  [...new Set(symbols.map((item) => item.trim().toUpperCase()).filter(Boolean))].sort((a, b) =>
+  [...new Set(symbols.map((item) => normalizeSymbol(item)).filter(Boolean))].sort((a, b) =>
     a.localeCompare(b)
   );
 

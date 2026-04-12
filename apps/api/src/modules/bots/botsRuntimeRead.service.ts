@@ -6,6 +6,7 @@ import { resolveRuntimeReferenceBalance } from '../engine/runtimeCapitalContext.
 import { runtimeSignalLoop } from '../engine/runtimeSignalLoop.service';
 import { orchestrateRuntimeSignal } from '../engine/executionOrchestrator.service';
 import { getRuntimeTicker } from '../engine/runtimeTickerStore';
+import { normalizeSymbol } from '../../lib/symbols';
 import {
   CloseBotRuntimePositionDto,
   ListBotRuntimeSymbolStatsQueryDto,
@@ -128,7 +129,7 @@ export const listBotRuntimeSessionSymbolStats = async (
   const session = await getOwnedBotRuntimeSession(userId, botId, sessionId);
   if (!session) return null;
 
-  const normalizedSymbol = query.symbol?.trim().toUpperCase();
+  const normalizedSymbol = normalizeSymbol(query.symbol) || undefined;
   const windowEnd = resolveSessionWindowEnd(session);
 
   const {
@@ -469,14 +470,9 @@ export const listBotRuntimeSessionTrades = async (
       ? { botId, walletId: botContext.walletId }
       : { botId };
 
-  const normalizedSymbol = query.symbol?.trim().toUpperCase();
-  const normalizedSide = query.side?.trim().toUpperCase() as 'BUY' | 'SELL' | undefined;
-  const normalizedAction = query.action?.trim().toUpperCase() as
-    | 'OPEN'
-    | 'DCA'
-    | 'CLOSE'
-    | 'UNKNOWN'
-    | undefined;
+  const normalizedSymbol = normalizeSymbol(query.symbol) || undefined;
+  const normalizedSide = query.side;
+  const normalizedAction = query.action;
   const isLegacyLimitOnly =
     query.limit != null &&
     query.page == null &&
@@ -866,7 +862,7 @@ export const listBotRuntimeSessionPositions = async (
   if (!session) return null;
   const showDynamicStopColumns = await resolveBotAdvancedCloseMode(userId, botId);
 
-  const normalizedSymbol = query.symbol?.trim().toUpperCase();
+  const normalizedSymbol = normalizeSymbol(query.symbol) || undefined;
   const windowEnd = resolveSessionWindowEnd(session);
   const botContext = await prisma.bot.findFirst({
     where: { id: botId, userId },
