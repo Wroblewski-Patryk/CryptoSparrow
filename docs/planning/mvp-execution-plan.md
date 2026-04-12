@@ -1457,10 +1457,28 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `NX-02 ux(wallet-form): redesign create/edit wallet form mode flow (LIVE/PAPER switch + deterministic conditional fields)`
 - [x] `NX-03 feat(wallet-metadata): source baseCurrency/marketType options from exchange capabilities instead of free-text assumptions`
 - [x] `NX-04 refactor(forms-core): unify shared form normalization/error wiring across wallets/markets/backtests`
-- [ ] `NX-05 hardening(web-runtime): add reusable async-state/retry helpers for profile+wallet critical flows`
+- [x] `NX-05 hardening(web-runtime): add reusable async-state/retry helpers for profile+wallet critical flows`
 
 ### Progress Log (Next Quality & UX Wave)
 - 2026-04-12: Completed `NX-01` by extending profile basic API validation contract to support `uiPreferences.timeZonePreference` (`auto` or valid IANA timezone), persisting this preference through profile update flow, and wiring profile form save to store timezone in user account settings; validated with API/web typecheck and profile/i18n regression tests.
 - 2026-04-12: Completed `NX-02` by redesigning wallet create/edit mode UX to deterministic conditional rendering (dedicated PAPER/LIVE sections + explicit mode hints) and mode-switch cleanup of irrelevant LIVE fields, eliminating stale cross-mode leakage; validated with `pnpm --filter web test -- src/features/wallets/components/WalletCreateEditForm.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - 2026-04-12: Completed `NX-03` by introducing wallet metadata endpoint (`GET /dashboard/wallets/metadata`) backed by exchange capability market-type/base-currency definitions with market-catalog enrichment and fallback policy, then wiring wallet create/edit form to consume dynamic `marketType/baseCurrency` options from this contract; validated with API+web typecheck and focused API/web wallet tests (PASS).
 - 2026-04-12: Completed `NX-04` by introducing shared forms-core helper module (`apps/web/src/lib/forms.ts`) and migrating wallets/markets/backtests forms to unified normalization + error wiring primitives, reducing duplicated `trim/uppercase/error` variants while preserving behavior; validated with focused wallet/market/backtest component tests and web typecheck (PASS).
+- 2026-04-12: Completed `NX-05` by adding reusable async runtime helpers (`apps/web/src/lib/async.ts`) with retriable HTTP policy and shared pending-state wrapper, then applying them to profile and wallet critical operations (profile fetch/save + wallet load/metadata/preview/submit) to reduce transient-failure breakage; validated with async helper + wallet form tests and web typecheck (PASS).
+
+## Documentation Knowledge Hardening Wave (2026-04-12)
+- [ ] `DCP-01 docs(governance): lock documentation parity policy and mandatory update triggers`
+- [ ] `DCP-02 docs(template): publish canonical module deep-dive template + authoring checklist`
+- [ ] `DCP-03 docs(index): create docs/modules index table mapping every active module to doc status`
+- [ ] `DCP-04 docs(api-identity): author deep-dives for admin/auth/profile/users modules`
+- [ ] `DCP-05 docs(api-trading-core): author deep-dives for engine/exchange/market-data/market-stream`
+- [ ] `DCP-06 docs(api-trading-domain): author deep-dives for strategies/markets/bots/orders/positions/backtests`
+- [ ] `DCP-07 docs(api-support): author deep-dives for reports/subscriptions/wallets/icons/upload/pagination/isolation`
+- [ ] `DCP-08 docs(web-core): author deep-dives for dashboard-home/auth/profile/admin flows`
+- [ ] `DCP-09 docs(web-trading): author deep-dives for bots/backtest/strategies/markets/exchanges/orders/positions/wallets/reports/logs`
+- [ ] `DCP-10 docs(route-contract): publish canonical route-to-feature-to-api mapping with ownership and guardrails`
+- [ ] `DCP-11 tooling(docs-parity): add script to verify module+route inventories against canonical docs`
+- [ ] `DCP-12 qa(docs-evidence): run parity check, publish evidence artifact, and close documentation hardening wave`
+
+### Progress Log (Documentation Knowledge Hardening)
+- 2026-04-12: Initialized wave plan and canonical references in `docs/planning/documentation-knowledge-hardening-plan-2026-04-12.md` after code-vs-docs audit; execution queue `DCP-01..DCP-12` added for tiny-commit delivery.

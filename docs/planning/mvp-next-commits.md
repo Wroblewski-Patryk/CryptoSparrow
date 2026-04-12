@@ -7,13 +7,25 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `NX-05 hardening(web-runtime): add reusable async-state/retry helpers for profile+wallet critical flows`
+- [ ] `DCP-01 docs(governance): lock documentation parity policy and mandatory update triggers`
+- [ ] `DCP-02 docs(template): publish canonical module deep-dive template + authoring checklist`
+- [ ] `DCP-03 docs(index): create docs/modules index table mapping every active module to doc status`
 ## NEXT
-- none
+- [ ] `DCP-04 docs(api-identity): author deep-dives for admin/auth/profile/users modules`
+- [ ] `DCP-05 docs(api-trading-core): author deep-dives for engine/exchange/market-data/market-stream`
+- [ ] `DCP-06 docs(api-trading-domain): author deep-dives for strategies/markets/bots/orders/positions/backtests`
+- [ ] `DCP-07 docs(api-support): author deep-dives for reports/subscriptions/wallets/icons/upload/pagination/isolation`
+- [ ] `DCP-08 docs(web-core): author deep-dives for dashboard-home/auth/profile/admin flows`
+- [ ] `DCP-09 docs(web-trading): author deep-dives for bots/backtest/strategies/markets/exchanges/orders/positions/wallets/reports/logs`
+- [ ] `DCP-10 docs(route-contract): publish canonical route-to-feature-to-api mapping with ownership and guardrails`
+- [ ] `DCP-11 tooling(docs-parity): add script to verify module+route inventories against canonical docs`
+- [ ] `DCP-12 qa(docs-evidence): run parity check, publish evidence artifact, and close documentation hardening wave`
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `NX-05 hardening(web-runtime): add reusable async-state/retry helpers for profile+wallet critical flows`
+  - 2026-04-12: Added shared async helpers (`apps/web/src/lib/async.ts`) for retry policy + pending-state wrapper and migrated profile/wallet critical flows to retry-aware execution paths (`useUser`, wallet form load/metadata/preview/submit); validated with `pnpm --filter web test -- src/lib/async.test.ts src/features/wallets/components/WalletCreateEditForm.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - [x] `NX-04 refactor(forms-core): unify shared form normalization/error wiring across wallets/markets/backtests`
   - 2026-04-12: Added shared web forms-core helper module (`apps/web/src/lib/forms.ts`) and migrated wallets/markets/backtests create-edit flows to common normalization (`normalizeFormText/normalizeFormBaseCurrency/normalizeFormSymbol`) and unified error mapping (`resolveFormErrorMessage`), reducing ad-hoc per-form variants; validated with `pnpm --filter web test -- src/features/wallets/components/WalletCreateEditForm.test.tsx src/features/markets/components/MarketUniverseForm.test.tsx src/features/backtest/components/BacktestCreateForm.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - [x] `NX-03 feat(wallet-metadata): source baseCurrency/marketType options from exchange capabilities instead of free-text assumptions`

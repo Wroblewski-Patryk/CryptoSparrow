@@ -17,6 +17,7 @@ import {
   normalizeFormText,
   resolveFormErrorMessage,
 } from '@/lib/forms';
+import { executeWithRetry, isRetriableHttpError, runAsyncWithState } from '@/lib/async';
 import { normalizeSymbol } from '@/lib/symbols';
 import { createWallet, fetchWalletMetadata, getWallet, previewWalletBalance, updateWallet } from '../services/wallets.service';
 import type {
@@ -255,24 +256,33 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
   );
 
   const loadData = useCallback(async () => {
-    setLoading(true);
     setError(null);
     try {
-      const keys = await fetchApiKeys().catch(() => [] as ApiKey[]);
-      setApiKeys(keys);
-      if (isEditMode && editId) {
-        const wallet = await getWallet(editId);
-        setForm(mapWalletToForm(wallet));
-      } else {
-        setForm(buildDefaultForm());
-      }
-      setPreview(null);
-      setPreviewError(null);
-      setShowValidation(false);
+      await runAsyncWithState(setLoading, async () => {
+        const keys = await executeWithRetry(() => fetchApiKeys(), {
+          maxAttempts: 2,
+          retryDelayMs: 250,
+          shouldRetry: isRetriableHttpError,
+        }).catch(() => [] as ApiKey[]);
+        setApiKeys(keys);
+
+        if (isEditMode && editId) {
+          const wallet = await executeWithRetry(() => getWallet(editId), {
+            maxAttempts: 2,
+            retryDelayMs: 250,
+            shouldRetry: isRetriableHttpError,
+          });
+          setForm(mapWalletToForm(wallet));
+        } else {
+          setForm(buildDefaultForm());
+        }
+
+        setPreview(null);
+        setPreviewError(null);
+        setShowValidation(false);
+      });
     } catch (err) {
       setError(resolveFormErrorMessage(err, copy.loadError));
-    } finally {
-      setLoading(false);
     }
   }, [copy.loadError, editId, isEditMode]);
 
@@ -287,9 +297,17 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
       setWalletMetadataLoading(true);
       setWalletMetadataError(null);
       try {
-        const metadata = await fetchWalletMetadata({
-          exchange: form.exchange,
-        });
+        const metadata = await executeWithRetry(
+          () =>
+            fetchWalletMetadata({
+              exchange: form.exchange,
+            }),
+          {
+            maxAttempts: 2,
+            retryDelayMs: 250,
+            shouldRetry: isRetriableHttpError,
+          }
+        );
         if (cancelled) return;
         const nextMarketTypes =
           metadata.marketTypes.length > 0 ? metadata.marketTypes : DEFAULT_MARKET_TYPE_OPTIONS;
@@ -449,21 +467,28 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
 
   const handlePreviewBalance = useCallback(async () => {
     if (form.mode !== 'LIVE' || !form.apiKeyId || !canSaveMode) return;
-    setPreviewLoading(true);
     setPreviewError(null);
     try {
-      const data = await previewWalletBalance({
-        exchange: form.exchange,
-        marketType: form.marketType,
-        baseCurrency: normalizeFormBaseCurrency(form.baseCurrency),
-        apiKeyId: form.apiKeyId,
+      await runAsyncWithState(setPreviewLoading, async () => {
+        const data = await executeWithRetry(
+          () =>
+            previewWalletBalance({
+              exchange: form.exchange,
+              marketType: form.marketType,
+              baseCurrency: normalizeFormBaseCurrency(form.baseCurrency),
+              apiKeyId: form.apiKeyId,
+            }),
+          {
+            maxAttempts: 2,
+            retryDelayMs: 250,
+            shouldRetry: isRetriableHttpError,
+          }
+        );
+        setPreview(data);
       });
-      setPreview(data);
     } catch (err) {
       setPreview(null);
       setPreviewError(resolveFormErrorMessage(err, copy.saveFailed));
-    } finally {
-      setPreviewLoading(false);
     }
   }, [
     canSaveMode,
@@ -501,24 +526,31 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
       return;
     }
 
-    setSubmitting(true);
     try {
-      const payload = toPayload(form);
-      if (isEditMode && editId) {
-        await updateWallet(editId, payload);
-        toast.success(copy.saved);
-        await loadData();
-      } else {
-        await createWallet(payload);
-        toast.success(copy.created);
-        router.replace('/dashboard/wallets/list');
-      }
+      await runAsyncWithState(setSubmitting, async () => {
+        const payload = toPayload(form);
+        if (isEditMode && editId) {
+          await executeWithRetry(() => updateWallet(editId, payload), {
+            maxAttempts: 2,
+            retryDelayMs: 250,
+            shouldRetry: isRetriableHttpError,
+          });
+          toast.success(copy.saved);
+          await loadData();
+        } else {
+          await executeWithRetry(() => createWallet(payload), {
+            maxAttempts: 2,
+            retryDelayMs: 250,
+            shouldRetry: isRetriableHttpError,
+          });
+          toast.success(copy.created);
+          router.replace('/dashboard/wallets/list');
+        }
+      });
     } catch (err) {
       toast.error(isEditMode ? copy.saveFailed : copy.createFailed, {
         description: resolveFormErrorMessage(err, isEditMode ? copy.saveFailed : copy.createFailed),
       });
-    } finally {
-      setSubmitting(false);
     }
   };
 

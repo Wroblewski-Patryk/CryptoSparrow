@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import api from "../../../lib/api";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { User } from "../types/user.type";
+import { executeWithRetry, isRetriableHttpError, runAsyncWithState } from "@/lib/async";
 
 export function useUser() {
   const { locale } = useI18n();
@@ -22,14 +23,20 @@ export function useUser() {
   const [loading, setLoading] = useState(false);
 
   const fetchUser = useCallback(async () => {
-    setLoading(true);
     try {
-      const res = await api.get<User>("/dashboard/profile/basic");
-      setUser(res.data);
+      await runAsyncWithState(setLoading, async () => {
+        const res = await executeWithRetry(
+          () => api.get<User>("/dashboard/profile/basic"),
+          {
+            maxAttempts: 2,
+            retryDelayMs: 250,
+            shouldRetry: isRetriableHttpError,
+          }
+        );
+        setUser(res.data);
+      });
     } catch {
       toast.error(copy.fetchFailed);
-    } finally {
-      setLoading(false);
     }
   }, [copy.fetchFailed]);
 
@@ -38,15 +45,21 @@ export function useUser() {
   }, [fetchUser]);
 
   const updateUser = async (data: Partial<User>) => {
-    setLoading(true);
     try {
-      const res = await api.patch<User>("/dashboard/profile/basic", data);
-      setUser(res.data);
+      await runAsyncWithState(setLoading, async () => {
+        const res = await executeWithRetry(
+          () => api.patch<User>("/dashboard/profile/basic", data),
+          {
+            maxAttempts: 2,
+            retryDelayMs: 250,
+            shouldRetry: isRetriableHttpError,
+          }
+        );
+        setUser(res.data);
+      });
     } catch (err) {
       toast.error(copy.saveFailed);
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 
