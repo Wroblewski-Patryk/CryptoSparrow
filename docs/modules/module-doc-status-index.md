@@ -27,14 +27,14 @@ Status legend:
 | api | orders | `apps/api/src/modules/orders` | `docs/modules/api-orders.md` | Published | DCP-06 |
 | api | positions | `apps/api/src/modules/positions` | `docs/modules/api-positions.md` | Published | DCP-06 |
 | api | backtests | `apps/api/src/modules/backtests` | `docs/modules/api-backtests.md` | Published | DCP-06 |
-| api | reports | `apps/api/src/modules/reports` | `docs/modules/api-reports.md` | Planned | DCP-07 |
-| api | subscriptions | `apps/api/src/modules/subscriptions` | `docs/modules/api-subscriptions.md` | Planned | DCP-07 |
-| api | wallets | `apps/api/src/modules/wallets` | `docs/modules/api-wallets.md` | Planned | DCP-07 |
-| api | icons | `apps/api/src/modules/icons` | `docs/modules/api-icons.md` | Planned | DCP-07 |
-| api | upload | `apps/api/src/modules/upload` | `docs/modules/api-upload.md` | Planned | DCP-07 |
-| api | pagination | `apps/api/src/modules/pagination` | `docs/modules/api-pagination.md` | Planned | DCP-07 |
-| api | isolation | `apps/api/src/modules/isolation` | `docs/modules/api-isolation.md` | Planned | DCP-07 |
-| api | logs | `apps/api/src/modules/logs` | `docs/modules/api-logs.md` | Planned | DCP-07 |
+| api | reports | `apps/api/src/modules/reports` | `docs/modules/api-reports.md` | Published | DCP-07 |
+| api | subscriptions | `apps/api/src/modules/subscriptions` | `docs/modules/api-subscriptions.md` | Published | DCP-07 |
+| api | wallets | `apps/api/src/modules/wallets` | `docs/modules/api-wallets.md` | Published | DCP-07 |
+| api | icons | `apps/api/src/modules/icons` | `docs/modules/api-icons.md` | Published | DCP-07 |
+| api | upload | `apps/api/src/modules/upload` | `docs/modules/api-upload.md` | Published | DCP-07 |
+| api | pagination | `apps/api/src/modules/pagination` | `docs/modules/api-pagination.md` | Published | DCP-07 |
+| api | isolation | `apps/api/src/modules/isolation` | `docs/modules/api-isolation.md` | Published | DCP-07 |
+| api | logs | `apps/api/src/modules/logs` | `docs/modules/api-logs.md` | Published | DCP-07 |
 
 ## Web Features (`apps/web/src/features/*`)
 
