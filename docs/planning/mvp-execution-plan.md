@@ -1482,3 +1482,16 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 
 ### Progress Log (Documentation Knowledge Hardening)
 - 2026-04-12: Initialized wave plan and canonical references in `docs/planning/documentation-knowledge-hardening-plan-2026-04-12.md` after code-vs-docs audit; execution queue `DCP-01..DCP-12` added for tiny-commit delivery.
+
+## Engineering Optimization Wave (2026-04-12)
+- [ ] `OPT-01 error-taxonomy(api): replace string-code Error.message flow with typed domain errors + central mapper`
+- [ ] `OPT-02 normalization(api): unify symbol/baseCurrency normalization primitives and remove local uppercase variants`
+- [ ] `OPT-03 async-errors(web): standardize async action + error mapping across page-level create/edit/list flows`
+- [ ] `OPT-04 runtime-ui-split(web): decompose HomeLiveWidgets + BotsManagement into smaller domain modules`
+- [ ] `OPT-05 contracts(shared): create shared exchange enum/capability contracts for API + Web`
+- [ ] `OPT-06 i18n(web): split monolithic translations into domain namespaces + remove remaining hardcoded copy`
+- [ ] `OPT-07 ux-guardrails(web): replace window.confirm/location.assign with app-level modal + navigation helpers`
+- [ ] `OPT-08 prefs-sync(web): cache/throttle profile preference sync (DataTable + account preferences)`
+
+### Progress Log (Engineering Optimization)
+- 2026-04-12: Completed repo-wide optimization standards audit and published actionable plan (`docs/planning/engineering-optimization-wave-2026-04-12.md`) plus tiny-commit execution queue (`docs/planning/engineering-optimization-next-commits-2026-04-12.md`) for follow-up implementation sessions.
