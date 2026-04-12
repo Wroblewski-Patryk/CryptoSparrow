@@ -26,15 +26,16 @@ This folder contains canonical project documentation grouped by domain.
 9. `architecture/legacy-cryptobot-positions-analysis.md`
 10. `modules/system-modules.md`
 11. `modules/module-deep-dive-template.md`
-12. `planning/mvp-execution-plan.md`
-13. `planning/mvp-next-commits.md`
-14. `planning/documentation-knowledge-hardening-plan-2026-04-12.md`
-15. `modules/documentation-coverage-audit-2026-04-12.md`
-16. `planning/architecture-monolith-remediation-plan-2026-04-09.md`
-17. `planning/v1-live-release-plan.md`
-18. `planning/full-commit-roadmap.md`
-19. `planning/repo-migration-plan.md`
-20. `planning/mobile-parity-contract.md`
+12. `modules/module-doc-status-index.md`
+13. `planning/mvp-execution-plan.md`
+14. `planning/mvp-next-commits.md`
+15. `planning/documentation-knowledge-hardening-plan-2026-04-12.md`
+16. `modules/documentation-coverage-audit-2026-04-12.md`
+17. `planning/architecture-monolith-remediation-plan-2026-04-09.md`
+18. `planning/v1-live-release-plan.md`
+19. `planning/full-commit-roadmap.md`
+20. `planning/repo-migration-plan.md`
+21. `planning/mobile-parity-contract.md`
 
 ## Governance and Source of Truth
 - Repository structure policy: `governance/repository-structure-policy.md`

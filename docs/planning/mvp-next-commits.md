@@ -7,11 +7,10 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `DCP-03 docs(index): create docs/modules index table mapping every active module to doc status`
-## NEXT
 - [ ] `DCP-04 docs(api-identity): author deep-dives for admin/auth/profile/users modules`
 - [ ] `DCP-05 docs(api-trading-core): author deep-dives for engine/exchange/market-data/market-stream`
 - [ ] `DCP-06 docs(api-trading-domain): author deep-dives for strategies/markets/bots/orders/positions/backtests`
+## NEXT
 - [ ] `DCP-07 docs(api-support): author deep-dives for reports/subscriptions/wallets/icons/upload/pagination/isolation`
 - [ ] `DCP-08 docs(web-core): author deep-dives for dashboard-home/auth/profile/admin flows`
 - [ ] `DCP-09 docs(web-trading): author deep-dives for bots/backtest/strategies/markets/exchanges/orders/positions/wallets/reports/logs`
@@ -23,6 +22,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `DCP-03 docs(index): create docs/modules index table mapping every active module to doc status`
+  - 2026-04-12: Added canonical module coverage index `docs/modules/module-doc-status-index.md` with API/Web inventory mapping, target deep-dive files, current status, and planned DCP task ownership; linked from modules/docs indexes.
 - [x] `DCP-02 docs(template): publish canonical module deep-dive template + authoring checklist`
   - 2026-04-12: Published canonical module deep-dive template with mandatory authoring checklist in `docs/modules/module-deep-dive-template.md`, then linked it from `docs/modules/README.md` and `docs/README.md`.
 - [x] `DCP-01 docs(governance): lock documentation parity policy and mandatory update triggers`
