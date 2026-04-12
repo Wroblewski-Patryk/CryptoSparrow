@@ -17,10 +17,10 @@ Status legend:
 | api | auth | `apps/api/src/modules/auth` | `docs/modules/api-auth.md` | Published | DCP-04 |
 | api | profile | `apps/api/src/modules/profile` | `docs/modules/api-profile.md` | Published | DCP-04 |
 | api | users | `apps/api/src/modules/users` | `docs/modules/api-users.md` | Published | DCP-04 |
-| api | engine | `apps/api/src/modules/engine` | `docs/modules/api-engine.md` | Planned | DCP-05 |
-| api | exchange | `apps/api/src/modules/exchange` | `docs/modules/api-exchange.md` | Planned | DCP-05 |
-| api | market-data | `apps/api/src/modules/market-data` | `docs/modules/api-market-data.md` | Planned | DCP-05 |
-| api | market-stream | `apps/api/src/modules/market-stream` | `docs/modules/api-market-stream.md` | Planned | DCP-05 |
+| api | engine | `apps/api/src/modules/engine` | `docs/modules/api-engine.md` | Published | DCP-05 |
+| api | exchange | `apps/api/src/modules/exchange` | `docs/modules/api-exchange.md` | Published | DCP-05 |
+| api | market-data | `apps/api/src/modules/market-data` | `docs/modules/api-market-data.md` | Published | DCP-05 |
+| api | market-stream | `apps/api/src/modules/market-stream` | `docs/modules/api-market-stream.md` | Published | DCP-05 |
 | api | strategies | `apps/api/src/modules/strategies` | `docs/modules/api-strategies.md` | Planned | DCP-06 |
 | api | markets | `apps/api/src/modules/markets` | `docs/modules/api-markets.md` | Planned | DCP-06 |
 | api | bots | `apps/api/src/modules/bots` | `docs/modules/api-bots.md` | Planned | DCP-06 |
