@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `DCP-01 docs(governance): lock documentation parity policy and mandatory update triggers`
 - [ ] `DCP-02 docs(template): publish canonical module deep-dive template + authoring checklist`
 - [ ] `DCP-03 docs(index): create docs/modules index table mapping every active module to doc status`
 ## NEXT
@@ -25,6 +24,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `DCP-01 docs(governance): lock documentation parity policy and mandatory update triggers`
+  - 2026-04-12: Added mandatory documentation parity trigger rules to `docs/governance/working-agreements.md` (module inventory, route inventory, canonical docs index, and planning queue sync requirements) to enforce same-change doc updates.
 - [x] `NX-05 hardening(web-runtime): add reusable async-state/retry helpers for profile+wallet critical flows`
   - 2026-04-12: Added shared async helpers (`apps/web/src/lib/async.ts`) for retry policy + pending-state wrapper and migrated profile/wallet critical flows to retry-aware execution paths (`useUser`, wallet form load/metadata/preview/submit); validated with `pnpm --filter web test -- src/lib/async.test.ts src/features/wallets/components/WalletCreateEditForm.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - [x] `NX-04 refactor(forms-core): unify shared form normalization/error wiring across wallets/markets/backtests`

@@ -1467,7 +1467,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-12: Completed `NX-05` by adding reusable async runtime helpers (`apps/web/src/lib/async.ts`) with retriable HTTP policy and shared pending-state wrapper, then applying them to profile and wallet critical operations (profile fetch/save + wallet load/metadata/preview/submit) to reduce transient-failure breakage; validated with async helper + wallet form tests and web typecheck (PASS).
 
 ## Documentation Knowledge Hardening Wave (2026-04-12)
-- [ ] `DCP-01 docs(governance): lock documentation parity policy and mandatory update triggers`
+- [x] `DCP-01 docs(governance): lock documentation parity policy and mandatory update triggers`
 - [ ] `DCP-02 docs(template): publish canonical module deep-dive template + authoring checklist`
 - [ ] `DCP-03 docs(index): create docs/modules index table mapping every active module to doc status`
 - [ ] `DCP-04 docs(api-identity): author deep-dives for admin/auth/profile/users modules`
@@ -1482,6 +1482,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 
 ### Progress Log (Documentation Knowledge Hardening)
 - 2026-04-12: Initialized wave plan and canonical references in `docs/planning/documentation-knowledge-hardening-plan-2026-04-12.md` after code-vs-docs audit; execution queue `DCP-01..DCP-12` added for tiny-commit delivery.
+- 2026-04-12: Completed `DCP-01` by locking mandatory documentation parity trigger rules in `docs/governance/working-agreements.md` for backend/frontend module inventories, app route inventory, canonical docs index updates, and queue-plan synchronization.
 
 ## Engineering Optimization Wave (2026-04-12)
 - [ ] `OPT-01 error-taxonomy(api): replace string-code Error.message flow with typed domain errors + central mapper`
