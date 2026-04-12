@@ -9,7 +9,7 @@ import { FieldWrapper, TextInputField } from '../../markets/components/FieldCont
 import { listMarketUniverses } from '../../markets/services/markets.service';
 import { MarketUniverse } from '../../markets/types/marketUniverse.type';
 import { I18nContext } from '../../../i18n/I18nProvider';
-import { getAxiosMessage } from '@/lib/getAxiosMessage';
+import { hasFormText, normalizeFormText, resolveFormErrorMessage } from '@/lib/forms';
 
 type BacktestCreateFormProps = {
   formId?: string;
@@ -23,9 +23,9 @@ const INITIAL_BALANCE_MIN = 1;
 const INITIAL_BALANCE_MAX = 1_000_000_000;
 
 const buildSuggestedRunName = (locale: 'pl' | 'en', strategyName?: string, universeName?: string, timeframe?: string) => {
-  const strategy = strategyName?.trim() || (locale === 'en' ? 'Strategy' : 'Strategia');
-  const universe = universeName?.trim() || (locale === 'en' ? 'Market' : 'Rynek');
-  const tf = timeframe?.trim() || '-';
+  const strategy = normalizeFormText(strategyName) || (locale === 'en' ? 'Strategy' : 'Strategia');
+  const universe = normalizeFormText(universeName) || (locale === 'en' ? 'Market' : 'Rynek');
+  const tf = normalizeFormText(timeframe) || '-';
   return `Backtest ${strategy} | ${universe} (${tf})`;
 };
 
@@ -114,7 +114,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
         setStrategyId((prev) => prev || data[0]?.id || '');
       } catch (error: unknown) {
         toast.error(strategyLoadErrorText, {
-          description: getAxiosMessage(error),
+          description: resolveFormErrorMessage(error, strategyLoadErrorText),
         });
         setStrategies([]);
       } finally {
@@ -134,7 +134,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
         setMarketUniverseId((prev) => prev || data[0]?.id || '');
       } catch (error: unknown) {
         toast.error(universesLoadErrorText, {
-          description: getAxiosMessage(error),
+          description: resolveFormErrorMessage(error, universesLoadErrorText),
         });
         setMarketUniverses([]);
       } finally {
@@ -181,9 +181,9 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
     parsedInitialBalance <= INITIAL_BALANCE_MAX;
 
   const canSubmit =
-    name.trim().length > 0 &&
-    strategyId.trim().length > 0 &&
-    marketUniverseId.trim().length > 0 &&
+    hasFormText(name) &&
+    hasFormText(strategyId) &&
+    hasFormText(marketUniverseId) &&
     hasValidMaxCandles &&
     hasValidInitialBalance &&
     !submitting &&
@@ -195,7 +195,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
     if (!canSubmit || !selectedStrategy) return;
 
     await onSubmit({
-      name: name.trim(),
+      name: normalizeFormText(name),
       timeframe: selectedStrategy.interval,
       strategyId,
       marketUniverseId,
@@ -203,7 +203,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
         maxCandles: parsedMaxCandles,
         initialBalance: parsedInitialBalance,
       },
-      notes: notes.trim() || undefined,
+      notes: normalizeFormText(notes) || undefined,
     });
   };
 

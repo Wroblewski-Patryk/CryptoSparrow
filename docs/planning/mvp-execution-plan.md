@@ -1456,10 +1456,11 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `NX-01 feat(profile-timezone): persist user timezone preference in profile basic settings and validate on API boundary`
 - [x] `NX-02 ux(wallet-form): redesign create/edit wallet form mode flow (LIVE/PAPER switch + deterministic conditional fields)`
 - [x] `NX-03 feat(wallet-metadata): source baseCurrency/marketType options from exchange capabilities instead of free-text assumptions`
-- [ ] `NX-04 refactor(forms-core): unify shared form normalization/error wiring across wallets/markets/backtests`
+- [x] `NX-04 refactor(forms-core): unify shared form normalization/error wiring across wallets/markets/backtests`
 - [ ] `NX-05 hardening(web-runtime): add reusable async-state/retry helpers for profile+wallet critical flows`
 
 ### Progress Log (Next Quality & UX Wave)
 - 2026-04-12: Completed `NX-01` by extending profile basic API validation contract to support `uiPreferences.timeZonePreference` (`auto` or valid IANA timezone), persisting this preference through profile update flow, and wiring profile form save to store timezone in user account settings; validated with API/web typecheck and profile/i18n regression tests.
 - 2026-04-12: Completed `NX-02` by redesigning wallet create/edit mode UX to deterministic conditional rendering (dedicated PAPER/LIVE sections + explicit mode hints) and mode-switch cleanup of irrelevant LIVE fields, eliminating stale cross-mode leakage; validated with `pnpm --filter web test -- src/features/wallets/components/WalletCreateEditForm.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - 2026-04-12: Completed `NX-03` by introducing wallet metadata endpoint (`GET /dashboard/wallets/metadata`) backed by exchange capability market-type/base-currency definitions with market-catalog enrichment and fallback policy, then wiring wallet create/edit form to consume dynamic `marketType/baseCurrency` options from this contract; validated with API+web typecheck and focused API/web wallet tests (PASS).
+- 2026-04-12: Completed `NX-04` by introducing shared forms-core helper module (`apps/web/src/lib/forms.ts`) and migrating wallets/markets/backtests forms to unified normalization + error wiring primitives, reducing duplicated `trim/uppercase/error` variants while preserving behavior; validated with focused wallet/market/backtest component tests and web typecheck (PASS).

@@ -7,8 +7,13 @@ import SearchableMultiSelect, { MultiSelectOption } from './SearchableMultiSelec
 import { fetchMarketCatalog } from '../services/markets.service';
 import { CreateMarketUniverseInput, MarketCatalogEntry, MarketUniverse } from '../types/marketUniverse.type';
 import { uniqueSortedSymbols } from '../utils/marketUniverseHelpers';
-import { getAxiosMessage } from '@/lib/getAxiosMessage';
-import { normalizeSymbol } from '@/lib/symbols';
+import {
+  hasFormText,
+  normalizeFormBaseCurrency,
+  normalizeFormSymbol,
+  normalizeFormText,
+  resolveFormErrorMessage,
+} from '@/lib/forms';
 import {
   EXCHANGE_OPTIONS,
   ExchangeOption,
@@ -65,7 +70,7 @@ export default function MarketUniverseForm({
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [exchange, setExchange] = useState<ExchangeOption>(initial?.exchange ?? 'BINANCE');
   const [marketType, setMarketType] = useState<'SPOT' | 'FUTURES'>(initial?.marketType ?? 'FUTURES');
-  const [baseCurrency, setBaseCurrency] = useState(normalizeSymbol(initial?.baseCurrency) || 'USDT');
+  const [baseCurrency, setBaseCurrency] = useState(normalizeFormBaseCurrency(initial?.baseCurrency));
   const [baseCurrencies, setBaseCurrencies] = useState<string[]>([]);
   const [catalogMarkets, setCatalogMarkets] = useState<MarketCatalogEntry[]>([]);
 
@@ -82,7 +87,7 @@ export default function MarketUniverseForm({
     setName(initial.name);
     setExchange(initial.exchange ?? 'BINANCE');
     setMarketType(initial.marketType);
-    setBaseCurrency(normalizeSymbol(initial.baseCurrency) || 'USDT');
+    setBaseCurrency(normalizeFormBaseCurrency(initial.baseCurrency));
     setWhitelistSymbols(uniqueSortedSymbols(initial.whitelist));
     setBlacklistSymbols(uniqueSortedSymbols(initial.blacklist));
     setMinQuoteVolumeEnabled(resolveSavedVolumeEnabled(initial));
@@ -104,7 +109,7 @@ export default function MarketUniverseForm({
           marketType: params?.requestedMarketType ?? marketType,
         });
 
-        const normalizedBaseCurrency = normalizeSymbol(catalog.baseCurrency) || 'USDT';
+        const normalizedBaseCurrency = normalizeFormBaseCurrency(catalog.baseCurrency);
         const normalizedBaseCurrencies = uniqueSortedSymbols([
           normalizedBaseCurrency,
           ...(catalog.baseCurrencies ?? []),
@@ -118,13 +123,13 @@ export default function MarketUniverseForm({
           catalog.markets
             .map((market) => ({
               ...market,
-              symbol: normalizeSymbol(market.symbol),
-              displaySymbol: market.displaySymbol || normalizeSymbol(market.symbol),
+              symbol: normalizeFormSymbol(market.symbol),
+              displaySymbol: market.displaySymbol || normalizeFormSymbol(market.symbol),
             }))
             .sort((a, b) => a.symbol.localeCompare(b.symbol))
         );
       } catch (err: unknown) {
-        const message = getAxiosMessage(err) ?? 'Nie udalo sie pobrac katalogu rynkow z gieldy.';
+        const message = resolveFormErrorMessage(err, 'Nie udalo sie pobrac katalogu rynkow z gieldy.');
         setCatalogError(message);
       } finally {
         setCatalogLoading(false);
@@ -136,7 +141,7 @@ export default function MarketUniverseForm({
   useEffect(() => {
     void loadCatalog({
       requestedExchange: initial?.exchange ?? 'BINANCE',
-      requestedBaseCurrency: normalizeSymbol(initial?.baseCurrency) || undefined,
+      requestedBaseCurrency: normalizeFormSymbol(initial?.baseCurrency) || undefined,
       requestedMarketType: initial?.marketType,
     });
   }, [initial?.baseCurrency, initial?.exchange, initial?.marketType, loadCatalog]);
@@ -149,11 +154,11 @@ export default function MarketUniverseForm({
     if (!initial) return null;
     const exchangeKey = initial.exchange ?? 'BINANCE';
     const marketTypeKey = initial.marketType ?? 'FUTURES';
-    const baseCurrencyKey = normalizeSymbol(initial.baseCurrency);
+    const baseCurrencyKey = normalizeFormBaseCurrency(initial.baseCurrency);
     return `${exchangeKey}|${marketTypeKey}|${baseCurrencyKey}`;
   }, [initial]);
   const currentContextKey = useMemo(
-    () => `${exchange}|${marketType}|${normalizeSymbol(baseCurrency)}`,
+    () => `${exchange}|${marketType}|${normalizeFormBaseCurrency(baseCurrency)}`,
     [baseCurrency, exchange, marketType]
   );
   const shouldPreserveInitialSelections =
@@ -225,21 +230,21 @@ export default function MarketUniverseForm({
   }, [availableSymbols, blacklistSymbols, whitelistSymbols]);
 
   const previewFiltered = useMemo(() => {
-    const q = normalizeSymbol(previewQuery);
+    const q = normalizeFormSymbol(previewQuery);
     if (!q) return previewSymbols;
     return previewSymbols.filter((symbol) => symbol.includes(q));
   }, [previewQuery, previewSymbols]);
 
   const canSubmit = useMemo(
     () =>
-      name.trim().length > 0 &&
+      hasFormText(name) &&
       !submitting &&
       (previewSymbols.length > 0 || !exchangeSupportsMarketCatalog),
     [exchangeSupportsMarketCatalog, name, previewSymbols.length, submitting]
   );
 
   const handleBaseCurrencyChange = async (nextBaseCurrency: string) => {
-    const normalizedBaseCurrency = normalizeSymbol(nextBaseCurrency) || 'USDT';
+    const normalizedBaseCurrency = normalizeFormBaseCurrency(nextBaseCurrency);
     setBaseCurrency(normalizedBaseCurrency);
     await loadCatalog({
       requestedExchange: exchange,
@@ -291,10 +296,10 @@ export default function MarketUniverseForm({
     const payloadBlacklist = [...mergedBlacklistSet].sort((a, b) => a.localeCompare(b));
 
     await onSubmit({
-      name: name.trim(),
+      name: normalizeFormText(name),
       exchange,
       marketType,
-      baseCurrency: normalizeSymbol(baseCurrency) || 'USDT',
+      baseCurrency: normalizeFormBaseCurrency(baseCurrency),
       filterRules: {
         minQuoteVolumeEnabled,
         ...(minQuoteVolumeEnabled ? { minQuoteVolume24h: minQuoteVolume } : {}),
@@ -305,7 +310,7 @@ export default function MarketUniverseForm({
   };
 
   const sliderStep = Math.max(1, Math.floor(maxQuoteVolume / 200));
-  const hasNameError = showValidation && !name.trim();
+  const hasNameError = showValidation && !hasFormText(name);
   const hasSymbolsError = showValidation && exchangeSupportsMarketCatalog && previewSymbols.length === 0;
 
   return (

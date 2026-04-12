@@ -10,7 +10,13 @@ import { EXCHANGE_OPTIONS, supportsExchangeCapability } from '@/features/exchang
 import { fetchApiKeys } from '@/features/profile/services/apiKeys.service';
 import type { ApiKey } from '@/features/profile/types/apiKey.type';
 import { ErrorState, LoadingState } from '@/ui/components/ViewState';
-import { getAxiosMessage } from '@/lib/getAxiosMessage';
+import {
+  hasFormText,
+  normalizeFormBaseCurrency,
+  normalizeFormSymbol,
+  normalizeFormText,
+  resolveFormErrorMessage,
+} from '@/lib/forms';
 import { normalizeSymbol } from '@/lib/symbols';
 import { createWallet, fetchWalletMetadata, getWallet, previewWalletBalance, updateWallet } from '../services/wallets.service';
 import type {
@@ -75,7 +81,7 @@ const mapWalletToForm = (wallet: Wallet): WalletFormState => ({
   mode: wallet.mode,
   exchange: wallet.exchange,
   marketType: wallet.marketType,
-  baseCurrency: normalizeSymbol(wallet.baseCurrency) || 'USDT',
+  baseCurrency: normalizeFormBaseCurrency(wallet.baseCurrency),
   paperInitialBalance: wallet.paperInitialBalance,
   liveAllocationMode: wallet.liveAllocationMode ?? 'PERCENT',
   liveAllocationValue: wallet.liveAllocationValue ?? 100,
@@ -83,11 +89,11 @@ const mapWalletToForm = (wallet: Wallet): WalletFormState => ({
 });
 
 const toPayload = (form: WalletFormState): CreateWalletInput => {
-  const baseCurrency = normalizeSymbol(form.baseCurrency) || 'USDT';
+  const baseCurrency = normalizeFormBaseCurrency(form.baseCurrency);
 
   if (form.mode === 'PAPER') {
     return {
-      name: form.name.trim(),
+      name: normalizeFormText(form.name),
       mode: form.mode,
       exchange: form.exchange,
       marketType: form.marketType,
@@ -100,7 +106,7 @@ const toPayload = (form: WalletFormState): CreateWalletInput => {
   }
 
   return {
-    name: form.name.trim(),
+    name: normalizeFormText(form.name),
     mode: form.mode,
     exchange: form.exchange,
     marketType: form.marketType,
@@ -264,7 +270,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
       setPreviewError(null);
       setShowValidation(false);
     } catch (err) {
-      setError(getAxiosMessage(err) ?? copy.loadError);
+      setError(resolveFormErrorMessage(err, copy.loadError));
     } finally {
       setLoading(false);
     }
@@ -321,7 +327,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
         if (cancelled) return;
         setMarketTypeOptions(DEFAULT_MARKET_TYPE_OPTIONS);
         setMarketTypeMetadataByType(DEFAULT_MARKET_TYPE_METADATA);
-        setWalletMetadataError(getAxiosMessage(err) ?? copy.baseCurrencyCatalogError);
+        setWalletMetadataError(resolveFormErrorMessage(err, copy.baseCurrencyCatalogError));
       } finally {
         if (!cancelled) {
           setWalletMetadataLoading(false);
@@ -358,7 +364,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
   }, [activeMarketTypeMetadata, form.marketType]);
 
   const resolvedBaseCurrencyOptions = useMemo(() => {
-    const current = normalizeSymbol(form.baseCurrency);
+    const current = normalizeFormSymbol(form.baseCurrency);
     const options = [
       ...new Set([...(activeMarketTypeMetadata.baseCurrencies ?? []).map(normalizeSymbol), current].filter(Boolean)),
     ].sort((a, b) => a.localeCompare(b));
@@ -414,10 +420,10 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
   const fieldErrors = useMemo(() => {
     const errors: Partial<Record<keyof WalletFormState, string>> = {};
 
-    if (!form.name.trim()) {
+    if (!hasFormText(form.name)) {
       errors.name = copy.validationName;
     }
-    if (!normalizeSymbol(form.baseCurrency)) {
+    if (!normalizeFormSymbol(form.baseCurrency)) {
       errors.baseCurrency = copy.validationBaseCurrency;
     }
 
@@ -449,13 +455,13 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
       const data = await previewWalletBalance({
         exchange: form.exchange,
         marketType: form.marketType,
-        baseCurrency: normalizeSymbol(form.baseCurrency) || 'USDT',
+        baseCurrency: normalizeFormBaseCurrency(form.baseCurrency),
         apiKeyId: form.apiKeyId,
       });
       setPreview(data);
     } catch (err) {
       setPreview(null);
-      setPreviewError(getAxiosMessage(err) ?? copy.saveFailed);
+      setPreviewError(resolveFormErrorMessage(err, copy.saveFailed));
     } finally {
       setPreviewLoading(false);
     }
@@ -509,7 +515,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
       }
     } catch (err) {
       toast.error(isEditMode ? copy.saveFailed : copy.createFailed, {
-        description: getAxiosMessage(err),
+        description: resolveFormErrorMessage(err, isEditMode ? copy.saveFailed : copy.createFailed),
       });
     } finally {
       setSubmitting(false);
@@ -612,7 +618,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
               <select
                 className='select select-bordered'
                 value={form.baseCurrency}
-                onChange={(event) => setForm((prev) => ({ ...prev, baseCurrency: normalizeSymbol(event.target.value) }))}
+                onChange={(event) => setForm((prev) => ({ ...prev, baseCurrency: normalizeFormSymbol(event.target.value) }))}
                 disabled={walletMetadataLoading}
               >
                 {resolvedBaseCurrencyOptions.map((currency) => (

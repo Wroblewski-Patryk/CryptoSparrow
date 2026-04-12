@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `NX-04 refactor(forms-core): unify shared form normalization/error wiring across wallets/markets/backtests`
 - [ ] `NX-05 hardening(web-runtime): add reusable async-state/retry helpers for profile+wallet critical flows`
 ## NEXT
 - none
@@ -15,6 +14,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `NX-04 refactor(forms-core): unify shared form normalization/error wiring across wallets/markets/backtests`
+  - 2026-04-12: Added shared web forms-core helper module (`apps/web/src/lib/forms.ts`) and migrated wallets/markets/backtests create-edit flows to common normalization (`normalizeFormText/normalizeFormBaseCurrency/normalizeFormSymbol`) and unified error mapping (`resolveFormErrorMessage`), reducing ad-hoc per-form variants; validated with `pnpm --filter web test -- src/features/wallets/components/WalletCreateEditForm.test.tsx src/features/markets/components/MarketUniverseForm.test.tsx src/features/backtest/components/BacktestCreateForm.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - [x] `NX-03 feat(wallet-metadata): source baseCurrency/marketType options from exchange capabilities instead of free-text assumptions`
   - 2026-04-12: Added `GET /dashboard/wallets/metadata` API contract that resolves market-type/base-currency options from exchange capability source with market-catalog integration and fail-safe capability fallbacks; wired wallet create/edit form to consume this metadata endpoint (dynamic marketType options + per-marketType baseCurrency list) and validated with `pnpm --filter api run typecheck`, `pnpm --filter api test -- src/modules/wallets/wallets.e2e.test.ts`, `pnpm --filter web test -- src/features/wallets/components/WalletCreateEditForm.test.tsx`, and `pnpm --filter web run typecheck` (PASS).
 - [x] `NX-02 ux(wallet-form): redesign create/edit wallet form mode flow (LIVE/PAPER switch + deterministic conditional fields)`
