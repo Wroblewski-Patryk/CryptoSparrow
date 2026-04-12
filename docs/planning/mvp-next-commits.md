@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `NX-02 ux(wallet-form): redesign create/edit wallet form mode flow (LIVE/PAPER switch + deterministic conditional fields)`
 - [ ] `NX-03 feat(wallet-metadata): source baseCurrency/marketType options from exchange capabilities instead of free-text assumptions`
 - [ ] `NX-04 refactor(forms-core): unify shared form normalization/error wiring across wallets/markets/backtests`
 - [ ] `NX-05 hardening(web-runtime): add reusable async-state/retry helpers for profile+wallet critical flows`
@@ -17,6 +16,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `NX-02 ux(wallet-form): redesign create/edit wallet form mode flow (LIVE/PAPER switch + deterministic conditional fields)`
+  - 2026-04-12: Refactored wallet create/edit mode flow to deterministic sections (`PAPER` and `LIVE` separated), added explicit mode hints, and enforced mode-switch reset of irrelevant fields (`apiKeyId/liveAllocation*`) to prevent stale cross-mode leakage; validated with `pnpm --filter web test -- src/features/wallets/components/WalletCreateEditForm.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - [x] `QH-01 refactor(api-profile): remove production as-any casts in profile basic service with Prisma-safe typing`
   - 2026-04-12: Replaced `as any` with Prisma-safe typing in `apps/api/src/modules/profile/basic/basic.service.ts` (`Prisma.UserSelect`, `Prisma.JsonObject`, `Prisma.InputJsonValue`, `Prisma.UserUpdateInput`) and validated with `pnpm --filter api run typecheck` + `pnpm --filter api test -- src/modules/profile/basic/basic.e2e.test.ts` (PASS).
 - [x] `QH-02 refactor(api-logging): introduce shared structured logger and migrate API entrypoints/workers`

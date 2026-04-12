@@ -127,6 +127,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
             loadFailedTitle: 'Blad ladowania portfela',
             retry: 'Sprobuj ponownie',
             sectionBasics: 'Podstawowe dane',
+            sectionPaper: 'Ustawienia PAPER',
             sectionLive: 'Ustawienia LIVE',
             sectionSummary: 'Podsumowanie konfiguracji',
             sectionPreview: 'Podglad salda LIVE',
@@ -168,6 +169,8 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
             validationApiKey: 'W LIVE musisz wybrac klucz API.',
             validationAllocationValue: 'W LIVE podaj dodatnia wartosc alokacji.',
             validationAllocationPercent: 'W trybie procentowym wartosc nie moze przekraczac 100.',
+            modePaperHint: 'W PAPER pokazujemy tylko pola symulacyjne.',
+            modeLiveHint: 'W LIVE pokazujemy tylko pola wykonania gieldowego.',
           }
         : {
             loading: 'Loading form...',
@@ -175,6 +178,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
             loadFailedTitle: 'Wallet form load failed',
             retry: 'Try again',
             sectionBasics: 'Basics',
+            sectionPaper: 'PAPER settings',
             sectionLive: 'LIVE settings',
             sectionSummary: 'Configuration summary',
             sectionPreview: 'LIVE balance preview',
@@ -216,6 +220,8 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
             validationApiKey: 'API key is required for LIVE mode.',
             validationAllocationValue: 'Allocation value must be positive in LIVE mode.',
             validationAllocationPercent: 'Percent allocation cannot exceed 100.',
+            modePaperHint: 'PAPER mode shows simulation-only fields.',
+            modeLiveHint: 'LIVE mode shows exchange execution fields only.',
           },
     [locale]
   );
@@ -310,6 +316,27 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
     () => apiKeys.filter((item) => item.exchange === form.exchange),
     [apiKeys, form.exchange]
   );
+
+  const setMode = useCallback((nextMode: WalletMode) => {
+    setForm((prev) => {
+      if (prev.mode === nextMode) return prev;
+      if (nextMode === 'PAPER') {
+        return {
+          ...prev,
+          mode: 'PAPER',
+          liveAllocationMode: 'PERCENT',
+          liveAllocationValue: 100,
+          apiKeyId: '',
+        };
+      }
+      return {
+        ...prev,
+        mode: 'LIVE',
+      };
+    });
+    setPreview(null);
+    setPreviewError(null);
+  }, []);
 
   useEffect(() => {
     if (form.mode !== 'LIVE') {
@@ -473,18 +500,23 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
                 <button
                   type='button'
                   className={`btn join-item ${form.mode === 'PAPER' ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() => setForm((prev) => ({ ...prev, mode: 'PAPER' }))}
+                  onClick={() => setMode('PAPER')}
+                  aria-pressed={form.mode === 'PAPER'}
                 >
                   {copy.modePaper}
                 </button>
                 <button
                   type='button'
                   className={`btn join-item ${form.mode === 'LIVE' ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() => setForm((prev) => ({ ...prev, mode: 'LIVE' }))}
+                  onClick={() => setMode('LIVE')}
+                  aria-pressed={form.mode === 'LIVE'}
                 >
                   {copy.modeLive}
                 </button>
               </div>
+              <span className='text-xs opacity-70'>
+                {form.mode === 'LIVE' ? copy.modeLiveHint : copy.modePaperHint}
+              </span>
             </div>
 
             <label className='form-control gap-1'>
@@ -543,7 +575,13 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
               ) : null}
             </label>
 
-            {form.mode === 'PAPER' ? (
+          </div>
+        </section>
+
+        {form.mode === 'PAPER' ? (
+          <section className='space-y-3 rounded-box border border-base-300/60 bg-base-100/80 p-4'>
+            <h2 className='text-base font-semibold'>{copy.sectionPaper}</h2>
+            <div className='grid gap-3 md:grid-cols-2'>
               <label className='form-control gap-1'>
                 <span className='label-text'>{copy.paperInitialBalance}</span>
                 <input
@@ -557,9 +595,9 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
                   }
                 />
               </label>
-            ) : null}
-          </div>
-        </section>
+            </div>
+          </section>
+        ) : null}
 
         {form.mode === 'LIVE' ? (
           <section className='space-y-3 rounded-box border border-base-300/60 bg-base-100/80 p-4'>

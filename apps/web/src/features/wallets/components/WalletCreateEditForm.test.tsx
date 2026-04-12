@@ -110,4 +110,67 @@ describe('WalletCreateEditForm', () => {
     expect(createWalletMock).not.toHaveBeenCalled();
     expect(screen.getByText('Podaj nazwe portfela.')).toBeInTheDocument();
   });
+
+  it('renders only mode-relevant fields when switching between LIVE and PAPER', async () => {
+    fetchApiKeysMock.mockResolvedValue([
+      {
+        id: 'key-1',
+        label: 'Main Binance Key',
+        exchange: 'BINANCE',
+      },
+    ]);
+    previewWalletBalanceMock.mockResolvedValue({
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+      accountBalance: 100,
+      freeBalance: 98.5,
+      referenceBalance: 100,
+      allocationApplied: null,
+      fetchedAt: '2026-04-10T12:00:00.000Z',
+      source: 'BINANCE',
+    });
+    createWalletMock.mockResolvedValue({
+      id: 'wallet-paper',
+    });
+
+    const { container } = render(<WalletCreateEditForm />);
+
+    await waitFor(() => {
+      expect(fetchApiKeysMock).toHaveBeenCalled();
+    });
+
+    expect(screen.getByLabelText('Kwota startowa paper')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Alokacja LIVE')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'LIVE' }));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Alokacja LIVE')).toBeInTheDocument();
+    });
+    expect(screen.queryByLabelText('Kwota startowa paper')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'PAPER' }));
+    expect(screen.getByLabelText('Kwota startowa paper')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Alokacja LIVE')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Nazwa'), {
+      target: { value: 'Paper Wallet' },
+    });
+
+    const form = container.querySelector('form');
+    expect(form).not.toBeNull();
+    fireEvent.submit(form as HTMLFormElement);
+
+    await waitFor(() => {
+      expect(createWalletMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'PAPER',
+          liveAllocationMode: null,
+          liveAllocationValue: null,
+          apiKeyId: null,
+        })
+      );
+    });
+  });
 });
