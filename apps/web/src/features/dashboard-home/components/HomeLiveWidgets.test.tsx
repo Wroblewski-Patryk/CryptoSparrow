@@ -165,6 +165,7 @@ describe("HomeLiveWidgets", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Brak botow do podsumowania dashboardu")).toBeInTheDocument();
+      expect(screen.getByText("Stworz portfel")).toBeInTheDocument();
       expect(screen.getAllByText(/Dodaj bota|Stworz i aktywuj bota|Create and activate bot/i).length).toBeGreaterThan(0);
     });
   });
@@ -189,9 +190,17 @@ describe("HomeLiveWidgets", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Brak aktywnych botow na dashboardzie")).toBeInTheDocument();
+      expect(screen.getByText("Stworz portfel")).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Otworz portfele" })).toBeInTheDocument();
       expect(screen.getByText("Aktywuj istniejacego bota")).toBeInTheDocument();
       expect(screen.getByRole("link", { name: "Otworz liste botow" })).toBeInTheDocument();
     });
+
+    {
+      const walletLink = screen.getByRole("link", { name: "Otworz portfele" });
+      const marketsLink = screen.getByRole("link", { name: "Otworz rynki" });
+      expect(walletLink.compareDocumentPosition(marketsLink) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
 
     expect(container.querySelector(".btn.btn-primary.btn-sm")).toBeNull();
     expect(container.querySelector(".btn.btn-outline.btn-sm")).toBeNull();

@@ -170,6 +170,9 @@ type TranslationSchema = {
         noActiveBotsDescription: string;
         goToBots: string;
         onboardingBadge: string;
+        onboardingStepWalletTitle: string;
+        onboardingStepWalletDescription: string;
+        onboardingStepWalletCta: string;
         onboardingStepMarketsTitle: string;
         onboardingStepMarketsDescription: string;
         onboardingStepMarketsCta: string;
@@ -453,6 +456,9 @@ export const translations: Record<Locale, TranslationSchema> = {
           noActiveBotsDescription: "Activate at least one bot to see live runtime.",
           goToBots: "Go to bots",
           onboardingBadge: "Quick start",
+          onboardingStepWalletTitle: "Create wallet",
+          onboardingStepWalletDescription: "Set up a PAPER or LIVE wallet before creating bot runtime.",
+          onboardingStepWalletCta: "Open wallets",
           onboardingStepMarketsTitle: "Create market universe",
           onboardingStepMarketsDescription: "Build market groups with exchange, market type and symbols.",
           onboardingStepMarketsCta: "Open markets",
@@ -1072,6 +1078,9 @@ export const translations: Record<Locale, TranslationSchema> = {
           noActiveBotsDescription: "Aktywuj co najmniej jednego bota, aby zobaczyc live runtime.",
           goToBots: "Przejdz do botow",
           onboardingBadge: "Szybki start",
+          onboardingStepWalletTitle: "Stworz portfel",
+          onboardingStepWalletDescription: "Skonfiguruj portfel PAPER lub LIVE zanim uruchomisz runtime bota.",
+          onboardingStepWalletCta: "Otworz portfele",
           onboardingStepMarketsTitle: "Stworz uniwersum rynkow",
           onboardingStepMarketsDescription: "Zbuduj grupy rynkow: gielda, typ rynku i symbole.",
           onboardingStepMarketsCta: "Otworz rynki",

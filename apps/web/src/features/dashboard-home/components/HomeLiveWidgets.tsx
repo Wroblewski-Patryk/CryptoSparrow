@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useState } from "react";
-import { LuBot, LuChartCandlestick, LuChartLine, LuChevronDown, LuListChecks, LuPackageOpen } from "react-icons/lu";
+import { LuBot, LuChartCandlestick, LuChartLine, LuChevronDown, LuListChecks, LuPackageOpen, LuWallet } from "react-icons/lu";
 import { toast } from "sonner";
 
 import { ErrorState } from "../../../ui/components/ViewState";
@@ -456,6 +456,15 @@ export default function HomeLiveWidgets() {
   });
   const runtimeOnboardingSteps = useMemo(
     () => [
+      {
+        key: "wallet",
+        icon: <LuWallet className="h-4 w-4" aria-hidden />,
+        toneClass: "border-warning/35 bg-warning/10 text-warning",
+        title: t("dashboard.home.runtime.onboardingStepWalletTitle"),
+        description: t("dashboard.home.runtime.onboardingStepWalletDescription"),
+        cta: t("dashboard.home.runtime.onboardingStepWalletCta"),
+        href: "/dashboard/wallets/list",
+      },
       {
         key: "markets",
         icon: <LuChartCandlestick className="h-4 w-4" aria-hidden />,
