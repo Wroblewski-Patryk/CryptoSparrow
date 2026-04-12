@@ -1472,7 +1472,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `DCP-03 docs(index): create docs/modules index table mapping every active module to doc status`
 - [x] `DCP-04 docs(api-identity): author deep-dives for admin/auth/profile/users modules`
 - [x] `DCP-05 docs(api-trading-core): author deep-dives for engine/exchange/market-data/market-stream`
-- [ ] `DCP-06 docs(api-trading-domain): author deep-dives for strategies/markets/bots/orders/positions/backtests`
+- [x] `DCP-06 docs(api-trading-domain): author deep-dives for strategies/markets/bots/orders/positions/backtests`
 - [ ] `DCP-07 docs(api-support): author deep-dives for reports/subscriptions/wallets/icons/upload/pagination/isolation`
 - [ ] `DCP-08 docs(web-core): author deep-dives for dashboard-home/auth/profile/admin flows`
 - [ ] `DCP-09 docs(web-trading): author deep-dives for bots/backtest/strategies/markets/exchanges/orders/positions/wallets/reports/logs`
@@ -1487,6 +1487,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-12: Completed `DCP-03` by publishing a full active-module documentation status index (`docs/modules/module-doc-status-index.md`) mapping API/Web inventories to target deep-dive files and planned DCP ownership.
 - 2026-04-12: Completed `DCP-04` by authoring API identity deep-dives (`admin`, `auth`, `profile`, `users`) and marking those modules as `Published` in `docs/modules/module-doc-status-index.md`.
 - 2026-04-12: Completed `DCP-05` by authoring API trading-core deep-dives (`engine`, `exchange`, `market-data`, `market-stream`) and marking those modules as `Published` in `docs/modules/module-doc-status-index.md`.
+- 2026-04-12: Completed `DCP-06` by authoring API trading-domain deep-dives (`strategies`, `markets`, `bots`, `orders`, `positions`, `backtests`) and marking those modules as `Published` in `docs/modules/module-doc-status-index.md`.
 
 ## Engineering Optimization Wave (2026-04-12)
 - [ ] `OPT-01 error-taxonomy(api): replace string-code Error.message flow with typed domain errors + central mapper`

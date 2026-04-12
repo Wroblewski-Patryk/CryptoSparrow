@@ -7,11 +7,10 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `DCP-06 docs(api-trading-domain): author deep-dives for strategies/markets/bots/orders/positions/backtests`
-## NEXT
 - [ ] `DCP-07 docs(api-support): author deep-dives for reports/subscriptions/wallets/icons/upload/pagination/isolation`
 - [ ] `DCP-08 docs(web-core): author deep-dives for dashboard-home/auth/profile/admin flows`
 - [ ] `DCP-09 docs(web-trading): author deep-dives for bots/backtest/strategies/markets/exchanges/orders/positions/wallets/reports/logs`
+## NEXT
 - [ ] `DCP-10 docs(route-contract): publish canonical route-to-feature-to-api mapping with ownership and guardrails`
 - [ ] `DCP-11 tooling(docs-parity): add script to verify module+route inventories against canonical docs`
 - [ ] `DCP-12 qa(docs-evidence): run parity check, publish evidence artifact, and close documentation hardening wave`
@@ -20,6 +19,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `DCP-06 docs(api-trading-domain): author deep-dives for strategies/markets/bots/orders/positions/backtests`
+  - 2026-04-12: Published `docs/modules/api-strategies.md`, `docs/modules/api-markets.md`, `docs/modules/api-bots.md`, `docs/modules/api-orders.md`, `docs/modules/api-positions.md`, and `docs/modules/api-backtests.md`; updated module coverage index statuses to `Published`.
 - [x] `DCP-05 docs(api-trading-core): author deep-dives for engine/exchange/market-data/market-stream`
   - 2026-04-12: Published `docs/modules/api-engine.md`, `docs/modules/api-exchange.md`, `docs/modules/api-market-data.md`, and `docs/modules/api-market-stream.md`; updated module coverage index statuses to `Published`.
 - [x] `DCP-04 docs(api-identity): author deep-dives for admin/auth/profile/users modules`
