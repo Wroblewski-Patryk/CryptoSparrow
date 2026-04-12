@@ -1,68 +1,78 @@
-﻿# Module Map
+# Module Map
+
+Updated: 2026-04-12
 
 ## Backend Modules (Current)
-- auth. Registration, login, JWT handling.
-- profile. User profile management and API keys.
-- strategies. Strategy CRUD and indicator metadata.
-- markets. Market universe CRUD (base, whitelist, blacklist).
-- bots. Bot CRUD with LIVE opt-in consent validation.
-- orders. Read and write endpoints for order history/details plus open/cancel/close actions.
-- positions. Read endpoints plus live reconciliation status exposure.
-- backtests. Backtest run/trade/report plus timeline endpoint (`/dashboard/backtests/runs/:id/timeline`) with progressive chunk loading (`events` + `candles`), lifecycle event overlays, indicator series, parity diagnostics, and position stats (`tradeCount`, `closedOnFinalCandleCount`, `liquidationsCount`).
-- logs. Audit/event log read endpoints.
-- exchange. CCXT connector and retrying live-order adapter services.
-- market-data. OHLCV ingest/cache service abstractions.
-- market-stream. Binance WebSocket ingest worker with normalized ticker/candle payloads.
-- market-stream fan-out gateway. Server-owned SSE broadcast path from worker events to dashboard clients.
-- execution-orchestrator. Runtime signal -> order -> position orchestration service.
-- runtime automation bridge. Continuous stream -> signal evaluation loop with periodic scan support.
-- upload, middleware, pagination, isolation. Supporting infrastructure.
+- `admin`. Administrative read/write workflows for users and subscription plans.
+- `auth`. Registration, login, JWT/session handling, auth cookies and token lifecycle.
+- `backtests`. Backtest run/trade/report flows and timeline data contracts.
+- `bots`. Bot CRUD, runtime projections, orchestration contracts, live consent and assistant wiring.
+- `engine`. Runtime decision and execution core (signal loop, risk checks, automation, lifecycle).
+- `exchange`. CCXT connectors, symbol rules, live adapter abstractions, and fee reconciliation.
+- `icons`. Coin/icon lookup and serving API for dashboard symbol visuals.
+- `isolation`. Multi-tenant access isolation guards and verification tests.
+- `logs`. Audit/event log query endpoints and filtering.
+- `market-data`. OHLCV and indicator feed adapter layer.
+- `market-stream`. WebSocket ingest, fan-out integration, and stream transport contracts.
+- `markets`. Market universe CRUD and market-group resolution helpers.
+- `orders`. Order query/commands and order-position relation endpoints.
+- `pagination`. Shared query parsing/normalization for paged endpoints.
+- `positions`. Position read models, reconciliation status, and takeover state exposure.
+- `profile`. User profile, security settings, API keys, and subscription profile reads.
+- `reports`. Aggregated performance reporting views and report service contracts.
+- `strategies`. Strategy CRUD, indicators metadata, and validation/transformation utilities.
+- `subscriptions`. Entitlements and payment gateway orchestration foundation.
+- `upload`. Upload endpoints and upload validation.
+- `users`. User public representation helpers shared across modules.
+- `wallets`. Wallet CRUD and related dashboard/accounting data boundaries.
 
-## Backend Modules (Planned for MVP Completion)
-- reports. Unified performance metrics parity across backtest/paper/live runtime datasets.
-- ai-assistants. Assistant profiles, mandate/risk config, and scope assignment to bots/bindings.
+## Backend Notes
+- `market-stream` fan-out to clients is server-owned.
+- Runtime execution idempotency and lifecycle parity are implemented through `engine` + `bots` + `exchange` boundaries.
+- Assistant behavior currently lives under bot/runtime orchestration contracts (not a separate top-level module directory yet).
 
 ## Frontend Areas (Current)
-- public. Landing and public pages.
-- public/auth. Login and registration.
-- dashboard. Control Center shell with snapshots.
-- dashboard/exchanges. Exchange connections domain entry with nested orders/positions views.
-- dashboard/profile. User settings.
-- dashboard/strategies. Strategy list and editor.
-- dashboard/markets. Market universe management.
-- dashboard/bots. Bot management and mode controls.
-- dashboard/backtest. Backtest pages with localized run header, summary/markets/trades/raw tabs, progressive per-symbol timeline loading, and parity-aware error states.
-- dashboard/logs. Audit/log pages.
-- dashboard/reports. Performance reporting views.
-- dashboard home live market bar with SSE client state.
+- `public` and `public/auth`. Landing and authentication entrypoints.
+- `admin`. Admin dashboard views (`users`, `subscriptions`).
+- `dashboard`. Control Center shell, route layout, risk and status framing.
+- `dashboard-home`. Home live widgets and runtime summary composition.
+- `dashboard/exchanges`. Exchange connections plus operational exchange context.
+- `dashboard/orders`. Order-oriented UI components/services used in exchange operational views.
+- `dashboard/positions`. Position-oriented UI components/services used in exchange operational views.
+- `dashboard/profile`. User/security/subscription settings.
+- `dashboard/strategies`. Strategy list/create/edit/detail workflows.
+- `dashboard/markets`. Market universe list/create/edit flows.
+- `dashboard/bots`. Bot list/create/detail/runtime/assistant workflows.
+- `dashboard/backtest`. Backtest list/create/details with summary/markets/trades/raw contracts.
+- `dashboard/reports`. Performance reporting views.
+- `dashboard/logs`. Audit trail views and filtering.
+- `dashboard/wallets`. Wallet list/create/detail/edit flows.
+- `icons`. Frontend icon lookup hooks/services for asset visualization.
 
-## Frontend Areas (Planned for MVP Completion)
-- dashboard richer paper/live runtime controls and state transitions.
-- dashboard manual trade ticket UX beyond API-first actions.
+## Frontend Areas (Planned)
+- Richer paper/live runtime controls and state transitions.
+- Manual trade ticket UX beyond current API-first operational actions.
 
 ## Dashboard IA Order (MVP)
-- dashboard. Control Center with risk and operations priority.
-- dashboard/exchanges.
-- dashboard/strategies.
-- dashboard/markets.
-- dashboard/bots.
-- dashboard/backtest.
-- dashboard/reports.
-- dashboard/logs.
-- dashboard/profile.
+- `dashboard` (Control Center with risk and operations priority).
+- `dashboard/exchanges`.
+- `dashboard/strategies`.
+- `dashboard/markets`.
+- `dashboard/bots`.
+- `dashboard/backtests`.
+- `dashboard/wallets`.
+- `dashboard/reports`.
+- `dashboard/logs`.
+- `dashboard/profile`.
 
 ## UX Expectations Per Frontend Module (MVP)
-- dashboard (Control Center). Safety bar, KPI risk row, positions/orders snapshots, bot status, quick actions, and recent audit feed.
-- dashboard/strategies. List-first workflow with clear preset/source metadata and safe edit/delete controls.
-- dashboard/markets. Universe builder with filter explainability and explicit whitelist/blacklist outcomes.
-- dashboard/bots. Lifecycle controls with explicit paper/live mode, heartbeat visibility, and emergency controls.
-- dashboard/exchanges. Connection health, permission checks, secure API key UX, plus nested order/position operational views.
-- dashboard/backtest. Run management with:
-  - run header KPI strip (trades, net PnL, win rate, drawdown) and compact stage timeline,
-  - summary charts (daily PnL bars + portfolio balance line),
-  - market-by-market timeline overlays (candles, indicators, entry/exit/DCA markers, non-overlapping position ranges, RSI panel),
-  - pair-side stats card (trades in-range/total, win rate, PnL, avg hold, execution and lifecycle counts),
-  - trades table with capital context (notional/margin entry+exit), move%, PnL%, fees, exit reason, cumulative PnL.
-- dashboard/reports. Performance summaries focused on PnL, drawdown, fees, and funding costs.
-- dashboard/logs. High-signal audit trail with severity, source, and actor filtering.
-- dashboard/profile. Account and user preferences, including locale selection.
+- `dashboard`: safety bar, KPI risk row, positions/orders snapshots, bot status, quick actions, recent audit feed.
+- `dashboard/strategies`: list-first workflow with clear preset/source metadata and safe edit/delete controls.
+- `dashboard/markets`: universe builder with explainable filters and explicit whitelist/blacklist outcomes.
+- `dashboard/bots`: lifecycle controls with explicit paper/live mode, heartbeat visibility, and emergency controls.
+- `dashboard/exchanges`: connection health, permission checks, secure API key UX, and nested operational order/position views.
+- `dashboard/backtests`: run KPI header, stage timeline, summary charts, per-symbol timeline overlays, pair-side stats, and capital-aware trades table.
+- `dashboard/wallets`: account balance views with clear create/edit safety and state feedback.
+- `dashboard/reports`: performance summaries focused on PnL, drawdown, fees, and funding costs.
+- `dashboard/logs`: high-signal audit trail with severity/source/actor filtering.
+- `dashboard/profile`: account settings and user preferences including locale.

@@ -27,11 +27,13 @@ This folder contains canonical project documentation grouped by domain.
 10. `modules/system-modules.md`
 11. `planning/mvp-execution-plan.md`
 12. `planning/mvp-next-commits.md`
-13. `planning/architecture-monolith-remediation-plan-2026-04-09.md`
-14. `planning/v1-live-release-plan.md`
-15. `planning/full-commit-roadmap.md`
-16. `planning/repo-migration-plan.md`
-17. `planning/mobile-parity-contract.md`
+13. `planning/documentation-knowledge-hardening-plan-2026-04-12.md`
+14. `modules/documentation-coverage-audit-2026-04-12.md`
+15. `planning/architecture-monolith-remediation-plan-2026-04-09.md`
+16. `planning/v1-live-release-plan.md`
+17. `planning/full-commit-roadmap.md`
+18. `planning/repo-migration-plan.md`
+19. `planning/mobile-parity-contract.md`
 
 ## Governance and Source of Truth
 - Repository structure policy: `governance/repository-structure-policy.md`

@@ -34,6 +34,21 @@ This file tracks intentionally unresolved architecture choices so implementation
       - `PROFESSIONAL`: enabled full global interval catalog (with `1m` default).
     - these are default plan baselines and may be tuned from admin controls if production load data requires adjustment.
 
+## Documentation Parity Governance
+- Decision state: resolved on 2026-04-12.
+- Decision:
+  - canonical documentation must stay execution-ready for both humans and agents.
+  - any change in module inventory (`apps/api/src/modules/*`, `apps/web/src/features/*`) or route inventory (`apps/web/src/app/**/page.tsx`) must include same-change updates in canonical docs.
+  - delivery model remains tiny-commit documentation waves with explicit queue items in `mvp-next-commits.md`.
+- Locked behavior:
+  - maintain module inventory in `docs/modules/system-modules.md`.
+  - maintain route inventory in `docs/architecture/dashboard-route-map.md`.
+  - maintain active documentation queue in `docs/planning/mvp-next-commits.md`.
+  - run and publish periodic parity audit artifacts in `docs/modules/`.
+- Canonical references:
+  - `docs/planning/documentation-knowledge-hardening-plan-2026-04-12.md`
+  - `docs/modules/documentation-coverage-audit-2026-04-12.md`
+
 ## Deployment Topology and Domain Split (DEV/STAGE/PROD)
 - Decision state: resolved on 2026-04-02.
 - Deployment direction:
