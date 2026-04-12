@@ -1,2 +1,36 @@
-export const themeBootstrapScript =
-  "(() => { const fallback = 'system'; const normalize = (value) => { if (!value || value === 'default') return fallback; if (value === 'cryptosparrow') return fallback; return value; }; const stored = normalize(localStorage.getItem('themePreference') || localStorage.getItem('theme')); const preference = stored || fallback; const resolved = preference === 'system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : preference; document.documentElement.setAttribute('data-theme', resolved); const locale = localStorage.getItem('cryptosparrow-locale'); if (locale === 'pl' || locale === 'en') { document.documentElement.lang = locale; } })();";
+export const themeBootstrapScript = `(() => {
+  const fallbackThemePreference = 'system';
+
+  const getStorageItem = (key) => {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  };
+
+  const normalizeThemePreference = (value) => {
+    if (!value || value === 'default' || value === 'cryptosparrow') return fallbackThemePreference;
+    return value;
+  };
+
+  const resolveSystemTheme = () => {
+    try {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    } catch {
+      return 'light';
+    }
+  };
+
+  const storedThemePreference = normalizeThemePreference(
+    getStorageItem('themePreference') || getStorageItem('theme')
+  );
+  const resolvedTheme =
+    storedThemePreference === 'system' ? resolveSystemTheme() : storedThemePreference;
+  document.documentElement.setAttribute('data-theme', resolvedTheme);
+
+  const locale = getStorageItem('cryptosparrow-locale');
+  if (locale === 'pl' || locale === 'en') {
+    document.documentElement.lang = locale;
+  }
+})();`;
