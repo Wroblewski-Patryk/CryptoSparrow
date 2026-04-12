@@ -169,6 +169,34 @@ describe("HomeLiveWidgets", () => {
     });
   });
 
+  it("renders no-active-bots onboarding with activation step and no footer CTA buttons", async () => {
+    listBotsMock.mockResolvedValue([
+      {
+        id: "inactive-bot-1",
+        name: "Inactive Bot",
+        mode: "PAPER",
+        paperStartBalance: 10000,
+        marketType: "FUTURES",
+        positionMode: "ONE_WAY",
+        strategyId: "str-inactive-1",
+        isActive: false,
+        liveOptIn: false,
+        maxOpenPositions: 2,
+      },
+    ]);
+
+    const { container } = renderSubject();
+
+    await waitFor(() => {
+      expect(screen.getByText("Brak aktywnych botow na dashboardzie")).toBeInTheDocument();
+      expect(screen.getByText("Aktywuj istniejacego bota")).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Otworz liste botow" })).toBeInTheDocument();
+    });
+
+    expect(container.querySelector(".btn.btn-primary.btn-sm")).toBeNull();
+    expect(container.querySelector(".btn.btn-outline.btn-sm")).toBeNull();
+  });
+
   it("renders runtime summary, monitored bots and market signals", async () => {
     listBotsMock.mockResolvedValue([
       {

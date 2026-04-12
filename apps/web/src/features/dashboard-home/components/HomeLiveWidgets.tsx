@@ -53,8 +53,6 @@ type DirectionPillValue = "LONG" | "SHORT" | "BUY" | "SELL";
 
 const CARD = "rounded-box bg-base-100/80";
 const CARD_ASIDE = "rounded-box bg-base-100/85 h-fit xl:sticky xl:top-4";
-const BTN_PRIMARY = "btn btn-primary btn-sm";
-const BTN_SECONDARY = "btn btn-outline btn-sm";
 const RUNTIME_DATA_STALE_WARNING_AFTER_MS = 20_000;
 const DASHBOARD_OPEN_POSITIONS_SORT_STORAGE_KEY = "dashboard.home.openPositions.sort.v1";
 const DASHBOARD_OPEN_POSITIONS_COLUMNS_STORAGE_KEY = "dashboard.home.openPositions.columns.v1";
@@ -496,6 +494,21 @@ export default function HomeLiveWidgets() {
       },
     ],
     [t]
+  );
+  const runtimeNoActiveBotsOnboardingSteps = useMemo(
+    () => [
+      ...runtimeOnboardingSteps,
+      {
+        key: "activate",
+        icon: <LuPackageOpen className="h-4 w-4" aria-hidden />,
+        toneClass: "border-success/35 bg-success/10 text-success",
+        title: t("dashboard.home.runtime.onboardingStepActivateTitle"),
+        description: t("dashboard.home.runtime.onboardingStepActivateDescription"),
+        cta: t("dashboard.home.runtime.onboardingStepActivateCta"),
+        href: "/dashboard/bots",
+      },
+    ],
+    [runtimeOnboardingSteps, t]
   );
 
   const summary = useMemo<RuntimeSummary>(() => {
@@ -1104,12 +1117,6 @@ export default function HomeLiveWidgets() {
           description={t("dashboard.home.runtime.noBotsDescription")}
           badgeLabel={t("dashboard.home.runtime.onboardingBadge")}
           steps={runtimeOnboardingSteps}
-          primaryCtaLabel={t("dashboard.home.runtime.onboardingPrimaryCta")}
-          secondaryCtaLabel={t("dashboard.home.runtime.onboardingSecondaryCta")}
-          primaryHref="/dashboard/bots/create"
-          secondaryHref="/dashboard/bots"
-          primaryButtonClassName={BTN_PRIMARY}
-          secondaryButtonClassName={BTN_SECONDARY}
         />
       </div>
     );
@@ -1123,13 +1130,7 @@ export default function HomeLiveWidgets() {
           title={t("dashboard.home.runtime.noActiveBotsTitle")}
           description={t("dashboard.home.runtime.noActiveBotsDescription")}
           badgeLabel={t("dashboard.home.runtime.onboardingBadge")}
-          steps={runtimeOnboardingSteps}
-          primaryCtaLabel={t("dashboard.home.runtime.onboardingPrimaryCta")}
-          secondaryCtaLabel={t("dashboard.home.runtime.onboardingSecondaryCta")}
-          primaryHref="/dashboard/bots/create"
-          secondaryHref="/dashboard/bots"
-          primaryButtonClassName={BTN_PRIMARY}
-          secondaryButtonClassName={BTN_SECONDARY}
+          steps={runtimeNoActiveBotsOnboardingSteps}
         />
       </div>
     );

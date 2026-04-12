@@ -170,8 +170,6 @@ type TranslationSchema = {
         noActiveBotsDescription: string;
         goToBots: string;
         onboardingBadge: string;
-        onboardingPrimaryCta: string;
-        onboardingSecondaryCta: string;
         onboardingStepMarketsTitle: string;
         onboardingStepMarketsDescription: string;
         onboardingStepMarketsCta: string;
@@ -184,6 +182,9 @@ type TranslationSchema = {
         onboardingStepBotTitle: string;
         onboardingStepBotDescription: string;
         onboardingStepBotCta: string;
+        onboardingStepActivateTitle: string;
+        onboardingStepActivateDescription: string;
+        onboardingStepActivateCta: string;
         openPositionsTitle: string;
         openOrdersTitle: string;
         timeOpened: string;
@@ -452,8 +453,6 @@ export const translations: Record<Locale, TranslationSchema> = {
           noActiveBotsDescription: "Activate at least one bot to see live runtime.",
           goToBots: "Go to bots",
           onboardingBadge: "Quick start",
-          onboardingPrimaryCta: "Create and activate bot",
-          onboardingSecondaryCta: "Open bots list",
           onboardingStepMarketsTitle: "Create market universe",
           onboardingStepMarketsDescription: "Build market groups with exchange, market type and symbols.",
           onboardingStepMarketsCta: "Open markets",
@@ -466,6 +465,9 @@ export const translations: Record<Locale, TranslationSchema> = {
           onboardingStepBotTitle: "Create and activate bot",
           onboardingStepBotDescription: "Assign strategy + markets, then start bot session.",
           onboardingStepBotCta: "Open bot creator",
+          onboardingStepActivateTitle: "Activate an existing bot",
+          onboardingStepActivateDescription: "Open bots list and enable at least one configured bot.",
+          onboardingStepActivateCta: "Open bots list",
           openPositionsTitle: "Open positions",
           openOrdersTitle: "Open orders",
           timeOpened: "Time",
@@ -1070,8 +1072,6 @@ export const translations: Record<Locale, TranslationSchema> = {
           noActiveBotsDescription: "Aktywuj co najmniej jednego bota, aby zobaczyc live runtime.",
           goToBots: "Przejdz do botow",
           onboardingBadge: "Szybki start",
-          onboardingPrimaryCta: "Stworz i aktywuj bota",
-          onboardingSecondaryCta: "Otworz liste botow",
           onboardingStepMarketsTitle: "Stworz uniwersum rynkow",
           onboardingStepMarketsDescription: "Zbuduj grupy rynkow: gielda, typ rynku i symbole.",
           onboardingStepMarketsCta: "Otworz rynki",
@@ -1084,6 +1084,9 @@ export const translations: Record<Locale, TranslationSchema> = {
           onboardingStepBotTitle: "Stworz i aktywuj bota",
           onboardingStepBotDescription: "Podepnij strategie i rynki, potem uruchom sesje.",
           onboardingStepBotCta: "Otworz kreator bota",
+          onboardingStepActivateTitle: "Aktywuj istniejacego bota",
+          onboardingStepActivateDescription: "Przejdz do listy botow i wlacz co najmniej jednego skonfigurowanego bota.",
+          onboardingStepActivateCta: "Otworz liste botow",
           openPositionsTitle: "Otwarte pozycje",
           openOrdersTitle: "Otwarte zlecenia",
           timeOpened: "Czas",

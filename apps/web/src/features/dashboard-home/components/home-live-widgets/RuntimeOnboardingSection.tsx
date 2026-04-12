@@ -17,12 +17,6 @@ type RuntimeOnboardingSectionProps = {
   description: string;
   badgeLabel: string;
   steps: RuntimeOnboardingStep[];
-  primaryCtaLabel: string;
-  secondaryCtaLabel: string;
-  primaryHref: string;
-  secondaryHref: string;
-  primaryButtonClassName: string;
-  secondaryButtonClassName: string;
 };
 
 export default function RuntimeOnboardingSection(props: RuntimeOnboardingSectionProps) {
@@ -55,15 +49,6 @@ export default function RuntimeOnboardingSection(props: RuntimeOnboardingSection
           </li>
         ))}
       </ol>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Link href={props.primaryHref} className={props.primaryButtonClassName}>
-          {props.primaryCtaLabel}
-        </Link>
-        <Link href={props.secondaryHref} className={props.secondaryButtonClassName}>
-          {props.secondaryCtaLabel}
-        </Link>
-      </div>
     </section>
   );
 }
