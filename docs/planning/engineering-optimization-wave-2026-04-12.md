@@ -2,6 +2,8 @@
 
 Goal: improve maintainability, reliability, and performance across API + Web after `NX-01..NX-05`.
 
+Execution queue (tiny commits): `docs/planning/engineering-optimization-next-commits-2026-04-12.md`.
+
 ## Review Evidence (repo-wide)
 1. API still has many local symbol/base-currency normalization variants (`trim().toUpperCase()`), for example:
    - `apps/api/src/modules/wallets/wallets.service.ts:21`

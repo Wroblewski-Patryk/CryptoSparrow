@@ -20,6 +20,7 @@ Operational queue for one-task execution runs.
 - [ ] `DCP-10 docs(route-contract): publish canonical route-to-feature-to-api mapping with ownership and guardrails`
 - [ ] `DCP-11 tooling(docs-parity): add script to verify module+route inventories against canonical docs`
 - [ ] `DCP-12 qa(docs-evidence): run parity check, publish evidence artifact, and close documentation hardening wave`
+- [ ] `OPTC-00 planning(optimization): execute engineering optimization queue from docs/planning/engineering-optimization-next-commits-2026-04-12.md after DCP wave`
 ## BLOCKED
 - none
 
