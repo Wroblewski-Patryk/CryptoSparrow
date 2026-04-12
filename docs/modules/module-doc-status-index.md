@@ -40,10 +40,10 @@ Status legend:
 
 | Layer | Module | Source Path | Target Deep-Dive File | Status | Planned Task |
 |---|---|---|---|---|---|
-| web | admin | `apps/web/src/features/admin` | `docs/modules/web-admin.md` | Planned | DCP-08 |
-| web | auth | `apps/web/src/features/auth` | `docs/modules/web-auth.md` | Planned | DCP-08 |
-| web | profile | `apps/web/src/features/profile` | `docs/modules/web-profile.md` | Planned | DCP-08 |
-| web | dashboard-home | `apps/web/src/features/dashboard-home` | `docs/modules/web-dashboard-home.md` | Planned | DCP-08 |
+| web | admin | `apps/web/src/features/admin` | `docs/modules/web-admin.md` | Published | DCP-08 |
+| web | auth | `apps/web/src/features/auth` | `docs/modules/web-auth.md` | Published | DCP-08 |
+| web | profile | `apps/web/src/features/profile` | `docs/modules/web-profile.md` | Published | DCP-08 |
+| web | dashboard-home | `apps/web/src/features/dashboard-home` | `docs/modules/web-dashboard-home.md` | Published | DCP-08 |
 | web | bots | `apps/web/src/features/bots` | `docs/modules/web-bots.md` | Planned | DCP-09 |
 | web | backtest | `apps/web/src/features/backtest` | `docs/modules/web-backtest.md` | Planned | DCP-09 |
 | web | strategies | `apps/web/src/features/strategies` | `docs/modules/web-strategies.md` | Planned | DCP-09 |

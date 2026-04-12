@@ -1474,7 +1474,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `DCP-05 docs(api-trading-core): author deep-dives for engine/exchange/market-data/market-stream`
 - [x] `DCP-06 docs(api-trading-domain): author deep-dives for strategies/markets/bots/orders/positions/backtests`
 - [x] `DCP-07 docs(api-support): author deep-dives for reports/subscriptions/wallets/icons/upload/pagination/isolation`
-- [ ] `DCP-08 docs(web-core): author deep-dives for dashboard-home/auth/profile/admin flows`
+- [x] `DCP-08 docs(web-core): author deep-dives for dashboard-home/auth/profile/admin flows`
 - [ ] `DCP-09 docs(web-trading): author deep-dives for bots/backtest/strategies/markets/exchanges/orders/positions/wallets/reports/logs`
 - [ ] `DCP-10 docs(route-contract): publish canonical route-to-feature-to-api mapping with ownership and guardrails`
 - [ ] `DCP-11 tooling(docs-parity): add script to verify module+route inventories against canonical docs`
@@ -1489,6 +1489,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-12: Completed `DCP-05` by authoring API trading-core deep-dives (`engine`, `exchange`, `market-data`, `market-stream`) and marking those modules as `Published` in `docs/modules/module-doc-status-index.md`.
 - 2026-04-12: Completed `DCP-06` by authoring API trading-domain deep-dives (`strategies`, `markets`, `bots`, `orders`, `positions`, `backtests`) and marking those modules as `Published` in `docs/modules/module-doc-status-index.md`.
 - 2026-04-12: Completed `DCP-07` by authoring API support deep-dives (`reports`, `subscriptions`, `wallets`, `icons`, `upload`, `pagination`, `isolation`, `logs`) and marking those modules as `Published` in `docs/modules/module-doc-status-index.md`.
+- 2026-04-12: Completed `DCP-08` by authoring web-core deep-dives (`dashboard-home`, `auth`, `profile`, `admin`) and marking those modules as `Published` in `docs/modules/module-doc-status-index.md`.
 
 ## Engineering Optimization Wave (2026-04-12)
 - [ ] `OPT-01 error-taxonomy(api): replace string-code Error.message flow with typed domain errors + central mapper`
