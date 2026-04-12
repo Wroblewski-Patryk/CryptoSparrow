@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `NX-03 feat(wallet-metadata): source baseCurrency/marketType options from exchange capabilities instead of free-text assumptions`
 - [ ] `NX-04 refactor(forms-core): unify shared form normalization/error wiring across wallets/markets/backtests`
 - [ ] `NX-05 hardening(web-runtime): add reusable async-state/retry helpers for profile+wallet critical flows`
 ## NEXT
@@ -16,6 +15,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `NX-03 feat(wallet-metadata): source baseCurrency/marketType options from exchange capabilities instead of free-text assumptions`
+  - 2026-04-12: Added `GET /dashboard/wallets/metadata` API contract that resolves market-type/base-currency options from exchange capability source with market-catalog integration and fail-safe capability fallbacks; wired wallet create/edit form to consume this metadata endpoint (dynamic marketType options + per-marketType baseCurrency list) and validated with `pnpm --filter api run typecheck`, `pnpm --filter api test -- src/modules/wallets/wallets.e2e.test.ts`, `pnpm --filter web test -- src/features/wallets/components/WalletCreateEditForm.test.tsx`, and `pnpm --filter web run typecheck` (PASS).
 - [x] `NX-02 ux(wallet-form): redesign create/edit wallet form mode flow (LIVE/PAPER switch + deterministic conditional fields)`
   - 2026-04-12: Refactored wallet create/edit mode flow to deterministic sections (`PAPER` and `LIVE` separated), added explicit mode hints, and enforced mode-switch reset of irrelevant fields (`apiKeyId/liveAllocation*`) to prevent stale cross-mode leakage; validated with `pnpm --filter web test -- src/features/wallets/components/WalletCreateEditForm.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - [x] `QH-01 refactor(api-profile): remove production as-any casts in profile basic service with Prisma-safe typing`

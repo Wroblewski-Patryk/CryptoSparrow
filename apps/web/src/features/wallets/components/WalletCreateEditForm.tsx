@@ -8,17 +8,17 @@ import { LuActivity, LuBadgeCheck, LuWallet } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
 import { EXCHANGE_OPTIONS, supportsExchangeCapability } from '@/features/exchanges/exchangeCapabilities';
 import { fetchApiKeys } from '@/features/profile/services/apiKeys.service';
-import { fetchMarketCatalog } from '@/features/markets/services/markets.service';
 import type { ApiKey } from '@/features/profile/types/apiKey.type';
 import { ErrorState, LoadingState } from '@/ui/components/ViewState';
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
 import { normalizeSymbol } from '@/lib/symbols';
-import { createWallet, getWallet, previewWalletBalance, updateWallet } from '../services/wallets.service';
+import { createWallet, fetchWalletMetadata, getWallet, previewWalletBalance, updateWallet } from '../services/wallets.service';
 import type {
   CreateWalletInput,
   Wallet,
   WalletAllocationMode,
   WalletBalancePreview,
+  WalletMetadata,
   WalletMode,
 } from '../types/wallet.type';
 
@@ -37,6 +37,25 @@ type WalletFormState = {
 type WalletCreateEditFormProps = {
   editId?: string | null;
   formId?: string;
+};
+
+type WalletMarketType = WalletFormState['marketType'];
+type WalletMarketTypeMetadata = WalletMetadata['byMarketType'][WalletMarketType];
+
+const DEFAULT_MARKET_TYPE_OPTIONS: WalletMarketType[] = ['FUTURES', 'SPOT'];
+const DEFAULT_MARKET_TYPE_METADATA: Record<WalletMarketType, WalletMarketTypeMetadata> = {
+  FUTURES: {
+    marketType: 'FUTURES',
+    baseCurrency: 'USDT',
+    baseCurrencies: ['USDT'],
+    source: 'EXCHANGE_CAPABILITIES',
+  },
+  SPOT: {
+    marketType: 'SPOT',
+    baseCurrency: 'USDT',
+    baseCurrencies: ['USDT'],
+    source: 'EXCHANGE_CAPABILITIES',
+  },
 };
 
 const buildDefaultForm = (): WalletFormState => ({
@@ -109,9 +128,12 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
   const [error, setError] = useState<string | null>(null);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [form, setForm] = useState<WalletFormState>(buildDefaultForm());
-  const [baseCurrencyOptions, setBaseCurrencyOptions] = useState<string[]>(['USDT']);
-  const [baseCurrencyOptionsLoading, setBaseCurrencyOptionsLoading] = useState(false);
-  const [baseCurrencyOptionsError, setBaseCurrencyOptionsError] = useState<string | null>(null);
+  const [marketTypeOptions, setMarketTypeOptions] = useState<WalletMarketType[]>(DEFAULT_MARKET_TYPE_OPTIONS);
+  const [marketTypeMetadataByType, setMarketTypeMetadataByType] = useState<
+    Record<WalletMarketType, WalletMarketTypeMetadata>
+  >(DEFAULT_MARKET_TYPE_METADATA);
+  const [walletMetadataLoading, setWalletMetadataLoading] = useState(false);
+  const [walletMetadataError, setWalletMetadataError] = useState<string | null>(null);
   const [showValidation, setShowValidation] = useState(false);
 
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -137,8 +159,8 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
             exchange: 'Gielda',
             marketType: 'Rynek',
             baseCurrency: 'Waluta bazowa',
-            baseCurrencyLoading: 'Ladowanie walut bazowych...',
-            baseCurrencyCatalogError: 'Nie udalo sie pobrac walut bazowych z katalogu gieldy.',
+            baseCurrencyLoading: 'Ladowanie metadanych rynku...',
+            baseCurrencyCatalogError: 'Nie udalo sie pobrac opcji rynku i waluty bazowej.',
             paperInitialBalance: 'Kwota startowa paper',
             liveAllocationMode: 'Tryb limitu LIVE',
             liveAllocationValue: 'Wartosc limitu LIVE',
@@ -188,8 +210,8 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
             exchange: 'Exchange',
             marketType: 'Market type',
             baseCurrency: 'Base currency',
-            baseCurrencyLoading: 'Loading base currencies...',
-            baseCurrencyCatalogError: 'Could not fetch base currencies from exchange catalog.',
+            baseCurrencyLoading: 'Loading market metadata...',
+            baseCurrencyCatalogError: 'Could not fetch market/base-currency options.',
             paperInitialBalance: 'Paper start balance',
             liveAllocationMode: 'LIVE allocation mode',
             liveAllocationValue: 'LIVE allocation value',
@@ -255,62 +277,93 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
   useEffect(() => {
     let cancelled = false;
 
-    const loadBaseCurrencies = async () => {
-      const fallbackOptions = ['USDT'];
-
-      if (!supportsExchangeCapability(form.exchange, 'MARKET_CATALOG')) {
-        setBaseCurrencyOptions(fallbackOptions);
-        setBaseCurrencyOptionsLoading(false);
-        setBaseCurrencyOptionsError(null);
-        return;
-      }
-
-      setBaseCurrencyOptionsLoading(true);
-      setBaseCurrencyOptionsError(null);
+    const loadWalletMetadata = async () => {
+      setWalletMetadataLoading(true);
+      setWalletMetadataError(null);
       try {
-        const catalog = await fetchMarketCatalog({
+        const metadata = await fetchWalletMetadata({
           exchange: form.exchange,
-          marketType: form.marketType,
         });
         if (cancelled) return;
+        const nextMarketTypes =
+          metadata.marketTypes.length > 0 ? metadata.marketTypes : DEFAULT_MARKET_TYPE_OPTIONS;
+        const nextMetadataByType: Record<WalletMarketType, WalletMarketTypeMetadata> = {
+          FUTURES: metadata.byMarketType.FUTURES ?? DEFAULT_MARKET_TYPE_METADATA.FUTURES,
+          SPOT: metadata.byMarketType.SPOT ?? DEFAULT_MARKET_TYPE_METADATA.SPOT,
+        };
 
-        const normalizedOptions = [...new Set((catalog.baseCurrencies ?? []).map(normalizeSymbol).filter(Boolean))].sort(
-          (a, b) => a.localeCompare(b)
-        );
-        const options = normalizedOptions.length > 0 ? normalizedOptions : fallbackOptions;
-        const defaultBase = normalizeSymbol(catalog.baseCurrency) || options[0] || 'USDT';
-        setBaseCurrencyOptions(options);
+        setMarketTypeOptions(nextMarketTypes);
+        setMarketTypeMetadataByType(nextMetadataByType);
+
         setForm((prev) => {
+          const nextMarketType = nextMarketTypes.includes(prev.marketType)
+            ? prev.marketType
+            : (metadata.marketType as WalletMarketType);
+          const nextMarketMetadata =
+            nextMetadataByType[nextMarketType] ?? DEFAULT_MARKET_TYPE_METADATA[nextMarketType];
+          const normalizedOptions = [
+            ...new Set((nextMarketMetadata.baseCurrencies ?? []).map(normalizeSymbol).filter(Boolean)),
+          ];
+          const options = normalizedOptions.length > 0 ? normalizedOptions : ['USDT'];
+          const defaultBase = normalizeSymbol(nextMarketMetadata.baseCurrency) || options[0] || 'USDT';
           const normalizedCurrent = normalizeSymbol(prev.baseCurrency);
           const nextBase = options.includes(normalizedCurrent) ? normalizedCurrent : defaultBase;
-          if (normalizedCurrent === nextBase && prev.baseCurrency === nextBase) return prev;
-          return { ...prev, baseCurrency: nextBase };
+          if (
+            prev.marketType === nextMarketType &&
+            normalizedCurrent === nextBase &&
+            prev.baseCurrency === nextBase
+          ) {
+            return prev;
+          }
+          return { ...prev, marketType: nextMarketType, baseCurrency: nextBase };
         });
       } catch (err) {
         if (cancelled) return;
-        setBaseCurrencyOptions(fallbackOptions);
-        setBaseCurrencyOptionsError(getAxiosMessage(err) ?? copy.baseCurrencyCatalogError);
+        setMarketTypeOptions(DEFAULT_MARKET_TYPE_OPTIONS);
+        setMarketTypeMetadataByType(DEFAULT_MARKET_TYPE_METADATA);
+        setWalletMetadataError(getAxiosMessage(err) ?? copy.baseCurrencyCatalogError);
       } finally {
         if (!cancelled) {
-          setBaseCurrencyOptionsLoading(false);
+          setWalletMetadataLoading(false);
         }
       }
     };
 
-    void loadBaseCurrencies();
+    void loadWalletMetadata();
 
     return () => {
       cancelled = true;
     };
-  }, [copy.baseCurrencyCatalogError, form.exchange, form.marketType]);
+  }, [copy.baseCurrencyCatalogError, form.exchange]);
+
+  const activeMarketTypeMetadata = useMemo(
+    () => marketTypeMetadataByType[form.marketType] ?? DEFAULT_MARKET_TYPE_METADATA[form.marketType],
+    [form.marketType, marketTypeMetadataByType]
+  );
+
+  useEffect(() => {
+    const normalizedOptions = [
+      ...new Set((activeMarketTypeMetadata.baseCurrencies ?? []).map(normalizeSymbol).filter(Boolean)),
+    ];
+    const options = normalizedOptions.length > 0 ? normalizedOptions : ['USDT'];
+    const defaultBase = normalizeSymbol(activeMarketTypeMetadata.baseCurrency) || options[0] || 'USDT';
+
+    setForm((prev) => {
+      if (prev.marketType !== form.marketType) return prev;
+      const normalizedCurrent = normalizeSymbol(prev.baseCurrency);
+      const nextBase = options.includes(normalizedCurrent) ? normalizedCurrent : defaultBase;
+      if (normalizedCurrent === nextBase && prev.baseCurrency === nextBase) return prev;
+      return { ...prev, baseCurrency: nextBase };
+    });
+  }, [activeMarketTypeMetadata, form.marketType]);
 
   const resolvedBaseCurrencyOptions = useMemo(() => {
     const current = normalizeSymbol(form.baseCurrency);
-    const options = [...new Set([...baseCurrencyOptions, current].filter(Boolean))].sort((a, b) =>
-      a.localeCompare(b)
-    );
+    const options = [
+      ...new Set([...(activeMarketTypeMetadata.baseCurrencies ?? []).map(normalizeSymbol), current].filter(Boolean)),
+    ].sort((a, b) => a.localeCompare(b));
     return options.length > 0 ? options : ['USDT'];
-  }, [baseCurrencyOptions, form.baseCurrency]);
+  }, [activeMarketTypeMetadata.baseCurrencies, form.baseCurrency]);
 
   const compatibleApiKeys = useMemo(
     () => apiKeys.filter((item) => item.exchange === form.exchange),
@@ -542,11 +595,15 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
                 className='select select-bordered'
                 value={form.marketType}
                 onChange={(event) =>
-                  setForm((prev) => ({ ...prev, marketType: event.target.value as 'FUTURES' | 'SPOT' }))
+                  setForm((prev) => ({ ...prev, marketType: event.target.value as WalletMarketType }))
                 }
+                disabled={walletMetadataLoading}
               >
-                <option value='FUTURES'>FUTURES</option>
-                <option value='SPOT'>SPOT</option>
+                {marketTypeOptions.map((marketType) => (
+                  <option key={marketType} value={marketType}>
+                    {marketType}
+                  </option>
+                ))}
               </select>
             </label>
 
@@ -556,7 +613,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
                 className='select select-bordered'
                 value={form.baseCurrency}
                 onChange={(event) => setForm((prev) => ({ ...prev, baseCurrency: normalizeSymbol(event.target.value) }))}
-                disabled={baseCurrencyOptionsLoading}
+                disabled={walletMetadataLoading}
               >
                 {resolvedBaseCurrencyOptions.map((currency) => (
                   <option key={currency} value={currency}>
@@ -564,11 +621,11 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
                   </option>
                 ))}
               </select>
-              {baseCurrencyOptionsLoading ? (
+              {walletMetadataLoading ? (
                 <span className='text-xs opacity-70'>{copy.baseCurrencyLoading}</span>
               ) : null}
-              {baseCurrencyOptionsError ? (
-                <span className='text-xs text-warning'>{baseCurrencyOptionsError}</span>
+              {walletMetadataError ? (
+                <span className='text-xs text-warning'>{walletMetadataError}</span>
               ) : null}
               {showValidation && fieldErrors.baseCurrency ? (
                 <span className='text-xs text-error'>{fieldErrors.baseCurrency}</span>

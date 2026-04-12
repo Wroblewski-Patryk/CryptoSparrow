@@ -4,6 +4,7 @@ import {
   createWallet,
   deleteWallet,
   getWallet,
+  listWalletMetadata,
   listWallets,
   previewBalance,
   updateWallet,
@@ -15,6 +16,7 @@ const walletWriteLimiter = createRateLimiter({ windowMs: 60_000, max: 40 });
 const walletPreviewLimiter = createRateLimiter({ windowMs: 60_000, max: 20, keyScope: 'user_exchange' });
 
 walletsRouter.get('/', walletReadLimiter, listWallets);
+walletsRouter.get('/metadata', walletReadLimiter, listWalletMetadata);
 walletsRouter.post('/preview-balance', walletPreviewLimiter, previewBalance);
 walletsRouter.get('/:id', walletReadLimiter, getWallet);
 walletsRouter.post('/', walletWriteLimiter, createWallet);

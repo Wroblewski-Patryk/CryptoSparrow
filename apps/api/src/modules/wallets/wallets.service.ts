@@ -1,10 +1,18 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
-import { assertExchangeCapability } from '../exchange/exchangeCapabilities';
+import {
+  assertExchangeCapability,
+  getExchangeBaseCurrencyFallbacks,
+  getExchangeMarketTypeOptions,
+  supportsExchangeCapability,
+  type ExchangeMarketType,
+} from '../exchange/exchangeCapabilities';
 import { decrypt } from '../../utils/crypto';
+import { getMarketCatalog } from '../markets/markets.service';
 import {
   CreateWalletDto,
   ListWalletsQueryDto,
+  WalletMetadataQueryDto,
   UpdateWalletDto,
   WalletBalancePreviewDto,
 } from './wallets.types';
@@ -72,6 +80,113 @@ const assertWalletLiveApiKeyCompatibility = async (params: {
   if (apiKey.exchange !== params.exchange) {
     throw new Error('WALLET_LIVE_API_KEY_EXCHANGE_MISMATCH');
   }
+};
+
+type WalletMetadataMarketTypeEntry = {
+  marketType: ExchangeMarketType;
+  baseCurrency: string;
+  baseCurrencies: string[];
+  source: 'MARKET_CATALOG' | 'EXCHANGE_CAPABILITIES';
+};
+
+const resolveWalletMetadataForMarketType = async (params: {
+  exchange: CreateWalletDto['exchange'];
+  marketType: ExchangeMarketType;
+}): Promise<WalletMetadataMarketTypeEntry> => {
+  const fallbackCurrencies = getExchangeBaseCurrencyFallbacks(params.exchange, params.marketType)
+    .map((item) => normalizeBaseCurrency(item))
+    .filter(Boolean);
+  const resolvedFallbackCurrencies =
+    fallbackCurrencies.length > 0 ? [...new Set(fallbackCurrencies)] : ['USDT'];
+  const fallbackBaseCurrency = resolvedFallbackCurrencies[0] ?? 'USDT';
+
+  if (!supportsExchangeCapability(params.exchange, 'MARKET_CATALOG')) {
+    return {
+      marketType: params.marketType,
+      baseCurrency: fallbackBaseCurrency,
+      baseCurrencies: resolvedFallbackCurrencies,
+      source: 'EXCHANGE_CAPABILITIES',
+    };
+  }
+
+  try {
+    const catalog = await getMarketCatalog(undefined, params.marketType, params.exchange);
+    const normalizedCatalogBaseCurrencies = (catalog.baseCurrencies ?? [])
+      .map((item) => normalizeBaseCurrency(item))
+      .filter(Boolean);
+    const baseCurrencies = normalizedCatalogBaseCurrencies.length
+      ? [...new Set(normalizedCatalogBaseCurrencies)]
+      : resolvedFallbackCurrencies;
+    const baseCurrency = baseCurrencies.includes(normalizeBaseCurrency(catalog.baseCurrency))
+      ? normalizeBaseCurrency(catalog.baseCurrency)
+      : (baseCurrencies[0] ?? fallbackBaseCurrency);
+
+    return {
+      marketType: params.marketType,
+      baseCurrency,
+      baseCurrencies,
+      source: 'MARKET_CATALOG',
+    };
+  } catch {
+    return {
+      marketType: params.marketType,
+      baseCurrency: fallbackBaseCurrency,
+      baseCurrencies: resolvedFallbackCurrencies,
+      source: 'EXCHANGE_CAPABILITIES',
+    };
+  }
+};
+
+export const getWalletMetadata = async (query: WalletMetadataQueryDto) => {
+  const marketTypes = getExchangeMarketTypeOptions(query.exchange);
+  const resolvedMarketType =
+    query.marketType && marketTypes.includes(query.marketType)
+      ? query.marketType
+      : (marketTypes[0] ?? 'SPOT');
+
+  const marketTypeEntries = await Promise.all(
+    marketTypes.map((marketType) =>
+      resolveWalletMetadataForMarketType({
+        exchange: query.exchange,
+        marketType,
+      })
+    )
+  );
+
+  const byMarketType = marketTypeEntries.reduce<
+    Record<ExchangeMarketType, WalletMetadataMarketTypeEntry>
+  >(
+    (acc, entry) => {
+      acc[entry.marketType] = entry;
+      return acc;
+    },
+    {
+      FUTURES: {
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        baseCurrencies: ['USDT'],
+        source: 'EXCHANGE_CAPABILITIES',
+      },
+      SPOT: {
+        marketType: 'SPOT',
+        baseCurrency: 'USDT',
+        baseCurrencies: ['USDT'],
+        source: 'EXCHANGE_CAPABILITIES',
+      },
+    }
+  );
+
+  const selected = byMarketType[resolvedMarketType] ?? byMarketType.SPOT;
+
+  return {
+    exchange: query.exchange,
+    marketTypes,
+    marketType: selected.marketType,
+    baseCurrency: selected.baseCurrency,
+    baseCurrencies: selected.baseCurrencies,
+    source: selected.source,
+    byMarketType,
+  };
 };
 
 export const listWallets = async (userId: string, query: ListWalletsQueryDto = {}) =>

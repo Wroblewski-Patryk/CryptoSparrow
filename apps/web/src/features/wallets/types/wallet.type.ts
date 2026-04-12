@@ -55,3 +55,22 @@ export type WalletBalancePreview = {
   fetchedAt: string;
   source: 'BINANCE';
 };
+
+export type WalletMetadataMarketType = 'FUTURES' | 'SPOT';
+
+export type WalletMetadataMarketTypeEntry = {
+  marketType: WalletMetadataMarketType;
+  baseCurrency: string;
+  baseCurrencies: string[];
+  source: 'MARKET_CATALOG' | 'EXCHANGE_CAPABILITIES';
+};
+
+export type WalletMetadata = {
+  exchange: ExchangeOption;
+  marketTypes: WalletMetadataMarketType[];
+  marketType: WalletMetadataMarketType;
+  baseCurrency: string;
+  baseCurrencies: string[];
+  source: 'MARKET_CATALOG' | 'EXCHANGE_CAPABILITIES';
+  byMarketType: Record<WalletMetadataMarketType, WalletMetadataMarketTypeEntry>;
+};

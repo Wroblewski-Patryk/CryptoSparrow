@@ -5,6 +5,7 @@ export type ExchangeCapability =
   | 'PAPER_PRICING_FEED'
   | 'LIVE_EXECUTION'
   | 'API_KEY_PROBE';
+export type ExchangeMarketType = 'FUTURES' | 'SPOT';
 
 type ExchangeCapabilityMatrix = Record<ExchangeCapability, boolean>;
 
@@ -43,10 +44,52 @@ export const EXCHANGE_CAPABILITIES: Record<Exchange, ExchangeCapabilityMatrix> =
   },
 };
 
+const EXCHANGE_MARKET_TYPES: Record<Exchange, ExchangeMarketType[]> = {
+  BINANCE: ['FUTURES', 'SPOT'],
+  BYBIT: ['FUTURES', 'SPOT'],
+  OKX: ['FUTURES', 'SPOT'],
+  KRAKEN: ['SPOT'],
+  COINBASE: ['SPOT'],
+};
+
+const EXCHANGE_BASE_CURRENCY_FALLBACKS: Record<
+  Exchange,
+  Record<ExchangeMarketType, string[]>
+> = {
+  BINANCE: {
+    FUTURES: ['USDT', 'USDC', 'BUSD'],
+    SPOT: ['USDT', 'USDC', 'BUSD', 'BTC', 'ETH', 'EUR'],
+  },
+  BYBIT: {
+    FUTURES: ['USDT', 'USDC'],
+    SPOT: ['USDT', 'USDC', 'BTC', 'ETH'],
+  },
+  OKX: {
+    FUTURES: ['USDT', 'USDC'],
+    SPOT: ['USDT', 'USDC', 'BTC', 'ETH'],
+  },
+  KRAKEN: {
+    FUTURES: ['USDT'],
+    SPOT: ['USD', 'EUR', 'BTC'],
+  },
+  COINBASE: {
+    FUTURES: ['USDT'],
+    SPOT: ['USD', 'USDC', 'BTC'],
+  },
+};
+
 export const supportsExchangeCapability = (
   exchange: Exchange,
   capability: ExchangeCapability
 ): boolean => EXCHANGE_CAPABILITIES[exchange][capability];
+
+export const getExchangeMarketTypeOptions = (exchange: Exchange): ExchangeMarketType[] =>
+  [...(EXCHANGE_MARKET_TYPES[exchange] ?? ['SPOT'])];
+
+export const getExchangeBaseCurrencyFallbacks = (
+  exchange: Exchange,
+  marketType: ExchangeMarketType
+): string[] => [...(EXCHANGE_BASE_CURRENCY_FALLBACKS[exchange]?.[marketType] ?? ['USDT'])];
 
 export class ExchangeNotImplementedError extends Error {
   readonly code = EXCHANGE_NOT_IMPLEMENTED_CODE;
@@ -77,4 +120,3 @@ export const assertExchangeCapability = (
     throw new ExchangeNotImplementedError(exchange, capability);
   }
 };
-

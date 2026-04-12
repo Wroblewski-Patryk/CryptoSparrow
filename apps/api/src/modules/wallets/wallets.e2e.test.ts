@@ -51,6 +51,45 @@ describe('Wallets balance preview contract', () => {
     expect(res.body.error.message).toBe('Missing token');
   });
 
+  it('returns exchange-driven wallet metadata with market-type specific base currencies', async () => {
+    const agent = await registerAndLogin('wallet-metadata-owner@example.com');
+
+    const metadataRes = await agent.get('/dashboard/wallets/metadata').query({
+      exchange: 'BINANCE',
+      marketType: 'SPOT',
+    });
+
+    expect(metadataRes.status).toBe(200);
+    expect(metadataRes.body).toMatchObject({
+      exchange: 'BINANCE',
+      marketType: 'SPOT',
+      source: 'MARKET_CATALOG',
+    });
+    expect(metadataRes.body.marketTypes).toEqual(expect.arrayContaining(['FUTURES', 'SPOT']));
+    expect(metadataRes.body.baseCurrencies).toEqual(expect.arrayContaining(['USDT', 'EUR']));
+    expect(metadataRes.body.byMarketType.SPOT.baseCurrencies).toEqual(
+      expect.arrayContaining(['USDT', 'EUR'])
+    );
+    expect(metadataRes.body.byMarketType.FUTURES.baseCurrencies).toContain('USDT');
+  });
+
+  it('falls back to exchange capability defaults when market catalog is unavailable', async () => {
+    const agent = await registerAndLogin('wallet-metadata-placeholder@example.com');
+
+    const metadataRes = await agent.get('/dashboard/wallets/metadata').query({
+      exchange: 'OKX',
+      marketType: 'SPOT',
+    });
+
+    expect(metadataRes.status).toBe(200);
+    expect(metadataRes.body).toMatchObject({
+      exchange: 'OKX',
+      marketType: 'SPOT',
+      source: 'EXCHANGE_CAPABILITIES',
+    });
+    expect(metadataRes.body.baseCurrencies).toEqual(expect.arrayContaining(['USDT', 'USDC']));
+  });
+
   it('returns wallet balance preview for owned API key with allocation applied', async () => {
     const agent = await registerAndLogin('wallet-preview-owner@example.com');
 

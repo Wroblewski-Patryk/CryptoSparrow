@@ -8,7 +8,7 @@ const createWalletMock = vi.hoisted(() => vi.fn());
 const getWalletMock = vi.hoisted(() => vi.fn());
 const updateWalletMock = vi.hoisted(() => vi.fn());
 const previewWalletBalanceMock = vi.hoisted(() => vi.fn());
-const fetchMarketCatalogMock = vi.hoisted(() => vi.fn());
+const fetchWalletMetadataMock = vi.hoisted(() => vi.fn());
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -24,15 +24,12 @@ vi.mock('@/features/profile/services/apiKeys.service', () => ({
   fetchApiKeys: fetchApiKeysMock,
 }));
 
-vi.mock('@/features/markets/services/markets.service', () => ({
-  fetchMarketCatalog: fetchMarketCatalogMock,
-}));
-
 vi.mock('../services/wallets.service', () => ({
   createWallet: createWalletMock,
   getWallet: getWalletMock,
   updateWallet: updateWalletMock,
   previewWalletBalance: previewWalletBalanceMock,
+  fetchWalletMetadata: fetchWalletMetadataMock,
 }));
 
 describe('WalletCreateEditForm', () => {
@@ -43,10 +40,28 @@ describe('WalletCreateEditForm', () => {
     getWalletMock.mockReset();
     updateWalletMock.mockReset();
     previewWalletBalanceMock.mockReset();
-    fetchMarketCatalogMock.mockReset();
-    fetchMarketCatalogMock.mockResolvedValue({
+    fetchWalletMetadataMock.mockReset();
+    fetchWalletMetadataMock.mockResolvedValue({
+      exchange: 'BINANCE',
+      marketTypes: ['FUTURES', 'SPOT'],
+      marketType: 'FUTURES',
       baseCurrencies: ['USDT', 'USDC'],
       baseCurrency: 'USDT',
+      source: 'MARKET_CATALOG',
+      byMarketType: {
+        FUTURES: {
+          marketType: 'FUTURES',
+          baseCurrencies: ['USDT', 'USDC'],
+          baseCurrency: 'USDT',
+          source: 'MARKET_CATALOG',
+        },
+        SPOT: {
+          marketType: 'SPOT',
+          baseCurrencies: ['USDT', 'USDC', 'EUR'],
+          baseCurrency: 'USDT',
+          source: 'MARKET_CATALOG',
+        },
+      },
     });
   });
 
@@ -172,5 +187,55 @@ describe('WalletCreateEditForm', () => {
         })
       );
     });
+  });
+
+  it('uses wallet metadata endpoint to resolve market type options', async () => {
+    fetchApiKeysMock.mockResolvedValue([]);
+    fetchWalletMetadataMock.mockResolvedValue({
+      exchange: 'COINBASE',
+      marketTypes: ['SPOT'],
+      marketType: 'SPOT',
+      baseCurrencies: ['USD', 'USDC'],
+      baseCurrency: 'USD',
+      source: 'EXCHANGE_CAPABILITIES',
+      byMarketType: {
+        FUTURES: {
+          marketType: 'FUTURES',
+          baseCurrencies: ['USDT'],
+          baseCurrency: 'USDT',
+          source: 'EXCHANGE_CAPABILITIES',
+        },
+        SPOT: {
+          marketType: 'SPOT',
+          baseCurrencies: ['USD', 'USDC'],
+          baseCurrency: 'USD',
+          source: 'EXCHANGE_CAPABILITIES',
+        },
+      },
+    });
+
+    render(<WalletCreateEditForm />);
+
+    await waitFor(() => {
+      expect(fetchApiKeysMock).toHaveBeenCalled();
+    });
+
+    fireEvent.change(screen.getByLabelText('Gielda'), {
+      target: { value: 'COINBASE' },
+    });
+
+    await waitFor(() => {
+      expect(fetchWalletMetadataMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({ exchange: 'COINBASE' })
+      );
+    });
+
+    const marketTypeSelect = screen.getByLabelText('Rynek');
+    const marketTypeOptions = Array.from(marketTypeSelect.querySelectorAll('option')).map((option) => option.value);
+    expect(marketTypeOptions).toEqual(['SPOT']);
+
+    const baseCurrencySelect = screen.getByLabelText('Waluta bazowa');
+    const baseCurrencyOptions = Array.from(baseCurrencySelect.querySelectorAll('option')).map((option) => option.value);
+    expect(baseCurrencyOptions).toEqual(expect.arrayContaining(['USD', 'USDC']));
   });
 });

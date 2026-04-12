@@ -66,6 +66,11 @@ export const ListWalletsQuerySchema = z.object({
   exchange: z.enum(['BINANCE', 'BYBIT', 'OKX', 'KRAKEN', 'COINBASE']).optional(),
 });
 
+export const WalletMetadataQuerySchema = z.object({
+  exchange: z.enum(['BINANCE', 'BYBIT', 'OKX', 'KRAKEN', 'COINBASE']).default('BINANCE'),
+  marketType: z.enum(['FUTURES', 'SPOT']).optional(),
+});
+
 export const WalletBalancePreviewSchema = z
   .object({
     exchange: z.enum(['BINANCE', 'BYBIT', 'OKX', 'KRAKEN', 'COINBASE']).default('BINANCE'),
@@ -110,4 +115,5 @@ export const WalletBalancePreviewSchema = z
 export type CreateWalletDto = z.infer<typeof CreateWalletSchema>;
 export type UpdateWalletDto = z.infer<typeof UpdateWalletSchema>;
 export type ListWalletsQueryDto = z.infer<typeof ListWalletsQuerySchema>;
+export type WalletMetadataQueryDto = z.infer<typeof WalletMetadataQuerySchema>;
 export type WalletBalancePreviewDto = z.infer<typeof WalletBalancePreviewSchema>;

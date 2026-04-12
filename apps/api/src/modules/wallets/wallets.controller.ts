@@ -8,6 +8,7 @@ import {
   ListWalletsQuerySchema,
   UpdateWalletSchema,
   WalletBalancePreviewSchema,
+  WalletMetadataQuerySchema,
 } from './wallets.types';
 
 export const listWallets = async (req: Request, res: Response) => {
@@ -32,6 +33,19 @@ export const getWallet = async (req: Request, res: Response) => {
   if (!wallet) return sendError(res, 404, 'Not found');
 
   return res.json(wallet);
+};
+
+export const listWalletMetadata = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const query = WalletMetadataQuerySchema.parse(req.query);
+    const metadata = await walletsService.getWalletMetadata(query);
+    return res.json(metadata);
+  } catch (error) {
+    return sendValidationError(res, error);
+  }
 };
 
 export const createWallet = async (req: Request, res: Response) => {

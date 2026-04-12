@@ -5,6 +5,7 @@ import {
   Wallet,
   WalletBalancePreview,
   WalletBalancePreviewInput,
+  WalletMetadata,
 } from '../types/wallet.type';
 import type { ExchangeOption } from '@/features/exchanges/exchangeCapabilities';
 
@@ -38,5 +39,15 @@ export const deleteWallet = async (id: string): Promise<void> => {
 
 export const previewWalletBalance = async (payload: WalletBalancePreviewInput): Promise<WalletBalancePreview> => {
   const res = await api.post<WalletBalancePreview>('/dashboard/wallets/preview-balance', payload);
+  return res.data;
+};
+
+export const fetchWalletMetadata = async (params?: {
+  exchange?: ExchangeOption;
+  marketType?: 'FUTURES' | 'SPOT';
+}): Promise<WalletMetadata> => {
+  const res = await api.get<WalletMetadata>('/dashboard/wallets/metadata', {
+    params: params ?? undefined,
+  });
   return res.data;
 };
