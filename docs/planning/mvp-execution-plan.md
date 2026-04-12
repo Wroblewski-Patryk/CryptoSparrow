@@ -1435,3 +1435,16 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-11: Completed `LBT-12` web regression coverage for takeover/runtime dashboard behavior (imported `EXCHANGE_SYNC` visibility, takeover badge rendering, and compatibility wallet metric mapping), validated with `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` and `pnpm --filter web run build` (PASS).
 - 2026-04-11: Completed `LBT-14` by publishing strict local+VPS takeover verification runbook with fail-closed gates in `docs/operations/live-takeover-local-vps-strict-smoke-checklist-2026-04-11.md`.
 - 2026-04-11: Completed `LBT-15` evidence run by executing fresh local confidence commands (API/Web tests + typecheck/build) and attaching consolidated artifact/report (`docs/operations/_artifacts-live-takeover-confidence-2026-04-11T14-48-55-096Z.json`, `docs/operations/live-takeover-confidence-pack-2026-04-11.md`); strict VPS gate remains explicitly OPEN pending private-route ops verification and production rollout of `/dashboard/positions/takeover-status` (public probe returned `404`).
+
+## Repo Quality Hardening Queue (2026-04-12)
+- [x] `QH-01 refactor(api-profile): remove production as-any casts in profile basic service with Prisma-safe typing`
+- [x] `QH-02 refactor(api-logging): introduce shared structured logger and migrate API entrypoints/workers`
+- [x] `QH-03 refactor(web-theme): harden theme bootstrap script contract and maintainability`
+- [x] `QH-04 refactor(api-normalization): centralize symbol/baseCurrency normalization in bots/backtests hot paths`
+- [x] `QH-05 refactor(web-backtest): split oversized BacktestRunDetails into modular units under guardrails budget`
+- [ ] `QH-06 test(api-bots): split oversized bots.e2e suite into focused scenario files`
+- [ ] `QH-07 refactor(web-normalization): replace remaining local uppercase normalization variants in backtest/markets/strategies`
+- [ ] `QH-08 quality(repo): execute final lint/typecheck/guardrails sweep and publish evidence snapshot`
+
+### Progress Log (Repo Quality Hardening)
+- 2026-04-12: Completed `QH-05` by extracting locale copy dictionary from `BacktestRunDetails.tsx` into `backtestRunDetails.copy.ts`, reducing component size to 97,801 bytes (below 105,000-byte web budget); validated with `pnpm --filter web run typecheck` and targeted backtest test pack (`BacktestRunDetails`, `BacktestCreateForm`, `useBacktestRunCoreData`) PASS.
