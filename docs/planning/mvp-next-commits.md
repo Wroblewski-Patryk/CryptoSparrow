@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `DCP-09 docs(web-trading): author deep-dives for bots/backtest/strategies/markets/exchanges/orders/positions/wallets/reports/logs`
 ## NEXT
 - [ ] `DCP-10 docs(route-contract): publish canonical route-to-feature-to-api mapping with ownership and guardrails`
 - [ ] `DCP-11 tooling(docs-parity): add script to verify module+route inventories against canonical docs`
@@ -17,6 +16,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `DCP-09 docs(web-trading): author deep-dives for bots/backtest/strategies/markets/exchanges/orders/positions/wallets/reports/logs`
+  - 2026-04-12: Published `docs/modules/web-bots.md`, `docs/modules/web-backtest.md`, `docs/modules/web-strategies.md`, `docs/modules/web-markets.md`, `docs/modules/web-exchanges.md`, `docs/modules/web-orders.md`, `docs/modules/web-positions.md`, `docs/modules/web-wallets.md`, `docs/modules/web-reports.md`, `docs/modules/web-logs.md`, and `docs/modules/web-icons.md`; updated module coverage index statuses to `Published`.
 - [x] `DCP-08 docs(web-core): author deep-dives for dashboard-home/auth/profile/admin flows`
   - 2026-04-12: Published `docs/modules/web-dashboard-home.md`, `docs/modules/web-auth.md`, `docs/modules/web-profile.md`, and `docs/modules/web-admin.md`; updated module coverage index statuses to `Published`.
 - [x] `DCP-07 docs(api-support): author deep-dives for reports/subscriptions/wallets/icons/upload/pagination/isolation`

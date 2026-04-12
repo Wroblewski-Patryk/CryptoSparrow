@@ -44,17 +44,17 @@ Status legend:
 | web | auth | `apps/web/src/features/auth` | `docs/modules/web-auth.md` | Published | DCP-08 |
 | web | profile | `apps/web/src/features/profile` | `docs/modules/web-profile.md` | Published | DCP-08 |
 | web | dashboard-home | `apps/web/src/features/dashboard-home` | `docs/modules/web-dashboard-home.md` | Published | DCP-08 |
-| web | bots | `apps/web/src/features/bots` | `docs/modules/web-bots.md` | Planned | DCP-09 |
-| web | backtest | `apps/web/src/features/backtest` | `docs/modules/web-backtest.md` | Planned | DCP-09 |
-| web | strategies | `apps/web/src/features/strategies` | `docs/modules/web-strategies.md` | Planned | DCP-09 |
-| web | markets | `apps/web/src/features/markets` | `docs/modules/web-markets.md` | Planned | DCP-09 |
-| web | exchanges | `apps/web/src/features/exchanges` | `docs/modules/web-exchanges.md` | Planned | DCP-09 |
-| web | orders | `apps/web/src/features/orders` | `docs/modules/web-orders.md` | Planned | DCP-09 |
-| web | positions | `apps/web/src/features/positions` | `docs/modules/web-positions.md` | Planned | DCP-09 |
-| web | wallets | `apps/web/src/features/wallets` | `docs/modules/web-wallets.md` | Planned | DCP-09 |
-| web | reports | `apps/web/src/features/reports` | `docs/modules/web-reports.md` | Planned | DCP-09 |
-| web | logs | `apps/web/src/features/logs` | `docs/modules/web-logs.md` | Planned | DCP-09 |
-| web | icons | `apps/web/src/features/icons` | `docs/modules/web-icons.md` | Planned | DCP-09 |
+| web | bots | `apps/web/src/features/bots` | `docs/modules/web-bots.md` | Published | DCP-09 |
+| web | backtest | `apps/web/src/features/backtest` | `docs/modules/web-backtest.md` | Published | DCP-09 |
+| web | strategies | `apps/web/src/features/strategies` | `docs/modules/web-strategies.md` | Published | DCP-09 |
+| web | markets | `apps/web/src/features/markets` | `docs/modules/web-markets.md` | Published | DCP-09 |
+| web | exchanges | `apps/web/src/features/exchanges` | `docs/modules/web-exchanges.md` | Published | DCP-09 |
+| web | orders | `apps/web/src/features/orders` | `docs/modules/web-orders.md` | Published | DCP-09 |
+| web | positions | `apps/web/src/features/positions` | `docs/modules/web-positions.md` | Published | DCP-09 |
+| web | wallets | `apps/web/src/features/wallets` | `docs/modules/web-wallets.md` | Published | DCP-09 |
+| web | reports | `apps/web/src/features/reports` | `docs/modules/web-reports.md` | Published | DCP-09 |
+| web | logs | `apps/web/src/features/logs` | `docs/modules/web-logs.md` | Published | DCP-09 |
+| web | icons | `apps/web/src/features/icons` | `docs/modules/web-icons.md` | Published | DCP-09 |
 
 ## Governance Notes
 - Use `docs/modules/module-deep-dive-template.md` for every new deep-dive file listed above.
