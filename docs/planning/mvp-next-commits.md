@@ -7,12 +7,34 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `OPTC-00 planning(optimization): execute engineering optimization queue from docs/planning/engineering-optimization-next-commits-2026-04-12.md after DCP wave`
+- [ ] `OPTC-01 core(api-errors): introduce typed AppError/DomainError primitives + central http mapper`
+- [ ] `OPTC-02 migrate(api-wallets): replace wallet error-string flow with typed domain errors`
+- [ ] `OPTC-03 migrate(api-markets-strategies): typed domain errors + controller mapping without message equality`
+- [ ] `OPTC-04 migrate(api-bots-orders): typed domain errors for high-change command/execution paths`
+- [ ] `OPTC-05 migrate(api-profile-subscriptions): typed domain errors for profile/security/subscription flows`
 ## NEXT
+- [ ] `OPTC-06 core(api-normalization): extend shared symbol/base-currency normalization helpers`
+- [ ] `OPTC-07 migrate(api-engine): remove local uppercase normalization variants in runtime/engine modules`
+- [ ] `OPTC-08 migrate(api-wallets-markets-icons-stream): remove remaining production trim().toUpperCase variants`
+- [ ] `OPTC-09 test(api-normalization): add regression contract tests for shared normalization invariants`
+- [ ] `OPTC-10 core(web-errors): create single UI error resolver and deprecate handleError/getAxiosMessage split`
+- [ ] `OPTC-11 migrate(web-create-pages): standardize async+error handling on create pages (markets/strategies/backtests)`
+- [ ] `OPTC-12 migrate(web-edit-list-pages): standardize async+error handling for edit/list dashboards`
+- [ ] `OPTC-13 core(shared-contracts): extract shared exchange constants/capabilities/marketType contract`
+- [ ] `OPTC-14 migrate(api-contracts): switch API zod schemas to shared exchange contract`
+- [ ] `OPTC-15 migrate(web-contracts): switch Web exchange capability/types to shared contract`
+- [ ] `OPTC-16 refactor(web-runtime-home): split HomeLiveWidgets into formatter/actions/sections hooks`
+- [ ] `OPTC-17 refactor(web-runtime-bots): split BotsManagement orchestration into focused modules`
+- [ ] `OPTC-18 i18n(web): split monolithic translations by domain namespaces`
+- [ ] `OPTC-19 ux(web-guardrails): replace window.confirm/location.assign with app modal + navigation helper`
+- [ ] `OPTC-20 perf(web-prefs): centralize profile preference cache/sync (DataTable + account prefs)`
+- [ ] `OPTC-21 qa(repo): run full lint/typecheck/guardrails + targeted e2e confidence pack and publish evidence`
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `OPTC-00 planning(optimization): execute engineering optimization queue from docs/planning/engineering-optimization-next-commits-2026-04-12.md after DCP wave`
+  - 2026-04-15: Activated optimization execution in canonical `mvp-next-commits` queue by importing `OPTC-01..05` into `NOW` and scheduling `OPTC-06..21` in `NEXT` from `docs/planning/engineering-optimization-next-commits-2026-04-12.md`.
 - [x] `DCP-12 qa(docs-evidence): run parity check, publish evidence artifact, and close documentation hardening wave`
   - 2026-04-15: Executed `pnpm run docs:parity:check -- --json --output docs/operations/_artifacts-docs-parity-2026-04-15T21-31-56-867Z.json` (PASS: `22/22 API`, `15/15 web`, `37/37 routes`) and published wave-close evidence report `docs/operations/documentation-hardening-parity-evidence-2026-04-15.md`.
 - [x] `DCP-11 tooling(docs-parity): add script to verify module+route inventories against canonical docs`

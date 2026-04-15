@@ -1506,4 +1506,5 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `OPT-08 prefs-sync(web): cache/throttle profile preference sync (DataTable + account preferences)`
 
 ### Progress Log (Engineering Optimization)
+- 2026-04-15: Completed `OPTC-00` queue activation by promoting optimization execution queue (`docs/planning/engineering-optimization-next-commits-2026-04-12.md`) into canonical `mvp-next-commits` (`NOW: OPTC-01..05`, `NEXT: OPTC-06..21`) after documentation hardening wave closure.
 - 2026-04-12: Completed repo-wide optimization standards audit and published actionable plan (`docs/planning/engineering-optimization-wave-2026-04-12.md`) plus tiny-commit execution queue (`docs/planning/engineering-optimization-next-commits-2026-04-12.md`) for follow-up implementation sessions.

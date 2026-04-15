@@ -129,3 +129,7 @@ Execution queue (tiny commits): `docs/planning/engineering-optimization-next-com
 3. Web create/edit/list flows use shared async and error helpers.
 4. Runtime dashboard hotspots are decomposed without behavior regressions.
 5. Exchange contracts are shared (single-source) across API and Web.
+
+## Progress Log (Engineering Optimization Wave)
+- 2026-04-12: Published optimization wave plan and execution queue (`engineering-optimization-next-commits-2026-04-12.md`) after repo-wide standards audit.
+- 2026-04-15: Activated execution flow in canonical `mvp-next-commits` by importing queue tasks (`NOW: OPTC-01..05`, `NEXT: OPTC-06..21`) under completion task `OPTC-00`.
