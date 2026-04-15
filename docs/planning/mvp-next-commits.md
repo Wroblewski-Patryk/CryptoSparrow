@@ -8,7 +8,6 @@ Operational queue for one-task execution runs.
 
 ## NOW
 ## NEXT
-- [ ] `OPTC-17 refactor(web-runtime-bots): split BotsManagement orchestration into focused modules`
 - [ ] `OPTC-18 i18n(web): split monolithic translations by domain namespaces`
 - [ ] `OPTC-19 ux(web-guardrails): replace window.confirm/location.assign with app modal + navigation helper`
 - [ ] `OPTC-20 perf(web-prefs): centralize profile preference cache/sync (DataTable + account prefs)`
@@ -17,6 +16,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `OPTC-17 refactor(web-runtime-bots): split BotsManagement orchestration into focused modules`
+  - 2026-04-16: Refactored `BotsManagement` by extracting runtime-monitoring formatting and status/badge mapping helpers to dedicated module (`bots-management/formatters.ts`), reducing inline orchestration complexity while preserving existing hook-driven behavior; validated with web typecheck + BotsManagement regression suite (PASS).
 - [x] `OPTC-16 refactor(web-runtime-home): split HomeLiveWidgets into formatter/actions/sections hooks`
   - 2026-04-16: Refactored `HomeLiveWidgets` by extracting formatter utilities, runtime data derivations, and close-position action flow into dedicated modules/hooks (`home-live-widgets/formatters.ts`, `home-live-widgets/runtimeDerivations.ts`, `useCloseRuntimePositionAction.ts`) while keeping section composition unchanged; validated with web typecheck + HomeLiveWidgets regression suite (PASS).
 - [x] `OPTC-15 migrate(web-contracts): switch Web exchange capability/types to shared contract`
