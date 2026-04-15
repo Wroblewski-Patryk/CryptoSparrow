@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `OPTC-06 core(api-normalization): extend shared symbol/base-currency normalization helpers`
 ## NEXT
 - [ ] `OPTC-07 migrate(api-engine): remove local uppercase normalization variants in runtime/engine modules`
 - [ ] `OPTC-08 migrate(api-wallets-markets-icons-stream): remove remaining production trim().toUpperCase variants`
@@ -28,6 +27,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `OPTC-06 core(api-normalization): extend shared symbol/base-currency normalization helpers`
+  - 2026-04-15: Extended shared API normalization primitives in `apps/api/src/lib/symbols.ts` with `normalizeBaseCurrency`, `normalizeSymbolStrict`, and list-level helpers (`normalizeBaseCurrencies` + widened input support), plus added focused helper contract tests in `apps/api/src/lib/symbols.test.ts`; validated with `pnpm --filter api run typecheck` + targeted symbols/wallets/market-stream suites (PASS).
 - [x] `OPTC-05 migrate(api-profile-subscriptions): typed domain errors for profile/security/subscription flows`
   - 2026-04-15: Added typed domain error contracts for profile/security and subscriptions (`security.errors.ts`, `subscriptions.errors.ts`), migrated security + checkout/payment/service throw-sites to `DomainError`, and replaced profile security/subscription controller `error.message` equality handling with code-based mapping via `mapErrorToHttpResponse`; validated with `pnpm --filter api run typecheck` + `security.e2e`, `subscription.e2e`, and `bots.subscription-entitlements.e2e` suites (PASS).
 - [x] `OPTC-04 migrate(api-bots-orders): typed domain errors for high-change command/execution paths`
