@@ -57,6 +57,47 @@ export const listActiveRuntimeBotsRaw = () =>
     },
   });
 
+const formatTopologyVersionPart = (name: string, count: number, updatedAt: Date | null) =>
+  `${name}:${count}:${updatedAt ? updatedAt.toISOString() : 'none'}`;
+
+export const readRuntimeTopologyVersionRaw = async () => {
+  const [bots, groups, links, strategies, symbolGroups, universes] = await prisma.$transaction([
+    prisma.bot.aggregate({
+      _count: { _all: true },
+      _max: { updatedAt: true },
+    }),
+    prisma.botMarketGroup.aggregate({
+      _count: { _all: true },
+      _max: { updatedAt: true },
+    }),
+    prisma.marketGroupStrategyLink.aggregate({
+      _count: { _all: true },
+      _max: { updatedAt: true },
+    }),
+    prisma.strategy.aggregate({
+      _count: { _all: true },
+      _max: { updatedAt: true },
+    }),
+    prisma.symbolGroup.aggregate({
+      _count: { _all: true },
+      _max: { updatedAt: true },
+    }),
+    prisma.marketUniverse.aggregate({
+      _count: { _all: true },
+      _max: { updatedAt: true },
+    }),
+  ]);
+
+  return [
+    formatTopologyVersionPart('bot', bots._count._all, bots._max.updatedAt),
+    formatTopologyVersionPart('group', groups._count._all, groups._max.updatedAt),
+    formatTopologyVersionPart('link', links._count._all, links._max.updatedAt),
+    formatTopologyVersionPart('strategy', strategies._count._all, strategies._max.updatedAt),
+    formatTopologyVersionPart('symbol_group', symbolGroups._count._all, symbolGroups._max.updatedAt),
+    formatTopologyVersionPart('market_universe', universes._count._all, universes._max.updatedAt),
+  ].join('|');
+};
+
 export const listRuntimeManagedExternalPositionsRaw = () =>
   prisma.position.findMany({
     where: {

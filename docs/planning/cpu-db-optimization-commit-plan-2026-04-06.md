@@ -70,7 +70,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 
 ### [ ] Group 2 - Runtime topology cache (biggest CPU/DB win)
 
-- [ ] `CPDB-04 feat(runtime-cache): add active bot topology cache with TTL + invalidation`
+- [x] `CPDB-04 feat(runtime-cache): add active bot topology cache with TTL + invalidation`
   - Files:
     - `apps/api/src/modules/engine/runtimeSignalLoop.service.ts`
     - `apps/api/src/modules/engine/runtimeTopologyCache.service.ts` (new)
@@ -280,3 +280,4 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Completed `CPDB-02` by introducing runtime hot-path metrics instrumentation (`listActiveBots`, `eligibleGroupsCount`, `preTradeLatencyMs`, `touchSessionWrites`, `symbolStatsWrites`) across runtime signal loop, pre-trade path, telemetry writes, and `/metrics` snapshot contract.
 - 2026-04-16: Completed `CPDB-03` by adding regression tests for hot-path metric emission in runtime signal loop, pre-trade analysis, telemetry writes, and metrics endpoint contract without changing decision behavior.
 - 2026-04-16: Closed Group 1 (`CPDB-01..CPDB-03`). Next unchecked group is Group 2 (`CPDB-04..CPDB-06`).
+- 2026-04-16: Completed `CPDB-04` by adding runtime topology cache service with TTL (`RUNTIME_TOPOLOGY_CACHE_TTL_MS`), feature-flag gate (`RUNTIME_TOPOLOGY_CACHE_ENABLED`), topology-version invalidation based on bot/group/strategy graph updates, and runtime loop invalidation hooks on stop/stall.

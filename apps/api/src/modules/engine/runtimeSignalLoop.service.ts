@@ -12,6 +12,7 @@ import { orchestrateRuntimeSignal } from './executionOrchestrator.service';
 import { runtimePositionAutomationService } from './runtimePositionAutomation.service';
 import { getRuntimeTicker, upsertRuntimeTicker } from './runtimeTickerStore';
 import { RuntimeSignalDecisionEngine } from './runtimeSignalDecisionEngine';
+import { runtimeTopologyCacheService } from './runtimeTopologyCache.service';
 import {
   RuntimeSignalMarketDataGateway,
 } from './runtimeSignalMarketDataGateway';
@@ -147,6 +148,8 @@ type RuntimeSignalLoopDeps = {
     quantity: number;
     price: number;
   }) => Promise<RuntimeExchangeOrderGuardResult>;
+  listActiveBotsFromTopologyCache?: () => Promise<ActiveBot[]>;
+  invalidateRuntimeTopologyCache?: () => void;
 };
 
 const runtimeSignalQuantity = Number.parseFloat(process.env.RUNTIME_SIGNAL_QUANTITY ?? '0.01');
@@ -203,6 +206,8 @@ const defaultDeps: RuntimeSignalLoopDeps = {
   recordRuntimeEvent: (params) => runtimeTelemetryService.recordRuntimeEvent(params),
   upsertRuntimeSymbolStat: (params) => runtimeTelemetryService.upsertRuntimeSymbolStat(params),
   validateExchangeOrderFn: (params) => validateRuntimeExchangeOrder(params),
+  listActiveBotsFromTopologyCache: () => runtimeTopologyCacheService.getActiveBots(),
+  invalidateRuntimeTopologyCache: () => runtimeTopologyCacheService.invalidate(),
 };
 
 export class RuntimeSignalLoop {
@@ -292,6 +297,7 @@ export class RuntimeSignalLoop {
     );
     await this.unsubscribe();
     this.unsubscribe = null;
+    this.deps.invalidateRuntimeTopologyCache?.();
     this.lastStreamEventAtMs = null;
     this.lastSessionSyncSuccessAtMs = null;
     this.lastKnownActiveBotIds.clear();
@@ -384,6 +390,7 @@ export class RuntimeSignalLoop {
       this.sessionWatchdogTimer = null;
     }
     this.processedDecisionWindows.clear();
+    this.deps.invalidateRuntimeTopologyCache?.();
     this.lastStreamEventAtMs = null;
     this.lastSessionSyncSuccessAtMs = null;
     this.lastKnownActiveBotIds.clear();
