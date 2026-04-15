@@ -7,7 +7,6 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 - Focus: architecture, reliability, consistency, and maintainability across API + Web.
 
 ## NOW
-- [ ] `OPTC-05 migrate(api-profile-subscriptions): typed domain errors for profile/security/subscription flows`
 - [ ] `OPTC-06 core(api-normalization): extend shared symbol/base-currency normalization helpers`
 
 ## NEXT
@@ -31,6 +30,8 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 - none
 
 ## DONE
+- [x] `OPTC-05 migrate(api-profile-subscriptions): typed domain errors for profile/security/subscription flows`
+  - 2026-04-15: Added typed domain errors for profile/security + subscriptions (`security.errors.ts`, `subscriptions.errors.ts`), migrated service/payment throw-sites to `DomainError`, and switched profile security/subscription controllers to code-based mapped error handling (`mapErrorToHttpResponse`) without message equality checks; validated with API typecheck and targeted security/subscription entitlements suites (PASS).
 - [x] `OPTC-04 migrate(api-bots-orders): typed domain errors for high-change command/execution paths`
   - 2026-04-15: Added typed domain errors for bots/orders (`bots.errors.ts`, `orders.errors.ts`), migrated throw-sites in bot command/runtime and order execution/pretrade flows, and replaced bots/orders controller message-equality checks with code-based mapped handling via `mapErrorToHttpResponse`; validated with API typecheck + targeted bots/orders tests (PASS).
 - [x] `OPTC-03 migrate(api-markets-strategies): typed domain errors + controller mapping without message equality`

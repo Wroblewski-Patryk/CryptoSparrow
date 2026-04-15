@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `OPTC-05 migrate(api-profile-subscriptions): typed domain errors for profile/security/subscription flows`
 - [ ] `OPTC-06 core(api-normalization): extend shared symbol/base-currency normalization helpers`
 ## NEXT
 - [ ] `OPTC-07 migrate(api-engine): remove local uppercase normalization variants in runtime/engine modules`
@@ -29,6 +28,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `OPTC-05 migrate(api-profile-subscriptions): typed domain errors for profile/security/subscription flows`
+  - 2026-04-15: Added typed domain error contracts for profile/security and subscriptions (`security.errors.ts`, `subscriptions.errors.ts`), migrated security + checkout/payment/service throw-sites to `DomainError`, and replaced profile security/subscription controller `error.message` equality handling with code-based mapping via `mapErrorToHttpResponse`; validated with `pnpm --filter api run typecheck` + `security.e2e`, `subscription.e2e`, and `bots.subscription-entitlements.e2e` suites (PASS).
 - [x] `OPTC-04 migrate(api-bots-orders): typed domain errors for high-change command/execution paths`
   - 2026-04-15: Added typed domain error contracts for bots/orders (`bots.errors.ts`, `orders.errors.ts`), migrated service throws across bot command/runtime paths and order execution/pretrade guards, and replaced bots/orders controller `error.message` equality checks with code-based mapping via `mapErrorToHttpResponse`; validated with `pnpm --filter api run typecheck` + targeted bots/orders suites (`bots.e2e`, `bots.orchestration.e2e`, `bots.duplicate-guard.e2e`, `bots.subscription-entitlements.e2e`, `orders-positions.e2e`, `orders.service`) (PASS).
 - [x] `OPTC-03 migrate(api-markets-strategies): typed domain errors + controller mapping without message equality`

@@ -4,6 +4,7 @@ import { prisma } from '../../../prisma/client';
 import { ensureSubscriptionCatalog } from '../subscriptions.service';
 import { resolveConfiguredPaymentProvider, resolvePaymentGatewayAdapter } from './paymentGateway.registry';
 import { appUrl, clientUrl, corsOrigins, serverUrl } from '../../../config/runtime';
+import { subscriptionErrors } from '../subscriptions.errors';
 
 type CreateSubscriptionCheckoutIntentInput = {
   userId: string;
@@ -63,8 +64,8 @@ export const createSubscriptionCheckoutIntent = async (
       currency: true,
     },
   });
-  if (!plan) throw new Error('SUBSCRIPTION_PLAN_NOT_FOUND');
-  if (plan.monthlyPriceMinor <= 0) throw new Error('CHECKOUT_PLAN_NOT_PAYABLE');
+  if (!plan) throw subscriptionErrors.subscriptionPlanNotFound(input.planCode);
+  if (plan.monthlyPriceMinor <= 0) throw subscriptionErrors.checkoutPlanNotPayable();
 
   const activeSubscription = await prisma.userSubscription.findFirst({
     where: {

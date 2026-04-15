@@ -6,6 +6,7 @@ import {
   ensureSubscriptionCatalog,
   SUBSCRIPTION_PLAN_SEED,
 } from './subscriptions.service';
+import { subscriptionErrors } from './subscriptions.errors';
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -59,7 +60,7 @@ export type SubscriptionEntitlements = z.infer<typeof SubscriptionEntitlementsSc
 
 const freeEntitlementsSeed = SUBSCRIPTION_PLAN_SEED.find((item) => item.code === 'FREE')?.entitlements;
 if (!freeEntitlementsSeed) {
-  throw new Error('FREE_SUBSCRIPTION_ENTITLEMENTS_MISSING');
+  throw subscriptionErrors.freeSubscriptionEntitlementsMissing();
 }
 
 const fallbackEntitlements = SubscriptionEntitlementsSchema.parse(freeEntitlementsSeed);

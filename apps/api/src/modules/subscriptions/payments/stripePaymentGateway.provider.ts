@@ -1,5 +1,6 @@
 import { PaymentIntentStatus, SubscriptionPlanCode } from '@prisma/client';
 import { PaymentGatewayAdapter } from './paymentGateway.types';
+import { subscriptionErrors } from '../subscriptions.errors';
 
 type StripeCheckoutSession = {
   id: string;
@@ -30,7 +31,7 @@ let stripeClient: StripeClient | null = null;
 const getStripeClient = () => {
   const secretKey = process.env.STRIPE_SECRET_KEY?.trim();
   if (!secretKey) {
-    throw new Error('PAYMENT_PROVIDER_STRIPE_NOT_CONFIGURED');
+    throw subscriptionErrors.paymentProviderStripeNotConfigured();
   }
   if (!stripeClient) {
     stripeClient = new StripeConstructor(secretKey, {
@@ -47,12 +48,12 @@ const resolvePriceIdForPlan = (planCode: SubscriptionPlanCode): string => {
   };
 
   if (planCode === 'FREE') {
-    throw new Error('CHECKOUT_PLAN_NOT_PAYABLE');
+    throw subscriptionErrors.checkoutPlanNotPayable();
   }
 
   const priceId = envMap[planCode]?.trim();
   if (!priceId) {
-    throw new Error('PAYMENT_PROVIDER_STRIPE_PRICE_NOT_CONFIGURED');
+    throw subscriptionErrors.paymentProviderStripePriceNotConfigured();
   }
 
   return priceId;

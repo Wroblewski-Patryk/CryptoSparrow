@@ -1,5 +1,6 @@
 import { prisma } from '../../../prisma/client';
 import { comparePassword, hashPassword } from '../../../utils/hash';
+import { profileSecurityErrors } from './security.errors';
 
 const getUserWithPassword = async (userId: string) =>
   prisma.user.findUnique({
@@ -9,10 +10,10 @@ const getUserWithPassword = async (userId: string) =>
 
 export const changePassword = async (userId: string, input: { currentPassword: string; newPassword: string }) => {
   const user = await getUserWithPassword(userId);
-  if (!user) throw new Error('USER_NOT_FOUND');
+  if (!user) throw profileSecurityErrors.userNotFound();
 
   const isValid = await comparePassword(input.currentPassword, user.password);
-  if (!isValid) throw new Error('INVALID_PASSWORD');
+  if (!isValid) throw profileSecurityErrors.invalidPassword();
 
   const nextHash = await hashPassword(input.newPassword);
   await prisma.user.update({
@@ -28,10 +29,10 @@ export const changePassword = async (userId: string, input: { currentPassword: s
 
 export const deleteAccount = async (userId: string, input: { password: string }) => {
   const user = await getUserWithPassword(userId);
-  if (!user) throw new Error('USER_NOT_FOUND');
+  if (!user) throw profileSecurityErrors.userNotFound();
 
   const isValid = await comparePassword(input.password, user.password);
-  if (!isValid) throw new Error('INVALID_PASSWORD');
+  if (!isValid) throw profileSecurityErrors.invalidPassword();
 
   await prisma.$transaction([
     prisma.orderFill.deleteMany({ where: { userId } }),

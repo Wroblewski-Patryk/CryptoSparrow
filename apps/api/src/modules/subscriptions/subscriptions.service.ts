@@ -1,5 +1,6 @@
 import { Prisma, PrismaClient, SubscriptionPlanCode, UserSubscriptionSource } from '@prisma/client';
 import { prisma } from '../../prisma/client';
+import { subscriptionErrors } from './subscriptions.errors';
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 type EnsureSubscriptionCatalogOptions = {
@@ -146,7 +147,7 @@ export const setActiveSubscriptionForUser = async (db: DbClient, input: SetActiv
     select: { id: true, code: true },
   });
   if (!plan) {
-    throw new Error(`SUBSCRIPTION_PLAN_NOT_FOUND:${input.planCode}`);
+    throw subscriptionErrors.subscriptionPlanNotFound(input.planCode);
   }
 
   const existingActive = await db.userSubscription.findFirst({

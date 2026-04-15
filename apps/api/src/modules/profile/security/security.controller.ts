@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import { sendError } from '../../../utils/apiError';
-import { sendValidationError } from '../../../utils/formatZodError';
+import { mapErrorToHttpResponse } from '../../../lib/httpErrorMapper';
 import { getCookieDomain, getSessionCookieBaseOptions } from '../../auth/auth.cookie';
 import { changePasswordSchema, deleteAccountSchema } from './security.types';
 import * as securityService from './security.service';
+import { PROFILE_SECURITY_ERROR_CODES } from './security.errors';
 
 type ProfileRequest = Request & { user?: { id: string } };
 
@@ -17,6 +18,23 @@ const clearSessionCookie = (res: Response) => {
   }
 };
 
+const handleSecurityError = (
+  res: Response,
+  error: unknown,
+  invalidPasswordMessage: string
+) => {
+  const mapped = mapErrorToHttpResponse(error);
+
+  if (mapped.code === PROFILE_SECURITY_ERROR_CODES.invalidPassword) {
+    return sendError(res, 400, invalidPasswordMessage, mapped.details);
+  }
+  if (mapped.code === PROFILE_SECURITY_ERROR_CODES.userNotFound) {
+    return sendError(res, 404, 'Not found', mapped.details);
+  }
+
+  return sendError(res, mapped.status, mapped.message, mapped.details);
+};
+
 export const updatePassword = async (req: ProfileRequest, res: Response) => {
   if (!req.user?.id) return sendError(res, 401, 'Unauthorized');
 
@@ -26,13 +44,7 @@ export const updatePassword = async (req: ProfileRequest, res: Response) => {
     clearSessionCookie(res);
     return res.status(204).end();
   } catch (error) {
-    if (error instanceof Error && error.message === 'INVALID_PASSWORD') {
-      return sendError(res, 400, 'Invalid current password');
-    }
-    if (error instanceof Error && error.message === 'USER_NOT_FOUND') {
-      return sendError(res, 404, 'Not found');
-    }
-    return sendValidationError(res, error);
+    return handleSecurityError(res, error, 'Invalid current password');
   }
 };
 
@@ -45,12 +57,6 @@ export const deleteAccount = async (req: ProfileRequest, res: Response) => {
     clearSessionCookie(res);
     return res.status(204).end();
   } catch (error) {
-    if (error instanceof Error && error.message === 'INVALID_PASSWORD') {
-      return sendError(res, 400, 'Invalid password');
-    }
-    if (error instanceof Error && error.message === 'USER_NOT_FOUND') {
-      return sendError(res, 404, 'Not found');
-    }
-    return sendValidationError(res, error);
+    return handleSecurityError(res, error, 'Invalid password');
   }
 };
