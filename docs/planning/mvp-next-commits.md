@@ -8,7 +8,6 @@ Operational queue for one-task execution runs.
 
 ## NOW
 ## NEXT
-- [ ] `OPTC-13 core(shared-contracts): extract shared exchange constants/capabilities/marketType contract`
 - [ ] `OPTC-14 migrate(api-contracts): switch API zod schemas to shared exchange contract`
 - [ ] `OPTC-15 migrate(web-contracts): switch Web exchange capability/types to shared contract`
 - [ ] `OPTC-16 refactor(web-runtime-home): split HomeLiveWidgets into formatter/actions/sections hooks`
@@ -21,6 +20,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `OPTC-13 core(shared-contracts): extract shared exchange constants/capabilities/marketType contract`
+  - 2026-04-16: Extracted canonical exchange contract to workspace package `@cryptosparrow/shared` (`libs/shared`) with unified exchange options/capabilities/market-type/base-currency-fallback matrices and switched API exchange capabilities core module to consume this shared source of truth; validated with API typecheck + focused exchange-symbol-rules suite (PASS).
 - [x] `OPTC-12 migrate(web-edit-list-pages): standardize async+error handling for edit/list dashboards`
   - 2026-04-16: Standardized async/error handling in dashboard edit/list pages (`markets`, `strategies`, `wallets`) by migrating load/update flows to shared helpers (`runAsyncWithState`, `resolveUiErrorMessage`) and aligning fallback messaging plus save pending states in edit actions; validated with `pnpm --filter web run typecheck` + targeted market/strategy/wallet suites (PASS).
 - [x] `OPTC-11 migrate(web-create-pages): standardize async+error handling on create pages (markets/strategies/backtests)`

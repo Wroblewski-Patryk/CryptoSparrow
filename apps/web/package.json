@@ -12,6 +12,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@cryptosparrow/shared": "workspace:*",
     "@hookform/resolvers": "^5.2.0",
     "@types/jsonwebtoken": "^9.0.10",
     "axios": "^1.14.0",
