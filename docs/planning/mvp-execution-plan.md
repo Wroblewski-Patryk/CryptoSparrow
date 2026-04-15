@@ -1531,3 +1531,29 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-15: Completed `OPTC-01` foundation slice for `OPT-01` by introducing typed error primitives (`AppError`, `DomainError`) in `apps/api/src/lib/errors.ts`, adding central mapper `apps/api/src/lib/httpErrorMapper.ts`, and wiring `apps/api/src/middleware/errorHandler.ts` to mapped responses (including legacy `status + toDetails()` compatibility); validated with API typecheck and targeted mapper/primitives tests.
 - 2026-04-15: Completed `OPTC-00` queue activation by promoting optimization execution queue (`docs/planning/engineering-optimization-next-commits-2026-04-12.md`) into canonical `mvp-next-commits` (`NOW: OPTC-01..05`, `NEXT: OPTC-06..21`) after documentation hardening wave closure.
 - 2026-04-12: Completed repo-wide optimization standards audit and published actionable plan (`docs/planning/engineering-optimization-wave-2026-04-12.md`) plus tiny-commit execution queue (`docs/planning/engineering-optimization-next-commits-2026-04-12.md`) for follow-up implementation sessions.
+
+## Continuous Group Pipeline (Post-OPT, 2026-04-16)
+- [ ] `CPDB-G1 baseline(cpu-db): contract freeze + runtime hot-path metrics + parity-safe assertions`
+- [ ] `CPDB-G2 runtime-cache(cpu-db): active topology cache + invalidation + parity tests`
+- [ ] `CPDB-G3 signal-routing(cpu-db): seriesKey routing index + pretrade position-count cache`
+- [ ] `CPDB-G4 telemetry-write(cpu-db): touchSession throttle + symbol stats batching + query-count checks`
+- [ ] `CPDB-G5 web-polling(cpu-db): adaptive refresh + SSE-first runtime stats with polling fallback`
+- [ ] `CPDB-G6 db-shaping(cpu-db): hot-path indexes + slim topology reads + EXPLAIN evidence`
+- [ ] `CPDB-G7 worker-backpressure(cpu-db): per-series concurrency guard + distributed warmup lock`
+- [ ] `CPDB-G8 rollout(cpu-db): canary/rollback docs + alert thresholds + 30m soak evidence`
+- [ ] `WLT-A wallet-contracts: wallet source-of-truth docs + decisions + IA placement`
+- [ ] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
+- [ ] `WLT-C wallet-api: wallet CRUD module with mode-aware validation + ownership isolation`
+- [ ] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
+- [ ] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
+- [ ] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
+- [ ] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
+- [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
+- [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
+- [ ] `PEX-C observability-ops: runtime alert thresholds + incident triage runbook`
+- [ ] `PEX-D recoverability: backup verification + restore drill automation + RTO/RPO doc`
+- [ ] `PEX-E secrets-hardening: secret inventory + rotation readiness validation + regression checks`
+- [ ] `PEX-F deploy-safety: post-deploy runtime freshness gate + rollback trigger policy`
+
+### Progress Log (Continuous Group Pipeline)
+- 2026-04-16: Initialized continuous post-optimization execution queue in canonical plan by importing active open groups from `cpu-db-optimization-commit-plan-2026-04-06.md`, `wallet-module-implementation-plan-2026-04-07.md`, and `production-excellence-plan-2026-04-03.md`, ensuring deterministic next-group continuity after each completed group.

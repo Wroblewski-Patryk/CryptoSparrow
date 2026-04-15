@@ -7,11 +7,35 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [ ] `CPDB-G1 baseline(cpu-db): contract freeze + runtime hot-path metrics + parity-safe assertions`
+- [ ] `CPDB-G2 runtime-cache(cpu-db): active topology cache + invalidation + parity tests`
+- [ ] `WLT-A wallet-contracts: wallet source-of-truth docs + decisions + IA placement`
+- [ ] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
+- [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
 ## NEXT
+- [ ] `CPDB-G3 signal-routing(cpu-db): seriesKey routing index + pretrade position-count cache`
+- [ ] `CPDB-G4 telemetry-write(cpu-db): touchSession throttle + symbol stats batching + query-count checks`
+- [ ] `WLT-C wallet-api: wallet CRUD module with mode-aware validation + ownership isolation`
+- [ ] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
+- [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
+## PIPELINE
+- [ ] `CPDB-G5 web-polling(cpu-db): adaptive refresh + SSE-first runtime stats with polling fallback`
+- [ ] `CPDB-G6 db-shaping(cpu-db): hot-path indexes + slim topology reads + EXPLAIN evidence`
+- [ ] `CPDB-G7 worker-backpressure(cpu-db): per-series concurrency guard + distributed warmup lock`
+- [ ] `CPDB-G8 rollout(cpu-db): canary/rollback docs + alert thresholds + 30m soak evidence`
+- [ ] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
+- [ ] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
+- [ ] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
+- [ ] `PEX-C observability-ops: runtime alert thresholds + incident triage runbook`
+- [ ] `PEX-D recoverability: backup verification + restore drill automation + RTO/RPO doc`
+- [ ] `PEX-E secrets-hardening: secret inventory + rotation readiness validation + regression checks`
+- [ ] `PEX-F deploy-safety: post-deploy runtime freshness gate + rollback trigger policy`
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `planning(queue-refill): repopulate canonical NOW/NEXT pipeline from active execution plans`
+  - 2026-04-16: Refilled canonical execution queue from active plan backlogs (`cpu-db-optimization-commit-plan-2026-04-06.md`, `wallet-module-implementation-plan-2026-04-07.md`, `production-excellence-plan-2026-04-03.md`) to guarantee continuous next-group visibility after each group completion.
 - [x] `OPT-08 prefs-sync(web): cache/throttle profile preference sync (DataTable + account preferences)`
   - 2026-04-16: Closed parent `OPT-08` objective via completed slice `OPTC-20` (shared profile preference cache/sync for DataTable + account preferences), with final QA evidence covered in `OPTC-21`.
 - [x] `OPT-07 ux-guardrails(web): replace window.confirm/location.assign with app-level modal + navigation helpers`
