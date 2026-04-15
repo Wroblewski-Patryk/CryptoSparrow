@@ -7,11 +7,20 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [ ] `OPT-02 normalization(api): unify symbol/baseCurrency normalization primitives and remove local uppercase variants`
+- [ ] `OPT-03 async-errors(web): standardize async action + error mapping across page-level create/edit/list flows`
+- [ ] `OPT-04 runtime-ui-split(web): decompose HomeLiveWidgets + BotsManagement into smaller domain modules`
+- [ ] `OPT-05 contracts(shared): create shared exchange enum/capability contracts for API + Web`
 ## NEXT
+- [ ] `OPT-06 i18n(web): split monolithic translations into domain namespaces + remove remaining hardcoded copy`
+- [ ] `OPT-07 ux-guardrails(web): replace window.confirm/location.assign with app-level modal + navigation helpers`
+- [ ] `OPT-08 prefs-sync(web): cache/throttle profile preference sync (DataTable + account preferences)`
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `OPT-01 error-taxonomy(api): replace string-code Error.message flow with typed domain errors + central mapper`
+  - 2026-04-16: Closed parent `OPT-01` objective by consolidating completed implementation slices `OPTC-01..OPTC-05` (typed `AppError/DomainError` primitives, central HTTP mapper wiring, and controller/service migrations across wallets/markets/strategies/bots/orders/profile/security/subscriptions); validation evidence captured in linked OPTC entries (`api typecheck` + targeted e2e/unit packs).
 - [x] `OPTC-21 qa(repo): run full lint/typecheck/guardrails + targeted e2e confidence pack and publish evidence`
   - 2026-04-16: Executed full repo quality gates (`pnpm run lint`, API+web typecheck, `pnpm run quality:guardrails`) plus targeted API/Web confidence pack (`8` API e2e files, `70` tests; `5` web regression files, `15` tests), and published evidence artifacts `docs/operations/_artifacts-engineering-optimization-confidence-2026-04-15T23-26-17-682Z.json` + `docs/operations/engineering-optimization-confidence-pack-2026-04-15T23-26-17-682Z.md` (PASS).
 - [x] `OPTC-20 perf(web-prefs): centralize profile preference cache/sync (DataTable + account prefs)`

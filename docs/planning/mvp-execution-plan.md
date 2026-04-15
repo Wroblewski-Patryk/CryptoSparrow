@@ -1496,7 +1496,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-12: Completed `DCP-09` by authoring web-trading deep-dives (`bots`, `backtest`, `strategies`, `markets`, `exchanges`, `orders`, `positions`, `wallets`, `reports`, `logs`, `icons`) and marking those modules as `Published` in `docs/modules/module-doc-status-index.md`.
 
 ## Engineering Optimization Wave (2026-04-12)
-- [ ] `OPT-01 error-taxonomy(api): replace string-code Error.message flow with typed domain errors + central mapper`
+- [x] `OPT-01 error-taxonomy(api): replace string-code Error.message flow with typed domain errors + central mapper`
 - [ ] `OPT-02 normalization(api): unify symbol/baseCurrency normalization primitives and remove local uppercase variants`
 - [ ] `OPT-03 async-errors(web): standardize async action + error mapping across page-level create/edit/list flows`
 - [ ] `OPT-04 runtime-ui-split(web): decompose HomeLiveWidgets + BotsManagement into smaller domain modules`
@@ -1506,6 +1506,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `OPT-08 prefs-sync(web): cache/throttle profile preference sync (DataTable + account preferences)`
 
 ### Progress Log (Engineering Optimization)
+- 2026-04-16: Closed parent `OPT-01` objective by consolidating already completed implementation slices `OPTC-01..OPTC-05` (typed error primitives, central mapper wiring, and domain/controller migrations for wallets/markets/strategies/bots/orders/profile/subscriptions) with no additional code delta required in this closure step; verification evidence remains in corresponding OPTC entries (`api typecheck` + targeted suites).
 - 2026-04-16: Completed `OPTC-21` by running full repo QA closure pack (`pnpm run lint`, `pnpm --filter api run typecheck`, `pnpm --filter web run typecheck`, `pnpm run quality:guardrails`) plus targeted optimization confidence suites (`pnpm --filter api test --` wallets/markets/strategies/bots/orders/profile-security/subscription e2e pack: `8` files, `70` tests; `pnpm --filter web test --` bots/security/datatable/i18n regression pack: `5` files, `15` tests), and published evidence artifacts `docs/operations/_artifacts-engineering-optimization-confidence-2026-04-15T23-26-17-682Z.json` + `docs/operations/engineering-optimization-confidence-pack-2026-04-15T23-26-17-682Z.md` (PASS).
 - 2026-04-16: Completed `OPTC-20` by introducing shared profile preference cache/sync service (`apps/web/src/features/profile/services/profileBasicCache.ts`) with in-flight request dedupe, TTL reuse, and optimistic profile patch merge, then migrating `useUser` account-preferences flow and DataTable column-visibility hydration/save paths to that shared contract to remove scattered direct `/dashboard/profile/basic` reads/writes; validated with `pnpm --filter web test -- src/ui/components/DataTable.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - 2026-04-16: Completed `OPTC-19` by replacing `window.confirm` and `window.location.assign` browser-native flows with reusable app-level guardrails (`useAsyncConfirm` + `navigateWithFallback`) and migrating bots/security/wallet/auth hotspots to those contracts, improving non-blocking UX consistency and testability; validated with targeted auth/bots/security suites and web typecheck (PASS).

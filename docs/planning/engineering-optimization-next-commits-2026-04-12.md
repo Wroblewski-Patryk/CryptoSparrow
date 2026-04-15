@@ -7,13 +7,22 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 - Focus: architecture, reliability, consistency, and maintainability across API + Web.
 
 ## NOW
+- [ ] `OPT-02 normalization(api): unify symbol/baseCurrency normalization primitives and remove local uppercase variants`
+- [ ] `OPT-03 async-errors(web): standardize async action + error mapping across page-level create/edit/list flows`
+- [ ] `OPT-04 runtime-ui-split(web): decompose HomeLiveWidgets + BotsManagement into smaller domain modules`
+- [ ] `OPT-05 contracts(shared): create shared exchange enum/capability contracts for API + Web`
 
 ## NEXT
+- [ ] `OPT-06 i18n(web): split monolithic translations into domain namespaces + remove remaining hardcoded copy`
+- [ ] `OPT-07 ux-guardrails(web): replace window.confirm/location.assign with app-level modal + navigation helpers`
+- [ ] `OPT-08 prefs-sync(web): cache/throttle profile preference sync (DataTable + account preferences)`
 
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `OPT-01 error-taxonomy(api): replace string-code Error.message flow with typed domain errors + central mapper`
+  - 2026-04-16: Closed parent `OPT-01` objective by consolidating implementation slices `OPTC-01..OPTC-05` (typed error primitives + central HTTP mapper + migrated domain/controller paths for wallets/markets/strategies/bots/orders/profile/subscriptions) with existing validation evidence preserved in corresponding OPTC entries.
 - [x] `OPTC-21 qa(repo): run full lint/typecheck/guardrails + targeted e2e confidence pack and publish evidence`
   - 2026-04-16: Closed optimization wave QA by running full repo quality gates (`lint`, API+web typecheck, `quality:guardrails`) and targeted confidence suites (`8` API e2e files = `70` tests, `5` web regression files = `15` tests), then publishing evidence artifacts `_artifacts-engineering-optimization-confidence-2026-04-15T23-26-17-682Z.json` and `engineering-optimization-confidence-pack-2026-04-15T23-26-17-682Z.md` (PASS).
 - [x] `OPTC-20 perf(web-prefs): centralize profile preference cache/sync (DataTable + account prefs)`
