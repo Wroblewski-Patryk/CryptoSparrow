@@ -8,7 +8,6 @@ Operational queue for one-task execution runs.
 
 ## NOW
 ## NEXT
-- [ ] `OPTC-16 refactor(web-runtime-home): split HomeLiveWidgets into formatter/actions/sections hooks`
 - [ ] `OPTC-17 refactor(web-runtime-bots): split BotsManagement orchestration into focused modules`
 - [ ] `OPTC-18 i18n(web): split monolithic translations by domain namespaces`
 - [ ] `OPTC-19 ux(web-guardrails): replace window.confirm/location.assign with app modal + navigation helper`
@@ -18,6 +17,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `OPTC-16 refactor(web-runtime-home): split HomeLiveWidgets into formatter/actions/sections hooks`
+  - 2026-04-16: Refactored `HomeLiveWidgets` by extracting formatter utilities, runtime data derivations, and close-position action flow into dedicated modules/hooks (`home-live-widgets/formatters.ts`, `home-live-widgets/runtimeDerivations.ts`, `useCloseRuntimePositionAction.ts`) while keeping section composition unchanged; validated with web typecheck + HomeLiveWidgets regression suite (PASS).
 - [x] `OPTC-15 migrate(web-contracts): switch Web exchange capability/types to shared contract`
   - 2026-04-16: Migrated web exchange capability/type contracts to shared `@cryptosparrow/shared` source (exchange/capability matrix + market-type constants/defaults), removing duplicated client-side contract literals in exchange/wallet/markets capability surfaces; validated with web typecheck + targeted ApiKey/MarketUniverse/Wallet tests (PASS).
 - [x] `OPTC-14 migrate(api-contracts): switch API zod schemas to shared exchange contract`

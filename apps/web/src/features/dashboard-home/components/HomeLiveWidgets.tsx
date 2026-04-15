@@ -1,8 +1,7 @@
 'use client';
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { LuBot, LuChartCandlestick, LuChartLine, LuChevronDown, LuListChecks, LuPackageOpen, LuWallet } from "react-icons/lu";
-import { toast } from "sonner";
 
 import { ErrorState } from "../../../ui/components/ViewState";
 import { SkeletonCardBlock, SkeletonKpiRow, SkeletonTableRows } from "../../../ui/components/loading";
@@ -15,13 +14,10 @@ import { normalizeSymbol } from "@/lib/symbols";
 import { toTimestamp } from "@/lib/time";
 import {
   BotRuntimePositionItem,
-  BotRuntimePositionsResponse,
-  BotRuntimeSymbolStatsResponse,
   BotRuntimeTrade,
 } from "../../../features/bots/types/bot.type";
 import {
   getBotRuntimeGraph,
-  closeBotRuntimeSessionPosition,
   listBots,
   listBotRuntimeSessionPositions,
   listBotRuntimeSessionSymbolStats,
@@ -33,12 +29,29 @@ import { useCoinIconLookup } from "../../../features/icons/hooks/useCoinIconLook
 import {
   pruneStickyFavorableMoveMap,
   resolveFallbackTtpProtectedPercent,
-  toProtectedPnlPercentFromStopPrice,
 } from "../../../features/bots/utils/trailingStopDisplay";
 import RuntimeDataSection from "./home-live-widgets/RuntimeDataSection";
 import RuntimeOnboardingSection from "./home-live-widgets/RuntimeOnboardingSection";
 import RuntimeSidebarSection from "./home-live-widgets/RuntimeSidebarSection";
 import RuntimeSignalsSection from "./home-live-widgets/RuntimeSignalsSection";
+import {
+  formatAgeCompact,
+  interpolateTemplate,
+  readFiniteNumber,
+  resolveQuoteCurrency,
+  resolveSignalCardsPerView,
+  sessionBadge,
+  SIGNAL_CARDS_DESKTOP_MIN_WIDTH,
+} from "./home-live-widgets/formatters";
+import {
+  buildLiveOpenPositions,
+  maxDrawdown,
+  resolveDynamicTslDisplay,
+  resolveDynamicTtpDisplay,
+  resolveUnrealized,
+  resolveUsedMargin,
+} from "./home-live-widgets/runtimeDerivations";
+import { useCloseRuntimePositionAction } from "../hooks/useCloseRuntimePositionAction";
 import { useHomeLiveWidgetsController } from "../hooks/useHomeLiveWidgetsController";
 import type {
   OpenPositionWithLive,
@@ -59,62 +72,6 @@ const DASHBOARD_OPEN_POSITIONS_COLUMNS_STORAGE_KEY = "dashboard.home.openPositio
 const DASHBOARD_TRADE_HISTORY_COLUMNS_STORAGE_KEY = "dashboard.home.tradeHistory.columns.v1";
 const TRADE_PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 const OPEN_POSITIONS_PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
-const SIGNAL_CARDS_DENSITY_BREAKPOINTS = {
-  desktopMinWidth: 1280,
-  tabletMinWidth: 768,
-} as const;
-const KNOWN_QUOTE_CURRENCIES = [
-  "USDT",
-  "USDC",
-  "BUSD",
-  "FDUSD",
-  "TUSD",
-  "USDP",
-  "DAI",
-  "USD",
-  "BTC",
-  "ETH",
-  "BNB",
-  "EUR",
-  "TRY",
-  "BRL",
-  "GBP",
-  "AUD",
-  "JPY",
-] as const;
-
-const resolveQuoteCurrency = (symbol: string) => {
-  const normalized = normalizeSymbol(symbol);
-  for (const quote of KNOWN_QUOTE_CURRENCIES) {
-    if (normalized.endsWith(quote) && normalized.length > quote.length) return quote;
-  }
-  return null;
-};
-
-const resolveSignalCardsPerView = (width: number) => {
-  if (width >= SIGNAL_CARDS_DENSITY_BREAKPOINTS.desktopMinWidth) return 4;
-  if (width >= SIGNAL_CARDS_DENSITY_BREAKPOINTS.tabletMinWidth) return 3;
-  return 2;
-};
-
-const formatAgeCompact = (ms: number) => {
-  if (!Number.isFinite(ms) || ms <= 0) return "0s";
-  if (ms < 60_000) return `${Math.max(1, Math.floor(ms / 1_000))}s`;
-  const totalMinutes = Math.floor(ms / 60_000);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  if (hours <= 0) return `${minutes}m`;
-  return `${hours}h ${minutes}m`;
-};
-
-const readFiniteNumber = (value: unknown) => {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string" && value.trim().length > 0) {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-  return null;
-};
 
 const RUNTIME_DATA_TABS: {
   key: RuntimeDataTab;
@@ -129,16 +86,6 @@ const RUNTIME_DATA_TABS: {
   { key: "TRADE_HISTORY", hash: "history", labelKey: "dashboard.home.runtime.tradesHistoryTitlePaper" },
 ];
 
-const interpolateTemplate = (template: string, values: Record<string, string | number>) =>
-  template.replace(/\{(\w+)\}/g, (_, token) => String(values[token] ?? ""));
-
-const sessionBadge = (status?: string | null) => {
-  if (status === "RUNNING") return "badge-info";
-  if (status === "COMPLETED") return "badge-success";
-  if (status === "FAILED") return "badge-error";
-  if (status === "CANCELED") return "badge-warning";
-  return "badge-ghost";
-};
 
 const normalizeDcaLevels = (levels?: number[] | null) =>
   (levels ?? []).filter((level) => Number.isFinite(level));
@@ -317,99 +264,8 @@ const tradeReasonLabelKey = (value: TradeActionReasonValue) => {
   return "dashboard.home.runtime.reasonUnknown";
 };
 
-const resolveUsedMargin = (positions: BotRuntimePositionsResponse | null) =>
-  (positions?.openItems ?? []).reduce((sum, p) => {
-    const lev = Number.isFinite(p.leverage) && p.leverage > 0 ? p.leverage : 1;
-    return sum + p.entryNotional / lev;
-  }, 0);
-
-const resolveDynamicTtpDisplay = (position: OpenPositionWithLive) =>
-  toProtectedPnlPercentFromStopPrice({
-    side: position.side,
-    entryPrice: position.entryPrice,
-    leverage: position.leverage,
-    stopPrice: position.dynamicTtpStopLoss,
-  }) ?? position.fallbackTtpProtectedPercent ?? null;
-
-const resolveDynamicTslDisplay = (position: OpenPositionWithLive) => {
-  if (resolveDynamicTtpDisplay(position) != null) return null;
-  return toProtectedPnlPercentFromStopPrice({
-    side: position.side,
-    entryPrice: position.entryPrice,
-    leverage: position.leverage,
-    stopPrice: position.dynamicTslStopLoss,
-  });
-};
-
-const buildLiveOpenPositions = (
-  positions: BotRuntimePositionsResponse | null,
-  symbolStats: BotRuntimeSymbolStatsResponse | null,
-  streamPrices: Map<string, number>
-): OpenPositionWithLive[] => {
-  const priceBySymbol = new Map<string, number>();
-  for (const item of symbolStats?.items ?? []) {
-    if (typeof item.lastPrice === "number" && Number.isFinite(item.lastPrice) && item.lastPrice > 0) {
-      priceBySymbol.set(normalizeSymbol(item.symbol), item.lastPrice);
-    }
-  }
-
-  return (positions?.openItems ?? []).map((position) => {
-    const symbolKey = normalizeSymbol(position.symbol);
-    const lev = Number.isFinite(position.leverage) && position.leverage > 0 ? position.leverage : 1;
-    const marginNotional = position.entryNotional / lev;
-    const candidateMark =
-      streamPrices.get(symbolKey) ?? priceBySymbol.get(symbolKey) ?? position.markPrice ?? null;
-    const liveMarkPrice = typeof candidateMark === "number" && Number.isFinite(candidateMark) ? candidateMark : null;
-    const hasPriceContext = liveMarkPrice != null || position.unrealizedPnl != null;
-    const grossLiveUnrealizedPnl =
-      liveMarkPrice == null
-        ? (position.unrealizedPnl ?? 0)
-        : position.side === "LONG"
-          ? (liveMarkPrice - position.entryPrice) * position.quantity
-          : (position.entryPrice - liveMarkPrice) * position.quantity;
-    // Keep dashboard PnL model aligned with bots runtime view (gross unrealized move).
-    // If neither live mark nor runtime unrealized is available yet, keep neutral 0.
-    const liveUnrealizedPnl = hasPriceContext ? grossLiveUnrealizedPnl : 0;
-    const livePnlPct = marginNotional > 0 ? (liveUnrealizedPnl / marginNotional) * 100 : 0;
-
-    return {
-      ...position,
-      liveMarkPrice,
-      liveUnrealizedPnl,
-      livePnlPct,
-      marginNotional,
-    };
-  });
-};
-
-const resolveUnrealized = (item: RuntimeSnapshot | null) => {
-  if (!item) return 0;
-  const liveOpen = buildLiveOpenPositions(item.positions, item.symbolStats, new Map<string, number>());
-  if (liveOpen.length > 0) {
-    return liveOpen.reduce((sum, row) => sum + row.liveUnrealizedPnl, 0);
-  }
-  if (typeof item.symbolStats?.summary.unrealizedPnl === "number") return item.symbolStats.summary.unrealizedPnl;
-  return item.positions?.summary.unrealizedPnl ?? 0;
-};
-
-const maxDrawdown = (trades: BotRuntimeTrade[]) => {
-  if (trades.length === 0) return { abs: 0, pct: null as number | null };
-  const sorted = [...trades].sort((a, b) => toTimestamp(a.executedAt) - toTimestamp(b.executedAt));
-  let running = 0;
-  let peak = 0;
-  let dd = 0;
-  for (const t of sorted) {
-    running += t.realizedPnl;
-    peak = Math.max(peak, running);
-    dd = Math.min(dd, running - peak);
-  }
-  const abs = Math.abs(dd);
-  return { abs, pct: peak > 0 ? (abs / peak) * 100 : null };
-};
-
 export default function HomeLiveWidgets() {
   const { t } = useI18n();
-  const [closingPositionId, setClosingPositionId] = useState<string | null>(null);
   const { formatCurrency, formatDateTime, formatDateTimeWithSeconds, formatNumber, formatPercent, formatTime } = useLocaleFormatting();
   const formatDcaPercent = useCallback(
     (value: number) => `${formatNumber(value, { maximumFractionDigits: 2 })}%`,
@@ -682,7 +538,7 @@ export default function HomeLiveWidgets() {
   }, [selected, t]);
 
   const signalCardsPerView = resolveSignalCardsPerView(
-    viewportWidth > 0 ? viewportWidth : SIGNAL_CARDS_DENSITY_BREAKPOINTS.desktopMinWidth
+    viewportWidth > 0 ? viewportWidth : SIGNAL_CARDS_DESKTOP_MIN_WIDTH
   );
   const signalSymbols = useMemo(() => selectedData?.symbols ?? [], [selectedData?.symbols]);
   const signalHeaderStats = useMemo(() => {
@@ -783,40 +639,15 @@ export default function HomeLiveWidgets() {
       : "Pozycja nie zostala zamknieta (jest juz zamknieta lub nie kwalifikuje sie).";
   const closePositionErrorLabel = closeActionBaseLabel === "Close" ? "Failed to close position." : "Nie udalo sie zamknac pozycji.";
 
-  const handleCloseRuntimePosition = useCallback(
-    async (position: OpenPositionWithLive) => {
-      const botId = position.runtimeBotId ?? selected?.bot.id;
-      const sessionId = position.runtimeSessionId ?? selected?.session?.id;
-      if (!botId || !sessionId) {
-        toast.error(closePositionNoSessionLabel);
-        return;
-      }
-
-      setClosingPositionId(position.id);
-      try {
-        const result = await closeBotRuntimeSessionPosition(botId, sessionId, position.id, { riskAck: true });
-        if (result.status === "closed") {
-          toast.success(closePositionSuccessLabel);
-        } else {
-          toast.error(closePositionIgnoredLabel);
-        }
-        await load({ silent: true });
-      } catch {
-        toast.error(closePositionErrorLabel);
-      } finally {
-        setClosingPositionId((current) => (current === position.id ? null : current));
-      }
-    },
-    [
-      closePositionErrorLabel,
-      closePositionIgnoredLabel,
-      closePositionNoSessionLabel,
-      closePositionSuccessLabel,
-      load,
-      selected?.bot.id,
-      selected?.session?.id,
-    ]
-  );
+  const { closingPositionId, handleCloseRuntimePosition } = useCloseRuntimePositionAction({
+    closePositionErrorLabel,
+    closePositionIgnoredLabel,
+    closePositionNoSessionLabel,
+    closePositionSuccessLabel,
+    onClosed: () => load({ silent: true }),
+    selectedBotId: selected?.bot.id,
+    selectedSessionId: selected?.session?.id,
+  });
 
   const openPositionsColumns = useMemo<DataTableColumn<OpenPositionWithLive>[]>(() => {
     const columns: DataTableColumn<OpenPositionWithLive>[] = [

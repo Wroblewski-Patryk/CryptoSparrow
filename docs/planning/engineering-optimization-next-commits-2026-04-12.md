@@ -9,7 +9,6 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 ## NOW
 
 ## NEXT
-- [ ] `OPTC-16 refactor(web-runtime-home): split HomeLiveWidgets into formatter/actions/sections hooks`
 - [ ] `OPTC-17 refactor(web-runtime-bots): split BotsManagement orchestration into focused modules`
 - [ ] `OPTC-18 i18n(web): split monolithic translations by domain namespaces`
 - [ ] `OPTC-19 ux(web-guardrails): replace window.confirm/location.assign with app modal + navigation helper`
@@ -20,6 +19,8 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 - none
 
 ## DONE
+- [x] `OPTC-16 refactor(web-runtime-home): split HomeLiveWidgets into formatter/actions/sections hooks`
+  - 2026-04-16: Split `HomeLiveWidgets` orchestration by extracting formatter/utility contracts into `home-live-widgets/formatters.ts`, runtime derivations into `home-live-widgets/runtimeDerivations.ts`, and close-position action orchestration into dedicated hook `useCloseRuntimePositionAction`; validated with `pnpm --filter web run typecheck` + `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` (PASS).
 - [x] `OPTC-15 migrate(web-contracts): switch Web exchange capability/types to shared contract`
   - 2026-04-16: Switched web exchange capability/types to shared contract package `@cryptosparrow/shared` by wiring exchange-capability matrix/type exports to shared source and migrating market/wallet market-type option contracts/defaults to shared constants; validated with `pnpm --filter web run typecheck` + targeted ApiKey/MarketUniverse/Wallet form suites (PASS).
 - [x] `OPTC-14 migrate(api-contracts): switch API zod schemas to shared exchange contract`
