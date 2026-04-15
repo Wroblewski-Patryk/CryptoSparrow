@@ -9,13 +9,14 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 ## NOW
 
 ## NEXT
-- [ ] `OPTC-20 perf(web-prefs): centralize profile preference cache/sync (DataTable + account prefs)`
 - [ ] `OPTC-21 qa(repo): run full lint/typecheck/guardrails + targeted e2e confidence pack and publish evidence`
 
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `OPTC-20 perf(web-prefs): centralize profile preference cache/sync (DataTable + account prefs)`
+  - 2026-04-16: Added shared profile preference cache/sync service (`profileBasicCache`) with in-flight request dedupe, TTL reuse, and optimistic patch merge, then migrated both `useUser` account-preferences flow and DataTable column-visibility sync to that contract to eliminate scattered direct profile-basic reads/writes; validated with `pnpm --filter web test -- src/ui/components/DataTable.test.tsx` + `pnpm --filter web run typecheck` (PASS).
 - [x] `OPTC-19 ux(web-guardrails): replace window.confirm/location.assign with app modal + navigation helper`
   - 2026-04-16: Replaced browser-native confirm/assign guardrails by introducing reusable async modal confirm hook (`useAsyncConfirm`) and shared navigation helper (`navigateWithFallback`), then migrated bots/security/wallet/auth hotspots off `window.confirm` and `window.location.assign`; validated with targeted auth/bots/security test pack + web typecheck (PASS).
 - [x] `OPTC-18 i18n(web): split monolithic translations by domain namespaces`

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import api from "../../../lib/api";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { User } from "../types/user.type";
 import { executeWithRetry, isRetriableHttpError, runAsyncWithState } from "@/lib/async";
+import { readProfileBasic, updateProfileBasic } from "../services/profileBasicCache";
 
 export function useUser() {
   const { locale } = useI18n();
@@ -26,14 +26,14 @@ export function useUser() {
     try {
       await runAsyncWithState(setLoading, async () => {
         const res = await executeWithRetry(
-          () => api.get<User>("/dashboard/profile/basic"),
+          () => readProfileBasic(),
           {
             maxAttempts: 2,
             retryDelayMs: 250,
             shouldRetry: isRetriableHttpError,
           }
         );
-        setUser(res.data);
+        setUser(res);
       });
     } catch {
       toast.error(copy.fetchFailed);
@@ -48,14 +48,14 @@ export function useUser() {
     try {
       await runAsyncWithState(setLoading, async () => {
         const res = await executeWithRetry(
-          () => api.patch<User>("/dashboard/profile/basic", data),
+          () => updateProfileBasic(data),
           {
             maxAttempts: 2,
             retryDelayMs: 250,
             shouldRetry: isRetriableHttpError,
           }
         );
-        setUser(res.data);
+        setUser(res);
       });
     } catch (err) {
       toast.error(copy.saveFailed);

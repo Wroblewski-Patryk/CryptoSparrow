@@ -8,12 +8,13 @@ Operational queue for one-task execution runs.
 
 ## NOW
 ## NEXT
-- [ ] `OPTC-20 perf(web-prefs): centralize profile preference cache/sync (DataTable + account prefs)`
 - [ ] `OPTC-21 qa(repo): run full lint/typecheck/guardrails + targeted e2e confidence pack and publish evidence`
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `OPTC-20 perf(web-prefs): centralize profile preference cache/sync (DataTable + account prefs)`
+  - 2026-04-16: Added shared profile basic cache service (`profileBasicCache`) with in-flight dedupe + TTL + optimistic patch merge, migrated account preference hook (`useUser`) and DataTable column-visibility hydration/save paths to this shared contract, and removed direct `/dashboard/profile/basic` calls outside the cache service; validated with `pnpm --filter web test -- src/ui/components/DataTable.test.tsx` + `pnpm --filter web run typecheck` (PASS).
 - [x] `OPTC-19 ux(web-guardrails): replace window.confirm/location.assign with app modal + navigation helper`
   - 2026-04-16: Replaced `window.confirm` flows with app-level async `ConfirmModal` patterns (`useAsyncConfirm`) across bots/security/wallet deletion paths, removed browser `window.location.assign` redirects by adding shared `navigateWithFallback` helper for auth transitions, and migrated bots list controller live-risk confirms to async modal orchestration; validated with `pnpm --filter web test -- src/features/auth/hooks/useLoginForm.test.ts src/features/bots/components/BotCreateEditForm.test.tsx src/features/bots/components/BotsManagement.test.tsx src/features/profile/components/Security.test.tsx` + `pnpm --filter web run typecheck` (PASS).
 - [x] `OPTC-18 i18n(web): split monolithic translations by domain namespaces`

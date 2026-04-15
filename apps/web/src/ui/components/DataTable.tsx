@@ -2,12 +2,15 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { LuArrowDown, LuArrowUp, LuArrowUpDown, LuColumns3, LuSearch, LuSlidersHorizontal } from 'react-icons/lu';
-import api from '../../lib/api';
 import {
   getLocalStorageJsonItem,
   setLocalStorageItem,
   setLocalStorageJsonItem,
 } from '../../lib/storage';
+import {
+  readTableColumnVisibilityPreference,
+  saveTableColumnVisibilityPreference,
+} from '@/features/profile/services/profileBasicCache';
 import InlinePager from './InlinePager';
 
 export type DataTableColumn<T> = {
@@ -87,14 +90,6 @@ const compareValues = (a: string | number | null | undefined, b: string | number
 };
 
 type TableColumnVisibilityState = Record<string, boolean>;
-
-type ProfileUiPreferences = {
-  tableColumnVisibility?: Record<string, TableColumnVisibilityState>;
-};
-
-type ProfileBasicResponse = {
-  uiPreferences?: ProfileUiPreferences;
-};
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value != null && !Array.isArray(value);
@@ -405,9 +400,7 @@ export default function DataTable<T>({
 
     const hydrateFromProfile = async () => {
       try {
-        const response = await api.get<ProfileBasicResponse>('/dashboard/profile/basic');
-        const remoteRaw =
-          response.data?.uiPreferences?.tableColumnVisibility?.[columnVisibilityPreferenceKey];
+        const remoteRaw = await readTableColumnVisibilityPreference(columnVisibilityPreferenceKey);
         const remoteParsed = normalizeColumnVisibilityState(remoteRaw, columnKeys);
         if (!remoteParsed || cancelled) return;
 
@@ -448,13 +441,10 @@ export default function DataTable<T>({
 
     const timeout = window.setTimeout(async () => {
       try {
-        await api.patch('/dashboard/profile/basic', {
-          uiPreferences: {
-            tableColumnVisibility: {
-              [columnVisibilityPreferenceKey]: resolvedColumnVisibility,
-            },
-          },
-        });
+        await saveTableColumnVisibilityPreference(
+          columnVisibilityPreferenceKey,
+          resolvedColumnVisibility
+        );
         lastSerializedColumnVisibilityRef.current = serialized;
       } catch {
         // Ignore profile preference sync failures.

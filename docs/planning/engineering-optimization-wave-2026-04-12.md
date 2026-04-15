@@ -131,6 +131,7 @@ Execution queue (tiny commits): `docs/planning/engineering-optimization-next-com
 5. Exchange contracts are shared (single-source) across API and Web.
 
 ## Progress Log (Engineering Optimization Wave)
+- 2026-04-16: Completed `OPTC-20` by adding shared profile preference cache/sync service (`profileBasicCache`) with in-flight dedupe, TTL-backed profile reuse, and optimistic patch merging, then migrating account preference (`useUser`) and DataTable column-visibility read/write flows to that contract to eliminate duplicated direct `/dashboard/profile/basic` API traffic across UI modules.
 - 2026-04-12: Published optimization wave plan and execution queue (`engineering-optimization-next-commits-2026-04-12.md`) after repo-wide standards audit.
 - 2026-04-15: Activated execution flow in canonical `mvp-next-commits` by importing queue tasks (`NOW: OPTC-01..05`, `NEXT: OPTC-06..21`) under completion task `OPTC-00`.
 - 2026-04-15: Completed `OPTC-01` by introducing typed API error primitives (`AppError`, `DomainError`) and centralized mapper wiring (`errorHandler` -> `httpErrorMapper`) with legacy compatibility retained for `status + toDetails()` error classes.
