@@ -23,6 +23,7 @@ describe('symbols normalization helpers', () => {
     expect(normalizeBaseCurrency(' usdt ')).toBe('USDT');
     expect(normalizeBaseCurrency('')).toBe('USDT');
     expect(normalizeBaseCurrency(undefined, ' usd ')).toBe('USD');
+    expect(normalizeBaseCurrency('   ', '   ')).toBe('USDT');
   });
 
   it('normalizes symbol lists to unique sorted values', () => {
@@ -44,5 +45,32 @@ describe('symbols normalization helpers', () => {
     expect(resolveUniverseSymbols([' btcusdt ', 'ETHUSDT', 'XRPUSDT'], ['ethusdt', ' xrpusdt '])).toEqual([
       'BTCUSDT',
     ]);
+  });
+
+  it('is idempotent for normalized values across helpers', () => {
+    expect(normalizeSymbol(normalizeSymbol(' btc/usdt '))).toBe('BTC/USDT');
+    expect(normalizeSymbolStrict(normalizeSymbolStrict(' eth-usdt '))).toBe('ETHUSDT');
+    expect(normalizeBaseCurrency(normalizeBaseCurrency(' usd '), 'usdt')).toBe('USD');
+  });
+
+  it('keeps list helpers deterministic regardless of input order and case', () => {
+    const firstBatch = [' xrpusdt ', 'BTCUSDT', 'ethusdt', 'ETHUSDT'];
+    const secondBatch = ['ethusdt', ' btcusdt ', 'XRPUSDT', 'ETHUSDT'];
+
+    expect(normalizeSymbols(firstBatch)).toEqual(normalizeSymbols(secondBatch));
+    expect(normalizeBaseCurrencies([' usdt ', 'EUR', 'usd', 'USD'])).toEqual(['EUR', 'USD', 'USDT']);
+  });
+
+  it('does not mutate whitelist or blacklist arrays when resolving universe symbols', () => {
+    const whitelist = [' btcusdt ', 'ETHUSDT', 'XRPUSDT'];
+    const blacklist = ['ethusdt'];
+
+    const whitelistBefore = [...whitelist];
+    const blacklistBefore = [...blacklist];
+
+    resolveUniverseSymbols(whitelist, blacklist);
+
+    expect(whitelist).toEqual(whitelistBefore);
+    expect(blacklist).toEqual(blacklistBefore);
   });
 });

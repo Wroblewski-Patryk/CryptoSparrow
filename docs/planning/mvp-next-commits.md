@@ -8,7 +8,6 @@ Operational queue for one-task execution runs.
 
 ## NOW
 ## NEXT
-- [ ] `OPTC-09 test(api-normalization): add regression contract tests for shared normalization invariants`
 - [ ] `OPTC-10 core(web-errors): create single UI error resolver and deprecate handleError/getAxiosMessage split`
 - [ ] `OPTC-11 migrate(web-create-pages): standardize async+error handling on create pages (markets/strategies/backtests)`
 - [ ] `OPTC-12 migrate(web-edit-list-pages): standardize async+error handling for edit/list dashboards`
@@ -25,6 +24,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `OPTC-09 test(api-normalization): add regression contract tests for shared normalization invariants`
+  - 2026-04-16: Added API normalization regression invariants in `apps/api/src/lib/symbols.test.ts` (idempotency, fallback hardening for blank input/fallback, deterministic list normalization independent of input order, and non-mutating `resolveUniverseSymbols` contract); validated with `pnpm --filter api run typecheck` + `pnpm --filter api test -- src/lib/symbols.test.ts` (PASS).
 - [x] `OPTC-08 migrate(api-wallets-markets-icons-stream): remove remaining production trim().toUpperCase variants`
   - 2026-04-16: Removed remaining production uppercase normalization variants in targeted API modules (`wallets`, `markets`, `icons`, `market-stream`, `workers/marketStream`) by switching to shared `lib/symbols` helpers (`normalizeSymbol`, `normalizeBaseCurrency`, `normalizeSymbols`); validated with `pnpm --filter api run typecheck` + targeted wallets/markets/icons/market-stream suites (PASS).
 - [x] `OPTC-07 migrate(api-engine): remove local uppercase normalization variants in runtime/engine modules`
