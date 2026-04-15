@@ -7,20 +7,27 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 - Focus: architecture, reliability, consistency, and maintainability across API + Web.
 
 ## NOW
-- [ ] `OPT-02 normalization(api): unify symbol/baseCurrency normalization primitives and remove local uppercase variants`
-- [ ] `OPT-03 async-errors(web): standardize async action + error mapping across page-level create/edit/list flows`
-- [ ] `OPT-04 runtime-ui-split(web): decompose HomeLiveWidgets + BotsManagement into smaller domain modules`
-- [ ] `OPT-05 contracts(shared): create shared exchange enum/capability contracts for API + Web`
 
 ## NEXT
-- [ ] `OPT-06 i18n(web): split monolithic translations into domain namespaces + remove remaining hardcoded copy`
-- [ ] `OPT-07 ux-guardrails(web): replace window.confirm/location.assign with app-level modal + navigation helpers`
-- [ ] `OPT-08 prefs-sync(web): cache/throttle profile preference sync (DataTable + account preferences)`
 
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `OPT-08 prefs-sync(web): cache/throttle profile preference sync (DataTable + account preferences)`
+  - 2026-04-16: Closed parent `OPT-08` objective via completed slice `OPTC-20` (shared profile preference cache/sync across DataTable and account preference flows), with final confidence evidence in `OPTC-21`.
+- [x] `OPT-07 ux-guardrails(web): replace window.confirm/location.assign with app-level modal + navigation helpers`
+  - 2026-04-16: Closed parent `OPT-07` objective via completed slice `OPTC-19` (browser-native confirm/assign replacement with app-level guardrails).
+- [x] `OPT-06 i18n(web): split monolithic translations into domain namespaces + remove remaining hardcoded copy`
+  - 2026-04-16: Closed parent `OPT-06` objective via completed slice `OPTC-18` (domainized translation namespaces and composed locale maps).
+- [x] `OPT-05 contracts(shared): create shared exchange enum/capability contracts for API + Web`
+  - 2026-04-16: Closed parent `OPT-05` objective via completed slices `OPTC-13..15` (shared contract package + API/Web contract adoption).
+- [x] `OPT-04 runtime-ui-split(web): decompose HomeLiveWidgets + BotsManagement into smaller domain modules`
+  - 2026-04-16: Closed parent `OPT-04` objective via completed slices `OPTC-16..17` (runtime dashboard decomposition into focused modules/hooks).
+- [x] `OPT-03 async-errors(web): standardize async action + error mapping across page-level create/edit/list flows`
+  - 2026-04-16: Closed parent `OPT-03` objective via completed slices `OPTC-10..12` (single UI error resolver + standardized async/error flow on create/edit/list pages).
+- [x] `OPT-02 normalization(api): unify symbol/baseCurrency normalization primitives and remove local uppercase variants`
+  - 2026-04-16: Closed parent `OPT-02` objective via completed slices `OPTC-06..09` (shared normalization primitives, migration across hot paths, and regression contracts).
 - [x] `OPT-01 error-taxonomy(api): replace string-code Error.message flow with typed domain errors + central mapper`
   - 2026-04-16: Closed parent `OPT-01` objective by consolidating implementation slices `OPTC-01..OPTC-05` (typed error primitives + central HTTP mapper + migrated domain/controller paths for wallets/markets/strategies/bots/orders/profile/subscriptions) with existing validation evidence preserved in corresponding OPTC entries.
 - [x] `OPTC-21 qa(repo): run full lint/typecheck/guardrails + targeted e2e confidence pack and publish evidence`

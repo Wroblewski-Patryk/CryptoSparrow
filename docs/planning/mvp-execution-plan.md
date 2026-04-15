@@ -1497,15 +1497,16 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 
 ## Engineering Optimization Wave (2026-04-12)
 - [x] `OPT-01 error-taxonomy(api): replace string-code Error.message flow with typed domain errors + central mapper`
-- [ ] `OPT-02 normalization(api): unify symbol/baseCurrency normalization primitives and remove local uppercase variants`
-- [ ] `OPT-03 async-errors(web): standardize async action + error mapping across page-level create/edit/list flows`
-- [ ] `OPT-04 runtime-ui-split(web): decompose HomeLiveWidgets + BotsManagement into smaller domain modules`
-- [ ] `OPT-05 contracts(shared): create shared exchange enum/capability contracts for API + Web`
-- [ ] `OPT-06 i18n(web): split monolithic translations into domain namespaces + remove remaining hardcoded copy`
-- [ ] `OPT-07 ux-guardrails(web): replace window.confirm/location.assign with app-level modal + navigation helpers`
-- [ ] `OPT-08 prefs-sync(web): cache/throttle profile preference sync (DataTable + account preferences)`
+- [x] `OPT-02 normalization(api): unify symbol/baseCurrency normalization primitives and remove local uppercase variants`
+- [x] `OPT-03 async-errors(web): standardize async action + error mapping across page-level create/edit/list flows`
+- [x] `OPT-04 runtime-ui-split(web): decompose HomeLiveWidgets + BotsManagement into smaller domain modules`
+- [x] `OPT-05 contracts(shared): create shared exchange enum/capability contracts for API + Web`
+- [x] `OPT-06 i18n(web): split monolithic translations into domain namespaces + remove remaining hardcoded copy`
+- [x] `OPT-07 ux-guardrails(web): replace window.confirm/location.assign with app-level modal + navigation helpers`
+- [x] `OPT-08 prefs-sync(web): cache/throttle profile preference sync (DataTable + account preferences)`
 
 ### Progress Log (Engineering Optimization)
+- 2026-04-16: Closed remaining parent objectives `OPT-02..OPT-08` by rolling up completed implementation slices (`OPT-02` -> `OPTC-06..09`, `OPT-03` -> `OPTC-10..12`, `OPT-04` -> `OPTC-16..17`, `OPT-05` -> `OPTC-13..15`, `OPT-06` -> `OPTC-18`, `OPT-07` -> `OPTC-19`, `OPT-08` -> `OPTC-20`) with wave QA closure already captured under `OPTC-21`.
 - 2026-04-16: Closed parent `OPT-01` objective by consolidating already completed implementation slices `OPTC-01..OPTC-05` (typed error primitives, central mapper wiring, and domain/controller migrations for wallets/markets/strategies/bots/orders/profile/subscriptions) with no additional code delta required in this closure step; verification evidence remains in corresponding OPTC entries (`api typecheck` + targeted suites).
 - 2026-04-16: Completed `OPTC-21` by running full repo QA closure pack (`pnpm run lint`, `pnpm --filter api run typecheck`, `pnpm --filter web run typecheck`, `pnpm run quality:guardrails`) plus targeted optimization confidence suites (`pnpm --filter api test --` wallets/markets/strategies/bots/orders/profile-security/subscription e2e pack: `8` files, `70` tests; `pnpm --filter web test --` bots/security/datatable/i18n regression pack: `5` files, `15` tests), and published evidence artifacts `docs/operations/_artifacts-engineering-optimization-confidence-2026-04-15T23-26-17-682Z.json` + `docs/operations/engineering-optimization-confidence-pack-2026-04-15T23-26-17-682Z.md` (PASS).
 - 2026-04-16: Completed `OPTC-20` by introducing shared profile preference cache/sync service (`apps/web/src/features/profile/services/profileBasicCache.ts`) with in-flight request dedupe, TTL reuse, and optimistic profile patch merge, then migrating `useUser` account-preferences flow and DataTable column-visibility hydration/save paths to that shared contract to remove scattered direct `/dashboard/profile/basic` reads/writes; validated with `pnpm --filter web test -- src/ui/components/DataTable.test.tsx` and `pnpm --filter web run typecheck` (PASS).
