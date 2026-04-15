@@ -9,7 +9,6 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 ## NOW
 
 ## NEXT
-- [ ] `OPTC-10 core(web-errors): create single UI error resolver and deprecate handleError/getAxiosMessage split`
 - [ ] `OPTC-11 migrate(web-create-pages): standardize async+error handling on create pages (markets/strategies/backtests)`
 - [ ] `OPTC-12 migrate(web-edit-list-pages): standardize async+error handling for edit/list dashboards`
 - [ ] `OPTC-13 core(shared-contracts): extract shared exchange constants/capabilities/marketType contract`
@@ -26,6 +25,8 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 - none
 
 ## DONE
+- [x] `OPTC-10 core(web-errors): create single UI error resolver and deprecate handleError/getAxiosMessage split`
+  - 2026-04-16: Added shared `resolveUiErrorMessage` in `apps/web/src/lib/errorResolver.ts` and switched `handleError`/`getAxiosMessage` to compatibility wrappers around that single resolver (deprecated split), updated forms helper to use the new resolver directly, and added focused contract tests (`errorResolver.test.ts`); validated with `pnpm --filter web run typecheck` + `pnpm --filter web test -- src/lib/errorResolver.test.ts` (PASS).
 - [x] `OPTC-09 test(api-normalization): add regression contract tests for shared normalization invariants`
   - 2026-04-16: Extended `apps/api/src/lib/symbols.test.ts` with regression invariants for idempotent normalization, fallback hardening (`USDT` when input/fallback are blank), deterministic order-insensitive list normalization, and non-mutating universe resolution contracts; validated with `pnpm --filter api run typecheck` + `pnpm --filter api test -- src/lib/symbols.test.ts` (PASS).
 - [x] `OPTC-08 migrate(api-wallets-markets-icons-stream): remove remaining production trim().toUpperCase variants`

@@ -1,4 +1,4 @@
-import { getAxiosMessage } from './getAxiosMessage';
+import { resolveUiErrorMessage } from './errorResolver';
 import { normalizeBaseCurrency, normalizeSymbol } from './symbols';
 
 export const normalizeFormText = (value: string | null | undefined) =>
@@ -16,4 +16,4 @@ export const normalizeFormBaseCurrency = (
 ) => normalizeBaseCurrency(value) || fallback;
 
 export const resolveFormErrorMessage = (error: unknown, fallback: string) =>
-  getAxiosMessage(error) ?? fallback;
+  resolveUiErrorMessage(error, { fallback }) ?? fallback;
