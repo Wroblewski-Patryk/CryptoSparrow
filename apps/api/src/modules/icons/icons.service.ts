@@ -1,4 +1,5 @@
 import { parsePositiveInt } from '../../lib/env';
+import { normalizeSymbol } from '../../lib/symbols';
 
 type CoinIconSource = 'coingecko' | 'curated' | 'placeholder';
 
@@ -113,8 +114,6 @@ const QUOTE_SUFFIXES = [
 const CACHE_TTL_MS = parsePositiveInt(process.env.COIN_ICON_CACHE_TTL_MINUTES, DEFAULT_CACHE_TTL_MINUTES) * 60_000;
 const REQUEST_TIMEOUT_MS = parsePositiveInt(process.env.COIN_ICON_REQUEST_TIMEOUT_MS, DEFAULT_REQUEST_TIMEOUT_MS);
 const FETCH_GAP_MS = parsePositiveInt(process.env.COIN_ICON_FETCH_GAP_MS, DEFAULT_FETCH_GAP_MS);
-
-const normalizeSymbol = (value: string) => value.trim().toUpperCase();
 
 const resolveBaseAssetFromSymbol = (rawSymbol: string) => {
   const cleaned = normalizeSymbol(rawSymbol).replace(/[^A-Z0-9/:_-]/g, '');

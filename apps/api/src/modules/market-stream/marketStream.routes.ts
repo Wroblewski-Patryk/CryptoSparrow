@@ -2,6 +2,7 @@ import { Response, Router } from 'express';
 import { MarketStreamEvent } from './binanceStream.types';
 import { subscribeMarketStreamEvents } from './marketStreamFanout';
 import { sendError } from '../../utils/apiError';
+import { normalizeSymbols } from '../../lib/symbols';
 
 const marketStreamRouter = Router();
 export const MARKET_STREAM_MAX_SYMBOLS = 20;
@@ -10,12 +11,7 @@ const HEALTH_INTERVAL_MS = 15_000;
 
 export const parseSymbols = (raw: unknown) => {
   if (typeof raw !== 'string') return new Set<string>();
-  return new Set(
-    raw
-      .split(',')
-      .map((item) => item.trim().toUpperCase())
-      .filter((item) => item.length > 0)
-  );
+  return new Set(normalizeSymbols(raw.split(',')));
 };
 
 export const formatSseEvent = (id: number, type: string, payload: unknown) => {

@@ -9,7 +9,6 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 ## NOW
 
 ## NEXT
-- [ ] `OPTC-08 migrate(api-wallets-markets-icons-stream): remove remaining production trim().toUpperCase variants`
 - [ ] `OPTC-09 test(api-normalization): add regression contract tests for shared normalization invariants`
 - [ ] `OPTC-10 core(web-errors): create single UI error resolver and deprecate handleError/getAxiosMessage split`
 - [ ] `OPTC-11 migrate(web-create-pages): standardize async+error handling on create pages (markets/strategies/backtests)`
@@ -28,6 +27,8 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 - none
 
 ## DONE
+- [x] `OPTC-08 migrate(api-wallets-markets-icons-stream): remove remaining production trim().toUpperCase variants`
+  - 2026-04-16: Migrated remaining production symbol/base-currency uppercase normalization in `wallets`, `markets`, `icons`, `market-stream` and `workers/marketStream` paths to shared helpers from `lib/symbols`, removing local `trim().toUpperCase()` variants from those modules; validated with API typecheck + targeted wallets/markets/icons/market-stream suites (PASS).
 - [x] `OPTC-07 migrate(api-engine): remove local uppercase normalization variants in runtime/engine modules`
   - 2026-04-16: Replaced local runtime/engine symbol/base-currency uppercase normalization with shared helpers (`normalizeSymbol`, `normalizeBaseCurrency`, `normalizeSymbols`) across execution/runtime dataflow services (`executionOrchestrator`, `runtimeScanLoop`, `runtimeSignalLoop`, `runtimeTelemetry`, `runtimeCapitalContext`, `runtimeExecutionDedupe`, `runtimeSignalLoopDefaults`, `runtimeSignalMarketDataGateway`, `runtimeTickerStore`, `paperRuntime`); validated with API typecheck + targeted engine unit suites (PASS).
 - [x] `OPTC-06 core(api-normalization): extend shared symbol/base-currency normalization helpers`

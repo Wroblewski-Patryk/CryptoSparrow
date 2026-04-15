@@ -2,7 +2,7 @@ import { BinanceMarketStreamWorker } from '../modules/market-stream/binanceStrea
 import { publishMarketStreamEvent } from '../modules/market-stream/marketStreamFanout';
 import { prisma } from '../prisma/client';
 import { bootstrapWorker } from './workerBootstrap';
-import { normalizeSymbols, resolveUniverseSymbols } from '../lib/symbols';
+import { normalizeSymbol, normalizeSymbols, resolveUniverseSymbols } from '../lib/symbols';
 import { resolveCatalogSymbolsForUniverse } from '../modules/markets/marketCatalogSymbolResolver.service';
 import { createModuleLogger } from '../lib/logger';
 
@@ -94,7 +94,7 @@ const resolveDynamicSubscriptions = async (): Promise<StreamSubscriptions> => {
     },
   });
 
-  const symbols = new Set<string>(envSymbols.map((symbol) => symbol.toUpperCase()));
+  const symbols = new Set<string>(normalizeSymbols(envSymbols));
   const intervals = new Set<string>(envIntervals);
   const catalogSymbolsCache = new Map<string, string[]>();
 
@@ -143,7 +143,7 @@ const resolveDynamicSubscriptions = async (): Promise<StreamSubscriptions> => {
       }
       for (const symbol of groupSymbols) {
         if (typeof symbol !== 'string' || symbol.trim().length === 0) continue;
-        symbols.add(symbol.trim().toUpperCase());
+        symbols.add(normalizeSymbol(symbol));
       }
       for (const link of group.strategyLinks) {
         const interval = normalizeInterval(link.strategy.interval);

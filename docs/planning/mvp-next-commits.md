@@ -8,7 +8,6 @@ Operational queue for one-task execution runs.
 
 ## NOW
 ## NEXT
-- [ ] `OPTC-08 migrate(api-wallets-markets-icons-stream): remove remaining production trim().toUpperCase variants`
 - [ ] `OPTC-09 test(api-normalization): add regression contract tests for shared normalization invariants`
 - [ ] `OPTC-10 core(web-errors): create single UI error resolver and deprecate handleError/getAxiosMessage split`
 - [ ] `OPTC-11 migrate(web-create-pages): standardize async+error handling on create pages (markets/strategies/backtests)`
@@ -26,6 +25,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `OPTC-08 migrate(api-wallets-markets-icons-stream): remove remaining production trim().toUpperCase variants`
+  - 2026-04-16: Removed remaining production uppercase normalization variants in targeted API modules (`wallets`, `markets`, `icons`, `market-stream`, `workers/marketStream`) by switching to shared `lib/symbols` helpers (`normalizeSymbol`, `normalizeBaseCurrency`, `normalizeSymbols`); validated with `pnpm --filter api run typecheck` + targeted wallets/markets/icons/market-stream suites (PASS).
 - [x] `OPTC-07 migrate(api-engine): remove local uppercase normalization variants in runtime/engine modules`
   - 2026-04-16: Migrated runtime/engine symbol/base-currency normalization to shared helpers from `apps/api/src/lib/symbols.ts` across orchestrator/scan-loop/signal-loop/telemetry/capital-context/dedupe/market-data-gateway/ticker-store/defaults modules, removing local symbol uppercase variants in production engine paths; validated with `pnpm --filter api run typecheck` + targeted engine suites (`executionOrchestrator`, `paperRuntime`, `runtimeCapitalContext`, `runtimeExecutionDedupe`, `runtimeScanLoop`, `runtimeSignalLoop`, `runtimeSignalMarketDataGateway`, `runtimeTelemetry`, `runtimeTickerStore`) (PASS).
 - [x] `OPTC-06 core(api-normalization): extend shared symbol/base-currency normalization helpers`

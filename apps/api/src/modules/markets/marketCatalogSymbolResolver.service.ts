@@ -1,5 +1,5 @@
 import { Exchange } from '@prisma/client';
-import { normalizeSymbols } from '../../lib/symbols';
+import { normalizeBaseCurrency, normalizeSymbols } from '../../lib/symbols';
 import { getMarketCatalog } from './markets.service';
 
 export const resolveMinQuoteVolumeFilter = (filterRules: unknown) => {
@@ -31,7 +31,7 @@ export const resolveCatalogSymbolsForUniverse = async (
   const cacheKey = [
     universe.exchange,
     universe.marketType,
-    universe.baseCurrency.toUpperCase(),
+    normalizeBaseCurrency(universe.baseCurrency),
     volumeFilter.enabled ? '1' : '0',
     volumeFilter.min.toString(),
     normalizeSymbols(universe.blacklist).join(','),

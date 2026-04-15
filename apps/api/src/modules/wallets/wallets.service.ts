@@ -18,9 +18,7 @@ import {
 } from './wallets.types';
 import { walletErrors } from './wallets.errors';
 import { isAppErrorLike } from '../../lib/errors';
-
-const normalizeBaseCurrency = (value: string | undefined) =>
-  (value?.trim().toUpperCase() || 'USDT');
+import { normalizeBaseCurrency } from '../../lib/symbols';
 
 const normalizeWalletInput = (payload: CreateWalletDto | UpdateWalletDto) => {
   const mode = payload.mode;
@@ -332,7 +330,7 @@ export const getOwnedWalletForBotContext = async (params: {
 
 const extractBalanceForCurrency = (payload: unknown, currency: string) => {
   if (!payload || typeof payload !== 'object') return null;
-  const normalizedCurrency = currency.toUpperCase();
+  const normalizedCurrency = normalizeBaseCurrency(currency);
   const parsed = payload as { total?: Record<string, unknown>; free?: Record<string, unknown> };
 
   const total = Number(parsed.total?.[normalizedCurrency]);
@@ -438,7 +436,7 @@ export const previewWalletBalance = async (userId: string, payload: WalletBalanc
       apiKey: decodedApiKey,
       apiSecret: decodedApiSecret,
       marketType: payload.marketType,
-      baseCurrency: payload.baseCurrency.trim().toUpperCase(),
+      baseCurrency: normalizeBaseCurrency(payload.baseCurrency),
     });
 
     if (snapshot?.accountBalance == null) {
@@ -459,7 +457,7 @@ export const previewWalletBalance = async (userId: string, payload: WalletBalanc
     return {
       exchange: payload.exchange,
       marketType: payload.marketType,
-      baseCurrency: payload.baseCurrency.trim().toUpperCase(),
+      baseCurrency: normalizeBaseCurrency(payload.baseCurrency),
       accountBalance: snapshot.accountBalance,
       freeBalance: snapshot.freeBalance,
       referenceBalance,

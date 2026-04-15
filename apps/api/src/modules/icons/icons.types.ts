@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { normalizeSymbol } from '../../lib/symbols';
 
 const normalizeSymbolsInput = (value: unknown): string[] => {
   const values = Array.isArray(value) ? value : [value];
@@ -8,7 +9,7 @@ const normalizeSymbolsInput = (value: unknown): string[] => {
   });
 
   return tokens
-    .map((token) => token.trim().toUpperCase())
+    .map((token) => normalizeSymbol(token))
     .filter(Boolean);
 };
 
@@ -20,4 +21,3 @@ export const CoinIconLookupQuerySchema = z.object({
 });
 
 export type CoinIconLookupQuery = z.infer<typeof CoinIconLookupQuerySchema>;
-

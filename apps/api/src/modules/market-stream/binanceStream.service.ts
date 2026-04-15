@@ -1,4 +1,5 @@
 import { MarketStreamEvent, StreamLogger, TradeMarketType } from './binanceStream.types';
+import { normalizeSymbol } from '../../lib/symbols';
 
 type WebSocketMessage = { data: unknown };
 
@@ -122,7 +123,7 @@ export const normalizeBinanceStreamEvent = (
   if (!data) return null;
 
   const eventType = typeof data.e === 'string' ? data.e : null;
-  const symbol = typeof data.s === 'string' ? data.s.toUpperCase() : null;
+  const symbol = typeof data.s === 'string' ? normalizeSymbol(data.s) : null;
   const eventTime = toInteger(data.E);
   if (!eventType || !symbol || eventTime === null) return null;
 

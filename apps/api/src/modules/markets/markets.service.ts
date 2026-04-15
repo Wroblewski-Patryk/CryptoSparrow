@@ -1,6 +1,6 @@
 import { Exchange as PrismaExchange } from '@prisma/client';
 import { prisma } from '../../prisma/client';
-import { resolveUniverseSymbols } from '../../lib/symbols';
+import { normalizeSymbol, resolveUniverseSymbols } from '../../lib/symbols';
 import { assertExchangeCapability } from '../exchange/exchangeCapabilities';
 import { CreateMarketUniverseDto, UpdateMarketUniverseDto } from './markets.types';
 import { marketErrors } from './markets.errors';
@@ -49,7 +49,7 @@ let catalogCache: Record<MarketType, { fetchedAt: number; entries: PublicMarketE
   FUTURES: null,
 };
 
-const normalizeAsset = (value: string | undefined) => value?.trim().toUpperCase() ?? '';
+const normalizeAsset = (value: string | undefined) => normalizeSymbol(value);
 
 const toPublicMarketEntry = (market: MarketLike): PublicMarketEntry | null => {
   const id = normalizeAsset(market.id);
