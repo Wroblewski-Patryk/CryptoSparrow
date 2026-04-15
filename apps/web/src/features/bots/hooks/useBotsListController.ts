@@ -30,7 +30,7 @@ const deriveStrategyMaxOpenPositions = (strategy: StrategyDto | null): number =>
 };
 
 type UseBotsListControllerArgs = {
-  confirmLiveRisk: (message: string) => boolean;
+  confirmLiveRisk: (message: string) => Promise<boolean>;
   t: (key: TranslationKey) => string;
 };
 
@@ -170,7 +170,7 @@ export const useBotsListController = ({ confirmLiveRisk, t }: UseBotsListControl
     try {
       const createMode = selectedWallet?.mode ?? "PAPER";
       if (createMode === "LIVE") {
-        const accepted = confirmLiveRisk(t("dashboard.bots.confirms.liveCreate"));
+        const accepted = await confirmLiveRisk(t("dashboard.bots.confirms.liveCreate"));
         if (!accepted) return;
       }
 
@@ -214,7 +214,7 @@ export const useBotsListController = ({ confirmLiveRisk, t }: UseBotsListControl
       !!previous && !previous.isActive && bot.isActive && (bot.mode === "LIVE" || effectiveLiveOptIn);
 
     if (enteringLiveMode || enablingLiveOptIn || activatingLiveBot) {
-      const accepted = confirmLiveRisk(t("dashboard.bots.confirms.liveSave"));
+      const accepted = await confirmLiveRisk(t("dashboard.bots.confirms.liveSave"));
       if (!accepted) {
         patchBot(bot.id, previous);
         return;
@@ -251,7 +251,7 @@ export const useBotsListController = ({ confirmLiveRisk, t }: UseBotsListControl
 
   const handleDelete = async (bot: Bot) => {
     if (bot.mode === "LIVE" || bot.liveOptIn || bot.isActive) {
-      const accepted = confirmLiveRisk(t("dashboard.bots.confirms.liveDelete"));
+      const accepted = await confirmLiveRisk(t("dashboard.bots.confirms.liveDelete"));
       if (!accepted) return;
     }
 

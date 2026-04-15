@@ -3,10 +3,13 @@
 import { FormEvent, useMemo, useState } from "react";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 import { useI18n } from "../../../i18n/I18nProvider";
 import PasswordVisibilityToggle from "../../auth/components/PasswordVisibilityToggle";
 import { changePassword, deleteAccount } from "../services/security.service";
+import ConfirmModal from "@/ui/components/ConfirmModal";
+import { navigateWithFallback } from "@/lib/navigation";
 
 const mapApiError = (error: unknown, fallback: string) => {
   if (isAxiosError<{ message?: string }>(error)) {
@@ -17,6 +20,7 @@ const mapApiError = (error: unknown, fallback: string) => {
 
 export default function SecurityPanel() {
   const { locale } = useI18n();
+  const router = useRouter();
   const copy =
     locale === "pl"
       ? {
@@ -77,6 +81,7 @@ export default function SecurityPanel() {
   const [deletePassword, setDeletePassword] = useState("");
   const [showDeletePassword, setShowDeletePassword] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const canSubmitPasswordChange = useMemo(() => {
     return (
@@ -118,7 +123,19 @@ export default function SecurityPanel() {
     }
   };
 
-  const handleDeleteAccount = async (event: FormEvent<HTMLFormElement>) => {
+  const performDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    try {
+      await deleteAccount({ password: deletePassword });
+      toast.success(copy.accountDeleted);
+      navigateWithFallback(router, { href: "/auth/login", mode: "replace" });
+    } catch (error) {
+      toast.error(mapApiError(error, copy.deleteFailed));
+      setIsDeletingAccount(false);
+    }
+  };
+
+  const handleDeleteAccount = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!deletePassword.trim()) {
@@ -126,20 +143,7 @@ export default function SecurityPanel() {
       return;
     }
 
-    const accepted = typeof window === "undefined" ? false : window.confirm(copy.deleteConfirm);
-    if (!accepted) return;
-
-    setIsDeletingAccount(true);
-    try {
-      await deleteAccount({ password: deletePassword });
-      toast.success(copy.accountDeleted);
-      if (typeof window !== "undefined") {
-        window.location.href = "/auth/login";
-      }
-    } catch (error) {
-      toast.error(mapApiError(error, copy.deleteFailed));
-      setIsDeletingAccount(false);
-    }
+    setIsDeleteConfirmOpen(true);
   };
 
   return (
@@ -250,6 +254,23 @@ export default function SecurityPanel() {
             </button>
           </div>
         </form>
+        <ConfirmModal
+          open={isDeleteConfirmOpen}
+          title={copy.deleteSectionTitle}
+          description={copy.deleteConfirm}
+          confirmLabel={copy.deleteAction}
+          cancelLabel={locale === "pl" ? "Anuluj" : "Cancel"}
+          confirmVariant="error"
+          pending={isDeletingAccount}
+          onCancel={() => {
+            if (isDeletingAccount) return;
+            setIsDeleteConfirmOpen(false);
+          }}
+          onConfirm={() => {
+            setIsDeleteConfirmOpen(false);
+            void performDeleteAccount();
+          }}
+        />
       </section>
     </div>
   );

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useI18n } from '@/i18n/I18nProvider';
 import { dashboardRoutes } from '@/ui/layout/dashboard/dashboardRoutes';
 import { EmptyState, ErrorState, LoadingState } from '@/ui/components/ViewState';
+import { useAsyncConfirm } from '@/ui/components/useAsyncConfirm';
 import { listMarketUniverses } from '@/features/markets/services/markets.service';
 import { MarketUniverse } from '@/features/markets/types/marketUniverse.type';
 import { listStrategies } from '@/features/strategies/api/strategies.api';
@@ -69,6 +70,7 @@ type BotCreateEditFormProps = {
 export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }: BotCreateEditFormProps) {
   const { t } = useI18n();
   const router = useRouter();
+  const { confirm, confirmModal } = useAsyncConfirm();
   const isEditMode = Boolean(editId);
 
   const [loading, setLoading] = useState(true);
@@ -203,7 +205,14 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
       const message = isEditMode
         ? t('dashboard.bots.confirms.liveSave')
         : t('dashboard.bots.confirms.liveCreate');
-      if (!window.confirm(message)) return;
+      const accepted = await confirm({
+        title: t('dashboard.bots.list.columns.liveOptIn'),
+        description: message,
+        confirmLabel: t('dashboard.home.runtime.apply'),
+        cancelLabel: t('dashboard.home.runtime.reset'),
+        confirmVariant: 'error',
+      });
+      if (!accepted) return;
     }
 
     setSubmitting(true);
@@ -281,8 +290,9 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
   }
 
   return (
-    <form id={formId} onSubmit={handleSubmit} className='space-y-4 rounded-box border border-base-300/60 bg-base-100/80 p-4'>
-      <fieldset disabled={submitting} className='space-y-4'>
+    <>
+      <form id={formId} onSubmit={handleSubmit} className='space-y-4 rounded-box border border-base-300/60 bg-base-100/80 p-4'>
+        <fieldset disabled={submitting} className='space-y-4'>
         <section className='space-y-3 rounded-box border border-base-300/60 bg-base-200/55 p-3'>
           <h2 className='text-base font-semibold'>{t('dashboard.bots.create.sectionBasics')}</h2>
           <div className='grid gap-3 md:grid-cols-2'>
@@ -394,8 +404,9 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
             </div>
           ) : null}
         </section>
-      </fieldset>
-
-    </form>
+        </fieldset>
+      </form>
+      {confirmModal}
+    </>
   );
 }

@@ -9,7 +9,6 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 ## NOW
 
 ## NEXT
-- [ ] `OPTC-19 ux(web-guardrails): replace window.confirm/location.assign with app modal + navigation helper`
 - [ ] `OPTC-20 perf(web-prefs): centralize profile preference cache/sync (DataTable + account prefs)`
 - [ ] `OPTC-21 qa(repo): run full lint/typecheck/guardrails + targeted e2e confidence pack and publish evidence`
 
@@ -17,6 +16,8 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 - none
 
 ## DONE
+- [x] `OPTC-19 ux(web-guardrails): replace window.confirm/location.assign with app modal + navigation helper`
+  - 2026-04-16: Replaced browser-native confirm/assign guardrails by introducing reusable async modal confirm hook (`useAsyncConfirm`) and shared navigation helper (`navigateWithFallback`), then migrated bots/security/wallet/auth hotspots off `window.confirm` and `window.location.assign`; validated with targeted auth/bots/security test pack + web typecheck (PASS).
 - [x] `OPTC-18 i18n(web): split monolithic translations by domain namespaces`
   - 2026-04-16: Split i18n contracts into domain namespace modules (`dashboard-shell`, `dashboard-home`, `dashboard-bots`) for EN/PL and switched `translations.ts` to compose the canonical map from those namespace modules; validated with `pnpm --filter web test -- src/i18n/translations.test.ts src/i18n/I18nProvider.test.tsx` + `pnpm --filter web run typecheck` (PASS).
 - [x] `OPTC-17 refactor(web-runtime-bots): split BotsManagement orchestration into focused modules`

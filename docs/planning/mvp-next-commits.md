@@ -8,13 +8,14 @@ Operational queue for one-task execution runs.
 
 ## NOW
 ## NEXT
-- [ ] `OPTC-19 ux(web-guardrails): replace window.confirm/location.assign with app modal + navigation helper`
 - [ ] `OPTC-20 perf(web-prefs): centralize profile preference cache/sync (DataTable + account prefs)`
 - [ ] `OPTC-21 qa(repo): run full lint/typecheck/guardrails + targeted e2e confidence pack and publish evidence`
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `OPTC-19 ux(web-guardrails): replace window.confirm/location.assign with app modal + navigation helper`
+  - 2026-04-16: Replaced `window.confirm` flows with app-level async `ConfirmModal` patterns (`useAsyncConfirm`) across bots/security/wallet deletion paths, removed browser `window.location.assign` redirects by adding shared `navigateWithFallback` helper for auth transitions, and migrated bots list controller live-risk confirms to async modal orchestration; validated with `pnpm --filter web test -- src/features/auth/hooks/useLoginForm.test.ts src/features/bots/components/BotCreateEditForm.test.tsx src/features/bots/components/BotsManagement.test.tsx src/features/profile/components/Security.test.tsx` + `pnpm --filter web run typecheck` (PASS).
 - [x] `OPTC-18 i18n(web): split monolithic translations by domain namespaces`
   - 2026-04-16: Split monolithic `translations.ts` into domain namespace modules (`dashboard-shell`, `dashboard-home`, `dashboard-bots`) for both EN/PL locales and rebuilt top-level translation map composition from these namespaces; validated with `pnpm --filter web test -- src/i18n/translations.test.ts src/i18n/I18nProvider.test.tsx` + `pnpm --filter web run typecheck` (PASS).
 - [x] `OPTC-17 refactor(web-runtime-bots): split BotsManagement orchestration into focused modules`

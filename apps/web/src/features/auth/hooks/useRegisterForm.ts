@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { handleError } from '../../../lib/handleError';
 import { toast } from 'sonner';
 import { useAuth } from '../../../context/AuthContext';
+import { navigateWithFallback } from '@/lib/navigation';
 
 export const useRegisterForm = () => {
   const router = useRouter();
@@ -30,14 +31,11 @@ export const useRegisterForm = () => {
       }
 
       toast.success('Rejestracja zakonczona sukcesem.');
-      router.replace('/dashboard');
-      if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'test') {
-        window.setTimeout(() => {
-          if (window.location.pathname.startsWith('/auth/register')) {
-            window.location.assign('/dashboard');
-          }
-        }, 250);
-      }
+      navigateWithFallback(router, {
+        href: '/dashboard',
+        mode: 'replace',
+        fallbackPrefix: '/auth/register',
+      });
     } catch (err) {
       toast.error(`Rejestracja nieudana: ${handleError(err)}`);
     }

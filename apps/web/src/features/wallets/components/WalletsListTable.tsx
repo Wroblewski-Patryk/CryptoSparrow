@@ -9,6 +9,7 @@ import { deleteWallet } from '../services/wallets.service';
 import { Wallet } from '../types/wallet.type';
 import { dashboardRoutes } from '@/ui/layout/dashboard/dashboardRoutes';
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
+import ConfirmModal from '@/ui/components/ConfirmModal';
 
 type WalletsListTableProps = {
   rows: Wallet[];
@@ -18,6 +19,7 @@ type WalletsListTableProps = {
 export default function WalletsListTable({ rows, onDeleted }: WalletsListTableProps) {
   const { locale } = useI18n();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDeleteWallet, setPendingDeleteWallet] = useState<Wallet | null>(null);
 
   const copy = useMemo(
     () =>
@@ -71,17 +73,18 @@ export default function WalletsListTable({ rows, onDeleted }: WalletsListTablePr
     return copy.liveFixed.replace('{value}', String(wallet.liveAllocationValue ?? 0));
   };
 
-  const handleDelete = async (wallet: Wallet) => {
-    if (!window.confirm(copy.deleteConfirm)) return;
-    setDeletingId(wallet.id);
+  const handleDelete = async () => {
+    if (!pendingDeleteWallet) return;
+    setDeletingId(pendingDeleteWallet.id);
     try {
-      await deleteWallet(wallet.id);
-      onDeleted(wallet.id);
+      await deleteWallet(pendingDeleteWallet.id);
+      onDeleted(pendingDeleteWallet.id);
       toast.success(copy.deleted);
     } catch (err) {
       toast.error(copy.deleteFailed, { description: getAxiosMessage(err) });
     } finally {
       setDeletingId(null);
+      setPendingDeleteWallet(null);
     }
   };
 
@@ -121,7 +124,7 @@ export default function WalletsListTable({ rows, onDeleted }: WalletsListTablePr
                     type='button'
                     className='btn btn-ghost btn-xs text-error'
                     disabled={deletingId === wallet.id}
-                    onClick={() => void handleDelete(wallet)}
+                    onClick={() => setPendingDeleteWallet(wallet)}
                   >
                     <LuTrash2 className='h-3.5 w-3.5' />
                     {deletingId === wallet.id ? copy.deleting : copy.delete}
@@ -132,6 +135,21 @@ export default function WalletsListTable({ rows, onDeleted }: WalletsListTablePr
           ))}
         </tbody>
       </table>
+
+      <ConfirmModal
+        open={Boolean(pendingDeleteWallet)}
+        title={copy.delete}
+        description={pendingDeleteWallet ? `"${pendingDeleteWallet.name}" - ${copy.deleteConfirm}` : copy.deleteConfirm}
+        confirmLabel={copy.delete}
+        cancelLabel={locale === 'pl' ? 'Anuluj' : 'Cancel'}
+        confirmVariant='error'
+        pending={Boolean(deletingId)}
+        onCancel={() => {
+          if (deletingId) return;
+          setPendingDeleteWallet(null);
+        }}
+        onConfirm={() => void handleDelete()}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { handleError } from '../../../lib/handleError';
 import { toast } from 'sonner';
 import { useAuth } from '../../../context/AuthContext';
+import { navigateWithFallback } from '@/lib/navigation';
 
 export const useLoginForm = () => {
   const router = useRouter();
@@ -33,14 +34,11 @@ export const useLoginForm = () => {
       }
 
       toast.success('Zalogowano pomyslnie.');
-      router.replace('/dashboard');
-      if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'test') {
-        window.setTimeout(() => {
-          if (window.location.pathname.startsWith('/auth/login')) {
-            window.location.assign('/dashboard');
-          }
-        }, 250);
-      }
+      navigateWithFallback(router, {
+        href: '/dashboard',
+        mode: 'replace',
+        fallbackPrefix: '/auth/login',
+      });
     } catch (err) {
       const fallbackMessage = 'Logowanie nieudane. Sprawdz dane i sprobuj ponownie.';
       const message = handleError(err) || fallbackMessage;

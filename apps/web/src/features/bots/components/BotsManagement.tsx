@@ -1,10 +1,11 @@
 ﻿'use client';
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "@/i18n/useLocaleFormatting";
 
 import StatusBadge from "../../../ui/components/StatusBadge";
+import { useAsyncConfirm } from "@/ui/components/useAsyncConfirm";
 import { EmptyState, ErrorState, SuccessState } from "../../../ui/components/ViewState";
 import { SkeletonCardBlock, SkeletonFormBlock, SkeletonKpiRow, SkeletonTableRows } from "../../../ui/components/loading";
 import { BotsManagementTabs } from "./bots-management/BotsManagementTabs";
@@ -56,10 +57,21 @@ export default function BotsManagement({
 }: BotsManagementProps) {
   const { t } = useI18n();
   const { formatDateTime } = useLocaleFormatting();
+  const { confirm, confirmModal } = useAsyncConfirm();
   const [activeTab, setActiveTab] = useState<"bots" | "monitoring" | "assistant">(
     lockedTab ?? initialTab
   );
-  const confirmLiveRisk = (message: string) => window.confirm(message);
+  const confirmLiveRisk = useCallback(
+    (message: string) =>
+      confirm({
+        title: t("dashboard.bots.list.columns.liveOptIn"),
+        description: message,
+        confirmLabel: t("dashboard.home.runtime.apply"),
+        cancelLabel: t("dashboard.home.runtime.reset"),
+        confirmVariant: "error",
+      }),
+    [confirm, t]
+  );
 
   useEffect(() => {
     if (!lockedTab) return;
@@ -1105,6 +1117,7 @@ export default function BotsManagement({
           )}
         </div>
       )}
+      {confirmModal}
     </div>
   );
 }

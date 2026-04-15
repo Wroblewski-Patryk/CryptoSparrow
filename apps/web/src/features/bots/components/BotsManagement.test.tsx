@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import BotsManagement from "./BotsManagement";
@@ -202,8 +202,6 @@ describe("BotsManagement", () => {
       liveOptIn: false,
       maxOpenPositions: 1,
     });
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
-
     renderWithI18n();
     await waitFor(() => {
       expect(listMarketUniversesMock).toHaveBeenCalled();
@@ -217,10 +215,17 @@ describe("BotsManagement", () => {
     fireEvent.click(screen.getByRole("button", { name: "Dodaj bota" }));
 
     await waitFor(() => {
-      expect(confirmSpy).toHaveBeenCalled();
+      expect(screen.getByText("Potwierdzenie LIVE: ten bot bedzie tworzony w trybie LIVE. Kontynuowac?")).toBeInTheDocument();
+    });
+    const createConfirmDialog = screen
+      .getByText("Potwierdzenie LIVE: ten bot bedzie tworzony w trybie LIVE. Kontynuowac?")
+      .closest("dialog");
+    expect(createConfirmDialog).not.toBeNull();
+    fireEvent.click(within(createConfirmDialog as HTMLElement).getByText("Reset"));
+    await waitFor(() => {
+      expect(screen.queryByText("Potwierdzenie LIVE: ten bot bedzie tworzony w trybie LIVE. Kontynuowac?")).not.toBeInTheDocument();
     });
     expect(createMock).not.toHaveBeenCalled();
-    confirmSpy.mockRestore();
   });
 
   it("renders empty state when no bots returned", async () => {
@@ -394,8 +399,6 @@ describe("BotsManagement", () => {
       },
     ]);
     deleteMock.mockResolvedValue(undefined);
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
-
     renderWithI18n();
 
     await waitFor(() => {
@@ -404,9 +407,18 @@ describe("BotsManagement", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Usun" }));
 
-    expect(confirmSpy).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.getByText("Potwierdzenie LIVE: usuniecie tego bota zatrzyma aktywna konfiguracje tradingowa. Kontynuowac?")).toBeInTheDocument();
+    });
+    const deleteConfirmDialog = screen
+      .getByText("Potwierdzenie LIVE: usuniecie tego bota zatrzyma aktywna konfiguracje tradingowa. Kontynuowac?")
+      .closest("dialog");
+    expect(deleteConfirmDialog).not.toBeNull();
+    fireEvent.click(within(deleteConfirmDialog as HTMLElement).getByText("Reset"));
+    await waitFor(() => {
+      expect(screen.queryByText("Potwierdzenie LIVE: usuniecie tego bota zatrzyma aktywna konfiguracje tradingowa. Kontynuowac?")).not.toBeInTheDocument();
+    });
     expect(deleteMock).not.toHaveBeenCalled();
-    confirmSpy.mockRestore();
   });
 
   it("renders monitoring tab with runtime session summary, symbol stats and trades", async () => {
