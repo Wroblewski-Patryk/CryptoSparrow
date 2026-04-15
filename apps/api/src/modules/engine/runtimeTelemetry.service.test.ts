@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { prisma } from '../../prisma/client';
 import { RuntimeTelemetryService } from './runtimeTelemetry.service';
+import { metricsStore } from '../../observability/metrics';
 
 describe('RuntimeTelemetryService.ensureRuntimeSession', () => {
   afterEach(() => {
@@ -112,5 +113,26 @@ describe('RuntimeTelemetryService.ensureRuntimeSession', () => {
         }),
       })
     );
+  });
+
+  it('records runtime telemetry write metrics for symbol stat upsert and heartbeat touch', async () => {
+    const service = new RuntimeTelemetryService();
+    vi.spyOn(prisma.botRuntimeSymbolStat, 'upsert').mockResolvedValue({} as any);
+    vi.spyOn(prisma.botRuntimeSession, 'update').mockResolvedValue({ id: 'session-1' } as any);
+
+    const before = metricsStore.snapshot().runtime.hotPath;
+    await service.upsertRuntimeSymbolStat({
+      userId: 'user-1',
+      botId: 'bot-1',
+      sessionId: 'session-1',
+      symbol: 'BTCUSDT',
+      increments: {
+        totalSignals: 1,
+      },
+    });
+    const after = metricsStore.snapshot().runtime.hotPath;
+
+    expect(after.symbolStatsWrites).toBeGreaterThanOrEqual(before.symbolStatsWrites + 1);
+    expect(after.touchSessionWrites).toBeGreaterThanOrEqual(before.touchSessionWrites + 1);
   });
 });

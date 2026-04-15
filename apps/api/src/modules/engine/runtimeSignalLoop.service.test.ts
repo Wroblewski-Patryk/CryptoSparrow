@@ -5,6 +5,7 @@ import {
   supportsRuntimeSignalLoopExchange,
 } from './runtimeSignalLoop.service';
 import { MarketStreamEvent } from '../market-stream/binanceStream.types';
+import { metricsStore } from '../../observability/metrics';
 
 vi.mock('./runtimeCapitalContext.service', () => ({
   resolveRuntimeReferenceBalance: vi.fn(async () => 10_000),
@@ -208,6 +209,37 @@ const emitFinalCandleSeries = async (
 };
 
 describe('RuntimeSignalLoop', () => {
+  it('records hot-path metrics for active-bot reads and eligible-group sampling', async () => {
+    const { deps, emit } = createDeps();
+    withStrategyBot(deps, { strategies: [] });
+    const before = metricsStore.snapshot().runtime.hotPath;
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    await emit({
+      type: 'candle',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      interval: '1m',
+      eventTime: 60_000,
+      openTime: 0,
+      closeTime: 59_000,
+      open: 100,
+      high: 101,
+      low: 99,
+      close: 100.5,
+      volume: 1000,
+      isFinal: true,
+    });
+
+    const after = metricsStore.snapshot().runtime.hotPath;
+    expect(after.listActiveBots.total).toBeGreaterThanOrEqual(before.listActiveBots.total + 2);
+    expect(after.eligibleGroupsCount.total).toBeGreaterThanOrEqual(before.eligibleGroupsCount.total + 1);
+
+    await loop.stop();
+  });
+
   it('runs position automation fallback from final candle when ticker is stale or missing', async () => {
     const { deps, emit } = createDeps();
     withStrategyBot(deps, { strategies: [] });

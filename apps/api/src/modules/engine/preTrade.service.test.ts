@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { analyzePreTrade, AuditLogWriter, BotReadStore, PositionReadStore } from './preTrade.service';
+import { metricsStore } from '../../observability/metrics';
 
 type MockPreTradeStore = PositionReadStore & BotReadStore;
 
@@ -18,6 +19,25 @@ const createStore = (overrides?: Partial<MockPreTradeStore>): MockPreTradeStore 
 });
 
 describe('preTrade analysis', () => {
+  it('records pre-trade latency metric for analysis flow', async () => {
+    const before = metricsStore.snapshot().runtime.hotPath.preTradeLatencyMs.total;
+    const store = createStore();
+
+    await analyzePreTrade(
+      {
+        userId: 'u1',
+        botId: 'b1',
+        symbol: 'BTCUSDT',
+        mode: 'PAPER',
+        liveOptIn: false,
+      },
+      store
+    );
+
+    const after = metricsStore.snapshot().runtime.hotPath.preTradeLatencyMs.total;
+    expect(after).toBeGreaterThanOrEqual(before + 1);
+  });
+
   it('allows trade when checks pass', async () => {
     const store = createStore();
 

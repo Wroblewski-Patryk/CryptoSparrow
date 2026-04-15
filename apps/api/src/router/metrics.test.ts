@@ -56,6 +56,28 @@ type MetricsPayload = {
       avgDelayMs: number;
       maxDelayMs: number;
     };
+    hotPath: {
+      listActiveBots: {
+        total: number;
+        totalDurationMs: number;
+        avgDurationMs: number;
+        maxDurationMs: number;
+      };
+      eligibleGroupsCount: {
+        total: number;
+        totalGroups: number;
+        avgGroupsPerEvaluation: number;
+        maxGroupsPerEvaluation: number;
+      };
+      preTradeLatencyMs: {
+        total: number;
+        totalDurationMs: number;
+        avgDurationMs: number;
+        maxDurationMs: number;
+      };
+      touchSessionWrites: number;
+      symbolStatsWrites: number;
+    };
     executionErrors: Record<string, number>;
   };
   assistant: {
@@ -156,6 +178,11 @@ describe('metrics endpoint', () => {
     metricsStore.recordRuntimeSignalLag(42);
     metricsStore.recordRuntimeRestart('runtime_stall_no_event');
     metricsStore.recordRuntimeReconciliationDelay(25, true);
+    metricsStore.recordRuntimeListActiveBots(10);
+    metricsStore.recordRuntimeEligibleGroupsCount(2);
+    metricsStore.recordRuntimePreTradeLatency(12);
+    metricsStore.recordRuntimeTouchSessionWrite();
+    metricsStore.recordRuntimeSymbolStatsWrite();
     metricsStore.recordRuntimeExecutionError('runtime_watchdog_sync_failure');
     metricsStore.recordAssistantSubagentTimeout();
 
@@ -182,6 +209,21 @@ describe('metrics endpoint', () => {
     );
     expect(after.runtime.reconciliation.pending).toBeGreaterThanOrEqual(
       before.runtime.reconciliation.pending + 1
+    );
+    expect(after.runtime.hotPath.listActiveBots.total).toBeGreaterThanOrEqual(
+      before.runtime.hotPath.listActiveBots.total + 1
+    );
+    expect(after.runtime.hotPath.eligibleGroupsCount.total).toBeGreaterThanOrEqual(
+      before.runtime.hotPath.eligibleGroupsCount.total + 1
+    );
+    expect(after.runtime.hotPath.preTradeLatencyMs.total).toBeGreaterThanOrEqual(
+      before.runtime.hotPath.preTradeLatencyMs.total + 1
+    );
+    expect(after.runtime.hotPath.touchSessionWrites).toBeGreaterThanOrEqual(
+      before.runtime.hotPath.touchSessionWrites + 1
+    );
+    expect(after.runtime.hotPath.symbolStatsWrites).toBeGreaterThanOrEqual(
+      before.runtime.hotPath.symbolStatsWrites + 1
     );
     expect(after.runtime.executionErrors.runtime_watchdog_sync_failure ?? 0).toBeGreaterThanOrEqual(
       (before.runtime.executionErrors.runtime_watchdog_sync_failure ?? 0) + 1
