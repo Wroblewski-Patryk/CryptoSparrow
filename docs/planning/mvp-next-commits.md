@@ -8,11 +8,12 @@ Operational queue for one-task execution runs.
 
 ## NOW
 ## NEXT
-- [ ] `OPTC-21 qa(repo): run full lint/typecheck/guardrails + targeted e2e confidence pack and publish evidence`
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `OPTC-21 qa(repo): run full lint/typecheck/guardrails + targeted e2e confidence pack and publish evidence`
+  - 2026-04-16: Executed full repo quality gates (`pnpm run lint`, API+web typecheck, `pnpm run quality:guardrails`) plus targeted API/Web confidence pack (`8` API e2e files, `70` tests; `5` web regression files, `15` tests), and published evidence artifacts `docs/operations/_artifacts-engineering-optimization-confidence-2026-04-15T23-26-17-682Z.json` + `docs/operations/engineering-optimization-confidence-pack-2026-04-15T23-26-17-682Z.md` (PASS).
 - [x] `OPTC-20 perf(web-prefs): centralize profile preference cache/sync (DataTable + account prefs)`
   - 2026-04-16: Added shared profile basic cache service (`profileBasicCache`) with in-flight dedupe + TTL + optimistic patch merge, migrated account preference hook (`useUser`) and DataTable column-visibility hydration/save paths to this shared contract, and removed direct `/dashboard/profile/basic` calls outside the cache service; validated with `pnpm --filter web test -- src/ui/components/DataTable.test.tsx` + `pnpm --filter web run typecheck` (PASS).
 - [x] `OPTC-19 ux(web-guardrails): replace window.confirm/location.assign with app modal + navigation helper`

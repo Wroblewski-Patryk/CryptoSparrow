@@ -1,0 +1,45 @@
+{
+    "task":  "OPTC-21",
+    "generatedAtUtc":  "2026-04-15T23:26:17.686Z",
+    "overallStatus":  "PASS",
+    "qualityGates":  [
+                         {
+                             "name":  "lint",
+                             "command":  "pnpm run lint",
+                             "status":  "PASS",
+                             "notes":  "2 existing warnings (unused type imports in BotsManagement.tsx and HomeLiveWidgets.tsx)"
+                         },
+                         {
+                             "name":  "typecheck-api",
+                             "command":  "pnpm --filter api run typecheck",
+                             "status":  "PASS"
+                         },
+                         {
+                             "name":  "typecheck-web",
+                             "command":  "pnpm --filter web run typecheck",
+                             "status":  "PASS"
+                         },
+                         {
+                             "name":  "repo-guardrails",
+                             "command":  "pnpm run quality:guardrails",
+                             "status":  "PASS",
+                             "notes":  "lockfile policy OK; source budget OK (api 90000 bytes, web 105000 bytes)"
+                         }
+                     ],
+    "confidencePack":  {
+                           "api":  {
+                                       "command":  "pnpm --filter api test -- src/modules/wallets/wallets.e2e.test.ts src/modules/markets/markets.e2e.test.ts src/modules/strategies/strategies.e2e.test.ts src/modules/bots/bots.e2e.test.ts src/modules/bots/bots.orchestration.e2e.test.ts src/modules/orders/orders-positions.e2e.test.ts src/modules/profile/security/security.e2e.test.ts src/modules/profile/subscription/subscription.e2e.test.ts",
+                                       "status":  "PASS",
+                                       "testFiles":  8,
+                                       "tests":  70,
+                                       "durationSeconds":  35.27
+                                   },
+                           "web":  {
+                                       "command":  "pnpm --filter web test -- src/features/bots/components/BotsManagement.test.tsx src/features/profile/components/Security.test.tsx src/ui/components/DataTable.test.tsx src/i18n/translations.test.ts src/i18n/I18nProvider.test.tsx",
+                                       "status":  "PASS",
+                                       "testFiles":  5,
+                                       "tests":  15,
+                                       "durationSeconds":  3.1
+                                   }
+                       }
+}

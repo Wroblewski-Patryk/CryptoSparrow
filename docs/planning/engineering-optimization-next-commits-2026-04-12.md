@@ -9,12 +9,13 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 ## NOW
 
 ## NEXT
-- [ ] `OPTC-21 qa(repo): run full lint/typecheck/guardrails + targeted e2e confidence pack and publish evidence`
 
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `OPTC-21 qa(repo): run full lint/typecheck/guardrails + targeted e2e confidence pack and publish evidence`
+  - 2026-04-16: Closed optimization wave QA by running full repo quality gates (`lint`, API+web typecheck, `quality:guardrails`) and targeted confidence suites (`8` API e2e files = `70` tests, `5` web regression files = `15` tests), then publishing evidence artifacts `_artifacts-engineering-optimization-confidence-2026-04-15T23-26-17-682Z.json` and `engineering-optimization-confidence-pack-2026-04-15T23-26-17-682Z.md` (PASS).
 - [x] `OPTC-20 perf(web-prefs): centralize profile preference cache/sync (DataTable + account prefs)`
   - 2026-04-16: Added shared profile preference cache/sync service (`profileBasicCache`) with in-flight request dedupe, TTL reuse, and optimistic patch merge, then migrated both `useUser` account-preferences flow and DataTable column-visibility sync to that contract to eliminate scattered direct profile-basic reads/writes; validated with `pnpm --filter web test -- src/ui/components/DataTable.test.tsx` + `pnpm --filter web run typecheck` (PASS).
 - [x] `OPTC-19 ux(web-guardrails): replace window.confirm/location.assign with app modal + navigation helper`

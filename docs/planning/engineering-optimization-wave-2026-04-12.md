@@ -131,6 +131,7 @@ Execution queue (tiny commits): `docs/planning/engineering-optimization-next-com
 5. Exchange contracts are shared (single-source) across API and Web.
 
 ## Progress Log (Engineering Optimization Wave)
+- 2026-04-16: Completed `OPTC-21` optimization QA closure by executing full repo quality gates (`lint`, API+web typecheck, repository guardrails) and targeted domain confidence suites (API wallets/markets/strategies/bots/orders/profile-security/subscription e2e + web bots/security/datatable/i18n regression), then publishing evidence artifacts `docs/operations/_artifacts-engineering-optimization-confidence-2026-04-15T23-26-17-682Z.json` and `docs/operations/engineering-optimization-confidence-pack-2026-04-15T23-26-17-682Z.md` (PASS).
 - 2026-04-16: Completed `OPTC-20` by adding shared profile preference cache/sync service (`profileBasicCache`) with in-flight dedupe, TTL-backed profile reuse, and optimistic patch merging, then migrating account preference (`useUser`) and DataTable column-visibility read/write flows to that contract to eliminate duplicated direct `/dashboard/profile/basic` API traffic across UI modules.
 - 2026-04-12: Published optimization wave plan and execution queue (`engineering-optimization-next-commits-2026-04-12.md`) after repo-wide standards audit.
 - 2026-04-15: Activated execution flow in canonical `mvp-next-commits` by importing queue tasks (`NOW: OPTC-01..05`, `NEXT: OPTC-06..21`) under completion task `OPTC-00`.
