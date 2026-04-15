@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { EXCHANGE_MARKET_TYPES } from '@cryptosparrow/shared';
 
 export const ExecutionModeSchema = z.enum(['PAPER', 'LIVE']);
 
@@ -6,7 +7,7 @@ export const PreTradeAnalysisInputSchema = z.object({
   userId: z.string().trim().min(1),
   botId: z.string().trim().min(1).optional(),
   symbol: z.string().trim().min(1),
-  marketType: z.enum(['FUTURES', 'SPOT']).optional(),
+  marketType: z.enum(EXCHANGE_MARKET_TYPES).optional(),
   mode: ExecutionModeSchema,
   liveOptIn: z.boolean().default(false),
   globalKillSwitch: z.boolean().default(false),

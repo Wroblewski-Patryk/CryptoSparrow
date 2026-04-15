@@ -1,25 +1,31 @@
 import { z } from 'zod';
+import {
+  DEFAULT_EXCHANGE,
+  DEFAULT_MARKET_TYPE,
+  EXCHANGE_MARKET_TYPES,
+  EXCHANGE_OPTIONS,
+} from '@cryptosparrow/shared';
 
-const TradeExchangeSchema = z.enum(['BINANCE', 'BYBIT', 'OKX', 'KRAKEN', 'COINBASE']);
-const TradeMarketSchema = z.enum(['FUTURES', 'SPOT']);
+const TradeExchangeSchema = z.enum(EXCHANGE_OPTIONS);
+const TradeMarketSchema = z.enum(EXCHANGE_MARKET_TYPES);
 
 export const OhlcvRequestSchema = z.object({
-  exchange: TradeExchangeSchema.default('BINANCE'),
-  marketType: TradeMarketSchema.default('FUTURES'),
+  exchange: TradeExchangeSchema.default(DEFAULT_EXCHANGE),
+  marketType: TradeMarketSchema.default(DEFAULT_MARKET_TYPE),
   symbol: z.string().trim().min(1),
   timeframe: z.string().trim().min(1),
   limit: z.number().int().min(1).max(1000).default(200),
 });
 
 export const MarketSnapshotRequestSchema = z.object({
-  exchange: TradeExchangeSchema.default('BINANCE'),
-  marketType: TradeMarketSchema.default('FUTURES'),
+  exchange: TradeExchangeSchema.default(DEFAULT_EXCHANGE),
+  marketType: TradeMarketSchema.default(DEFAULT_MARKET_TYPE),
   symbol: z.string().trim().min(1),
 });
 
 export const OrderBookRequestSchema = z.object({
-  exchange: TradeExchangeSchema.default('BINANCE'),
-  marketType: TradeMarketSchema.default('FUTURES'),
+  exchange: TradeExchangeSchema.default(DEFAULT_EXCHANGE),
+  marketType: TradeMarketSchema.default(DEFAULT_MARKET_TYPE),
   symbol: z.string().trim().min(1),
   limit: z.number().int().min(1).max(500).default(50),
 });

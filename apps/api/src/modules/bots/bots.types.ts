@@ -1,7 +1,8 @@
 import { z } from 'zod';
+import { EXCHANGE_MARKET_TYPES } from '@cryptosparrow/shared';
 
 export const BotModeSchema = z.enum(['PAPER', 'LIVE']);
-export const TradeMarketSchema = z.enum(['FUTURES', 'SPOT']);
+export const TradeMarketSchema = z.enum(EXCHANGE_MARKET_TYPES);
 export const BotMarketGroupStatusSchema = z.enum(['DRAFT', 'ACTIVE', 'PAUSED', 'ARCHIVED']);
 export const AssistantSafetyModeSchema = z.enum(['STRICT', 'BALANCED', 'EXPERIMENTAL']);
 

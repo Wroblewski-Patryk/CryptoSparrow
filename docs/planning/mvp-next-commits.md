@@ -8,7 +8,6 @@ Operational queue for one-task execution runs.
 
 ## NOW
 ## NEXT
-- [ ] `OPTC-14 migrate(api-contracts): switch API zod schemas to shared exchange contract`
 - [ ] `OPTC-15 migrate(web-contracts): switch Web exchange capability/types to shared contract`
 - [ ] `OPTC-16 refactor(web-runtime-home): split HomeLiveWidgets into formatter/actions/sections hooks`
 - [ ] `OPTC-17 refactor(web-runtime-bots): split BotsManagement orchestration into focused modules`
@@ -20,6 +19,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `OPTC-14 migrate(api-contracts): switch API zod schemas to shared exchange contract`
+  - 2026-04-16: Switched API zod exchange/market-type contracts and defaults to shared constants from `@cryptosparrow/shared` in wallets/markets/market-data plus dependent bots/preTrade market-type schemas, removing duplicated literal enums from backend schema layers; validated with API typecheck + targeted e2e pack (PASS).
 - [x] `OPTC-13 core(shared-contracts): extract shared exchange constants/capabilities/marketType contract`
   - 2026-04-16: Extracted canonical exchange contract to workspace package `@cryptosparrow/shared` (`libs/shared`) with unified exchange options/capabilities/market-type/base-currency-fallback matrices and switched API exchange capabilities core module to consume this shared source of truth; validated with API typecheck + focused exchange-symbol-rules suite (PASS).
 - [x] `OPTC-12 migrate(web-edit-list-pages): standardize async+error handling for edit/list dashboards`
