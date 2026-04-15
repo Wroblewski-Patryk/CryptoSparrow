@@ -1477,10 +1477,11 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `DCP-08 docs(web-core): author deep-dives for dashboard-home/auth/profile/admin flows`
 - [x] `DCP-09 docs(web-trading): author deep-dives for bots/backtest/strategies/markets/exchanges/orders/positions/wallets/reports/logs`
 - [x] `DCP-10 docs(route-contract): publish canonical route-to-feature-to-api mapping with ownership and guardrails`
-- [ ] `DCP-11 tooling(docs-parity): add script to verify module+route inventories against canonical docs`
+- [x] `DCP-11 tooling(docs-parity): add script to verify module+route inventories against canonical docs`
 - [ ] `DCP-12 qa(docs-evidence): run parity check, publish evidence artifact, and close documentation hardening wave`
 
 ### Progress Log (Documentation Knowledge Hardening)
+- 2026-04-15: Completed `DCP-11` by adding `scripts/checkDocsParity.mjs` with root `pnpm run docs:parity:check` command to verify module inventories (`apps/api/src/modules`, `apps/web/src/features`) and route inventory (`apps/web/src/app/**/page.tsx`) against canonical docs; validation run PASS (`22/22 API`, `15/15 web`, `37/37 routes`).
 - 2026-04-15: Completed `DCP-10` by publishing canonical route-to-feature-to-API mapping in `docs/architecture/dashboard-route-map.md` with explicit dashboard/admin/public coverage, ownership matrix, legacy redirect contract, and update guardrails.
 - 2026-04-12: Initialized wave plan and canonical references in `docs/planning/documentation-knowledge-hardening-plan-2026-04-12.md` after code-vs-docs audit; execution queue `DCP-01..DCP-12` added for tiny-commit delivery.
 - 2026-04-12: Completed `DCP-01` by locking mandatory documentation parity trigger rules in `docs/governance/working-agreements.md` for backend/frontend module inventories, app route inventory, canonical docs index updates, and queue-plan synchronization.

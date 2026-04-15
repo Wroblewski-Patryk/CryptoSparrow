@@ -18,6 +18,7 @@
     "workers:prod": "pnpm run workers/prod",
     "prod-like/start": "node scripts/start-local-prod-like.mjs",
     "prod-like:start": "pnpm run prod-like/start",
+    "docs:parity:check": "node scripts/checkDocsParity.mjs",
     "lint": "pnpm -r --if-present run lint",
     "quality:guardrails": "node scripts/repoGuardrails.mjs",
     "typecheck": "pnpm --filter api run typecheck && pnpm --filter web run typecheck",

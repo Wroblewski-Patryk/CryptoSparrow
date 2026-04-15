@@ -57,6 +57,7 @@ Goal: make project context durable and execution-ready by ensuring each active c
 Get-ChildItem -Path apps/api/src/modules -Directory | Select-Object -ExpandProperty Name
 Get-ChildItem -Path apps/web/src/features -Directory | Select-Object -ExpandProperty Name
 Get-ChildItem -Path apps/web/src/app -Recurse -Filter page.tsx
+pnpm run docs:parity:check
 ```
 
 ## Canonical References
