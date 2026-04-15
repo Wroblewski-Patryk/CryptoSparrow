@@ -37,3 +37,16 @@ if ($LASTEXITCODE -eq 0) { pnpm -r build }
 - Evidence:
   - https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_pipeline_chain_operators?view=powershell-7.5
   - Team-reported failure pattern in this repository workflow on Windows.
+
+### 2026-04-15 - ripgrep access denied in this workspace
+- Context: repository exploration on Windows PowerShell in Codex desktop environment.
+- Symptom: `rg --files <path>` fails with `Program 'rg.exe' failed to run: Access denied`.
+- Root cause: environment-level execution restriction for `rg.exe` in this session.
+- Guardrail: fallback to PowerShell-native discovery commands when `rg` is unavailable or blocked.
+- Preferred pattern:
+```powershell
+Get-ChildItem -Recurse -File <path> | ForEach-Object { $_.FullName }
+```
+- Avoid: retry loops with `rg` after first deterministic `Access denied` failure.
+- Evidence:
+  - Observed on 2026-04-15 while inspecting `apps/web/src/features/*` directories in this repository.
