@@ -7,13 +7,14 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `DCP-12 qa(docs-evidence): run parity check, publish evidence artifact, and close documentation hardening wave`
-## NEXT
 - [ ] `OPTC-00 planning(optimization): execute engineering optimization queue from docs/planning/engineering-optimization-next-commits-2026-04-12.md after DCP wave`
+## NEXT
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `DCP-12 qa(docs-evidence): run parity check, publish evidence artifact, and close documentation hardening wave`
+  - 2026-04-15: Executed `pnpm run docs:parity:check -- --json --output docs/operations/_artifacts-docs-parity-2026-04-15T21-31-56-867Z.json` (PASS: `22/22 API`, `15/15 web`, `37/37 routes`) and published wave-close evidence report `docs/operations/documentation-hardening-parity-evidence-2026-04-15.md`.
 - [x] `DCP-11 tooling(docs-parity): add script to verify module+route inventories against canonical docs`
   - 2026-04-15: Added `scripts/checkDocsParity.mjs` + root command `pnpm run docs:parity:check` to validate API modules, web features, route inventory, source-path parity, and presence of published deep-dive files (`PASS: 22/22 API, 15/15 web, 37/37 routes`).
 - [x] `DCP-10 docs(route-contract): publish canonical route-to-feature-to-api mapping with ownership and guardrails`

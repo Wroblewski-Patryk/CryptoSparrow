@@ -50,3 +50,16 @@ Get-ChildItem -Recurse -File <path> | ForEach-Object { $_.FullName }
 - Avoid: retry loops with `rg` after first deterministic `Access denied` failure.
 - Evidence:
   - Observed on 2026-04-15 while inspecting `apps/web/src/features/*` directories in this repository.
+
+### 2026-04-15 - PowerShell 5.1 UTC timestamp compatibility
+- Context: generating timestamped evidence artifact names in Windows PowerShell shell scripts.
+- Symptom: `Get-Date -AsUTC` fails with parameter binding error in this environment.
+- Root cause: `-AsUTC` is not available in Windows PowerShell 5.1.
+- Guardrail: use explicit conversion with `.ToUniversalTime()` when building UTC file-name timestamps.
+- Preferred pattern:
+```powershell
+$ts = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH-mm-ss-fffZ')
+```
+- Avoid: `Get-Date -AsUTC -Format ...`
+- Evidence:
+  - Observed on 2026-04-15 while generating `docs/operations/_artifacts-docs-parity-*.json` in this repository.
