@@ -7,13 +7,12 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `OPTC-01 core(api-errors): introduce typed AppError/DomainError primitives + central http mapper`
 - [ ] `OPTC-02 migrate(api-wallets): replace wallet error-string flow with typed domain errors`
 - [ ] `OPTC-03 migrate(api-markets-strategies): typed domain errors + controller mapping without message equality`
 - [ ] `OPTC-04 migrate(api-bots-orders): typed domain errors for high-change command/execution paths`
 - [ ] `OPTC-05 migrate(api-profile-subscriptions): typed domain errors for profile/security/subscription flows`
-## NEXT
 - [ ] `OPTC-06 core(api-normalization): extend shared symbol/base-currency normalization helpers`
+## NEXT
 - [ ] `OPTC-07 migrate(api-engine): remove local uppercase normalization variants in runtime/engine modules`
 - [ ] `OPTC-08 migrate(api-wallets-markets-icons-stream): remove remaining production trim().toUpperCase variants`
 - [ ] `OPTC-09 test(api-normalization): add regression contract tests for shared normalization invariants`
@@ -33,6 +32,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `OPTC-01 core(api-errors): introduce typed AppError/DomainError primitives + central http mapper`
+  - 2026-04-15: Added core API error primitives (`apps/api/src/lib/errors.ts`) and centralized HTTP mapper (`apps/api/src/lib/httpErrorMapper.ts`), wired global middleware mapping in `apps/api/src/middleware/errorHandler.ts`, migrated exchange capability error to `DomainError`, and validated with `pnpm --filter api run typecheck` + `pnpm --filter api test -- src/lib/errors.test.ts src/lib/httpErrorMapper.test.ts` (PASS).
 - [x] `OPTC-00 planning(optimization): execute engineering optimization queue from docs/planning/engineering-optimization-next-commits-2026-04-12.md after DCP wave`
   - 2026-04-15: Activated optimization execution in canonical `mvp-next-commits` queue by importing `OPTC-01..05` into `NOW` and scheduling `OPTC-06..21` in `NEXT` from `docs/planning/engineering-optimization-next-commits-2026-04-12.md`.
 - [x] `DCP-12 qa(docs-evidence): run parity check, publish evidence artifact, and close documentation hardening wave`

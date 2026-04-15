@@ -7,14 +7,13 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 - Focus: architecture, reliability, consistency, and maintainability across API + Web.
 
 ## NOW
-- [ ] `OPTC-01 core(api-errors): introduce typed AppError/DomainError primitives + central http mapper`
 - [ ] `OPTC-02 migrate(api-wallets): replace wallet error-string flow with typed domain errors`
 - [ ] `OPTC-03 migrate(api-markets-strategies): typed domain errors + controller mapping without message equality`
 - [ ] `OPTC-04 migrate(api-bots-orders): typed domain errors for high-change command/execution paths`
 - [ ] `OPTC-05 migrate(api-profile-subscriptions): typed domain errors for profile/security/subscription flows`
+- [ ] `OPTC-06 core(api-normalization): extend shared symbol/base-currency normalization helpers`
 
 ## NEXT
-- [ ] `OPTC-06 core(api-normalization): extend shared symbol/base-currency normalization helpers`
 - [ ] `OPTC-07 migrate(api-engine): remove local uppercase normalization variants in runtime/engine modules`
 - [ ] `OPTC-08 migrate(api-wallets-markets-icons-stream): remove remaining production trim().toUpperCase variants`
 - [ ] `OPTC-09 test(api-normalization): add regression contract tests for shared normalization invariants`
@@ -35,7 +34,8 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 - none
 
 ## DONE
-- none
+- [x] `OPTC-01 core(api-errors): introduce typed AppError/DomainError primitives + central http mapper`
+  - 2026-04-15: Added core primitives (`apps/api/src/lib/errors.ts`) and centralized mapper (`apps/api/src/lib/httpErrorMapper.ts`), wired global `errorHandler` to mapped responses, migrated `ExchangeNotImplementedError` to `DomainError`, and validated with `pnpm --filter api run typecheck` + `pnpm --filter api test -- src/lib/errors.test.ts src/lib/httpErrorMapper.test.ts` (PASS).
 
 ## Queue Rules
 - Keep `NOW` at max 5 tasks.

@@ -1,8 +1,9 @@
-import { ZodError } from 'zod';
 import { Request, Response, NextFunction } from 'express';
-import { sendValidationError } from '../utils/formatZodError';
 import { sendError } from '../utils/apiError';
-import { ExchangeNotImplementedError } from '../modules/exchange/exchangeCapabilities';
+import { mapErrorToHttpResponse } from '../lib/httpErrorMapper';
+import { createModuleLogger } from '../lib/logger';
+
+const logger = createModuleLogger('api.error-handler');
 
 export function errorHandler(
   err: unknown,
@@ -10,15 +11,16 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ) {
-  if (err instanceof ZodError) {
-    return sendValidationError(res, err);
+  const mapped = mapErrorToHttpResponse(err);
+
+  if (mapped.status >= 500) {
+    logger.error('request_error_unhandled', {
+      status: mapped.status,
+      code: mapped.code ?? null,
+      source: mapped.source,
+      error: err,
+    });
   }
 
-  if (err instanceof ExchangeNotImplementedError) {
-    return sendError(res, err.status, err.message, err.toDetails());
-  }
-
-  console.error(err);
-
-  return sendError(res, 500, 'Internal server error');
+  return sendError(res, mapped.status, mapped.message, mapped.details);
 }

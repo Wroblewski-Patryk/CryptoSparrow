@@ -1,4 +1,5 @@
 import { Exchange } from '@prisma/client';
+import { DomainError } from '../../lib/errors';
 
 export type ExchangeCapability =
   | 'MARKET_CATALOG'
@@ -91,24 +92,27 @@ export const getExchangeBaseCurrencyFallbacks = (
   marketType: ExchangeMarketType
 ): string[] => [...(EXCHANGE_BASE_CURRENCY_FALLBACKS[exchange]?.[marketType] ?? ['USDT'])];
 
-export class ExchangeNotImplementedError extends Error {
-  readonly code = EXCHANGE_NOT_IMPLEMENTED_CODE;
-  readonly status = 501;
-
+export class ExchangeNotImplementedError extends DomainError<{
+  exchange: Exchange;
+  capability: ExchangeCapability;
+}> {
   constructor(
     public readonly exchange: Exchange,
     public readonly capability: ExchangeCapability
   ) {
-    super(`Exchange ${exchange} does not support ${capability}.`);
+    super(
+      EXCHANGE_NOT_IMPLEMENTED_CODE,
+      `Exchange ${exchange} does not support ${capability}.`,
+      {
+        status: 501,
+        details: {
+          exchange,
+          capability,
+        },
+        name: 'ExchangeNotImplementedError',
+      }
+    );
     this.name = 'ExchangeNotImplementedError';
-  }
-
-  toDetails() {
-    return {
-      code: this.code,
-      exchange: this.exchange,
-      capability: this.capability,
-    };
   }
 }
 

@@ -133,3 +133,4 @@ Execution queue (tiny commits): `docs/planning/engineering-optimization-next-com
 ## Progress Log (Engineering Optimization Wave)
 - 2026-04-12: Published optimization wave plan and execution queue (`engineering-optimization-next-commits-2026-04-12.md`) after repo-wide standards audit.
 - 2026-04-15: Activated execution flow in canonical `mvp-next-commits` by importing queue tasks (`NOW: OPTC-01..05`, `NEXT: OPTC-06..21`) under completion task `OPTC-00`.
+- 2026-04-15: Completed `OPTC-01` by introducing typed API error primitives (`AppError`, `DomainError`) and centralized mapper wiring (`errorHandler` -> `httpErrorMapper`) with legacy compatibility retained for `status + toDetails()` error classes.
