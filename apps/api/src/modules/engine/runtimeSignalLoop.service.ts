@@ -1,5 +1,6 @@
 import { SignalDirection } from '@prisma/client';
 import { metricsStore } from '../../observability/metrics';
+import { normalizeSymbol } from '../../lib/symbols';
 import {
   MarketStreamEvent,
   StreamCandleEvent,
@@ -539,7 +540,7 @@ export class RuntimeSignalLoop {
     return [
       input.botId,
       input.groupId,
-      input.symbol.toUpperCase(),
+      normalizeSymbol(input.symbol),
       normalizeInterval(input.interval),
       String(input.openTime),
       String(input.closeTime),
@@ -564,7 +565,7 @@ export class RuntimeSignalLoop {
     try {
       const managedExternalPositions = await this.deps.listRuntimeManagedExternalPositions();
       for (const position of managedExternalPositions) {
-        const normalizedSymbol = position.symbol.trim().toUpperCase();
+        const normalizedSymbol = normalizeSymbol(position.symbol);
         if (!normalizedSymbol) continue;
         managedExternalSymbolKeys.add(`${position.userId}:${normalizedSymbol}`);
       }
@@ -585,7 +586,7 @@ export class RuntimeSignalLoop {
         const eligibleGroups = bot.marketGroups.filter((group) => {
           if (group.symbols.length > 0) {
             const hasSymbol = group.symbols.some(
-              (symbol) => symbol.toUpperCase() === event.symbol.toUpperCase()
+              (symbol) => normalizeSymbol(symbol) === normalizeSymbol(event.symbol)
             );
             if (!hasSymbol) return false;
           }
@@ -674,7 +675,7 @@ export class RuntimeSignalLoop {
             this.processedDecisionWindows.set(decisionWindowKey, now);
 
             if (direction === 'LONG' || direction === 'SHORT') {
-              const managedExternalKey = `${bot.userId}:${event.symbol.toUpperCase()}`;
+              const managedExternalKey = `${bot.userId}:${normalizeSymbol(event.symbol)}`;
               if (managedExternalSymbolKeys.has(managedExternalKey)) {
                 await this.deps.recordRuntimeEvent?.({
                   userId: bot.userId,

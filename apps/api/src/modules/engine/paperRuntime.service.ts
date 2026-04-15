@@ -1,4 +1,5 @@
 import { OhlcvCandle, OhlcvRequest } from '../market-data/marketData.types';
+import { normalizeSymbol } from '../../lib/symbols';
 
 export interface PaperRuntimeMarketDataService {
   ingestOHLCV(input: OhlcvRequest, forceRefresh?: boolean): Promise<OhlcvCandle[]>;
@@ -110,7 +111,7 @@ export class PaperRuntimeService {
   private async processTask(task: PaperRuntimeTask) {
     const exchange = task.exchange ?? 'BINANCE';
     const marketType = task.marketType ?? 'FUTURES';
-    const taskKey = `${exchange}|${marketType}|${task.symbol.toUpperCase()}|${task.timeframe}`;
+    const taskKey = `${exchange}|${marketType}|${normalizeSymbol(task.symbol)}|${task.timeframe}`;
     if (this.inFlightTaskKeys.has(taskKey)) {
       this.logger.warn({
         event: 'worker.paper_runtime.task_skipped_inflight',

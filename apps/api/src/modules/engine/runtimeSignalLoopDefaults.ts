@@ -174,7 +174,7 @@ export const countOpenPositionsForBotAndSymbols = async ({
   botId: string;
   symbols: string[];
 }) => {
-  const normalizedSymbols = [...new Set(symbols.map((symbol) => symbol.toUpperCase()))];
+  const normalizedSymbols = normalizeSymbols(symbols);
   return countOpenPositionsForBotAndSymbolsRaw({
     userId,
     botId,

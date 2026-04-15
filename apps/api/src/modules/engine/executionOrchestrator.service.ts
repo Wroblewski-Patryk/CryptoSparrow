@@ -1,5 +1,6 @@
 import { Order, Position, PositionSide, Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
+import { normalizeSymbol } from '../../lib/symbols';
 import { closeOrder as closeOrderLifecycle, openOrder as openOrderLifecycle } from '../orders/orders.service';
 import { decideExecutionAction } from './sharedExecutionCore';
 import { runtimeTelemetryService } from './runtimeTelemetry.service';
@@ -87,7 +88,7 @@ export const buildOpenPositionLookupWhere = (input: {
   botId?: string;
   walletId?: string;
 }): Prisma.PositionWhereInput => {
-  const normalizedSymbol = input.symbol.trim().toUpperCase();
+  const normalizedSymbol = normalizeSymbol(input.symbol);
   const baseWhere: Prisma.PositionWhereInput = {
     userId: input.userId,
     symbol: normalizedSymbol,
@@ -469,7 +470,7 @@ export const orchestrateRuntimeSignal = async (
       symbol: input.symbol,
       commandFingerprint: {
         positionId: openPosition.id,
-        symbol: input.symbol.toUpperCase(),
+        symbol: normalizeSymbol(input.symbol),
         closeReason: input.reason ?? 'EXIT',
         direction: input.direction,
       },

@@ -10,6 +10,7 @@ import {
   OrderBookPoint,
 } from './runtimeSignalSeriesTypes';
 import { normalizeInterval } from './runtimeSignalLoopDefaults';
+import { normalizeSymbol } from '../../lib/symbols';
 
 export type RuntimeCandle = {
   openTime: number;
@@ -130,7 +131,7 @@ export class RuntimeSignalMarketDataGateway {
     const exact = this.candleSeries.get(key);
     if (exact && exact.length > 0) return exact;
 
-    const prefix = `${marketType}|${symbol.toUpperCase()}|`;
+    const prefix = `${marketType}|${normalizeSymbol(symbol)}|`;
     const fallbackKey = [...this.candleSeries.keys()].find((entry) => entry.startsWith(prefix));
     if (!fallbackKey) return null;
     const fallbackSeries = this.candleSeries.get(fallbackKey);
@@ -238,7 +239,7 @@ export class RuntimeSignalMarketDataGateway {
         : process.env.BINANCE_FUTURES_REST_URL ?? 'https://fapi.binance.com';
     const endpoint = marketType === 'SPOT' ? '/api/v3/klines' : '/fapi/v1/klines';
     const params = new URLSearchParams({
-      symbol: symbol.toUpperCase(),
+      symbol: normalizeSymbol(symbol),
       interval: normalizeInterval(interval),
       limit: String(Math.min(1000, Math.max(20, limit))),
     });
@@ -340,7 +341,7 @@ export class RuntimeSignalMarketDataGateway {
   }
 
   private getFundingKey(marketType: 'FUTURES' | 'SPOT', symbol: string) {
-    return `${marketType}|${symbol.toUpperCase()}`;
+    return `${marketType}|${normalizeSymbol(symbol)}`;
   }
 
   private mergeFundingRatePoints(key: string, incoming: FundingRatePoint[]) {
@@ -369,7 +370,7 @@ export class RuntimeSignalMarketDataGateway {
     if (process.env.NODE_ENV === 'test') return [];
     const base = process.env.BINANCE_FUTURES_REST_URL ?? 'https://fapi.binance.com';
     const params = new URLSearchParams({
-      symbol: symbol.toUpperCase(),
+      symbol: normalizeSymbol(symbol),
       limit: String(Math.min(1000, Math.max(20, runtimeFundingHistoryLimit))),
     });
     if (Number.isFinite(endTimeMs)) {
@@ -401,7 +402,7 @@ export class RuntimeSignalMarketDataGateway {
   private async fetchFundingRateSnapshot(symbol: string): Promise<FundingRatePoint | null> {
     if (process.env.NODE_ENV === 'test') return null;
     const base = process.env.BINANCE_FUTURES_REST_URL ?? 'https://fapi.binance.com';
-    const params = new URLSearchParams({ symbol: symbol.toUpperCase() });
+    const params = new URLSearchParams({ symbol: normalizeSymbol(symbol) });
     const url = `${base}/fapi/v1/premiumIndex?${params.toString()}`;
 
     try {
@@ -472,7 +473,7 @@ export class RuntimeSignalMarketDataGateway {
     if (process.env.NODE_ENV === 'test') return [];
     const base = process.env.BINANCE_FUTURES_REST_URL ?? 'https://fapi.binance.com';
     const params = new URLSearchParams({
-      symbol: symbol.toUpperCase(),
+      symbol: normalizeSymbol(symbol),
       period: this.openInterestPeriodForInterval(interval),
       limit: String(Math.min(500, Math.max(20, runtimeOpenInterestHistoryLimit))),
     });
@@ -505,7 +506,7 @@ export class RuntimeSignalMarketDataGateway {
   private async fetchOpenInterestSnapshot(symbol: string): Promise<OpenInterestPoint | null> {
     if (process.env.NODE_ENV === 'test') return null;
     const base = process.env.BINANCE_FUTURES_REST_URL ?? 'https://fapi.binance.com';
-    const params = new URLSearchParams({ symbol: symbol.toUpperCase() });
+    const params = new URLSearchParams({ symbol: normalizeSymbol(symbol) });
     const url = `${base}/fapi/v1/openInterest?${params.toString()}`;
 
     try {
@@ -574,7 +575,7 @@ export class RuntimeSignalMarketDataGateway {
     if (process.env.NODE_ENV === 'test') return null;
     const base = process.env.BINANCE_FUTURES_REST_URL ?? 'https://fapi.binance.com';
     const params = new URLSearchParams({
-      symbol: symbol.toUpperCase(),
+      symbol: normalizeSymbol(symbol),
       limit: '100',
     });
     const url = `${base}/fapi/v1/depth?${params.toString()}`;
@@ -658,6 +659,6 @@ export class RuntimeSignalMarketDataGateway {
   }
 
   private getSeriesKey(marketType: 'FUTURES' | 'SPOT', symbol: string, interval: string) {
-    return `${marketType}|${symbol.toUpperCase()}|${normalizeInterval(interval)}`;
+    return `${marketType}|${normalizeSymbol(symbol)}|${normalizeInterval(interval)}`;
   }
 }

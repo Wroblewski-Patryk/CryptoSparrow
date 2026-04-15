@@ -1,6 +1,7 @@
 import { BotMode, Exchange, PositionManagementMode, PositionStatus, TradeMarket, WalletAllocationMode } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { decrypt } from '../../utils/crypto';
+import { normalizeBaseCurrency } from '../../lib/symbols';
 
 const runtimeReferenceBalanceFallback = Number.parseFloat(
   process.env.RUNTIME_REFERENCE_BALANCE_USDT ?? '1000'
@@ -53,7 +54,7 @@ type RuntimeCapitalContextDeps = {
 
 const extractBalanceForCurrency = (payload: unknown, baseCurrency: string) => {
   if (!payload || typeof payload !== 'object') return null;
-  const normalizedBaseCurrency = baseCurrency.toUpperCase();
+  const normalizedBaseCurrency = normalizeBaseCurrency(baseCurrency);
   const withTotal = payload as { total?: Record<string, unknown>; free?: Record<string, unknown> };
   const total = Number(withTotal.total?.[normalizedBaseCurrency]);
   if (Number.isFinite(total) && total > 0) return total;
@@ -289,7 +290,7 @@ const resolveLiveRuntimeCapitalSnapshot = async (
     userId: input.userId,
     walletId: input.walletId,
   });
-  const baseCurrency = (wallet?.baseCurrency ?? 'USDT').toUpperCase();
+  const baseCurrency = normalizeBaseCurrency(wallet?.baseCurrency ?? 'USDT');
 
   const cacheKey = `${input.userId}:${input.walletId ?? input.botId ?? 'none'}:${input.exchange}:${input.marketType}:${baseCurrency}`;
   const cached = liveBalanceCache.get(cacheKey);

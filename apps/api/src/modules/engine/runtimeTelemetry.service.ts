@@ -6,6 +6,7 @@ import {
   SignalDirection,
 } from '@prisma/client';
 import { prisma } from '../../prisma/client';
+import { normalizeSymbol } from '../../lib/symbols';
 
 type RuntimeMode = 'PAPER' | 'LIVE';
 
@@ -73,7 +74,6 @@ type CachedSession = {
   mode: RuntimeMode;
 };
 
-const normalizeSymbol = (symbol: string) => symbol.trim().toUpperCase();
 const safeNumber = (value: number | undefined) =>
   Number.isFinite(value as number) ? (value as number) : undefined;
 

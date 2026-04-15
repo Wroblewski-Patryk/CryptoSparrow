@@ -1,4 +1,5 @@
 import { prisma } from '../../prisma/client';
+import { normalizeSymbol } from '../../lib/symbols';
 import { runtimeSignalLoop } from './runtimeSignalLoop.service';
 import { getRuntimeTicker } from './runtimeTickerStore';
 import { StreamTickerEvent } from '../market-stream/binanceStream.types';
@@ -19,7 +20,7 @@ type RuntimeScanDeps = {
 const parseEnvSymbols = (value: string | undefined) =>
   (value ?? '')
     .split(',')
-    .map((item) => item.trim().toUpperCase())
+    .map((item) => normalizeSymbol(item))
     .filter((item) => item.length > 0);
 
 const parseEnvBoolean = (value: string | undefined, fallback: boolean) => {
@@ -40,7 +41,7 @@ const defaultDeps: RuntimeScanDeps = {
       select: { symbol: true },
       distinct: ['symbol'],
     });
-    return positions.map((position) => position.symbol.toUpperCase());
+    return positions.map((position) => normalizeSymbol(position.symbol)).filter((symbol) => symbol.length > 0);
   },
   getTickerSnapshot: async (symbol) => {
     const ticker = getRuntimeTicker(symbol);

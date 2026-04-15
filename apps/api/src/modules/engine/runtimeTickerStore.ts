@@ -1,5 +1,6 @@
 import { Exchange } from '@prisma/client';
 import { StreamTickerEvent } from '../market-stream/binanceStream.types';
+import { normalizeSymbol } from '../../lib/symbols';
 
 type TickerContext = {
   exchange: Exchange;
@@ -13,10 +14,10 @@ const toTickerKey = (params: {
   symbol: string;
   exchange: string;
   marketType: StreamTickerEvent['marketType'];
-}) => `${params.exchange}|${params.marketType}|${params.symbol.toUpperCase()}`;
+}) => `${params.exchange}|${params.marketType}|${normalizeSymbol(params.symbol)}`;
 
 export const upsertRuntimeTicker = (event: StreamTickerEvent) => {
-  const normalizedSymbol = event.symbol.toUpperCase();
+  const normalizedSymbol = normalizeSymbol(event.symbol);
   const normalizedEvent: StreamTickerEvent = {
     ...event,
     symbol: normalizedSymbol,
@@ -38,7 +39,7 @@ export const upsertRuntimeTicker = (event: StreamTickerEvent) => {
 };
 
 export const getRuntimeTicker = (symbol: string, context?: TickerContext) => {
-  const normalizedSymbol = symbol.toUpperCase();
+  const normalizedSymbol = normalizeSymbol(symbol);
   if (context) {
     return (
       tickerStoreByContext.get(

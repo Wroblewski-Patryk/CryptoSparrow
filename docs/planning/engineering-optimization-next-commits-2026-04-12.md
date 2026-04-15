@@ -9,7 +9,6 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 ## NOW
 
 ## NEXT
-- [ ] `OPTC-07 migrate(api-engine): remove local uppercase normalization variants in runtime/engine modules`
 - [ ] `OPTC-08 migrate(api-wallets-markets-icons-stream): remove remaining production trim().toUpperCase variants`
 - [ ] `OPTC-09 test(api-normalization): add regression contract tests for shared normalization invariants`
 - [ ] `OPTC-10 core(web-errors): create single UI error resolver and deprecate handleError/getAxiosMessage split`
@@ -29,6 +28,8 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 - none
 
 ## DONE
+- [x] `OPTC-07 migrate(api-engine): remove local uppercase normalization variants in runtime/engine modules`
+  - 2026-04-16: Replaced local runtime/engine symbol/base-currency uppercase normalization with shared helpers (`normalizeSymbol`, `normalizeBaseCurrency`, `normalizeSymbols`) across execution/runtime dataflow services (`executionOrchestrator`, `runtimeScanLoop`, `runtimeSignalLoop`, `runtimeTelemetry`, `runtimeCapitalContext`, `runtimeExecutionDedupe`, `runtimeSignalLoopDefaults`, `runtimeSignalMarketDataGateway`, `runtimeTickerStore`, `paperRuntime`); validated with API typecheck + targeted engine unit suites (PASS).
 - [x] `OPTC-06 core(api-normalization): extend shared symbol/base-currency normalization helpers`
   - 2026-04-15: Expanded shared API normalization helpers in `lib/symbols.ts` by adding `normalizeBaseCurrency`, `normalizeSymbolStrict`, and list-level normalization utilities, then added dedicated helper tests (`src/lib/symbols.test.ts`) as baseline contract coverage for upcoming runtime/wallets/icons migrations; validated with API typecheck + targeted symbols/wallets/market-stream suites (PASS).
 - [x] `OPTC-05 migrate(api-profile-subscriptions): typed domain errors for profile/security/subscription flows`

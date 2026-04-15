@@ -1,5 +1,6 @@
 import { Prisma, RuntimeExecutionCommandType } from '@prisma/client';
 import { prisma } from '../../prisma/client';
+import { normalizeSymbol } from '../../lib/symbols';
 
 const dedupeVersion = 'v1';
 
@@ -69,7 +70,7 @@ const buildDedupeKeyBase = (input: {
   intentScope: string;
 }) => {
   const botScope = input.botId ? input.botId : 'manual';
-  const symbolScope = input.symbol ? input.symbol.toUpperCase() : 'na';
+  const symbolScope = input.symbol ? normalizeSymbol(input.symbol) : 'na';
   return [
     dedupeVersion,
     input.commandType,
@@ -205,7 +206,7 @@ export class RuntimeExecutionDedupeService {
           commandType: input.commandType,
           userId: input.userId,
           botId: input.botId ?? null,
-          symbol: input.symbol?.toUpperCase() ?? null,
+          symbol: input.symbol ? normalizeSymbol(input.symbol) : null,
           status: 'PENDING',
           commandFingerprint: toPrismaJson(input.commandFingerprint),
           firstSeenAt: now,
@@ -261,7 +262,7 @@ export class RuntimeExecutionDedupeService {
         commandType: input.commandType,
         userId: input.userId,
         botId: input.botId ?? null,
-        symbol: input.symbol?.toUpperCase() ?? null,
+        symbol: input.symbol ? normalizeSymbol(input.symbol) : null,
         commandFingerprint: toPrismaJson(input.commandFingerprint),
         lastSeenAt: now,
         ttlExpiresAt,
