@@ -5,6 +5,7 @@ import {
   STRATEGY_EXPORT_FORMAT_VERSION,
   StrategyExportPackage,
 } from './strategies.types';
+import { strategyErrors } from './strategies.errors';
 
 export const getStrategies = async (userId: string) => {
     return prisma.strategy.findMany({ where: { userId } });
@@ -30,7 +31,7 @@ export const updateStrategy = async (id: string, userId: string, data: Partial<C
 
     const usedByActiveBot = await isStrategyUsedByActiveBot(userId, existing.id);
     if (usedByActiveBot) {
-      throw new Error('STRATEGY_USED_BY_ACTIVE_BOT');
+      throw strategyErrors.usedByActiveBot();
     }
 
     return prisma.strategy.update({
@@ -85,10 +86,19 @@ export const deleteStrategy = async (id: string, userId: string) => {
 
     const usedByActiveBot = await isStrategyUsedByActiveBot(userId, existing.id);
     if (usedByActiveBot) {
-      throw new Error('STRATEGY_USED_BY_ACTIVE_BOT');
+      throw strategyErrors.usedByActiveBot();
     }
 
-    await prisma.strategy.delete({ where: { id: existing.id } });
+    try {
+      await prisma.strategy.delete({ where: { id: existing.id } });
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error) {
+        if ((error as { code?: string }).code === 'P2003') {
+          throw strategyErrors.linkedRecords();
+        }
+      }
+      throw error;
+    }
     return true;
 };
 
@@ -129,7 +139,7 @@ const isValidImportPayload = (payload: unknown): payload is StrategyExportPackag
 
 export const importStrategy = async (userId: string, payload: unknown) => {
   if (!isValidImportPayload(payload)) {
-    throw new Error('INVALID_STRATEGY_IMPORT_PAYLOAD');
+    throw strategyErrors.invalidImportPayload();
   }
 
   const source = payload.strategy;

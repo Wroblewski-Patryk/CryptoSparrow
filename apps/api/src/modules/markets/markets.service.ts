@@ -3,6 +3,7 @@ import { prisma } from '../../prisma/client';
 import { resolveUniverseSymbols } from '../../lib/symbols';
 import { assertExchangeCapability } from '../exchange/exchangeCapabilities';
 import { CreateMarketUniverseDto, UpdateMarketUniverseDto } from './markets.types';
+import { marketErrors } from './markets.errors';
 
 type MarketType = 'SPOT' | 'FUTURES';
 type Exchange = PrismaExchange;
@@ -242,7 +243,7 @@ const assertUniverseNotUsedByActiveBot = async (params: { userId: string; market
   });
 
   if (usedByActiveCanonicalBot || usedByActiveLegacyBot) {
-    throw new Error('MARKET_UNIVERSE_USED_BY_ACTIVE_BOT');
+    throw marketErrors.universeUsedByActiveBot();
   }
 };
 
@@ -293,52 +294,62 @@ export const deleteUniverse = async (userId: string, id: string) => {
   if (!existing) return false;
   await assertUniverseNotUsedByActiveBot({ userId, marketUniverseId: existing.id });
 
-  await prisma.$transaction(async (tx) => {
-    const symbolGroups = await tx.symbolGroup.findMany({
-      where: {
-        userId,
-        marketUniverseId: existing.id,
-      },
-      select: { id: true },
-    });
-
-    const symbolGroupIds = symbolGroups.map((group) => group.id);
-    if (symbolGroupIds.length > 0) {
-      await tx.marketGroupStrategyLink.deleteMany({
+  try {
+    await prisma.$transaction(async (tx) => {
+      const symbolGroups = await tx.symbolGroup.findMany({
         where: {
           userId,
-          botMarketGroup: {
+          marketUniverseId: existing.id,
+        },
+        select: { id: true },
+      });
+
+      const symbolGroupIds = symbolGroups.map((group) => group.id);
+      if (symbolGroupIds.length > 0) {
+        await tx.marketGroupStrategyLink.deleteMany({
+          where: {
+            userId,
+            botMarketGroup: {
+              symbolGroupId: { in: symbolGroupIds },
+            },
+          },
+        });
+
+        await tx.botStrategy.deleteMany({
+          where: {
+            symbolGroupId: { in: symbolGroupIds },
+            bot: { userId },
+          },
+        });
+
+        await tx.botMarketGroup.deleteMany({
+          where: {
+            userId,
             symbolGroupId: { in: symbolGroupIds },
           },
-        },
-      });
+        });
 
-      await tx.botStrategy.deleteMany({
-        where: {
-          symbolGroupId: { in: symbolGroupIds },
-          bot: { userId },
-        },
-      });
+        await tx.symbolGroup.deleteMany({
+          where: {
+            userId,
+            id: { in: symbolGroupIds },
+          },
+        });
+      }
 
-      await tx.botMarketGroup.deleteMany({
-        where: {
-          userId,
-          symbolGroupId: { in: symbolGroupIds },
-        },
+      await tx.marketUniverse.delete({
+        where: { id: existing.id },
       });
-
-      await tx.symbolGroup.deleteMany({
-        where: {
-          userId,
-          id: { in: symbolGroupIds },
-        },
-      });
-    }
-
-    await tx.marketUniverse.delete({
-      where: { id: existing.id },
     });
-  });
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error) {
+      const code = (error as { code?: string }).code;
+      if (code && ['P2003', 'P2014', 'P2025', 'P2022'].includes(code)) {
+        throw marketErrors.universeLinkedRecords();
+      }
+    }
+    throw error;
+  }
 
   return true;
 };

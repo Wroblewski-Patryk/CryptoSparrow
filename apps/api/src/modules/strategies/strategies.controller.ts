@@ -1,7 +1,33 @@
 import { Request, Response } from 'express';
-import { Prisma } from '@prisma/client';
 import * as strategyService from './strategies.service';
 import { sendError } from '../../utils/apiError';
+import { mapErrorToHttpResponse } from '../../lib/httpErrorMapper';
+import { STRATEGY_ERROR_CODES } from './strategies.errors';
+
+const handleStrategyError = (
+  res: Response,
+  error: unknown,
+  action?: 'update' | 'delete' | 'import'
+) => {
+  const mapped = mapErrorToHttpResponse(error);
+
+  if (mapped.code === STRATEGY_ERROR_CODES.usedByActiveBot) {
+    if (action === 'delete') {
+      return sendError(res, 409, 'strategy is used by active bot and cannot be deleted', mapped.details);
+    }
+    return sendError(res, 409, 'strategy is used by active bot and cannot be edited', mapped.details);
+  }
+
+  if (mapped.code === STRATEGY_ERROR_CODES.linkedRecords) {
+    return sendError(res, 409, 'strategy has linked records and cannot be deleted', mapped.details);
+  }
+
+  if (mapped.code === STRATEGY_ERROR_CODES.invalidImportPayload) {
+    return sendError(res, 400, 'Invalid strategy import payload', mapped.details);
+  }
+
+  return sendError(res, mapped.status, mapped.message, mapped.details);
+};
 
 // GET /strategies
 export const getStrategies = async (req: Request, res: Response) => {
@@ -39,10 +65,7 @@ export const updateStrategy = async (req: Request, res: Response) => {
       if (!strategy) return sendError(res, 404, 'Not found');
       return res.json(strategy);
     } catch (error) {
-      if (error instanceof Error && error.message === 'STRATEGY_USED_BY_ACTIVE_BOT') {
-        return sendError(res, 409, 'strategy is used by active bot and cannot be edited');
-      }
-      throw error;
+      return handleStrategyError(res, error, 'update');
     }
 };
 
@@ -56,13 +79,7 @@ export const deleteStrategy = async (req: Request, res: Response) => {
       if (!deleted) return sendError(res, 404, 'Not found');
       return res.status(204).end();
     } catch (error) {
-      if (error instanceof Error && error.message === 'STRATEGY_USED_BY_ACTIVE_BOT') {
-        return sendError(res, 409, 'strategy is used by active bot and cannot be deleted');
-      }
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
-        return sendError(res, 409, 'strategy has linked records and cannot be deleted');
-      }
-      throw error;
+      return handleStrategyError(res, error, 'delete');
     }
 };
 
@@ -86,9 +103,6 @@ export const importStrategy = async (req: Request, res: Response) => {
     const imported = await strategyService.importStrategy(userId, req.body);
     return res.status(201).json(imported);
   } catch (error) {
-    if (error instanceof Error && error.message === 'INVALID_STRATEGY_IMPORT_PAYLOAD') {
-      return sendError(res, 400, 'Invalid strategy import payload');
-    }
-    throw error;
+    return handleStrategyError(res, error, 'import');
   }
 };

@@ -1,14 +1,30 @@
 import { Request, Response } from 'express';
-import { Prisma } from '@prisma/client';
 import { sendError } from '../../utils/apiError';
-import { sendValidationError } from '../../utils/formatZodError';
-import { ExchangeNotImplementedError } from '../exchange/exchangeCapabilities';
+import { mapErrorToHttpResponse } from '../../lib/httpErrorMapper';
 import * as marketsService from './markets.service';
 import {
   MarketCatalogQuerySchema,
   MarketUniverseCreateSchema,
   MarketUniverseUpdateSchema,
 } from './markets.types';
+import { MARKET_ERROR_CODES } from './markets.errors';
+
+const handleMarketError = (res: Response, error: unknown, action?: 'update' | 'delete') => {
+  const mapped = mapErrorToHttpResponse(error);
+
+  if (mapped.code === MARKET_ERROR_CODES.universeUsedByActiveBot) {
+    if (action === 'delete') {
+      return sendError(res, 409, 'market universe is used by active bot and cannot be deleted', mapped.details);
+    }
+    return sendError(res, 409, 'market universe is used by active bot and cannot be edited', mapped.details);
+  }
+
+  if (mapped.code === MARKET_ERROR_CODES.universeLinkedRecords) {
+    return sendError(res, 409, 'market universe has linked records and cannot be deleted', mapped.details);
+  }
+
+  return sendError(res, mapped.status, mapped.message, mapped.details);
+};
 
 export const listMarketCatalog = async (req: Request, res: Response) => {
   try {
@@ -16,10 +32,7 @@ export const listMarketCatalog = async (req: Request, res: Response) => {
     const catalog = await marketsService.getMarketCatalog(query.baseCurrency, query.marketType, query.exchange);
     return res.json(catalog);
   } catch (error) {
-    if (error instanceof ExchangeNotImplementedError) {
-      return sendError(res, error.status, error.message, error.toDetails());
-    }
-    return sendValidationError(res, error);
+    return handleMarketError(res, error);
   }
 };
 
@@ -51,7 +64,7 @@ export const createMarketUniverse = async (req: Request, res: Response) => {
     const created = await marketsService.createUniverse(userId, payload);
     return res.status(201).json(created);
   } catch (error) {
-    return sendValidationError(res, error);
+    return handleMarketError(res, error);
   }
 };
 
@@ -67,10 +80,7 @@ export const updateMarketUniverse = async (req: Request, res: Response) => {
 
     return res.json(updated);
   } catch (error) {
-    if (error instanceof Error && error.message === 'MARKET_UNIVERSE_USED_BY_ACTIVE_BOT') {
-      return sendError(res, 409, 'market universe is used by active bot and cannot be edited');
-    }
-    return sendValidationError(res, error);
+    return handleMarketError(res, error, 'update');
   }
 };
 
@@ -85,15 +95,6 @@ export const deleteMarketUniverse = async (req: Request, res: Response) => {
 
     return res.status(204).end();
   } catch (error) {
-    if (error instanceof Error && error.message === 'MARKET_UNIVERSE_USED_BY_ACTIVE_BOT') {
-      return sendError(res, 409, 'market universe is used by active bot and cannot be deleted');
-    }
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      ['P2003', 'P2014', 'P2025', 'P2022'].includes(error.code)
-    ) {
-      return sendError(res, 409, 'market universe has linked records and cannot be deleted');
-    }
-    return sendError(res, 500, 'Internal server error');
+    return handleMarketError(res, error, 'delete');
   }
 };

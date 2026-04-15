@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `OPTC-03 migrate(api-markets-strategies): typed domain errors + controller mapping without message equality`
 - [ ] `OPTC-04 migrate(api-bots-orders): typed domain errors for high-change command/execution paths`
 - [ ] `OPTC-05 migrate(api-profile-subscriptions): typed domain errors for profile/security/subscription flows`
 - [ ] `OPTC-06 core(api-normalization): extend shared symbol/base-currency normalization helpers`
@@ -31,6 +30,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `OPTC-03 migrate(api-markets-strategies): typed domain errors + controller mapping without message equality`
+  - 2026-04-15: Migrated markets/strategies flows from string error comparisons to typed domain errors and code-based controller mapping (`mapErrorToHttpResponse`), covering active-bot lock and linked-record guards for update/delete/import paths; validated with API typecheck and targeted e2e suites.
 - [x] `OPTC-02 migrate(api-wallets): replace wallet error-string flow with typed domain errors`
   - 2026-04-15: Added typed wallet domain errors and replaced wallet controller message-equality branches with code-based mapped handling (`mapErrorToHttpResponse` + `error.code`), preserving API messages for LIVE api-key compatibility, preview, and in-use delete guards; validated with API typecheck + wallets e2e contract suite.
 - [x] `OPTC-01 core(api-errors): introduce typed AppError/DomainError primitives + central http mapper`
