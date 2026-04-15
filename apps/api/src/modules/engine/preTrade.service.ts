@@ -7,6 +7,7 @@ import {
   PreTradeDecision,
 } from './preTrade.types';
 import { evaluatePreTradeRiskReasons } from './preTradeRisk.service';
+import { runtimeMetricsService } from './runtimeMetrics.service';
 
 export interface PositionReadStore {
   countOpenByUser(userId: string): Promise<number>;
@@ -100,69 +101,71 @@ export const analyzePreTrade = async (
   readStore: PreTradeReadStore = defaultReadStore,
   auditLogWriter: AuditLogWriter = defaultAuditLogWriter
 ): Promise<PreTradeDecision> => {
-  const parsed = PreTradeAnalysisInputSchema.parse(input);
+  return runtimeMetricsService.measurePreTradeLatency(async () => {
+    const parsed = PreTradeAnalysisInputSchema.parse(input);
 
-  const userOpenPositions = await readStore.countOpenByUser(parsed.userId);
-  const botOpenPositions = parsed.botId
-    ? await readStore.countOpenByBot(parsed.userId, parsed.botId)
-    : null;
-  const hasOpenPositionOnSymbol = parsed.enforceOnePositionPerSymbol
-    ? await readStore.hasOpenPositionOnSymbol(parsed.userId, parsed.symbol)
-    : false;
-  const botLiveConfig = parsed.botId
-    ? await readStore.getBotLiveConfig(parsed.userId, parsed.botId)
-    : null;
-  const reasons = evaluatePreTradeRiskReasons({
-    parsed,
-    userOpenPositions,
-    botOpenPositions,
-    hasOpenPositionOnSymbol,
-    botLiveConfig,
-  });
-
-  const decision = {
-    allowed: reasons.length === 0,
-    reasons,
-    metrics: {
+    const userOpenPositions = await readStore.countOpenByUser(parsed.userId);
+    const botOpenPositions = parsed.botId
+      ? await readStore.countOpenByBot(parsed.userId, parsed.botId)
+      : null;
+    const hasOpenPositionOnSymbol = parsed.enforceOnePositionPerSymbol
+      ? await readStore.hasOpenPositionOnSymbol(parsed.userId, parsed.symbol)
+      : false;
+    const botLiveConfig = parsed.botId
+      ? await readStore.getBotLiveConfig(parsed.userId, parsed.botId)
+      : null;
+    const reasons = evaluatePreTradeRiskReasons({
+      parsed,
       userOpenPositions,
       botOpenPositions,
       hasOpenPositionOnSymbol,
-    },
-  };
+      botLiveConfig,
+    });
 
-  const isCriticalDecision = parsed.mode === 'LIVE' || reasons.length > 0;
-  if (isCriticalDecision) {
-    try {
-      await auditLogWriter.write({
-        userId: parsed.userId,
-        botId: parsed.botId,
-        action: decision.allowed ? 'trade.precheck.allowed' : 'trade.precheck.blocked',
-        level: decision.allowed ? 'INFO' : 'WARN',
-        source: 'engine.pre-trade',
-        message: decision.allowed
-          ? `Pre-trade check allowed (${parsed.mode}) for ${parsed.symbol}`
-          : `Pre-trade check blocked (${parsed.mode}) for ${parsed.symbol}`,
-        category: 'TRADING_DECISION',
-        entityType: parsed.botId ? 'BOT' : undefined,
-        entityId: parsed.botId,
-        metadata: {
-          symbol: parsed.symbol,
-          mode: parsed.mode,
-          requestedMarketType: parsed.marketType ?? null,
-          marketType: botLiveConfig?.marketType ?? null,
-          positionMode: botLiveConfig?.positionMode ?? null,
-          reasons: decision.reasons,
-          metrics: decision.metrics,
-          guardrails: {
-            globalKillSwitch: parsed.globalKillSwitch,
-            emergencyStop: parsed.emergencyStop,
+    const decision = {
+      allowed: reasons.length === 0,
+      reasons,
+      metrics: {
+        userOpenPositions,
+        botOpenPositions,
+        hasOpenPositionOnSymbol,
+      },
+    };
+
+    const isCriticalDecision = parsed.mode === 'LIVE' || reasons.length > 0;
+    if (isCriticalDecision) {
+      try {
+        await auditLogWriter.write({
+          userId: parsed.userId,
+          botId: parsed.botId,
+          action: decision.allowed ? 'trade.precheck.allowed' : 'trade.precheck.blocked',
+          level: decision.allowed ? 'INFO' : 'WARN',
+          source: 'engine.pre-trade',
+          message: decision.allowed
+            ? `Pre-trade check allowed (${parsed.mode}) for ${parsed.symbol}`
+            : `Pre-trade check blocked (${parsed.mode}) for ${parsed.symbol}`,
+          category: 'TRADING_DECISION',
+          entityType: parsed.botId ? 'BOT' : undefined,
+          entityId: parsed.botId,
+          metadata: {
+            symbol: parsed.symbol,
+            mode: parsed.mode,
+            requestedMarketType: parsed.marketType ?? null,
+            marketType: botLiveConfig?.marketType ?? null,
+            positionMode: botLiveConfig?.positionMode ?? null,
+            reasons: decision.reasons,
+            metrics: decision.metrics,
+            guardrails: {
+              globalKillSwitch: parsed.globalKillSwitch,
+              emergencyStop: parsed.emergencyStop,
+            },
           },
-        },
-      });
-    } catch {
-      // Audit logging failures must not block risk checks.
+        });
+      } catch {
+        // Audit logging failures must not block risk checks.
+      }
     }
-  }
 
-  return decision;
+    return decision;
+  });
 };

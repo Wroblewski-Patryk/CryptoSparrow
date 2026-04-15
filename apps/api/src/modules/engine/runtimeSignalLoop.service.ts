@@ -17,6 +17,7 @@ import {
 } from './runtimeSignalMarketDataGateway';
 import { resolveRuntimeDcaFundsExhausted, resolveRuntimeReferenceBalance } from './runtimeCapitalContext.service';
 import { runtimeTelemetryService } from './runtimeTelemetry.service';
+import { runtimeMetricsService } from './runtimeMetrics.service';
 import { mergeRuntimeStrategyVotes, StrategyVote } from './runtimeSignalMerge';
 import {
   validateRuntimeExchangeOrder,
@@ -279,7 +280,7 @@ export class RuntimeSignalLoop {
       this.sessionWatchdogTimer = null;
     }
     if (!this.unsubscribe) return;
-    const activeBots = await this.deps.listActiveBots();
+    const activeBots = await this.listActiveBotsWithMetrics();
     await Promise.all(
       activeBots.map((bot) =>
         this.deps.closeRuntimeSession?.({
@@ -319,7 +320,7 @@ export class RuntimeSignalLoop {
   }
 
   private async syncRuntimeSessions() {
-    const activeBots = await this.deps.listActiveBots();
+    const activeBots = await this.listActiveBotsWithMetrics();
     await this.deps.closeInactiveRuntimeSessions?.(activeBots.map((bot) => bot.id));
     await Promise.all(
       activeBots.map((bot) =>
@@ -331,6 +332,10 @@ export class RuntimeSignalLoop {
       )
     );
     return activeBots;
+  }
+
+  private async listActiveBotsWithMetrics() {
+    return runtimeMetricsService.measureListActiveBots(async () => this.deps.listActiveBots());
   }
 
   private async detectRuntimeStall(now: number, activeBotIdsFromSync: string[]) {
@@ -559,7 +564,7 @@ export class RuntimeSignalLoop {
   }
 
   private async handleFinalCandleDecision(event: StreamCandleEvent) {
-    const bots = await this.deps.listActiveBots();
+    const bots = await this.listActiveBotsWithMetrics();
     await this.deps.closeInactiveRuntimeSessions?.(bots.map((bot) => bot.id));
     const managedExternalSymbolKeys = new Set<string>();
     try {
@@ -594,6 +599,7 @@ export class RuntimeSignalLoop {
             this.strategyMatchesCandleInterval(strategy.strategyInterval, event.interval)
           );
         });
+        runtimeMetricsService.recordEligibleGroupsCount(eligibleGroups.length);
 
         await Promise.all(
           eligibleGroups.map(async (group) => {

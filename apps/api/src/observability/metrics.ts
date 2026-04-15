@@ -50,6 +50,28 @@ type MetricsSnapshot = {
       avgDelayMs: number;
       maxDelayMs: number;
     };
+    hotPath: {
+      listActiveBots: {
+        total: number;
+        totalDurationMs: number;
+        avgDurationMs: number;
+        maxDurationMs: number;
+      };
+      eligibleGroupsCount: {
+        total: number;
+        totalGroups: number;
+        avgGroupsPerEvaluation: number;
+        maxGroupsPerEvaluation: number;
+      };
+      preTradeLatencyMs: {
+        total: number;
+        totalDurationMs: number;
+        avgDurationMs: number;
+        maxDurationMs: number;
+      };
+      touchSessionWrites: number;
+      symbolStatsWrites: number;
+    };
     executionErrors: Record<string, number>;
   };
   assistant: {
@@ -91,6 +113,17 @@ class InMemoryMetricsStore {
   private runtimeReconciliationPending = 0;
   private runtimeReconciliationTotalDelayMs = 0;
   private runtimeReconciliationMaxDelayMs = 0;
+  private runtimeHotPathListActiveBotsTotal = 0;
+  private runtimeHotPathListActiveBotsTotalDurationMs = 0;
+  private runtimeHotPathListActiveBotsMaxDurationMs = 0;
+  private runtimeHotPathEligibleGroupsTotal = 0;
+  private runtimeHotPathEligibleGroupsSamples = 0;
+  private runtimeHotPathEligibleGroupsMax = 0;
+  private runtimeHotPathPreTradeLatencyTotal = 0;
+  private runtimeHotPathPreTradeLatencyTotalDurationMs = 0;
+  private runtimeHotPathPreTradeLatencyMaxDurationMs = 0;
+  private runtimeHotPathTouchSessionWrites = 0;
+  private runtimeHotPathSymbolStatsWrites = 0;
   private readonly runtimeExecutionErrors = new Map<string, number>();
   private assistantSubagentTimeouts = 0;
 
@@ -164,6 +197,41 @@ class InMemoryMetricsStore {
     if (pending) this.runtimeReconciliationPending += 1;
   }
 
+  recordRuntimeListActiveBots(durationMs: number) {
+    const value = Number.isFinite(durationMs) ? Math.max(0, durationMs) : 0;
+    this.runtimeHotPathListActiveBotsTotal += 1;
+    this.runtimeHotPathListActiveBotsTotalDurationMs += value;
+    this.runtimeHotPathListActiveBotsMaxDurationMs = Math.max(
+      this.runtimeHotPathListActiveBotsMaxDurationMs,
+      value
+    );
+  }
+
+  recordRuntimeEligibleGroupsCount(count: number) {
+    const value = Number.isFinite(count) ? Math.max(0, Math.trunc(count)) : 0;
+    this.runtimeHotPathEligibleGroupsSamples += 1;
+    this.runtimeHotPathEligibleGroupsTotal += value;
+    this.runtimeHotPathEligibleGroupsMax = Math.max(this.runtimeHotPathEligibleGroupsMax, value);
+  }
+
+  recordRuntimePreTradeLatency(durationMs: number) {
+    const value = Number.isFinite(durationMs) ? Math.max(0, durationMs) : 0;
+    this.runtimeHotPathPreTradeLatencyTotal += 1;
+    this.runtimeHotPathPreTradeLatencyTotalDurationMs += value;
+    this.runtimeHotPathPreTradeLatencyMaxDurationMs = Math.max(
+      this.runtimeHotPathPreTradeLatencyMaxDurationMs,
+      value
+    );
+  }
+
+  recordRuntimeTouchSessionWrite() {
+    this.runtimeHotPathTouchSessionWrites += 1;
+  }
+
+  recordRuntimeSymbolStatsWrite() {
+    this.runtimeHotPathSymbolStatsWrites += 1;
+  }
+
   recordRuntimeExecutionError(errorClass: string) {
     const key = this.normalizeRuntimeErrorClass(errorClass);
     const current = this.runtimeExecutionErrors.get(key) ?? 0;
@@ -194,6 +262,18 @@ class InMemoryMetricsStore {
     const runtimeReconciliationAvgMs =
       this.runtimeReconciliationTotal > 0
         ? this.runtimeReconciliationTotalDelayMs / this.runtimeReconciliationTotal
+        : 0;
+    const runtimeListActiveBotsAvgDurationMs =
+      this.runtimeHotPathListActiveBotsTotal > 0
+        ? this.runtimeHotPathListActiveBotsTotalDurationMs / this.runtimeHotPathListActiveBotsTotal
+        : 0;
+    const runtimeEligibleGroupsAvg =
+      this.runtimeHotPathEligibleGroupsSamples > 0
+        ? this.runtimeHotPathEligibleGroupsTotal / this.runtimeHotPathEligibleGroupsSamples
+        : 0;
+    const runtimePreTradeAvgDurationMs =
+      this.runtimeHotPathPreTradeLatencyTotal > 0
+        ? this.runtimeHotPathPreTradeLatencyTotalDurationMs / this.runtimeHotPathPreTradeLatencyTotal
         : 0;
     return {
       http: {
@@ -246,6 +326,28 @@ class InMemoryMetricsStore {
           totalDelayMs: this.runtimeReconciliationTotalDelayMs,
           avgDelayMs: runtimeReconciliationAvgMs,
           maxDelayMs: this.runtimeReconciliationMaxDelayMs,
+        },
+        hotPath: {
+          listActiveBots: {
+            total: this.runtimeHotPathListActiveBotsTotal,
+            totalDurationMs: this.runtimeHotPathListActiveBotsTotalDurationMs,
+            avgDurationMs: runtimeListActiveBotsAvgDurationMs,
+            maxDurationMs: this.runtimeHotPathListActiveBotsMaxDurationMs,
+          },
+          eligibleGroupsCount: {
+            total: this.runtimeHotPathEligibleGroupsSamples,
+            totalGroups: this.runtimeHotPathEligibleGroupsTotal,
+            avgGroupsPerEvaluation: runtimeEligibleGroupsAvg,
+            maxGroupsPerEvaluation: this.runtimeHotPathEligibleGroupsMax,
+          },
+          preTradeLatencyMs: {
+            total: this.runtimeHotPathPreTradeLatencyTotal,
+            totalDurationMs: this.runtimeHotPathPreTradeLatencyTotalDurationMs,
+            avgDurationMs: runtimePreTradeAvgDurationMs,
+            maxDurationMs: this.runtimeHotPathPreTradeLatencyMaxDurationMs,
+          },
+          touchSessionWrites: this.runtimeHotPathTouchSessionWrites,
+          symbolStatsWrites: this.runtimeHotPathSymbolStatsWrites,
         },
         executionErrors: Object.fromEntries(this.runtimeExecutionErrors.entries()),
       },

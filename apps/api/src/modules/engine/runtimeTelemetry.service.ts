@@ -7,6 +7,7 @@ import {
 } from '@prisma/client';
 import { prisma } from '../../prisma/client';
 import { normalizeSymbol } from '../../lib/symbols';
+import { runtimeMetricsService } from './runtimeMetrics.service';
 
 type RuntimeMode = 'PAPER' | 'LIVE';
 
@@ -392,6 +393,7 @@ export class RuntimeTelemetryService {
         snapshotAt: now,
       },
     });
+    runtimeMetricsService.recordSymbolStatsWrite();
 
     await this.touchSession(sessionId);
   }
@@ -403,6 +405,7 @@ export class RuntimeTelemetryService {
         lastHeartbeatAt: new Date(),
       },
     });
+    runtimeMetricsService.recordTouchSessionWrite();
   }
 
   private async findRunningSessionId(botId: string) {
