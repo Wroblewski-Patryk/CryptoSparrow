@@ -2,6 +2,7 @@ import { prisma } from '../../prisma/client';
 import { orchestrateAssistantDecision } from '../engine/assistantOrchestrator.service';
 import { AssistantDryRunDto, UpsertBotAssistantConfigDto, UpsertBotSubagentConfigDto } from './bots.types';
 import { getOwnedBot } from './botOwnership.service';
+import { botErrors } from './bots.errors';
 
 export const getBotAssistantConfig = async (userId: string, botId: string) => {
   const bot = await getOwnedBot(userId, botId);
@@ -55,7 +56,7 @@ export const upsertBotSubagentConfig = async (
 ) => {
   const bot = await getOwnedBot(userId, botId);
   if (!bot) return null;
-  if (slotIndex < 1 || slotIndex > 4) throw new Error('SUBAGENT_SLOT_OUT_OF_RANGE');
+  if (slotIndex < 1 || slotIndex > 4) throw botErrors.subagentSlotOutOfRange();
 
   return prisma.botSubagentConfig.upsert({
     where: {
@@ -87,7 +88,7 @@ export const upsertBotSubagentConfig = async (
 export const deleteBotSubagentConfig = async (userId: string, botId: string, slotIndex: number) => {
   const bot = await getOwnedBot(userId, botId);
   if (!bot) return false;
-  if (slotIndex < 1 || slotIndex > 4) throw new Error('SUBAGENT_SLOT_OUT_OF_RANGE');
+  if (slotIndex < 1 || slotIndex > 4) throw botErrors.subagentSlotOutOfRange();
 
   const existing = await prisma.botSubagentConfig.findUnique({
     where: {

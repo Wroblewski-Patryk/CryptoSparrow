@@ -1,5 +1,6 @@
 import { prisma } from '../../prisma/client';
 import { normalizeSymbols } from './runtimeSymbolUniverse.service';
+import { botErrors } from './bots.errors';
 
 type OwnedStrategy = {
   id: string;
@@ -155,6 +156,6 @@ export const assertNoDuplicateActiveBotByStrategyAndSymbolGroup = async (params:
 }) => {
   const duplicate = await findDuplicateActiveBotByStrategyAndSymbolGroup(params);
   if (duplicate?.bot) {
-    throw new Error('ACTIVE_BOT_STRATEGY_MARKET_GROUP_DUPLICATE');
+    throw botErrors.activeBotStrategyMarketGroupDuplicate();
   }
 };

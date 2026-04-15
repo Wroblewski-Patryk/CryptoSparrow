@@ -1,4 +1,5 @@
 import { prisma } from '../../prisma/client';
+import { botErrors } from './bots.errors';
 
 export type BotConsentState = {
   mode: 'PAPER' | 'LIVE';
@@ -13,7 +14,7 @@ export const normalizeConsentTextVersion = (value?: string | null) => {
 
 export const validateLiveConsentState = (state: BotConsentState) => {
   if (state.liveOptIn && !normalizeConsentTextVersion(state.consentTextVersion)) {
-    throw new Error('LIVE_CONSENT_VERSION_REQUIRED');
+    throw botErrors.liveConsentVersionRequired();
   }
 };
 

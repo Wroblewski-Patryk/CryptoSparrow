@@ -28,6 +28,7 @@ import {
   getOwnedBotWithStrategyProjection,
   listOwnedBotsWithStrategyProjection,
 } from './botReadProjection.service';
+import { botErrors } from './bots.errors';
 
 export {
   deleteBotSubagentConfig,
@@ -65,18 +66,18 @@ export const getBot = async (userId: string, id: string) => {
 export const createBot = async (userId: string, data: CreateBotDto) => {
   const { strategyId, marketGroupId, walletId, ...botData } = data;
   const strategy = await getOwnedStrategy(userId, strategyId);
-  if (!strategy) throw new Error('BOT_STRATEGY_NOT_FOUND');
+  if (!strategy) throw botErrors.botStrategyNotFound();
 
   const symbolGroup = await resolveCreateMarketGroupToSymbolGroup(userId, marketGroupId);
-  if (!symbolGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
+  if (!symbolGroup) throw botErrors.symbolGroupNotFound();
   const wallet = await getOwnedWalletForBotContext({ userId, walletId });
-  if (!wallet) throw new Error('WALLET_NOT_FOUND');
+  if (!wallet) throw botErrors.walletNotFound();
   if (
     symbolGroup.marketUniverse.exchange !== wallet.exchange ||
     symbolGroup.marketUniverse.marketType !== wallet.marketType ||
     symbolGroup.marketUniverse.baseCurrency.toUpperCase() !== wallet.baseCurrency.toUpperCase()
   ) {
-    throw new Error('WALLET_MARKET_CONTEXT_MISMATCH');
+    throw botErrors.walletMarketContextMismatch();
   }
 
   const derivedMode = wallet.mode;
@@ -85,7 +86,7 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
   const derivedExchange = wallet.exchange;
   const derivedApiKeyId = wallet.mode === 'LIVE' ? wallet.apiKeyId : null;
   if (wallet.mode === 'LIVE' && !derivedApiKeyId) {
-    throw new Error('WALLET_LIVE_API_KEY_REQUIRED');
+    throw botErrors.walletLiveApiKeyRequired();
   }
 
   const nextState: BotConsentState = {
@@ -183,7 +184,7 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
 
   const withStrategy = await getBotWithStrategyProjectionById(createdBotId);
 
-  if (!withStrategy) throw new Error('BOT_NOT_FOUND');
+  if (!withStrategy) throw botErrors.botNotFound();
   return mapBotResponse(withStrategy);
 };
 
@@ -203,11 +204,11 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
     : null;
   if (walletIdUpdateRequested) {
     if (!requestedWalletId) {
-      throw new Error('WALLET_NOT_FOUND');
+      throw botErrors.walletNotFound();
     }
     targetWallet = await getOwnedWalletForBotContext({ userId, walletId: requestedWalletId });
     if (!targetWallet) {
-      throw new Error('WALLET_NOT_FOUND');
+      throw botErrors.walletNotFound();
     }
   }
 
@@ -237,7 +238,7 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
     nextMode === 'LIVE' ? (targetWallet?.apiKeyId ?? existing.apiKeyId ?? null) : null;
 
   if (nextMode === 'LIVE' && !resolvedApiKeyId) {
-    throw new Error('WALLET_LIVE_API_KEY_REQUIRED');
+    throw botErrors.walletLiveApiKeyRequired();
   }
 
   const switchingPaperToLive = existing.mode === 'PAPER' && nextMode === 'LIVE';
@@ -257,13 +258,13 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
 
   if (requestedMarketGroupId) {
     const resolvedGroup = await resolveCreateMarketGroupToSymbolGroup(userId, requestedMarketGroupId);
-    if (!resolvedGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
+    if (!resolvedGroup) throw botErrors.symbolGroupNotFound();
     if (
       resolvedGroup.marketUniverse.exchange !== targetExchange ||
       resolvedGroup.marketUniverse.marketType !== targetMarketType ||
       resolvedGroup.marketUniverse.baseCurrency.toUpperCase() !== targetBaseCurrency
     ) {
-      throw new Error('WALLET_MARKET_CONTEXT_MISMATCH');
+      throw botErrors.walletMarketContextMismatch();
     }
   }
 
@@ -281,7 +282,7 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
 
       if (requestedMarketGroupId) {
         const resolvedGroup = await resolveCreateMarketGroupToSymbolGroup(userId, requestedMarketGroupId);
-        if (!resolvedGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
+        if (!resolvedGroup) throw botErrors.symbolGroupNotFound();
         targetSymbolGroupId = resolvedGroup.id;
       } else {
         const primaryGroup = await prisma.botMarketGroup.findFirst({

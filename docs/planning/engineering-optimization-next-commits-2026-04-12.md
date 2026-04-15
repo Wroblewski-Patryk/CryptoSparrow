@@ -7,7 +7,6 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 - Focus: architecture, reliability, consistency, and maintainability across API + Web.
 
 ## NOW
-- [ ] `OPTC-04 migrate(api-bots-orders): typed domain errors for high-change command/execution paths`
 - [ ] `OPTC-05 migrate(api-profile-subscriptions): typed domain errors for profile/security/subscription flows`
 - [ ] `OPTC-06 core(api-normalization): extend shared symbol/base-currency normalization helpers`
 
@@ -32,6 +31,8 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 - none
 
 ## DONE
+- [x] `OPTC-04 migrate(api-bots-orders): typed domain errors for high-change command/execution paths`
+  - 2026-04-15: Added typed domain errors for bots/orders (`bots.errors.ts`, `orders.errors.ts`), migrated throw-sites in bot command/runtime and order execution/pretrade flows, and replaced bots/orders controller message-equality checks with code-based mapped handling via `mapErrorToHttpResponse`; validated with API typecheck + targeted bots/orders tests (PASS).
 - [x] `OPTC-03 migrate(api-markets-strategies): typed domain errors + controller mapping without message equality`
   - 2026-04-15: Added typed domain error contracts for markets/strategies (`markets.errors.ts`, `strategies.errors.ts`), migrated service throws from string-errors to typed domain errors, and replaced controller message-equality branches with code-based mapping via `mapErrorToHttpResponse`; validated with `pnpm --filter api run typecheck` + targeted markets/strategies e2e suites (PASS).
 - [x] `OPTC-02 migrate(api-wallets): replace wallet error-string flow with typed domain errors`

@@ -1,5 +1,6 @@
 import { Exchange } from '@prisma/client';
 import { prisma } from '../../prisma/client';
+import { botErrors } from './bots.errors';
 
 const getOwnedApiKey = async (userId: string, apiKeyId: string) =>
   prisma.apiKey.findFirst({
@@ -31,9 +32,9 @@ export const resolveCompatibleBotApiKey = async (params: {
 }) => {
   if (params.requestedApiKeyId) {
     const apiKey = await getOwnedApiKey(params.userId, params.requestedApiKeyId);
-    if (!apiKey) throw new Error('BOT_LIVE_API_KEY_NOT_FOUND');
+    if (!apiKey) throw botErrors.botLiveApiKeyNotFound();
     if (apiKey.exchange !== params.exchange) {
-      throw new Error('BOT_LIVE_API_KEY_EXCHANGE_MISMATCH');
+      throw botErrors.botLiveApiKeyExchangeMismatch();
     }
     return apiKey.id;
   }
@@ -41,6 +42,6 @@ export const resolveCompatibleBotApiKey = async (params: {
   if (!params.requireForActivation) return null;
 
   const latest = await findLatestApiKeyByExchange(params.userId, params.exchange);
-  if (!latest) throw new Error('BOT_LIVE_API_KEY_NOT_FOUND');
+  if (!latest) throw botErrors.botLiveApiKeyNotFound();
   return latest.id;
 };

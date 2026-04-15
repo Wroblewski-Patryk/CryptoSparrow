@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `OPTC-04 migrate(api-bots-orders): typed domain errors for high-change command/execution paths`
 - [ ] `OPTC-05 migrate(api-profile-subscriptions): typed domain errors for profile/security/subscription flows`
 - [ ] `OPTC-06 core(api-normalization): extend shared symbol/base-currency normalization helpers`
 ## NEXT
@@ -30,6 +29,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `OPTC-04 migrate(api-bots-orders): typed domain errors for high-change command/execution paths`
+  - 2026-04-15: Added typed domain error contracts for bots/orders (`bots.errors.ts`, `orders.errors.ts`), migrated service throws across bot command/runtime paths and order execution/pretrade guards, and replaced bots/orders controller `error.message` equality checks with code-based mapping via `mapErrorToHttpResponse`; validated with `pnpm --filter api run typecheck` + targeted bots/orders suites (`bots.e2e`, `bots.orchestration.e2e`, `bots.duplicate-guard.e2e`, `bots.subscription-entitlements.e2e`, `orders-positions.e2e`, `orders.service`) (PASS).
 - [x] `OPTC-03 migrate(api-markets-strategies): typed domain errors + controller mapping without message equality`
   - 2026-04-15: Migrated markets/strategies flows from string error comparisons to typed domain errors and code-based controller mapping (`mapErrorToHttpResponse`), covering active-bot lock and linked-record guards for update/delete/import paths; validated with API typecheck and targeted e2e suites.
 - [x] `OPTC-02 migrate(api-wallets): replace wallet error-string flow with typed domain errors`

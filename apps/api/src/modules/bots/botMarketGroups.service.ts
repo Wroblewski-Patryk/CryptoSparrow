@@ -8,6 +8,7 @@ import {
 } from './bots.types';
 import { getOwnedStrategy } from './botWriteValidation.service';
 import { getOwnedBot, validateSymbolGroupForBot } from './botOwnership.service';
+import { botErrors } from './bots.errors';
 
 export const listBotMarketGroups = async (userId: string, botId: string) => {
   const bot = await getOwnedBot(userId, botId);
@@ -109,10 +110,10 @@ export const attachMarketGroupStrategy = async (
   data: AttachMarketGroupStrategyDto
 ) => {
   const group = await getBotMarketGroup(userId, botId, marketGroupId);
-  if (!group) throw new Error('BOT_MARKET_GROUP_NOT_FOUND');
+  if (!group) throw botErrors.botMarketGroupNotFound();
 
   const strategy = await getOwnedStrategy(userId, data.strategyId);
-  if (!strategy) throw new Error('BOT_STRATEGY_NOT_FOUND');
+  if (!strategy) throw botErrors.botStrategyNotFound();
 
   try {
     return prisma.marketGroupStrategyLink.create({
@@ -133,7 +134,7 @@ export const attachMarketGroupStrategy = async (
       'code' in error &&
       (error as { code?: string }).code === 'P2002'
     ) {
-      throw new Error('MARKET_GROUP_STRATEGY_ALREADY_ATTACHED');
+      throw botErrors.marketGroupStrategyAlreadyAttached();
     }
     throw error;
   }
@@ -214,7 +215,7 @@ export const reorderMarketGroupStrategies = async (
   });
 
   if (existing.length !== ids.length) {
-    throw new Error('MARKET_GROUP_STRATEGY_LINK_NOT_FOUND');
+    throw botErrors.marketGroupStrategyLinkNotFound();
   }
 
   await prisma.$transaction(

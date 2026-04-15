@@ -6,6 +6,8 @@ import { CcxtFuturesConnector } from '../exchange/ccxtFuturesConnector.service';
 import { createLiveOrderAdapter } from '../exchange/liveOrderAdapter.service';
 import { CcxtFuturesOrderFill } from '../exchange/ccxtFuturesConnector.types';
 import { parsePositiveInt } from '../../lib/env';
+import { isAppErrorLike } from '../../lib/errors';
+import { orderErrors } from './orders.errors';
 
 export const listOrders = async (userId: string, query: ListOrdersQuery) => {
   const skip = (query.page - 1) * query.limit;
@@ -60,7 +62,7 @@ type OpenOrderDeps = {
 const mapLiveOrderType = (type: OpenOrderDto['type']) => {
   if (type === 'MARKET') return 'market' as const;
   if (type === 'LIMIT') return 'limit' as const;
-  throw new Error('LIVE_ORDER_TYPE_UNSUPPORTED');
+  throw orderErrors.liveOrderTypeUnsupported();
 };
 
 const mapLiveOrderStatus = (status: string | undefined, fallbackType: OpenOrderDto['type']) => {
@@ -168,10 +170,10 @@ const ensureLiveOrderAllowed = async (
 ): Promise<LiveBotContext | null> => {
   if (payload.mode !== 'LIVE') return null;
   if (!payload.riskAck) {
-    throw new Error('LIVE_RISK_ACK_REQUIRED');
+    throw orderErrors.liveRiskAckRequired();
   }
   if (!payload.botId) {
-    throw new Error('LIVE_BOT_REQUIRED');
+    throw orderErrors.liveBotRequired();
   }
 
   const bot = await prisma.bot.findFirst({
@@ -189,10 +191,10 @@ const ensureLiveOrderAllowed = async (
     },
   });
 
-  if (!bot) throw new Error('LIVE_BOT_NOT_FOUND');
-  if (bot.mode !== 'LIVE') throw new Error('LIVE_BOT_MODE_REQUIRED');
-  if (!bot.liveOptIn || !bot.consentTextVersion) throw new Error('LIVE_BOT_OPT_IN_REQUIRED');
-  if (!bot.isActive) throw new Error('LIVE_BOT_ACTIVE_REQUIRED');
+  if (!bot) throw orderErrors.liveBotNotFound();
+  if (bot.mode !== 'LIVE') throw orderErrors.liveBotModeRequired();
+  if (!bot.liveOptIn || !bot.consentTextVersion) throw orderErrors.liveBotOptInRequired();
+  if (!bot.isActive) throw orderErrors.liveBotActiveRequired();
 
   return {
     id: bot.id,
@@ -245,7 +247,7 @@ export const resolveLiveExecutionApiKey = async (params: {
   });
 
   if (!fallbackApiKey) {
-    throw new Error('LIVE_API_KEY_REQUIRED');
+    throw orderErrors.liveApiKeyRequired();
   }
 
   return fallbackApiKey;
@@ -353,7 +355,7 @@ const convergeLiveMarginAndLeverageIfNeeded = async (params: {
     });
   } catch (error) {
     if (LIVE_CONVERGENCE_STRICT) {
-      throw new Error('LIVE_PRETRADE_MARGIN_LEVERAGE_CONVERGENCE_FAILED');
+      throw orderErrors.livePretradeMarginLeverageConvergenceFailed();
     }
     const message = error instanceof Error ? error.message : 'unknown_error';
     console.warn(
@@ -372,7 +374,7 @@ const enforceLivePretradeGuards = async (params: {
   const normalizedSymbol = params.payload.symbol.toUpperCase();
   const quantity = Number(params.payload.quantity);
   if (!Number.isFinite(quantity) || quantity <= 0) {
-    throw new Error('LIVE_PRETRADE_INVALID_QUANTITY');
+    throw orderErrors.livePretradeInvalidQuantity();
   }
 
   const hasExposure = await hasOpenExposureCached({
@@ -381,7 +383,7 @@ const enforceLivePretradeGuards = async (params: {
     symbol: normalizedSymbol,
   });
   if (hasExposure) {
-    throw new Error('LIVE_PRETRADE_EXTERNAL_POSITION_OPEN');
+    throw orderErrors.livePretradeExternalPositionOpen();
   }
 
   const rules = await getSymbolTradingRulesCached({
@@ -392,12 +394,12 @@ const enforceLivePretradeGuards = async (params: {
   });
 
   if (typeof rules.minAmount === 'number' && approxLessThan(quantity, rules.minAmount)) {
-    throw new Error('LIVE_PRETRADE_AMOUNT_BELOW_MIN');
+    throw orderErrors.livePretradeAmountBelowMin();
   }
 
   const normalizedByPrecision = normalizeAmountByPrecision(quantity, rules.amountPrecision);
   if (Number.isFinite(normalizedByPrecision) && approxGreaterThan(Math.abs(quantity - normalizedByPrecision), 1e-12)) {
-    throw new Error('LIVE_PRETRADE_AMOUNT_PRECISION');
+    throw orderErrors.livePretradeAmountPrecision();
   }
 
   if (typeof rules.minNotional === 'number') {
@@ -410,7 +412,7 @@ const enforceLivePretradeGuards = async (params: {
     if (typeof priceForNotional === 'number' && Number.isFinite(priceForNotional)) {
       const notional = quantity * priceForNotional;
       if (approxLessThan(notional, rules.minNotional)) {
-        throw new Error('LIVE_PRETRADE_NOTIONAL_BELOW_MIN');
+        throw orderErrors.livePretradeNotionalBelowMin();
       }
     }
   }
@@ -476,13 +478,10 @@ const executeLiveOrderOnExchange: OpenOrderDeps['executeLiveOrder'] = async (par
       fills: result.fills,
     };
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.startsWith('LIVE_PRETRADE_')
-    ) {
+    if (isAppErrorLike(error) && error.code.startsWith('LIVE_PRETRADE_')) {
       throw error;
     }
-    throw new Error('LIVE_EXECUTION_FAILED');
+    throw orderErrors.liveExecutionFailed();
   } finally {
     await connector.disconnect().catch(() => undefined);
   }
@@ -538,7 +537,7 @@ export const openOrder = async (
 
   if (payload.mode === 'LIVE' && process.env.NODE_ENV !== 'test') {
     if (!liveBot) {
-      throw new Error('LIVE_BOT_NOT_FOUND');
+      throw orderErrors.liveBotNotFound();
     }
     const liveResult = await deps.executeLiveOrder({
       userId,
@@ -631,11 +630,11 @@ export const cancelOrder = async (userId: string, id: string, payload: CancelOrd
   if (!existing) return null;
 
   if (existing.status === 'CANCELED' || existing.status === 'FILLED') {
-    throw new Error('ORDER_NOT_CANCELABLE');
+    throw orderErrors.orderNotCancelable();
   }
 
   if (!payload.riskAck) {
-    throw new Error('ORDER_CANCEL_RISK_ACK_REQUIRED');
+    throw orderErrors.orderCancelRiskAckRequired();
   }
 
   const updated = await prisma.order.update({
@@ -667,11 +666,11 @@ export const closeOrder = async (userId: string, id: string, payload: CloseOrder
   if (!existing) return null;
 
   if (!payload.riskAck) {
-    throw new Error('ORDER_CLOSE_RISK_ACK_REQUIRED');
+    throw orderErrors.orderCloseRiskAckRequired();
   }
 
   if (existing.status !== 'OPEN' && existing.status !== 'PARTIALLY_FILLED') {
-    throw new Error('ORDER_NOT_CLOSABLE');
+    throw orderErrors.orderNotClosable();
   }
 
   const now = new Date();

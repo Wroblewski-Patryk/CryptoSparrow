@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { sendError } from '../../utils/apiError';
-import { sendValidationError } from '../../utils/formatZodError';
+import { mapErrorToHttpResponse } from '../../lib/httpErrorMapper';
 import { ExchangeNotImplementedError } from '../exchange/exchangeCapabilities';
 import { SubscriptionBotLimitError } from '../subscriptions/subscriptionEntitlements.service';
 import * as botsService from './bots.service';
+import { BOT_ERROR_CODES } from './bots.errors';
 import {
   AssistantDryRunSchema,
   AttachMarketGroupStrategySchema,
@@ -24,6 +25,107 @@ import {
   UpdateBotSchema,
 } from './bots.types';
 
+const handleBotError = (res: Response, error: unknown) => {
+  const mapped = mapErrorToHttpResponse(error);
+  return sendError(res, mapped.status, mapped.message, mapped.details);
+};
+
+const handleCloseRuntimePositionError = (res: Response, error: unknown) => {
+  const mapped = mapErrorToHttpResponse(error);
+  if (mapped.code === BOT_ERROR_CODES.positionCloseRiskAckRequired) {
+    return sendError(res, 400, 'riskAck must be true to close runtime position', mapped.details);
+  }
+  return sendError(res, mapped.status, mapped.message, mapped.details);
+};
+
+const handleBotCommandValidationError = (res: Response, error: unknown) => {
+  const mapped = mapErrorToHttpResponse(error);
+  if (mapped.code === BOT_ERROR_CODES.liveConsentVersionRequired) {
+    return sendError(res, 400, 'consentTextVersion is required when liveOptIn is enabled', mapped.details);
+  }
+  if (mapped.code === BOT_ERROR_CODES.botStrategyNotFound) {
+    return sendError(res, 400, 'strategyId is invalid for current user', mapped.details);
+  }
+  if (mapped.code === BOT_ERROR_CODES.symbolGroupNotFound) {
+    return sendError(res, 400, 'marketGroupId is invalid for current user', mapped.details);
+  }
+  if (mapped.code === BOT_ERROR_CODES.walletNotFound) {
+    return sendError(res, 400, 'walletId is invalid for current user', mapped.details);
+  }
+  if (mapped.code === BOT_ERROR_CODES.walletMarketContextMismatch) {
+    return sendError(
+      res,
+      400,
+      'wallet exchange/market/baseCurrency must match selected market group context',
+      mapped.details
+    );
+  }
+  if (mapped.code === BOT_ERROR_CODES.walletLiveApiKeyRequired) {
+    return sendError(res, 400, 'selected LIVE wallet requires linked exchange api key', mapped.details);
+  }
+  if (mapped.code === BOT_ERROR_CODES.activeBotStrategyMarketGroupDuplicate) {
+    return sendError(res, 409, 'active bot already exists for this strategy + market group pair', mapped.details);
+  }
+  if (mapped.code === BOT_ERROR_CODES.botNotFound) {
+    return sendError(res, 404, 'Not found', mapped.details);
+  }
+
+  return sendError(res, mapped.status, mapped.message, mapped.details);
+};
+
+const handleBotMarketGroupError = (res: Response, error: unknown) => {
+  const mapped = mapErrorToHttpResponse(error);
+  if (mapped.code === BOT_ERROR_CODES.botNotFound) {
+    return sendError(res, 404, 'Not found', mapped.details);
+  }
+  if (mapped.code === BOT_ERROR_CODES.symbolGroupNotFound) {
+    return sendError(res, 400, 'symbolGroupId is invalid for current user', mapped.details);
+  }
+  if (mapped.code === BOT_ERROR_CODES.botMarketGroupMarketTypeMismatch) {
+    return sendError(res, 400, 'symbolGroup market type must match bot marketType', mapped.details);
+  }
+  if (mapped.code === BOT_ERROR_CODES.botMarketGroupExchangeMismatch) {
+    return sendError(res, 400, 'symbolGroup exchange must match bot exchange', mapped.details);
+  }
+  if (mapped.code === BOT_ERROR_CODES.walletMarketContextMismatch) {
+    return sendError(
+      res,
+      400,
+      'wallet exchange/market/baseCurrency must match selected market group context',
+      mapped.details
+    );
+  }
+
+  return sendError(res, mapped.status, mapped.message, mapped.details);
+};
+
+const handleMarketGroupStrategyError = (res: Response, error: unknown) => {
+  const mapped = mapErrorToHttpResponse(error);
+  if (mapped.code === BOT_ERROR_CODES.botMarketGroupNotFound) {
+    return sendError(res, 404, 'Not found', mapped.details);
+  }
+  if (mapped.code === BOT_ERROR_CODES.botStrategyNotFound) {
+    return sendError(res, 400, 'strategyId is invalid for current user', mapped.details);
+  }
+  if (mapped.code === BOT_ERROR_CODES.marketGroupStrategyAlreadyAttached) {
+    return sendError(res, 409, 'strategy already attached to this market group', mapped.details);
+  }
+  if (mapped.code === BOT_ERROR_CODES.marketGroupStrategyLinkNotFound) {
+    return sendError(res, 400, 'all strategy link ids must belong to current bot market group', mapped.details);
+  }
+
+  return sendError(res, mapped.status, mapped.message, mapped.details);
+};
+
+const handleSubagentConfigError = (res: Response, error: unknown) => {
+  const mapped = mapErrorToHttpResponse(error);
+  if (mapped.code === BOT_ERROR_CODES.subagentSlotOutOfRange) {
+    return sendError(res, 400, 'slotIndex must be between 1 and 4', mapped.details);
+  }
+
+  return sendError(res, mapped.status, mapped.message, mapped.details);
+};
+
 export const listBots = async (req: Request, res: Response) => {
   const userId = req.user?.id;
   if (!userId) return sendError(res, 401, 'Unauthorized');
@@ -33,7 +135,7 @@ export const listBots = async (req: Request, res: Response) => {
     const bots = await botsService.listBots(userId, query);
     return res.json(bots);
   } catch (error) {
-    return sendValidationError(res, error);
+    return handleBotError(res, error);
   }
 };
 
@@ -70,7 +172,7 @@ export const listBotRuntimeSessions = async (req: Request, res: Response) => {
     if (!sessions) return sendError(res, 404, 'Not found');
     return res.json(sessions);
   } catch (error) {
-    return sendValidationError(res, error);
+    return handleBotError(res, error);
   }
 };
 
@@ -96,7 +198,7 @@ export const listBotRuntimeSessionSymbolStats = async (req: Request, res: Respon
     if (!stats) return sendError(res, 404, 'Not found');
     return res.json(stats);
   } catch (error) {
-    return sendValidationError(res, error);
+    return handleBotError(res, error);
   }
 };
 
@@ -111,7 +213,7 @@ export const listBotRuntimeSessionTrades = async (req: Request, res: Response) =
     if (!trades) return sendError(res, 404, 'Not found');
     return res.json(trades);
   } catch (error) {
-    return sendValidationError(res, error);
+    return handleBotError(res, error);
   }
 };
 
@@ -126,7 +228,7 @@ export const listBotRuntimeSessionPositions = async (req: Request, res: Response
     if (!positions) return sendError(res, 404, 'Not found');
     return res.json(positions);
   } catch (error) {
-    return sendValidationError(res, error);
+    return handleBotError(res, error);
   }
 };
 
@@ -147,10 +249,7 @@ export const closeBotRuntimeSessionPosition = async (req: Request, res: Response
     if (!result) return sendError(res, 404, 'Not found');
     return res.status(200).json(result);
   } catch (error) {
-    if (error instanceof Error && error.message === 'POSITION_CLOSE_RISK_ACK_REQUIRED') {
-      return sendError(res, 400, 'riskAck must be true to close runtime position');
-    }
-    return sendValidationError(res, error);
+    return handleCloseRuntimePositionError(res, error);
   }
 };
 
@@ -169,28 +268,7 @@ export const createBot = async (req: Request, res: Response) => {
     if (error instanceof SubscriptionBotLimitError) {
       return sendError(res, 409, 'bot limit for active subscription reached', error.details);
     }
-    if (error instanceof Error && error.message === 'LIVE_CONSENT_VERSION_REQUIRED') {
-      return sendError(res, 400, 'consentTextVersion is required when liveOptIn is enabled');
-    }
-    if (error instanceof Error && error.message === 'BOT_STRATEGY_NOT_FOUND') {
-      return sendError(res, 400, 'strategyId is invalid for current user');
-    }
-    if (error instanceof Error && error.message === 'SYMBOL_GROUP_NOT_FOUND') {
-      return sendError(res, 400, 'marketGroupId is invalid for current user');
-    }
-    if (error instanceof Error && error.message === 'WALLET_NOT_FOUND') {
-      return sendError(res, 400, 'walletId is invalid for current user');
-    }
-    if (error instanceof Error && error.message === 'WALLET_MARKET_CONTEXT_MISMATCH') {
-      return sendError(res, 400, 'wallet exchange/market/baseCurrency must match selected market group context');
-    }
-    if (error instanceof Error && error.message === 'WALLET_LIVE_API_KEY_REQUIRED') {
-      return sendError(res, 400, 'selected LIVE wallet requires linked exchange api key');
-    }
-    if (error instanceof Error && error.message === 'ACTIVE_BOT_STRATEGY_MARKET_GROUP_DUPLICATE') {
-      return sendError(res, 409, 'active bot already exists for this strategy + market group pair');
-    }
-    return sendValidationError(res, error);
+    return handleBotCommandValidationError(res, error);
   }
 };
 
@@ -209,24 +287,6 @@ export const updateBot = async (req: Request, res: Response) => {
     if (error instanceof ExchangeNotImplementedError) {
       return sendError(res, error.status, error.message, error.toDetails());
     }
-    if (error instanceof Error && error.message === 'LIVE_CONSENT_VERSION_REQUIRED') {
-      return sendError(res, 400, 'consentTextVersion is required when liveOptIn is enabled');
-    }
-    if (error instanceof Error && error.message === 'BOT_STRATEGY_NOT_FOUND') {
-      return sendError(res, 400, 'strategyId is invalid for current user');
-    }
-    if (error instanceof Error && error.message === 'SYMBOL_GROUP_NOT_FOUND') {
-      return sendError(res, 400, 'marketGroupId is invalid for current user');
-    }
-    if (error instanceof Error && error.message === 'WALLET_NOT_FOUND') {
-      return sendError(res, 400, 'walletId is invalid for current user');
-    }
-    if (error instanceof Error && error.message === 'WALLET_MARKET_CONTEXT_MISMATCH') {
-      return sendError(res, 400, 'wallet exchange/market/baseCurrency must match selected market group context');
-    }
-    if (error instanceof Error && error.message === 'WALLET_LIVE_API_KEY_REQUIRED') {
-      return sendError(res, 400, 'selected LIVE wallet requires linked exchange api key');
-    }
     if (error instanceof botsService.BotModeSwitchBlockedError) {
       return sendError(
         res,
@@ -235,10 +295,7 @@ export const updateBot = async (req: Request, res: Response) => {
         { openPaperPositions: error.openPaperPositions }
       );
     }
-    if (error instanceof Error && error.message === 'ACTIVE_BOT_STRATEGY_MARKET_GROUP_DUPLICATE') {
-      return sendError(res, 409, 'active bot already exists for this strategy + market group pair');
-    }
-    return sendValidationError(res, error);
+    return handleBotCommandValidationError(res, error);
   }
 };
 
@@ -292,22 +349,7 @@ export const createBotMarketGroup = async (req: Request, res: Response) => {
     const created = await botsService.createBotMarketGroup(userId, id, payload);
     return res.status(201).json(created);
   } catch (error) {
-    if (error instanceof Error && error.message === 'BOT_NOT_FOUND') {
-      return sendError(res, 404, 'Not found');
-    }
-    if (error instanceof Error && error.message === 'SYMBOL_GROUP_NOT_FOUND') {
-      return sendError(res, 400, 'symbolGroupId is invalid for current user');
-    }
-    if (error instanceof Error && error.message === 'BOT_MARKET_GROUP_MARKET_TYPE_MISMATCH') {
-      return sendError(res, 400, 'symbolGroup market type must match bot marketType');
-    }
-    if (error instanceof Error && error.message === 'BOT_MARKET_GROUP_EXCHANGE_MISMATCH') {
-      return sendError(res, 400, 'symbolGroup exchange must match bot exchange');
-    }
-    if (error instanceof Error && error.message === 'WALLET_MARKET_CONTEXT_MISMATCH') {
-      return sendError(res, 400, 'wallet exchange/market/baseCurrency must match selected market group context');
-    }
-    return sendValidationError(res, error);
+    return handleBotMarketGroupError(res, error);
   }
 };
 
@@ -322,19 +364,7 @@ export const updateBotMarketGroup = async (req: Request, res: Response) => {
     if (!updated) return sendError(res, 404, 'Not found');
     return res.json(updated);
   } catch (error) {
-    if (error instanceof Error && error.message === 'SYMBOL_GROUP_NOT_FOUND') {
-      return sendError(res, 400, 'symbolGroupId is invalid for current user');
-    }
-    if (error instanceof Error && error.message === 'BOT_MARKET_GROUP_MARKET_TYPE_MISMATCH') {
-      return sendError(res, 400, 'symbolGroup market type must match bot marketType');
-    }
-    if (error instanceof Error && error.message === 'BOT_MARKET_GROUP_EXCHANGE_MISMATCH') {
-      return sendError(res, 400, 'symbolGroup exchange must match bot exchange');
-    }
-    if (error instanceof Error && error.message === 'WALLET_MARKET_CONTEXT_MISMATCH') {
-      return sendError(res, 400, 'wallet exchange/market/baseCurrency must match selected market group context');
-    }
-    return sendValidationError(res, error);
+    return handleBotMarketGroupError(res, error);
   }
 };
 
@@ -370,16 +400,7 @@ export const attachMarketGroupStrategy = async (req: Request, res: Response) => 
     const created = await botsService.attachMarketGroupStrategy(userId, id, groupId, payload);
     return res.status(201).json(created);
   } catch (error) {
-    if (error instanceof Error && error.message === 'BOT_MARKET_GROUP_NOT_FOUND') {
-      return sendError(res, 404, 'Not found');
-    }
-    if (error instanceof Error && error.message === 'BOT_STRATEGY_NOT_FOUND') {
-      return sendError(res, 400, 'strategyId is invalid for current user');
-    }
-    if (error instanceof Error && error.message === 'MARKET_GROUP_STRATEGY_ALREADY_ATTACHED') {
-      return sendError(res, 409, 'strategy already attached to this market group');
-    }
-    return sendValidationError(res, error);
+    return handleMarketGroupStrategyError(res, error);
   }
 };
 
@@ -394,7 +415,7 @@ export const updateMarketGroupStrategy = async (req: Request, res: Response) => 
     if (!updated) return sendError(res, 404, 'Not found');
     return res.json(updated);
   } catch (error) {
-    return sendValidationError(res, error);
+    return handleBotError(res, error);
   }
 };
 
@@ -420,10 +441,7 @@ export const reorderMarketGroupStrategies = async (req: Request, res: Response) 
     if (!reordered) return sendError(res, 404, 'Not found');
     return res.json(reordered);
   } catch (error) {
-    if (error instanceof Error && error.message === 'MARKET_GROUP_STRATEGY_LINK_NOT_FOUND') {
-      return sendError(res, 400, 'all strategy link ids must belong to current bot market group');
-    }
-    return sendValidationError(res, error);
+    return handleMarketGroupStrategyError(res, error);
   }
 };
 
@@ -449,7 +467,7 @@ export const upsertBotAssistantConfig = async (req: Request, res: Response) => {
     if (!updated) return sendError(res, 404, 'Not found');
     return res.json(updated);
   } catch (error) {
-    return sendValidationError(res, error);
+    return handleBotError(res, error);
   }
 };
 
@@ -467,10 +485,7 @@ export const upsertBotSubagentConfig = async (req: Request, res: Response) => {
     if (!updated) return sendError(res, 404, 'Not found');
     return res.json(updated);
   } catch (error) {
-    if (error instanceof Error && error.message === 'SUBAGENT_SLOT_OUT_OF_RANGE') {
-      return sendError(res, 400, 'slotIndex must be between 1 and 4');
-    }
-    return sendValidationError(res, error);
+    return handleSubagentConfigError(res, error);
   }
 };
 
@@ -487,10 +502,7 @@ export const deleteBotSubagentConfig = async (req: Request, res: Response) => {
     if (!deleted) return sendError(res, 404, 'Not found');
     return res.status(204).end();
   } catch (error) {
-    if (error instanceof Error && error.message === 'SUBAGENT_SLOT_OUT_OF_RANGE') {
-      return sendError(res, 400, 'slotIndex must be between 1 and 4');
-    }
-    return sendValidationError(res, error);
+    return handleSubagentConfigError(res, error);
   }
 };
 
@@ -505,6 +517,6 @@ export const runAssistantDryRun = async (req: Request, res: Response) => {
     if (!trace) return sendError(res, 404, 'Not found');
     return res.json(trace);
   } catch (error) {
-    return sendValidationError(res, error);
+    return handleBotError(res, error);
   }
 };

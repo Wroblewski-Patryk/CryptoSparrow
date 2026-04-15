@@ -1,4 +1,5 @@
 import { prisma } from '../../prisma/client';
+import { botErrors } from './bots.errors';
 
 export const getOwnedBot = async (userId: string, botId: string) =>
   prisma.bot.findFirst({
@@ -58,21 +59,21 @@ export const validateSymbolGroupForBot = async (params: {
   symbolGroupId: string;
 }) => {
   const bot = await getOwnedBot(params.userId, params.botId);
-  if (!bot) throw new Error('BOT_NOT_FOUND');
+  if (!bot) throw botErrors.botNotFound();
 
   const symbolGroup = await getOwnedSymbolGroup(params.userId, params.symbolGroupId);
-  if (!symbolGroup) throw new Error('SYMBOL_GROUP_NOT_FOUND');
+  if (!symbolGroup) throw botErrors.symbolGroupNotFound();
 
   if (symbolGroup.marketUniverse.marketType !== bot.marketType) {
-    throw new Error('BOT_MARKET_GROUP_MARKET_TYPE_MISMATCH');
+    throw botErrors.botMarketGroupMarketTypeMismatch();
   }
   if (symbolGroup.marketUniverse.exchange !== bot.exchange) {
-    throw new Error('BOT_MARKET_GROUP_EXCHANGE_MISMATCH');
+    throw botErrors.botMarketGroupExchangeMismatch();
   }
   if (
     bot.wallet &&
     symbolGroup.marketUniverse.baseCurrency.toUpperCase() !== bot.wallet.baseCurrency.toUpperCase()
   ) {
-    throw new Error('WALLET_MARKET_CONTEXT_MISMATCH');
+    throw botErrors.walletMarketContextMismatch();
   }
 };

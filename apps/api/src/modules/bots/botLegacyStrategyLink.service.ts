@@ -1,4 +1,5 @@
 import { prisma } from '../../prisma/client';
+import { botErrors } from './bots.errors';
 
 const getOrCreateDefaultSymbolGroup = async (
   userId: string,
@@ -65,7 +66,7 @@ export const upsertBotStrategy = async (params: {
   });
 
   if (!strategy) {
-    throw new Error('BOT_STRATEGY_NOT_FOUND');
+    throw botErrors.botStrategyNotFound();
   }
 
   const symbolGroupId = await getOrCreateDefaultSymbolGroup(params.userId, params.marketType);

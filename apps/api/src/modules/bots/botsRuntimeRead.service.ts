@@ -49,6 +49,7 @@ import { buildLifecycleActionByTradeId, toPositionMetaById } from './runtimeTrad
 import { getRuntimeSessionSummaryMetrics, listRuntimeSessionsWithSummary } from './runtimeSessionsRead.service';
 import { fetchFallbackKlineCloses, fetchFallbackTickerPrices } from './runtimeMarketDataFallback.service';
 import { getOwnedBot, getOwnedBotRuntimeSession, resolveSessionWindowEnd } from './botOwnership.service';
+import { botErrors } from './bots.errors';
 import {
   buildConfiguredStrategyBySymbol,
   buildLatestTradeAtBySymbol,
@@ -1315,7 +1316,7 @@ export const closeBotRuntimeSessionPosition = async (
   const session = await getOwnedBotRuntimeSession(userId, botId, sessionId);
   if (!session) return null;
   if (!payload.riskAck) {
-    throw new Error('POSITION_CLOSE_RISK_ACK_REQUIRED');
+    throw botErrors.positionCloseRiskAckRequired();
   }
 
   const botContext = await prisma.bot.findFirst({
