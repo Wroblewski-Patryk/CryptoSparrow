@@ -1506,6 +1506,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `OPT-08 prefs-sync(web): cache/throttle profile preference sync (DataTable + account preferences)`
 
 ### Progress Log (Engineering Optimization)
+- 2026-04-15: Completed `OPTC-02` by migrating wallet-domain error flow to typed `DomainError` contracts (`wallets.errors.ts` + wallets service throws) and replacing wallet controller `error.message` checks with code-based mapped responses through `mapErrorToHttpResponse`; validated with API typecheck and wallets e2e suite.
 - 2026-04-15: Completed `OPTC-01` foundation slice for `OPT-01` by introducing typed error primitives (`AppError`, `DomainError`) in `apps/api/src/lib/errors.ts`, adding central mapper `apps/api/src/lib/httpErrorMapper.ts`, and wiring `apps/api/src/middleware/errorHandler.ts` to mapped responses (including legacy `status + toDetails()` compatibility); validated with API typecheck and targeted mapper/primitives tests.
 - 2026-04-15: Completed `OPTC-00` queue activation by promoting optimization execution queue (`docs/planning/engineering-optimization-next-commits-2026-04-12.md`) into canonical `mvp-next-commits` (`NOW: OPTC-01..05`, `NEXT: OPTC-06..21`) after documentation hardening wave closure.
 - 2026-04-12: Completed repo-wide optimization standards audit and published actionable plan (`docs/planning/engineering-optimization-wave-2026-04-12.md`) plus tiny-commit execution queue (`docs/planning/engineering-optimization-next-commits-2026-04-12.md`) for follow-up implementation sessions.

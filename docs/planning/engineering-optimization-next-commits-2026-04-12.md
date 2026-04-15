@@ -7,7 +7,6 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 - Focus: architecture, reliability, consistency, and maintainability across API + Web.
 
 ## NOW
-- [ ] `OPTC-02 migrate(api-wallets): replace wallet error-string flow with typed domain errors`
 - [ ] `OPTC-03 migrate(api-markets-strategies): typed domain errors + controller mapping without message equality`
 - [ ] `OPTC-04 migrate(api-bots-orders): typed domain errors for high-change command/execution paths`
 - [ ] `OPTC-05 migrate(api-profile-subscriptions): typed domain errors for profile/security/subscription flows`
@@ -34,6 +33,8 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 - none
 
 ## DONE
+- [x] `OPTC-02 migrate(api-wallets): replace wallet error-string flow with typed domain errors`
+  - 2026-04-15: Added typed wallet domain errors (`wallets.errors.ts`), migrated wallet service throws to `DomainError`, and switched wallet controller error handling to code-based mapping via central mapper (`mapErrorToHttpResponse`) without `error.message` equality checks; validated with `pnpm --filter api run typecheck` and `pnpm --filter api test -- src/modules/wallets/wallets.e2e.test.ts` (PASS).
 - [x] `OPTC-01 core(api-errors): introduce typed AppError/DomainError primitives + central http mapper`
   - 2026-04-15: Added core primitives (`apps/api/src/lib/errors.ts`) and centralized mapper (`apps/api/src/lib/httpErrorMapper.ts`), wired global `errorHandler` to mapped responses, migrated `ExchangeNotImplementedError` to `DomainError`, and validated with `pnpm --filter api run typecheck` + `pnpm --filter api test -- src/lib/errors.test.ts src/lib/httpErrorMapper.test.ts` (PASS).
 

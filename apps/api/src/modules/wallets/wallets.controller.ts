@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
-import { ExchangeNotImplementedError } from '../exchange/exchangeCapabilities';
 import { sendError } from '../../utils/apiError';
-import { sendValidationError } from '../../utils/formatZodError';
+import { mapErrorToHttpResponse } from '../../lib/httpErrorMapper';
 import * as walletsService from './wallets.service';
 import {
   CreateWalletSchema,
@@ -10,6 +9,29 @@ import {
   WalletBalancePreviewSchema,
   WalletMetadataQuerySchema,
 } from './wallets.types';
+import { WALLET_ERROR_CODES } from './wallets.errors';
+
+const handleWalletError = (res: Response, error: unknown) => {
+  const mapped = mapErrorToHttpResponse(error);
+
+  if (mapped.code === WALLET_ERROR_CODES.liveApiKeyRequired) {
+    return sendError(res, 400, 'apiKeyId is required for LIVE wallet', mapped.details);
+  }
+  if (mapped.code === WALLET_ERROR_CODES.liveApiKeyExchangeMismatch) {
+    return sendError(res, 400, 'apiKeyId exchange must match wallet exchange', mapped.details);
+  }
+  if (mapped.code === WALLET_ERROR_CODES.inUseCannotDelete) {
+    return sendError(res, 409, 'wallet is used by at least one bot and cannot be deleted', mapped.details);
+  }
+  if (mapped.code === WALLET_ERROR_CODES.previewApiKeyNotFound) {
+    return sendError(res, 404, 'api key not found for selected exchange context', mapped.details);
+  }
+  if (mapped.code === WALLET_ERROR_CODES.previewFetchFailed) {
+    return sendError(res, 502, 'Unable to fetch exchange wallet balance preview', mapped.details);
+  }
+
+  return sendError(res, mapped.status, mapped.message, mapped.details);
+};
 
 export const listWallets = async (req: Request, res: Response) => {
   const userId = req.user?.id;
@@ -20,7 +42,7 @@ export const listWallets = async (req: Request, res: Response) => {
     const wallets = await walletsService.listWallets(userId, query);
     return res.json(wallets);
   } catch (error) {
-    return sendValidationError(res, error);
+    return handleWalletError(res, error);
   }
 };
 
@@ -44,7 +66,7 @@ export const listWalletMetadata = async (req: Request, res: Response) => {
     const metadata = await walletsService.getWalletMetadata(query);
     return res.json(metadata);
   } catch (error) {
-    return sendValidationError(res, error);
+    return handleWalletError(res, error);
   }
 };
 
@@ -57,16 +79,7 @@ export const createWallet = async (req: Request, res: Response) => {
     const created = await walletsService.createWallet(userId, payload);
     return res.status(201).json(created);
   } catch (error) {
-    if (error instanceof ExchangeNotImplementedError) {
-      return sendError(res, error.status, error.message, error.toDetails());
-    }
-    if (error instanceof Error && error.message === 'WALLET_LIVE_API_KEY_REQUIRED') {
-      return sendError(res, 400, 'apiKeyId is required for LIVE wallet');
-    }
-    if (error instanceof Error && error.message === 'WALLET_LIVE_API_KEY_EXCHANGE_MISMATCH') {
-      return sendError(res, 400, 'apiKeyId exchange must match wallet exchange');
-    }
-    return sendValidationError(res, error);
+    return handleWalletError(res, error);
   }
 };
 
@@ -81,16 +94,7 @@ export const updateWallet = async (req: Request, res: Response) => {
     if (!updated) return sendError(res, 404, 'Not found');
     return res.json(updated);
   } catch (error) {
-    if (error instanceof ExchangeNotImplementedError) {
-      return sendError(res, error.status, error.message, error.toDetails());
-    }
-    if (error instanceof Error && error.message === 'WALLET_LIVE_API_KEY_REQUIRED') {
-      return sendError(res, 400, 'apiKeyId is required for LIVE wallet');
-    }
-    if (error instanceof Error && error.message === 'WALLET_LIVE_API_KEY_EXCHANGE_MISMATCH') {
-      return sendError(res, 400, 'apiKeyId exchange must match wallet exchange');
-    }
-    return sendValidationError(res, error);
+    return handleWalletError(res, error);
   }
 };
 
@@ -104,10 +108,7 @@ export const deleteWallet = async (req: Request, res: Response) => {
     if (!deleted) return sendError(res, 404, 'Not found');
     return res.status(204).end();
   } catch (error) {
-    if (error instanceof Error && error.message === 'WALLET_IN_USE_CANNOT_DELETE') {
-      return sendError(res, 409, 'wallet is used by at least one bot and cannot be deleted');
-    }
-    return sendError(res, 500, 'Internal server error');
+    return handleWalletError(res, error);
   }
 };
 
@@ -120,15 +121,6 @@ export const previewBalance = async (req: Request, res: Response) => {
     const preview = await walletsService.previewWalletBalance(userId, payload);
     return res.status(200).json(preview);
   } catch (error) {
-    if (error instanceof ExchangeNotImplementedError) {
-      return sendError(res, error.status, error.message, error.toDetails());
-    }
-    if (error instanceof Error && error.message === 'WALLET_PREVIEW_API_KEY_NOT_FOUND') {
-      return sendError(res, 404, 'api key not found for selected exchange context');
-    }
-    if (error instanceof Error && error.message === 'WALLET_PREVIEW_FETCH_FAILED') {
-      return sendError(res, 502, 'Unable to fetch exchange wallet balance preview');
-    }
-    return sendValidationError(res, error);
+    return handleWalletError(res, error);
   }
 };

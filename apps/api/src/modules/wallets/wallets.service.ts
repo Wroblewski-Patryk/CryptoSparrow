@@ -16,6 +16,8 @@ import {
   UpdateWalletDto,
   WalletBalancePreviewDto,
 } from './wallets.types';
+import { walletErrors } from './wallets.errors';
+import { isAppErrorLike } from '../../lib/errors';
 
 const normalizeBaseCurrency = (value: string | undefined) =>
   (value?.trim().toUpperCase() || 'USDT');
@@ -59,7 +61,7 @@ const assertWalletLiveApiKeyCompatibility = async (params: {
   if (params.mode !== 'LIVE') return;
 
   if (!params.apiKeyId) {
-    throw new Error('WALLET_LIVE_API_KEY_REQUIRED');
+    throw walletErrors.liveApiKeyRequired();
   }
 
   const apiKey = await prisma.apiKey.findFirst({
@@ -74,11 +76,11 @@ const assertWalletLiveApiKeyCompatibility = async (params: {
   });
 
   if (!apiKey) {
-    throw new Error('WALLET_LIVE_API_KEY_REQUIRED');
+    throw walletErrors.liveApiKeyRequired();
   }
 
   if (apiKey.exchange !== params.exchange) {
-    throw new Error('WALLET_LIVE_API_KEY_EXCHANGE_MISMATCH');
+    throw walletErrors.liveApiKeyExchangeMismatch();
   }
 };
 
@@ -289,7 +291,7 @@ export const deleteWallet = async (userId: string, id: string) => {
     },
   });
   if (linkedBotsCount > 0) {
-    throw new Error('WALLET_IN_USE_CANNOT_DELETE');
+    throw walletErrors.inUseCannotDelete();
   }
 
   try {
@@ -298,7 +300,7 @@ export const deleteWallet = async (userId: string, id: string) => {
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
-      throw new Error('WALLET_IN_USE_CANNOT_DELETE');
+      throw walletErrors.inUseCannotDelete();
     }
     throw error;
   }
@@ -425,7 +427,7 @@ export const previewWalletBalance = async (userId: string, payload: WalletBalanc
   });
 
   if (!apiKey) {
-    throw new Error('WALLET_PREVIEW_API_KEY_NOT_FOUND');
+    throw walletErrors.previewApiKeyNotFound();
   }
 
   const decodedApiKey = decrypt(apiKey.apiKey);
@@ -440,7 +442,7 @@ export const previewWalletBalance = async (userId: string, payload: WalletBalanc
     });
 
     if (snapshot?.accountBalance == null) {
-      throw new Error('WALLET_PREVIEW_FETCH_FAILED');
+      throw walletErrors.previewFetchFailed();
     }
 
     const referenceBalance = resolveReferenceBalanceFromAllocation({
@@ -472,9 +474,9 @@ export const previewWalletBalance = async (userId: string, payload: WalletBalanc
       source: 'BINANCE' as const,
     };
   } catch (error) {
-    if (error instanceof Error && error.message === 'WALLET_PREVIEW_FETCH_FAILED') {
+    if (isAppErrorLike(error) && error.code === 'WALLET_PREVIEW_FETCH_FAILED') {
       throw error;
     }
-    throw new Error('WALLET_PREVIEW_FETCH_FAILED');
+    throw walletErrors.previewFetchFailed();
   }
 };
