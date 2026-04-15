@@ -35,7 +35,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 
 ## GROUPS
 
-### [ ] Group 1 - Baseline and safety rails
+### [x] Group 1 - Baseline and safety rails
 
 - [x] `CPDB-01 docs(contract): freeze optimization contract + feature-flag matrix`
   - Files:
@@ -46,7 +46,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
   - Tests:
     - none (docs only)
 
-- [ ] `CPDB-02 feat(api-observability): add runtime hot-path timing/counter metrics`
+- [x] `CPDB-02 feat(api-observability): add runtime hot-path timing/counter metrics`
   - Files:
     - `apps/api/src/modules/engine/runtimeSignalLoop.service.ts`
     - `apps/api/src/modules/engine/preTrade.service.ts`
@@ -58,7 +58,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
     - `pnpm --filter api test -- runtimeSignalLoop`
     - `pnpm --filter api test -- preTrade`
 
-- [ ] `CPDB-03 test(api-metrics): regression coverage for metrics emission without behavior drift`
+- [x] `CPDB-03 test(api-metrics): regression coverage for metrics emission without behavior drift`
   - Files:
     - `apps/api/src/modules/engine/runtimeSignalLoop.service.test.ts`
     - `apps/api/src/modules/engine/preTrade.service.test.ts`
@@ -277,3 +277,6 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 
 - 2026-04-06: Plan created. No implementation started yet.
 - 2026-04-16: Completed `CPDB-01` by locking runtime optimization feature-flag matrix and rollout/rollback guardrails in canonical governance docs (`open-decisions`, `working-agreements`).
+- 2026-04-16: Completed `CPDB-02` by introducing runtime hot-path metrics instrumentation (`listActiveBots`, `eligibleGroupsCount`, `preTradeLatencyMs`, `touchSessionWrites`, `symbolStatsWrites`) across runtime signal loop, pre-trade path, telemetry writes, and `/metrics` snapshot contract.
+- 2026-04-16: Completed `CPDB-03` by adding regression tests for hot-path metric emission in runtime signal loop, pre-trade analysis, telemetry writes, and metrics endpoint contract without changing decision behavior.
+- 2026-04-16: Closed Group 1 (`CPDB-01..CPDB-03`). Next unchecked group is Group 2 (`CPDB-04..CPDB-06`).

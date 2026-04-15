@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `CPDB-G1 baseline(cpu-db): contract freeze + runtime hot-path metrics + parity-safe assertions`
 - [ ] `CPDB-G2 runtime-cache(cpu-db): active topology cache + invalidation + parity tests`
 - [ ] `WLT-A wallet-contracts: wallet source-of-truth docs + decisions + IA placement`
 - [ ] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
@@ -34,6 +33,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `CPDB-G1 baseline(cpu-db): contract freeze + runtime hot-path metrics + parity-safe assertions`
+  - 2026-04-16: Closed CPU/DB Group 1 by completing `CPDB-01..CPDB-03` (flag contract freeze, runtime hot-path metrics instrumentation, and parity-safe regression tests); next CPU/DB group promoted as `CPDB-G2`.
 - [x] `planning(queue-refill): repopulate canonical NOW/NEXT pipeline from active execution plans`
   - 2026-04-16: Refilled canonical execution queue from active plan backlogs (`cpu-db-optimization-commit-plan-2026-04-06.md`, `wallet-module-implementation-plan-2026-04-07.md`, `production-excellence-plan-2026-04-03.md`) to guarantee continuous next-group visibility after each group completion.
 - [x] `OPT-08 prefs-sync(web): cache/throttle profile preference sync (DataTable + account preferences)`

@@ -1533,7 +1533,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-12: Completed repo-wide optimization standards audit and published actionable plan (`docs/planning/engineering-optimization-wave-2026-04-12.md`) plus tiny-commit execution queue (`docs/planning/engineering-optimization-next-commits-2026-04-12.md`) for follow-up implementation sessions.
 
 ## Continuous Group Pipeline (Post-OPT, 2026-04-16)
-- [ ] `CPDB-G1 baseline(cpu-db): contract freeze + runtime hot-path metrics + parity-safe assertions`
+- [x] `CPDB-G1 baseline(cpu-db): contract freeze + runtime hot-path metrics + parity-safe assertions`
 - [ ] `CPDB-G2 runtime-cache(cpu-db): active topology cache + invalidation + parity tests`
 - [ ] `CPDB-G3 signal-routing(cpu-db): seriesKey routing index + pretrade position-count cache`
 - [ ] `CPDB-G4 telemetry-write(cpu-db): touchSession throttle + symbol stats batching + query-count checks`
@@ -1557,3 +1557,4 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 
 ### Progress Log (Continuous Group Pipeline)
 - 2026-04-16: Initialized continuous post-optimization execution queue in canonical plan by importing active open groups from `cpu-db-optimization-commit-plan-2026-04-06.md`, `wallet-module-implementation-plan-2026-04-07.md`, and `production-excellence-plan-2026-04-03.md`, ensuring deterministic next-group continuity after each completed group.
+- 2026-04-16: Closed `CPDB-G1` by completing `CPDB-01..CPDB-03` (feature-flag contract freeze, runtime hot-path metrics instrumentation, and parity-safe metric regression tests) and kept `CPDB-G2` as next active CPU/DB group in canonical queue.
