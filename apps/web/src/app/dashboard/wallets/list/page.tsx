@@ -11,7 +11,8 @@ import WalletsListTable from '@/features/wallets/components/WalletsListTable';
 import { listWallets } from '@/features/wallets/services/wallets.service';
 import { Wallet } from '@/features/wallets/types/wallet.type';
 import { dashboardRoutes } from '@/ui/layout/dashboard/dashboardRoutes';
-import { getAxiosMessage } from '@/lib/getAxiosMessage';
+import { runAsyncWithState } from '@/lib/async';
+import { resolveUiErrorMessage } from '@/lib/errorResolver';
 
 export default function WalletsListPage() {
   const { locale } = useI18n();
@@ -51,15 +52,14 @@ export default function WalletsListPage() {
   );
 
   const loadData = useCallback(async () => {
-    setLoading(true);
     setError(null);
     try {
-      const data = await listWallets();
-      setRows(data);
+      await runAsyncWithState(setLoading, async () => {
+        const data = await listWallets();
+        setRows(data);
+      });
     } catch (err) {
-      setError(getAxiosMessage(err) ?? copy.loadError);
-    } finally {
-      setLoading(false);
+      setError(resolveUiErrorMessage(err, { fallback: copy.loadError }) ?? copy.loadError);
     }
   }, [copy.loadError]);
 

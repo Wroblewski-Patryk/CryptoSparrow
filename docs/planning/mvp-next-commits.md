@@ -8,7 +8,6 @@ Operational queue for one-task execution runs.
 
 ## NOW
 ## NEXT
-- [ ] `OPTC-12 migrate(web-edit-list-pages): standardize async+error handling for edit/list dashboards`
 - [ ] `OPTC-13 core(shared-contracts): extract shared exchange constants/capabilities/marketType contract`
 - [ ] `OPTC-14 migrate(api-contracts): switch API zod schemas to shared exchange contract`
 - [ ] `OPTC-15 migrate(web-contracts): switch Web exchange capability/types to shared contract`
@@ -22,6 +21,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `OPTC-12 migrate(web-edit-list-pages): standardize async+error handling for edit/list dashboards`
+  - 2026-04-16: Standardized async/error handling in dashboard edit/list pages (`markets`, `strategies`, `wallets`) by migrating load/update flows to shared helpers (`runAsyncWithState`, `resolveUiErrorMessage`) and aligning fallback messaging plus save pending states in edit actions; validated with `pnpm --filter web run typecheck` + targeted market/strategy/wallet suites (PASS).
 - [x] `OPTC-11 migrate(web-create-pages): standardize async+error handling on create pages (markets/strategies/backtests)`
   - 2026-04-16: Standardized async/error handling in create pages for markets/strategies/backtests by adopting shared helpers (`runAsyncWithState`, `resolveUiErrorMessage`), aligning fallback error descriptions, and adding pending submit guard on strategy create action; validated with `pnpm --filter web run typecheck` + targeted form suites (PASS).
 - [x] `OPTC-10 core(web-errors): create single UI error resolver and deprecate handleError/getAxiosMessage split`

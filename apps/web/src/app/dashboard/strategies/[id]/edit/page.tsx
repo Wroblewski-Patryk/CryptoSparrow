@@ -8,7 +8,8 @@ import StrategiesForm from '@/features/strategies/components/StrategyForm';
 import { getStrategy, updateStrategy } from '@/features/strategies/api/strategies.api';
 import { StrategyFormState } from '@/features/strategies/types/StrategyForm.type';
 import { dtoToForm } from '@/features/strategies/utils/StrategyForm.map';
-import { handleError } from '@/lib/handleError';
+import { runAsyncWithState } from '@/lib/async';
+import { resolveUiErrorMessage } from '@/lib/errorResolver';
 import { ErrorState, LoadingState } from '@/ui/components/ViewState';
 import { LuListChecks, LuPencilLine, LuSave } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -22,6 +23,7 @@ export default function StrategiesEditPage() {
   const router = useRouter();
   const [initial, setInitial] = useState<StrategyFormState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const copy = useMemo(
@@ -60,27 +62,28 @@ export default function StrategiesEditPage() {
 
   useEffect(() => {
     const load = async () => {
-      setLoading(true);
       setError(null);
       try {
-        const data = await getStrategy(id);
-        setInitial(dtoToForm(data));
+        await runAsyncWithState(setLoading, async () => {
+          const data = await getStrategy(id);
+          setInitial(dtoToForm(data));
+        });
       } catch (err: unknown) {
-        setError(handleError(err));
-      } finally {
-        setLoading(false);
+        setError(resolveUiErrorMessage(err, { fallback: copy.errorTitle }) ?? copy.errorTitle);
       }
     };
 
     void load();
-  }, [id]);
+  }, [copy.errorTitle, id]);
 
   const handleUpdate = async (form: StrategyFormState) => {
     try {
-      await updateStrategy(id, form);
-      toast.success(copy.updated);
+      await runAsyncWithState(setSubmitting, async () => {
+        await updateStrategy(id, form);
+        toast.success(copy.updated);
+      });
     } catch (error: unknown) {
-      const message = handleError(error);
+      const message = resolveUiErrorMessage(error, { fallback: copy.saveFailed }) ?? copy.saveFailed;
       if (message === STRATEGY_USED_BY_ACTIVE_BOT_ERROR) {
         toast.error(copy.activeBotTitle, { description: copy.activeBotDescription });
         return;
@@ -104,7 +107,12 @@ export default function StrategiesEditPage() {
           },
         ]}
         actions={
-          <button type='submit' form={STRATEGY_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS}>
+          <button
+            type='submit'
+            form={STRATEGY_FORM_ID}
+            className={PAGE_TITLE_ACTION_SAVE_CLASS}
+            disabled={submitting}
+          >
             <LuSave className='h-4 w-4' />
             {copy.save}
           </button>

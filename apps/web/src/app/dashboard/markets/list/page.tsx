@@ -9,7 +9,8 @@ import { listMarketUniverses } from '@/features/markets/services/markets.service
 import { MarketUniverse } from '@/features/markets/types/marketUniverse.type';
 import { LuChartCandlestick, LuList } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
-import { getAxiosMessage } from '@/lib/getAxiosMessage';
+import { runAsyncWithState } from '@/lib/async';
+import { resolveUiErrorMessage } from '@/lib/errorResolver';
 
 export default function MarketsListPage() {
   const { locale } = useI18n();
@@ -47,15 +48,14 @@ export default function MarketsListPage() {
   );
 
   const loadData = useCallback(async () => {
-    setLoading(true);
     setError(null);
     try {
-      const data = await listMarketUniverses();
-      setRows(data);
+      await runAsyncWithState(setLoading, async () => {
+        const data = await listMarketUniverses();
+        setRows(data);
+      });
     } catch (err: unknown) {
-      setError(getAxiosMessage(err) ?? copy.loadError);
-    } finally {
-      setLoading(false);
+      setError(resolveUiErrorMessage(err, { fallback: copy.loadError }) ?? copy.loadError);
     }
   }, [copy.loadError]);
 

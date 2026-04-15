@@ -8,7 +8,8 @@ import { ErrorState, LoadingState } from '@/ui/components/ViewState';
 import MarketUniverseForm from '@/features/markets/components/MarketUniverseForm';
 import { getMarketUniverse, updateMarketUniverse } from '@/features/markets/services/markets.service';
 import { CreateMarketUniverseInput, MarketUniverse } from '@/features/markets/types/marketUniverse.type';
-import { handleError } from '@/lib/handleError';
+import { runAsyncWithState } from '@/lib/async';
+import { resolveUiErrorMessage } from '@/lib/errorResolver';
 import { LuChartCandlestick, LuPencilLine, LuSave } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
 
@@ -60,35 +61,33 @@ export default function MarketsEditPage() {
 
   useEffect(() => {
     const load = async () => {
-      setLoading(true);
       setError(null);
       try {
-        const data = await getMarketUniverse(id);
-        setInitial(data);
+        await runAsyncWithState(setLoading, async () => {
+          const data = await getMarketUniverse(id);
+          setInitial(data);
+        });
       } catch (err: unknown) {
-        setError(handleError(err));
-      } finally {
-        setLoading(false);
+        setError(resolveUiErrorMessage(err, { fallback: copy.errorTitle }) ?? copy.errorTitle);
       }
     };
     void load();
-  }, [id]);
+  }, [copy.errorTitle, id]);
 
   const handleUpdate = async (payload: CreateMarketUniverseInput) => {
-    setSubmitting(true);
     try {
-      const updated = await updateMarketUniverse(id, payload);
-      setInitial(updated);
-      toast.success(copy.updated);
+      await runAsyncWithState(setSubmitting, async () => {
+        const updated = await updateMarketUniverse(id, payload);
+        setInitial(updated);
+        toast.success(copy.updated);
+      });
     } catch (err: unknown) {
-      const message = handleError(err);
+      const message = resolveUiErrorMessage(err, { fallback: copy.saveFailed }) ?? copy.saveFailed;
       if (message === MARKET_UNIVERSE_ACTIVE_BOT_ERROR) {
         toast.error(copy.activeBotTitle, { description: copy.activeBotDescription });
       } else {
         toast.error(copy.saveFailed, { description: message });
       }
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -106,7 +105,7 @@ export default function MarketsEditPage() {
           },
         ]}
         actions={
-          <button type='submit' form={MARKET_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS}>
+          <button type='submit' form={MARKET_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS} disabled={submitting}>
             <LuSave className='h-4 w-4' />
             {copy.submitLabel}
           </button>
