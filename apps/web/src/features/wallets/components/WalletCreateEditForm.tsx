@@ -6,7 +6,18 @@ import { useRouter } from 'next/navigation';
 import { LuActivity, LuBadgeCheck, LuWallet } from 'react-icons/lu';
 
 import { useI18n } from '@/i18n/I18nProvider';
-import { EXCHANGE_OPTIONS, supportsExchangeCapability } from '@/features/exchanges/exchangeCapabilities';
+import {
+  EXCHANGE_OPTIONS,
+  supportsExchangeCapability,
+  type ExchangeOption,
+} from '@/features/exchanges/exchangeCapabilities';
+import {
+  DEFAULT_BASE_CURRENCY,
+  DEFAULT_EXCHANGE,
+  DEFAULT_MARKET_TYPE,
+  EXCHANGE_MARKET_TYPES,
+  type ExchangeMarketType,
+} from '@cryptosparrow/shared';
 import { fetchApiKeys } from '@/features/profile/services/apiKeys.service';
 import type { ApiKey } from '@/features/profile/types/apiKey.type';
 import { ErrorState, LoadingState } from '@/ui/components/ViewState';
@@ -32,8 +43,8 @@ import type {
 type WalletFormState = {
   name: string;
   mode: WalletMode;
-  exchange: (typeof EXCHANGE_OPTIONS)[number];
-  marketType: 'FUTURES' | 'SPOT';
+  exchange: ExchangeOption;
+  marketType: ExchangeMarketType;
   baseCurrency: string;
   paperInitialBalance: number;
   liveAllocationMode: WalletAllocationMode;
@@ -49,18 +60,18 @@ type WalletCreateEditFormProps = {
 type WalletMarketType = WalletFormState['marketType'];
 type WalletMarketTypeMetadata = WalletMetadata['byMarketType'][WalletMarketType];
 
-const DEFAULT_MARKET_TYPE_OPTIONS: WalletMarketType[] = ['FUTURES', 'SPOT'];
+const DEFAULT_MARKET_TYPE_OPTIONS: WalletMarketType[] = [...EXCHANGE_MARKET_TYPES];
 const DEFAULT_MARKET_TYPE_METADATA: Record<WalletMarketType, WalletMarketTypeMetadata> = {
   FUTURES: {
     marketType: 'FUTURES',
-    baseCurrency: 'USDT',
-    baseCurrencies: ['USDT'],
+    baseCurrency: DEFAULT_BASE_CURRENCY,
+    baseCurrencies: [DEFAULT_BASE_CURRENCY],
     source: 'EXCHANGE_CAPABILITIES',
   },
   SPOT: {
     marketType: 'SPOT',
-    baseCurrency: 'USDT',
-    baseCurrencies: ['USDT'],
+    baseCurrency: DEFAULT_BASE_CURRENCY,
+    baseCurrencies: [DEFAULT_BASE_CURRENCY],
     source: 'EXCHANGE_CAPABILITIES',
   },
 };
@@ -68,9 +79,9 @@ const DEFAULT_MARKET_TYPE_METADATA: Record<WalletMarketType, WalletMarketTypeMet
 const buildDefaultForm = (): WalletFormState => ({
   name: '',
   mode: 'PAPER',
-  exchange: 'BINANCE',
-  marketType: 'FUTURES',
-  baseCurrency: 'USDT',
+  exchange: DEFAULT_EXCHANGE,
+  marketType: DEFAULT_MARKET_TYPE,
+  baseCurrency: DEFAULT_BASE_CURRENCY,
   paperInitialBalance: 10_000,
   liveAllocationMode: 'PERCENT',
   liveAllocationValue: 100,
@@ -328,8 +339,9 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
           const normalizedOptions = [
             ...new Set((nextMarketMetadata.baseCurrencies ?? []).map(normalizeSymbol).filter(Boolean)),
           ];
-          const options = normalizedOptions.length > 0 ? normalizedOptions : ['USDT'];
-          const defaultBase = normalizeSymbol(nextMarketMetadata.baseCurrency) || options[0] || 'USDT';
+          const options = normalizedOptions.length > 0 ? normalizedOptions : [DEFAULT_BASE_CURRENCY];
+          const defaultBase =
+            normalizeSymbol(nextMarketMetadata.baseCurrency) || options[0] || DEFAULT_BASE_CURRENCY;
           const normalizedCurrent = normalizeSymbol(prev.baseCurrency);
           const nextBase = options.includes(normalizedCurrent) ? normalizedCurrent : defaultBase;
           if (
@@ -369,8 +381,9 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
     const normalizedOptions = [
       ...new Set((activeMarketTypeMetadata.baseCurrencies ?? []).map(normalizeSymbol).filter(Boolean)),
     ];
-    const options = normalizedOptions.length > 0 ? normalizedOptions : ['USDT'];
-    const defaultBase = normalizeSymbol(activeMarketTypeMetadata.baseCurrency) || options[0] || 'USDT';
+    const options = normalizedOptions.length > 0 ? normalizedOptions : [DEFAULT_BASE_CURRENCY];
+    const defaultBase =
+      normalizeSymbol(activeMarketTypeMetadata.baseCurrency) || options[0] || DEFAULT_BASE_CURRENCY;
 
     setForm((prev) => {
       if (prev.marketType !== form.marketType) return prev;
@@ -386,7 +399,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
     const options = [
       ...new Set([...(activeMarketTypeMetadata.baseCurrencies ?? []).map(normalizeSymbol), current].filter(Boolean)),
     ].sort((a, b) => a.localeCompare(b));
-    return options.length > 0 ? options : ['USDT'];
+    return options.length > 0 ? options : [DEFAULT_BASE_CURRENCY];
   }, [activeMarketTypeMetadata.baseCurrencies, form.baseCurrency]);
 
   const compatibleApiKeys = useMemo(

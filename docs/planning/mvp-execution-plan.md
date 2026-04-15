@@ -1506,6 +1506,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `OPT-08 prefs-sync(web): cache/throttle profile preference sync (DataTable + account preferences)`
 
 ### Progress Log (Engineering Optimization)
+- 2026-04-16: Completed `OPTC-15` by migrating frontend exchange capability/types and market-type defaults/options to shared contracts from `@cryptosparrow/shared` (exchange capabilities module + markets/wallets contract usage); validated with web typecheck and targeted ApiKey/MarketUniverse/Wallet suites (PASS).
 - 2026-04-16: Completed `OPTC-14` by migrating API zod exchange/market-type contracts and defaults in wallets/markets/market-data plus bots/preTrade market-type schemas to shared constants from `@cryptosparrow/shared`; validated with API typecheck and targeted wallets/markets/preTrade/bots suites (PASS).
 - 2026-04-16: Completed `OPTC-13` by extracting shared exchange contracts into workspace package `@cryptosparrow/shared` (exchange options/capabilities/market types/base-currency fallbacks) and wiring API exchange capabilities core to consume those canonical contracts; validated with API typecheck + focused exchange symbol-rules tests (PASS).
 - 2026-04-16: Completed `OPTC-12` by standardizing dashboard edit/list async-error handling in markets/strategies/wallets pages through shared helpers (`runAsyncWithState`, `resolveUiErrorMessage`), including consistent fallback error messages and pending-submit guards for edit forms; validated with web typecheck and targeted feature suites (PASS).

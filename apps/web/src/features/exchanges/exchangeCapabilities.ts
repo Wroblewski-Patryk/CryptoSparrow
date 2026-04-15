@@ -1,61 +1,27 @@
-export const EXCHANGE_OPTIONS = [
-  "BINANCE",
-  "BYBIT",
-  "OKX",
-  "KRAKEN",
-  "COINBASE",
-] as const;
+import {
+  EXCHANGE_CAPABILITIES as SHARED_EXCHANGE_CAPABILITIES,
+  EXCHANGE_CAPABILITY_MATRIX,
+  EXCHANGE_OPTIONS,
+  type ExchangeCapability,
+  type ExchangeOption,
+} from '@cryptosparrow/shared';
 
-export type ExchangeOption = (typeof EXCHANGE_OPTIONS)[number];
+export { EXCHANGE_OPTIONS };
+export type { ExchangeCapability, ExchangeOption };
 
-export type ExchangeCapability =
-  | "MARKET_CATALOG"
-  | "PAPER_PRICING_FEED"
-  | "LIVE_EXECUTION"
-  | "API_KEY_PROBE";
+export const EXCHANGE_CAPABILITIES = SHARED_EXCHANGE_CAPABILITIES;
 
-const EXCHANGE_CAPABILITIES: Record<
+const EXCHANGE_CAPABILITY_BY_EXCHANGE = EXCHANGE_CAPABILITY_MATRIX as Record<
   ExchangeOption,
   Record<ExchangeCapability, boolean>
-> = {
-  BINANCE: {
-    MARKET_CATALOG: true,
-    PAPER_PRICING_FEED: true,
-    LIVE_EXECUTION: true,
-    API_KEY_PROBE: true,
-  },
-  BYBIT: {
-    MARKET_CATALOG: false,
-    PAPER_PRICING_FEED: false,
-    LIVE_EXECUTION: false,
-    API_KEY_PROBE: false,
-  },
-  OKX: {
-    MARKET_CATALOG: false,
-    PAPER_PRICING_FEED: false,
-    LIVE_EXECUTION: false,
-    API_KEY_PROBE: false,
-  },
-  KRAKEN: {
-    MARKET_CATALOG: false,
-    PAPER_PRICING_FEED: false,
-    LIVE_EXECUTION: false,
-    API_KEY_PROBE: false,
-  },
-  COINBASE: {
-    MARKET_CATALOG: false,
-    PAPER_PRICING_FEED: false,
-    LIVE_EXECUTION: false,
-    API_KEY_PROBE: false,
-  },
-};
+>;
 
 export const supportsExchangeCapability = (
   exchange: ExchangeOption | string | null | undefined,
   capability: ExchangeCapability
 ) => {
   if (!exchange) return false;
-  const capabilities = EXCHANGE_CAPABILITIES[exchange as ExchangeOption];
+  const capabilities = EXCHANGE_CAPABILITY_BY_EXCHANGE[exchange as ExchangeOption];
   if (!capabilities) return false;
   return capabilities[capability] ?? false;
 };

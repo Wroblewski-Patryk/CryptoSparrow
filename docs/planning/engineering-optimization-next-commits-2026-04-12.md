@@ -9,7 +9,6 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 ## NOW
 
 ## NEXT
-- [ ] `OPTC-15 migrate(web-contracts): switch Web exchange capability/types to shared contract`
 - [ ] `OPTC-16 refactor(web-runtime-home): split HomeLiveWidgets into formatter/actions/sections hooks`
 - [ ] `OPTC-17 refactor(web-runtime-bots): split BotsManagement orchestration into focused modules`
 - [ ] `OPTC-18 i18n(web): split monolithic translations by domain namespaces`
@@ -21,6 +20,8 @@ Operational tiny-commit queue for repo-wide engineering standards hardening.
 - none
 
 ## DONE
+- [x] `OPTC-15 migrate(web-contracts): switch Web exchange capability/types to shared contract`
+  - 2026-04-16: Switched web exchange capability/types to shared contract package `@cryptosparrow/shared` by wiring exchange-capability matrix/type exports to shared source and migrating market/wallet market-type option contracts/defaults to shared constants; validated with `pnpm --filter web run typecheck` + targeted ApiKey/MarketUniverse/Wallet form suites (PASS).
 - [x] `OPTC-14 migrate(api-contracts): switch API zod schemas to shared exchange contract`
   - 2026-04-16: Migrated API zod schema literals for exchange/market-type defaults and enum contracts to shared package constants (`@cryptosparrow/shared`) across wallets, markets, market-data, bots, and pre-trade contracts; validated with `pnpm --filter api run typecheck` + targeted wallets/markets/preTrade/bots suites (PASS).
 - [x] `OPTC-13 core(shared-contracts): extract shared exchange constants/capabilities/marketType contract`

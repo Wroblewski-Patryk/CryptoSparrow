@@ -19,8 +19,9 @@ import {
   ExchangeOption,
   supportsExchangeCapability,
 } from '@/features/exchanges/exchangeCapabilities';
+import { EXCHANGE_MARKET_TYPES, type ExchangeMarketType } from '@cryptosparrow/shared';
 
-const MARKET_TYPES: Array<'SPOT' | 'FUTURES'> = ['SPOT', 'FUTURES'];
+const MARKET_TYPES: ExchangeMarketType[] = [...EXCHANGE_MARKET_TYPES];
 const EXCHANGES: ExchangeOption[] = [...EXCHANGE_OPTIONS];
 
 const formatVolumeLabel = (value: number) => {
@@ -98,7 +99,7 @@ export default function MarketUniverseForm({
     async (params?: {
       requestedExchange?: ExchangeOption;
       requestedBaseCurrency?: string;
-      requestedMarketType?: 'SPOT' | 'FUTURES';
+      requestedMarketType?: ExchangeMarketType;
     }) => {
       setCatalogLoading(true);
       setCatalogError(null);
@@ -254,7 +255,7 @@ export default function MarketUniverseForm({
   };
 
   const handleMarketTypeChange = async (nextMarketType: string) => {
-    const parsed = nextMarketType === 'SPOT' ? 'SPOT' : 'FUTURES';
+    const parsed: ExchangeMarketType = nextMarketType === 'SPOT' ? 'SPOT' : 'FUTURES';
     setMarketType(parsed);
     setMinQuoteVolume(0);
     await loadCatalog({
