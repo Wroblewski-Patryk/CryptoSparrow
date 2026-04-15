@@ -8,7 +8,8 @@ import BacktestCreateForm from '@/features/backtest/components/BacktestCreateFor
 import { createBacktestRun } from '@/features/backtest/services/backtests.service';
 import { CreateBacktestRunInput } from '@/features/backtest/types/backtest.type';
 import { useI18n } from '@/i18n/I18nProvider';
-import { handleError } from '@/lib/handleError';
+import { runAsyncWithState } from '@/lib/async';
+import { resolveUiErrorMessage } from '@/lib/errorResolver';
 import { LuChartLine, LuPlus, LuSave } from 'react-icons/lu';
 
 const BACKTEST_FORM_ID = 'backtest-form-create';
@@ -19,17 +20,17 @@ export default function BacktestsCreatePage() {
   const [submitting, setSubmitting] = useState(false);
 
   const handleCreate = async (payload: CreateBacktestRunInput) => {
-    setSubmitting(true);
+    const createFailed = locale === 'en' ? 'Could not create backtest run' : 'Nie udalo sie utworzyc runa backtestu';
     try {
-      const created = await createBacktestRun(payload);
-      toast.success(locale === 'en' ? 'Backtest run created' : 'Run backtestu utworzony');
-      router.push(`/dashboard/backtests/${created.id}`);
-    } catch (error: unknown) {
-      toast.error(locale === 'en' ? 'Could not create backtest run' : 'Nie udalo sie utworzyc runa backtestu', {
-        description: handleError(error),
+      await runAsyncWithState(setSubmitting, async () => {
+        const created = await createBacktestRun(payload);
+        toast.success(locale === 'en' ? 'Backtest run created' : 'Run backtestu utworzony');
+        router.push(`/dashboard/backtests/${created.id}`);
       });
-    } finally {
-      setSubmitting(false);
+    } catch (error: unknown) {
+      toast.error(createFailed, {
+        description: resolveUiErrorMessage(error, { fallback: createFailed }),
+      });
     }
   };
 

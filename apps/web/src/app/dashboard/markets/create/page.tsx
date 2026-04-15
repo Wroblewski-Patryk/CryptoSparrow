@@ -7,7 +7,8 @@ import { PAGE_TITLE_ACTION_SAVE_CLASS, PageTitle } from '@/ui/layout/dashboard/P
 import MarketUniverseForm from '@/features/markets/components/MarketUniverseForm';
 import { createMarketUniverse } from '@/features/markets/services/markets.service';
 import { CreateMarketUniverseInput } from '@/features/markets/types/marketUniverse.type';
-import { handleError } from '@/lib/handleError';
+import { runAsyncWithState } from '@/lib/async';
+import { resolveUiErrorMessage } from '@/lib/errorResolver';
 import { LuChartCandlestick, LuPlus, LuSave } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
 
@@ -41,15 +42,16 @@ export default function MarketsCreatePage() {
   );
 
   const handleCreate = async (payload: CreateMarketUniverseInput) => {
-    setSubmitting(true);
     try {
-      const created = await createMarketUniverse(payload);
-      toast.success(copy.created);
-      router.push(`/dashboard/markets/${created.id}/edit`);
+      await runAsyncWithState(setSubmitting, async () => {
+        const created = await createMarketUniverse(payload);
+        toast.success(copy.created);
+        router.push(`/dashboard/markets/${created.id}/edit`);
+      });
     } catch (error: unknown) {
-      toast.error(copy.createFailed, { description: handleError(error) });
-    } finally {
-      setSubmitting(false);
+      toast.error(copy.createFailed, {
+        description: resolveUiErrorMessage(error, { fallback: copy.createFailed }),
+      });
     }
   };
 

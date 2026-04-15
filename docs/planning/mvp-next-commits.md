@@ -8,7 +8,6 @@ Operational queue for one-task execution runs.
 
 ## NOW
 ## NEXT
-- [ ] `OPTC-11 migrate(web-create-pages): standardize async+error handling on create pages (markets/strategies/backtests)`
 - [ ] `OPTC-12 migrate(web-edit-list-pages): standardize async+error handling for edit/list dashboards`
 - [ ] `OPTC-13 core(shared-contracts): extract shared exchange constants/capabilities/marketType contract`
 - [ ] `OPTC-14 migrate(api-contracts): switch API zod schemas to shared exchange contract`
@@ -23,6 +22,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `OPTC-11 migrate(web-create-pages): standardize async+error handling on create pages (markets/strategies/backtests)`
+  - 2026-04-16: Standardized async/error handling in create pages for markets/strategies/backtests by adopting shared helpers (`runAsyncWithState`, `resolveUiErrorMessage`), aligning fallback error descriptions, and adding pending submit guard on strategy create action; validated with `pnpm --filter web run typecheck` + targeted form suites (PASS).
 - [x] `OPTC-10 core(web-errors): create single UI error resolver and deprecate handleError/getAxiosMessage split`
   - 2026-04-16: Added unified web UI error resolver (`apps/web/src/lib/errorResolver.ts`), converted `handleError` and `getAxiosMessage` into deprecated compatibility wrappers on top of that shared resolver, and switched form-level error mapping to the new resolver path; validated with `pnpm --filter web run typecheck` + `pnpm --filter web test -- src/lib/errorResolver.test.ts` (PASS).
 - [x] `OPTC-09 test(api-normalization): add regression contract tests for shared normalization invariants`
