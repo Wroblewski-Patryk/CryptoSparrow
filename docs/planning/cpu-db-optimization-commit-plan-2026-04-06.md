@@ -37,7 +37,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 
 ### [ ] Group 1 - Baseline and safety rails
 
-- [ ] `CPDB-01 docs(contract): freeze optimization contract + feature-flag matrix`
+- [x] `CPDB-01 docs(contract): freeze optimization contract + feature-flag matrix`
   - Files:
     - `docs/planning/open-decisions.md`
     - `docs/governance/working-agreements.md`
@@ -276,3 +276,4 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 ## Progress log
 
 - 2026-04-06: Plan created. No implementation started yet.
+- 2026-04-16: Completed `CPDB-01` by locking runtime optimization feature-flag matrix and rollout/rollback guardrails in canonical governance docs (`open-decisions`, `working-agreements`).

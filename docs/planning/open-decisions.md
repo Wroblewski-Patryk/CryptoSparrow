@@ -311,6 +311,25 @@ This file tracks intentionally unresolved architecture choices so implementation
   - parser enforces precision/range with explicit validation errors,
   - integer and decimal field classes are validated separately by policy matrix.
 
+## Runtime Optimization Feature-Flag Matrix (CPU/DB Wave)
+- Decision state: resolved on 2026-04-16.
+- Decision:
+  - CPU/DB runtime optimization rollout is flag-first and reversible.
+  - each optimization slice must ship with explicit enable/disable control before broad activation.
+- Locked flag matrix (default values):
+  - `RUNTIME_TOPOLOGY_CACHE_ENABLED=true`
+    - scope: runtime active-bot topology cache read path.
+  - `RUNTIME_TELEMETRY_THROTTLE_ENABLED=true`
+    - scope: session heartbeat write throttling and symbol-stats batching paths.
+  - `WEB_RUNTIME_ADAPTIVE_POLLING_ENABLED=true`
+    - scope: dashboard/bots adaptive polling cadence.
+  - `WEB_RUNTIME_SSE_PREFERRED_ENABLED=true`
+    - scope: SSE-first runtime stats refresh with polling fallback.
+- Rollout contract:
+  - each flag can be disabled independently without cross-module code rollback.
+  - production rollout order remains: `stage canary -> production partial -> production full`.
+  - rollback contract is fail-safe: disable affected flag first, then investigate root cause.
+
 ## Worker Split Timing
 - Open: exact threshold for splitting API and workers into separate processes.
 - Current assumption: split when queue lag or API latency exceeds acceptable limits.

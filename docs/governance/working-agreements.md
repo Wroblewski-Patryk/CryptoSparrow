@@ -20,3 +20,17 @@
 - Any change in route inventory under `apps/web/src/app/**/page.tsx` must include same-change update of `docs/architecture/dashboard-route-map.md`.
 - Any moved/renamed canonical docs file must include same-change update of `docs/README.md`.
 - Delivery queue updates must be reflected in both `docs/planning/mvp-next-commits.md` and `docs/planning/mvp-execution-plan.md` in the same task.
+
+## Runtime Optimization Flag Rollout (Mandatory)
+- Runtime CPU/DB optimizations must be shipped behind explicit feature flags before broad rollout.
+- Required flags for this wave:
+  - `RUNTIME_TOPOLOGY_CACHE_ENABLED`
+  - `RUNTIME_TELEMETRY_THROTTLE_ENABLED`
+  - `WEB_RUNTIME_ADAPTIVE_POLLING_ENABLED`
+  - `WEB_RUNTIME_SSE_PREFERRED_ENABLED`
+- Never couple multiple optimization slices to one non-reversible release switch.
+- For runtime regressions, rollback sequence is deterministic:
+  - disable affected flag first,
+  - validate parity/safety behavior,
+  - then patch implementation.
+- Each optimization commit must include targeted regression tests proving behavior parity when flag is enabled.
