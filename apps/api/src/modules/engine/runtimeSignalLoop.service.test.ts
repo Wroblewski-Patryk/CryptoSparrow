@@ -1302,6 +1302,76 @@ describe('RuntimeSignalLoop', () => {
     await loop.stop();
   });
 
+  it('avoids duplicate side effects for shared BTCUSDT/5m across 5 users x 3 bots', async () => {
+    const { deps, emit } = createDeps();
+    const sharedExitStrategy = {
+      ...strategyExit,
+      strategyId: 'strategy-exit-5m',
+      strategyInterval: '5m',
+    };
+    const activeBots = Array.from({ length: 15 }, (_, index) => {
+      const userSlot = Math.floor(index / 3) + 1;
+      const botSlot = (index % 3) + 1;
+      return {
+        id: `bot-${userSlot}-${botSlot}`,
+        userId: `user-${userSlot}`,
+        mode: 'PAPER' as const,
+        exchange: 'BINANCE' as const,
+        paperStartBalance: 1_000,
+        marketType: 'FUTURES' as const,
+        marketGroups: [
+          {
+            id: `group-${userSlot}-${botSlot}`,
+            symbolGroupId: `symbol-group-${userSlot}-${botSlot}`,
+            executionOrder: 1,
+            maxOpenPositions: 1,
+            symbols: ['BTCUSDT'],
+            strategies: [sharedExitStrategy],
+          },
+        ],
+      };
+    });
+    deps.listActiveBots = vi.fn(async () => activeBots);
+    deps.listActiveBotsFromTopologyCache = vi.fn(async () => activeBots);
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    await emitFinalCandleSeries(emit, {
+      symbol: 'BTCUSDT',
+      interval: '5m',
+      points: 8,
+    });
+
+    const beforeDuplicateCount = (deps.createSignal as ReturnType<typeof vi.fn>).mock.calls.length;
+    const duplicateEvent: MarketStreamEvent = {
+      type: 'candle',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      interval: '5m',
+      eventTime: 2_400_000,
+      openTime: 2_100_000,
+      closeTime: 2_399_000,
+      open: 108,
+      high: 109,
+      low: 107,
+      close: 108.5,
+      volume: 2_000,
+      isFinal: true,
+    };
+
+    await emit(duplicateEvent);
+    const afterFirstDuplicateCount = (deps.createSignal as ReturnType<typeof vi.fn>).mock.calls.length;
+    await emit(duplicateEvent);
+    const afterSecondDuplicateCount = (deps.createSignal as ReturnType<typeof vi.fn>).mock.calls.length;
+
+    expect(afterFirstDuplicateCount - beforeDuplicateCount).toBe(15);
+    expect(afterSecondDuplicateCount).toBe(afterFirstDuplicateCount);
+
+    await loop.stop();
+  });
+
   it('merges final-candle multi-strategy votes with EXIT priority and trace-only behavior', async () => {
     const { deps, emit } = createDeps();
     withStrategyBot(deps, { strategies: [strategyExit, strategyLong] });

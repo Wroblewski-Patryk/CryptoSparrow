@@ -7,7 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `CPDB-G5 web-polling(cpu-db): adaptive refresh + SSE-first runtime stats with polling fallback`
+- [ ] `CPDB-G8 rollout(cpu-db): canary/rollback docs + alert thresholds + 30m soak evidence`
 - [ ] `WLT-A wallet-contracts: wallet source-of-truth docs + decisions + IA placement`
 - [ ] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
 - [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
@@ -16,9 +16,6 @@ Operational queue for one-task execution runs.
 - [ ] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
 - [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
 ## PIPELINE
-- [ ] `CPDB-G6 db-shaping(cpu-db): hot-path indexes + slim topology reads + EXPLAIN evidence`
-- [ ] `CPDB-G7 worker-backpressure(cpu-db): per-series concurrency guard + distributed warmup lock` (in progress: `CPDB-19..20` done, `CPDB-21` pending)
-- [ ] `CPDB-G8 rollout(cpu-db): canary/rollback docs + alert thresholds + 30m soak evidence`
 - [ ] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
 - [ ] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
 - [ ] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
@@ -30,6 +27,12 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `CPDB-G7 worker-backpressure(cpu-db): per-series concurrency guard + distributed warmup lock`
+  - 2026-04-16: Closed CPU/DB Group 7 by completing `CPDB-19..CPDB-21` (per-series final-candle backpressure queue, distributed warmup lock across replicas, and stress/fanout regression coverage for shared `BTCUSDT/5m` workloads); next CPU/DB group promoted as `CPDB-G8`.
+- [x] `CPDB-G6 db-shaping(cpu-db): hot-path indexes + slim topology reads + EXPLAIN evidence`
+  - 2026-04-16: Closed CPU/DB Group 6 by completing `CPDB-16..CPDB-18` (runtime hot-path DB indexes, topology read shaping, and EXPLAIN evidence capture); next CPU/DB group promoted as `CPDB-G7`.
+- [x] `CPDB-G5 web-polling(cpu-db): adaptive refresh + SSE-first runtime stats with polling fallback`
+  - 2026-04-16: Closed CPU/DB Group 5 by completing `CPDB-13..CPDB-15` (visibility-aware polling cadence, SSE-first runtime refresh, and fallback regression coverage); next CPU/DB group promoted as `CPDB-G6`.
 - [x] `CPDB-G4 telemetry-write(cpu-db): touchSession throttle + symbol stats batching + query-count checks`
   - 2026-04-16: Closed CPU/DB Group 4 by completing `CPDB-10..CPDB-12` (telemetry heartbeat throttling + symbol-stat debounce batching with flush on session close, execution OPEN leverage-query removal via decision-context pass-through, and query-count regressions for telemetry/execution paths); next CPU/DB group promoted as `CPDB-G5`.
 - [x] `CPDB-G3 signal-routing(cpu-db): seriesKey routing index + pretrade position-count cache`

@@ -1537,9 +1537,9 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `CPDB-G2 runtime-cache(cpu-db): active topology cache + invalidation + parity tests`
 - [x] `CPDB-G3 signal-routing(cpu-db): seriesKey routing index + pretrade position-count cache`
 - [x] `CPDB-G4 telemetry-write(cpu-db): touchSession throttle + symbol stats batching + query-count checks`
-- [ ] `CPDB-G5 web-polling(cpu-db): adaptive refresh + SSE-first runtime stats with polling fallback`
-- [ ] `CPDB-G6 db-shaping(cpu-db): hot-path indexes + slim topology reads + EXPLAIN evidence`
-- [ ] `CPDB-G7 worker-backpressure(cpu-db): per-series concurrency guard + distributed warmup lock`
+- [x] `CPDB-G5 web-polling(cpu-db): adaptive refresh + SSE-first runtime stats with polling fallback`
+- [x] `CPDB-G6 db-shaping(cpu-db): hot-path indexes + slim topology reads + EXPLAIN evidence`
+- [x] `CPDB-G7 worker-backpressure(cpu-db): per-series concurrency guard + distributed warmup lock`
 - [ ] `CPDB-G8 rollout(cpu-db): canary/rollback docs + alert thresholds + 30m soak evidence`
 - [ ] `WLT-A wallet-contracts: wallet source-of-truth docs + decisions + IA placement`
 - [ ] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
@@ -1561,5 +1561,8 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-16: Closed `CPDB-G2` by completing `CPDB-04..CPDB-06` (runtime topology cache service with TTL/version invalidation, final-candle cache read refactor with direct-query fallback hardening, and parity regression coverage for cache hit/miss/invalidation), with `CPDB-G3` now active as the next CPU/DB group.
 - 2026-04-16: Closed `CPDB-G3` by completing `CPDB-07..CPDB-09` (seriesKey eligible-group routing index, pre-trade open-position count cache + OPEN/CLOSE invalidation, and cache parity tests that keep user/bot caps enforced), with `CPDB-G4` promoted as the next active CPU/DB group.
 - 2026-04-16: Closed `CPDB-G4` by completing `CPDB-10..CPDB-12` (telemetry touch-session throttling, symbol-stat debounce batching + close-session flush, execution OPEN leverage query removal, and query-count regression assertions), with `CPDB-G5` promoted as the next active CPU/DB group.
+- 2026-04-16: Closed `CPDB-G5` by completing `CPDB-13..CPDB-15` (visibility-aware polling cadence, SSE-first runtime refresh with polling fallback, and cadence/fallback regression coverage), with `CPDB-G6` promoted as the next active CPU/DB group.
+- 2026-04-16: Closed `CPDB-G6` by completing `CPDB-16..CPDB-18` (runtime hot-path DB indexes, topology-read query shaping, and EXPLAIN evidence capture), with `CPDB-G7` promoted as the next active CPU/DB group.
 - 2026-04-16: Advanced `CPDB-G7` by completing `CPDB-19` (runtime per-series final-candle backpressure queue with bounded pending backlog and overflow drop of the oldest pending event, plus stop/stall queue cleanup and burst-load regression coverage in `runtimeSignalLoop`), keeping `CPDB-20..CPDB-21` as remaining scope for the active group.
 - 2026-04-16: Advanced `CPDB-G7` by completing `CPDB-20` (distributed warmup lock integration for runtime series warmup via Redis-backed fanout lock provider, runtime loop dependency wiring, and lock-aware market-data gateway release semantics), leaving `CPDB-21` as the final remaining scope in the active group.
+- 2026-04-16: Closed `CPDB-G7` by completing `CPDB-21` (shared-series concurrency stress for `5 users x 3 bots` on `BTCUSDT/5m` with duplicate-event side-effect guardrails plus `marketStreamFanout` single-delivery/lock contract tests), with `CPDB-G8` now the next active CPU/DB group.

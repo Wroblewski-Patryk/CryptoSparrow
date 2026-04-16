@@ -216,7 +216,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
   - Tests:
     - manual SQL verification on dev db
 
-### [ ] Group 7 - Worker backpressure and horizontal scale safety
+### [x] Group 7 - Worker backpressure and horizontal scale safety
 
 - [x] `CPDB-19 feat(runtime-backpressure): per-series concurrency guard and bounded queue`
   - Files:
@@ -235,7 +235,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
   - Tests:
     - `pnpm --filter api test -- runtimeSignalLoop marketStream`
 
-- [ ] `CPDB-21 test(concurrency): stress regression for shared symbol/interval across many bots`
+- [x] `CPDB-21 test(concurrency): stress regression for shared symbol/interval across many bots`
   - Files:
     - `apps/api/src/modules/engine/runtimeSignalLoop.service.test.ts`
     - `apps/api/src/modules/market-stream/marketStreamFanout.test.ts` (new/extend)
@@ -302,3 +302,5 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Closed Group 6 (`CPDB-16..CPDB-18`). Next unchecked group is Group 7 (`CPDB-19..CPDB-21`).
 - 2026-04-16: Completed `CPDB-19` by adding per-series final-candle backpressure guardrails in runtime loop (`exchange|marketType|symbol|interval` queue with bounded pending backlog + overflow drop of oldest pending event), while preserving sequential in-series processing semantics and queue cleanup on stop/stall; validated with `pnpm --filter api test -- runtimeSignalLoop` (PASS).
 - 2026-04-16: Completed `CPDB-20` by adding distributed warmup-lock plumbing for runtime candle series (`RuntimeSignalMarketDataGateway` lock hook + runtime-loop dependency wiring + Redis-backed lock acquisition/release in market-stream fanout), ensuring per-series warmup fetch coordination across replicas while failing open on Redis issues; validated with `pnpm --filter api test -- runtimeSignalLoop marketStream runtimeSignalMarketDataGateway` (PASS).
+- 2026-04-16: Completed `CPDB-21` by adding shared-series stress regression (`5 users x 3 bots`, `BTCUSDT/5m`) that validates duplicate-event idempotency in runtime side effects, plus new `marketStreamFanout` unit coverage for single-delivery payload fanout and warmup-lock NX/PX semantics; validated with `pnpm --filter api test -- runtimeSignalLoop marketStreamFanout` (PASS).
+- 2026-04-16: Closed Group 7 (`CPDB-19..CPDB-21`). Next unchecked group is Group 8 (`CPDB-22..CPDB-24`).
