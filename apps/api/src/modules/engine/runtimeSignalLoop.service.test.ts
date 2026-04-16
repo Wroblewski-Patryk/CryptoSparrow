@@ -313,7 +313,7 @@ describe('RuntimeSignalLoop', () => {
             executionOrder: 1,
             maxOpenPositions: 1,
             symbols: ['BTCUSDT'],
-            strategies: [],
+            strategies: [] as Array<typeof strategyLong>,
           },
         ],
       },
@@ -1223,9 +1223,11 @@ describe('RuntimeSignalLoop', () => {
     deps.seriesQueueMaxPending = 1;
     const queueSymbol = 'CPDBQUEUEUSDT';
 
-    let releaseFirstDecision: (() => void) | null = null;
+    const releaseFirstDecisionRef: { current: () => void } = {
+      current: () => undefined,
+    };
     const firstDecisionGate = new Promise<void>((resolve) => {
-      releaseFirstDecision = resolve;
+      releaseFirstDecisionRef.current = resolve;
     });
     let topologyReads = 0;
     deps.listActiveBotsFromTopologyCache = vi.fn(async () => {
@@ -1290,7 +1292,7 @@ describe('RuntimeSignalLoop', () => {
       isFinal: true,
     });
 
-    releaseFirstDecision?.();
+    releaseFirstDecisionRef.current();
     await Promise.all([firstEmit, secondEmit, thirdEmit]);
     await vi.waitFor(() => expect(deps.listActiveBotsFromTopologyCache).toHaveBeenCalledTimes(2));
 

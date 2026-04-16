@@ -10,11 +10,11 @@ vi.mock('redis', () => ({
 const buildRedisClientMock = () => ({
   on: vi.fn(),
   connect: vi.fn(async () => undefined),
-  subscribe: vi.fn(async () => 1),
+  subscribe: vi.fn(async (..._args: any[]) => 1),
   unsubscribe: vi.fn(async () => 1),
   disconnect: vi.fn(async () => undefined),
   publish: vi.fn(async () => 1),
-  set: vi.fn(async () => 'OK' as const),
+  set: vi.fn(async (..._args: any[]) => 'OK' as 'OK' | null),
   eval: vi.fn(async () => 1),
 });
 
@@ -33,9 +33,9 @@ describe('marketStreamFanout', () => {
   it('forwards each valid payload once and ignores malformed messages', async () => {
     process.env.NODE_ENV = 'development';
     const subscriberClient = buildRedisClientMock();
-    let subscriberHandler: ((payload: string) => void) | null = null;
-    subscriberClient.subscribe.mockImplementation(async (_channel: string, handler: (payload: string) => void) => {
-      subscriberHandler = handler;
+    const subscriberHandlerRef: { current?: (payload: string) => void } = {};
+    subscriberClient.subscribe.mockImplementation(async (...args: any[]) => {
+      subscriberHandlerRef.current = args[1] as (payload: string) => void;
       return 1;
     });
     createClientMock.mockReturnValue(subscriberClient as any);
@@ -55,8 +55,10 @@ describe('marketStreamFanout', () => {
       priceChangePercent24h: 0.4,
     };
 
-    subscriberHandler?.(JSON.stringify(event));
-    subscriberHandler?.('{bad-json');
+    const subscriberHandler = subscriberHandlerRef.current;
+    if (!subscriberHandler) throw new Error('subscriber handler missing');
+    subscriberHandler(JSON.stringify(event));
+    subscriberHandler('{bad-json');
     await Promise.resolve();
 
     expect(onEvent).toHaveBeenCalledTimes(1);

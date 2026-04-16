@@ -7,13 +7,12 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `QFIX-A runtime-quality(api): telemetry flush fail-safe + runtime typecheck restoration`
+- [ ] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
 - [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
 ## NEXT
-- [ ] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
+- [ ] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
 - [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
 ## PIPELINE
-- [ ] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
 - [ ] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
 - [ ] `PEX-C observability-ops: runtime alert thresholds + incident triage runbook`
 - [ ] `PEX-D recoverability: backup verification + restore drill automation + RTO/RPO doc`
@@ -23,6 +22,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `QFIX-A runtime-quality(api): telemetry flush fail-safe + runtime typecheck restoration`
+  - 2026-04-16: Closed runtime quality cleanup gate by hardening telemetry symbol-stat flush to be fail-safe during teardown races (recoverable Prisma FK `P2003` handling + background flush catch), fixing runtime typecheck regressions in `runtimeSignalLoop*` and `marketStreamFanout*`, and validating with `pnpm --filter api run typecheck`, `pnpm --filter api test -- src/modules/bots/bots.e2e.test.ts src/modules/bots/bots.duplicate-guard.e2e.test.ts`, and `pnpm --filter api test -- src/modules/engine/runtimeSignalLoop.service.test.ts src/modules/market-stream/marketStreamFanout.test.ts` (PASS); next active group promoted to `WLT-E`.
 - [x] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
   - 2026-04-16: Closed wallet Group D by completing `WLT-11..WLT-14` (wallet-first bot write derivation, wallet-marketGroup compatibility guard on wallet switch, deprecated direct execution-field compatibility handling, and targeted regression suite `apps/api/src/modules/bots/bots.wallet-contract.e2e.test.ts`); next wallet group promoted as `WLT-E`.
 - [x] `WLT-C wallet-api: wallet CRUD module with mode-aware validation + ownership isolation`

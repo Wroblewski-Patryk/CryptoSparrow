@@ -106,6 +106,13 @@ const resolveNewerDate = (current: Date | undefined, candidate: Date | undefined
   return candidate.getTime() >= current.getTime() ? candidate : current;
 };
 
+const isRecoverableSymbolStatFlushError = (error: unknown) => {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return false;
+  if (error.code !== 'P2003') return false;
+  const modelName = (error.meta as { modelName?: string } | undefined)?.modelName;
+  return modelName === 'BotRuntimeSymbolStat';
+};
+
 export class RuntimeTelemetryService {
   private readonly botSessionCache = new Map<string, CachedSession>();
   private readonly lastTouchedSessionAtMs = new Map<string, number>();
@@ -199,16 +206,22 @@ export class RuntimeTelemetryService {
     }
 
     if (runtimeSymbolStatDebounceMs <= 0) {
-      void this.flushSymbolStatByKey(key);
+      this.flushSymbolStatByKeyInBackground(key);
       return;
     }
 
     const timer = setTimeout(() => {
       this.symbolStatFlushTimersByKey.delete(key);
-      void this.flushSymbolStatByKey(key);
+      this.flushSymbolStatByKeyInBackground(key);
     }, runtimeSymbolStatDebounceMs);
     timer.unref?.();
     this.symbolStatFlushTimersByKey.set(key, timer);
+  }
+
+  private flushSymbolStatByKeyInBackground(key: string) {
+    void this.flushSymbolStatByKey(key).catch((error) => {
+      console.error('RuntimeTelemetryService symbol-stat flush failed:', error);
+    });
   }
 
   private async flushSymbolStatByKey(key: string) {
@@ -217,62 +230,67 @@ export class RuntimeTelemetryService {
     this.pendingSymbolStatsByKey.delete(key);
 
     const now = new Date();
-    await prisma.botRuntimeSymbolStat.upsert({
-      where: {
-        sessionId_symbol: {
+    try {
+      await prisma.botRuntimeSymbolStat.upsert({
+        where: {
+          sessionId_symbol: {
+            sessionId: pending.sessionId,
+            symbol: pending.symbol,
+          },
+        },
+        create: {
+          userId: pending.userId,
+          botId: pending.botId,
           sessionId: pending.sessionId,
           symbol: pending.symbol,
+          totalSignals: pending.increments.totalSignals ?? 0,
+          longEntries: pending.increments.longEntries ?? 0,
+          shortEntries: pending.increments.shortEntries ?? 0,
+          exits: pending.increments.exits ?? 0,
+          dcaCount: pending.increments.dcaCount ?? 0,
+          closedTrades: pending.increments.closedTrades ?? 0,
+          winningTrades: pending.increments.winningTrades ?? 0,
+          losingTrades: pending.increments.losingTrades ?? 0,
+          realizedPnl: pending.increments.realizedPnl ?? 0,
+          grossProfit: pending.increments.grossProfit ?? 0,
+          grossLoss: pending.increments.grossLoss ?? 0,
+          feesPaid: pending.increments.feesPaid ?? 0,
+          openPositionCount: pending.openPositionCount ?? 0,
+          openPositionQty: pending.openPositionQty ?? 0,
+          lastPrice: safeNumber(pending.lastPrice),
+          lastSignalAt: pending.lastSignalAt,
+          lastTradeAt: pending.lastTradeAt,
+          snapshotAt: now,
         },
-      },
-      create: {
-        userId: pending.userId,
-        botId: pending.botId,
-        sessionId: pending.sessionId,
-        symbol: pending.symbol,
-        totalSignals: pending.increments.totalSignals ?? 0,
-        longEntries: pending.increments.longEntries ?? 0,
-        shortEntries: pending.increments.shortEntries ?? 0,
-        exits: pending.increments.exits ?? 0,
-        dcaCount: pending.increments.dcaCount ?? 0,
-        closedTrades: pending.increments.closedTrades ?? 0,
-        winningTrades: pending.increments.winningTrades ?? 0,
-        losingTrades: pending.increments.losingTrades ?? 0,
-        realizedPnl: pending.increments.realizedPnl ?? 0,
-        grossProfit: pending.increments.grossProfit ?? 0,
-        grossLoss: pending.increments.grossLoss ?? 0,
-        feesPaid: pending.increments.feesPaid ?? 0,
-        openPositionCount: pending.openPositionCount ?? 0,
-        openPositionQty: pending.openPositionQty ?? 0,
-        lastPrice: safeNumber(pending.lastPrice),
-        lastSignalAt: pending.lastSignalAt,
-        lastTradeAt: pending.lastTradeAt,
-        snapshotAt: now,
-      },
-      update: {
-        totalSignals: { increment: pending.increments.totalSignals ?? 0 },
-        longEntries: { increment: pending.increments.longEntries ?? 0 },
-        shortEntries: { increment: pending.increments.shortEntries ?? 0 },
-        exits: { increment: pending.increments.exits ?? 0 },
-        dcaCount: { increment: pending.increments.dcaCount ?? 0 },
-        closedTrades: { increment: pending.increments.closedTrades ?? 0 },
-        winningTrades: { increment: pending.increments.winningTrades ?? 0 },
-        losingTrades: { increment: pending.increments.losingTrades ?? 0 },
-        realizedPnl: { increment: pending.increments.realizedPnl ?? 0 },
-        grossProfit: { increment: pending.increments.grossProfit ?? 0 },
-        grossLoss: { increment: pending.increments.grossLoss ?? 0 },
-        feesPaid: { increment: pending.increments.feesPaid ?? 0 },
-        ...(pending.openPositionCount !== undefined
-          ? { openPositionCount: Math.max(0, Math.trunc(pending.openPositionCount)) }
-          : {}),
-        ...(pending.openPositionQty !== undefined
-          ? { openPositionQty: Math.max(0, pending.openPositionQty) }
-          : {}),
-        ...(pending.lastPrice !== undefined ? { lastPrice: safeNumber(pending.lastPrice) } : {}),
-        ...(pending.lastSignalAt ? { lastSignalAt: pending.lastSignalAt } : {}),
-        ...(pending.lastTradeAt ? { lastTradeAt: pending.lastTradeAt } : {}),
-        snapshotAt: now,
-      },
-    });
+        update: {
+          totalSignals: { increment: pending.increments.totalSignals ?? 0 },
+          longEntries: { increment: pending.increments.longEntries ?? 0 },
+          shortEntries: { increment: pending.increments.shortEntries ?? 0 },
+          exits: { increment: pending.increments.exits ?? 0 },
+          dcaCount: { increment: pending.increments.dcaCount ?? 0 },
+          closedTrades: { increment: pending.increments.closedTrades ?? 0 },
+          winningTrades: { increment: pending.increments.winningTrades ?? 0 },
+          losingTrades: { increment: pending.increments.losingTrades ?? 0 },
+          realizedPnl: { increment: pending.increments.realizedPnl ?? 0 },
+          grossProfit: { increment: pending.increments.grossProfit ?? 0 },
+          grossLoss: { increment: pending.increments.grossLoss ?? 0 },
+          feesPaid: { increment: pending.increments.feesPaid ?? 0 },
+          ...(pending.openPositionCount !== undefined
+            ? { openPositionCount: Math.max(0, Math.trunc(pending.openPositionCount)) }
+            : {}),
+          ...(pending.openPositionQty !== undefined
+            ? { openPositionQty: Math.max(0, pending.openPositionQty) }
+            : {}),
+          ...(pending.lastPrice !== undefined ? { lastPrice: safeNumber(pending.lastPrice) } : {}),
+          ...(pending.lastSignalAt ? { lastSignalAt: pending.lastSignalAt } : {}),
+          ...(pending.lastTradeAt ? { lastTradeAt: pending.lastTradeAt } : {}),
+          snapshotAt: now,
+        },
+      });
+    } catch (error) {
+      if (isRecoverableSymbolStatFlushError(error)) return;
+      throw error;
+    }
     runtimeMetricsService.recordSymbolStatsWrite();
     await this.touchSession(pending.sessionId);
   }

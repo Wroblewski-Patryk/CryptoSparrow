@@ -386,7 +386,8 @@ export class RuntimeSignalLoop {
   }
 
   private async listActiveBotsFromTopologyCacheWithMetrics() {
-    if (!this.deps.listActiveBotsFromTopologyCache) {
+    const listActiveBotsFromTopologyCache = this.deps.listActiveBotsFromTopologyCache;
+    if (!listActiveBotsFromTopologyCache) {
       const topology = await this.listActiveBotsDirectWithMetrics();
       this.rebuildRuntimeRoutingIndex(topology);
       return topology;
@@ -394,7 +395,7 @@ export class RuntimeSignalLoop {
 
     try {
       const topology = await runtimeMetricsService.measureListActiveBots(async () =>
-        this.deps.listActiveBotsFromTopologyCache()
+        listActiveBotsFromTopologyCache()
       );
       this.rebuildRuntimeRoutingIndex(topology);
       return topology;

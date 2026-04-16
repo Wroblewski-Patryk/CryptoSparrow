@@ -50,6 +50,7 @@ Get-ChildItem -Recurse -File <path> | ForEach-Object { $_.FullName }
 - Avoid: retry loops with `rg` after first deterministic `Access denied` failure.
 - Evidence:
   - Observed on 2026-04-15 while inspecting `apps/web/src/features/*` directories in this repository.
+  - Reconfirmed on 2026-04-16 while triaging `apps/api/src/modules/engine/*` and `apps/api/src/modules/market-stream/*`; `Select-String` fallback worked without retries.
 
 ### 2026-04-15 - PowerShell 5.1 UTC timestamp compatibility
 - Context: generating timestamped evidence artifact names in Windows PowerShell shell scripts.
