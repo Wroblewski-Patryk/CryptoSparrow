@@ -154,7 +154,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
   - Tests:
     - `pnpm --filter api test -- runtimeTelemetry executionOrchestrator`
 
-### [ ] Group 5 - Web polling pressure reduction
+### [x] Group 5 - Web polling pressure reduction
 
 - [x] `CPDB-13 feat(web-polling): adaptive refresh (active tab: 10s, hidden tab: 30s)`
   - Files:
@@ -176,7 +176,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
     - `pnpm --filter web test -- HomeLiveWidgets BotsManagement`
     - `pnpm --filter api test -- dashboard`
 
-- [ ] `CPDB-15 test(web-runtime-load): regression tests for refresh cadence + stale recovery`
+- [x] `CPDB-15 test(web-runtime-load): regression tests for refresh cadence + stale recovery`
   - Files:
     - `apps/web/src/features/dashboard-home/components/HomeLiveWidgets.test.tsx`
     - `apps/web/src/features/bots/components/BotsManagement.test.tsx`
@@ -294,3 +294,5 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Closed Group 4 (`CPDB-10..CPDB-12`). Next unchecked group is Group 5 (`CPDB-13..CPDB-15`).
 - 2026-04-16: Completed `CPDB-13` by replacing fixed 5s refresh loops with visibility-aware intervals (10s when tab is visible, 30s when hidden) in dashboard-home and bots monitoring runtime controllers, with updated web tests covering new cadence expectations.
 - 2026-04-16: Completed `CPDB-14` by moving dashboard-home and bots monitoring runtime refresh to SSE-first flow (`ticker`-driven silent refresh with visibility-aware throttling), while keeping interval polling only as fallback when stream is unavailable/disconnected/stale.
+- 2026-04-16: Completed `CPDB-15` by extending web regression coverage for runtime refresh cadence and stale recovery: hidden-tab 30s interval switch assertion on home dashboard plus SSE-tick refresh and stale-stream polling fallback assertions on bots monitoring.
+- 2026-04-16: Closed Group 5 (`CPDB-13..CPDB-15`). Next unchecked group is Group 6 (`CPDB-16..CPDB-18`).

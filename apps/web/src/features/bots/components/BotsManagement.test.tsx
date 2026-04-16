@@ -1044,4 +1044,248 @@ describe("BotsManagement", () => {
 
     setIntervalSpy.mockRestore();
   });
+
+  it("refreshes from SSE ticks and falls back to polling when stream goes stale", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    class MockEventSource {
+      static instances: MockEventSource[] = [];
+      readonly close = vi.fn();
+      onopen: ((event: Event) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      private listeners = new Map<string, Array<(event: MessageEvent) => void>>();
+
+      constructor(_url: string, _init?: EventSourceInit) {
+        MockEventSource.instances.push(this);
+      }
+
+      addEventListener(type: string, listener: (event: MessageEvent) => void) {
+        const current = this.listeners.get(type) ?? [];
+        current.push(listener);
+        this.listeners.set(type, current);
+      }
+
+      emitTicker(payload: { symbol: string; lastPrice: number }) {
+        const event = new MessageEvent("ticker", { data: JSON.stringify(payload) });
+        for (const listener of this.listeners.get("ticker") ?? []) {
+          listener(event);
+        }
+      }
+    }
+
+    const previousEventSource = window.EventSource;
+    Object.defineProperty(window, "EventSource", {
+      configurable: true,
+      writable: true,
+      value: MockEventSource as unknown as typeof EventSource,
+    });
+
+    listStrategiesMock.mockResolvedValue([{ id: "s-sse", name: "SSE Strategy", interval: "5m" }]);
+    listMarketUniversesMock.mockResolvedValue([
+      {
+        id: "g-sse",
+        name: "SSE Group",
+        marketType: "FUTURES",
+        baseCurrency: "USDT",
+        whitelist: [],
+        blacklist: [],
+      },
+    ]);
+    listMock.mockResolvedValue([
+      {
+        id: "b-sse",
+        name: "SSE Bot",
+        mode: "PAPER",
+        paperStartBalance: 10000,
+        marketType: "FUTURES",
+        positionMode: "ONE_WAY",
+        isActive: true,
+        liveOptIn: false,
+        maxOpenPositions: 1,
+      },
+    ]);
+
+    listRuntimeSessionsMock.mockResolvedValue([
+      {
+        id: "session-sse",
+        botId: "b-sse",
+        mode: "PAPER",
+        status: "RUNNING",
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: null,
+        lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+        stopReason: null,
+        errorMessage: null,
+        createdAt: "2026-03-31T10:00:00.000Z",
+        updatedAt: "2026-03-31T10:05:00.000Z",
+        durationMs: 300000,
+        eventsCount: 1,
+        symbolsTracked: 1,
+        summary: {
+          totalSignals: 1,
+          dcaCount: 0,
+          closedTrades: 0,
+          realizedPnl: 0,
+        },
+      },
+    ]);
+
+    getRuntimeSessionMock.mockResolvedValue({
+      id: "session-sse",
+      botId: "b-sse",
+      mode: "PAPER",
+      status: "RUNNING",
+      startedAt: "2026-03-31T10:00:00.000Z",
+      finishedAt: null,
+      lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+      stopReason: null,
+      errorMessage: null,
+      metadata: null,
+      createdAt: "2026-03-31T10:00:00.000Z",
+      updatedAt: "2026-03-31T10:05:00.000Z",
+      durationMs: 300000,
+      eventsCount: 1,
+      symbolsTracked: 1,
+      summary: {
+        totalSignals: 1,
+        longEntries: 1,
+        shortEntries: 0,
+        exits: 0,
+        dcaCount: 0,
+        closedTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        realizedPnl: 0,
+        grossProfit: 0,
+        grossLoss: 0,
+        feesPaid: 0,
+      },
+    });
+
+    listRuntimeSymbolStatsMock.mockResolvedValue({
+      sessionId: "session-sse",
+      items: [
+        {
+          id: "stat-sse",
+          userId: "u-sse",
+          botId: "b-sse",
+          sessionId: "session-sse",
+          symbol: "BTCUSDT",
+          totalSignals: 1,
+          longEntries: 1,
+          shortEntries: 0,
+          exits: 0,
+          dcaCount: 0,
+          closedTrades: 0,
+          winningTrades: 0,
+          losingTrades: 0,
+          realizedPnl: 0,
+          grossProfit: 0,
+          grossLoss: 0,
+          feesPaid: 0,
+          openPositionCount: 0,
+          openPositionQty: 0,
+          lastPrice: 70000,
+          lastSignalAt: "2026-03-31T10:04:00.000Z",
+          lastTradeAt: "2026-03-31T10:04:30.000Z",
+          snapshotAt: "2026-03-31T10:05:00.000Z",
+          createdAt: "2026-03-31T10:05:00.000Z",
+          updatedAt: "2026-03-31T10:05:00.000Z",
+        },
+      ],
+      summary: {
+        totalSignals: 1,
+        longEntries: 1,
+        shortEntries: 0,
+        exits: 0,
+        dcaCount: 0,
+        closedTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        realizedPnl: 0,
+        grossProfit: 0,
+        grossLoss: 0,
+        feesPaid: 0,
+      },
+    });
+
+    listRuntimePositionsMock.mockResolvedValue({
+      sessionId: "session-sse",
+      total: 0,
+      openCount: 0,
+      closedCount: 0,
+      openOrdersCount: 0,
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      summary: {
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        feesPaid: 0,
+      },
+      openOrders: [],
+      openItems: [],
+      historyItems: [],
+    });
+
+    listRuntimeTradesMock.mockResolvedValue({
+      sessionId: "session-sse",
+      total: 0,
+      meta: {
+        page: 1,
+        pageSize: 25,
+        total: 0,
+        totalPages: 0,
+        hasPrev: false,
+        hasNext: false,
+      },
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      items: [],
+    });
+
+    renderWithI18n();
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("SSE Bot")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("tab", { name: /Operacje runtime|Monitoring/i }));
+
+    await waitFor(() => {
+      expect(listRuntimeSessionsMock).toHaveBeenCalled();
+      expect(MockEventSource.instances.length).toBeGreaterThan(0);
+    });
+
+    const stream = MockEventSource.instances[0]!;
+    act(() => {
+      stream.onopen?.(new Event("open"));
+    });
+
+    const callsBeforeSseTick = listRuntimeSessionsMock.mock.calls.length;
+    act(() => {
+      stream.emitTicker({ symbol: "BTCUSDT", lastPrice: 70100 });
+    });
+
+    await waitFor(() => {
+      expect(listRuntimeSessionsMock.mock.calls.length).toBeGreaterThan(callsBeforeSseTick);
+    });
+
+    const callsBeforeFallback = listRuntimeSessionsMock.mock.calls.length;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10_100);
+    });
+
+    await waitFor(() => {
+      expect(listRuntimeSessionsMock.mock.calls.length).toBeGreaterThan(callsBeforeFallback);
+    });
+
+    Object.defineProperty(window, "EventSource", {
+      configurable: true,
+      writable: true,
+      value: previousEventSource,
+    });
+  }, 20_000);
 });
