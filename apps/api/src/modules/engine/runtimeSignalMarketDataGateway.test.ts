@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { RuntimeSignalMarketDataGateway } from './runtimeSignalMarketDataGateway';
 
 describe('RuntimeSignalMarketDataGateway', () => {
@@ -131,5 +131,101 @@ describe('RuntimeSignalMarketDataGateway', () => {
     expect(orderBook?.orderBookImbalance).toEqual([0.1, 0.3]);
     expect(orderBook?.orderBookSpreadBps).toEqual([2.5, 3.5]);
     expect(orderBook?.orderBookDepthRatio).toEqual([1.2, 1.8]);
+  });
+
+  it('skips warmup fetch when distributed warmup lock is not acquired', async () => {
+    const originalNodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => [],
+    } as any);
+    const acquireWarmupLock = vi.fn(async () => ({
+      acquired: false,
+      release: async () => undefined,
+    }));
+
+    try {
+      const gateway = new RuntimeSignalMarketDataGateway({
+        nowMs: () => 1_000_000,
+        warmupEnabled: true,
+        acquireWarmupLock,
+      });
+
+      await gateway.ingestCandleEvent({
+        type: 'candle',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        symbol: 'BTCUSDT',
+        interval: '1m',
+        eventTime: 60_000,
+        openTime: 0,
+        closeTime: 59_000,
+        open: 100,
+        high: 101,
+        low: 99,
+        close: 100,
+        volume: 1_000,
+        isFinal: true,
+      });
+
+      expect(acquireWarmupLock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          seriesKey: 'FUTURES|BTCUSDT|1m',
+        })
+      );
+      const requestedUrls = fetchSpy.mock.calls.map(([url]) => String(url));
+      expect(
+        requestedUrls.some((url) => url.includes('/fapi/v1/klines') || url.includes('/api/v3/klines'))
+      ).toBe(false);
+    } finally {
+      fetchSpy.mockRestore();
+      process.env.NODE_ENV = originalNodeEnv;
+    }
+  });
+
+  it('releases distributed warmup lock after warmup attempt completes', async () => {
+    const originalNodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => [],
+    } as any);
+    const releaseWarmupLock = vi.fn(async () => undefined);
+    const acquireWarmupLock = vi.fn(async () => ({
+      acquired: true,
+      release: releaseWarmupLock,
+    }));
+
+    try {
+      const gateway = new RuntimeSignalMarketDataGateway({
+        nowMs: () => 1_000_000,
+        warmupEnabled: true,
+        acquireWarmupLock,
+      });
+
+      await gateway.ingestCandleEvent({
+        type: 'candle',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        symbol: 'BTCUSDT',
+        interval: '1m',
+        eventTime: 60_000,
+        openTime: 0,
+        closeTime: 59_000,
+        open: 100,
+        high: 101,
+        low: 99,
+        close: 100,
+        volume: 1_000,
+        isFinal: true,
+      });
+
+      expect(acquireWarmupLock).toHaveBeenCalledTimes(1);
+      expect(releaseWarmupLock).toHaveBeenCalledTimes(1);
+    } finally {
+      fetchSpy.mockRestore();
+      process.env.NODE_ENV = originalNodeEnv;
+    }
   });
 });

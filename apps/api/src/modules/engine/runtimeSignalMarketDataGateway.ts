@@ -28,8 +28,22 @@ export type RuntimeOrderBookSeries = {
   orderBookDepthRatio: Array<number | null>;
 };
 
+export type RuntimeSignalWarmupLockInput = {
+  seriesKey: string;
+  ttlMs: number;
+};
+
+export type RuntimeSignalWarmupLockHandle = {
+  acquired: boolean;
+  release: () => Promise<void>;
+};
+
 type RuntimeSignalMarketDataGatewayDeps = {
   nowMs: () => number;
+  warmupEnabled?: boolean | (() => boolean | undefined);
+  acquireWarmupLock?: (
+    input: RuntimeSignalWarmupLockInput
+  ) => Promise<RuntimeSignalWarmupLockHandle>;
 };
 
 const maxCandlesPerSeries = Number.parseInt(process.env.RUNTIME_SIGNAL_CANDLE_BUFFER ?? '500', 10);
@@ -41,6 +55,10 @@ const runtimeSignalWarmupCandles = Math.max(
 const runtimeSignalWarmupRetryMs = Math.max(
   60_000,
   Number.parseInt(process.env.RUNTIME_SIGNAL_WARMUP_RETRY_MS ?? '300000', 10),
+);
+const runtimeSignalWarmupLockTtlMs = Math.max(
+  5_000,
+  Number.parseInt(process.env.RUNTIME_SIGNAL_WARMUP_LOCK_TTL_MS ?? '45000', 10),
 );
 const runtimeFundingRefreshMs = Math.max(
   30_000,
@@ -303,13 +321,41 @@ export class RuntimeSignalMarketDataGateway {
     }
   }
 
+  private async acquireRuntimeWarmupLock(seriesKey: string): Promise<RuntimeSignalWarmupLockHandle> {
+    if (!this.deps.acquireWarmupLock) {
+      return {
+        acquired: true,
+        release: async () => undefined,
+      };
+    }
+    try {
+      return await this.deps.acquireWarmupLock({
+        seriesKey,
+        ttlMs: runtimeSignalWarmupLockTtlMs,
+      });
+    } catch {
+      return {
+        acquired: true,
+        release: async () => undefined,
+      };
+    }
+  }
+
   private async ensureSeriesWarmup(
     marketType: 'FUTURES' | 'SPOT',
     symbol: string,
     interval: string,
     endTimeMs?: number,
   ) {
-    if (!runtimeSignalWarmupEnabled) return;
+    const warmupEnabledOverride =
+      typeof this.deps.warmupEnabled === 'function'
+        ? this.deps.warmupEnabled()
+        : this.deps.warmupEnabled;
+    const warmupEnabled =
+      typeof warmupEnabledOverride === 'boolean'
+        ? warmupEnabledOverride
+        : runtimeSignalWarmupEnabled;
+    if (!warmupEnabled) return;
     const normalizedInterval = normalizeInterval(interval);
     const key = this.getSeriesKey(marketType, symbol, normalizedInterval);
     const currentSeries = this.candleSeries.get(key) ?? [];
@@ -318,26 +364,31 @@ export class RuntimeSignalMarketDataGateway {
     const now = this.deps.nowMs();
     const lastAttemptAt = this.warmupLastAttemptAt.get(key) ?? 0;
     if (now - lastAttemptAt < runtimeSignalWarmupRetryMs) return;
+    const warmupLock = await this.acquireRuntimeWarmupLock(key);
+    if (!warmupLock.acquired) return;
     this.warmupLastAttemptAt.set(key, now);
+    try {
+      const fetched = await this.fetchWarmupCandles(
+        marketType,
+        symbol,
+        normalizedInterval,
+        runtimeSignalWarmupCandles,
+        endTimeMs,
+      );
+      if (fetched.length === 0) return;
 
-    const fetched = await this.fetchWarmupCandles(
-      marketType,
-      symbol,
-      normalizedInterval,
-      runtimeSignalWarmupCandles,
-      endTimeMs,
-    );
-    if (fetched.length === 0) return;
+      const deduped = new Map<number, RuntimeCandle>();
+      for (const candle of fetched) deduped.set(candle.openTime, candle);
+      for (const candle of currentSeries) deduped.set(candle.openTime, candle);
 
-    const deduped = new Map<number, RuntimeCandle>();
-    for (const candle of fetched) deduped.set(candle.openTime, candle);
-    for (const candle of currentSeries) deduped.set(candle.openTime, candle);
-
-    const merged = [...deduped.values()].sort((left, right) => left.openTime - right.openTime);
-    if (merged.length > maxCandlesPerSeries) {
-      merged.splice(0, merged.length - maxCandlesPerSeries);
+      const merged = [...deduped.values()].sort((left, right) => left.openTime - right.openTime);
+      if (merged.length > maxCandlesPerSeries) {
+        merged.splice(0, merged.length - maxCandlesPerSeries);
+      }
+      this.candleSeries.set(key, merged);
+    } finally {
+      await warmupLock.release().catch(() => undefined);
     }
-    this.candleSeries.set(key, merged);
   }
 
   private getFundingKey(marketType: 'FUTURES' | 'SPOT', symbol: string) {

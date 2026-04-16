@@ -17,7 +17,7 @@ Operational queue for one-task execution runs.
 - [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
 ## PIPELINE
 - [ ] `CPDB-G6 db-shaping(cpu-db): hot-path indexes + slim topology reads + EXPLAIN evidence`
-- [ ] `CPDB-G7 worker-backpressure(cpu-db): per-series concurrency guard + distributed warmup lock` (in progress: `CPDB-19` done, `CPDB-20..21` pending)
+- [ ] `CPDB-G7 worker-backpressure(cpu-db): per-series concurrency guard + distributed warmup lock` (in progress: `CPDB-19..20` done, `CPDB-21` pending)
 - [ ] `CPDB-G8 rollout(cpu-db): canary/rollback docs + alert thresholds + 30m soak evidence`
 - [ ] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
 - [ ] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`

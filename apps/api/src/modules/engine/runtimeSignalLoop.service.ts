@@ -6,7 +6,10 @@ import {
   StreamCandleEvent,
   StreamTickerEvent,
 } from '../market-stream/binanceStream.types';
-import { subscribeMarketStreamEvents } from '../market-stream/marketStreamFanout';
+import {
+  acquireMarketStreamWarmupLock,
+  subscribeMarketStreamEvents,
+} from '../market-stream/marketStreamFanout';
 import { analyzePreTrade } from './preTrade.service';
 import { orchestrateRuntimeSignal } from './executionOrchestrator.service';
 import { runtimePositionAutomationService } from './runtimePositionAutomation.service';
@@ -15,6 +18,8 @@ import { RuntimeSignalDecisionEngine } from './runtimeSignalDecisionEngine';
 import { runtimeTopologyCacheService } from './runtimeTopologyCache.service';
 import {
   RuntimeSignalMarketDataGateway,
+  RuntimeSignalWarmupLockHandle,
+  RuntimeSignalWarmupLockInput,
 } from './runtimeSignalMarketDataGateway';
 import { resolveRuntimeDcaFundsExhausted, resolveRuntimeReferenceBalance } from './runtimeCapitalContext.service';
 import { runtimeTelemetryService } from './runtimeTelemetry.service';
@@ -143,6 +148,10 @@ type RuntimeSignalLoopDeps = {
   autoRestartMaxAttempts?: number;
   autoRestartWindowMs?: number;
   seriesQueueMaxPending?: number;
+  warmupEnabled?: boolean;
+  acquireWarmupLock?: (
+    input: RuntimeSignalWarmupLockInput
+  ) => Promise<RuntimeSignalWarmupLockHandle>;
   validateExchangeOrderFn?: (input: {
     exchange: ActiveBot['exchange'];
     marketType: ActiveBot['marketType'];
@@ -214,6 +223,7 @@ const defaultDeps: RuntimeSignalLoopDeps = {
   validateExchangeOrderFn: (params) => validateRuntimeExchangeOrder(params),
   listActiveBotsFromTopologyCache: () => runtimeTopologyCacheService.getActiveBots(),
   invalidateRuntimeTopologyCache: () => runtimeTopologyCacheService.invalidate(),
+  acquireWarmupLock: (input) => acquireMarketStreamWarmupLock(input),
 };
 
 type RuntimeSignalRouteEntry = {
@@ -235,6 +245,13 @@ export class RuntimeSignalLoop {
   private readonly processedDecisionWindows = new Map<string, number>();
   private readonly marketDataGateway = new RuntimeSignalMarketDataGateway({
     nowMs: () => this.deps.nowMs(),
+    warmupEnabled: () => this.deps.warmupEnabled,
+    acquireWarmupLock: (input) =>
+      this.deps.acquireWarmupLock?.(input) ??
+      Promise.resolve({
+        acquired: true,
+        release: async () => undefined,
+      }),
   });
   private routedTopologyRef: ActiveBot[] | null = null;
   private readonly routeEntriesBySeriesKey = new Map<string, RuntimeSignalRouteEntry[]>();

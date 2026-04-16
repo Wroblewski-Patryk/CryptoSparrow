@@ -588,6 +588,47 @@ describe('RuntimeSignalLoop', () => {
     ).toEqual([104.2]);
   });
 
+  it('delegates runtime warmup lock acquisition for final-candle series through loop deps', async () => {
+    const { deps, emit } = createDeps();
+    withStrategyBot(deps, { strategies: [] });
+    deps.nowMs = vi.fn(() => 1_000_000);
+    deps.warmupEnabled = true;
+    const releaseWarmupLock = vi.fn(async () => undefined);
+    deps.acquireWarmupLock = vi.fn(async () => ({
+      acquired: true,
+      release: releaseWarmupLock,
+    }));
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    await emit({
+      type: 'candle',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      symbol: 'BTCUSDT',
+      interval: '1m',
+      eventTime: 60_000,
+      openTime: 0,
+      closeTime: 59_000,
+      open: 100,
+      high: 101,
+      low: 99,
+      close: 100.5,
+      volume: 1_000,
+      isFinal: true,
+    });
+
+    expect(deps.acquireWarmupLock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        seriesKey: 'FUTURES|BTCUSDT|1m',
+      })
+    );
+    expect(releaseWarmupLock).toHaveBeenCalledTimes(1);
+
+    await loop.stop();
+  });
+
   it('creates signal and orchestrates from final candle when strategy votes LONG', async () => {
     const { deps, emit } = createDeps();
     withStrategyBot(deps);
