@@ -227,4 +227,56 @@ describe("BotCreateEditForm", () => {
 
     expect(screen.getByLabelText("Active")).toBeDisabled();
   });
+
+  it("submits wallet-first payload without legacy mode/paper fields", async () => {
+    listStrategiesMock.mockResolvedValue([
+      { id: "s4", name: "Wallet First", interval: "5m", leverage: 2, config: {} },
+    ]);
+    listMarketUniversesMock.mockResolvedValue([
+      {
+        id: "g4",
+        name: "Binance Futures",
+        exchange: "BINANCE",
+        marketType: "FUTURES",
+        baseCurrency: "USDT",
+        whitelist: ["BTCUSDT"],
+        blacklist: [],
+      },
+    ]);
+    listWalletsMock.mockResolvedValue([baseWallet]);
+    fetchApiKeysMock.mockResolvedValue([baseApiKey]);
+    createBotMock.mockResolvedValue({ id: "bot-created" });
+
+    const { container } = renderWithI18n();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Bot name")).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText("Bot name"), { target: { value: "Wallet payload bot" } });
+    const form = container.querySelector("form");
+    expect(form).not.toBeNull();
+    fireEvent.submit(form as HTMLFormElement);
+
+    await waitFor(() => {
+      expect(createBotMock).toHaveBeenCalledTimes(1);
+    });
+
+    const payload = createBotMock.mock.calls[0][0] as Record<string, unknown>;
+    expect(payload).toEqual(
+      expect.objectContaining({
+        name: "Wallet payload bot",
+        walletId: "w1",
+        strategyId: "s4",
+        marketGroupId: "g4",
+        isActive: true,
+        liveOptIn: false,
+        consentTextVersion: null,
+      })
+    );
+    expect(payload).not.toHaveProperty("mode");
+    expect(payload).not.toHaveProperty("paperStartBalance");
+    expect(payload).not.toHaveProperty("apiKeyId");
+    expect(routerReplaceMock).toHaveBeenCalledWith("/dashboard/bots/bot-created/edit");
+  });
 });

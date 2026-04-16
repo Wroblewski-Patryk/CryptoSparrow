@@ -7,10 +7,9 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
+- [ ] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
 - [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
 ## NEXT
-- [ ] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
 - [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
 ## PIPELINE
 - [ ] `PEX-C observability-ops: runtime alert thresholds + incident triage runbook`
@@ -21,6 +20,10 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
+  - 2026-04-16: Closed wallet Group F by completing `WLT-19..WLT-22` (dashboard nav placement `Exchanges -> Wallets -> Markets`, wallet pages route/form coverage, wallet-first bot form context summary, and regression suite for wallet pages + nav + bot-form payload contract), validated with targeted web tests and `pnpm --filter web run typecheck` (PASS); next wallet group promoted to `WLT-G`.
+- [x] `WLT-22 test(web): add regression coverage for wallet pages, nav placement, and bot-form payload changes`
+  - 2026-04-16: Added regression coverage for `/dashboard/wallets` redirect + `/dashboard/wallets/list` behavior, nav link placement and routes in `Header.responsive`, and wallet-first bot create payload contract (asserting absence of legacy `mode/paperStartBalance/apiKeyId`); validated with `pnpm --filter web test -- src/app/dashboard/wallets/page.test.tsx src/app/dashboard/wallets/list/page.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx src/features/bots/components/BotCreateEditForm.test.tsx` + `pnpm --filter web run typecheck` (PASS).
 - [x] `WLT-21 refactor(web-bot-form): replace mode/paper-balance controls with wallet selector + context summary`
   - 2026-04-16: Advanced active wallet group `WLT-F` by refining wallet-first bot form contract (`BotCreateEditForm`) with explicit wallet context summary (wallet/mode/venue/LIVE API key status), removing legacy mode/paper-balance expectations from regression tests, and aligning LIVE missing-key validation to i18n copy; validated with `pnpm --filter web test -- src/features/bots/components/BotCreateEditForm.test.tsx` + `pnpm --filter web run typecheck` (PASS); remaining `WLT-F` scope is `WLT-22`.
 - [x] `WLT-20 feat(web-wallets): add /dashboard/wallets list/create/edit screens with mode-aware form`

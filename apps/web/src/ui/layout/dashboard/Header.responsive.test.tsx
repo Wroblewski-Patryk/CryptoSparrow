@@ -23,6 +23,10 @@ describe("Header responsive smoke", () => {
     expect(screen.getAllByText("Markets").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Exchanges").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Wallets").length).toBeGreaterThan(0);
+    const exchangesLinks = screen.getAllByRole("link", { name: "Exchanges" });
+    expect(exchangesLinks.some((item) => item.getAttribute("href") === "/dashboard/exchanges")).toBe(true);
+    const walletsLinks = screen.getAllByRole("link", { name: "Wallets" });
+    expect(walletsLinks.some((item) => item.getAttribute("href") === "/dashboard/wallets/list")).toBe(true);
     expect(screen.getAllByText("Bots").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Bots" })).toHaveAttribute("href", "/dashboard/bots");
     expect(screen.queryByRole("link", { name: "Create bot" })).not.toBeInTheDocument();

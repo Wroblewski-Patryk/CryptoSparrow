@@ -1547,7 +1547,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
 - [x] `QFIX-A runtime-quality(api): telemetry flush fail-safe + runtime typecheck restoration`
 - [x] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
-- [ ] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
+- [x] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
 - [ ] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
 - [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
 - [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
@@ -1557,6 +1557,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `PEX-F deploy-safety: post-deploy runtime freshness gate + rollback trigger policy`
 
 ### Progress Log (Continuous Group Pipeline)
+- 2026-04-16: Closed `WLT-F` by completing `WLT-22` (wallet web regression pack for `/dashboard/wallets` redirect + `/dashboard/wallets/list` empty/create flow, `Header.responsive` nav route/order assertions, and wallet-first bot create payload contract with legacy field exclusions), validated with `pnpm --filter web test -- src/app/dashboard/wallets/page.test.tsx src/app/dashboard/wallets/list/page.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx src/features/bots/components/BotCreateEditForm.test.tsx` + `pnpm --filter web run typecheck` (PASS), and promoted `WLT-G` as the next wallet group.
 - 2026-04-16: Advanced `WLT-F` by completing `WLT-21` (wallet-first bot form refactor hardening in `BotCreateEditForm`: explicit wallet context summary for selected wallet/mode/venue/LIVE key status + i18n-aligned LIVE missing-key validation copy, with regression assertion that legacy mode/paper-balance controls are absent), validated with `pnpm --filter web test -- src/features/bots/components/BotCreateEditForm.test.tsx` + `pnpm --filter web run typecheck` (PASS); remaining scope in active group: `WLT-22`.
 - 2026-04-16: Advanced `WLT-F` by completing `WLT-20` (wallet web module route set + mode-aware form contract confirmed for `/dashboard/wallets/list`, `/dashboard/wallets/create`, and `/dashboard/wallets/[id]/edit`, including PAPER/LIVE conditional fields and payload behavior), validated with `pnpm --filter web test -- src/app/dashboard/wallets/create/page.test.tsx src/app/dashboard/wallets/[id]/edit/page.test.tsx src/features/wallets/components/WalletCreateEditForm.test.tsx` + `pnpm --filter web run typecheck` (PASS); remaining scope in active group: `WLT-21..WLT-22`.
 - 2026-04-16: Advanced `WLT-F` by completing `WLT-19` (dashboard nav contract restored to explicit `Exchanges -> Wallets -> Markets` module order via `Header` direct links and regression assertion in `Header.responsive.test.tsx`), validated with `pnpm --filter web test -- src/ui/layout/dashboard/Header.responsive.test.tsx` + `pnpm --filter web run typecheck` (PASS); remaining scope in active group: `WLT-20..WLT-22`.
