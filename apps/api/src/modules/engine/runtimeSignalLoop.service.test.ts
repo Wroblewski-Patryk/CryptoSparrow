@@ -9,6 +9,7 @@ import { metricsStore } from '../../observability/metrics';
 
 vi.mock('./runtimeCapitalContext.service', () => ({
   resolveRuntimeReferenceBalance: vi.fn(async () => 10_000),
+  resolveRuntimeWalletFundsExhausted: vi.fn(() => false),
   resolveRuntimeDcaFundsExhausted: vi.fn(() => false),
 }));
 
@@ -884,6 +885,34 @@ describe('RuntimeSignalLoop', () => {
           constraintReason: 'exchange_min_notional_not_met',
         }),
       })
+    );
+  });
+
+  it('blocks OPEN execution when wallet free-cash check fails', async () => {
+    const runtimeCapitalContext = await import('./runtimeCapitalContext.service');
+    (runtimeCapitalContext.resolveRuntimeWalletFundsExhausted as ReturnType<typeof vi.fn>).mockResolvedValue(
+      true
+    );
+
+    const { deps, emit } = createDeps();
+    withStrategyBot(deps, { mode: 'LIVE' });
+    deps.recordRuntimeEvent = vi.fn(async () => undefined);
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+    await emitFinalCandleSeries(emit);
+
+    expect(deps.orchestrateFn).not.toHaveBeenCalled();
+    expect(deps.recordRuntimeEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'PRETRADE_BLOCKED',
+        payload: expect.objectContaining({
+          reason: 'WALLET_INSUFFICIENT_FUNDS',
+        }),
+      })
+    );
+
+    (runtimeCapitalContext.resolveRuntimeWalletFundsExhausted as ReturnType<typeof vi.fn>).mockResolvedValue(
+      false
     );
   });
 

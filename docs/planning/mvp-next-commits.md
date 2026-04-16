@@ -22,6 +22,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `WLT-16 feat(runtime-budget): enforce hard-fail wallet free-cash checks for OPEN and DCA`
+  - 2026-04-16: Advanced active wallet group `WLT-E` by introducing explicit runtime wallet free-cash guard (`resolveRuntimeWalletFundsExhausted`) used in OPEN pre-trade blocking (`WALLET_INSUFFICIENT_FUNDS`) and aligned DCA guard compatibility, validated via `pnpm --filter api test -- src/modules/engine/runtimeCapitalContext.service.test.ts src/modules/engine/runtimeSignalLoop.service.test.ts src/modules/engine/runtimePositionAutomation.service.test.ts` + `pnpm --filter api run typecheck` (PASS); remaining `WLT-E` scope is `WLT-17..WLT-18`.
 - [x] `WLT-15 refactor(runtime-capital): resolve reference balance from wallet context (paper/live rules)`
   - 2026-04-16: Advanced active wallet group `WLT-E` by hardening runtime capital resolution to wallet-first semantics (wallet-scoped PAPER/LIVE context with fail-closed behavior when wallet context/API key is missing) and validating via `pnpm --filter api test -- src/modules/engine/runtimeCapitalContext.service.test.ts` + `pnpm --filter api run typecheck` (PASS); remaining `WLT-E` scope is `WLT-16..WLT-18`.
 - [x] `QFIX-A runtime-quality(api): telemetry flush fail-safe + runtime typecheck restoration`

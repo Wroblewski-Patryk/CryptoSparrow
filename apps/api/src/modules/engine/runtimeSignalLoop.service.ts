@@ -21,7 +21,10 @@ import {
   RuntimeSignalWarmupLockHandle,
   RuntimeSignalWarmupLockInput,
 } from './runtimeSignalMarketDataGateway';
-import { resolveRuntimeDcaFundsExhausted, resolveRuntimeReferenceBalance } from './runtimeCapitalContext.service';
+import {
+  resolveRuntimeReferenceBalance,
+  resolveRuntimeWalletFundsExhausted,
+} from './runtimeCapitalContext.service';
 import { runtimeTelemetryService } from './runtimeTelemetry.service';
 import { runtimeMetricsService } from './runtimeMetrics.service';
 import { mergeRuntimeStrategyVotes, StrategyVote } from './runtimeSignalMerge';
@@ -1168,7 +1171,7 @@ export class RuntimeSignalLoop {
               }
             }
 
-            const insufficientWalletFunds = await resolveRuntimeDcaFundsExhausted({
+            const insufficientWalletFunds = await resolveRuntimeWalletFundsExhausted({
               userId: bot.userId,
               botId: bot.id,
               walletId: bot.walletId,

@@ -411,7 +411,7 @@ export const resolveRuntimeReferenceBalance = async (
   return snapshot.referenceBalance;
 };
 
-export const resolveRuntimeDcaFundsExhausted = async (
+export const resolveRuntimeWalletFundsExhausted = async (
   input: {
     userId: string;
     botId?: string | null;
@@ -457,3 +457,36 @@ export const resolveRuntimeDcaFundsExhausted = async (
 
   return requiredMargin > snapshot.freeCash;
 };
+
+export const resolveRuntimeDcaFundsExhausted = async (
+  input: {
+    userId: string;
+    botId?: string | null;
+    walletId?: string | null;
+    mode: 'PAPER' | 'LIVE';
+    exchange: Exchange;
+    marketType: TradeMarket;
+    paperStartBalance: number;
+    markPrice: number;
+    addedQuantity: number;
+    leverage: number;
+    nowMs: number;
+  },
+  deps: RuntimeCapitalContextDeps = defaultDeps
+) =>
+  resolveRuntimeWalletFundsExhausted(
+    {
+      userId: input.userId,
+      botId: input.botId,
+      walletId: input.walletId,
+      mode: input.mode,
+      exchange: input.exchange,
+      marketType: input.marketType,
+      paperStartBalance: input.paperStartBalance,
+      markPrice: input.markPrice,
+      addedQuantity: input.addedQuantity,
+      leverage: input.leverage,
+      nowMs: input.nowMs,
+    },
+    deps
+  );
