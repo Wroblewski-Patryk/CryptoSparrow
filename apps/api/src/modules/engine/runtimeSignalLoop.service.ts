@@ -30,6 +30,7 @@ import {
 } from './runtimeSignalEvaluationTypes';
 import {
   ActiveBot,
+  ActiveBotMarketGroup,
   ActiveBotStrategy,
   deriveRuntimeGroupMaxOpenPositions,
   normalizeInterval,
@@ -210,6 +211,11 @@ const defaultDeps: RuntimeSignalLoopDeps = {
   invalidateRuntimeTopologyCache: () => runtimeTopologyCacheService.invalidate(),
 };
 
+type RuntimeSignalRouteEntry = {
+  bot: ActiveBot;
+  group: ActiveBotMarketGroup;
+};
+
 export class RuntimeSignalLoop {
   private unsubscribe: (() => Promise<void>) | null = null;
   private sessionWatchdogTimer: NodeJS.Timeout | null = null;
@@ -219,6 +225,9 @@ export class RuntimeSignalLoop {
   private readonly marketDataGateway = new RuntimeSignalMarketDataGateway({
     nowMs: () => this.deps.nowMs(),
   });
+  private routedTopologyRef: ActiveBot[] | null = null;
+  private readonly routeEntriesBySeriesKey = new Map<string, RuntimeSignalRouteEntry[]>();
+  private readonly routeBotsByMarketKey = new Map<string, ActiveBot[]>();
   private lastStreamEventAtMs: number | null = null;
   private lastSessionSyncSuccessAtMs: number | null = null;
   private lastKnownActiveBotIds = new Set<string>();
@@ -298,6 +307,7 @@ export class RuntimeSignalLoop {
     await this.unsubscribe();
     this.unsubscribe = null;
     this.deps.invalidateRuntimeTopologyCache?.();
+    this.clearRuntimeRoutingIndex();
     this.lastStreamEventAtMs = null;
     this.lastSessionSyncSuccessAtMs = null;
     this.lastKnownActiveBotIds.clear();
@@ -346,18 +356,162 @@ export class RuntimeSignalLoop {
 
   private async listActiveBotsFromTopologyCacheWithMetrics() {
     if (!this.deps.listActiveBotsFromTopologyCache) {
-      return this.listActiveBotsDirectWithMetrics();
+      const topology = await this.listActiveBotsDirectWithMetrics();
+      this.rebuildRuntimeRoutingIndex(topology);
+      return topology;
     }
 
     try {
-      return await runtimeMetricsService.measureListActiveBots(async () =>
+      const topology = await runtimeMetricsService.measureListActiveBots(async () =>
         this.deps.listActiveBotsFromTopologyCache()
       );
+      this.rebuildRuntimeRoutingIndex(topology);
+      return topology;
     } catch (error) {
       console.error('RuntimeSignalLoop topology cache read failed. Falling back to direct query.', error);
       metricsStore.recordRuntimeExecutionError('runtime_topology_cache_read_failure');
-      return this.listActiveBotsDirectWithMetrics();
+      const topology = await this.listActiveBotsDirectWithMetrics();
+      this.rebuildRuntimeRoutingIndex(topology);
+      return topology;
     }
+  }
+
+  private clearRuntimeRoutingIndex() {
+    this.routedTopologyRef = null;
+    this.routeEntriesBySeriesKey.clear();
+    this.routeBotsByMarketKey.clear();
+  }
+
+  private buildRuntimeMarketKey(exchange: ActiveBot['exchange'], marketType: ActiveBot['marketType']) {
+    return `${exchange}|${marketType}`;
+  }
+
+  private buildRuntimeSeriesRouteKey(input: {
+    marketKey: string;
+    symbol: string;
+    interval: string;
+  }) {
+    return `${input.marketKey}|${input.symbol}|${input.interval}`;
+  }
+
+  private rebuildRuntimeRoutingIndex(topology: ActiveBot[]) {
+    if (this.routedTopologyRef === topology) return;
+    this.clearRuntimeRoutingIndex();
+    this.routedTopologyRef = topology;
+
+    for (const bot of topology) {
+      const marketKey = this.buildRuntimeMarketKey(bot.exchange, bot.marketType);
+      const marketBots = this.routeBotsByMarketKey.get(marketKey);
+      if (marketBots) {
+        marketBots.push(bot);
+      } else {
+        this.routeBotsByMarketKey.set(marketKey, [bot]);
+      }
+
+      for (const group of bot.marketGroups) {
+        if (group.strategies.length === 0) continue;
+
+        const symbolKeys = group.symbols
+          .map((symbol) => normalizeSymbol(symbol))
+          .filter((symbol): symbol is string => symbol.length > 0);
+        const effectiveSymbolKeys = symbolKeys.length > 0 ? symbolKeys : ['*'];
+        const intervalKeys = Array.from(
+          new Set(
+            group.strategies.map((strategy) =>
+              strategy.strategyInterval ? normalizeInterval(strategy.strategyInterval) : '*'
+            )
+          )
+        );
+        const effectiveIntervalKeys = intervalKeys.length > 0 ? intervalKeys : ['*'];
+
+        for (const symbolKey of effectiveSymbolKeys) {
+          for (const intervalKey of effectiveIntervalKeys) {
+            const routeKey = this.buildRuntimeSeriesRouteKey({
+              marketKey,
+              symbol: symbolKey,
+              interval: intervalKey,
+            });
+            const routeEntries = this.routeEntriesBySeriesKey.get(routeKey);
+            if (routeEntries) {
+              routeEntries.push({ bot, group });
+            } else {
+              this.routeEntriesBySeriesKey.set(routeKey, [{ bot, group }]);
+            }
+          }
+        }
+      }
+    }
+
+    for (const [marketKey, marketBots] of this.routeBotsByMarketKey.entries()) {
+      this.routeBotsByMarketKey.set(
+        marketKey,
+        [...marketBots].sort((left, right) => left.id.localeCompare(right.id))
+      );
+    }
+
+    for (const [routeKey, routeEntries] of this.routeEntriesBySeriesKey.entries()) {
+      this.routeEntriesBySeriesKey.set(
+        routeKey,
+        [...routeEntries].sort((left, right) => {
+          if (left.bot.id !== right.bot.id) {
+            return left.bot.id.localeCompare(right.bot.id);
+          }
+          if (left.group.executionOrder !== right.group.executionOrder) {
+            return left.group.executionOrder - right.group.executionOrder;
+          }
+          return left.group.id.localeCompare(right.group.id);
+        })
+      );
+    }
+  }
+
+  private resolveRuntimeRoutesForEvent(event: StreamCandleEvent, topology: ActiveBot[]) {
+    if (this.routedTopologyRef !== topology) {
+      this.rebuildRuntimeRoutingIndex(topology);
+    }
+
+    const marketKey = this.buildRuntimeMarketKey(event.exchange, event.marketType);
+    if (!this.routeBotsByMarketKey.has(marketKey)) return [];
+    const symbolKey = normalizeSymbol(event.symbol);
+    if (!symbolKey) return [];
+    const intervalKey = normalizeInterval(event.interval);
+    const candidateRouteKeys = [
+      this.buildRuntimeSeriesRouteKey({
+        marketKey,
+        symbol: symbolKey,
+        interval: intervalKey,
+      }),
+      this.buildRuntimeSeriesRouteKey({
+        marketKey,
+        symbol: symbolKey,
+        interval: '*',
+      }),
+      this.buildRuntimeSeriesRouteKey({
+        marketKey,
+        symbol: '*',
+        interval: intervalKey,
+      }),
+      this.buildRuntimeSeriesRouteKey({
+        marketKey,
+        symbol: '*',
+        interval: '*',
+      }),
+    ];
+    const seenRouteKeys = new Set<string>();
+    const resolvedRoutes: RuntimeSignalRouteEntry[] = [];
+
+    for (const routeKey of candidateRouteKeys) {
+      const routeEntries = this.routeEntriesBySeriesKey.get(routeKey);
+      if (!routeEntries?.length) continue;
+      for (const routeEntry of routeEntries) {
+        const dedupeKey = `${routeEntry.bot.id}|${routeEntry.group.id}`;
+        if (seenRouteKeys.has(dedupeKey)) continue;
+        seenRouteKeys.add(dedupeKey);
+        resolvedRoutes.push(routeEntry);
+      }
+    }
+
+    return resolvedRoutes;
   }
 
   private async detectRuntimeStall(now: number, activeBotIdsFromSync: string[]) {
@@ -407,6 +561,7 @@ export class RuntimeSignalLoop {
     }
     this.processedDecisionWindows.clear();
     this.deps.invalidateRuntimeTopologyCache?.();
+    this.clearRuntimeRoutingIndex();
     this.lastStreamEventAtMs = null;
     this.lastSessionSyncSuccessAtMs = null;
     this.lastKnownActiveBotIds.clear();
@@ -601,61 +756,52 @@ export class RuntimeSignalLoop {
       console.error('RuntimeSignalLoop managed external positions lookup failed:', error);
       metricsStore.recordRuntimeExecutionError('runtime_external_positions_lookup_failure');
     }
+    const runtimeRoutes = this.resolveRuntimeRoutesForEvent(event, bots);
+    runtimeMetricsService.recordEligibleGroupsCount(runtimeRoutes.length);
+    const runtimeSessionByBotId = new Map<string, string | undefined>();
+
     await Promise.all(
-      bots.map(async (bot) => {
-        if (bot.marketType !== event.marketType) return;
-        if (bot.exchange !== event.exchange) return;
-        const sessionId = await this.deps.ensureRuntimeSession?.({
-          userId: bot.userId,
-          botId: bot.id,
-          mode: bot.mode,
-        });
+      runtimeRoutes.map(async ({ bot, group }) => {
+        if (!runtimeSessionByBotId.has(bot.id)) {
+          const ensuredSessionId = await this.deps.ensureRuntimeSession?.({
+            userId: bot.userId,
+            botId: bot.id,
+            mode: bot.mode,
+          });
+          runtimeSessionByBotId.set(bot.id, ensuredSessionId);
+        }
+        const sessionId = runtimeSessionByBotId.get(bot.id);
 
-        const eligibleGroups = bot.marketGroups.filter((group) => {
-          if (group.symbols.length > 0) {
-            const hasSymbol = group.symbols.some(
-              (symbol) => normalizeSymbol(symbol) === normalizeSymbol(event.symbol)
-            );
-            if (!hasSymbol) return false;
-          }
-          return group.strategies.some((strategy) =>
+        const groupEvalStartedAt = this.deps.nowMs();
+        const strategyAnalysisById: Record<
+          string,
+          { conditionLines: RuntimeSignalConditionLine[]; indicatorSummary: string | null }
+        > = {};
+        const strategyVotes: StrategyVote[] = group.strategies
+          .filter((strategy) =>
             this.strategyMatchesCandleInterval(strategy.strategyInterval, event.interval)
-          );
-        });
-        runtimeMetricsService.recordEligibleGroupsCount(eligibleGroups.length);
-
-        await Promise.all(
-          eligibleGroups.map(async (group) => {
-            const groupEvalStartedAt = this.deps.nowMs();
-            const strategyAnalysisById: Record<
-              string,
-              { conditionLines: RuntimeSignalConditionLine[]; indicatorSummary: string | null }
-            > = {};
-            const strategyVotes: StrategyVote[] = group.strategies
-              .filter((strategy) =>
-                this.strategyMatchesCandleInterval(strategy.strategyInterval, event.interval)
-              )
-              .map((strategy) => {
-                const evaluation = this.evaluateStrategy({
-                  marketType: bot.marketType,
-                  symbol: event.symbol,
-                  strategy,
-                  decisionOpenTime: event.openTime,
-                });
-                strategyAnalysisById[strategy.strategyId] = {
-                  conditionLines: evaluation.conditionLines,
-                  indicatorSummary: evaluation.indicatorSummary,
-                };
-                const direction = evaluation.direction;
-                if (!direction) return null;
-                return {
-                  strategyId: strategy.strategyId,
-                  direction,
-                  priority: strategy.priority,
-                  weight: strategy.weight,
-                } satisfies StrategyVote;
-              })
-              .filter((vote): vote is StrategyVote => Boolean(vote));
+          )
+          .map((strategy) => {
+            const evaluation = this.evaluateStrategy({
+              marketType: bot.marketType,
+              symbol: event.symbol,
+              strategy,
+              decisionOpenTime: event.openTime,
+            });
+            strategyAnalysisById[strategy.strategyId] = {
+              conditionLines: evaluation.conditionLines,
+              indicatorSummary: evaluation.indicatorSummary,
+            };
+            const direction = evaluation.direction;
+            if (!direction) return null;
+            return {
+              strategyId: strategy.strategyId,
+              direction,
+              priority: strategy.priority,
+              weight: strategy.weight,
+            } satisfies StrategyVote;
+          })
+          .filter((vote): vote is StrategyVote => Boolean(vote));
 
             const merged = mergeRuntimeStrategyVotes({
               strategies: group.strategies,
@@ -961,10 +1107,8 @@ export class RuntimeSignalLoop {
               candleOpenTime: event.openTime,
               candleCloseTime: event.closeTime,
             });
-            metricsStore.recordRuntimeMergeOutcome(direction);
-            metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
-          })
-        );
+        metricsStore.recordRuntimeMergeOutcome(direction);
+        metricsStore.recordRuntimeGroupEvaluation(this.deps.nowMs() - groupEvalStartedAt);
       })
     );
   }

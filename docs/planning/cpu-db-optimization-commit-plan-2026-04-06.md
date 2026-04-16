@@ -98,7 +98,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 
 ### [ ] Group 3 - Signal routing + pre-trade DB short-circuit
 
-- [ ] `CPDB-07 feat(runtime-routing): build seriesKey -> eligible group index`
+- [x] `CPDB-07 feat(runtime-routing): build seriesKey -> eligible group index`
   - Files:
     - `apps/api/src/modules/engine/runtimeSignalLoop.service.ts`
   - Deliverable:
@@ -284,3 +284,4 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Completed `CPDB-05` by switching final-candle topology reads to cache-backed path (`listActiveBotsFromTopologyCache`) with fail-safe fallback to direct query on cache read errors.
 - 2026-04-16: Completed `CPDB-06` by adding parity regression coverage for topology cache hit path, cache-failure direct-query fallback path, and invalidation-driven topology refresh behavior in runtime final-candle flow.
 - 2026-04-16: Closed Group 2 (`CPDB-04..CPDB-06`). Next unchecked group is Group 3 (`CPDB-07..CPDB-09`).
+- 2026-04-16: Completed `CPDB-07` by adding a cache-refresh-bound routing index (`exchange|marketType|symbol|interval`) with wildcard-aware route resolution and deduped group targeting so final-candle evaluation processes only eligible bot market-groups, plus routing-index invalidation on stop/stall topology resets.
