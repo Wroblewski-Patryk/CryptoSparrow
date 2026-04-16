@@ -1100,6 +1100,7 @@ export class RuntimeSignalLoop {
               symbol: event.symbol,
               direction,
               strategyId: merged.strategyId,
+              strategyLeverage: leverage,
               strategyInterval: event.interval,
               quantity: orderQuantity,
               markPrice: event.close,

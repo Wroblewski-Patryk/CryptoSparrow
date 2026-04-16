@@ -136,7 +136,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
   - Tests:
     - `pnpm --filter api test -- runtimeTelemetry`
 
-- [ ] `CPDB-11 refactor(execution): remove redundant strategy leverage query on OPEN`
+- [x] `CPDB-11 refactor(execution): remove redundant strategy leverage query on OPEN`
   - Files:
     - `apps/api/src/modules/engine/executionOrchestrator.service.ts`
     - `apps/api/src/modules/engine/runtimeSignalLoop.service.ts`
@@ -289,3 +289,4 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Completed `CPDB-09` by adding pre-trade parity tests for count-cache reuse and explicit invalidation refresh so user/bot risk caps remain enforced while DB roundtrips are reduced.
 - 2026-04-16: Closed Group 3 (`CPDB-07..CPDB-09`). Next unchecked group is Group 4 (`CPDB-10..CPDB-12`).
 - 2026-04-16: Completed `CPDB-10` by adding throttled `touchSession` heartbeat writes (`RUNTIME_TELEMETRY_TOUCH_SESSION_THROTTLE_MS`, default 15s), debounced symbol-stat batching (`RUNTIME_TELEMETRY_SYMBOL_STAT_DEBOUNCE_MS`, default 250ms), and session-close flush logic for pending stat updates.
+- 2026-04-16: Completed `CPDB-11` by passing `strategyLeverage` from runtime decision context into execution orchestration and deleting per-OPEN strategy leverage lookup query from orchestrator path.

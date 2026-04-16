@@ -22,6 +22,7 @@ export type RuntimeSignalInput = {
   botMarketGroupId?: string;
   runtimeSessionId?: string;
   strategyId?: string;
+  strategyLeverage?: number;
   strategyInterval?: string;
   symbol: string;
   direction: RuntimeSignalDirection;
@@ -727,15 +728,7 @@ export const orchestrateRuntimeSignal = async (
     riskAck: true,
   });
 
-  const strategyLeverage =
-    input.strategyId
-      ? (
-          await prisma.strategy.findFirst({
-            where: { id: input.strategyId, userId: input.userId },
-            select: { leverage: true },
-          })
-        )?.leverage ?? 1
-      : 1;
+  const strategyLeverage = Math.max(1, input.strategyLeverage ?? 1);
 
   const position = await positionGateway.createPosition({
     userId: input.userId,
