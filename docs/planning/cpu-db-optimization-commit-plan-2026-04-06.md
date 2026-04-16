@@ -244,7 +244,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
   - Tests:
     - `pnpm --filter api test -- runtimeSignalLoop marketStreamFanout`
 
-### [ ] Group 8 - Rollout, SLO, and handoff closure
+### [x] Group 8 - Rollout, SLO, and handoff closure
 
 - [x] `CPDB-22 docs(runbook): staged rollout + feature-flag enable sequence + rollback`
   - Files:
@@ -264,7 +264,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
   - Tests:
     - manual ops validation
 
-- [ ] `CPDB-24 qa(soak): 30-minute load soak + evidence note`
+- [x] `CPDB-24 qa(soak): 30-minute load soak + evidence note`
   - Files:
     - `docs/planning/mvp-execution-plan.md`
     - `docs/planning/mvp-next-commits.md`
@@ -306,3 +306,5 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Closed Group 7 (`CPDB-19..CPDB-21`). Next unchecked group is Group 8 (`CPDB-22..CPDB-24`).
 - 2026-04-16: Completed `CPDB-22` by publishing staged flag rollout runbook and rollback matrix in canonical governance/planning docs (`working-agreements`, `v1-live-release-plan`), leaving `CPDB-23..CPDB-24` as remaining Group 8 scope.
 - 2026-04-16: Completed `CPDB-23` by locking CPU/DB alert-threshold and dashboard contract in `open-decisions` (API latency p95, DB QPS, runtime lag, restart bursts), with explicit source mapping and rollout-blocking fallback policy for missing local metrics; `deploy/monitoring` config directories are currently absent in repository scope.
+- 2026-04-16: Completed `CPDB-24` by executing a 30-minute local soak run against `http://localhost:3001` (`/health`, concurrency 20) and publishing evidence artifacts (`docs/operations/_artifacts-cpdb24-soak-2026-04-16T02-03-29-605Z.json`, `docs/operations/cpdb24-soak-report-2026-04-16T02-03-29-605Z.md`) with pre/post metrics snapshot and `FAIL` conclusion (load-test summary overflow after run, with raw evidence preserved).
+- 2026-04-16: Closed Group 8 (`CPDB-22..CPDB-24`). CPU/DB optimization execution plan is fully completed; next active group continues in canonical queue (`WLT-A` in `mvp-next-commits`).

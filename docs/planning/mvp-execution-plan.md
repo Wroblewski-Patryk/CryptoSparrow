@@ -1540,7 +1540,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `CPDB-G5 web-polling(cpu-db): adaptive refresh + SSE-first runtime stats with polling fallback`
 - [x] `CPDB-G6 db-shaping(cpu-db): hot-path indexes + slim topology reads + EXPLAIN evidence`
 - [x] `CPDB-G7 worker-backpressure(cpu-db): per-series concurrency guard + distributed warmup lock`
-- [ ] `CPDB-G8 rollout(cpu-db): canary/rollback docs + alert thresholds + 30m soak evidence`
+- [x] `CPDB-G8 rollout(cpu-db): canary/rollback docs + alert thresholds + 30m soak evidence`
 - [ ] `WLT-A wallet-contracts: wallet source-of-truth docs + decisions + IA placement`
 - [ ] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
 - [ ] `WLT-C wallet-api: wallet CRUD module with mode-aware validation + ownership isolation`
@@ -1556,6 +1556,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `PEX-F deploy-safety: post-deploy runtime freshness gate + rollback trigger policy`
 
 ### Progress Log (Continuous Group Pipeline)
+- 2026-04-16: Closed `CPDB-G8` by completing `CPDB-22..CPDB-24` (staged rollout + rollback runbook contract, CPU/DB alert-threshold/dashboard contract, and 30-minute local soak evidence artifacts with pre/post metrics snapshot and explicit `FAIL` conclusion), then promoted `WLT-A` as the next active group in canonical queue.
 - 2026-04-16: Initialized continuous post-optimization execution queue in canonical plan by importing active open groups from `cpu-db-optimization-commit-plan-2026-04-06.md`, `wallet-module-implementation-plan-2026-04-07.md`, and `production-excellence-plan-2026-04-03.md`, ensuring deterministic next-group continuity after each completed group.
 - 2026-04-16: Closed `CPDB-G1` by completing `CPDB-01..CPDB-03` (feature-flag contract freeze, runtime hot-path metrics instrumentation, and parity-safe metric regression tests) and kept `CPDB-G2` as next active CPU/DB group in canonical queue.
 - 2026-04-16: Closed `CPDB-G2` by completing `CPDB-04..CPDB-06` (runtime topology cache service with TTL/version invalidation, final-candle cache read refactor with direct-query fallback hardening, and parity regression coverage for cache hit/miss/invalidation), with `CPDB-G3` now active as the next CPU/DB group.

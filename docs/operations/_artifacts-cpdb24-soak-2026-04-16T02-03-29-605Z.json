@@ -1,0 +1,204 @@
+{
+    "task":  "CPDB-24",
+    "startedAt":  "2026-04-16T02:03:29.9503762Z",
+    "endedAt":  "2026-04-16T02:33:30.5642726Z",
+    "baseUrl":  "http://localhost:3001",
+    "soak":  {
+                 "durationMinutes":  30,
+                 "loadPath":  "/health",
+                 "concurrency":  20,
+                 "timeoutMs":  5000,
+                 "maxErrorRate":  0.2
+             },
+    "pre":  {
+                "metrics":  {
+                                "http":  {
+                                             "requestsTotal":  2301043,
+                                             "status2xx":  2301038,
+                                             "status4xx":  5,
+                                             "status5xx":  0,
+                                             "totalDurationMs":  626740,
+                                             "avgDurationMs":  0.272372137330767
+                                         },
+                                "exchange":  {
+                                                 "orderAttempts":  0,
+                                                 "orderRetries":  0,
+                                                 "orderFailures":  0
+                                             },
+                                "worker":  {
+                                               "queueLag":  {
+                                                                "marketData":  0,
+                                                                "backtest":  0,
+                                                                "execution":  0
+                                                            }
+                                           },
+                                "runtime":  {
+                                                "groupEvaluation":  {
+                                                                        "total":  0,
+                                                                        "totalDurationMs":  0,
+                                                                        "avgDurationMs":  0
+                                                                    },
+                                                "mergeOutcomes":  {
+                                                                      "long":  0,
+                                                                      "short":  0,
+                                                                      "exit":  0,
+                                                                      "noTrade":  0
+                                                                  },
+                                                "signalLag":  {
+                                                                  "total":  0,
+                                                                  "lastMs":  0,
+                                                                  "maxMs":  0,
+                                                                  "totalLagMs":  0,
+                                                                  "avgLagMs":  0
+                                                              },
+                                                "restarts":  {
+                                                                 "total":  0,
+                                                                 "noEvent":  0,
+                                                                 "noHeartbeat":  0
+                                                             },
+                                                "reconciliation":  {
+                                                                       "total":  0,
+                                                                       "pending":  0,
+                                                                       "totalDelayMs":  0,
+                                                                       "avgDelayMs":  0,
+                                                                       "maxDelayMs":  0
+                                                                   },
+                                                "hotPath":  {
+                                                                "listActiveBots":  {
+                                                                                       "total":  0,
+                                                                                       "totalDurationMs":  0,
+                                                                                       "avgDurationMs":  0,
+                                                                                       "maxDurationMs":  0
+                                                                                   },
+                                                                "eligibleGroupsCount":  {
+                                                                                            "total":  0,
+                                                                                            "totalGroups":  0,
+                                                                                            "avgGroupsPerEvaluation":  0,
+                                                                                            "maxGroupsPerEvaluation":  0
+                                                                                        },
+                                                                "preTradeLatencyMs":  {
+                                                                                          "total":  0,
+                                                                                          "totalDurationMs":  0,
+                                                                                          "avgDurationMs":  0,
+                                                                                          "maxDurationMs":  0
+                                                                                      },
+                                                                "touchSessionWrites":  0,
+                                                                "symbolStatsWrites":  0
+                                                            },
+                                                "executionErrors":  {
+
+                                                                    }
+                                            },
+                                "assistant":  {
+                                                  "subagentTimeouts":  0
+                                              }
+                            },
+                "alerts":  {
+                               "alerts":  [
+
+                                          ]
+                           }
+            },
+    "post":  {
+                 "metrics":  {
+                                 "http":  {
+                                              "requestsTotal":  4352053,
+                                              "status2xx":  4352048,
+                                              "status4xx":  5,
+                                              "status5xx":  0,
+                                              "totalDurationMs":  1276488,
+                                              "avgDurationMs":  0.2933070897803864
+                                          },
+                                 "exchange":  {
+                                                  "orderAttempts":  0,
+                                                  "orderRetries":  0,
+                                                  "orderFailures":  0
+                                              },
+                                 "worker":  {
+                                                "queueLag":  {
+                                                                 "marketData":  0,
+                                                                 "backtest":  0,
+                                                                 "execution":  0
+                                                             }
+                                            },
+                                 "runtime":  {
+                                                 "groupEvaluation":  {
+                                                                         "total":  0,
+                                                                         "totalDurationMs":  0,
+                                                                         "avgDurationMs":  0
+                                                                     },
+                                                 "mergeOutcomes":  {
+                                                                       "long":  0,
+                                                                       "short":  0,
+                                                                       "exit":  0,
+                                                                       "noTrade":  0
+                                                                   },
+                                                 "signalLag":  {
+                                                                   "total":  0,
+                                                                   "lastMs":  0,
+                                                                   "maxMs":  0,
+                                                                   "totalLagMs":  0,
+                                                                   "avgLagMs":  0
+                                                               },
+                                                 "restarts":  {
+                                                                  "total":  0,
+                                                                  "noEvent":  0,
+                                                                  "noHeartbeat":  0
+                                                              },
+                                                 "reconciliation":  {
+                                                                        "total":  0,
+                                                                        "pending":  0,
+                                                                        "totalDelayMs":  0,
+                                                                        "avgDelayMs":  0,
+                                                                        "maxDelayMs":  0
+                                                                    },
+                                                 "hotPath":  {
+                                                                 "listActiveBots":  {
+                                                                                        "total":  0,
+                                                                                        "totalDurationMs":  0,
+                                                                                        "avgDurationMs":  0,
+                                                                                        "maxDurationMs":  0
+                                                                                    },
+                                                                 "eligibleGroupsCount":  {
+                                                                                             "total":  0,
+                                                                                             "totalGroups":  0,
+                                                                                             "avgGroupsPerEvaluation":  0,
+                                                                                             "maxGroupsPerEvaluation":  0
+                                                                                         },
+                                                                 "preTradeLatencyMs":  {
+                                                                                           "total":  0,
+                                                                                           "totalDurationMs":  0,
+                                                                                           "avgDurationMs":  0,
+                                                                                           "maxDurationMs":  0
+                                                                                       },
+                                                                 "touchSessionWrites":  0,
+                                                                 "symbolStatsWrites":  0
+                                                             },
+                                                 "executionErrors":  {
+
+                                                                     }
+                                             },
+                                 "assistant":  {
+                                                   "subagentTimeouts":  0
+                                               }
+                             },
+                 "alerts":  {
+                                "alerts":  [
+
+                                           ]
+                            }
+             },
+    "delta":  {
+                  "httpRequestsTotal":  2051010,
+                  "http5xxTotal":  0,
+                  "runtimeSignalLagLastMs":  0,
+                  "runtimeSignalLagAvgMs":  0,
+                  "runtimeRestartsTotalDelta":  0,
+                  "executionQueueLagPost":  0
+              },
+    "loadTest":  {
+                     "exitCode":  1,
+                     "summary":  null,
+                     "rawOutput":  "node : file:///C:/Personal/Projekty/Aplikacje/CryptoSparrow/apps/api/scripts/load-test.mjs:125\r\nAt line:22 char:13\r\n+ $loadOutput=node apps/api/scripts/load-test.mjs baseline 2\u003e\u00261;\r\n+             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : NotSpecified: (file:///C:/Pers...ad-test.mjs:125:String) [], RemoteException\r\n    + FullyQualifiedErrorId : NativeCommandError\r\n \r\n    minMs: result.latenciesMs.length ? Math.min(...result.latenciesMs) : 0,\r\n                                            ^\r\n\r\nRangeError: Maximum call stack size exceeded\r\n    at file:///C:/Personal/Projekty/Aplikacje/CryptoSparrow/apps/api/scripts/load-test.mjs:125:45\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\r\n\r\nNode.js v22.13.0"
+                 }
+}
