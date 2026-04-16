@@ -140,12 +140,11 @@ const defaultDeps: RuntimeCapitalContextDeps = {
           },
         },
       });
-      if (wallet?.apiKey && wallet.apiKey.exchange === exchange) {
-        return {
-          apiKey: decrypt(wallet.apiKey.apiKey),
-          apiSecret: decrypt(wallet.apiKey.apiSecret),
-        };
-      }
+      if (!wallet?.apiKey || wallet.apiKey.exchange !== exchange) return null;
+      return {
+        apiKey: decrypt(wallet.apiKey.apiKey),
+        apiSecret: decrypt(wallet.apiKey.apiSecret),
+      };
     }
 
     if (botId) {
@@ -241,11 +240,13 @@ export const resolvePaperRuntimeCapitalSnapshot = async (
 
   const startBalance = wallet
     ? Math.max(0, wallet.paperInitialBalance)
-    : await deps.getBotPaperStartBalance({
-        userId: input.userId,
-        botId: input.botId,
-        fallback: input.paperStartBalance,
-      });
+    : input.walletId
+      ? 0
+      : await deps.getBotPaperStartBalance({
+          userId: input.userId,
+          botId: input.botId,
+          fallback: input.paperStartBalance,
+        });
 
   const [openPositions, realizedPnl] = await Promise.all([
     deps.listOpenBotManagedPositions({
@@ -290,6 +291,7 @@ const resolveLiveRuntimeCapitalSnapshot = async (
     userId: input.userId,
     walletId: input.walletId,
   });
+  const walletScoped = Boolean(input.walletId);
   const baseCurrency = normalizeBaseCurrency(wallet?.baseCurrency ?? 'USDT');
 
   const cacheKey = `${input.userId}:${input.walletId ?? input.botId ?? 'none'}:${input.exchange}:${input.marketType}:${baseCurrency}`;
@@ -323,7 +325,7 @@ const resolveLiveRuntimeCapitalSnapshot = async (
     exchange: input.exchange,
   });
 
-  let accountBalance = runtimeReferenceBalanceFallback;
+  let accountBalance = walletScoped ? 0 : runtimeReferenceBalanceFallback;
   if (apiKey) {
     const fetched = await deps.fetchLiveBalance({
       apiKey: apiKey.apiKey,
@@ -342,7 +344,9 @@ const resolveLiveRuntimeCapitalSnapshot = async (
         liveAllocationMode: wallet.liveAllocationMode,
         liveAllocationValue: wallet.liveAllocationValue,
       })
-    : accountBalance;
+    : walletScoped
+      ? 0
+      : accountBalance;
 
   liveBalanceCache.set(cacheKey, { value: referenceBalance, fetchedAt: input.nowMs });
 

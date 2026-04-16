@@ -134,7 +134,7 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 - [x] `WLT-14 test(api-bots): add regression tests for wallet binding, mismatch errors, and shared-wallet assignment`
 
 ### Phase E - Runtime Budget Enforcement
-- [ ] `WLT-15 refactor(runtime-capital): resolve reference balance from wallet context (paper/live rules)`
+- [x] `WLT-15 refactor(runtime-capital): resolve reference balance from wallet context (paper/live rules)`
 - [ ] `WLT-16 feat(runtime-budget): enforce hard-fail wallet free-cash checks for OPEN and DCA`
 - [ ] `WLT-17 feat(runtime-attribution): persist walletId snapshot on runtime-created positions/orders/trades`
 - [ ] `WLT-18 test(runtime): shared-wallet multi-bot concurrency and insufficient-funds regressions`
@@ -159,6 +159,7 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 - API/web/runtime tests cover wallet mismatch and insufficient-funds scenarios.
 
 ## Progress Log
+- 2026-04-16: Completed `WLT-15` by hardening `runtimeCapitalContext` to wallet-first balance sourcing (no bot/latest API-key fallback when `walletId` is present, wallet-scoped LIVE fail-closed reference balance, and wallet-scoped PAPER start-balance fallback to `0` when wallet context is missing), with unit coverage added for wallet PAPER/LIVE semantics; validated with `pnpm --filter api test -- src/modules/engine/runtimeCapitalContext.service.test.ts` and `pnpm --filter api run typecheck` (PASS).
 - 2026-04-16: Completed `WLT-14` by adding targeted bot wallet-contract e2e suite `apps/api/src/modules/bots/bots.wallet-contract.e2e.test.ts` (deprecated direct-field payload behavior, wallet-switch mismatch guard, shared-wallet assignment) and validating with `pnpm --filter api test -- src/modules/bots/bots.wallet-contract.e2e.test.ts` (PASS, `4/4`).
 - 2026-04-16: Completed `WLT-13` by locking wallet-first write semantics in bot create/update payload handling where direct execution fields (`mode`, `paperStartBalance`, `apiKeyId`) are treated as deprecated compatibility inputs and do not override wallet-derived runtime context.
 - 2026-04-16: Completed `WLT-12` by adding update-time wallet compatibility guard in `apps/api/src/modules/bots/botsCommand.service.ts` to reject `walletId` switches when existing bot market-group universe context (`exchange/marketType/baseCurrency`) mismatches selected wallet context.

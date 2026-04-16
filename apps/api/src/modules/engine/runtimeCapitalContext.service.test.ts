@@ -56,6 +56,87 @@ describe('runtimeCapitalContext', () => {
     expect(reference).toBe(1_750);
   });
 
+  it('uses wallet paper balance as source of truth when walletId is provided', async () => {
+    const snapshot = await resolvePaperRuntimeCapitalSnapshot(
+      {
+        userId: 'u-wallet-paper',
+        botId: 'b-wallet-paper',
+        walletId: 'wallet-paper',
+        paperStartBalance: 50_000,
+      },
+      buildDeps({
+        getWalletContext: async () => ({
+          id: 'wallet-paper',
+          mode: 'PAPER',
+          paperInitialBalance: 4_000,
+          liveAllocationMode: null,
+          liveAllocationValue: null,
+          baseCurrency: 'USDT',
+          exchange: 'BINANCE',
+          apiKey: null,
+        }),
+        getBotPaperStartBalance: async () => {
+          throw new Error('wallet-scoped paper path should not read bot paper balance');
+        },
+        sumClosedBotManagedRealizedPnl: async () => 250,
+      }),
+    );
+
+    expect(snapshot.referenceBalance).toBe(4_250);
+  });
+
+  it('applies wallet LIVE allocation rules to runtime reference balance', async () => {
+    const reference = await resolveRuntimeReferenceBalance(
+      {
+        userId: 'u-wallet-live',
+        botId: 'b-wallet-live',
+        walletId: 'wallet-live',
+        mode: 'LIVE',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        paperStartBalance: 0,
+        nowMs: 5_000,
+      },
+      buildDeps({
+        getWalletContext: async () => ({
+          id: 'wallet-live',
+          mode: 'LIVE',
+          paperInitialBalance: 0,
+          liveAllocationMode: 'PERCENT',
+          liveAllocationValue: 25,
+          baseCurrency: 'USDT',
+          exchange: 'BINANCE',
+          apiKey: null,
+        }),
+        getLiveApiKeyContext: async () => ({ apiKey: 'k', apiSecret: 's' }),
+        fetchLiveBalance: async () => 4_000,
+      }),
+    );
+
+    expect(reference).toBe(1_000);
+  });
+
+  it('fails closed for wallet-scoped LIVE balance when wallet context is unavailable', async () => {
+    const reference = await resolveRuntimeReferenceBalance(
+      {
+        userId: 'u-wallet-live-missing',
+        botId: 'b-wallet-live-missing',
+        walletId: 'wallet-missing',
+        mode: 'LIVE',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        paperStartBalance: 0,
+        nowMs: 6_000,
+      },
+      buildDeps({
+        getWalletContext: async () => null,
+        getLiveApiKeyContext: async () => null,
+      }),
+    );
+
+    expect(reference).toBe(0);
+  });
+
   it('marks DCA as unaffordable when required margin is above free paper cash', async () => {
     const exhausted = await resolveRuntimeDcaFundsExhausted(
       {

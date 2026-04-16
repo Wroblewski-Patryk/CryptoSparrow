@@ -22,6 +22,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `WLT-15 refactor(runtime-capital): resolve reference balance from wallet context (paper/live rules)`
+  - 2026-04-16: Advanced active wallet group `WLT-E` by hardening runtime capital resolution to wallet-first semantics (wallet-scoped PAPER/LIVE context with fail-closed behavior when wallet context/API key is missing) and validating via `pnpm --filter api test -- src/modules/engine/runtimeCapitalContext.service.test.ts` + `pnpm --filter api run typecheck` (PASS); remaining `WLT-E` scope is `WLT-16..WLT-18`.
 - [x] `QFIX-A runtime-quality(api): telemetry flush fail-safe + runtime typecheck restoration`
   - 2026-04-16: Closed runtime quality cleanup gate by hardening telemetry symbol-stat flush to be fail-safe during teardown races (recoverable Prisma FK `P2003` handling + background flush catch), fixing runtime typecheck regressions in `runtimeSignalLoop*` and `marketStreamFanout*`, and validating with `pnpm --filter api run typecheck`, `pnpm --filter api test -- src/modules/bots/bots.e2e.test.ts src/modules/bots/bots.duplicate-guard.e2e.test.ts`, and `pnpm --filter api test -- src/modules/engine/runtimeSignalLoop.service.test.ts src/modules/market-stream/marketStreamFanout.test.ts` (PASS); next active group promoted to `WLT-E`.
 - [x] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
