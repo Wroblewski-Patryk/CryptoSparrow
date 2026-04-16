@@ -11,6 +11,7 @@ This runbook covers:
 
 Out of scope:
 - backtest UX details (covered by backtest runbooks),
+- wallet lifecycle and wallet-budget troubleshooting details (see wallet lifecycle runbook),
 - exchange-key onboarding details (see Binance onboarding runbook).
 
 ## 2. Runtime Contract (Operator View)

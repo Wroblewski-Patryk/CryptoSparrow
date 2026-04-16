@@ -20,6 +20,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `WLT-24 docs(runbook): publish operator guide for wallet lifecycle and insufficient-funds troubleshooting`
+  - 2026-04-16: Advanced active wallet group `WLT-G` by publishing `docs/operations/wallet-lifecycle-operator-runbook.md` (wallet-first lifecycle procedure + insufficient-funds incident matrix with fast triage, deep diagnostics, and safe mitigations), and linking it from bot and MVP ops runbooks for operator discovery; remaining `WLT-G` scope is `WLT-25`.
 - [x] `WLT-23 qa(api+web+runtime): execute end-to-end flow strategy -> bot(wallet) -> paper/live runtime`
   - 2026-04-16: Advanced active wallet group `WLT-G` by running strategy/wallet/bot/runtime/web confidence pack (`strategies.e2e`, `wallets.crud.e2e`, `bots.wallet-contract.e2e`, `preTrade.e2e`, `runtime-flow.e2e`, `runtime-orchestration-smoke.e2e`, wallet pages + bot-form web regressions) plus API/web typecheck (PASS), and stabilized `runtime-flow.e2e` to deterministic PAPER runtime assertions with async polling; remaining `WLT-G` scope is `WLT-24..WLT-25`.
 - [x] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`

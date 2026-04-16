@@ -156,5 +156,6 @@ Capture every deploy/recovery incident using:
 ## 8. Exchange API-Key Diagnostics
 For API-key onboarding and Binance permission troubleshooting, use:
 - `docs/operations/binance-api-key-onboarding-runbook.md`
+- `docs/operations/wallet-lifecycle-operator-runbook.md` (wallet lifecycle and insufficient-funds troubleshooting)
 
 
