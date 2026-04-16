@@ -5,6 +5,23 @@ import { prisma } from '../../prisma/client';
 import { RuntimeSignalLoop } from './runtimeSignalLoop.service';
 import { setActiveSubscriptionForUser } from '../subscriptions/subscriptions.service';
 
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const pollUntil = async <T>(
+  resolver: () => Promise<T | null>,
+  predicate: (value: T | null) => boolean,
+  timeoutMs = 4_000,
+  intervalMs = 100
+) => {
+  const deadline = Date.now() + timeoutMs;
+  let current = await resolver();
+  while (!predicate(current) && Date.now() < deadline) {
+    await wait(intervalMs);
+    current = await resolver();
+  }
+  return current;
+};
+
 const registerAndLogin = async (email: string) => {
   const agent = request.agent(app);
   const res = await agent.post('/auth/register').send({
@@ -15,7 +32,7 @@ const registerAndLogin = async (email: string) => {
   return agent;
 };
 
-describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
+describe('Runtime flow e2e (strategy -> backtest -> paper runtime)', () => {
   beforeEach(async () => {
     await prisma.log.deleteMany();
     await prisma.backtestReport.deleteMany();
@@ -42,7 +59,7 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
     await prisma.user.deleteMany();
   });
 
-  it('creates runtime orders/positions and closes via ticker lifecycle after strategy entry for LIVE bot', async () => {
+  it('creates runtime orders/positions and closes via ticker lifecycle after strategy entry for PAPER bot', async () => {
     const runtimeSignalLoop = new RuntimeSignalLoop();
     const email = 'runtime-flow@example.com';
     const agent = await registerAndLogin(email);
@@ -108,27 +125,15 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
     });
     expect(backtestRes.status).toBe(201);
 
-    const apiKeyRes = await agent.post('/dashboard/profile/apiKeys').send({
-      label: 'runtime-flow-live',
-      exchange: 'BINANCE',
-      apiKey: 'RUNTIME_FLOW_LIVE_KEY',
-      apiSecret: 'RUNTIME_FLOW_LIVE_SECRET',
-      syncExternalPositions: true,
-      manageExternalPositions: false,
-    });
-    expect(apiKeyRes.status).toBe(201);
     const wallet = await prisma.wallet.create({
       data: {
         userId: user.id,
-        name: 'Runtime Flow Live Wallet',
-        mode: 'LIVE',
+        name: 'Runtime Flow Paper Wallet',
+        mode: 'PAPER',
         exchange: 'BINANCE',
         marketType: 'FUTURES',
         baseCurrency: 'USDT',
         paperInitialBalance: 10_000,
-        liveAllocationMode: 'PERCENT',
-        liveAllocationValue: 100,
-        apiKeyId: apiKeyRes.body.id as string,
       },
       select: {
         id: true,
@@ -136,13 +141,13 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
     });
 
     const botRes = await agent.post('/dashboard/bots').send({
-      name: 'Runtime Live Bot',
+      name: 'Runtime Paper Bot',
       walletId: wallet.id,
       strategyId,
       marketGroupId: createSymbolGroup.id,
       isActive: true,
-      liveOptIn: true,
-      consentTextVersion: 'mvp-v1',
+      liveOptIn: false,
+      consentTextVersion: null,
     });
     expect(botRes.status).toBe(201);
     const botId = botRes.body.id as string;
@@ -212,41 +217,57 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
       priceChangePercent24h: 1.8,
     });
 
-    const openedPosition = await prisma.position.findFirst({
-      where: {
-        botId,
-        symbol: 'BTCUSDT',
-        status: 'OPEN',
-      },
-    });
+    const openedPosition = await pollUntil(
+      () =>
+        prisma.position.findFirst({
+          where: {
+            botId,
+            symbol: 'BTCUSDT',
+            status: 'OPEN',
+          },
+        }),
+      (value) => Boolean(value)
+    );
     expect(openedPosition).toBeTruthy();
 
-    const openedOrder = await prisma.order.findFirst({
-      where: {
-        botId,
-        symbol: 'BTCUSDT',
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const openedOrder = await pollUntil(
+      () =>
+        prisma.order.findFirst({
+          where: {
+            botId,
+            symbol: 'BTCUSDT',
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+      (value) => Boolean(value)
+    );
     expect(openedOrder).toBeTruthy();
 
-    const runtimeSignal = await prisma.signal.findFirst({
-      where: {
-        botId,
-        symbol: 'BTCUSDT',
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const runtimeSignal = await pollUntil(
+      () =>
+        prisma.signal.findFirst({
+          where: {
+            botId,
+            symbol: 'BTCUSDT',
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+      (value) => value?.direction === 'LONG'
+    );
     expect(runtimeSignal?.direction).toBe('LONG');
 
     await emitFinalCandle(3, 50000);
-    const exitSignal = await prisma.signal.findFirst({
-      where: {
-        botId,
-        symbol: 'BTCUSDT',
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const exitSignal = await pollUntil(
+      () =>
+        prisma.signal.findFirst({
+          where: {
+            botId,
+            symbol: 'BTCUSDT',
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+      (value) => value?.direction === 'EXIT'
+    );
     expect(exitSignal?.direction).toBe('EXIT');
 
     await runtimeSignalLoop.processTickerEvent({
@@ -259,13 +280,17 @@ describe('Runtime flow e2e (strategy -> backtest -> live runtime)', () => {
       priceChangePercent24h: -3.8,
     });
 
-    const closedPosition = await prisma.position.findFirst({
-      where: {
-        botId,
-        symbol: 'BTCUSDT',
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const closedPosition = await pollUntil(
+      () =>
+        prisma.position.findFirst({
+          where: {
+            botId,
+            symbol: 'BTCUSDT',
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+      (value) => value?.status === 'CLOSED'
+    );
     expect(closedPosition?.status).toBe('CLOSED');
   });
 });

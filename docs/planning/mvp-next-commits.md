@@ -20,6 +20,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `WLT-23 qa(api+web+runtime): execute end-to-end flow strategy -> bot(wallet) -> paper/live runtime`
+  - 2026-04-16: Advanced active wallet group `WLT-G` by running strategy/wallet/bot/runtime/web confidence pack (`strategies.e2e`, `wallets.crud.e2e`, `bots.wallet-contract.e2e`, `preTrade.e2e`, `runtime-flow.e2e`, `runtime-orchestration-smoke.e2e`, wallet pages + bot-form web regressions) plus API/web typecheck (PASS), and stabilized `runtime-flow.e2e` to deterministic PAPER runtime assertions with async polling; remaining `WLT-G` scope is `WLT-24..WLT-25`.
 - [x] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
   - 2026-04-16: Closed wallet Group F by completing `WLT-19..WLT-22` (dashboard nav placement `Exchanges -> Wallets -> Markets`, wallet pages route/form coverage, wallet-first bot form context summary, and regression suite for wallet pages + nav + bot-form payload contract), validated with targeted web tests and `pnpm --filter web run typecheck` (PASS); next wallet group promoted to `WLT-G`.
 - [x] `WLT-22 test(web): add regression coverage for wallet pages, nav placement, and bot-form payload changes`

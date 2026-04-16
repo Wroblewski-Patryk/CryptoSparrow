@@ -78,3 +78,18 @@ $ts = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH-mm-ss-fffZ')
 - Avoid: using spread (`Math.min(...arr)`, `Math.max(...arr)`) over unbounded large arrays in long-duration load runners.
 - Evidence:
   - Observed on 2026-04-16 in `docs/operations/_artifacts-cpdb24-soak-2026-04-16T02-03-29-605Z.json` (`RangeError` in `apps/api/scripts/load-test.mjs`).
+
+### 2026-04-16 - API e2e shared-db concurrency collision
+- Context: running multiple API e2e files in one `vitest` invocation against the shared local test database.
+- Symptom: suites that pass individually fail in batch with FK cleanup errors (for example `BacktestRun_userId_fkey` during `wallets.crud.e2e` teardown).
+- Root cause: file-level parallel execution causes cleanup order races between suites that mutate overlapping relational tables.
+- Guardrail: run DB-mutating API e2e suites sequentially per file for planning/QA evidence runs unless an isolated database per worker is configured.
+- Preferred pattern:
+```powershell
+pnpm --filter api test -- src/modules/strategies/strategies.e2e.test.ts
+if ($LASTEXITCODE -eq 0) { pnpm --filter api test -- src/modules/wallets/wallets.crud.e2e.test.ts }
+if ($LASTEXITCODE -eq 0) { pnpm --filter api test -- src/modules/bots/bots.wallet-contract.e2e.test.ts }
+```
+- Avoid: bundling several DB-mutating e2e files into a single `vitest` call in this environment.
+- Evidence:
+  - Reproduced on 2026-04-16 while executing WLT-23 QA pack; grouped run failed with FK cleanup collisions, sequential per-file execution passed.

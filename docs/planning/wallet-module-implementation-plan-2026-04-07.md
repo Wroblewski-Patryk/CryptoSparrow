@@ -146,7 +146,7 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 - [x] `WLT-22 test(web): add regression coverage for wallet pages, nav placement, and bot-form payload changes`
 
 ### Phase G - QA and Stabilization
-- [ ] `WLT-23 qa(api+web+runtime): execute end-to-end flow strategy -> bot(wallet) -> paper/live runtime`
+- [x] `WLT-23 qa(api+web+runtime): execute end-to-end flow strategy -> bot(wallet) -> paper/live runtime`
 - [ ] `WLT-24 docs(runbook): publish operator guide for wallet lifecycle and insufficient-funds troubleshooting`
 - [ ] `WLT-25 release(gate): run lint/typecheck/tests and capture rollout evidence`
 
@@ -159,6 +159,7 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 - API/web/runtime tests cover wallet mismatch and insufficient-funds scenarios.
 
 ## Progress Log
+- 2026-04-16: Completed `WLT-23` by executing wallet QA end-to-end confidence pack across strategy/wallet/bot/runtime/web flows (`strategies.e2e`, `wallets.crud.e2e`, `bots.wallet-contract.e2e`, `preTrade.e2e`, `runtime-flow.e2e`, `runtime-orchestration-smoke.e2e`, wallet page + bot-form web regressions) and API/web typecheck (PASS), plus stabilizing runtime e2e contract by making `runtime-flow.e2e` deterministic for PAPER runtime with async polling assertions; remaining scope in Phase G: `WLT-24..WLT-25`.
 - 2026-04-16: Completed `WLT-22` by adding wallet-module web regressions for route coverage (`/dashboard/wallets` redirect and `/dashboard/wallets/list` list/empty/add-action behavior), nav placement coverage (`Header.responsive` checks for `Exchanges`/`Wallets` route links + order), and bot-form payload contract coverage (`BotCreateEditForm` create payload asserts wallet-first fields and absence of legacy `mode/paperStartBalance/apiKeyId`); validated with `pnpm --filter web test -- src/app/dashboard/wallets/page.test.tsx src/app/dashboard/wallets/list/page.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx src/features/bots/components/BotCreateEditForm.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - 2026-04-16: Completed `WLT-21` by hardening wallet-first bot form UX contract in `BotCreateEditForm` (explicit wallet context summary: selected wallet, mode, venue context, LIVE API key status; legacy mode/paper-balance controls kept absent) and aligning LIVE missing-key validation copy to canonical i18n; validated with `pnpm --filter web test -- src/features/bots/components/BotCreateEditForm.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - 2026-04-16: Completed `WLT-20` by confirming wallet module web routes/screens are in place (`/dashboard/wallets/list`, `/dashboard/wallets/create`, `/dashboard/wallets/[id]/edit`) and backed by mode-aware wallet form behavior (`PAPER`/`LIVE` conditional sections + payload contract), validated with `pnpm --filter web test -- src/app/dashboard/wallets/create/page.test.tsx src/app/dashboard/wallets/[id]/edit/page.test.tsx src/features/wallets/components/WalletCreateEditForm.test.tsx` and `pnpm --filter web run typecheck` (PASS).
