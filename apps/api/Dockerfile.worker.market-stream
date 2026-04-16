@@ -10,12 +10,14 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json tsconfig.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
+COPY libs/shared/package.json libs/shared/package.json
 
 FROM base AS deps
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 COPY apps/api apps/api
+COPY libs/shared libs/shared
 RUN pnpm --filter api exec prisma generate
 RUN pnpm --filter api build
 
@@ -27,6 +29,7 @@ WORKDIR /app
 COPY --from=build /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml /app/
 COPY --from=build /app/node_modules /app/node_modules
 COPY --from=build /app/apps/api /app/apps/api
+COPY --from=build /app/libs/shared /app/libs/shared
 
 WORKDIR /app/apps/api
 CMD ["node", "dist/workers/marketStream.worker.js"]
