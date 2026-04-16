@@ -38,8 +38,8 @@ export const botErrors = {
   botStrategyNotFound: () => new BotDomainError(BOT_ERROR_CODES.botStrategyNotFound, 400),
   symbolGroupNotFound: () => new BotDomainError(BOT_ERROR_CODES.symbolGroupNotFound, 400),
   walletNotFound: () => new BotDomainError(BOT_ERROR_CODES.walletNotFound, 400),
-  walletMarketContextMismatch: () =>
-    new BotDomainError(BOT_ERROR_CODES.walletMarketContextMismatch, 400),
+  walletMarketContextMismatch: (details?: Record<string, unknown>) =>
+    new BotDomainError(BOT_ERROR_CODES.walletMarketContextMismatch, 400, details),
   walletLiveApiKeyRequired: () =>
     new BotDomainError(BOT_ERROR_CODES.walletLiveApiKeyRequired, 400),
   activeBotStrategyMarketGroupDuplicate: () =>

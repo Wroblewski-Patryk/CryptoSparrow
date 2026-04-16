@@ -45,6 +45,88 @@ export class BotModeSwitchBlockedError extends Error {
   }
 }
 
+const normalizeWalletContextValue = (value: string | null | undefined) =>
+  (value ?? '').trim().toUpperCase();
+
+const isWalletContextCompatibleWithMarketUniverse = (params: {
+  wallet: {
+    exchange: Exchange;
+    marketType: 'FUTURES' | 'SPOT';
+    baseCurrency: string;
+  };
+  marketUniverse: {
+    exchange: Exchange;
+    marketType: 'FUTURES' | 'SPOT';
+    baseCurrency: string;
+  };
+}) =>
+  params.wallet.exchange === params.marketUniverse.exchange &&
+  params.wallet.marketType === params.marketUniverse.marketType &&
+  normalizeWalletContextValue(params.wallet.baseCurrency) ===
+    normalizeWalletContextValue(params.marketUniverse.baseCurrency);
+
+const assertWalletContextMatchesExistingBotMarketGroups = async (params: {
+  userId: string;
+  botId: string;
+  wallet: {
+    id: string;
+    exchange: Exchange;
+    marketType: 'FUTURES' | 'SPOT';
+    baseCurrency: string;
+  };
+}) => {
+  const botGroups = await prisma.botMarketGroup.findMany({
+    where: {
+      userId: params.userId,
+      botId: params.botId,
+    },
+    select: {
+      id: true,
+      symbolGroupId: true,
+      symbolGroup: {
+        select: {
+          marketUniverse: {
+            select: {
+              id: true,
+              exchange: true,
+              marketType: true,
+              baseCurrency: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const mismatch = botGroups.find((group) => {
+    const universe = group.symbolGroup.marketUniverse;
+    return !isWalletContextCompatibleWithMarketUniverse({
+      wallet: params.wallet,
+      marketUniverse: {
+        exchange: universe.exchange,
+        marketType: universe.marketType,
+        baseCurrency: universe.baseCurrency,
+      },
+    });
+  });
+
+  if (mismatch) {
+    throw botErrors.walletMarketContextMismatch({
+      walletId: params.wallet.id,
+      walletExchange: params.wallet.exchange,
+      walletMarketType: params.wallet.marketType,
+      walletBaseCurrency: normalizeWalletContextValue(params.wallet.baseCurrency),
+      symbolGroupId: mismatch.symbolGroupId,
+      marketUniverseId: mismatch.symbolGroup.marketUniverse.id,
+      marketUniverseExchange: mismatch.symbolGroup.marketUniverse.exchange,
+      marketUniverseMarketType: mismatch.symbolGroup.marketUniverse.marketType,
+      marketUniverseBaseCurrency: normalizeWalletContextValue(
+        mismatch.symbolGroup.marketUniverse.baseCurrency
+      ),
+    });
+  }
+};
+
 export const listBots = async (userId: string, query: ListBotsQueryDto = {}) => {
   const bots = await listOwnedBotsWithStrategyProjection({
     userId,
@@ -73,9 +155,18 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
   const wallet = await getOwnedWalletForBotContext({ userId, walletId });
   if (!wallet) throw botErrors.walletNotFound();
   if (
-    symbolGroup.marketUniverse.exchange !== wallet.exchange ||
-    symbolGroup.marketUniverse.marketType !== wallet.marketType ||
-    symbolGroup.marketUniverse.baseCurrency.toUpperCase() !== wallet.baseCurrency.toUpperCase()
+    !isWalletContextCompatibleWithMarketUniverse({
+      wallet: {
+        exchange: wallet.exchange,
+        marketType: wallet.marketType,
+        baseCurrency: wallet.baseCurrency,
+      },
+      marketUniverse: {
+        exchange: symbolGroup.marketUniverse.exchange,
+        marketType: symbolGroup.marketUniverse.marketType,
+        baseCurrency: symbolGroup.marketUniverse.baseCurrency,
+      },
+    })
   ) {
     throw botErrors.walletMarketContextMismatch();
   }
@@ -241,6 +332,19 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
     throw botErrors.walletLiveApiKeyRequired();
   }
 
+  if (walletIdUpdateRequested && targetWallet) {
+    await assertWalletContextMatchesExistingBotMarketGroups({
+      userId,
+      botId: existing.id,
+      wallet: {
+        id: targetWallet.id,
+        exchange: targetWallet.exchange as Exchange,
+        marketType: targetWallet.marketType as 'FUTURES' | 'SPOT',
+        baseCurrency: targetWallet.baseCurrency,
+      },
+    });
+  }
+
   const switchingPaperToLive = existing.mode === 'PAPER' && nextMode === 'LIVE';
   if (switchingPaperToLive) {
     const openPaperPositions = await prisma.position.count({
@@ -260,9 +364,18 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
     const resolvedGroup = await resolveCreateMarketGroupToSymbolGroup(userId, requestedMarketGroupId);
     if (!resolvedGroup) throw botErrors.symbolGroupNotFound();
     if (
-      resolvedGroup.marketUniverse.exchange !== targetExchange ||
-      resolvedGroup.marketUniverse.marketType !== targetMarketType ||
-      resolvedGroup.marketUniverse.baseCurrency.toUpperCase() !== targetBaseCurrency
+      !isWalletContextCompatibleWithMarketUniverse({
+        wallet: {
+          exchange: targetExchange,
+          marketType: targetMarketType,
+          baseCurrency: targetBaseCurrency,
+        },
+        marketUniverse: {
+          exchange: resolvedGroup.marketUniverse.exchange,
+          marketType: resolvedGroup.marketUniverse.marketType,
+          baseCurrency: resolvedGroup.marketUniverse.baseCurrency,
+        },
+      })
     ) {
       throw botErrors.walletMarketContextMismatch();
     }
