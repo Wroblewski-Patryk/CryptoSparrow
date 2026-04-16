@@ -1,0 +1,68 @@
+{
+  "startedAt": "2026-04-16T12:10:31.760Z",
+  "endedAt": "2026-04-16T12:10:31.835Z",
+  "migrationId": "20260407121500_add_wallet_module",
+  "summary": {
+    "overallStatus": "PASS",
+    "failingChecks": [],
+    "totalBots": 1,
+    "totalWallets": 1,
+    "botsWithoutWallet": 0,
+    "walletCoveragePct": 100,
+    "orphanBotWalletRefs": 0,
+    "orphanPositionWalletRefs": 0,
+    "orphanOrderWalletRefs": 0,
+    "orphanTradeWalletRefs": 0
+  },
+  "checks": {
+    "walletModelPresent": true,
+    "walletIdColumnsPresent": true,
+    "walletIndexesPresent": true,
+    "walletForeignKeysPresent": true,
+    "botWalletBackfillCoverage": true,
+    "orphanWalletReferences": true
+  },
+  "schema": {
+    "requiredWalletIdColumns": [
+      {
+        "table": "Bot",
+        "column": "walletId"
+      },
+      {
+        "table": "Position",
+        "column": "walletId"
+      },
+      {
+        "table": "Order",
+        "column": "walletId"
+      },
+      {
+        "table": "Trade",
+        "column": "walletId"
+      }
+    ],
+    "missingColumns": [],
+    "requiredIndexes": [
+      "Wallet_userId_idx",
+      "Wallet_apiKeyId_idx",
+      "Wallet_userId_exchange_marketType_baseCurrency_idx",
+      "Bot_walletId_idx",
+      "Position_walletId_idx",
+      "Order_walletId_idx",
+      "Trade_walletId_idx"
+    ],
+    "missingIndexes": [],
+    "requiredConstraints": [
+      "Bot_walletId_fkey",
+      "Position_walletId_fkey",
+      "Order_walletId_fkey",
+      "Trade_walletId_fkey"
+    ],
+    "missingConstraints": []
+  },
+  "rollbackNotes": [
+    "Primary rollback path: restore database from pre-migration backup/snapshot.",
+    "Emergency degrade path: keep schema, disable wallet-first writes at application layer, and pause LIVE bot activation.",
+    "Before rollback/degrade, export Bot->walletId mapping and current Wallet rows for incident evidence."
+  ]
+}
