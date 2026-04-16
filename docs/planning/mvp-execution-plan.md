@@ -1591,15 +1591,15 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-16: Closed `CPDB-G7` by completing `CPDB-21` (shared-series concurrency stress for `5 users x 3 bots` on `BTCUSDT/5m` with duplicate-event side-effect guardrails plus `marketStreamFanout` single-delivery/lock contract tests), with `CPDB-G8` now the next active CPU/DB group.
 
 ## Continuous Group Pipeline (Post-PEX Continuation, 2026-04-17)
-- [ ] `A11Y-A accessibility-full-pass: full dashboard accessibility closure (automated + manual + evidence)`
+- [x] `A11Y-A accessibility-full-pass: full dashboard accessibility closure (automated + manual + evidence)`
 - [ ] `DOCSYNC-A docs-parity-sustainment: periodic parity audit refresh + queue continuity safeguards`
 
 ### Active Task Breakdown (A11Y-A)
 - [x] `A11Y-01 docs(plan): publish full accessibility pass timeline and resolve open decision`
-- [ ] `A11Y-02 test(web-a11y): add automated accessibility smoke for core dashboard routes`
-- [ ] `A11Y-03 fix(web-a11y): remediate highest-priority issues from accessibility smoke findings`
-- [ ] `A11Y-04 qa(a11y-manual): run keyboard/screen-reader smoke checklist and capture evidence`
-- [ ] `A11Y-05 docs(closure): publish closure evidence and sync canonical docs/plan status`
+- [x] `A11Y-02 test(web-a11y): add automated accessibility smoke for core dashboard routes`
+- [x] `A11Y-03 fix(web-a11y): remediate highest-priority issues from accessibility smoke findings`
+- [x] `A11Y-04 qa(a11y-manual): run keyboard/screen-reader smoke checklist and capture evidence`
+- [x] `A11Y-05 docs(closure): publish closure evidence and sync canonical docs/plan status`
 
 ### Active Task Breakdown (DOCSYNC-A)
 - [ ] `DOCSYNC-01 ops(docs-parity): run docs parity check and publish fresh evidence artifact`
@@ -1608,4 +1608,5 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `DOCSYNC-04 docs(governance): capture sustainment cadence and ownership in working agreements`
 
 ### Progress Log (Post-PEX Continuation)
+- 2026-04-17: Closed `A11Y-A` by completing `A11Y-02..A11Y-05` (added dashboard route-level a11y smoke suites `dashboard.a11y.smoke.test.tsx` + `PageTitle.a11y.test.tsx`, remediated page-title semantic gaps via breadcrumb landmark and contextual create-action SR descriptions, and published closure evidence artifacts `docs/operations/_artifacts-a11y-full-pass-2026-04-17T00-17-35-000Z.json` + `docs/operations/a11y-full-pass-closure-2026-04-17.md`); promoted `DOCSYNC-A` as next active group.
 - 2026-04-17: Initialized post-PEX continuation queue by promoting `A11Y-A` as active group and `DOCSYNC-A` as next group, then completed `A11Y-01` by publishing canonical full-pass timeline (`docs/planning/accessibility-full-pass-plan-2026-04-17.md`) and resolving `Accessibility Scope` in `open-decisions.md`.

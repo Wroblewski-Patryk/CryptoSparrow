@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { type ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 import { LuHouse, LuPlus } from "react-icons/lu";
 import { useI18n } from "../../../i18n/I18nProvider";
 
@@ -41,7 +41,8 @@ export function PageTitle({
   variant = "boxed",
   actions,
 }: PageTitleProps) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
+  const addActionDescriptionId = useId();
 
   const normalizedBreadcrumb =
     breadcrumb.length > 0
@@ -73,12 +74,24 @@ export function PageTitle({
     "mb-6 rounded-box md:flex md:items-center md:justify-between";
 
   const legacyAction = onAdd ? (
-    <button type="button" className={addButtonClassName ?? PAGE_TITLE_ACTION_CREATE_CLASS} onClick={onAdd}>
-      <span className="inline-flex items-center gap-1">
-        <LuPlus className="h-3.5 w-3.5" />
-        <span>{addLabel || t("dashboard.common.add")}</span>
+    <>
+      <button
+        type="button"
+        className={addButtonClassName ?? PAGE_TITLE_ACTION_CREATE_CLASS}
+        onClick={onAdd}
+        aria-describedby={addActionDescriptionId}
+      >
+        <span className="inline-flex items-center gap-1">
+          <LuPlus className="h-3.5 w-3.5" />
+          <span>{addLabel || t("dashboard.common.add")}</span>
+        </span>
+      </button>
+      <span id={addActionDescriptionId} className="sr-only">
+        {locale === "pl"
+          ? `${addLabel || t("dashboard.common.add")} dla sekcji ${title}`
+          : `${addLabel || t("dashboard.common.add")} for ${title}`}
       </span>
-    </button>
+    </>
   ) : null;
 
   const renderedActions = actions ?? legacyAction;
@@ -86,7 +99,10 @@ export function PageTitle({
   return (
     <div className={wrapperClassName}>
       <div className="min-w-0">
-        <div className="breadcrumbs mt-2 max-w-full overflow-x-auto text-sm">
+        <nav
+          aria-label={locale === "pl" ? "Nawigacja okruszkowa" : "Breadcrumb navigation"}
+          className="breadcrumbs mt-2 max-w-full overflow-x-auto text-sm"
+        >
           <ul>
             {renderedBreadcrumb.map((item, index) => {
               const key = `${index}-${item.href || item.label}`;
@@ -148,7 +164,7 @@ export function PageTitle({
               );
             })}
           </ul>
-        </div>
+        </nav>
       </div>
 
       {renderedActions ? <div className="mt-4 flex flex-wrap items-center gap-2 md:mt-0">{renderedActions}</div> : null}

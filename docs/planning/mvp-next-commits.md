@@ -7,19 +7,28 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `A11Y-02 test(web-a11y): add automated accessibility smoke for core dashboard routes`
-- [ ] `A11Y-03 fix(web-a11y): remediate highest-priority issues from accessibility smoke findings`
-- [ ] `A11Y-04 qa(a11y-manual): run keyboard/screen-reader smoke checklist and capture evidence`
-- [ ] `A11Y-05 docs(closure): publish closure evidence and sync canonical docs/plan status`
-## NEXT
 - [ ] `DOCSYNC-01 ops(docs-parity): run docs parity check and publish fresh evidence artifact`
 - [ ] `DOCSYNC-02 docs(module-index): refresh module+route inventory snapshots after parity run`
+- [ ] `DOCSYNC-03 chore(planning-queue): validate NOW/NEXT refill continuity and align canonical queue`
+- [ ] `DOCSYNC-04 docs(governance): capture sustainment cadence and ownership in working agreements`
+## NEXT
+- none
 ## PIPELINE
-- [ ] `DOCSYNC-A docs-parity-sustainment: periodic parity audit refresh + queue continuity safeguards`
+- none
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `A11Y-A accessibility-full-pass: full dashboard accessibility closure (automated + manual + evidence)`
+  - 2026-04-17: Closed `A11Y-A` by completing `A11Y-02..A11Y-05` (automated route-level accessibility smoke, `PageTitle` semantic remediation for breadcrumb landmark + contextual create-action SR description, and closure evidence artifacts `docs/operations/_artifacts-a11y-full-pass-2026-04-17T00-17-35-000Z.json` + `docs/operations/a11y-full-pass-closure-2026-04-17.md`), promoting `DOCSYNC-A` into active `NOW`.
+- [x] `A11Y-05 docs(closure): publish closure evidence and sync canonical docs/plan status`
+  - 2026-04-17: Published closure report and canonical audit updates in `docs/operations/a11y-full-pass-closure-2026-04-17.md` and `docs/ux/accessibility-dashboard-audit.md`.
+- [x] `A11Y-04 qa(a11y-manual): run keyboard/screen-reader smoke checklist and capture evidence`
+  - 2026-04-17: Captured manual-checklist evidence in `docs/operations/_artifacts-a11y-full-pass-2026-04-17T00-17-35-000Z.json` with keyboard-navigation, screen-reader-context, and heading/landmark checks.
+- [x] `A11Y-03 fix(web-a11y): remediate highest-priority issues from accessibility smoke findings`
+  - 2026-04-17: Remediated `PageTitle` accessibility semantics by adding breadcrumb navigation landmark labeling and contextual SR descriptions for generic page create actions.
+- [x] `A11Y-02 test(web-a11y): add automated accessibility smoke for core dashboard routes`
+  - 2026-04-17: Added automated smoke suites `apps/web/src/app/dashboard/dashboard.a11y.smoke.test.tsx` and `apps/web/src/ui/layout/dashboard/PageTitle.a11y.test.tsx`; validated with targeted `web` Vitest run (`7/7` PASS).
 - [x] `A11Y-01 docs(plan): publish full accessibility pass timeline and resolve open decision`
   - 2026-04-17: Initialized post-PEX continuation by publishing canonical accessibility full-pass plan (`docs/planning/accessibility-full-pass-plan-2026-04-17.md`), resolving `Accessibility Scope` decision in `docs/planning/open-decisions.md`, and promoting `A11Y-02..A11Y-05` into `NOW` with `DOCSYNC-A` staged in `NEXT/PIPELINE`.
 - [x] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`

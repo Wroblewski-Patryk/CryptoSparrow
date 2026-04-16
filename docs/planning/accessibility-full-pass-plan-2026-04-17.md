@@ -28,10 +28,18 @@ Goal: close post-MVP full accessibility scope with explicit timeline, measurable
 
 ## Tiny-Commit Task List
 - [x] `A11Y-01 docs(plan): publish full-pass timeline and resolve Accessibility Scope decision`
-- [ ] `A11Y-02 test(web-a11y): add automated accessibility smoke for core dashboard routes`
-- [ ] `A11Y-03 fix(web-a11y): remediate highest-priority issues from A11Y-02 findings`
-- [ ] `A11Y-04 qa(a11y-manual): run keyboard + screen-reader smoke checklist and capture evidence`
-- [ ] `A11Y-05 docs(closure): update canonical runbooks/plans and publish closure evidence artifact`
+- [x] `A11Y-02 test(web-a11y): add automated accessibility smoke for core dashboard routes`
+- [x] `A11Y-03 fix(web-a11y): remediate highest-priority issues from A11Y-02 findings`
+- [x] `A11Y-04 qa(a11y-manual): run keyboard + screen-reader smoke checklist and capture evidence`
+- [x] `A11Y-05 docs(closure): update canonical runbooks/plans and publish closure evidence artifact`
+
+## Completion Log
+- 2026-04-17: Completed `A11Y-02` by adding route-level smoke suite `apps/web/src/app/dashboard/dashboard.a11y.smoke.test.tsx` and `PageTitle` a11y contract tests in `apps/web/src/ui/layout/dashboard/PageTitle.a11y.test.tsx`.
+- 2026-04-17: Completed `A11Y-03` by remediating `PageTitle` semantics (`breadcrumb` landmark and contextual SR description for generic `Create` action).
+- 2026-04-17: Completed `A11Y-04` + `A11Y-05` by publishing checklist and evidence artifacts:
+  - `docs/operations/_artifacts-a11y-full-pass-2026-04-17T00-17-35-000Z.json`
+  - `docs/operations/a11y-full-pass-closure-2026-04-17.md`
+  - `docs/ux/accessibility-dashboard-audit.md`
 
 ## Exit Criteria
 - Automated accessibility smoke passes for selected core routes.

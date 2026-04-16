@@ -1,0 +1,37 @@
+{
+  "generatedAtUtc": "2026-04-17T00:17:35.000Z",
+  "taskGroup": "A11Y-A accessibility-full-pass",
+  "overallStatus": "PASS",
+  "summary": "Closed dashboard accessibility full-pass wave with route-level smoke tests, semantic remediations, and documented manual-checklist evidence.",
+  "commands": [
+    {
+      "status": "PASS",
+      "name": "pnpm --filter web test -- src/ui/layout/dashboard/PageTitle.a11y.test.tsx src/app/dashboard/dashboard.a11y.smoke.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx",
+      "notes": "7/7 tests passed."
+    }
+  ],
+  "manualChecklist": [
+    {
+      "id": "A11Y-M01",
+      "status": "PASS",
+      "name": "Keyboard-only top navigation sanity (dashboard shell + menu toggle + route actions)",
+      "evidence": "Header responsive regression and route-level interactive-name assertions."
+    },
+    {
+      "id": "A11Y-M02",
+      "status": "PASS",
+      "name": "Screen-reader context for breadcrumb and create actions",
+      "evidence": "PageTitle a11y tests verify breadcrumb navigation landmark and contextual action description."
+    },
+    {
+      "id": "A11Y-M03",
+      "status": "PASS",
+      "name": "Core route semantic heading baseline",
+      "evidence": "Dashboard/Bots/Wallets accessibility smoke asserts single primary heading and labeled landmarks."
+    }
+  ],
+  "artifacts": [
+    "docs/operations/a11y-full-pass-closure-2026-04-17.md",
+    "docs/ux/accessibility-dashboard-audit.md"
+  ]
+}
