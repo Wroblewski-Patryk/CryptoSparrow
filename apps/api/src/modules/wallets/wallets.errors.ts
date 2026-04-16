@@ -1,6 +1,7 @@
 import { DomainError } from '../../lib/errors';
 
 export const WALLET_ERROR_CODES = {
+  modeInvalid: 'WALLET_MODE_INVALID',
   liveApiKeyRequired: 'WALLET_LIVE_API_KEY_REQUIRED',
   liveApiKeyExchangeMismatch: 'WALLET_LIVE_API_KEY_EXCHANGE_MISMATCH',
   inUseCannotDelete: 'WALLET_IN_USE_CANNOT_DELETE',
@@ -21,6 +22,8 @@ export class WalletDomainError extends DomainError {
 }
 
 export const walletErrors = {
+  modeInvalid: (details?: Record<string, unknown>) =>
+    new WalletDomainError(WALLET_ERROR_CODES.modeInvalid, 400, details),
   liveApiKeyRequired: () =>
     new WalletDomainError(WALLET_ERROR_CODES.liveApiKeyRequired, 400),
   liveApiKeyExchangeMismatch: () =>

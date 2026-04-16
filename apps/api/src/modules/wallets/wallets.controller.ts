@@ -17,6 +17,9 @@ const handleWalletError = (res: Response, error: unknown) => {
   if (mapped.code === WALLET_ERROR_CODES.liveApiKeyRequired) {
     return sendError(res, 400, 'apiKeyId is required for LIVE wallet', mapped.details);
   }
+  if (mapped.code === WALLET_ERROR_CODES.modeInvalid) {
+    return sendError(res, 400, 'wallet mode configuration is invalid', mapped.details);
+  }
   if (mapped.code === WALLET_ERROR_CODES.liveApiKeyExchangeMismatch) {
     return sendError(res, 400, 'apiKeyId exchange must match wallet exchange', mapped.details);
   }

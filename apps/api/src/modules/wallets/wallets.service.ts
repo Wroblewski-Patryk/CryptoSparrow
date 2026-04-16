@@ -50,6 +50,36 @@ const assertWalletModeExchangeCapability = (input: {
   assertExchangeCapability(input.exchange, 'PAPER_PRICING_FEED');
 };
 
+const assertWalletLiveModeConfig = (params: {
+  mode: 'PAPER' | 'LIVE';
+  liveAllocationMode?: 'PERCENT' | 'FIXED' | null;
+  liveAllocationValue?: number | null;
+}) => {
+  if (params.mode !== 'LIVE') return;
+
+  if (!params.liveAllocationMode) {
+    throw walletErrors.modeInvalid({
+      reason: 'LIVE_ALLOCATION_MODE_REQUIRED',
+    });
+  }
+
+  if (
+    typeof params.liveAllocationValue !== 'number' ||
+    !Number.isFinite(params.liveAllocationValue) ||
+    params.liveAllocationValue <= 0
+  ) {
+    throw walletErrors.modeInvalid({
+      reason: 'LIVE_ALLOCATION_VALUE_REQUIRED',
+    });
+  }
+
+  if (params.liveAllocationMode === 'PERCENT' && params.liveAllocationValue > 100) {
+    throw walletErrors.modeInvalid({
+      reason: 'LIVE_ALLOCATION_PERCENT_OUT_OF_RANGE',
+    });
+  }
+};
+
 const assertWalletLiveApiKeyCompatibility = async (params: {
   userId: string;
   mode: 'PAPER' | 'LIVE';
@@ -215,6 +245,11 @@ export const createWallet = async (userId: string, payload: CreateWalletDto) => 
     mode: normalized.mode,
     exchange: normalized.exchange,
   });
+  assertWalletLiveModeConfig({
+    mode: normalized.mode,
+    liveAllocationMode: normalized.liveAllocationMode,
+    liveAllocationValue: normalized.liveAllocationValue,
+  });
   await assertWalletLiveApiKeyCompatibility({
     userId,
     mode: normalized.mode,
@@ -254,6 +289,11 @@ export const updateWallet = async (userId: string, id: string, payload: UpdateWa
   assertWalletModeExchangeCapability({
     mode: nextMode,
     exchange: nextExchange,
+  });
+  assertWalletLiveModeConfig({
+    mode: nextMode,
+    liveAllocationMode: nextData.liveAllocationMode,
+    liveAllocationValue: nextData.liveAllocationValue,
   });
   await assertWalletLiveApiKeyCompatibility({
     userId,

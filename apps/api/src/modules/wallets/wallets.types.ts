@@ -67,7 +67,17 @@ export const CreateWalletSchema = z
     }
   });
 
-export const UpdateWalletSchema = CreateWalletSchema.partial();
+export const UpdateWalletSchema = z.object({
+  name: z.string().trim().min(1).max(120).optional(),
+  mode: WalletModeSchema.optional(),
+  exchange: ExchangeSchema.optional(),
+  marketType: MarketTypeSchema.optional(),
+  baseCurrency: z.string().trim().min(2).max(16).optional(),
+  paperInitialBalance: z.number().min(0).max(1_000_000_000).optional(),
+  liveAllocationMode: WalletAllocationModeSchema.optional().nullable(),
+  liveAllocationValue: z.number().positive().max(1_000_000_000).optional().nullable(),
+  apiKeyId: z.string().trim().min(1).optional().nullable(),
+});
 
 export const ListWalletsQuerySchema = z.object({
   mode: WalletModeSchema.optional(),
