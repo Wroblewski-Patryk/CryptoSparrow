@@ -187,7 +187,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 
 ### [ ] Group 6 - DB indexing and query shaping
 
-- [ ] `CPDB-16 feat(db-index): add hot-path indexes for positions/runtime queries`
+- [x] `CPDB-16 feat(db-index): add hot-path indexes for positions/runtime queries`
   - Files:
     - `apps/api/prisma/schema.prisma`
     - `apps/api/prisma/migrations/*` (new migration)
@@ -296,3 +296,4 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Completed `CPDB-14` by moving dashboard-home and bots monitoring runtime refresh to SSE-first flow (`ticker`-driven silent refresh with visibility-aware throttling), while keeping interval polling only as fallback when stream is unavailable/disconnected/stale.
 - 2026-04-16: Completed `CPDB-15` by extending web regression coverage for runtime refresh cadence and stale recovery: hidden-tab 30s interval switch assertion on home dashboard plus SSE-tick refresh and stale-stream polling fallback assertions on bots monitoring.
 - 2026-04-16: Closed Group 5 (`CPDB-13..CPDB-15`). Next unchecked group is Group 6 (`CPDB-16..CPDB-18`).
+- 2026-04-16: Completed `CPDB-16` by adding hot-path composite indexes for runtime position queries (`Position(userId, botId, status)` and `Position(userId, symbol, status)`) with migration `20260416005358_add_position_runtime_hot_path_indexes`; `bots/runtime` test sweep was executed and reached an existing unhandled Prisma FK rejection in runtime telemetry tests after all test assertions passed.

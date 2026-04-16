@@ -731,6 +731,8 @@ model Position {
   @@index([userId, openedAt])
   @@index([userId, status, openedAt])
   @@index([userId, symbol, openedAt])
+  @@index([userId, botId, status])
+  @@index([userId, symbol, status])
   @@index([userId, origin, openedAt])
   @@index([userId, managementMode, openedAt])
   @@index([botId])
