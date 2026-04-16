@@ -68,6 +68,87 @@ describe('preTrade analysis', () => {
     expect(decision.reasons).toEqual([]);
   });
 
+  it('reuses cached open-position counts for repeated pre-trade checks within TTL', async () => {
+    const store = createStore({
+      countOpenByUser: vi.fn().mockResolvedValue(1),
+      countOpenByBot: vi.fn().mockResolvedValue(1),
+    });
+
+    await analyzePreTrade(
+      {
+        userId: 'u1',
+        botId: 'b1',
+        symbol: 'BTCUSDT',
+        mode: 'PAPER',
+        liveOptIn: false,
+        maxOpenPositionsPerUser: 5,
+        maxOpenPositionsPerBot: 5,
+      },
+      store
+    );
+
+    await analyzePreTrade(
+      {
+        userId: 'u1',
+        botId: 'b1',
+        symbol: 'ETHUSDT',
+        mode: 'PAPER',
+        liveOptIn: false,
+        maxOpenPositionsPerUser: 5,
+        maxOpenPositionsPerBot: 5,
+      },
+      store
+    );
+
+    expect(store.countOpenByUser).toHaveBeenCalledTimes(1);
+    expect(store.countOpenByBot).toHaveBeenCalledTimes(1);
+  });
+
+  it('refreshes cached counts after invalidation so risk caps stay enforced', async () => {
+    const store = createStore({
+      countOpenByUser: vi.fn().mockResolvedValueOnce(0).mockResolvedValueOnce(2),
+      countOpenByBot: vi.fn().mockResolvedValueOnce(0).mockResolvedValueOnce(2),
+    });
+
+    const firstDecision = await analyzePreTrade(
+      {
+        userId: 'u1',
+        botId: 'b1',
+        symbol: 'BTCUSDT',
+        mode: 'PAPER',
+        liveOptIn: false,
+        maxOpenPositionsPerUser: 1,
+        maxOpenPositionsPerBot: 1,
+      },
+      store
+    );
+    expect(firstDecision.allowed).toBe(true);
+
+    invalidatePreTradeOpenPositionCountCache({
+      userId: 'u1',
+      botId: 'b1',
+    });
+
+    const secondDecision = await analyzePreTrade(
+      {
+        userId: 'u1',
+        botId: 'b1',
+        symbol: 'ETHUSDT',
+        mode: 'PAPER',
+        liveOptIn: false,
+        maxOpenPositionsPerUser: 1,
+        maxOpenPositionsPerBot: 1,
+      },
+      store
+    );
+
+    expect(secondDecision.allowed).toBe(false);
+    expect(secondDecision.reasons).toContain('user_open_positions_limit_reached');
+    expect(secondDecision.reasons).toContain('bot_open_positions_limit_reached');
+    expect(store.countOpenByUser).toHaveBeenCalledTimes(2);
+    expect(store.countOpenByBot).toHaveBeenCalledTimes(2);
+  });
+
   it('blocks when live mode is requested without bot id', async () => {
     const store = createStore();
 

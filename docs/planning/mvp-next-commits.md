@@ -7,12 +7,11 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `CPDB-G3 signal-routing(cpu-db): seriesKey routing index + pretrade position-count cache`
+- [ ] `CPDB-G4 telemetry-write(cpu-db): touchSession throttle + symbol stats batching + query-count checks`
 - [ ] `WLT-A wallet-contracts: wallet source-of-truth docs + decisions + IA placement`
 - [ ] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
 - [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
 ## NEXT
-- [ ] `CPDB-G4 telemetry-write(cpu-db): touchSession throttle + symbol stats batching + query-count checks`
 - [ ] `WLT-C wallet-api: wallet CRUD module with mode-aware validation + ownership isolation`
 - [ ] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
 - [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
@@ -32,6 +31,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `CPDB-G3 signal-routing(cpu-db): seriesKey routing index + pretrade position-count cache`
+  - 2026-04-16: Closed CPU/DB Group 3 by completing `CPDB-07..CPDB-09` (seriesKey routing index for eligible final-candle groups, short-TTL pre-trade open-position count cache with runtime OPEN/CLOSE invalidation, and parity tests for cache reuse/invalidation risk-cap enforcement); next CPU/DB group promoted as `CPDB-G4`.
 - [x] `CPDB-G2 runtime-cache(cpu-db): active topology cache + invalidation + parity tests`
   - 2026-04-16: Closed CPU/DB Group 2 by completing `CPDB-04..CPDB-06` (topology cache service with TTL/version invalidation, final-candle cache read integration with fail-safe direct fallback, and parity regressions for cache hit/miss/invalidation); next CPU/DB group promoted as `CPDB-G3`.
 - [x] `CPDB-G1 baseline(cpu-db): contract freeze + runtime hot-path metrics + parity-safe assertions`

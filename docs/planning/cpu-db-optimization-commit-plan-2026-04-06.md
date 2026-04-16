@@ -96,7 +96,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
   - Tests:
     - `pnpm --filter api test -- runtimeSignalLoop`
 
-### [ ] Group 3 - Signal routing + pre-trade DB short-circuit
+### [x] Group 3 - Signal routing + pre-trade DB short-circuit
 
 - [x] `CPDB-07 feat(runtime-routing): build seriesKey -> eligible group index`
   - Files:
@@ -117,7 +117,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
   - Tests:
     - `pnpm --filter api test -- preTrade executionOrchestrator`
 
-- [ ] `CPDB-09 test(pretrade-parity): preserve risk caps while reducing DB roundtrips`
+- [x] `CPDB-09 test(pretrade-parity): preserve risk caps while reducing DB roundtrips`
   - Files:
     - `apps/api/src/modules/engine/preTrade.service.test.ts`
   - Deliverable:
@@ -286,3 +286,5 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Closed Group 2 (`CPDB-04..CPDB-06`). Next unchecked group is Group 3 (`CPDB-07..CPDB-09`).
 - 2026-04-16: Completed `CPDB-07` by adding a cache-refresh-bound routing index (`exchange|marketType|symbol|interval`) with wildcard-aware route resolution and deduped group targeting so final-candle evaluation processes only eligible bot market-groups, plus routing-index invalidation on stop/stall topology resets.
 - 2026-04-16: Completed `CPDB-08` by introducing short-TTL pre-trade open-position count caches (user-level and bot-level) and wiring deterministic invalidation on runtime execution `OPEN`/`CLOSE` outcomes to prevent stale risk-cap decisions while cutting repeat count reads.
+- 2026-04-16: Completed `CPDB-09` by adding pre-trade parity tests for count-cache reuse and explicit invalidation refresh so user/bot risk caps remain enforced while DB roundtrips are reduced.
+- 2026-04-16: Closed Group 3 (`CPDB-07..CPDB-09`). Next unchecked group is Group 4 (`CPDB-10..CPDB-12`).
