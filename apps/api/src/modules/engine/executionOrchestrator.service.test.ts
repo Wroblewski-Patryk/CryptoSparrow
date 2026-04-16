@@ -319,6 +319,7 @@ describe('orchestrateRuntimeSignal', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       botId: null,
+      walletId: 'wallet-open',
       strategyId: null,
       stopLoss: null,
       takeProfit: null,
@@ -375,7 +376,12 @@ describe('orchestrateRuntimeSignal', () => {
     });
     expect(orderGateway.openOrder).toHaveBeenCalledWith(
       'u1',
-      expect.objectContaining({ side: 'SELL', quantity: 0.2, mode: 'LIVE' })
+      expect.objectContaining({
+        side: 'SELL',
+        quantity: 0.2,
+        mode: 'LIVE',
+        walletId: 'wallet-open',
+      })
     );
     expect(positionGateway.closePosition).toHaveBeenCalledWith(
       'position-open',
@@ -390,6 +396,7 @@ describe('orchestrateRuntimeSignal', () => {
         orderId: 'order-1',
         positionId: 'position-open',
         side: 'SELL',
+        walletId: 'wallet-open',
       })
     );
     expect(eventGateway.writeEvent).toHaveBeenCalledWith(

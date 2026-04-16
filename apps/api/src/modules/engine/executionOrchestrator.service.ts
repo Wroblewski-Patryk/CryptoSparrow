@@ -526,6 +526,7 @@ export const orchestrateRuntimeSignal = async (
 
     const closeOrder = await orderGateway.openOrder(input.userId, {
       botId: input.botId,
+      walletId: openPosition.walletId ?? input.walletId,
       strategyId: input.strategyId,
       symbol: input.symbol,
       side: decision.orderSide,

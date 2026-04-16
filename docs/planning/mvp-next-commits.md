@@ -22,6 +22,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `WLT-17 feat(runtime-attribution): persist walletId snapshot on runtime-created positions/orders/trades`
+  - 2026-04-16: Advanced active wallet group `WLT-E` by fixing runtime EXIT close-order wallet attribution (`walletId: openPosition.walletId ?? input.walletId`) and locking regression in `executionOrchestrator.service.test.ts` for close order/trade wallet snapshot propagation; validated with `pnpm --filter api test -- src/modules/engine/executionOrchestrator.service.test.ts` + `pnpm --filter api run typecheck` (PASS); remaining `WLT-E` scope is `WLT-18`.
 - [x] `WLT-16 feat(runtime-budget): enforce hard-fail wallet free-cash checks for OPEN and DCA`
   - 2026-04-16: Advanced active wallet group `WLT-E` by introducing explicit runtime wallet free-cash guard (`resolveRuntimeWalletFundsExhausted`) used in OPEN pre-trade blocking (`WALLET_INSUFFICIENT_FUNDS`) and aligned DCA guard compatibility, validated via `pnpm --filter api test -- src/modules/engine/runtimeCapitalContext.service.test.ts src/modules/engine/runtimeSignalLoop.service.test.ts src/modules/engine/runtimePositionAutomation.service.test.ts` + `pnpm --filter api run typecheck` (PASS); remaining `WLT-E` scope is `WLT-17..WLT-18`.
 - [x] `WLT-15 refactor(runtime-capital): resolve reference balance from wallet context (paper/live rules)`
