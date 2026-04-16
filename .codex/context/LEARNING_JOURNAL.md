@@ -63,3 +63,17 @@ $ts = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH-mm-ss-fffZ')
 - Avoid: `Get-Date -AsUTC -Format ...`
 - Evidence:
   - Observed on 2026-04-15 while generating `docs/operations/_artifacts-docs-parity-*.json` in this repository.
+
+### 2026-04-16 - Long soak load-test summary overflow
+- Context: running 30-minute load soak via `apps/api/scripts/load-test.mjs`.
+- Symptom: process exits with `RangeError: Maximum call stack size exceeded` at summary stage (`Math.min(...result.latenciesMs)` / `Math.max(...result.latenciesMs)`).
+- Root cause: spread operator over very large latency arrays exceeds call stack for long/high-throughput runs.
+- Guardrail: for 30-minute soak evidence, always persist pre/post `/metrics` snapshots and raw load output; treat script summary as optional unless load-test implementation is hardened.
+- Preferred pattern:
+```powershell
+# capture pre/post metrics + raw runner output as primary evidence
+# do not rely only on load-test JSON summary for long windows
+```
+- Avoid: using spread (`Math.min(...arr)`, `Math.max(...arr)`) over unbounded large arrays in long-duration load runners.
+- Evidence:
+  - Observed on 2026-04-16 in `docs/operations/_artifacts-cpdb24-soak-2026-04-16T02-03-29-605Z.json` (`RangeError` in `apps/api/scripts/load-test.mjs`).
