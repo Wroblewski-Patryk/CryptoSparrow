@@ -143,7 +143,7 @@ describe('RuntimeTelemetryService.ensureRuntimeSession', () => {
     vi.useFakeTimers();
     const service = new RuntimeTelemetryService();
     const upsertSpy = vi.spyOn(prisma.botRuntimeSymbolStat, 'upsert').mockResolvedValue({} as any);
-    vi.spyOn(prisma.botRuntimeSession, 'update').mockResolvedValue({ id: 'session-1' } as any);
+    const touchSpy = vi.spyOn(prisma.botRuntimeSession, 'update').mockResolvedValue({ id: 'session-1' } as any);
 
     await service.upsertRuntimeSymbolStat({
       userId: 'user-1',
@@ -170,6 +170,7 @@ describe('RuntimeTelemetryService.ensureRuntimeSession', () => {
     await vi.advanceTimersByTimeAsync(300);
 
     expect(upsertSpy).toHaveBeenCalledTimes(1);
+    expect(touchSpy).toHaveBeenCalledTimes(1);
     expect(upsertSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         update: expect.objectContaining({

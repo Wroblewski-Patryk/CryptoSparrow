@@ -7,7 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `CPDB-G4 telemetry-write(cpu-db): touchSession throttle + symbol stats batching + query-count checks`
+- [ ] `CPDB-G5 web-polling(cpu-db): adaptive refresh + SSE-first runtime stats with polling fallback`
 - [ ] `WLT-A wallet-contracts: wallet source-of-truth docs + decisions + IA placement`
 - [ ] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
 - [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
@@ -16,7 +16,6 @@ Operational queue for one-task execution runs.
 - [ ] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
 - [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
 ## PIPELINE
-- [ ] `CPDB-G5 web-polling(cpu-db): adaptive refresh + SSE-first runtime stats with polling fallback`
 - [ ] `CPDB-G6 db-shaping(cpu-db): hot-path indexes + slim topology reads + EXPLAIN evidence`
 - [ ] `CPDB-G7 worker-backpressure(cpu-db): per-series concurrency guard + distributed warmup lock`
 - [ ] `CPDB-G8 rollout(cpu-db): canary/rollback docs + alert thresholds + 30m soak evidence`
@@ -31,6 +30,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `CPDB-G4 telemetry-write(cpu-db): touchSession throttle + symbol stats batching + query-count checks`
+  - 2026-04-16: Closed CPU/DB Group 4 by completing `CPDB-10..CPDB-12` (telemetry heartbeat throttling + symbol-stat debounce batching with flush on session close, execution OPEN leverage-query removal via decision-context pass-through, and query-count regressions for telemetry/execution paths); next CPU/DB group promoted as `CPDB-G5`.
 - [x] `CPDB-G3 signal-routing(cpu-db): seriesKey routing index + pretrade position-count cache`
   - 2026-04-16: Closed CPU/DB Group 3 by completing `CPDB-07..CPDB-09` (seriesKey routing index for eligible final-candle groups, short-TTL pre-trade open-position count cache with runtime OPEN/CLOSE invalidation, and parity tests for cache reuse/invalidation risk-cap enforcement); next CPU/DB group promoted as `CPDB-G4`.
 - [x] `CPDB-G2 runtime-cache(cpu-db): active topology cache + invalidation + parity tests`

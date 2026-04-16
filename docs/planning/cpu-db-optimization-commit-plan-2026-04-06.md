@@ -125,7 +125,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
   - Tests:
     - `pnpm --filter api test -- preTrade`
 
-### [ ] Group 4 - Telemetry write reduction + execution query cleanup
+### [x] Group 4 - Telemetry write reduction + execution query cleanup
 
 - [x] `CPDB-10 refactor(telemetry): throttle touchSession + batch symbol stats writes`
   - Files:
@@ -145,7 +145,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
   - Tests:
     - `pnpm --filter api test -- executionOrchestrator runtimeSignalLoop`
 
-- [ ] `CPDB-12 test(engine-load): verify DB write/read count drop for telemetry+execution paths`
+- [x] `CPDB-12 test(engine-load): verify DB write/read count drop for telemetry+execution paths`
   - Files:
     - `apps/api/src/modules/engine/runtimeTelemetry.service.test.ts`
     - `apps/api/src/modules/engine/executionOrchestrator.service.test.ts`
@@ -290,3 +290,5 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Closed Group 3 (`CPDB-07..CPDB-09`). Next unchecked group is Group 4 (`CPDB-10..CPDB-12`).
 - 2026-04-16: Completed `CPDB-10` by adding throttled `touchSession` heartbeat writes (`RUNTIME_TELEMETRY_TOUCH_SESSION_THROTTLE_MS`, default 15s), debounced symbol-stat batching (`RUNTIME_TELEMETRY_SYMBOL_STAT_DEBOUNCE_MS`, default 250ms), and session-close flush logic for pending stat updates.
 - 2026-04-16: Completed `CPDB-11` by passing `strategyLeverage` from runtime decision context into execution orchestration and deleting per-OPEN strategy leverage lookup query from orchestrator path.
+- 2026-04-16: Completed `CPDB-12` by adding query-count regression assertions that lock telemetry batching/throttling write reduction (`upsert` and `touchSession` call counts) and execution-path read reduction (no per-OPEN strategy leverage lookup query).
+- 2026-04-16: Closed Group 4 (`CPDB-10..CPDB-12`). Next unchecked group is Group 5 (`CPDB-13..CPDB-15`).

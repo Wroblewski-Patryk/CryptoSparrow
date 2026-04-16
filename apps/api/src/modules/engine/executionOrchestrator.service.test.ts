@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { prisma } from '../../prisma/client';
 import {
   buildOpenPositionLookupWhere,
   orchestrateRuntimeSignal,
@@ -127,6 +128,7 @@ describe('orchestrateRuntimeSignal', () => {
     const positionGateway = createPositionGateway();
     const eventGateway = createEventGateway();
     const tradeGateway = createTradeGateway();
+    const strategyLookupSpy = vi.spyOn(prisma.strategy, 'findFirst');
 
     const result = await orchestrateRuntimeSignal(
       {
@@ -161,6 +163,7 @@ describe('orchestrateRuntimeSignal', () => {
     });
     expect(positionGateway.createPosition).toHaveBeenCalled();
     expect(orderGateway.linkOrderToPosition).toHaveBeenCalledWith('order-1', 'position-1');
+    expect(strategyLookupSpy).not.toHaveBeenCalled();
     expect(tradeGateway.createTrade).toHaveBeenCalledWith(
       expect.objectContaining({
         orderId: 'order-1',

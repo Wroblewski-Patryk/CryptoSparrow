@@ -1536,7 +1536,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `CPDB-G1 baseline(cpu-db): contract freeze + runtime hot-path metrics + parity-safe assertions`
 - [x] `CPDB-G2 runtime-cache(cpu-db): active topology cache + invalidation + parity tests`
 - [x] `CPDB-G3 signal-routing(cpu-db): seriesKey routing index + pretrade position-count cache`
-- [ ] `CPDB-G4 telemetry-write(cpu-db): touchSession throttle + symbol stats batching + query-count checks`
+- [x] `CPDB-G4 telemetry-write(cpu-db): touchSession throttle + symbol stats batching + query-count checks`
 - [ ] `CPDB-G5 web-polling(cpu-db): adaptive refresh + SSE-first runtime stats with polling fallback`
 - [ ] `CPDB-G6 db-shaping(cpu-db): hot-path indexes + slim topology reads + EXPLAIN evidence`
 - [ ] `CPDB-G7 worker-backpressure(cpu-db): per-series concurrency guard + distributed warmup lock`
@@ -1560,3 +1560,4 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-16: Closed `CPDB-G1` by completing `CPDB-01..CPDB-03` (feature-flag contract freeze, runtime hot-path metrics instrumentation, and parity-safe metric regression tests) and kept `CPDB-G2` as next active CPU/DB group in canonical queue.
 - 2026-04-16: Closed `CPDB-G2` by completing `CPDB-04..CPDB-06` (runtime topology cache service with TTL/version invalidation, final-candle cache read refactor with direct-query fallback hardening, and parity regression coverage for cache hit/miss/invalidation), with `CPDB-G3` now active as the next CPU/DB group.
 - 2026-04-16: Closed `CPDB-G3` by completing `CPDB-07..CPDB-09` (seriesKey eligible-group routing index, pre-trade open-position count cache + OPEN/CLOSE invalidation, and cache parity tests that keep user/bot caps enforced), with `CPDB-G4` promoted as the next active CPU/DB group.
+- 2026-04-16: Closed `CPDB-G4` by completing `CPDB-10..CPDB-12` (telemetry touch-session throttling, symbol-stat debounce batching + close-session flush, execution OPEN leverage query removal, and query-count regression assertions), with `CPDB-G5` promoted as the next active CPU/DB group.
