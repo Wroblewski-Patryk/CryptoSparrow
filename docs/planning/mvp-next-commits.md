@@ -8,6 +8,7 @@ Operational queue for one-task execution runs.
 
 ## NOW
 - [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
+  - 2026-04-16: Advanced `PEX-A` by hardening `PEX-02` dedupe failure handling (retry only for retryable `FAILED` classes, terminal failures resolve replay as `reused/no-op`) with new service-level regression coverage; remaining active scope: `PEX-03`.
 ## NEXT
 - [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
 ## PIPELINE

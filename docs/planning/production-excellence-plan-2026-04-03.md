@@ -25,7 +25,7 @@ Move from "works in production" to "predictable, auditable, and resilient in pro
 
 ## Phase A - Idempotency and Runtime Correctness
 - [x] `PEX-01 docs(contract): freeze idempotency contract for runtime execution commands (open/dca/close/cancel) with dedupe-key schema`
-- [ ] `PEX-02 feat(api-runtime): enforce dedupe key persistence + replay-safe execution guards for side-effecting runtime actions`
+- [x] `PEX-02 feat(api-runtime): enforce dedupe key persistence + replay-safe execution guards for side-effecting runtime actions`
 - [ ] `PEX-03 test(runtime): add crash/retry regression suite proving no duplicate open/close orders after restart`
 
 Exit criteria:

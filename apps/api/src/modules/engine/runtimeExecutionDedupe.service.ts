@@ -50,6 +50,34 @@ const normalizeErrorClass = (value: string) =>
     .replace(/[^a-z0-9_:-]+/g, '_')
     .slice(0, 80) || 'runtime_execution_error';
 
+const parseRetryableErrorClasses = (value: string | undefined, fallback: string[]) => {
+  const source = value && value.trim().length > 0 ? value.split(',') : fallback;
+  return new Set(
+    source
+      .map((entry) => normalizeErrorClass(entry))
+      .filter((entry) => entry.length > 0)
+  );
+};
+
+const retryableErrorClasses = parseRetryableErrorClasses(
+  process.env.RUNTIME_EXECUTION_DEDUPE_RETRYABLE_ERRORS,
+  [
+    'TimeoutError',
+    'timeout_error',
+    'abort_error',
+    'fetch_error',
+    'network_error',
+    'prisma_client_initialization_error',
+    'prisma_client_unknown_request_error',
+    'prisma_client_rust_panic_error',
+  ]
+);
+
+export const isRuntimeExecutionRetryableErrorClass = (errorClass?: string | null) => {
+  if (!errorClass) return false;
+  return retryableErrorClasses.has(normalizeErrorClass(errorClass));
+};
+
 const toPrismaJson = (value: Record<string, unknown>): Prisma.InputJsonValue =>
   value as unknown as Prisma.InputJsonValue;
 
@@ -252,6 +280,24 @@ export class RuntimeExecutionDedupeService {
         });
         return { outcome: 'inflight', dedupeKey: input.dedupeKey };
       }
+    }
+
+    if (
+      existing.status === 'FAILED' &&
+      !isRuntimeExecutionRetryableErrorClass(existing.errorClass)
+    ) {
+      await prisma.runtimeExecutionDedupe.update({
+        where: { dedupeKey: input.dedupeKey },
+        data: {
+          lastSeenAt: now,
+        },
+      });
+      return {
+        outcome: 'reused',
+        dedupeKey: input.dedupeKey,
+        orderId: existing.orderId,
+        positionId: existing.positionId,
+      };
     }
 
     await prisma.runtimeExecutionDedupe.update({
