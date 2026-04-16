@@ -7,12 +7,10 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
-  - 2026-04-16: Advanced `PEX-A` by hardening `PEX-02` dedupe failure handling (retry only for retryable `FAILED` classes, terminal failures resolve replay as `reused/no-op`) with new service-level regression coverage; remaining active scope: `PEX-03`.
-## NEXT
 - [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
-## PIPELINE
+## NEXT
 - [ ] `PEX-C observability-ops: runtime alert thresholds + incident triage runbook`
+## PIPELINE
 - [ ] `PEX-D recoverability: backup verification + restore drill automation + RTO/RPO doc`
 - [ ] `PEX-E secrets-hardening: secret inventory + rotation readiness validation + regression checks`
 - [ ] `PEX-F deploy-safety: post-deploy runtime freshness gate + rollback trigger policy`
@@ -20,6 +18,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
+  - 2026-04-16: Closed `PEX-A` by completing `PEX-03` with a crash-window replay regression (`OPEN` side effect completed, restart replay while dedupe stays `PENDING` => `dedupe_inflight` and zero duplicate `openOrder`/`createPosition`), validating together with existing OPEN/CLOSE restart-reuse coverage; promoted `PEX-B` as active group.
 - [x] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
   - 2026-04-16: Closed wallet Group G by completing `WLT-23..WLT-25` (end-to-end wallet QA confidence pack, wallet lifecycle + insufficient-funds operator runbook, and release-gate lint/typecheck/tests with evidence artifacts `docs/operations/_artifacts-wlt25-release-gate-2026-04-16T20-49-53-335Z.json` + `docs/operations/wlt25-release-gate-2026-04-16T20-49-53-335Z.md`), promoting `PEX-A` as next active group.
 - [x] `WLT-25 release(gate): run lint/typecheck/tests and capture rollout evidence`

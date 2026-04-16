@@ -20,6 +20,12 @@ type MemoryDedupe = {
   positionId?: string | null;
 };
 
+type PendingOnlyDedupe = {
+  status: 'PENDING' | 'SUCCEEDED';
+  orderId?: string | null;
+  positionId?: string | null;
+};
+
 const createMemoryDedupeGateway = (): RuntimeExecutionDedupeGateway => {
   const store = new Map<string, MemoryDedupe>();
   return {
@@ -58,6 +64,43 @@ const createMemoryDedupeGateway = (): RuntimeExecutionDedupeGateway => {
     markFailed: vi.fn(async (input) => {
       store.set(input.dedupeKey, { status: 'FAILED' });
     }),
+  };
+};
+
+const createCrashPendingDedupeGateway = (): RuntimeExecutionDedupeGateway => {
+  const store = new Map<string, PendingOnlyDedupe>();
+  return {
+    acquire: vi.fn(async (input): Promise<DedupeAcquireResult> => {
+      const existing = store.get(input.dedupeKey);
+      if (!existing) {
+        store.set(input.dedupeKey, { status: 'PENDING' });
+        return {
+          outcome: 'execute',
+          dedupeKey: input.dedupeKey,
+        };
+      }
+      if (existing.status === 'SUCCEEDED') {
+        return {
+          outcome: 'reused',
+          dedupeKey: input.dedupeKey,
+          orderId: existing.orderId,
+          positionId: existing.positionId,
+        };
+      }
+      return {
+        outcome: 'inflight',
+        dedupeKey: input.dedupeKey,
+      };
+    }),
+    markSucceeded: vi.fn(async (input) => {
+      store.set(input.dedupeKey, {
+        status: 'SUCCEEDED',
+        orderId: input.orderId,
+        positionId: input.positionId,
+      });
+    }),
+    // Crash window simulation: side effect happened, process died before failure status persisted.
+    markFailed: vi.fn(async () => undefined),
   };
 };
 
@@ -359,5 +402,140 @@ describe('runtime crash/retry regression', () => {
     });
     expect(closeOpenOrderCalls).toBe(1);
     expect(closePositionCalls).toBe(1);
+  });
+
+  it('does not duplicate OPEN side effect when restart replays while dedupe record remains PENDING', async () => {
+    const dedupe = createCrashPendingDedupeGateway();
+    let openOrderCalls = 0;
+    let createPositionCalls = 0;
+
+    const orderGateway: OrderFlowGateway = {
+      openOrder: vi.fn(async (_userId, input): Promise<OpenOrderResult> => {
+        openOrderCalls += 1;
+        return {
+          id: `open-order-pending-${openOrderCalls}`,
+          userId: 'u1',
+          origin: 'BOT',
+          managementMode: 'BOT_MANAGED',
+          syncState: 'IN_SYNC',
+          symbol: input.symbol,
+          side: input.side,
+          type: input.type,
+          status: 'FILLED',
+          quantity: input.quantity,
+          filledQuantity: input.quantity,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          submittedAt: new Date(),
+          filledAt: new Date(),
+          botId: input.botId ?? null,
+          walletId: input.walletId ?? null,
+          strategyId: input.strategyId ?? null,
+          positionId: null,
+          price: null,
+          stopPrice: null,
+          averageFillPrice: null,
+          fee: null,
+          feeSource: 'ESTIMATED',
+          feePending: false,
+          feeCurrency: null,
+          effectiveFeeRate: null,
+          exchangeOrderId: null,
+          exchangeTradeId: null,
+          canceledAt: null,
+        };
+      }),
+      closeOrder: vi.fn(async () => null),
+      linkOrderToPosition: vi.fn(async () => {
+        throw new Error('simulated_crash_after_open_side_effect');
+      }),
+    };
+    const positionGateway: PositionFlowGateway = {
+      getOpenPositionBySymbol: vi.fn(async () => null),
+      createPosition: vi.fn(async (input): Promise<OpenPositionResult> => {
+        createPositionCalls += 1;
+        return {
+          id: `open-position-pending-${createPositionCalls}`,
+          userId: input.userId,
+          externalId: null,
+          origin: 'BOT',
+          managementMode: 'BOT_MANAGED',
+          syncState: 'IN_SYNC',
+          symbol: input.symbol,
+          side: input.side,
+          status: 'OPEN',
+          entryPrice: input.entryPrice,
+          quantity: input.quantity,
+          leverage: input.leverage ?? 1,
+          openedAt: new Date(),
+          closedAt: null,
+          realizedPnl: null,
+          unrealizedPnl: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          botId: input.botId ?? null,
+          walletId: input.walletId ?? null,
+          strategyId: input.strategyId ?? null,
+          stopLoss: null,
+          takeProfit: null,
+        };
+      }),
+      closePosition: vi.fn(async () => undefined),
+    };
+
+    await expect(
+      orchestrateRuntimeSignal(
+        {
+          userId: 'u1',
+          botId: 'bot-1',
+          botMarketGroupId: 'group-1',
+          runtimeSessionId: 'session-crash-1',
+          strategyId: 'strategy-1',
+          strategyInterval: '1m',
+          symbol: 'BTCUSDT',
+          direction: 'LONG',
+          quantity: 0.1,
+          markPrice: 42_000,
+          mode: 'PAPER',
+          candleOpenTime: 1_000,
+          candleCloseTime: 59_000,
+        },
+        orderGateway,
+        positionGateway,
+        noopEventGateway,
+        noopTradeGateway,
+        dedupe
+      )
+    ).rejects.toThrow('simulated_crash_after_open_side_effect');
+
+    const replayResult = await orchestrateRuntimeSignal(
+      {
+        userId: 'u1',
+        botId: 'bot-1',
+        botMarketGroupId: 'group-1',
+        runtimeSessionId: 'session-crash-2',
+        strategyId: 'strategy-1',
+        strategyInterval: '1m',
+        symbol: 'BTCUSDT',
+        direction: 'LONG',
+        quantity: 0.1,
+        markPrice: 42_000,
+        mode: 'PAPER',
+        candleOpenTime: 1_000,
+        candleCloseTime: 59_000,
+      },
+      orderGateway,
+      positionGateway,
+      noopEventGateway,
+      noopTradeGateway,
+      dedupe
+    );
+
+    expect(replayResult).toEqual({
+      status: 'ignored',
+      reason: 'dedupe_inflight',
+    });
+    expect(openOrderCalls).toBe(1);
+    expect(createPositionCalls).toBe(1);
   });
 });

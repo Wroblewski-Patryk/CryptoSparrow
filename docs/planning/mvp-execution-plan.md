@@ -1549,7 +1549,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
 - [x] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
 - [x] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
-- [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
+- [x] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
 - [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
 - [ ] `PEX-C observability-ops: runtime alert thresholds + incident triage runbook`
 - [ ] `PEX-D recoverability: backup verification + restore drill automation + RTO/RPO doc`
@@ -1557,6 +1557,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `PEX-F deploy-safety: post-deploy runtime freshness gate + rollback trigger policy`
 
 ### Progress Log (Continuous Group Pipeline)
+- 2026-04-16: Closed `PEX-A` by completing `PEX-03` (crash-window replay regression in `runtimeCrashRetry.regression.test.ts`: side effect executed once, restart replay with dedupe `PENDING` returns `dedupe_inflight`, no duplicate OPEN side effects) and revalidating OPEN/CLOSE restart parity coverage; promoted `PEX-B` as next active group.
 - 2026-04-16: Advanced `PEX-A` by hardening `PEX-02` runtime idempotency failure semantics in `runtimeExecutionDedupeService` (retry only for retryable `FAILED` classes; terminal failures now replay as `reused/no-op` to avoid duplicate side effects) and adding targeted dedupe service regression tests; remaining active group scope: `PEX-03`.
 - 2026-04-16: Closed `WLT-G` by completing `WLT-25` (release-gate lint/typecheck/sequential wallet-first API e2e + wallet-focused web regression validation, all PASS, with rollout evidence artifacts `docs/operations/_artifacts-wlt25-release-gate-2026-04-16T20-49-53-335Z.json` and `docs/operations/wlt25-release-gate-2026-04-16T20-49-53-335Z.md`), finalizing group scope `WLT-23..WLT-25` and promoting `PEX-A` as next active group.
 - 2026-04-16: Advanced `WLT-G` by completing `WLT-24` (published canonical wallet lifecycle operator runbook `docs/operations/wallet-lifecycle-operator-runbook.md` for wallet-first PAPER/LIVE lifecycle operations and `WALLET_INSUFFICIENT_FUNDS` incident troubleshooting with fast triage/deep diagnostics/mitigation matrix, plus linked operator discovery from bot and MVP ops runbooks); remaining scope in active group: `WLT-25`.
