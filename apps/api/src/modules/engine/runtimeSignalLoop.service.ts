@@ -285,7 +285,7 @@ export class RuntimeSignalLoop {
       this.sessionWatchdogTimer = null;
     }
     if (!this.unsubscribe) return;
-    const activeBots = await this.listActiveBotsWithMetrics();
+    const activeBots = await this.listActiveBotsDirectWithMetrics();
     await Promise.all(
       activeBots.map((bot) =>
         this.deps.closeRuntimeSession?.({
@@ -326,7 +326,7 @@ export class RuntimeSignalLoop {
   }
 
   private async syncRuntimeSessions() {
-    const activeBots = await this.listActiveBotsWithMetrics();
+    const activeBots = await this.listActiveBotsDirectWithMetrics();
     await this.deps.closeInactiveRuntimeSessions?.(activeBots.map((bot) => bot.id));
     await Promise.all(
       activeBots.map((bot) =>
@@ -340,8 +340,24 @@ export class RuntimeSignalLoop {
     return activeBots;
   }
 
-  private async listActiveBotsWithMetrics() {
+  private async listActiveBotsDirectWithMetrics() {
     return runtimeMetricsService.measureListActiveBots(async () => this.deps.listActiveBots());
+  }
+
+  private async listActiveBotsFromTopologyCacheWithMetrics() {
+    if (!this.deps.listActiveBotsFromTopologyCache) {
+      return this.listActiveBotsDirectWithMetrics();
+    }
+
+    try {
+      return runtimeMetricsService.measureListActiveBots(async () =>
+        this.deps.listActiveBotsFromTopologyCache()
+      );
+    } catch (error) {
+      console.error('RuntimeSignalLoop topology cache read failed. Falling back to direct query.', error);
+      metricsStore.recordRuntimeExecutionError('runtime_topology_cache_read_failure');
+      return this.listActiveBotsDirectWithMetrics();
+    }
   }
 
   private async detectRuntimeStall(now: number, activeBotIdsFromSync: string[]) {
@@ -571,7 +587,7 @@ export class RuntimeSignalLoop {
   }
 
   private async handleFinalCandleDecision(event: StreamCandleEvent) {
-    const bots = await this.listActiveBotsWithMetrics();
+    const bots = await this.listActiveBotsFromTopologyCacheWithMetrics();
     await this.deps.closeInactiveRuntimeSessions?.(bots.map((bot) => bot.id));
     const managedExternalSymbolKeys = new Set<string>();
     try {
