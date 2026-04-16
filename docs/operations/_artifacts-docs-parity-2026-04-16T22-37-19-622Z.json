@@ -1,0 +1,22 @@
+{
+  "generatedAt": "2026-04-16T22:37:20.312Z",
+  "status": "PASS",
+  "counts": {
+    "apiModulesOnDisk": 22,
+    "apiModulesDocumented": 22,
+    "webFeaturesOnDisk": 15,
+    "webFeaturesDocumented": 15,
+    "routesOnDisk": 37,
+    "routesDocumented": 37
+  },
+  "mismatches": {
+    "apiModulesMissingInDocs": [],
+    "apiModulesStaleInDocs": [],
+    "webFeaturesMissingInDocs": [],
+    "webFeaturesStaleInDocs": [],
+    "routesMissingInDocs": [],
+    "routesStaleInDocs": [],
+    "sourcePathMismatches": [],
+    "missingPublishedDeepDiveDocs": []
+  }
+}

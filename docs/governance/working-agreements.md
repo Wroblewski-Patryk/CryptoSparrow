@@ -21,6 +21,18 @@
 - Any moved/renamed canonical docs file must include same-change update of `docs/README.md`.
 - Delivery queue updates must be reflected in both `docs/planning/mvp-next-commits.md` and `docs/planning/mvp-execution-plan.md` in the same task.
 
+## Documentation Parity Sustainment (Cadence and Ownership)
+- Cadence:
+  - Run `pnpm run docs:parity:check -- --json --output docs/operations/_artifacts-docs-parity-<UTC_TIMESTAMP>.json` at least once per week.
+  - Run the same command immediately after any route/module inventory change, before closing the task.
+- Ownership:
+  - The active delivery agent for the current queue task is responsible for generating parity evidence and syncing canonical docs in the same commit.
+  - The release/ops owner for the wave validates that the latest parity artifact is referenced in canonical docs before deployment sign-off.
+- Evidence contract:
+  - Keep the latest parity artifact under `docs/operations/`.
+  - Publish a short evidence note summarizing command, counts, and PASS/FAIL outcome.
+  - Update `mvp-next-commits.md` and `mvp-execution-plan.md` together when parity sustainment tasks are completed.
+
 ## Runtime Optimization Flag Rollout (Mandatory)
 - Runtime CPU/DB optimizations must be shipped behind explicit feature flags before broad rollout.
 - Required flags for this wave:

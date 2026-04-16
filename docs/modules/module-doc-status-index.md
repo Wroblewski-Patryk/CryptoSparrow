@@ -1,8 +1,9 @@
 # Module Documentation Status Index (Canonical)
 
-Updated: 2026-04-12
+Updated: 2026-04-17
 
 Purpose: map every active module in code inventory to deep-dive documentation status and planned delivery task.
+Latest docs parity artifact: `docs/operations/_artifacts-docs-parity-2026-04-16T22-37-19-622Z.json` (`PASS`).
 
 Status legend:
 - `Planned`: deep-dive file not authored yet.

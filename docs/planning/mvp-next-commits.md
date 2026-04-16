@@ -7,18 +7,34 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `DOCSYNC-01 ops(docs-parity): run docs parity check and publish fresh evidence artifact`
-- [ ] `DOCSYNC-02 docs(module-index): refresh module+route inventory snapshots after parity run`
-- [ ] `DOCSYNC-03 chore(planning-queue): validate NOW/NEXT refill continuity and align canonical queue`
-- [ ] `DOCSYNC-04 docs(governance): capture sustainment cadence and ownership in working agreements`
+- [ ] `L10NPT-01 docs(contract): lock Portuguese locale policy to pt-PT only and forbid pt-BR in this rollout`
+- [ ] `L10NPT-02 feat(i18n-core): extend locale contract to en/pl/pt + pt-PT formatting`
+- [ ] `L10NPT-03 feat(web-language-switcher): add Portuguese option in language switcher (header/footer)`
+- [ ] `L10NPT-04 feat(i18n-namespaces): add dashboard namespace translation files for Portuguese`
+- [ ] `L10NPT-05 refactor(web-shared-copy): remove en/pl-only branches in shared layout/components`
 ## NEXT
-- [ ] `L10NPT-A localization(pt-pt): execute European Portuguese rollout queue from docs/planning/pt-pt-localization-rollout-plan-2026-04-17.md (pt-PT only, no pt-BR)`
+- [ ] `L10NPT-06 refactor(web-page-copy): migrate page-level inline copy to include Portuguese`
+- [ ] `L10NPT-07 refactor(strategies-localizers): widen strategy helper locale maps to include Portuguese`
+- [ ] `L10NPT-08 refactor(profile-wallet-markets): remove remaining en/pl-only branches in forms and tables`
+- [ ] `L10NPT-09 test(i18n-contract): update tests for en/pl/pt key parity and persistence`
+- [ ] `L10NPT-10 qa(i18n-hardcoded-scan): rerun hardcoded-locale scan and close remaining hotspots`
 ## PIPELINE
-- none
+- [ ] `L10NPT-11 qa(web-smoke): manual PT smoke across dashboard/public/profile/auth`
+- [ ] `L10NPT-12 docs(closure): publish rollout evidence and sync canonical queue statuses`
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `DOCSYNC-A docs-parity-sustainment: periodic parity audit refresh + queue continuity safeguards`
+  - 2026-04-17: Closed `DOCSYNC-A` by completing `DOCSYNC-01..DOCSYNC-04` (fresh docs parity artifact `docs/operations/_artifacts-docs-parity-2026-04-16T22-37-19-622Z.json` with `PASS` result, published sustainment evidence `docs/operations/documentation-parity-sustainment-evidence-2026-04-17.md`, refreshed module/route inventory snapshots, and added cadence/ownership guardrails in working agreements), promoting `L10NPT-01..L10NPT-05` into active `NOW`.
+- [x] `DOCSYNC-04 docs(governance): capture sustainment cadence and ownership in working agreements`
+  - 2026-04-17: Added `Documentation Parity Sustainment (Cadence and Ownership)` contract in `docs/governance/working-agreements.md` with weekly parity run cadence, explicit ownership, and evidence requirements.
+- [x] `DOCSYNC-03 chore(planning-queue): validate NOW/NEXT refill continuity and align canonical queue`
+  - 2026-04-17: Refilled canonical one-task queue to next group by promoting `L10NPT-01..L10NPT-05` into `NOW`, `L10NPT-06..L10NPT-10` into `NEXT`, and `L10NPT-11..L10NPT-12` into `PIPELINE`.
+- [x] `DOCSYNC-02 docs(module-index): refresh module+route inventory snapshots after parity run`
+  - 2026-04-17: Refreshed snapshot metadata in `docs/modules/module-doc-status-index.md`, `docs/modules/system-modules.md`, and `docs/architecture/dashboard-route-map.md` with current date plus latest parity artifact reference.
+- [x] `DOCSYNC-01 ops(docs-parity): run docs parity check and publish fresh evidence artifact`
+  - 2026-04-17: Ran `pnpm run docs:parity:check -- --json --output docs/operations/_artifacts-docs-parity-2026-04-16T22-37-19-622Z.json` (`PASS`: `22/22 API`, `15/15 Web`, `37/37 routes`) and published operational summary in `docs/operations/documentation-parity-sustainment-evidence-2026-04-17.md`.
 - [x] `A11Y-A accessibility-full-pass: full dashboard accessibility closure (automated + manual + evidence)`
   - 2026-04-17: Closed `A11Y-A` by completing `A11Y-02..A11Y-05` (automated route-level accessibility smoke, `PageTitle` semantic remediation for breadcrumb landmark + contextual create-action SR description, and closure evidence artifacts `docs/operations/_artifacts-a11y-full-pass-2026-04-17T00-17-35-000Z.json` + `docs/operations/a11y-full-pass-closure-2026-04-17.md`), promoting `DOCSYNC-A` into active `NOW`.
 - [x] `A11Y-05 docs(closure): publish closure evidence and sync canonical docs/plan status`
