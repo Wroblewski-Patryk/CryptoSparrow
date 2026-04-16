@@ -5,6 +5,7 @@ import { metricsStore } from '../../observability/metrics';
 
 describe('RuntimeTelemetryService.ensureRuntimeSession', () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -115,7 +116,8 @@ describe('RuntimeTelemetryService.ensureRuntimeSession', () => {
     );
   });
 
-  it('records runtime telemetry write metrics for symbol stat upsert and heartbeat touch', async () => {
+  it('records runtime telemetry write metrics after debounced symbol stat flush', async () => {
+    vi.useFakeTimers();
     const service = new RuntimeTelemetryService();
     vi.spyOn(prisma.botRuntimeSymbolStat, 'upsert').mockResolvedValue({} as any);
     vi.spyOn(prisma.botRuntimeSession, 'update').mockResolvedValue({ id: 'session-1' } as any);
@@ -130,9 +132,94 @@ describe('RuntimeTelemetryService.ensureRuntimeSession', () => {
         totalSignals: 1,
       },
     });
+    await vi.advanceTimersByTimeAsync(300);
     const after = metricsStore.snapshot().runtime.hotPath;
 
     expect(after.symbolStatsWrites).toBeGreaterThanOrEqual(before.symbolStatsWrites + 1);
     expect(after.touchSessionWrites).toBeGreaterThanOrEqual(before.touchSessionWrites + 1);
+  });
+
+  it('batches symbol stat upserts for the same session and symbol within debounce window', async () => {
+    vi.useFakeTimers();
+    const service = new RuntimeTelemetryService();
+    const upsertSpy = vi.spyOn(prisma.botRuntimeSymbolStat, 'upsert').mockResolvedValue({} as any);
+    vi.spyOn(prisma.botRuntimeSession, 'update').mockResolvedValue({ id: 'session-1' } as any);
+
+    await service.upsertRuntimeSymbolStat({
+      userId: 'user-1',
+      botId: 'bot-1',
+      sessionId: 'session-1',
+      symbol: 'BTCUSDT',
+      increments: {
+        totalSignals: 1,
+        longEntries: 1,
+      },
+    });
+    await service.upsertRuntimeSymbolStat({
+      userId: 'user-1',
+      botId: 'bot-1',
+      sessionId: 'session-1',
+      symbol: 'BTCUSDT',
+      increments: {
+        totalSignals: 2,
+        shortEntries: 1,
+      },
+    });
+
+    expect(upsertSpy).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(300);
+
+    expect(upsertSpy).toHaveBeenCalledTimes(1);
+    expect(upsertSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: expect.objectContaining({
+          totalSignals: { increment: 3 },
+          longEntries: { increment: 1 },
+          shortEntries: { increment: 1 },
+        }),
+      })
+    );
+  });
+
+  it('throttles touchSession writes to once per configured window', async () => {
+    vi.useFakeTimers();
+    const service = new RuntimeTelemetryService();
+    (service as any).botSessionCache.set('bot-1', {
+      sessionId: 'session-running',
+      userId: 'user-1',
+      mode: 'PAPER',
+    });
+
+    vi.spyOn(prisma.botRuntimeSession, 'findFirst').mockResolvedValue({
+      id: 'session-running',
+      userId: 'user-1',
+      mode: 'PAPER',
+      status: 'RUNNING',
+    } as any);
+    vi.spyOn(prisma.botRuntimeSession, 'findMany').mockResolvedValue([] as any);
+    const touchSpy = vi.spyOn(prisma.botRuntimeSession, 'update').mockResolvedValue({
+      id: 'session-running',
+    } as any);
+
+    await service.ensureRuntimeSession({
+      userId: 'user-1',
+      botId: 'bot-1',
+      mode: 'PAPER',
+    });
+    await service.ensureRuntimeSession({
+      userId: 'user-1',
+      botId: 'bot-1',
+      mode: 'PAPER',
+    });
+
+    expect(touchSpy).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(15_100);
+    await service.ensureRuntimeSession({
+      userId: 'user-1',
+      botId: 'bot-1',
+      mode: 'PAPER',
+    });
+    expect(touchSpy).toHaveBeenCalledTimes(2);
   });
 });

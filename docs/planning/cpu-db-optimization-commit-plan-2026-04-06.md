@@ -127,7 +127,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 
 ### [ ] Group 4 - Telemetry write reduction + execution query cleanup
 
-- [ ] `CPDB-10 refactor(telemetry): throttle touchSession + batch symbol stats writes`
+- [x] `CPDB-10 refactor(telemetry): throttle touchSession + batch symbol stats writes`
   - Files:
     - `apps/api/src/modules/engine/runtimeTelemetry.service.ts`
   - Deliverable:
@@ -288,3 +288,4 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Completed `CPDB-08` by introducing short-TTL pre-trade open-position count caches (user-level and bot-level) and wiring deterministic invalidation on runtime execution `OPEN`/`CLOSE` outcomes to prevent stale risk-cap decisions while cutting repeat count reads.
 - 2026-04-16: Completed `CPDB-09` by adding pre-trade parity tests for count-cache reuse and explicit invalidation refresh so user/bot risk caps remain enforced while DB roundtrips are reduced.
 - 2026-04-16: Closed Group 3 (`CPDB-07..CPDB-09`). Next unchecked group is Group 4 (`CPDB-10..CPDB-12`).
+- 2026-04-16: Completed `CPDB-10` by adding throttled `touchSession` heartbeat writes (`RUNTIME_TELEMETRY_TOUCH_SESSION_THROTTLE_MS`, default 15s), debounced symbol-stat batching (`RUNTIME_TELEMETRY_SYMBOL_STAT_DEBOUNCE_MS`, default 250ms), and session-close flush logic for pending stat updates.

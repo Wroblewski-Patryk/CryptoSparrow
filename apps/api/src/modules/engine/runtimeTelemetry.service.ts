@@ -75,11 +75,46 @@ type CachedSession = {
   mode: RuntimeMode;
 };
 
+type PendingSymbolStat = {
+  userId: string;
+  botId: string;
+  sessionId: string;
+  symbol: string;
+  increments: SymbolStatIncrements;
+  lastPrice?: number;
+  lastSignalAt?: Date;
+  lastTradeAt?: Date;
+  openPositionCount?: number;
+  openPositionQty?: number;
+};
+
+const runtimeTouchSessionThrottleMs = Math.max(
+  0,
+  Number.parseInt(process.env.RUNTIME_TELEMETRY_TOUCH_SESSION_THROTTLE_MS ?? '15000', 10)
+);
+const runtimeSymbolStatDebounceMs = Math.max(
+  0,
+  Number.parseInt(process.env.RUNTIME_TELEMETRY_SYMBOL_STAT_DEBOUNCE_MS ?? '250', 10)
+);
+
 const safeNumber = (value: number | undefined) =>
   Number.isFinite(value as number) ? (value as number) : undefined;
 
+const resolveNewerDate = (current: Date | undefined, candidate: Date | undefined) => {
+  if (!candidate) return current;
+  if (!current) return candidate;
+  return candidate.getTime() >= current.getTime() ? candidate : current;
+};
+
 export class RuntimeTelemetryService {
   private readonly botSessionCache = new Map<string, CachedSession>();
+  private readonly lastTouchedSessionAtMs = new Map<string, number>();
+  private readonly pendingSymbolStatsByKey = new Map<string, PendingSymbolStat>();
+  private readonly symbolStatFlushTimersByKey = new Map<string, NodeJS.Timeout>();
+
+  private buildSymbolStatKey(sessionId: string, symbol: string) {
+    return `${sessionId}|${symbol}`;
+  }
 
   private async cancelDuplicateRunningSessions(botId: string, keepSessionId: string) {
     const duplicates = await prisma.botRuntimeSession.findMany({
@@ -112,6 +147,155 @@ export class RuntimeTelemetryService {
         stopReason: 'duplicate_running_session',
       },
     });
+  }
+
+  private mergeSymbolStatIncrements(
+    base: SymbolStatIncrements,
+    delta: SymbolStatIncrements | undefined
+  ): SymbolStatIncrements {
+    if (!delta) return base;
+    return {
+      totalSignals: (base.totalSignals ?? 0) + (delta.totalSignals ?? 0),
+      longEntries: (base.longEntries ?? 0) + (delta.longEntries ?? 0),
+      shortEntries: (base.shortEntries ?? 0) + (delta.shortEntries ?? 0),
+      exits: (base.exits ?? 0) + (delta.exits ?? 0),
+      dcaCount: (base.dcaCount ?? 0) + (delta.dcaCount ?? 0),
+      closedTrades: (base.closedTrades ?? 0) + (delta.closedTrades ?? 0),
+      winningTrades: (base.winningTrades ?? 0) + (delta.winningTrades ?? 0),
+      losingTrades: (base.losingTrades ?? 0) + (delta.losingTrades ?? 0),
+      realizedPnl: (base.realizedPnl ?? 0) + (delta.realizedPnl ?? 0),
+      grossProfit: (base.grossProfit ?? 0) + (delta.grossProfit ?? 0),
+      grossLoss: (base.grossLoss ?? 0) + (delta.grossLoss ?? 0),
+      feesPaid: (base.feesPaid ?? 0) + (delta.feesPaid ?? 0),
+    };
+  }
+
+  private queueSymbolStatUpsert(input: PendingSymbolStat) {
+    const key = this.buildSymbolStatKey(input.sessionId, input.symbol);
+    const existing = this.pendingSymbolStatsByKey.get(key);
+    if (!existing) {
+      this.pendingSymbolStatsByKey.set(key, {
+        ...input,
+        increments: this.mergeSymbolStatIncrements({}, input.increments),
+      });
+      return key;
+    }
+
+    existing.increments = this.mergeSymbolStatIncrements(existing.increments, input.increments);
+    if (input.lastPrice !== undefined) existing.lastPrice = input.lastPrice;
+    if (input.openPositionCount !== undefined) existing.openPositionCount = input.openPositionCount;
+    if (input.openPositionQty !== undefined) existing.openPositionQty = input.openPositionQty;
+    existing.lastSignalAt = resolveNewerDate(existing.lastSignalAt, input.lastSignalAt);
+    existing.lastTradeAt = resolveNewerDate(existing.lastTradeAt, input.lastTradeAt);
+    this.pendingSymbolStatsByKey.set(key, existing);
+    return key;
+  }
+
+  private scheduleSymbolStatFlush(key: string) {
+    const existingTimer = this.symbolStatFlushTimersByKey.get(key);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      this.symbolStatFlushTimersByKey.delete(key);
+    }
+
+    if (runtimeSymbolStatDebounceMs <= 0) {
+      void this.flushSymbolStatByKey(key);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      this.symbolStatFlushTimersByKey.delete(key);
+      void this.flushSymbolStatByKey(key);
+    }, runtimeSymbolStatDebounceMs);
+    timer.unref?.();
+    this.symbolStatFlushTimersByKey.set(key, timer);
+  }
+
+  private async flushSymbolStatByKey(key: string) {
+    const pending = this.pendingSymbolStatsByKey.get(key);
+    if (!pending) return;
+    this.pendingSymbolStatsByKey.delete(key);
+
+    const now = new Date();
+    await prisma.botRuntimeSymbolStat.upsert({
+      where: {
+        sessionId_symbol: {
+          sessionId: pending.sessionId,
+          symbol: pending.symbol,
+        },
+      },
+      create: {
+        userId: pending.userId,
+        botId: pending.botId,
+        sessionId: pending.sessionId,
+        symbol: pending.symbol,
+        totalSignals: pending.increments.totalSignals ?? 0,
+        longEntries: pending.increments.longEntries ?? 0,
+        shortEntries: pending.increments.shortEntries ?? 0,
+        exits: pending.increments.exits ?? 0,
+        dcaCount: pending.increments.dcaCount ?? 0,
+        closedTrades: pending.increments.closedTrades ?? 0,
+        winningTrades: pending.increments.winningTrades ?? 0,
+        losingTrades: pending.increments.losingTrades ?? 0,
+        realizedPnl: pending.increments.realizedPnl ?? 0,
+        grossProfit: pending.increments.grossProfit ?? 0,
+        grossLoss: pending.increments.grossLoss ?? 0,
+        feesPaid: pending.increments.feesPaid ?? 0,
+        openPositionCount: pending.openPositionCount ?? 0,
+        openPositionQty: pending.openPositionQty ?? 0,
+        lastPrice: safeNumber(pending.lastPrice),
+        lastSignalAt: pending.lastSignalAt,
+        lastTradeAt: pending.lastTradeAt,
+        snapshotAt: now,
+      },
+      update: {
+        totalSignals: { increment: pending.increments.totalSignals ?? 0 },
+        longEntries: { increment: pending.increments.longEntries ?? 0 },
+        shortEntries: { increment: pending.increments.shortEntries ?? 0 },
+        exits: { increment: pending.increments.exits ?? 0 },
+        dcaCount: { increment: pending.increments.dcaCount ?? 0 },
+        closedTrades: { increment: pending.increments.closedTrades ?? 0 },
+        winningTrades: { increment: pending.increments.winningTrades ?? 0 },
+        losingTrades: { increment: pending.increments.losingTrades ?? 0 },
+        realizedPnl: { increment: pending.increments.realizedPnl ?? 0 },
+        grossProfit: { increment: pending.increments.grossProfit ?? 0 },
+        grossLoss: { increment: pending.increments.grossLoss ?? 0 },
+        feesPaid: { increment: pending.increments.feesPaid ?? 0 },
+        ...(pending.openPositionCount !== undefined
+          ? { openPositionCount: Math.max(0, Math.trunc(pending.openPositionCount)) }
+          : {}),
+        ...(pending.openPositionQty !== undefined
+          ? { openPositionQty: Math.max(0, pending.openPositionQty) }
+          : {}),
+        ...(pending.lastPrice !== undefined ? { lastPrice: safeNumber(pending.lastPrice) } : {}),
+        ...(pending.lastSignalAt ? { lastSignalAt: pending.lastSignalAt } : {}),
+        ...(pending.lastTradeAt ? { lastTradeAt: pending.lastTradeAt } : {}),
+        snapshotAt: now,
+      },
+    });
+    runtimeMetricsService.recordSymbolStatsWrite();
+    await this.touchSession(pending.sessionId);
+  }
+
+  private async flushPendingSymbolStatsForSessions(sessionIds: string[]) {
+    if (sessionIds.length === 0) return;
+    const sessionIdSet = new Set(sessionIds);
+    const pendingKeys = Array.from(this.pendingSymbolStatsByKey.keys()).filter((key) => {
+      const separatorIndex = key.indexOf('|');
+      if (separatorIndex <= 0) return false;
+      return sessionIdSet.has(key.slice(0, separatorIndex));
+    });
+
+    await Promise.all(
+      pendingKeys.map(async (key) => {
+        const timer = this.symbolStatFlushTimersByKey.get(key);
+        if (timer) {
+          clearTimeout(timer);
+          this.symbolStatFlushTimersByKey.delete(key);
+        }
+        await this.flushSymbolStatByKey(key);
+      })
+    );
   }
 
   async ensureRuntimeSession(input: EnsureRuntimeSessionInput) {
@@ -190,6 +374,7 @@ export class RuntimeTelemetryService {
       userId: input.userId,
       mode: input.mode,
     });
+    this.lastTouchedSessionAtMs.set(created.id, now.getTime());
 
     await prisma.botRuntimeEvent.create({
       data: {
@@ -227,6 +412,7 @@ export class RuntimeTelemetryService {
     }
 
     const sessionIds = runningSessions.map((session) => session.id);
+    await this.flushPendingSymbolStatsForSessions(sessionIds);
     const now = new Date();
     await prisma.botRuntimeSession.updateMany({
       where: {
@@ -260,6 +446,9 @@ export class RuntimeTelemetryService {
     });
 
     this.botSessionCache.delete(input.botId);
+    for (const sessionId of sessionIds) {
+      this.lastTouchedSessionAtMs.delete(sessionId);
+    }
   }
 
   async closeInactiveRuntimeSessions(activeBotIds: string[]) {
@@ -334,77 +523,37 @@ export class RuntimeTelemetryService {
     if (!sessionId) return;
 
     const symbol = normalizeSymbol(input.symbol);
-    const increments = input.increments ?? {};
-    const now = new Date();
-
-    await prisma.botRuntimeSymbolStat.upsert({
-      where: {
-        sessionId_symbol: {
-          sessionId,
-          symbol,
-        },
-      },
-      create: {
-        userId: input.userId,
-        botId: input.botId,
-        sessionId,
-        symbol,
-        totalSignals: increments.totalSignals ?? 0,
-        longEntries: increments.longEntries ?? 0,
-        shortEntries: increments.shortEntries ?? 0,
-        exits: increments.exits ?? 0,
-        dcaCount: increments.dcaCount ?? 0,
-        closedTrades: increments.closedTrades ?? 0,
-        winningTrades: increments.winningTrades ?? 0,
-        losingTrades: increments.losingTrades ?? 0,
-        realizedPnl: increments.realizedPnl ?? 0,
-        grossProfit: increments.grossProfit ?? 0,
-        grossLoss: increments.grossLoss ?? 0,
-        feesPaid: increments.feesPaid ?? 0,
-        openPositionCount: input.openPositionCount ?? 0,
-        openPositionQty: input.openPositionQty ?? 0,
-        lastPrice: safeNumber(input.lastPrice),
-        lastSignalAt: input.lastSignalAt,
-        lastTradeAt: input.lastTradeAt,
-        snapshotAt: now,
-      },
-      update: {
-        totalSignals: { increment: increments.totalSignals ?? 0 },
-        longEntries: { increment: increments.longEntries ?? 0 },
-        shortEntries: { increment: increments.shortEntries ?? 0 },
-        exits: { increment: increments.exits ?? 0 },
-        dcaCount: { increment: increments.dcaCount ?? 0 },
-        closedTrades: { increment: increments.closedTrades ?? 0 },
-        winningTrades: { increment: increments.winningTrades ?? 0 },
-        losingTrades: { increment: increments.losingTrades ?? 0 },
-        realizedPnl: { increment: increments.realizedPnl ?? 0 },
-        grossProfit: { increment: increments.grossProfit ?? 0 },
-        grossLoss: { increment: increments.grossLoss ?? 0 },
-        feesPaid: { increment: increments.feesPaid ?? 0 },
-        ...(input.openPositionCount !== undefined
-          ? { openPositionCount: Math.max(0, Math.trunc(input.openPositionCount)) }
-          : {}),
-        ...(input.openPositionQty !== undefined
-          ? { openPositionQty: Math.max(0, input.openPositionQty) }
-          : {}),
-        ...(input.lastPrice !== undefined ? { lastPrice: safeNumber(input.lastPrice) } : {}),
-        ...(input.lastSignalAt ? { lastSignalAt: input.lastSignalAt } : {}),
-        ...(input.lastTradeAt ? { lastTradeAt: input.lastTradeAt } : {}),
-        snapshotAt: now,
-      },
+    const key = this.queueSymbolStatUpsert({
+      userId: input.userId,
+      botId: input.botId,
+      sessionId,
+      symbol,
+      increments: input.increments ?? {},
+      lastPrice: safeNumber(input.lastPrice),
+      lastSignalAt: input.lastSignalAt,
+      lastTradeAt: input.lastTradeAt,
+      openPositionCount: input.openPositionCount,
+      openPositionQty: input.openPositionQty,
     });
-    runtimeMetricsService.recordSymbolStatsWrite();
-
-    await this.touchSession(sessionId);
+    this.scheduleSymbolStatFlush(key);
   }
 
   private async touchSession(sessionId: string) {
+    const nowMs = Date.now();
+    if (runtimeTouchSessionThrottleMs > 0) {
+      const lastTouchedAtMs = this.lastTouchedSessionAtMs.get(sessionId);
+      if (lastTouchedAtMs != null && nowMs - lastTouchedAtMs < runtimeTouchSessionThrottleMs) {
+        return;
+      }
+    }
+
     await prisma.botRuntimeSession.update({
       where: { id: sessionId },
       data: {
         lastHeartbeatAt: new Date(),
       },
     });
+    this.lastTouchedSessionAtMs.set(sessionId, nowMs);
     runtimeMetricsService.recordTouchSessionWrite();
   }
 
