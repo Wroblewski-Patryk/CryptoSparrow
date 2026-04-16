@@ -128,10 +128,10 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 - [x] `WLT-10 test(api-wallets): add e2e coverage for CRUD, validation, and delete guards`
 
 ### Phase D - Bot Contract Migration
-- [ ] `WLT-11 refactor(api-bots): require walletId in create/update and derive bot execution fields from wallet`
-- [ ] `WLT-12 feat(api-bots): enforce wallet-marketGroup exchange/marketType/baseCurrency compatibility`
-- [ ] `WLT-13 refactor(api-bots): mark direct mode/paperStartBalance/apiKeyId payload inputs as deprecated`
-- [ ] `WLT-14 test(api-bots): add regression tests for wallet binding, mismatch errors, and shared-wallet assignment`
+- [x] `WLT-11 refactor(api-bots): require walletId in create/update and derive bot execution fields from wallet`
+- [x] `WLT-12 feat(api-bots): enforce wallet-marketGroup exchange/marketType/baseCurrency compatibility`
+- [x] `WLT-13 refactor(api-bots): mark direct mode/paperStartBalance/apiKeyId payload inputs as deprecated`
+- [x] `WLT-14 test(api-bots): add regression tests for wallet binding, mismatch errors, and shared-wallet assignment`
 
 ### Phase E - Runtime Budget Enforcement
 - [ ] `WLT-15 refactor(runtime-capital): resolve reference balance from wallet context (paper/live rules)`
@@ -159,6 +159,10 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 - API/web/runtime tests cover wallet mismatch and insufficient-funds scenarios.
 
 ## Progress Log
+- 2026-04-16: Completed `WLT-14` by adding targeted bot wallet-contract e2e suite `apps/api/src/modules/bots/bots.wallet-contract.e2e.test.ts` (deprecated direct-field payload behavior, wallet-switch mismatch guard, shared-wallet assignment) and validating with `pnpm --filter api test -- src/modules/bots/bots.wallet-contract.e2e.test.ts` (PASS, `4/4`).
+- 2026-04-16: Completed `WLT-13` by locking wallet-first write semantics in bot create/update payload handling where direct execution fields (`mode`, `paperStartBalance`, `apiKeyId`) are treated as deprecated compatibility inputs and do not override wallet-derived runtime context.
+- 2026-04-16: Completed `WLT-12` by adding update-time wallet compatibility guard in `apps/api/src/modules/bots/botsCommand.service.ts` to reject `walletId` switches when existing bot market-group universe context (`exchange/marketType/baseCurrency`) mismatches selected wallet context.
+- 2026-04-16: Completed `WLT-11` by validating wallet-first bot write contract in API command layer (`createBot`/`updateBot`) where persisted execution fields (`mode`, `exchange`, `marketType`, `paperStartBalance`, `apiKeyId`) are derived from wallet context rather than direct payload values.
 - 2026-04-16: Completed `WLT-10` by adding dedicated wallet CRUD e2e contract suite `apps/api/src/modules/wallets/wallets.crud.e2e.test.ts` (create/update/delete/list ownership isolation, LIVE validation, api-key exchange mismatch, and in-use delete guard) and validating together with preview/metadata suite via `pnpm --filter api test -- src/modules/wallets/wallets.crud.e2e.test.ts src/modules/wallets/wallets.e2e.test.ts` (PASS, `14/14`).
 - 2026-04-16: Completed `WLT-09` by hardening wallet mode validation in service layer (`assertWalletLiveModeConfig`) so LIVE wallets always require valid allocation mode/value even on partial updates, and by exposing mapped `WALLET_MODE_INVALID` controller response for deterministic API contract handling.
 - 2026-04-16: Completed `WLT-08` by validating and hardening wallet CRUD ownership isolation contract in `apps/api/src/modules/wallets/wallets.routes.ts`, `wallets.controller.ts`, and `wallets.service.ts`, including partial-update safety fix in `UpdateWalletSchema` (remove create-time defaults from update payload).

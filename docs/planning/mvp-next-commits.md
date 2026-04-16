@@ -7,13 +7,12 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
+- [ ] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
 - [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
 ## NEXT
-- [ ] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
+- [ ] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
 - [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
 ## PIPELINE
-- [ ] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
 - [ ] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
 - [ ] `PEX-C observability-ops: runtime alert thresholds + incident triage runbook`
 - [ ] `PEX-D recoverability: backup verification + restore drill automation + RTO/RPO doc`
@@ -23,6 +22,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
+  - 2026-04-16: Closed wallet Group D by completing `WLT-11..WLT-14` (wallet-first bot write derivation, wallet-marketGroup compatibility guard on wallet switch, deprecated direct execution-field compatibility handling, and targeted regression suite `apps/api/src/modules/bots/bots.wallet-contract.e2e.test.ts`); next wallet group promoted as `WLT-E`.
 - [x] `WLT-C wallet-api: wallet CRUD module with mode-aware validation + ownership isolation`
   - 2026-04-16: Closed wallet Group C by completing `WLT-08..WLT-10` (wallet CRUD/ownership API hardening, LIVE-mode allocation validation safety in partial updates, and dedicated e2e coverage for CRUD/validation/delete guards in `apps/api/src/modules/wallets/wallets.crud.e2e.test.ts`); next wallet group promoted as `WLT-D`.
 - [x] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
