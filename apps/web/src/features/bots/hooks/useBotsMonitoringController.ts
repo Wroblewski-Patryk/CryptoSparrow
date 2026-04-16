@@ -312,6 +312,10 @@ export const useBotsMonitoringController = ({
   const [monitorStaleWatchNowMs, setMonitorStaleWatchNowMs] = useState(() => Date.now());
   const [monitorLiveTickerPrices, setMonitorLiveTickerPrices] = useState<Record<string, number>>({});
   const monitorTtpStickyFavorableMoveByPositionRef = useRef<Map<string, number>>(new Map());
+  const monitorStreamEligibleRef = useRef(false);
+  const monitorStreamConnectedRef = useRef(false);
+  const monitorLastSseTickerAtRef = useRef<number | null>(null);
+  const monitorLastSseDrivenRefreshAtRef = useRef(0);
 
   const monitorStreamSymbols = useMemo(() => {
     const fromStats = monitorSymbolStats?.items?.map((item) => item.symbol) ?? [];
@@ -552,6 +556,30 @@ export const useBotsMonitoringController = ({
     ]
   );
 
+  const triggerSseDrivenMonitorRefresh = useCallback(() => {
+    if (!monitorAutoRefreshEnabled) return;
+    const now = Date.now();
+    const minIntervalMs = resolveMonitorRefreshIntervalMs();
+    if (now - monitorLastSseDrivenRefreshAtRef.current < minIntervalMs) return;
+    monitorLastSseDrivenRefreshAtRef.current = now;
+    void refreshMonitoring({ silent: true });
+  }, [monitorAutoRefreshEnabled, refreshMonitoring]);
+
+  const shouldRunMonitorPollingFallback = useCallback(() => {
+    if (typeof window === "undefined" || typeof window.EventSource === "undefined") {
+      return true;
+    }
+    if (!monitorStreamEligibleRef.current) {
+      return true;
+    }
+    if (!monitorStreamConnectedRef.current) {
+      return true;
+    }
+    const lastTickerAt = monitorLastSseTickerAtRef.current;
+    if (lastTickerAt == null) return true;
+    return Date.now() - lastTickerAt >= resolveMonitorRefreshIntervalMs();
+  }, []);
+
   useEffect(() => {
     if (bots.length === 0) {
       setMonitorBotId("");
@@ -583,12 +611,14 @@ export const useBotsMonitoringController = ({
     if (typeof document === "undefined") return;
 
     let intervalId = window.setInterval(() => {
+      if (!shouldRunMonitorPollingFallback()) return;
       void refreshMonitoring({ silent: true });
     }, resolveMonitorRefreshIntervalMs());
 
     const handleVisibilityChange = () => {
       window.clearInterval(intervalId);
       intervalId = window.setInterval(() => {
+        if (!shouldRunMonitorPollingFallback()) return;
         void refreshMonitoring({ silent: true });
       }, resolveMonitorRefreshIntervalMs());
     };
@@ -604,6 +634,7 @@ export const useBotsMonitoringController = ({
     monitorAutoRefreshEnabled,
     monitorBotId,
     refreshMonitoring,
+    shouldRunMonitorPollingFallback,
   ]);
 
   useEffect(() => {
@@ -623,6 +654,18 @@ export const useBotsMonitoringController = ({
   }, [monitorBotId, monitorSessionId, monitorViewMode]);
 
   useEffect(() => {
+    const streamEligible = activeTab === "monitoring" &&
+      Boolean(monitorBotId) &&
+      Boolean(monitorStreamSymbolsKey) &&
+      monitorAutoRefreshEnabled;
+    monitorStreamEligibleRef.current = streamEligible;
+    if (streamEligible) return;
+    monitorStreamConnectedRef.current = false;
+    monitorLastSseTickerAtRef.current = null;
+    monitorLastSseDrivenRefreshAtRef.current = 0;
+  }, [activeTab, monitorAutoRefreshEnabled, monitorBotId, monitorStreamSymbolsKey]);
+
+  useEffect(() => {
     if (activeTab !== "monitoring" || !monitorBotId) return;
     if (!monitorStreamSymbolsKey) return;
     if (typeof window === "undefined" || typeof window.EventSource === "undefined") return;
@@ -632,24 +675,41 @@ export const useBotsMonitoringController = ({
       interval: "1m",
     });
 
+    source.onopen = () => {
+      monitorStreamConnectedRef.current = true;
+    };
+
+    source.onerror = () => {
+      monitorStreamConnectedRef.current = false;
+    };
+
     source.addEventListener("ticker", (event) => {
       try {
         const data = JSON.parse((event as MessageEvent).data) as TickerEventPayload;
         if (!data?.symbol || !Number.isFinite(data.lastPrice)) return;
+        monitorLastSseTickerAtRef.current = Date.now();
         const symbolKey = normalizeSymbol(data.symbol);
         setMonitorLiveTickerPrices((prev) => {
           if (prev[symbolKey] === data.lastPrice) return prev;
           return { ...prev, [symbolKey]: data.lastPrice };
         });
+        triggerSseDrivenMonitorRefresh();
       } catch {
         // ignore malformed ticker payload
       }
     });
 
     return () => {
+      monitorStreamConnectedRef.current = false;
       source.close();
     };
-  }, [activeTab, monitorBotId, monitorStreamSymbols, monitorStreamSymbolsKey]);
+  }, [
+    activeTab,
+    monitorBotId,
+    monitorStreamSymbols,
+    monitorStreamSymbolsKey,
+    triggerSseDrivenMonitorRefresh,
+  ]);
 
   return {
     handleApplyMonitoringFilter,

@@ -165,7 +165,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
   - Tests:
     - `pnpm --filter web test -- HomeLiveWidgets BotsManagement`
 
-- [ ] `CPDB-14 feat(web-stream): move runtime stats refresh to SSE-first with polling fallback`
+- [x] `CPDB-14 feat(web-stream): move runtime stats refresh to SSE-first with polling fallback`
   - Files:
     - `apps/web/src/features/dashboard-home/components/HomeLiveWidgets.tsx`
     - `apps/web/src/features/bots/components/BotsManagement.tsx`
@@ -293,3 +293,4 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Completed `CPDB-12` by adding query-count regression assertions that lock telemetry batching/throttling write reduction (`upsert` and `touchSession` call counts) and execution-path read reduction (no per-OPEN strategy leverage lookup query).
 - 2026-04-16: Closed Group 4 (`CPDB-10..CPDB-12`). Next unchecked group is Group 5 (`CPDB-13..CPDB-15`).
 - 2026-04-16: Completed `CPDB-13` by replacing fixed 5s refresh loops with visibility-aware intervals (10s when tab is visible, 30s when hidden) in dashboard-home and bots monitoring runtime controllers, with updated web tests covering new cadence expectations.
+- 2026-04-16: Completed `CPDB-14` by moving dashboard-home and bots monitoring runtime refresh to SSE-first flow (`ticker`-driven silent refresh with visibility-aware throttling), while keeping interval polling only as fallback when stream is unavailable/disconnected/stale.

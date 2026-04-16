@@ -165,6 +165,10 @@ export const useHomeLiveWidgetsController = ({
   const hasLoadedTradesRef = useRef(false);
   const loadInFlightRef = useRef(false);
   const loadStartedAtRef = useRef<number | null>(null);
+  const runtimeStreamEligibleRef = useRef(false);
+  const runtimeStreamConnectedRef = useRef(false);
+  const lastSseTickerAtRef = useRef<number | null>(null);
+  const lastSseDrivenRefreshAtRef = useRef(0);
   const signalRailRef = useRef<HTMLDivElement | null>(null);
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
@@ -259,6 +263,29 @@ export const useHomeLiveWidgetsController = ({
     t,
   ]);
 
+  const triggerSseDrivenRefresh = useCallback(() => {
+    const now = Date.now();
+    const minIntervalMs = resolveAutoRefreshIntervalMs();
+    if (now - lastSseDrivenRefreshAtRef.current < minIntervalMs) return;
+    lastSseDrivenRefreshAtRef.current = now;
+    void load({ silent: true });
+  }, [load]);
+
+  const shouldRunPollingFallback = useCallback(() => {
+    if (typeof window === "undefined" || typeof window.EventSource === "undefined") {
+      return true;
+    }
+    if (!runtimeStreamEligibleRef.current) {
+      return true;
+    }
+    if (!runtimeStreamConnectedRef.current) {
+      return true;
+    }
+    const lastTickerAt = lastSseTickerAtRef.current;
+    if (lastTickerAt == null) return true;
+    return Date.now() - lastTickerAt >= resolveAutoRefreshIntervalMs();
+  }, []);
+
   useEffect(() => {
     const saved = getLocalStorageItem(SELECTED_BOT_STORAGE_KEY);
     if (saved) setSelectedBotId(saved);
@@ -279,11 +306,17 @@ export const useHomeLiveWidgetsController = ({
   useEffect(() => {
     if (typeof document === "undefined") return;
 
-    let timer = window.setInterval(() => void load({ silent: true }), resolveAutoRefreshIntervalMs());
+    let timer = window.setInterval(() => {
+      if (!shouldRunPollingFallback()) return;
+      void load({ silent: true });
+    }, resolveAutoRefreshIntervalMs());
 
     const handleVisibilityChange = () => {
       window.clearInterval(timer);
-      timer = window.setInterval(() => void load({ silent: true }), resolveAutoRefreshIntervalMs());
+      timer = window.setInterval(() => {
+        if (!shouldRunPollingFallback()) return;
+        void load({ silent: true });
+      }, resolveAutoRefreshIntervalMs());
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -292,7 +325,7 @@ export const useHomeLiveWidgetsController = ({
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.clearInterval(timer);
     };
-  }, [load]);
+  }, [load, shouldRunPollingFallback]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -324,6 +357,19 @@ export const useHomeLiveWidgetsController = ({
   const streamSymbolsKey = useMemo(() => streamSymbols.join(","), [streamSymbols]);
 
   useEffect(() => {
+    const streamEligible = Boolean(
+      selected?.session?.id &&
+      selected.session.status === "RUNNING" &&
+      streamSymbolsKey
+    );
+    runtimeStreamEligibleRef.current = streamEligible;
+    if (streamEligible) return;
+    runtimeStreamConnectedRef.current = false;
+    lastSseTickerAtRef.current = null;
+    lastSseDrivenRefreshAtRef.current = 0;
+  }, [selected?.session?.id, selected?.session?.status, streamSymbolsKey]);
+
+  useEffect(() => {
     if (!selected?.session?.id || selected.session.status !== "RUNNING") return;
     if (!streamSymbolsKey) return;
     if (typeof window === "undefined" || typeof window.EventSource === "undefined") return;
@@ -333,24 +379,42 @@ export const useHomeLiveWidgetsController = ({
       interval: "1m",
     });
 
+    source.onopen = () => {
+      runtimeStreamConnectedRef.current = true;
+    };
+
+    source.onerror = () => {
+      runtimeStreamConnectedRef.current = false;
+    };
+
     source.addEventListener("ticker", (event) => {
       try {
         const data = JSON.parse((event as MessageEvent).data) as TickerEventPayload;
         if (!data?.symbol || !Number.isFinite(data.lastPrice)) return;
+        lastSseTickerAtRef.current = Date.now();
         const symbolKey = normalizeSymbol(data.symbol);
         setLiveTickerPrices((prev) => {
           if (prev[symbolKey] === data.lastPrice) return prev;
           return { ...prev, [symbolKey]: data.lastPrice };
         });
+        triggerSseDrivenRefresh();
       } catch {
         // ignore malformed ticker payload
       }
     });
 
     return () => {
+      runtimeStreamConnectedRef.current = false;
       source.close();
     };
-  }, [createMarketStreamEventSource, selected?.session?.id, selected?.session?.status, streamSymbols, streamSymbolsKey]);
+  }, [
+    createMarketStreamEventSource,
+    selected?.session?.id,
+    selected?.session?.status,
+    streamSymbols,
+    streamSymbolsKey,
+    triggerSseDrivenRefresh,
+  ]);
 
   useEffect(() => {
     hasLoadedTradesRef.current = false;
