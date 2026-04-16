@@ -7,12 +7,11 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `CPDB-G2 runtime-cache(cpu-db): active topology cache + invalidation + parity tests`
+- [ ] `CPDB-G3 signal-routing(cpu-db): seriesKey routing index + pretrade position-count cache`
 - [ ] `WLT-A wallet-contracts: wallet source-of-truth docs + decisions + IA placement`
 - [ ] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
 - [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
 ## NEXT
-- [ ] `CPDB-G3 signal-routing(cpu-db): seriesKey routing index + pretrade position-count cache`
 - [ ] `CPDB-G4 telemetry-write(cpu-db): touchSession throttle + symbol stats batching + query-count checks`
 - [ ] `WLT-C wallet-api: wallet CRUD module with mode-aware validation + ownership isolation`
 - [ ] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
@@ -33,6 +32,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `CPDB-G2 runtime-cache(cpu-db): active topology cache + invalidation + parity tests`
+  - 2026-04-16: Closed CPU/DB Group 2 by completing `CPDB-04..CPDB-06` (topology cache service with TTL/version invalidation, final-candle cache read integration with fail-safe direct fallback, and parity regressions for cache hit/miss/invalidation); next CPU/DB group promoted as `CPDB-G3`.
 - [x] `CPDB-G1 baseline(cpu-db): contract freeze + runtime hot-path metrics + parity-safe assertions`
   - 2026-04-16: Closed CPU/DB Group 1 by completing `CPDB-01..CPDB-03` (flag contract freeze, runtime hot-path metrics instrumentation, and parity-safe regression tests); next CPU/DB group promoted as `CPDB-G2`.
 - [x] `planning(queue-refill): repopulate canonical NOW/NEXT pipeline from active execution plans`
