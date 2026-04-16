@@ -7,15 +7,21 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- none (canonical PEX backlog completed)
+- [ ] `A11Y-02 test(web-a11y): add automated accessibility smoke for core dashboard routes`
+- [ ] `A11Y-03 fix(web-a11y): remediate highest-priority issues from accessibility smoke findings`
+- [ ] `A11Y-04 qa(a11y-manual): run keyboard/screen-reader smoke checklist and capture evidence`
+- [ ] `A11Y-05 docs(closure): publish closure evidence and sync canonical docs/plan status`
 ## NEXT
-- none
+- [ ] `DOCSYNC-01 ops(docs-parity): run docs parity check and publish fresh evidence artifact`
+- [ ] `DOCSYNC-02 docs(module-index): refresh module+route inventory snapshots after parity run`
 ## PIPELINE
-- none
+- [ ] `DOCSYNC-A docs-parity-sustainment: periodic parity audit refresh + queue continuity safeguards`
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `A11Y-01 docs(plan): publish full accessibility pass timeline and resolve open decision`
+  - 2026-04-17: Initialized post-PEX continuation by publishing canonical accessibility full-pass plan (`docs/planning/accessibility-full-pass-plan-2026-04-17.md`), resolving `Accessibility Scope` decision in `docs/planning/open-decisions.md`, and promoting `A11Y-02..A11Y-05` into `NOW` with `DOCSYNC-A` staged in `NEXT/PIPELINE`.
 - [x] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
   - 2026-04-16: Closed `PEX-B` by completing `PEX-06` validation and extending restart-window guardrail regression (`max attempts` blocked inside window, fresh retry allowed after window expiry) in `runtimeSignalLoop.service.test.ts`.
 - [x] `PEX-C observability-ops: runtime alert thresholds + incident triage runbook`

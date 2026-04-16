@@ -588,8 +588,13 @@ This file tracks intentionally unresolved architecture choices so implementation
   - extend admin with richer billing/analytics/experimentation workflows beyond V1 critical controls.
 
 ## Accessibility Scope
-- Open: full accessibility pass timeline.
-- Current assumption: baseline accessibility in MVP, full pass after MVP.
+- Decision state: resolved on 2026-04-17.
+- Decision:
+  - keep MVP/V1 baseline accessibility as already delivered.
+  - execute a structured post-MVP full accessibility pass through tiny-commit wave `A11Y`.
+  - lock execution timeline and closure gates in canonical plan.
+- Canonical reference:
+  - `docs/planning/accessibility-full-pass-plan-2026-04-17.md`
 
 ## Runtime Position Governance (BACKTEST/PAPER/LIVE)
 - Decision state: resolved on 2026-03-22.
