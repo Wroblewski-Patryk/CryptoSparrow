@@ -7,12 +7,13 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [ ] `NAVHF-01 fix(web-nav): remove top-level Exchanges link regression from dashboard menu (introduced in 1b91763) using docs/planning/dashboard-nav-exchanges-removal-hotfix-plan-2026-04-17.md`
 - [ ] `L10NPT-01 docs(contract): lock Portuguese locale policy to pt-PT only and forbid pt-BR in this rollout`
 - [ ] `L10NPT-02 feat(i18n-core): extend locale contract to en/pl/pt + pt-PT formatting`
 - [ ] `L10NPT-03 feat(web-language-switcher): add Portuguese option in language switcher (header/footer)`
 - [ ] `L10NPT-04 feat(i18n-namespaces): add dashboard namespace translation files for Portuguese`
-- [ ] `L10NPT-05 refactor(web-shared-copy): remove en/pl-only branches in shared layout/components`
 ## NEXT
+- [ ] `L10NPT-05 refactor(web-shared-copy): remove en/pl-only branches in shared layout/components`
 - [ ] `L10NPT-06 refactor(web-page-copy): migrate page-level inline copy to include Portuguese`
 - [ ] `L10NPT-07 refactor(strategies-localizers): widen strategy helper locale maps to include Portuguese`
 - [ ] `L10NPT-08 refactor(profile-wallet-markets): remove remaining en/pl-only branches in forms and tables`
