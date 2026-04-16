@@ -7,10 +7,9 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
+- [ ] `WLT-C wallet-api: wallet CRUD module with mode-aware validation + ownership isolation`
 - [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
 ## NEXT
-- [ ] `WLT-C wallet-api: wallet CRUD module with mode-aware validation + ownership isolation`
 - [ ] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
 - [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
 ## PIPELINE
@@ -25,6 +24,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
+  - 2026-04-16: Closed wallet Group B by completing `WLT-04..WLT-07` (Wallet/WalletAllocationMode + `Bot.walletId` DB foundation, walletId snapshots for `Position/Order/Trade`, migration backfill validation for existing bots, and DB-safety evidence via `docs/operations/_artifacts-wallet-db-foundation-2026-04-16T12-10-31-835Z.json` + `docs/operations/wallet-db-foundation-verification-2026-04-16T12-10-31-835Z.md`); next wallet group promoted as `WLT-C`.
 - [x] `WLT-A wallet-contracts: wallet source-of-truth docs + decisions + IA placement`
   - 2026-04-16: Closed wallet Group A by completing `WLT-01..WLT-03` (canonical wallet source-of-truth contract, locked wallet-first/open-decisions policy, and dashboard IA placement `Exchanges -> Wallets -> Markets`); next wallet group promoted as `WLT-B`.
 - [x] `CPDB-G8 rollout(cpu-db): canary/rollback docs + alert thresholds + 30m soak evidence`

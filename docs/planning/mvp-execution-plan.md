@@ -1542,7 +1542,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `CPDB-G7 worker-backpressure(cpu-db): per-series concurrency guard + distributed warmup lock`
 - [x] `CPDB-G8 rollout(cpu-db): canary/rollback docs + alert thresholds + 30m soak evidence`
 - [x] `WLT-A wallet-contracts: wallet source-of-truth docs + decisions + IA placement`
-- [ ] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
+- [x] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
 - [ ] `WLT-C wallet-api: wallet CRUD module with mode-aware validation + ownership isolation`
 - [ ] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
 - [ ] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
@@ -1556,6 +1556,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `PEX-F deploy-safety: post-deploy runtime freshness gate + rollback trigger policy`
 
 ### Progress Log (Continuous Group Pipeline)
+- 2026-04-16: Closed `WLT-B` by completing `WLT-04..WLT-07` (Wallet DB foundation in Prisma+migration, walletId snapshot coverage on `Position/Order/Trade`, existing-bot backfill verification, and PASS safety artifacts `docs/operations/_artifacts-wallet-db-foundation-2026-04-16T12-10-31-835Z.json` + `docs/operations/wallet-db-foundation-verification-2026-04-16T12-10-31-835Z.md`), with `WLT-C` promoted as next active wallet group.
 - 2026-04-16: Closed `WLT-A` by completing `WLT-01..WLT-03` (wallet source-of-truth contract publication, wallet-first decision lock in canonical decisions, and dashboard IA placement rule `Exchanges -> Wallets -> Markets`), with `WLT-B` promoted as next active wallet group.
 - 2026-04-16: Closed `CPDB-G8` by completing `CPDB-22..CPDB-24` (staged rollout + rollback runbook contract, CPU/DB alert-threshold/dashboard contract, and 30-minute local soak evidence artifacts with pre/post metrics snapshot and explicit `FAIL` conclusion), then promoted `WLT-A` as the next active group in canonical queue.
 - 2026-04-16: Initialized continuous post-optimization execution queue in canonical plan by importing active open groups from `cpu-db-optimization-commit-plan-2026-04-06.md`, `wallet-module-implementation-plan-2026-04-07.md`, and `production-excellence-plan-2026-04-03.md`, ensuring deterministic next-group continuity after each completed group.

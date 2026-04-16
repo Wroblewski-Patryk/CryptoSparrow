@@ -117,10 +117,10 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 - [x] `WLT-03 docs(ui): define Wallet module IA and nav placement (between Exchanges and Markets)`
 
 ### Phase B - DB and Migration Foundation
-- [ ] `WLT-04 feat(db): add Wallet model + live-allocation enum + Bot.walletId relation (nullable in transition)`
-- [ ] `WLT-05 feat(db): add walletId snapshot column to Position/Order/Trade with indexes`
-- [ ] `WLT-06 chore(data-migration): create one wallet per existing bot and backfill Bot.walletId`
-- [ ] `WLT-07 test(db): migration/backfill safety checks and rollback notes`
+- [x] `WLT-04 feat(db): add Wallet model + live-allocation enum + Bot.walletId relation (nullable in transition)`
+- [x] `WLT-05 feat(db): add walletId snapshot column to Position/Order/Trade with indexes`
+- [x] `WLT-06 chore(data-migration): create one wallet per existing bot and backfill Bot.walletId`
+- [x] `WLT-07 test(db): migration/backfill safety checks and rollback notes`
 
 ### Phase C - Wallet API Module
 - [ ] `WLT-08 feat(api-wallets): add wallet CRUD routes/controller/service with ownership isolation`
@@ -159,6 +159,10 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 - API/web/runtime tests cover wallet mismatch and insufficient-funds scenarios.
 
 ## Progress Log
+- 2026-04-16: Completed `WLT-07` by adding DB-foundation verifier `apps/api/scripts/verifyWalletDbFoundation.ts`, generating PASS evidence artifacts (`docs/operations/_artifacts-wallet-db-foundation-2026-04-16T12-10-31-835Z.json`, `docs/operations/wallet-db-foundation-verification-2026-04-16T12-10-31-835Z.md`) with explicit rollback notes, and validating wallet regression contract via `pnpm --filter api test -- src/modules/wallets/wallets.e2e.test.ts` (PASS).
+- 2026-04-16: Completed `WLT-06` by validating migration backfill contract in `apps/api/prisma/migrations/20260407121500_add_wallet_module/migration.sql` (`wallet-<botId>` wallet creation + `Bot.walletId` population for existing rows).
+- 2026-04-16: Completed `WLT-05` by validating `walletId` snapshot columns, indexes, and FK links on `Position/Order/Trade` in Prisma schema + migration SQL (`Position_walletId_idx`, `Order_walletId_idx`, `Trade_walletId_idx`).
+- 2026-04-16: Completed `WLT-04` by validating canonical DB foundation in Prisma (`Wallet` model, `WalletAllocationMode` enum, and transitional `Bot.walletId` relation) with migration `20260407121500_add_wallet_module`.
 - 2026-04-16: Completed `WLT-01` by publishing canonical wallet source-of-truth contract in `docs/architecture/wallet-source-of-truth-contract.md` (ownership, invariants, capital policy, wallet-first bot write contract).
 - 2026-04-16: Completed `WLT-02` by locking wallet-first product/runtime decisions in `docs/planning/open-decisions.md` (shared-wallet allowed, hard-fail insufficient funds, backtest-no-wallet, compatibility invariants).
 - 2026-04-16: Completed `WLT-03` by defining dashboard IA placement contract (`Exchanges -> Wallets -> Markets`) in `docs/architecture/dashboard-route-map.md` and syncing module IA map in `docs/modules/system-modules.md`.
