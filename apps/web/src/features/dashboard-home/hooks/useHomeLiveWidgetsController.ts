@@ -28,7 +28,8 @@ import type {
 } from "../components/home-live-widgets/types";
 
 const MAX_DASHBOARD_BOTS = 8;
-const AUTO_REFRESH_INTERVAL_MS = 5_000;
+const AUTO_REFRESH_VISIBLE_INTERVAL_MS = 10_000;
+const AUTO_REFRESH_HIDDEN_INTERVAL_MS = 30_000;
 const LOAD_STALE_AFTER_MS = 20_000;
 const SELECTED_BOT_STORAGE_KEY = "dashboard.home.selectedBotId";
 const DASHBOARD_TRADE_HISTORY_SORT_STORAGE_KEY = "dashboard.home.tradeHistory.sort.v1";
@@ -88,6 +89,15 @@ const normalizeDateTimeLocalToIso = (value: string, bound: "from" | "to") => {
     }
   }
   return parsed.toISOString();
+};
+
+const resolveAutoRefreshIntervalMs = () => {
+  if (typeof document === "undefined") {
+    return AUTO_REFRESH_VISIBLE_INTERVAL_MS;
+  }
+  return document.visibilityState === "hidden"
+    ? AUTO_REFRESH_HIDDEN_INTERVAL_MS
+    : AUTO_REFRESH_VISIBLE_INTERVAL_MS;
 };
 
 type TickerEventPayload = {
@@ -267,8 +277,21 @@ export const useHomeLiveWidgetsController = ({
   }, [load]);
 
   useEffect(() => {
-    const timer = window.setInterval(() => void load({ silent: true }), AUTO_REFRESH_INTERVAL_MS);
-    return () => window.clearInterval(timer);
+    if (typeof document === "undefined") return;
+
+    let timer = window.setInterval(() => void load({ silent: true }), resolveAutoRefreshIntervalMs());
+
+    const handleVisibilityChange = () => {
+      window.clearInterval(timer);
+      timer = window.setInterval(() => void load({ silent: true }), resolveAutoRefreshIntervalMs());
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.clearInterval(timer);
+    };
   }, [load]);
 
   useEffect(() => {

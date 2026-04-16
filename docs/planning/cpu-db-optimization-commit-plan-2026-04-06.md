@@ -156,7 +156,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 
 ### [ ] Group 5 - Web polling pressure reduction
 
-- [ ] `CPDB-13 feat(web-polling): adaptive refresh (active tab: 10s, hidden tab: 30s)`
+- [x] `CPDB-13 feat(web-polling): adaptive refresh (active tab: 10s, hidden tab: 30s)`
   - Files:
     - `apps/web/src/features/dashboard-home/components/HomeLiveWidgets.tsx`
     - `apps/web/src/features/bots/components/BotsManagement.tsx`
@@ -292,3 +292,4 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Completed `CPDB-11` by passing `strategyLeverage` from runtime decision context into execution orchestration and deleting per-OPEN strategy leverage lookup query from orchestrator path.
 - 2026-04-16: Completed `CPDB-12` by adding query-count regression assertions that lock telemetry batching/throttling write reduction (`upsert` and `touchSession` call counts) and execution-path read reduction (no per-OPEN strategy leverage lookup query).
 - 2026-04-16: Closed Group 4 (`CPDB-10..CPDB-12`). Next unchecked group is Group 5 (`CPDB-13..CPDB-15`).
+- 2026-04-16: Completed `CPDB-13` by replacing fixed 5s refresh loops with visibility-aware intervals (10s when tab is visible, 30s when hidden) in dashboard-home and bots monitoring runtime controllers, with updated web tests covering new cadence expectations.

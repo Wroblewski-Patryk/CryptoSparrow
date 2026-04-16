@@ -1039,7 +1039,7 @@ describe("BotsManagement", () => {
     });
 
     await waitFor(() => {
-      expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 5000);
+      expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
     });
 
     setIntervalSpy.mockRestore();

@@ -1514,7 +1514,7 @@ describe("HomeLiveWidgets", () => {
 
     shouldFailRefresh = false;
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(6_000);
+      await vi.advanceTimersByTimeAsync(11_000);
     });
 
     await waitFor(() => {
@@ -1739,7 +1739,7 @@ describe("HomeLiveWidgets", () => {
     });
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(5_100);
+      await vi.advanceTimersByTimeAsync(10_100);
     });
 
     await waitFor(() => {

@@ -23,7 +23,8 @@ import {
   BotRuntimeTradesResponse,
 } from "../types/bot.type";
 
-const MONITOR_AUTO_REFRESH_INTERVAL_MS = 5_000;
+const MONITOR_AUTO_REFRESH_VISIBLE_INTERVAL_MS = 10_000;
+const MONITOR_AUTO_REFRESH_HIDDEN_INTERVAL_MS = 30_000;
 
 type TickerEventPayload = {
   symbol: string;
@@ -45,6 +46,15 @@ const uniqueById = <T extends { id: string }>(items: T[]) => {
     }
   }
   return [...map.values()];
+};
+
+const resolveMonitorRefreshIntervalMs = () => {
+  if (typeof document === "undefined") {
+    return MONITOR_AUTO_REFRESH_VISIBLE_INTERVAL_MS;
+  }
+  return document.visibilityState === "hidden"
+    ? MONITOR_AUTO_REFRESH_HIDDEN_INTERVAL_MS
+    : MONITOR_AUTO_REFRESH_VISIBLE_INTERVAL_MS;
 };
 
 const aggregateMonitorData = (params: {
@@ -570,11 +580,23 @@ export const useBotsMonitoringController = ({
   useEffect(() => {
     if (activeTab !== "monitoring" || !monitorAutoRefreshEnabled || !monitorBotId) return;
 
-    const intervalId = window.setInterval(() => {
+    if (typeof document === "undefined") return;
+
+    let intervalId = window.setInterval(() => {
       void refreshMonitoring({ silent: true });
-    }, MONITOR_AUTO_REFRESH_INTERVAL_MS);
+    }, resolveMonitorRefreshIntervalMs());
+
+    const handleVisibilityChange = () => {
+      window.clearInterval(intervalId);
+      intervalId = window.setInterval(() => {
+        void refreshMonitoring({ silent: true });
+      }, resolveMonitorRefreshIntervalMs());
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.clearInterval(intervalId);
     };
   }, [
