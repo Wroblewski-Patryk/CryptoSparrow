@@ -1,6 +1,6 @@
 # Module Map
 
-Updated: 2026-04-12
+Updated: 2026-04-16
 
 ## Backend Modules (Current)
 - `admin`. Administrative read/write workflows for users and subscription plans.
@@ -56,11 +56,11 @@ Updated: 2026-04-12
 ## Dashboard IA Order (MVP)
 - `dashboard` (Control Center with risk and operations priority).
 - `dashboard/exchanges`.
-- `dashboard/strategies`.
+- `dashboard/wallets`.
 - `dashboard/markets`.
+- `dashboard/strategies`.
 - `dashboard/bots`.
 - `dashboard/backtests`.
-- `dashboard/wallets`.
 - `dashboard/reports`.
 - `dashboard/logs`.
 - `dashboard/profile`.
@@ -69,10 +69,10 @@ Updated: 2026-04-12
 - `dashboard`: safety bar, KPI risk row, positions/orders snapshots, bot status, quick actions, recent audit feed.
 - `dashboard/strategies`: list-first workflow with clear preset/source metadata and safe edit/delete controls.
 - `dashboard/markets`: universe builder with explainable filters and explicit whitelist/blacklist outcomes.
-- `dashboard/bots`: lifecycle controls with explicit paper/live mode, heartbeat visibility, and emergency controls.
+- `dashboard/bots`: lifecycle controls with wallet-derived execution context, heartbeat visibility, and emergency controls.
 - `dashboard/exchanges`: connection health, permission checks, secure API key UX, and nested operational order/position views.
 - `dashboard/backtests`: run KPI header, stage timeline, summary charts, per-symbol timeline overlays, pair-side stats, and capital-aware trades table.
-- `dashboard/wallets`: account balance views with clear create/edit safety and state feedback.
+- `dashboard/wallets`: source-of-truth for execution mode and capital context, with clear create/edit safety and state feedback.
 - `dashboard/reports`: performance summaries focused on PnL, drawdown, fees, and funding costs.
 - `dashboard/logs`: high-signal audit trail with severity/source/actor filtering.
 - `dashboard/profile`: account settings and user preferences including locale.

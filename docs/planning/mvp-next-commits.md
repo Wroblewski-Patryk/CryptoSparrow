@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `WLT-A wallet-contracts: wallet source-of-truth docs + decisions + IA placement`
 - [ ] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
 - [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
 ## NEXT
@@ -26,6 +25,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `WLT-A wallet-contracts: wallet source-of-truth docs + decisions + IA placement`
+  - 2026-04-16: Closed wallet Group A by completing `WLT-01..WLT-03` (canonical wallet source-of-truth contract, locked wallet-first/open-decisions policy, and dashboard IA placement `Exchanges -> Wallets -> Markets`); next wallet group promoted as `WLT-B`.
 - [x] `CPDB-G8 rollout(cpu-db): canary/rollback docs + alert thresholds + 30m soak evidence`
   - 2026-04-16: Closed CPU/DB Group 8 by completing `CPDB-22..CPDB-24` (staged flag rollout + rollback matrix docs, alert-threshold/dashboard contract, and 30-minute soak evidence artifacts `docs/operations/_artifacts-cpdb24-soak-2026-04-16T02-03-29-605Z.json` + `docs/operations/cpdb24-soak-report-2026-04-16T02-03-29-605Z.md` with explicit `FAIL` result), then promoted `WLT-A` as the next active group.
 - [x] `CPDB-G7 worker-backpressure(cpu-db): per-series concurrency guard + distributed warmup lock`

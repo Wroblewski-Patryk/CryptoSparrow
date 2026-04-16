@@ -302,6 +302,21 @@ This file tracks intentionally unresolved architecture choices so implementation
   - `docs/architecture/venue-context-source-of-truth-contract.md`
   - `docs/planning/exchange-context-consistency-plan-2026-04-01.md`
 
+## Wallet Source-of-Truth and Wallet-First Bot Contract
+- Decision state: resolved on 2026-04-16.
+- Product/runtime decision:
+  - `Wallet` is canonical source-of-truth for bot execution mode and capital budgeting context.
+  - shared wallet is allowed (`many bots -> one wallet`).
+  - bot create/edit contract is wallet-first (`walletId`); direct mode selection in bot form is not canonical.
+  - backtests stay wallet-independent and keep explicit `initialBalance`.
+  - insufficient wallet budget is hard-fail (reject order; no auto-clamp).
+  - wallet context must be compatible with selected bot market context (`exchange`, `marketType`, `baseCurrency`).
+- Dashboard IA decision:
+  - wallet module is first-class and must be placed between `Exchanges` and `Markets` in canonical dashboard navigation contract.
+- Canonical references:
+  - `docs/architecture/wallet-source-of-truth-contract.md`
+  - `docs/planning/wallet-module-implementation-plan-2026-04-07.md`
+
 ## Numeric Locale Input Policy (Comma vs Dot)
 - Decision state: resolved on 2026-04-02.
 - Decision:
@@ -402,12 +417,12 @@ This file tracks intentionally unresolved architecture choices so implementation
 ## Mode Entry Policy (PAPER vs LIVE)
 - Decision state: resolved on 2026-03-20.
 - V1 decision:
-  - user can choose PAPER or LIVE mode directly.
-  - newly created bots default to PAPER mode.
+  - user chooses execution mode through selected wallet (`wallet.mode`) in bot create/edit flow.
+  - newly created wallets should default to `PAPER`; bots inherit mode from wallet.
   - PAPER mode does not require risk-consent acceptance.
   - LIVE mode requires explicit risk-consent acceptance before activation.
 - UX/ops guidance:
-  - PAPER-before-LIVE remains strongly recommended but is not a hard technical gate.
+  - PAPER-before-LIVE remains strongly recommended but is not a hard technical gate for wallet activation.
 
 ## Runtime Domain Model (Bot vs Strategy)
 - Decision state: resolved on 2026-03-20.

@@ -1,6 +1,6 @@
 # Dashboard Route-to-Feature-to-API Contract (Canonical)
 
-Updated: 2026-04-15
+Updated: 2026-04-16
 
 Purpose: keep one canonical mapping of web routes to frontend feature ownership, API contracts, and security/operational guardrails.
 
@@ -48,6 +48,23 @@ Purpose: keep one canonical mapping of web routes to frontend feature ownership,
 - `/auth/register`
 - `/offline`
 
+## Dashboard Navigation IA Contract (Wallet-First)
+Canonical top-level dashboard order:
+1. `/dashboard`
+2. `/dashboard/exchanges`
+3. `/dashboard/wallets`
+4. `/dashboard/markets/*`
+5. `/dashboard/strategies/*`
+6. `/dashboard/bots/*`
+7. `/dashboard/backtests/*`
+8. `/dashboard/reports`
+9. `/dashboard/logs`
+10. `/dashboard/profile`
+
+Wallet placement rule:
+- Wallet must remain between Exchanges and Markets in navigation IA.
+- Bot create/edit entrypoints depend on this placement because wallet is runtime-mode and budget source-of-truth.
+
 ## Canonical Route Mapping
 | Web Route Pattern | Web Feature Ownership | Primary API Contract | Backend Module Ownership | Guardrails |
 |---|---|---|---|---|
@@ -55,7 +72,7 @@ Purpose: keep one canonical mapping of web routes to frontend feature ownership,
 | `/dashboard` | `features/dashboard-home` | `/dashboard/bots*`, `/dashboard/market-stream/events`, `/dashboard/icons/lookup` | `api/bots`, `api/market-stream`, `api/icons` | Requires dashboard session; stale runtime data warning and read-safe fallback states. |
 | `/dashboard/profile` | `features/profile` + `features/exchanges` | `/dashboard/profile/basic`, `/dashboard/profile/apiKeys*`, `/dashboard/profile/security/*`, `/dashboard/profile/subscription`, `/upload/avatar` | `api/profile`, `api/subscriptions`, `api/upload` | Sensitive actions require explicit confirmation/password input. |
 | `/dashboard/exchanges` | Redirect to profile integrations (`#api`) | Uses profile API-key contract (`/dashboard/profile/apiKeys*`) | `api/profile` | Canonical integration surface remains profile tab; no standalone exchanges write contract yet. |
-| `/dashboard/wallets*` | `features/wallets` | `/dashboard/wallets*` | `api/wallets` | Wallet is required prerequisite for bot creation (`walletId`-first contract). |
+| `/dashboard/wallets*` | `features/wallets` | `/dashboard/wallets*` | `api/wallets` | Wallet is required prerequisite for bot creation (`walletId`-first contract) and must stay in nav between Exchanges and Markets. |
 | `/dashboard/markets*` | `features/markets` | `/dashboard/markets/universes*`, `/dashboard/markets/catalog` | `api/markets` | Edit path fails closed when market universe is used by active bot. |
 | `/dashboard/strategies*` | `features/strategies` | `/dashboard/strategies*`, `/dashboard/strategies/indicators` | `api/strategies` | Edit path surfaces active-bot lock contract from backend. |
 | `/dashboard/backtests*` | `features/backtest` | `/dashboard/backtests/runs*` | `api/backtests` | Deterministic staging in details view; safe handling of missing report/timeline failures. |

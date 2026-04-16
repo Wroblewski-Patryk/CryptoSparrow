@@ -1,6 +1,6 @@
 # Wallet Module Implementation Plan (WLT) - 2026-04-07
 
-Status: proposed, ready for tiny-commit execution.
+Status: active, Phase A docs contracts completed (2026-04-16).
 
 ## Objective
 Add a first-class `Wallet` module (CRUD + dashboard navigation) and make wallet context the source of truth for bot execution mode and capital budgeting.
@@ -112,9 +112,9 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 ## Tiny-Commit Execution Sequence
 
 ### Phase A - Contracts and Docs
-- [ ] `WLT-01 docs(contract): publish wallet source-of-truth contract and invariants`
-- [ ] `WLT-02 docs(decisions): lock shared-wallet + hard-fail + backtest-no-wallet decisions`
-- [ ] `WLT-03 docs(ui): define Wallet module IA and nav placement (between Exchanges and Markets)`
+- [x] `WLT-01 docs(contract): publish wallet source-of-truth contract and invariants`
+- [x] `WLT-02 docs(decisions): lock shared-wallet + hard-fail + backtest-no-wallet decisions`
+- [x] `WLT-03 docs(ui): define Wallet module IA and nav placement (between Exchanges and Markets)`
 
 ### Phase B - DB and Migration Foundation
 - [ ] `WLT-04 feat(db): add Wallet model + live-allocation enum + Bot.walletId relation (nullable in transition)`
@@ -157,3 +157,8 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 - Multiple bots can safely share one wallet.
 - Backtest remains unaffected and continues to use `initialBalance`.
 - API/web/runtime tests cover wallet mismatch and insufficient-funds scenarios.
+
+## Progress Log
+- 2026-04-16: Completed `WLT-01` by publishing canonical wallet source-of-truth contract in `docs/architecture/wallet-source-of-truth-contract.md` (ownership, invariants, capital policy, wallet-first bot write contract).
+- 2026-04-16: Completed `WLT-02` by locking wallet-first product/runtime decisions in `docs/planning/open-decisions.md` (shared-wallet allowed, hard-fail insufficient funds, backtest-no-wallet, compatibility invariants).
+- 2026-04-16: Completed `WLT-03` by defining dashboard IA placement contract (`Exchanges -> Wallets -> Markets`) in `docs/architecture/dashboard-route-map.md` and syncing module IA map in `docs/modules/system-modules.md`.

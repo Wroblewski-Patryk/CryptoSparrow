@@ -1541,7 +1541,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `CPDB-G6 db-shaping(cpu-db): hot-path indexes + slim topology reads + EXPLAIN evidence`
 - [x] `CPDB-G7 worker-backpressure(cpu-db): per-series concurrency guard + distributed warmup lock`
 - [x] `CPDB-G8 rollout(cpu-db): canary/rollback docs + alert thresholds + 30m soak evidence`
-- [ ] `WLT-A wallet-contracts: wallet source-of-truth docs + decisions + IA placement`
+- [x] `WLT-A wallet-contracts: wallet source-of-truth docs + decisions + IA placement`
 - [ ] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
 - [ ] `WLT-C wallet-api: wallet CRUD module with mode-aware validation + ownership isolation`
 - [ ] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
@@ -1556,6 +1556,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `PEX-F deploy-safety: post-deploy runtime freshness gate + rollback trigger policy`
 
 ### Progress Log (Continuous Group Pipeline)
+- 2026-04-16: Closed `WLT-A` by completing `WLT-01..WLT-03` (wallet source-of-truth contract publication, wallet-first decision lock in canonical decisions, and dashboard IA placement rule `Exchanges -> Wallets -> Markets`), with `WLT-B` promoted as next active wallet group.
 - 2026-04-16: Closed `CPDB-G8` by completing `CPDB-22..CPDB-24` (staged rollout + rollback runbook contract, CPU/DB alert-threshold/dashboard contract, and 30-minute local soak evidence artifacts with pre/post metrics snapshot and explicit `FAIL` conclusion), then promoted `WLT-A` as the next active group in canonical queue.
 - 2026-04-16: Initialized continuous post-optimization execution queue in canonical plan by importing active open groups from `cpu-db-optimization-commit-plan-2026-04-06.md`, `wallet-module-implementation-plan-2026-04-07.md`, and `production-excellence-plan-2026-04-03.md`, ensuring deterministic next-group continuity after each completed group.
 - 2026-04-16: Closed `CPDB-G1` by completing `CPDB-01..CPDB-03` (feature-flag contract freeze, runtime hot-path metrics instrumentation, and parity-safe metric regression tests) and kept `CPDB-G2` as next active CPU/DB group in canonical queue.
