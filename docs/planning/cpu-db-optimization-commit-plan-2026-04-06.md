@@ -200,7 +200,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
     - `pnpm --filter api prisma migrate dev`
     - `pnpm --filter api test -- bots runtime`
 
-- [ ] `CPDB-17 refactor(api-query): slim topology read query to minimal selected fields`
+- [x] `CPDB-17 refactor(api-query): slim topology read query to minimal selected fields`
   - Files:
     - `apps/api/src/modules/engine/runtimeSignalLoop.service.ts`
   - Deliverable:
@@ -297,3 +297,4 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Completed `CPDB-15` by extending web regression coverage for runtime refresh cadence and stale recovery: hidden-tab 30s interval switch assertion on home dashboard plus SSE-tick refresh and stale-stream polling fallback assertions on bots monitoring.
 - 2026-04-16: Closed Group 5 (`CPDB-13..CPDB-15`). Next unchecked group is Group 6 (`CPDB-16..CPDB-18`).
 - 2026-04-16: Completed `CPDB-16` by adding hot-path composite indexes for runtime position queries (`Position(userId, botId, status)` and `Position(userId, symbol, status)`) with migration `20260416005358_add_position_runtime_hot_path_indexes`; `bots/runtime` test sweep was executed and reached an existing unhandled Prisma FK rejection in runtime telemetry tests after all test assertions passed.
+- 2026-04-16: Completed `CPDB-17` by slimming active runtime topology read selection to only fields consumed by runtime signal evaluation/routing (bot market-groups, symbol-group universe filters, and strategy routing parameters), reducing payload size of `listActiveRuntimeBotsRaw` while preserving runtime loop behavior (`runtimeSignalLoop` tests green).

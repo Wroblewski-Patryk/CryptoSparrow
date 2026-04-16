@@ -20,10 +20,13 @@ export const listActiveRuntimeBotsRaw = () =>
           isEnabled: true,
           lifecycleStatus: { in: ['ACTIVE', 'PAUSED'] },
         },
-        include: {
+        select: {
+          id: true,
+          symbolGroupId: true,
+          executionOrder: true,
+          maxOpenPositions: true,
           symbolGroup: {
             select: {
-              id: true,
               symbols: true,
               marketUniverse: {
                 select: {
@@ -40,7 +43,10 @@ export const listActiveRuntimeBotsRaw = () =>
           strategyLinks: {
             where: { isEnabled: true },
             orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
-            include: {
+            select: {
+              strategyId: true,
+              priority: true,
+              weight: true,
               strategy: {
                 select: {
                   interval: true,
