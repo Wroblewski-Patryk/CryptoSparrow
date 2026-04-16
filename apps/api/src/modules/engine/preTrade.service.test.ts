@@ -1,5 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
-import { analyzePreTrade, AuditLogWriter, BotReadStore, PositionReadStore } from './preTrade.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  analyzePreTrade,
+  AuditLogWriter,
+  BotReadStore,
+  invalidatePreTradeOpenPositionCountCache,
+  PositionReadStore,
+} from './preTrade.service';
 import { metricsStore } from '../../observability/metrics';
 
 type MockPreTradeStore = PositionReadStore & BotReadStore;
@@ -19,6 +25,10 @@ const createStore = (overrides?: Partial<MockPreTradeStore>): MockPreTradeStore 
 });
 
 describe('preTrade analysis', () => {
+  beforeEach(() => {
+    invalidatePreTradeOpenPositionCountCache();
+  });
+
   it('records pre-trade latency metric for analysis flow', async () => {
     const before = metricsStore.snapshot().runtime.hotPath.preTradeLatencyMs.total;
     const store = createStore();

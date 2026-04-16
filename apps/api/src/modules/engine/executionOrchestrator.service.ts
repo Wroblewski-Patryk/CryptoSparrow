@@ -4,6 +4,7 @@ import { normalizeSymbol } from '../../lib/symbols';
 import { closeOrder as closeOrderLifecycle, openOrder as openOrderLifecycle } from '../orders/orders.service';
 import { decideExecutionAction } from './sharedExecutionCore';
 import { runtimeTelemetryService } from './runtimeTelemetry.service';
+import { invalidatePreTradeOpenPositionCountCache } from './preTrade.service';
 import {
   buildCancelExecutionDedupeKey,
   buildCloseExecutionDedupeKey,
@@ -635,6 +636,10 @@ export const orchestrateRuntimeSignal = async (
       orderId: closeOrder.id,
       positionId: openPosition.id,
     });
+    invalidatePreTradeOpenPositionCountCache({
+      userId: input.userId,
+      botId: input.botId,
+    });
 
     return {
       status: 'closed',
@@ -805,6 +810,10 @@ export const orchestrateRuntimeSignal = async (
       positionId: position.id,
     });
   }
+  invalidatePreTradeOpenPositionCountCache({
+    userId: input.userId,
+    botId: input.botId,
+  });
 
   return {
     status: 'opened',

@@ -38,6 +38,86 @@ export interface AuditLogWriter {
 
 type PreTradeReadStore = PositionReadStore & BotReadStore;
 
+type PreTradeCountCacheEntry = {
+  value: number;
+  expiresAtMs: number;
+};
+
+const preTradeOpenPositionCountCacheTtlMs = Math.max(
+  0,
+  Number.parseInt(process.env.PRETRADE_OPEN_POSITION_COUNT_CACHE_TTL_MS ?? '1500', 10)
+);
+const preTradeUserOpenCountCache = new Map<string, PreTradeCountCacheEntry>();
+const preTradeBotOpenCountCache = new Map<string, PreTradeCountCacheEntry>();
+
+const buildPreTradeUserCountKey = (userId: string) => userId;
+const buildPreTradeBotCountKey = (userId: string, botId: string) => `${userId}|${botId}`;
+
+const resolveCachedPreTradeCount = async (
+  cache: Map<string, PreTradeCountCacheEntry>,
+  key: string,
+  loader: () => Promise<number>
+) => {
+  if (preTradeOpenPositionCountCacheTtlMs <= 0) {
+    return loader();
+  }
+
+  const nowMs = Date.now();
+  const cached = cache.get(key);
+  if (cached && cached.expiresAtMs > nowMs) {
+    return cached.value;
+  }
+  if (cached) {
+    cache.delete(key);
+  }
+
+  const value = await loader();
+  cache.set(key, {
+    value,
+    expiresAtMs: nowMs + preTradeOpenPositionCountCacheTtlMs,
+  });
+  return value;
+};
+
+const resolveCachedUserOpenPositions = (readStore: PositionReadStore, userId: string) =>
+  resolveCachedPreTradeCount(preTradeUserOpenCountCache, buildPreTradeUserCountKey(userId), () =>
+    readStore.countOpenByUser(userId)
+  );
+
+const resolveCachedBotOpenPositions = (
+  readStore: PositionReadStore,
+  userId: string,
+  botId: string
+) =>
+  resolveCachedPreTradeCount(preTradeBotOpenCountCache, buildPreTradeBotCountKey(userId, botId), () =>
+    readStore.countOpenByBot(userId, botId)
+  );
+
+export const invalidatePreTradeOpenPositionCountCache = (input?: { userId?: string; botId?: string }) => {
+  if (!input?.userId && !input?.botId) {
+    preTradeUserOpenCountCache.clear();
+    preTradeBotOpenCountCache.clear();
+    return;
+  }
+
+  if (input.userId) {
+    preTradeUserOpenCountCache.delete(buildPreTradeUserCountKey(input.userId));
+  }
+
+  if (input.userId && input.botId) {
+    preTradeBotOpenCountCache.delete(buildPreTradeBotCountKey(input.userId, input.botId));
+    return;
+  }
+
+  if (input.botId) {
+    for (const cacheKey of preTradeBotOpenCountCache.keys()) {
+      if (cacheKey.endsWith(`|${input.botId}`)) {
+        preTradeBotOpenCountCache.delete(cacheKey);
+      }
+    }
+  }
+};
+
 class PrismaPreTradeReadStore implements PreTradeReadStore {
   async countOpenByUser(userId: string) {
     return prisma.position.count({
@@ -104,9 +184,9 @@ export const analyzePreTrade = async (
   return runtimeMetricsService.measurePreTradeLatency(async () => {
     const parsed = PreTradeAnalysisInputSchema.parse(input);
 
-    const userOpenPositions = await readStore.countOpenByUser(parsed.userId);
+    const userOpenPositions = await resolveCachedUserOpenPositions(readStore, parsed.userId);
     const botOpenPositions = parsed.botId
-      ? await readStore.countOpenByBot(parsed.userId, parsed.botId)
+      ? await resolveCachedBotOpenPositions(readStore, parsed.userId, parsed.botId)
       : null;
     const hasOpenPositionOnSymbol = parsed.enforceOnePositionPerSymbol
       ? await readStore.hasOpenPositionOnSymbol(parsed.userId, parsed.symbol)
