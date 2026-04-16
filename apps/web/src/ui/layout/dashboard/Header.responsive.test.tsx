@@ -21,7 +21,8 @@ describe("Header responsive smoke", () => {
 
     expect(screen.getByRole("navigation", { name: "Dashboard navigation" })).toBeInTheDocument();
     expect(screen.getAllByText("Markets").length).toBeGreaterThan(0);
-    expect(screen.queryByText("Exchanges")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Exchanges").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Wallets").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Bots").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Bots" })).toHaveAttribute("href", "/dashboard/bots");
     expect(screen.queryByRole("link", { name: "Create bot" })).not.toBeInTheDocument();
@@ -38,6 +39,15 @@ describe("Header responsive smoke", () => {
     expect(marketsLinks.some((item) => item.className.includes("!text-primary"))).toBe(true);
     const nav = screen.getByRole("navigation", { name: "Dashboard navigation" });
     expect(nav.className).toContain("justify-center");
+    const desktopNavLabels = Array.from(nav.querySelectorAll("a")).map((anchor) =>
+      anchor.textContent?.replace(/\s+/g, " ").trim()
+    );
+    const exchangesIndex = desktopNavLabels.indexOf("Exchanges");
+    const walletsIndex = desktopNavLabels.indexOf("Wallets");
+    const marketsIndex = desktopNavLabels.indexOf("Markets");
+    expect(exchangesIndex).toBeGreaterThan(-1);
+    expect(walletsIndex).toBeGreaterThan(exchangesIndex);
+    expect(marketsIndex).toBeGreaterThan(walletsIndex);
   });
 
   it("opens and closes mobile menu overlay with scroll lock side effects", () => {

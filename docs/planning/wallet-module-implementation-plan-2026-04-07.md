@@ -140,7 +140,7 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 - [x] `WLT-18 test(runtime): shared-wallet multi-bot concurrency and insufficient-funds regressions`
 
 ### Phase F - Web Wallet Module + Bot Form
-- [ ] `WLT-19 feat(web-nav): add Wallet menu entry between Exchanges and Markets`
+- [x] `WLT-19 feat(web-nav): add Wallet menu entry between Exchanges and Markets`
 - [ ] `WLT-20 feat(web-wallets): add /dashboard/wallets list/create/edit screens with mode-aware form`
 - [ ] `WLT-21 refactor(web-bot-form): replace mode/paper-balance controls with wallet selector + context summary`
 - [ ] `WLT-22 test(web): add regression coverage for wallet pages, nav placement, and bot-form payload changes`
@@ -159,6 +159,7 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 - API/web/runtime tests cover wallet mismatch and insufficient-funds scenarios.
 
 ## Progress Log
+- 2026-04-16: Completed `WLT-19` by restoring explicit `Exchanges` module link in dashboard navigation and enforcing route order `Exchanges -> Wallets -> Markets` in `Header` with regression assertions in `Header.responsive.test.tsx`; validated with `pnpm --filter web test -- src/ui/layout/dashboard/Header.responsive.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - 2026-04-16: Completed `WLT-18` by adding runtime regressions for shared-wallet multi-bot insufficient-funds behavior (`runtimeSignalLoop.service.test.ts`: shared wallet route-level funds guard with one bot blocked and one bot executed, `runtimeCapitalContext.service.test.ts`: shared-wallet reserved-margin accounting across bots), validated with `pnpm --filter api test -- src/modules/engine/runtimeCapitalContext.service.test.ts src/modules/engine/runtimeSignalLoop.service.test.ts` and `pnpm --filter api run typecheck` (PASS).
 - 2026-04-16: Completed `WLT-17` by fixing runtime EXIT close-order attribution in `executionOrchestrator` so `orderGateway.openOrder` receives wallet snapshot (`walletId: openPosition.walletId ?? input.walletId`) and by locking regression in `executionOrchestrator.service.test.ts` (EXIT flow asserts wallet propagation to close order/trade); validated with `pnpm --filter api test -- src/modules/engine/executionOrchestrator.service.test.ts` and `pnpm --filter api run typecheck` (PASS).
 - 2026-04-16: Completed `WLT-16` by introducing explicit wallet free-cash guard primitive (`resolveRuntimeWalletFundsExhausted`) and wiring OPEN pre-trade runtime path to this hard-fail check (`WALLET_INSUFFICIENT_FUNDS` block before orchestrator), while keeping DCA hard-fail flow on the same capital guard contract; validated with targeted runtime suites (`runtimeCapitalContext`, `runtimeSignalLoop`, `runtimePositionAutomation`) and `pnpm --filter api run typecheck` (PASS).

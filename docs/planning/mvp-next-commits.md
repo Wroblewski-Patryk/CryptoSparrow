@@ -21,6 +21,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `WLT-19 feat(web-nav): add Wallet menu entry between Exchanges and Markets`
+  - 2026-04-16: Advanced active wallet group `WLT-F` by restoring `Exchanges` link in dashboard navigation and enforcing desktop order `Exchanges -> Wallets -> Markets` with regression coverage in `Header.responsive.test.tsx`; validated with `pnpm --filter web test -- src/ui/layout/dashboard/Header.responsive.test.tsx` + `pnpm --filter web run typecheck` (PASS); remaining `WLT-F` scope is `WLT-20..WLT-22`.
 - [x] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
   - 2026-04-16: Closed wallet Group E by completing `WLT-15..WLT-18` (wallet-first runtime capital context, hard-fail OPEN/DCA wallet free-cash guard, EXIT close-order wallet snapshot attribution, and shared-wallet multi-bot insufficient-funds regressions in runtime tests); validated with targeted runtime suites and `pnpm --filter api run typecheck` (PASS); next wallet group promoted to `WLT-F`.
 - [x] `WLT-18 test(runtime): shared-wallet multi-bot concurrency and insufficient-funds regressions`
