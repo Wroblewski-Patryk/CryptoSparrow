@@ -1259,6 +1259,50 @@ describe('RuntimeSignalLoop', () => {
     vi.useRealTimers();
   });
 
+  it('allows a new auto-restart attempt after guard window expires', async () => {
+    vi.useFakeTimers();
+    const { deps } = createDeps();
+    withStrategyBot(deps, { strategies: [] });
+    deps.ensureRuntimeSession = vi.fn(async () => 'session-1');
+    deps.closeInactiveRuntimeSessions = vi.fn(async () => undefined);
+    deps.stallNoEventMs = 20_000;
+    deps.stallNoHeartbeatMs = 300_000;
+    deps.stallDetectorEnabled = true;
+    deps.autoRestartEnabled = true;
+    deps.autoRestartCooldownMs = 2_000;
+    deps.autoRestartMaxAttempts = 1;
+    deps.autoRestartWindowMs = 60_000;
+
+    let subscribeCalls = 0;
+    deps.subscribe = vi.fn(async () => {
+      subscribeCalls += 1;
+      if (subscribeCalls === 1) {
+        return async () => undefined;
+      }
+      throw new Error('restart_subscribe_failure');
+    });
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+    expect(loop.isRunning()).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(31_000);
+    await vi.waitFor(() => expect(loop.isRunning()).toBe(false));
+
+    // Within the same attempt window guardrail blocks repeated retries.
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(subscribeCalls).toBe(2);
+    expect(loop.isRunning()).toBe(false);
+
+    // After guard window expires, one fresh restart attempt is allowed again.
+    await vi.advanceTimersByTimeAsync(65_000);
+    expect(subscribeCalls).toBeGreaterThanOrEqual(3);
+    expect(loop.isRunning()).toBe(false);
+
+    await loop.stop();
+    vi.useRealTimers();
+  });
+
   it('keeps session continuity during long soak with heartbeat recovery and no stuck CANCELED loop', async () => {
     vi.useFakeTimers();
     const { deps } = createDeps();

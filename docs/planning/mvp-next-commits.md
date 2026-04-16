@@ -8,6 +8,7 @@ Operational queue for one-task execution runs.
 
 ## NOW
 - [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
+  - 2026-04-16: Advanced `PEX-B` by closing `PEX-05` guardrail coverage with a restart-window regression (`max attempts` blocks retries inside window and allows a fresh attempt after `autoRestartWindowMs` elapses); remaining active scope: `PEX-06`.
 ## NEXT
 - [ ] `PEX-C observability-ops: runtime alert thresholds + incident triage runbook`
 ## PIPELINE
