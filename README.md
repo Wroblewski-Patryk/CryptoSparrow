@@ -167,6 +167,7 @@ VPS fallback env template:
 - `.env.vps.example` (copy to `.env.vps` for `docker-compose.vps.yml`)
 
 If Coolify shows `failed to read dockerfile`, verify Dockerfile path in service config.
+If Coolify build fails with `unexpected key 'env' in 'env=COOLIFY_URL'`, ensure deploy Dockerfiles use `# syntax=docker/dockerfile:1.10` (or newer) and redeploy.
 
 ## Load Testing (Server)
 With backend running on `http://localhost:3001`:

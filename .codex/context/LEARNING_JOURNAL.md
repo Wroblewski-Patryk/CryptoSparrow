@@ -93,3 +93,18 @@ if ($LASTEXITCODE -eq 0) { pnpm --filter api test -- src/modules/bots/bots.walle
 - Avoid: bundling several DB-mutating e2e files into a single `vitest` call in this environment.
 - Evidence:
   - Reproduced on 2026-04-16 while executing WLT-23 QA pack; grouped run failed with FK cleanup collisions, sequential per-file execution passed.
+
+### 2026-04-17 - Coolify secret-env mount requires Dockerfile syntax 1.10
+- Context: Docker builds on Coolify with "Use Docker Build Secrets" enabled.
+- Symptom: deployment fails early during Dockerfile parse/solve with errors like `unexpected key 'env' in 'env=COOLIFY_URL'`, often before app build steps run.
+- Root cause: Coolify injects `RUN --mount=type=secret,...,env=...` options that are not supported by Dockerfile frontend `1.7`.
+- Guardrail: keep all deploy Dockerfiles on `# syntax=docker/dockerfile:1.10` (or newer) when builds can receive Coolify secret mounts.
+- Preferred pattern:
+```Dockerfile
+# syntax=docker/dockerfile:1.10
+FROM node:20-bookworm-slim
+```
+- Avoid: mixing Coolify build-secret injection with Dockerfile frontend `1.7`.
+- Evidence:
+  - Local reproduction on 2026-04-17: minimal Dockerfile with `1.7` + `--mount=type=secret,env=...` failed with `unexpected key 'env'`; same file with `1.10` succeeded.
+  - Applied across `apps/api/Dockerfile*` and `apps/web/Dockerfile` in this repository.

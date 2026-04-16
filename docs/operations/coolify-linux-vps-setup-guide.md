@@ -240,6 +240,7 @@ If post-deploy health fails:
 5. API CORS not matching web domain.
 6. Wrong Dockerfile path in Coolify (must point to `apps/api/Dockerfile` or `apps/web/Dockerfile`).
 7. Using Docker mode without repository Dockerfile artifacts.
+8. Coolify build-secrets injection + old Dockerfile frontend (`1.7`) can fail with `unexpected key 'env' in 'env=COOLIFY_URL'`; keep deploy Dockerfiles on `# syntax=docker/dockerfile:1.10` or newer.
 
 ## References
 - `docs/operations/dev-stage-prod-environment-matrix.md`
