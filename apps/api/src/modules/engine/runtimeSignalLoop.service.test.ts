@@ -181,6 +181,7 @@ const emitFinalCandleSeries = async (
     marketType?: 'FUTURES' | 'SPOT';
     interval?: string;
     points?: number;
+    startIndex?: number;
   }
 ) => {
   const symbol = options?.symbol ?? 'BTCUSDT';
@@ -188,20 +189,22 @@ const emitFinalCandleSeries = async (
   const marketType = options?.marketType ?? 'FUTURES';
   const interval = options?.interval ?? '1m';
   const points = options?.points ?? 8;
+  const startIndex = options?.startIndex ?? 0;
   for (let index = 0; index < points; index += 1) {
+    const seriesIndex = startIndex + index;
     await emit({
       type: 'candle',
       exchange,
       marketType,
       symbol,
       interval,
-      eventTime: 10_000 + index * 60_000,
-      openTime: index * 60_000,
-      closeTime: index * 60_000 + 59_000,
-      open: 100 + index,
-      high: 101 + index,
-      low: 99 + index,
-      close: 100 + index,
+      eventTime: 10_000 + seriesIndex * 60_000,
+      openTime: seriesIndex * 60_000,
+      closeTime: seriesIndex * 60_000 + 59_000,
+      open: 100 + seriesIndex,
+      high: 101 + seriesIndex,
+      low: 99 + seriesIndex,
+      close: 100 + seriesIndex,
       volume: 1000,
       isFinal: true,
     });
@@ -238,6 +241,122 @@ describe('RuntimeSignalLoop', () => {
     expect(after.eligibleGroupsCount.total).toBeGreaterThanOrEqual(before.eligibleGroupsCount.total + 1);
 
     await loop.stop();
+  });
+
+  it('uses topology cache provider for final-candle bot reads when cache path is available', async () => {
+    const { deps, emit } = createDeps();
+    withStrategyBot(deps);
+    deps.listActiveBotsFromTopologyCache = vi.fn(async () => [
+      {
+        id: 'bot-1',
+        userId: 'user-1',
+        mode: 'PAPER' as const,
+        exchange: 'BINANCE' as const,
+        paperStartBalance: 1000,
+        marketType: 'FUTURES' as const,
+        marketGroups: [
+          {
+            id: 'group-1',
+            symbolGroupId: 'symbol-group-1',
+            executionOrder: 1,
+            maxOpenPositions: 1,
+            symbols: ['BTCUSDT'],
+            strategies: [strategyLong],
+          },
+        ],
+      },
+    ]);
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+    const directReadsAfterStart = deps.listActiveBots.mock.calls.length;
+
+    await emitFinalCandleSeries(emit);
+
+    expect(deps.listActiveBotsFromTopologyCache).toHaveBeenCalled();
+    expect(deps.listActiveBots.mock.calls.length).toBe(directReadsAfterStart);
+    expect(deps.createSignal).toHaveBeenCalled();
+  });
+
+  it('falls back to direct topology read when cache provider fails during final-candle flow', async () => {
+    const { deps, emit } = createDeps();
+    withStrategyBot(deps);
+    deps.listActiveBotsFromTopologyCache = vi.fn(async () => {
+      throw new Error('cache_read_failed');
+    });
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+    const directReadsAfterStart = deps.listActiveBots.mock.calls.length;
+
+    await emitFinalCandleSeries(emit);
+
+    expect(deps.listActiveBotsFromTopologyCache).toHaveBeenCalled();
+    expect(deps.listActiveBots.mock.calls.length).toBeGreaterThan(directReadsAfterStart);
+    expect(deps.createSignal).toHaveBeenCalled();
+  });
+
+  it('preserves parity across topology-cache invalidation by applying refreshed bot topology', async () => {
+    const { deps, emit } = createDeps();
+    const noStrategyTopology = [
+      {
+        id: 'bot-1',
+        userId: 'user-1',
+        mode: 'PAPER' as const,
+        exchange: 'BINANCE' as const,
+        paperStartBalance: 1000,
+        marketType: 'FUTURES' as const,
+        marketGroups: [
+          {
+            id: 'group-1',
+            symbolGroupId: 'symbol-group-1',
+            executionOrder: 1,
+            maxOpenPositions: 1,
+            symbols: ['BTCUSDT'],
+            strategies: [],
+          },
+        ],
+      },
+    ];
+    const refreshedTopology = [
+      {
+        id: 'bot-1',
+        userId: 'user-1',
+        mode: 'PAPER' as const,
+        exchange: 'BINANCE' as const,
+        paperStartBalance: 1000,
+        marketType: 'FUTURES' as const,
+        marketGroups: [
+          {
+            id: 'group-1',
+            symbolGroupId: 'symbol-group-1',
+            executionOrder: 1,
+            maxOpenPositions: 1,
+            symbols: ['BTCUSDT'],
+            strategies: [strategyLong],
+          },
+        ],
+      },
+    ];
+    let activeTopology = noStrategyTopology;
+
+    withStrategyBot(deps, { strategies: [] });
+    deps.listActiveBotsFromTopologyCache = vi.fn(async () => activeTopology);
+    deps.invalidateRuntimeTopologyCache = vi.fn(() => {
+      activeTopology = refreshedTopology;
+    });
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    await emitFinalCandleSeries(emit, { startIndex: 0 });
+    expect(deps.createSignal).not.toHaveBeenCalled();
+
+    deps.invalidateRuntimeTopologyCache();
+    await emitFinalCandleSeries(emit, { startIndex: 64 });
+
+    expect(deps.createSignal).toHaveBeenCalled();
+    expect(deps.orchestrateFn).toHaveBeenCalled();
   });
 
   it('runs position automation fallback from final candle when ticker is stale or missing', async () => {

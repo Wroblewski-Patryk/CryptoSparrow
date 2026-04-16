@@ -350,7 +350,7 @@ export class RuntimeSignalLoop {
     }
 
     try {
-      return runtimeMetricsService.measureListActiveBots(async () =>
+      return await runtimeMetricsService.measureListActiveBots(async () =>
         this.deps.listActiveBotsFromTopologyCache()
       );
     } catch (error) {
