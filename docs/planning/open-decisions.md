@@ -587,6 +587,19 @@ This file tracks intentionally unresolved architecture choices so implementation
 - V2 direction:
   - extend admin with richer billing/analytics/experimentation workflows beyond V1 critical controls.
 
+## Portuguese Locale Variant Policy
+- Decision state: resolved on 2026-04-17.
+- Decision:
+  - add one Portuguese locale variant for V1 localization expansion: `pt` mapped to `pt-PT`.
+  - explicitly exclude `pt-BR` from this rollout.
+  - EN remains default locale; PL remains fully supported.
+- Locked behavior:
+  - language switcher must expose `en`, `pl`, and `pt`.
+  - selecting Portuguese sets HTML lang to `pt` and formatting contract to `pt-PT`.
+  - no parallel Brazil-specific copy branch should be introduced in this wave.
+- Canonical reference:
+  - `docs/planning/pt-pt-localization-rollout-plan-2026-04-17.md`
+
 ## Accessibility Scope
 - Decision state: resolved on 2026-04-17.
 - Decision:

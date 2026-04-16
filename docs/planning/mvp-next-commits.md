@@ -12,7 +12,7 @@ Operational queue for one-task execution runs.
 - [ ] `DOCSYNC-03 chore(planning-queue): validate NOW/NEXT refill continuity and align canonical queue`
 - [ ] `DOCSYNC-04 docs(governance): capture sustainment cadence and ownership in working agreements`
 ## NEXT
-- none
+- [ ] `L10NPT-A localization(pt-pt): execute European Portuguese rollout queue from docs/planning/pt-pt-localization-rollout-plan-2026-04-17.md (pt-PT only, no pt-BR)`
 ## PIPELINE
 - none
 ## BLOCKED
