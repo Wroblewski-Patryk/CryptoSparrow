@@ -218,7 +218,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 
 ### [ ] Group 7 - Worker backpressure and horizontal scale safety
 
-- [ ] `CPDB-19 feat(runtime-backpressure): per-series concurrency guard and bounded queue`
+- [x] `CPDB-19 feat(runtime-backpressure): per-series concurrency guard and bounded queue`
   - Files:
     - `apps/api/src/modules/engine/runtimeSignalLoop.service.ts`
   - Deliverable:
@@ -300,3 +300,4 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Completed `CPDB-17` by slimming active runtime topology read selection to only fields consumed by runtime signal evaluation/routing (bot market-groups, symbol-group universe filters, and strategy routing parameters), reducing payload size of `listActiveRuntimeBotsRaw` while preserving runtime loop behavior (`runtimeSignalLoop` tests green).
 - 2026-04-16: Completed `CPDB-18` by capturing `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)` baseline/after snapshots for runtime position hot-path queries with index drop/recreate cycle, saving raw evidence to `docs/planning/_artifacts-cpdb18-explain-2026-04-16.json` and publishing summary in `cpu-db-explain-baseline-2026-04-06.md`.
 - 2026-04-16: Closed Group 6 (`CPDB-16..CPDB-18`). Next unchecked group is Group 7 (`CPDB-19..CPDB-21`).
+- 2026-04-16: Completed `CPDB-19` by adding per-series final-candle backpressure guardrails in runtime loop (`exchange|marketType|symbol|interval` queue with bounded pending backlog + overflow drop of oldest pending event), while preserving sequential in-series processing semantics and queue cleanup on stop/stall; validated with `pnpm --filter api test -- runtimeSignalLoop` (PASS).

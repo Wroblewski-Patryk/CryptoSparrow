@@ -1176,6 +1176,91 @@ describe('RuntimeSignalLoop', () => {
     expect(loop.isRunning()).toBe(true);
   });
 
+  it('bounds per-series backlog and drops the oldest queued final candle under burst load', async () => {
+    const { deps, emit } = createDeps();
+    withStrategyBot(deps, { strategies: [] });
+    deps.seriesQueueMaxPending = 1;
+    const queueSymbol = 'CPDBQUEUEUSDT';
+
+    let releaseFirstDecision: (() => void) | null = null;
+    const firstDecisionGate = new Promise<void>((resolve) => {
+      releaseFirstDecision = resolve;
+    });
+    let topologyReads = 0;
+    deps.listActiveBotsFromTopologyCache = vi.fn(async () => {
+      topologyReads += 1;
+      if (topologyReads === 1) {
+        await firstDecisionGate;
+      }
+      return deps.listActiveBots();
+    });
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+
+    const firstEmit = emit({
+      type: 'candle',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      symbol: queueSymbol,
+      interval: '1m',
+      eventTime: 60_000,
+      openTime: 0,
+      closeTime: 59_000,
+      open: 100,
+      high: 101,
+      low: 99,
+      close: 100,
+      volume: 1_000,
+      isFinal: true,
+    });
+    await vi.waitFor(() => expect(deps.listActiveBotsFromTopologyCache).toHaveBeenCalledTimes(1));
+
+    const secondEmit = emit({
+      type: 'candle',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      symbol: queueSymbol,
+      interval: '1m',
+      eventTime: 120_000,
+      openTime: 60_000,
+      closeTime: 119_000,
+      open: 101,
+      high: 102,
+      low: 100,
+      close: 101,
+      volume: 1_100,
+      isFinal: true,
+    });
+    const thirdEmit = emit({
+      type: 'candle',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      symbol: queueSymbol,
+      interval: '1m',
+      eventTime: 180_000,
+      openTime: 120_000,
+      closeTime: 179_000,
+      open: 102,
+      high: 103,
+      low: 101,
+      close: 102,
+      volume: 1_200,
+      isFinal: true,
+    });
+
+    releaseFirstDecision?.();
+    await Promise.all([firstEmit, secondEmit, thirdEmit]);
+    await vi.waitFor(() => expect(deps.listActiveBotsFromTopologyCache).toHaveBeenCalledTimes(2));
+
+    const fallbackTickerPrices = (deps.processPositionAutomation as ReturnType<typeof vi.fn>).mock.calls.map(
+      ([event]) => event.lastPrice
+    );
+    expect(fallbackTickerPrices).toEqual([100, 102]);
+
+    await loop.stop();
+  });
+
   it('merges final-candle multi-strategy votes with EXIT priority and trace-only behavior', async () => {
     const { deps, emit } = createDeps();
     withStrategyBot(deps, { strategies: [strategyExit, strategyLong] });

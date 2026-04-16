@@ -142,6 +142,7 @@ type RuntimeSignalLoopDeps = {
   autoRestartCooldownMs?: number;
   autoRestartMaxAttempts?: number;
   autoRestartWindowMs?: number;
+  seriesQueueMaxPending?: number;
   validateExchangeOrderFn?: (input: {
     exchange: ActiveBot['exchange'];
     marketType: ActiveBot['marketType'];
@@ -189,6 +190,10 @@ const runtimeAutoRestartWindowMs = Math.max(
   runtimeAutoRestartCooldownMs,
   Number.parseInt(process.env.RUNTIME_AUTO_RESTART_WINDOW_MS ?? '300000', 10)
 );
+const runtimeSeriesQueueMaxPending = Math.max(
+  1,
+  Number.parseInt(process.env.RUNTIME_SIGNAL_SERIES_QUEUE_MAX_PENDING ?? '64', 10)
+);
 
 const defaultDeps: RuntimeSignalLoopDeps = {
   subscribe: subscribeMarketStreamEvents,
@@ -216,6 +221,12 @@ type RuntimeSignalRouteEntry = {
   group: ActiveBotMarketGroup;
 };
 
+type RuntimeQueuedCandleEvent = {
+  event: StreamCandleEvent;
+  resolve: () => void;
+  reject: (error: unknown) => void;
+};
+
 export class RuntimeSignalLoop {
   private unsubscribe: (() => Promise<void>) | null = null;
   private sessionWatchdogTimer: NodeJS.Timeout | null = null;
@@ -228,6 +239,8 @@ export class RuntimeSignalLoop {
   private routedTopologyRef: ActiveBot[] | null = null;
   private readonly routeEntriesBySeriesKey = new Map<string, RuntimeSignalRouteEntry[]>();
   private readonly routeBotsByMarketKey = new Map<string, ActiveBot[]>();
+  private readonly queuedCandleEventsBySeriesKey = new Map<string, RuntimeQueuedCandleEvent[]>();
+  private readonly processingSeriesKeys = new Set<string>();
   private lastStreamEventAtMs: number | null = null;
   private lastSessionSyncSuccessAtMs: number | null = null;
   private lastKnownActiveBotIds = new Set<string>();
@@ -308,6 +321,7 @@ export class RuntimeSignalLoop {
     this.unsubscribe = null;
     this.deps.invalidateRuntimeTopologyCache?.();
     this.clearRuntimeRoutingIndex();
+    this.clearRuntimeSeriesEventQueues();
     this.lastStreamEventAtMs = null;
     this.lastSessionSyncSuccessAtMs = null;
     this.lastKnownActiveBotIds.clear();
@@ -392,6 +406,84 @@ export class RuntimeSignalLoop {
     interval: string;
   }) {
     return `${input.marketKey}|${input.symbol}|${input.interval}`;
+  }
+
+  private buildRuntimeSeriesEventKey(event: StreamCandleEvent) {
+    const symbolKey = normalizeSymbol(event.symbol);
+    const intervalKey = normalizeInterval(event.interval);
+    return `${event.exchange}|${event.marketType}|${symbolKey}|${intervalKey}`;
+  }
+
+  private resolveSeriesQueueMaxPending() {
+    if (Number.isFinite(this.deps.seriesQueueMaxPending as number)) {
+      return Math.max(1, Math.floor(this.deps.seriesQueueMaxPending as number));
+    }
+    return runtimeSeriesQueueMaxPending;
+  }
+
+  private clearRuntimeSeriesEventQueues() {
+    for (const queue of this.queuedCandleEventsBySeriesKey.values()) {
+      for (const queuedEvent of queue) {
+        queuedEvent.resolve();
+      }
+    }
+    this.queuedCandleEventsBySeriesKey.clear();
+    this.processingSeriesKeys.clear();
+  }
+
+  private dequeueQueuedRuntimeCandleEvent(seriesKey: string) {
+    const queue = this.queuedCandleEventsBySeriesKey.get(seriesKey);
+    const next = queue?.shift();
+    if (!queue || queue.length === 0) {
+      this.queuedCandleEventsBySeriesKey.delete(seriesKey);
+    }
+    return next ?? null;
+  }
+
+  private enqueueFinalCandleEvent(event: StreamCandleEvent) {
+    const seriesKey = this.buildRuntimeSeriesEventKey(event);
+    return new Promise<void>((resolve, reject) => {
+      const queuedEvent: RuntimeQueuedCandleEvent = { event, resolve, reject };
+      if (!this.processingSeriesKeys.has(seriesKey)) {
+        this.processingSeriesKeys.add(seriesKey);
+        void this.drainRuntimeSeriesQueue(seriesKey, queuedEvent);
+        return;
+      }
+
+      const queue = this.queuedCandleEventsBySeriesKey.get(seriesKey) ?? [];
+      const maxPending = this.resolveSeriesQueueMaxPending();
+      if (queue.length >= maxPending) {
+        const droppedEvent = queue.shift();
+        droppedEvent?.resolve();
+        metricsStore.recordRuntimeExecutionError('runtime_series_queue_overflow');
+      }
+      queue.push(queuedEvent);
+      this.queuedCandleEventsBySeriesKey.set(seriesKey, queue);
+    });
+  }
+
+  private async drainRuntimeSeriesQueue(seriesKey: string, initialEvent: RuntimeQueuedCandleEvent) {
+    let current: RuntimeQueuedCandleEvent | null = initialEvent;
+    try {
+      while (current) {
+        try {
+          await this.handleCandleEvent(current.event);
+          current.resolve();
+        } catch (error) {
+          current.reject(error);
+          console.error('RuntimeSignalLoop candle processing failed:', error);
+          metricsStore.recordRuntimeExecutionError('runtime_candle_handler_failure');
+        }
+        current = this.dequeueQueuedRuntimeCandleEvent(seriesKey);
+      }
+    } finally {
+      this.processingSeriesKeys.delete(seriesKey);
+      const nextQueuedEvent = this.dequeueQueuedRuntimeCandleEvent(seriesKey);
+      if (nextQueuedEvent) {
+        this.processingSeriesKeys.add(seriesKey);
+        void this.drainRuntimeSeriesQueue(seriesKey, nextQueuedEvent);
+      }
+    }
   }
 
   private rebuildRuntimeRoutingIndex(topology: ActiveBot[]) {
@@ -562,6 +654,7 @@ export class RuntimeSignalLoop {
     this.processedDecisionWindows.clear();
     this.deps.invalidateRuntimeTopologyCache?.();
     this.clearRuntimeRoutingIndex();
+    this.clearRuntimeSeriesEventQueues();
     this.lastStreamEventAtMs = null;
     this.lastSessionSyncSuccessAtMs = null;
     this.lastKnownActiveBotIds.clear();
@@ -677,6 +770,10 @@ export class RuntimeSignalLoop {
     this.lastStreamEventAtMs = now;
     metricsStore.recordRuntimeSignalLag(now - event.eventTime);
     if (event.type === 'candle') {
+      if (event.isFinal) {
+        await this.enqueueFinalCandleEvent(event);
+        return;
+      }
       await this.handleCandleEvent(event);
       return;
     }
