@@ -21,6 +21,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `WLT-21 refactor(web-bot-form): replace mode/paper-balance controls with wallet selector + context summary`
+  - 2026-04-16: Advanced active wallet group `WLT-F` by refining wallet-first bot form contract (`BotCreateEditForm`) with explicit wallet context summary (wallet/mode/venue/LIVE API key status), removing legacy mode/paper-balance expectations from regression tests, and aligning LIVE missing-key validation to i18n copy; validated with `pnpm --filter web test -- src/features/bots/components/BotCreateEditForm.test.tsx` + `pnpm --filter web run typecheck` (PASS); remaining `WLT-F` scope is `WLT-22`.
 - [x] `WLT-20 feat(web-wallets): add /dashboard/wallets list/create/edit screens with mode-aware form`
   - 2026-04-16: Advanced active wallet group `WLT-F` by validating wallet web module route contract (`/dashboard/wallets/list`, `/dashboard/wallets/create`, `/dashboard/wallets/[id]/edit`) and mode-aware form behavior/payload for PAPER vs LIVE; verified via wallet create/edit page tests + wallet form component tests and `web typecheck` (PASS); remaining `WLT-F` scope is `WLT-21..WLT-22`.
 - [x] `WLT-19 feat(web-nav): add Wallet menu entry between Exchanges and Markets`

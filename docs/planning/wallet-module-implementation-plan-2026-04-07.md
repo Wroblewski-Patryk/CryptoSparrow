@@ -142,7 +142,7 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 ### Phase F - Web Wallet Module + Bot Form
 - [x] `WLT-19 feat(web-nav): add Wallet menu entry between Exchanges and Markets`
 - [x] `WLT-20 feat(web-wallets): add /dashboard/wallets list/create/edit screens with mode-aware form`
-- [ ] `WLT-21 refactor(web-bot-form): replace mode/paper-balance controls with wallet selector + context summary`
+- [x] `WLT-21 refactor(web-bot-form): replace mode/paper-balance controls with wallet selector + context summary`
 - [ ] `WLT-22 test(web): add regression coverage for wallet pages, nav placement, and bot-form payload changes`
 
 ### Phase G - QA and Stabilization
@@ -159,6 +159,7 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 - API/web/runtime tests cover wallet mismatch and insufficient-funds scenarios.
 
 ## Progress Log
+- 2026-04-16: Completed `WLT-21` by hardening wallet-first bot form UX contract in `BotCreateEditForm` (explicit wallet context summary: selected wallet, mode, venue context, LIVE API key status; legacy mode/paper-balance controls kept absent) and aligning LIVE missing-key validation copy to canonical i18n; validated with `pnpm --filter web test -- src/features/bots/components/BotCreateEditForm.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - 2026-04-16: Completed `WLT-20` by confirming wallet module web routes/screens are in place (`/dashboard/wallets/list`, `/dashboard/wallets/create`, `/dashboard/wallets/[id]/edit`) and backed by mode-aware wallet form behavior (`PAPER`/`LIVE` conditional sections + payload contract), validated with `pnpm --filter web test -- src/app/dashboard/wallets/create/page.test.tsx src/app/dashboard/wallets/[id]/edit/page.test.tsx src/features/wallets/components/WalletCreateEditForm.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - 2026-04-16: Completed `WLT-19` by restoring explicit `Exchanges` module link in dashboard navigation and enforcing route order `Exchanges -> Wallets -> Markets` in `Header` with regression assertions in `Header.responsive.test.tsx`; validated with `pnpm --filter web test -- src/ui/layout/dashboard/Header.responsive.test.tsx` and `pnpm --filter web run typecheck` (PASS).
 - 2026-04-16: Completed `WLT-18` by adding runtime regressions for shared-wallet multi-bot insufficient-funds behavior (`runtimeSignalLoop.service.test.ts`: shared wallet route-level funds guard with one bot blocked and one bot executed, `runtimeCapitalContext.service.test.ts`: shared-wallet reserved-margin accounting across bots), validated with `pnpm --filter api test -- src/modules/engine/runtimeCapitalContext.service.test.ts src/modules/engine/runtimeSignalLoop.service.test.ts` and `pnpm --filter api run typecheck` (PASS).

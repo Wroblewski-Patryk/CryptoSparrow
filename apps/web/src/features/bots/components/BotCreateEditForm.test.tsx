@@ -135,10 +135,19 @@ describe("BotCreateEditForm", () => {
     renderWithI18n();
 
     await waitFor(() => {
-      expect(screen.getByText("Wallet mode:")).toBeInTheDocument();
+      expect(screen.getByTestId("wallet-context-summary")).toBeInTheDocument();
     });
+    expect(screen.queryByLabelText("Bot mode")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Paper start balance")).not.toBeInTheDocument();
+    expect(screen.getByText("Wallet:")).toBeInTheDocument();
+    expect(screen.getByText("Paper wallet")).toBeInTheDocument();
+    expect(screen.getByText("Mode:")).toBeInTheDocument();
     expect(screen.getByText("LIVE")).toBeInTheDocument();
-    expect(screen.queryByText("Selected LIVE wallet has no linked API key.")).not.toBeInTheDocument();
+    expect(screen.getByText("Venue context:")).toBeInTheDocument();
+    expect(screen.getByText("BINANCE / FUTURES / USDT")).toBeInTheDocument();
+    expect(screen.getByText("LIVE API key:")).toBeInTheDocument();
+    expect(screen.getByText("Linked")).toBeInTheDocument();
+    expect(screen.queryByText("Missing")).not.toBeInTheDocument();
     expect(screen.getAllByRole("checkbox")).toHaveLength(2);
   });
 
@@ -179,7 +188,9 @@ describe("BotCreateEditForm", () => {
     fireEvent.submit(form as HTMLFormElement);
 
     await waitFor(() => {
-      expect(toastErrorMock).toHaveBeenCalledWith("Selected LIVE wallet has no linked API key.");
+      expect(toastErrorMock).toHaveBeenCalledWith(
+        "Add at least one compatible LIVE API key for selected exchange before activating LIVE bot."
+      );
     });
     expect(createBotMock).not.toHaveBeenCalled();
   });

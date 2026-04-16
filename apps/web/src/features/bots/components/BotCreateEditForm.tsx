@@ -196,7 +196,7 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
       return;
     }
     if (selectedMode === 'LIVE' && form.isActive && !hasCompatibleLiveApiKey) {
-      toast.error('Selected LIVE wallet has no linked API key.');
+      toast.error(t('dashboard.bots.create.liveApiKeyMissingValidation'));
       return;
     }
 
@@ -346,10 +346,30 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
             ) : null}
           </div>
 
-          <div className='rounded-md border border-base-300/60 bg-base-100/70 px-3 py-2 text-xs opacity-80'>
-            <span className='font-semibold'>Wallet mode:</span> {selectedMode}
-            {selectedMode === 'LIVE' && !hasCompatibleLiveApiKey ? (
-              <div className='mt-1 text-error'>Selected LIVE wallet has no linked API key.</div>
+          <div
+            data-testid='wallet-context-summary'
+            className='rounded-md border border-base-300/60 bg-base-100/70 px-3 py-2 text-xs opacity-80 space-y-1'
+          >
+            <div>
+              <span className='font-semibold'>{t('dashboard.bots.create.walletSummaryLabel')}:</span>{' '}
+              {selectedWallet?.name ?? '-'}
+            </div>
+            <div>
+              <span className='font-semibold'>{t('dashboard.bots.create.walletContextModeLabel')}:</span> {selectedMode}
+            </div>
+            <div>
+              <span className='font-semibold'>{t('dashboard.bots.create.walletContextVenueLabel')}:</span>{' '}
+              {selectedWallet
+                ? `${selectedWallet.exchange} / ${selectedWallet.marketType} / ${selectedWallet.baseCurrency}`
+                : '-'}
+            </div>
+            {selectedMode === 'LIVE' ? (
+              <div className={hasCompatibleLiveApiKey ? '' : 'text-error'}>
+                <span className='font-semibold'>{t('dashboard.bots.create.walletContextApiKeyLabel')}:</span>{' '}
+                {hasCompatibleLiveApiKey
+                  ? t('dashboard.bots.create.walletContextApiKeyReady')
+                  : t('dashboard.bots.create.walletContextApiKeyMissing')}
+              </div>
             ) : null}
           </div>
         </section>
