@@ -1,0 +1,115 @@
+{
+  "capturedAt": "2026-04-16T00:59:11.088Z",
+  "sample": {
+    "userId": "cmo0rodyd0001itf43ib5bd0c",
+    "botId": "52f4d35b-bb8a-48b5-afb9-69711fb21874",
+    "symbolA": "CPDB18A",
+    "symbolB": "CPDB18B"
+  },
+  "baseline": {
+    "q1_count_open_by_bot": {
+      "sql": "SELECT COUNT(*) FROM \"Position\" WHERE \"userId\" = 'cmo0rodyd0001itf43ib5bd0c' AND \"botId\" = '52f4d35b-bb8a-48b5-afb9-69711fb21874' AND \"status\" = 'OPEN'",
+      "summary": {
+        "rootNodeType": "Aggregate",
+        "rootTotalCost": 1.03,
+        "executionTimeMs": 0.036,
+        "planningTimeMs": 0.235,
+        "scanNodeType": "Seq Scan",
+        "scanIndexName": null,
+        "scanRelationName": "Position",
+        "scanFilter": "((\"userId\" = 'cmo0rodyd0001itf43ib5bd0c'::text) AND (\"botId\" = '52f4d35b-bb8a-48b5-afb9-69711fb21874'::text) AND (status = 'OPEN'::\"PositionStatus\"))",
+        "scanRowsRemovedByFilter": 2,
+        "scanActualRows": 2,
+        "scanSharedHitBlocks": 1,
+        "scanSharedReadBlocks": 0
+      }
+    },
+    "q2_exists_open_by_symbol": {
+      "sql": "SELECT \"id\" FROM \"Position\" WHERE \"userId\" = 'cmo0rodyd0001itf43ib5bd0c' AND \"symbol\" = 'CPDB18A' AND \"status\" = 'OPEN' LIMIT 1",
+      "summary": {
+        "rootNodeType": "Limit",
+        "rootTotalCost": 1.02,
+        "executionTimeMs": 0.013,
+        "planningTimeMs": 0.091,
+        "scanNodeType": "Seq Scan",
+        "scanIndexName": null,
+        "scanRelationName": "Position",
+        "scanFilter": "((\"userId\" = 'cmo0rodyd0001itf43ib5bd0c'::text) AND (symbol = 'CPDB18A'::text) AND (status = 'OPEN'::\"PositionStatus\"))",
+        "scanRowsRemovedByFilter": 0,
+        "scanActualRows": 1,
+        "scanSharedHitBlocks": 1,
+        "scanSharedReadBlocks": 0
+      }
+    },
+    "q3_count_open_by_bot_and_symbols": {
+      "sql": "SELECT COUNT(*) FROM \"Position\" WHERE \"userId\" = 'cmo0rodyd0001itf43ib5bd0c' AND \"botId\" = '52f4d35b-bb8a-48b5-afb9-69711fb21874' AND \"status\" = 'OPEN' AND \"symbol\" IN ('CPDB18A', 'CPDB18B', 'CPDB18X')",
+      "summary": {
+        "rootNodeType": "Aggregate",
+        "rootTotalCost": 1.03,
+        "executionTimeMs": 0.021,
+        "planningTimeMs": 0.204,
+        "scanNodeType": "Seq Scan",
+        "scanIndexName": null,
+        "scanRelationName": "Position",
+        "scanFilter": "((\"userId\" = 'cmo0rodyd0001itf43ib5bd0c'::text) AND (\"botId\" = '52f4d35b-bb8a-48b5-afb9-69711fb21874'::text) AND (status = 'OPEN'::\"PositionStatus\") AND (symbol = ANY ('{CPDB18A,CPDB18B,CPDB18X}'::text[])))",
+        "scanRowsRemovedByFilter": 2,
+        "scanActualRows": 2,
+        "scanSharedHitBlocks": 1,
+        "scanSharedReadBlocks": 0
+      }
+    }
+  },
+  "after": {
+    "q1_count_open_by_bot": {
+      "sql": "SELECT COUNT(*) FROM \"Position\" WHERE \"userId\" = 'cmo0rodyd0001itf43ib5bd0c' AND \"botId\" = '52f4d35b-bb8a-48b5-afb9-69711fb21874' AND \"status\" = 'OPEN'",
+      "summary": {
+        "rootNodeType": "Aggregate",
+        "rootTotalCost": 1.08,
+        "executionTimeMs": 0.024,
+        "planningTimeMs": 0.241,
+        "scanNodeType": "Seq Scan",
+        "scanIndexName": null,
+        "scanRelationName": "Position",
+        "scanFilter": "((\"userId\" = 'cmo0rodyd0001itf43ib5bd0c'::text) AND (\"botId\" = '52f4d35b-bb8a-48b5-afb9-69711fb21874'::text) AND (status = 'OPEN'::\"PositionStatus\"))",
+        "scanRowsRemovedByFilter": 2,
+        "scanActualRows": 2,
+        "scanSharedHitBlocks": 1,
+        "scanSharedReadBlocks": 0
+      }
+    },
+    "q2_exists_open_by_symbol": {
+      "sql": "SELECT \"id\" FROM \"Position\" WHERE \"userId\" = 'cmo0rodyd0001itf43ib5bd0c' AND \"symbol\" = 'CPDB18A' AND \"status\" = 'OPEN' LIMIT 1",
+      "summary": {
+        "rootNodeType": "Limit",
+        "rootTotalCost": 1.07,
+        "executionTimeMs": 0.015,
+        "planningTimeMs": 0.076,
+        "scanNodeType": "Seq Scan",
+        "scanIndexName": null,
+        "scanRelationName": "Position",
+        "scanFilter": "((\"userId\" = 'cmo0rodyd0001itf43ib5bd0c'::text) AND (symbol = 'CPDB18A'::text) AND (status = 'OPEN'::\"PositionStatus\"))",
+        "scanRowsRemovedByFilter": 0,
+        "scanActualRows": 1,
+        "scanSharedHitBlocks": 1,
+        "scanSharedReadBlocks": 0
+      }
+    },
+    "q3_count_open_by_bot_and_symbols": {
+      "sql": "SELECT COUNT(*) FROM \"Position\" WHERE \"userId\" = 'cmo0rodyd0001itf43ib5bd0c' AND \"botId\" = '52f4d35b-bb8a-48b5-afb9-69711fb21874' AND \"status\" = 'OPEN' AND \"symbol\" IN ('CPDB18A', 'CPDB18B', 'CPDB18X')",
+      "summary": {
+        "rootNodeType": "Aggregate",
+        "rootTotalCost": 1.1,
+        "executionTimeMs": 0.026,
+        "planningTimeMs": 0.115,
+        "scanNodeType": "Seq Scan",
+        "scanIndexName": null,
+        "scanRelationName": "Position",
+        "scanFilter": "((\"userId\" = 'cmo0rodyd0001itf43ib5bd0c'::text) AND (\"botId\" = '52f4d35b-bb8a-48b5-afb9-69711fb21874'::text) AND (status = 'OPEN'::\"PositionStatus\") AND (symbol = ANY ('{CPDB18A,CPDB18B,CPDB18X}'::text[])))",
+        "scanRowsRemovedByFilter": 2,
+        "scanActualRows": 2,
+        "scanSharedHitBlocks": 1,
+        "scanSharedReadBlocks": 0
+      }
+    }
+  }
+}

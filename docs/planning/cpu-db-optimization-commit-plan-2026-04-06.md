@@ -185,7 +185,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
   - Tests:
     - `pnpm --filter web test -- HomeLiveWidgets BotsManagement`
 
-### [ ] Group 6 - DB indexing and query shaping
+### [x] Group 6 - DB indexing and query shaping
 
 - [x] `CPDB-16 feat(db-index): add hot-path indexes for positions/runtime queries`
   - Files:
@@ -208,7 +208,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
   - Tests:
     - `pnpm --filter api test -- runtimeSignalLoop`
 
-- [ ] `CPDB-18 qa(explain): snapshot EXPLAIN ANALYZE before/after for top runtime queries`
+- [x] `CPDB-18 qa(explain): snapshot EXPLAIN ANALYZE before/after for top runtime queries`
   - Files:
     - `docs/planning/cpu-db-explain-baseline-2026-04-06.md` (new)
   - Deliverable:
@@ -298,3 +298,5 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Closed Group 5 (`CPDB-13..CPDB-15`). Next unchecked group is Group 6 (`CPDB-16..CPDB-18`).
 - 2026-04-16: Completed `CPDB-16` by adding hot-path composite indexes for runtime position queries (`Position(userId, botId, status)` and `Position(userId, symbol, status)`) with migration `20260416005358_add_position_runtime_hot_path_indexes`; `bots/runtime` test sweep was executed and reached an existing unhandled Prisma FK rejection in runtime telemetry tests after all test assertions passed.
 - 2026-04-16: Completed `CPDB-17` by slimming active runtime topology read selection to only fields consumed by runtime signal evaluation/routing (bot market-groups, symbol-group universe filters, and strategy routing parameters), reducing payload size of `listActiveRuntimeBotsRaw` while preserving runtime loop behavior (`runtimeSignalLoop` tests green).
+- 2026-04-16: Completed `CPDB-18` by capturing `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)` baseline/after snapshots for runtime position hot-path queries with index drop/recreate cycle, saving raw evidence to `docs/planning/_artifacts-cpdb18-explain-2026-04-16.json` and publishing summary in `cpu-db-explain-baseline-2026-04-06.md`.
+- 2026-04-16: Closed Group 6 (`CPDB-16..CPDB-18`). Next unchecked group is Group 7 (`CPDB-19..CPDB-21`).
