@@ -7,7 +7,6 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
 - [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
 ## NEXT
 - [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
@@ -20,6 +19,10 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
+  - 2026-04-16: Closed wallet Group G by completing `WLT-23..WLT-25` (end-to-end wallet QA confidence pack, wallet lifecycle + insufficient-funds operator runbook, and release-gate lint/typecheck/tests with evidence artifacts `docs/operations/_artifacts-wlt25-release-gate-2026-04-16T20-49-53-335Z.json` + `docs/operations/wlt25-release-gate-2026-04-16T20-49-53-335Z.md`), promoting `PEX-A` as next active group.
+- [x] `WLT-25 release(gate): run lint/typecheck/tests and capture rollout evidence`
+  - 2026-04-16: Executed release-gate validation (`pnpm run lint`, `pnpm --filter api run typecheck`, `pnpm --filter web run typecheck`, sequential API e2e wallet-first confidence pack, and wallet-focused web regression pack), all PASS; published rollout evidence artifacts `docs/operations/_artifacts-wlt25-release-gate-2026-04-16T20-49-53-335Z.json` + `docs/operations/wlt25-release-gate-2026-04-16T20-49-53-335Z.md`.
 - [x] `WLT-24 docs(runbook): publish operator guide for wallet lifecycle and insufficient-funds troubleshooting`
   - 2026-04-16: Advanced active wallet group `WLT-G` by publishing `docs/operations/wallet-lifecycle-operator-runbook.md` (wallet-first lifecycle procedure + insufficient-funds incident matrix with fast triage, deep diagnostics, and safe mitigations), and linking it from bot and MVP ops runbooks for operator discovery; remaining `WLT-G` scope is `WLT-25`.
 - [x] `WLT-23 qa(api+web+runtime): execute end-to-end flow strategy -> bot(wallet) -> paper/live runtime`

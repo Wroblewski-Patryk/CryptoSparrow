@@ -1,0 +1,63 @@
+{
+    "generatedAtUtc":  "2026-04-16T20:49:53.3400826Z",
+    "task":  "WLT-25 release(gate)",
+    "group":  "WLT-G wallet-qa-release",
+    "overallStatus":  "PASS",
+    "summary":  "Wallet release gate validated: lint + api/web typecheck + wallet-first api/web confidence tests.",
+    "notes":  [
+                  "API e2e suites executed sequentially to avoid shared-test-db concurrency collisions documented in LEARNING_JOURNAL.",
+                  "Lint contains pre-existing warnings but no blocking errors."
+              ],
+    "commands":  [
+                     {
+                         "status":  "PASS",
+                         "name":  "pnpm run lint",
+                         "notes":  "Completed with non-blocking ESLint warnings in web."
+                     },
+                     {
+                         "status":  "PASS",
+                         "name":  "pnpm --filter api run typecheck",
+                         "notes":  ""
+                     },
+                     {
+                         "status":  "PASS",
+                         "name":  "pnpm --filter web run typecheck",
+                         "notes":  ""
+                     },
+                     {
+                         "status":  "PASS",
+                         "name":  "pnpm --filter api test -- src/modules/strategies/strategies.e2e.test.ts",
+                         "notes":  "8/8 tests passed."
+                     },
+                     {
+                         "status":  "PASS",
+                         "name":  "pnpm --filter api test -- src/modules/wallets/wallets.crud.e2e.test.ts",
+                         "notes":  "8/8 tests passed."
+                     },
+                     {
+                         "status":  "PASS",
+                         "name":  "pnpm --filter api test -- src/modules/bots/bots.wallet-contract.e2e.test.ts",
+                         "notes":  "4/4 tests passed."
+                     },
+                     {
+                         "status":  "PASS",
+                         "name":  "pnpm --filter api test -- src/modules/engine/preTrade.e2e.test.ts",
+                         "notes":  "3/3 tests passed."
+                     },
+                     {
+                         "status":  "PASS",
+                         "name":  "pnpm --filter api test -- src/modules/engine/runtime-flow.e2e.test.ts",
+                         "notes":  "1/1 tests passed."
+                     },
+                     {
+                         "status":  "PASS",
+                         "name":  "pnpm --filter api test -- src/modules/engine/runtime-orchestration-smoke.e2e.test.ts",
+                         "notes":  "2/2 tests passed."
+                     },
+                     {
+                         "status":  "PASS",
+                         "name":  "pnpm --filter web test -- src/app/dashboard/wallets/page.test.tsx src/app/dashboard/wallets/list/page.test.tsx src/app/dashboard/wallets/create/page.test.tsx src/app/dashboard/wallets/[id]/edit/page.test.tsx src/features/wallets/components/WalletCreateEditForm.test.tsx src/features/bots/components/BotCreateEditForm.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx",
+                         "notes":  "16/16 tests passed."
+                     }
+                 ]
+}

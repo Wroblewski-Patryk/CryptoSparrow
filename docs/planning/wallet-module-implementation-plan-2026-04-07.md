@@ -148,7 +148,7 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 ### Phase G - QA and Stabilization
 - [x] `WLT-23 qa(api+web+runtime): execute end-to-end flow strategy -> bot(wallet) -> paper/live runtime`
 - [x] `WLT-24 docs(runbook): publish operator guide for wallet lifecycle and insufficient-funds troubleshooting`
-- [ ] `WLT-25 release(gate): run lint/typecheck/tests and capture rollout evidence`
+- [x] `WLT-25 release(gate): run lint/typecheck/tests and capture rollout evidence`
 
 ## Done Criteria
 - Wallet module is fully available in dashboard navigation and supports CRUD.
@@ -159,6 +159,7 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 - API/web/runtime tests cover wallet mismatch and insufficient-funds scenarios.
 
 ## Progress Log
+- 2026-04-16: Completed `WLT-25` by running wallet release-gate validation pack (`pnpm run lint`, API+web typecheck, sequential API e2e confidence suite for strategy/wallet/bot/runtime, and wallet-first web regression suite), all PASS, and publishing rollout evidence artifacts `docs/operations/_artifacts-wlt25-release-gate-2026-04-16T20-49-53-335Z.json` + `docs/operations/wlt25-release-gate-2026-04-16T20-49-53-335Z.md`; Phase G (`WLT-23..WLT-25`) is fully closed.
 - 2026-04-16: Completed `WLT-24` by publishing wallet operator runbook `docs/operations/wallet-lifecycle-operator-runbook.md` with wallet-first lifecycle protocol (`create/update/bind/delete` for PAPER/LIVE), runtime `WALLET_INSUFFICIENT_FUNDS` troubleshooting flow (fast triage + deep diagnostics + safe mitigations), and validation command pack; linked from bot module and MVP ops runbooks for canonical operator navigation; remaining scope in Phase G: `WLT-25`.
 - 2026-04-16: Completed `WLT-23` by executing wallet QA end-to-end confidence pack across strategy/wallet/bot/runtime/web flows (`strategies.e2e`, `wallets.crud.e2e`, `bots.wallet-contract.e2e`, `preTrade.e2e`, `runtime-flow.e2e`, `runtime-orchestration-smoke.e2e`, wallet page + bot-form web regressions) and API/web typecheck (PASS), plus stabilizing runtime e2e contract by making `runtime-flow.e2e` deterministic for PAPER runtime with async polling assertions; remaining scope in Phase G: `WLT-24..WLT-25`.
 - 2026-04-16: Completed `WLT-22` by adding wallet-module web regressions for route coverage (`/dashboard/wallets` redirect and `/dashboard/wallets/list` list/empty/add-action behavior), nav placement coverage (`Header.responsive` checks for `Exchanges`/`Wallets` route links + order), and bot-form payload contract coverage (`BotCreateEditForm` create payload asserts wallet-first fields and absence of legacy `mode/paperStartBalance/apiKeyId`); validated with `pnpm --filter web test -- src/app/dashboard/wallets/page.test.tsx src/app/dashboard/wallets/list/page.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx src/features/bots/components/BotCreateEditForm.test.tsx` and `pnpm --filter web run typecheck` (PASS).
