@@ -1,6 +1,6 @@
 # Production Excellence Plan (2026-04-03)
 
-Status: planned  
+Status: completed  
 Owner: Platform + Runtime + Web + Ops  
 Scope: hardening production behavior for runtime trading flows (`BACKTEST/PAPER/LIVE`) and dashboard observability.
 
@@ -34,39 +34,39 @@ Exit criteria:
 ## Phase B - Liveness, Self-Healing, and Session Continuity
 - [x] `PEX-04 feat(runtime-watchdog): add explicit stall detector for NO_EVENT/NO_HEARTBEAT windows with classified failure reasons`
 - [x] `PEX-05 feat(runtime-recovery): implement bounded auto-restart policy with cooldown and max-attempt guardrails`
-- [ ] `PEX-06 test(runtime): add long-running soak test for session continuity (heartbeat freshness, auto-restart trace, no stuck CANCELED loop)`
+- [x] `PEX-06 test(runtime): add long-running soak test for session continuity (heartbeat freshness, auto-restart trace, no stuck CANCELED loop)`
 
 Exit criteria:
 - runtime recovers from transient stream failures automatically and reports why.
 
 ## Phase C - Observability and Operational Signals
 - [x] `PEX-07 feat(obs-metrics): add production metrics for runtime lag, restart count, reconciliation delay, and execution error classes`
-- [ ] `PEX-08 feat(obs-alerts): define alert thresholds for stale runtime, repeated restarts, and reconciliation drift`
-- [ ] `PEX-09 docs(runbook): publish incident triage matrix (symptoms -> checks -> mitigations -> rollback)`
+- [x] `PEX-08 feat(obs-alerts): define alert thresholds for stale runtime, repeated restarts, and reconciliation drift`
+- [x] `PEX-09 docs(runbook): publish incident triage matrix (symptoms -> checks -> mitigations -> rollback)`
 
 Exit criteria:
 - operators can detect and triage runtime issues without digging through raw logs only.
 
 ## Phase D - Data Safety and Recoverability
-- [ ] `PEX-10 feat(ops-backup): add repeatable backup verification command set for target deployment profile`
-- [ ] `PEX-11 chore(ops-restore-drill): automate restore drill evidence generation with pass/fail contract`
-- [ ] `PEX-12 docs(ops-rto-rpo): document RTO/RPO targets and acceptable degradation windows`
+- [x] `PEX-10 feat(ops-backup): add repeatable backup verification command set for target deployment profile`
+- [x] `PEX-11 chore(ops-restore-drill): automate restore drill evidence generation with pass/fail contract`
+- [x] `PEX-12 docs(ops-rto-rpo): document RTO/RPO targets and acceptable degradation windows`
 
 Exit criteria:
 - backup and restore are verified, not assumed.
 
 ## Phase E - Secrets and Access Hardening
-- [ ] `PEX-13 docs(secrets-inventory): publish canonical secret inventory + ownership + rotation cadence`
-- [ ] `PEX-14 feat(security-rotation): add rotation readiness checks and startup validation for critical secrets`
-- [ ] `PEX-15 test(security): add regression checks for invalid/expired secret combinations and fail-safe startup`
+- [x] `PEX-13 docs(secrets-inventory): publish canonical secret inventory + ownership + rotation cadence`
+- [x] `PEX-14 feat(security-rotation): add rotation readiness checks and startup validation for critical secrets`
+- [x] `PEX-15 test(security): add regression checks for invalid/expired secret combinations and fail-safe startup`
 
 Exit criteria:
 - secret rotation is operationally safe and testable.
 
 ## Phase F - Deployment and Release Reliability
-- [ ] `PEX-16 feat(release-gates): add mandatory post-deploy runtime freshness check (bots/sessions/signals not stale)`
-- [ ] `PEX-17 feat(rollback-guard): define automatic rollback trigger conditions for runtime-critical regressions`
-- [ ] `PEX-18 docs(release-checklist): update deployment checklist with runtime+cache+stream validation sequence`
+- [x] `PEX-16 feat(release-gates): add mandatory post-deploy runtime freshness check (bots/sessions/signals not stale)`
+- [x] `PEX-17 feat(rollback-guard): define automatic rollback trigger conditions for runtime-critical regressions`
+- [x] `PEX-18 docs(release-checklist): update deployment checklist with runtime+cache+stream validation sequence`
 
 Exit criteria:
 - bad runtime deploys are detected quickly and rolled back with deterministic criteria.

@@ -7,18 +7,25 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
-  - 2026-04-16: Advanced `PEX-B` by closing `PEX-05` guardrail coverage with a restart-window regression (`max attempts` blocks retries inside window and allows a fresh attempt after `autoRestartWindowMs` elapses); remaining active scope: `PEX-06`.
+- none (canonical PEX backlog completed)
 ## NEXT
-- [ ] `PEX-C observability-ops: runtime alert thresholds + incident triage runbook`
+- none
 ## PIPELINE
-- [ ] `PEX-D recoverability: backup verification + restore drill automation + RTO/RPO doc`
-- [ ] `PEX-E secrets-hardening: secret inventory + rotation readiness validation + regression checks`
-- [ ] `PEX-F deploy-safety: post-deploy runtime freshness gate + rollback trigger policy`
+- none
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
+  - 2026-04-16: Closed `PEX-B` by completing `PEX-06` validation and extending restart-window guardrail regression (`max attempts` blocked inside window, fresh retry allowed after window expiry) in `runtimeSignalLoop.service.test.ts`.
+- [x] `PEX-C observability-ops: runtime alert thresholds + incident triage runbook`
+  - 2026-04-16: Closed `PEX-C` by validating alert and freshness contracts (`alerts.test.ts`, `workers-runtime-freshness.test.ts`) and confirming canonical incident runbook `docs/operations/runtime-incident-triage-matrix.md`.
+- [x] `PEX-D recoverability: backup verification + restore drill automation + RTO/RPO doc`
+  - 2026-04-16: Closed `PEX-D` through canonical evidence reconciliation (backup/restore command artifacts and restore-drill reports under `docs/operations/_artifacts-db-restore-check-*`, `docs/operations/_artifacts-restore-drill-local-*`, plus `docs/operations/v1-rto-rpo-targets.md`).
+- [x] `PEX-E secrets-hardening: secret inventory + rotation readiness validation + regression checks`
+  - 2026-04-16: Closed `PEX-E` by validating startup-secret readiness checks and tests (`criticalSecretsReadiness.ts`, `criticalSecretsReadiness.test.ts`) and confirming canonical inventory `docs/security/v1-secrets-inventory.md`.
+- [x] `PEX-F deploy-safety: post-deploy runtime freshness gate + rollback trigger policy`
+  - 2026-04-16: Closed `PEX-F` by validating runtime freshness gate tests (`workers-runtime-freshness.test.ts`) and confirming rollback/release runbook contracts (`docs/operations/deployment-rollback-playbook.md`, `docs/operations/mvp-release-checklist.md`).
 - [x] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
   - 2026-04-16: Closed `PEX-A` by completing `PEX-03` with a crash-window replay regression (`OPEN` side effect completed, restart replay while dedupe stays `PENDING` => `dedupe_inflight` and zero duplicate `openOrder`/`createPosition`), validating together with existing OPEN/CLOSE restart-reuse coverage; promoted `PEX-B` as active group.
 - [x] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`

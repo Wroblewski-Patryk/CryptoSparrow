@@ -1550,13 +1550,14 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
 - [x] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
 - [x] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
-- [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
-- [ ] `PEX-C observability-ops: runtime alert thresholds + incident triage runbook`
-- [ ] `PEX-D recoverability: backup verification + restore drill automation + RTO/RPO doc`
-- [ ] `PEX-E secrets-hardening: secret inventory + rotation readiness validation + regression checks`
-- [ ] `PEX-F deploy-safety: post-deploy runtime freshness gate + rollback trigger policy`
+- [x] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
+- [x] `PEX-C observability-ops: runtime alert thresholds + incident triage runbook`
+- [x] `PEX-D recoverability: backup verification + restore drill automation + RTO/RPO doc`
+- [x] `PEX-E secrets-hardening: secret inventory + rotation readiness validation + regression checks`
+- [x] `PEX-F deploy-safety: post-deploy runtime freshness gate + rollback trigger policy`
 
 ### Progress Log (Continuous Group Pipeline)
+- 2026-04-16: Closed remaining `PEX` groups (`PEX-B..PEX-F`) by completing `PEX-06` validation and reconciling canonical production-excellence phase status against existing implementation/evidence (`alerts + runtime freshness + critical-secrets` regression pack PASS, backup/restore/RTO-RPO/secrets/release docs and artifacts present), resulting in fully closed `PEX` backlog.
 - 2026-04-16: Advanced `PEX-B` by closing `PEX-05` runtime recovery guardrail coverage in `runtimeSignalLoop.service.test.ts` (new regression confirms `max-attempt` blocking within window and fresh retry allowance after `autoRestartWindowMs` expiry), validated with `pnpm --filter api test -- src/modules/engine/runtimeSignalLoop.service.test.ts`; remaining active group scope: `PEX-06`.
 - 2026-04-16: Closed `PEX-A` by completing `PEX-03` (crash-window replay regression in `runtimeCrashRetry.regression.test.ts`: side effect executed once, restart replay with dedupe `PENDING` returns `dedupe_inflight`, no duplicate OPEN side effects) and revalidating OPEN/CLOSE restart parity coverage; promoted `PEX-B` as next active group.
 - 2026-04-16: Advanced `PEX-A` by hardening `PEX-02` runtime idempotency failure semantics in `runtimeExecutionDedupeService` (retry only for retryable `FAILED` classes; terminal failures now replay as `reused/no-op` to avoid duplicate side effects) and adding targeted dedupe service regression tests; remaining active group scope: `PEX-03`.
