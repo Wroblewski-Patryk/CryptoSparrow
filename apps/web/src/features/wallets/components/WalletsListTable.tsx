@@ -23,43 +23,65 @@ export default function WalletsListTable({ rows, onDeleted }: WalletsListTablePr
 
   const copy = useMemo(
     () =>
-      locale === 'pl'
-        ? {
-            name: 'Nazwa',
-            mode: 'Tryb',
-            exchange: 'Gielda',
-            marketType: 'Rynek',
-            baseCurrency: 'Waluta bazowa',
-            allocation: 'Budzet',
-            actions: 'Akcje',
-            edit: 'Edytuj',
-            delete: 'Usun',
-            deleting: 'Usuwanie...',
-            deleteConfirm: 'Usunac ten portfel?',
-            deleted: 'Portfel usuniety',
-            deleteFailed: 'Nie udalo sie usunac portfela',
-            paperLabel: 'paper',
-            livePercent: '{value}% salda',
-            liveFixed: '{value} (fixed)',
-          }
-        : {
-            name: 'Name',
-            mode: 'Mode',
-            exchange: 'Exchange',
-            marketType: 'Market',
-            baseCurrency: 'Base currency',
-            allocation: 'Allocation',
-            actions: 'Actions',
-            edit: 'Edit',
-            delete: 'Delete',
-            deleting: 'Deleting...',
-            deleteConfirm: 'Delete this wallet?',
-            deleted: 'Wallet deleted',
-            deleteFailed: 'Failed to delete wallet',
-            paperLabel: 'paper',
-            livePercent: '{value}% of balance',
-            liveFixed: '{value} (fixed)',
-          },
+      ({
+        en: {
+          name: 'Name',
+          mode: 'Mode',
+          exchange: 'Exchange',
+          marketType: 'Market',
+          baseCurrency: 'Base currency',
+          allocation: 'Allocation',
+          actions: 'Actions',
+          edit: 'Edit',
+          delete: 'Delete',
+          deleting: 'Deleting...',
+          deleteConfirm: 'Delete this wallet?',
+          deleted: 'Wallet deleted',
+          deleteFailed: 'Failed to delete wallet',
+          paperLabel: 'paper',
+          livePercent: '{value}% of balance',
+          liveFixed: '{value} (fixed)',
+          cancel: 'Cancel',
+        },
+        pl: {
+          name: 'Nazwa',
+          mode: 'Tryb',
+          exchange: 'Gielda',
+          marketType: 'Rynek',
+          baseCurrency: 'Waluta bazowa',
+          allocation: 'Budzet',
+          actions: 'Akcje',
+          edit: 'Edytuj',
+          delete: 'Usun',
+          deleting: 'Usuwanie...',
+          deleteConfirm: 'Usunac ten portfel?',
+          deleted: 'Portfel usuniety',
+          deleteFailed: 'Nie udalo sie usunac portfela',
+          paperLabel: 'paper',
+          livePercent: '{value}% salda',
+          liveFixed: '{value} (fixed)',
+          cancel: 'Anuluj',
+        },
+        pt: {
+          name: 'Nome',
+          mode: 'Modo',
+          exchange: 'Corretora',
+          marketType: 'Mercado',
+          baseCurrency: 'Moeda base',
+          allocation: 'Alocacao',
+          actions: 'Acoes',
+          edit: 'Editar',
+          delete: 'Remover',
+          deleting: 'A remover...',
+          deleteConfirm: 'Remover esta carteira?',
+          deleted: 'Carteira removida',
+          deleteFailed: 'Falha ao remover carteira',
+          paperLabel: 'paper',
+          livePercent: '{value}% do saldo',
+          liveFixed: '{value} (fixo)',
+          cancel: 'Cancelar',
+        },
+      } as const)[locale],
     [locale]
   );
 
@@ -141,7 +163,7 @@ export default function WalletsListTable({ rows, onDeleted }: WalletsListTablePr
         title={copy.delete}
         description={pendingDeleteWallet ? `"${pendingDeleteWallet.name}" - ${copy.deleteConfirm}` : copy.deleteConfirm}
         confirmLabel={copy.delete}
-        cancelLabel={locale === 'pl' ? 'Anuluj' : 'Cancel'}
+        cancelLabel={copy.cancel}
         confirmVariant='error'
         pending={Boolean(deletingId)}
         onCancel={() => {

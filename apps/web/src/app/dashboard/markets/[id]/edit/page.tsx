@@ -26,36 +26,50 @@ export default function MarketsEditPage() {
   const [error, setError] = useState<string | null>(null);
 
   const copy = useMemo(
-    () =>
-      locale === 'pl'
-        ? {
-            updated: 'Grupa rynkow zaktualizowana',
-            activeBotTitle: 'Grupa rynkow jest aktualnie uzywana przez aktywnego bota',
-            activeBotDescription: 'Wylacz bota, a potem zapisz zmiany.',
-            saveFailed: 'Nie udalo sie zapisac zmian',
-            titleFallback: 'Rynki',
-            breadcrumbMarkets: 'Rynki',
-            breadcrumbEdit: 'Edycja',
-            loading: 'Ladowanie grupy rynkow',
-            errorTitle: 'Nie udalo sie pobrac grupy rynkow',
-            backToList: 'Powrot do listy',
-            submitLabel: 'Save',
-            updatePrefix: 'Aktualizacja:',
-          }
-        : {
-            updated: 'Markets entry updated',
-            activeBotTitle: 'Markets entry is currently used by an active bot',
-            activeBotDescription: 'Disable the bot and then save changes.',
-            saveFailed: 'Could not save changes',
-            titleFallback: 'Markets',
-            breadcrumbMarkets: 'Markets',
-            breadcrumbEdit: 'Edit',
-            loading: 'Loading markets entry',
-            errorTitle: 'Could not load markets entry',
-            backToList: 'Back to list',
-            submitLabel: 'Save',
-            updatePrefix: 'Update:',
-          },
+    () => ({
+      en: {
+        updated: 'Markets entry updated',
+        activeBotTitle: 'Markets entry is currently used by an active bot',
+        activeBotDescription: 'Disable the bot and then save changes.',
+        saveFailed: 'Could not save changes',
+        titleFallback: 'Markets',
+        breadcrumbMarkets: 'Markets',
+        breadcrumbEdit: 'Edit',
+        loading: 'Loading markets entry',
+        errorTitle: 'Could not load markets entry',
+        backToList: 'Back to list',
+        submitLabel: 'Save',
+        updatePrefix: 'Update:',
+      },
+      pl: {
+        updated: 'Grupa rynkow zaktualizowana',
+        activeBotTitle: 'Grupa rynkow jest aktualnie uzywana przez aktywnego bota',
+        activeBotDescription: 'Wylacz bota, a potem zapisz zmiany.',
+        saveFailed: 'Nie udalo sie zapisac zmian',
+        titleFallback: 'Rynki',
+        breadcrumbMarkets: 'Rynki',
+        breadcrumbEdit: 'Edycja',
+        loading: 'Ladowanie grupy rynkow',
+        errorTitle: 'Nie udalo sie pobrac grupy rynkow',
+        backToList: 'Powrot do listy',
+        submitLabel: 'Save',
+        updatePrefix: 'Aktualizacja:',
+      },
+      pt: {
+        updated: 'Grupo de mercados atualizado',
+        activeBotTitle: 'Este grupo de mercados esta em uso por um bot ativo',
+        activeBotDescription: 'Desativa o bot e depois guarda as alteracoes.',
+        saveFailed: 'Nao foi possivel guardar alteracoes',
+        titleFallback: 'Mercados',
+        breadcrumbMarkets: 'Mercados',
+        breadcrumbEdit: 'Editar',
+        loading: 'A carregar grupo de mercados',
+        errorTitle: 'Nao foi possivel carregar grupo de mercados',
+        backToList: 'Voltar a lista',
+        submitLabel: 'Save',
+        updatePrefix: 'Atualizacao:',
+      },
+    } as const)[locale],
     [locale]
   );
 

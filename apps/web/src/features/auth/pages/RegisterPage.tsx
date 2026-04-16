@@ -16,25 +16,30 @@ export default function RegisterPage() {
     }
   }, [user, router]);
   
-  const copy =
-    locale === 'pl'
-      ? {
-          title: 'Utworz konto Soar',
-          description:
-            'Skonfiguruj konto, a potem testuj strategie, uruchamiaj boty i kontroluj ryzyko w jednym panelu.',
-        }
-      : {
-          title: 'Create your Soar account',
-          description:
-            'Set up your account and start testing strategies, running bots, and tracking risk in one dashboard.',
-        };
+  const copy = {
+    en: {
+      title: 'Create your Soar account',
+      description:
+        'Set up your account and start testing strategies, running bots, and tracking risk in one dashboard.',
+    },
+    pl: {
+      title: 'Utworz konto Soar',
+      description:
+        'Skonfiguruj konto, a potem testuj strategie, uruchamiaj boty i kontroluj ryzyko w jednym panelu.',
+    },
+    pt: {
+      title: 'Criar conta Soar',
+      description:
+        'Configura a tua conta e comeca a testar estrategias, correr bots e controlar risco num so painel.',
+    },
+  } as const;
 
   return (
     <section className="hero flex-1 min-h-full bg-base-200 px-4 py-8 md:px-6 md:py-12">
       <div className="hero-content w-full max-w-6xl flex-col gap-8 p-0 lg:flex-row-reverse lg:gap-12">
         <div className="max-w-xl text-center lg:text-left">
-          <h1 className="text-4xl font-bold md:text-5xl">{copy.title}</h1>
-          <p className="py-4 text-base-content/75 md:py-6">{copy.description}</p>
+          <h1 className="text-4xl font-bold md:text-5xl">{copy[locale].title}</h1>
+          <p className="py-4 text-base-content/75 md:py-6">{copy[locale].description}</p>
         </div>
         <div className="card bg-base-100 w-full max-w-md shrink-0 shadow-xl">
           <div className="card-body">

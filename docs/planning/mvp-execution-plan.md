@@ -1593,7 +1593,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 ## Continuous Group Pipeline (Post-PEX Continuation, 2026-04-17)
 - [x] `A11Y-A accessibility-full-pass: full dashboard accessibility closure (automated + manual + evidence)`
 - [x] `DOCSYNC-A docs-parity-sustainment: periodic parity audit refresh + queue continuity safeguards`
-- [ ] `L10NPT-A localization(pt-pt): execute European Portuguese rollout queue from docs/planning/pt-pt-localization-rollout-plan-2026-04-17.md (pt-PT only, no pt-BR)`
+- [x] `L10NPT-A localization(pt-pt): execute European Portuguese rollout queue from docs/planning/pt-pt-localization-rollout-plan-2026-04-17.md (pt-PT only, no pt-BR)`
 - [ ] `NAVHF-A dashboard-nav-regression: remove unnecessary top-level Exchanges link from main dashboard menu`
 
 ### Active Task Breakdown (A11Y-A)
@@ -1613,24 +1613,26 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `NAVHF-01 fix(web-nav): remove top-level Exchanges link regression from dashboard menu (introduced in commit 1b91763)`
 
 ### Progress Log (Post-PEX Continuation)
+- 2026-04-17: Closed `L10NPT-A` by completing `L10NPT-01..L10NPT-12` (locale contract expanded to `en/pl/pt` with `pt-PT` formatting, language switcher and namespace support, shared/page/feature locale-branch widening, i18n parity tests refreshed, hardcoded-locale scan result `0` matches, smoke/build pack PASS, and closure evidence in `docs/operations/_artifacts-l10npt-rollout-2026-04-16T22-59-22-697Z.json` + `docs/operations/l10npt-rollout-closure-2026-04-17.md`); promoted `NAVHF-A` as next active group.
 - 2026-04-17: Added `NAVHF-A` hotfix group and queued `NAVHF-01` to remove unintended top-level `Exchanges` main-menu link regression (reintroduced in commit `1b91763`), with execution details captured in `docs/planning/dashboard-nav-exchanges-removal-hotfix-plan-2026-04-17.md`.
 - 2026-04-17: Closed `DOCSYNC-A` by completing `DOCSYNC-01..DOCSYNC-04` (fresh parity artifact `docs/operations/_artifacts-docs-parity-2026-04-16T22-37-19-622Z.json` with `PASS`, sustainment evidence note `docs/operations/documentation-parity-sustainment-evidence-2026-04-17.md`, refreshed module+route inventory snapshots, and governance cadence/ownership contract update); promoted `L10NPT-A` as next active group and refilled one-task queue continuity for `L10NPT-01..L10NPT-12`.
 - 2026-04-17: Closed `A11Y-A` by completing `A11Y-02..A11Y-05` (added dashboard route-level a11y smoke suites `dashboard.a11y.smoke.test.tsx` + `PageTitle.a11y.test.tsx`, remediated page-title semantic gaps via breadcrumb landmark and contextual create-action SR descriptions, and published closure evidence artifacts `docs/operations/_artifacts-a11y-full-pass-2026-04-17T00-17-35-000Z.json` + `docs/operations/a11y-full-pass-closure-2026-04-17.md`); promoted `DOCSYNC-A` as next active group.
 - 2026-04-17: Initialized post-PEX continuation queue by promoting `A11Y-A` as active group and `DOCSYNC-A` as next group, then completed `A11Y-01` by publishing canonical full-pass timeline (`docs/planning/accessibility-full-pass-plan-2026-04-17.md`) and resolving `Accessibility Scope` in `open-decisions.md`.
 
 ## Phase 36 - European Portuguese Localization (pt-PT Only, As of 2026-04-17)
-- [ ] `L10NPT-01 docs(contract): lock Portuguese locale policy to pt-PT only and forbid pt-BR in this rollout`
-- [ ] `L10NPT-02 feat(i18n-core): extend locale contract to en/pl/pt + pt-PT formatting`
-- [ ] `L10NPT-03 feat(web-language-switcher): add Portuguese option in language switcher (header/footer)`
-- [ ] `L10NPT-04 feat(i18n-namespaces): add dashboard namespace translation files for Portuguese`
-- [ ] `L10NPT-05 refactor(web-shared-copy): remove en/pl-only branches in shared layout/components`
-- [ ] `L10NPT-06 refactor(web-page-copy): migrate page-level inline copy to include Portuguese`
-- [ ] `L10NPT-07 refactor(strategies-localizers): widen strategy helper locale maps to include Portuguese`
-- [ ] `L10NPT-08 refactor(profile-wallet-markets): remove remaining en/pl-only branches in forms and tables`
-- [ ] `L10NPT-09 test(i18n-contract): update tests for en/pl/pt key parity and persistence`
-- [ ] `L10NPT-10 qa(i18n-hardcoded-scan): rerun hardcoded-locale scan and close remaining hotspots`
-- [ ] `L10NPT-11 qa(web-smoke): manual PT smoke across dashboard/public/profile/auth`
-- [ ] `L10NPT-12 docs(closure): publish rollout evidence and sync canonical queue statuses`
+- [x] `L10NPT-01 docs(contract): lock Portuguese locale policy to pt-PT only and forbid pt-BR in this rollout`
+- [x] `L10NPT-02 feat(i18n-core): extend locale contract to en/pl/pt + pt-PT formatting`
+- [x] `L10NPT-03 feat(web-language-switcher): add Portuguese option in language switcher (header/footer)`
+- [x] `L10NPT-04 feat(i18n-namespaces): add dashboard namespace translation files for Portuguese`
+- [x] `L10NPT-05 refactor(web-shared-copy): remove en/pl-only branches in shared layout/components`
+- [x] `L10NPT-06 refactor(web-page-copy): migrate page-level inline copy to include Portuguese`
+- [x] `L10NPT-07 refactor(strategies-localizers): widen strategy helper locale maps to include Portuguese`
+- [x] `L10NPT-08 refactor(profile-wallet-markets): remove remaining en/pl-only branches in forms and tables`
+- [x] `L10NPT-09 test(i18n-contract): update tests for en/pl/pt key parity and persistence`
+- [x] `L10NPT-10 qa(i18n-hardcoded-scan): rerun hardcoded-locale scan and close remaining hotspots`
+- [x] `L10NPT-11 qa(web-smoke): manual PT smoke across dashboard/public/profile/auth`
+- [x] `L10NPT-12 docs(closure): publish rollout evidence and sync canonical queue statuses`
 
 ### Progress Log (Phase 36 - European Portuguese Localization)
+- 2026-04-17: Closed phase by completing `L10NPT-01..L10NPT-12` with Portuguese locale rollout (`pt` + `pt-PT`) across i18n core, switchers, namespaces, shared/page/feature copy paths, strategy localizers, and contract tests; validated via typecheck + targeted smoke/build packs and published closure artifacts `docs/operations/_artifacts-l10npt-rollout-2026-04-16T22-59-22-697Z.json` + `docs/operations/l10npt-rollout-closure-2026-04-17.md`.
 - 2026-04-17: Initialized canonical localization phase and rollout queue in `docs/planning/pt-pt-localization-rollout-plan-2026-04-17.md` with locked locale policy (`pt` mapped to `pt-PT`, explicitly excluding `pt-BR`) and hardcoded-branch inventory baseline for implementation.

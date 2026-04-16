@@ -20,24 +20,32 @@ export default function StrategiesCreatePage() {
   const [submitting, setSubmitting] = useState(false);
 
   const copy = useMemo(
-    () =>
-      locale === 'pl'
-        ? {
-            created: 'Strategia utworzona',
-            createFailed: 'Blad tworzenia strategii',
-            title: 'Strategie',
-            save: 'Save',
-            breadcrumbStrategies: 'Strategie',
-            breadcrumbCreate: 'Tworzenie',
-          }
-        : {
-            created: 'Strategy created',
-            createFailed: 'Failed to create strategy',
-            title: 'Strategies',
-            save: 'Save',
-            breadcrumbStrategies: 'Strategies',
-            breadcrumbCreate: 'Create',
-          },
+    () => ({
+      en: {
+        created: 'Strategy created',
+        createFailed: 'Failed to create strategy',
+        title: 'Strategies',
+        save: 'Save',
+        breadcrumbStrategies: 'Strategies',
+        breadcrumbCreate: 'Create',
+      },
+      pl: {
+        created: 'Strategia utworzona',
+        createFailed: 'Blad tworzenia strategii',
+        title: 'Strategie',
+        save: 'Save',
+        breadcrumbStrategies: 'Strategie',
+        breadcrumbCreate: 'Tworzenie',
+      },
+      pt: {
+        created: 'Estrategia criada',
+        createFailed: 'Falha ao criar estrategia',
+        title: 'Estrategias',
+        save: 'Save',
+        breadcrumbStrategies: 'Estrategias',
+        breadcrumbCreate: 'Criar',
+      },
+    } as const)[locale],
     [locale]
   );
 

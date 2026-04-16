@@ -19,7 +19,7 @@ export default function PublicPage() {
     'btn btn-sm h-9 min-h-9 border transition-colors duration-150 border-primary/45 bg-primary/10 text-primary hover:border-primary/70 hover:bg-primary/20';
 
   const copy =
-    locale === 'pl'
+    locale === "pl"
       ? {
           badge: 'Platforma do budowy botow i strategii',
           heading: 'Automatyzuj trading od pomyslu do egzekucji.',

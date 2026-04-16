@@ -27,36 +27,50 @@ export default function StrategiesEditPage() {
   const [error, setError] = useState<string | null>(null);
 
   const copy = useMemo(
-    () =>
-      locale === 'pl'
-        ? {
-            updated: 'Strategia zaktualizowana',
-            activeBotTitle: 'Strategia jest aktualnie uzywana przez aktywnego bota',
-            activeBotDescription: 'Wylacz bota lub ustaw go jako nieaktywny przed edycja strategii.',
-            saveFailed: 'Blad zapisu strategii',
-            save: 'Save',
-            titleFallback: 'Strategie',
-            breadcrumbStrategies: 'Strategie',
-            breadcrumbEdit: 'Edycja',
-            loading: 'Ladowanie strategii',
-            errorTitle: 'Nie udalo sie pobrac strategii',
-            backToList: 'Powrot do listy',
-            updatePrefix: 'Aktualizacja:',
-          }
-        : {
-            updated: 'Strategy updated',
-            activeBotTitle: 'Strategy is currently used by an active bot',
-            activeBotDescription: 'Disable the bot or set it inactive before editing strategy.',
-            saveFailed: 'Failed to save strategy',
-            save: 'Save',
-            titleFallback: 'Strategies',
-            breadcrumbStrategies: 'Strategies',
-            breadcrumbEdit: 'Edit',
-            loading: 'Loading strategy',
-            errorTitle: 'Could not load strategy',
-            backToList: 'Back to list',
-            updatePrefix: 'Update:',
-          },
+    () => ({
+      en: {
+        updated: 'Strategy updated',
+        activeBotTitle: 'Strategy is currently used by an active bot',
+        activeBotDescription: 'Disable the bot or set it inactive before editing strategy.',
+        saveFailed: 'Failed to save strategy',
+        save: 'Save',
+        titleFallback: 'Strategies',
+        breadcrumbStrategies: 'Strategies',
+        breadcrumbEdit: 'Edit',
+        loading: 'Loading strategy',
+        errorTitle: 'Could not load strategy',
+        backToList: 'Back to list',
+        updatePrefix: 'Update:',
+      },
+      pl: {
+        updated: 'Strategia zaktualizowana',
+        activeBotTitle: 'Strategia jest aktualnie uzywana przez aktywnego bota',
+        activeBotDescription: 'Wylacz bota lub ustaw go jako nieaktywny przed edycja strategii.',
+        saveFailed: 'Blad zapisu strategii',
+        save: 'Save',
+        titleFallback: 'Strategie',
+        breadcrumbStrategies: 'Strategie',
+        breadcrumbEdit: 'Edycja',
+        loading: 'Ladowanie strategii',
+        errorTitle: 'Nie udalo sie pobrac strategii',
+        backToList: 'Powrot do listy',
+        updatePrefix: 'Aktualizacja:',
+      },
+      pt: {
+        updated: 'Estrategia atualizada',
+        activeBotTitle: 'A estrategia esta a ser usada por um bot ativo',
+        activeBotDescription: 'Desativa o bot ou marca-o inativo antes de editar.',
+        saveFailed: 'Falha ao guardar estrategia',
+        save: 'Save',
+        titleFallback: 'Estrategias',
+        breadcrumbStrategies: 'Estrategias',
+        breadcrumbEdit: 'Editar',
+        loading: 'A carregar estrategia',
+        errorTitle: 'Nao foi possivel carregar estrategia',
+        backToList: 'Voltar a lista',
+        updatePrefix: 'Atualizacao:',
+      },
+    } as const)[locale],
     [locale]
   );
 

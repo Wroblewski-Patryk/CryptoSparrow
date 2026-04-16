@@ -20,24 +20,32 @@ export default function MarketsCreatePage() {
   const [submitting, setSubmitting] = useState(false);
 
   const copy = useMemo(
-    () =>
-      locale === 'pl'
-        ? {
-            created: 'Grupa rynkow utworzona',
-            createFailed: 'Nie udalo sie utworzyc grupy rynkow',
-            title: 'Rynki',
-            breadcrumbMarkets: 'Rynki',
-            breadcrumbCreate: 'Tworzenie',
-            submitLabel: 'Save',
-          }
-        : {
-            created: 'Markets entry created',
-            createFailed: 'Could not create markets entry',
-            title: 'Markets',
-            breadcrumbMarkets: 'Markets',
-            breadcrumbCreate: 'Create',
-            submitLabel: 'Save',
-          },
+    () => ({
+      en: {
+        created: 'Markets entry created',
+        createFailed: 'Could not create markets entry',
+        title: 'Markets',
+        breadcrumbMarkets: 'Markets',
+        breadcrumbCreate: 'Create',
+        submitLabel: 'Save',
+      },
+      pl: {
+        created: 'Grupa rynkow utworzona',
+        createFailed: 'Nie udalo sie utworzyc grupy rynkow',
+        title: 'Rynki',
+        breadcrumbMarkets: 'Rynki',
+        breadcrumbCreate: 'Tworzenie',
+        submitLabel: 'Save',
+      },
+      pt: {
+        created: 'Grupo de mercados criado',
+        createFailed: 'Nao foi possivel criar o grupo de mercados',
+        title: 'Mercados',
+        breadcrumbMarkets: 'Mercados',
+        breadcrumbCreate: 'Criar',
+        submitLabel: 'Save',
+      },
+    } as const)[locale],
     [locale]
   );
 

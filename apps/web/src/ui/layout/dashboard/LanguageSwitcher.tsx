@@ -2,11 +2,12 @@
 
 import { useRef } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
+import type { Locale } from '../../../i18n/translations';
 import { useDetailsDropdown } from '../../hooks/useDetailsDropdown';
 import languageOptions from './languageOptions.json';
 import { getHeaderDropdownLinkClass, getHeaderDropdownMenuClass, headerMenuItemClass } from './headerControlStyles';
 
-type LocaleCode = 'en' | 'pl';
+type LocaleCode = Locale;
 type LanguageOption = {
   locale: LocaleCode;
   label: string;
@@ -50,7 +51,7 @@ export default function LanguageSwitcher({
   const { locale, setLocale, t } = useI18n();
   const detailsRef = useRef<HTMLDetailsElement>(null);
   useDetailsDropdown(detailsRef);
-  const active = getLanguage(locale as LocaleCode);
+  const active = getLanguage(locale);
   const detailsClass = `dropdown dropdown-end group ${placement === 'top' ? 'dropdown-top' : ''}`;
   const menuClass = getHeaderDropdownMenuClass(placement, 'w-44');
   const summaryToneClass =

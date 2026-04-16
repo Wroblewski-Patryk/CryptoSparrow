@@ -9,8 +9,8 @@ export type StrategyPreset = {
   form: StrategyFormState;
 };
 
-type LocalizedText = { en: string; pl: string };
-type LocalizedTags = { en: string[]; pl: string[] };
+type LocalizedText = { en: string; pl: string; pt?: string };
+type LocalizedTags = { en: string[]; pl: string[]; pt?: string[] };
 export type StrategyPresetPresentation = {
   name: string;
   description: string;
@@ -538,8 +538,8 @@ export const getStrategyPresetPresentation = (
   }
 
   return {
-    name: localized.name[locale],
-    description: localized.description[locale],
-    tags: localized.tags[locale],
+    name: localized.name[locale] ?? localized.name.en,
+    description: localized.description[locale] ?? localized.description.en,
+    tags: localized.tags[locale] ?? localized.tags.en,
   };
 };

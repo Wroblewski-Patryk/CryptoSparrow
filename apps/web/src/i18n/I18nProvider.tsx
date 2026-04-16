@@ -60,7 +60,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const raw = getLocalStorageItem(LOCALE_STORAGE_KEY);
-    if (raw === "en" || raw === "pl") {
+    if (raw === "en" || raw === "pl" || raw === "pt") {
       setLocaleState(raw);
     }
 

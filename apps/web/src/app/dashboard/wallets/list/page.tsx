@@ -22,32 +22,44 @@ export default function WalletsListPage() {
   const [error, setError] = useState<string | null>(null);
 
   const copy = useMemo(
-    () =>
-      locale === 'pl'
-        ? {
-            loadError: 'Nie udalo sie pobrac listy portfeli.',
-            title: 'Portfele',
-            breadcrumbWallets: 'Portfele',
-            breadcrumbList: 'Lista',
-            addLabel: 'Create',
-            loading: 'Ladowanie portfeli',
-            errorTitle: 'Nie udalo sie pobrac portfeli',
-            retry: 'Sprobuj ponownie',
-            emptyTitle: 'Brak portfeli',
-            emptyDescription: 'Dodaj pierwszy portfel, aby przypisywac go do botow.',
-          }
-        : {
-            loadError: 'Could not fetch wallets list.',
-            title: 'Wallets',
-            breadcrumbWallets: 'Wallets',
-            breadcrumbList: 'List',
-            addLabel: 'Create',
-            loading: 'Loading wallets',
-            errorTitle: 'Could not load wallets',
-            retry: 'Try again',
-            emptyTitle: 'No wallets',
-            emptyDescription: 'Add your first wallet to assign it to bots.',
-          },
+    () => ({
+      en: {
+        loadError: 'Could not fetch wallets list.',
+        title: 'Wallets',
+        breadcrumbWallets: 'Wallets',
+        breadcrumbList: 'List',
+        addLabel: 'Create',
+        loading: 'Loading wallets',
+        errorTitle: 'Could not load wallets',
+        retry: 'Try again',
+        emptyTitle: 'No wallets',
+        emptyDescription: 'Add your first wallet to assign it to bots.',
+      },
+      pl: {
+        loadError: 'Nie udalo sie pobrac listy portfeli.',
+        title: 'Portfele',
+        breadcrumbWallets: 'Portfele',
+        breadcrumbList: 'Lista',
+        addLabel: 'Create',
+        loading: 'Ladowanie portfeli',
+        errorTitle: 'Nie udalo sie pobrac portfeli',
+        retry: 'Sprobuj ponownie',
+        emptyTitle: 'Brak portfeli',
+        emptyDescription: 'Dodaj pierwszy portfel, aby przypisywac go do botow.',
+      },
+      pt: {
+        loadError: 'Nao foi possivel carregar a lista de carteiras.',
+        title: 'Carteiras',
+        breadcrumbWallets: 'Carteiras',
+        breadcrumbList: 'Lista',
+        addLabel: 'Create',
+        loading: 'A carregar carteiras',
+        errorTitle: 'Nao foi possivel carregar carteiras',
+        retry: 'Tentar novamente',
+        emptyTitle: 'Sem carteiras',
+        emptyDescription: 'Adiciona a primeira carteira para atribuir aos bots.',
+      },
+    } as const)[locale],
     [locale]
   );
 

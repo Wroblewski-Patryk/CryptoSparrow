@@ -26,25 +26,36 @@ export default function ProfileButton({ mobile = false, onNavigate }: ProfileBut
   const { loading, logout, user } = useAuth();
   const detailsRef = useRef<HTMLDetailsElement>(null);
   useDetailsDropdown(detailsRef);
-  const copy = locale === 'pl'
-    ? {
-        myAccount: 'Moje konto',
-        basic: 'Dane podstawowe',
-        subscription: 'Subskrypcja',
-        security: 'Bezpieczenstwo',
-        api: 'Integracje i API keys',
-        logout: 'Wyloguj',
-        openMenu: 'Otworz menu konta',
-      }
-    : {
-        myAccount: 'My account',
-        basic: 'Basic profile',
-        subscription: 'Subscription',
-        security: 'Security',
-        api: 'Integrations and API keys',
-        logout: 'Sign out',
-        openMenu: 'Open account menu',
-      };
+  const copyByLocale = {
+    en: {
+      myAccount: 'My account',
+      basic: 'Basic profile',
+      subscription: 'Subscription',
+      security: 'Security',
+      api: 'Integrations and API keys',
+      logout: 'Sign out',
+      openMenu: 'Open account menu',
+    },
+    pl: {
+      myAccount: 'Moje konto',
+      basic: 'Dane podstawowe',
+      subscription: 'Subskrypcja',
+      security: 'Bezpieczenstwo',
+      api: 'Integracje i API keys',
+      logout: 'Wyloguj',
+      openMenu: 'Otworz menu konta',
+    },
+    pt: {
+      myAccount: 'Minha conta',
+      basic: 'Perfil basico',
+      subscription: 'Subscricao',
+      security: 'Seguranca',
+      api: 'Integracoes e chaves API',
+      logout: 'Terminar sessao',
+      openMenu: 'Abrir menu da conta',
+    },
+  } as const;
+  const copy = copyByLocale[locale];
 
   const handleProfileSectionNavigation = (
     section: 'basic' | 'api' | 'subscription' | 'security',

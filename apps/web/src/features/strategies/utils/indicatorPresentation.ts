@@ -1,6 +1,7 @@
 import { normalizeUppercaseToken } from "@/lib/text";
+import type { Locale } from "@/i18n/translations";
 
-const indicatorLabels: Record<string, { en: string; pl: string }> = {
+const indicatorLabels: Record<string, { en: string; pl: string; pt?: string }> = {
   EMA: { en: "EMA(Exponential Moving Average)", pl: "EMA(wykladnicza srednia kroczaca)" },
   SMA: { en: "SMA(Simple Moving Average)", pl: "SMA(prosta srednia kroczaca)" },
   RSI: { en: "RSI(Relative Strength Index)", pl: "RSI(wzgledna sila)" },
@@ -34,7 +35,7 @@ const indicatorLabels: Record<string, { en: string; pl: string }> = {
   OUTSIDE_BAR: { en: "Outside Bar", pl: "Outside Bar" },
 };
 
-const paramLabels: Record<string, { en: string; pl: string }> = {
+const paramLabels: Record<string, { en: string; pl: string; pt?: string }> = {
   fast: { en: "Fast period", pl: "Szybki okres" },
   slow: { en: "Slow period", pl: "Wolny okres" },
   period: { en: "Period", pl: "Okres" },
@@ -63,15 +64,15 @@ const toStartCase = (value: string) =>
     })
     .join(" ");
 
-export const getIndicatorDisplayName = (name: string, locale: "en" | "pl"): string => {
+export const getIndicatorDisplayName = (name: string, locale: Locale): string => {
   const normalized = normalizeUppercaseToken(name);
   const direct = indicatorLabels[normalized];
-  if (direct) return direct[locale];
+  if (direct) return direct[locale] ?? direct.en;
   return toStartCase(name);
 };
 
-export const getIndicatorParamLabel = (name: string, locale: "en" | "pl"): string => {
+export const getIndicatorParamLabel = (name: string, locale: Locale): string => {
   const direct = paramLabels[name];
-  if (direct) return direct[locale];
+  if (direct) return direct[locale] ?? direct.en;
   return toStartCase(name);
 };

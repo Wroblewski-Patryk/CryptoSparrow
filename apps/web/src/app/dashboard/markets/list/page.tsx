@@ -20,30 +20,41 @@ export default function MarketsListPage() {
   const [error, setError] = useState<string | null>(null);
 
   const copy = useMemo(
-    () =>
-      locale === 'pl'
-        ? {
-            loadError: 'Nie udalo sie pobrac listy grup rynkow.',
-            breadcrumbMarkets: 'Rynki',
-            breadcrumbList: 'Lista',
-            addLabel: 'Create',
-            loading: 'Ladowanie grup rynkow',
-            errorTitle: 'Nie udalo sie pobrac grup rynkow',
-            retry: 'Sprobuj ponownie',
-            emptyTitle: 'Brak grup rynkow',
-            emptyDescription: 'Dodaj pierwsza grupe, aby wykorzystac ja w botach i backtestach.',
-          }
-        : {
-            loadError: 'Could not fetch markets list.',
-            breadcrumbMarkets: 'Markets',
-            breadcrumbList: 'List',
-            addLabel: 'Create',
-            loading: 'Loading markets',
-            errorTitle: 'Could not load markets',
-            retry: 'Try again',
-            emptyTitle: 'No markets',
-            emptyDescription: 'Add your first market set to use it in bots and backtests.',
-          },
+    () => ({
+      en: {
+        loadError: 'Could not fetch markets list.',
+        breadcrumbMarkets: 'Markets',
+        breadcrumbList: 'List',
+        addLabel: 'Create',
+        loading: 'Loading markets',
+        errorTitle: 'Could not load markets',
+        retry: 'Try again',
+        emptyTitle: 'No markets',
+        emptyDescription: 'Add your first market set to use it in bots and backtests.',
+      },
+      pl: {
+        loadError: 'Nie udalo sie pobrac listy grup rynkow.',
+        breadcrumbMarkets: 'Rynki',
+        breadcrumbList: 'Lista',
+        addLabel: 'Create',
+        loading: 'Ladowanie grup rynkow',
+        errorTitle: 'Nie udalo sie pobrac grup rynkow',
+        retry: 'Sprobuj ponownie',
+        emptyTitle: 'Brak grup rynkow',
+        emptyDescription: 'Dodaj pierwsza grupe, aby wykorzystac ja w botach i backtestach.',
+      },
+      pt: {
+        loadError: 'Nao foi possivel carregar a lista de grupos de mercados.',
+        breadcrumbMarkets: 'Mercados',
+        breadcrumbList: 'Lista',
+        addLabel: 'Create',
+        loading: 'A carregar grupos de mercados',
+        errorTitle: 'Nao foi possivel carregar grupos de mercados',
+        retry: 'Tentar novamente',
+        emptyTitle: 'Sem grupos de mercados',
+        emptyDescription: 'Adiciona o primeiro grupo para usar em bots e backtests.',
+      },
+    } as const)[locale],
     [locale]
   );
 

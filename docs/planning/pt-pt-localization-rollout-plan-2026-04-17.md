@@ -1,6 +1,6 @@
 # European Portuguese Localization Rollout Plan (2026-04-17)
 
-Status: ready-for-implementation  
+Status: closed-2026-04-17  
 Execution mode: tiny-commit only (one task per commit)
 
 ## Goal
@@ -186,3 +186,7 @@ Execution mode: tiny-commit only (one task per commit)
 3. PT language path uses `pt-PT` formatting conventions.
 4. No regressions in EN/PL behavior.
 5. Most user-facing `en/pl-only` branches are removed or explicitly tracked with follow-up IDs.
+
+## Closure Evidence
+- JSON artifact: `docs/operations/_artifacts-l10npt-rollout-2026-04-16T22-59-22-697Z.json`
+- Closure report: `docs/operations/l10npt-rollout-closure-2026-04-17.md`

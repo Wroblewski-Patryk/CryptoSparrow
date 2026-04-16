@@ -20,17 +20,23 @@ export default function StrategyPresetPicker({
   const { locale } = useI18n();
   const copy = useMemo(
     () =>
-      locale === "pl"
-        ? {
-            title: "Presety strategii",
-            description: "MVP: presety sa tylko do odczytu i sa wersjonowane w kodzie.",
-            clear: "Wyczysc preset",
-          }
-        : {
-            title: "Strategy presets",
-            description: "MVP: presets are read-only and versioned in code.",
-            clear: "Clear preset",
-          },
+      ({
+        en: {
+          title: "Strategy presets",
+          description: "MVP: presets are read-only and versioned in code.",
+          clear: "Clear preset",
+        },
+        pl: {
+          title: "Presety strategii",
+          description: "MVP: presety sa tylko do odczytu i sa wersjonowane w kodzie.",
+          clear: "Wyczysc preset",
+        },
+        pt: {
+          title: "Presets de estrategia",
+          description: "MVP: os presets sao apenas leitura e versionados no codigo.",
+          clear: "Limpar preset",
+        },
+      } as const)[locale],
     [locale],
   );
 

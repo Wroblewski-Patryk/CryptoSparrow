@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import Indicators from "./Indicators";
 import type { IndicatorMeta, UserIndicator } from "../../types/StrategyForm.type";
 
-let mockLocale: "en" | "pl" = "en";
+let mockLocale: "en" | "pl" | "pt" = "en";
 
 vi.mock("@/i18n/I18nProvider", () => ({
   useI18n: () => ({

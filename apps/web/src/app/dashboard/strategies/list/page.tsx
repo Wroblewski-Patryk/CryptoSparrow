@@ -12,20 +12,26 @@ export default function StrategiesListPage() {
   const router = useRouter();
 
   const copy = useMemo(
-    () =>
-      locale === 'pl'
-        ? {
-            title: 'Strategie',
-            breadcrumbStrategies: 'Strategie',
-            breadcrumbList: 'Lista',
-            addLabel: 'Create',
-          }
-        : {
-            title: 'Strategies',
-            breadcrumbStrategies: 'Strategies',
-            breadcrumbList: 'List',
-            addLabel: 'Create',
-          },
+    () => ({
+      en: {
+        title: 'Strategies',
+        breadcrumbStrategies: 'Strategies',
+        breadcrumbList: 'List',
+        addLabel: 'Create',
+      },
+      pl: {
+        title: 'Strategie',
+        breadcrumbStrategies: 'Strategie',
+        breadcrumbList: 'Lista',
+        addLabel: 'Create',
+      },
+      pt: {
+        title: 'Estrategias',
+        breadcrumbStrategies: 'Estrategias',
+        breadcrumbList: 'Lista',
+        addLabel: 'Create',
+      },
+    } as const)[locale],
     [locale]
   );
 

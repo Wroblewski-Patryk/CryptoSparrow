@@ -4,7 +4,7 @@ import { I18nProvider } from "./I18nProvider";
 import LanguageSwitcher from "../ui/layout/dashboard/LanguageSwitcher";
 
 describe("I18nProvider", () => {
-  it("uses EN by default and allows switching to PL", async () => {
+  it("uses EN by default and allows switching to PL and PT", async () => {
     window.localStorage.removeItem("cryptosparrow-locale");
     window.localStorage.removeItem("cryptosparrow-timezone");
 
@@ -25,6 +25,15 @@ describe("I18nProvider", () => {
       expect(document.documentElement.lang).toBe("pl");
       expect(window.localStorage.getItem("cryptosparrow-locale")).toBe("pl");
       expect(screen.getByLabelText(/language|jezyk/i)).toHaveTextContent("Polski");
+    });
+
+    fireEvent.click(screen.getByLabelText(/language|jezyk/i));
+    fireEvent.click(screen.getByRole("button", { name: /Portugues \(PT\)/i }));
+
+    await waitFor(() => {
+      expect(document.documentElement.lang).toBe("pt");
+      expect(window.localStorage.getItem("cryptosparrow-locale")).toBe("pt");
+      expect(screen.getByLabelText(/language|jezyk/i)).toHaveTextContent("Portugues (PT)");
     });
   });
 });

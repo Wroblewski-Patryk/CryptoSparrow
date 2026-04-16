@@ -117,19 +117,27 @@ export default function ThemeSwitcher({
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [activeTheme]);
 
-  const copy = locale === 'pl'
-    ? {
-        selectorAria: 'Wybierz motyw',
-        optionsAria: 'Opcje motywu',
-        currentTheme: 'Aktualny motyw',
-        systemLabel: 'System',
-      }
-    : {
-        selectorAria: 'Theme selector',
-        optionsAria: 'Theme options',
-        currentTheme: 'Current theme',
-        systemLabel: 'System',
-      };
+  const copyByLocale = {
+    en: {
+      selectorAria: 'Theme selector',
+      optionsAria: 'Theme options',
+      currentTheme: 'Current theme',
+      systemLabel: 'System',
+    },
+    pl: {
+      selectorAria: 'Wybierz motyw',
+      optionsAria: 'Opcje motywu',
+      currentTheme: 'Aktualny motyw',
+      systemLabel: 'System',
+    },
+    pt: {
+      selectorAria: 'Seletor de tema',
+      optionsAria: 'Opcoes de tema',
+      currentTheme: 'Tema atual',
+      systemLabel: 'Sistema',
+    },
+  } as const;
+  const copy = copyByLocale[locale];
 
   const activeThemeConfig = themes.find((item) => item.value === activeTheme) ?? themes[0];
   const activeSwatchTheme = activeTheme === 'system' ? systemResolvedTheme : activeThemeConfig.value;

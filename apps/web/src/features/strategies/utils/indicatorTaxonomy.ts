@@ -1,3 +1,5 @@
+import type { Locale } from "@/i18n/translations";
+
 export type IndicatorGroupKey =
   | "TREND"
   | "MOMENTUM_OSCILLATOR"
@@ -17,34 +19,41 @@ const indicatorGroupOrder: IndicatorGroupKey[] = [
   "DERIVATIVES",
 ];
 
-const groupLabels: Record<IndicatorGroupKey, { en: string; pl: string }> = {
+const groupLabels: Record<IndicatorGroupKey, { en: string; pl: string; pt?: string }> = {
   TREND: {
     en: "Trend",
     pl: "Trend",
+    pt: "Tendencia",
   },
   MOMENTUM_OSCILLATOR: {
     en: "Momentum",
     pl: "Momentum",
+    pt: "Momentum",
   },
   VOLATILITY: {
     en: "Volatility",
     pl: "Zmiennosc",
+    pt: "Volatilidade",
   },
   VOLUME: {
     en: "Volume",
     pl: "Wolumen",
+    pt: "Volume",
   },
   PRICE_ACTION: {
     en: "Price Action",
     pl: "Price Action",
+    pt: "Price Action",
   },
   CANDLE_PATTERNS: {
     en: "Candle Patterns",
     pl: "Formacje swiecowe",
+    pt: "Padroes de velas",
   },
   DERIVATIVES: {
     en: "Derivatives",
     pl: "Derywaty",
+    pt: "Derivados",
   },
 };
 
@@ -118,8 +127,8 @@ export const resolveIndicatorGroupKey = (input: { indicatorName: string; group?:
   );
 };
 
-export const getIndicatorGroupLabel = (group: IndicatorGroupKey, locale: "en" | "pl"): string => {
-  return groupLabels[group][locale];
+export const getIndicatorGroupLabel = (group: IndicatorGroupKey, locale: Locale): string => {
+  return groupLabels[group][locale] ?? groupLabels[group].en;
 };
 
 export const sortIndicatorGroups = (groups: IndicatorGroupKey[]): IndicatorGroupKey[] => {

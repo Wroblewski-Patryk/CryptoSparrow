@@ -1,6 +1,7 @@
 import { LuChevronDown, LuChevronRight, LuChevronUp, LuTrash2, LuTrendingDown, LuTrendingUp } from "react-icons/lu";
 import { useMemo } from "react";
 import { useI18n } from "@/i18n/I18nProvider";
+import type { Locale } from "@/i18n/translations";
 import { IndicatorsProps, StrategyConditionOperator } from "../../types/StrategyForm.type";
 import { numericInputProps, readNumericInputValue, strategyNumericContracts } from "../../utils/strategyNumericInput";
 import {
@@ -34,17 +35,17 @@ const allConditionOptions: StrategyConditionOperator[] = [
   ...crossConditions,
   ...rangeConditions,
 ];
-const conditionLabelMap: Record<StrategyConditionOperator, { en: string; pl: string }> = {
-  ">": { en: "Greater than (>)", pl: "Wieksze niz (>)" },
-  ">=": { en: "Greater than or equal (>=)", pl: "Wieksze lub rowne (>=)" },
-  "<": { en: "Less than (<)", pl: "Mniejsze niz (<)" },
-  "<=": { en: "Less than or equal (<=)", pl: "Mniejsze lub rowne (<=)" },
-  "==": { en: "Equal to (==)", pl: "Rowne (==)" },
-  "!=": { en: "Not equal to (!=)", pl: "Rozne (!=)" },
-  CROSS_ABOVE: { en: "Cross above", pl: "Przeciecie w gore" },
-  CROSS_BELOW: { en: "Cross below", pl: "Przeciecie w dol" },
-  IN_RANGE: { en: "In range", pl: "W zakresie" },
-  OUT_OF_RANGE: { en: "Out of range", pl: "Poza zakresem" },
+const conditionLabelMap: Record<StrategyConditionOperator, { en: string; pl: string; pt: string }> = {
+  ">": { en: "Greater than (>)", pl: "Wieksze niz (>)", pt: "Maior que (>)" },
+  ">=": { en: "Greater than or equal (>=)", pl: "Wieksze lub rowne (>=)", pt: "Maior ou igual (>=)" },
+  "<": { en: "Less than (<)", pl: "Mniejsze niz (<)", pt: "Menor que (<)" },
+  "<=": { en: "Less than or equal (<=)", pl: "Mniejsze lub rowne (<=)", pt: "Menor ou igual (<=)" },
+  "==": { en: "Equal to (==)", pl: "Rowne (==)", pt: "Igual a (==)" },
+  "!=": { en: "Not equal to (!=)", pl: "Rozne (!=)", pt: "Diferente de (!=)" },
+  CROSS_ABOVE: { en: "Cross above", pl: "Przeciecie w gore", pt: "Cruza acima" },
+  CROSS_BELOW: { en: "Cross below", pl: "Przeciecie w dol", pt: "Cruza abaixo" },
+  IN_RANGE: { en: "In range", pl: "W zakresie", pt: "No intervalo" },
+  OUT_OF_RANGE: { en: "Out of range", pl: "Poza zakresem", pt: "Fora do intervalo" },
 };
 
 const resolveConditionOptions = (
@@ -69,7 +70,7 @@ const resolveConditionOptions = (
   return allConditionOptions;
 };
 
-const resolveConditionLabel = (condition: StrategyConditionOperator, locale: "en" | "pl") =>
+const resolveConditionLabel = (condition: StrategyConditionOperator, locale: Locale) =>
   conditionLabelMap[condition][locale];
 
 const isRangeCondition = (condition: StrategyConditionOperator) =>
@@ -98,43 +99,62 @@ export default function Indicators({ side, indicators, value, setValue }: Indica
   const { locale } = useI18n();
   const copy = useMemo(
     () =>
-      locale === "pl"
-        ? {
-            collapse: "Zwin",
-            expand: "Rozwin",
-            moveUp: "Wyzej",
-            moveDown: "Nizej",
-            removeIndicator: "Usun wskaznik",
-            group: "Grupa",
-            indicator: "Wskaznik",
-            indicatorParams: "Parametry wskaznika",
-            condition: "Warunek",
-            value: "Wartosc",
-            valueFrom: "Wartosc od",
-            valueTo: "Wartosc do",
-            weight: "Waga",
-            addIndicator: "+ Dodaj wskaznik",
-            sideLong: "Long",
-            sideShort: "Short",
-          }
-        : {
-            collapse: "Collapse",
-            expand: "Expand",
-            moveUp: "Move up",
-            moveDown: "Move down",
-            removeIndicator: "Remove indicator",
-            group: "Group",
-            indicator: "Indicator",
-            indicatorParams: "Indicator parameters",
-            condition: "Condition",
-            value: "Value",
-            valueFrom: "Value from",
-            valueTo: "Value to",
-            weight: "Weight",
-            addIndicator: "+ Add indicator",
-            sideLong: "Long",
-            sideShort: "Short",
-          },
+      ({
+        en: {
+          collapse: "Collapse",
+          expand: "Expand",
+          moveUp: "Move up",
+          moveDown: "Move down",
+          removeIndicator: "Remove indicator",
+          group: "Group",
+          indicator: "Indicator",
+          indicatorParams: "Indicator parameters",
+          condition: "Condition",
+          value: "Value",
+          valueFrom: "Value from",
+          valueTo: "Value to",
+          weight: "Weight",
+          addIndicator: "+ Add indicator",
+          sideLong: "Long",
+          sideShort: "Short",
+        },
+        pl: {
+          collapse: "Zwin",
+          expand: "Rozwin",
+          moveUp: "Wyzej",
+          moveDown: "Nizej",
+          removeIndicator: "Usun wskaznik",
+          group: "Grupa",
+          indicator: "Wskaznik",
+          indicatorParams: "Parametry wskaznika",
+          condition: "Warunek",
+          value: "Wartosc",
+          valueFrom: "Wartosc od",
+          valueTo: "Wartosc do",
+          weight: "Waga",
+          addIndicator: "+ Dodaj wskaznik",
+          sideLong: "Long",
+          sideShort: "Short",
+        },
+        pt: {
+          collapse: "Recolher",
+          expand: "Expandir",
+          moveUp: "Subir",
+          moveDown: "Descer",
+          removeIndicator: "Remover indicador",
+          group: "Grupo",
+          indicator: "Indicador",
+          indicatorParams: "Parametros do indicador",
+          condition: "Condicao",
+          value: "Valor",
+          valueFrom: "Valor de",
+          valueTo: "Valor ate",
+          weight: "Peso",
+          addIndicator: "+ Adicionar indicador",
+          sideLong: "Long",
+          sideShort: "Short",
+        },
+      } as const)[locale],
     [locale],
   );
   const normalizedIndicators = indicators.map((indicator) => ({

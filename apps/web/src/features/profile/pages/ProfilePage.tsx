@@ -16,31 +16,45 @@ type ProfileTabKey = "basic" | "api" | "subscription" | "security";
 
 export default function ProfilePage() {
   const { locale } = useI18n();
-  const copy = locale === 'pl'
-    ? {
-        title: "Moje konto",
-        breadcrumbDashboard: "Dashboard",
-        breadcrumbCurrent: "Moje konto",
-        breadcrumbAction: "Przeglad",
-        tabs: {
-          basic: "Profil uzytkownika",
-          api: "Integracje i API keys",
-          subscription: "Subskrypcja",
-          security: "Bezpieczenstwo",
-        },
-      }
-    : {
-        title: "My account",
-        breadcrumbDashboard: "Dashboard",
-        breadcrumbCurrent: "My account",
-        breadcrumbAction: "Overview",
-        tabs: {
-          basic: "User profile",
-          api: "Integrations and API keys",
-          subscription: "Subscription",
-          security: "Security",
-        },
-      };
+  const copyByLocale = {
+    en: {
+      title: "My account",
+      breadcrumbDashboard: "Dashboard",
+      breadcrumbCurrent: "My account",
+      breadcrumbAction: "Overview",
+      tabs: {
+        basic: "User profile",
+        api: "Integrations and API keys",
+        subscription: "Subscription",
+        security: "Security",
+      },
+    },
+    pl: {
+      title: "Moje konto",
+      breadcrumbDashboard: "Dashboard",
+      breadcrumbCurrent: "Moje konto",
+      breadcrumbAction: "Przeglad",
+      tabs: {
+        basic: "Profil uzytkownika",
+        api: "Integracje i API keys",
+        subscription: "Subskrypcja",
+        security: "Bezpieczenstwo",
+      },
+    },
+    pt: {
+      title: "Minha conta",
+      breadcrumbDashboard: "Dashboard",
+      breadcrumbCurrent: "Minha conta",
+      breadcrumbAction: "Visao geral",
+      tabs: {
+        basic: "Perfil de utilizador",
+        api: "Integracoes e chaves API",
+        subscription: "Subscricao",
+        security: "Seguranca",
+      },
+    },
+  } as const;
+  const copy = copyByLocale[locale];
 
   const tabs: { label: string; key: ProfileTabKey; hash: string; icon: ReactNode }[] = [
     { label: copy.tabs.basic, key: "basic", hash: "basic", icon: <LuUser className="h-4 w-4" aria-hidden /> },

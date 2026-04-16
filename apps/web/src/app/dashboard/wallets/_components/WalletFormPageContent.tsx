@@ -20,22 +20,29 @@ export default function WalletFormPageContent({ mode, editId }: WalletFormPageCo
   const isEditMode = mode === 'edit';
 
   const copy = useMemo(
-    () =>
-      locale === 'pl'
-        ? {
-            title: 'Portfele',
-            breadcrumbWallets: 'Portfele',
-            breadcrumbCreate: 'Dodaj',
-            breadcrumbEdit: 'Edycja',
-            submitLabel: 'Save',
-          }
-        : {
-            title: 'Wallets',
-            breadcrumbWallets: 'Wallets',
-            breadcrumbCreate: 'Create',
-            breadcrumbEdit: 'Edit',
-            submitLabel: 'Save',
-          },
+    () => ({
+      en: {
+        title: 'Wallets',
+        breadcrumbWallets: 'Wallets',
+        breadcrumbCreate: 'Create',
+        breadcrumbEdit: 'Edit',
+        submitLabel: 'Save',
+      },
+      pl: {
+        title: 'Portfele',
+        breadcrumbWallets: 'Portfele',
+        breadcrumbCreate: 'Dodaj',
+        breadcrumbEdit: 'Edycja',
+        submitLabel: 'Save',
+      },
+      pt: {
+        title: 'Carteiras',
+        breadcrumbWallets: 'Carteiras',
+        breadcrumbCreate: 'Criar',
+        breadcrumbEdit: 'Editar',
+        submitLabel: 'Save',
+      },
+    } as const)[locale],
     [locale]
   );
 

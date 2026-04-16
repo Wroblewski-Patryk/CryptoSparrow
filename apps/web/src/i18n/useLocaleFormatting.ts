@@ -8,6 +8,7 @@ import { DEFAULT_LOCALE, Locale } from "./translations";
 const localeToIntl: Record<Locale, string> = {
   en: "en-US",
   pl: "pl-PL",
+  pt: "pt-PT",
 };
 
 const toNumber = (value: number | null | undefined) => (value == null ? null : Number(value));

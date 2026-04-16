@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import StrategyPresetPicker from "./StrategyPresetPicker";
 import { strategyPresets } from "../presets/strategyPresets";
 
-let mockLocale: "en" | "pl" = "en";
+let mockLocale: "en" | "pl" | "pt" = "en";
 
 vi.mock("@/i18n/I18nProvider", () => ({
   useI18n: () => ({

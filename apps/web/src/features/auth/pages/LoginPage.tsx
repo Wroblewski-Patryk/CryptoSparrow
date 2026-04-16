@@ -16,25 +16,30 @@ export default function LoginPage() {
     }
   }, [user, router]);
 
-  const copy =
-    locale === 'pl'
-      ? {
-          title: 'Zaloguj sie do Soar',
-          description:
-            'Przejdz do panelu i monitoruj rynek, pozycje oraz runtime botow w jednym miejscu.',
-        }
-      : {
-          title: 'Sign in to Soar',
-          description:
-            'Access your control center and monitor markets, positions, and bot runtime in one place.',
-        };
+  const copy = {
+    en: {
+      title: 'Sign in to Soar',
+      description:
+        'Access your control center and monitor markets, positions, and bot runtime in one place.',
+    },
+    pl: {
+      title: 'Zaloguj sie do Soar',
+      description:
+        'Przejdz do panelu i monitoruj rynek, pozycje oraz runtime botow w jednym miejscu.',
+    },
+    pt: {
+      title: 'Entrar no Soar',
+      description:
+        'Acede ao centro de controlo e monitoriza mercados, posicoes e runtime dos bots num so lugar.',
+    },
+  } as const;
 
   return (
     <section className="hero flex-1 min-h-full bg-base-200 px-4 py-8 md:px-6 md:py-12">
       <div className="hero-content w-full max-w-6xl flex-col gap-8 p-0 lg:flex-row-reverse lg:gap-12">
         <div className="max-w-xl text-center lg:text-left">
-          <h1 className="text-4xl font-bold md:text-5xl">{copy.title}</h1>
-          <p className="py-4 text-base-content/75 md:py-6">{copy.description}</p>
+          <h1 className="text-4xl font-bold md:text-5xl">{copy[locale].title}</h1>
+          <p className="py-4 text-base-content/75 md:py-6">{copy[locale].description}</p>
         </div>
         <div className="card bg-base-100 w-full max-w-md shrink-0 shadow-xl">
           <div className="card-body">

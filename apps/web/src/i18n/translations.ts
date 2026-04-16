@@ -1,10 +1,14 @@
 import { dashboardBotsEn } from "./namespaces/dashboard-bots.en";
 import { dashboardBotsPl } from "./namespaces/dashboard-bots.pl";
+import { dashboardBotsPt } from "./namespaces/dashboard-bots.pt";
 import { dashboardHomeEn } from "./namespaces/dashboard-home.en";
 import { dashboardHomePl } from "./namespaces/dashboard-home.pl";
+import { dashboardHomePt } from "./namespaces/dashboard-home.pt";
 import { dashboardShellEn } from "./namespaces/dashboard-shell.en";
 import { dashboardShellPl } from "./namespaces/dashboard-shell.pl";
-export type Locale = "en" | "pl";
+import { dashboardShellPt } from "./namespaces/dashboard-shell.pt";
+export const SUPPORTED_LOCALES = ["en", "pl", "pt"] as const;
+export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
 type TranslationSchema = {
   dashboard: {
@@ -304,6 +308,13 @@ export const translations: Record<Locale, TranslationSchema> = {
       ...dashboardShellPl,
       home: dashboardHomePl,
       bots: dashboardBotsPl,
+    },
+  },
+  pt: {
+    dashboard: {
+      ...dashboardShellPt,
+      home: dashboardHomePt,
+      bots: dashboardBotsPt,
     },
   },
 };

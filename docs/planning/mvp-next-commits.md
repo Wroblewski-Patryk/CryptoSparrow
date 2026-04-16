@@ -8,24 +8,40 @@ Operational queue for one-task execution runs.
 
 ## NOW
 - [ ] `NAVHF-01 fix(web-nav): remove top-level Exchanges link regression from dashboard menu (introduced in 1b91763) using docs/planning/dashboard-nav-exchanges-removal-hotfix-plan-2026-04-17.md`
-- [ ] `L10NPT-01 docs(contract): lock Portuguese locale policy to pt-PT only and forbid pt-BR in this rollout`
-- [ ] `L10NPT-02 feat(i18n-core): extend locale contract to en/pl/pt + pt-PT formatting`
-- [ ] `L10NPT-03 feat(web-language-switcher): add Portuguese option in language switcher (header/footer)`
-- [ ] `L10NPT-04 feat(i18n-namespaces): add dashboard namespace translation files for Portuguese`
 ## NEXT
-- [ ] `L10NPT-05 refactor(web-shared-copy): remove en/pl-only branches in shared layout/components`
-- [ ] `L10NPT-06 refactor(web-page-copy): migrate page-level inline copy to include Portuguese`
-- [ ] `L10NPT-07 refactor(strategies-localizers): widen strategy helper locale maps to include Portuguese`
-- [ ] `L10NPT-08 refactor(profile-wallet-markets): remove remaining en/pl-only branches in forms and tables`
-- [ ] `L10NPT-09 test(i18n-contract): update tests for en/pl/pt key parity and persistence`
-- [ ] `L10NPT-10 qa(i18n-hardcoded-scan): rerun hardcoded-locale scan and close remaining hotspots`
+- none
 ## PIPELINE
-- [ ] `L10NPT-11 qa(web-smoke): manual PT smoke across dashboard/public/profile/auth`
-- [ ] `L10NPT-12 docs(closure): publish rollout evidence and sync canonical queue statuses`
+- none
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `L10NPT-A localization(pt-pt): execute European Portuguese rollout queue from docs/planning/pt-pt-localization-rollout-plan-2026-04-17.md (pt-PT only, no pt-BR)`
+  - 2026-04-17: Closed `L10NPT-A` by completing `L10NPT-01..L10NPT-12` (locale contract expanded to `en/pl/pt`, switcher + namespace support for Portuguese, shared/page/feature locale branches widened, i18n parity tests refreshed, hardcoded-locale scan cleared, smoke/build validation pack PASS, and closure evidence published in `docs/operations/_artifacts-l10npt-rollout-2026-04-16T22-59-22-697Z.json` + `docs/operations/l10npt-rollout-closure-2026-04-17.md`), promoting `NAVHF-01` as active `NOW`.
+- [x] `L10NPT-12 docs(closure): publish rollout evidence and sync canonical queue statuses`
+  - 2026-04-17: Published closure evidence report `docs/operations/l10npt-rollout-closure-2026-04-17.md` with linked JSON artifact and synchronized queue/plan statuses for `L10NPT-A`.
+- [x] `L10NPT-11 qa(web-smoke): manual PT smoke across dashboard/public/profile/auth`
+  - 2026-04-17: Completed smoke validation pack across i18n/header-footer/dashboard/auth/profile surfaces via targeted web tests and build (`42/42` tests PASS across smoke suites + `pnpm --filter web run build` PASS).
+- [x] `L10NPT-10 qa(i18n-hardcoded-scan): rerun hardcoded-locale scan and close remaining hotspots`
+  - 2026-04-17: Reran non-test web scan for `locale === 'pl'` and `"en" | "pl"` patterns; result `0` matches captured in rollout artifact `docs/operations/_artifacts-l10npt-rollout-2026-04-16T22-59-22-697Z.json`.
+- [x] `L10NPT-09 test(i18n-contract): update tests for en/pl/pt key parity and persistence`
+  - 2026-04-17: Updated i18n contract suites (`translations`, `I18nProvider`, `useLocaleFormatting`, `LanguageSwitcher`) for EN/PL/PT parity and persistence; targeted run PASS (`8/8`).
+- [x] `L10NPT-08 refactor(profile-wallet-markets): remove remaining en/pl-only branches in forms and tables`
+  - 2026-04-17: Widened locale maps for profile/wallets/markets forms and tables (`ProfilePage`, `WalletCreateEditForm`, `WalletsListTable`, `MarketUniversesTable`) to include Portuguese branch support.
+- [x] `L10NPT-07 refactor(strategies-localizers): widen strategy helper locale maps to include Portuguese`
+  - 2026-04-17: Extended strategy localization contracts (`Indicators`, indicator presentation/taxonomy, preset picker/presentation) to support `pt` locale paths with deterministic fallback behavior.
+- [x] `L10NPT-06 refactor(web-page-copy): migrate page-level inline copy to include Portuguese`
+  - 2026-04-17: Expanded dashboard/auth/public page-level copy maps to EN/PL/PT in markets/strategies/wallets and auth page entrypoints.
+- [x] `L10NPT-05 refactor(web-shared-copy): remove en/pl-only branches in shared layout/components`
+  - 2026-04-17: Replaced shared UI `en/pl` copy forks with EN/PL/PT maps in public header, profile menu, theme switch, and dashboard page-title accessibility strings.
+- [x] `L10NPT-04 feat(i18n-namespaces): add dashboard namespace translation files for Portuguese`
+  - 2026-04-17: Added Portuguese namespace files `dashboard-shell.pt.ts`, `dashboard-home.pt.ts`, and `dashboard-bots.pt.ts` and wired them into translation composition.
+- [x] `L10NPT-03 feat(web-language-switcher): add Portuguese option in language switcher (header/footer)`
+  - 2026-04-17: Added `pt` option to language dataset and switcher contract, including persistence + visual regression coverage in `LanguageSwitcher`/`I18nProvider` tests.
+- [x] `L10NPT-02 feat(i18n-core): extend locale contract to en/pl/pt + pt-PT formatting`
+  - 2026-04-17: Extended i18n core locale contract (`translations`, `I18nProvider`, `useLocaleFormatting`, `themeBootstrap`) with `pt` and `pt-PT` formatting mapping.
+- [x] `L10NPT-01 docs(contract): lock Portuguese locale policy to pt-PT only and forbid pt-BR in this rollout`
+  - 2026-04-17: Confirmed and synchronized canonical locale policy docs (`open-decisions` + rollout plan) to keep `pt-PT` only and forbid `pt-BR` in this wave.
 - [x] `DOCSYNC-A docs-parity-sustainment: periodic parity audit refresh + queue continuity safeguards`
   - 2026-04-17: Closed `DOCSYNC-A` by completing `DOCSYNC-01..DOCSYNC-04` (fresh docs parity artifact `docs/operations/_artifacts-docs-parity-2026-04-16T22-37-19-622Z.json` with `PASS` result, published sustainment evidence `docs/operations/documentation-parity-sustainment-evidence-2026-04-17.md`, refreshed module/route inventory snapshots, and added cadence/ownership guardrails in working agreements), promoting `L10NPT-01..L10NPT-05` into active `NOW`.
 - [x] `DOCSYNC-04 docs(governance): capture sustainment cadence and ownership in working agreements`

@@ -11,20 +11,27 @@ export default function Header() {
   const { locale } = useI18n();
   const showDashboardCta = !loading && Boolean(user);
   const showAdminCta = showDashboardCta && user?.role === 'ADMIN';
-  const copy =
-    locale === 'pl'
-      ? {
-          dashboard: 'Panel',
-          admin: 'Admin',
-          login: 'Logowanie',
-          register: 'Rejestracja',
-        }
-      : {
-          dashboard: 'Dashboard',
-          admin: 'Admin',
-          login: 'Login',
-          register: 'Register',
-        };
+  const copyByLocale = {
+    en: {
+      dashboard: 'Dashboard',
+      admin: 'Admin',
+      login: 'Login',
+      register: 'Register',
+    },
+    pl: {
+      dashboard: 'Panel',
+      admin: 'Admin',
+      login: 'Logowanie',
+      register: 'Rejestracja',
+    },
+    pt: {
+      dashboard: 'Painel',
+      admin: 'Admin',
+      login: 'Entrar',
+      register: 'Criar conta',
+    },
+  } as const;
+  const copy = copyByLocale[locale];
   const headerActionPrimaryClass =
     'btn btn-xs h-7 min-h-7 border transition-colors duration-150 border-primary/45 bg-primary/10 text-primary hover:border-primary/70 hover:bg-primary/20';
   const headerActionSecondaryClass =

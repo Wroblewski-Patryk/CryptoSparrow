@@ -43,6 +43,21 @@ export function PageTitle({
 }: PageTitleProps) {
   const { locale, t } = useI18n();
   const addActionDescriptionId = useId();
+  const copyByLocale = {
+    en: {
+      addDescription: (label: string, sectionTitle: string) => `${label} for ${sectionTitle}`,
+      breadcrumbAria: "Breadcrumb navigation",
+    },
+    pl: {
+      addDescription: (label: string, sectionTitle: string) => `${label} dla sekcji ${sectionTitle}`,
+      breadcrumbAria: "Nawigacja okruszkowa",
+    },
+    pt: {
+      addDescription: (label: string, sectionTitle: string) => `${label} para a secao ${sectionTitle}`,
+      breadcrumbAria: "Navegacao breadcrumb",
+    },
+  } as const;
+  const copy = copyByLocale[locale];
 
   const normalizedBreadcrumb =
     breadcrumb.length > 0
@@ -87,9 +102,7 @@ export function PageTitle({
         </span>
       </button>
       <span id={addActionDescriptionId} className="sr-only">
-        {locale === "pl"
-          ? `${addLabel || t("dashboard.common.add")} dla sekcji ${title}`
-          : `${addLabel || t("dashboard.common.add")} for ${title}`}
+        {copy.addDescription(addLabel || t("dashboard.common.add"), title)}
       </span>
     </>
   ) : null;
@@ -100,7 +113,7 @@ export function PageTitle({
     <div className={wrapperClassName}>
       <div className="min-w-0">
         <nav
-          aria-label={locale === "pl" ? "Nawigacja okruszkowa" : "Breadcrumb navigation"}
+          aria-label={copy.breadcrumbAria}
           className="breadcrumbs mt-2 max-w-full overflow-x-auto text-sm"
         >
           <ul>

@@ -4,14 +4,20 @@
     "label": "English",
     "short": "EN",
     "countryCode": "gb",
-    "icon": "🇬🇧"
+    "icon": "EN"
   },
   {
     "locale": "pl",
     "label": "Polski",
     "short": "PL",
     "countryCode": "pl",
-    "icon": "🇵🇱"
+    "icon": "PL"
+  },
+  {
+    "locale": "pt",
+    "label": "Portugues (PT)",
+    "short": "PT",
+    "countryCode": "pt",
+    "icon": "PT"
   }
 ]
-
