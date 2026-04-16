@@ -1594,7 +1594,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `A11Y-A accessibility-full-pass: full dashboard accessibility closure (automated + manual + evidence)`
 - [x] `DOCSYNC-A docs-parity-sustainment: periodic parity audit refresh + queue continuity safeguards`
 - [x] `L10NPT-A localization(pt-pt): execute European Portuguese rollout queue from docs/planning/pt-pt-localization-rollout-plan-2026-04-17.md (pt-PT only, no pt-BR)`
-- [ ] `NAVHF-A dashboard-nav-regression: remove unnecessary top-level Exchanges link from main dashboard menu`
+- [x] `NAVHF-A dashboard-nav-regression: remove unnecessary top-level Exchanges link from main dashboard menu`
 
 ### Active Task Breakdown (A11Y-A)
 - [x] `A11Y-01 docs(plan): publish full accessibility pass timeline and resolve open decision`
@@ -1610,9 +1610,10 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `DOCSYNC-04 docs(governance): capture sustainment cadence and ownership in working agreements`
 
 ### Active Task Breakdown (NAVHF-A)
-- [ ] `NAVHF-01 fix(web-nav): remove top-level Exchanges link regression from dashboard menu (introduced in commit 1b91763)`
+- [x] `NAVHF-01 fix(web-nav): remove top-level Exchanges link regression from dashboard menu (introduced in commit 1b91763)`
 
 ### Progress Log (Post-PEX Continuation)
+- 2026-04-17: Closed `NAVHF-A` by completing `NAVHF-01` (removed top-level `Exchanges` from `Header` direct module navigation so desktop/mobile main menu now starts with `Wallets`, updated responsive nav contract assertions to enforce no `Exchanges` link while preserving wallet/markets routes, and validated with `pnpm --filter web test -- src/ui/layout/dashboard/Header.responsive.test.tsx` + `pnpm --filter web run typecheck`, both PASS).
 - 2026-04-17: Closed `L10NPT-A` by completing `L10NPT-01..L10NPT-12` (locale contract expanded to `en/pl/pt` with `pt-PT` formatting, language switcher and namespace support, shared/page/feature locale-branch widening, i18n parity tests refreshed, hardcoded-locale scan result `0` matches, smoke/build pack PASS, and closure evidence in `docs/operations/_artifacts-l10npt-rollout-2026-04-16T22-59-22-697Z.json` + `docs/operations/l10npt-rollout-closure-2026-04-17.md`); promoted `NAVHF-A` as next active group.
 - 2026-04-17: Added `NAVHF-A` hotfix group and queued `NAVHF-01` to remove unintended top-level `Exchanges` main-menu link regression (reintroduced in commit `1b91763`), with execution details captured in `docs/planning/dashboard-nav-exchanges-removal-hotfix-plan-2026-04-17.md`.
 - 2026-04-17: Closed `DOCSYNC-A` by completing `DOCSYNC-01..DOCSYNC-04` (fresh parity artifact `docs/operations/_artifacts-docs-parity-2026-04-16T22-37-19-622Z.json` with `PASS`, sustainment evidence note `docs/operations/documentation-parity-sustainment-evidence-2026-04-17.md`, refreshed module+route inventory snapshots, and governance cadence/ownership contract update); promoted `L10NPT-A` as next active group and refilled one-task queue continuity for `L10NPT-01..L10NPT-12`.

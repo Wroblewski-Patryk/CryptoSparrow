@@ -21,10 +21,8 @@ describe("Header responsive smoke", () => {
 
     expect(screen.getByRole("navigation", { name: "Dashboard navigation" })).toBeInTheDocument();
     expect(screen.getAllByText("Markets").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Exchanges").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Wallets").length).toBeGreaterThan(0);
-    const exchangesLinks = screen.getAllByRole("link", { name: "Exchanges" });
-    expect(exchangesLinks.some((item) => item.getAttribute("href") === "/dashboard/exchanges")).toBe(true);
+    expect(screen.queryByRole("link", { name: "Exchanges" })).not.toBeInTheDocument();
     const walletsLinks = screen.getAllByRole("link", { name: "Wallets" });
     expect(walletsLinks.some((item) => item.getAttribute("href") === "/dashboard/wallets/list")).toBe(true);
     expect(screen.getAllByText("Bots").length).toBeGreaterThan(0);
@@ -46,11 +44,9 @@ describe("Header responsive smoke", () => {
     const desktopNavLabels = Array.from(nav.querySelectorAll("a")).map((anchor) =>
       anchor.textContent?.replace(/\s+/g, " ").trim()
     );
-    const exchangesIndex = desktopNavLabels.indexOf("Exchanges");
     const walletsIndex = desktopNavLabels.indexOf("Wallets");
     const marketsIndex = desktopNavLabels.indexOf("Markets");
-    expect(exchangesIndex).toBeGreaterThan(-1);
-    expect(walletsIndex).toBeGreaterThan(exchangesIndex);
+    expect(walletsIndex).toBeGreaterThan(-1);
     expect(marketsIndex).toBeGreaterThan(walletsIndex);
   });
 
@@ -70,6 +66,7 @@ describe("Header responsive smoke", () => {
     const mobileNav = document.getElementById("dashboard-mobile-nav");
     expect(mobileNav).toBeInTheDocument();
     expect(mobileNav?.className).toContain("overflow-y-auto");
+    expect(screen.queryByRole("link", { name: "Exchanges" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Orders" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Positions" })).not.toBeInTheDocument();
     const overlay = mobileNav?.parentElement;

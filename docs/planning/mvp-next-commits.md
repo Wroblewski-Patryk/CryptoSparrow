@@ -7,7 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `NAVHF-01 fix(web-nav): remove top-level Exchanges link regression from dashboard menu (introduced in 1b91763) using docs/planning/dashboard-nav-exchanges-removal-hotfix-plan-2026-04-17.md`
+- none
 ## NEXT
 - none
 ## PIPELINE
@@ -16,6 +16,10 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `NAVHF-A dashboard-nav-regression: remove unnecessary top-level Exchanges link from main dashboard menu`
+  - 2026-04-17: Closed `NAVHF-A` by completing `NAVHF-01` (removed top-level `Exchanges` from dashboard header nav model for desktop/mobile, updated responsive regression assertions to enforce no `Exchanges` link, and validated with `pnpm --filter web test -- src/ui/layout/dashboard/Header.responsive.test.tsx` + `pnpm --filter web run typecheck`, both PASS).
+- [x] `NAVHF-01 fix(web-nav): remove top-level Exchanges link regression from dashboard menu (introduced in 1b91763) using docs/planning/dashboard-nav-exchanges-removal-hotfix-plan-2026-04-17.md`
+  - 2026-04-17: Removed top-level `Exchanges` menu entry in `Header` and refreshed nav-order assertions (`Wallets` before `Markets`) plus desktop/mobile absence checks in `Header.responsive` contract tests.
 - [x] `L10NPT-A localization(pt-pt): execute European Portuguese rollout queue from docs/planning/pt-pt-localization-rollout-plan-2026-04-17.md (pt-PT only, no pt-BR)`
   - 2026-04-17: Closed `L10NPT-A` by completing `L10NPT-01..L10NPT-12` (locale contract expanded to `en/pl/pt`, switcher + namespace support for Portuguese, shared/page/feature locale branches widened, i18n parity tests refreshed, hardcoded-locale scan cleared, smoke/build validation pack PASS, and closure evidence published in `docs/operations/_artifacts-l10npt-rollout-2026-04-16T22-59-22-697Z.json` + `docs/operations/l10npt-rollout-closure-2026-04-17.md`), promoting `NAVHF-01` as active `NOW`.
 - [x] `L10NPT-12 docs(closure): publish rollout evidence and sync canonical queue statuses`

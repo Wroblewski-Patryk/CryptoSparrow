@@ -1,6 +1,6 @@
 # Dashboard Nav Exchanges Removal Hotfix Plan (2026-04-17)
 
-Status: ready-for-implementation  
+Status: closed-2026-04-17  
 Execution mode: tiny-commit (single-task commit)
 
 ## Problem

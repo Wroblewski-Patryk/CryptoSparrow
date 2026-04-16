@@ -140,12 +140,6 @@ export default function Header() {
 
   const directModuleLinks: NavItem[] = [
     {
-      href: dashboardRoutes.exchanges.root,
-      label: t('dashboard.nav.exchanges'),
-      icon: LuChartCandlestick,
-      activePrefixes: [dashboardRoutes.exchanges.root],
-    },
-    {
       href: dashboardRoutes.wallets.list,
       label: t('dashboard.nav.wallets'),
       icon: LuWallet,
