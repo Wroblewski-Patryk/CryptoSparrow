@@ -916,6 +916,93 @@ describe('RuntimeSignalLoop', () => {
     );
   });
 
+  it('applies shared-wallet funds guard per bot route and blocks only insufficient bot', async () => {
+    const runtimeCapitalContext = await import('./runtimeCapitalContext.service');
+    const walletFundsGuardMock = runtimeCapitalContext.resolveRuntimeWalletFundsExhausted as ReturnType<
+      typeof vi.fn
+    >;
+    walletFundsGuardMock.mockClear();
+    walletFundsGuardMock.mockImplementation(async ({ botId }: { botId?: string }) => botId === 'bot-2');
+
+    const { deps, emit } = createDeps();
+    deps.recordRuntimeEvent = vi.fn(async () => undefined);
+    deps.listActiveBots = vi.fn(async () => [
+      {
+        id: 'bot-1',
+        userId: 'user-1',
+        mode: 'LIVE' as const,
+        exchange: 'BINANCE' as const,
+        walletId: 'wallet-shared',
+        paperStartBalance: 1000,
+        marketType: 'FUTURES' as const,
+        marketGroups: [
+          {
+            id: 'group-1',
+            symbolGroupId: 'symbol-group-1',
+            executionOrder: 1,
+            maxOpenPositions: 1,
+            symbols: ['BTCUSDT'],
+            strategies: [strategyLong],
+          },
+        ],
+      },
+      {
+        id: 'bot-2',
+        userId: 'user-1',
+        mode: 'LIVE' as const,
+        exchange: 'BINANCE' as const,
+        walletId: 'wallet-shared',
+        paperStartBalance: 1000,
+        marketType: 'FUTURES' as const,
+        marketGroups: [
+          {
+            id: 'group-2',
+            symbolGroupId: 'symbol-group-2',
+            executionOrder: 1,
+            maxOpenPositions: 1,
+            symbols: ['BTCUSDT'],
+            strategies: [strategyLong],
+          },
+        ],
+      },
+    ]);
+
+    const loop = new RuntimeSignalLoop(deps);
+    await loop.start();
+    await emitFinalCandleSeries(emit);
+
+    const guardCalls = walletFundsGuardMock.mock.calls
+      .map(([input]) => input as { botId?: string; walletId?: string })
+      .filter((call) => call.botId === 'bot-1' || call.botId === 'bot-2');
+    expect(guardCalls.length).toBeGreaterThanOrEqual(2);
+    expect(guardCalls.map((call) => call.walletId)).toEqual(
+      expect.arrayContaining(['wallet-shared', 'wallet-shared'])
+    );
+    expect(guardCalls.map((call) => call.botId)).toEqual(expect.arrayContaining(['bot-1', 'bot-2']));
+    const orchestrateCalls = (deps.orchestrateFn as ReturnType<typeof vi.fn>).mock.calls.map(
+      ([input]) => input as { botId?: string; walletId?: string }
+    );
+    expect(orchestrateCalls.some((call) => call.botId === 'bot-1')).toBe(true);
+    expect(orchestrateCalls.some((call) => call.botId === 'bot-2')).toBe(false);
+    expect(deps.orchestrateFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        botId: 'bot-1',
+        walletId: 'wallet-shared',
+      })
+    );
+    expect(deps.recordRuntimeEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        botId: 'bot-2',
+        eventType: 'PRETRADE_BLOCKED',
+        payload: expect.objectContaining({
+          reason: 'WALLET_INSUFFICIENT_FUNDS',
+        }),
+      })
+    );
+
+    walletFundsGuardMock.mockImplementation(async () => false);
+  });
+
   it('skips final-candle LONG/SHORT execution when market-group maxOpenPositions is reached', async () => {
     const { deps, emit } = createDeps();
     withStrategyBot(deps, { maxOpenPositions: 1 });

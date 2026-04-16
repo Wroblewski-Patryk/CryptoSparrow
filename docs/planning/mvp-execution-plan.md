@@ -1546,7 +1546,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `WLT-C wallet-api: wallet CRUD module with mode-aware validation + ownership isolation`
 - [x] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
 - [x] `QFIX-A runtime-quality(api): telemetry flush fail-safe + runtime typecheck restoration`
-- [ ] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
+- [x] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
 - [ ] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
 - [ ] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
 - [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
@@ -1557,6 +1557,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `PEX-F deploy-safety: post-deploy runtime freshness gate + rollback trigger policy`
 
 ### Progress Log (Continuous Group Pipeline)
+- 2026-04-16: Closed `WLT-E` by completing `WLT-18` (runtime regressions for shared-wallet multi-bot insufficient-funds behavior in `runtimeSignalLoop.service.test.ts` and shared-wallet reserved-margin accounting in `runtimeCapitalContext.service.test.ts`), finalizing group scope `WLT-15..WLT-18`; validated with `pnpm --filter api test -- src/modules/engine/runtimeCapitalContext.service.test.ts src/modules/engine/runtimeSignalLoop.service.test.ts` + `pnpm --filter api run typecheck` (PASS), and promoted `WLT-F` as next wallet group.
 - 2026-04-16: Advanced `WLT-E` by completing `WLT-17` (runtime EXIT wallet attribution hardening: close-order path in `executionOrchestrator` now persists wallet snapshot via `walletId: openPosition.walletId ?? input.walletId`, with regression lock for close order/trade wallet propagation in `executionOrchestrator.service.test.ts`), validated with `pnpm --filter api test -- src/modules/engine/executionOrchestrator.service.test.ts` + `pnpm --filter api run typecheck` (PASS); remaining scope in active group: `WLT-18`.
 - 2026-04-16: Advanced `WLT-E` by completing `WLT-16` (explicit wallet free-cash hard-fail guard for OPEN pre-trade path via `resolveRuntimeWalletFundsExhausted` plus aligned DCA guard contract) and validating with `pnpm --filter api test -- src/modules/engine/runtimeCapitalContext.service.test.ts src/modules/engine/runtimeSignalLoop.service.test.ts src/modules/engine/runtimePositionAutomation.service.test.ts` + `pnpm --filter api run typecheck` (PASS); remaining scope in active group: `WLT-17..WLT-18`.
 - 2026-04-16: Advanced `WLT-E` by completing `WLT-15` (wallet-first runtime capital context for PAPER/LIVE reference balance, including wallet-scoped fail-closed behavior when wallet context or wallet API key is unavailable) and validated with `pnpm --filter api test -- src/modules/engine/runtimeCapitalContext.service.test.ts` + `pnpm --filter api run typecheck` (PASS); remaining scope in active group: `WLT-16..WLT-18`.

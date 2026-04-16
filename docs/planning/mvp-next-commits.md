@@ -7,13 +7,12 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
+- [ ] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
 - [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
 ## NEXT
-- [ ] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
+- [ ] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
 - [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
 ## PIPELINE
-- [ ] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
 - [ ] `PEX-C observability-ops: runtime alert thresholds + incident triage runbook`
 - [ ] `PEX-D recoverability: backup verification + restore drill automation + RTO/RPO doc`
 - [ ] `PEX-E secrets-hardening: secret inventory + rotation readiness validation + regression checks`
@@ -22,6 +21,10 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
+  - 2026-04-16: Closed wallet Group E by completing `WLT-15..WLT-18` (wallet-first runtime capital context, hard-fail OPEN/DCA wallet free-cash guard, EXIT close-order wallet snapshot attribution, and shared-wallet multi-bot insufficient-funds regressions in runtime tests); validated with targeted runtime suites and `pnpm --filter api run typecheck` (PASS); next wallet group promoted to `WLT-F`.
+- [x] `WLT-18 test(runtime): shared-wallet multi-bot concurrency and insufficient-funds regressions`
+  - 2026-04-16: Added runtime regressions for shared-wallet multi-bot funds behavior in `runtimeSignalLoop.service.test.ts` (per-route wallet funds guard: insufficient bot blocked, affordable bot executed) and `runtimeCapitalContext.service.test.ts` (shared-wallet reserved-margin accounting across bots); validated with `pnpm --filter api test -- src/modules/engine/runtimeCapitalContext.service.test.ts src/modules/engine/runtimeSignalLoop.service.test.ts` + `pnpm --filter api run typecheck` (PASS).
 - [x] `WLT-17 feat(runtime-attribution): persist walletId snapshot on runtime-created positions/orders/trades`
   - 2026-04-16: Advanced active wallet group `WLT-E` by fixing runtime EXIT close-order wallet attribution (`walletId: openPosition.walletId ?? input.walletId`) and locking regression in `executionOrchestrator.service.test.ts` for close order/trade wallet snapshot propagation; validated with `pnpm --filter api test -- src/modules/engine/executionOrchestrator.service.test.ts` + `pnpm --filter api run typecheck` (PASS); remaining `WLT-E` scope is `WLT-18`.
 - [x] `WLT-16 feat(runtime-budget): enforce hard-fail wallet free-cash checks for OPEN and DCA`

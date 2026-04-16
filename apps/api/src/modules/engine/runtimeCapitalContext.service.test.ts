@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   resolvePaperRuntimeCapitalSnapshot,
   resolveRuntimeDcaFundsExhausted,
+  resolveRuntimeWalletFundsExhausted,
   resolveRuntimeReferenceBalance,
 } from './runtimeCapitalContext.service';
 
@@ -183,5 +184,51 @@ describe('runtimeCapitalContext', () => {
 
     // required margin = 700, free cash = 600
     expect(exhaustedHigh).toBe(true);
+  });
+
+  it('treats shared-wallet open exposure as reserved margin for another bot', async () => {
+    const listOpenBotManagedPositions = vi.fn(async () => [
+      // Exposure from another bot on the same shared wallet
+      { entryPrice: 300, quantity: 2, leverage: 1 }, // reserved 600
+    ]);
+
+    const exhausted = await resolveRuntimeWalletFundsExhausted(
+      {
+        userId: 'u-shared',
+        botId: 'bot-b',
+        walletId: 'wallet-shared',
+        mode: 'PAPER',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        paperStartBalance: 10_000,
+        markPrice: 100,
+        addedQuantity: 5,
+        leverage: 1,
+        nowMs: 10_000,
+      },
+      buildDeps({
+        getWalletContext: async () => ({
+          id: 'wallet-shared',
+          mode: 'PAPER',
+          paperInitialBalance: 1_000,
+          liveAllocationMode: null,
+          liveAllocationValue: null,
+          baseCurrency: 'USDT',
+          exchange: 'BINANCE',
+          apiKey: null,
+        }),
+        listOpenBotManagedPositions,
+        sumClosedBotManagedRealizedPnl: async () => 0,
+      })
+    );
+
+    expect(exhausted).toBe(true);
+    expect(listOpenBotManagedPositions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'u-shared',
+        botId: 'bot-b',
+        walletId: 'wallet-shared',
+      })
+    );
   });
 });
