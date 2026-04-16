@@ -29,8 +29,26 @@
   - `WEB_RUNTIME_ADAPTIVE_POLLING_ENABLED`
   - `WEB_RUNTIME_SSE_PREFERRED_ENABLED`
 - Never couple multiple optimization slices to one non-reversible release switch.
+- Staged enable sequence is mandatory (per environment: stage -> prod canary -> prod full):
+  1. `RUNTIME_TOPOLOGY_CACHE_ENABLED`
+  2. `RUNTIME_TELEMETRY_THROTTLE_ENABLED`
+  3. `WEB_RUNTIME_ADAPTIVE_POLLING_ENABLED`
+  4. `WEB_RUNTIME_SSE_PREFERRED_ENABLED`
+- Canary gate before each next flag:
+  - minimum 15 minutes of stable runtime,
+  - no critical runtime alerts,
+  - no operator-reported trading decision drift.
 - For runtime regressions, rollback sequence is deterministic:
   - disable affected flag first,
   - validate parity/safety behavior,
   - then patch implementation.
+- Rollback matrix (operator shorthand):
+
+| Signal | First rollback action |
+| --- | --- |
+| runtime decision latency spike or CPU surge in signal loop | disable `RUNTIME_TOPOLOGY_CACHE_ENABLED` |
+| DB write spike from runtime sessions/stats | disable `RUNTIME_TELEMETRY_THROTTLE_ENABLED` |
+| API/read pressure spike from dashboard polling cadence | disable `WEB_RUNTIME_ADAPTIVE_POLLING_ENABLED` |
+| runtime widgets staleness/reconnect churn after stream rollout | disable `WEB_RUNTIME_SSE_PREFERRED_ENABLED` |
+
 - Each optimization commit must include targeted regression tests proving behavior parity when flag is enabled.

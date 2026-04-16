@@ -167,7 +167,25 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 - [x] `G10-22 parity-runtime-guard: protect markets-tab timeline processing from undefined arrays`
 - [x] `G10-23 web-build-stability: provide favicon asset required by Next.js production build pipeline`
 
+### G11 - CPU/DB Runtime Optimization Rollout Guardrails
+- [x] `CPDB-22 docs(runbook): staged rollout + feature-flag enable sequence + rollback matrix`
+
+#### CPU/DB Flag Rollout Sequence (stage -> prod canary -> prod full)
+1. Enable `RUNTIME_TOPOLOGY_CACHE_ENABLED`.
+2. After minimum 15 minutes stable canary and no critical alerts, enable `RUNTIME_TELEMETRY_THROTTLE_ENABLED`.
+3. After same canary gate, enable `WEB_RUNTIME_ADAPTIVE_POLLING_ENABLED`.
+4. Enable `WEB_RUNTIME_SSE_PREFERRED_ENABLED` last after dashboard freshness is confirmed.
+
+#### CPU/DB Rollback Matrix (first action)
+| Symptom | Immediate rollback |
+| --- | --- |
+| runtime signal-loop CPU spike or p95 decision latency regression | disable `RUNTIME_TOPOLOGY_CACHE_ENABLED` |
+| runtime session/stat write pressure on DB | disable `RUNTIME_TELEMETRY_THROTTLE_ENABLED` |
+| dashboard API read surge after cadence switch | disable `WEB_RUNTIME_ADAPTIVE_POLLING_ENABLED` |
+| dashboard runtime-card staleness or reconnect churn | disable `WEB_RUNTIME_SSE_PREFERRED_ENABLED` |
+
 ## Progress Log
+- 2026-04-16: Added `CPDB-22` runbook guardrails in V1 live plan with staged CPU/DB flag enable sequence (stage -> canary -> full) and explicit rollback matrix for runtime CPU/DB and dashboard refresh regressions.
 - 2026-04-10: Closed V1 external production gates end-to-end: collected 30-minute production SLO window from VPS/private ops network path (`docs/operations/_artifacts-slo-window-2026-04-10T17-09-26-532Z.json`, `docs/operations/v1-slo-observation-2026-04-10T17-09-26-532Z.md`), completed Gate1/Gate3 runbook evidence, finalized RC sign-off record, and reached strict production evidence check PASS (`G1/G2/G3/G4 = PASS`).
 - 2026-04-07: Added explicit production prerequisites (target API + admin JWT + `PROD_DB_CHECK_*`) and one-command production closure instructions in RC runbook/checklist for final exit-gate execution.
 - 2026-04-07: Added db-profile aware external-gates pipeline (`--db-profile`) and corrected strict production aliases so production closure commands enforce both `environment=production` and `db-profile=prod`.

@@ -246,7 +246,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 
 ### [ ] Group 8 - Rollout, SLO, and handoff closure
 
-- [ ] `CPDB-22 docs(runbook): staged rollout + feature-flag enable sequence + rollback`
+- [x] `CPDB-22 docs(runbook): staged rollout + feature-flag enable sequence + rollback`
   - Files:
     - `docs/planning/v1-live-release-plan.md`
     - `docs/governance/working-agreements.md`
@@ -304,3 +304,4 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Completed `CPDB-20` by adding distributed warmup-lock plumbing for runtime candle series (`RuntimeSignalMarketDataGateway` lock hook + runtime-loop dependency wiring + Redis-backed lock acquisition/release in market-stream fanout), ensuring per-series warmup fetch coordination across replicas while failing open on Redis issues; validated with `pnpm --filter api test -- runtimeSignalLoop marketStream runtimeSignalMarketDataGateway` (PASS).
 - 2026-04-16: Completed `CPDB-21` by adding shared-series stress regression (`5 users x 3 bots`, `BTCUSDT/5m`) that validates duplicate-event idempotency in runtime side effects, plus new `marketStreamFanout` unit coverage for single-delivery payload fanout and warmup-lock NX/PX semantics; validated with `pnpm --filter api test -- runtimeSignalLoop marketStreamFanout` (PASS).
 - 2026-04-16: Closed Group 7 (`CPDB-19..CPDB-21`). Next unchecked group is Group 8 (`CPDB-22..CPDB-24`).
+- 2026-04-16: Completed `CPDB-22` by publishing staged flag rollout runbook and rollback matrix in canonical governance/planning docs (`working-agreements`, `v1-live-release-plan`), leaving `CPDB-23..CPDB-24` as remaining Group 8 scope.
