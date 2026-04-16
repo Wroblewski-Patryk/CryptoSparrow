@@ -123,9 +123,9 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 - [x] `WLT-07 test(db): migration/backfill safety checks and rollback notes`
 
 ### Phase C - Wallet API Module
-- [ ] `WLT-08 feat(api-wallets): add wallet CRUD routes/controller/service with ownership isolation`
-- [ ] `WLT-09 feat(api-wallets): enforce mode-specific validation and API-key compatibility checks`
-- [ ] `WLT-10 test(api-wallets): add e2e coverage for CRUD, validation, and delete guards`
+- [x] `WLT-08 feat(api-wallets): add wallet CRUD routes/controller/service with ownership isolation`
+- [x] `WLT-09 feat(api-wallets): enforce mode-specific validation and API-key compatibility checks`
+- [x] `WLT-10 test(api-wallets): add e2e coverage for CRUD, validation, and delete guards`
 
 ### Phase D - Bot Contract Migration
 - [ ] `WLT-11 refactor(api-bots): require walletId in create/update and derive bot execution fields from wallet`
@@ -159,6 +159,9 @@ Rationale: avoids coupling simulation workflow to runtime wallet state and keeps
 - API/web/runtime tests cover wallet mismatch and insufficient-funds scenarios.
 
 ## Progress Log
+- 2026-04-16: Completed `WLT-10` by adding dedicated wallet CRUD e2e contract suite `apps/api/src/modules/wallets/wallets.crud.e2e.test.ts` (create/update/delete/list ownership isolation, LIVE validation, api-key exchange mismatch, and in-use delete guard) and validating together with preview/metadata suite via `pnpm --filter api test -- src/modules/wallets/wallets.crud.e2e.test.ts src/modules/wallets/wallets.e2e.test.ts` (PASS, `14/14`).
+- 2026-04-16: Completed `WLT-09` by hardening wallet mode validation in service layer (`assertWalletLiveModeConfig`) so LIVE wallets always require valid allocation mode/value even on partial updates, and by exposing mapped `WALLET_MODE_INVALID` controller response for deterministic API contract handling.
+- 2026-04-16: Completed `WLT-08` by validating and hardening wallet CRUD ownership isolation contract in `apps/api/src/modules/wallets/wallets.routes.ts`, `wallets.controller.ts`, and `wallets.service.ts`, including partial-update safety fix in `UpdateWalletSchema` (remove create-time defaults from update payload).
 - 2026-04-16: Completed `WLT-07` by adding DB-foundation verifier `apps/api/scripts/verifyWalletDbFoundation.ts`, generating PASS evidence artifacts (`docs/operations/_artifacts-wallet-db-foundation-2026-04-16T12-10-31-835Z.json`, `docs/operations/wallet-db-foundation-verification-2026-04-16T12-10-31-835Z.md`) with explicit rollback notes, and validating wallet regression contract via `pnpm --filter api test -- src/modules/wallets/wallets.e2e.test.ts` (PASS).
 - 2026-04-16: Completed `WLT-06` by validating migration backfill contract in `apps/api/prisma/migrations/20260407121500_add_wallet_module/migration.sql` (`wallet-<botId>` wallet creation + `Bot.walletId` population for existing rows).
 - 2026-04-16: Completed `WLT-05` by validating `walletId` snapshot columns, indexes, and FK links on `Position/Order/Trade` in Prisma schema + migration SQL (`Position_walletId_idx`, `Order_walletId_idx`, `Trade_walletId_idx`).

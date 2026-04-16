@@ -7,13 +7,12 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `WLT-C wallet-api: wallet CRUD module with mode-aware validation + ownership isolation`
+- [ ] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
 - [ ] `PEX-A runtime-idempotency: replay-safe runtime execution guards + crash/retry regression`
 ## NEXT
-- [ ] `WLT-D bot-wallet-migration: require walletId in bot write contract + context compatibility guards`
+- [ ] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
 - [ ] `PEX-B runtime-liveness: bounded auto-restart policy + long-run continuity regression`
 ## PIPELINE
-- [ ] `WLT-E runtime-wallet-budget: wallet-based capital checks + walletId runtime attribution`
 - [ ] `WLT-F web-wallet-module: dashboard wallet pages + nav + bot form wallet selector migration`
 - [ ] `WLT-G wallet-qa-release: end-to-end wallet flow QA + runbook + release evidence gate`
 - [ ] `PEX-C observability-ops: runtime alert thresholds + incident triage runbook`
@@ -24,6 +23,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `WLT-C wallet-api: wallet CRUD module with mode-aware validation + ownership isolation`
+  - 2026-04-16: Closed wallet Group C by completing `WLT-08..WLT-10` (wallet CRUD/ownership API hardening, LIVE-mode allocation validation safety in partial updates, and dedicated e2e coverage for CRUD/validation/delete guards in `apps/api/src/modules/wallets/wallets.crud.e2e.test.ts`); next wallet group promoted as `WLT-D`.
 - [x] `WLT-B wallet-db-foundation: Wallet model + walletId snapshots + backfill migration`
   - 2026-04-16: Closed wallet Group B by completing `WLT-04..WLT-07` (Wallet/WalletAllocationMode + `Bot.walletId` DB foundation, walletId snapshots for `Position/Order/Trade`, migration backfill validation for existing bots, and DB-safety evidence via `docs/operations/_artifacts-wallet-db-foundation-2026-04-16T12-10-31-835Z.json` + `docs/operations/wallet-db-foundation-verification-2026-04-16T12-10-31-835Z.md`); next wallet group promoted as `WLT-C`.
 - [x] `WLT-A wallet-contracts: wallet source-of-truth docs + decisions + IA placement`
