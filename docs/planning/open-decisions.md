@@ -330,6 +330,34 @@ This file tracks intentionally unresolved architecture choices so implementation
   - production rollout order remains: `stage canary -> production partial -> production full`.
   - rollback contract is fail-safe: disable affected flag first, then investigate root cause.
 
+## CPU/DB Runtime Alert Thresholds and Dashboard Contract
+- Decision state: resolved on 2026-04-16.
+- Decision:
+  - CPU/DB rollout gates require explicit alert thresholds for latency, DB pressure, runtime lag, and restart bursts.
+  - operator dashboards must expose those signals in one canary-ready view before full rollout.
+- Threshold matrix:
+
+| Signal | Source | Warning threshold | Critical threshold |
+| --- | --- | --- | --- |
+| API latency p95 | edge/APM gateway latency percentile for `/dashboard/*` + `/workers/runtime-freshness` probes | >= 350ms for 10m | >= 600ms for 5m |
+| DB QPS (read+write) | managed Postgres telemetry (provider-level query throughput) | >= 120 qps for 10m | >= 180 qps for 5m |
+| Runtime event lag | `GET /metrics` -> `runtime.signalLag.lastMs` (`runtime_signal_lag_stale`) | >= 90,000ms for 3 consecutive checks | >= 180,000ms for 3 consecutive checks |
+| Runtime restart burst | `GET /metrics` -> `runtime.restarts.total` delta + `/alerts` (`runtime_restarts_repeated`) | >= 3 restarts in 30m | >= 6 restarts in 30m |
+
+- Dashboard contract (minimum panels):
+  - `CPU/DB Canary Gate`:
+    - API latency p95 trend,
+    - runtime signal lag (`lastMs`, `avgLagMs`, `maxMs`),
+    - runtime restart delta (`runtime.restarts.total` over 30m),
+    - active rollback-critical alerts count (`/alerts`).
+  - `CPU/DB Database Pressure`:
+    - DB QPS (read+write),
+    - runtime hot-path write proxies (`runtime.hotPath.touchSessionWrites`, `runtime.hotPath.symbolStatsWrites`),
+    - execution queue lag (`worker.queueLag.execution`) as pressure correlation signal.
+- Fallback policy:
+  - if p95 or DB QPS is unavailable in local `/metrics`, use provider/APM dashboards as canonical source for those two thresholds.
+  - rollout is blocked when any critical threshold is breached until rollback/mitigation clears the signal.
+
 ## Worker Split Timing
 - Open: exact threshold for splitting API and workers into separate processes.
 - Current assumption: split when queue lag or API latency exceeds acceptable limits.

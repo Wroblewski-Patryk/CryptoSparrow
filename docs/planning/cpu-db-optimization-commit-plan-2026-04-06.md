@@ -255,7 +255,7 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
   - Tests:
     - none (docs only)
 
-- [ ] `CPDB-23 feat(obs-alerts): define CPU/DB/runtime-lag alert thresholds and dashboards`
+- [x] `CPDB-23 feat(obs-alerts): define CPU/DB/runtime-lag alert thresholds and dashboards`
   - Files:
     - `docs/planning/open-decisions.md`
     - ops config files if present (`deploy`, `monitoring`, etc.)
@@ -305,3 +305,4 @@ Scope: runtime CPU hot path, DB pressure, dashboard polling pressure, worker sca
 - 2026-04-16: Completed `CPDB-21` by adding shared-series stress regression (`5 users x 3 bots`, `BTCUSDT/5m`) that validates duplicate-event idempotency in runtime side effects, plus new `marketStreamFanout` unit coverage for single-delivery payload fanout and warmup-lock NX/PX semantics; validated with `pnpm --filter api test -- runtimeSignalLoop marketStreamFanout` (PASS).
 - 2026-04-16: Closed Group 7 (`CPDB-19..CPDB-21`). Next unchecked group is Group 8 (`CPDB-22..CPDB-24`).
 - 2026-04-16: Completed `CPDB-22` by publishing staged flag rollout runbook and rollback matrix in canonical governance/planning docs (`working-agreements`, `v1-live-release-plan`), leaving `CPDB-23..CPDB-24` as remaining Group 8 scope.
+- 2026-04-16: Completed `CPDB-23` by locking CPU/DB alert-threshold and dashboard contract in `open-decisions` (API latency p95, DB QPS, runtime lag, restart bursts), with explicit source mapping and rollout-blocking fallback policy for missing local metrics; `deploy/monitoring` config directories are currently absent in repository scope.
