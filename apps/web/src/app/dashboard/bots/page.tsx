@@ -11,7 +11,7 @@ export default function BotsPage() {
   const { t } = useI18n();
   const router = useRouter();
   const listLabel = t("dashboard.nav.botsList");
-  const createLabel = t("dashboard.backtests.createLabel");
+  const createLabel = t("dashboard.nav.createBot");
 
   return (
     <section className="w-full space-y-4">

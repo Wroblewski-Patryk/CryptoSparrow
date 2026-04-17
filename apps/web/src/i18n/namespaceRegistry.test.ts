@@ -1,6 +1,8 @@
 ﻿import { describe, expect, it } from "vitest";
 import {
   ALL_I18N_NAMESPACES,
+  buildTranslationsForRoute,
+  clearRouteTranslationCache,
   I18N_NAMESPACE_REGISTRY,
   resolveNamespacesForRoute,
 } from "./namespaceRegistry";
@@ -20,6 +22,29 @@ const collectKeys = (value: unknown, prefix = ""): string[] => {
 };
 
 describe("namespaceRegistry", () => {
+  it("builds route-scoped dictionaries with deterministic namespace ownership", () => {
+    clearRouteTranslationCache();
+    const backtestsRoute = buildTranslationsForRoute("en", "/dashboard/backtests/list") as Record<
+      string,
+      unknown
+    >;
+    const marketsRoute = buildTranslationsForRoute("en", "/dashboard/markets/list") as Record<
+      string,
+      unknown
+    >;
+
+    const read = (source: Record<string, unknown>, path: string): unknown =>
+      path.split(".").reduce<unknown>((current, key) => {
+        if (current == null || typeof current !== "object") return undefined;
+        return (current as Record<string, unknown>)[key];
+      }, source);
+
+    expect(read(backtestsRoute, "dashboard.backtests.createLabel")).toBe("Create");
+    expect(read(backtestsRoute, "dashboard.markets.title")).toBeUndefined();
+    expect(read(marketsRoute, "dashboard.markets.title")).toBe("Markets");
+    expect(read(marketsRoute, "dashboard.backtests.createLabel")).toBeUndefined();
+  });
+
   it("keeps en/pl/pt key parity for every namespace with explicit missing-key report", () => {
     const report: string[] = [];
 

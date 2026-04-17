@@ -41,7 +41,7 @@ describe("Bots list page", () => {
     render(<BotsPage />);
 
     expect(screen.getByTestId("bots-table")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "dashboard.backtests.createLabel" }));
+    fireEvent.click(screen.getByRole("button", { name: "dashboard.nav.createBot" }));
     expect(pushMock).toHaveBeenCalledWith("/dashboard/bots/create");
   });
 });

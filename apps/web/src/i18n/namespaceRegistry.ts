@@ -150,3 +150,22 @@ export const resolveNamespacesForRoute = (routePath: string): I18nNamespace[] =>
 
   return Array.from(new Set([...DEFAULT_ROUTE_NAMESPACES, ...matched.namespaces]));
 };
+
+const routeTranslationCache = new Map<string, TranslationFragment>();
+
+export const buildTranslationsForRoute = (locale: Locale, routePath: string): TranslationFragment => {
+  const namespaces = resolveNamespacesForRoute(routePath);
+  const cacheKey = `${locale}|${namespaces.join(",")}`;
+  const cached = routeTranslationCache.get(cacheKey);
+  if (cached) return cached;
+
+  const merged = mergeNamespaceTranslations(
+    namespaces.map((namespace) => I18N_NAMESPACE_REGISTRY[namespace][locale])
+  );
+  routeTranslationCache.set(cacheKey, merged);
+  return merged;
+};
+
+export const clearRouteTranslationCache = () => {
+  routeTranslationCache.clear();
+};

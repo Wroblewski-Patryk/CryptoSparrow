@@ -13,6 +13,20 @@
 - Never remove potentially shared code without verifying no remaining runtime/test/doc references.
 - Keep commits tiny and reversible: one logical concern per commit, no mixed refactor+feature payloads.
 
+## Documentation Language Guardrail (Mandatory)
+- Canonical repository documentation must be authored in English.
+- When touching a legacy non-English canonical document, normalize it to English in the same task whenever feasible.
+- If same-task normalization is out of scope, add/update a tracked backlog entry in this file before closing the task.
+- Planning updates must not silently reintroduce non-English canonical policy text.
+
+### Backlog: Legacy Non-English Docs To Normalize
+- `docs/planning/bots-menu-ia-plan-2026-04-01.md`
+- `docs/planning/dashboard-sidebar-control-prune-plan-2026-04-01.md`
+- `docs/planning/dashboard-trades-filter-polish-plan-2026-04-02.md`
+- `docs/planning/exchanges-module-manual-position-plan-2026-04-02.md`
+- `docs/planning/i18n-dashboard-bots-menu-inventory-2026-04-02.md`
+- `docs/planning/typecheck-adoption-plan-2026-04-02.md`
+
 ## Documentation Parity Policy (Mandatory)
 - Treat documentation parity as release-blocking for structural changes.
 - Any change in `apps/api/src/modules/*` directory inventory must include same-change update of `docs/modules/system-modules.md`.

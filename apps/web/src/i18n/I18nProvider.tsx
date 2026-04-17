@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { DEFAULT_LOCALE, Locale, TranslationKey, translations } from "./translations";
 import { getLocalStorageItem, setLocalStorageItem } from "@/lib/storage";
-import { resolveNamespacesForRoute } from "./namespaceRegistry";
+import { buildTranslationsForRoute, resolveNamespacesForRoute } from "./namespaceRegistry";
 
 export type I18nContextValue = {
   locale: Locale;
@@ -20,6 +20,7 @@ const LOCALE_STORAGE_KEY = "cryptosparrow-locale";
 const TIMEZONE_STORAGE_KEY = "cryptosparrow-timezone";
 const AUTO_TIMEZONE = "auto";
 const missingTranslationWarnings = new Set<string>();
+const ROUTE_CHANGE_EVENT = "cryptosparrow:i18n-route-change";
 
 const detectSystemTimeZone = () => {
   try {
@@ -44,6 +45,11 @@ const normalizeTimeZonePreference = (value: string | null | undefined) => {
   return isValidTimeZone(normalized) ? normalized : AUTO_TIMEZONE;
 };
 
+const detectRoutePath = () => {
+  if (typeof window === "undefined") return "/";
+  return window.location.pathname || "/";
+};
+
 const resolveKey = (obj: unknown, path: TranslationKey): string | undefined => {
   const value = path.split(".").reduce<unknown>((acc, chunk) => {
     if (acc && typeof acc === "object" && chunk in acc) {
@@ -55,18 +61,22 @@ const resolveKey = (obj: unknown, path: TranslationKey): string | undefined => {
   return typeof value === "string" ? value : undefined;
 };
 
-const reportMissingTranslation = (locale: Locale, key: TranslationKey, hasFallback: boolean) => {
+const reportMissingTranslation = (
+  locale: Locale,
+  key: TranslationKey,
+  hasFallback: boolean,
+  routePath: string
+) => {
   if (process.env.NODE_ENV === "production") return;
 
-  const path = typeof window === "undefined" ? "ssr" : window.location.pathname || "/";
-  const namespaces = resolveNamespacesForRoute(path);
-  const cacheKey = `${locale}|${path}|${String(key)}`;
+  const namespaces = resolveNamespacesForRoute(routePath);
+  const cacheKey = `${locale}|${routePath}|${String(key)}`;
   if (missingTranslationWarnings.has(cacheKey)) return;
 
   missingTranslationWarnings.add(cacheKey);
   const fallbackState = hasFallback ? "using EN fallback" : "missing EN fallback";
   console.warn(
-    `[i18n] Missing key "${key}" for locale "${locale}" at route "${path}" (${fallbackState}); expected namespaces: ${namespaces.join(", ")}`
+    `[i18n] Missing key "${key}" for locale "${locale}" at route "${routePath}" (${fallbackState}); expected namespaces: ${namespaces.join(", ")}`
   );
 };
 
@@ -74,6 +84,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
   const [timeZonePreference, setTimeZonePreferenceState] = useState<string>(AUTO_TIMEZONE);
   const [timeZone, setTimeZoneState] = useState<string>(detectSystemTimeZone());
+  const [routePath, setRoutePath] = useState<string>(detectRoutePath);
 
   useEffect(() => {
     const raw = getLocalStorageItem(LOCALE_STORAGE_KEY);
@@ -98,6 +109,38 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     );
   }, [timeZonePreference]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const syncRoutePath = () => {
+      setRoutePath(detectRoutePath());
+    };
+
+    const originalPushState = window.history.pushState.bind(window.history);
+    const originalReplaceState = window.history.replaceState.bind(window.history);
+
+    window.history.pushState = ((...args: Parameters<History["pushState"]>) => {
+      originalPushState(...args);
+      window.dispatchEvent(new Event(ROUTE_CHANGE_EVENT));
+    }) as History["pushState"];
+
+    window.history.replaceState = ((...args: Parameters<History["replaceState"]>) => {
+      originalReplaceState(...args);
+      window.dispatchEvent(new Event(ROUTE_CHANGE_EVENT));
+    }) as History["replaceState"];
+
+    window.addEventListener("popstate", syncRoutePath);
+    window.addEventListener(ROUTE_CHANGE_EVENT, syncRoutePath);
+    syncRoutePath();
+
+    return () => {
+      window.history.pushState = originalPushState as History["pushState"];
+      window.history.replaceState = originalReplaceState as History["replaceState"];
+      window.removeEventListener("popstate", syncRoutePath);
+      window.removeEventListener(ROUTE_CHANGE_EVENT, syncRoutePath);
+    };
+  }, []);
+
   const setLocale = useCallback((next: Locale) => {
     setLocaleState(next);
   }, []);
@@ -106,13 +149,28 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     setTimeZonePreferenceState(normalizeTimeZonePreference(next));
   }, []);
 
+  const routeTranslations = useMemo(
+    () => buildTranslationsForRoute(locale, routePath),
+    [locale, routePath]
+  );
+  const routeFallbackTranslations = useMemo(
+    () => buildTranslationsForRoute(DEFAULT_LOCALE, routePath),
+    [routePath]
+  );
+
   const t = useCallback((key: TranslationKey) => {
-    const localized = resolveKey(translations[locale], key);
+    const localized = resolveKey(routeTranslations, key);
     if (localized) return localized;
-    const fallback = resolveKey(translations[DEFAULT_LOCALE], key);
-    reportMissingTranslation(locale, key, Boolean(fallback));
-    return fallback ?? key;
-  }, [locale]);
+    const routeFallback = resolveKey(routeFallbackTranslations, key);
+    if (routeFallback) {
+      reportMissingTranslation(locale, key, true, routePath);
+      return routeFallback;
+    }
+
+    const globalFallback = resolveKey(translations[DEFAULT_LOCALE], key);
+    reportMissingTranslation(locale, key, Boolean(globalFallback), routePath);
+    return globalFallback ?? key;
+  }, [locale, routeFallbackTranslations, routePath, routeTranslations]);
 
   const value = useMemo(
     () => ({
