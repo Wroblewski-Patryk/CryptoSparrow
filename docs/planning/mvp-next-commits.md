@@ -7,11 +7,11 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `none`
+- [x] `none`
 ## NEXT
-- [ ] `none`
+- [x] `none`
 ## PIPELINE
-- [ ] `none`
+- [x] `none`
 ## GROUP QUEUE
 - [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
 - [x] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
@@ -24,7 +24,7 @@ Operational queue for one-task execution runs.
 - [x] `L10NQ-B (commits 06-11): per-module namespace split + parity/guardrail tests`
 - [x] `L10NQ-C (commits 12-15): route-level namespace loading + English docs normalization`
 ## BLOCKED
-- [ ] `none`
+- [x] `none`
 
 ## DONE
 - [x] `BTMM-C (commits 11-12): confidence pack + closure`

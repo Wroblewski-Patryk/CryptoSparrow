@@ -1,6 +1,6 @@
 # Dashboard Trade Action UX Plan (DBACT) - 2026-04-01
 
-Status: implemented (2026-04-01, write-time + read-time-safe path; pending manual smoke only).
+Status: implemented (2026-04-01 core path; manual smoke closure synced 2026-04-17).
 Note (2026-04-04): Financial rendering semantics were finalized in `docs/architecture/dashboard-trade-history-financial-semantics-contract.md` (`OPEN/DCA -> realized "-"`, `CLOSE -> realized value`) and override older placeholder assumptions in this plan.
 
 ## Objective
@@ -133,7 +133,7 @@ Expected value after rollout: `0`.
 - [x] `DBACT-07 feat(web-bots): align bots runtime history action + margin/fee/pnl rendering with dashboard contract`
 - [x] `DBACT-08 test(api): add monitor contract tests for OPEN/DCA/CLOSE mapping and non-null fee/realized/margin fields`
 - [x] `DBACT-09 test(web): add component tests for action badges, margin column, and non-placeholder financial values`
-- [ ] `DBACT-10 qa(smoke): manual verification on real paper-session timeline (open -> dca -> close) including fee/pnl/margin coherence`
+- [x] `DBACT-10 qa(smoke): manual verification on real paper-session timeline (open -> dca -> close) including fee/pnl/margin coherence`
 
 ## Implementation Notes (2026-04-01)
 - API read-model updated in `apps/api/src/modules/bots/bots.service.ts`:

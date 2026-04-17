@@ -1,6 +1,6 @@
 # Cache / Runtime Hardening Plan (2026-04-03)
 
-Status: partially completed; remaining tasks tracked in canonical plan (reconciled 2026-04-05)  
+Status: implemented; canonical sync reconciled (2026-04-17)  
 Owner: Web + API + Ops  
 Scope: eliminate stale session/runtime data in production (web + api + PWA + proxy) while preserving performance.
 
@@ -58,29 +58,29 @@ Expected headers:
 
 ## Phase A - Cache policy hardening on API
 - [x] `CACHE-01 feat(api-headers): add authenticated no-store middleware for /auth, /dashboard, /admin responses`
-- [ ] `CACHE-02 test(api-headers): add route tests asserting no-store/vary headers on protected endpoints`
+- [x] `CACHE-02 test(api-headers): add route tests asserting no-store/vary headers on protected endpoints`
 
 Exit criteria:
 - All protected endpoints return anti-cache headers consistently.
 
 ## Phase B - Web/PWA runtime safety
 - [x] `CACHE-03 fix(web-sw): restrict service worker runtime caching to static assets only, bypass API/runtime payloads`
-- [ ] `CACHE-04 feat(web-sw-lifecycle): add service-worker update strategy (registration update + activation handoff) to reduce stale clients after deploy`
-- [ ] `CACHE-05 test(web-pwa): add regression checks for market/dashboard runtime requests not served from SW cache`
+- [x] `CACHE-04 feat(web-sw-lifecycle): add service-worker update strategy (registration update + activation handoff) to reduce stale clients after deploy`
+- [x] `CACHE-05 test(web-pwa): add regression checks for market/dashboard runtime requests not served from SW cache`
 
 Exit criteria:
 - Bot list/session data refreshes without hard reload.
 
 ## Phase C - Edge/Proxy/Coolify contract
 - [x] `CACHE-06 docs(ops-coolify): document reverse-proxy cache rules (never cache /auth|/dashboard|/admin, cache static only)`
-- [ ] `CACHE-07 docs(runbook): add stale-cache incident playbook with clear verify/mitigate/rollback steps`
+- [x] `CACHE-07 docs(runbook): add stale-cache incident playbook with clear verify/mitigate/rollback steps`
 
 Exit criteria:
 - Ops can verify effective cache behavior from headers and reproduce mitigation safely.
 
 ## Phase D - Runtime UX resilience
-- [ ] `CACHE-08 feat(web-runtime): add explicit stale-data guard in dashboard/bots runtime (age watchdog + transparent warning state)`
-- [ ] `CACHE-09 test(web-runtime): cover stale-age warning and recovery after fresh payload arrival`
+- [x] `CACHE-08 feat(web-runtime): add explicit stale-data guard in dashboard/bots runtime (age watchdog + transparent warning state)`
+- [x] `CACHE-09 test(web-runtime): cover stale-age warning and recovery after fresh payload arrival`
 
 Exit criteria:
 - User sees deterministic stale/fresh state without visual ambiguity.

@@ -1,6 +1,6 @@
 # Exchange Placeholder Adapters Plan (EXPH) - 2026-04-04
 
-Status: partially completed; remaining tasks tracked in canonical plan (reconciled 2026-04-05).
+Status: implemented; canonical sync reconciled (2026-04-17).
 
 ## Objective
 
@@ -93,11 +93,11 @@ Phase C - API safety gates
 Phase D - web wiring
 - [x] `EXPH-08 feat(web-types): extend Exchange unions/options across Markets/Bots/Profile modules`
 - [x] `EXPH-09 feat(web-ux): render placeholder badges/hints for unsupported exchange operations`
-- [ ] `EXPH-10 test(web): add regression coverage for exchange select options and not-implemented UX states`
+- [x] `EXPH-10 test(web): add regression coverage for exchange select options and not-implemented UX states`
 
 Phase E - verification
-- [ ] `EXPH-11 test(api): add contract tests for placeholder exchange fail-closed responses`
-- [ ] `EXPH-12 chore(qa): manual smoke checklist for colleague exchange testing (create/save/read + blocked execute)`
+- [x] `EXPH-11 test(api): add contract tests for placeholder exchange fail-closed responses`
+- [x] `EXPH-12 chore(qa): manual smoke checklist for colleague exchange testing (create/save/read + blocked execute)`
 
 ## Done Criteria
 
