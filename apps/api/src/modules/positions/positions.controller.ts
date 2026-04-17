@@ -2,7 +2,11 @@ import { Request, Response } from 'express';
 import { sendError } from '../../utils/apiError';
 import { sendValidationError } from '../../utils/formatZodError';
 import { livePositionReconciliationLoop } from './livePositionReconciliation.service';
-import { ListPositionsQuerySchema, UpdatePositionManagementModeSchema } from './positions.types';
+import {
+  ListPositionsQuerySchema,
+  UpdatePositionManagementModeSchema,
+  UpdatePositionManualParamsSchema,
+} from './positions.types';
 import * as positionsService from './positions.service';
 
 export const listPositions = async (req: Request, res: Response) => {
@@ -89,6 +93,31 @@ export const updatePositionManagementMode = async (req: Request, res: Response) 
     if (!updated) return sendError(res, 404, 'Not found');
     return res.json(updated);
   } catch (error) {
+    return sendValidationError(res, error);
+  }
+};
+
+export const updatePositionManualParams = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const body = UpdatePositionManualParamsSchema.parse(req.body);
+    const updated = await positionsService.updatePositionManualParams(
+      userId,
+      req.params.id,
+      body
+    );
+
+    if (!updated) return sendError(res, 404, 'Not found');
+    return res.json(updated);
+  } catch (error) {
+    if (error instanceof positionsService.PositionManualUpdateError) {
+      if (error.code === 'POSITION_NOT_OPEN') {
+        return sendError(res, 409, error.message);
+      }
+      return sendError(res, 400, error.message);
+    }
     return sendValidationError(res, error);
   }
 };

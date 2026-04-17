@@ -293,6 +293,142 @@ describe('Orders and positions read contract', () => {
     expect(updated.managementMode).toBe('MANUAL_MANAGED');
   });
 
+  it('updates position TP/SL manually for owner and persists audit metadata', async () => {
+    const ownerAgent = await registerAndLogin('positions-manual-edit-owner@example.com');
+    const otherAgent = await registerAndLogin('positions-manual-edit-other@example.com');
+    const ownerId = await getUserId('positions-manual-edit-owner@example.com');
+
+    const position = await prisma.position.create({
+      data: {
+        userId: ownerId,
+        symbol: 'BTCUSDT',
+        side: 'LONG',
+        status: 'OPEN',
+        entryPrice: 63000,
+        quantity: 0.05,
+        takeProfit: null,
+        stopLoss: null,
+        managementMode: 'BOT_MANAGED',
+        origin: 'BOT',
+      },
+    });
+
+    const forbiddenRes = await otherAgent
+      .patch(`/dashboard/positions/${position.id}/manual-update`)
+      .send({ takeProfit: 64000, stopLoss: 62000, notes: 'other-user', lockRules: true });
+    expect(forbiddenRes.status).toBe(404);
+    expect(forbiddenRes.body.error.message).toBe('Not found');
+
+    const updateRes = await ownerAgent
+      .patch(`/dashboard/positions/${position.id}/manual-update`)
+      .send({
+        takeProfit: 64000,
+        stopLoss: 62000,
+        notes: 'manual runtime adjustment',
+        lockRules: true,
+      });
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.takeProfit).toBe(64000);
+    expect(updateRes.body.stopLoss).toBe(62000);
+
+    const updated = await prisma.position.findUniqueOrThrow({
+      where: { id: position.id },
+    });
+    expect(updated.takeProfit).toBe(64000);
+    expect(updated.stopLoss).toBe(62000);
+
+    const auditLog = await prisma.log.findFirst({
+      where: {
+        userId: ownerId,
+        action: 'position.manual_update',
+        entityType: 'POSITION',
+        entityId: position.id,
+      },
+      orderBy: { occurredAt: 'desc' },
+    });
+    expect(auditLog).not.toBeNull();
+    expect(auditLog?.source).toBe('positions.service');
+    const metadata = (auditLog?.metadata ?? {}) as {
+      previous?: { takeProfit?: number | null; stopLoss?: number | null };
+      next?: { takeProfit?: number | null; stopLoss?: number | null };
+      notes?: string | null;
+      lockRules?: boolean;
+    };
+    expect(metadata.previous?.takeProfit ?? null).toBeNull();
+    expect(metadata.previous?.stopLoss ?? null).toBeNull();
+    expect(metadata.next?.takeProfit ?? null).toBe(64000);
+    expect(metadata.next?.stopLoss ?? null).toBe(62000);
+    expect(metadata.notes ?? null).toBe('manual runtime adjustment');
+    expect(metadata.lockRules).toBe(true);
+  });
+
+  it('rejects unsafe manual TP/SL updates and closed-position edits', async () => {
+    const ownerAgent = await registerAndLogin('positions-manual-edit-safety-owner@example.com');
+    const ownerId = await getUserId('positions-manual-edit-safety-owner@example.com');
+
+    const longPosition = await prisma.position.create({
+      data: {
+        userId: ownerId,
+        symbol: 'ETHUSDT',
+        side: 'LONG',
+        status: 'OPEN',
+        entryPrice: 3000,
+        quantity: 0.4,
+        managementMode: 'BOT_MANAGED',
+        origin: 'BOT',
+      },
+    });
+
+    const unsafeLongTpRes = await ownerAgent
+      .patch(`/dashboard/positions/${longPosition.id}/manual-update`)
+      .send({ takeProfit: 2900 });
+    expect(unsafeLongTpRes.status).toBe(400);
+    expect(unsafeLongTpRes.body.error.message).toBe(
+      'Take profit must be above entry price for LONG position.'
+    );
+
+    const shortPosition = await prisma.position.create({
+      data: {
+        userId: ownerId,
+        symbol: 'BNBUSDT',
+        side: 'SHORT',
+        status: 'OPEN',
+        entryPrice: 600,
+        quantity: 1.2,
+        managementMode: 'BOT_MANAGED',
+        origin: 'BOT',
+      },
+    });
+
+    const unsafeShortSlRes = await ownerAgent
+      .patch(`/dashboard/positions/${shortPosition.id}/manual-update`)
+      .send({ stopLoss: 590 });
+    expect(unsafeShortSlRes.status).toBe(400);
+    expect(unsafeShortSlRes.body.error.message).toBe(
+      'Stop loss must be above entry price for SHORT position.'
+    );
+
+    const closedPosition = await prisma.position.create({
+      data: {
+        userId: ownerId,
+        symbol: 'SOLUSDT',
+        side: 'LONG',
+        status: 'CLOSED',
+        entryPrice: 180,
+        quantity: 2,
+        managementMode: 'BOT_MANAGED',
+        origin: 'BOT',
+        closedAt: new Date('2026-04-12T10:00:00.000Z'),
+      },
+    });
+
+    const closedUpdateRes = await ownerAgent
+      .patch(`/dashboard/positions/${closedPosition.id}/manual-update`)
+      .send({ takeProfit: 190 });
+    expect(closedUpdateRes.status).toBe(409);
+    expect(closedUpdateRes.body.error.message).toBe('Only OPEN positions can be manually updated.');
+  });
+
   it('keeps EXCHANGE_SYNC BOT_MANAGED runtime positions visible for LIVE bot even when PAPER bot shares symbol', async () => {
     const ownerAgent = await registerAndLogin('runtime-ownership-live-paper@example.com');
     const ownerId = await getUserId('runtime-ownership-live-paper@example.com');

@@ -1,5 +1,6 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '../../prisma/client';
-import { ListPositionsQuery } from './positions.types';
+import { ListPositionsQuery, UpdatePositionManualParamsInput } from './positions.types';
 import { decrypt } from '../../utils/crypto';
 
 export type ExchangePositionSnapshotItem = {
@@ -118,6 +119,70 @@ export class ExchangeSnapshotError extends Error {
     this.name = 'ExchangeSnapshotError';
   }
 }
+
+export class PositionManualUpdateError extends Error {
+  constructor(
+    public readonly code:
+      | 'POSITION_NOT_OPEN'
+      | 'TAKE_PROFIT_INVALID_FOR_SIDE'
+      | 'STOP_LOSS_INVALID_FOR_SIDE'
+      | 'STOP_RANGE_INVALID',
+    message: string
+  ) {
+    super(message);
+    this.name = 'PositionManualUpdateError';
+  }
+}
+
+const validateDirectionalStops = (params: {
+  side: 'LONG' | 'SHORT';
+  entryPrice: number;
+  takeProfit: number | null;
+  stopLoss: number | null;
+}) => {
+  const { side, entryPrice, takeProfit, stopLoss } = params;
+
+  if (side === 'LONG') {
+    if (takeProfit != null && takeProfit <= entryPrice) {
+      throw new PositionManualUpdateError(
+        'TAKE_PROFIT_INVALID_FOR_SIDE',
+        'Take profit must be above entry price for LONG position.'
+      );
+    }
+    if (stopLoss != null && stopLoss >= entryPrice) {
+      throw new PositionManualUpdateError(
+        'STOP_LOSS_INVALID_FOR_SIDE',
+        'Stop loss must be below entry price for LONG position.'
+      );
+    }
+    if (takeProfit != null && stopLoss != null && stopLoss >= takeProfit) {
+      throw new PositionManualUpdateError(
+        'STOP_RANGE_INVALID',
+        'Stop loss must be below take profit for LONG position.'
+      );
+    }
+    return;
+  }
+
+  if (takeProfit != null && takeProfit >= entryPrice) {
+    throw new PositionManualUpdateError(
+      'TAKE_PROFIT_INVALID_FOR_SIDE',
+      'Take profit must be below entry price for SHORT position.'
+    );
+  }
+  if (stopLoss != null && stopLoss <= entryPrice) {
+    throw new PositionManualUpdateError(
+      'STOP_LOSS_INVALID_FOR_SIDE',
+      'Stop loss must be above entry price for SHORT position.'
+    );
+  }
+  if (takeProfit != null && stopLoss != null && stopLoss <= takeProfit) {
+    throw new PositionManualUpdateError(
+      'STOP_RANGE_INVALID',
+      'Stop loss must be above take profit for SHORT position.'
+    );
+  }
+};
 
 const defaultBinanceClientFactory = async (credentials: {
   apiKey: string;
@@ -358,6 +423,97 @@ export const updatePositionManagementMode = async (
   return prisma.position.findFirst({
     where: { id, userId },
   });
+};
+
+export const updatePositionManualParams = async (
+  userId: string,
+  id: string,
+  input: UpdatePositionManualParamsInput
+) => {
+  const existing = await prisma.position.findFirst({
+    where: { id, userId },
+    select: {
+      id: true,
+      botId: true,
+      strategyId: true,
+      status: true,
+      side: true,
+      entryPrice: true,
+      takeProfit: true,
+      stopLoss: true,
+    },
+  });
+  if (!existing) return null;
+  if (existing.status !== 'OPEN') {
+    throw new PositionManualUpdateError(
+      'POSITION_NOT_OPEN',
+      'Only OPEN positions can be manually updated.'
+    );
+  }
+
+  const nextTakeProfit = input.takeProfit === undefined ? existing.takeProfit : input.takeProfit;
+  const nextStopLoss = input.stopLoss === undefined ? existing.stopLoss : input.stopLoss;
+
+  validateDirectionalStops({
+    side: existing.side,
+    entryPrice: existing.entryPrice,
+    takeProfit: nextTakeProfit,
+    stopLoss: nextStopLoss,
+  });
+
+  let updatedPosition: Awaited<ReturnType<typeof getPosition>> = null;
+  const hasStopUpdate = input.takeProfit !== undefined || input.stopLoss !== undefined;
+  if (hasStopUpdate) {
+    const data: Prisma.PositionUpdateInput = {};
+    if (input.takeProfit !== undefined) data.takeProfit = input.takeProfit;
+    if (input.stopLoss !== undefined) data.stopLoss = input.stopLoss;
+    updatedPosition = await prisma.position.update({
+      where: { id: existing.id },
+      data,
+    });
+  } else {
+    updatedPosition = await getPosition(userId, existing.id);
+  }
+
+  const notes = input.notes ?? null;
+  const lockRules = input.lockRules ?? false;
+  try {
+    await prisma.log.create({
+      data: {
+        userId,
+        botId: existing.botId,
+        strategyId: existing.strategyId,
+        action: 'position.manual_update',
+        level: 'INFO',
+        source: 'positions.service',
+        message: `Manual position update applied for ${existing.id}`,
+        category: 'TRADING_DECISION',
+        entityType: 'POSITION',
+        entityId: existing.id,
+        actor: 'user',
+        metadata: {
+          fields: {
+            takeProfitChanged: input.takeProfit !== undefined,
+            stopLossChanged: input.stopLoss !== undefined,
+          },
+          previous: {
+            takeProfit: existing.takeProfit,
+            stopLoss: existing.stopLoss,
+          },
+          next: {
+            takeProfit: nextTakeProfit,
+            stopLoss: nextStopLoss,
+          },
+          notes,
+          lockRules,
+        } as Prisma.InputJsonValue,
+      },
+    });
+  } catch {
+    // Audit log write should not block manual TP/SL updates.
+  }
+
+  return updatedPosition;
 };
 
 export const fetchExchangePositionsSnapshot = async (userId: string): Promise<ExchangePositionSnapshot> => {

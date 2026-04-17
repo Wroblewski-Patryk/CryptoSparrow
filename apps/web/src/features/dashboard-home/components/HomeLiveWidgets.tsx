@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { LuBot, LuChartCandlestick, LuChartLine, LuChevronDown, LuListChecks, LuPackageOpen, LuPencil, LuWallet, LuX } from "react-icons/lu";
+import { toast } from "sonner";
 
 import { ErrorState } from "../../../ui/components/ViewState";
 import { SkeletonCardBlock, SkeletonKpiRow, SkeletonTableRows } from "../../../ui/components/loading";
@@ -13,6 +14,7 @@ import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { createMarketStreamEventSource } from "../../../lib/marketStream";
 import { normalizeSymbol } from "@/lib/symbols";
 import { toTimestamp } from "@/lib/time";
+import { getAxiosMessage } from "@/lib/getAxiosMessage";
 import {
   BotRuntimePositionItem,
   BotRuntimeTrade,
@@ -31,6 +33,7 @@ import {
   pruneStickyFavorableMoveMap,
   resolveFallbackTtpProtectedPercent,
 } from "../../../features/bots/utils/trailingStopDisplay";
+import { updatePositionManualParams } from "../../../features/positions/services/positions.service";
 import RuntimeDataSection from "./home-live-widgets/RuntimeDataSection";
 import RuntimeOnboardingSection from "./home-live-widgets/RuntimeOnboardingSection";
 import RuntimeSidebarSection from "./home-live-widgets/RuntimeSidebarSection";
@@ -212,6 +215,14 @@ const DirectionPill = ({ value }: { value: DirectionPillValue }) => (
   </span>
 );
 
+const parseOptionalPositivePriceInput = (value: string): number | null | "invalid" => {
+  const normalized = value.trim();
+  if (!normalized) return null;
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed) || parsed <= 0) return "invalid";
+  return parsed;
+};
+
 type TradeActionValue = "OPEN" | "DCA" | "CLOSE" | "UNKNOWN";
 type TradeActionReasonValue =
   | "SIGNAL_ENTRY"
@@ -319,6 +330,7 @@ export default function HomeLiveWidgets() {
     t,
   });
   const [positionEditDraft, setPositionEditDraft] = useState<PositionEditDraft | null>(null);
+  const [isSavingPositionEdit, setIsSavingPositionEdit] = useState(false);
   const runtimeOnboardingSteps = useMemo(
     () => [
       {
@@ -654,8 +666,18 @@ export default function HomeLiveWidgets() {
     closeActionBaseLabel === "Close"
       ? "Adjust TP/SL and notes. Save action is enabled in the API integration step."
       : "Dostosuj TP/SL i notatki. Zapis zostanie aktywowany po podpieciu API.";
+  const editPositionSaveLabel = closeActionBaseLabel === "Close" ? "Save changes" : "Zapisz zmiany";
+  const editPositionSaveSuccessLabel =
+    closeActionBaseLabel === "Close" ? "Position settings updated." : "Ustawienia pozycji zaktualizowane.";
+  const editPositionSaveErrorLabel =
+    closeActionBaseLabel === "Close" ? "Failed to save position settings." : "Nie udalo sie zapisac ustawien pozycji.";
+  const editPositionInvalidValueLabel =
+    closeActionBaseLabel === "Close"
+      ? "TP/SL must be positive numbers or empty values."
+      : "TP/SL musza byc dodatnimi liczbami lub pustymi polami.";
 
   const openPositionEdit = useCallback((position: OpenPositionWithLive) => {
+    setIsSavingPositionEdit(false);
     setPositionEditDraft({
       position,
       takeProfit: position.takeProfit != null ? String(position.takeProfit) : "",
@@ -665,8 +687,46 @@ export default function HomeLiveWidgets() {
     });
   }, []);
   const closePositionEdit = useCallback(() => {
+    setIsSavingPositionEdit(false);
     setPositionEditDraft(null);
   }, []);
+  const handleSavePositionEdit = useCallback(async () => {
+    if (!positionEditDraft) return;
+    const parsedTakeProfit = parseOptionalPositivePriceInput(positionEditDraft.takeProfit);
+    const parsedStopLoss = parseOptionalPositivePriceInput(positionEditDraft.stopLoss);
+    if (parsedTakeProfit === "invalid" || parsedStopLoss === "invalid") {
+      toast.error(editPositionInvalidValueLabel);
+      return;
+    }
+
+    setIsSavingPositionEdit(true);
+    try {
+      await updatePositionManualParams(positionEditDraft.position.id, {
+        takeProfit: parsedTakeProfit,
+        stopLoss: parsedStopLoss,
+        notes: positionEditDraft.notes.trim().length > 0 ? positionEditDraft.notes.trim() : null,
+        lockRules: positionEditDraft.lockRules,
+      });
+      toast.success(editPositionSaveSuccessLabel);
+      closePositionEdit();
+      await load({ silent: true });
+    } catch (error) {
+      toast.error(getAxiosMessage(error) ?? editPositionSaveErrorLabel);
+    } finally {
+      setIsSavingPositionEdit(false);
+    }
+  }, [
+    closePositionEdit,
+    editPositionInvalidValueLabel,
+    editPositionSaveErrorLabel,
+    editPositionSaveSuccessLabel,
+    load,
+    positionEditDraft,
+  ]);
+  const closePositionEditSafely = useCallback(() => {
+    if (isSavingPositionEdit) return;
+    closePositionEdit();
+  }, [closePositionEdit, isSavingPositionEdit]);
 
   const { isClosingPosition, handleCloseRuntimePosition } = useCloseRuntimePositionAction({
     closePositionErrorLabel,
@@ -1192,7 +1252,7 @@ export default function HomeLiveWidgets() {
         open={Boolean(positionEditDraft)}
         title={editPositionModalTitle}
         description={editPositionModalDescription}
-        onClose={closePositionEdit}
+        onClose={closePositionEditSafely}
       >
         {positionEditDraft ? (
           <div className="space-y-4">
@@ -1234,6 +1294,7 @@ export default function HomeLiveWidgets() {
                   min="0"
                   className="input input-bordered input-sm"
                   value={positionEditDraft.takeProfit}
+                  disabled={isSavingPositionEdit}
                   onChange={(event) =>
                     setPositionEditDraft((current) =>
                       current ? { ...current, takeProfit: event.target.value } : current
@@ -1250,6 +1311,7 @@ export default function HomeLiveWidgets() {
                   min="0"
                   className="input input-bordered input-sm"
                   value={positionEditDraft.stopLoss}
+                  disabled={isSavingPositionEdit}
                   onChange={(event) =>
                     setPositionEditDraft((current) =>
                       current ? { ...current, stopLoss: event.target.value } : current
@@ -1263,6 +1325,7 @@ export default function HomeLiveWidgets() {
               <textarea
                 className="textarea textarea-bordered min-h-20"
                 value={positionEditDraft.notes}
+                disabled={isSavingPositionEdit}
                 onChange={(event) =>
                   setPositionEditDraft((current) =>
                     current ? { ...current, notes: event.target.value } : current
@@ -1276,6 +1339,7 @@ export default function HomeLiveWidgets() {
                 type="checkbox"
                 className="checkbox checkbox-sm"
                 checked={positionEditDraft.lockRules}
+                disabled={isSavingPositionEdit}
                 onChange={(event) =>
                   setPositionEditDraft((current) =>
                     current ? { ...current, lockRules: event.target.checked } : current
@@ -1287,8 +1351,22 @@ export default function HomeLiveWidgets() {
               </span>
             </label>
             <div className="modal-action mt-0">
-              <button type="button" className="btn btn-outline btn-sm" onClick={closePositionEdit}>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={closePositionEdit}
+                disabled={isSavingPositionEdit}
+              >
                 {closeActionBaseLabel === "Close" ? "Close" : "Zamknij"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => void handleSavePositionEdit()}
+                disabled={isSavingPositionEdit}
+              >
+                {isSavingPositionEdit ? <span className="loading loading-spinner loading-xs" aria-hidden /> : null}
+                {editPositionSaveLabel}
               </button>
             </div>
           </div>

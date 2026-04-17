@@ -15,3 +15,30 @@ export const UpdatePositionManagementModeSchema = z.object({
 });
 
 export type UpdatePositionManagementModeInput = z.infer<typeof UpdatePositionManagementModeSchema>;
+
+const optionalPositiveNumber = z.union([z.number().positive(), z.null()]).optional();
+
+export const UpdatePositionManualParamsSchema = z
+  .object({
+    takeProfit: optionalPositiveNumber,
+    stopLoss: optionalPositiveNumber,
+    notes: z
+      .string()
+      .trim()
+      .max(500)
+      .optional()
+      .transform((value) => (typeof value === 'string' && value.length > 0 ? value : null)),
+    lockRules: z.boolean().optional().default(false),
+  })
+  .refine(
+    (value) =>
+      value.takeProfit !== undefined ||
+      value.stopLoss !== undefined ||
+      value.notes !== null ||
+      value.lockRules === true,
+    {
+    message: 'At least one manual update field is required.',
+    }
+  );
+
+export type UpdatePositionManualParamsInput = z.infer<typeof UpdatePositionManualParamsSchema>;

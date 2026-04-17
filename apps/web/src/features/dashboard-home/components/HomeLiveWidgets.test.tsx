@@ -11,6 +11,7 @@ const listBotRuntimeSessionSymbolStatsMock = vi.hoisted(() => vi.fn());
 const listBotRuntimeSessionPositionsMock = vi.hoisted(() => vi.fn());
 const listBotRuntimeSessionTradesMock = vi.hoisted(() => vi.fn());
 const closeBotRuntimeSessionPositionMock = vi.hoisted(() => vi.fn());
+const updatePositionManualParamsMock = vi.hoisted(() => vi.fn());
 const lookupCoinIconsMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../../../features/bots/services/bots.service", () => ({
@@ -27,6 +28,10 @@ vi.mock("../../../features/icons/services/icons.service", () => ({
   lookupCoinIcons: lookupCoinIconsMock,
 }));
 
+vi.mock("../../../features/positions/services/positions.service", () => ({
+  updatePositionManualParams: updatePositionManualParamsMock,
+}));
+
 describe("HomeLiveWidgets", () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -39,6 +44,12 @@ describe("HomeLiveWidgets", () => {
       status: "closed",
       positionId: "position-default",
       orderId: "order-default",
+    });
+    updatePositionManualParamsMock.mockReset();
+    updatePositionManualParamsMock.mockResolvedValue({
+      id: "position-default",
+      takeProfit: null,
+      stopLoss: null,
     });
   });
 
