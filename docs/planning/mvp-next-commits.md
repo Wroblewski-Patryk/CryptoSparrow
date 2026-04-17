@@ -7,26 +7,28 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `UXR-23 feat(web-bots-list): hide assistant action in V1 list view`
-- [ ] `UXR-24 refactor(web-bots-runtime): tabbed runtime layout with dashboard-like readability`
-- [ ] `UXR-25 fix(web-runtime-refresh): remove local refresh controls and use automatic interval only`
-- [ ] `UXR-26 fix(api-bots-duplicate-guard): enforce uniqueness by wallet+market+strategy tuple`
-- [ ] `UXR-27 ux(web-bot-form): simplify IA (one section, two rows), clarify live opt-in, complete i18n`
-## NEXT
-- [ ] `UXR-28 fix(web-backtests-breadcrumb): normalize labels to List/Create and make module header linkable`
-- [ ] `UXR-29 fix(web-footer-mobile): center both dashboard footer rows on mobile`
-- [ ] `UXR-30 qa(regression-pack): run focused API+WEB tests and manual smoke for live/paper parity`
 - [ ] `L10NQ-01 docs(contract): freeze remediation scope and English-only documentation baseline`
 - [ ] `L10NQ-02 qa(scan): capture baseline inventory of locale clamps and hardcoded-copy hotspots`
-## PIPELINE
 - [ ] `L10NQ-03 fix(web-backtest-locale): remove EN/PL clamp in backtest module`
 - [ ] `L10NQ-04 test(web-backtest-i18n): add regression coverage for Portuguese backtest locale path`
 - [ ] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
+## NEXT
+- [ ] `L10NQ-06 feat(i18n-namespaces): split translations by module/route domain`
+- [ ] `L10NQ-07 refactor(i18n-registry): add explicit namespace registry and route-domain mapping`
+- [ ] `L10NQ-08 refactor(web-language-switcher): localize language labels via translation keys`
+- [ ] `L10NQ-09 test(i18n-parity): enforce key parity across en/pl/pt for every namespace`
+- [ ] `L10NQ-10 test(i18n-guardrails): detect locale clamps and hardcoded-copy regressions`
+## PIPELINE
+- [ ] `L10NQ-11 l10n(pt-content): replace placeholder EN copy in PT namespaces with real pt-PT content`
+- [ ] `L10NQ-12 feat(i18n-route-loading): introduce route-level namespace loading`
+- [ ] `L10NQ-13 test(i18n-route-loading): verify no missing-key flicker and stable locale persistence`
+- [ ] `L10NQ-14 docs(localization): rewrite localization policy/qa docs to English-only and en/pl/pt contract`
+- [ ] `L10NQ-15 docs(governance): add docs-language guardrail and backlog for remaining non-English docs`
 ## GROUP QUEUE
 - [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
 - [x] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
 - [x] `UXR-C (commits 16-22): advanced table rollout + logs module completion`
-- [ ] `UXR-D (commits 23-30): bots IA/runtime polish + breadcrumb/footer + regression closure`
+- [x] `UXR-D (commits 23-30): bots IA/runtime polish + breadcrumb/footer + regression closure`
 - [ ] `L10NQ-A (commits 01-05): i18n P0 blockers (backtest clamp + wrapper hardcoded copy)`
 - [ ] `L10NQ-B (commits 06-11): per-module namespace split + parity/guardrail tests`
 - [ ] `L10NQ-C (commits 12-15): route-level namespace loading + English docs normalization`
@@ -34,6 +36,24 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `UXR-D (commits 23-30): bots IA/runtime polish + breadcrumb/footer + regression closure`
+  - 2026-04-17: Closed `UXR-D` by completing `UXR-23..UXR-30` (removed list-level assistant action, improved bots-runtime readability tabs, removed local runtime refresh controls in favor of automatic refresh, enforced duplicate-active guard by `wallet+strategy+market-group` tuple, simplified bot-form IA into one two-row setup section with full i18n copy, normalized backtests breadcrumb labels to `List/Create` with linkable module title, centered dashboard footer rows on mobile, and executed focused regression/build/deploy-parity pack). Validation: API sequential e2e (`orders-positions`, `apiKey`, `markets`, `wallets`, `bots.duplicate-guard`, `logs`) => `49/49 PASS`; WEB focused pack (`HomeLiveWidgets`, `BotCreateEditForm`, `BotsManagement`, `BotsListTable`, `ApiKeyForm`, `AuditTrailView`, `PageTitle.a11y`, `Footer.layout`) => `49/49 PASS`; `pnpm --filter api run typecheck` + `pnpm --filter api build` + `pnpm --filter web run typecheck` + `pnpm --filter web run build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
+- [x] `UXR-30 qa(regression-pack): run focused API+WEB tests and manual smoke for live/paper parity`
+  - 2026-04-17: Executed focused parity regression pack covering dashboard runtime tabs/actions/manual order path, markets composition, profile sync, wallet edit guard, bots duplicate guard, runtime auto-refresh behavior, and logs completeness; all targeted suites + build parity checks passed.
+- [x] `UXR-29 fix(web-footer-mobile): center both dashboard footer rows on mobile`
+  - 2026-04-17: Updated dashboard footer container alignment to center both rows on mobile and keep split layout on desktop; added `Footer.layout.test.tsx` regression for class-level contract.
+- [x] `UXR-28 fix(web-backtests-breadcrumb): normalize labels to List/Create and make module header linkable`
+  - 2026-04-17: Normalized backtests breadcrumb/action labels to `List/Create` and added module-title linkability when breadcrumb module item has `href`, with coverage in `PageTitle.a11y.test.tsx`.
+- [x] `UXR-27 ux(web-bot-form): simplify IA (one section, two rows), clarify live opt-in, complete i18n`
+  - 2026-04-17: Refactored bot create/edit form to one setup section with two-row IA (identity/context + runtime toggles/summary), added live opt-in helper copy and paper-mode info block, and moved remaining hardcoded form copy to dashboard-bots i18n namespaces (`en/pl/pt`).
+- [x] `UXR-26 fix(api-bots-duplicate-guard): enforce uniqueness by wallet+market+strategy tuple`
+  - 2026-04-17: Extended duplicate-active guard to include `walletId` on create/update paths, updated API conflict copy, and added e2e coverage allowing active duplicate only when wallet differs.
+- [x] `UXR-25 fix(web-runtime-refresh): remove local refresh controls and use automatic interval only`
+  - 2026-04-17: Removed monitoring-level auto-refresh toggle/manual refresh button and hardened monitoring controller to always use automatic refresh cadence while monitoring tab is active.
+- [x] `UXR-24 refactor(web-bots-runtime): tabbed runtime layout with dashboard-like readability`
+  - 2026-04-17: Refined bots module tabs and monitoring quick-navigation into clearer tabbed layouts with compact icon+label affordances for better runtime readability.
+- [x] `UXR-23 feat(web-bots-list): hide assistant action in V1 list view`
+  - 2026-04-17: Removed Assistant action from bots list row actions while keeping assistant route/feature intact and updated list regression assertions.
 - [x] `UXR-C (commits 16-22): advanced table rollout + logs module completion`
   - 2026-04-17: Closed `UXR-C` by completing `UXR-16..UXR-22` (API-key form IA reorder, profile sync determinism+audit observability, wallets migration to shared `DataTable`, active-bot wallet edit guard, `DataTable` advanced-mode core, rollout to wallets/markets/strategies/backtests/bots, and logs module migration + bot runtime/execution/sync completeness API assertions). Validation pack: `pnpm --filter web test -- src/features/profile/components/ApiKeyForm.test.tsx src/ui/components/DataTable.test.tsx src/features/wallets/components/WalletsListTable.test.tsx src/features/logs/components/AuditTrailView.test.tsx` => `18/18 PASS`, `pnpm --filter api test -- src/modules/profile/apiKey/apiKey.e2e.test.ts src/modules/wallets/wallets.crud.e2e.test.ts src/modules/logs/logs.e2e.test.ts` => `27/27 PASS`, `pnpm --filter api run typecheck` + `pnpm --filter api build` + `pnpm --filter web run typecheck` + `pnpm --filter web run build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
 - [x] `UXR-22 feat(web+api-logs): migrate logs view to unified table UX and verify bot-message completeness`

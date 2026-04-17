@@ -1694,16 +1694,24 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `UXR-20 feat(web-table-core): shared advanced table options (column visibility + expandable details)`
 - [x] `UXR-21 feat(web-tables): apply advanced table mode to wallets/markets/strategies/backtests/bots`
 - [x] `UXR-22 feat(web+api-logs): migrate logs view to unified table UX and verify bot-message completeness`
-- [ ] `UXR-23 feat(web-bots-list): hide assistant action in V1 list view`
-- [ ] `UXR-24 refactor(web-bots-runtime): tabbed runtime layout with dashboard-like readability`
-- [ ] `UXR-25 fix(web-runtime-refresh): remove local refresh controls and use automatic interval only`
-- [ ] `UXR-26 fix(api-bots-duplicate-guard): enforce uniqueness by wallet+market+strategy tuple`
-- [ ] `UXR-27 ux(web-bot-form): simplify IA (one section, two rows), clarify live opt-in, complete i18n`
-- [ ] `UXR-28 fix(web-backtests-breadcrumb): normalize labels to List/Create and make module header linkable`
-- [ ] `UXR-29 fix(web-footer-mobile): center both dashboard footer rows on mobile`
-- [ ] `UXR-30 qa(regression-pack): run focused API+WEB tests and manual smoke for live/paper parity`
+- [x] `UXR-23 feat(web-bots-list): hide assistant action in V1 list view`
+- [x] `UXR-24 refactor(web-bots-runtime): tabbed runtime layout with dashboard-like readability`
+- [x] `UXR-25 fix(web-runtime-refresh): remove local refresh controls and use automatic interval only`
+- [x] `UXR-26 fix(api-bots-duplicate-guard): enforce uniqueness by wallet+market+strategy tuple`
+- [x] `UXR-27 ux(web-bot-form): simplify IA (one section, two rows), clarify live opt-in, complete i18n`
+- [x] `UXR-28 fix(web-backtests-breadcrumb): normalize labels to List/Create and make module header linkable`
+- [x] `UXR-29 fix(web-footer-mobile): center both dashboard footer rows on mobile`
+- [x] `UXR-30 qa(regression-pack): run focused API+WEB tests and manual smoke for live/paper parity`
 
 ### Progress Log (Phase 37 - Dashboard + Modules UX/Runtime Fix Wave)
+- 2026-04-17: Completed `UXR-30` and closed `UXR-D` by executing focused regression/deploy-parity validation for live/paper operator flow: API sequential e2e (`orders-positions`, `profile/apiKey`, `markets`, `wallets`, `bots.duplicate-guard`, `logs`) => `49/49 PASS`; WEB focused pack (`HomeLiveWidgets`, `BotCreateEditForm`, `BotsManagement`, `BotsListTable`, `ApiKeyForm`, `AuditTrailView`, `PageTitle.a11y`, `Footer.layout`) => `49/49 PASS`; plus `pnpm --filter api run typecheck` + `pnpm --filter api build` + `pnpm --filter web run typecheck` + `pnpm --filter web run build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
+- 2026-04-17: Completed `UXR-29` by centering dashboard footer rows on mobile while preserving desktop split layout, and added regression `Footer.layout.test.tsx`.
+- 2026-04-17: Completed `UXR-28` by normalizing backtests breadcrumb/action labels to `List/Create` and making module heading linkable when module breadcrumb has `href`, with coverage in `PageTitle.a11y.test.tsx`.
+- 2026-04-17: Completed `UXR-27` by simplifying bot create/edit IA into a single setup section with two-row layout, adding live opt-in helper copy/paper guidance, and migrating remaining hardcoded form copy to i18n (`dashboard-bots.en/pl/pt`).
+- 2026-04-17: Completed `UXR-26` by extending active-bot duplicate guard to enforce uniqueness on `walletId + strategyId + marketGroupId` across create/update paths, with conflict-message update and e2e contract for same tuple block + different-wallet allow.
+- 2026-04-17: Completed `UXR-25` by removing runtime monitoring local refresh controls (toggle + button) and enforcing automatic refresh cadence only while retaining stale-data signaling behavior.
+- 2026-04-17: Completed `UXR-24` by refining bots runtime readability with tabbed top-level module navigation and tab-like quick-navigation blocks in monitoring.
+- 2026-04-17: Completed `UXR-23` by removing list-level Assistant action from bots table row actions while keeping assistant internals/routes intact.
 - 2026-04-17: Completed `UXR-22` by migrating logs UI to shared `DataTable` (`advancedMode`, row-level trace expansion, preserved source/severity filters + refresh), and by adding API completeness regression ensuring bot runtime/execution/sync messages remain visible in owner logs timeline; validation: `pnpm --filter web test -- src/features/logs/components/AuditTrailView.test.tsx` + `pnpm --filter api test -- src/modules/logs/logs.e2e.test.ts` => PASS.
 - 2026-04-17: Completed `UXR-21` by applying advanced table mode rollout across wallets/markets/strategies/backtests/bots with persisted per-table column visibility keys; validation: targeted web tests for changed modules + `pnpm --filter web run typecheck` => PASS.
 - 2026-04-17: Completed `UXR-20` by extending `DataTable` with explicit `advancedMode` opt-in contract for shared advanced controls (column personalization + settings/pagination surface) and adding regression in `DataTable.test.tsx`; validation: `pnpm --filter web test -- src/ui/components/DataTable.test.tsx` => PASS.
