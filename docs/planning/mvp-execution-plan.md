@@ -1598,6 +1598,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `WSPLIT-A worker-split-decision-closure: resolve open Worker Split Timing policy and sync canonical plans`
 - [x] `UXR-A dashboard-ux-runtime-wave: execute grouped UXR queue from docs/planning/dashboard-modules-ux-runtime-fix-wave-plan-2026-04-15.md`
 - [ ] `L10NQ-A i18n-contract-remediation-wave: execute grouped locale hardening queue from docs/planning/i18n-contract-remediation-plan-2026-04-17.md`
+- [ ] `BTMM-A backtest-multi-market-parity-wave: execute grouped parity fixes from docs/planning/backtest-multi-market-parity-remediation-plan-2026-04-17.md`
 
 ### Active Task Breakdown (A11Y-A)
 - [x] `A11Y-01 docs(plan): publish full accessibility pass timeline and resolve open decision`
@@ -1632,7 +1633,15 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `L10NQ-04 test(web-backtest-i18n): add regression coverage for Portuguese backtest locale path`
 - [ ] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
 
+### Active Task Breakdown (BTMM-A)
+- [ ] `BTMM-01 docs(contract): freeze multi-market parity semantics (isolated symbol timeline vs run totals)`
+- [ ] `BTMM-02 test(api-backtest-red): add failing reproducible contract for 1-symbol vs 50-symbol parity on same target symbol`
+- [ ] `BTMM-03 fix(api-backtest-window): remove double adaptive maxCandles and persist one effective window`
+- [ ] `BTMM-04 fix(api-backtest-timeline-anchor): use deterministic terminal run end anchor instead of stale liveProgress`
+- [ ] `BTMM-05 fix(api-backtest-replay-context): add symbol-isolated replay mode and make pair timeline deterministic by default`
+
 ### Progress Log (Post-PEX Continuation)
+- 2026-04-17: Added `BTMM-A` priority remediation wave for backtest multi-market determinism (`docs/planning/backtest-multi-market-parity-remediation-plan-2026-04-17.md`) covering single-adaptation `effectiveMaxCandles`, terminal timeline anchoring without stale `currentCandleTime`, isolated pair replay context, cache continuity validation, and dedicated 1-vs-50 parity regressions.
 - 2026-04-17: Completed `UXR-08` by moving runtime open-positions close action to a dedicated last column (`Action`) even when dynamic stop columns are present, and replacing text CTA with an icon-only close button that preserves accessible labels (`aria-label` + tooltip); validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`.
 - 2026-04-17: Completed `UXR-07` by shortening runtime dashboard tab labels to `positions/orders/history` across localized dashboard-home namespaces (`en/pl/pt`) and updating `HomeLiveWidgets` regression expectations for the compact tab naming contract; validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`.
 - 2026-04-17: Completed `UXR-06` by redesigning runtime wallet summary into a compact first-row KPI layout (`portfolio`, `free funds`, `in positions`) with consistent wallet-icon semantics and responsive 1->3 column rendering in `RuntimeSidebarSection`, plus regression assertions for the new KPI row/card contract in `HomeLiveWidgets.test.tsx`; validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`.
@@ -1755,3 +1764,20 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 
 ### Progress Log (Phase L10NQ - i18n Contract Remediation + Docs Language Baseline)
 - 2026-04-17: Initialized phase from audit findings and locked canonical execution plan in `docs/planning/i18n-contract-remediation-plan-2026-04-17.md` (P0 backtest locale clamp removal, hardcoded-copy cleanup, module namespace split, parity/guardrail tests, route-level namespace loading, and English-only localization docs normalization).
+
+## Phase BTMM - Backtest Multi-Market Parity Remediation (As of 2026-04-17)
+- [ ] `BTMM-01 docs(contract): freeze multi-market parity semantics (isolated symbol timeline vs run totals)`
+- [ ] `BTMM-02 test(api-backtest-red): add failing reproducible contract for 1-symbol vs 50-symbol parity on same target symbol`
+- [ ] `BTMM-03 fix(api-backtest-window): remove double adaptive maxCandles and persist one effective window`
+- [ ] `BTMM-04 fix(api-backtest-timeline-anchor): use deterministic terminal run end anchor instead of stale liveProgress`
+- [ ] `BTMM-05 fix(api-backtest-replay-context): add symbol-isolated replay mode and make pair timeline deterministic by default`
+- [ ] `BTMM-06 fix(api-backtest-cache): validate candle interval continuity in DB cache and fallback on gaps`
+- [ ] `BTMM-07 refactor(web-backtest-stats): separate run totals from chart-window stats in core data hooks`
+- [ ] `BTMM-08 feat(web-backtest-ui): expose run totals vs chart-window source labels in BacktestRunDetails`
+- [ ] `BTMM-09 test(api-backtest-window): add regression for single adaptation of effectiveMaxCandles`
+- [ ] `BTMM-10 test(api-backtest-anchor-cache): add regressions for stale currentCandleTime and cache-gap fallback`
+- [ ] `BTMM-11 qa(confidence-pack): execute focused backtest parity pack (1 vs 3 vs 50 markets)`
+- [ ] `BTMM-12 docs(closure): publish remediation evidence and sync canonical queues/plans`
+
+### Progress Log (Phase BTMM - Backtest Multi-Market Parity Remediation)
+- 2026-04-17: Initialized phase using audit-confirmed regressions (double adaptive `maxCandles`, stale timeline anchor on terminal runs, portfolio-coupled pair replay context, cache continuity blind spot, and chart-vs-run stats divergence) with canonical execution plan in `docs/planning/backtest-multi-market-parity-remediation-plan-2026-04-17.md`.

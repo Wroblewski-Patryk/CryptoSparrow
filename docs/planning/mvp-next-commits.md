@@ -7,33 +7,36 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [ ] `BTMM-01 docs(contract): freeze multi-market parity semantics (isolated symbol timeline vs run totals)`
+- [ ] `BTMM-02 test(api-backtest-red): add failing reproducible contract for 1-symbol vs 50-symbol parity on same target symbol`
+- [ ] `BTMM-03 fix(api-backtest-window): remove double adaptive maxCandles and persist one effective window`
+- [ ] `BTMM-04 fix(api-backtest-timeline-anchor): use deterministic terminal run end anchor instead of stale liveProgress`
+- [ ] `BTMM-05 fix(api-backtest-replay-context): add symbol-isolated replay mode and make pair timeline deterministic by default`
+## NEXT
+- [ ] `BTMM-06 fix(api-backtest-cache): validate candle interval continuity in DB cache and fallback on gaps`
+- [ ] `BTMM-07 refactor(web-backtest-stats): separate run totals from chart-window stats in core data hooks`
+- [ ] `BTMM-08 feat(web-backtest-ui): expose run totals vs chart-window source labels in BacktestRunDetails`
+- [ ] `BTMM-09 test(api-backtest-window): add regression for single adaptation of effectiveMaxCandles`
+- [ ] `BTMM-10 test(api-backtest-anchor-cache): add regressions for stale currentCandleTime and cache-gap fallback`
+## PIPELINE
+- [ ] `BTMM-11 qa(confidence-pack): execute focused backtest parity pack (1 vs 3 vs 50 markets)`
+- [ ] `BTMM-12 docs(closure): publish remediation evidence and sync canonical queues/plans`
 - [ ] `L10NQ-01 docs(contract): freeze remediation scope and English-only documentation baseline`
 - [ ] `L10NQ-02 qa(scan): capture baseline inventory of locale clamps and hardcoded-copy hotspots`
 - [ ] `L10NQ-03 fix(web-backtest-locale): remove EN/PL clamp in backtest module`
-- [ ] `L10NQ-04 test(web-backtest-i18n): add regression coverage for Portuguese backtest locale path`
-- [ ] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
-## NEXT
-- [ ] `L10NQ-06 feat(i18n-namespaces): split translations by module/route domain`
-- [ ] `L10NQ-07 refactor(i18n-registry): add explicit namespace registry and route-domain mapping`
-- [ ] `L10NQ-08 refactor(web-language-switcher): localize language labels via translation keys`
-- [ ] `L10NQ-09 test(i18n-parity): enforce key parity across en/pl/pt for every namespace`
-- [ ] `L10NQ-10 test(i18n-guardrails): detect locale clamps and hardcoded-copy regressions`
-## PIPELINE
-- [ ] `L10NQ-11 l10n(pt-content): replace placeholder EN copy in PT namespaces with real pt-PT content`
-- [ ] `L10NQ-12 feat(i18n-route-loading): introduce route-level namespace loading`
-- [ ] `L10NQ-13 test(i18n-route-loading): verify no missing-key flicker and stable locale persistence`
-- [ ] `L10NQ-14 docs(localization): rewrite localization policy/qa docs to English-only and en/pl/pt contract`
-- [ ] `L10NQ-15 docs(governance): add docs-language guardrail and backlog for remaining non-English docs`
 ## GROUP QUEUE
 - [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
 - [x] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
 - [x] `UXR-C (commits 16-22): advanced table rollout + logs module completion`
 - [x] `UXR-D (commits 23-30): bots IA/runtime polish + breadcrumb/footer + regression closure`
+- [ ] `BTMM-A (commits 01-05): multi-market parity contract + core backtest fixes`
+- [ ] `BTMM-B (commits 06-10): cache continuity + UI/source-of-truth alignment + regressions`
+- [ ] `BTMM-C (commits 11-12): confidence pack + closure`
 - [ ] `L10NQ-A (commits 01-05): i18n P0 blockers (backtest clamp + wrapper hardcoded copy)`
 - [ ] `L10NQ-B (commits 06-11): per-module namespace split + parity/guardrail tests`
 - [ ] `L10NQ-C (commits 12-15): route-level namespace loading + English docs normalization`
 ## BLOCKED
-- none
+- [ ] `L10NQ-A/B/C paused behind BTMM-A priority due backtest correctness regressions`
 
 ## DONE
 - [x] `UXR-D (commits 23-30): bots IA/runtime polish + breadcrumb/footer + regression closure`
