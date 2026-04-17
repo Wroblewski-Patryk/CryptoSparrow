@@ -57,6 +57,25 @@ describe("ApiKeyForm", () => {
     expect(testApiKeyConnectionMock).not.toHaveBeenCalled();
   });
 
+  it("keeps the requested form step order from identity to requirements blocks", () => {
+    renderForm({ onSave: vi.fn(), onCancel: vi.fn() });
+
+    const keyNameInput = screen.getByLabelText("Key name");
+    const exchangeSelect = screen.getByLabelText("Exchange");
+    const apiKeyInput = screen.getByLabelText("API Key");
+    const apiSecretInput = screen.getByLabelText("API Secret");
+    const syncToggle = screen.getByLabelText("Sync external exchange positions");
+    const manageToggle = screen.getByLabelText("Allow bot to manage external positions");
+    const requirementsBlock = screen.getByText("Exchange requirements");
+
+    expect(keyNameInput.compareDocumentPosition(exchangeSelect) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(exchangeSelect.compareDocumentPosition(apiKeyInput) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(apiKeyInput.compareDocumentPosition(apiSecretInput) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(apiSecretInput.compareDocumentPosition(syncToggle) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(syncToggle.compareDocumentPosition(manageToggle) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(manageToggle.compareDocumentPosition(requirementsBlock) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+  });
+
   it("shows success status for successful connection test", async () => {
     testApiKeyConnectionMock.mockResolvedValueOnce({
       ok: true,
