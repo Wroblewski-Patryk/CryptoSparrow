@@ -108,3 +108,23 @@ FROM node:20-bookworm-slim
 - Evidence:
   - Local reproduction on 2026-04-17: minimal Dockerfile with `1.7` + `--mount=type=secret,env=...` failed with `unexpected key 'env'`; same file with `1.10` succeeded.
   - Applied across `apps/api/Dockerfile*` and `apps/web/Dockerfile` in this repository.
+
+### 2026-04-17 - SCOPE LOCK, SMALL COMMITS, GROUP-END PUSH
+- Context: UI/task execution in planning waves.
+- Symptom: unnecessary rework caused by changing UI detail (footer language-switcher flags) without explicit request and by oversized multi-topic commits.
+- Root cause: assumption-driven change beyond requested scope + bundling too many concerns in one commit.
+- Guardrail:
+  - `IF NOT EXPLICITLY REQUESTED, DO NOT CHANGE IT.`
+  - `ONE TASK GROUP -> SMALL SCOPE-LOCKED COMMITS -> PUSH AFTER LAST COMMIT IN THAT GROUP.`
+- Preferred pattern:
+```text
+SCOPE LOCK: implement only explicitly requested behavior.
+If unsure, leave existing UI/UX unchanged.
+Bridge/add-on changes are allowed only when required by failing tests/build/contracts for the requested feature.
+Prefer smaller, single-purpose commits over large mixed commits.
+After completing the full planned group: push immediately after the final commit.
+```
+- Avoid: "cleanup" or visual tweaks not listed in task acceptance criteria.
+- Evidence:
+  - User-reported rework caused by unnecessary footer language-switcher flag change (2026-04-17).
+  - User feedback that large, multi-thread commits increase drift risk and rework (2026-04-17).
