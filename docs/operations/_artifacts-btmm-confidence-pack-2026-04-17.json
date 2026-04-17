@@ -1,0 +1,86 @@
+{
+  "artifact": "BTMM-C confidence pack",
+  "generatedOn": "2026-04-17",
+  "scope": {
+    "phase": "BTMM",
+    "group": "BTMM-C",
+    "tasks": [
+      "BTMM-11",
+      "BTMM-12"
+    ]
+  },
+  "summary": {
+    "status": "PASS",
+    "notes": [
+      "Focused parity confidence pack executed for 1-symbol, 3-symbol, and 50-symbol diagnostic contracts.",
+      "Run totals vs chart-window source split and cache-gap fallback remained stable under regression pack.",
+      "Build/deploy parity checks passed including Docker worker image build."
+    ]
+  },
+  "validation": {
+    "apiTests": [
+      {
+        "command": "pnpm --filter api test -- src/modules/backtests/backtests.contract-remediation.test.ts",
+        "status": "PASS",
+        "testsPassed": 6,
+        "testsTotal": 6
+      },
+      {
+        "command": "pnpm --filter api test -- src/modules/backtests/backtestParity3Symbols.test.ts",
+        "status": "PASS",
+        "testsPassed": 21,
+        "testsTotal": 21
+      },
+      {
+        "command": "pnpm --filter api test -- src/modules/backtests/backtests.e2e.test.ts",
+        "status": "PASS",
+        "testsPassed": 10,
+        "testsTotal": 10
+      },
+      {
+        "command": "pnpm --filter api test -- src/modules/backtests/backtestReplayCore.test.ts",
+        "status": "PASS",
+        "testsPassed": 24,
+        "testsTotal": 24
+      }
+    ],
+    "webTests": [
+      {
+        "command": "pnpm --filter web test -- src/features/backtest/components/BacktestRunDetails.test.tsx",
+        "status": "PASS",
+        "testsPassed": 3,
+        "testsTotal": 3
+      },
+      {
+        "command": "pnpm --filter web test -- src/features/backtest/hooks/useBacktestRunCoreData.test.tsx",
+        "status": "PASS",
+        "testsPassed": 4,
+        "testsTotal": 4
+      }
+    ],
+    "qualityGates": [
+      {
+        "command": "pnpm --filter api run typecheck",
+        "status": "PASS"
+      },
+      {
+        "command": "pnpm --filter web run typecheck",
+        "status": "PASS"
+      },
+      {
+        "command": "pnpm --filter api build",
+        "status": "PASS"
+      },
+      {
+        "command": "pnpm --filter web run build",
+        "status": "PASS",
+        "notes": "Build reports pre-existing unrelated lint warnings only."
+      },
+      {
+        "command": "docker build -f apps/api/Dockerfile.worker.backtest .",
+        "status": "PASS"
+      }
+    ]
+  }
+}
+

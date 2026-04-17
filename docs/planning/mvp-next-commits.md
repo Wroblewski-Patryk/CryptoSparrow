@@ -7,8 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BTMM-11 qa(confidence-pack): execute focused backtest parity pack (1 vs 3 vs 50 markets)`
-- [ ] `BTMM-12 docs(closure): publish remediation evidence and sync canonical queues/plans`
+- [ ] `none`
 ## NEXT
 - [ ] `none`
 ## PIPELINE
@@ -20,7 +19,7 @@ Operational queue for one-task execution runs.
 - [x] `UXR-D (commits 23-30): bots IA/runtime polish + breadcrumb/footer + regression closure`
 - [x] `BTMM-A (commits 01-05): multi-market parity contract + core backtest fixes`
 - [x] `BTMM-B (commits 06-10): cache continuity + UI/source-of-truth alignment + regressions`
-- [ ] `BTMM-C (commits 11-12): confidence pack + closure`
+- [x] `BTMM-C (commits 11-12): confidence pack + closure`
 - [x] `L10NQ-A (commits 01-05): i18n P0 blockers (backtest clamp + wrapper hardcoded copy)`
 - [x] `L10NQ-B (commits 06-11): per-module namespace split + parity/guardrail tests`
 - [x] `L10NQ-C (commits 12-15): route-level namespace loading + English docs normalization`
@@ -28,6 +27,8 @@ Operational queue for one-task execution runs.
 - [ ] `none`
 
 ## DONE
+- [x] `BTMM-C (commits 11-12): confidence pack + closure`
+  - 2026-04-17: Closed `BTMM-C` by completing `BTMM-11..BTMM-12` (executed focused parity confidence pack for 1-symbol/3-symbol/50-symbol diagnostics, validated web backtest details source-label contract, and published closure evidence in `docs/operations/_artifacts-btmm-confidence-pack-2026-04-17.json` + `docs/operations/btmm-remediation-closure-2026-04-17.md`). Validation: `pnpm --filter api test -- src/modules/backtests/backtests.contract-remediation.test.ts` => `6/6 PASS`; `pnpm --filter api test -- src/modules/backtests/backtestParity3Symbols.test.ts` => `21/21 PASS`; `pnpm --filter api test -- src/modules/backtests/backtests.e2e.test.ts` => `10/10 PASS`; `pnpm --filter api test -- src/modules/backtests/backtestReplayCore.test.ts` => `24/24 PASS`; `pnpm --filter web test -- src/features/backtest/components/BacktestRunDetails.test.tsx` => `3/3 PASS`; `pnpm --filter web test -- src/features/backtest/hooks/useBacktestRunCoreData.test.tsx` => `4/4 PASS`; `pnpm --filter api run typecheck` + `pnpm --filter web run typecheck` + `pnpm --filter api build` + `pnpm --filter web run build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
 - [x] `BTMM-B (commits 06-10): cache continuity + UI/source-of-truth alignment + regressions`
   - 2026-04-17: Closed `BTMM-B` by completing `BTMM-06..BTMM-10` (added DB cache candle-interval continuity validation with automatic network fallback/backfill on gaps in `backtestDataGateway`, separated run-level symbol totals and grouped trades into `useBacktestRunCoreData` for explicit source-of-truth split, updated `BacktestRunDetails` pair stats to label run totals vs chart-window values, and added regression coverage for terminal timeline anchoring across all terminal statuses plus no-re-adaptation of legacy `maxCandles`). Validation: `pnpm --filter api test -- src/modules/backtests/backtests.contract-remediation.test.ts src/modules/backtests/backtestRunJob.test.ts src/modules/backtests/backtestDataGateway.test.ts` => `10/10 PASS`; `pnpm --filter api test -- src/modules/backtests/backtests.e2e.test.ts` => `10/10 PASS`; `pnpm --filter web test -- src/features/backtest/hooks/useBacktestRunCoreData.test.tsx src/features/backtest/components/BacktestRunDetails.test.tsx` => `7/7 PASS`; `pnpm --filter api run typecheck` + `pnpm --filter web run typecheck` + `pnpm --filter api build` + `pnpm --filter web run build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
 - [x] `BTMM-A (commits 01-05): multi-market parity contract + core backtest fixes`

@@ -1,7 +1,13 @@
 # Backtest Multi-Market Parity Remediation Plan (2026-04-17)
 
-Status: planned  
+Status: closed (2026-04-17)  
 Execution mode: tiny-commit only (one task per commit)
+
+## Closure Evidence
+- `docs/operations/_artifacts-btmm-confidence-pack-2026-04-17.json`
+- `docs/operations/btmm-remediation-closure-2026-04-17.md`
+- Canonical queue sync: `docs/planning/mvp-next-commits.md`
+- Canonical execution sync: `docs/planning/mvp-execution-plan.md`
 
 ## Goal
 - Restore deterministic backtest behavior so symbol-level outcomes are stable and understandable for 1, 3, or 50 markets.
@@ -118,4 +124,3 @@ Execution mode: tiny-commit only (one task per commit)
 3. Completed/failed/canceled timeline ranges are not truncated by stale single-symbol progress markers.
 4. Cache gap detection prevents non-continuous candle windows from silently driving replay.
 5. UI clearly distinguishes run totals from chart-window scoped metrics.
-
