@@ -13,7 +13,7 @@ import { runAsyncWithState } from '@/lib/async';
 import { resolveUiErrorMessage } from '@/lib/errorResolver';
 
 export default function MarketsListPage() {
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const router = useRouter();
   const [rows, setRows] = useState<MarketUniverse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ export default function MarketsListPage() {
         loadError: 'Nie udalo sie pobrac listy grup rynkow.',
         breadcrumbMarkets: 'Rynki',
         breadcrumbList: 'Lista',
-        addLabel: 'Create',
+        addLabel: 'Utworz',
         loading: 'Ladowanie grup rynkow',
         errorTitle: 'Nie udalo sie pobrac grup rynkow',
         retry: 'Sprobuj ponownie',
@@ -47,7 +47,7 @@ export default function MarketsListPage() {
         loadError: 'Nao foi possivel carregar a lista de grupos de mercados.',
         breadcrumbMarkets: 'Mercados',
         breadcrumbList: 'Lista',
-        addLabel: 'Create',
+        addLabel: 'Criar',
         loading: 'A carregar grupos de mercados',
         errorTitle: 'Nao foi possivel carregar grupos de mercados',
         retry: 'Tentar novamente',
@@ -80,7 +80,7 @@ export default function MarketsListPage() {
         title={copy.breadcrumbMarkets}
         icon={<LuChartCandlestick className='h-5 w-5' />}
         breadcrumb={[
-          { label: 'Dashboard', href: '/dashboard' },
+          { label: t('dashboard.common.dashboard'), href: '/dashboard' },
           { label: copy.breadcrumbMarkets, href: '/dashboard/markets/list' },
           { label: copy.breadcrumbList, icon: <LuList className='h-3.5 w-3.5' /> },
         ]}

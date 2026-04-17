@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { LuCheck, LuFilter, LuList } from 'react-icons/lu';
 import { FieldWrapper, SelectField, TextInputField } from './FieldControls';
 import SearchableMultiSelect, { MultiSelectOption } from './SearchableMultiSelect';
@@ -20,6 +20,7 @@ import {
   supportsExchangeCapability,
 } from '@/features/exchanges/exchangeCapabilities';
 import { EXCHANGE_MARKET_TYPES, type ExchangeMarketType } from '@cryptosparrow/shared';
+import { I18nContext } from '@/i18n/I18nProvider';
 
 const MARKET_TYPES: ExchangeMarketType[] = [...EXCHANGE_MARKET_TYPES];
 const EXCHANGES: ExchangeOption[] = [...EXCHANGE_OPTIONS];
@@ -67,6 +68,126 @@ export default function MarketUniverseForm({
   submitting,
   onSubmit,
 }: MarketUniverseFormProps) {
+  const i18n = useContext(I18nContext);
+  const locale = i18n?.locale ?? 'pl';
+  const copy = {
+    en: {
+      loadCatalogError: 'Could not load market catalog from exchange.',
+      sectionTitle: 'Market configuration',
+      modeEdit: 'Edit',
+      modeCreate: 'Create',
+      groupName: 'Group name',
+      groupNamePlaceholder: 'Top Futures',
+      groupNameError: 'Provide market group name.',
+      exchange: 'Exchange',
+      marketType: 'Market type',
+      baseCurrency: 'Base currency',
+      placeholderBadge: 'PLACEHOLDER',
+      placeholderDescription:
+        'Placeholder exchange selected. Public catalog for this exchange is not implemented yet. You can still save the universe context.',
+      volumeFilterLabel: 'Filter: minimum quote volume 24h',
+      volumeFilterEnabled: 'Filter enabled',
+      volumeFilterDisabled: 'Filter disabled',
+      minVolume: 'Min volume',
+      maxVolume: 'Max volume',
+      availableAfterFilter: 'Available after filter',
+      symbolSelectionTitle: 'Symbol selection',
+      selectAll: 'Select all',
+      clearAll: 'Clear',
+      whitelistCount: 'Whitelist',
+      blacklistCount: 'Blacklist',
+      resultCount: 'Result',
+      whitelistLabel: 'Whitelist',
+      blacklistLabel: 'Blacklist',
+      whitelistEmpty: 'Whitelist is empty.',
+      blacklistEmpty: 'Blacklist is empty.',
+      catalogLoading: 'Loading market catalog...',
+      previewTitle: 'Filtered list preview',
+      marketsCount: 'Markets count',
+      previewHint: 'Alphabetical order. Applied: market type + base currency + volume + whitelist - blacklist.',
+      previewEmptyWarning: 'No symbols after filters. Add whitelist entries or adjust filters.',
+      previewSearchPlaceholder: 'Search in list...',
+      previewNoMarkets: 'No markets after applying filters.',
+    },
+    pl: {
+      loadCatalogError: 'Nie udalo sie pobrac katalogu rynkow z gieldy.',
+      sectionTitle: 'Konfiguracja rynku',
+      modeEdit: 'Edycja',
+      modeCreate: 'Tworzenie',
+      groupName: 'Nazwa grupy',
+      groupNamePlaceholder: 'Top Futures',
+      groupNameError: 'Podaj nazwe grupy rynkow.',
+      exchange: 'Gielda',
+      marketType: 'Market type',
+      baseCurrency: 'Base currency',
+      placeholderBadge: 'PLACEHOLDER',
+      placeholderDescription:
+        'Wybrano placeholder exchange. Publiczny katalog dla tej gieldy nie jest jeszcze dostepny. Nadal mozesz zapisac kontekst grupy.',
+      volumeFilterLabel: 'Filtr: minimalny wolumen quote 24h',
+      volumeFilterEnabled: 'Filtr wlaczony',
+      volumeFilterDisabled: 'Filtr wylaczony',
+      minVolume: 'Min wolumen',
+      maxVolume: 'Max wolumen',
+      availableAfterFilter: 'Dostepnych po filtrze',
+      symbolSelectionTitle: 'Selekcja symboli',
+      selectAll: 'Wybierz wszystkie',
+      clearAll: 'Wyczysc',
+      whitelistCount: 'Whitelist',
+      blacklistCount: 'Blacklist',
+      resultCount: 'Wynik',
+      whitelistLabel: 'Whitelist',
+      blacklistLabel: 'Blacklist',
+      whitelistEmpty: 'Brak whitelist.',
+      blacklistEmpty: 'Brak blacklist.',
+      catalogLoading: 'Ladowanie katalogu rynkow...',
+      previewTitle: 'Podglad listy po filtrach',
+      marketsCount: 'Liczba rynkow',
+      previewHint: 'Kolejnosc alfabetyczna. Zastosowano: market type + base currency + volume + whitelist - blacklist.',
+      previewEmptyWarning: 'Brak symboli po filtrach. Dodaj whitelist albo zmien filtry.',
+      previewSearchPlaceholder: 'Szukaj w liscie...',
+      previewNoMarkets: 'Brak rynkow po zastosowaniu filtrow.',
+    },
+    pt: {
+      loadCatalogError: 'Nao foi possivel carregar catalogo de mercados da exchange.',
+      sectionTitle: 'Configuracao de mercado',
+      modeEdit: 'Editar',
+      modeCreate: 'Criar',
+      groupName: 'Nome do grupo',
+      groupNamePlaceholder: 'Top Futures',
+      groupNameError: 'Indica nome do grupo de mercados.',
+      exchange: 'Exchange',
+      marketType: 'Market type',
+      baseCurrency: 'Base currency',
+      placeholderBadge: 'PLACEHOLDER',
+      placeholderDescription:
+        'Exchange placeholder selecionada. Catalogo publico para esta exchange ainda nao esta implementado. Podes guardar o contexto do universo.',
+      volumeFilterLabel: 'Filtro: volume quote minimo 24h',
+      volumeFilterEnabled: 'Filtro ativo',
+      volumeFilterDisabled: 'Filtro inativo',
+      minVolume: 'Volume min',
+      maxVolume: 'Volume max',
+      availableAfterFilter: 'Disponiveis apos filtro',
+      symbolSelectionTitle: 'Selecao de simbolos',
+      selectAll: 'Selecionar todos',
+      clearAll: 'Limpar',
+      whitelistCount: 'Whitelist',
+      blacklistCount: 'Blacklist',
+      resultCount: 'Resultado',
+      whitelistLabel: 'Whitelist',
+      blacklistLabel: 'Blacklist',
+      whitelistEmpty: 'Whitelist vazia.',
+      blacklistEmpty: 'Blacklist vazia.',
+      catalogLoading: 'A carregar catalogo de mercados...',
+      previewTitle: 'Pre-visualizacao apos filtros',
+      marketsCount: 'Numero de mercados',
+      previewHint: 'Ordem alfabetica. Aplicado: market type + base currency + volume + whitelist - blacklist.',
+      previewEmptyWarning: 'Sem simbolos apos filtros. Adiciona whitelist ou ajusta filtros.',
+      previewSearchPlaceholder: 'Pesquisar na lista...',
+      previewNoMarkets: 'Sem mercados apos aplicar filtros.',
+    },
+  } as const;
+  const labels = copy[locale];
+
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [exchange, setExchange] = useState<ExchangeOption>(initial?.exchange ?? 'BINANCE');
@@ -130,13 +251,13 @@ export default function MarketUniverseForm({
             .sort((a, b) => a.symbol.localeCompare(b.symbol))
         );
       } catch (err: unknown) {
-        const message = resolveFormErrorMessage(err, 'Nie udalo sie pobrac katalogu rynkow z gieldy.');
+        const message = resolveFormErrorMessage(err, labels.loadCatalogError);
         setCatalogError(message);
       } finally {
         setCatalogLoading(false);
       }
     },
-    [exchange, marketType]
+    [exchange, labels.loadCatalogError, marketType]
   );
 
   useEffect(() => {
@@ -323,33 +444,33 @@ export default function MarketUniverseForm({
       <section className='rounded-box border border-base-300/60 bg-base-100/85 p-4'>
         <div className='mb-3 flex items-center gap-2'>
           <LuFilter className='h-4 w-4 text-primary' aria-hidden />
-          <h2 className='text-base font-semibold'>Konfiguracja rynku</h2>
+          <h2 className='text-base font-semibold'>{labels.sectionTitle}</h2>
           <span className='badge badge-ghost badge-sm'>
-            {mode === 'edit' ? 'Edycja' : 'Tworzenie'}
+            {mode === 'edit' ? labels.modeEdit : labels.modeCreate}
           </span>
         </div>
 
         <div className='grid gap-3 md:grid-cols-4'>
           <div className='md:col-span-2'>
-            <TextInputField label='Nazwa grupy' placeholder='Top Futures' value={name} onChange={setName} />
-            {hasNameError ? <p className='mt-1 text-xs text-error'>Podaj nazwe grupy rynkow.</p> : null}
+            <TextInputField label={labels.groupName} placeholder={labels.groupNamePlaceholder} value={name} onChange={setName} />
+            {hasNameError ? <p className='mt-1 text-xs text-error'>{labels.groupNameError}</p> : null}
           </div>
           <SelectField
-            label='Gielda'
+            label={labels.exchange}
             value={exchange}
             options={EXCHANGES}
             onChange={(next) => void handleExchangeChange(next)}
             disabled={catalogLoading}
           />
           <SelectField
-            label='Market type'
+            label={labels.marketType}
             value={marketType}
             options={MARKET_TYPES}
             onChange={(next) => void handleMarketTypeChange(next)}
             disabled={catalogLoading}
           />
           <SelectField
-            label='Base currency'
+            label={labels.baseCurrency}
             value={baseCurrency}
             options={baseCurrencies}
             onChange={(next) => void handleBaseCurrencyChange(next)}
@@ -360,18 +481,15 @@ export default function MarketUniverseForm({
         {!exchangeSupportsMarketCatalog ? (
           <div className='alert alert-warning mt-3 text-sm'>
             <div className='space-y-1'>
-              <span className='badge badge-xs badge-warning badge-outline'>PLACEHOLDER</span>
-              <span>
-                Placeholder exchange selected. Public catalog for this exchange is not implemented yet.
-                You can still save the universe context.
-              </span>
+              <span className='badge badge-xs badge-warning badge-outline'>{labels.placeholderBadge}</span>
+              <span>{labels.placeholderDescription}</span>
             </div>
           </div>
         ) : null}
 
         <div className='mt-4 rounded-xl border border-base-300 bg-base-200 p-3'>
           <div className='grid gap-3 lg:grid-cols-2'>
-            <FieldWrapper label='Filtr: minimalny wolumen quote 24h'>
+            <FieldWrapper label={labels.volumeFilterLabel}>
               <div className='space-y-2'>
                 <label className='label cursor-pointer justify-start gap-3 p-0'>
                   <input
@@ -381,7 +499,7 @@ export default function MarketUniverseForm({
                     onChange={(event) => setMinQuoteVolumeEnabled(event.target.checked)}
                   />
                   <span className='label-text'>
-                    {minQuoteVolumeEnabled ? 'Filtr wlaczony' : 'Filtr wylaczony'}
+                    {minQuoteVolumeEnabled ? labels.volumeFilterEnabled : labels.volumeFilterDisabled}
                   </span>
                 </label>
                 <input
@@ -398,15 +516,15 @@ export default function MarketUniverseForm({
             </FieldWrapper>
             <div className='rounded-box border border-base-300 bg-base-100 px-3 py-2 text-sm'>
               <p>
-                Min wolumen:{' '}
+                {labels.minVolume}:{' '}
                 <span className='font-mono'>
                   {minQuoteVolumeEnabled ? formatVolumeLabel(minQuoteVolume) : 'OFF'}
                 </span>
               </p>
               <p>
-                Max wolumen: <span className='font-mono'>{formatVolumeLabel(maxQuoteVolume)}</span>
+                {labels.maxVolume}: <span className='font-mono'>{formatVolumeLabel(maxQuoteVolume)}</span>
               </p>
-              <p className='opacity-70'>Dostepnych po filtrze: {marketOptions.length}</p>
+              <p className='opacity-70'>{labels.availableAfterFilter}: {marketOptions.length}</p>
             </div>
           </div>
         </div>
@@ -416,7 +534,7 @@ export default function MarketUniverseForm({
         <div className='mb-3 flex items-center justify-between gap-2'>
           <p className='flex items-center gap-2 text-base font-semibold'>
             <LuList className='h-4 w-4 text-primary' aria-hidden />
-            Selekcja symboli
+            {labels.symbolSelectionTitle}
           </p>
           <div className='flex gap-2'>
             <button
@@ -425,40 +543,40 @@ export default function MarketUniverseForm({
               onClick={selectAllFromBaseCurrency}
               disabled={availableSymbols.length === 0}
             >
-              Wybierz wszystkie
+              {labels.selectAll}
             </button>
             <button type='button' className='btn btn-xs btn-outline' onClick={clearAllSelections}>
-              Wyczysc
+              {labels.clearAll}
             </button>
           </div>
         </div>
 
         <div className='mb-3 flex flex-wrap gap-2 text-xs'>
-          <span className='badge badge-outline'>Whitelist: {whitelistSymbols.length}</span>
-          <span className='badge badge-outline'>Blacklist: {blacklistSymbols.length}</span>
-          <span className='badge badge-primary badge-outline'>Wynik: {previewSymbols.length}</span>
+          <span className='badge badge-outline'>{labels.whitelistCount}: {whitelistSymbols.length}</span>
+          <span className='badge badge-outline'>{labels.blacklistCount}: {blacklistSymbols.length}</span>
+          <span className='badge badge-primary badge-outline'>{labels.resultCount}: {previewSymbols.length}</span>
         </div>
 
         <div className='grid gap-3 xl:grid-cols-2'>
           <SearchableMultiSelect
-            label='Whitelist'
+            label={labels.whitelistLabel}
             options={selectionOptions}
             selectedValues={whitelistSymbols}
             onChange={setWhitelistSymbols}
-            emptyText='Brak whitelist.'
+            emptyText={labels.whitelistEmpty}
             maxListHeightClassName='max-h-80'
           />
           <SearchableMultiSelect
-            label='Blacklist'
+            label={labels.blacklistLabel}
             options={selectionOptions}
             selectedValues={blacklistSymbols}
             onChange={setBlacklistSymbols}
-            emptyText='Brak blacklist.'
+            emptyText={labels.blacklistEmpty}
             maxListHeightClassName='max-h-80'
           />
         </div>
 
-        {catalogLoading ? <p className='mt-3 text-sm opacity-70'>Ladowanie katalogu rynkow...</p> : null}
+        {catalogLoading ? <p className='mt-3 text-sm opacity-70'>{labels.catalogLoading}</p> : null}
         {!catalogLoading && catalogError ? <p className='mt-3 text-sm text-error'>{catalogError}</p> : null}
       </section>
 
@@ -466,24 +584,24 @@ export default function MarketUniverseForm({
         <div className='mb-2 flex items-center justify-between gap-2'>
           <p className='flex items-center gap-2 text-base font-semibold'>
             <LuCheck className='h-4 w-4 text-primary' aria-hidden />
-            Podglad listy po filtrach
+            {labels.previewTitle}
           </p>
-          <span className='text-sm opacity-70'>Liczba rynkow: {previewSymbols.length}</span>
+          <span className='text-sm opacity-70'>{labels.marketsCount}: {previewSymbols.length}</span>
         </div>
         <p className='text-xs opacity-70'>
-          Kolejnosc alfabetyczna. Zastosowano: market type + base currency + volume + whitelist - blacklist.
+          {labels.previewHint}
         </p>
 
         {hasSymbolsError ? (
           <div className='alert alert-warning mt-3 py-2 text-sm'>
-            Brak symboli po filtrach. Dodaj whitelist albo zmien filtry.
+            {labels.previewEmptyWarning}
           </div>
         ) : null}
 
         <div className='mt-3'>
           <input
             className='input input-bordered input-sm w-full'
-            placeholder='Szukaj w liscie...'
+            placeholder={labels.previewSearchPlaceholder}
             value={previewQuery}
             onChange={(event) => setPreviewQuery(event.target.value)}
           />
@@ -491,7 +609,7 @@ export default function MarketUniverseForm({
 
         <div className='mt-3 max-h-72 overflow-y-auto overflow-x-hidden rounded-box border border-base-300 bg-base-200 p-2'>
           {previewFiltered.length === 0 ? (
-            <p className='text-sm opacity-70'>Brak rynkow po zastosowaniu filtrow.</p>
+            <p className='text-sm opacity-70'>{labels.previewNoMarkets}</p>
           ) : (
             <div className='flex flex-wrap gap-2'>
               {previewFiltered.map((symbol) => (

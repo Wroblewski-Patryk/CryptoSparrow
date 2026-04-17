@@ -15,7 +15,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 const MARKET_FORM_ID = 'market-universe-form-create';
 
 export default function MarketsCreatePage() {
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
 
@@ -35,7 +35,7 @@ export default function MarketsCreatePage() {
         title: 'Rynki',
         breadcrumbMarkets: 'Rynki',
         breadcrumbCreate: 'Tworzenie',
-        submitLabel: 'Save',
+        submitLabel: 'Zapisz',
       },
       pt: {
         created: 'Grupo de mercados criado',
@@ -43,7 +43,7 @@ export default function MarketsCreatePage() {
         title: 'Mercados',
         breadcrumbMarkets: 'Mercados',
         breadcrumbCreate: 'Criar',
-        submitLabel: 'Save',
+        submitLabel: 'Guardar',
       },
     } as const)[locale],
     [locale]
@@ -69,7 +69,7 @@ export default function MarketsCreatePage() {
         title={copy.title}
         icon={<LuChartCandlestick className='h-5 w-5' />}
         breadcrumb={[
-          { label: 'Dashboard', href: '/dashboard' },
+          { label: t('dashboard.common.dashboard'), href: '/dashboard' },
           { label: copy.breadcrumbMarkets, href: '/dashboard/markets/list' },
           { label: copy.breadcrumbCreate, icon: <LuPlus className='h-3.5 w-3.5' /> },
         ]}

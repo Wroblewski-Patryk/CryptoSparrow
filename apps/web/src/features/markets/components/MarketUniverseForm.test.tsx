@@ -268,7 +268,7 @@ describe('MarketUniverseForm', () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          'Placeholder exchange selected. Public catalog for this exchange is not implemented yet. You can still save the universe context.'
+          'Wybrano placeholder exchange. Publiczny katalog dla tej gieldy nie jest jeszcze dostepny. Nadal mozesz zapisac kontekst grupy.'
         )
       ).toBeInTheDocument();
     });

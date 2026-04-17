@@ -1,23 +1,118 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { getAdminSubscriptionPlans } from "../../subscriptions/services/adminSubscriptionPlan.service";
 import { useAuth } from "@/context/AuthContext";
 import { getAdminUsers, updateAdminUser } from "../services/adminUsers.service";
 import { AdminSubscriptionPlanCode, AdminUser, AdminUserRole } from "../types/adminUser.type";
+import { I18nContext } from "@/i18n/I18nProvider";
 
-const formatDate = (value: string) => {
+const formatDate = (value: string, locale: "en" | "pl" | "pt") => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
+  const dateLocale = locale === "pl" ? "pl-PL" : locale === "pt" ? "pt-PT" : "en-US";
 
-  return new Intl.DateTimeFormat("pl-PL", {
+  return new Intl.DateTimeFormat(dateLocale, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
 };
 
 export default function AdminUsersPage() {
+  const i18n = useContext(I18nContext);
+  const locale = i18n?.locale ?? "en";
   const { user: authUser } = useAuth();
+  const copy = {
+    en: {
+      loadError: "Could not load users.",
+      roleUpdateErrorPrefix: "Could not update role for",
+      planAssignErrorPrefix: "Could not assign subscription plan for",
+      title: "Users admin",
+      description: "Manage account roles and active subscription plans for registered users.",
+      refresh: "Refresh",
+      searchLabel: "Search by email or name",
+      searchPlaceholder: "for example user@example.com",
+      roleLabel: "Role",
+      allRoles: "All roles",
+      apply: "Apply",
+      totalUsers: "Total users",
+      loadingUsers: "Loading users...",
+      tableUser: "User",
+      tableRole: "Role",
+      tableActivePlan: "Active plan",
+      tableCreated: "Created",
+      tableActions: "Actions",
+      noDisplayName: "No display name",
+      noActiveSubscription: "No active subscription",
+      cannotDemoteSelf: "You cannot demote your own admin account.",
+      makeAdmin: "Make admin",
+      makeUser: "Make user",
+      assignPlan: "Assign plan",
+      toggleRoleAriaPrefix: "Toggle role for",
+      planSelectAriaPrefix: "Plan select for",
+      assignPlanAriaPrefix: "Assign plan for",
+    },
+    pl: {
+      loadError: "Nie udalo sie pobrac listy uzytkownikow.",
+      roleUpdateErrorPrefix: "Nie udalo sie zaktualizowac roli dla",
+      planAssignErrorPrefix: "Nie udalo sie przypisac planu dla",
+      title: "Panel uzytkownikow",
+      description: "Zarzadzaj rolami kont i aktywnymi planami subskrypcji dla zarejestrowanych uzytkownikow.",
+      refresh: "Odswiez",
+      searchLabel: "Szukaj po emailu lub nazwie",
+      searchPlaceholder: "np. user@example.com",
+      roleLabel: "Rola",
+      allRoles: "Wszystkie role",
+      apply: "Zastosuj",
+      totalUsers: "Laczna liczba uzytkownikow",
+      loadingUsers: "Ladowanie uzytkownikow...",
+      tableUser: "Uzytkownik",
+      tableRole: "Rola",
+      tableActivePlan: "Aktywny plan",
+      tableCreated: "Utworzono",
+      tableActions: "Akcje",
+      noDisplayName: "Brak nazwy wyswietlanej",
+      noActiveSubscription: "Brak aktywnej subskrypcji",
+      cannotDemoteSelf: "Nie mozesz odebrac sobie roli administratora.",
+      makeAdmin: "Ustaw admin",
+      makeUser: "Ustaw user",
+      assignPlan: "Przypisz plan",
+      toggleRoleAriaPrefix: "Przelacz role dla",
+      planSelectAriaPrefix: "Wybierz plan dla",
+      assignPlanAriaPrefix: "Przypisz plan dla",
+    },
+    pt: {
+      loadError: "Nao foi possivel carregar utilizadores.",
+      roleUpdateErrorPrefix: "Nao foi possivel atualizar papel para",
+      planAssignErrorPrefix: "Nao foi possivel atribuir plano para",
+      title: "Painel de utilizadores",
+      description: "Gerir papeis de conta e planos de subscricao ativos para utilizadores registados.",
+      refresh: "Atualizar",
+      searchLabel: "Procurar por email ou nome",
+      searchPlaceholder: "ex. user@example.com",
+      roleLabel: "Papel",
+      allRoles: "Todos os papeis",
+      apply: "Aplicar",
+      totalUsers: "Total de utilizadores",
+      loadingUsers: "A carregar utilizadores...",
+      tableUser: "Utilizador",
+      tableRole: "Papel",
+      tableActivePlan: "Plano ativo",
+      tableCreated: "Criado",
+      tableActions: "Acoes",
+      noDisplayName: "Sem nome publico",
+      noActiveSubscription: "Sem subscricao ativa",
+      cannotDemoteSelf: "Nao podes remover o teu proprio papel de admin.",
+      makeAdmin: "Tornar admin",
+      makeUser: "Tornar user",
+      assignPlan: "Atribuir plano",
+      toggleRoleAriaPrefix: "Alterar papel para",
+      planSelectAriaPrefix: "Selecionar plano para",
+      assignPlanAriaPrefix: "Atribuir plano para",
+    },
+  } as const;
+  const labels = copy[locale];
+
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +149,7 @@ export default function AdminUsersPage() {
         return next;
       });
     } catch {
-      setError("Could not load users.");
+      setError(labels.loadError);
     } finally {
       setLoading(false);
     }
@@ -117,7 +212,7 @@ export default function AdminUsersPage() {
       const updated = await updateAdminUser(user.id, { role: nextRole });
       upsertUser(updated);
     } catch {
-      setActionError(`Could not update role for ${user.email}.`);
+      setActionError(`${labels.roleUpdateErrorPrefix} ${user.email}.`);
     } finally {
       setSavingKey(null);
     }
@@ -135,7 +230,7 @@ export default function AdminUsersPage() {
       });
       upsertUser(updated);
     } catch {
-      setActionError(`Could not assign subscription plan for ${user.email}.`);
+      setActionError(`${labels.planAssignErrorPrefix} ${user.email}.`);
     } finally {
       setSavingKey(null);
     }
@@ -150,35 +245,35 @@ export default function AdminUsersPage() {
     <section className="mx-auto w-full max-w-7xl px-4 py-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Users admin</h1>
+          <h1 className="text-2xl font-semibold">{labels.title}</h1>
           <p className="text-sm text-base-content/70">
-            Manage account roles and active subscription plans for registered users.
+            {labels.description}
           </p>
         </div>
         <button type="button" className="btn btn-outline btn-sm" onClick={() => void onRefresh()} disabled={loading}>
-          Refresh
+          {labels.refresh}
         </button>
       </div>
 
       <form className="mb-4 grid gap-3 rounded-box border border-base-300/70 p-3 md:grid-cols-[2fr_1fr_auto]" onSubmit={onApplyFilters}>
         <label className="form-control">
-          <span className="label-text">Search by email or name</span>
+          <span className="label-text">{labels.searchLabel}</span>
           <input
             className="input input-bordered"
             value={searchDraft}
             onChange={(event) => setSearchDraft(event.target.value)}
-            placeholder="for example user@example.com"
+            placeholder={labels.searchPlaceholder}
           />
         </label>
 
         <label className="form-control">
-          <span className="label-text">Role</span>
+          <span className="label-text">{labels.roleLabel}</span>
           <select
             className="select select-bordered"
             value={roleFilter}
             onChange={(event) => setRoleFilter(event.target.value as "ALL" | AdminUserRole)}
           >
-            <option value="ALL">All roles</option>
+            <option value="ALL">{labels.allRoles}</option>
             <option value="USER">USER</option>
             <option value="ADMIN">ADMIN</option>
           </select>
@@ -186,14 +281,14 @@ export default function AdminUsersPage() {
 
         <div className="flex items-end">
           <button type="submit" className="btn btn-primary w-full md:w-auto">
-            Apply
+            {labels.apply}
           </button>
         </div>
       </form>
 
-      <p className="mb-3 text-sm text-base-content/70">Total users: {totalUsers}</p>
+      <p className="mb-3 text-sm text-base-content/70">{labels.totalUsers}: {totalUsers}</p>
 
-      {loading && <div className="alert alert-info">Loading users...</div>}
+      {loading && <div className="alert alert-info">{labels.loadingUsers}</div>}
       {!loading && error && <div className="alert alert-error">{error}</div>}
       {actionError && <div className="alert alert-error mb-4">{actionError}</div>}
 
@@ -202,11 +297,11 @@ export default function AdminUsersPage() {
           <table className="table table-zebra">
             <thead>
               <tr>
-                <th>User</th>
-                <th>Role</th>
-                <th>Active plan</th>
-                <th>Created</th>
-                <th className="text-right">Actions</th>
+                <th>{labels.tableUser}</th>
+                <th>{labels.tableRole}</th>
+                <th>{labels.tableActivePlan}</th>
+                <th>{labels.tableCreated}</th>
+                <th className="text-right">{labels.tableActions}</th>
               </tr>
             </thead>
             <tbody>
@@ -222,7 +317,7 @@ export default function AdminUsersPage() {
                   <tr key={item.id}>
                     <td>
                       <div className="font-semibold">{item.email}</div>
-                      <div className="text-xs opacity-60">{item.name ?? "No display name"}</div>
+                      <div className="text-xs opacity-60">{item.name ?? labels.noDisplayName}</div>
                     </td>
                     <td>
                       <span className={`badge ${item.role === "ADMIN" ? "badge-secondary" : "badge-ghost"}`}>
@@ -238,21 +333,21 @@ export default function AdminUsersPage() {
                           </div>
                         </div>
                       ) : (
-                        <span className="text-sm opacity-60">No active subscription</span>
+                        <span className="text-sm opacity-60">{labels.noActiveSubscription}</span>
                       )}
                     </td>
-                    <td className="text-sm">{formatDate(item.createdAt)}</td>
+                    <td className="text-sm">{formatDate(item.createdAt, locale)}</td>
                     <td className="text-right">
                       <div className="flex flex-wrap justify-end gap-2">
                         <button
                           type="button"
                           className={`btn btn-sm ${targetRole === "ADMIN" ? "btn-primary" : "btn-warning"} ${roleActionBusy ? "loading" : ""}`}
-                          aria-label={`Toggle role for ${item.email}`}
+                          aria-label={`${labels.toggleRoleAriaPrefix} ${item.email}`}
                           disabled={roleActionBusy || !canDemoteCurrentUser}
                           onClick={() => void onToggleRole(item)}
-                          title={!canDemoteCurrentUser ? "You cannot demote your own admin account." : undefined}
+                          title={!canDemoteCurrentUser ? labels.cannotDemoteSelf : undefined}
                         >
-                          {targetRole === "ADMIN" ? "Make admin" : "Make user"}
+                          {targetRole === "ADMIN" ? labels.makeAdmin : labels.makeUser}
                         </button>
 
                         <select
@@ -265,7 +360,7 @@ export default function AdminUsersPage() {
                             }))
                           }
                           disabled={planCodes.length === 0 || planActionBusy}
-                          aria-label={`Plan select for ${item.email}`}
+                          aria-label={`${labels.planSelectAriaPrefix} ${item.email}`}
                         >
                           {planCodes.map((code) => (
                             <option key={code} value={code}>
@@ -277,11 +372,11 @@ export default function AdminUsersPage() {
                         <button
                           type="button"
                           className={`btn btn-outline btn-sm ${planActionBusy ? "loading" : ""}`}
-                          aria-label={`Assign plan for ${item.email}`}
+                          aria-label={`${labels.assignPlanAriaPrefix} ${item.email}`}
                           disabled={planActionBusy || !canAssignPlan}
                           onClick={() => void onAssignPlan(item)}
                         >
-                          Assign plan
+                          {labels.assignPlan}
                         </button>
                       </div>
                     </td>

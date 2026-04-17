@@ -17,7 +17,7 @@ const MARKET_UNIVERSE_ACTIVE_BOT_ERROR = 'market universe is used by active bot 
 const MARKET_FORM_ID = 'market-universe-form-edit';
 
 export default function MarketsEditPage() {
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [initial, setInitial] = useState<MarketUniverse | null>(null);
@@ -52,7 +52,7 @@ export default function MarketsEditPage() {
         loading: 'Ladowanie grupy rynkow',
         errorTitle: 'Nie udalo sie pobrac grupy rynkow',
         backToList: 'Powrot do listy',
-        submitLabel: 'Save',
+        submitLabel: 'Zapisz',
         updatePrefix: 'Aktualizacja:',
       },
       pt: {
@@ -66,7 +66,7 @@ export default function MarketsEditPage() {
         loading: 'A carregar grupo de mercados',
         errorTitle: 'Nao foi possivel carregar grupo de mercados',
         backToList: 'Voltar a lista',
-        submitLabel: 'Save',
+        submitLabel: 'Guardar',
         updatePrefix: 'Atualizacao:',
       },
     } as const)[locale],
@@ -111,7 +111,7 @@ export default function MarketsEditPage() {
         title={copy.titleFallback}
         icon={<LuChartCandlestick className='h-5 w-5' />}
         breadcrumb={[
-          { label: 'Dashboard', href: '/dashboard' },
+          { label: t('dashboard.common.dashboard'), href: '/dashboard' },
           { label: copy.breadcrumbMarkets, href: '/dashboard/markets/list' },
           {
             label: initial ? `${copy.updatePrefix} ${initial.name}` : copy.breadcrumbEdit,
