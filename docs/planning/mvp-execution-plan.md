@@ -1634,13 +1634,14 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
 
 ### Active Task Breakdown (BTMM-A)
-- [ ] `BTMM-01 docs(contract): freeze multi-market parity semantics (isolated symbol timeline vs run totals)`
-- [ ] `BTMM-02 test(api-backtest-red): add failing reproducible contract for 1-symbol vs 50-symbol parity on same target symbol`
-- [ ] `BTMM-03 fix(api-backtest-window): remove double adaptive maxCandles and persist one effective window`
-- [ ] `BTMM-04 fix(api-backtest-timeline-anchor): use deterministic terminal run end anchor instead of stale liveProgress`
-- [ ] `BTMM-05 fix(api-backtest-replay-context): add symbol-isolated replay mode and make pair timeline deterministic by default`
+- [x] `BTMM-01 docs(contract): freeze multi-market parity semantics (isolated symbol timeline vs run totals)`
+- [x] `BTMM-02 test(api-backtest-red): add failing reproducible contract for 1-symbol vs 50-symbol parity on same target symbol`
+- [x] `BTMM-03 fix(api-backtest-window): remove double adaptive maxCandles and persist one effective window`
+- [x] `BTMM-04 fix(api-backtest-timeline-anchor): use deterministic terminal run end anchor instead of stale liveProgress`
+- [x] `BTMM-05 fix(api-backtest-replay-context): add symbol-isolated replay mode and make pair timeline deterministic by default`
 
 ### Progress Log (Post-PEX Continuation)
+- 2026-04-17: Closed `BTMM-A` by completing `BTMM-01..BTMM-05` (canonical docs freeze for multi-market parity semantics, added API contract tests for 1-symbol vs 50-symbol divergence and replay-context defaults, removed double adaptive `maxCandles` via persisted `requestedMaxCandles/effectiveMaxCandles` contract reused in run job + timeline, switched terminal timeline end anchor to run-level `finishedAt`, and added timeline replay context `isolated|portfolio` with default `isolated`).
 - 2026-04-17: Added `BTMM-A` priority remediation wave for backtest multi-market determinism (`docs/planning/backtest-multi-market-parity-remediation-plan-2026-04-17.md`) covering single-adaptation `effectiveMaxCandles`, terminal timeline anchoring without stale `currentCandleTime`, isolated pair replay context, cache continuity validation, and dedicated 1-vs-50 parity regressions.
 - 2026-04-17: Completed `UXR-08` by moving runtime open-positions close action to a dedicated last column (`Action`) even when dynamic stop columns are present, and replacing text CTA with an icon-only close button that preserves accessible labels (`aria-label` + tooltip); validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`.
 - 2026-04-17: Completed `UXR-07` by shortening runtime dashboard tab labels to `positions/orders/history` across localized dashboard-home namespaces (`en/pl/pt`) and updating `HomeLiveWidgets` regression expectations for the compact tab naming contract; validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`.
@@ -1769,11 +1770,11 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-17: Initialized phase from audit findings and locked canonical execution plan in `docs/planning/i18n-contract-remediation-plan-2026-04-17.md` (P0 backtest locale clamp removal, hardcoded-copy cleanup, module namespace split, parity/guardrail tests, route-level namespace loading, and English-only localization docs normalization).
 
 ## Phase BTMM - Backtest Multi-Market Parity Remediation (As of 2026-04-17)
-- [ ] `BTMM-01 docs(contract): freeze multi-market parity semantics (isolated symbol timeline vs run totals)`
-- [ ] `BTMM-02 test(api-backtest-red): add failing reproducible contract for 1-symbol vs 50-symbol parity on same target symbol`
-- [ ] `BTMM-03 fix(api-backtest-window): remove double adaptive maxCandles and persist one effective window`
-- [ ] `BTMM-04 fix(api-backtest-timeline-anchor): use deterministic terminal run end anchor instead of stale liveProgress`
-- [ ] `BTMM-05 fix(api-backtest-replay-context): add symbol-isolated replay mode and make pair timeline deterministic by default`
+- [x] `BTMM-01 docs(contract): freeze multi-market parity semantics (isolated symbol timeline vs run totals)`
+- [x] `BTMM-02 test(api-backtest-red): add failing reproducible contract for 1-symbol vs 50-symbol parity on same target symbol`
+- [x] `BTMM-03 fix(api-backtest-window): remove double adaptive maxCandles and persist one effective window`
+- [x] `BTMM-04 fix(api-backtest-timeline-anchor): use deterministic terminal run end anchor instead of stale liveProgress`
+- [x] `BTMM-05 fix(api-backtest-replay-context): add symbol-isolated replay mode and make pair timeline deterministic by default`
 - [ ] `BTMM-06 fix(api-backtest-cache): validate candle interval continuity in DB cache and fallback on gaps`
 - [ ] `BTMM-07 refactor(web-backtest-stats): separate run totals from chart-window stats in core data hooks`
 - [ ] `BTMM-08 feat(web-backtest-ui): expose run totals vs chart-window source labels in BacktestRunDetails`
@@ -1783,4 +1784,5 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `BTMM-12 docs(closure): publish remediation evidence and sync canonical queues/plans`
 
 ### Progress Log (Phase BTMM - Backtest Multi-Market Parity Remediation)
+- 2026-04-17: Completed `BTMM-A` by closing `BTMM-01..BTMM-05` (frozen parity contract in `open-decisions` + `api-backtests` docs, added contract tests for deterministic isolated replay semantics and 1-vs-50 divergence evidence, implemented single `effectiveMaxCandles` reuse across create/run job/timeline, switched terminal timeline anchoring to `finishedAt` for terminal statuses, and introduced timeline `replayContext` with default `isolated` and optional `portfolio`); validation: `pnpm --filter api test -- src/modules/backtests/backtests.contract-remediation.test.ts src/modules/backtests/backtestRunJob.test.ts src/modules/backtests/backtests.e2e.test.ts src/modules/backtests/backtestParity3Symbols.test.ts` => `37/37 PASS`, `pnpm --filter api run typecheck`, `pnpm --filter api build`, `docker build -f apps/api/Dockerfile.worker.backtest .` => PASS.
 - 2026-04-17: Initialized phase using audit-confirmed regressions (double adaptive `maxCandles`, stale timeline anchor on terminal runs, portfolio-coupled pair replay context, cache continuity blind spot, and chart-vs-run stats divergence) with canonical execution plan in `docs/planning/backtest-multi-market-parity-remediation-plan-2026-04-17.md`.

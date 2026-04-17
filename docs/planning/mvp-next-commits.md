@@ -7,26 +7,22 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `BTMM-01 docs(contract): freeze multi-market parity semantics (isolated symbol timeline vs run totals)`
-- [ ] `BTMM-02 test(api-backtest-red): add failing reproducible contract for 1-symbol vs 50-symbol parity on same target symbol`
-- [ ] `BTMM-03 fix(api-backtest-window): remove double adaptive maxCandles and persist one effective window`
-- [ ] `BTMM-04 fix(api-backtest-timeline-anchor): use deterministic terminal run end anchor instead of stale liveProgress`
-- [ ] `BTMM-05 fix(api-backtest-replay-context): add symbol-isolated replay mode and make pair timeline deterministic by default`
-## NEXT
 - [ ] `BTMM-06 fix(api-backtest-cache): validate candle interval continuity in DB cache and fallback on gaps`
 - [ ] `BTMM-07 refactor(web-backtest-stats): separate run totals from chart-window stats in core data hooks`
 - [ ] `BTMM-08 feat(web-backtest-ui): expose run totals vs chart-window source labels in BacktestRunDetails`
 - [ ] `BTMM-09 test(api-backtest-window): add regression for single adaptation of effectiveMaxCandles`
 - [ ] `BTMM-10 test(api-backtest-anchor-cache): add regressions for stale currentCandleTime and cache-gap fallback`
-## PIPELINE
+## NEXT
 - [ ] `BTMM-11 qa(confidence-pack): execute focused backtest parity pack (1 vs 3 vs 50 markets)`
 - [ ] `BTMM-12 docs(closure): publish remediation evidence and sync canonical queues/plans`
+## PIPELINE
+- [ ] `none`
 ## GROUP QUEUE
 - [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
 - [x] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
 - [x] `UXR-C (commits 16-22): advanced table rollout + logs module completion`
 - [x] `UXR-D (commits 23-30): bots IA/runtime polish + breadcrumb/footer + regression closure`
-- [ ] `BTMM-A (commits 01-05): multi-market parity contract + core backtest fixes`
+- [x] `BTMM-A (commits 01-05): multi-market parity contract + core backtest fixes`
 - [ ] `BTMM-B (commits 06-10): cache continuity + UI/source-of-truth alignment + regressions`
 - [ ] `BTMM-C (commits 11-12): confidence pack + closure`
 - [x] `L10NQ-A (commits 01-05): i18n P0 blockers (backtest clamp + wrapper hardcoded copy)`
@@ -36,6 +32,8 @@ Operational queue for one-task execution runs.
 - [ ] `none`
 
 ## DONE
+- [x] `BTMM-A (commits 01-05): multi-market parity contract + core backtest fixes`
+  - 2026-04-17: Closed `BTMM-A` by completing `BTMM-01..BTMM-05` (froze multi-market parity contract in canonical docs, added parity remediation contract tests for 1-symbol vs 50-symbol divergence + replay-context defaults, removed double adaptive `maxCandles` by introducing single persisted `requestedMaxCandles/effectiveMaxCandles` contract reused across create/job/timeline, switched terminal timeline anchor to run-level `finishedAt` for terminal statuses, and added timeline replay context `isolated|portfolio` with default `isolated` for deterministic pair diagnostics). Validation: `pnpm --filter api test -- src/modules/backtests/backtests.contract-remediation.test.ts src/modules/backtests/backtestRunJob.test.ts src/modules/backtests/backtests.e2e.test.ts src/modules/backtests/backtestParity3Symbols.test.ts` => `37/37 PASS`; `pnpm --filter api run typecheck` + `pnpm --filter api build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
 - [x] `L10NQ-C (commits 12-15): route-level namespace loading + English docs normalization`
   - 2026-04-17: Closed `L10NQ-C` by completing `L10NQ-12..L10NQ-15` (added route-level namespace loading in `I18nProvider`/`namespaceRegistry` with route-scoped translation cache and navigation listeners for `popstate/pushState/replaceState`, added route-loading regression tests for no missing-key flicker and locale persistence, normalized localization docs to English-only `en/pl/pt` policy, and introduced governance docs-language guardrail with non-English backlog list). Validation: `pnpm --filter web test -- src/i18n/I18nProvider.test.tsx src/i18n/I18nProvider.route-loading.test.tsx src/i18n/namespaceRegistry.test.ts src/app/dashboard/bots/page.test.tsx` => `7/7 PASS`; `pnpm --filter api build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
 - [x] `L10NQ-B (commits 06-11): per-module namespace split + parity/guardrail tests`
