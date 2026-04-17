@@ -1,0 +1,189 @@
+# L10NQ-D Route Coverage Matrix (2026-04-18)
+
+Generated from route-reachable dependency graph (page + ancestor layouts + transitive imports).
+
+- apps/web/src/app/(public)/auth/login/page.tsx
+  - reachableFiles=19
+  - issueFiles=7 (module=3, shared=4)
+  - score(module/shared)=23/6
+  - topModuleFiles=apps/web/src/features/auth/hooks/useLoginForm.ts [11]; apps/web/src/features/auth/components/LoginForm.tsx [6]; apps/web/src/features/auth/pages/LoginPage.tsx [6]
+- apps/web/src/app/(public)/auth/register/page.tsx
+  - reachableFiles=19
+  - issueFiles=7 (module=3, shared=4)
+  - score(module/shared)=23/6
+  - topModuleFiles=apps/web/src/features/auth/hooks/useRegisterForm.ts [11]; apps/web/src/features/auth/components/RegisterForm.tsx [6]; apps/web/src/features/auth/pages/RegisterPage.tsx [6]
+- apps/web/src/app/(public)/page.tsx
+  - reachableFiles=13
+  - issueFiles=4 (module=0, shared=4)
+  - score(module/shared)=0/6
+  - topModuleFiles=none
+- apps/web/src/app/admin/page.tsx
+  - reachableFiles=11
+  - issueFiles=4 (module=1, shared=3)
+  - score(module/shared)=4/4
+  - topModuleFiles=apps/web/src/app/admin/layout.tsx [4]
+- apps/web/src/app/admin/subscriptions/page.tsx
+  - reachableFiles=14
+  - issueFiles=5 (module=2, shared=3)
+  - score(module/shared)=11/4
+  - topModuleFiles=apps/web/src/features/admin/subscriptions/pages/AdminSubscriptionsPage.tsx [7]; apps/web/src/app/admin/layout.tsx [4]
+- apps/web/src/app/admin/users/page.tsx
+  - reachableFiles=16
+  - issueFiles=5 (module=2, shared=3)
+  - score(module/shared)=10/4
+  - topModuleFiles=apps/web/src/features/admin/users/pages/AdminUsersPage.tsx [6]; apps/web/src/app/admin/layout.tsx [4]
+- apps/web/src/app/dashboard/backtests/[id]/page.tsx
+  - reachableFiles=39
+  - issueFiles=10 (module=1, shared=9)
+  - score(module/shared)=8/13
+  - topModuleFiles=apps/web/src/features/backtest/components/BacktestRunDetails.tsx [8]
+- apps/web/src/app/dashboard/backtests/create/page.tsx
+  - reachableFiles=27
+  - issueFiles=6 (module=1, shared=5)
+  - score(module/shared)=7/9
+  - topModuleFiles=apps/web/src/features/backtest/components/BacktestCreateForm.tsx [7]
+- apps/web/src/app/dashboard/backtests/list/page.tsx
+  - reachableFiles=33
+  - issueFiles=13 (module=2, shared=11)
+  - score(module/shared)=10/15
+  - topModuleFiles=apps/web/src/features/backtest/components/BacktestsListView.tsx [5]; apps/web/src/features/backtest/components/BacktestsRunsTable.tsx [5]
+- apps/web/src/app/dashboard/bots/[id]/assistant/page.tsx
+  - reachableFiles=45
+  - issueFiles=14 (module=4, shared=10)
+  - score(module/shared)=6/14
+  - topModuleFiles=apps/web/src/features/bots/components/BotsManagement.tsx [3]; apps/web/src/app/dashboard/bots/[id]/assistant/page.tsx [1]; apps/web/src/features/bots/components/bots-management/BotsMonitoringTab.tsx [1]; apps/web/src/features/bots/hooks/useBotsListController.ts [1]
+- apps/web/src/app/dashboard/bots/[id]/edit/page.tsx
+  - reachableFiles=36
+  - issueFiles=12 (module=2, shared=10)
+  - score(module/shared)=3/14
+  - topModuleFiles=apps/web/src/app/dashboard/bots/[id]/edit/page.tsx [2]; apps/web/src/features/bots/components/BotCreateEditForm.tsx [1]
+- apps/web/src/app/dashboard/bots/[id]/page.tsx
+  - reachableFiles=16
+  - issueFiles=5 (module=0, shared=5)
+  - score(module/shared)=0/9
+  - topModuleFiles=none
+- apps/web/src/app/dashboard/bots/[id]/preview/page.tsx
+  - reachableFiles=45
+  - issueFiles=14 (module=4, shared=10)
+  - score(module/shared)=6/14
+  - topModuleFiles=apps/web/src/features/bots/components/BotsManagement.tsx [3]; apps/web/src/app/dashboard/bots/[id]/preview/page.tsx [1]; apps/web/src/features/bots/components/bots-management/BotsMonitoringTab.tsx [1]; apps/web/src/features/bots/hooks/useBotsListController.ts [1]
+- apps/web/src/app/dashboard/bots/[id]/runtime/page.tsx
+  - reachableFiles=16
+  - issueFiles=5 (module=0, shared=5)
+  - score(module/shared)=0/9
+  - topModuleFiles=none
+- apps/web/src/app/dashboard/bots/assistant/page.tsx
+  - reachableFiles=16
+  - issueFiles=5 (module=0, shared=5)
+  - score(module/shared)=0/9
+  - topModuleFiles=none
+- apps/web/src/app/dashboard/bots/create/page.tsx
+  - reachableFiles=36
+  - issueFiles=12 (module=2, shared=10)
+  - score(module/shared)=3/14
+  - topModuleFiles=apps/web/src/app/dashboard/bots/create/page.tsx [2]; apps/web/src/features/bots/components/BotCreateEditForm.tsx [1]
+- apps/web/src/app/dashboard/bots/new/page.tsx
+  - reachableFiles=16
+  - issueFiles=5 (module=0, shared=5)
+  - score(module/shared)=0/9
+  - topModuleFiles=none
+- apps/web/src/app/dashboard/bots/page.tsx
+  - reachableFiles=36
+  - issueFiles=11 (module=0, shared=11)
+  - score(module/shared)=0/15
+  - topModuleFiles=none
+- apps/web/src/app/dashboard/bots/runtime/page.tsx
+  - reachableFiles=16
+  - issueFiles=5 (module=0, shared=5)
+  - score(module/shared)=0/9
+  - topModuleFiles=none
+- apps/web/src/app/dashboard/exchanges/page.tsx
+  - reachableFiles=16
+  - issueFiles=5 (module=0, shared=5)
+  - score(module/shared)=0/9
+  - topModuleFiles=none
+- apps/web/src/app/dashboard/logs/page.tsx
+  - reachableFiles=31
+  - issueFiles=10 (module=0, shared=10)
+  - score(module/shared)=0/14
+  - topModuleFiles=none
+- apps/web/src/app/dashboard/markets/[id]/edit/page.tsx
+  - reachableFiles=30
+  - issueFiles=11 (module=2, shared=9)
+  - score(module/shared)=14/13
+  - topModuleFiles=apps/web/src/features/markets/components/MarketUniverseForm.tsx [11]; apps/web/src/features/markets/components/SearchableMultiSelect.tsx [3]
+- apps/web/src/app/dashboard/markets/create/page.tsx
+  - reachableFiles=24
+  - issueFiles=7 (module=2, shared=5)
+  - score(module/shared)=14/9
+  - topModuleFiles=apps/web/src/features/markets/components/MarketUniverseForm.tsx [11]; apps/web/src/features/markets/components/SearchableMultiSelect.tsx [3]
+- apps/web/src/app/dashboard/markets/list/page.tsx
+  - reachableFiles=34
+  - issueFiles=11 (module=0, shared=11)
+  - score(module/shared)=0/15
+  - topModuleFiles=none
+- apps/web/src/app/dashboard/page.tsx
+  - reachableFiles=49
+  - issueFiles=12 (module=1, shared=11)
+  - score(module/shared)=4/15
+  - topModuleFiles=apps/web/src/features/dashboard-home/components/HomeLiveWidgets.tsx [4]
+- apps/web/src/app/dashboard/profile/page.tsx
+  - reachableFiles=50
+  - issueFiles=12 (module=1, shared=11)
+  - score(module/shared)=2/15
+  - topModuleFiles=apps/web/src/features/profile/components/BasicForm.tsx [2]
+- apps/web/src/app/dashboard/reports/page.tsx
+  - reachableFiles=27
+  - issueFiles=11 (module=2, shared=9)
+  - score(module/shared)=31/13
+  - topModuleFiles=apps/web/src/features/reports/components/PerformanceReportsView.tsx [25]; apps/web/src/app/dashboard/reports/page.tsx [6]
+- apps/web/src/app/dashboard/strategies/[id]/edit/page.tsx
+  - reachableFiles=38
+  - issueFiles=9 (module=0, shared=9)
+  - score(module/shared)=0/13
+  - topModuleFiles=none
+- apps/web/src/app/dashboard/strategies/[id]/page.tsx
+  - reachableFiles=16
+  - issueFiles=5 (module=0, shared=5)
+  - score(module/shared)=0/9
+  - topModuleFiles=none
+- apps/web/src/app/dashboard/strategies/create/page.tsx
+  - reachableFiles=32
+  - issueFiles=5 (module=0, shared=5)
+  - score(module/shared)=0/9
+  - topModuleFiles=none
+- apps/web/src/app/dashboard/strategies/list/page.tsx
+  - reachableFiles=33
+  - issueFiles=11 (module=0, shared=11)
+  - score(module/shared)=0/15
+  - topModuleFiles=none
+- apps/web/src/app/dashboard/wallets/[id]/edit/page.tsx
+  - reachableFiles=30
+  - issueFiles=10 (module=1, shared=9)
+  - score(module/shared)=1/13
+  - topModuleFiles=apps/web/src/features/wallets/components/WalletCreateEditForm.tsx [1]
+- apps/web/src/app/dashboard/wallets/[id]/page.tsx
+  - reachableFiles=16
+  - issueFiles=5 (module=0, shared=5)
+  - score(module/shared)=0/9
+  - topModuleFiles=none
+- apps/web/src/app/dashboard/wallets/create/page.tsx
+  - reachableFiles=30
+  - issueFiles=10 (module=1, shared=9)
+  - score(module/shared)=1/13
+  - topModuleFiles=apps/web/src/features/wallets/components/WalletCreateEditForm.tsx [1]
+- apps/web/src/app/dashboard/wallets/list/page.tsx
+  - reachableFiles=33
+  - issueFiles=11 (module=0, shared=11)
+  - score(module/shared)=0/15
+  - topModuleFiles=none
+- apps/web/src/app/dashboard/wallets/page.tsx
+  - reachableFiles=16
+  - issueFiles=5 (module=0, shared=5)
+  - score(module/shared)=0/9
+  - topModuleFiles=none
+- apps/web/src/app/offline/page.tsx
+  - reachableFiles=4
+  - issueFiles=3 (module=1, shared=2)
+  - score(module/shared)=2/3
+  - topModuleFiles=apps/web/src/app/offline/page.tsx [2]

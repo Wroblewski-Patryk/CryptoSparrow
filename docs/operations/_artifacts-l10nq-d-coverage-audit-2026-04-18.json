@@ -1,0 +1,1053 @@
+{
+  "generatedAt": "2026-04-17T22:38:04.543Z",
+  "scope": {
+    "scannedFiles": 187,
+    "routePages": 37,
+    "routeReachableFiles": 228
+  },
+  "metrics": {
+    "filesWithHardcodedCandidates": 35,
+    "filesWithLocalCopyObjects": 11,
+    "filesWithLocaleFallbackPl": 7,
+    "routeReachableIssueFiles": 42,
+    "actionableModuleFindingFiles": 29,
+    "sharedFoundationFindingFiles": 13
+  },
+  "actionableModuleFindings": [
+    {
+      "file": "apps/web/src/features/reports/components/PerformanceReportsView.tsx",
+      "score": 25,
+      "hardcodedCount": 25,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "translationCalls": 0,
+      "sample": {
+        "line": 72,
+        "type": "attr-text",
+        "text": "title=\"Ladowanie reports performance\""
+      }
+    },
+    {
+      "file": "apps/web/src/features/auth/hooks/useLoginForm.ts",
+      "score": 11,
+      "hardcodedCount": 0,
+      "localCopyObjects": 1,
+      "localeFallbackPl": 1,
+      "translationCalls": 0,
+      "sample": null
+    },
+    {
+      "file": "apps/web/src/features/auth/hooks/useRegisterForm.ts",
+      "score": 11,
+      "hardcodedCount": 0,
+      "localCopyObjects": 1,
+      "localeFallbackPl": 1,
+      "translationCalls": 0,
+      "sample": null
+    },
+    {
+      "file": "apps/web/src/features/markets/components/MarketUniverseForm.tsx",
+      "score": 11,
+      "hardcodedCount": 0,
+      "localCopyObjects": 1,
+      "localeFallbackPl": 1,
+      "translationCalls": 0,
+      "sample": null
+    },
+    {
+      "file": "apps/web/src/features/backtest/components/BacktestRunDetails.tsx",
+      "score": 8,
+      "hardcodedCount": 3,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 1,
+      "translationCalls": 0,
+      "sample": {
+        "line": 713,
+        "type": "attr-text",
+        "text": "title=\"Oddal (wiecej swiec)\""
+      }
+    },
+    {
+      "file": "apps/web/src/features/admin/subscriptions/pages/AdminSubscriptionsPage.tsx",
+      "score": 7,
+      "hardcodedCount": 1,
+      "localCopyObjects": 1,
+      "localeFallbackPl": 0,
+      "translationCalls": 0,
+      "sample": {
+        "line": 409,
+        "type": "jsx-text",
+        "text": "close"
+      }
+    },
+    {
+      "file": "apps/web/src/features/backtest/components/BacktestCreateForm.tsx",
+      "score": 7,
+      "hardcodedCount": 2,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 1,
+      "translationCalls": 0,
+      "sample": {
+        "line": 336,
+        "type": "attr-text",
+        "text": "placeholder=\"1200\""
+      }
+    },
+    {
+      "file": "apps/web/src/app/dashboard/reports/page.tsx",
+      "score": 6,
+      "hardcodedCount": 0,
+      "localCopyObjects": 1,
+      "localeFallbackPl": 0,
+      "translationCalls": 1,
+      "sample": null
+    },
+    {
+      "file": "apps/web/src/features/admin/users/pages/AdminUsersPage.tsx",
+      "score": 6,
+      "hardcodedCount": 0,
+      "localCopyObjects": 1,
+      "localeFallbackPl": 0,
+      "translationCalls": 0,
+      "sample": null
+    },
+    {
+      "file": "apps/web/src/features/auth/components/LoginForm.tsx",
+      "score": 6,
+      "hardcodedCount": 0,
+      "localCopyObjects": 1,
+      "localeFallbackPl": 0,
+      "translationCalls": 0,
+      "sample": null
+    },
+    {
+      "file": "apps/web/src/features/auth/components/RegisterForm.tsx",
+      "score": 6,
+      "hardcodedCount": 0,
+      "localCopyObjects": 1,
+      "localeFallbackPl": 0,
+      "translationCalls": 0,
+      "sample": null
+    },
+    {
+      "file": "apps/web/src/features/auth/pages/LoginPage.tsx",
+      "score": 6,
+      "hardcodedCount": 0,
+      "localCopyObjects": 1,
+      "localeFallbackPl": 0,
+      "translationCalls": 0,
+      "sample": null
+    },
+    {
+      "file": "apps/web/src/features/auth/pages/RegisterPage.tsx",
+      "score": 6,
+      "hardcodedCount": 0,
+      "localCopyObjects": 1,
+      "localeFallbackPl": 0,
+      "translationCalls": 0,
+      "sample": null
+    },
+    {
+      "file": "apps/web/src/features/backtest/components/BacktestsListView.tsx",
+      "score": 5,
+      "hardcodedCount": 0,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 1,
+      "translationCalls": 0,
+      "sample": null
+    },
+    {
+      "file": "apps/web/src/features/backtest/components/BacktestsRunsTable.tsx",
+      "score": 5,
+      "hardcodedCount": 0,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 1,
+      "translationCalls": 0,
+      "sample": null
+    },
+    {
+      "file": "apps/web/src/app/admin/layout.tsx",
+      "score": 4,
+      "hardcodedCount": 4,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "translationCalls": 0,
+      "sample": {
+        "line": 16,
+        "type": "jsx-text",
+        "text": "Subscriptions"
+      }
+    },
+    {
+      "file": "apps/web/src/features/dashboard-home/components/HomeLiveWidgets.tsx",
+      "score": 4,
+      "hardcodedCount": 4,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "translationCalls": 122,
+      "sample": {
+        "line": 1202,
+        "type": "attr-text",
+        "text": "placeholder=\"BTCUSDT\""
+      }
+    },
+    {
+      "file": "apps/web/src/features/bots/components/BotsManagement.tsx",
+      "score": 3,
+      "hardcodedCount": 3,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "translationCalls": 101,
+      "sample": {
+        "line": 459,
+        "type": "jsx-text",
+        "text": "Wallet"
+      }
+    },
+    {
+      "file": "apps/web/src/features/markets/components/SearchableMultiSelect.tsx",
+      "score": 3,
+      "hardcodedCount": 3,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "translationCalls": 0,
+      "sample": {
+        "line": 72,
+        "type": "attr-text",
+        "text": "placeholder=\"Szukaj...\""
+      }
+    },
+    {
+      "file": "apps/web/src/app/dashboard/bots/[id]/edit/page.tsx",
+      "score": 2,
+      "hardcodedCount": 2,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "translationCalls": 0,
+      "sample": {
+        "line": 19,
+        "type": "attr-text",
+        "text": "title=\"Bots\""
+      }
+    },
+    {
+      "file": "apps/web/src/app/dashboard/bots/create/page.tsx",
+      "score": 2,
+      "hardcodedCount": 2,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "translationCalls": 0,
+      "sample": {
+        "line": 26,
+        "type": "attr-text",
+        "text": "title=\"Bots\""
+      }
+    },
+    {
+      "file": "apps/web/src/app/offline/page.tsx",
+      "score": 2,
+      "hardcodedCount": 2,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "translationCalls": 0,
+      "sample": {
+        "line": 5,
+        "type": "jsx-text",
+        "text": "Offline Mode"
+      }
+    },
+    {
+      "file": "apps/web/src/features/profile/components/BasicForm.tsx",
+      "score": 2,
+      "hardcodedCount": 2,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "translationCalls": 0,
+      "sample": {
+        "line": 156,
+        "type": "attr-text",
+        "text": "placeholder=\"John Doe\""
+      }
+    },
+    {
+      "file": "apps/web/src/app/dashboard/bots/[id]/assistant/page.tsx",
+      "score": 1,
+      "hardcodedCount": 1,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "translationCalls": 0,
+      "sample": {
+        "line": 17,
+        "type": "attr-text",
+        "text": "title=\"Bots\""
+      }
+    },
+    {
+      "file": "apps/web/src/app/dashboard/bots/[id]/preview/page.tsx",
+      "score": 1,
+      "hardcodedCount": 1,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "translationCalls": 0,
+      "sample": {
+        "line": 17,
+        "type": "attr-text",
+        "text": "title=\"Bots\""
+      }
+    },
+    {
+      "file": "apps/web/src/features/bots/components/BotCreateEditForm.tsx",
+      "score": 1,
+      "hardcodedCount": 1,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "translationCalls": 47,
+      "sample": {
+        "line": 429,
+        "type": "jsx-text",
+        "text": ": x"
+      }
+    },
+    {
+      "file": "apps/web/src/features/bots/components/bots-management/BotsMonitoringTab.tsx",
+      "score": 1,
+      "hardcodedCount": 1,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "translationCalls": 166,
+      "sample": {
+        "line": 358,
+        "type": "jsx-text",
+        "text": "&nbsp;"
+      }
+    },
+    {
+      "file": "apps/web/src/features/bots/hooks/useBotsListController.ts",
+      "score": 1,
+      "hardcodedCount": 1,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "translationCalls": 15,
+      "sample": {
+        "line": 126,
+        "type": "toast",
+        "text": "toast.error(\"Wallets load failed\")"
+      }
+    },
+    {
+      "file": "apps/web/src/features/wallets/components/WalletCreateEditForm.tsx",
+      "score": 1,
+      "hardcodedCount": 1,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "translationCalls": 0,
+      "sample": {
+        "line": 926,
+        "type": "jsx-text",
+        "text": "hidden-submit"
+      }
+    }
+  ],
+  "sharedFoundationFindings": [
+    {
+      "file": "apps/web/src/ui/layout/dashboard/Header.tsx",
+      "score": 3,
+      "hardcodedCount": 3,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "sample": {
+        "line": 223,
+        "type": "attr-text",
+        "text": "aria-label=\"Dashboard navigation\""
+      }
+    },
+    {
+      "file": "apps/web/src/context/AuthContext.tsx",
+      "score": 2,
+      "hardcodedCount": 2,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "sample": {
+        "line": 61,
+        "type": "toast",
+        "text": "toast.warning(\"Sesja wygasla. Zaloguj sie ponownie.\")"
+      }
+    },
+    {
+      "file": "apps/web/src/ui/layout/dashboard/Footer.tsx",
+      "score": 2,
+      "hardcodedCount": 2,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "sample": {
+        "line": 13,
+        "type": "jsx-text",
+        "text": "&copy;"
+      }
+    },
+    {
+      "file": "apps/web/src/ui/layout/public/Footer.tsx",
+      "score": 2,
+      "hardcodedCount": 2,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "sample": {
+        "line": 13,
+        "type": "jsx-text",
+        "text": "&copy;"
+      }
+    },
+    {
+      "file": "apps/web/src/app/layout.tsx",
+      "score": 1,
+      "hardcodedCount": 1,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "sample": {
+        "line": 75,
+        "type": "jsx-text",
+        "text": "Skip to main content"
+      }
+    },
+    {
+      "file": "apps/web/src/ui/components/ConfirmModal.tsx",
+      "score": 1,
+      "hardcodedCount": 1,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "sample": {
+        "line": 47,
+        "type": "attr-text",
+        "text": "aria-label=\"Close modal\""
+      }
+    },
+    {
+      "file": "apps/web/src/ui/components/DataTable.tsx",
+      "score": 1,
+      "hardcodedCount": 1,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "sample": {
+        "line": 544,
+        "type": "attr-text",
+        "text": "aria-label=\"Filter rows\""
+      }
+    },
+    {
+      "file": "apps/web/src/ui/components/FooterPreferencesSwitchers.tsx",
+      "score": 1,
+      "hardcodedCount": 1,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "sample": {
+        "line": 18,
+        "type": "attr-text",
+        "text": "aria-label=\"Footer preferences\""
+      }
+    },
+    {
+      "file": "apps/web/src/ui/components/FormModal.tsx",
+      "score": 1,
+      "hardcodedCount": 1,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "sample": {
+        "line": 41,
+        "type": "attr-text",
+        "text": "aria-label=\"Close modal\""
+      }
+    },
+    {
+      "file": "apps/web/src/ui/components/loading/SkeletonCardBlock.tsx",
+      "score": 1,
+      "hardcodedCount": 1,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "sample": {
+        "line": 19,
+        "type": "attr-text",
+        "text": "aria-label=\"Loading cards\""
+      }
+    },
+    {
+      "file": "apps/web/src/ui/components/loading/SkeletonFormBlock.tsx",
+      "score": 1,
+      "hardcodedCount": 1,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "sample": {
+        "line": 23,
+        "type": "attr-text",
+        "text": "aria-label=\"Loading form\""
+      }
+    },
+    {
+      "file": "apps/web/src/ui/components/loading/SkeletonKpiRow.tsx",
+      "score": 1,
+      "hardcodedCount": 1,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "sample": {
+        "line": 12,
+        "type": "attr-text",
+        "text": "aria-label=\"Loading KPI row\""
+      }
+    },
+    {
+      "file": "apps/web/src/ui/components/loading/SkeletonTableRows.tsx",
+      "score": 1,
+      "hardcodedCount": 1,
+      "localCopyObjects": 0,
+      "localeFallbackPl": 0,
+      "sample": {
+        "line": 24,
+        "type": "attr-text",
+        "text": "aria-label=\"Loading table rows\""
+      }
+    }
+  ],
+  "routeSummary": [
+    {
+      "page": "apps/web/src/app/(public)/auth/login/page.tsx",
+      "reachableFiles": 19,
+      "issueFiles": 7,
+      "moduleIssueFiles": 3,
+      "sharedIssueFiles": 4,
+      "moduleScore": 23,
+      "sharedScore": 6,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/features/auth/hooks/useLoginForm.ts",
+          "score": 11
+        },
+        {
+          "file": "apps/web/src/features/auth/components/LoginForm.tsx",
+          "score": 6
+        },
+        {
+          "file": "apps/web/src/features/auth/pages/LoginPage.tsx",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/(public)/auth/register/page.tsx",
+      "reachableFiles": 19,
+      "issueFiles": 7,
+      "moduleIssueFiles": 3,
+      "sharedIssueFiles": 4,
+      "moduleScore": 23,
+      "sharedScore": 6,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/features/auth/hooks/useRegisterForm.ts",
+          "score": 11
+        },
+        {
+          "file": "apps/web/src/features/auth/components/RegisterForm.tsx",
+          "score": 6
+        },
+        {
+          "file": "apps/web/src/features/auth/pages/RegisterPage.tsx",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/(public)/page.tsx",
+      "reachableFiles": 13,
+      "issueFiles": 4,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 4,
+      "moduleScore": 0,
+      "sharedScore": 6,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/admin/page.tsx",
+      "reachableFiles": 11,
+      "issueFiles": 4,
+      "moduleIssueFiles": 1,
+      "sharedIssueFiles": 3,
+      "moduleScore": 4,
+      "sharedScore": 4,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/app/admin/layout.tsx",
+          "score": 4
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/admin/subscriptions/page.tsx",
+      "reachableFiles": 14,
+      "issueFiles": 5,
+      "moduleIssueFiles": 2,
+      "sharedIssueFiles": 3,
+      "moduleScore": 11,
+      "sharedScore": 4,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/features/admin/subscriptions/pages/AdminSubscriptionsPage.tsx",
+          "score": 7
+        },
+        {
+          "file": "apps/web/src/app/admin/layout.tsx",
+          "score": 4
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/admin/users/page.tsx",
+      "reachableFiles": 16,
+      "issueFiles": 5,
+      "moduleIssueFiles": 2,
+      "sharedIssueFiles": 3,
+      "moduleScore": 10,
+      "sharedScore": 4,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/features/admin/users/pages/AdminUsersPage.tsx",
+          "score": 6
+        },
+        {
+          "file": "apps/web/src/app/admin/layout.tsx",
+          "score": 4
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/dashboard/backtests/[id]/page.tsx",
+      "reachableFiles": 39,
+      "issueFiles": 10,
+      "moduleIssueFiles": 1,
+      "sharedIssueFiles": 9,
+      "moduleScore": 8,
+      "sharedScore": 13,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/features/backtest/components/BacktestRunDetails.tsx",
+          "score": 8
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/dashboard/backtests/create/page.tsx",
+      "reachableFiles": 27,
+      "issueFiles": 6,
+      "moduleIssueFiles": 1,
+      "sharedIssueFiles": 5,
+      "moduleScore": 7,
+      "sharedScore": 9,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/features/backtest/components/BacktestCreateForm.tsx",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/dashboard/backtests/list/page.tsx",
+      "reachableFiles": 33,
+      "issueFiles": 13,
+      "moduleIssueFiles": 2,
+      "sharedIssueFiles": 11,
+      "moduleScore": 10,
+      "sharedScore": 15,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/features/backtest/components/BacktestsListView.tsx",
+          "score": 5
+        },
+        {
+          "file": "apps/web/src/features/backtest/components/BacktestsRunsTable.tsx",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/dashboard/bots/[id]/assistant/page.tsx",
+      "reachableFiles": 45,
+      "issueFiles": 14,
+      "moduleIssueFiles": 4,
+      "sharedIssueFiles": 10,
+      "moduleScore": 6,
+      "sharedScore": 14,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/features/bots/components/BotsManagement.tsx",
+          "score": 3
+        },
+        {
+          "file": "apps/web/src/app/dashboard/bots/[id]/assistant/page.tsx",
+          "score": 1
+        },
+        {
+          "file": "apps/web/src/features/bots/components/bots-management/BotsMonitoringTab.tsx",
+          "score": 1
+        },
+        {
+          "file": "apps/web/src/features/bots/hooks/useBotsListController.ts",
+          "score": 1
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/dashboard/bots/[id]/edit/page.tsx",
+      "reachableFiles": 36,
+      "issueFiles": 12,
+      "moduleIssueFiles": 2,
+      "sharedIssueFiles": 10,
+      "moduleScore": 3,
+      "sharedScore": 14,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/app/dashboard/bots/[id]/edit/page.tsx",
+          "score": 2
+        },
+        {
+          "file": "apps/web/src/features/bots/components/BotCreateEditForm.tsx",
+          "score": 1
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/dashboard/bots/[id]/page.tsx",
+      "reachableFiles": 16,
+      "issueFiles": 5,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 5,
+      "moduleScore": 0,
+      "sharedScore": 9,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/dashboard/bots/[id]/preview/page.tsx",
+      "reachableFiles": 45,
+      "issueFiles": 14,
+      "moduleIssueFiles": 4,
+      "sharedIssueFiles": 10,
+      "moduleScore": 6,
+      "sharedScore": 14,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/features/bots/components/BotsManagement.tsx",
+          "score": 3
+        },
+        {
+          "file": "apps/web/src/app/dashboard/bots/[id]/preview/page.tsx",
+          "score": 1
+        },
+        {
+          "file": "apps/web/src/features/bots/components/bots-management/BotsMonitoringTab.tsx",
+          "score": 1
+        },
+        {
+          "file": "apps/web/src/features/bots/hooks/useBotsListController.ts",
+          "score": 1
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/dashboard/bots/[id]/runtime/page.tsx",
+      "reachableFiles": 16,
+      "issueFiles": 5,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 5,
+      "moduleScore": 0,
+      "sharedScore": 9,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/dashboard/bots/assistant/page.tsx",
+      "reachableFiles": 16,
+      "issueFiles": 5,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 5,
+      "moduleScore": 0,
+      "sharedScore": 9,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/dashboard/bots/create/page.tsx",
+      "reachableFiles": 36,
+      "issueFiles": 12,
+      "moduleIssueFiles": 2,
+      "sharedIssueFiles": 10,
+      "moduleScore": 3,
+      "sharedScore": 14,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/app/dashboard/bots/create/page.tsx",
+          "score": 2
+        },
+        {
+          "file": "apps/web/src/features/bots/components/BotCreateEditForm.tsx",
+          "score": 1
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/dashboard/bots/new/page.tsx",
+      "reachableFiles": 16,
+      "issueFiles": 5,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 5,
+      "moduleScore": 0,
+      "sharedScore": 9,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/dashboard/bots/page.tsx",
+      "reachableFiles": 36,
+      "issueFiles": 11,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 11,
+      "moduleScore": 0,
+      "sharedScore": 15,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/dashboard/bots/runtime/page.tsx",
+      "reachableFiles": 16,
+      "issueFiles": 5,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 5,
+      "moduleScore": 0,
+      "sharedScore": 9,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/dashboard/exchanges/page.tsx",
+      "reachableFiles": 16,
+      "issueFiles": 5,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 5,
+      "moduleScore": 0,
+      "sharedScore": 9,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/dashboard/logs/page.tsx",
+      "reachableFiles": 31,
+      "issueFiles": 10,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 10,
+      "moduleScore": 0,
+      "sharedScore": 14,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/dashboard/markets/[id]/edit/page.tsx",
+      "reachableFiles": 30,
+      "issueFiles": 11,
+      "moduleIssueFiles": 2,
+      "sharedIssueFiles": 9,
+      "moduleScore": 14,
+      "sharedScore": 13,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/features/markets/components/MarketUniverseForm.tsx",
+          "score": 11
+        },
+        {
+          "file": "apps/web/src/features/markets/components/SearchableMultiSelect.tsx",
+          "score": 3
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/dashboard/markets/create/page.tsx",
+      "reachableFiles": 24,
+      "issueFiles": 7,
+      "moduleIssueFiles": 2,
+      "sharedIssueFiles": 5,
+      "moduleScore": 14,
+      "sharedScore": 9,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/features/markets/components/MarketUniverseForm.tsx",
+          "score": 11
+        },
+        {
+          "file": "apps/web/src/features/markets/components/SearchableMultiSelect.tsx",
+          "score": 3
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/dashboard/markets/list/page.tsx",
+      "reachableFiles": 34,
+      "issueFiles": 11,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 11,
+      "moduleScore": 0,
+      "sharedScore": 15,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/dashboard/page.tsx",
+      "reachableFiles": 49,
+      "issueFiles": 12,
+      "moduleIssueFiles": 1,
+      "sharedIssueFiles": 11,
+      "moduleScore": 4,
+      "sharedScore": 15,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/features/dashboard-home/components/HomeLiveWidgets.tsx",
+          "score": 4
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/dashboard/profile/page.tsx",
+      "reachableFiles": 50,
+      "issueFiles": 12,
+      "moduleIssueFiles": 1,
+      "sharedIssueFiles": 11,
+      "moduleScore": 2,
+      "sharedScore": 15,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/features/profile/components/BasicForm.tsx",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/dashboard/reports/page.tsx",
+      "reachableFiles": 27,
+      "issueFiles": 11,
+      "moduleIssueFiles": 2,
+      "sharedIssueFiles": 9,
+      "moduleScore": 31,
+      "sharedScore": 13,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/features/reports/components/PerformanceReportsView.tsx",
+          "score": 25
+        },
+        {
+          "file": "apps/web/src/app/dashboard/reports/page.tsx",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/dashboard/strategies/[id]/edit/page.tsx",
+      "reachableFiles": 38,
+      "issueFiles": 9,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 9,
+      "moduleScore": 0,
+      "sharedScore": 13,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/dashboard/strategies/[id]/page.tsx",
+      "reachableFiles": 16,
+      "issueFiles": 5,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 5,
+      "moduleScore": 0,
+      "sharedScore": 9,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/dashboard/strategies/create/page.tsx",
+      "reachableFiles": 32,
+      "issueFiles": 5,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 5,
+      "moduleScore": 0,
+      "sharedScore": 9,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/dashboard/strategies/list/page.tsx",
+      "reachableFiles": 33,
+      "issueFiles": 11,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 11,
+      "moduleScore": 0,
+      "sharedScore": 15,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/dashboard/wallets/[id]/edit/page.tsx",
+      "reachableFiles": 30,
+      "issueFiles": 10,
+      "moduleIssueFiles": 1,
+      "sharedIssueFiles": 9,
+      "moduleScore": 1,
+      "sharedScore": 13,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/features/wallets/components/WalletCreateEditForm.tsx",
+          "score": 1
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/dashboard/wallets/[id]/page.tsx",
+      "reachableFiles": 16,
+      "issueFiles": 5,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 5,
+      "moduleScore": 0,
+      "sharedScore": 9,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/dashboard/wallets/create/page.tsx",
+      "reachableFiles": 30,
+      "issueFiles": 10,
+      "moduleIssueFiles": 1,
+      "sharedIssueFiles": 9,
+      "moduleScore": 1,
+      "sharedScore": 13,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/features/wallets/components/WalletCreateEditForm.tsx",
+          "score": 1
+        }
+      ]
+    },
+    {
+      "page": "apps/web/src/app/dashboard/wallets/list/page.tsx",
+      "reachableFiles": 33,
+      "issueFiles": 11,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 11,
+      "moduleScore": 0,
+      "sharedScore": 15,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/dashboard/wallets/page.tsx",
+      "reachableFiles": 16,
+      "issueFiles": 5,
+      "moduleIssueFiles": 0,
+      "sharedIssueFiles": 5,
+      "moduleScore": 0,
+      "sharedScore": 9,
+      "topModuleFiles": []
+    },
+    {
+      "page": "apps/web/src/app/offline/page.tsx",
+      "reachableFiles": 4,
+      "issueFiles": 3,
+      "moduleIssueFiles": 1,
+      "sharedIssueFiles": 2,
+      "moduleScore": 2,
+      "sharedScore": 3,
+      "topModuleFiles": [
+        {
+          "file": "apps/web/src/app/offline/page.tsx",
+          "score": 2
+        }
+      ]
+    }
+  ]
+}
