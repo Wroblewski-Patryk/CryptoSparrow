@@ -7,7 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `UXR-06 feat(web-dashboard-wallet): redesign wallet KPI row + wallet icon consistency`
+- [x] `UXR-06 feat(web-dashboard-wallet): redesign wallet KPI row + wallet icon consistency`
 - [ ] `UXR-07 feat(web-dashboard-tabs): rename tab labels to positions/orders/history`
 - [ ] `UXR-08 fix(web-positions-table): move close column to last, rename to Action, use icon button`
 - [ ] `UXR-09 fix(web-actions): implement per-row pending state for concurrent close actions`
@@ -36,6 +36,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `UXR-06 feat(web-dashboard-wallet): redesign wallet KPI row + wallet icon consistency`
+  - 2026-04-17: Redesigned wallet summary into a compact first-row KPI layout (`portfolio/free funds/in positions`) with consistent wallet-icon treatment and responsive 1->3 column behavior in runtime sidebar, plus regression lock for new KPI row/card contract in `HomeLiveWidgets.test.tsx`; validation pack: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`.
 - [x] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
   - 2026-04-17: Removed runtime-session `createdAt` clamp from open-orders read path for `PAPER`, aligning both modes to a unified open-order visibility contract (`LIVE_EXCHANGE` + `PAPER_SIMULATED` carryover shown in runtime dashboard payload), and added PAPER carryover regression coverage in `orders-positions.e2e`; validation pack: `pnpm --filter api test -- src/modules/orders/orders-positions.e2e.test.ts` => `9/9 PASS`.
 - [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`

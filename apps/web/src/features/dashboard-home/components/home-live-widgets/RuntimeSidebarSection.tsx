@@ -99,6 +99,32 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
           ? props.formatAmountWithUnit(selectedWallet.liveAllocationValue ?? 0)
           : "-"
       : "-";
+  const walletKpis = [
+    {
+      key: "portfolio",
+      label: props.text.portfolio,
+      value: walletTotal != null ? props.formatAmountWithUnit(walletTotal) : "-",
+      toneClass: "text-base-content",
+      percent: null as string | null,
+      testId: "wallet-kpi-portfolio",
+    },
+    {
+      key: "free",
+      label: props.text.freeFunds,
+      value: walletFree != null ? props.formatAmountWithUnit(walletFree) : "-",
+      toneClass: "text-primary",
+      percent: walletFreePct != null ? props.formatPercent(walletFreePct) : null,
+      testId: "wallet-kpi-free-funds",
+    },
+    {
+      key: "inPositions",
+      label: props.text.inPositionsShort,
+      value: props.formatAmountWithUnit(selectedUsedMargin),
+      toneClass: "text-secondary",
+      percent: walletInPositionsPct != null ? props.formatPercent(walletInPositionsPct) : null,
+      testId: "wallet-kpi-in-positions",
+    },
+  ];
   const panelFrameClassName =
     "rounded-box border-b-[3px] border-secondary/70 bg-gradient-to-br from-primary/70 to-secondary/70 p-px";
   const panelBodyClassName = "rounded-box bg-base-100/85 p-3";
@@ -276,7 +302,10 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
           <div className={`${panelBodyClassName} text-xs`}>
             <div className="space-y-1.5">
               <p className="flex items-center justify-between gap-2">
-                <span className="opacity-65">{props.text.walletTitle}</span>
+                <span className="inline-flex items-center gap-1.5 opacity-65">
+                  <LuWallet className="h-3.5 w-3.5" aria-hidden />
+                  {props.text.walletTitle}
+                </span>
                 <span className="font-semibold">{walletName}</span>
               </p>
               <p className="flex items-center justify-between gap-2">
@@ -289,15 +318,27 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
                   <span className="font-semibold">{walletAllocationLabel}</span>
                 </p>
               ) : null}
-              <p className="flex items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1.5 opacity-65">
-                  <LuWallet className="h-3.5 w-3.5" aria-hidden />
-                  {props.text.portfolio}
-                </span>
-                <span className="font-semibold">
-                  {walletTotal != null ? props.formatAmountWithUnit(walletTotal) : "-"}
-                </span>
-              </p>
+              <div
+                className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-3"
+                data-testid="wallet-kpi-row"
+              >
+                {walletKpis.map((kpi) => (
+                  <div
+                    key={kpi.key}
+                    className="rounded-box border border-base-300/45 bg-base-100/60 px-2 py-1.5"
+                    data-testid={kpi.testId}
+                  >
+                    <p className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide opacity-65">
+                      <LuWallet className="h-3 w-3" aria-hidden />
+                      {kpi.label}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold">{kpi.value}</p>
+                    <p className={`mt-0.5 text-[11px] font-semibold ${kpi.toneClass}`}>
+                      {kpi.percent ?? "-"}
+                    </p>
+                  </div>
+                ))}
+              </div>
               <div className="space-y-2">
                 {walletFreePct != null && walletInPositionsPct != null ? (
                   <div className="flex h-2 overflow-hidden rounded-full bg-base-300/30">
@@ -311,24 +352,6 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
                     />
                   </div>
                 ) : null}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-box py-1.5 text-left">
-                    <p className="text-xs font-semibold">
-                      {walletFree != null ? props.formatAmountWithUnit(walletFree) : "-"}
-                    </p>
-                    <p className="mt-0.5 text-[10px] uppercase tracking-wide opacity-65">{props.text.freeFunds}</p>
-                    <p className="mt-0.5 text-[11px] font-semibold text-primary">
-                      {walletFreePct != null ? props.formatPercent(walletFreePct) : "-"}
-                    </p>
-                  </div>
-                  <div className="rounded-box py-1.5 text-right">
-                    <p className="text-xs font-semibold">{props.formatAmountWithUnit(selectedUsedMargin)}</p>
-                    <p className="mt-0.5 text-[10px] uppercase tracking-wide opacity-65">{props.text.inPositionsShort}</p>
-                    <p className="mt-0.5 text-[11px] font-semibold text-secondary">
-                      {walletInPositionsPct != null ? props.formatPercent(walletInPositionsPct) : "-"}
-                    </p>
-                  </div>
-                </div>
               </div>
               <p className="flex items-center justify-between gap-2">
                 <span className="opacity-65">{props.text.deltaFromStart}</span>

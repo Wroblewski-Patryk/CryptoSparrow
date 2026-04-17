@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { I18nProvider } from "../../../i18n/I18nProvider";
@@ -924,23 +924,20 @@ describe("HomeLiveWidgets", () => {
     renderSubject();
 
     await waitFor(() => {
-      const portfolioLabel = screen
-        .getAllByText(/Portfel|Portfolio/i)
-        .find((node) => node.className.includes("inline-flex"));
-      const portfolioRow = portfolioLabel?.closest("p");
-      const portfolioValue = portfolioRow?.querySelector("span:last-child")?.textContent ?? "";
-      expect(portfolioValue).toMatch(/200/);
-      expect(portfolioValue.trim()).not.toBe("-");
+      const walletKpiRow = screen.getByTestId("wallet-kpi-row");
+      expect(walletKpiRow).toBeInTheDocument();
 
-      const freeFundsCard = screen.getByText(/Wolne srodki|Free funds/i).closest("div");
-      const freeFundsValue = freeFundsCard?.querySelector("p.text-xs.font-semibold")?.textContent ?? "";
-      expect(freeFundsValue).toMatch(/194/);
-      expect(freeFundsValue.trim()).not.toBe("-");
+      const portfolioCard = screen.getByTestId("wallet-kpi-portfolio");
+      const freeFundsCard = screen.getByTestId("wallet-kpi-free-funds");
+      const inPositionsCard = screen.getByTestId("wallet-kpi-in-positions");
 
-      const inPositionsCard = screen.getByText(/W pozycjach|In positions/i).closest("div");
-      const inPositionsValue = inPositionsCard?.querySelector("p.text-xs.font-semibold")?.textContent ?? "";
-      expect(inPositionsValue).toMatch(/5/);
-      expect(inPositionsValue.trim()).not.toBe("-");
+      expect(within(portfolioCard).getByText(/Portfel|Portfolio/i)).toBeInTheDocument();
+      expect(within(freeFundsCard).getByText(/Wolne srodki|Free funds/i)).toBeInTheDocument();
+      expect(within(inPositionsCard).getByText(/W pozycjach|In positions/i)).toBeInTheDocument();
+
+      expect(within(portfolioCard).getByText(/200/)).toBeInTheDocument();
+      expect(within(freeFundsCard).getByText(/194/)).toBeInTheDocument();
+      expect(within(inPositionsCard).getByText(/5/)).toBeInTheDocument();
     });
   });
 

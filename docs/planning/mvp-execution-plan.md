@@ -1633,6 +1633,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
 
 ### Progress Log (Post-PEX Continuation)
+- 2026-04-17: Completed `UXR-06` by redesigning runtime wallet summary into a compact first-row KPI layout (`portfolio`, `free funds`, `in positions`) with consistent wallet-icon semantics and responsive 1->3 column rendering in `RuntimeSidebarSection`, plus regression assertions for the new KPI row/card contract in `HomeLiveWidgets.test.tsx`; validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`.
 - 2026-04-17: Completed `UXR-05` by removing runtime-session `createdAt` clamping from open-orders read-path for `PAPER`, aligning `LIVE` and `PAPER` runtime dashboard visibility to the same unified carryover contract, with explicit PAPER carryover regression coverage in `orders-positions.e2e`; validation: `pnpm --filter api test -- src/modules/orders/orders-positions.e2e.test.ts` => `9/9 PASS`.
 - 2026-04-17: Closed grouped wave `UXR-A` (`UXR-01..UXR-05`) and promoted `UXR-06..UXR-10` as the active execution queue with `UXR-11..UXR-15` staged next in `mvp-next-commits.md`.
 - 2026-04-17: Completed `UXR-04` by making runtime open-orders windowing mode-aware (session `createdAt` clamp now kept for `PAPER` only, while `LIVE` read-model includes carryover open orders created before current runtime session start), plus added carryover visibility regression coverage in `orders-positions.e2e`; validation: `pnpm --filter api test -- src/modules/orders/orders-positions.e2e.test.ts` => `8/8 PASS`.
@@ -1674,7 +1675,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
 - [x] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
 - [x] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
-- [ ] `UXR-06 feat(web-dashboard-wallet): redesign wallet KPI row + wallet icon consistency`
+- [x] `UXR-06 feat(web-dashboard-wallet): redesign wallet KPI row + wallet icon consistency`
 - [ ] `UXR-07 feat(web-dashboard-tabs): rename tab labels to positions/orders/history`
 - [ ] `UXR-08 fix(web-positions-table): move close column to last, rename to Action, use icon button`
 - [ ] `UXR-09 fix(web-actions): implement per-row pending state for concurrent close actions`
@@ -1701,6 +1702,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `UXR-30 qa(regression-pack): run focused API+WEB tests and manual smoke for live/paper parity`
 
 ### Progress Log (Phase 37 - Dashboard + Modules UX/Runtime Fix Wave)
+- 2026-04-17: Completed `UXR-06` wallet dashboard UX pass by moving `portfolio/free funds/in positions` into one compact, responsive KPI row with consistent wallet-icon semantics in sidebar summary, validated by `HomeLiveWidgets.test.tsx` (`12/12 PASS`).
 - 2026-04-17: Completed `UXR-05` paper-orders parity by aligning runtime open-order visibility for pre-session carryover rows in `PAPER` mode with unified read-model expectations, validated with `orders-positions.e2e` (`9/9 PASS`).
 - 2026-04-17: Completed `UXR-04` live-orders parity by exposing pre-session LIVE carryover open orders in runtime payload, validated with `orders-positions.e2e` (`8/8 PASS`).
 - 2026-04-17: Completed `UXR-03` runtime ownership fix: LIVE-only symbol-owner arbitration for `EXCHANGE_SYNC` takeover and close-flow claim/backfill for missing takeover ownership fields.
