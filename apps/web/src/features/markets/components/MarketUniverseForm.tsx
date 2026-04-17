@@ -6,7 +6,7 @@ import { FieldWrapper, SelectField, TextInputField } from './FieldControls';
 import SearchableMultiSelect, { MultiSelectOption } from './SearchableMultiSelect';
 import { fetchMarketCatalog } from '../services/markets.service';
 import { CreateMarketUniverseInput, MarketCatalogEntry, MarketUniverse } from '../types/marketUniverse.type';
-import { uniqueSortedSymbols } from '../utils/marketUniverseHelpers';
+import { composeMarketUniverseSymbols, uniqueSortedSymbols } from '../utils/marketUniverseHelpers';
 import {
   hasFormText,
   normalizeFormBaseCurrency,
@@ -224,11 +224,15 @@ export default function MarketUniverseForm({
 
   const availableSymbols = useMemo(() => marketOptions.map((option) => option.value), [marketOptions]);
 
-  const previewSymbols = useMemo(() => {
-    const include = whitelistSymbols.length > 0 ? whitelistSymbols : availableSymbols;
-    const blacklistSet = new Set(blacklistSymbols);
-    return uniqueSortedSymbols(include).filter((symbol) => !blacklistSet.has(symbol));
-  }, [availableSymbols, blacklistSymbols, whitelistSymbols]);
+  const previewSymbols = useMemo(
+    () =>
+      composeMarketUniverseSymbols({
+        catalogSymbols: availableSymbols,
+        whitelistSymbols,
+        blacklistSymbols,
+      }),
+    [availableSymbols, blacklistSymbols, whitelistSymbols]
+  );
 
   const previewFiltered = useMemo(() => {
     const q = normalizeFormSymbol(previewQuery);

@@ -1685,7 +1685,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `UXR-11 feat(web-position-edit-modal): add reusable modal shell + initial position-edit form`
 - [x] `UXR-12 feat(api-position-edit): expose safe manual update endpoint for TP/SL and metadata`
 - [x] `UXR-13 feat(web-dashboard-manual-order): add manual order panel using existing bot order pipeline`
-- [ ] `UXR-14 feat(web-markets-form): compose symbol universe from (min-volume U whitelist) - blacklist`
+- [x] `UXR-14 feat(web-markets-form): compose symbol universe from (min-volume U whitelist) - blacklist`
 - [ ] `UXR-15 fix(api-markets): enforce same universe composition contract on backend`
 - [ ] `UXR-16 ux(web-profile-api): redesign API key form row layout and helper blocks`
 - [ ] `UXR-17 fix(api-profile-sync): make API sync action deterministic and observable`
@@ -1704,6 +1704,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `UXR-30 qa(regression-pack): run focused API+WEB tests and manual smoke for live/paper parity`
 
 ### Progress Log (Phase 37 - Dashboard + Modules UX/Runtime Fix Wave)
+- 2026-04-17: Completed `UXR-14` by aligning markets-form preview composition to canonical contract `(min-volume filtered catalog U whitelist) - blacklist` using a dedicated helper (`composeMarketUniverseSymbols`) and adding regression coverage for composed preview output (`BTCUSDT + SOLUSDT`, `ETHUSDT` excluded) in `MarketUniverseForm.test.tsx`; validation: `pnpm --filter web test -- src/features/markets/components/MarketUniverseForm.test.tsx` => `6/6 PASS`.
 - 2026-04-17: Completed `UXR-13` by adding a dashboard `Manual order` panel in `HomeLiveWidgets` (symbol/side/qty) wired to existing backend order-open command path (`/dashboard/orders/open`) through shared bot service helper, with mode-aware payload (`PAPER/LIVE`, `riskAck` in live), deterministic operator feedback (toast success/error), and runtime refresh after successful submit; validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `13/13 PASS`, `pnpm --filter web run typecheck` => `PASS`.
 - 2026-04-17: Completed `UXR-12` by adding safe manual TP/SL dashboard update endpoint (`PATCH /dashboard/positions/:id/manual-update`) with ownership isolation, OPEN-position guard, side-aware TP/SL directional validation (`LONG`/`SHORT`), and audit metadata log contract (`position.manual_update`), then wiring position-edit modal save to this endpoint with runtime refresh + toast error/success handling; validation: `pnpm --filter api test -- src/modules/orders/orders-positions.e2e.test.ts` => `11/11 PASS`, `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`, `pnpm --filter web run typecheck` => `PASS`.
 - 2026-04-17: Completed `UXR-11` by introducing reusable `FormModal` and wiring initial position-edit UX in runtime open-positions table (`Edit position` action + modal draft fields for TP/SL/notes/lock-rules and context summary), while preserving existing close-action behavior; validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`, `pnpm --filter web run typecheck` => `PASS`.

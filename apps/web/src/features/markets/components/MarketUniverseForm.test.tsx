@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MarketUniverseForm from './MarketUniverseForm';
 
@@ -68,6 +68,74 @@ describe('MarketUniverseForm', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Liczba rynkow: 1')).toBeInTheDocument();
+    });
+  });
+
+  it('composes preview symbols as (volume-filtered catalog U whitelist) - blacklist', async () => {
+    fetchCatalogMock.mockResolvedValue({
+      source: 'BINANCE_PUBLIC',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+      baseCurrencies: ['USDT'],
+      totalAvailable: 3,
+      totalForBaseCurrency: 3,
+      markets: [
+        {
+          symbol: 'BTCUSDT',
+          displaySymbol: 'BTC/USDT',
+          baseAsset: 'BTC',
+          quoteAsset: 'USDT',
+          quoteVolume24h: 2000,
+          lastPrice: 68000,
+        },
+        {
+          symbol: 'ETHUSDT',
+          displaySymbol: 'ETH/USDT',
+          baseAsset: 'ETH',
+          quoteAsset: 'USDT',
+          quoteVolume24h: 1800,
+          lastPrice: 3600,
+        },
+        {
+          symbol: 'SOLUSDT',
+          displaySymbol: 'SOL/USDT',
+          baseAsset: 'SOL',
+          quoteAsset: 'USDT',
+          quoteVolume24h: 100,
+          lastPrice: 150,
+        },
+      ],
+    });
+
+    render(
+      <MarketUniverseForm
+        mode='edit'
+        initial={{
+          id: 'u-compose-1',
+          name: 'Compose Contract',
+          marketType: 'FUTURES',
+          baseCurrency: 'USDT',
+          filterRules: { minQuoteVolumeEnabled: true, minQuoteVolume24h: 1500 },
+          whitelist: ['SOLUSDT'],
+          blacklist: ['ETHUSDT'],
+        }}
+        submitting={false}
+        onSubmit={async () => undefined}
+      />
+    );
+
+    await waitFor(() => {
+      expect(fetchCatalogMock).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      const previewCounter = screen.getByText('Liczba rynkow: 2');
+      const previewSection = previewCounter.closest('section');
+      expect(previewSection).not.toBeNull();
+      const scoped = within(previewSection as HTMLElement);
+      expect(scoped.getByText('BTCUSDT')).toBeInTheDocument();
+      expect(scoped.getByText('SOLUSDT')).toBeInTheDocument();
+      expect(scoped.queryByText('ETHUSDT')).not.toBeInTheDocument();
     });
   });
 

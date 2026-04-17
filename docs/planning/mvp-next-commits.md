@@ -16,7 +16,7 @@ Operational queue for one-task execution runs.
 - [x] `UXR-11 feat(web-position-edit-modal): add reusable modal shell + initial position-edit form`
 - [x] `UXR-12 feat(api-position-edit): expose safe manual update endpoint for TP/SL and metadata`
 - [x] `UXR-13 feat(web-dashboard-manual-order): add manual order panel using existing bot order pipeline`
-- [ ] `UXR-14 feat(web-markets-form): compose symbol universe from (min-volume U whitelist) - blacklist`
+- [x] `UXR-14 feat(web-markets-form): compose symbol universe from (min-volume U whitelist) - blacklist`
 - [ ] `UXR-15 fix(api-markets): enforce same universe composition contract on backend`
 ## PIPELINE
 - [ ] `L10NQ-01 docs(contract): freeze remediation scope and English-only documentation baseline`
@@ -36,6 +36,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `UXR-14 feat(web-markets-form): compose symbol universe from (min-volume U whitelist) - blacklist`
+  - 2026-04-17: Updated markets form composition contract to compute preview universe as `(volume-filtered catalog U whitelist) - blacklist` via shared helper (`composeMarketUniverseSymbols`) and locked regression coverage for composed preview behavior in edit mode. Validation pack: `pnpm --filter web test -- src/features/markets/components/MarketUniverseForm.test.tsx` => `6/6 PASS`.
 - [x] `UXR-13 feat(web-dashboard-manual-order): add manual order panel using existing bot order pipeline`
   - 2026-04-17: Added dashboard `Manual order` operator panel in `HomeLiveWidgets` (symbol/side/quantity) and wired submit flow to existing backend command path (`POST /dashboard/orders/open`) via shared `openDashboardManualOrder` service helper, including mode-aware payload (`botId/walletId/strategyId`, `PAPER/LIVE`, `riskAck` for live), success/error toasts, and runtime refresh after submit. Validation pack: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `13/13 PASS`, `pnpm --filter web run typecheck` => `PASS`.
 - [x] `UXR-12 feat(api-position-edit): expose safe manual update endpoint for TP/SL and metadata`
