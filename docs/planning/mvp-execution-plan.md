@@ -1788,3 +1788,43 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-17: Completed `BTMM-B` by closing `BTMM-06..BTMM-10` (added DB-cache interval continuity guard with network fallback/backfill for cache gaps in `backtestDataGateway`, moved run-level per-symbol totals/grouped trades into `useBacktestRunCoreData` for explicit source-of-truth split, exposed run-total vs chart-window labels in `BacktestRunDetails`, and expanded remediation regressions for terminal anchor stability across all terminal statuses plus single-adaptation legacy `maxCandles` contract). Validation: `pnpm --filter api test -- src/modules/backtests/backtests.contract-remediation.test.ts src/modules/backtests/backtestRunJob.test.ts src/modules/backtests/backtestDataGateway.test.ts` => `10/10 PASS`, `pnpm --filter api test -- src/modules/backtests/backtests.e2e.test.ts` => `10/10 PASS`, `pnpm --filter web test -- src/features/backtest/hooks/useBacktestRunCoreData.test.tsx src/features/backtest/components/BacktestRunDetails.test.tsx` => `7/7 PASS`, `pnpm --filter api run typecheck`, `pnpm --filter web run typecheck`, `pnpm --filter api build`, `pnpm --filter web run build`, `docker build -f apps/api/Dockerfile.worker.backtest .` => PASS.
 - 2026-04-17: Completed `BTMM-A` by closing `BTMM-01..BTMM-05` (frozen parity contract in `open-decisions` + `api-backtests` docs, added contract tests for deterministic isolated replay semantics and 1-vs-50 divergence evidence, implemented single `effectiveMaxCandles` reuse across create/run job/timeline, switched terminal timeline anchoring to `finishedAt` for terminal statuses, and introduced timeline `replayContext` with default `isolated` and optional `portfolio`); validation: `pnpm --filter api test -- src/modules/backtests/backtests.contract-remediation.test.ts src/modules/backtests/backtestRunJob.test.ts src/modules/backtests/backtests.e2e.test.ts src/modules/backtests/backtestParity3Symbols.test.ts` => `37/37 PASS`, `pnpm --filter api run typecheck`, `pnpm --filter api build`, `docker build -f apps/api/Dockerfile.worker.backtest .` => PASS.
 - 2026-04-17: Initialized phase using audit-confirmed regressions (double adaptive `maxCandles`, stale timeline anchor on terminal runs, portfolio-coupled pair replay context, cache continuity blind spot, and chart-vs-run stats divergence) with canonical execution plan in `docs/planning/backtest-multi-market-parity-remediation-plan-2026-04-17.md`.
+
+## Phase L10NQ-D - Full Web i18n Coverage and Single-Standard Enforcement (As of 2026-04-18)
+- [ ] `L10NQ-D-01 docs(audit-freeze): freeze full route-reachable i18n inventory and scope split (module/shared foundation)`
+- [ ] `L10NQ-D-02 chore(tooling-i18n-audit): add deterministic route-reachable i18n audit command + JSON output contract`
+- [ ] `L10NQ-D-03 test(guardrail-hard-fail): fail on local copy objects, pl fallback drift, and hardcoded monitored UI strings`
+- [ ] `L10NQ-D-04 refactor(auth-localization): migrate auth pages/forms/hooks to auth namespace keys and remove pl fallback`
+- [ ] `L10NQ-D-05 refactor(admin-localization): migrate admin users/subscriptions/layout copy to admin namespace keys`
+- [ ] `L10NQ-D-06 refactor(reports-localization): migrate reports page + performance view to dashboard-reports namespace`
+- [ ] `L10NQ-D-07 refactor(markets-localization): migrate MarketUniverseForm/SearchableMultiSelect copy and remove pl fallback`
+- [ ] `L10NQ-D-08 refactor(backtests-fallback-removal): remove pl fallback drift and explicit pt copy in backtests surfaces`
+- [ ] `L10NQ-D-09 refactor(bots-page-copy): localize bot create/edit/assistant/preview page labels and remaining bot copy`
+- [ ] `L10NQ-D-10 refactor(dashboard-home-copy): localize TP/SL/Notes/manual-order literals in HomeLiveWidgets`
+- [ ] `L10NQ-D-11 refactor(global-offline-risk-copy): localize offline page and risk notice footer`
+- [ ] `L10NQ-D-12 refactor(shared-foundation-aria): localize shared aria/title strings in modal/table/loading/layout primitives`
+- [ ] `L10NQ-D-13 refactor(shared-footer-labels): align footer/public shell labels to translation keys`
+- [ ] `L10NQ-D-14 refactor(low-score-module-cleanup): clear residual route-reachable literals in profile/wallet components`
+- [ ] `L10NQ-D-15 cleanup(non-route-legacy-copy): align legacy BacktestsList + strategy presets localization contract`
+- [ ] `L10NQ-D-16 test(namespace-parity-expanded): enforce en/pl/pt parity for all new namespace keys`
+- [ ] `L10NQ-D-17 test(route-locale-smoke): add route-level locale smoke tests for highest-impact routes`
+- [ ] `L10NQ-D-18 qa(final-pack-and-closure): run full i18n regression/build pack and publish closure evidence`
+
+### Progress Log (Phase L10NQ-D - Full Web i18n Coverage and Single-Standard Enforcement)
+- 2026-04-18: Initialized `L10NQ-D` with deterministic full-scope audit artifacts (`docs/operations/_artifacts-l10nq-d-coverage-audit-2026-04-18.json`, `docs/operations/l10nq-d-coverage-audit-2026-04-18.md`, `docs/operations/l10nq-d-route-coverage-matrix-2026-04-18.md`) and canonical execution plan `docs/planning/l10nq-d-total-web-i18n-coverage-plan-2026-04-18.md`.
+
+## Phase UXR-E - Table Action System + Clone + Dashboard Polish (Queued 2026-04-18)
+- [ ] `UXR-E-01 docs(contract): freeze table action semantics and clone naming contract for wallets/markets/strategies`
+- [ ] `UXR-E-02 refactor(web-table-actions-core): add shared action presets in TableUi for standard and dedicated table actions`
+- [ ] `UXR-E-03 feat(web-wallets-clone): add wallets list duplicate action with create-from-existing flow and clone-marked naming`
+- [ ] `UXR-E-04 feat(web-markets-clone): add markets list duplicate action with create-from-existing flow and clone-marked naming`
+- [ ] `UXR-E-05 feat(web-strategies-clone): add strategies list duplicate action with create-from-existing flow and clone-marked naming`
+- [ ] `UXR-E-06 refactor(web-table-actions-rollout): align edit/delete/preview/runtime action icon+tone contract in markets/strategies/backtests/bots`
+- [ ] `UXR-E-07 refactor(web-dashboard-manual-order-layout): move manual order under wallet context and replace symbol/side controls with guided UX`
+- [ ] `UXR-E-08 feat(web-dashboard-manual-order-estimates): show qty-derived notional and margin estimate using leverage and live symbol price`
+- [ ] `UXR-E-09 refactor(web-dashboard-wallet-kpi-style): simplify wallet KPI visuals (no icon cards/backgrounds) and align to inline summary rows`
+- [ ] `UXR-E-10 fix(web-page-title-actions): remove forced tiny-height action class and widen header action spacing to gap-3`
+- [ ] `UXR-E-11 fix(web-footer-lang-mobile): remove `(PT)` suffix from Portuguese label and center both dashboard/public footer rows on mobile`
+- [ ] `UXR-E-12 qa(regression-pack): run focused web regression pack for table actions, clone flows, dashboard manual-order/wallet polish, and shell/footer contracts`
+
+### Progress Log (Phase UXR-E - Table Action System + Clone + Dashboard Polish)
+- 2026-04-18: Queued post-`L10NQ-D` implementation wave with detailed execution plan in `docs/planning/uxr-e-table-actions-clone-dashboard-polish-plan-2026-04-18.md`, split into grouped batches `UXR-E-A..UXR-E-C` for executor continuity.

@@ -7,12 +7,33 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `none`
+- [ ] `L10NQ-D-01 docs(audit-freeze): freeze full route-reachable i18n inventory and scope split (module/shared foundation)`
+- [ ] `L10NQ-D-02 chore(tooling-i18n-audit): add deterministic route-reachable i18n audit command + JSON output contract`
+- [ ] `L10NQ-D-03 test(guardrail-hard-fail): fail on local copy objects, pl fallback drift, and hardcoded monitored UI strings`
+- [ ] `L10NQ-D-04 refactor(auth-localization): migrate auth pages/forms/hooks to auth namespace keys and remove pl fallback`
+- [ ] `L10NQ-D-05 refactor(admin-localization): migrate admin users/subscriptions/layout copy to admin namespace keys`
 ## NEXT
-- [x] `none`
+- [ ] `L10NQ-D-06 refactor(reports-localization): migrate reports page + performance view to dashboard-reports namespace`
+- [ ] `L10NQ-D-07 refactor(markets-localization): migrate MarketUniverseForm/SearchableMultiSelect copy and remove pl fallback`
+- [ ] `L10NQ-D-08 refactor(backtests-fallback-removal): remove pl fallback drift and explicit pt copy in backtests surfaces`
+- [ ] `L10NQ-D-09 refactor(bots-page-copy): localize bot create/edit/assistant/preview page labels and remaining bot copy`
+- [ ] `L10NQ-D-10 refactor(dashboard-home-copy): localize TP/SL/Notes/manual-order literals in HomeLiveWidgets`
 ## PIPELINE
-- [x] `none`
+- [ ] `L10NQ-D-11 refactor(global-offline-risk-copy): localize offline page and risk notice footer`
+- [ ] `L10NQ-D-12 refactor(shared-foundation-aria): localize shared aria/title strings in modal/table/loading/layout primitives`
+- [ ] `L10NQ-D-13 refactor(shared-footer-labels): align footer/public shell labels to translation keys`
+- [ ] `L10NQ-D-14 refactor(low-score-module-cleanup): clear residual route-reachable literals in profile/wallet components`
+- [ ] `L10NQ-D-15 cleanup(non-route-legacy-copy): align legacy BacktestsList + strategy presets localization contract`
+- [ ] `L10NQ-D-16 test(namespace-parity-expanded): enforce en/pl/pt parity for all new namespace keys`
+- [ ] `L10NQ-D-17 test(route-locale-smoke): add route-level locale smoke tests for highest-impact routes`
+- [ ] `L10NQ-D-18 qa(final-pack-and-closure): run full i18n regression/build pack and publish closure evidence`
 ## GROUP QUEUE
+- [ ] `L10NQ-D-A (commits 01-05): inventory + guardrail hardening + auth/admin migration`
+- [ ] `L10NQ-D-B (commits 06-10): reports/markets/backtests/bots/home copy migration`
+- [ ] `L10NQ-D-C (commits 11-18): shared foundation localization + parity/smoke/closure`
+- [ ] `UXR-E-A (commits UXR-E-01..UXR-E-04): table action system + clone foundation`
+- [ ] `UXR-E-B (commits UXR-E-05..UXR-E-08): action rollout + dashboard manual-order/wallet polish`
+- [ ] `UXR-E-C (commits UXR-E-09..UXR-E-12): shell polish + regression closure`
 - [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
 - [x] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
 - [x] `UXR-C (commits 16-22): advanced table rollout + logs module completion`
@@ -27,6 +48,10 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
+- [x] `UXR-E planning queued (post-L10NQ-D)`
+  - 2026-04-18: Published post-`L10NQ-D` implementation wave plan in `docs/planning/uxr-e-table-actions-clone-dashboard-polish-plan-2026-04-18.md` and queued grouped execution batches `UXR-E-A..UXR-E-C` in canonical queue files for executor continuity.
+- [x] `L10NQ-D planning activation (full web i18n coverage)`
+  - 2026-04-18: Activated new execution wave from full route-reachable audit by publishing `docs/planning/l10nq-d-total-web-i18n-coverage-plan-2026-04-18.md`, `docs/operations/_artifacts-l10nq-d-coverage-audit-2026-04-18.json`, `docs/operations/l10nq-d-coverage-audit-2026-04-18.md`, and `docs/operations/l10nq-d-route-coverage-matrix-2026-04-18.md`, then promoting `L10NQ-D-01..L10NQ-D-05` to `NOW`.
 - [x] `BTMM-C (commits 11-12): confidence pack + closure`
   - 2026-04-17: Closed `BTMM-C` by completing `BTMM-11..BTMM-12` (executed focused parity confidence pack for 1-symbol/3-symbol/50-symbol diagnostics, validated web backtest details source-label contract, and published closure evidence in `docs/operations/_artifacts-btmm-confidence-pack-2026-04-17.json` + `docs/operations/btmm-remediation-closure-2026-04-17.md`). Validation: `pnpm --filter api test -- src/modules/backtests/backtests.contract-remediation.test.ts` => `6/6 PASS`; `pnpm --filter api test -- src/modules/backtests/backtestParity3Symbols.test.ts` => `21/21 PASS`; `pnpm --filter api test -- src/modules/backtests/backtests.e2e.test.ts` => `10/10 PASS`; `pnpm --filter api test -- src/modules/backtests/backtestReplayCore.test.ts` => `24/24 PASS`; `pnpm --filter web test -- src/features/backtest/components/BacktestRunDetails.test.tsx` => `3/3 PASS`; `pnpm --filter web test -- src/features/backtest/hooks/useBacktestRunCoreData.test.tsx` => `4/4 PASS`; `pnpm --filter api run typecheck` + `pnpm --filter web run typecheck` + `pnpm --filter api build` + `pnpm --filter web run build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
 - [x] `BTMM-B (commits 06-10): cache continuity + UI/source-of-truth alignment + regressions`
