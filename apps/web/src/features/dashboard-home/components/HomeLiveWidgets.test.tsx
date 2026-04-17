@@ -11,6 +11,7 @@ const listBotRuntimeSessionSymbolStatsMock = vi.hoisted(() => vi.fn());
 const listBotRuntimeSessionPositionsMock = vi.hoisted(() => vi.fn());
 const listBotRuntimeSessionTradesMock = vi.hoisted(() => vi.fn());
 const closeBotRuntimeSessionPositionMock = vi.hoisted(() => vi.fn());
+const openDashboardManualOrderMock = vi.hoisted(() => vi.fn());
 const updatePositionManualParamsMock = vi.hoisted(() => vi.fn());
 const lookupCoinIconsMock = vi.hoisted(() => vi.fn());
 
@@ -22,6 +23,7 @@ vi.mock("../../../features/bots/services/bots.service", () => ({
   listBotRuntimeSessionPositions: listBotRuntimeSessionPositionsMock,
   listBotRuntimeSessionTrades: listBotRuntimeSessionTradesMock,
   closeBotRuntimeSessionPosition: closeBotRuntimeSessionPositionMock,
+  openDashboardManualOrder: openDashboardManualOrderMock,
 }));
 
 vi.mock("../../../features/icons/services/icons.service", () => ({
@@ -44,6 +46,11 @@ describe("HomeLiveWidgets", () => {
       status: "closed",
       positionId: "position-default",
       orderId: "order-default",
+    });
+    openDashboardManualOrderMock.mockReset();
+    openDashboardManualOrderMock.mockResolvedValue({
+      id: "order-default",
+      status: "OPEN",
     });
     updatePositionManualParamsMock.mockReset();
     updatePositionManualParamsMock.mockResolvedValue({
@@ -472,6 +479,158 @@ describe("HomeLiveWidgets", () => {
     fireEvent.click(screen.getByRole("tab", { name: /Historia|History/i }));
     expect(screen.queryByRole("columnheader", { name: /^Fee$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: /^Origin$/i })).not.toBeInTheDocument();
+  });
+
+  it("opens manual dashboard order through shared order endpoint contract", async () => {
+    listBotsMock.mockResolvedValue([
+      {
+        id: "bot-manual-order",
+        name: "Manual Order Bot",
+        walletId: "wallet-manual-order",
+        mode: "PAPER",
+        paperStartBalance: 10000,
+        marketType: "FUTURES",
+        positionMode: "ONE_WAY",
+        strategyId: "str-manual-order",
+        isActive: true,
+        liveOptIn: false,
+        maxOpenPositions: 2,
+      },
+    ]);
+    listBotRuntimeSessionsMock.mockResolvedValue([
+      {
+        id: "session-manual-order",
+        botId: "bot-manual-order",
+        mode: "PAPER",
+        status: "RUNNING",
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: null,
+        lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+        stopReason: null,
+        errorMessage: null,
+        createdAt: "2026-03-31T10:00:00.000Z",
+        updatedAt: "2026-03-31T10:05:00.000Z",
+        durationMs: 300000,
+        eventsCount: 0,
+        symbolsTracked: 1,
+        summary: {
+          totalSignals: 0,
+          dcaCount: 0,
+          closedTrades: 0,
+          realizedPnl: 0,
+        },
+      },
+    ]);
+    listBotRuntimeSessionSymbolStatsMock.mockResolvedValue({
+      sessionId: "session-manual-order",
+      items: [
+        {
+          id: "stat-manual-order",
+          userId: "u-manual-order",
+          botId: "bot-manual-order",
+          sessionId: "session-manual-order",
+          symbol: "BTCUSDT",
+          totalSignals: 0,
+          longEntries: 0,
+          shortEntries: 0,
+          exits: 0,
+          dcaCount: 0,
+          closedTrades: 0,
+          winningTrades: 0,
+          losingTrades: 0,
+          realizedPnl: 0,
+          grossProfit: 0,
+          grossLoss: 0,
+          feesPaid: 0,
+          openPositionCount: 0,
+          openPositionQty: 0,
+          unrealizedPnl: 0,
+          lastPrice: 68000,
+          lastSignalAt: null,
+          lastSignalDirection: "NEUTRAL",
+          lastSignalDecisionAt: null,
+          lastTradeAt: null,
+          snapshotAt: "2026-03-31T10:05:00.000Z",
+          createdAt: "2026-03-31T10:05:00.000Z",
+          updatedAt: "2026-03-31T10:05:00.000Z",
+        },
+      ],
+      summary: {
+        totalSignals: 0,
+        longEntries: 0,
+        shortEntries: 0,
+        exits: 0,
+        dcaCount: 0,
+        closedTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        totalPnl: 0,
+        grossProfit: 0,
+        grossLoss: 0,
+        feesPaid: 0,
+      },
+    });
+    listBotRuntimeSessionPositionsMock.mockResolvedValue({
+      sessionId: "session-manual-order",
+      total: 0,
+      openCount: 0,
+      closedCount: 0,
+      openOrdersCount: 0,
+      showDynamicStopColumns: false,
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      summary: {
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        feesPaid: 0,
+      },
+      openOrders: [],
+      openItems: [],
+      historyItems: [],
+    });
+    listBotRuntimeSessionTradesMock.mockResolvedValue({
+      sessionId: "session-manual-order",
+      total: 0,
+      meta: {
+        page: 1,
+        pageSize: 25,
+        total: 0,
+        totalPages: 0,
+        hasPrev: false,
+        hasNext: false,
+      },
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      items: [],
+    });
+
+    renderSubject();
+
+    const symbolInput = await screen.findByLabelText(/Symbol/i);
+    fireEvent.change(symbolInput, { target: { value: "btcusdt" } });
+    fireEvent.change(screen.getByLabelText(/Side|Kierunek/i), { target: { value: "SELL" } });
+    fireEvent.change(screen.getByLabelText(/Qty|Ilosc/i), { target: { value: "0.25" } });
+    fireEvent.click(screen.getByRole("button", { name: /Otworz zlecenie reczne|Open manual order/i }));
+
+    await waitFor(() => {
+      expect(openDashboardManualOrderMock).toHaveBeenCalledWith({
+        botId: "bot-manual-order",
+        walletId: "wallet-manual-order",
+        strategyId: "str-manual-order",
+        symbol: "BTCUSDT",
+        side: "SELL",
+        type: "MARKET",
+        quantity: 0.25,
+        mode: "PAPER",
+        riskAck: undefined,
+      });
+    });
   });
 
   it("renders strategy signals above open positions and enables rail controls for larger symbol sets", async () => {
@@ -1809,8 +1968,8 @@ describe("HomeLiveWidgets", () => {
 
     const callsAfterInitialLoad = listBotRuntimeSessionTradesMock.mock.calls.length;
     fireEvent.click(screen.getByRole("button", { name: /Opcje zaawansowane/i }));
-    fireEvent.change(screen.getByPlaceholderText("BTCUSDT"), { target: { value: "btcusdt" } });
-    fireEvent.change(screen.getByLabelText("Side"), { target: { value: "SELL" } });
+    fireEvent.change(screen.getAllByPlaceholderText("BTCUSDT").at(-1) as HTMLInputElement, { target: { value: "btcusdt" } });
+    fireEvent.change(screen.getAllByLabelText("Side").at(-1) as HTMLSelectElement, { target: { value: "SELL" } });
     fireEvent.change(screen.getByLabelText("Action"), { target: { value: "CLOSE" } });
     fireEvent.change(screen.getByLabelText("Od"), { target: { value: "2026-03-31T10:00" } });
     fireEvent.change(screen.getByLabelText("Do"), { target: { value: "2026-03-31T10:15" } });

@@ -15,7 +15,7 @@ Operational queue for one-task execution runs.
 ## NEXT
 - [x] `UXR-11 feat(web-position-edit-modal): add reusable modal shell + initial position-edit form`
 - [x] `UXR-12 feat(api-position-edit): expose safe manual update endpoint for TP/SL and metadata`
-- [ ] `UXR-13 feat(web-dashboard-manual-order): add manual order panel using existing bot order pipeline`
+- [x] `UXR-13 feat(web-dashboard-manual-order): add manual order panel using existing bot order pipeline`
 - [ ] `UXR-14 feat(web-markets-form): compose symbol universe from (min-volume U whitelist) - blacklist`
 - [ ] `UXR-15 fix(api-markets): enforce same universe composition contract on backend`
 ## PIPELINE
@@ -36,6 +36,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `UXR-13 feat(web-dashboard-manual-order): add manual order panel using existing bot order pipeline`
+  - 2026-04-17: Added dashboard `Manual order` operator panel in `HomeLiveWidgets` (symbol/side/quantity) and wired submit flow to existing backend command path (`POST /dashboard/orders/open`) via shared `openDashboardManualOrder` service helper, including mode-aware payload (`botId/walletId/strategyId`, `PAPER/LIVE`, `riskAck` for live), success/error toasts, and runtime refresh after submit. Validation pack: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `13/13 PASS`, `pnpm --filter web run typecheck` => `PASS`.
 - [x] `UXR-12 feat(api-position-edit): expose safe manual update endpoint for TP/SL and metadata`
   - 2026-04-17: Added safe manual position-update API (`PATCH /dashboard/positions/:id/manual-update`) with ownership guard, OPEN-only gate, directional TP/SL validation (`LONG`/`SHORT` side-aware), and audit metadata log (`position.manual_update`); wired dashboard position-edit modal save action to the endpoint with success/error handling and runtime refresh. Validation pack: `pnpm --filter api test -- src/modules/orders/orders-positions.e2e.test.ts` => `11/11 PASS`, `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`, `pnpm --filter web run typecheck` => `PASS`.
 - [x] `UXR-11 feat(web-position-edit-modal): add reusable modal shell + initial position-edit form`

@@ -130,6 +130,24 @@ export const closeBotRuntimeSessionPosition = async (
   return res.data;
 };
 
+export const openDashboardManualOrder = async (payload: {
+  botId?: string;
+  walletId?: string;
+  strategyId?: string;
+  symbol: string;
+  side: "BUY" | "SELL";
+  type: "MARKET";
+  quantity: number;
+  mode: "PAPER" | "LIVE";
+  riskAck?: boolean;
+}): Promise<{ id: string; status: string }> => {
+  const res = await api.post<{ id: string; status: string }>("/dashboard/orders/open", {
+    ...payload,
+    riskAck: payload.mode === "LIVE" ? (payload.riskAck ?? true) : undefined,
+  });
+  return res.data;
+};
+
 export const getBotAssistantConfig = async (botId: string): Promise<BotAssistantConfigResponse> => {
   const res = await api.get<BotAssistantConfigResponse>(`/dashboard/bots/${botId}/assistant-config`);
   return res.data;

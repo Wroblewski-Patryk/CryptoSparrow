@@ -22,6 +22,7 @@ import {
 import {
   getBotRuntimeGraph,
   listBots,
+  openDashboardManualOrder,
   listBotRuntimeSessionPositions,
   listBotRuntimeSessionSymbolStats,
   listBotRuntimeSessionTrades,
@@ -67,6 +68,7 @@ import type {
   RuntimeSymbolWithLive,
 } from "./home-live-widgets/types";
 type DirectionPillValue = "LONG" | "SHORT" | "BUY" | "SELL";
+type ManualOrderSide = "BUY" | "SELL";
 
 const CARD = "rounded-box bg-base-100/80";
 const CARD_ASIDE = "rounded-box bg-base-100/85 h-fit xl:sticky xl:top-4";
@@ -223,6 +225,13 @@ const parseOptionalPositivePriceInput = (value: string): number | null | "invali
   return parsed;
 };
 
+const parsePositiveQuantityInput = (value: string): number | "invalid" => {
+  const normalized = value.trim();
+  const parsed = Number(normalized);
+  if (!normalized || !Number.isFinite(parsed) || parsed <= 0) return "invalid";
+  return parsed;
+};
+
 type TradeActionValue = "OPEN" | "DCA" | "CLOSE" | "UNKNOWN";
 type TradeActionReasonValue =
   | "SIGNAL_ENTRY"
@@ -331,6 +340,10 @@ export default function HomeLiveWidgets() {
   });
   const [positionEditDraft, setPositionEditDraft] = useState<PositionEditDraft | null>(null);
   const [isSavingPositionEdit, setIsSavingPositionEdit] = useState(false);
+  const [manualOrderSymbol, setManualOrderSymbol] = useState("");
+  const [manualOrderSide, setManualOrderSide] = useState<ManualOrderSide>("BUY");
+  const [manualOrderQuantity, setManualOrderQuantity] = useState("");
+  const [isSubmittingManualOrder, setIsSubmittingManualOrder] = useState(false);
   const runtimeOnboardingSteps = useMemo(
     () => [
       {
@@ -660,6 +673,15 @@ export default function HomeLiveWidgets() {
       ? "Position was not closed (already closed or not eligible)."
       : "Pozycja nie zostala zamknieta (jest juz zamknieta lub nie kwalifikuje sie).";
   const closePositionErrorLabel = closeActionBaseLabel === "Close" ? "Failed to close position." : "Nie udalo sie zamknac pozycji.";
+  const manualOrderPanelTitle = closeActionBaseLabel === "Close" ? "Manual order" : "Zlecenie reczne";
+  const manualOrderOpenLabel = closeActionBaseLabel === "Close" ? "Open manual order" : "Otworz zlecenie reczne";
+  const manualOrderSubmittingLabel = closeActionBaseLabel === "Close" ? "Opening..." : "Otwieranie...";
+  const manualOrderSuccessLabel = closeActionBaseLabel === "Close" ? "Manual order opened." : "Zlecenie reczne otwarte.";
+  const manualOrderErrorLabel = closeActionBaseLabel === "Close" ? "Failed to open manual order." : "Nie udalo sie otworzyc zlecenia recznego.";
+  const manualOrderInvalidSymbolLabel =
+    closeActionBaseLabel === "Close" ? "Symbol is required." : "Symbol jest wymagany.";
+  const manualOrderInvalidQuantityLabel =
+    closeActionBaseLabel === "Close" ? "Quantity must be a positive number." : "Ilosc musi byc dodatnia liczba.";
   const editPositionButtonLabel = closeActionBaseLabel === "Close" ? "Edit position" : "Edytuj pozycje";
   const editPositionModalTitle = closeActionBaseLabel === "Close" ? "Position edit" : "Edycja pozycji";
   const editPositionModalDescription =
@@ -727,6 +749,59 @@ export default function HomeLiveWidgets() {
     if (isSavingPositionEdit) return;
     closePositionEdit();
   }, [closePositionEdit, isSavingPositionEdit]);
+
+  const manualOrderSymbolOptions = useMemo(() => {
+    const options = new Set<string>();
+    for (const item of selectedData?.symbols ?? []) options.add(normalizeSymbol(item.symbol));
+    for (const item of selectedData?.open ?? []) options.add(normalizeSymbol(item.symbol));
+    return [...options];
+  }, [selectedData?.open, selectedData?.symbols]);
+
+  const handleSubmitManualOrder = useCallback(async () => {
+    if (!selected) return;
+    const symbol = normalizeSymbol(manualOrderSymbol);
+    if (!symbol) {
+      toast.error(manualOrderInvalidSymbolLabel);
+      return;
+    }
+    const quantity = parsePositiveQuantityInput(manualOrderQuantity);
+    if (quantity === "invalid") {
+      toast.error(manualOrderInvalidQuantityLabel);
+      return;
+    }
+
+    setIsSubmittingManualOrder(true);
+    try {
+      await openDashboardManualOrder({
+        botId: selected.bot.id,
+        walletId: selected.bot.walletId ?? undefined,
+        strategyId: selected.bot.strategyId ?? undefined,
+        symbol,
+        side: manualOrderSide,
+        type: "MARKET",
+        quantity,
+        mode: selected.bot.mode,
+        riskAck: selected.bot.mode === "LIVE" ? true : undefined,
+      });
+      toast.success(manualOrderSuccessLabel);
+      setManualOrderQuantity("");
+      await load({ silent: true });
+    } catch (error) {
+      toast.error(getAxiosMessage(error) ?? manualOrderErrorLabel);
+    } finally {
+      setIsSubmittingManualOrder(false);
+    }
+  }, [
+    load,
+    manualOrderInvalidQuantityLabel,
+    manualOrderInvalidSymbolLabel,
+    manualOrderQuantity,
+    manualOrderSide,
+    manualOrderSymbol,
+    manualOrderErrorLabel,
+    manualOrderSuccessLabel,
+    selected,
+  ]);
 
   const { isClosingPosition, handleCloseRuntimePosition } = useCloseRuntimePositionAction({
     closePositionErrorLabel,
@@ -1109,6 +1184,75 @@ export default function HomeLiveWidgets() {
                   <p>{selectedPlaceholderHint}</p>
                 </div>
               ) : null}
+              <section className="rounded-box border border-base-300/70 bg-base-200/45 p-3">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-sm font-semibold">{manualOrderPanelTitle}</h3>
+                    <p className="text-xs opacity-70">
+                      {selected?.bot.name} | {selected?.bot.mode}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid gap-2 md:grid-cols-[minmax(0,1.4fr)_auto_minmax(0,0.9fr)_auto]">
+                  <label className="form-control gap-1">
+                    <span className="label-text text-xs">{t("dashboard.home.runtime.symbol")}</span>
+                    <input
+                      type="text"
+                      className="input input-bordered input-sm"
+                      placeholder="BTCUSDT"
+                      value={manualOrderSymbol}
+                      list="runtime-manual-order-symbols"
+                      disabled={isSubmittingManualOrder}
+                      onChange={(event) => setManualOrderSymbol(event.target.value)}
+                    />
+                    <datalist id="runtime-manual-order-symbols">
+                      {manualOrderSymbolOptions.map((symbol) => (
+                        <option key={symbol} value={symbol} />
+                      ))}
+                    </datalist>
+                  </label>
+                  <label className="form-control gap-1">
+                    <span className="label-text text-xs">{t("dashboard.home.runtime.side")}</span>
+                    <select
+                      className="select select-bordered select-sm"
+                      value={manualOrderSide}
+                      disabled={isSubmittingManualOrder}
+                      onChange={(event) =>
+                        setManualOrderSide(event.target.value === "SELL" ? "SELL" : "BUY")
+                      }
+                    >
+                      <option value="BUY">BUY</option>
+                      <option value="SELL">SELL</option>
+                    </select>
+                  </label>
+                  <label className="form-control gap-1">
+                    <span className="label-text text-xs">{t("dashboard.home.runtime.qty")}</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      step="0.000001"
+                      className="input input-bordered input-sm"
+                      value={manualOrderQuantity}
+                      disabled={isSubmittingManualOrder}
+                      onChange={(event) => setManualOrderQuantity(event.target.value)}
+                    />
+                  </label>
+                  <div className="flex items-end">
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm w-full md:w-auto"
+                      onClick={() => void handleSubmitManualOrder()}
+                      disabled={isSubmittingManualOrder || !selectedRuntimeCapabilityAvailable}
+                    >
+                      {isSubmittingManualOrder ? (
+                        <span className="loading loading-spinner loading-xs" aria-hidden />
+                      ) : null}
+                      {isSubmittingManualOrder ? manualOrderSubmittingLabel : manualOrderOpenLabel}
+                    </button>
+                  </div>
+                </div>
+              </section>
 
               <RuntimeDataSection
                 runtimeDataTab={runtimeDataTab}
