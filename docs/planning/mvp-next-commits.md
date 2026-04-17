@@ -21,9 +21,9 @@ Operational queue for one-task execution runs.
 ## PIPELINE
 - [ ] `BTMM-11 qa(confidence-pack): execute focused backtest parity pack (1 vs 3 vs 50 markets)`
 - [ ] `BTMM-12 docs(closure): publish remediation evidence and sync canonical queues/plans`
-- [ ] `L10NQ-01 docs(contract): freeze remediation scope and English-only documentation baseline`
-- [ ] `L10NQ-02 qa(scan): capture baseline inventory of locale clamps and hardcoded-copy hotspots`
-- [ ] `L10NQ-03 fix(web-backtest-locale): remove EN/PL clamp in backtest module`
+- [ ] `L10NQ-06 feat(i18n-namespaces): split translations by module/route domain`
+- [ ] `L10NQ-07 refactor(i18n-registry): add explicit namespace registry and route-domain mapping`
+- [ ] `L10NQ-08 refactor(web-language-switcher): localize language labels via translation keys`
 ## GROUP QUEUE
 - [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
 - [x] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
@@ -32,13 +32,15 @@ Operational queue for one-task execution runs.
 - [ ] `BTMM-A (commits 01-05): multi-market parity contract + core backtest fixes`
 - [ ] `BTMM-B (commits 06-10): cache continuity + UI/source-of-truth alignment + regressions`
 - [ ] `BTMM-C (commits 11-12): confidence pack + closure`
-- [ ] `L10NQ-A (commits 01-05): i18n P0 blockers (backtest clamp + wrapper hardcoded copy)`
+- [x] `L10NQ-A (commits 01-05): i18n P0 blockers (backtest clamp + wrapper hardcoded copy)`
 - [ ] `L10NQ-B (commits 06-11): per-module namespace split + parity/guardrail tests`
 - [ ] `L10NQ-C (commits 12-15): route-level namespace loading + English docs normalization`
 ## BLOCKED
-- [ ] `L10NQ-A/B/C paused behind BTMM-A priority due backtest correctness regressions`
+- [ ] `L10NQ-B/C paused behind BTMM-A priority due backtest correctness regressions`
 
 ## DONE
+- [x] `L10NQ-A (commits 01-05): i18n P0 blockers (backtest clamp + wrapper hardcoded copy)`
+  - 2026-04-17: Closed `L10NQ-A` by completing `L10NQ-01..L10NQ-05` (scope + docs-language baseline locked in `open-decisions`, baseline inventory artifacts published in `docs/operations/_artifacts-l10nq-a-baseline-2026-04-17.json` + `docs/operations/l10nq-a-baseline-2026-04-17.md`, EN/PL locale clamps removed from backtest create/list/table/details paths with PT support, PT regression tests added for backtest create/list flows, and wrapper/module hardcoded-copy hotspots migrated to locale-aware copy in reports/markets/auth/admin/market-universe surfaces). Validation: `pnpm --filter web test -- src/features/backtest/components/BacktestCreateForm.test.tsx src/features/backtest/components/BacktestsListView.test.tsx src/features/backtest/components/BacktestRunDetails.test.tsx src/features/backtest/components/BacktestsList.test.tsx src/features/auth/components/LoginForm.test.tsx src/features/auth/components/RegisterForm.test.tsx src/features/auth/hooks/useLoginForm.test.tsx` => `18/18 PASS`; `pnpm --filter web test -- src/features/markets/components/MarketUniverseForm.test.tsx src/features/admin/users/pages/AdminUsersPage.test.tsx src/features/admin/subscriptions/pages/AdminSubscriptionsPage.test.tsx` => `11/11 PASS`; `pnpm --filter web run typecheck` + `pnpm --filter web run build` + `pnpm --filter api run typecheck` + `pnpm --filter api build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
 - [x] `UXR-D (commits 23-30): bots IA/runtime polish + breadcrumb/footer + regression closure`
   - 2026-04-17: Closed `UXR-D` by completing `UXR-23..UXR-30` (removed list-level assistant action, improved bots-runtime readability tabs, removed local runtime refresh controls in favor of automatic refresh, enforced duplicate-active guard by `wallet+strategy+market-group` tuple, simplified bot-form IA into one two-row setup section with full i18n copy, normalized backtests breadcrumb labels to `List/Create` with linkable module title, centered dashboard footer rows on mobile, and executed focused regression/build/deploy-parity pack). Validation: API sequential e2e (`orders-positions`, `apiKey`, `markets`, `wallets`, `bots.duplicate-guard`, `logs`) => `49/49 PASS`; WEB focused pack (`HomeLiveWidgets`, `BotCreateEditForm`, `BotsManagement`, `BotsListTable`, `ApiKeyForm`, `AuditTrailView`, `PageTitle.a11y`, `Footer.layout`) => `49/49 PASS`; `pnpm --filter api run typecheck` + `pnpm --filter api build` + `pnpm --filter web run typecheck` + `pnpm --filter web run build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
 - [x] `UXR-30 qa(regression-pack): run focused API+WEB tests and manual smoke for live/paper parity`

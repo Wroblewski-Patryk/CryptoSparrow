@@ -1627,11 +1627,11 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
 
 ### Active Task Breakdown (L10NQ-A)
-- [ ] `L10NQ-01 docs(contract): freeze remediation scope and English-only documentation baseline`
-- [ ] `L10NQ-02 qa(scan): capture baseline inventory of locale clamps and hardcoded-copy hotspots`
-- [ ] `L10NQ-03 fix(web-backtest-locale): remove EN/PL clamp in backtest module`
-- [ ] `L10NQ-04 test(web-backtest-i18n): add regression coverage for Portuguese backtest locale path`
-- [ ] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
+- [x] `L10NQ-01 docs(contract): freeze remediation scope and English-only documentation baseline`
+- [x] `L10NQ-02 qa(scan): capture baseline inventory of locale clamps and hardcoded-copy hotspots`
+- [x] `L10NQ-03 fix(web-backtest-locale): remove EN/PL clamp in backtest module`
+- [x] `L10NQ-04 test(web-backtest-i18n): add regression coverage for Portuguese backtest locale path`
+- [x] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
 
 ### Active Task Breakdown (BTMM-A)
 - [ ] `BTMM-01 docs(contract): freeze multi-market parity semantics (isolated symbol timeline vs run totals)`
@@ -1746,11 +1746,11 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-17: Activated canonical execution for UXR wave by promoting `UXR-01..UXR-05` into active queue and locking grouped continuation (`UXR-B`, `UXR-C`, `UXR-D`) in `mvp-next-commits.md`; source plan remains `docs/planning/dashboard-modules-ux-runtime-fix-wave-plan-2026-04-15.md`.
 
 ## Phase L10NQ - i18n Contract Remediation + Docs Language Baseline (As of 2026-04-17)
-- [ ] `L10NQ-01 docs(contract): freeze remediation scope and English-only documentation baseline`
-- [ ] `L10NQ-02 qa(scan): capture baseline inventory of locale clamps and hardcoded-copy hotspots`
-- [ ] `L10NQ-03 fix(web-backtest-locale): remove EN/PL clamp in backtest module`
-- [ ] `L10NQ-04 test(web-backtest-i18n): add regression coverage for Portuguese backtest locale path`
-- [ ] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
+- [x] `L10NQ-01 docs(contract): freeze remediation scope and English-only documentation baseline`
+- [x] `L10NQ-02 qa(scan): capture baseline inventory of locale clamps and hardcoded-copy hotspots`
+- [x] `L10NQ-03 fix(web-backtest-locale): remove EN/PL clamp in backtest module`
+- [x] `L10NQ-04 test(web-backtest-i18n): add regression coverage for Portuguese backtest locale path`
+- [x] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
 - [ ] `L10NQ-06 feat(i18n-namespaces): split translations by module/route domain`
 - [ ] `L10NQ-07 refactor(i18n-registry): add explicit namespace registry and route-domain mapping`
 - [ ] `L10NQ-08 refactor(web-language-switcher): localize language labels via translation keys`
@@ -1763,6 +1763,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `L10NQ-15 docs(governance): add docs-language guardrail and backlog for remaining non-English docs`
 
 ### Progress Log (Phase L10NQ - i18n Contract Remediation + Docs Language Baseline)
+- 2026-04-17: Completed `L10NQ-A` by closing `L10NQ-01..L10NQ-05` (scope/docs-language baseline decision in `open-decisions`, baseline scan artifacts, backtest locale clamp removal for `en/pl/pt`, PT regression coverage for backtest create/list, and wrapper/module hardcoded-copy migration for reports/markets/auth/admin/market-universe); validation: `pnpm --filter web test` targeted packs (`18/18` + `11/11`), `pnpm --filter web run typecheck`, `pnpm --filter web run build`, `pnpm --filter api run typecheck`, `pnpm --filter api build`, and `docker build -f apps/api/Dockerfile.worker.backtest .` all PASS.
 - 2026-04-17: Initialized phase from audit findings and locked canonical execution plan in `docs/planning/i18n-contract-remediation-plan-2026-04-17.md` (P0 backtest locale clamp removal, hardcoded-copy cleanup, module namespace split, parity/guardrail tests, route-level namespace loading, and English-only localization docs normalization).
 
 ## Phase BTMM - Backtest Multi-Market Parity Remediation (As of 2026-04-17)
