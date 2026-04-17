@@ -158,6 +158,8 @@ type BacktestRunJobDeps = {
   maxDrawdownFromPnlSeries: (pnls: number[]) => number;
 };
 
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
 const emptyLifecycleEventCounts = (): LifecycleEventCounts => ({
   ENTRY: 0,
   EXIT: 0,
@@ -168,6 +170,31 @@ const emptyLifecycleEventCounts = (): LifecycleEventCounts => ({
   TRAILING: 0,
   LIQUIDATION: 0,
 });
+
+const resolveEffectiveMaxCandlesPerSymbol = (input: {
+  seed: Record<string, unknown>;
+  timeframe: string;
+  symbolCount: number;
+  computeAdaptiveMaxCandles: BacktestRunJobDeps['computeAdaptiveMaxCandles'];
+}) => {
+  const effectiveFromSeed = Number((input.seed as { effectiveMaxCandles?: unknown }).effectiveMaxCandles);
+  if (Number.isFinite(effectiveFromSeed)) {
+    return clamp(Math.floor(effectiveFromSeed), 100, 10_000);
+  }
+
+  // Backward compatibility: older runs persisted already-adapted value in `maxCandles`.
+  const legacyMaxCandles = Number((input.seed as { maxCandles?: unknown }).maxCandles);
+  if (Number.isFinite(legacyMaxCandles)) {
+    return clamp(Math.floor(legacyMaxCandles), 100, 10_000);
+  }
+
+  const requestedFromSeed = Number((input.seed as { requestedMaxCandles?: unknown }).requestedMaxCandles);
+  return input.computeAdaptiveMaxCandles(
+    input.timeframe,
+    input.symbolCount,
+    Number.isFinite(requestedFromSeed) ? requestedFromSeed : undefined,
+  );
+};
 
 const updateRunProgress = async (
   deps: BacktestRunJobDeps,
@@ -204,11 +231,12 @@ export const createBacktestRunJob = (deps: BacktestRunJobDeps) =>
     const initialBalance = Number.isFinite(initialBalanceCandidate)
       ? Math.max(0, initialBalanceCandidate)
       : 10_000;
-    const maxCandlesPerSymbol = deps.computeAdaptiveMaxCandles(
-      run.timeframe,
-      symbols.length,
-      typeof seed.maxCandles === 'number' ? seed.maxCandles : undefined,
-    );
+    const maxCandlesPerSymbol = resolveEffectiveMaxCandlesPerSymbol({
+      seed,
+      timeframe: run.timeframe,
+      symbolCount: symbols.length,
+      computeAdaptiveMaxCandles: deps.computeAdaptiveMaxCandles,
+    });
 
     const progress: ProgressState = {
       marketType,

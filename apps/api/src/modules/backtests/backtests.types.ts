@@ -41,6 +41,7 @@ export const GetBacktestTimelineQuerySchema = z.object({
   symbol: z.string().trim().min(1),
   cursor: z.coerce.number().int().min(0).default(0),
   chunkSize: z.coerce.number().int().min(50).max(10000).default(300),
+  replayContext: z.enum(['isolated', 'portfolio']).default('isolated'),
   includeCandles: QueryBooleanSchema.default(true),
   includeIndicators: QueryBooleanSchema.default(true),
   includeEvents: QueryBooleanSchema.default(true),

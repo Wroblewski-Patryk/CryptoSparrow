@@ -98,6 +98,7 @@ import {
 } from './backtests.repository';
 
 type MarginMode = 'CROSSED' | 'ISOLATED';
+type ReplayContext = 'isolated' | 'portfolio';
 
 type TradeDraft = {
   symbol: string;
@@ -143,6 +144,68 @@ const computeAdaptiveMaxCandles = (timeframe: string, symbolCount: number, reque
   if (symbolCount <= 100) return clamp(Math.floor(safeBase * 0.65), 100, safeBase);
   if (symbolCount <= 250) return clamp(Math.floor(safeBase * 0.45), 80, safeBase);
   return clamp(Math.floor(safeBase * 0.3), 60, safeBase);
+};
+
+const resolveRequestedMaxCandles = (seedConfig: unknown) =>
+  typeof seedConfig === 'object' &&
+  seedConfig &&
+  'maxCandles' in seedConfig &&
+  Number.isFinite(Number((seedConfig as { maxCandles?: unknown }).maxCandles))
+    ? Number((seedConfig as { maxCandles?: unknown }).maxCandles)
+    : undefined;
+
+export const resolveEffectiveMaxCandlesFromSeed = (input: {
+  seed: Record<string, unknown>;
+  timeframe: string;
+  symbolCount: number;
+}) => {
+  const effectiveFromSeed = Number((input.seed as { effectiveMaxCandles?: unknown }).effectiveMaxCandles);
+  if (Number.isFinite(effectiveFromSeed)) {
+    return clamp(Math.floor(effectiveFromSeed), 100, 10_000);
+  }
+
+  // Backward compatibility: older runs persisted already-adapted value in `maxCandles`.
+  const legacyMaxCandles = Number((input.seed as { maxCandles?: unknown }).maxCandles);
+  if (Number.isFinite(legacyMaxCandles)) {
+    return clamp(Math.floor(legacyMaxCandles), 100, 10_000);
+  }
+
+  const requestedFromSeed = Number((input.seed as { requestedMaxCandles?: unknown }).requestedMaxCandles);
+  return computeAdaptiveMaxCandles(
+    input.timeframe,
+    input.symbolCount,
+    Number.isFinite(requestedFromSeed) ? requestedFromSeed : undefined,
+  );
+};
+
+export const resolveTimelineEndTimeMs = (input: {
+  runStatus: string;
+  finishedAt: Date | null;
+  liveProgressCurrentCandleTime?: string | null;
+}) => {
+  const terminalStatuses = new Set(['COMPLETED', 'FAILED', 'CANCELED']);
+  if (terminalStatuses.has(input.runStatus) && input.finishedAt) {
+    return input.finishedAt.getTime();
+  }
+
+  const liveProgressTimeRaw =
+    typeof input.liveProgressCurrentCandleTime === 'string'
+      ? Date.parse(input.liveProgressCurrentCandleTime)
+      : Number.NaN;
+  if (Number.isFinite(liveProgressTimeRaw)) return liveProgressTimeRaw;
+
+  return input.finishedAt?.getTime();
+};
+
+export const resolveReplaySymbolsForTimeline = (input: {
+  runSymbols: string[];
+  requestedSymbol: string;
+  replayContext: ReplayContext;
+}) => {
+  if (input.replayContext === 'portfolio') {
+    return input.runSymbols.length > 0 ? input.runSymbols : [input.requestedSymbol];
+  }
+  return [input.requestedSymbol];
 };
 
 const maxDrawdownFromPnlSeries = (pnls: number[]) => {
@@ -222,7 +285,7 @@ type InterleavedPortfolioSimulationResult = {
   finalBalance: number;
 };
 
-const simulateInterleavedPortfolio = (input: {
+export const simulateInterleavedPortfolio = (input: {
   symbols: string[];
   candlesBySymbol: Map<string, KlineCandle[]>;
   supplementalBySymbol?: Map<string, SupplementalSeries>;
@@ -1160,12 +1223,11 @@ export const createRun = async (userId: string, data: CreateBacktestRunDto) => {
   const resolved = await resolveSymbolsForRun(userId, data);
   if (!resolved || resolved.symbols.length === 0) return null;
 
-  const maxCandles = computeAdaptiveMaxCandles(
+  const requestedMaxCandles = resolveRequestedMaxCandles(data.seedConfig);
+  const effectiveMaxCandles = computeAdaptiveMaxCandles(
     data.timeframe,
     resolved.symbols.length,
-    typeof data.seedConfig === 'object' && data.seedConfig && 'maxCandles' in data.seedConfig
-      ? Number((data.seedConfig as { maxCandles?: number }).maxCandles)
-      : undefined,
+    requestedMaxCandles,
   );
 
   const created = await createBacktestRun({
@@ -1189,7 +1251,10 @@ export const createRun = async (userId: string, data: CreateBacktestRunDto) => {
       marketUniverseId: resolved.marketUniverseId,
       leverage: resolved.marketType === 'SPOT' ? 1 : (strategyDefaults?.leverage ?? 1),
       marginMode: resolved.marketType === 'SPOT' ? 'NONE' : (strategyDefaults?.marginMode ?? 'CROSSED'),
-      maxCandles,
+      requestedMaxCandles: requestedMaxCandles ?? null,
+      effectiveMaxCandles,
+      // Backward compatibility for older readers expecting this field.
+      maxCandles: effectiveMaxCandles,
       executionMode: 'interleaved_multi_market_portfolio_clock',
     },
     notes: data.notes,
@@ -1234,9 +1299,11 @@ export const getRunTimeline = async (
     ? normalizeSymbols(seed.symbols as string[])
     : [];
   const marketType = (seed.marketType === 'SPOT' ? 'SPOT' : 'FUTURES') as MarketType;
-  const maxCandles = typeof seed.maxCandles === 'number'
-    ? clamp(Math.floor(seed.maxCandles), 100, 10_000)
-    : computeAdaptiveMaxCandles(run.timeframe, 1, undefined);
+  const maxCandles = resolveEffectiveMaxCandlesFromSeed({
+    seed,
+    timeframe: run.timeframe,
+    symbolCount: runSymbols.length > 0 ? runSymbols.length : 1,
+  });
 
   const symbol = normalizeSymbol(query.symbol);
   if (runSymbols.length > 0 && !runSymbols.includes(symbol)) {
@@ -1249,19 +1316,19 @@ export const getRunTimeline = async (
   const indicatorSpecs = parseStrategyIndicators(strategyConfig);
   const indicatorWarmupCandles = indicatorSpecs.reduce((maxPeriod, spec) => Math.max(maxPeriod, spec.period), 0);
 
-  const replaySymbols = runSymbols.length > 0 ? runSymbols : [symbol];
+  const replaySymbols = resolveReplaySymbolsForTimeline({
+    runSymbols,
+    requestedSymbol: symbol,
+    replayContext: query.replayContext,
+  });
   const liveProgress = (seed.liveProgress ?? {}) as {
     currentCandleTime?: string | null;
   };
-  const timelineEndTimeMsRaw =
-    typeof liveProgress.currentCandleTime === 'string'
-      ? Date.parse(liveProgress.currentCandleTime)
-      : Number.NaN;
-  const timelineEndTimeMs = Number.isFinite(timelineEndTimeMsRaw)
-    ? timelineEndTimeMsRaw
-    : run.finishedAt
-      ? run.finishedAt.getTime()
-      : undefined;
+  const timelineEndTimeMs = resolveTimelineEndTimeMs({
+    runStatus: run.status,
+    finishedAt: run.finishedAt,
+    liveProgressCurrentCandleTime: liveProgress.currentCandleTime,
+  });
   const candlesBySymbol = new Map<string, KlineCandle[]>();
   const supplementalBySymbol = new Map<string, SupplementalSeries>();
   for (const replaySymbol of replaySymbols) {
@@ -1414,6 +1481,7 @@ export const getRunTimeline = async (
     timeframe: run.timeframe,
     marketType,
     status: run.status,
+    replayContext: query.replayContext,
     cursor: start,
     previousCursor: start > 0 ? Math.max(0, start - query.chunkSize) : null,
     nextCursor: end < total ? end : null,

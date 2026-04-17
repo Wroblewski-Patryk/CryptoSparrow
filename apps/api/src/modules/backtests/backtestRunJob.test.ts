@@ -116,4 +116,82 @@ describe('createBacktestRunJob', () => {
     expect(lastRunUpdate).toBeDefined();
     expect(lastRunUpdate?.status).toBe('COMPLETED');
   });
+
+  it('reuses persisted effectiveMaxCandles without applying adaptive reduction twice', async () => {
+    const safeUpdateRun = vi.fn(async () => true);
+    const fetchKlines = vi.fn(async () => [
+      {
+        openTime: 0,
+        closeTime: 59_000,
+        open: 100,
+        high: 101,
+        low: 99,
+        close: 100,
+        volume: 1_000,
+      },
+      {
+        openTime: 60_000,
+        closeTime: 119_000,
+        open: 100,
+        high: 102,
+        low: 99,
+        close: 101,
+        volume: 1_200,
+      },
+    ]);
+    const computeAdaptiveMaxCandles = vi.fn(() => 120);
+
+    const runJob = createBacktestRunJob({
+      findBacktestRunById: vi.fn(async () => ({
+        id: 'run-2',
+        userId: 'user-1',
+        symbol: 'BTCUSDT',
+        timeframe: '1m',
+        strategyId: null,
+        seedConfig: {
+          symbols: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'],
+          marketType: 'FUTURES',
+          leverage: 2,
+          marginMode: 'CROSSED',
+          initialBalance: 10_000,
+          requestedMaxCandles: 600,
+          effectiveMaxCandles: 400,
+          maxCandles: 400,
+        },
+      })),
+      safeUpdateRun,
+      uniqueSorted: (values) => [...new Set(values)].sort(),
+      computeAdaptiveMaxCandles,
+      resolveIndicatorWarmupCandles: () => 0,
+      normalizeWalletRiskPercent: () => 1,
+      parseStrategySignalRules: () => null,
+      findOwnedStrategySignalConfig: vi.fn(async () => null),
+      fetchKlines,
+      fetchSupplementalSeries: vi.fn(async () => ({
+        fundingRates: [],
+        openInterest: [],
+        orderBook: [],
+      })),
+      simulateInterleavedPortfolio: vi.fn(
+        () =>
+          ({
+            perSymbol: {},
+            finalBalance: 10_000,
+          }) as any,
+      ),
+      createBacktestTrades: vi.fn(async () => undefined),
+      countWinningBacktestTrades: vi.fn(async () => 0),
+      countLosingBacktestTrades: vi.fn(async () => 0),
+      upsertBacktestReportForRun: vi.fn(async () => undefined),
+      computeSourceWindowMs: () => 14 * 24 * 60 * 60 * 1000,
+      maxDrawdownFromPnlSeries: () => 0,
+    });
+
+    await runJob('run-2');
+
+    expect(fetchKlines).toHaveBeenCalled();
+    const fetchCalls = (fetchKlines as any).mock.calls as Array<any[]>;
+    expect(fetchCalls[0]?.[3]).toBe(400);
+    expect(computeAdaptiveMaxCandles).not.toHaveBeenCalled();
+  });
 });
