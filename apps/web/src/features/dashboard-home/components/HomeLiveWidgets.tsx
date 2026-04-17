@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo } from "react";
-import { LuBot, LuChartCandlestick, LuChartLine, LuChevronDown, LuListChecks, LuPackageOpen, LuWallet } from "react-icons/lu";
+import { LuBot, LuChartCandlestick, LuChartLine, LuChevronDown, LuListChecks, LuPackageOpen, LuWallet, LuX } from "react-icons/lu";
 
 import { ErrorState } from "../../../ui/components/ViewState";
 import { SkeletonCardBlock, SkeletonKpiRow, SkeletonTableRows } from "../../../ui/components/loading";
@@ -630,6 +630,7 @@ export default function HomeLiveWidgets() {
   const closeActionBaseLabel = t("dashboard.home.runtime.actionClose");
   const closePositionButtonLabel = closeActionBaseLabel === "Close" ? "Close position" : "Zamknij pozycje";
   const closePositionPendingLabel = closeActionBaseLabel === "Close" ? "Closing..." : "Zamykanie...";
+  const closePositionActionColumnLabel = t("dashboard.home.runtime.filterAction");
   const closePositionNoSessionLabel =
     closeActionBaseLabel === "Close" ? "No active runtime session selected." : "Brak aktywnej sesji runtime.";
   const closePositionSuccessLabel = closeActionBaseLabel === "Close" ? "Position closed." : "Pozycja zamknieta.";
@@ -720,21 +721,6 @@ export default function HomeLiveWidgets() {
         className: "text-[11px]",
         render: (row) => renderDcaLadderCell({ position: row, formatPercent: formatDcaPercent }),
       },
-      {
-        key: "actionClosePosition",
-        label: closePositionButtonLabel,
-        className: "text-right",
-        render: (row) => (
-          <button
-            type="button"
-            className="btn btn-error btn-outline btn-xs whitespace-nowrap"
-            onClick={() => void handleCloseRuntimePosition(row)}
-            disabled={closingPositionId === row.id}
-          >
-            {closingPositionId === row.id ? closePositionPendingLabel : closePositionButtonLabel}
-          </button>
-        ),
-      },
     ];
 
     if (showDynamicStopColumns) {
@@ -762,8 +748,36 @@ export default function HomeLiveWidgets() {
       );
     }
 
+    columns.push({
+      key: "actionClosePosition",
+      label: closePositionActionColumnLabel,
+      className: "text-right",
+      render: (row) => {
+        const isClosing = closingPositionId === row.id;
+        const actionLabel = isClosing ? closePositionPendingLabel : closePositionButtonLabel;
+        return (
+          <button
+            type="button"
+            className="btn btn-error btn-outline btn-xs btn-square"
+            onClick={() => void handleCloseRuntimePosition(row)}
+            disabled={isClosing}
+            aria-label={actionLabel}
+            title={actionLabel}
+          >
+            {isClosing ? (
+              <span className="loading loading-spinner loading-xs" aria-hidden />
+            ) : (
+              <LuX className="h-3.5 w-3.5" aria-hidden />
+            )}
+            <span className="sr-only">{actionLabel}</span>
+          </button>
+        );
+      },
+    });
+
     return columns;
   }, [
+    closePositionActionColumnLabel,
     closePositionButtonLabel,
     closePositionPendingLabel,
     closingPositionId,

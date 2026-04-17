@@ -1633,6 +1633,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
 
 ### Progress Log (Post-PEX Continuation)
+- 2026-04-17: Completed `UXR-08` by moving runtime open-positions close action to a dedicated last column (`Action`) even when dynamic stop columns are present, and replacing text CTA with an icon-only close button that preserves accessible labels (`aria-label` + tooltip); validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`.
 - 2026-04-17: Completed `UXR-07` by shortening runtime dashboard tab labels to `positions/orders/history` across localized dashboard-home namespaces (`en/pl/pt`) and updating `HomeLiveWidgets` regression expectations for the compact tab naming contract; validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`.
 - 2026-04-17: Completed `UXR-06` by redesigning runtime wallet summary into a compact first-row KPI layout (`portfolio`, `free funds`, `in positions`) with consistent wallet-icon semantics and responsive 1->3 column rendering in `RuntimeSidebarSection`, plus regression assertions for the new KPI row/card contract in `HomeLiveWidgets.test.tsx`; validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`.
 - 2026-04-17: Completed `UXR-05` by removing runtime-session `createdAt` clamping from open-orders read-path for `PAPER`, aligning `LIVE` and `PAPER` runtime dashboard visibility to the same unified carryover contract, with explicit PAPER carryover regression coverage in `orders-positions.e2e`; validation: `pnpm --filter api test -- src/modules/orders/orders-positions.e2e.test.ts` => `9/9 PASS`.
@@ -1678,7 +1679,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
 - [x] `UXR-06 feat(web-dashboard-wallet): redesign wallet KPI row + wallet icon consistency`
 - [x] `UXR-07 feat(web-dashboard-tabs): rename tab labels to positions/orders/history`
-- [ ] `UXR-08 fix(web-positions-table): move close column to last, rename to Action, use icon button`
+- [x] `UXR-08 fix(web-positions-table): move close column to last, rename to Action, use icon button`
 - [ ] `UXR-09 fix(web-actions): implement per-row pending state for concurrent close actions`
 - [ ] `UXR-10 fix(api-close-position): align close-position button flow with backend close handler`
 - [ ] `UXR-11 feat(web-position-edit-modal): add reusable modal shell + initial position-edit form`
@@ -1703,6 +1704,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `UXR-30 qa(regression-pack): run focused API+WEB tests and manual smoke for live/paper parity`
 
 ### Progress Log (Phase 37 - Dashboard + Modules UX/Runtime Fix Wave)
+- 2026-04-17: Completed `UXR-08` open-positions table UX cleanup: close action column moved to final position and renamed to `Action`, with icon-only row button and preserved accessibility labels; validated by `HomeLiveWidgets.test.tsx` (`12/12 PASS`).
 - 2026-04-17: Completed `UXR-07` tab-label polish by replacing long runtime tab copy with concise `positions/orders/history` labels in EN/PL/PT dashboard-home namespaces and by updating widget tab assertions in `HomeLiveWidgets.test.tsx` (`12/12 PASS`).
 - 2026-04-17: Completed `UXR-06` wallet dashboard UX pass by moving `portfolio/free funds/in positions` into one compact, responsive KPI row with consistent wallet-icon semantics in sidebar summary, validated by `HomeLiveWidgets.test.tsx` (`12/12 PASS`).
 - 2026-04-17: Completed `UXR-05` paper-orders parity by aligning runtime open-order visibility for pre-session carryover rows in `PAPER` mode with unified read-model expectations, validated with `orders-positions.e2e` (`9/9 PASS`).

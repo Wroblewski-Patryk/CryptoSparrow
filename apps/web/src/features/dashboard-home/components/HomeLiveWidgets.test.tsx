@@ -439,6 +439,13 @@ describe("HomeLiveWidgets", () => {
         screen.getByText((content) => /5[.,]0[56]%/.test(content.replace(/\u00a0/g, " ")))
       ).toBeInTheDocument();
       expect(screen.getAllByText("-").length).toBeGreaterThan(0);
+      const openPositionsColumnHeaders = screen.getAllByRole("columnheader").map((header) => (header.textContent ?? "").trim());
+      const actionColumnIndex = openPositionsColumnHeaders.findIndex((label) => /Action|Akcja|Acao/i.test(label));
+      const tslColumnIndex = openPositionsColumnHeaders.findIndex((label) => /^TSL$/i.test(label));
+      expect(actionColumnIndex).toBeGreaterThan(-1);
+      expect(tslColumnIndex).toBeGreaterThan(-1);
+      expect(actionColumnIndex).toBeGreaterThan(tslColumnIndex);
+      expect(actionColumnIndex).toBe(openPositionsColumnHeaders.length - 1);
     });
     {
       const openPositionsTab = screen.getByRole("tab", { name: /Pozycje|Positions/i });
