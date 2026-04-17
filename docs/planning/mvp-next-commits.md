@@ -7,25 +7,25 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
-- [x] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
-- [x] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
-- [x] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
-- [ ] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
-## NEXT
 - [ ] `UXR-06 feat(web-dashboard-wallet): redesign wallet KPI row + wallet icon consistency`
 - [ ] `UXR-07 feat(web-dashboard-tabs): rename tab labels to positions/orders/history`
 - [ ] `UXR-08 fix(web-positions-table): move close column to last, rename to Action, use icon button`
 - [ ] `UXR-09 fix(web-actions): implement per-row pending state for concurrent close actions`
 - [ ] `UXR-10 fix(api-close-position): align close-position button flow with backend close handler`
-## PIPELINE
+## NEXT
 - [ ] `UXR-11 feat(web-position-edit-modal): add reusable modal shell + initial position-edit form`
 - [ ] `UXR-12 feat(api-position-edit): expose safe manual update endpoint for TP/SL and metadata`
 - [ ] `UXR-13 feat(web-dashboard-manual-order): add manual order panel using existing bot order pipeline`
 - [ ] `UXR-14 feat(web-markets-form): compose symbol universe from (min-volume U whitelist) - blacklist`
 - [ ] `UXR-15 fix(api-markets): enforce same universe composition contract on backend`
+## PIPELINE
+- [ ] `L10NQ-01 docs(contract): freeze remediation scope and English-only documentation baseline`
+- [ ] `L10NQ-02 qa(scan): capture baseline inventory of locale clamps and hardcoded-copy hotspots`
+- [ ] `L10NQ-03 fix(web-backtest-locale): remove EN/PL clamp in backtest module`
+- [ ] `L10NQ-04 test(web-backtest-i18n): add regression coverage for Portuguese backtest locale path`
+- [ ] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
 ## GROUP QUEUE
-- [ ] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
+- [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
 - [ ] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
 - [ ] `UXR-C (commits 16-22): advanced table rollout + logs module completion`
 - [ ] `UXR-D (commits 23-30): bots IA/runtime polish + breadcrumb/footer + regression closure`
@@ -36,6 +36,10 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
+  - 2026-04-17: Removed runtime-session `createdAt` clamp from open-orders read path for `PAPER`, aligning both modes to a unified open-order visibility contract (`LIVE_EXCHANGE` + `PAPER_SIMULATED` carryover shown in runtime dashboard payload), and added PAPER carryover regression coverage in `orders-positions.e2e`; validation pack: `pnpm --filter api test -- src/modules/orders/orders-positions.e2e.test.ts` => `9/9 PASS`.
+- [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
+  - 2026-04-17: Closed grouped foundation wave after completing `UXR-01..UXR-05`; promoted `UXR-06..UXR-10` to active `NOW` and staged `UXR-11..UXR-15` in `NEXT`.
 - [x] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
   - 2026-04-17: Relaxed runtime open-orders read-window filter for `LIVE` mode so carryover exchange-backed open orders created before current runtime session start remain visible in dashboard runtime payload, and added API regression coverage (`orders-positions.e2e`) for LIVE carryover visibility; validation pack: `pnpm --filter api test -- src/modules/orders/orders-positions.e2e.test.ts` => `8/8 PASS`.
 - [x] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`

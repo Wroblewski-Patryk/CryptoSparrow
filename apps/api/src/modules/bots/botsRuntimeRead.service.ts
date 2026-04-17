@@ -947,16 +947,6 @@ export const listBotRuntimeSessionPositions = async (
       return { referenceBalance: null, freeCash: null };
     }
   };
-  const runtimeOpenOrdersWindowWhere =
-    botContext.mode === 'LIVE'
-      ? {}
-      : {
-          createdAt: {
-            gte: session.startedAt,
-            lte: windowEnd,
-          },
-        };
-
   const positions = await prisma.position.findMany({
     where: {
       userId,
@@ -1004,7 +994,6 @@ export const listBotRuntimeSessionPositions = async (
           in: ['PENDING', 'OPEN', 'PARTIALLY_FILLED'],
         },
         ...(normalizedSymbol ? { symbol: normalizedSymbol } : {}),
-        ...runtimeOpenOrdersWindowWhere,
       },
       orderBy: [{ createdAt: 'desc' }, { updatedAt: 'desc' }],
       take: query.limit,
@@ -1100,7 +1089,6 @@ export const listBotRuntimeSessionPositions = async (
           in: ['PENDING', 'OPEN', 'PARTIALLY_FILLED'],
         },
         ...(normalizedSymbol ? { symbol: normalizedSymbol } : {}),
-        ...runtimeOpenOrdersWindowWhere,
       },
       orderBy: [{ createdAt: 'desc' }, { updatedAt: 'desc' }],
       take: query.limit,

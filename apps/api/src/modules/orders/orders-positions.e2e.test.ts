@@ -598,6 +598,73 @@ describe('Orders and positions read contract', () => {
     ).toBe(true);
   });
 
+  it('keeps PAPER open orders visible in runtime view when order was created before current session start', async () => {
+    const ownerAgent = await registerAndLogin('runtime-paper-open-order-carryover@example.com');
+    const ownerId = await getUserId('runtime-paper-open-order-carryover@example.com');
+
+    const paperWallet = await prisma.wallet.create({
+      data: {
+        userId: ownerId,
+        name: 'Paper order wallet',
+        mode: 'PAPER',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        paperInitialBalance: 10000,
+      },
+    });
+
+    const paperBot = await prisma.bot.create({
+      data: {
+        userId: ownerId,
+        name: 'Paper orders bot',
+        mode: 'PAPER',
+        marketType: 'FUTURES',
+        isActive: true,
+        walletId: paperWallet.id,
+      },
+    });
+
+    const session = await prisma.botRuntimeSession.create({
+      data: {
+        userId: ownerId,
+        botId: paperBot.id,
+        mode: 'PAPER',
+        status: 'RUNNING',
+        startedAt: new Date('2026-04-12T12:00:00.000Z'),
+        lastHeartbeatAt: new Date('2026-04-12T12:02:00.000Z'),
+      },
+    });
+
+    const carryoverOrder = await prisma.order.create({
+      data: {
+        userId: ownerId,
+        botId: paperBot.id,
+        walletId: paperWallet.id,
+        symbol: 'ETHUSDT',
+        side: 'BUY',
+        type: 'LIMIT',
+        status: 'OPEN',
+        quantity: 0.5,
+        filledQuantity: 0,
+        price: 3000,
+        origin: 'BOT',
+        managementMode: 'BOT_MANAGED',
+        submittedAt: new Date('2026-04-12T11:40:00.000Z'),
+        createdAt: new Date('2026-04-12T11:40:00.000Z'),
+      },
+    });
+
+    const positionsRes = await ownerAgent.get(
+      `/dashboard/bots/${paperBot.id}/runtime-sessions/${session.id}/positions`
+    );
+    expect(positionsRes.status).toBe(200);
+    expect(positionsRes.body.openOrdersCount).toBe(1);
+    expect(
+      positionsRes.body.openOrders.some((item: { id: string }) => item.id === carryoverOrder.id)
+    ).toBe(true);
+  });
+
 });
 
 
