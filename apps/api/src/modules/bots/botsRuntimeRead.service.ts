@@ -1481,7 +1481,10 @@ export const closeBotRuntimeSessionPosition = async (
   if (closeResult.status === 'closed') {
     return closeResult;
   }
-  if (closeResult.reason === 'no_open_position' || closeResult.reason === 'dedupe_reused') {
+  if (
+    closeResult.status === 'ignored' &&
+    (closeResult.reason === 'no_open_position' || closeResult.reason === 'dedupe_reused')
+  ) {
     const alreadyClosed = await resolveClosedResult();
     if (alreadyClosed) return alreadyClosed;
   }
