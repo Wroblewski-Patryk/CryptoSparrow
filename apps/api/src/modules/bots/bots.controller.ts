@@ -64,7 +64,12 @@ const handleBotCommandValidationError = (res: Response, error: unknown) => {
     return sendError(res, 400, 'selected LIVE wallet requires linked exchange api key', mapped.details);
   }
   if (mapped.code === BOT_ERROR_CODES.activeBotStrategyMarketGroupDuplicate) {
-    return sendError(res, 409, 'active bot already exists for this strategy + market group pair', mapped.details);
+    return sendError(
+      res,
+      409,
+      'active bot already exists for this wallet + strategy + market group tuple',
+      mapped.details
+    );
   }
   if (mapped.code === BOT_ERROR_CODES.botNotFound) {
     return sendError(res, 404, 'Not found', mapped.details);

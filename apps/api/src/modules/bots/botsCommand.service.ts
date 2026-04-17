@@ -200,6 +200,7 @@ export const createBot = async (userId: string, data: CreateBotDto) => {
       userId,
       strategyId,
       symbolGroupId: symbolGroup.id,
+      walletId: wallet.id,
     });
   }
 
@@ -413,10 +414,15 @@ export const updateBot = async (userId: string, id: string, data: UpdateBotDto) 
       }
 
       if (targetSymbolGroupId) {
+        const targetWalletId = targetWallet?.id ?? existing.walletId ?? null;
+        if (!targetWalletId) {
+          throw botErrors.walletNotFound();
+        }
         await assertNoDuplicateActiveBotByStrategyAndSymbolGroup({
           userId,
           strategyId: targetStrategyId,
           symbolGroupId: targetSymbolGroupId,
+          walletId: targetWalletId,
           excludeBotId: existing.id,
         });
       }

@@ -14,7 +14,8 @@ import { Bot, TradeMarket } from "../types/bot.type";
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 const LIVE_CONSENT_TEXT_VERSION = "mvp-v1";
-const DUPLICATE_ACTIVE_BOT_ERROR = "active bot already exists for this strategy + market group pair";
+const DUPLICATE_ACTIVE_BOT_ERROR =
+  "active bot already exists for this wallet + strategy + market group tuple";
 
 const deriveStrategyMaxOpenPositions = (strategy: StrategyDto | null): number => {
   if (!strategy?.config || typeof strategy.config !== "object") return 1;

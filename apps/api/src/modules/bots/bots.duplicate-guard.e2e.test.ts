@@ -141,7 +141,7 @@ describe('Bots duplicate active guard', () => {
     });
     expect(duplicateActiveCreate.status).toBe(409);
     expect(duplicateActiveCreate.body.error.message).toBe(
-      'active bot already exists for this strategy + market group pair'
+      'active bot already exists for this wallet + strategy + market group tuple'
     );
 
     const inactiveCreate = await agent.post('/dashboard/bots').send({
@@ -153,6 +153,17 @@ describe('Bots duplicate active guard', () => {
       liveOptIn: false,
     });
     expect(inactiveCreate.status).toBe(201);
+
+    const secondWalletId = await createWalletForContext(email);
+    const activeWithDifferentWallet = await agent.post('/dashboard/bots').send({
+      name: 'Active Other Wallet',
+      strategyId,
+      marketGroupId,
+      walletId: secondWalletId,
+      isActive: true,
+      liveOptIn: false,
+    });
+    expect(activeWithDifferentWallet.status).toBe(201);
   });
 
   it('blocks activating duplicate bot when same strategy + market group already active', async () => {
@@ -186,7 +197,7 @@ describe('Bots duplicate active guard', () => {
     });
     expect(activateSecondary.status).toBe(409);
     expect(activateSecondary.body.error.message).toBe(
-      'active bot already exists for this strategy + market group pair'
+      'active bot already exists for this wallet + strategy + market group tuple'
     );
   });
 });

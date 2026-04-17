@@ -119,6 +119,7 @@ export const findDuplicateActiveBotByStrategyAndSymbolGroup = async (params: {
   userId: string;
   strategyId: string;
   symbolGroupId: string;
+  walletId: string;
   excludeBotId?: string;
 }) =>
   prisma.marketGroupStrategyLink.findFirst({
@@ -129,6 +130,7 @@ export const findDuplicateActiveBotByStrategyAndSymbolGroup = async (params: {
       bot: {
         userId: params.userId,
         isActive: true,
+        walletId: params.walletId,
         ...(params.excludeBotId ? { id: { not: params.excludeBotId } } : {}),
       },
       botMarketGroup: {
@@ -152,6 +154,7 @@ export const assertNoDuplicateActiveBotByStrategyAndSymbolGroup = async (params:
   userId: string;
   strategyId: string;
   symbolGroupId: string;
+  walletId: string;
   excludeBotId?: string;
 }) => {
   const duplicate = await findDuplicateActiveBotByStrategyAndSymbolGroup(params);
