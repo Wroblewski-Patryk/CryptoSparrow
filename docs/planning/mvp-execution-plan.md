@@ -1622,7 +1622,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
 - [x] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
 - [x] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
-- [ ] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
+- [x] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
 - [ ] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
 
 ### Active Task Breakdown (L10NQ-A)
@@ -1633,6 +1633,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
 
 ### Progress Log (Post-PEX Continuation)
+- 2026-04-17: Completed `UXR-04` by making runtime open-orders windowing mode-aware (session `createdAt` clamp now kept for `PAPER` only, while `LIVE` read-model includes carryover open orders created before current runtime session start), plus added carryover visibility regression coverage in `orders-positions.e2e`; validation: `pnpm --filter api test -- src/modules/orders/orders-positions.e2e.test.ts` => `8/8 PASS`.
 - 2026-04-17: Completed `UXR-03` by enforcing LIVE-only deterministic owner arbitration for `EXCHANGE_SYNC` symbol takeover and by claiming/backfilling missing `botId/walletId` before close orchestration, which resolves missing LIVE runtime visibility and `ignored` close responses for takeover rows.
 - 2026-04-17: Planned and queued `L10NQ-A` follow-up localization hardening wave (`docs/planning/i18n-contract-remediation-plan-2026-04-17.md`) covering backtest EN/PL clamp removal, hardcoded-copy cleanup, module namespace split, i18n parity/guardrail tests, route-level namespace loading, and English-only localization docs normalization.
 - 2026-04-17: Completed `UXR-02` by adding red-baseline API coverage for runtime exchange-position visibility + close-action regression (`orders-positions.e2e`) and WEB hook coverage for `ignored` close-response handling (`useCloseRuntimePositionAction.test.tsx`); validation evidence: API targeted suite currently fails on the two expected regressions, WEB targeted suite passes.
@@ -1669,7 +1670,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
 - [x] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
 - [x] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
-- [ ] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
+- [x] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
 - [ ] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
 - [ ] `UXR-06 feat(web-dashboard-wallet): redesign wallet KPI row + wallet icon consistency`
 - [ ] `UXR-07 feat(web-dashboard-tabs): rename tab labels to positions/orders/history`

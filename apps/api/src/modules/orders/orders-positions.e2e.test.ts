@@ -36,6 +36,7 @@ describe('Orders and positions read contract', () => {
     await prisma.botRuntimeEvent.deleteMany();
     await prisma.botRuntimeSymbolStat.deleteMany();
     await prisma.botRuntimeSession.deleteMany();
+    await prisma.runtimeExecutionDedupe.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
@@ -528,6 +529,75 @@ describe('Orders and positions read contract', () => {
     expect(closeRes.status).toBe(200);
     expect(closeRes.body.status).toBe('closed');
   });
+
+  it('keeps LIVE open orders visible in runtime view when order was created before current session start', async () => {
+    const ownerAgent = await registerAndLogin('runtime-live-open-order-carryover@example.com');
+    const ownerId = await getUserId('runtime-live-open-order-carryover@example.com');
+
+    const liveWallet = await prisma.wallet.create({
+      data: {
+        userId: ownerId,
+        name: 'Live order wallet',
+        mode: 'LIVE',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+      },
+    });
+
+    const liveBot = await prisma.bot.create({
+      data: {
+        userId: ownerId,
+        name: 'Live orders bot',
+        mode: 'LIVE',
+        marketType: 'FUTURES',
+        isActive: true,
+        liveOptIn: true,
+        consentTextVersion: 'mvp-v1',
+        walletId: liveWallet.id,
+      },
+    });
+
+    const session = await prisma.botRuntimeSession.create({
+      data: {
+        userId: ownerId,
+        botId: liveBot.id,
+        mode: 'LIVE',
+        status: 'RUNNING',
+        startedAt: new Date('2026-04-12T12:00:00.000Z'),
+        lastHeartbeatAt: new Date('2026-04-12T12:02:00.000Z'),
+      },
+    });
+
+    const carryoverOrder = await prisma.order.create({
+      data: {
+        userId: ownerId,
+        botId: liveBot.id,
+        walletId: liveWallet.id,
+        symbol: 'BTCUSDT',
+        side: 'BUY',
+        type: 'LIMIT',
+        status: 'OPEN',
+        quantity: 0.04,
+        filledQuantity: 0,
+        price: 63000,
+        origin: 'EXCHANGE_SYNC',
+        managementMode: 'BOT_MANAGED',
+        submittedAt: new Date('2026-04-12T11:40:00.000Z'),
+        createdAt: new Date('2026-04-12T11:40:00.000Z'),
+      },
+    });
+
+    const positionsRes = await ownerAgent.get(
+      `/dashboard/bots/${liveBot.id}/runtime-sessions/${session.id}/positions`
+    );
+    expect(positionsRes.status).toBe(200);
+    expect(positionsRes.body.openOrdersCount).toBe(1);
+    expect(
+      positionsRes.body.openOrders.some((item: { id: string }) => item.id === carryoverOrder.id)
+    ).toBe(true);
+  });
+
 });
 
 

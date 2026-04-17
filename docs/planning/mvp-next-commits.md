@@ -10,7 +10,7 @@ Operational queue for one-task execution runs.
 - [x] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
 - [x] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
 - [x] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
-- [ ] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
+- [x] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
 - [ ] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
 ## NEXT
 - [ ] `UXR-06 feat(web-dashboard-wallet): redesign wallet KPI row + wallet icon consistency`
@@ -36,6 +36,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
+  - 2026-04-17: Relaxed runtime open-orders read-window filter for `LIVE` mode so carryover exchange-backed open orders created before current runtime session start remain visible in dashboard runtime payload, and added API regression coverage (`orders-positions.e2e`) for LIVE carryover visibility; validation pack: `pnpm --filter api test -- src/modules/orders/orders-positions.e2e.test.ts` => `8/8 PASS`.
 - [x] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
   - 2026-04-17: Fixed runtime takeover ownership resolver to LIVE-only active candidates (`PAPER` bots excluded from `EXCHANGE_SYNC` symbol-owner arbitration), and hardened close flow for externally owned rows by claiming missing `botId/walletId` before orchestration (fail-closed preserved); validation pack: `pnpm --filter api test -- src/modules/orders/orders-positions.e2e.test.ts` => `7/7 PASS`, `pnpm --filter web test -- src/features/dashboard-home/hooks/useCloseRuntimePositionAction.test.tsx` => `1/1 PASS`.
 - [x] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
