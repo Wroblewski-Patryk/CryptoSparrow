@@ -879,7 +879,9 @@ describe("BotsManagement", () => {
     });
 
     shouldFailRefresh = false;
-    fireEvent.click(screen.getByRole("button", { name: "Odswiez" }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(11_000);
+    });
 
     await waitFor(() => {
       expect(screen.queryByText(/Dane monitoringu moga byc przestarzale/i)).not.toBeInTheDocument();
@@ -1037,6 +1039,8 @@ describe("BotsManagement", () => {
     await waitFor(() => {
       expect(listRuntimeSessionsMock).toHaveBeenCalledTimes(1);
     });
+
+    expect(screen.queryByRole("button", { name: "Odswiez" })).not.toBeInTheDocument();
 
     await waitFor(() => {
       expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10000);

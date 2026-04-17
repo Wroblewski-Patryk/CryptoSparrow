@@ -72,8 +72,6 @@ type BotsMonitoringTabProps = {
   setMonitorBotId: (botId: string) => void;
   monitorRuntimeCapabilityAvailable: boolean;
   selectedMonitorBot: Bot | null;
-  monitorAutoRefreshEnabled: boolean;
-  setMonitorAutoRefreshEnabled: (value: boolean) => void;
   refreshMonitoring: () => Promise<void>;
   monitorStatus: "ALL" | BotRuntimeSessionStatus;
   setMonitorStatus: (status: "ALL" | BotRuntimeSessionStatus) => void;
@@ -196,8 +194,6 @@ export function BotsMonitoringTab(props: BotsMonitoringTabProps) {
     setMonitorBotId,
     monitorRuntimeCapabilityAvailable,
     selectedMonitorBot,
-    monitorAutoRefreshEnabled,
-    setMonitorAutoRefreshEnabled,
     refreshMonitoring,
     monitorStatus,
     setMonitorStatus,
@@ -305,21 +301,7 @@ export function BotsMonitoringTab(props: BotsMonitoringTabProps) {
                     <h3 className="text-sm font-semibold">{t("dashboard.bots.monitoring.controlsTitle")}</h3>
                     <p className="text-xs opacity-70">{t("dashboard.bots.monitoring.controlsDescription")}</p>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <label className="label cursor-pointer gap-2 p-0">
-                      <input
-                        type="checkbox"
-                        className="toggle toggle-sm"
-                        aria-label={t("dashboard.bots.monitoring.autoRefreshAria")}
-                        checked={monitorAutoRefreshEnabled}
-                        onChange={(event) => setMonitorAutoRefreshEnabled(event.target.checked)}
-                      />
-                      <span className="label-text text-xs">{t("dashboard.bots.monitoring.autoRefreshLabel")}</span>
-                    </label>
-                    <button type="button" className="btn btn-outline btn-sm" onClick={() => void refreshMonitoring()}>
-                      {t("dashboard.bots.monitoring.refresh")}
-                    </button>
-                  </div>
+                  <span className="badge badge-outline badge-sm">{t("dashboard.bots.monitoring.autoRefreshLabel")}</span>
                 </div>
 
                 {!monitorRuntimeCapabilityAvailable && selectedMonitorBot ? (
@@ -474,14 +456,14 @@ export function BotsMonitoringTab(props: BotsMonitoringTabProps) {
 
               <div className="rounded-lg border border-base-300 bg-base-100 p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide opacity-65">{t("dashboard.bots.monitoring.quickNavTitle")}</p>
-                <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                  <a href="#monitor-now" className="btn btn-outline btn-xs">
+                <div role="tablist" className="tabs tabs-boxed mt-2 w-full max-w-xl">
+                  <a href="#monitor-now" role="tab" className="tab">
                     {t("dashboard.bots.monitoring.quickNavNow")}
                   </a>
-                  <a href="#monitor-history" className="btn btn-outline btn-xs">
+                  <a href="#monitor-history" role="tab" className="tab">
                     {t("dashboard.bots.monitoring.quickNavHistory")}
                   </a>
-                  <a href="#monitor-future" className="btn btn-outline btn-xs">
+                  <a href="#monitor-future" role="tab" className="tab">
                     {t("dashboard.bots.monitoring.quickNavFuture")}
                   </a>
                 </div>

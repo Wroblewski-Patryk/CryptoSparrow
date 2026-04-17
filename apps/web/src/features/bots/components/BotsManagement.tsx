@@ -151,7 +151,6 @@ export default function BotsManagement({
     handleApplyMonitoringFilter,
     handleClearMonitoringFilter,
     monitorAppliedSymbolFilter,
-    monitorAutoRefreshEnabled,
     monitorBotId,
     monitorError,
     monitorLastUpdatedAt,
@@ -170,7 +169,6 @@ export default function BotsManagement({
     monitorTrades,
     monitorViewMode,
     refreshMonitoring,
-    setMonitorAutoRefreshEnabled,
     setMonitorBotId,
     setMonitorSessionId,
     setMonitorStatus,
@@ -762,8 +760,6 @@ export default function BotsManagement({
           setMonitorBotId={setMonitorBotId}
           monitorRuntimeCapabilityAvailable={monitorRuntimeCapabilityAvailable}
           selectedMonitorBot={selectedMonitorBot}
-          monitorAutoRefreshEnabled={monitorAutoRefreshEnabled}
-          setMonitorAutoRefreshEnabled={setMonitorAutoRefreshEnabled}
           refreshMonitoring={refreshMonitoring}
           monitorStatus={monitorStatus}
           setMonitorStatus={setMonitorStatus}

@@ -307,7 +307,6 @@ export const useBotsMonitoringController = ({
   const [monitorLoading, setMonitorLoading] = useState(false);
   const [monitorSessionLoading, setMonitorSessionLoading] = useState(false);
   const [monitorError, setMonitorError] = useState<string | null>(null);
-  const [monitorAutoRefreshEnabled, setMonitorAutoRefreshEnabled] = useState(true);
   const [monitorLastUpdatedAt, setMonitorLastUpdatedAt] = useState<string | null>(null);
   const [monitorStaleWatchNowMs, setMonitorStaleWatchNowMs] = useState(() => Date.now());
   const [monitorLiveTickerPrices, setMonitorLiveTickerPrices] = useState<Record<string, number>>({});
@@ -557,13 +556,12 @@ export const useBotsMonitoringController = ({
   );
 
   const triggerSseDrivenMonitorRefresh = useCallback(() => {
-    if (!monitorAutoRefreshEnabled) return;
     const now = Date.now();
     const minIntervalMs = resolveMonitorRefreshIntervalMs();
     if (now - monitorLastSseDrivenRefreshAtRef.current < minIntervalMs) return;
     monitorLastSseDrivenRefreshAtRef.current = now;
     void refreshMonitoring({ silent: true });
-  }, [monitorAutoRefreshEnabled, refreshMonitoring]);
+  }, [refreshMonitoring]);
 
   const shouldRunMonitorPollingFallback = useCallback(() => {
     if (typeof window === "undefined" || typeof window.EventSource === "undefined") {
@@ -606,7 +604,7 @@ export const useBotsMonitoringController = ({
   }, [activeTab, monitorBotId, refreshMonitoring]);
 
   useEffect(() => {
-    if (activeTab !== "monitoring" || !monitorAutoRefreshEnabled || !monitorBotId) return;
+    if (activeTab !== "monitoring" || !monitorBotId) return;
 
     if (typeof document === "undefined") return;
 
@@ -631,7 +629,6 @@ export const useBotsMonitoringController = ({
     };
   }, [
     activeTab,
-    monitorAutoRefreshEnabled,
     monitorBotId,
     refreshMonitoring,
     shouldRunMonitorPollingFallback,
@@ -656,14 +653,13 @@ export const useBotsMonitoringController = ({
   useEffect(() => {
     const streamEligible = activeTab === "monitoring" &&
       Boolean(monitorBotId) &&
-      Boolean(monitorStreamSymbolsKey) &&
-      monitorAutoRefreshEnabled;
+      Boolean(monitorStreamSymbolsKey);
     monitorStreamEligibleRef.current = streamEligible;
     if (streamEligible) return;
     monitorStreamConnectedRef.current = false;
     monitorLastSseTickerAtRef.current = null;
     monitorLastSseDrivenRefreshAtRef.current = 0;
-  }, [activeTab, monitorAutoRefreshEnabled, monitorBotId, monitorStreamSymbolsKey]);
+  }, [activeTab, monitorBotId, monitorStreamSymbolsKey]);
 
   useEffect(() => {
     if (activeTab !== "monitoring" || !monitorBotId) return;
@@ -715,7 +711,6 @@ export const useBotsMonitoringController = ({
     handleApplyMonitoringFilter,
     handleClearMonitoringFilter,
     monitorAppliedSymbolFilter,
-    monitorAutoRefreshEnabled,
     monitorBotId,
     monitorError,
     monitorLastUpdatedAt,
@@ -734,7 +729,6 @@ export const useBotsMonitoringController = ({
     monitorTrades,
     monitorViewMode,
     refreshMonitoring,
-    setMonitorAutoRefreshEnabled,
     setMonitorBotId,
     setMonitorSessionId,
     setMonitorStatus,
