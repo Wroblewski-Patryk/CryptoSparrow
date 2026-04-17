@@ -1618,13 +1618,14 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `WSPLIT-01 docs(decision): close Worker Split Timing with explicit split policy and thresholds`
 
 ### Active Task Breakdown (UXR-A)
-- [ ] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
+- [x] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
 - [ ] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
 - [ ] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
 - [ ] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
 - [ ] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
 
 ### Progress Log (Post-PEX Continuation)
+- 2026-04-17: Completed `UXR-01` by freezing dashboard `positions/orders/history` ownership and visibility matrix in canonical docs (`open-decisions`, `api-bots`, `web-dashboard-home`), including deterministic external takeover owner ordering and fail-closed close-position actionability.
 - 2026-04-17: Promoted `UXR-A` as active follow-up group with explicit tiny-commit queue (`UXR-01..UXR-05`) and grouped continuation contract (`UXR-B..UXR-D`) based on `docs/planning/dashboard-modules-ux-runtime-fix-wave-plan-2026-04-15.md`, so executor `NOW` refill always has actionable tasks.
 - 2026-04-17: Executed Dashboard+Bots operational UX checklist pass (`docs/operations/dashboard-bots-operational-ux-checklist.md`) with fresh validation pack (`pnpm --filter web test -- src/features/bots/components/BotCreateEditForm.test.tsx src/features/dashboard-home/components/HomeLiveWidgets.test.tsx src/features/bots/components/BotsManagement.test.tsx src/app/dashboard/dashboard.a11y.smoke.test.tsx src/ui/layout/dashboard/PageTitle.a11y.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx` => `34/34 PASS`, `pnpm --filter web run build` PASS), and closed creator-form IA gap on `/dashboard/bots/create` by enforcing explicit 3-section structure (`Basics`, `Market`, `Strategy`) with regression lock in `BotCreateEditForm.test.tsx`.
 - 2026-04-17: Closed `WSPLIT-A` by completing `WSPLIT-01` (resolved `Worker Split Timing` open decision by locking `PROD` mandatory API/worker split-process policy and concrete `STAGE/DEV` split triggers for queue lag/API p95/restart burst, published closure plan `docs/planning/worker-split-timing-decision-closure-plan-2026-04-17.md`, and validated queue/docs synchronization with `pnpm run docs:parity:check` PASS).
@@ -1654,7 +1655,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-17: Initialized canonical localization phase and rollout queue in `docs/planning/pt-pt-localization-rollout-plan-2026-04-17.md` with locked locale policy (`pt` mapped to `pt-PT`, explicitly excluding `pt-BR`) and hardcoded-branch inventory baseline for implementation.
 
 ## Phase 37 - Dashboard + Modules UX/Runtime Fix Wave (As of 2026-04-17)
-- [ ] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
+- [x] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
 - [ ] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
 - [ ] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
 - [ ] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
@@ -1686,4 +1687,5 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `UXR-30 qa(regression-pack): run focused API+WEB tests and manual smoke for live/paper parity`
 
 ### Progress Log (Phase 37 - Dashboard + Modules UX/Runtime Fix Wave)
+- 2026-04-17: Completed `UXR-01` docs freeze for dashboard ownership/visibility matrix (`positions/orders/history`) and synchronized canonical contract references in `open-decisions`, `api-bots`, and `web-dashboard-home`.
 - 2026-04-17: Activated canonical execution for UXR wave by promoting `UXR-01..UXR-05` into active queue and locking grouped continuation (`UXR-B`, `UXR-C`, `UXR-D`) in `mvp-next-commits.md`; source plan remains `docs/planning/dashboard-modules-ux-runtime-fix-wave-plan-2026-04-15.md`.

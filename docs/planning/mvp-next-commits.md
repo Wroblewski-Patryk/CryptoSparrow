@@ -7,7 +7,7 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
+- [x] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
 - [ ] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
 - [ ] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
 - [ ] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
@@ -33,6 +33,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
+  - 2026-04-17: Locked canonical ownership/actionability matrix for dashboard `positions/orders/history` in `open-decisions.md`, synchronized runtime API contract notes in `docs/modules/api-bots.md`, and synchronized web tab visibility/actionability contract in `docs/modules/web-dashboard-home.md` (including deterministic external takeover ownership order and fail-closed close-action behavior).
 - [x] `BOPS-66 ops(ux-checklist): execute dashboard+bots operational UX checklist and close creator-form section contract gap`
   - 2026-04-17: Executed `docs/operations/dashboard-bots-operational-ux-checklist.md` with fresh regression/build evidence (`pnpm --filter web test -- src/features/bots/components/BotCreateEditForm.test.tsx src/features/dashboard-home/components/HomeLiveWidgets.test.tsx src/features/bots/components/BotsManagement.test.tsx src/app/dashboard/dashboard.a11y.smoke.test.tsx src/ui/layout/dashboard/PageTitle.a11y.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx` => `34/34 PASS`, `pnpm --filter web run build` PASS), fixed `/dashboard/bots/create` creator IA to explicit 3 sections (`Basics/Market/Strategy`), added regression assertion for section headings, and marked checklist A-F as PASS with execution notes.
 - [x] `WSPLIT-A worker-split-decision-closure: resolve open Worker Split Timing policy and sync canonical plans`

@@ -5,8 +5,8 @@
 - Layer: `api`
 - Source path: `apps/api/src/modules/bots`
 - Owner: backend/trading-domain
-- Last updated: 2026-04-12
-- Related planning task: `DCP-06`
+- Last updated: 2026-04-17
+- Related planning task: `UXR-01`
 
 ## 1. Purpose and Scope
 - Owns bot command + runtime read APIs:
@@ -84,3 +84,23 @@ pnpm --filter api test -- src/modules/bots/bots.e2e.test.ts src/modules/bots/bot
 ## 9. Open Issues and Follow-Ups
 - Continue splitting oversized read/command surfaces where maintainability pressure is high.
 - Complete error taxonomy migration for deterministic controller mapping.
+
+## 10. Dashboard Ownership and Actionability Contract (`UXR-01`)
+- Runtime positions read model (`listBotRuntimeSessionPositions`) is scoped to `managementMode=BOT_MANAGED` only.
+- Dashboard `positions` rows for selected bot are allowed from:
+  - direct ownership (`position.botId === selectedBotId`),
+  - external takeover (`origin=EXCHANGE_SYNC`, `botId=null`) only if deterministic symbol ownership resolves to selected bot.
+- Deterministic owner resolution for external symbol takeover is frozen as:
+  - active bot first,
+  - lower market-group `executionOrder`,
+  - earlier bot `createdAt`,
+  - lexical bot id tie-break.
+- Close action (`closeBotRuntimeSessionPosition`) is fail-closed:
+  - allowed only for `OPEN + BOT_MANAGED + wallet-compatible` rows owned directly or through external deterministic mapping,
+  - all other paths return `status=ignored`, `reason=no_open_position`.
+- External takeover audit statuses from positions module are non-actionable in dashboard close flow:
+  - `UNOWNED`, `AMBIGUOUS`, `MANUAL_ONLY`.
+- Dashboard `orders` contract for this module:
+  - tab is always visible in LIVE and PAPER contexts,
+  - rows are bot/wallet-scoped `BOT_MANAGED` open-order states (`PENDING`, `OPEN`, `PARTIALLY_FILLED`),
+  - empty list is valid runtime state (tab must stay visible).

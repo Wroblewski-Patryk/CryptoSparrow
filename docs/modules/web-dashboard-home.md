@@ -5,8 +5,8 @@
 - Layer: `web`
 - Source path: `apps/web/src/features/dashboard-home`
 - Owner: frontend/runtime-observability
-- Last updated: 2026-04-12
-- Related planning task: `DCP-08`
+- Last updated: 2026-04-17
+- Related planning task: `UXR-01`
 
 ## 1. Purpose and Scope
 - Implements dashboard control-center home view (`/dashboard`) for runtime monitoring.
@@ -89,3 +89,13 @@ pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets
 - Consider virtualized tables for larger runtime payloads.
 - Evaluate extracting additional controller concerns from `HomeLiveWidgets` to reduce component size pressure.
 
+## 10. Dashboard Tabs Ownership and Visibility Matrix (`UXR-01`)
+| Tab | Visibility contract | Actionability contract |
+| --- | --- | --- |
+| `positions` | Always rendered for active bot context. Rows include bot-scoped `BOT_MANAGED` positions and deterministic `EXCHANGE_SYNC` takeover rows mapped to selected bot. | Close action only for rows accepted by backend ownership contract (`OPEN + BOT_MANAGED + wallet-compatible + owned`). Non-owned/non-eligible rows are fail-closed by API (`ignored/no_open_position`). |
+| `orders` | Always rendered in both `LIVE` and `PAPER` mode. Empty list is valid state. | Read-only list in this wave. No tab hiding fallback when list is empty. |
+| `history` | Always rendered as runtime history surface in active bot context. | Read-only by default (no ownership mutation actions). |
+
+- Operator note:
+  - unresolved external takeover states (`UNOWNED`, `AMBIGUOUS`, `MANUAL_ONLY`) are not actionable from dashboard close flow.
+  - onboarding sequence remains wallet-first when runtime context is missing (`/dashboard/wallets/list` as first step).

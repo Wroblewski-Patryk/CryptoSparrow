@@ -637,6 +637,29 @@ This file tracks intentionally unresolved architecture choices so implementation
   - user can manually switch position management mode to `BOT_MANAGED`.
   - when symbol is occupied by manually managed position, bot entry signal for that symbol is ignored.
 
+## Dashboard Positions/Orders Ownership and Visibility Matrix
+- Decision state: resolved on 2026-04-17.
+- Decision:
+  - dashboard runtime tab contract is frozen as `positions`, `orders`, `history`.
+  - `positions` tab for selected bot shows only `BOT_MANAGED` rows in bot runtime scope:
+    - directly owned rows (`position.botId === botId`),
+    - external takeover rows (`origin=EXCHANGE_SYNC`, `botId=null`) only when deterministic symbol-owner mapping resolves to selected bot.
+  - deterministic symbol-owner mapping order is frozen:
+    - active bot first,
+    - lower `executionOrder` first,
+    - earlier bot `createdAt` first,
+    - lexical bot id as final tie-break.
+  - close-position action is fail-closed:
+    - actionable only for `OPEN + BOT_MANAGED + wallet-compatible` rows owned directly or via deterministic external takeover mapping,
+    - non-matching rows must return `status=ignored`, `reason=no_open_position`.
+  - external takeover statuses (`UNOWNED`, `AMBIGUOUS`, `MANUAL_ONLY`) remain non-actionable in dashboard close flow.
+  - `orders` tab remains visible for both `LIVE` and `PAPER`; empty-state is valid and must not hide the tab.
+  - `history` tab remains visible as read-only runtime history surface.
+- Canonical references:
+  - `docs/planning/dashboard-modules-ux-runtime-fix-wave-plan-2026-04-15.md`
+  - `docs/modules/api-bots.md`
+  - `docs/modules/web-dashboard-home.md`
+
 ## Execution and Backtest Parity Policy
 - Decision state: resolved on 2026-03-22.
 - V1 direction:
