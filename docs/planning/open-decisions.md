@@ -617,6 +617,25 @@ This file tracks intentionally unresolved architecture choices so implementation
 - Canonical reference:
   - `docs/planning/pt-pt-localization-rollout-plan-2026-04-17.md`
 
+## L10NQ Scope and Documentation Language Baseline
+- Decision state: resolved on 2026-04-17.
+- Decision:
+  - execute localization remediation in three scoped waves:
+    - `L10NQ-A` (`L10NQ-01..L10NQ-05`): P0 blockers (locale clamps + hardcoded-copy hotspots),
+    - `L10NQ-B` (`L10NQ-06..L10NQ-11`): namespace structure + parity/guardrail tests,
+    - `L10NQ-C` (`L10NQ-12..L10NQ-15`): route-level loading + docs normalization.
+  - freeze active runtime localization contract to three locales only: `en`, `pl`, `pt` (`pt-PT` formatting).
+  - canonical product/governance/QA documentation language is English by default.
+  - non-English docs may remain temporarily as legacy backlog, but new canonical docs must be authored in English.
+- Locked behavior:
+  - no new EN/PL locale clamp may be introduced in production code paths.
+  - hardcoded user-facing wrapper/module copy must be migrated to locale-aware contract before wave closure.
+  - remediation status is tracked only through canonical planning files (`mvp-next-commits`, `mvp-execution-plan`).
+- Canonical references:
+  - `docs/planning/i18n-contract-remediation-plan-2026-04-17.md`
+  - `docs/planning/mvp-next-commits.md`
+  - `docs/planning/mvp-execution-plan.md`
+
 ## Accessibility Scope
 - Decision state: resolved on 2026-04-17.
 - Decision:
