@@ -212,6 +212,8 @@ export default function StrategiesList() {
             );
           }}
           emptyText={copy.emptyTable}
+          advancedMode
+          columnVisibilityPreferenceKey='strategies.list'
         />
       )}
 

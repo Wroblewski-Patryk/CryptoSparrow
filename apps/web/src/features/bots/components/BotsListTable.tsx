@@ -234,6 +234,8 @@ export default function BotsListTable() {
           );
         }}
         emptyText={t("dashboard.bots.list.noBotsForFilter")}
+        advancedMode
+        columnVisibilityPreferenceKey='bots.list'
       />
 
       <ConfirmModal

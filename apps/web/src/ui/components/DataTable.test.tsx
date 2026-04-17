@@ -30,4 +30,26 @@ describe("DataTable", () => {
     expect(emptyMessage).toBeInTheDocument();
     expect(emptyMessage).toHaveClass("px-3");
   });
+
+  it("enables advanced controls as opt-in even without explicit pagination", () => {
+    const columns: DataTableColumn<Row>[] = [
+      {
+        key: "name",
+        label: "Name",
+        accessor: (row) => row.name,
+      },
+    ];
+
+    render(
+      <DataTable<Row>
+        rows={[{ id: "1", name: "Alpha" }]}
+        columns={columns}
+        getRowId={(row) => row.id}
+        advancedMode
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "Columns" })).toBeInTheDocument();
+    expect(screen.getByText("Rows: 1")).toBeInTheDocument();
+  });
 });

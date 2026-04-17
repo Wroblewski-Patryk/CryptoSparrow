@@ -170,6 +170,8 @@ export default function BacktestsRunsTable({ rows, onDeleted }: BacktestsRunsTab
           );
         }}
         emptyText={copy.emptyText}
+        advancedMode
+        columnVisibilityPreferenceKey='backtests.runs.list'
       />
 
       <ConfirmModal

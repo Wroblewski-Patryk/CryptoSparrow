@@ -321,6 +321,8 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
           );
         }}
         emptyText={copy.empty}
+        advancedMode
+        columnVisibilityPreferenceKey='markets.list'
         isRowExpanded={(row) => Boolean(expandedRows[row.id])}
         renderExpandedRow={(row) => {
           const resolved = resolvedTickersMap[row.id];

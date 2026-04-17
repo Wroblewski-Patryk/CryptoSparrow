@@ -77,6 +77,7 @@ type DataTableProps<T> = {
   columnVisibilityPreferenceKey?: string;
   settingsGroupVisible?: boolean;
   settingsControlsIconOnly?: boolean;
+  advancedMode?: boolean;
 };
 
 type SortDirection = 'asc' | 'desc';
@@ -183,7 +184,14 @@ export default function DataTable<T>({
   columnVisibilityPreferenceKey,
   settingsGroupVisible = true,
   settingsControlsIconOnly = false,
+  advancedMode = false,
 }: DataTableProps<T>) {
+  const effectivePaginationEnabled = paginationEnabled || advancedMode;
+  const effectiveColumnVisibilityEnabled = advancedMode ? true : columnVisibilityEnabled;
+  const effectiveSettingsGroupVisible = advancedMode ? true : settingsGroupVisible;
+  const effectiveSettingsControlsIconOnly = advancedMode ? true : settingsControlsIconOnly;
+  const effectiveAdvancedTogglePlacement = advancedMode ? 'footer' : advancedTogglePlacement;
+
   const resolvedDefaultPageSize = defaultPageSize ?? pageSizeOptions[0] ?? 10;
   const [internalQuery, setInternalQuery] = useState('');
   const [internalSortKey, setInternalSortKey] = useState<string | null>(defaultSortKey);
@@ -248,12 +256,12 @@ export default function DataTable<T>({
     [columnKeys]
   );
   const resolvedColumnVisibility = useMemo(() => {
-    if (!columnVisibilityEnabled) return defaultColumnVisibility;
+    if (!effectiveColumnVisibilityEnabled) return defaultColumnVisibility;
     return mergeColumnVisibilityState(
       defaultColumnVisibility,
       normalizeColumnVisibilityState(columnVisibilityState, columnKeys)
     );
-  }, [columnKeys, columnVisibilityEnabled, columnVisibilityState, defaultColumnVisibility]);
+  }, [columnKeys, columnVisibilityState, defaultColumnVisibility, effectiveColumnVisibilityEnabled]);
   const visibleColumns = useMemo(() => {
     const next = columns.filter((column) => resolvedColumnVisibility[column.key] !== false);
     return next.length > 0 ? next : columns;
@@ -272,7 +280,7 @@ export default function DataTable<T>({
     Math.max(1, manualPagination ? externalPage ?? 1 : internalPage),
     totalPages
   );
-  const pagedRows = paginationEnabled
+  const pagedRows = effectivePaginationEnabled
     ? manualPagination
       ? sortedRows
       : sortedRows.slice((effectivePage - 1) * effectivePageSize, effectivePage * effectivePageSize)
@@ -347,14 +355,14 @@ export default function DataTable<T>({
   };
 
   useEffect(() => {
-    if (!paginationEnabled || manualPagination) return;
+    if (!effectivePaginationEnabled || manualPagination) return;
     setInternalPage(1);
-  }, [activeSortDirection, activeSortKey, manualPagination, paginationEnabled, queryValue]);
+  }, [activeSortDirection, activeSortKey, effectivePaginationEnabled, manualPagination, queryValue]);
 
   useEffect(() => {
-    if (!paginationEnabled || manualPagination) return;
+    if (!effectivePaginationEnabled || manualPagination) return;
     setInternalPage((prev) => Math.min(Math.max(1, prev), totalPages));
-  }, [manualPagination, paginationEnabled, totalPages]);
+  }, [effectivePaginationEnabled, manualPagination, totalPages]);
 
   useEffect(() => {
     setPageInputValue(String(effectivePage));
@@ -379,7 +387,7 @@ export default function DataTable<T>({
   }, [internalSortDirection, internalSortKey, manualSorting, persistSortKey]);
 
   useEffect(() => {
-    if (!columnVisibilityEnabled || !columnVisibilityPreferenceKey) {
+    if (!effectiveColumnVisibilityEnabled || !columnVisibilityPreferenceKey) {
       setColumnVisibilityState(defaultColumnVisibility);
       setColumnVisibilityReady(true);
       return;
@@ -425,13 +433,13 @@ export default function DataTable<T>({
   }, [
     columnKeys,
     columnKeysSignature,
-    columnVisibilityEnabled,
+    effectiveColumnVisibilityEnabled,
     columnVisibilityPreferenceKey,
     defaultColumnVisibility,
   ]);
 
   useEffect(() => {
-    if (!columnVisibilityEnabled || !columnVisibilityPreferenceKey || !columnVisibilityReady) return;
+    if (!effectiveColumnVisibilityEnabled || !columnVisibilityPreferenceKey || !columnVisibilityReady) return;
 
     const serialized = JSON.stringify(resolvedColumnVisibility);
     if (serialized === lastSerializedColumnVisibilityRef.current) return;
@@ -455,7 +463,7 @@ export default function DataTable<T>({
       window.clearTimeout(timeout);
     };
   }, [
-    columnVisibilityEnabled,
+    effectiveColumnVisibilityEnabled,
     columnVisibilityPreferenceKey,
     columnVisibilityReady,
     resolvedColumnVisibility,
@@ -497,9 +505,9 @@ export default function DataTable<T>({
   const tableClassName = compact
     ? `table table-sm w-full [&>thead>tr>th]:align-middle [&>tbody>tr>td]:align-middle ${softZebraClassName}`
     : `table w-full [&>thead>tr>th]:align-middle [&>tbody>tr>td]:align-middle ${softZebraClassName}`;
-  const showSettingsGroup = settingsGroupVisible && columnVisibilityEnabled;
-  const showAdvancedInToolbar = Boolean(advancedFilters && advancedTogglePlacement === 'toolbar');
-  const showAdvancedInFooter = Boolean(advancedFilters && advancedTogglePlacement === 'footer');
+  const showSettingsGroup = effectiveSettingsGroupVisible && effectiveColumnVisibilityEnabled;
+  const showAdvancedInToolbar = Boolean(advancedFilters && effectiveAdvancedTogglePlacement === 'toolbar');
+  const showAdvancedInFooter = Boolean(advancedFilters && effectiveAdvancedTogglePlacement === 'footer');
   const showSettingsControls = showSettingsGroup || showAdvancedInFooter;
   const showPagesGroup = totalPages > 1;
   const desktopColumnsClass = showPagesGroup
@@ -619,7 +627,7 @@ export default function DataTable<T>({
 
       {pagedRows.length === 0 ? <p className='px-3 text-sm opacity-70'>{emptyText}</p> : null}
 
-      {paginationEnabled ? (
+      {effectivePaginationEnabled ? (
         <div
           className={`grid grid-cols-[auto_minmax(0,1fr)] gap-2 lg:grid lg:items-center lg:justify-between lg:gap-4 ${desktopColumnsClass} ${paginationClassName}`.trim()}
         >
@@ -634,15 +642,15 @@ export default function DataTable<T>({
                     >
                       <button
                         type='button'
-                        className={`btn btn-outline btn-sm h-8 min-h-8 border-base-300 bg-base-100/90 shadow-sm hover:bg-base-200 ${
-                          settingsControlsIconOnly ? 'w-8 px-0' : 'gap-2 px-3'
-                        }`}
+                      className={`btn btn-outline btn-sm h-8 min-h-8 border-base-300 bg-base-100/90 shadow-sm hover:bg-base-200 ${
+                        effectiveSettingsControlsIconOnly ? 'w-8 px-0' : 'gap-2 px-3'
+                      }`}
                         onClick={() => setColumnsDropdownOpen((prev) => !prev)}
                         aria-expanded={columnsDropdownOpen}
                         aria-label={columnsToggleLabel}
                       >
                         <LuColumns3 className='h-4 w-4' />
-                        {settingsControlsIconOnly ? <span className='sr-only'>{columnsToggleLabel}</span> : <span>{columnsToggleLabel}</span>}
+                        {effectiveSettingsControlsIconOnly ? <span className='sr-only'>{columnsToggleLabel}</span> : <span>{columnsToggleLabel}</span>}
                       </button>
                       {columnsDropdownOpen ? (
                         <ul className='menu dropdown-content z-[40] mb-2 w-56 rounded-box border border-base-300/70 bg-base-100 p-2 shadow-lg'>
@@ -680,7 +688,7 @@ export default function DataTable<T>({
                     <button
                       type='button'
                       className={`btn btn-outline btn-sm h-8 min-h-8 border-base-300 bg-base-100/90 shadow-sm hover:bg-base-200 ${
-                        settingsControlsIconOnly ? 'w-8 px-0' : 'gap-1.5 px-3'
+                        effectiveSettingsControlsIconOnly ? 'w-8 px-0' : 'gap-1.5 px-3'
                       } ${
                         advancedOpen ? 'border-base-content/25 bg-base-200 text-base-content hover:bg-base-200' : ''
                       }`}
@@ -689,7 +697,7 @@ export default function DataTable<T>({
                       aria-label={advancedToggleLabel}
                     >
                       <LuSlidersHorizontal className='h-3.5 w-3.5' />
-                      {settingsControlsIconOnly ? <span className='sr-only'>{advancedToggleLabel}</span> : <span>{advancedToggleLabel}</span>}
+                      {effectiveSettingsControlsIconOnly ? <span className='sr-only'>{advancedToggleLabel}</span> : <span>{advancedToggleLabel}</span>}
                     </button>
                   ) : null}
                 </div>
