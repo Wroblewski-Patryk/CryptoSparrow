@@ -7,32 +7,25 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `UXR-16 ux(web-profile-api): redesign API key form row layout and helper blocks`
-- [ ] `UXR-17 fix(api-profile-sync): make API sync action deterministic and observable`
-- [ ] `UXR-18 refactor(web-wallets-list): migrate wallets list to shared DataTable pattern`
-- [ ] `UXR-19 fix(api-wallet-guard): block wallet edits when wallet is used by active bot`
-- [ ] `UXR-20 feat(web-table-core): shared advanced table options (column visibility + expandable details)`
-## NEXT
-- [ ] `UXR-21 feat(web-tables): apply advanced table mode to wallets/markets/strategies/backtests/bots`
-- [ ] `UXR-22 feat(web+api-logs): migrate logs view to unified table UX and verify bot-message completeness`
 - [ ] `UXR-23 feat(web-bots-list): hide assistant action in V1 list view`
 - [ ] `UXR-24 refactor(web-bots-runtime): tabbed runtime layout with dashboard-like readability`
 - [ ] `UXR-25 fix(web-runtime-refresh): remove local refresh controls and use automatic interval only`
-## PIPELINE
 - [ ] `UXR-26 fix(api-bots-duplicate-guard): enforce uniqueness by wallet+market+strategy tuple`
 - [ ] `UXR-27 ux(web-bot-form): simplify IA (one section, two rows), clarify live opt-in, complete i18n`
+## NEXT
 - [ ] `UXR-28 fix(web-backtests-breadcrumb): normalize labels to List/Create and make module header linkable`
 - [ ] `UXR-29 fix(web-footer-mobile): center both dashboard footer rows on mobile`
 - [ ] `UXR-30 qa(regression-pack): run focused API+WEB tests and manual smoke for live/paper parity`
 - [ ] `L10NQ-01 docs(contract): freeze remediation scope and English-only documentation baseline`
 - [ ] `L10NQ-02 qa(scan): capture baseline inventory of locale clamps and hardcoded-copy hotspots`
+## PIPELINE
 - [ ] `L10NQ-03 fix(web-backtest-locale): remove EN/PL clamp in backtest module`
 - [ ] `L10NQ-04 test(web-backtest-i18n): add regression coverage for Portuguese backtest locale path`
 - [ ] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
 ## GROUP QUEUE
 - [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
 - [x] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
-- [ ] `UXR-C (commits 16-22): advanced table rollout + logs module completion`
+- [x] `UXR-C (commits 16-22): advanced table rollout + logs module completion`
 - [ ] `UXR-D (commits 23-30): bots IA/runtime polish + breadcrumb/footer + regression closure`
 - [ ] `L10NQ-A (commits 01-05): i18n P0 blockers (backtest clamp + wrapper hardcoded copy)`
 - [ ] `L10NQ-B (commits 06-11): per-module namespace split + parity/guardrail tests`
@@ -41,6 +34,22 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `UXR-C (commits 16-22): advanced table rollout + logs module completion`
+  - 2026-04-17: Closed `UXR-C` by completing `UXR-16..UXR-22` (API-key form IA reorder, profile sync determinism+audit observability, wallets migration to shared `DataTable`, active-bot wallet edit guard, `DataTable` advanced-mode core, rollout to wallets/markets/strategies/backtests/bots, and logs module migration + bot runtime/execution/sync completeness API assertions). Validation pack: `pnpm --filter web test -- src/features/profile/components/ApiKeyForm.test.tsx src/ui/components/DataTable.test.tsx src/features/wallets/components/WalletsListTable.test.tsx src/features/logs/components/AuditTrailView.test.tsx` => `18/18 PASS`, `pnpm --filter api test -- src/modules/profile/apiKey/apiKey.e2e.test.ts src/modules/wallets/wallets.crud.e2e.test.ts src/modules/logs/logs.e2e.test.ts` => `27/27 PASS`, `pnpm --filter api run typecheck` + `pnpm --filter api build` + `pnpm --filter web run typecheck` + `pnpm --filter web run build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
+- [x] `UXR-22 feat(web+api-logs): migrate logs view to unified table UX and verify bot-message completeness`
+  - 2026-04-17: Migrated `AuditTrailView` from bespoke table layout to shared `DataTable` (`advancedMode`, column visibility, row-level trace expansion, preserved source/severity filters + refresh), and added API completeness regression for bot runtime/execution/sync log visibility in owner timeline (`logs.e2e`).
+- [x] `UXR-21 feat(web-tables): apply advanced table mode to wallets/markets/strategies/backtests/bots`
+  - 2026-04-17: Applied shared advanced table mode with persisted column-visibility preferences across wallets/markets/strategies/backtests/bots list views using dedicated preference keys (`wallets.list`, `markets.list`, `strategies.list`, `backtests.runs.list`, `bots.list`).
+- [x] `UXR-20 feat(web-table-core): shared advanced table options (column visibility + expandable details)`
+  - 2026-04-17: Added `advancedMode` opt-in contract to `DataTable` that standardizes advanced controls (columns personalization + table settings/pagination surface) as a reusable core toggle for list modules.
+- [x] `UXR-19 fix(api-wallet-guard): block wallet edits when wallet is used by active bot`
+  - 2026-04-17: Added backend edit guard rejecting wallet updates when referenced by an active bot (`409 wallet is used by active bot and cannot be edited`) with structured bot context in error details and e2e coverage in `wallets.crud.e2e`.
+- [x] `UXR-18 refactor(web-wallets-list): migrate wallets list to shared DataTable pattern`
+  - 2026-04-17: Replaced legacy wallets HTML table with shared `DataTable` rendering (search/sort, advanced mode, column visibility, row details expansion, icon-action row controls), preserving delete-confirm modal flow.
+- [x] `UXR-17 fix(api-profile-sync): make API sync action deterministic and observable`
+  - 2026-04-17: Normalized profile API-key sync/manage flags to deterministic contract (`manageExternalPositions=true` forces `syncExternalPositions=true`), added stable fallback handling for unexpected probe failures, and enriched API-key test audit metadata (`probeMode`, `probeLatencyMs`, `apiKeyId`) with e2e assertions.
+- [x] `UXR-16 ux(web-profile-api): redesign API key form row layout and helper blocks`
+  - 2026-04-17: Reordered API-key form into requested operational steps (identity row -> API key -> API secret -> Sync -> Allow -> requirements/permissions) while preserving existing validation/test flows and mobile/desktop behavior; added UI-order regression in `ApiKeyForm.test.tsx`.
 - [x] `UXR-15 fix(api-markets): enforce same universe composition contract on backend`
   - 2026-04-17: Enforced backend market-universe sync contract for linked symbol groups as `(min-volume filtered catalog U whitelist) - blacklist` in `markets.service` (including sync triggers on `filterRules/exchange/marketType/baseCurrency` updates), and added API regression for composed sync behavior in `markets.e2e`. Validation pack: `pnpm --filter api test -- src/modules/markets/markets.e2e.test.ts` => `9/9 PASS`.
 - [x] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`

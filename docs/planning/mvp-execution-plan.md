@@ -1687,13 +1687,13 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `UXR-13 feat(web-dashboard-manual-order): add manual order panel using existing bot order pipeline`
 - [x] `UXR-14 feat(web-markets-form): compose symbol universe from (min-volume U whitelist) - blacklist`
 - [x] `UXR-15 fix(api-markets): enforce same universe composition contract on backend`
-- [ ] `UXR-16 ux(web-profile-api): redesign API key form row layout and helper blocks`
-- [ ] `UXR-17 fix(api-profile-sync): make API sync action deterministic and observable`
-- [ ] `UXR-18 refactor(web-wallets-list): migrate wallets list to shared DataTable pattern`
-- [ ] `UXR-19 fix(api-wallet-guard): block wallet edits when wallet is used by active bot`
-- [ ] `UXR-20 feat(web-table-core): shared advanced table options (column visibility + expandable details)`
-- [ ] `UXR-21 feat(web-tables): apply advanced table mode to wallets/markets/strategies/backtests/bots`
-- [ ] `UXR-22 feat(web+api-logs): migrate logs view to unified table UX and verify bot-message completeness`
+- [x] `UXR-16 ux(web-profile-api): redesign API key form row layout and helper blocks`
+- [x] `UXR-17 fix(api-profile-sync): make API sync action deterministic and observable`
+- [x] `UXR-18 refactor(web-wallets-list): migrate wallets list to shared DataTable pattern`
+- [x] `UXR-19 fix(api-wallet-guard): block wallet edits when wallet is used by active bot`
+- [x] `UXR-20 feat(web-table-core): shared advanced table options (column visibility + expandable details)`
+- [x] `UXR-21 feat(web-tables): apply advanced table mode to wallets/markets/strategies/backtests/bots`
+- [x] `UXR-22 feat(web+api-logs): migrate logs view to unified table UX and verify bot-message completeness`
 - [ ] `UXR-23 feat(web-bots-list): hide assistant action in V1 list view`
 - [ ] `UXR-24 refactor(web-bots-runtime): tabbed runtime layout with dashboard-like readability`
 - [ ] `UXR-25 fix(web-runtime-refresh): remove local refresh controls and use automatic interval only`
@@ -1704,6 +1704,13 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `UXR-30 qa(regression-pack): run focused API+WEB tests and manual smoke for live/paper parity`
 
 ### Progress Log (Phase 37 - Dashboard + Modules UX/Runtime Fix Wave)
+- 2026-04-17: Completed `UXR-22` by migrating logs UI to shared `DataTable` (`advancedMode`, row-level trace expansion, preserved source/severity filters + refresh), and by adding API completeness regression ensuring bot runtime/execution/sync messages remain visible in owner logs timeline; validation: `pnpm --filter web test -- src/features/logs/components/AuditTrailView.test.tsx` + `pnpm --filter api test -- src/modules/logs/logs.e2e.test.ts` => PASS.
+- 2026-04-17: Completed `UXR-21` by applying advanced table mode rollout across wallets/markets/strategies/backtests/bots with persisted per-table column visibility keys; validation: targeted web tests for changed modules + `pnpm --filter web run typecheck` => PASS.
+- 2026-04-17: Completed `UXR-20` by extending `DataTable` with explicit `advancedMode` opt-in contract for shared advanced controls (column personalization + settings/pagination surface) and adding regression in `DataTable.test.tsx`; validation: `pnpm --filter web test -- src/ui/components/DataTable.test.tsx` => PASS.
+- 2026-04-17: Completed `UXR-19` by adding API wallet-update guard that rejects edits when wallet is referenced by an active bot (`409` + bot context details), with e2e coverage in `wallets.crud.e2e`; validation: `pnpm --filter api test -- src/modules/wallets/wallets.crud.e2e.test.ts` => PASS.
+- 2026-04-17: Completed `UXR-18` by migrating wallets list from bespoke table markup to shared `DataTable` with search/sort, advanced columns, and expandable details rows while preserving edit/delete actions; validation: `pnpm --filter web test -- src/features/wallets/components/WalletsListTable.test.tsx` => PASS.
+- 2026-04-17: Completed `UXR-17` by making profile API-key sync/manage flags deterministic (`manageExternalPositions` enforces `syncExternalPositions=true`) and improving observability of probe runs via audit metadata (`probeMode`, `probeLatencyMs`, `apiKeyId`) plus stable unexpected-failure fallback mapping; validation: `pnpm --filter api test -- src/modules/profile/apiKey/apiKey.e2e.test.ts` => PASS.
+- 2026-04-17: Completed `UXR-16` by redesigning API-key form flow to requested step order (identity -> apiKey -> apiSecret -> sync -> allow -> requirements/permissions) and adding explicit order regression coverage in `ApiKeyForm.test.tsx`; validation: `pnpm --filter web test -- src/features/profile/components/ApiKeyForm.test.tsx` => PASS.
 - 2026-04-17: Completed `UXR-15` by enforcing backend symbol-group synchronization contract in markets module as `(min-volume filtered catalog U whitelist) - blacklist`, including sync-trigger expansion on universe context changes (`filterRules`, `exchange`, `marketType`, `baseCurrency`) and regression coverage in `markets.e2e`; validation: `pnpm --filter api test -- src/modules/markets/markets.e2e.test.ts` => `9/9 PASS`.
 - 2026-04-17: Completed `UXR-14` by aligning markets-form preview composition to canonical contract `(min-volume filtered catalog U whitelist) - blacklist` using a dedicated helper (`composeMarketUniverseSymbols`) and adding regression coverage for composed preview output (`BTCUSDT + SOLUSDT`, `ETHUSDT` excluded) in `MarketUniverseForm.test.tsx`; validation: `pnpm --filter web test -- src/features/markets/components/MarketUniverseForm.test.tsx` => `6/6 PASS`.
 - 2026-04-17: Completed `UXR-13` by adding a dashboard `Manual order` panel in `HomeLiveWidgets` (symbol/side/qty) wired to existing backend order-open command path (`/dashboard/orders/open`) through shared bot service helper, with mode-aware payload (`PAPER/LIVE`, `riskAck` in live), deterministic operator feedback (toast success/error), and runtime refresh after successful submit; validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `13/13 PASS`, `pnpm --filter web run typecheck` => `PASS`.
