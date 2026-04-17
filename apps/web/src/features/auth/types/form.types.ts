@@ -4,14 +4,14 @@ export const registerSchema = z.object({
   email: z
     .string()
     .trim()
-    .email({ message: 'Podaj poprawny email' }),
+    .email({ message: 'auth.validation.emailInvalid' }),
   password: z
     .string()
-    .min(8, { message: 'Haslo musi miec min. 8 znakow' })
-    .regex(/[A-Za-z]/, { message: 'Haslo musi zawierac co najmniej jedna litere' })
-    .regex(/\d/, { message: 'Haslo musi zawierac co najmniej jedna cyfre' }),
+    .min(8, { message: 'auth.validation.passwordMin' })
+    .regex(/[A-Za-z]/, { message: 'auth.validation.passwordLetter' })
+    .regex(/\d/, { message: 'auth.validation.passwordDigit' }),
   terms: z.boolean().refine(val => val, {
-    message: 'Musisz zaakceptowac regulamin',
+    message: 'auth.validation.termsRequired',
   }),
 });
 
@@ -19,9 +19,9 @@ export const loginSchema = z.object({
   email: z
     .string()
     .trim()
-    .email({ message: 'Podaj poprawny email' }),
+    .email({ message: 'auth.validation.emailInvalid' }),
   // Login validates presence only; password complexity belongs to registration.
-  password: z.string().min(1, { message: 'Podaj haslo' }),
+  password: z.string().min(1, { message: 'auth.validation.passwordRequired' }),
   remember: z.boolean().optional(),
 });
 

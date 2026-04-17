@@ -1,3 +1,5 @@
+import { useI18n } from '@/i18n/I18nProvider';
+
 type PasswordVisibilityToggleProps = {
   show: boolean;
   disabled?: boolean;
@@ -5,11 +7,13 @@ type PasswordVisibilityToggleProps = {
 };
 
 export default function PasswordVisibilityToggle({ show, disabled = false, onToggle }: PasswordVisibilityToggleProps) {
+  const { t } = useI18n();
+
   return (
     <button
       type="button"
       className="input input-bordered join-item flex w-12 items-center justify-center px-0"
-      aria-label={show ? 'Hide password' : 'Show password'}
+      aria-label={show ? t('auth.forms.common.hidePassword') : t('auth.forms.common.showPassword')}
       onClick={onToggle}
       disabled={disabled}
     >

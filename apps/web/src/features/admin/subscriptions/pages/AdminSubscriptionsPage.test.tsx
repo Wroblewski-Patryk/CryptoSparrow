@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AdminSubscriptionsPage from "./AdminSubscriptionsPage";
+import { I18nProvider } from "@/i18n/I18nProvider";
 
 const getAdminSubscriptionPlansMock = vi.hoisted(() => vi.fn());
 const updateAdminSubscriptionPlanMock = vi.hoisted(() => vi.fn());
@@ -43,6 +44,15 @@ const freePlan = {
 };
 
 describe("AdminSubscriptionsPage", () => {
+  const renderWithI18n = () => {
+    window.history.pushState({}, "", "/admin/subscriptions");
+    return render(
+      <I18nProvider>
+        <AdminSubscriptionsPage />
+      </I18nProvider>
+    );
+  };
+
   beforeEach(() => {
     getAdminSubscriptionPlansMock.mockReset();
     updateAdminSubscriptionPlanMock.mockReset();
@@ -66,7 +76,7 @@ describe("AdminSubscriptionsPage", () => {
       },
     });
 
-    render(<AdminSubscriptionsPage />);
+    renderWithI18n();
 
     expect(await screen.findByText("Free")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
@@ -105,7 +115,7 @@ describe("AdminSubscriptionsPage", () => {
   it("shows error alert when loading plans fails", async () => {
     getAdminSubscriptionPlansMock.mockRejectedValue(new Error("boom"));
 
-    render(<AdminSubscriptionsPage />);
+    renderWithI18n();
 
     expect(await screen.findByText("Could not load subscription plans.")).toBeInTheDocument();
   });

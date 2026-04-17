@@ -8,32 +8,12 @@ import { handleError } from '../../../lib/handleError';
 import { toast } from 'sonner';
 import { useAuth } from '../../../context/AuthContext';
 import { navigateWithFallback } from '@/lib/navigation';
-import { I18nContext } from '@/i18n/I18nProvider';
-import { useContext } from 'react';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export const useRegisterForm = () => {
   const router = useRouter();
   const { refetchUser } = useAuth();
-  const i18n = useContext(I18nContext);
-  const locale = i18n?.locale ?? 'pl';
-  const copy = {
-    en: {
-      sessionConfirmFailed: 'Could not confirm session after registration. Please sign in again.',
-      registerSuccess: 'Registration completed successfully.',
-      registerFailedPrefix: 'Registration failed:',
-    },
-    pl: {
-      sessionConfirmFailed: 'Nie udalo sie potwierdzic sesji po rejestracji. Sprobuj zalogowac sie ponownie.',
-      registerSuccess: 'Rejestracja zakonczona sukcesem.',
-      registerFailedPrefix: 'Rejestracja nieudana:',
-    },
-    pt: {
-      sessionConfirmFailed: 'Nao foi possivel confirmar sessao apos registo. Tenta entrar novamente.',
-      registerSuccess: 'Registo concluido com sucesso.',
-      registerFailedPrefix: 'Registo falhou:',
-    },
-  } as const;
-  const labels = copy[locale];
+  const { t } = useI18n();
 
   const {
     register,
@@ -49,17 +29,18 @@ export const useRegisterForm = () => {
       await registerUser(data);
       const hasActiveSession = await refetchUser();
       if (!hasActiveSession) {
-        throw new Error(labels.sessionConfirmFailed);
+        throw new Error(t('auth.toasts.register.sessionConfirmFailed'));
       }
 
-      toast.success(labels.registerSuccess);
+      toast.success(t('auth.toasts.register.success'));
       navigateWithFallback(router, {
         href: '/dashboard',
         mode: 'replace',
         fallbackPrefix: '/auth/register',
       });
     } catch (err) {
-      toast.error(`${labels.registerFailedPrefix} ${handleError(err)}`);
+      const message = handleError(err) || t('auth.toasts.register.failedFallback');
+      toast.error(`${t('auth.toasts.register.failedPrefix')} ${message}`);
     }
   };
 

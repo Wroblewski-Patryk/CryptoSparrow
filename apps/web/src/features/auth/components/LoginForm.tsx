@@ -1,79 +1,44 @@
 import Link from 'next/link';
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 import { useLoginForm } from '../hooks/useLoginForm';
 import PasswordVisibilityToggle from './PasswordVisibilityToggle';
-import { I18nContext } from '@/i18n/I18nProvider';
+import { useI18n } from '@/i18n/I18nProvider';
+import type { TranslationKey } from '@/i18n/translations';
 
 export default function LoginForm() {
   const { register, onFormSubmit, errors, isSubmitting, serverError } = useLoginForm();
   const [showPassword, setShowPassword] = useState(false);
-  const i18n = useContext(I18nContext);
-  const locale = i18n?.locale ?? 'en';
-  const copy = {
-    en: {
-      email: 'Email',
-      emailPlaceholder: 'name@example.com',
-      password: 'Password',
-      passwordPlaceholder: '********',
-      rememberDevice: 'Remember this device',
-      submitIdle: 'Sign in',
-      submitPending: 'Signing in...',
-      noAccount: "Don't have an account?",
-      createOne: 'Create one',
-      passwordResetSoon: 'Password reset will be available soon.',
-    },
-    pl: {
-      email: 'Email',
-      emailPlaceholder: 'name@example.com',
-      password: 'Haslo',
-      passwordPlaceholder: '********',
-      rememberDevice: 'Zapamietaj to urzadzenie',
-      submitIdle: 'Zaloguj sie',
-      submitPending: 'Logowanie...',
-      noAccount: 'Nie masz konta?',
-      createOne: 'Utworz konto',
-      passwordResetSoon: 'Reset hasla bedzie dostepny wkrotce.',
-    },
-    pt: {
-      email: 'Email',
-      emailPlaceholder: 'name@example.com',
-      password: 'Password',
-      passwordPlaceholder: '********',
-      rememberDevice: 'Lembrar este dispositivo',
-      submitIdle: 'Entrar',
-      submitPending: 'A entrar...',
-      noAccount: 'Nao tens conta?',
-      createOne: 'Criar conta',
-      passwordResetSoon: 'Reset de password disponivel em breve.',
-    },
-  } as const;
-  const labels = copy[locale];
+  const { t } = useI18n();
+  const resolveFieldError = (value: unknown) =>
+    typeof value === 'string' ? t(value as TranslationKey) : null;
 
   return (
     <form onSubmit={onFormSubmit} className='form' noValidate>
       <fieldset className='fieldset'>
         <label className='label' htmlFor='email'>
-          {labels.email}
+          {t('auth.forms.common.emailLabel')}
         </label>
         <input
           id='email'
           type='email'
           className={`input input-bordered w-full ${errors.email ? 'input-error' : ''}`}
-          placeholder={labels.emailPlaceholder}
+          placeholder={t('auth.forms.common.emailPlaceholder')}
           disabled={isSubmitting}
           {...register('email')}
         />
-        {errors.email && <div className='text-error text-sm mt-1'>{errors.email.message}</div>}
+        {errors.email && (
+          <div className='text-error text-sm mt-1'>{resolveFieldError(errors.email.message)}</div>
+        )}
 
         <label className='label' htmlFor='password'>
-          {labels.password}
+          {t('auth.forms.common.passwordLabel')}
         </label>
         <div className='join w-full'>
           <input
             id='password'
             type={showPassword ? 'text' : 'password'}
             className={`input input-bordered join-item w-full ${errors.password ? 'input-error' : ''}`}
-            placeholder={labels.passwordPlaceholder}
+            placeholder={t('auth.forms.common.passwordPlaceholder')}
             disabled={isSubmitting}
             {...register('password')}
           />
@@ -83,7 +48,9 @@ export default function LoginForm() {
             onToggle={() => setShowPassword((prev) => !prev)}
           />
         </div>
-        {errors.password && <div className='text-error text-sm mt-1'>{errors.password.message}</div>}
+        {errors.password && (
+          <div className='text-error text-sm mt-1'>{resolveFieldError(errors.password.message)}</div>
+        )}
 
         <label htmlFor='remember' className='label'>
           <input
@@ -93,23 +60,23 @@ export default function LoginForm() {
             disabled={isSubmitting}
             {...register('remember')}
           />
-          <span className='pt-4'>{labels.rememberDevice}</span>
+          <span className='pt-4'>{t('auth.forms.login.rememberDevice')}</span>
         </label>
 
         {serverError && <div className='alert alert-error mt-2 text-sm'>{serverError}</div>}
 
         <button type='submit' className='btn btn-primary mt-4 mb-4' disabled={isSubmitting}>
-          {isSubmitting ? labels.submitPending : labels.submitIdle}
+          {isSubmitting ? t('auth.forms.login.submitPending') : t('auth.forms.login.submitIdle')}
         </button>
 
         <p className='text-center'>
-          {labels.noAccount}{' '}
+          {t('auth.forms.login.noAccount')}{' '}
           <Link href='/auth/register' className='link link-hover'>
-            {labels.createOne}
+            {t('auth.forms.login.createOne')}
           </Link>
         </p>
         <p className='text-center'>
-          <span className='opacity-70'>{labels.passwordResetSoon}</span>
+          <span className='opacity-70'>{t('auth.forms.common.passwordResetSoon')}</span>
         </p>
       </fieldset>
     </form>

@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useLoginForm } from './useLoginForm';
+import { I18nProvider } from '@/i18n/I18nProvider';
 
 const mockReplace = vi.fn();
 const mockRefetchUser = vi.fn();
@@ -55,21 +56,26 @@ vi.mock('react-hook-form', () => ({
 }));
 
 describe('useLoginForm', () => {
+  const wrapper = ({ children }: { children: import('react').ReactNode }) => (
+    <I18nProvider>{children}</I18nProvider>
+  );
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useRealTimers();
+    window.history.pushState({}, '', '/auth/login');
   });
 
   it('shows error toast when login request fails', async () => {
     mockLoginUser.mockRejectedValueOnce(new Error('invalid_credentials'));
 
-    const { result } = renderHook(() => useLoginForm());
+    const { result } = renderHook(() => useLoginForm(), { wrapper });
 
     await act(async () => {
       await result.current.onFormSubmit();
     });
 
-    expect(mockToastError).toHaveBeenCalledWith('Logowanie nieudane: invalid_credentials');
+    expect(mockToastError).toHaveBeenCalledWith('Sign-in failed: invalid_credentials');
     expect(mockToastSuccess).not.toHaveBeenCalled();
     expect(mockReplace).not.toHaveBeenCalled();
   });
@@ -78,13 +84,13 @@ describe('useLoginForm', () => {
     mockLoginUser.mockResolvedValueOnce({});
     mockRefetchUser.mockResolvedValueOnce(true);
 
-    const { result } = renderHook(() => useLoginForm());
+    const { result } = renderHook(() => useLoginForm(), { wrapper });
 
     await act(async () => {
       await result.current.onFormSubmit();
     });
 
-    expect(mockToastSuccess).toHaveBeenCalledWith('Zalogowano pomyslnie.');
+    expect(mockToastSuccess).toHaveBeenCalledWith('Signed in successfully.');
     expect(mockToastError).not.toHaveBeenCalled();
     expect(mockReplace).toHaveBeenCalledWith('/dashboard');
   });
@@ -93,7 +99,7 @@ describe('useLoginForm', () => {
     mockLoginUser.mockResolvedValueOnce({});
     mockRefetchUser.mockResolvedValueOnce(false);
 
-    const { result } = renderHook(() => useLoginForm());
+    const { result } = renderHook(() => useLoginForm(), { wrapper });
 
     await act(async () => {
       await result.current.onFormSubmit();

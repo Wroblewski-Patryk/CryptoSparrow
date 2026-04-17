@@ -1,12 +1,12 @@
 "use client";
 
-import { FormEvent, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
   getAdminSubscriptionPlans,
   updateAdminSubscriptionPlan,
 } from "../services/adminSubscriptionPlan.service";
 import { AdminSubscriptionPlan } from "../types/adminSubscriptionPlan.type";
-import { I18nContext } from "@/i18n/I18nProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type PlanFormState = {
   monthlyPriceMinor: string;
@@ -26,110 +26,41 @@ const priceFormatter = (currency: string, locale: "en" | "pl" | "pt") =>
   });
 
 export default function AdminSubscriptionsPage() {
-  const i18n = useContext(I18nContext);
-  const locale = i18n?.locale ?? "en";
-  const copy = {
-    en: {
-      loadError: "Could not load subscription plans.",
-      numericValidation: "All numeric fields must be valid integers.",
-      nonNegativeValidation: "Price and limits cannot be negative.",
-      minBacktestsValidation: "Concurrent backtests limit must be at least 1.",
-      modeLimitsValidation: "Mode limits cannot exceed total bot limit.",
-      currencyValidation: "Currency must be a 3-letter code (for example USD).",
-      saveError: "Could not save subscription plan. Please check values and try again.",
-      title: "Subscriptions admin",
-      description: "Edit pricing and entitlement limits for FREE, ADVANCED, and PROFESSIONAL plans.",
-      refresh: "Refresh",
-      loading: "Loading plans...",
-      tablePlan: "Plan",
-      tablePrice: "Price",
-      tableTotalBots: "Total bots",
-      tablePaperLive: "PAPER / LIVE",
-      tableBacktests: "Backtests",
-      tableStatus: "Status",
-      tableActions: "Actions",
-      statusActive: "Active",
-      statusInactive: "Inactive",
-      edit: "Edit",
-      editPlanTitlePrefix: "Edit plan:",
-      editPlanFallback: "Plan",
-      monthlyPrice: "Monthly price (minor units)",
-      currency: "Currency",
-      maxBotsTotal: "Max bots total",
-      paperBotsLimit: "PAPER bots limit",
-      liveBotsLimit: "LIVE bots limit",
-      maxConcurrentBacktests: "Max concurrent backtests",
-      cancel: "Cancel",
-      save: "Save",
-    },
-    pl: {
-      loadError: "Nie udalo sie pobrac planow subskrypcji.",
-      numericValidation: "Wszystkie pola liczbowe musza byc poprawnymi liczbami calkowitymi.",
-      nonNegativeValidation: "Cena i limity nie moga byc ujemne.",
-      minBacktestsValidation: "Limit rownoleglych backtestow musi byc co najmniej 1.",
-      modeLimitsValidation: "Limity trybow nie moga przekraczac limitu wszystkich botow.",
-      currencyValidation: "Waluta musi byc 3-literowym kodem (np. USD).",
-      saveError: "Nie udalo sie zapisac planu subskrypcji. Sprawdz dane i sprobuj ponownie.",
-      title: "Panel subskrypcji",
-      description: "Edytuj cennik i limity uprawnien dla planow FREE, ADVANCED i PROFESSIONAL.",
-      refresh: "Odswiez",
-      loading: "Ladowanie planow...",
-      tablePlan: "Plan",
-      tablePrice: "Cena",
-      tableTotalBots: "Liczba botow",
-      tablePaperLive: "PAPER / LIVE",
-      tableBacktests: "Backtesty",
-      tableStatus: "Status",
-      tableActions: "Akcje",
-      statusActive: "Aktywny",
-      statusInactive: "Nieaktywny",
-      edit: "Edytuj",
-      editPlanTitlePrefix: "Edycja planu:",
-      editPlanFallback: "Plan",
-      monthlyPrice: "Cena miesieczna (jednostki minor)",
-      currency: "Waluta",
-      maxBotsTotal: "Maksymalna liczba botow",
-      paperBotsLimit: "Limit botow PAPER",
-      liveBotsLimit: "Limit botow LIVE",
-      maxConcurrentBacktests: "Maksymalna liczba rownoleglych backtestow",
-      cancel: "Anuluj",
-      save: "Zapisz",
-    },
-    pt: {
-      loadError: "Nao foi possivel carregar planos de subscricao.",
-      numericValidation: "Todos os campos numericos devem conter inteiros validos.",
-      nonNegativeValidation: "Preco e limites nao podem ser negativos.",
-      minBacktestsValidation: "Limite de backtests concorrentes deve ser pelo menos 1.",
-      modeLimitsValidation: "Limites por modo nao podem exceder o limite total de bots.",
-      currencyValidation: "Moeda deve ter 3 letras (por exemplo USD).",
-      saveError: "Nao foi possivel guardar plano de subscricao. Verifica os dados e tenta novamente.",
-      title: "Painel de subscricoes",
-      description: "Editar precos e limites de permissao para planos FREE, ADVANCED e PROFESSIONAL.",
-      refresh: "Atualizar",
-      loading: "A carregar planos...",
-      tablePlan: "Plano",
-      tablePrice: "Preco",
-      tableTotalBots: "Bots totais",
-      tablePaperLive: "PAPER / LIVE",
-      tableBacktests: "Backtests",
-      tableStatus: "Estado",
-      tableActions: "Acoes",
-      statusActive: "Ativo",
-      statusInactive: "Inativo",
-      edit: "Editar",
-      editPlanTitlePrefix: "Editar plano:",
-      editPlanFallback: "Plano",
-      monthlyPrice: "Preco mensal (unidades minor)",
-      currency: "Moeda",
-      maxBotsTotal: "Maximo de bots",
-      paperBotsLimit: "Limite de bots PAPER",
-      liveBotsLimit: "Limite de bots LIVE",
-      maxConcurrentBacktests: "Maximo de backtests concorrentes",
-      cancel: "Cancelar",
-      save: "Guardar",
-    },
+  const { locale, t } = useI18n();
+  const labels = {
+    loadError: t("admin.subscriptions.loadError"),
+    numericValidation: t("admin.subscriptions.numericValidation"),
+    nonNegativeValidation: t("admin.subscriptions.nonNegativeValidation"),
+    minBacktestsValidation: t("admin.subscriptions.minBacktestsValidation"),
+    modeLimitsValidation: t("admin.subscriptions.modeLimitsValidation"),
+    currencyValidation: t("admin.subscriptions.currencyValidation"),
+    saveError: t("admin.subscriptions.saveError"),
+    title: t("admin.subscriptions.title"),
+    description: t("admin.subscriptions.description"),
+    refresh: t("admin.subscriptions.refresh"),
+    loading: t("admin.subscriptions.loading"),
+    tablePlan: t("admin.subscriptions.tablePlan"),
+    tablePrice: t("admin.subscriptions.tablePrice"),
+    tableTotalBots: t("admin.subscriptions.tableTotalBots"),
+    tablePaperLive: t("admin.subscriptions.tablePaperLive"),
+    tableBacktests: t("admin.subscriptions.tableBacktests"),
+    tableStatus: t("admin.subscriptions.tableStatus"),
+    tableActions: t("admin.subscriptions.tableActions"),
+    statusActive: t("admin.subscriptions.statusActive"),
+    statusInactive: t("admin.subscriptions.statusInactive"),
+    edit: t("admin.subscriptions.edit"),
+    editPlanTitlePrefix: t("admin.subscriptions.editPlanTitlePrefix"),
+    editPlanFallback: t("admin.subscriptions.editPlanFallback"),
+    monthlyPrice: t("admin.subscriptions.monthlyPrice"),
+    currency: t("admin.subscriptions.currency"),
+    maxBotsTotal: t("admin.subscriptions.maxBotsTotal"),
+    paperBotsLimit: t("admin.subscriptions.paperBotsLimit"),
+    liveBotsLimit: t("admin.subscriptions.liveBotsLimit"),
+    maxConcurrentBacktests: t("admin.subscriptions.maxConcurrentBacktests"),
+    cancel: t("admin.subscriptions.cancel"),
+    save: t("admin.subscriptions.save"),
+    closeBackdrop: t("admin.subscriptions.closeBackdrop"),
   } as const;
-  const labels = copy[locale];
 
   const [plans, setPlans] = useState<AdminSubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -406,7 +337,7 @@ export default function AdminSubscriptionsPage() {
           )}
         </div>
         <form method="dialog" className="modal-backdrop" onClick={closeEditModal}>
-          <button type="button">close</button>
+          <button type="button">{labels.closeBackdrop}</button>
         </form>
       </dialog>
     </section>

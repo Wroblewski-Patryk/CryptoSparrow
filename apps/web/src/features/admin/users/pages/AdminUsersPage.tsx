@@ -1,11 +1,11 @@
 "use client";
 
-import { FormEvent, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { getAdminSubscriptionPlans } from "../../subscriptions/services/adminSubscriptionPlan.service";
 import { useAuth } from "@/context/AuthContext";
 import { getAdminUsers, updateAdminUser } from "../services/adminUsers.service";
 import { AdminSubscriptionPlanCode, AdminUser, AdminUserRole } from "../types/adminUser.type";
-import { I18nContext } from "@/i18n/I18nProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 
 const formatDate = (value: string, locale: "en" | "pl" | "pt") => {
   const date = new Date(value);
@@ -19,99 +19,37 @@ const formatDate = (value: string, locale: "en" | "pl" | "pt") => {
 };
 
 export default function AdminUsersPage() {
-  const i18n = useContext(I18nContext);
-  const locale = i18n?.locale ?? "en";
+  const { locale, t } = useI18n();
   const { user: authUser } = useAuth();
-  const copy = {
-    en: {
-      loadError: "Could not load users.",
-      roleUpdateErrorPrefix: "Could not update role for",
-      planAssignErrorPrefix: "Could not assign subscription plan for",
-      title: "Users admin",
-      description: "Manage account roles and active subscription plans for registered users.",
-      refresh: "Refresh",
-      searchLabel: "Search by email or name",
-      searchPlaceholder: "for example user@example.com",
-      roleLabel: "Role",
-      allRoles: "All roles",
-      apply: "Apply",
-      totalUsers: "Total users",
-      loadingUsers: "Loading users...",
-      tableUser: "User",
-      tableRole: "Role",
-      tableActivePlan: "Active plan",
-      tableCreated: "Created",
-      tableActions: "Actions",
-      noDisplayName: "No display name",
-      noActiveSubscription: "No active subscription",
-      cannotDemoteSelf: "You cannot demote your own admin account.",
-      makeAdmin: "Make admin",
-      makeUser: "Make user",
-      assignPlan: "Assign plan",
-      toggleRoleAriaPrefix: "Toggle role for",
-      planSelectAriaPrefix: "Plan select for",
-      assignPlanAriaPrefix: "Assign plan for",
-    },
-    pl: {
-      loadError: "Nie udalo sie pobrac listy uzytkownikow.",
-      roleUpdateErrorPrefix: "Nie udalo sie zaktualizowac roli dla",
-      planAssignErrorPrefix: "Nie udalo sie przypisac planu dla",
-      title: "Panel uzytkownikow",
-      description: "Zarzadzaj rolami kont i aktywnymi planami subskrypcji dla zarejestrowanych uzytkownikow.",
-      refresh: "Odswiez",
-      searchLabel: "Szukaj po emailu lub nazwie",
-      searchPlaceholder: "np. user@example.com",
-      roleLabel: "Rola",
-      allRoles: "Wszystkie role",
-      apply: "Zastosuj",
-      totalUsers: "Laczna liczba uzytkownikow",
-      loadingUsers: "Ladowanie uzytkownikow...",
-      tableUser: "Uzytkownik",
-      tableRole: "Rola",
-      tableActivePlan: "Aktywny plan",
-      tableCreated: "Utworzono",
-      tableActions: "Akcje",
-      noDisplayName: "Brak nazwy wyswietlanej",
-      noActiveSubscription: "Brak aktywnej subskrypcji",
-      cannotDemoteSelf: "Nie mozesz odebrac sobie roli administratora.",
-      makeAdmin: "Ustaw admin",
-      makeUser: "Ustaw user",
-      assignPlan: "Przypisz plan",
-      toggleRoleAriaPrefix: "Przelacz role dla",
-      planSelectAriaPrefix: "Wybierz plan dla",
-      assignPlanAriaPrefix: "Przypisz plan dla",
-    },
-    pt: {
-      loadError: "Nao foi possivel carregar utilizadores.",
-      roleUpdateErrorPrefix: "Nao foi possivel atualizar papel para",
-      planAssignErrorPrefix: "Nao foi possivel atribuir plano para",
-      title: "Painel de utilizadores",
-      description: "Gerir papeis de conta e planos de subscricao ativos para utilizadores registados.",
-      refresh: "Atualizar",
-      searchLabel: "Procurar por email ou nome",
-      searchPlaceholder: "ex. user@example.com",
-      roleLabel: "Papel",
-      allRoles: "Todos os papeis",
-      apply: "Aplicar",
-      totalUsers: "Total de utilizadores",
-      loadingUsers: "A carregar utilizadores...",
-      tableUser: "Utilizador",
-      tableRole: "Papel",
-      tableActivePlan: "Plano ativo",
-      tableCreated: "Criado",
-      tableActions: "Acoes",
-      noDisplayName: "Sem nome publico",
-      noActiveSubscription: "Sem subscricao ativa",
-      cannotDemoteSelf: "Nao podes remover o teu proprio papel de admin.",
-      makeAdmin: "Tornar admin",
-      makeUser: "Tornar user",
-      assignPlan: "Atribuir plano",
-      toggleRoleAriaPrefix: "Alterar papel para",
-      planSelectAriaPrefix: "Selecionar plano para",
-      assignPlanAriaPrefix: "Atribuir plano para",
-    },
+  const labels = {
+    loadError: t("admin.users.loadError"),
+    roleUpdateErrorPrefix: t("admin.users.roleUpdateErrorPrefix"),
+    planAssignErrorPrefix: t("admin.users.planAssignErrorPrefix"),
+    title: t("admin.users.title"),
+    description: t("admin.users.description"),
+    refresh: t("admin.users.refresh"),
+    searchLabel: t("admin.users.searchLabel"),
+    searchPlaceholder: t("admin.users.searchPlaceholder"),
+    roleLabel: t("admin.users.roleLabel"),
+    allRoles: t("admin.users.allRoles"),
+    apply: t("admin.users.apply"),
+    totalUsers: t("admin.users.totalUsers"),
+    loadingUsers: t("admin.users.loadingUsers"),
+    tableUser: t("admin.users.tableUser"),
+    tableRole: t("admin.users.tableRole"),
+    tableActivePlan: t("admin.users.tableActivePlan"),
+    tableCreated: t("admin.users.tableCreated"),
+    tableActions: t("admin.users.tableActions"),
+    noDisplayName: t("admin.users.noDisplayName"),
+    noActiveSubscription: t("admin.users.noActiveSubscription"),
+    cannotDemoteSelf: t("admin.users.cannotDemoteSelf"),
+    makeAdmin: t("admin.users.makeAdmin"),
+    makeUser: t("admin.users.makeUser"),
+    assignPlan: t("admin.users.assignPlan"),
+    toggleRoleAriaPrefix: t("admin.users.toggleRoleAriaPrefix"),
+    planSelectAriaPrefix: t("admin.users.planSelectAriaPrefix"),
+    assignPlanAriaPrefix: t("admin.users.assignPlanAriaPrefix"),
   } as const;
-  const labels = copy[locale];
 
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);

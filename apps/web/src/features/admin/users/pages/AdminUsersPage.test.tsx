@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AdminUsersPage from "./AdminUsersPage";
+import { I18nProvider } from "@/i18n/I18nProvider";
 
 const getAdminUsersMock = vi.hoisted(() => vi.fn());
 const updateAdminUserMock = vi.hoisted(() => vi.fn());
@@ -99,6 +100,15 @@ const freePlan = {
 };
 
 describe("AdminUsersPage", () => {
+  const renderWithI18n = () => {
+    window.history.pushState({}, "", "/admin/users");
+    return render(
+      <I18nProvider>
+        <AdminUsersPage />
+      </I18nProvider>
+    );
+  };
+
   beforeEach(() => {
     getAdminUsersMock.mockReset();
     updateAdminUserMock.mockReset();
@@ -116,7 +126,7 @@ describe("AdminUsersPage", () => {
       role: "ADMIN",
     });
 
-    render(<AdminUsersPage />);
+    renderWithI18n();
 
     expect(await screen.findByText("user@example.com")).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText("Toggle role for user@example.com"));
@@ -143,7 +153,7 @@ describe("AdminUsersPage", () => {
       },
     });
 
-    render(<AdminUsersPage />);
+    renderWithI18n();
 
     expect(await screen.findByText("user@example.com")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Plan select for user@example.com"), {
@@ -163,7 +173,7 @@ describe("AdminUsersPage", () => {
     getAdminUsersMock.mockRejectedValue(new Error("boom"));
     getAdminSubscriptionPlansMock.mockResolvedValue([freePlan, advancedPlan]);
 
-    render(<AdminUsersPage />);
+    renderWithI18n();
 
     expect(await screen.findByText("Could not load users.")).toBeInTheDocument();
   });
