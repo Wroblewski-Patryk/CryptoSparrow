@@ -112,6 +112,61 @@ describe("Logs API contract", () => {
     expect(severityRes.body).toHaveLength(1);
     expect(severityRes.body[0].level).toBe("WARN");
   });
+
+  it("keeps bot runtime/execution/sync messages visible for owner timeline", async () => {
+    const ownerAgent = await registerAndLogin("logs-bot-events-owner@example.com");
+    const owner = await prisma.user.findUniqueOrThrow({
+      where: { email: "logs-bot-events-owner@example.com" },
+    });
+
+    await prisma.log.createMany({
+      data: [
+        {
+          userId: owner.id,
+          source: "bots.runtime",
+          action: "bot.runtime.tick.completed",
+          level: "INFO",
+          actor: "runtime-loop",
+          message: "Runtime tick completed",
+          category: "RUNTIME",
+          metadata: { botId: "bot-1", symbol: "BTCUSDT" },
+        },
+        {
+          userId: owner.id,
+          source: "engine.execution",
+          action: "bot.order.opened",
+          level: "INFO",
+          actor: "execution-orchestrator",
+          message: "Order opened from signal",
+          category: "TRADING_DECISION",
+          metadata: { botId: "bot-1", orderId: "ord-1" },
+        },
+        {
+          userId: owner.id,
+          source: "exchange.sync",
+          action: "bot.position.sync.reconciled",
+          level: "WARN",
+          actor: "positions-sync",
+          message: "Position ownership reconciled",
+          category: "RUNTIME",
+          metadata: { botId: "bot-1", reason: "exchange_source_of_truth" },
+        },
+      ],
+    });
+
+    const res = await ownerAgent.get("/dashboard/logs").query({ limit: 10, page: 1 });
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body).toHaveLength(3);
+    const actions = res.body.map((item: { action: string }) => item.action);
+    expect(actions).toEqual(
+      expect.arrayContaining([
+        "bot.runtime.tick.completed",
+        "bot.order.opened",
+        "bot.position.sync.reconciled",
+      ])
+    );
+  });
 });
 
 
