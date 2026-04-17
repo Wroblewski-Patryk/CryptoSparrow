@@ -1790,11 +1790,11 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-17: Initialized phase using audit-confirmed regressions (double adaptive `maxCandles`, stale timeline anchor on terminal runs, portfolio-coupled pair replay context, cache continuity blind spot, and chart-vs-run stats divergence) with canonical execution plan in `docs/planning/backtest-multi-market-parity-remediation-plan-2026-04-17.md`.
 
 ## Phase L10NQ-D - Full Web i18n Coverage and Single-Standard Enforcement (As of 2026-04-18)
-- [ ] `L10NQ-D-01 docs(audit-freeze): freeze full route-reachable i18n inventory and scope split (module/shared foundation)`
-- [ ] `L10NQ-D-02 chore(tooling-i18n-audit): add deterministic route-reachable i18n audit command + JSON output contract`
-- [ ] `L10NQ-D-03 test(guardrail-hard-fail): fail on local copy objects, pl fallback drift, and hardcoded monitored UI strings`
-- [ ] `L10NQ-D-04 refactor(auth-localization): migrate auth pages/forms/hooks to auth namespace keys and remove pl fallback`
-- [ ] `L10NQ-D-05 refactor(admin-localization): migrate admin users/subscriptions/layout copy to admin namespace keys`
+- [x] `L10NQ-D-01 docs(audit-freeze): freeze full route-reachable i18n inventory and scope split (module/shared foundation)`
+- [x] `L10NQ-D-02 chore(tooling-i18n-audit): add deterministic route-reachable i18n audit command + JSON output contract`
+- [x] `L10NQ-D-03 test(guardrail-hard-fail): fail on local copy objects, pl fallback drift, and hardcoded monitored UI strings`
+- [x] `L10NQ-D-04 refactor(auth-localization): migrate auth pages/forms/hooks to auth namespace keys and remove pl fallback`
+- [x] `L10NQ-D-05 refactor(admin-localization): migrate admin users/subscriptions/layout copy to admin namespace keys`
 - [ ] `L10NQ-D-06 refactor(reports-localization): migrate reports page + performance view to dashboard-reports namespace`
 - [ ] `L10NQ-D-07 refactor(markets-localization): migrate MarketUniverseForm/SearchableMultiSelect copy and remove pl fallback`
 - [ ] `L10NQ-D-08 refactor(backtests-fallback-removal): remove pl fallback drift and explicit pt copy in backtests surfaces`
@@ -1810,6 +1810,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `L10NQ-D-18 qa(final-pack-and-closure): run full i18n regression/build pack and publish closure evidence`
 
 ### Progress Log (Phase L10NQ-D - Full Web i18n Coverage and Single-Standard Enforcement)
+- 2026-04-18: Completed `L10NQ-D-A` by closing `L10NQ-D-01..L10NQ-D-05` (frozen full route-reachable i18n inventory + module/shared split baseline, added deterministic route-reachable audit command `pnpm i18n:audit:route-reachable:web` with JSON contract doc in `docs/operations/i18n-route-reachable-audit-contract.md`, hardened i18n guardrails with seeded regression fixture and hard-fail checks for local-copy/fallback-pl/hardcoded monitored contexts, migrated auth forms/hooks/pages/password-toggle to `auth` namespace keys with locale fallback drift removed, and migrated admin users/subscriptions/layout copy + modal backdrop close label to `admin` namespace keys). Validation: `pnpm --filter web test -- src/i18n/guardrails.test.ts src/i18n/namespaceRegistry.test.ts src/i18n/translations.test.ts src/features/auth/components/LoginForm.test.tsx src/features/auth/components/RegisterForm.test.tsx src/features/auth/hooks/useLoginForm.test.tsx src/features/admin/users/pages/AdminUsersPage.test.tsx src/features/admin/subscriptions/pages/AdminSubscriptionsPage.test.tsx` => `24/24 PASS`; `pnpm i18n:audit:route-reachable:web` => `PASS`; `pnpm --filter web run typecheck` + `pnpm --filter web run build` + `pnpm --filter api run typecheck` + `pnpm --filter api build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
 - 2026-04-18: Initialized `L10NQ-D` with deterministic full-scope audit artifacts (`docs/operations/_artifacts-l10nq-d-coverage-audit-2026-04-18.json`, `docs/operations/l10nq-d-coverage-audit-2026-04-18.md`, `docs/operations/l10nq-d-route-coverage-matrix-2026-04-18.md`) and canonical execution plan `docs/planning/l10nq-d-total-web-i18n-coverage-plan-2026-04-18.md`.
 
 ## Phase UXR-E - Table Action System + Clone + Dashboard Polish (Queued 2026-04-18)

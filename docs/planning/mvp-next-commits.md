@@ -7,28 +7,23 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [ ] `L10NQ-D-01 docs(audit-freeze): freeze full route-reachable i18n inventory and scope split (module/shared foundation)`
-- [ ] `L10NQ-D-02 chore(tooling-i18n-audit): add deterministic route-reachable i18n audit command + JSON output contract`
-- [ ] `L10NQ-D-03 test(guardrail-hard-fail): fail on local copy objects, pl fallback drift, and hardcoded monitored UI strings`
-- [ ] `L10NQ-D-04 refactor(auth-localization): migrate auth pages/forms/hooks to auth namespace keys and remove pl fallback`
-- [ ] `L10NQ-D-05 refactor(admin-localization): migrate admin users/subscriptions/layout copy to admin namespace keys`
-## NEXT
 - [ ] `L10NQ-D-06 refactor(reports-localization): migrate reports page + performance view to dashboard-reports namespace`
 - [ ] `L10NQ-D-07 refactor(markets-localization): migrate MarketUniverseForm/SearchableMultiSelect copy and remove pl fallback`
 - [ ] `L10NQ-D-08 refactor(backtests-fallback-removal): remove pl fallback drift and explicit pt copy in backtests surfaces`
 - [ ] `L10NQ-D-09 refactor(bots-page-copy): localize bot create/edit/assistant/preview page labels and remaining bot copy`
 - [ ] `L10NQ-D-10 refactor(dashboard-home-copy): localize TP/SL/Notes/manual-order literals in HomeLiveWidgets`
-## PIPELINE
+## NEXT
 - [ ] `L10NQ-D-11 refactor(global-offline-risk-copy): localize offline page and risk notice footer`
 - [ ] `L10NQ-D-12 refactor(shared-foundation-aria): localize shared aria/title strings in modal/table/loading/layout primitives`
 - [ ] `L10NQ-D-13 refactor(shared-footer-labels): align footer/public shell labels to translation keys`
 - [ ] `L10NQ-D-14 refactor(low-score-module-cleanup): clear residual route-reachable literals in profile/wallet components`
 - [ ] `L10NQ-D-15 cleanup(non-route-legacy-copy): align legacy BacktestsList + strategy presets localization contract`
+## PIPELINE
 - [ ] `L10NQ-D-16 test(namespace-parity-expanded): enforce en/pl/pt parity for all new namespace keys`
 - [ ] `L10NQ-D-17 test(route-locale-smoke): add route-level locale smoke tests for highest-impact routes`
 - [ ] `L10NQ-D-18 qa(final-pack-and-closure): run full i18n regression/build pack and publish closure evidence`
 ## GROUP QUEUE
-- [ ] `L10NQ-D-A (commits 01-05): inventory + guardrail hardening + auth/admin migration`
+- [x] `L10NQ-D-A (commits 01-05): inventory + guardrail hardening + auth/admin migration`
 - [ ] `L10NQ-D-B (commits 06-10): reports/markets/backtests/bots/home copy migration`
 - [ ] `L10NQ-D-C (commits 11-18): shared foundation localization + parity/smoke/closure`
 - [ ] `UXR-E-A (commits UXR-E-01..UXR-E-04): table action system + clone foundation`
@@ -48,6 +43,8 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
+- [x] `L10NQ-D-A (commits 01-05): inventory + guardrail hardening + auth/admin migration`
+  - 2026-04-18: Closed `L10NQ-D-A` by completing `L10NQ-D-01..L10NQ-D-05` (frozen full-scope route-reachable audit artifacts and module/shared split docs, added deterministic pnpm-runnable route-reachable i18n audit command + JSON contract in `scripts/auditRouteReachableI18n.mjs` and `docs/operations/i18n-route-reachable-audit-contract.md`, hardened guardrails with seeded regression fixture coverage for local-copy/fallback-pl/hardcoded-UI checks, migrated auth forms/hooks/pages/password-toggle to `auth` namespace keys with `pl` fallback removal, and migrated admin users/subscriptions/layout copy to `admin` namespace keys including modal backdrop close label). Validation: `pnpm --filter web test -- src/i18n/guardrails.test.ts src/i18n/namespaceRegistry.test.ts src/i18n/translations.test.ts src/features/auth/components/LoginForm.test.tsx src/features/auth/components/RegisterForm.test.tsx src/features/auth/hooks/useLoginForm.test.tsx src/features/admin/users/pages/AdminUsersPage.test.tsx src/features/admin/subscriptions/pages/AdminSubscriptionsPage.test.tsx` => `24/24 PASS`; `pnpm i18n:audit:route-reachable:web` => `PASS`; `pnpm --filter web run typecheck` + `pnpm --filter web run build` + `pnpm --filter api run typecheck` + `pnpm --filter api build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
 - [x] `UXR-E planning queued (post-L10NQ-D)`
   - 2026-04-18: Published post-`L10NQ-D` implementation wave plan in `docs/planning/uxr-e-table-actions-clone-dashboard-polish-plan-2026-04-18.md` and queued grouped execution batches `UXR-E-A..UXR-E-C` in canonical queue files for executor continuity.
 - [x] `L10NQ-D planning activation (full web i18n coverage)`
