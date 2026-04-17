@@ -129,6 +129,30 @@ describe("API Keys security contract", () => {
     expect(updateRes.body.manageExternalPositions).toBe(true);
   });
 
+  it("forces sync flag on when manage-external is enabled", async () => {
+    const agent = await registerAndLogin("apikey-onboarding-sync-guard@example.com");
+
+    const createRes = await agent.post("/dashboard/profile/apiKeys").send({
+      label: "sync-guard",
+      exchange: "BINANCE",
+      apiKey: "SYNCGUARDKEY12345",
+      apiSecret: "SYNCGUARDSECRET12345",
+      syncExternalPositions: false,
+      manageExternalPositions: true,
+    });
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.syncExternalPositions).toBe(true);
+    expect(createRes.body.manageExternalPositions).toBe(true);
+
+    const updateRes = await agent.patch(`/dashboard/profile/apiKeys/${createRes.body.id}`).send({
+      syncExternalPositions: false,
+      manageExternalPositions: true,
+    });
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.syncExternalPositions).toBe(true);
+    expect(updateRes.body.manageExternalPositions).toBe(true);
+  });
+
   it("enforces ownership on update and delete", async () => {
     const owner = await registerAndLogin("apikey-owner@example.com");
     const other = await registerAndLogin("apikey-other@example.com");
@@ -219,15 +243,17 @@ describe("API Keys security contract", () => {
 
     expect(log).toBeTruthy();
     expect(log?.message).toBe("API key connection test accepted.");
-    expect(log?.metadata).toEqual({
+    expect(log?.metadata).toMatchObject({
       exchange: "BINANCE",
       ok: true,
       code: "OK",
+      probeMode: "provided",
       permissions: {
         spot: true,
         futures: true,
       },
     });
+    expect((log?.metadata as { probeLatencyMs?: unknown })?.probeLatencyMs).toEqual(expect.any(Number));
     expect(JSON.stringify(log?.metadata)).not.toContain(testPayload.apiKey);
     expect(JSON.stringify(log?.metadata)).not.toContain(testPayload.apiSecret);
   });
@@ -254,6 +280,25 @@ describe("API Keys security contract", () => {
         spot: true,
         futures: true,
       },
+    });
+
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { email: "apikey-test-stored-connection@example.com" },
+    });
+    const log = await prisma.log.findFirst({
+      where: {
+        userId: user.id,
+        action: "profile.api_key.test_connection",
+      },
+      orderBy: { occurredAt: "desc" },
+    });
+    expect(log).toBeTruthy();
+    expect(log?.metadata).toMatchObject({
+      exchange: "BINANCE",
+      ok: true,
+      code: "OK",
+      probeMode: "stored",
+      apiKeyId: keyId,
     });
   });
 

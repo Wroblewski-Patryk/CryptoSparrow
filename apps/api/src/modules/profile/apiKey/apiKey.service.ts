@@ -25,6 +25,13 @@ export type ApiKeyTestResult = {
   };
 };
 
+type ApiKeySyncOptions = {
+  syncExternalPositions: boolean;
+  manageExternalPositions: boolean;
+};
+
+type ApiKeyProbeMode = "provided" | "stored";
+
 const API_KEY_TEST_CODES: BinanceApiKeyTestCode[] = [
   "OK",
   "INVALID_KEY",
@@ -106,11 +113,41 @@ const buildApiKeyTestResultForCode = (code: BinanceApiKeyTestCode): ApiKeyTestRe
   }
 };
 
+const resolveApiKeySyncOptions = (input: {
+  syncExternalPositions?: boolean;
+  manageExternalPositions?: boolean;
+}): ApiKeySyncOptions => {
+  const manageExternalPositions = input.manageExternalPositions ?? false;
+  const syncExternalPositions = manageExternalPositions ? true : (input.syncExternalPositions ?? true);
+  return {
+    syncExternalPositions,
+    manageExternalPositions,
+  };
+};
+
+const mapProbeUnexpectedFailure = (error: unknown): BinanceApiKeyTestCode => {
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  if (
+    message.includes("timed out") ||
+    message.includes("timeout") ||
+    message.includes("econnreset") ||
+    message.includes("econnrefused") ||
+    message.includes("enotfound") ||
+    message.includes("network error")
+  ) {
+    return "NETWORK_TIMEOUT";
+  }
+  return "UNKNOWN";
+};
+
 const writeApiKeyTestAudit = async (params: {
   userId: string;
   exchange: Exchange;
   ok: boolean;
   code: BinanceApiKeyTestCode;
+  probeMode: ApiKeyProbeMode;
+  probeLatencyMs: number;
+  apiKeyId?: string | null;
   permissions: {
     spot: boolean;
     futures: boolean;
@@ -130,6 +167,9 @@ const writeApiKeyTestAudit = async (params: {
           exchange: params.exchange,
           ok: params.ok,
           code: params.code,
+          probeMode: params.probeMode,
+          probeLatencyMs: params.probeLatencyMs,
+          apiKeyId: params.apiKeyId ?? null,
           permissions: params.permissions,
         },
       },
@@ -175,13 +215,18 @@ export const listApiKeys = async (userId: string) => {
 };
 
 export const createApiKey = async (userId: string, data: ApiKeyPayload) => {
+  const syncOptions = resolveApiKeySyncOptions({
+    syncExternalPositions: data.syncExternalPositions,
+    manageExternalPositions: data.manageExternalPositions,
+  });
+
   const created = await prisma.apiKey.create({
     data: {
         ...data,
         apiKey: encrypt(data.apiKey),
         apiSecret: encrypt(data.apiSecret),
-        syncExternalPositions: data.syncExternalPositions ?? true,
-        manageExternalPositions: data.manageExternalPositions ?? false,
+        syncExternalPositions: syncOptions.syncExternalPositions,
+        manageExternalPositions: syncOptions.manageExternalPositions,
         userId
     }
   });
@@ -194,25 +239,36 @@ export const updateApiKey = async (
   id: string,
   data: Partial<ApiKeyPayload>
 ) => {
+  const existing = await prisma.apiKey.findFirst({
+    where: { id, userId },
+  });
+
+  if (!existing) return null;
+
+  const syncOptions = resolveApiKeySyncOptions({
+    syncExternalPositions:
+      data.syncExternalPositions !== undefined
+        ? data.syncExternalPositions
+        : existing.syncExternalPositions,
+    manageExternalPositions:
+      data.manageExternalPositions !== undefined
+        ? data.manageExternalPositions
+        : existing.manageExternalPositions,
+  });
+
   const updateData: Prisma.ApiKeyUpdateManyMutationInput = {
     ...(data.label !== undefined ? { label: data.label } : {}),
     ...(data.exchange !== undefined ? { exchange: data.exchange } : {}),
     ...(data.apiKey !== undefined ? { apiKey: encrypt(data.apiKey) } : {}),
     ...(data.apiSecret !== undefined ? { apiSecret: encrypt(data.apiSecret) } : {}),
-    ...(data.syncExternalPositions !== undefined
-      ? { syncExternalPositions: data.syncExternalPositions }
-      : {}),
-    ...(data.manageExternalPositions !== undefined
-      ? { manageExternalPositions: data.manageExternalPositions }
-      : {}),
+    syncExternalPositions: syncOptions.syncExternalPositions,
+    manageExternalPositions: syncOptions.manageExternalPositions,
   };
 
-  const result = await prisma.apiKey.updateMany({
-    where: { id, userId },
+  await prisma.apiKey.update({
+    where: { id: existing.id },
     data: updateData,
   });
-
-  if (result.count === 0) return null;
 
   const updated = await prisma.apiKey.findFirst({
     where: { id, userId },
@@ -259,25 +315,42 @@ export const revokeApiKey = async (userId: string, id: string) => {
 
 export const testApiKeyConnection = async (
   userId: string,
-  data: ApiKeyTestPayload
+  data: ApiKeyTestPayload,
+  context: {
+    probeMode?: ApiKeyProbeMode;
+    apiKeyId?: string | null;
+  } = {}
 ): Promise<ApiKeyTestResult> => {
   assertExchangeCapability(data.exchange, "API_KEY_PROBE");
 
+  const probeMode = context.probeMode ?? "provided";
+  const startedAt = Date.now();
   const forcedCode = getForcedApiKeyTestCode();
-  const result = forcedCode
-    ? buildApiKeyTestResultForCode(forcedCode)
-    : process.env.NODE_ENV === "test"
-      ? buildApiKeyTestResultForCode("OK")
-      : await probeBinanceApiKeyPermissions({
-          apiKey: data.apiKey,
-          apiSecret: data.apiSecret,
-        });
+  let result: ApiKeyTestResult;
+  try {
+    result = forcedCode
+      ? buildApiKeyTestResultForCode(forcedCode)
+      : process.env.NODE_ENV === "test"
+        ? buildApiKeyTestResultForCode("OK")
+        : await probeBinanceApiKeyPermissions({
+            apiKey: data.apiKey,
+            apiSecret: data.apiSecret,
+          });
+  } catch (error) {
+    const fallbackCode = mapProbeUnexpectedFailure(error);
+    result = buildApiKeyTestResultForCode(fallbackCode);
+  }
+
+  const probeLatencyMs = Math.max(0, Date.now() - startedAt);
 
   await writeApiKeyTestAudit({
     userId,
     exchange: data.exchange,
     ok: result.ok,
     code: result.code,
+    probeMode,
+    probeLatencyMs,
+    apiKeyId: context.apiKeyId ?? null,
     permissions: result.permissions,
   });
 
@@ -302,6 +375,9 @@ export const testStoredApiKeyConnection = async (
     apiSecret: decrypt(existing.apiSecret),
   };
 
-  const result = await testApiKeyConnection(userId, probePayload);
+  const result = await testApiKeyConnection(userId, probePayload, {
+    probeMode: "stored",
+    apiKeyId: existing.id,
+  });
   return result;
 };
