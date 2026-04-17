@@ -7,11 +7,28 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- none
+- [ ] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
+- [ ] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
+- [ ] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
+- [ ] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
+- [ ] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
 ## NEXT
-- none
+- [ ] `UXR-06 feat(web-dashboard-wallet): redesign wallet KPI row + wallet icon consistency`
+- [ ] `UXR-07 feat(web-dashboard-tabs): rename tab labels to positions/orders/history`
+- [ ] `UXR-08 fix(web-positions-table): move close column to last, rename to Action, use icon button`
+- [ ] `UXR-09 fix(web-actions): implement per-row pending state for concurrent close actions`
+- [ ] `UXR-10 fix(api-close-position): align close-position button flow with backend close handler`
 ## PIPELINE
-- none
+- [ ] `UXR-11 feat(web-position-edit-modal): add reusable modal shell + initial position-edit form`
+- [ ] `UXR-12 feat(api-position-edit): expose safe manual update endpoint for TP/SL and metadata`
+- [ ] `UXR-13 feat(web-dashboard-manual-order): add manual order panel using existing bot order pipeline`
+- [ ] `UXR-14 feat(web-markets-form): compose symbol universe from (min-volume U whitelist) - blacklist`
+- [ ] `UXR-15 fix(api-markets): enforce same universe composition contract on backend`
+## GROUP QUEUE
+- [ ] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
+- [ ] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
+- [ ] `UXR-C (commits 16-22): advanced table rollout + logs module completion`
+- [ ] `UXR-D (commits 23-30): bots IA/runtime polish + breadcrumb/footer + regression closure`
 ## BLOCKED
 - none
 

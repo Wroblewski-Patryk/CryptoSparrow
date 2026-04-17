@@ -1596,6 +1596,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `L10NPT-A localization(pt-pt): execute European Portuguese rollout queue from docs/planning/pt-pt-localization-rollout-plan-2026-04-17.md (pt-PT only, no pt-BR)`
 - [x] `NAVHF-A dashboard-nav-regression: remove unnecessary top-level Exchanges link from main dashboard menu`
 - [x] `WSPLIT-A worker-split-decision-closure: resolve open Worker Split Timing policy and sync canonical plans`
+- [ ] `UXR-A dashboard-ux-runtime-wave: execute grouped UXR queue from docs/planning/dashboard-modules-ux-runtime-fix-wave-plan-2026-04-15.md`
 
 ### Active Task Breakdown (A11Y-A)
 - [x] `A11Y-01 docs(plan): publish full accessibility pass timeline and resolve open decision`
@@ -1616,7 +1617,15 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 ### Active Task Breakdown (WSPLIT-A)
 - [x] `WSPLIT-01 docs(decision): close Worker Split Timing with explicit split policy and thresholds`
 
+### Active Task Breakdown (UXR-A)
+- [ ] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
+- [ ] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
+- [ ] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
+- [ ] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
+- [ ] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
+
 ### Progress Log (Post-PEX Continuation)
+- 2026-04-17: Promoted `UXR-A` as active follow-up group with explicit tiny-commit queue (`UXR-01..UXR-05`) and grouped continuation contract (`UXR-B..UXR-D`) based on `docs/planning/dashboard-modules-ux-runtime-fix-wave-plan-2026-04-15.md`, so executor `NOW` refill always has actionable tasks.
 - 2026-04-17: Executed Dashboard+Bots operational UX checklist pass (`docs/operations/dashboard-bots-operational-ux-checklist.md`) with fresh validation pack (`pnpm --filter web test -- src/features/bots/components/BotCreateEditForm.test.tsx src/features/dashboard-home/components/HomeLiveWidgets.test.tsx src/features/bots/components/BotsManagement.test.tsx src/app/dashboard/dashboard.a11y.smoke.test.tsx src/ui/layout/dashboard/PageTitle.a11y.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx` => `34/34 PASS`, `pnpm --filter web run build` PASS), and closed creator-form IA gap on `/dashboard/bots/create` by enforcing explicit 3-section structure (`Basics`, `Market`, `Strategy`) with regression lock in `BotCreateEditForm.test.tsx`.
 - 2026-04-17: Closed `WSPLIT-A` by completing `WSPLIT-01` (resolved `Worker Split Timing` open decision by locking `PROD` mandatory API/worker split-process policy and concrete `STAGE/DEV` split triggers for queue lag/API p95/restart burst, published closure plan `docs/planning/worker-split-timing-decision-closure-plan-2026-04-17.md`, and validated queue/docs synchronization with `pnpm run docs:parity:check` PASS).
 - 2026-04-17: Closed `NAVHF-A` by completing `NAVHF-01` (removed top-level `Exchanges` from `Header` direct module navigation so desktop/mobile main menu now starts with `Wallets`, updated responsive nav contract assertions to enforce no `Exchanges` link while preserving wallet/markets routes, and validated with `pnpm --filter web test -- src/ui/layout/dashboard/Header.responsive.test.tsx` + `pnpm --filter web run typecheck`, both PASS).
@@ -1643,3 +1652,38 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 ### Progress Log (Phase 36 - European Portuguese Localization)
 - 2026-04-17: Closed phase by completing `L10NPT-01..L10NPT-12` with Portuguese locale rollout (`pt` + `pt-PT`) across i18n core, switchers, namespaces, shared/page/feature copy paths, strategy localizers, and contract tests; validated via typecheck + targeted smoke/build packs and published closure artifacts `docs/operations/_artifacts-l10npt-rollout-2026-04-16T22-59-22-697Z.json` + `docs/operations/l10npt-rollout-closure-2026-04-17.md`.
 - 2026-04-17: Initialized canonical localization phase and rollout queue in `docs/planning/pt-pt-localization-rollout-plan-2026-04-17.md` with locked locale policy (`pt` mapped to `pt-PT`, explicitly excluding `pt-BR`) and hardcoded-branch inventory baseline for implementation.
+
+## Phase 37 - Dashboard + Modules UX/Runtime Fix Wave (As of 2026-04-17)
+- [ ] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
+- [ ] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
+- [ ] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
+- [ ] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
+- [ ] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
+- [ ] `UXR-06 feat(web-dashboard-wallet): redesign wallet KPI row + wallet icon consistency`
+- [ ] `UXR-07 feat(web-dashboard-tabs): rename tab labels to positions/orders/history`
+- [ ] `UXR-08 fix(web-positions-table): move close column to last, rename to Action, use icon button`
+- [ ] `UXR-09 fix(web-actions): implement per-row pending state for concurrent close actions`
+- [ ] `UXR-10 fix(api-close-position): align close-position button flow with backend close handler`
+- [ ] `UXR-11 feat(web-position-edit-modal): add reusable modal shell + initial position-edit form`
+- [ ] `UXR-12 feat(api-position-edit): expose safe manual update endpoint for TP/SL and metadata`
+- [ ] `UXR-13 feat(web-dashboard-manual-order): add manual order panel using existing bot order pipeline`
+- [ ] `UXR-14 feat(web-markets-form): compose symbol universe from (min-volume U whitelist) - blacklist`
+- [ ] `UXR-15 fix(api-markets): enforce same universe composition contract on backend`
+- [ ] `UXR-16 ux(web-profile-api): redesign API key form row layout and helper blocks`
+- [ ] `UXR-17 fix(api-profile-sync): make API sync action deterministic and observable`
+- [ ] `UXR-18 refactor(web-wallets-list): migrate wallets list to shared DataTable pattern`
+- [ ] `UXR-19 fix(api-wallet-guard): block wallet edits when wallet is used by active bot`
+- [ ] `UXR-20 feat(web-table-core): shared advanced table options (column visibility + expandable details)`
+- [ ] `UXR-21 feat(web-tables): apply advanced table mode to wallets/markets/strategies/backtests/bots`
+- [ ] `UXR-22 feat(web+api-logs): migrate logs view to unified table UX and verify bot-message completeness`
+- [ ] `UXR-23 feat(web-bots-list): hide assistant action in V1 list view`
+- [ ] `UXR-24 refactor(web-bots-runtime): tabbed runtime layout with dashboard-like readability`
+- [ ] `UXR-25 fix(web-runtime-refresh): remove local refresh controls and use automatic interval only`
+- [ ] `UXR-26 fix(api-bots-duplicate-guard): enforce uniqueness by wallet+market+strategy tuple`
+- [ ] `UXR-27 ux(web-bot-form): simplify IA (one section, two rows), clarify live opt-in, complete i18n`
+- [ ] `UXR-28 fix(web-backtests-breadcrumb): normalize labels to List/Create and make module header linkable`
+- [ ] `UXR-29 fix(web-footer-mobile): center both dashboard footer rows on mobile`
+- [ ] `UXR-30 qa(regression-pack): run focused API+WEB tests and manual smoke for live/paper parity`
+
+### Progress Log (Phase 37 - Dashboard + Modules UX/Runtime Fix Wave)
+- 2026-04-17: Activated canonical execution for UXR wave by promoting `UXR-01..UXR-05` into active queue and locking grouped continuation (`UXR-B`, `UXR-C`, `UXR-D`) in `mvp-next-commits.md`; source plan remains `docs/planning/dashboard-modules-ux-runtime-fix-wave-plan-2026-04-15.md`.

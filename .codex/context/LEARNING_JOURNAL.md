@@ -147,3 +147,20 @@ When user asks "what is planned":
 - Avoid: collapsing all unchecked boxes into one queue or ignoring non-canonical unchecked docs entirely.
 - Evidence:
   - Observed mismatch on 2026-04-17: canonical planning files had 0 open tasks while legacy docs still had many unchecked checklists (including EXCTX/VPS readiness artifacts).
+
+### 2026-04-17 - Planning must activate executable NOW queue
+- Context: user asks for a large implementation plan and expects executor to start immediately with `start` intent.
+- Symptom: executor reports "nothing to do" even when a detailed plan document exists.
+- Root cause: plan was documented, but canonical execution queue (`mvp-next-commits.md`) and fallback source (`mvp-execution-plan.md`) were not populated with active unchecked task commits.
+- Guardrail: every new wave plan must be followed in the same turn by queue activation in canonical planning files.
+- Preferred pattern:
+```text
+1) Write detailed wave plan file.
+2) Promote first 3-5 concrete commit tasks to `NOW`.
+3) Place next slice in `NEXT`, remaining slice in `PIPELINE`.
+4) Mirror unchecked tasks in `mvp-execution-plan.md` so automatic refill works.
+5) Add grouped batch map (A/B/C/...) for executor clarity.
+```
+- Avoid: leaving `NOW/NEXT/PIPELINE` as `none` after publishing a new plan.
+- Evidence:
+  - 2026-04-17 user report: executor had no actionable tasks despite existing UXR plan.

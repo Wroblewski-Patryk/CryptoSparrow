@@ -37,6 +37,15 @@ Primary audience: implementation agent
 4. Runtime refresh controls: remove local switch/button in runtime view, keep auto-refresh by default; add account-level refresh interval setting in profile if low-risk.
 5. Assistant action in bots list: hide in V1 UI only (do not delete backend/service code).
 
+## Execution Groups (Commit Batches)
+1. `UXR-A` (commits `UXR-01..UXR-05`)
+2. `UXR-B` (commits `UXR-06..UXR-15`)
+3. `UXR-C` (commits `UXR-16..UXR-22`)
+4. `UXR-D` (commits `UXR-23..UXR-30`)
+
+Execution rule:
+- run one task = one commit in sequence; do not mix IDs in a single commit.
+
 ## Tiny-Commit Queue
 
 ### Wave A - Contracts + Critical Runtime/Data Parity
