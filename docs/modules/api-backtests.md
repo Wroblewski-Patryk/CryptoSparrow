@@ -5,7 +5,7 @@
 - Layer: `api`
 - Source path: `apps/api/src/modules/backtests`
 - Owner: backend/trading-domain
-- Last updated: 2026-04-12
+- Last updated: 2026-04-17
 - Related planning task: `DCP-06`
 
 ## 1. Purpose and Scope
@@ -39,11 +39,22 @@ Out of scope:
 ## 4. Runtime Flows
 - Run creation:
   1. Validate owned strategy + market universe.
-  2. Build run record and queue job payload.
-  3. Execute replay with indicator/derivative series and fill model.
-  4. Persist trades and report summary; update run status.
+  2. Resolve and persist one candle-window contract per run:
+     - `requestedMaxCandles` (nullable request input),
+     - `effectiveMaxCandles` (single adapted value reused everywhere),
+     - compatibility `maxCandles` mirror.
+  3. Build run record and queue job payload.
+  4. Execute replay with indicator/derivative series and fill model.
+  5. Persist trades and report summary; update run status.
 - Timeline/report reads:
   - resolve owned run and emit scoped timeline/report projections.
+  - terminal runs (`COMPLETED/FAILED/CANCELED`) anchor timeline by `finishedAt` (not stale `liveProgress.currentCandleTime`).
+  - timeline replay context supports:
+    - `isolated` (default): requested symbol only,
+    - `portfolio`: full run-symbol context.
+- Metrics semantics:
+  - run/report totals are run-level portfolio truth.
+  - timeline/chart diagnostics are replay-context scoped and may differ in portfolio mode by design.
 
 ## 5. API and UI Integration
 - Routes:

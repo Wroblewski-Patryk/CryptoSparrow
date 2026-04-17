@@ -636,6 +636,25 @@ This file tracks intentionally unresolved architecture choices so implementation
   - `docs/planning/mvp-next-commits.md`
   - `docs/planning/mvp-execution-plan.md`
 
+## BTMM Multi-Market Parity Contract
+- Decision state: resolved on 2026-04-17.
+- Decision:
+  - `effectiveMaxCandles` is computed once per run and reused across job execution, report metrics, and timeline reads.
+  - run seed contract stores:
+    - `requestedMaxCandles` (user input, nullable),
+    - `effectiveMaxCandles` (final single adapted value),
+    - legacy `maxCandles` mirrored to `effectiveMaxCandles` for backward compatibility.
+  - timeline end anchor for terminal run states (`COMPLETED`, `FAILED`, `CANCELED`) must prefer run-level `finishedAt`; stale symbol-level `liveProgress.currentCandleTime` cannot truncate completed timelines.
+  - timeline replay context contract:
+    - default mode is `isolated` (only requested symbol replayed),
+    - optional `portfolio` mode replays full run symbol set for advanced comparison.
+  - analytics semantics are frozen:
+    - run totals are run-level portfolio truth from persisted report/trades,
+    - chart/timeline diagnostics are replay-context scoped and must not be presented as global run totals.
+- Canonical references:
+  - `docs/planning/backtest-multi-market-parity-remediation-plan-2026-04-17.md`
+  - `docs/modules/api-backtests.md`
+
 ## Accessibility Scope
 - Decision state: resolved on 2026-04-17.
 - Decision:
