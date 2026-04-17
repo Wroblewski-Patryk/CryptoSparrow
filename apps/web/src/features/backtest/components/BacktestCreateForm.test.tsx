@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import BacktestCreateForm from './BacktestCreateForm';
+import { I18nProvider } from '@/i18n/I18nProvider';
 
 const listStrategiesMock = vi.hoisted(() => vi.fn());
 const listMarketUniversesMock = vi.hoisted(() => vi.fn());
@@ -21,6 +22,10 @@ vi.mock('sonner', () => ({
 }));
 
 describe('BacktestCreateForm', () => {
+  afterEach(() => {
+    window.localStorage.removeItem('cryptosparrow-locale');
+  });
+
   it('disables submit and shows validation when maxCandles is out of range', async () => {
     listStrategiesMock.mockResolvedValue([
       {
@@ -149,5 +154,40 @@ describe('BacktestCreateForm', () => {
         'Kontekst wykonania backtestu jest dziedziczony z wybranej grupy rynkow i nie moze sie rozjechac.'
       )
     ).toBeInTheDocument();
+  });
+
+  it('supports Portuguese locale path without EN/PL clamp in create form copy', async () => {
+    window.localStorage.setItem('cryptosparrow-locale', 'pt');
+    listStrategiesMock.mockResolvedValue([
+      {
+        id: 's4',
+        name: 'Trend PT',
+        interval: '15m',
+        leverage: 2,
+        config: { additional: { marginMode: 'CROSSED' } },
+      },
+    ]);
+    listMarketUniversesMock.mockResolvedValue([
+      {
+        id: 'm4',
+        name: 'Mercado PT',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        whitelist: ['BTCUSDT'],
+        blacklist: [],
+      },
+    ]);
+
+    render(
+      <I18nProvider>
+        <BacktestCreateForm submitting={false} onSubmit={vi.fn()} />
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Assistente de backtest')).toBeInTheDocument();
+    });
+    expect(screen.getByLabelText('Nome da execucao')).toBeInTheDocument();
+    expect(screen.getByText('Configuracao da execucao')).toBeInTheDocument();
   });
 });
