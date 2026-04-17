@@ -65,6 +65,10 @@ import {
 } from './botsRuntimeRead.repository';
 
 type RuntimeTakeoverStatus = 'OWNED_AND_MANAGED' | 'UNOWNED' | 'AMBIGUOUS' | 'MANUAL_ONLY';
+type ExternalSymbolOwner = {
+  botId: string;
+  walletId: string | null;
+};
 
 const resolveRuntimeTakeoverStatus = (input: {
   origin: string;
@@ -761,14 +765,17 @@ export const listBotRuntimeSessionTrades = async (
 
 const resolveExternalPositionOwnerBySymbol = async (
   userId: string
-): Promise<Map<string, string>> => {
+): Promise<Map<string, ExternalSymbolOwner>> => {
   const bots = await prisma.bot.findMany({
     where: {
       userId,
-      mode: { in: ['PAPER', 'LIVE'] },
+      mode: 'LIVE',
+      isActive: true,
+      liveOptIn: true,
     },
     select: {
       id: true,
+      walletId: true,
       isActive: true,
       createdAt: true,
       botMarketGroups: {
@@ -798,6 +805,7 @@ const resolveExternalPositionOwnerBySymbol = async (
     string,
     {
       botId: string;
+      walletId: string | null;
       isActive: boolean;
       executionOrder: number;
       createdAtMs: number;
@@ -821,6 +829,7 @@ const resolveExternalPositionOwnerBySymbol = async (
         if (!existing) {
           ownerBySymbol.set(symbol, {
             botId: bot.id,
+            walletId: bot.walletId,
             isActive: bot.isActive,
             executionOrder,
             createdAtMs,
@@ -839,6 +848,7 @@ const resolveExternalPositionOwnerBySymbol = async (
         if (preferCandidate) {
           ownerBySymbol.set(symbol, {
             botId: bot.id,
+            walletId: bot.walletId,
             isActive: bot.isActive,
             executionOrder,
             createdAtMs,
@@ -849,7 +859,10 @@ const resolveExternalPositionOwnerBySymbol = async (
   }
 
   return new Map(
-    [...ownerBySymbol.entries()].map(([symbol, owner]) => [symbol, owner.botId])
+    [...ownerBySymbol.entries()].map(([symbol, owner]) => [
+      symbol,
+      { botId: owner.botId, walletId: owner.walletId },
+    ])
   );
 };
 
@@ -893,7 +906,7 @@ export const listBotRuntimeSessionPositions = async (
       : { botId };
   const externalOwnerBySymbol = await resolveExternalPositionOwnerBySymbol(userId);
   const ownedExternalSymbols = [...externalOwnerBySymbol.entries()]
-    .filter(([, ownerBotId]) => ownerBotId === botId)
+    .filter(([, owner]) => owner.botId === botId)
     .map(([symbol]) => symbol);
   const externalOwnedWhere: Prisma.PositionWhereInput[] =
     ownedExternalSymbols.length > 0
@@ -1360,10 +1373,32 @@ export const closeBotRuntimeSessionPosition = async (
   let externallyOwnedByBot = false;
   if (!directlyOwnedByBot && !position.botId && position.origin === 'EXCHANGE_SYNC') {
     const externalOwnerBySymbol = await resolveExternalPositionOwnerBySymbol(userId);
-    externallyOwnedByBot = externalOwnerBySymbol.get(position.symbol) === botId;
+    externallyOwnedByBot = externalOwnerBySymbol.get(position.symbol)?.botId === botId;
   }
   if (!directlyOwnedByBot && !externallyOwnedByBot) {
     return { status: 'ignored', reason: 'no_open_position' };
+  }
+
+  const shouldClaimOwnership = !position.botId && externallyOwnedByBot;
+  const shouldBackfillWallet = !position.walletId && Boolean(botContext.walletId);
+  if (shouldClaimOwnership || shouldBackfillWallet) {
+    const update: Prisma.PositionUpdateManyMutationInput = {
+      syncState: 'IN_SYNC',
+      ...(shouldClaimOwnership ? { botId } : {}),
+      ...(shouldBackfillWallet && botContext.walletId ? { walletId: botContext.walletId } : {}),
+    };
+    const claimed = await prisma.position.updateMany({
+      where: {
+        id: position.id,
+        userId,
+        status: 'OPEN',
+        managementMode: 'BOT_MANAGED',
+      },
+      data: update,
+    });
+    if (claimed.count === 0) {
+      return { status: 'ignored', reason: 'no_open_position' };
+    }
   }
 
   const botExchange = botContext.exchange ?? 'BINANCE';

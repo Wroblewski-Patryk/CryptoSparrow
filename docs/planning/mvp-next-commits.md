@@ -9,7 +9,7 @@ Operational queue for one-task execution runs.
 ## NOW
 - [x] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
 - [x] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
-- [ ] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
+- [x] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
 - [ ] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
 - [ ] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
 ## NEXT
@@ -29,10 +29,15 @@ Operational queue for one-task execution runs.
 - [ ] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
 - [ ] `UXR-C (commits 16-22): advanced table rollout + logs module completion`
 - [ ] `UXR-D (commits 23-30): bots IA/runtime polish + breadcrumb/footer + regression closure`
+- [ ] `L10NQ-A (commits 01-05): i18n P0 blockers (backtest clamp + wrapper hardcoded copy)`
+- [ ] `L10NQ-B (commits 06-11): per-module namespace split + parity/guardrail tests`
+- [ ] `L10NQ-C (commits 12-15): route-level namespace loading + English docs normalization`
 ## BLOCKED
 - none
 
 ## DONE
+- [x] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
+  - 2026-04-17: Fixed runtime takeover ownership resolver to LIVE-only active candidates (`PAPER` bots excluded from `EXCHANGE_SYNC` symbol-owner arbitration), and hardened close flow for externally owned rows by claiming missing `botId/walletId` before orchestration (fail-closed preserved); validation pack: `pnpm --filter api test -- src/modules/orders/orders-positions.e2e.test.ts` => `7/7 PASS`, `pnpm --filter web test -- src/features/dashboard-home/hooks/useCloseRuntimePositionAction.test.tsx` => `1/1 PASS`.
 - [x] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
   - 2026-04-17: Added API failing coverage in `orders-positions.e2e` for two runtime regressions (`EXCHANGE_SYNC` `BOT_MANAGED` position not visible for LIVE bot when PAPER bot shares symbol ownership scope, and close-position returning `ignored` instead of `closed` in LIVE dashboard flow) plus WEB hook coverage for `ignored` close-response handling (`useCloseRuntimePositionAction.test.tsx`); validation pack: `pnpm --filter api test -- src/modules/orders/orders-positions.e2e.test.ts` => `2 failing / 5 passing` (expected red baseline), `pnpm --filter web test -- src/features/dashboard-home/hooks/useCloseRuntimePositionAction.test.tsx` => `1/1 PASS`.
 - [x] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`

@@ -1597,6 +1597,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `NAVHF-A dashboard-nav-regression: remove unnecessary top-level Exchanges link from main dashboard menu`
 - [x] `WSPLIT-A worker-split-decision-closure: resolve open Worker Split Timing policy and sync canonical plans`
 - [ ] `UXR-A dashboard-ux-runtime-wave: execute grouped UXR queue from docs/planning/dashboard-modules-ux-runtime-fix-wave-plan-2026-04-15.md`
+- [ ] `L10NQ-A i18n-contract-remediation-wave: execute grouped locale hardening queue from docs/planning/i18n-contract-remediation-plan-2026-04-17.md`
 
 ### Active Task Breakdown (A11Y-A)
 - [x] `A11Y-01 docs(plan): publish full accessibility pass timeline and resolve open decision`
@@ -1620,11 +1621,20 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 ### Active Task Breakdown (UXR-A)
 - [x] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
 - [x] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
-- [ ] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
+- [x] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
 - [ ] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
 - [ ] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
 
+### Active Task Breakdown (L10NQ-A)
+- [ ] `L10NQ-01 docs(contract): freeze remediation scope and English-only documentation baseline`
+- [ ] `L10NQ-02 qa(scan): capture baseline inventory of locale clamps and hardcoded-copy hotspots`
+- [ ] `L10NQ-03 fix(web-backtest-locale): remove EN/PL clamp in backtest module`
+- [ ] `L10NQ-04 test(web-backtest-i18n): add regression coverage for Portuguese backtest locale path`
+- [ ] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
+
 ### Progress Log (Post-PEX Continuation)
+- 2026-04-17: Completed `UXR-03` by enforcing LIVE-only deterministic owner arbitration for `EXCHANGE_SYNC` symbol takeover and by claiming/backfilling missing `botId/walletId` before close orchestration, which resolves missing LIVE runtime visibility and `ignored` close responses for takeover rows.
+- 2026-04-17: Planned and queued `L10NQ-A` follow-up localization hardening wave (`docs/planning/i18n-contract-remediation-plan-2026-04-17.md`) covering backtest EN/PL clamp removal, hardcoded-copy cleanup, module namespace split, i18n parity/guardrail tests, route-level namespace loading, and English-only localization docs normalization.
 - 2026-04-17: Completed `UXR-02` by adding red-baseline API coverage for runtime exchange-position visibility + close-action regression (`orders-positions.e2e`) and WEB hook coverage for `ignored` close-response handling (`useCloseRuntimePositionAction.test.tsx`); validation evidence: API targeted suite currently fails on the two expected regressions, WEB targeted suite passes.
 - 2026-04-17: Completed `UXR-01` by freezing dashboard `positions/orders/history` ownership and visibility matrix in canonical docs (`open-decisions`, `api-bots`, `web-dashboard-home`), including deterministic external takeover owner ordering and fail-closed close-position actionability.
 - 2026-04-17: Promoted `UXR-A` as active follow-up group with explicit tiny-commit queue (`UXR-01..UXR-05`) and grouped continuation contract (`UXR-B..UXR-D`) based on `docs/planning/dashboard-modules-ux-runtime-fix-wave-plan-2026-04-15.md`, so executor `NOW` refill always has actionable tasks.
@@ -1658,7 +1668,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 ## Phase 37 - Dashboard + Modules UX/Runtime Fix Wave (As of 2026-04-17)
 - [x] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
 - [x] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
-- [ ] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
+- [x] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
 - [ ] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
 - [ ] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
 - [ ] `UXR-06 feat(web-dashboard-wallet): redesign wallet KPI row + wallet icon consistency`
@@ -1688,6 +1698,27 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `UXR-30 qa(regression-pack): run focused API+WEB tests and manual smoke for live/paper parity`
 
 ### Progress Log (Phase 37 - Dashboard + Modules UX/Runtime Fix Wave)
+- 2026-04-17: Completed `UXR-03` runtime ownership fix: LIVE-only symbol-owner arbitration for `EXCHANGE_SYNC` takeover and close-flow claim/backfill for missing takeover ownership fields.
 - 2026-04-17: Completed `UXR-02` test baseline with failing API regression coverage for exchange-position ownership visibility and close-position runtime flow (`orders-positions.e2e`) plus WEB hook coverage for ignored-close UX handling.
 - 2026-04-17: Completed `UXR-01` docs freeze for dashboard ownership/visibility matrix (`positions/orders/history`) and synchronized canonical contract references in `open-decisions`, `api-bots`, and `web-dashboard-home`.
 - 2026-04-17: Activated canonical execution for UXR wave by promoting `UXR-01..UXR-05` into active queue and locking grouped continuation (`UXR-B`, `UXR-C`, `UXR-D`) in `mvp-next-commits.md`; source plan remains `docs/planning/dashboard-modules-ux-runtime-fix-wave-plan-2026-04-15.md`.
+
+## Phase L10NQ - i18n Contract Remediation + Docs Language Baseline (As of 2026-04-17)
+- [ ] `L10NQ-01 docs(contract): freeze remediation scope and English-only documentation baseline`
+- [ ] `L10NQ-02 qa(scan): capture baseline inventory of locale clamps and hardcoded-copy hotspots`
+- [ ] `L10NQ-03 fix(web-backtest-locale): remove EN/PL clamp in backtest module`
+- [ ] `L10NQ-04 test(web-backtest-i18n): add regression coverage for Portuguese backtest locale path`
+- [ ] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
+- [ ] `L10NQ-06 feat(i18n-namespaces): split translations by module/route domain`
+- [ ] `L10NQ-07 refactor(i18n-registry): add explicit namespace registry and route-domain mapping`
+- [ ] `L10NQ-08 refactor(web-language-switcher): localize language labels via translation keys`
+- [ ] `L10NQ-09 test(i18n-parity): enforce key parity across en/pl/pt for every namespace`
+- [ ] `L10NQ-10 test(i18n-guardrails): detect locale clamps and hardcoded-copy regressions`
+- [ ] `L10NQ-11 l10n(pt-content): replace placeholder EN copy in PT namespaces with real pt-PT content`
+- [ ] `L10NQ-12 feat(i18n-route-loading): introduce route-level namespace loading`
+- [ ] `L10NQ-13 test(i18n-route-loading): verify no missing-key flicker and stable locale persistence`
+- [ ] `L10NQ-14 docs(localization): rewrite localization policy/qa docs to English-only and en/pl/pt contract`
+- [ ] `L10NQ-15 docs(governance): add docs-language guardrail and backlog for remaining non-English docs`
+
+### Progress Log (Phase L10NQ - i18n Contract Remediation + Docs Language Baseline)
+- 2026-04-17: Initialized phase from audit findings and locked canonical execution plan in `docs/planning/i18n-contract-remediation-plan-2026-04-17.md` (P0 backtest locale clamp removal, hardcoded-copy cleanup, module namespace split, parity/guardrail tests, route-level namespace loading, and English-only localization docs normalization).
