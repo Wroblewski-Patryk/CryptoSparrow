@@ -190,4 +190,59 @@ describe("useBacktestRunCoreData", () => {
     expect(result.current.run?.id).toBe("run_polling");
     expect(result.current.error).toBeNull();
   });
+
+  it("exposes run-level symbol stats separately from grouped run trades", async () => {
+    const runData = {
+      id: "run_stats",
+      strategyId: null,
+      name: "Stats run",
+      symbol: "BTCUSDT",
+      timeframe: "1m",
+      status: "COMPLETED",
+      seedConfig: {
+        symbols: ["ETHUSDT", "BTCUSDT"],
+      },
+      startedAt: "2026-04-10T10:00:00.000Z",
+      finishedAt: "2026-04-10T10:10:00.000Z",
+      notes: null,
+      createdAt: "2026-04-10T10:00:00.000Z",
+    } as const;
+    getBacktestRunMock.mockResolvedValue(runData);
+    getBacktestRunReportMock.mockResolvedValue(null);
+    listBacktestRunTradesMock.mockResolvedValue([
+      {
+        id: "trade_1",
+        symbol: "BTCUSDT",
+        side: "LONG",
+        entryPrice: 100,
+        exitPrice: 105,
+        quantity: 1,
+        openedAt: "2026-04-10T10:00:00.000Z",
+        closedAt: "2026-04-10T10:05:00.000Z",
+        pnl: 5,
+        fee: 0.1,
+      },
+    ]);
+    getStrategyMock.mockResolvedValue(null);
+    getMarketUniverseMock.mockResolvedValue(null);
+
+    const { result } = renderHook(() =>
+      useBacktestRunCoreData({
+        runId: "run_stats",
+        loadErrorDefault: "Nie udalo sie pobrac szczegolow backtestu",
+      }),
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(result.current.runSymbolStats.map((item) => item.symbol)).toEqual(["BTCUSDT", "ETHUSDT"]);
+    expect(result.current.runSymbolStats.find((item) => item.symbol === "BTCUSDT")?.tradesCount).toBe(1);
+    expect(result.current.runSymbolStats.find((item) => item.symbol === "ETHUSDT")?.tradesCount).toBe(0);
+    expect(result.current.runTradesBySymbol.get("BTCUSDT")).toHaveLength(1);
+  });
 });

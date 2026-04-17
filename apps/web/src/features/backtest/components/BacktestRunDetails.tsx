@@ -12,6 +12,7 @@ import { useLocaleFormatting } from '@/i18n/useLocaleFormatting';
 import { StrategyDto } from '../../strategies/types/StrategyForm.type';
 import { buildNonOverlappingTradeSegments } from '../utils/nonOverlappingTradeSegments';
 import { buildPairStatsMetricDisplay } from '../utils/pairStatsMetricDisplay';
+import { buildBacktestSymbolStats } from '../utils/backtestSymbolStats';
 import { getPatternMarkerBias, splitTimelineIndicatorSeriesForRendering } from '../utils/timelineIndicatorOverlays';
 import { I18nContext } from '../../../i18n/I18nProvider';
 import { useBacktestRunCoreData } from '../hooks/useBacktestRunCoreData';
@@ -60,30 +61,6 @@ type DailyPerformancePoint = {
 
 type BacktestRunDetailsProps = {
   runId: string;
-};
-
-type PricePoint = {
-  id: string;
-  kind: 'entry' | 'exit';
-  side: 'LONG' | 'SHORT';
-  timestamp: number;
-  price: number;
-  pnl?: number;
-};
-
-type SymbolStats = {
-  symbol: string;
-  tradesCount: number;
-  wins: number;
-  losses: number;
-  winRate: number | null;
-  netPnl: number;
-  avgEntry: number;
-  avgExit: number;
-  avgHoldMinutes: number;
-  points: PricePoint[];
-  firstAt: number | null;
-  lastAt: number | null;
 };
 
 type TimelineState = {
@@ -238,85 +215,6 @@ const extractStrategyIndicatorMeta = (strategy: StrategyDto | null): StrategyInd
     rsiLongLevel,
     rsiShortLevel,
   };
-};
-
-const buildSymbolStats = (items: BacktestTrade[], configuredSymbols: string[] = []): SymbolStats[] => {
-  const grouped = new Map<string, BacktestTrade[]>();
-  for (const trade of items) {
-    if (!grouped.has(trade.symbol)) grouped.set(trade.symbol, []);
-    grouped.get(trade.symbol)?.push(trade);
-  }
-
-  const stats = [...grouped.entries()].map(([symbol, trades]) => {
-    const ordered = [...trades].sort((a, b) => safeDateMs(a.openedAt) - safeDateMs(b.openedAt));
-    const wins = ordered.filter((trade) => trade.pnl > 0).length;
-    const losses = ordered.filter((trade) => trade.pnl < 0).length;
-    const netPnl = ordered.reduce((sum, trade) => sum + trade.pnl, 0);
-    const avgEntry = ordered.reduce((sum, trade) => sum + trade.entryPrice, 0) / ordered.length;
-    const avgExit = ordered.reduce((sum, trade) => sum + trade.exitPrice, 0) / ordered.length;
-    const avgHoldMinutes =
-      ordered.reduce((sum, trade) => sum + Math.max(0, safeDateMs(trade.closedAt) - safeDateMs(trade.openedAt)), 0) /
-      ordered.length /
-      60_000;
-
-    const points = ordered.flatMap((trade) => {
-      const openedAt = safeDateMs(trade.openedAt);
-      const closedAt = safeDateMs(trade.closedAt);
-      return [
-        {
-          id: `${trade.id}-entry`,
-          kind: 'entry' as const,
-          side: trade.side,
-          timestamp: openedAt,
-          price: trade.entryPrice,
-        },
-        {
-          id: `${trade.id}-exit`,
-          kind: 'exit' as const,
-          side: trade.side,
-          timestamp: closedAt,
-          price: trade.exitPrice,
-          pnl: trade.pnl,
-        },
-      ];
-    });
-
-    return {
-      symbol,
-      tradesCount: ordered.length,
-      wins,
-      losses,
-      winRate: ordered.length > 0 ? (wins / ordered.length) * 100 : null,
-      netPnl,
-      avgEntry,
-      avgExit,
-      avgHoldMinutes,
-      points: points.sort((a, b) => a.timestamp - b.timestamp),
-      firstAt: ordered[0] ? safeDateMs(ordered[0].openedAt) : null,
-      lastAt: ordered[ordered.length - 1] ? safeDateMs(ordered[ordered.length - 1].closedAt) : null,
-    };
-  });
-
-  const withMissing = [...stats];
-  for (const symbol of configuredSymbols) {
-    if (withMissing.some((item) => item.symbol === symbol)) continue;
-    withMissing.push({
-      symbol,
-      tradesCount: 0,
-      wins: 0,
-      losses: 0,
-      winRate: null,
-      netPnl: 0,
-      avgEntry: 0,
-      avgExit: 0,
-      avgHoldMinutes: 0,
-      points: [],
-      firstAt: null,
-      lastAt: null,
-    });
-  }
-
-  return withMissing.sort((a, b) => a.symbol.localeCompare(b.symbol));
 };
 
 const CLOSE_LIKE_TIMELINE_EVENT_TYPES = new Set<BacktestTimelineEvent['type']>([
@@ -1196,6 +1094,8 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
     run,
     report,
     trades,
+    runSymbolStats,
+    runTradesBySymbol,
     strategy,
     marketUniverseName,
     loading,
@@ -1238,29 +1138,8 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
               : 1,
         );
   const indicatorMeta = useMemo(() => extractStrategyIndicatorMeta(strategy), [strategy]);
-  const configuredRunSymbols = useMemo(() => {
-    const symbols = ((run?.seedConfig as { symbols?: unknown } | null)?.symbols ?? null) as string[] | null;
-    if (!Array.isArray(symbols)) return [];
-    return [...new Set(symbols.map((symbol) => normalizeSymbol(symbol)).filter(Boolean))].sort((a, b) =>
-      a.localeCompare(b),
-    );
-  }, [run?.seedConfig]);
-  const symbolStats = useMemo(() => buildSymbolStats(trades, configuredRunSymbols), [configuredRunSymbols, trades]);
-  const tradesBySymbol = useMemo(() => {
-    const grouped = new Map<string, BacktestTrade[]>();
-    for (const trade of trades) {
-      const bucket = grouped.get(trade.symbol) ?? [];
-      bucket.push(trade);
-      grouped.set(trade.symbol, bucket);
-    }
-    for (const [symbol, items] of grouped.entries()) {
-      grouped.set(
-        symbol,
-        [...items].sort((a, b) => safeDateMs(a.openedAt) - safeDateMs(b.openedAt)),
-      );
-    }
-    return grouped;
-  }, [trades]);
+  const symbolStats = runSymbolStats;
+  const tradesBySymbol = runTradesBySymbol;
   const timelineTradeEventMeta = useMemo(() => {
     const dcaCountByTradeId = new Map<string, number>();
     const knownTradeIds = new Set<string>();
@@ -1444,6 +1323,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
             symbol,
             cursor,
             chunkSize: TIMELINE_CHUNK_SIZE,
+            replayContext: 'isolated',
             includeCandles: scope === 'candles',
             includeIndicators: scope === 'candles',
             includeEvents: scope === 'events',
@@ -1967,7 +1847,8 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                             )
                           : [];
                       const visibleTradesForStats = timelineDerivedTrades.length > 0 ? timelineDerivedTrades : visibleTrades;
-                      const visibleStats = buildSymbolStats(visibleTradesForStats, [stats.symbol])[0] ?? stats;
+                      const visibleStats =
+                        buildBacktestSymbolStats(visibleTradesForStats, [stats.symbol])[0] ?? stats;
                       const tradesMetricDisplay = buildPairStatsMetricDisplay({
                         visibleValue: visibleStats.tradesCount,
                         totalValue: stats.tradesCount,
@@ -2041,6 +1922,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                                 <div className='rounded-md border border-base-300 bg-base-100/70 p-2'>
                                   <p className='text-[10px] uppercase tracking-wide opacity-65'>{copy.trades}</p>
                                   <p className='mt-1 text-base font-semibold'>{tradesMetricDisplay.primary}</p>
+                                  <p className='mt-0.5 text-[10px] opacity-60'>{copy.runTotalValue}</p>
                                   {tradesMetricDisplay.chartWindow ? (
                                     <p className='mt-0.5 text-[10px] opacity-60'>
                                       {copy.chartWindowValue}: {tradesMetricDisplay.chartWindow}
@@ -2057,6 +1939,7 @@ export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
                                   <p className={`mt-1 text-base font-semibold ${pnlClass(stats.netPnl)}`}>
                                     {pnlMetricDisplay.primary}
                                   </p>
+                                  <p className='mt-0.5 text-[10px] opacity-60'>{copy.runTotalValue}</p>
                                   {pnlMetricDisplay.chartWindow ? (
                                     <p className='mt-0.5 text-[10px] opacity-60'>
                                       {copy.chartWindowValue}: {pnlMetricDisplay.chartWindow}

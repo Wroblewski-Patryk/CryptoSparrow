@@ -62,6 +62,7 @@ export type BacktestTimelineQuery = {
   symbol: string;
   cursor?: number;
   chunkSize?: number;
+  replayContext?: 'isolated' | 'portfolio';
   includeCandles?: boolean;
   includeIndicators?: boolean;
   includeEvents?: boolean;
@@ -108,6 +109,7 @@ export type BacktestTimeline = {
   timeframe: string;
   marketType: 'SPOT' | 'FUTURES';
   status: BacktestStatus;
+  replayContext?: 'isolated' | 'portfolio';
   cursor: number;
   previousCursor: number | null;
   nextCursor: number | null;

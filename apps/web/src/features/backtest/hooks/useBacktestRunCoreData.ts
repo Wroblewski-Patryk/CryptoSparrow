@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import {
   getBacktestRun,
@@ -12,6 +12,8 @@ import { getStrategy } from '../../strategies/api/strategies.api';
 import { StrategyDto } from '../../strategies/types/StrategyForm.type';
 import { getMarketUniverse } from '../../markets/services/markets.service';
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
+import { normalizeSymbol } from '@/lib/symbols';
+import { buildBacktestSymbolStats, groupBacktestTradesBySymbol } from '../utils/backtestSymbolStats';
 
 const BOOTSTRAP_RETRY_DELAY_MS = 1500;
 const MAX_BOOTSTRAP_RETRIES = 8;
@@ -191,10 +193,26 @@ export const useBacktestRunCoreData = ({
     void loadData();
   }, [clearBootstrapRetryTimer, loadData]);
 
+  const configuredRunSymbols = useMemo(() => {
+    const symbols = ((run?.seedConfig as { symbols?: unknown } | null)?.symbols ?? null) as string[] | null;
+    if (!Array.isArray(symbols)) return [];
+    return [...new Set(symbols.map((symbol) => normalizeSymbol(symbol)).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b),
+    );
+  }, [run?.seedConfig]);
+
+  const runSymbolStats = useMemo(
+    () => buildBacktestSymbolStats(trades, configuredRunSymbols),
+    [configuredRunSymbols, trades],
+  );
+  const runTradesBySymbol = useMemo(() => groupBacktestTradesBySymbol(trades), [trades]);
+
   return {
     run,
     report,
     trades,
+    runSymbolStats,
+    runTradesBySymbol,
     strategy,
     marketUniverseName,
     loading,

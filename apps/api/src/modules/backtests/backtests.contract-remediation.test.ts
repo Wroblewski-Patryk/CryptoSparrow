@@ -126,6 +126,21 @@ describe('backtest parity remediation contracts', () => {
     ).toBe(new Date(staleLiveProgress).getTime());
   });
 
+  it('keeps terminal timeline anchor on finishedAt for all terminal statuses', () => {
+    const finishedAt = new Date('2026-04-17T12:45:00.000Z');
+    const staleLiveProgress = '2026-04-17T10:15:00.000Z';
+
+    for (const status of ['COMPLETED', 'FAILED', 'CANCELED'] as const) {
+      expect(
+        resolveTimelineEndTimeMs({
+          runStatus: status,
+          finishedAt,
+          liveProgressCurrentCandleTime: staleLiveProgress,
+        }),
+      ).toBe(finishedAt.getTime());
+    }
+  });
+
   it('resolves one effective maxCandles value from seed without re-adaptation', () => {
     expect(
       resolveEffectiveMaxCandlesFromSeed({
@@ -138,5 +153,18 @@ describe('backtest parity remediation contracts', () => {
         symbolCount: 50,
       }),
     ).toBe(650);
+  });
+
+  it('preserves legacy maxCandles from seed as already-adapted effective window', () => {
+    expect(
+      resolveEffectiveMaxCandlesFromSeed({
+        seed: {
+          requestedMaxCandles: 1000,
+          maxCandles: 730,
+        },
+        timeframe: '1m',
+        symbolCount: 120,
+      }),
+    ).toBe(730);
   });
 });

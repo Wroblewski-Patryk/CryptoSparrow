@@ -36,6 +36,21 @@ export type BacktestSupplementalSeries = {
   orderBook: BacktestOrderBookPoint[];
 };
 
+type DbCandleCacheRow = {
+  openTime: bigint;
+  closeTime: bigint;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+};
+
+type DbCandleDelegate = {
+  findMany: (args: unknown) => Promise<DbCandleCacheRow[]>;
+  createMany: (args: unknown) => Promise<unknown>;
+};
+
 const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
 const CANDLE_CACHE_TTL_MS = 20 * 60 * 1000;
 const useDbCandleCache = (process.env.BACKTEST_USE_DB_CANDLE_CACHE ?? 'true').toLowerCase() !== 'false';
@@ -56,22 +71,12 @@ const supplementalCache = new Map<
   }
 >();
 
+let dbCandleDelegateOverride: DbCandleDelegate | null = null;
+
 const getDbCandleDelegate = () =>
+  dbCandleDelegateOverride ??
   (prisma as unknown as {
-    marketCandleCache?: {
-      findMany: (args: unknown) => Promise<
-        Array<{
-          openTime: bigint;
-          closeTime: bigint;
-          open: number;
-          high: number;
-          low: number;
-          close: number;
-          volume: number;
-        }>
-      >;
-      createMany: (args: unknown) => Promise<unknown>;
-    };
+    marketCandleCache?: DbCandleDelegate;
   }).marketCandleCache;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -88,15 +93,7 @@ const safeFloat = (value: unknown) => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const toKlineFromDb = (row: {
-  openTime: bigint;
-  closeTime: bigint;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}): BacktestKlineCandle => ({
+const toKlineFromDb = (row: DbCandleCacheRow): BacktestKlineCandle => ({
   openTime: Number(row.openTime),
   closeTime: Number(row.closeTime),
   open: row.open,
@@ -105,6 +102,38 @@ const toKlineFromDb = (row: {
   close: row.close,
   volume: row.volume,
 });
+
+export const hasContinuousCandleIntervals = (
+  candles: BacktestKlineCandle[],
+  timeframe: string,
+) => {
+  if (candles.length <= 1) return true;
+
+  const intervalMs = getTimeframeIntervalMs(timeframe);
+  if (!Number.isFinite(intervalMs) || intervalMs <= 0) return false;
+
+  for (let index = 1; index < candles.length; index += 1) {
+    const previousOpen = candles[index - 1]?.openTime;
+    const currentOpen = candles[index]?.openTime;
+    if (!Number.isFinite(previousOpen) || !Number.isFinite(currentOpen)) {
+      return false;
+    }
+    if (currentOpen <= previousOpen) return false;
+    if (currentOpen - previousOpen !== intervalMs) return false;
+  }
+
+  return true;
+};
+
+export const setDbCandleDelegateForTests = (delegate: DbCandleDelegate | null) => {
+  dbCandleDelegateOverride = delegate;
+};
+
+export const resetBacktestDataGatewayCacheForTests = () => {
+  candleCache.clear();
+  supplementalCache.clear();
+  dbCandleDelegateOverride = null;
+};
 
 const cacheKeyForCandles = (
   symbol: string,
@@ -184,8 +213,10 @@ export const fetchKlines = async (
           .map(toKlineFromDb)
           .sort((a, b) => a.openTime - b.openTime)
           .slice(-maxCandles);
-        candleCache.set(key, { cachedAt: Date.now(), candles: dbCandles });
-        return dbCandles;
+        if (hasContinuousCandleIntervals(dbCandles, normalizedTimeframe)) {
+          candleCache.set(key, { cachedAt: Date.now(), candles: dbCandles });
+          return dbCandles;
+        }
       }
     } catch {
       // Database candle cache is an optimization only; network fetch remains source of truth.

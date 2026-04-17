@@ -56,6 +56,7 @@ export type BacktestRunDetailsCopy = {
   zoom: string;
   pairStatsTitle: string;
   parityFailed: string;
+  runTotalValue: string;
   chartWindowValue: string;
   avgHold: string;
   pnl: string;
@@ -160,6 +161,7 @@ const EN_COPY: BacktestRunDetailsCopy = {
   zoom: 'Zoom',
   pairStatsTitle: 'Pair stats',
   parityFailed: 'Parity FAILED',
+  runTotalValue: 'Run total',
   chartWindowValue: 'Chart window',
   avgHold: 'Avg hold',
   pnl: 'PnL',
@@ -264,6 +266,7 @@ const PL_COPY: BacktestRunDetailsCopy = {
   zoom: 'Zoom',
   pairStatsTitle: 'Statystyki pary',
   parityFailed: 'Przetwarzanie pary nie powiodlo sie',
+  runTotalValue: 'Caly run',
   chartWindowValue: 'Zakres wykresu',
   avgHold: 'Sredni hold',
   pnl: 'PnL',
@@ -325,6 +328,7 @@ const PT_COPY: BacktestRunDetailsCopy = {
   tabSummary: 'Resumo',
   tabMarkets: 'Mercados',
   tabTrades: 'Trades',
+  runTotalValue: 'Total da execucao',
   noTradesTitle: 'Sem trades',
   noTradesDescription: 'Nao existem trades para esta execucao.',
 };
