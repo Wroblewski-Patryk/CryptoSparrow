@@ -18,6 +18,7 @@ export default function BacktestsCreatePage() {
   const router = useRouter();
   const { locale, t } = useI18n();
   const [submitting, setSubmitting] = useState(false);
+  const createLabel = 'Create';
 
   const handleCreate = async (payload: CreateBacktestRunInput) => {
     const createFailed = locale === 'en' ? 'Could not create backtest run' : 'Nie udalo sie utworzyc runa backtestu';
@@ -42,7 +43,7 @@ export default function BacktestsCreatePage() {
         breadcrumb={[
           { label: t('dashboard.common.dashboard'), href: '/dashboard' },
           { label: t('dashboard.nav.backtests'), href: '/dashboard/backtests/list' },
-          { label: t('dashboard.nav.createBacktest'), icon: <LuPlus className='h-3.5 w-3.5' /> },
+          { label: createLabel, icon: <LuPlus className='h-3.5 w-3.5' /> },
         ]}
         actions={
           <button type='submit' form={BACKTEST_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS}>

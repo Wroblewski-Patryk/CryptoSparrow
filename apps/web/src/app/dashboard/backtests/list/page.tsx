@@ -9,6 +9,8 @@ import { LuChartLine, LuList } from 'react-icons/lu';
 export default function BacktestsListPage() {
   const router = useRouter();
   const { t } = useI18n();
+  const listLabel = 'List';
+  const createLabel = 'Create';
 
   return (
     <section className='w-full space-y-4'>
@@ -18,10 +20,10 @@ export default function BacktestsListPage() {
         breadcrumb={[
           { label: t('dashboard.common.dashboard'), href: '/dashboard' },
           { label: t('dashboard.nav.backtests'), href: '/dashboard/backtests/list' },
-          { label: t('dashboard.nav.backtestsList'), icon: <LuList className='h-3.5 w-3.5' /> },
+          { label: listLabel, icon: <LuList className='h-3.5 w-3.5' /> },
         ]}
         onAdd={() => router.push('/dashboard/backtests/create')}
-        addLabel={t('dashboard.nav.createBacktest')}
+        addLabel={createLabel}
       />
 
       <BacktestsListView />

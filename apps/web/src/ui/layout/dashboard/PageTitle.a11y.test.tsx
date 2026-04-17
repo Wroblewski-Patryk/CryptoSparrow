@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
 
@@ -26,6 +26,23 @@ describe("PageTitle accessibility contract", () => {
     const breadcrumbsNav = screen.getByRole("navigation", { name: "Breadcrumb navigation" });
     expect(breadcrumbsNav).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1, name: "Wallets" })).toBeInTheDocument();
+  });
+
+  it("keeps module heading linkable when breadcrumb module item has href", () => {
+    renderWithI18n(
+      <PageTitle
+        title="Backtests"
+        breadcrumb={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Backtests", href: "/dashboard/backtests/list" },
+          { label: "List" },
+        ]}
+      />
+    );
+
+    const heading = screen.getByRole("heading", { level: 1, name: "Backtests" });
+    const headingLink = within(heading).getByRole("link", { name: "Backtests" });
+    expect(headingLink).toHaveAttribute("href", "/dashboard/backtests/list");
   });
 
   it("keeps visible create label and exposes contextual SR description", () => {

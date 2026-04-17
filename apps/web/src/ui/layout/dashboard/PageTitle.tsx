@@ -134,12 +134,25 @@ export function PageTitle({
               if (isTitleCrumb) {
                 const titleContent = (
                   <h1 className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-xl font-medium tracking-tight text-transparent md:text-2xl">
-                    {icon ? (
-                      <span className="inline-flex h-7 w-7 items-center justify-center text-primary">
-                        {icon}
-                      </span>
-                    ) : null}
-                    <span>{title}</span>
+                    {item.href ? (
+                      <Link href={item.href} className="inline-flex items-center gap-2">
+                        {icon ? (
+                          <span className="inline-flex h-7 w-7 items-center justify-center text-primary">
+                            {icon}
+                          </span>
+                        ) : null}
+                        <span>{title}</span>
+                      </Link>
+                    ) : (
+                      <>
+                        {icon ? (
+                          <span className="inline-flex h-7 w-7 items-center justify-center text-primary">
+                            {icon}
+                          </span>
+                        ) : null}
+                        <span>{title}</span>
+                      </>
+                    )}
                   </h1>
                 );
 
