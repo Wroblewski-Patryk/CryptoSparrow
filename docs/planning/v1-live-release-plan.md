@@ -185,6 +185,7 @@ Objective: deliver deterministic runtime parity across `BACKTEST`, `PAPER`, and 
 | dashboard runtime-card staleness or reconnect churn | disable `WEB_RUNTIME_SSE_PREFERRED_ENABLED` |
 
 ## Progress Log
+- 2026-04-17: Closed lingering `Worker Split Timing` open decision in canonical governance (`docs/planning/open-decisions.md`) by locking `PROD` mandatory API/worker split-process policy and explicit `STAGE/DEV` split trigger thresholds (execution queue lag, API p95 + lag coupling, restart burst) with deployment/SLO/incident runbook references.
 - 2026-04-16: Added `CPDB-22` runbook guardrails in V1 live plan with staged CPU/DB flag enable sequence (stage -> canary -> full) and explicit rollback matrix for runtime CPU/DB and dashboard refresh regressions.
 - 2026-04-10: Closed V1 external production gates end-to-end: collected 30-minute production SLO window from VPS/private ops network path (`docs/operations/_artifacts-slo-window-2026-04-10T17-09-26-532Z.json`, `docs/operations/v1-slo-observation-2026-04-10T17-09-26-532Z.md`), completed Gate1/Gate3 runbook evidence, finalized RC sign-off record, and reached strict production evidence check PASS (`G1/G2/G3/G4 = PASS`).
 - 2026-04-07: Added explicit production prerequisites (target API + admin JWT + `PROD_DB_CHECK_*`) and one-command production closure instructions in RC runbook/checklist for final exit-gate execution.

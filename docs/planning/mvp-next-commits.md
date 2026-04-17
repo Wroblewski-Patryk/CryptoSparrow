@@ -16,6 +16,10 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `WSPLIT-A worker-split-decision-closure: resolve open Worker Split Timing policy and sync canonical plans`
+  - 2026-04-17: Closed `WSPLIT-A` by completing `WSPLIT-01` (resolved `Worker Split Timing` in `open-decisions.md` with explicit `PROD` mandatory split policy plus `STAGE/DEV` trigger thresholds based on queue lag/API latency/restart-burst conditions, synchronized canonical queue/plan files, and validated with `pnpm run docs:parity:check` PASS).
+- [x] `WSPLIT-01 docs(decision): close Worker Split Timing with explicit split policy and thresholds using docs/planning/worker-split-timing-decision-closure-plan-2026-04-17.md`
+  - 2026-04-17: Published decision closure plan and locked stage/dev split triggers (`queue lag`, `API p95 + lag coupling`, `restart burst`) with escalation contract references to deployment/SLO/incident docs.
 - [x] `NAVHF-A dashboard-nav-regression: remove unnecessary top-level Exchanges link from main dashboard menu`
   - 2026-04-17: Closed `NAVHF-A` by completing `NAVHF-01` (removed top-level `Exchanges` from dashboard header nav model for desktop/mobile, updated responsive regression assertions to enforce no `Exchanges` link, and validated with `pnpm --filter web test -- src/ui/layout/dashboard/Header.responsive.test.tsx` + `pnpm --filter web run typecheck`, both PASS).
 - [x] `NAVHF-01 fix(web-nav): remove top-level Exchanges link regression from dashboard menu (introduced in 1b91763) using docs/planning/dashboard-nav-exchanges-removal-hotfix-plan-2026-04-17.md`

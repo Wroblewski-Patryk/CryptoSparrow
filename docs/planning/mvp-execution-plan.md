@@ -1595,6 +1595,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `DOCSYNC-A docs-parity-sustainment: periodic parity audit refresh + queue continuity safeguards`
 - [x] `L10NPT-A localization(pt-pt): execute European Portuguese rollout queue from docs/planning/pt-pt-localization-rollout-plan-2026-04-17.md (pt-PT only, no pt-BR)`
 - [x] `NAVHF-A dashboard-nav-regression: remove unnecessary top-level Exchanges link from main dashboard menu`
+- [x] `WSPLIT-A worker-split-decision-closure: resolve open Worker Split Timing policy and sync canonical plans`
 
 ### Active Task Breakdown (A11Y-A)
 - [x] `A11Y-01 docs(plan): publish full accessibility pass timeline and resolve open decision`
@@ -1612,7 +1613,11 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 ### Active Task Breakdown (NAVHF-A)
 - [x] `NAVHF-01 fix(web-nav): remove top-level Exchanges link regression from dashboard menu (introduced in commit 1b91763)`
 
+### Active Task Breakdown (WSPLIT-A)
+- [x] `WSPLIT-01 docs(decision): close Worker Split Timing with explicit split policy and thresholds`
+
 ### Progress Log (Post-PEX Continuation)
+- 2026-04-17: Closed `WSPLIT-A` by completing `WSPLIT-01` (resolved `Worker Split Timing` open decision by locking `PROD` mandatory API/worker split-process policy and concrete `STAGE/DEV` split triggers for queue lag/API p95/restart burst, published closure plan `docs/planning/worker-split-timing-decision-closure-plan-2026-04-17.md`, and validated queue/docs synchronization with `pnpm run docs:parity:check` PASS).
 - 2026-04-17: Closed `NAVHF-A` by completing `NAVHF-01` (removed top-level `Exchanges` from `Header` direct module navigation so desktop/mobile main menu now starts with `Wallets`, updated responsive nav contract assertions to enforce no `Exchanges` link while preserving wallet/markets routes, and validated with `pnpm --filter web test -- src/ui/layout/dashboard/Header.responsive.test.tsx` + `pnpm --filter web run typecheck`, both PASS).
 - 2026-04-17: Closed `L10NPT-A` by completing `L10NPT-01..L10NPT-12` (locale contract expanded to `en/pl/pt` with `pt-PT` formatting, language switcher and namespace support, shared/page/feature locale-branch widening, i18n parity tests refreshed, hardcoded-locale scan result `0` matches, smoke/build pack PASS, and closure evidence in `docs/operations/_artifacts-l10npt-rollout-2026-04-16T22-59-22-697Z.json` + `docs/operations/l10npt-rollout-closure-2026-04-17.md`); promoted `NAVHF-A` as next active group.
 - 2026-04-17: Added `NAVHF-A` hotfix group and queued `NAVHF-01` to remove unintended top-level `Exchanges` main-menu link regression (reintroduced in commit `1b91763`), with execution details captured in `docs/planning/dashboard-nav-exchanges-removal-hotfix-plan-2026-04-17.md`.

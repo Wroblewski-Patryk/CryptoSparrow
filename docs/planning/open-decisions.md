@@ -374,8 +374,25 @@ This file tracks intentionally unresolved architecture choices so implementation
   - rollout is blocked when any critical threshold is breached until rollback/mitigation clears the signal.
 
 ## Worker Split Timing
-- Open: exact threshold for splitting API and workers into separate processes.
-- Current assumption: split when queue lag or API latency exceeds acceptable limits.
+- Decision state: resolved on 2026-04-17.
+- Decision:
+  - `PROD`: API and workers are mandatory split-process services (no shared-process fallback in normal operation).
+  - `STAGE/DEV`: split API and workers when any trigger below is met.
+- Trigger contract for `STAGE/DEV` split:
+  - execution queue lag pressure:
+    - `worker.queueLag.execution` p95 `> 10` for `>= 15 minutes`, or
+    - `worker.queueLag.execution` max `> 20` for `>= 5 minutes`.
+  - API latency with queue coupling:
+    - API p95 `>= 350ms` for `>= 10 minutes` with simultaneous execution queue lag p95 `> 10`.
+  - restart instability:
+    - runtime restart burst reaches critical threshold (`>= 6 restarts / 30 minutes`) and queue lag does not recover to `<= 10` within 10 minutes.
+- Escalation policy:
+  - when any trigger is met, promote split-process topology before further runtime feature rollout.
+  - if already split and trigger persists, treat as incident and execute runtime triage/rollback playbooks.
+- Canonical references:
+  - `docs/planning/deployment-dev-prod-coolify-plan-2026-04-02.md`
+  - `docs/operations/v1-slo-catalog.md`
+  - `docs/operations/runtime-incident-triage-matrix.md`
 
 ## Stream Transport to Frontend
 - Decision state: resolved on 2026-03-19.
