@@ -418,9 +418,9 @@ describe("HomeLiveWidgets", () => {
     renderSubject();
 
     await waitFor(() => {
-      expect(screen.getByRole("tab", { name: /Otwarte pozycje|Open positions/i })).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: /Otwarte zlecenia|Open orders/i })).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: /Historia transakcji|Trade history/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /Pozycje|Positions/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /Zlecenia|Orders/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /Historia|History/i })).toBeInTheDocument();
       expect(screen.getByText(/Wybrany bot|Selected bot/i)).toBeInTheDocument();
       expect(screen.getByRole("option", { name: /Monitor Bot/i })).toBeInTheDocument();
       expect(screen.getAllByText("RUNNING").length).toBeGreaterThan(0);
@@ -441,9 +441,9 @@ describe("HomeLiveWidgets", () => {
       expect(screen.getAllByText("-").length).toBeGreaterThan(0);
     });
     {
-      const openPositionsTab = screen.getByRole("tab", { name: /Otwarte pozycje|Open positions/i });
-      const openOrdersTab = screen.getByRole("tab", { name: /Otwarte zlecenia|Open orders/i });
-      const tradeHistoryTab = screen.getByRole("tab", { name: /Historia transakcji|Trade history/i });
+      const openPositionsTab = screen.getByRole("tab", { name: /Pozycje|Positions/i });
+      const openOrdersTab = screen.getByRole("tab", { name: /Zlecenia|Orders/i });
+      const tradeHistoryTab = screen.getByRole("tab", { name: /Historia|History/i });
 
       expect(openPositionsTab.compareDocumentPosition(openOrdersTab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       expect(openOrdersTab.compareDocumentPosition(tradeHistoryTab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -451,7 +451,7 @@ describe("HomeLiveWidgets", () => {
 
     expect(lookupCoinIconsMock).toHaveBeenCalledWith(expect.arrayContaining(["BTCUSDT", "ETHUSDT"]));
 
-    fireEvent.click(screen.getByRole("tab", { name: /Historia transakcji/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Historia|History/i }));
     expect(screen.queryByRole("columnheader", { name: /^Fee$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: /^Origin$/i })).not.toBeInTheDocument();
   });
@@ -591,7 +591,7 @@ describe("HomeLiveWidgets", () => {
     });
 
     const signalsAnchor = screen.getByText("SOLUSDT");
-    const openPositionsTab = screen.getByRole("tab", { name: /Otwarte pozycje|Open positions/i });
+    const openPositionsTab = screen.getByRole("tab", { name: /Pozycje|Positions/i });
     expect(openPositionsTab.compareDocumentPosition(signalsAnchor) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
@@ -1223,7 +1223,7 @@ describe("HomeLiveWidgets", () => {
     });
 
     renderSubject();
-    const openPositionsTab = await screen.findByRole("tab", { name: /Otwarte pozycje|Open positions/i });
+    const openPositionsTab = await screen.findByRole("tab", { name: /Pozycje|Positions/i });
     fireEvent.click(openPositionsTab);
     const closeButton = await screen.findByRole("button", { name: /Zamknij pozycje|Close position/i });
     fireEvent.click(closeButton);
@@ -1781,7 +1781,7 @@ describe("HomeLiveWidgets", () => {
 
     expect(screen.queryByRole("option", { name: /Unknown/i })).not.toBeInTheDocument();
 
-    const tradeHistoryTab = screen.getByRole("tab", { name: /Historia transakcji/i });
+    const tradeHistoryTab = screen.getByRole("tab", { name: /Historia|History/i });
     fireEvent.click(tradeHistoryTab);
 
     const callsAfterInitialLoad = listBotRuntimeSessionTradesMock.mock.calls.length;
@@ -1817,7 +1817,7 @@ describe("HomeLiveWidgets", () => {
       expect(toDate.getUTCMilliseconds()).toBe(999);
     }
 
-    const historyTab = screen.getByRole("tab", { name: /Historia transakcji/i });
+    const historyTab = screen.getByRole("tab", { name: /Historia|History/i });
     fireEvent.click(historyTab);
 
     const marginSortButton = screen.getByRole("button", { name: /Margin/i });
