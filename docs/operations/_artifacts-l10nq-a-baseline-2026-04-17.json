@@ -1,0 +1,77 @@
+{
+  "artifact": "l10nq-a-baseline",
+  "generatedAtUtc": "2026-04-17T16:35:00Z",
+  "scope": {
+    "group": "L10NQ-A",
+    "tasks": ["L10NQ-01", "L10NQ-02", "L10NQ-03", "L10NQ-04", "L10NQ-05"]
+  },
+  "localeClampBaseline": [
+    {
+      "file": "apps/web/src/features/backtest/components/BacktestCreateForm.tsx",
+      "line": 34,
+      "pattern": "locale = i18n?.locale === 'en' ? 'en' : 'pl'"
+    },
+    {
+      "file": "apps/web/src/features/backtest/components/BacktestsListView.tsx",
+      "line": 14,
+      "pattern": "locale = i18n?.locale === 'en' ? 'en' : 'pl'"
+    },
+    {
+      "file": "apps/web/src/features/backtest/components/BacktestsRunsTable.tsx",
+      "line": 39,
+      "pattern": "locale = i18n?.locale === 'en' ? 'en' : 'pl'"
+    },
+    {
+      "file": "apps/web/src/features/backtest/components/BacktestRunDetails.tsx",
+      "line": 1186,
+      "pattern": "locale = i18n?.locale === 'en' ? 'en' : 'pl'"
+    },
+    {
+      "file": "apps/web/src/features/backtest/components/backtestRunDetails.copy.ts",
+      "line": 313,
+      "pattern": "getBacktestRunDetailsCopy(locale: 'pl' | 'en')"
+    }
+  ],
+  "hardcodedCopyHotspotsBaseline": [
+    {
+      "file": "apps/web/src/features/auth/components/LoginForm.tsx",
+      "sample": "Sign in / Remember this device / Password reset will be available soon"
+    },
+    {
+      "file": "apps/web/src/features/auth/components/RegisterForm.tsx",
+      "sample": "Create account / Terms of Service / Privacy Policy"
+    },
+    {
+      "file": "apps/web/src/features/admin/users/pages/AdminUsersPage.tsx",
+      "sample": "Users admin / Manage account roles / Search by email or name"
+    },
+    {
+      "file": "apps/web/src/features/admin/subscriptions/pages/AdminSubscriptionsPage.tsx",
+      "sample": "Subscriptions admin / Edit pricing and entitlement limits"
+    },
+    {
+      "file": "apps/web/src/app/dashboard/reports/page.tsx",
+      "sample": "Reports / Dashboard / Performance"
+    },
+    {
+      "file": "apps/web/src/app/dashboard/markets/create/page.tsx",
+      "sample": "hardcoded Dashboard breadcrumb label + mixed Save/Create copy handling"
+    },
+    {
+      "file": "apps/web/src/app/dashboard/markets/list/page.tsx",
+      "sample": "hardcoded Dashboard breadcrumb label + mixed List/Create copy handling"
+    },
+    {
+      "file": "apps/web/src/app/dashboard/markets/[id]/edit/page.tsx",
+      "sample": "hardcoded Dashboard breadcrumb label + mixed Save/Edit copy handling"
+    },
+    {
+      "file": "apps/web/src/features/markets/components/MarketUniverseForm.tsx",
+      "sample": "module UI copy hardcoded in Polish without locale selection"
+    }
+  ],
+  "notes": [
+    "Baseline captured before L10NQ-A remediation commits.",
+    "Test files are intentionally excluded from this baseline artifact."
+  ]
+}
