@@ -1232,6 +1232,11 @@ describe("HomeLiveWidgets", () => {
     renderSubject();
     const openPositionsTab = await screen.findByRole("tab", { name: /Pozycje|Positions/i });
     fireEvent.click(openPositionsTab);
+    const editButton = await screen.findByRole("button", { name: /Edytuj pozycje|Edit position/i });
+    fireEvent.click(editButton);
+    expect(await screen.findByLabelText(/Take profit \(TP\)/i)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/Stop loss \(SL\)/i)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/Notes/i)).toBeInTheDocument();
     const closeButton = await screen.findByRole("button", { name: /Zamknij pozycje|Close position/i });
     fireEvent.click(closeButton);
 

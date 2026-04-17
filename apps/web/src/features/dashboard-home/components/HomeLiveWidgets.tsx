@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useMemo } from "react";
-import { LuBot, LuChartCandlestick, LuChartLine, LuChevronDown, LuListChecks, LuPackageOpen, LuWallet, LuX } from "react-icons/lu";
+import { useCallback, useMemo, useState } from "react";
+import { LuBot, LuChartCandlestick, LuChartLine, LuChevronDown, LuListChecks, LuPackageOpen, LuPencil, LuWallet, LuX } from "react-icons/lu";
 
 import { ErrorState } from "../../../ui/components/ViewState";
 import { SkeletonCardBlock, SkeletonKpiRow, SkeletonTableRows } from "../../../ui/components/loading";
 import { DataTableColumn } from "../../../ui/components/DataTable";
+import FormModal from "../../../ui/components/FormModal";
 import AssetSymbol from "../../../ui/components/AssetSymbol";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
@@ -222,6 +223,13 @@ type TradeActionReasonValue =
   | "SIGNAL_EXIT"
   | "MANUAL"
   | "UNKNOWN";
+type PositionEditDraft = {
+  position: OpenPositionWithLive;
+  takeProfit: string;
+  stopLoss: string;
+  notes: string;
+  lockRules: boolean;
+};
 
 const tradeActionPillClass = (value: TradeActionValue) => {
   if (value === "OPEN") return "border-success/40 bg-success/10 text-success";
@@ -310,6 +318,7 @@ export default function HomeLiveWidgets() {
     listBots,
     t,
   });
+  const [positionEditDraft, setPositionEditDraft] = useState<PositionEditDraft | null>(null);
   const runtimeOnboardingSteps = useMemo(
     () => [
       {
@@ -639,6 +648,25 @@ export default function HomeLiveWidgets() {
       ? "Position was not closed (already closed or not eligible)."
       : "Pozycja nie zostala zamknieta (jest juz zamknieta lub nie kwalifikuje sie).";
   const closePositionErrorLabel = closeActionBaseLabel === "Close" ? "Failed to close position." : "Nie udalo sie zamknac pozycji.";
+  const editPositionButtonLabel = closeActionBaseLabel === "Close" ? "Edit position" : "Edytuj pozycje";
+  const editPositionModalTitle = closeActionBaseLabel === "Close" ? "Position edit" : "Edycja pozycji";
+  const editPositionModalDescription =
+    closeActionBaseLabel === "Close"
+      ? "Adjust TP/SL and notes. Save action is enabled in the API integration step."
+      : "Dostosuj TP/SL i notatki. Zapis zostanie aktywowany po podpieciu API.";
+
+  const openPositionEdit = useCallback((position: OpenPositionWithLive) => {
+    setPositionEditDraft({
+      position,
+      takeProfit: position.takeProfit != null ? String(position.takeProfit) : "",
+      stopLoss: position.stopLoss != null ? String(position.stopLoss) : "",
+      notes: "",
+      lockRules: false,
+    });
+  }, []);
+  const closePositionEdit = useCallback(() => {
+    setPositionEditDraft(null);
+  }, []);
 
   const { isClosingPosition, handleCloseRuntimePosition } = useCloseRuntimePositionAction({
     closePositionErrorLabel,
@@ -756,21 +784,34 @@ export default function HomeLiveWidgets() {
         const isClosing = isClosingPosition(row.id);
         const actionLabel = isClosing ? closePositionPendingLabel : closePositionButtonLabel;
         return (
-          <button
-            type="button"
-            className="btn btn-error btn-outline btn-xs btn-square"
-            onClick={() => void handleCloseRuntimePosition(row)}
-            disabled={isClosing}
-            aria-label={actionLabel}
-            title={actionLabel}
-          >
-            {isClosing ? (
-              <span className="loading loading-spinner loading-xs" aria-hidden />
-            ) : (
-              <LuX className="h-3.5 w-3.5" aria-hidden />
-            )}
-            <span className="sr-only">{actionLabel}</span>
-          </button>
+          <div className="flex items-center justify-end gap-1">
+            <button
+              type="button"
+              className="btn btn-outline btn-xs btn-square"
+              onClick={() => openPositionEdit(row)}
+              disabled={isClosing}
+              aria-label={editPositionButtonLabel}
+              title={editPositionButtonLabel}
+            >
+              <LuPencil className="h-3.5 w-3.5" aria-hidden />
+              <span className="sr-only">{editPositionButtonLabel}</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-error btn-outline btn-xs btn-square"
+              onClick={() => void handleCloseRuntimePosition(row)}
+              disabled={isClosing}
+              aria-label={actionLabel}
+              title={actionLabel}
+            >
+              {isClosing ? (
+                <span className="loading loading-spinner loading-xs" aria-hidden />
+              ) : (
+                <LuX className="h-3.5 w-3.5" aria-hidden />
+              )}
+              <span className="sr-only">{actionLabel}</span>
+            </button>
+          </div>
         );
       },
     });
@@ -780,12 +821,14 @@ export default function HomeLiveWidgets() {
     closePositionActionColumnLabel,
     closePositionButtonLabel,
     closePositionPendingLabel,
+    editPositionButtonLabel,
     formatDateTimeWithSeconds,
     formatDcaPercent,
     formatPercent,
     formatRuntimeAmount,
     handleCloseRuntimePosition,
     isClosingPosition,
+    openPositionEdit,
     resolveRuntimeIcon,
     runtimeIconsError,
     runtimeIconsLoading,
@@ -1145,6 +1188,112 @@ export default function HomeLiveWidgets() {
           }}
         />
       </section>
+      <FormModal
+        open={Boolean(positionEditDraft)}
+        title={editPositionModalTitle}
+        description={editPositionModalDescription}
+        onClose={closePositionEdit}
+      >
+        {positionEditDraft ? (
+          <div className="space-y-4">
+            <section className="rounded-box border border-base-300/60 bg-base-200/60 p-3 text-xs">
+              <div className="grid gap-2 md:grid-cols-2">
+                <p>
+                  <span className="opacity-70">{t("dashboard.home.runtime.symbol")}:</span>{" "}
+                  <span className="font-semibold">{positionEditDraft.position.symbol}</span>
+                </p>
+                <p>
+                  <span className="opacity-70">{t("dashboard.home.runtime.side")}:</span>{" "}
+                  <span className="font-semibold">{positionEditDraft.position.side}</span>
+                </p>
+                <p>
+                  <span className="opacity-70">{t("dashboard.home.runtime.reason")}:</span>{" "}
+                  <span className="font-semibold">{positionEditDraft.position.origin ?? "BOT"}</span>
+                </p>
+                <p>
+                  <span className="opacity-70">{t("dashboard.home.runtime.dca")}:</span>{" "}
+                  <span className="font-semibold">{positionEditDraft.position.dcaCount}</span>
+                </p>
+                <p>
+                  <span className="opacity-70">{t("dashboard.bots.create.strategyLabel")}:</span>{" "}
+                  <span className="font-semibold">{selected?.bot.strategyId ?? "-"}</span>
+                </p>
+                <p>
+                  <span className="opacity-70">{t("dashboard.home.runtime.timeOpened")}:</span>{" "}
+                  <span className="font-semibold">{formatDateTimeWithSeconds(positionEditDraft.position.openedAt)}</span>
+                </p>
+              </div>
+            </section>
+            <section className="grid gap-3 md:grid-cols-2">
+              <label className="form-control gap-1">
+                <span className="label-text text-xs">Take profit (TP)</span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.0001"
+                  min="0"
+                  className="input input-bordered input-sm"
+                  value={positionEditDraft.takeProfit}
+                  onChange={(event) =>
+                    setPositionEditDraft((current) =>
+                      current ? { ...current, takeProfit: event.target.value } : current
+                    )
+                  }
+                />
+              </label>
+              <label className="form-control gap-1">
+                <span className="label-text text-xs">Stop loss (SL)</span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.0001"
+                  min="0"
+                  className="input input-bordered input-sm"
+                  value={positionEditDraft.stopLoss}
+                  onChange={(event) =>
+                    setPositionEditDraft((current) =>
+                      current ? { ...current, stopLoss: event.target.value } : current
+                    )
+                  }
+                />
+              </label>
+            </section>
+            <label className="form-control gap-1">
+              <span className="label-text text-xs">Notes</span>
+              <textarea
+                className="textarea textarea-bordered min-h-20"
+                value={positionEditDraft.notes}
+                onChange={(event) =>
+                  setPositionEditDraft((current) =>
+                    current ? { ...current, notes: event.target.value } : current
+                  )
+                }
+                placeholder={closeActionBaseLabel === "Close" ? "Optional operator notes" : "Opcjonalne notatki operatora"}
+              />
+            </label>
+            <label className="label cursor-pointer justify-start gap-3 p-0">
+              <input
+                type="checkbox"
+                className="checkbox checkbox-sm"
+                checked={positionEditDraft.lockRules}
+                onChange={(event) =>
+                  setPositionEditDraft((current) =>
+                    current ? { ...current, lockRules: event.target.checked } : current
+                  )
+                }
+              />
+              <span className="label-text text-xs">
+                {closeActionBaseLabel === "Close" ? "Lock runtime stop rules for this edit" : "Zablokuj runtime stop-rules dla tej edycji"}
+              </span>
+            </label>
+            <div className="modal-action mt-0">
+              <button type="button" className="btn btn-outline btn-sm" onClick={closePositionEdit}>
+                {closeActionBaseLabel === "Close" ? "Close" : "Zamknij"}
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </FormModal>
     </div>
   );
 }

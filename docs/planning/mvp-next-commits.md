@@ -13,7 +13,7 @@ Operational queue for one-task execution runs.
 - [x] `UXR-09 fix(web-actions): implement per-row pending state for concurrent close actions`
 - [x] `UXR-10 fix(api-close-position): align close-position button flow with backend close handler`
 ## NEXT
-- [ ] `UXR-11 feat(web-position-edit-modal): add reusable modal shell + initial position-edit form`
+- [x] `UXR-11 feat(web-position-edit-modal): add reusable modal shell + initial position-edit form`
 - [ ] `UXR-12 feat(api-position-edit): expose safe manual update endpoint for TP/SL and metadata`
 - [ ] `UXR-13 feat(web-dashboard-manual-order): add manual order panel using existing bot order pipeline`
 - [ ] `UXR-14 feat(web-markets-form): compose symbol universe from (min-volume U whitelist) - blacklist`
@@ -36,6 +36,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `UXR-11 feat(web-position-edit-modal): add reusable modal shell + initial position-edit form`
+  - 2026-04-17: Added reusable dashboard `FormModal` shell and integrated an initial open-position edit flow in `HomeLiveWidgets` with per-row edit action (TP/SL/notes/lock-rules draft + runtime context block), preserving close-action behavior and extending widget regression coverage for edit modal fields. Validation pack: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`, `pnpm --filter web run typecheck` => `PASS`.
 - [x] `UXR-10 fix(api-close-position): align close-position button flow with backend close handler`
   - 2026-04-17: Hardened runtime close-position endpoint to be idempotent for repeated dashboard closes by resolving already-closed owned positions to `status=closed` (using latest CLOSE trade/order reference) instead of returning false-negative `ignored`, and added API regression assertion for repeated close call contract. Validation pack: `pnpm --filter api test -- src/modules/orders/orders-positions.e2e.test.ts` => `9/9 PASS`, `pnpm --filter api test -- src/modules/bots/bots.e2e.test.ts -t "closes open runtime position from dashboard endpoint and enforces risk acknowledgement"` => `1/1 PASS`.
 - [x] `UXR-09 fix(web-actions): implement per-row pending state for concurrent close actions`
