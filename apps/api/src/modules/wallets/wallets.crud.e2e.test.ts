@@ -157,6 +157,45 @@ describe('Wallet CRUD and ownership contract', () => {
     });
   });
 
+  it('blocks wallet update when wallet is used by active bot', async () => {
+    const email = 'wallet-crud-update-guard@example.com';
+    const agent = await registerAndLogin(email);
+
+    const created = await agent.post('/dashboard/wallets').send({
+      name: 'Guarded update wallet',
+      mode: 'PAPER',
+      exchange: 'BINANCE',
+      marketType: 'FUTURES',
+      baseCurrency: 'USDT',
+      paperInitialBalance: 5000,
+    });
+    expect(created.status).toBe(201);
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+    expect(user?.id).toBeTruthy();
+
+    await prisma.bot.create({
+      data: {
+        userId: user!.id,
+        name: 'Active guard bot',
+        walletId: created.body.id,
+        isActive: true,
+      },
+    });
+
+    const updateRes = await agent.put(`/dashboard/wallets/${created.body.id}`).send({
+      name: 'Should fail',
+    });
+    expect(updateRes.status).toBe(409);
+    expect(updateRes.body.error.message).toBe('wallet is used by active bot and cannot be edited');
+    expect(updateRes.body.error.details).toMatchObject({
+      botName: 'Active guard bot',
+    });
+  });
+
   it('enforces ownership isolation for get/update/delete wallet endpoints', async () => {
     const owner = await registerAndLogin('wallet-crud-owner@example.com');
     const outsider = await registerAndLogin('wallet-crud-outsider@example.com');

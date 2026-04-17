@@ -26,6 +26,9 @@ const handleWalletError = (res: Response, error: unknown) => {
   if (mapped.code === WALLET_ERROR_CODES.inUseCannotDelete) {
     return sendError(res, 409, 'wallet is used by at least one bot and cannot be deleted', mapped.details);
   }
+  if (mapped.code === WALLET_ERROR_CODES.inUseByActiveBotCannotEdit) {
+    return sendError(res, 409, 'wallet is used by active bot and cannot be edited', mapped.details);
+  }
   if (mapped.code === WALLET_ERROR_CODES.previewApiKeyNotFound) {
     return sendError(res, 404, 'api key not found for selected exchange context', mapped.details);
   }

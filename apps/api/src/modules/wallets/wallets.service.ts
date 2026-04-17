@@ -277,6 +277,24 @@ export const updateWallet = async (userId: string, id: string, payload: UpdateWa
   const existing = await getWallet(userId, id);
   if (!existing) return null;
 
+  const activeBot = await prisma.bot.findFirst({
+    where: {
+      userId,
+      walletId: existing.id,
+      isActive: true,
+    },
+    select: {
+      id: true,
+      name: true,
+    },
+  });
+  if (activeBot) {
+    throw walletErrors.inUseByActiveBotCannotEdit({
+      botId: activeBot.id,
+      botName: activeBot.name,
+    });
+  }
+
   const nextMode = payload.mode ?? existing.mode;
   const nextExchange = payload.exchange ?? existing.exchange;
   const nextData = normalizeWalletInput({
