@@ -1317,6 +1317,65 @@ export const closeBotRuntimeSessionPosition = async (
   positionId: string,
   payload: CloseBotRuntimePositionDto
 ): Promise<Awaited<ReturnType<typeof orchestrateRuntimeSignal>> | null> => {
+  const resolveClosedResult = async () => {
+    const closedPosition = await prisma.position.findFirst({
+      where: {
+        id: positionId,
+        userId,
+        botId,
+        status: 'CLOSED',
+        managementMode: 'BOT_MANAGED',
+      },
+      select: {
+        id: true,
+        symbol: true,
+        side: true,
+      },
+    });
+    if (!closedPosition) return null;
+    const latestCloseTrade = await prisma.trade.findFirst({
+      where: {
+        userId,
+        botId,
+        positionId: closedPosition.id,
+        lifecycleAction: 'CLOSE',
+      },
+      orderBy: {
+        executedAt: 'desc',
+      },
+      select: {
+        orderId: true,
+      },
+    });
+    const latestOrderIdFromTrade =
+      typeof latestCloseTrade?.orderId === 'string' && latestCloseTrade.orderId.length > 0
+        ? latestCloseTrade.orderId
+        : null;
+    const latestOrder = latestOrderIdFromTrade
+      ? null
+      : await prisma.order.findFirst({
+          where: {
+            userId,
+            botId,
+            symbol: closedPosition.symbol,
+            side: closedPosition.side === 'LONG' ? 'SELL' : 'BUY',
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          select: {
+            id: true,
+          },
+        });
+    const orderId = latestOrderIdFromTrade ?? latestOrder?.id ?? null;
+    if (!orderId) return null;
+    return {
+      status: 'closed' as const,
+      orderId,
+      positionId: closedPosition.id,
+    };
+  };
+
   const session = await getOwnedBotRuntimeSession(userId, botId, sessionId);
   if (!session) return null;
   if (!payload.riskAck) {
@@ -1353,6 +1412,8 @@ export const closeBotRuntimeSessionPosition = async (
     },
   });
   if (!position) {
+    const alreadyClosed = await resolveClosedResult();
+    if (alreadyClosed) return alreadyClosed;
     return { status: 'ignored', reason: 'no_open_position' };
   }
 
@@ -1404,7 +1465,7 @@ export const closeBotRuntimeSessionPosition = async (
       ? liveTicker.lastPrice
       : fallbackMarkPrice;
 
-  return orchestrateRuntimeSignal({
+  const closeResult = await orchestrateRuntimeSignal({
     userId,
     botId,
     walletId: botContext.walletId ?? undefined,
@@ -1417,4 +1478,12 @@ export const closeBotRuntimeSessionPosition = async (
     mode: botContext.mode,
     reason: 'manual_dashboard_close_position',
   });
+  if (closeResult.status === 'closed') {
+    return closeResult;
+  }
+  if (closeResult.reason === 'no_open_position' || closeResult.reason === 'dedupe_reused') {
+    const alreadyClosed = await resolveClosedResult();
+    if (alreadyClosed) return alreadyClosed;
+  }
+  return closeResult;
 };

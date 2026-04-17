@@ -11,7 +11,7 @@ Operational queue for one-task execution runs.
 - [x] `UXR-07 feat(web-dashboard-tabs): rename tab labels to positions/orders/history`
 - [x] `UXR-08 fix(web-positions-table): move close column to last, rename to Action, use icon button`
 - [x] `UXR-09 fix(web-actions): implement per-row pending state for concurrent close actions`
-- [ ] `UXR-10 fix(api-close-position): align close-position button flow with backend close handler`
+- [x] `UXR-10 fix(api-close-position): align close-position button flow with backend close handler`
 ## NEXT
 - [ ] `UXR-11 feat(web-position-edit-modal): add reusable modal shell + initial position-edit form`
 - [ ] `UXR-12 feat(api-position-edit): expose safe manual update endpoint for TP/SL and metadata`
@@ -36,6 +36,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `UXR-10 fix(api-close-position): align close-position button flow with backend close handler`
+  - 2026-04-17: Hardened runtime close-position endpoint to be idempotent for repeated dashboard closes by resolving already-closed owned positions to `status=closed` (using latest CLOSE trade/order reference) instead of returning false-negative `ignored`, and added API regression assertion for repeated close call contract. Validation pack: `pnpm --filter api test -- src/modules/orders/orders-positions.e2e.test.ts` => `9/9 PASS`, `pnpm --filter api test -- src/modules/bots/bots.e2e.test.ts -t "closes open runtime position from dashboard endpoint and enforces risk acknowledgement"` => `1/1 PASS`.
 - [x] `UXR-09 fix(web-actions): implement per-row pending state for concurrent close actions`
   - 2026-04-17: Replaced dashboard close-position single pending flag with per-row pending map (`isClosingPosition`) so concurrent close actions render independent loading state per row; added hook regression coverage for two simultaneous closes with stepwise completion state checks. Validation pack: `pnpm --filter web test -- src/features/dashboard-home/hooks/useCloseRuntimePositionAction.test.tsx` => `2/2 PASS`, `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`.
 - [x] `UXR-08 fix(web-positions-table): move close column to last, rename to Action, use icon button`

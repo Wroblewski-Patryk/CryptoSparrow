@@ -528,6 +528,15 @@ describe('Orders and positions read contract', () => {
 
     expect(closeRes.status).toBe(200);
     expect(closeRes.body.status).toBe('closed');
+    expect(closeRes.body.positionId).toBe(exchangePosition.id);
+
+    const secondCloseRes = await ownerAgent
+      .post(`/dashboard/bots/${liveBot.id}/runtime-sessions/${session.id}/positions/${exchangePosition.id}/close`)
+      .send({ riskAck: true });
+
+    expect(secondCloseRes.status).toBe(200);
+    expect(secondCloseRes.body.status).toBe('closed');
+    expect(secondCloseRes.body.positionId).toBe(exchangePosition.id);
   });
 
   it('keeps LIVE open orders visible in runtime view when order was created before current session start', async () => {
