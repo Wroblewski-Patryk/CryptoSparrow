@@ -1680,7 +1680,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `UXR-06 feat(web-dashboard-wallet): redesign wallet KPI row + wallet icon consistency`
 - [x] `UXR-07 feat(web-dashboard-tabs): rename tab labels to positions/orders/history`
 - [x] `UXR-08 fix(web-positions-table): move close column to last, rename to Action, use icon button`
-- [ ] `UXR-09 fix(web-actions): implement per-row pending state for concurrent close actions`
+- [x] `UXR-09 fix(web-actions): implement per-row pending state for concurrent close actions`
 - [ ] `UXR-10 fix(api-close-position): align close-position button flow with backend close handler`
 - [ ] `UXR-11 feat(web-position-edit-modal): add reusable modal shell + initial position-edit form`
 - [ ] `UXR-12 feat(api-position-edit): expose safe manual update endpoint for TP/SL and metadata`
@@ -1704,6 +1704,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `UXR-30 qa(regression-pack): run focused API+WEB tests and manual smoke for live/paper parity`
 
 ### Progress Log (Phase 37 - Dashboard + Modules UX/Runtime Fix Wave)
+- 2026-04-17: Completed `UXR-09` by replacing global close-action loader with per-row pending tracking (`isClosingPosition`) so concurrent position-close requests keep independent loading state and clear deterministically as each request resolves; validation: `pnpm --filter web test -- src/features/dashboard-home/hooks/useCloseRuntimePositionAction.test.tsx` => `2/2 PASS`, `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`.
 - 2026-04-17: Completed `UXR-08` open-positions table UX cleanup: close action column moved to final position and renamed to `Action`, with icon-only row button and preserved accessibility labels; validated by `HomeLiveWidgets.test.tsx` (`12/12 PASS`).
 - 2026-04-17: Completed `UXR-07` tab-label polish by replacing long runtime tab copy with concise `positions/orders/history` labels in EN/PL/PT dashboard-home namespaces and by updating widget tab assertions in `HomeLiveWidgets.test.tsx` (`12/12 PASS`).
 - 2026-04-17: Completed `UXR-06` wallet dashboard UX pass by moving `portfolio/free funds/in positions` into one compact, responsive KPI row with consistent wallet-icon semantics in sidebar summary, validated by `HomeLiveWidgets.test.tsx` (`12/12 PASS`).

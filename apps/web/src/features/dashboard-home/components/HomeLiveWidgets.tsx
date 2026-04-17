@@ -640,7 +640,7 @@ export default function HomeLiveWidgets() {
       : "Pozycja nie zostala zamknieta (jest juz zamknieta lub nie kwalifikuje sie).";
   const closePositionErrorLabel = closeActionBaseLabel === "Close" ? "Failed to close position." : "Nie udalo sie zamknac pozycji.";
 
-  const { closingPositionId, handleCloseRuntimePosition } = useCloseRuntimePositionAction({
+  const { isClosingPosition, handleCloseRuntimePosition } = useCloseRuntimePositionAction({
     closePositionErrorLabel,
     closePositionIgnoredLabel,
     closePositionNoSessionLabel,
@@ -753,7 +753,7 @@ export default function HomeLiveWidgets() {
       label: closePositionActionColumnLabel,
       className: "text-right",
       render: (row) => {
-        const isClosing = closingPositionId === row.id;
+        const isClosing = isClosingPosition(row.id);
         const actionLabel = isClosing ? closePositionPendingLabel : closePositionButtonLabel;
         return (
           <button
@@ -780,12 +780,12 @@ export default function HomeLiveWidgets() {
     closePositionActionColumnLabel,
     closePositionButtonLabel,
     closePositionPendingLabel,
-    closingPositionId,
     formatDateTimeWithSeconds,
     formatDcaPercent,
     formatPercent,
     formatRuntimeAmount,
     handleCloseRuntimePosition,
+    isClosingPosition,
     resolveRuntimeIcon,
     runtimeIconsError,
     runtimeIconsLoading,

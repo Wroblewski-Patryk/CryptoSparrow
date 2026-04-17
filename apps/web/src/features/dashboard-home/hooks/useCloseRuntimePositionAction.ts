@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { closeBotRuntimeSessionPosition } from '@/features/bots/services/bots.service';
 import type { OpenPositionWithLive } from '../components/home-live-widgets/types';
@@ -22,7 +22,12 @@ export const useCloseRuntimePositionAction = ({
   selectedBotId,
   selectedSessionId,
 }: UseCloseRuntimePositionActionParams) => {
-  const [closingPositionId, setClosingPositionId] = useState<string | null>(null);
+  const [closingPositionById, setClosingPositionById] = useState<Record<string, true>>({});
+  const closingPositionIds = useMemo(() => Object.keys(closingPositionById), [closingPositionById]);
+  const isClosingPosition = useCallback(
+    (positionId: string) => Boolean(closingPositionById[positionId]),
+    [closingPositionById]
+  );
 
   const handleCloseRuntimePosition = useCallback(
     async (position: OpenPositionWithLive) => {
@@ -33,7 +38,7 @@ export const useCloseRuntimePositionAction = ({
         return;
       }
 
-      setClosingPositionId(position.id);
+      setClosingPositionById((current) => ({ ...current, [position.id]: true }));
       try {
         const result = await closeBotRuntimeSessionPosition(botId, sessionId, position.id, {
           riskAck: true,
@@ -47,7 +52,11 @@ export const useCloseRuntimePositionAction = ({
       } catch {
         toast.error(closePositionErrorLabel);
       } finally {
-        setClosingPositionId((current) => (current === position.id ? null : current));
+        setClosingPositionById((current) => {
+          if (!current[position.id]) return current;
+          const { [position.id]: _removed, ...rest } = current;
+          return rest;
+        });
       }
     },
     [
@@ -62,7 +71,8 @@ export const useCloseRuntimePositionAction = ({
   );
 
   return {
-    closingPositionId,
+    closingPositionIds,
+    isClosingPosition,
     handleCloseRuntimePosition,
   };
 };

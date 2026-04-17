@@ -10,7 +10,7 @@ Operational queue for one-task execution runs.
 - [x] `UXR-06 feat(web-dashboard-wallet): redesign wallet KPI row + wallet icon consistency`
 - [x] `UXR-07 feat(web-dashboard-tabs): rename tab labels to positions/orders/history`
 - [x] `UXR-08 fix(web-positions-table): move close column to last, rename to Action, use icon button`
-- [ ] `UXR-09 fix(web-actions): implement per-row pending state for concurrent close actions`
+- [x] `UXR-09 fix(web-actions): implement per-row pending state for concurrent close actions`
 - [ ] `UXR-10 fix(api-close-position): align close-position button flow with backend close handler`
 ## NEXT
 - [ ] `UXR-11 feat(web-position-edit-modal): add reusable modal shell + initial position-edit form`
@@ -36,6 +36,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `UXR-09 fix(web-actions): implement per-row pending state for concurrent close actions`
+  - 2026-04-17: Replaced dashboard close-position single pending flag with per-row pending map (`isClosingPosition`) so concurrent close actions render independent loading state per row; added hook regression coverage for two simultaneous closes with stepwise completion state checks. Validation pack: `pnpm --filter web test -- src/features/dashboard-home/hooks/useCloseRuntimePositionAction.test.tsx` => `2/2 PASS`, `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`.
 - [x] `UXR-08 fix(web-positions-table): move close column to last, rename to Action, use icon button`
   - 2026-04-17: Refactored open-positions table action column to always render as the last column (after dynamic `TTP/TSL`), switched close action to icon-only button with accessible labels/tooltips, and aligned widget regression assertions for compact `Action` column ordering; validation pack: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `12/12 PASS`.
 - [x] `UXR-07 feat(web-dashboard-tabs): rename tab labels to positions/orders/history`
