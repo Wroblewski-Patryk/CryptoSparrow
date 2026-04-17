@@ -25,7 +25,8 @@ import {
 } from '../services/bots.service';
 
 const LIVE_CONSENT_TEXT_VERSION = 'mvp-v1';
-const DUPLICATE_ACTIVE_BOT_ERROR = 'active bot already exists for this strategy + market group pair';
+const DUPLICATE_ACTIVE_BOT_ERROR =
+  'active bot already exists for this wallet + strategy + market group tuple';
 
 const deriveStrategyMaxOpenPositions = (strategy: StrategyDto | null): number => {
   if (!strategy?.config || typeof strategy.config !== 'object') return 1;
@@ -188,7 +189,7 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
       return;
     }
     if (!walletContextMatches) {
-      toast.error('Wallet context must match selected market group (exchange/market/base currency).');
+      toast.error(t('dashboard.bots.create.walletContextMismatchValidation'));
       return;
     }
     if (form.isActive && !canActivateForMode) {
@@ -283,8 +284,8 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
   if (wallets.length === 0) {
     return (
       <EmptyState
-        title='No wallets available'
-        description='Create wallet first in Wallets module, then return to bot form.'
+        title={t('dashboard.bots.create.noWalletsTitle')}
+        description={t('dashboard.bots.create.noWalletsDescription')}
       />
     );
   }
@@ -293,141 +294,144 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
     <>
       <form id={formId} onSubmit={handleSubmit} className='space-y-4 rounded-box border border-base-300/60 bg-base-100/80 p-4'>
         <fieldset disabled={submitting} className='space-y-4'>
-        <section className='space-y-3 rounded-box border border-base-300/60 bg-base-200/55 p-3'>
-          <h2 className='text-base font-semibold'>{t('dashboard.bots.create.sectionBasics')}</h2>
-          <div className='grid gap-3 md:grid-cols-2'>
-            <label className='form-control gap-1'>
-              <span className='label-text'>{t('dashboard.bots.create.nameLabel')}</span>
-              <input
-                className='input input-bordered'
-                aria-label={t('dashboard.bots.create.nameAria')}
-                placeholder={t('dashboard.bots.create.namePlaceholder')}
-                value={form.name}
-                onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-              />
-            </label>
+          <section className='space-y-3 rounded-box border border-base-300/60 bg-base-200/55 p-3'>
+            <h2 className='text-base font-semibold'>{t('dashboard.bots.create.sectionSetup')}</h2>
+            <p className='text-xs opacity-70'>{t('dashboard.bots.create.sectionSetupDescription')}</p>
 
-            <label className='form-control gap-1'>
-              <span className='label-text'>{t('dashboard.bots.create.walletSummaryLabel')}</span>
-              <select
-                className='select select-bordered'
-                value={form.walletId}
-                onChange={(event) => setForm((prev) => ({ ...prev, walletId: event.target.value }))}
-              >
-                {wallets.map((wallet) => (
-                  <option key={wallet.id} value={wallet.id}>
-                    {wallet.name} ({wallet.mode} / {wallet.exchange} / {wallet.marketType} / {wallet.baseCurrency})
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className='form-control gap-1'>
-              <span className='label-text'>{t('dashboard.bots.list.columns.active')}</span>
-              <input
-                type='checkbox'
-                className='toggle toggle-success'
-                checked={form.isActive}
-                disabled={!canActivateForMode || !walletContextMatches}
-                onChange={(event) => setForm((prev) => ({ ...prev, isActive: event.target.checked }))}
-              />
-            </label>
-
-            {selectedMode === 'LIVE' ? (
+            <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-4'>
               <label className='form-control gap-1'>
-                <span className='label-text'>{t('dashboard.bots.list.columns.liveOptIn')}</span>
+                <span className='label-text'>{t('dashboard.bots.create.nameLabel')}</span>
                 <input
-                  type='checkbox'
-                  className='toggle toggle-warning'
-                  checked={form.liveOptIn}
-                  onChange={(event) => setForm((prev) => ({ ...prev, liveOptIn: event.target.checked }))}
+                  className='input input-bordered'
+                  aria-label={t('dashboard.bots.create.nameAria')}
+                  placeholder={t('dashboard.bots.create.namePlaceholder')}
+                  value={form.name}
+                  onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
                 />
               </label>
-            ) : null}
-          </div>
 
-          <div
-            data-testid='wallet-context-summary'
-            className='rounded-md border border-base-300/60 bg-base-100/70 px-3 py-2 text-xs opacity-80 space-y-1'
-          >
-            <div>
-              <span className='font-semibold'>{t('dashboard.bots.create.walletSummaryLabel')}:</span>{' '}
-              {selectedWallet?.name ?? '-'}
+              <label className='form-control gap-1'>
+                <span className='label-text'>{t('dashboard.bots.create.walletSummaryLabel')}</span>
+                <select
+                  className='select select-bordered'
+                  value={form.walletId}
+                  onChange={(event) => setForm((prev) => ({ ...prev, walletId: event.target.value }))}
+                >
+                  {wallets.map((wallet) => (
+                    <option key={wallet.id} value={wallet.id}>
+                      {wallet.name} ({wallet.mode} / {wallet.exchange} / {wallet.marketType} / {wallet.baseCurrency})
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className='form-control gap-1'>
+                <span className='label-text'>{t('dashboard.bots.create.strategyLabel')}</span>
+                <select
+                  className='select select-bordered'
+                  aria-label={t('dashboard.bots.create.strategyAria')}
+                  value={form.strategyId}
+                  onChange={(event) => setForm((prev) => ({ ...prev, strategyId: event.target.value }))}
+                >
+                  {strategies.map((strategy) => (
+                    <option key={strategy.id} value={strategy.id}>
+                      {strategy.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className='form-control gap-1'>
+                <span className='label-text'>{t('dashboard.bots.create.marketGroupLabel')}</span>
+                <select
+                  className='select select-bordered'
+                  aria-label={t('dashboard.bots.create.marketGroupAria')}
+                  value={form.marketGroupId}
+                  onChange={(event) => setForm((prev) => ({ ...prev, marketGroupId: event.target.value }))}
+                >
+                  {marketGroups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.name} ({group.exchange ?? 'BINANCE'} - {group.marketType}/{group.baseCurrency})
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
-            <div>
-              <span className='font-semibold'>{t('dashboard.bots.create.walletContextModeLabel')}:</span> {selectedMode}
+
+            <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-4'>
+              <label className='form-control gap-1'>
+                <span className='label-text'>{t('dashboard.bots.list.columns.active')}</span>
+                <input
+                  type='checkbox'
+                  className='toggle toggle-success'
+                  checked={form.isActive}
+                  disabled={!canActivateForMode || !walletContextMatches}
+                  onChange={(event) => setForm((prev) => ({ ...prev, isActive: event.target.checked }))}
+                />
+              </label>
+
+              {selectedMode === 'LIVE' ? (
+                <label className='form-control gap-1'>
+                  <span className='label-text'>{t('dashboard.bots.list.columns.liveOptIn')}</span>
+                  <input
+                    type='checkbox'
+                    className='toggle toggle-warning'
+                    checked={form.liveOptIn}
+                    onChange={(event) => setForm((prev) => ({ ...prev, liveOptIn: event.target.checked }))}
+                  />
+                  <span className='label-text-alt text-xs opacity-70'>
+                    {t('dashboard.bots.create.liveOptInHelper')}
+                  </span>
+                </label>
+              ) : (
+                <div className='rounded-md border border-base-300/60 bg-base-100/70 px-3 py-2 text-xs opacity-75'>
+                  {t('dashboard.bots.create.liveOptInPaperInfo')}
+                </div>
+              )}
+
+              <div
+                data-testid='wallet-context-summary'
+                className='rounded-md border border-base-300/60 bg-base-100/70 px-3 py-2 text-xs opacity-80 space-y-1 md:col-span-2'
+              >
+                <div>
+                  <span className='font-semibold'>{t('dashboard.bots.create.walletSummaryLabel')}:</span>{' '}
+                  {selectedWallet?.name ?? '-'}
+                </div>
+                <div>
+                  <span className='font-semibold'>{t('dashboard.bots.create.walletContextModeLabel')}:</span> {selectedMode}
+                </div>
+                <div>
+                  <span className='font-semibold'>{t('dashboard.bots.create.walletContextVenueLabel')}:</span>{' '}
+                  {selectedWallet
+                    ? `${selectedWallet.exchange} / ${selectedWallet.marketType} / ${selectedWallet.baseCurrency}`
+                    : '-'}
+                </div>
+                {selectedMode === 'LIVE' ? (
+                  <div className={hasCompatibleLiveApiKey ? '' : 'text-error'}>
+                    <span className='font-semibold'>{t('dashboard.bots.create.walletContextApiKeyLabel')}:</span>{' '}
+                    {hasCompatibleLiveApiKey
+                      ? t('dashboard.bots.create.walletContextApiKeyReady')
+                      : t('dashboard.bots.create.walletContextApiKeyMissing')}
+                  </div>
+                ) : null}
+              </div>
             </div>
-            <div>
-              <span className='font-semibold'>{t('dashboard.bots.create.walletContextVenueLabel')}:</span>{' '}
-              {selectedWallet
-                ? `${selectedWallet.exchange} / ${selectedWallet.marketType} / ${selectedWallet.baseCurrency}`
-                : '-'}
-            </div>
-            {selectedMode === 'LIVE' ? (
-              <div className={hasCompatibleLiveApiKey ? '' : 'text-error'}>
-                <span className='font-semibold'>{t('dashboard.bots.create.walletContextApiKeyLabel')}:</span>{' '}
-                {hasCompatibleLiveApiKey
-                  ? t('dashboard.bots.create.walletContextApiKeyReady')
-                  : t('dashboard.bots.create.walletContextApiKeyMissing')}
+
+            {!walletContextMatches ? (
+              <div className='alert alert-warning'>
+                <span>{t('dashboard.bots.create.walletContextMismatchAlert')}</span>
               </div>
             ) : null}
-          </div>
-        </section>
 
-        <section className='space-y-3 rounded-box border border-base-300/60 bg-base-200/55 p-3'>
-          <h2 className='text-base font-semibold'>{t('dashboard.bots.create.sectionMarket')}</h2>
-          <div className='grid gap-3'>
-            <label className='form-control gap-1'>
-              <span className='label-text'>{t('dashboard.bots.create.marketGroupLabel')}</span>
-              <select
-                className='select select-bordered'
-                aria-label={t('dashboard.bots.create.marketGroupAria')}
-                value={form.marketGroupId}
-                onChange={(event) => setForm((prev) => ({ ...prev, marketGroupId: event.target.value }))}
-              >
-                {marketGroups.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {group.name} ({group.exchange ?? 'BINANCE'} - {group.marketType}/{group.baseCurrency})
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          {!walletContextMatches ? (
-            <div className='alert alert-warning'>
-              <span>Wallet and market group contexts must match: exchange, market type, base currency.</span>
-            </div>
-          ) : null}
-        </section>
-
-        <section className='space-y-3 rounded-box border border-base-300/60 bg-base-200/55 p-3'>
-          <h2 className='text-base font-semibold'>{t('dashboard.bots.create.sectionStrategy')}</h2>
-          <div className='grid gap-3'>
-            <label className='form-control gap-1'>
-              <span className='label-text'>{t('dashboard.bots.create.strategyLabel')}</span>
-              <select
-                className='select select-bordered'
-                aria-label={t('dashboard.bots.create.strategyAria')}
-                value={form.strategyId}
-                onChange={(event) => setForm((prev) => ({ ...prev, strategyId: event.target.value }))}
-              >
-                {strategies.map((strategy) => (
-                  <option key={strategy.id} value={strategy.id}>
-                    {strategy.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          {selectedStrategy ? (
-            <div className='rounded-md border border-base-300/60 bg-base-100/70 px-3 py-2 text-xs opacity-80'>
-              <span className='font-semibold'>{t('dashboard.bots.create.strategyLabel')}:</span>{' '}
-              {selectedStrategy.interval.toUpperCase()} | {t('dashboard.bots.create.leverageLabel')}: x
-              {selectedStrategy.leverage} | {t('dashboard.bots.create.maxOpenLabel')}: {deriveStrategyMaxOpenPositions(selectedStrategy)}
-            </div>
-          ) : null}
-        </section>
+            {selectedStrategy ? (
+              <div className='rounded-md border border-base-300/60 bg-base-100/70 px-3 py-2 text-xs opacity-80'>
+                <span className='font-semibold'>{t('dashboard.bots.create.strategyLabel')}:</span>{' '}
+                {selectedStrategy.interval.toUpperCase()} | {t('dashboard.bots.create.leverageLabel')}: x
+                {selectedStrategy.leverage} | {t('dashboard.bots.create.maxOpenLabel')}:{' '}
+                {deriveStrategyMaxOpenPositions(selectedStrategy)}
+              </div>
+            ) : null}
+          </section>
         </fieldset>
       </form>
       {confirmModal}
