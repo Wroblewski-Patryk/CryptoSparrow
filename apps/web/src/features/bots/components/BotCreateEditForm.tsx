@@ -308,7 +308,7 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
             </label>
 
             <label className='form-control gap-1'>
-              <span className='label-text'>Wallet</span>
+              <span className='label-text'>{t('dashboard.bots.create.walletSummaryLabel')}</span>
               <select
                 className='select select-bordered'
                 value={form.walletId}
@@ -375,24 +375,8 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
         </section>
 
         <section className='space-y-3 rounded-box border border-base-300/60 bg-base-200/55 p-3'>
-          <h2 className='text-base font-semibold'>{t('dashboard.bots.create.sectionContext')}</h2>
-          <div className='grid gap-3 md:grid-cols-2'>
-            <label className='form-control gap-1'>
-              <span className='label-text'>{t('dashboard.bots.create.strategyLabel')}</span>
-              <select
-                className='select select-bordered'
-                aria-label={t('dashboard.bots.create.strategyAria')}
-                value={form.strategyId}
-                onChange={(event) => setForm((prev) => ({ ...prev, strategyId: event.target.value }))}
-              >
-                {strategies.map((strategy) => (
-                  <option key={strategy.id} value={strategy.id}>
-                    {strategy.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
+          <h2 className='text-base font-semibold'>{t('dashboard.bots.create.sectionMarket')}</h2>
+          <div className='grid gap-3'>
             <label className='form-control gap-1'>
               <span className='label-text'>{t('dashboard.bots.create.marketGroupLabel')}</span>
               <select
@@ -415,12 +399,32 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
               <span>Wallet and market group contexts must match: exchange, market type, base currency.</span>
             </div>
           ) : null}
+        </section>
 
+        <section className='space-y-3 rounded-box border border-base-300/60 bg-base-200/55 p-3'>
+          <h2 className='text-base font-semibold'>{t('dashboard.bots.create.sectionStrategy')}</h2>
+          <div className='grid gap-3'>
+            <label className='form-control gap-1'>
+              <span className='label-text'>{t('dashboard.bots.create.strategyLabel')}</span>
+              <select
+                className='select select-bordered'
+                aria-label={t('dashboard.bots.create.strategyAria')}
+                value={form.strategyId}
+                onChange={(event) => setForm((prev) => ({ ...prev, strategyId: event.target.value }))}
+              >
+                {strategies.map((strategy) => (
+                  <option key={strategy.id} value={strategy.id}>
+                    {strategy.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           {selectedStrategy ? (
             <div className='rounded-md border border-base-300/60 bg-base-100/70 px-3 py-2 text-xs opacity-80'>
-              <span className='font-semibold'>{t('dashboard.bots.create.strategySummaryLabel')}:</span>{' '}
-              {selectedStrategy.interval.toUpperCase()} | x{selectedStrategy.leverage} | max open{' '}
-              {deriveStrategyMaxOpenPositions(selectedStrategy)}
+              <span className='font-semibold'>{t('dashboard.bots.create.strategyLabel')}:</span>{' '}
+              {selectedStrategy.interval.toUpperCase()} | {t('dashboard.bots.create.leverageLabel')}: x
+              {selectedStrategy.leverage} | {t('dashboard.bots.create.maxOpenLabel')}: {deriveStrategyMaxOpenPositions(selectedStrategy)}
             </div>
           ) : null}
         </section>

@@ -137,6 +137,9 @@ describe("BotCreateEditForm", () => {
     await waitFor(() => {
       expect(screen.getByTestId("wallet-context-summary")).toBeInTheDocument();
     });
+    expect(screen.getByRole("heading", { name: "1. Bot basics" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "2. Market context" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "3. Strategy context" })).toBeInTheDocument();
     expect(screen.queryByLabelText("Bot mode")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Paper start balance")).not.toBeInTheDocument();
     expect(screen.getByText("Wallet:")).toBeInTheDocument();

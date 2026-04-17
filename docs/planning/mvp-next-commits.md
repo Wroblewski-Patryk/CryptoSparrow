@@ -16,6 +16,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `BOPS-66 ops(ux-checklist): execute dashboard+bots operational UX checklist and close creator-form section contract gap`
+  - 2026-04-17: Executed `docs/operations/dashboard-bots-operational-ux-checklist.md` with fresh regression/build evidence (`pnpm --filter web test -- src/features/bots/components/BotCreateEditForm.test.tsx src/features/dashboard-home/components/HomeLiveWidgets.test.tsx src/features/bots/components/BotsManagement.test.tsx src/app/dashboard/dashboard.a11y.smoke.test.tsx src/ui/layout/dashboard/PageTitle.a11y.test.tsx src/ui/layout/dashboard/Header.responsive.test.tsx` => `34/34 PASS`, `pnpm --filter web run build` PASS), fixed `/dashboard/bots/create` creator IA to explicit 3 sections (`Basics/Market/Strategy`), added regression assertion for section headings, and marked checklist A-F as PASS with execution notes.
 - [x] `WSPLIT-A worker-split-decision-closure: resolve open Worker Split Timing policy and sync canonical plans`
   - 2026-04-17: Closed `WSPLIT-A` by completing `WSPLIT-01` (resolved `Worker Split Timing` in `open-decisions.md` with explicit `PROD` mandatory split policy plus `STAGE/DEV` trigger thresholds based on queue lag/API latency/restart-burst conditions, synchronized canonical queue/plan files, and validated with `pnpm run docs:parity:check` PASS).
 - [x] `WSPLIT-01 docs(decision): close Worker Split Timing with explicit split policy and thresholds using docs/planning/worker-split-timing-decision-closure-plan-2026-04-17.md`
