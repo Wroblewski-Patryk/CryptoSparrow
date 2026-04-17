@@ -33,6 +33,9 @@ describe('Orders and positions read contract', () => {
     await prisma.botAssistantConfig.deleteMany();
     await prisma.marketGroupStrategyLink.deleteMany();
     await prisma.botMarketGroup.deleteMany();
+    await prisma.botRuntimeEvent.deleteMany();
+    await prisma.botRuntimeSymbolStat.deleteMany();
+    await prisma.botRuntimeSession.deleteMany();
     await prisma.bot.deleteMany();
     await prisma.symbolGroup.deleteMany();
     await prisma.marketUniverse.deleteMany();
@@ -287,6 +290,243 @@ describe('Orders and positions read contract', () => {
       where: { id: position.id },
     });
     expect(updated.managementMode).toBe('MANUAL_MANAGED');
+  });
+
+  it('keeps EXCHANGE_SYNC BOT_MANAGED runtime positions visible for LIVE bot even when PAPER bot shares symbol', async () => {
+    const ownerAgent = await registerAndLogin('runtime-ownership-live-paper@example.com');
+    const ownerId = await getUserId('runtime-ownership-live-paper@example.com');
+
+    const liveWallet = await prisma.wallet.create({
+      data: {
+        userId: ownerId,
+        name: 'Live runtime wallet',
+        mode: 'LIVE',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+      },
+    });
+
+    const marketUniverse = await prisma.marketUniverse.create({
+      data: {
+        userId: ownerId,
+        name: 'Runtime ownership universe',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        whitelist: ['BTCUSDT'],
+        blacklist: [],
+      },
+    });
+    const symbolGroup = await prisma.symbolGroup.create({
+      data: {
+        userId: ownerId,
+        marketUniverseId: marketUniverse.id,
+        name: 'Runtime ownership group',
+        symbols: ['BTCUSDT'],
+      },
+    });
+
+    const paperBot = await prisma.bot.create({
+      data: {
+        userId: ownerId,
+        name: 'Paper runtime owner',
+        mode: 'PAPER',
+        marketType: 'FUTURES',
+        isActive: true,
+        createdAt: new Date('2026-04-12T10:00:00.000Z'),
+      },
+    });
+    const liveBot = await prisma.bot.create({
+      data: {
+        userId: ownerId,
+        name: 'Live runtime owner',
+        mode: 'LIVE',
+        marketType: 'FUTURES',
+        isActive: true,
+        liveOptIn: true,
+        consentTextVersion: 'mvp-v1',
+        walletId: liveWallet.id,
+        createdAt: new Date('2026-04-12T10:05:00.000Z'),
+      },
+    });
+
+    await prisma.botMarketGroup.createMany({
+      data: [
+        {
+          userId: ownerId,
+          botId: paperBot.id,
+          symbolGroupId: symbolGroup.id,
+          lifecycleStatus: 'ACTIVE',
+          executionOrder: 1,
+          isEnabled: true,
+        },
+        {
+          userId: ownerId,
+          botId: liveBot.id,
+          symbolGroupId: symbolGroup.id,
+          lifecycleStatus: 'ACTIVE',
+          executionOrder: 1,
+          isEnabled: true,
+        },
+      ],
+    });
+
+    const session = await prisma.botRuntimeSession.create({
+      data: {
+        userId: ownerId,
+        botId: liveBot.id,
+        mode: 'LIVE',
+        status: 'RUNNING',
+        startedAt: new Date('2026-04-12T11:00:00.000Z'),
+        lastHeartbeatAt: new Date('2026-04-12T11:02:00.000Z'),
+      },
+    });
+
+    const exchangePosition = await prisma.position.create({
+      data: {
+        userId: ownerId,
+        botId: null,
+        walletId: null,
+        externalId: 'runtime-owner-key:BTCUSDT:LONG',
+        symbol: 'BTCUSDT',
+        side: 'LONG',
+        status: 'OPEN',
+        entryPrice: 64000,
+        quantity: 0.03,
+        leverage: 5,
+        origin: 'EXCHANGE_SYNC',
+        managementMode: 'BOT_MANAGED',
+        syncState: 'IN_SYNC',
+        openedAt: new Date('2026-04-12T10:59:00.000Z'),
+      },
+    });
+
+    const positionsRes = await ownerAgent.get(
+      `/dashboard/bots/${liveBot.id}/runtime-sessions/${session.id}/positions`
+    );
+    expect(positionsRes.status).toBe(200);
+    expect(
+      positionsRes.body.openItems.some((item: { id: string }) => item.id === exchangePosition.id)
+    ).toBe(true);
+  });
+
+  it('closes EXCHANGE_SYNC BOT_MANAGED runtime position selected from LIVE dashboard flow', async () => {
+    const ownerAgent = await registerAndLogin('runtime-close-live-exchange@example.com');
+    const ownerId = await getUserId('runtime-close-live-exchange@example.com');
+
+    const liveWallet = await prisma.wallet.create({
+      data: {
+        userId: ownerId,
+        name: 'Live close wallet',
+        mode: 'LIVE',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+      },
+    });
+
+    const marketUniverse = await prisma.marketUniverse.create({
+      data: {
+        userId: ownerId,
+        name: 'Runtime close universe',
+        exchange: 'BINANCE',
+        marketType: 'FUTURES',
+        baseCurrency: 'USDT',
+        whitelist: ['BTCUSDT'],
+        blacklist: [],
+      },
+    });
+    const symbolGroup = await prisma.symbolGroup.create({
+      data: {
+        userId: ownerId,
+        marketUniverseId: marketUniverse.id,
+        name: 'Runtime close group',
+        symbols: ['BTCUSDT'],
+      },
+    });
+
+    const paperBot = await prisma.bot.create({
+      data: {
+        userId: ownerId,
+        name: 'Paper close owner',
+        mode: 'PAPER',
+        marketType: 'FUTURES',
+        isActive: true,
+        createdAt: new Date('2026-04-12T10:00:00.000Z'),
+      },
+    });
+    const liveBot = await prisma.bot.create({
+      data: {
+        userId: ownerId,
+        name: 'Live close owner',
+        mode: 'LIVE',
+        marketType: 'FUTURES',
+        isActive: true,
+        liveOptIn: true,
+        consentTextVersion: 'mvp-v1',
+        walletId: liveWallet.id,
+        createdAt: new Date('2026-04-12T10:05:00.000Z'),
+      },
+    });
+
+    await prisma.botMarketGroup.createMany({
+      data: [
+        {
+          userId: ownerId,
+          botId: paperBot.id,
+          symbolGroupId: symbolGroup.id,
+          lifecycleStatus: 'ACTIVE',
+          executionOrder: 1,
+          isEnabled: true,
+        },
+        {
+          userId: ownerId,
+          botId: liveBot.id,
+          symbolGroupId: symbolGroup.id,
+          lifecycleStatus: 'ACTIVE',
+          executionOrder: 1,
+          isEnabled: true,
+        },
+      ],
+    });
+
+    const session = await prisma.botRuntimeSession.create({
+      data: {
+        userId: ownerId,
+        botId: liveBot.id,
+        mode: 'LIVE',
+        status: 'RUNNING',
+        startedAt: new Date('2026-04-12T11:00:00.000Z'),
+        lastHeartbeatAt: new Date('2026-04-12T11:02:00.000Z'),
+      },
+    });
+
+    const exchangePosition = await prisma.position.create({
+      data: {
+        userId: ownerId,
+        botId: null,
+        walletId: null,
+        externalId: 'runtime-close-key:BTCUSDT:LONG',
+        symbol: 'BTCUSDT',
+        side: 'LONG',
+        status: 'OPEN',
+        entryPrice: 64000,
+        quantity: 0.03,
+        leverage: 5,
+        origin: 'EXCHANGE_SYNC',
+        managementMode: 'BOT_MANAGED',
+        syncState: 'IN_SYNC',
+        openedAt: new Date('2026-04-12T10:59:00.000Z'),
+      },
+    });
+
+    const closeRes = await ownerAgent
+      .post(`/dashboard/bots/${liveBot.id}/runtime-sessions/${session.id}/positions/${exchangePosition.id}/close`)
+      .send({ riskAck: true });
+
+    expect(closeRes.status).toBe(200);
+    expect(closeRes.body.status).toBe('closed');
   });
 });
 

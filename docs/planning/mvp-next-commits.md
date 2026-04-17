@@ -8,7 +8,7 @@ Operational queue for one-task execution runs.
 
 ## NOW
 - [x] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
-- [ ] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
+- [x] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
 - [ ] `UXR-03 fix(api-runtime): deterministic exchange-position takeover mapping for dashboard open positions`
 - [ ] `UXR-04 feat(api-orders-sync): persist and reconcile LIVE open orders into unified read model/cache`
 - [ ] `UXR-05 feat(api-paper-orders): align PAPER order lifecycle with unified orders read model`
@@ -33,6 +33,8 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `UXR-02 test(api+web): add failing coverage for missing exchange positions and close-position action error`
+  - 2026-04-17: Added API failing coverage in `orders-positions.e2e` for two runtime regressions (`EXCHANGE_SYNC` `BOT_MANAGED` position not visible for LIVE bot when PAPER bot shares symbol ownership scope, and close-position returning `ignored` instead of `closed` in LIVE dashboard flow) plus WEB hook coverage for `ignored` close-response handling (`useCloseRuntimePositionAction.test.tsx`); validation pack: `pnpm --filter api test -- src/modules/orders/orders-positions.e2e.test.ts` => `2 failing / 5 passing` (expected red baseline), `pnpm --filter web test -- src/features/dashboard-home/hooks/useCloseRuntimePositionAction.test.tsx` => `1/1 PASS`.
 - [x] `UXR-01 docs(contract): freeze dashboard positions/orders ownership and visibility matrix`
   - 2026-04-17: Locked canonical ownership/actionability matrix for dashboard `positions/orders/history` in `open-decisions.md`, synchronized runtime API contract notes in `docs/modules/api-bots.md`, and synchronized web tab visibility/actionability contract in `docs/modules/web-dashboard-home.md` (including deterministic external takeover ownership order and fail-closed close-action behavior).
 - [x] `BOPS-66 ops(ux-checklist): execute dashboard+bots operational UX checklist and close creator-form section contract gap`
