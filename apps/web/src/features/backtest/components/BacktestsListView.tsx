@@ -11,25 +11,33 @@ import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 export default function BacktestsListView() {
   const i18n = useContext(I18nContext);
-  const locale = i18n?.locale === 'en' ? 'en' : 'pl';
-  const copy =
-    locale === 'en'
-      ? {
-          loadErrorDefault: 'Could not load backtest list.',
-          loadingTitle: 'Loading backtest list',
-          errorTitle: 'Could not load backtest list',
-          retry: 'Try again',
-          emptyTitle: 'No backtest runs',
-          emptyDescription: 'Create the first run to browse results.',
-        }
-      : {
-          loadErrorDefault: 'Nie udalo sie pobrac listy backtestow.',
-          loadingTitle: 'Ladowanie listy backtestow',
-          errorTitle: 'Nie udalo sie pobrac listy backtestow',
-          retry: 'Sprobuj ponownie',
-          emptyTitle: 'Brak runow backtestu',
-          emptyDescription: 'Utworz pierwszy run, aby przejrzec wyniki.',
-        };
+  const locale = i18n?.locale ?? 'pl';
+  const copy = {
+    en: {
+      loadErrorDefault: 'Could not load backtest list.',
+      loadingTitle: 'Loading backtest list',
+      errorTitle: 'Could not load backtest list',
+      retry: 'Try again',
+      emptyTitle: 'No backtest runs',
+      emptyDescription: 'Create the first run to browse results.',
+    },
+    pl: {
+      loadErrorDefault: 'Nie udalo sie pobrac listy backtestow.',
+      loadingTitle: 'Ladowanie listy backtestow',
+      errorTitle: 'Nie udalo sie pobrac listy backtestow',
+      retry: 'Sprobuj ponownie',
+      emptyTitle: 'Brak runow backtestu',
+      emptyDescription: 'Utworz pierwszy run, aby przejrzec wyniki.',
+    },
+    pt: {
+      loadErrorDefault: 'Nao foi possivel carregar a lista de backtests.',
+      loadingTitle: 'A carregar lista de backtests',
+      errorTitle: 'Nao foi possivel carregar lista de backtests',
+      retry: 'Tentar novamente',
+      emptyTitle: 'Sem execucoes de backtest',
+      emptyDescription: 'Cria a primeira execucao para consultar resultados.',
+    },
+  }[locale];
   const [rows, setRows] = useState<BacktestRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

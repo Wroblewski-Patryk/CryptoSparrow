@@ -17,79 +17,111 @@ type BacktestCreateFormProps = {
   onSubmit: (payload: CreateBacktestRunInput) => Promise<void>;
 };
 
+type BacktestLocale = 'en' | 'pl' | 'pt';
+
 const MAX_CANDLES_MIN = 100;
 const MAX_CANDLES_MAX = 10000;
 const INITIAL_BALANCE_MIN = 1;
 const INITIAL_BALANCE_MAX = 1_000_000_000;
 
-const buildSuggestedRunName = (locale: 'pl' | 'en', strategyName?: string, universeName?: string, timeframe?: string) => {
-  const strategy = normalizeFormText(strategyName) || (locale === 'en' ? 'Strategy' : 'Strategia');
-  const universe = normalizeFormText(universeName) || (locale === 'en' ? 'Market' : 'Rynek');
+const buildSuggestedRunName = (locale: BacktestLocale, strategyName?: string, universeName?: string, timeframe?: string) => {
+  const strategyFallback = locale === 'en' ? 'Strategy' : locale === 'pt' ? 'Estrategia' : 'Strategia';
+  const marketFallback = locale === 'en' ? 'Market' : locale === 'pt' ? 'Mercado' : 'Rynek';
+  const strategy = normalizeFormText(strategyName) || strategyFallback;
+  const universe = normalizeFormText(universeName) || marketFallback;
   const tf = normalizeFormText(timeframe) || '-';
   return `Backtest ${strategy} | ${universe} (${tf})`;
 };
 
 export default function BacktestCreateForm({ formId = 'backtest-form', submitting, onSubmit }: BacktestCreateFormProps) {
   const i18n = useContext(I18nContext);
-  const locale = i18n?.locale === 'en' ? 'en' : 'pl';
-  const copy =
-    locale === 'en'
-      ? {
-          strategyLoadError: 'Could not load strategy list',
-          universesLoadError: 'Could not load market groups',
-          noStrategies: 'No strategies',
-          noUniverses: 'No market groups',
-          creating: 'Creating...',
-          title: 'Backtest wizard',
-          subtitle: 'Pick strategy + market universe and run historical simulation.',
-          sectionRunConfig: 'Run setup',
-          sectionSimParams: 'Simulation parameters',
-          runName: 'Run name',
-          runNamePlaceholder: 'e.g. Backtest Trend Pulse | Spot Core (5m)',
-          strategy: 'Strategy',
-          marketGroup: 'Market group',
-          maxCandles: 'Max candles per market (auto-limit)',
-          maxCandlesErrorPrefix: 'Provide a number in range',
-          initialBalance: 'Initial portfolio balance (Backtest/Paper)',
-          initialBalanceErrorPrefix: 'Provide a value in range',
-          venueContextTitle: 'Venue context (bound to selected market group)',
-          venueContextHint:
-            'Backtest execution context is derived from the selected market group and cannot diverge.',
-          venueContextAwaitingSelection: 'Select a market group to resolve context.',
-          venueContextExchange: 'Exchange',
-          venueContextMarketType: 'Market type',
-          venueContextBaseCurrency: 'Base currency',
-          notes: 'Notes (optional)',
-          notesPlaceholder: 'Assumptions, data version, comments...',
-        }
-      : {
-          strategyLoadError: 'Nie udalo sie pobrac listy strategii',
-          universesLoadError: 'Nie udalo sie pobrac grup rynkow',
-          noStrategies: 'Brak strategii',
-          noUniverses: 'Brak grup rynkow',
-          creating: 'Tworzenie...',
-          title: 'Kreator backtestu',
-          subtitle: 'Ustaw strategy + market universe i uruchom symulacje na danych historycznych.',
-          sectionRunConfig: 'Konfiguracja runa',
-          sectionSimParams: 'Parametry symulacji',
-          runName: 'Nazwa runa',
-          runNamePlaceholder: 'np. Backtest Trend Pulse | Spot Core (5m)',
-          strategy: 'Strategia',
-          marketGroup: 'Grupa rynkow',
-          maxCandles: 'Maksymalna liczba swiec na rynek (auto-limit)',
-          maxCandlesErrorPrefix: 'Podaj liczbe z zakresu',
-          initialBalance: 'Startowy balans portfela (Backtest/Paper)',
-          initialBalanceErrorPrefix: 'Podaj wartosc z zakresu',
-          venueContextTitle: 'Kontekst venue (powiazany z wybrana grupa rynkow)',
-          venueContextHint:
-            'Kontekst wykonania backtestu jest dziedziczony z wybranej grupy rynkow i nie moze sie rozjechac.',
-          venueContextAwaitingSelection: 'Wybierz grupe rynkow, aby zobaczyc kontekst.',
-          venueContextExchange: 'Exchange',
-          venueContextMarketType: 'Market type',
-          venueContextBaseCurrency: 'Base currency',
-          notes: 'Notatki (opcjonalnie)',
-          notesPlaceholder: 'Opis zalozen runa, wersja danych, komentarz...',
-        };
+  const locale: BacktestLocale = i18n?.locale ?? 'pl';
+  const copy = {
+    en: {
+      strategyLoadError: 'Could not load strategy list',
+      universesLoadError: 'Could not load market groups',
+      noStrategies: 'No strategies',
+      noUniverses: 'No market groups',
+      creating: 'Creating...',
+      title: 'Backtest wizard',
+      subtitle: 'Pick strategy + market universe and run historical simulation.',
+      sectionRunConfig: 'Run setup',
+      sectionSimParams: 'Simulation parameters',
+      runName: 'Run name',
+      runNamePlaceholder: 'e.g. Backtest Trend Pulse | Spot Core (5m)',
+      strategy: 'Strategy',
+      marketGroup: 'Market group',
+      maxCandles: 'Max candles per market (auto-limit)',
+      maxCandlesErrorPrefix: 'Provide a number in range',
+      initialBalance: 'Initial portfolio balance (Backtest/Paper)',
+      initialBalanceErrorPrefix: 'Provide a value in range',
+      venueContextTitle: 'Venue context (bound to selected market group)',
+      venueContextHint:
+        'Backtest execution context is derived from the selected market group and cannot diverge.',
+      venueContextAwaitingSelection: 'Select a market group to resolve context.',
+      venueContextExchange: 'Exchange',
+      venueContextMarketType: 'Market type',
+      venueContextBaseCurrency: 'Base currency',
+      notes: 'Notes (optional)',
+      notesPlaceholder: 'Assumptions, data version, comments...',
+    },
+    pl: {
+      strategyLoadError: 'Nie udalo sie pobrac listy strategii',
+      universesLoadError: 'Nie udalo sie pobrac grup rynkow',
+      noStrategies: 'Brak strategii',
+      noUniverses: 'Brak grup rynkow',
+      creating: 'Tworzenie...',
+      title: 'Kreator backtestu',
+      subtitle: 'Ustaw strategy + market universe i uruchom symulacje na danych historycznych.',
+      sectionRunConfig: 'Konfiguracja runa',
+      sectionSimParams: 'Parametry symulacji',
+      runName: 'Nazwa runa',
+      runNamePlaceholder: 'np. Backtest Trend Pulse | Spot Core (5m)',
+      strategy: 'Strategia',
+      marketGroup: 'Grupa rynkow',
+      maxCandles: 'Maksymalna liczba swiec na rynek (auto-limit)',
+      maxCandlesErrorPrefix: 'Podaj liczbe z zakresu',
+      initialBalance: 'Startowy balans portfela (Backtest/Paper)',
+      initialBalanceErrorPrefix: 'Podaj wartosc z zakresu',
+      venueContextTitle: 'Kontekst venue (powiazany z wybrana grupa rynkow)',
+      venueContextHint:
+        'Kontekst wykonania backtestu jest dziedziczony z wybranej grupy rynkow i nie moze sie rozjechac.',
+      venueContextAwaitingSelection: 'Wybierz grupe rynkow, aby zobaczyc kontekst.',
+      venueContextExchange: 'Exchange',
+      venueContextMarketType: 'Market type',
+      venueContextBaseCurrency: 'Base currency',
+      notes: 'Notatki (opcjonalnie)',
+      notesPlaceholder: 'Opis zalozen runa, wersja danych, komentarz...',
+    },
+    pt: {
+      strategyLoadError: 'Nao foi possivel carregar a lista de estrategias',
+      universesLoadError: 'Nao foi possivel carregar grupos de mercados',
+      noStrategies: 'Sem estrategias',
+      noUniverses: 'Sem grupos de mercados',
+      creating: 'A criar...',
+      title: 'Assistente de backtest',
+      subtitle: 'Escolhe estrategia + universo de mercado e executa simulacao historica.',
+      sectionRunConfig: 'Configuracao da execucao',
+      sectionSimParams: 'Parametros de simulacao',
+      runName: 'Nome da execucao',
+      runNamePlaceholder: 'ex. Backtest Trend Pulse | Spot Core (5m)',
+      strategy: 'Estrategia',
+      marketGroup: 'Grupo de mercados',
+      maxCandles: 'Maximo de velas por mercado (auto-limit)',
+      maxCandlesErrorPrefix: 'Indica um numero no intervalo',
+      initialBalance: 'Saldo inicial da carteira (Backtest/Paper)',
+      initialBalanceErrorPrefix: 'Indica um valor no intervalo',
+      venueContextTitle: 'Contexto da venue (ligado ao grupo de mercados selecionado)',
+      venueContextHint:
+        'O contexto de execucao do backtest e derivado do grupo de mercados selecionado e nao pode divergir.',
+      venueContextAwaitingSelection: 'Seleciona um grupo de mercados para resolver o contexto.',
+      venueContextExchange: 'Exchange',
+      venueContextMarketType: 'Market type',
+      venueContextBaseCurrency: 'Base currency',
+      notes: 'Notas (opcional)',
+      notesPlaceholder: 'Premissas, versao de dados, comentarios...',
+    },
+  }[locale];
   const [name, setName] = useState('');
   const [nameEdited, setNameEdited] = useState(false);
   const [strategyId, setStrategyId] = useState('');

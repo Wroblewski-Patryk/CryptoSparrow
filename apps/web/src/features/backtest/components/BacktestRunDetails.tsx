@@ -35,12 +35,12 @@ const runStatusBadgeClass = (status: BacktestRun['status']) => {
   return 'badge-outline';
 };
 
-const runStatusLabel = (status: BacktestRun['status'], locale: 'pl' | 'en') => {
-  if (status === 'COMPLETED') return locale === 'en' ? 'Completed' : 'Zakonczony';
-  if (status === 'RUNNING') return locale === 'en' ? 'Running' : 'W toku';
-  if (status === 'PENDING') return locale === 'en' ? 'Pending' : 'Oczekuje';
-  if (status === 'FAILED') return locale === 'en' ? 'Failed' : 'Niepowodzenie';
-  if (status === 'CANCELED') return locale === 'en' ? 'Canceled' : 'Anulowany';
+const runStatusLabel = (status: BacktestRun['status'], locale: 'en' | 'pl' | 'pt') => {
+  if (status === 'COMPLETED') return locale === 'en' ? 'Completed' : locale === 'pt' ? 'Concluido' : 'Zakonczony';
+  if (status === 'RUNNING') return locale === 'en' ? 'Running' : locale === 'pt' ? 'Em execucao' : 'W toku';
+  if (status === 'PENDING') return locale === 'en' ? 'Pending' : locale === 'pt' ? 'Pendente' : 'Oczekuje';
+  if (status === 'FAILED') return locale === 'en' ? 'Failed' : locale === 'pt' ? 'Falhou' : 'Niepowodzenie';
+  if (status === 'CANCELED') return locale === 'en' ? 'Canceled' : locale === 'pt' ? 'Cancelado' : 'Anulowany';
   return status;
 };
 
@@ -139,11 +139,12 @@ const formatHoldDuration = (minutes: number) => {
 
 const getExitReasonLabel = (
   reason: 'SIGNAL_EXIT' | 'FINAL_CANDLE' | 'LIQUIDATION',
-  locale: 'pl' | 'en',
+  locale: 'en' | 'pl' | 'pt',
 ) => {
-  if (reason === 'SIGNAL_EXIT') return locale === 'en' ? 'Signal' : 'Sygnal';
-  if (reason === 'FINAL_CANDLE') return locale === 'en' ? 'Final candle' : 'Ostatnia swieca';
-  return locale === 'en' ? 'Liquidation' : 'Likwidacja';
+  if (reason === 'SIGNAL_EXIT') return locale === 'en' ? 'Signal' : locale === 'pt' ? 'Sinal' : 'Sygnal';
+  if (reason === 'FINAL_CANDLE')
+    return locale === 'en' ? 'Final candle' : locale === 'pt' ? 'Vela final' : 'Ostatnia swieca';
+  return locale === 'en' ? 'Liquidation' : locale === 'pt' ? 'Liquidacao' : 'Likwidacja';
 };
 
 const filterTradesByTimelineWindow = (items: BacktestTrade[], timeline: BacktestTimeline) => {
@@ -1183,7 +1184,7 @@ function TimelineCandlesChart({
 
 export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
   const i18n = useContext(I18nContext);
-  const locale = i18n?.locale === 'en' ? 'en' : 'pl';
+  const locale = i18n?.locale ?? 'pl';
   const { formatCurrency, formatDateTime, formatNumber, formatPercent } = useLocaleFormatting();
   const copy = getBacktestRunDetailsCopy(locale);
   const [timelines, setTimelines] = useState<Record<string, TimelineState>>({});

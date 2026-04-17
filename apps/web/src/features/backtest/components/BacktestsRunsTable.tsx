@@ -25,54 +25,70 @@ const statusBadgeTone = (status: BacktestStatus): 'success' | 'danger' | 'info' 
   return 'warning';
 };
 
-const getStatusLabel = (status: BacktestStatus, locale: 'pl' | 'en') => {
-  if (status === 'PENDING') return locale === 'en' ? 'Pending' : 'Oczekuje';
-  if (status === 'RUNNING') return locale === 'en' ? 'Running' : 'W toku';
-  if (status === 'COMPLETED') return locale === 'en' ? 'Completed' : 'Zakonczony';
-  if (status === 'FAILED') return locale === 'en' ? 'Failed' : 'Niepowodzenie';
-  return locale === 'en' ? 'Canceled' : 'Anulowany';
+const getStatusLabel = (status: BacktestStatus, locale: 'en' | 'pl' | 'pt') => {
+  if (status === 'PENDING') return locale === 'en' ? 'Pending' : locale === 'pt' ? 'Pendente' : 'Oczekuje';
+  if (status === 'RUNNING') return locale === 'en' ? 'Running' : locale === 'pt' ? 'Em execucao' : 'W toku';
+  if (status === 'COMPLETED') return locale === 'en' ? 'Completed' : locale === 'pt' ? 'Concluido' : 'Zakonczony';
+  if (status === 'FAILED') return locale === 'en' ? 'Failed' : locale === 'pt' ? 'Falhou' : 'Niepowodzenie';
+  return locale === 'en' ? 'Canceled' : locale === 'pt' ? 'Cancelado' : 'Anulowany';
 };
 
 export default function BacktestsRunsTable({ rows, onDeleted }: BacktestsRunsTableProps) {
   const { formatDateTime } = useLocaleFormatting();
   const i18n = useContext(I18nContext);
-  const locale = i18n?.locale === 'en' ? 'en' : 'pl';
+  const locale = i18n?.locale ?? 'pl';
   const [selectedDeleteRun, setSelectedDeleteRun] = useState<BacktestRun | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const copy =
-    locale === 'en'
-      ? {
-          colName: 'Name',
-          colSymbol: 'Symbol',
-          colTimeframe: 'Interval',
-          colStatus: 'Status',
-          colStart: 'Start',
-          colActions: 'Actions',
-          preview: 'Preview',
-          delete: 'Delete',
-          deleted: 'Backtest run deleted',
-          deleteFailed: 'Could not delete backtest run',
-          deleteTitle: 'Delete backtest run?',
-          cancel: 'Cancel',
-          filterPlaceholder: 'Filter runs...',
-          emptyText: 'No backtest runs.',
-        }
-      : {
-          colName: 'Nazwa',
-          colSymbol: 'Symbol',
-          colTimeframe: 'Interwal',
-          colStatus: 'Status',
-          colStart: 'Start',
-          colActions: 'Akcje',
-          preview: 'Podglad',
-          delete: 'Usun',
-          deleted: 'Run backtestu usuniety',
-          deleteFailed: 'Nie udalo sie usunac runa backtestu',
-          deleteTitle: 'Usunac run backtestu?',
-          cancel: 'Anuluj',
-          filterPlaceholder: 'Filtruj runy...',
-          emptyText: 'Brak runow backtestu.',
-        };
+  const copy = {
+    en: {
+      colName: 'Name',
+      colSymbol: 'Symbol',
+      colTimeframe: 'Interval',
+      colStatus: 'Status',
+      colStart: 'Start',
+      colActions: 'Actions',
+      preview: 'Preview',
+      delete: 'Delete',
+      deleted: 'Backtest run deleted',
+      deleteFailed: 'Could not delete backtest run',
+      deleteTitle: 'Delete backtest run?',
+      cancel: 'Cancel',
+      filterPlaceholder: 'Filter runs...',
+      emptyText: 'No backtest runs.',
+    },
+    pl: {
+      colName: 'Nazwa',
+      colSymbol: 'Symbol',
+      colTimeframe: 'Interwal',
+      colStatus: 'Status',
+      colStart: 'Start',
+      colActions: 'Akcje',
+      preview: 'Podglad',
+      delete: 'Usun',
+      deleted: 'Run backtestu usuniety',
+      deleteFailed: 'Nie udalo sie usunac runa backtestu',
+      deleteTitle: 'Usunac run backtestu?',
+      cancel: 'Anuluj',
+      filterPlaceholder: 'Filtruj runy...',
+      emptyText: 'Brak runow backtestu.',
+    },
+    pt: {
+      colName: 'Nome',
+      colSymbol: 'Simbolo',
+      colTimeframe: 'Intervalo',
+      colStatus: 'Estado',
+      colStart: 'Inicio',
+      colActions: 'Acoes',
+      preview: 'Prever',
+      delete: 'Remover',
+      deleted: 'Execucao de backtest removida',
+      deleteFailed: 'Nao foi possivel remover execucao de backtest',
+      deleteTitle: 'Remover execucao de backtest?',
+      cancel: 'Cancelar',
+      filterPlaceholder: 'Filtrar execucoes...',
+      emptyText: 'Sem execucoes de backtest.',
+    },
+  }[locale];
 
   const handleDelete = async () => {
     if (!selectedDeleteRun) return;

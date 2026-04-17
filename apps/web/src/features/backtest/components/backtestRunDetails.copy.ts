@@ -310,5 +310,24 @@ const PL_COPY: BacktestRunDetailsCopy = {
   custom: 'Niestandardowa',
 };
 
-export const getBacktestRunDetailsCopy = (locale: 'pl' | 'en'): BacktestRunDetailsCopy =>
-  locale === 'en' ? EN_COPY : PL_COPY;
+const PT_COPY: BacktestRunDetailsCopy = {
+  ...EN_COPY,
+  loadingTitle: 'A carregar detalhes do backtest',
+  loadErrorTitle: 'Nao foi possivel carregar detalhes do backtest',
+  loadErrorDefault: 'Nao foi possivel obter detalhes do backtest.',
+  retry: 'Tentar novamente',
+  notFoundTitle: 'Execucao nao encontrada',
+  notFoundDescription: 'A execucao selecionada nao existe ou nao tens acesso.',
+  summaryDailyPnlTitle: 'PnL diario',
+  summaryBalanceTitle: 'Saldo da carteira do inicio ao fim',
+  marketsEmptyTitle: 'Sem dados de mercado',
+  marketsEmptyDescription: 'Resultados por mercado aparecem apos pelo menos uma trade.',
+  tabSummary: 'Resumo',
+  tabMarkets: 'Mercados',
+  tabTrades: 'Trades',
+  noTradesTitle: 'Sem trades',
+  noTradesDescription: 'Nao existem trades para esta execucao.',
+};
+
+export const getBacktestRunDetailsCopy = (locale: 'en' | 'pl' | 'pt'): BacktestRunDetailsCopy =>
+  locale === 'en' ? EN_COPY : locale === 'pt' ? PT_COPY : PL_COPY;
