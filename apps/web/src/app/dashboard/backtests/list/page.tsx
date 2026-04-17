@@ -9,8 +9,8 @@ import { LuChartLine, LuList } from 'react-icons/lu';
 export default function BacktestsListPage() {
   const router = useRouter();
   const { t } = useI18n();
-  const listLabel = 'List';
-  const createLabel = 'Create';
+  const listLabel = t('dashboard.backtests.listLabel');
+  const createLabel = t('dashboard.backtests.createLabel');
 
   return (
     <section className='w-full space-y-4'>

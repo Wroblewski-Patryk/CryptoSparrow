@@ -7,23 +7,24 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
+- [ ] `L10NQ-12 feat(i18n-route-loading): introduce route-level namespace loading`
+- [ ] `L10NQ-13 test(i18n-route-loading): verify no missing-key flicker and stable locale persistence`
+- [ ] `L10NQ-14 docs(localization): rewrite localization policy/qa docs to English-only and en/pl/pt contract`
+- [ ] `L10NQ-15 docs(governance): add docs-language guardrail and backlog for remaining non-English docs`
+## NEXT
 - [ ] `BTMM-01 docs(contract): freeze multi-market parity semantics (isolated symbol timeline vs run totals)`
 - [ ] `BTMM-02 test(api-backtest-red): add failing reproducible contract for 1-symbol vs 50-symbol parity on same target symbol`
 - [ ] `BTMM-03 fix(api-backtest-window): remove double adaptive maxCandles and persist one effective window`
 - [ ] `BTMM-04 fix(api-backtest-timeline-anchor): use deterministic terminal run end anchor instead of stale liveProgress`
 - [ ] `BTMM-05 fix(api-backtest-replay-context): add symbol-isolated replay mode and make pair timeline deterministic by default`
-## NEXT
+## PIPELINE
 - [ ] `BTMM-06 fix(api-backtest-cache): validate candle interval continuity in DB cache and fallback on gaps`
 - [ ] `BTMM-07 refactor(web-backtest-stats): separate run totals from chart-window stats in core data hooks`
 - [ ] `BTMM-08 feat(web-backtest-ui): expose run totals vs chart-window source labels in BacktestRunDetails`
 - [ ] `BTMM-09 test(api-backtest-window): add regression for single adaptation of effectiveMaxCandles`
 - [ ] `BTMM-10 test(api-backtest-anchor-cache): add regressions for stale currentCandleTime and cache-gap fallback`
-## PIPELINE
 - [ ] `BTMM-11 qa(confidence-pack): execute focused backtest parity pack (1 vs 3 vs 50 markets)`
 - [ ] `BTMM-12 docs(closure): publish remediation evidence and sync canonical queues/plans`
-- [ ] `L10NQ-06 feat(i18n-namespaces): split translations by module/route domain`
-- [ ] `L10NQ-07 refactor(i18n-registry): add explicit namespace registry and route-domain mapping`
-- [ ] `L10NQ-08 refactor(web-language-switcher): localize language labels via translation keys`
 ## GROUP QUEUE
 - [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
 - [x] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
@@ -33,12 +34,14 @@ Operational queue for one-task execution runs.
 - [ ] `BTMM-B (commits 06-10): cache continuity + UI/source-of-truth alignment + regressions`
 - [ ] `BTMM-C (commits 11-12): confidence pack + closure`
 - [x] `L10NQ-A (commits 01-05): i18n P0 blockers (backtest clamp + wrapper hardcoded copy)`
-- [ ] `L10NQ-B (commits 06-11): per-module namespace split + parity/guardrail tests`
+- [x] `L10NQ-B (commits 06-11): per-module namespace split + parity/guardrail tests`
 - [ ] `L10NQ-C (commits 12-15): route-level namespace loading + English docs normalization`
 ## BLOCKED
-- [ ] `L10NQ-B/C paused behind BTMM-A priority due backtest correctness regressions`
+- [ ] `none`
 
 ## DONE
+- [x] `L10NQ-B (commits 06-11): per-module namespace split + parity/guardrail tests`
+  - 2026-04-17: Closed `L10NQ-B` by completing `L10NQ-06..L10NQ-11` (introduced explicit i18n namespace architecture by route/domain with `namespaceRegistry` + deterministic route mapping, added module namespaces for `public/auth/dashboard-backtests/dashboard-markets/dashboard-strategies/dashboard-wallets/dashboard-reports/admin`, migrated backtests+bots wrapper labels/toasts to translation keys, removed static `languageOptions.json` coupling and localized language labels in `LanguageSwitcher`, added dev-only missing-key diagnostics with route namespace hints in `I18nProvider`, added namespace parity and i18n guardrail tests, and replaced EN-placeholder PT copy on critical `dashboard-shell/home/bots` paths). Validation: `pnpm --filter web test -- src/i18n/translations.test.ts src/i18n/I18nProvider.test.tsx src/i18n/useLocaleFormatting.test.tsx src/ui/layout/dashboard/LanguageSwitcher.test.tsx src/i18n/namespaceRegistry.test.ts src/i18n/guardrails.test.ts src/app/dashboard/backtests/create/page.test.tsx src/app/dashboard/backtests/list/page.test.tsx src/app/dashboard/bots/page.test.tsx` => `14/14 PASS`; `pnpm --filter web run typecheck` + `pnpm --filter web run build` + `pnpm --filter api run typecheck` + `pnpm --filter api build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
 - [x] `L10NQ-A (commits 01-05): i18n P0 blockers (backtest clamp + wrapper hardcoded copy)`
   - 2026-04-17: Closed `L10NQ-A` by completing `L10NQ-01..L10NQ-05` (scope + docs-language baseline locked in `open-decisions`, baseline inventory artifacts published in `docs/operations/_artifacts-l10nq-a-baseline-2026-04-17.json` + `docs/operations/l10nq-a-baseline-2026-04-17.md`, EN/PL locale clamps removed from backtest create/list/table/details paths with PT support, PT regression tests added for backtest create/list flows, and wrapper/module hardcoded-copy hotspots migrated to locale-aware copy in reports/markets/auth/admin/market-universe surfaces). Validation: `pnpm --filter web test -- src/features/backtest/components/BacktestCreateForm.test.tsx src/features/backtest/components/BacktestsListView.test.tsx src/features/backtest/components/BacktestRunDetails.test.tsx src/features/backtest/components/BacktestsList.test.tsx src/features/auth/components/LoginForm.test.tsx src/features/auth/components/RegisterForm.test.tsx src/features/auth/hooks/useLoginForm.test.tsx` => `18/18 PASS`; `pnpm --filter web test -- src/features/markets/components/MarketUniverseForm.test.tsx src/features/admin/users/pages/AdminUsersPage.test.tsx src/features/admin/subscriptions/pages/AdminSubscriptionsPage.test.tsx` => `11/11 PASS`; `pnpm --filter web run typecheck` + `pnpm --filter web run build` + `pnpm --filter api run typecheck` + `pnpm --filter api build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
 - [x] `UXR-D (commits 23-30): bots IA/runtime polish + breadcrumb/footer + regression closure`

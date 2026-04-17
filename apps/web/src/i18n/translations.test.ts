@@ -57,4 +57,32 @@ describe("translations", () => {
       expect(String(ptValue).trim().length, `Empty PT translation: ${key}`).toBeGreaterThan(0);
     }
   });
+
+  it("uses pt-PT content for core dashboard shell/home/bots keys", () => {
+    const coreKeys = [
+      "dashboard.nav.markets",
+      "dashboard.common.language",
+      "dashboard.logs.title",
+      "dashboard.home.controlCenterTitle",
+      "dashboard.home.quickActionsStripTitle",
+      "dashboard.home.runtime.noActiveBotsTitle",
+      "dashboard.home.runtime.onboardingStepWalletTitle",
+      "dashboard.home.runtime.onboardingStepMarketsTitle",
+      "dashboard.bots.page.title",
+      "dashboard.bots.create.description",
+      "dashboard.bots.states.emptyTitle",
+      "dashboard.bots.monitoring.title",
+      "dashboard.bots.monitoring.sections.historyTradesTitle",
+    ];
+
+    for (const key of coreKeys) {
+      const enValue = readNested(translations.en as unknown as Record<string, unknown>, key);
+      const ptValue = readNested(translations.pt as unknown as Record<string, unknown>, key);
+
+      expect(enValue, `Missing EN key: ${key}`).toEqual(expect.any(String));
+      expect(ptValue, `Missing PT key: ${key}`).toEqual(expect.any(String));
+      expect(String(ptValue).trim().length, `Empty PT translation: ${key}`).toBeGreaterThan(0);
+      expect(ptValue, `PT translation should not be EN placeholder for key: ${key}`).not.toEqual(enValue);
+    }
+  });
 });

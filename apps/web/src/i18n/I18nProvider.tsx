@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { DEFAULT_LOCALE, Locale, TranslationKey, translations } from "./translations";
 import { getLocalStorageItem, setLocalStorageItem } from "@/lib/storage";
+import { resolveNamespacesForRoute } from "./namespaceRegistry";
 
 export type I18nContextValue = {
   locale: Locale;
@@ -18,6 +19,7 @@ export const I18nContext = createContext<I18nContextValue | null>(null);
 const LOCALE_STORAGE_KEY = "cryptosparrow-locale";
 const TIMEZONE_STORAGE_KEY = "cryptosparrow-timezone";
 const AUTO_TIMEZONE = "auto";
+const missingTranslationWarnings = new Set<string>();
 
 const detectSystemTimeZone = () => {
   try {
@@ -51,6 +53,21 @@ const resolveKey = (obj: unknown, path: TranslationKey): string | undefined => {
   }, obj);
 
   return typeof value === "string" ? value : undefined;
+};
+
+const reportMissingTranslation = (locale: Locale, key: TranslationKey, hasFallback: boolean) => {
+  if (process.env.NODE_ENV === "production") return;
+
+  const path = typeof window === "undefined" ? "ssr" : window.location.pathname || "/";
+  const namespaces = resolveNamespacesForRoute(path);
+  const cacheKey = `${locale}|${path}|${String(key)}`;
+  if (missingTranslationWarnings.has(cacheKey)) return;
+
+  missingTranslationWarnings.add(cacheKey);
+  const fallbackState = hasFallback ? "using EN fallback" : "missing EN fallback";
+  console.warn(
+    `[i18n] Missing key "${key}" for locale "${locale}" at route "${path}" (${fallbackState}); expected namespaces: ${namespaces.join(", ")}`
+  );
 };
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
@@ -93,6 +110,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     const localized = resolveKey(translations[locale], key);
     if (localized) return localized;
     const fallback = resolveKey(translations[DEFAULT_LOCALE], key);
+    reportMissingTranslation(locale, key, Boolean(fallback));
     return fallback ?? key;
   }, [locale]);
 

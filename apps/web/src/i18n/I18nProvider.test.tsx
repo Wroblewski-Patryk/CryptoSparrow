@@ -19,21 +19,21 @@ describe("I18nProvider", () => {
     expect(document.documentElement.lang).toBe("en");
 
     fireEvent.click(toggle);
-    fireEvent.click(screen.getByRole("button", { name: "Polski" }));
+    fireEvent.click(screen.getByRole("button", { name: /polski|polish/i }));
 
     await waitFor(() => {
       expect(document.documentElement.lang).toBe("pl");
       expect(window.localStorage.getItem("cryptosparrow-locale")).toBe("pl");
-      expect(screen.getByLabelText(/language|jezyk/i)).toHaveTextContent("Polski");
+      expect(screen.getByLabelText(/language|jezyk|idioma/i)).toHaveTextContent("Polski");
     });
 
-    fireEvent.click(screen.getByLabelText(/language|jezyk/i));
-    fireEvent.click(screen.getByRole("button", { name: /Portugues \(PT\)/i }));
+    fireEvent.click(screen.getByLabelText(/language|jezyk|idioma/i));
+    fireEvent.click(screen.getByRole("button", { name: /portugalski \(pt\)|portuguese \(pt\)|portugues \(pt\)/i }));
 
     await waitFor(() => {
       expect(document.documentElement.lang).toBe("pt");
       expect(window.localStorage.getItem("cryptosparrow-locale")).toBe("pt");
-      expect(screen.getByLabelText(/language|jezyk/i)).toHaveTextContent("Portugues (PT)");
+      expect(screen.getByLabelText(/language|jezyk|idioma/i)).toHaveTextContent("Portugues (PT)");
     });
   });
 });

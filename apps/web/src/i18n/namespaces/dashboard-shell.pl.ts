@@ -32,7 +32,8 @@ export const dashboardShellPl = {
     "timeZone": "Strefa czasowa",
     "timeZoneAuto": "Auto (system)",
     "english": "Angielski",
-    "polish": "Polski"
+    "polish": "Polski",
+    "portuguese": "Portugalski (PT)"
   },
   "footer": {
     "rights": "Wszelkie prawa zastrzezone."

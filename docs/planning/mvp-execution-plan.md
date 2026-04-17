@@ -1751,18 +1751,19 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `L10NQ-03 fix(web-backtest-locale): remove EN/PL clamp in backtest module`
 - [x] `L10NQ-04 test(web-backtest-i18n): add regression coverage for Portuguese backtest locale path`
 - [x] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
-- [ ] `L10NQ-06 feat(i18n-namespaces): split translations by module/route domain`
-- [ ] `L10NQ-07 refactor(i18n-registry): add explicit namespace registry and route-domain mapping`
-- [ ] `L10NQ-08 refactor(web-language-switcher): localize language labels via translation keys`
-- [ ] `L10NQ-09 test(i18n-parity): enforce key parity across en/pl/pt for every namespace`
-- [ ] `L10NQ-10 test(i18n-guardrails): detect locale clamps and hardcoded-copy regressions`
-- [ ] `L10NQ-11 l10n(pt-content): replace placeholder EN copy in PT namespaces with real pt-PT content`
+- [x] `L10NQ-06 feat(i18n-namespaces): split translations by module/route domain`
+- [x] `L10NQ-07 refactor(i18n-registry): add explicit namespace registry and route-domain mapping`
+- [x] `L10NQ-08 refactor(web-language-switcher): localize language labels via translation keys`
+- [x] `L10NQ-09 test(i18n-parity): enforce key parity across en/pl/pt for every namespace`
+- [x] `L10NQ-10 test(i18n-guardrails): detect locale clamps and hardcoded-copy regressions`
+- [x] `L10NQ-11 l10n(pt-content): replace placeholder EN copy in PT namespaces with real pt-PT content`
 - [ ] `L10NQ-12 feat(i18n-route-loading): introduce route-level namespace loading`
 - [ ] `L10NQ-13 test(i18n-route-loading): verify no missing-key flicker and stable locale persistence`
 - [ ] `L10NQ-14 docs(localization): rewrite localization policy/qa docs to English-only and en/pl/pt contract`
 - [ ] `L10NQ-15 docs(governance): add docs-language guardrail and backlog for remaining non-English docs`
 
 ### Progress Log (Phase L10NQ - i18n Contract Remediation + Docs Language Baseline)
+- 2026-04-17: Completed `L10NQ-B` by closing `L10NQ-06..L10NQ-11` (introduced route/module i18n namespace registry + deterministic route-domain mapping, added domain namespaces for `public/auth/dashboard-backtests/dashboard-markets/dashboard-strategies/dashboard-wallets/dashboard-reports/admin`, localized `LanguageSwitcher` labels via translation keys and removed static JSON coupling, migrated backtests+bots wrapper labels/toasts to i18n keys, added dev missing-key diagnostics in `I18nProvider`, added namespace parity + guardrail tests, and replaced EN placeholder PT copy for core `dashboard-shell/home/bots` keys); validation: `pnpm --filter web test -- src/i18n/translations.test.ts src/i18n/I18nProvider.test.tsx src/i18n/useLocaleFormatting.test.tsx src/ui/layout/dashboard/LanguageSwitcher.test.tsx src/i18n/namespaceRegistry.test.ts src/i18n/guardrails.test.ts src/app/dashboard/backtests/create/page.test.tsx src/app/dashboard/backtests/list/page.test.tsx src/app/dashboard/bots/page.test.tsx` => `14/14 PASS`, `pnpm --filter web run typecheck`, `pnpm --filter web run build`, `pnpm --filter api run typecheck`, `pnpm --filter api build`, `docker build -f apps/api/Dockerfile.worker.backtest .` => PASS.
 - 2026-04-17: Completed `L10NQ-A` by closing `L10NQ-01..L10NQ-05` (scope/docs-language baseline decision in `open-decisions`, baseline scan artifacts, backtest locale clamp removal for `en/pl/pt`, PT regression coverage for backtest create/list, and wrapper/module hardcoded-copy migration for reports/markets/auth/admin/market-universe); validation: `pnpm --filter web test` targeted packs (`18/18` + `11/11`), `pnpm --filter web run typecheck`, `pnpm --filter web run build`, `pnpm --filter api run typecheck`, `pnpm --filter api build`, and `docker build -f apps/api/Dockerfile.worker.backtest .` all PASS.
 - 2026-04-17: Initialized phase from audit findings and locked canonical execution plan in `docs/planning/i18n-contract-remediation-plan-2026-04-17.md` (P0 backtest locale clamp removal, hardcoded-copy cleanup, module namespace split, parity/guardrail tests, route-level namespace loading, and English-only localization docs normalization).
 

@@ -18,7 +18,7 @@ export default function BacktestsDetailsPage() {
         breadcrumb={[
           { label: t('dashboard.common.dashboard'), href: '/dashboard' },
           { label: t('dashboard.nav.backtests'), href: '/dashboard/backtests/list' },
-          { label: t('dashboard.logs.tableDetails'), icon: <LuList className='h-3.5 w-3.5' /> },
+          { label: t('dashboard.backtests.detailsLabel'), icon: <LuList className='h-3.5 w-3.5' /> },
         ]}
       />
 

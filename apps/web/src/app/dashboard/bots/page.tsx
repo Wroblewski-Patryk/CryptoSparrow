@@ -8,10 +8,10 @@ import { LuBot, LuList } from "react-icons/lu";
 import { dashboardRoutes } from "@/ui/layout/dashboard/dashboardRoutes";
 
 export default function BotsPage() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const router = useRouter();
-  const listLabel = locale === "pl" ? "Lista" : "List";
-  const createLabel = "Create";
+  const listLabel = t("dashboard.nav.botsList");
+  const createLabel = t("dashboard.backtests.createLabel");
 
   return (
     <section className="w-full space-y-4">

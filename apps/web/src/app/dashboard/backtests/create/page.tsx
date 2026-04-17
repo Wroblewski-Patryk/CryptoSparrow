@@ -16,16 +16,16 @@ const BACKTEST_FORM_ID = 'backtest-form-create';
 
 export default function BacktestsCreatePage() {
   const router = useRouter();
-  const { locale, t } = useI18n();
+  const { t } = useI18n();
   const [submitting, setSubmitting] = useState(false);
-  const createLabel = 'Create';
+  const createLabel = t('dashboard.backtests.createLabel');
 
   const handleCreate = async (payload: CreateBacktestRunInput) => {
-    const createFailed = locale === 'en' ? 'Could not create backtest run' : 'Nie udalo sie utworzyc runa backtestu';
+    const createFailed = t('dashboard.backtests.toastCreateFailed');
     try {
       await runAsyncWithState(setSubmitting, async () => {
         const created = await createBacktestRun(payload);
-        toast.success(locale === 'en' ? 'Backtest run created' : 'Run backtestu utworzony');
+        toast.success(t('dashboard.backtests.toastCreated'));
         router.push(`/dashboard/backtests/${created.id}`);
       });
     } catch (error: unknown) {
@@ -48,7 +48,7 @@ export default function BacktestsCreatePage() {
         actions={
           <button type='submit' form={BACKTEST_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS}>
             <LuSave className='h-4 w-4' />
-            Save
+            {t('dashboard.backtests.saveLabel')}
           </button>
         }
       />

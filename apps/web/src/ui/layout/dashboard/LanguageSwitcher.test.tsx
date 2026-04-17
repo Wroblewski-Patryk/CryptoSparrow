@@ -5,6 +5,9 @@ import LanguageSwitcher from "./LanguageSwitcher";
 
 describe("LanguageSwitcher visual contract", () => {
   it("renders EN option and switches to PL then PT", async () => {
+    window.localStorage.removeItem("cryptosparrow-locale");
+    window.localStorage.removeItem("cryptosparrow-timezone");
+
     render(
       <I18nProvider>
         <LanguageSwitcher />
@@ -16,7 +19,7 @@ describe("LanguageSwitcher visual contract", () => {
     expect(toggle).toHaveTextContent("English");
 
     fireEvent.click(toggle);
-    fireEvent.click(screen.getByRole("button", { name: "Polski" }));
+    fireEvent.click(screen.getByRole("button", { name: /polski|polish/i }));
 
     await waitFor(() => {
       expect(screen.getAllByTestId("flag-pl").length).toBeGreaterThan(0);
@@ -24,7 +27,7 @@ describe("LanguageSwitcher visual contract", () => {
     });
 
     fireEvent.click(screen.getByLabelText(/language|jezyk/i));
-    fireEvent.click(screen.getByRole("button", { name: /Portugues \(PT\)/i }));
+    fireEvent.click(screen.getByRole("button", { name: /portugalski \(pt\)|portuguese \(pt\)|portugues \(pt\)/i }));
 
     await waitFor(() => {
       expect(screen.getAllByTestId("flag-pt").length).toBeGreaterThan(0);

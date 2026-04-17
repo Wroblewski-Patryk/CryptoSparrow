@@ -1,16 +1,11 @@
-import { dashboardBotsEn } from "./namespaces/dashboard-bots.en";
-import { dashboardBotsPl } from "./namespaces/dashboard-bots.pl";
-import { dashboardBotsPt } from "./namespaces/dashboard-bots.pt";
-import { dashboardHomeEn } from "./namespaces/dashboard-home.en";
-import { dashboardHomePl } from "./namespaces/dashboard-home.pl";
-import { dashboardHomePt } from "./namespaces/dashboard-home.pt";
-import { dashboardShellEn } from "./namespaces/dashboard-shell.en";
-import { dashboardShellPl } from "./namespaces/dashboard-shell.pl";
-import { dashboardShellPt } from "./namespaces/dashboard-shell.pt";
+import { buildTranslationsForLocale } from "./namespaceRegistry";
 export const SUPPORTED_LOCALES = ["en", "pl", "pt"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
 type TranslationSchema = {
+  public: Record<string, unknown>;
+  auth: Record<string, unknown>;
+  admin: Record<string, unknown>;
   dashboard: {
     nav: {
       home: string;
@@ -46,6 +41,7 @@ type TranslationSchema = {
       timeZoneAuto: string;
       english: string;
       polish: string;
+      portuguese: string;
     };
     footer: {
       rights: string;
@@ -292,31 +288,18 @@ type TranslationSchema = {
       };
     };
     bots: Record<string, unknown>;
+    backtests: Record<string, unknown>;
+    markets: Record<string, unknown>;
+    strategies: Record<string, unknown>;
+    wallets: Record<string, unknown>;
+    reports: Record<string, unknown>;
   };
 };
 
 export const translations: Record<Locale, TranslationSchema> = {
-  en: {
-    dashboard: {
-      ...dashboardShellEn,
-      home: dashboardHomeEn,
-      bots: dashboardBotsEn,
-    },
-  },
-  pl: {
-    dashboard: {
-      ...dashboardShellPl,
-      home: dashboardHomePl,
-      bots: dashboardBotsPl,
-    },
-  },
-  pt: {
-    dashboard: {
-      ...dashboardShellPt,
-      home: dashboardHomePt,
-      bots: dashboardBotsPt,
-    },
-  },
+  en: buildTranslationsForLocale("en") as TranslationSchema,
+  pl: buildTranslationsForLocale("pl") as TranslationSchema,
+  pt: buildTranslationsForLocale("pt") as TranslationSchema,
 };
 
 export const DEFAULT_LOCALE: Locale = "en";
@@ -329,4 +312,5 @@ type NestedTranslationKey<T> = T extends string
 
 export type TranslationKey =
   | NestedTranslationKey<TranslationSchema>
-  | `dashboard.bots.${string}`;
+  | `dashboard.bots.${string}`
+  | string;

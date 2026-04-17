@@ -4,16 +4,15 @@ import { useRef } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import type { Locale } from '../../../i18n/translations';
 import { useDetailsDropdown } from '../../hooks/useDetailsDropdown';
-import languageOptions from './languageOptions.json';
 import { getHeaderDropdownLinkClass, getHeaderDropdownMenuClass, headerMenuItemClass } from './headerControlStyles';
 
 type LocaleCode = Locale;
 type LanguageOption = {
   locale: LocaleCode;
-  label: string;
-  short: string;
+  labelKey: string;
+  shortLabel: string;
   countryCode: string;
-  icon: string;
+  flag: string;
 };
 
 type DropdownPlacement = 'top' | 'bottom';
@@ -25,7 +24,29 @@ type LanguageSwitcherProps = {
   tone?: LanguageSwitcherTone;
 };
 
-const LANGUAGES = languageOptions as LanguageOption[];
+const LANGUAGES: LanguageOption[] = [
+  {
+    locale: 'en',
+    labelKey: 'public.localeNames.en',
+    shortLabel: 'EN',
+    countryCode: 'gb',
+    flag: '🇬🇧',
+  },
+  {
+    locale: 'pl',
+    labelKey: 'public.localeNames.pl',
+    shortLabel: 'PL',
+    countryCode: 'pl',
+    flag: '🇵🇱',
+  },
+  {
+    locale: 'pt',
+    labelKey: 'public.localeNames.pt',
+    shortLabel: 'PT',
+    countryCode: 'pt',
+    flag: '🇵🇹',
+  },
+];
 
 const getLanguage = (locale: LocaleCode) =>
   LANGUAGES.find((item) => item.locale === locale) ?? LANGUAGES[0];
@@ -38,7 +59,7 @@ function FlagIcon({ option }: { option: LanguageOption }) {
       data-testid={`flag-${option.locale}`}
       title={option.countryCode.toUpperCase()}
     >
-      {option.icon}
+      {option.flag}
     </span>
   );
 }
@@ -52,6 +73,7 @@ export default function LanguageSwitcher({
   const detailsRef = useRef<HTMLDetailsElement>(null);
   useDetailsDropdown(detailsRef);
   const active = getLanguage(locale);
+  const activeLabel = t(active.labelKey);
   const detailsClass = `dropdown dropdown-end group ${placement === 'top' ? 'dropdown-top' : ''}`;
   const menuClass = getHeaderDropdownMenuClass(placement, 'w-44');
   const summaryToneClass =
@@ -68,7 +90,7 @@ export default function LanguageSwitcher({
     <details ref={detailsRef} className={detailsClass}>
       <summary className={`${summaryToneClass} ${summaryClassName}`.trim()} aria-label={t('dashboard.common.language')}>
         <FlagIcon option={active} />
-        <span>{active.label}</span>
+        <span>{activeLabel || active.shortLabel}</span>
       </summary>
       <ul className={menuClass}>
         {LANGUAGES.map((option) => (
@@ -79,7 +101,7 @@ export default function LanguageSwitcher({
               className={getHeaderDropdownLinkClass(locale === option.locale)}
             >
               <FlagIcon option={option} />
-              {option.label}
+              {t(option.labelKey)}
             </button>
           </li>
         ))}
