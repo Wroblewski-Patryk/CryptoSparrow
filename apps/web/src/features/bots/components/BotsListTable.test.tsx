@@ -28,7 +28,7 @@ const renderWithI18n = () => {
 };
 
 describe("BotsListTable", () => {
-  it("renders canonical list-table action links for runtime, assistant and edit form", async () => {
+  it("renders canonical list-table action links for runtime and edit form", async () => {
     listStrategiesMock.mockResolvedValue([
       {
         id: "strat-1",
@@ -60,12 +60,11 @@ describe("BotsListTable", () => {
     });
 
     const runtimeLink = screen.getByRole("link", { name: /operacje runtime/i });
-    const assistantLink = screen.getByRole("link", { name: /asystent/i });
     const editLink = screen.getByRole("link", { name: /edytuj/i });
 
     expect(runtimeLink).toHaveAttribute("href", "/dashboard/bots/bot-1/preview");
-    expect(assistantLink).toHaveAttribute("href", "/dashboard/bots/bot-1/assistant");
     expect(editLink).toHaveAttribute("href", "/dashboard/bots/bot-1/edit");
+    expect(screen.queryByRole("link", { name: /asystent/i })).not.toBeInTheDocument();
   });
 
   it("shows placeholder badge for unsupported exchange and supports filtering by exchange name", async () => {

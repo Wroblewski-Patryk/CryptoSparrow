@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { LuBot, LuLayoutDashboard, LuPencilLine, LuTrash2 } from "react-icons/lu";
+import { LuLayoutDashboard, LuPencilLine, LuTrash2 } from "react-icons/lu";
 import { useRouter } from "next/navigation";
 
 import ConfirmModal from "@/ui/components/ConfirmModal";
@@ -160,18 +160,13 @@ export default function BotsListTable() {
     {
       key: "actions",
       label: t("dashboard.bots.list.columns.actions"),
-      className: "w-[180px] text-right",
+      className: "w-[140px] text-right",
       render: (row) => (
         <div className="flex flex-wrap items-center justify-end gap-2">
           <TableIconLinkAction
             href={dashboardRoutes.bots.preview(row.id)}
             label={t("dashboard.bots.tabs.monitoring")}
             icon={<LuLayoutDashboard className="h-3.5 w-3.5" />}
-          />
-          <TableIconLinkAction
-            href={dashboardRoutes.bots.assistant(row.id)}
-            label={t("dashboard.bots.tabs.assistant")}
-            icon={<LuBot className="h-3.5 w-3.5" />}
           />
           <TableIconLinkAction
             href={dashboardRoutes.bots.edit(row.id)}
