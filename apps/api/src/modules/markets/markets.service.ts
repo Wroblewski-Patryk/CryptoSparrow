@@ -1,6 +1,6 @@
 import { Exchange as PrismaExchange } from '@prisma/client';
 import { prisma } from '../../prisma/client';
-import { normalizeSymbol, resolveUniverseSymbols } from '../../lib/symbols';
+import { normalizeSymbol, normalizeSymbols, resolveUniverseSymbols } from '../../lib/symbols';
 import { assertExchangeCapability } from '../exchange/exchangeCapabilities';
 import { CreateMarketUniverseDto, UpdateMarketUniverseDto } from './markets.types';
 import { marketErrors } from './markets.errors';
@@ -210,6 +210,64 @@ export const getUniverse = async (userId: string, id: string) => {
   });
 };
 
+const resolveMinQuoteVolumeFilter = (filterRules: unknown) => {
+  const parsedRules =
+    filterRules && typeof filterRules === 'object'
+      ? (filterRules as {
+          minQuoteVolumeEnabled?: unknown;
+          minQuoteVolume24h?: unknown;
+          minVolume24h?: unknown;
+        })
+      : null;
+  const enabled = parsedRules?.minQuoteVolumeEnabled === true;
+  const minRaw = Number(parsedRules?.minQuoteVolume24h ?? parsedRules?.minVolume24h ?? 0);
+  const min = Number.isFinite(minRaw) && minRaw > 0 ? minRaw : 0;
+  return { enabled, min };
+};
+
+const composeUniverseSymbols = (params: {
+  catalogSymbols: string[];
+  whitelist: string[];
+  blacklist: string[];
+}) => {
+  const include = normalizeSymbols([...params.catalogSymbols, ...params.whitelist]);
+  const blacklistSet = new Set(normalizeSymbols(params.blacklist));
+  return include.filter((symbol) => !blacklistSet.has(symbol));
+};
+
+const resolveEffectiveUniverseSymbolsForSync = async (params: {
+  exchange: Exchange;
+  marketType: 'FUTURES' | 'SPOT';
+  baseCurrency: string;
+  filterRules: unknown;
+  whitelist: string[];
+  blacklist: string[];
+}) => {
+  const fallbackSymbols = resolveUniverseSymbols(params.whitelist, params.blacklist);
+  try {
+    const catalog = await getMarketCatalog(
+      params.baseCurrency,
+      params.marketType,
+      params.exchange
+    );
+    const volumeFilter = resolveMinQuoteVolumeFilter(params.filterRules);
+    const catalogSymbols = normalizeSymbols(
+      catalog.markets
+        .filter((market) =>
+          volumeFilter.enabled ? (market.quoteVolume24h ?? 0) >= volumeFilter.min : true
+        )
+        .map((market) => market.symbol)
+    );
+    return composeUniverseSymbols({
+      catalogSymbols,
+      whitelist: params.whitelist,
+      blacklist: params.blacklist,
+    });
+  } catch {
+    return fallbackSymbols;
+  }
+};
+
 const assertUniverseNotUsedByActiveBot = async (params: { userId: string; marketUniverseId: string }) => {
   const { userId, marketUniverseId } = params;
 
@@ -264,6 +322,26 @@ export const updateUniverse = async (
   const existing = await getUniverse(userId, id);
   if (!existing) return null;
   await assertUniverseNotUsedByActiveBot({ userId, marketUniverseId: existing.id });
+  const shouldSyncSymbols =
+    data.whitelist !== undefined ||
+    data.blacklist !== undefined ||
+    data.filterRules !== undefined ||
+    data.exchange !== undefined ||
+    data.marketType !== undefined ||
+    data.baseCurrency !== undefined;
+
+  const nextUniverseState = {
+    exchange: (data.exchange ?? existing.exchange) as Exchange,
+    marketType: (data.marketType ?? existing.marketType) as 'FUTURES' | 'SPOT',
+    baseCurrency: data.baseCurrency ?? existing.baseCurrency,
+    filterRules: data.filterRules ?? existing.filterRules,
+    whitelist: data.whitelist ?? existing.whitelist,
+    blacklist: data.blacklist ?? existing.blacklist,
+  };
+
+  const resolvedSymbols = shouldSyncSymbols
+    ? await resolveEffectiveUniverseSymbolsForSync(nextUniverseState)
+    : null;
 
   return prisma.$transaction(async (tx) => {
     const updated = await tx.marketUniverse.update({
@@ -271,9 +349,7 @@ export const updateUniverse = async (
       data,
     });
 
-    const shouldSyncSymbols = data.whitelist !== undefined || data.blacklist !== undefined;
-    if (shouldSyncSymbols) {
-      const resolvedSymbols = resolveUniverseSymbols(updated.whitelist, updated.blacklist);
+    if (resolvedSymbols) {
       await tx.symbolGroup.updateMany({
         where: {
           userId,

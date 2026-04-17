@@ -7,18 +7,23 @@ Operational queue for one-task execution runs.
 - Agent executes exactly one unchecked task from `NOW`.
 
 ## NOW
-- [x] `UXR-06 feat(web-dashboard-wallet): redesign wallet KPI row + wallet icon consistency`
-- [x] `UXR-07 feat(web-dashboard-tabs): rename tab labels to positions/orders/history`
-- [x] `UXR-08 fix(web-positions-table): move close column to last, rename to Action, use icon button`
-- [x] `UXR-09 fix(web-actions): implement per-row pending state for concurrent close actions`
-- [x] `UXR-10 fix(api-close-position): align close-position button flow with backend close handler`
+- [ ] `UXR-16 ux(web-profile-api): redesign API key form row layout and helper blocks`
+- [ ] `UXR-17 fix(api-profile-sync): make API sync action deterministic and observable`
+- [ ] `UXR-18 refactor(web-wallets-list): migrate wallets list to shared DataTable pattern`
+- [ ] `UXR-19 fix(api-wallet-guard): block wallet edits when wallet is used by active bot`
+- [ ] `UXR-20 feat(web-table-core): shared advanced table options (column visibility + expandable details)`
 ## NEXT
-- [x] `UXR-11 feat(web-position-edit-modal): add reusable modal shell + initial position-edit form`
-- [x] `UXR-12 feat(api-position-edit): expose safe manual update endpoint for TP/SL and metadata`
-- [x] `UXR-13 feat(web-dashboard-manual-order): add manual order panel using existing bot order pipeline`
-- [x] `UXR-14 feat(web-markets-form): compose symbol universe from (min-volume U whitelist) - blacklist`
-- [ ] `UXR-15 fix(api-markets): enforce same universe composition contract on backend`
+- [ ] `UXR-21 feat(web-tables): apply advanced table mode to wallets/markets/strategies/backtests/bots`
+- [ ] `UXR-22 feat(web+api-logs): migrate logs view to unified table UX and verify bot-message completeness`
+- [ ] `UXR-23 feat(web-bots-list): hide assistant action in V1 list view`
+- [ ] `UXR-24 refactor(web-bots-runtime): tabbed runtime layout with dashboard-like readability`
+- [ ] `UXR-25 fix(web-runtime-refresh): remove local refresh controls and use automatic interval only`
 ## PIPELINE
+- [ ] `UXR-26 fix(api-bots-duplicate-guard): enforce uniqueness by wallet+market+strategy tuple`
+- [ ] `UXR-27 ux(web-bot-form): simplify IA (one section, two rows), clarify live opt-in, complete i18n`
+- [ ] `UXR-28 fix(web-backtests-breadcrumb): normalize labels to List/Create and make module header linkable`
+- [ ] `UXR-29 fix(web-footer-mobile): center both dashboard footer rows on mobile`
+- [ ] `UXR-30 qa(regression-pack): run focused API+WEB tests and manual smoke for live/paper parity`
 - [ ] `L10NQ-01 docs(contract): freeze remediation scope and English-only documentation baseline`
 - [ ] `L10NQ-02 qa(scan): capture baseline inventory of locale clamps and hardcoded-copy hotspots`
 - [ ] `L10NQ-03 fix(web-backtest-locale): remove EN/PL clamp in backtest module`
@@ -26,7 +31,7 @@ Operational queue for one-task execution runs.
 - [ ] `L10NQ-05 refactor(web-hardcoded-wrapper-copy): migrate page-wrapper/module hardcoded strings to i18n keys`
 ## GROUP QUEUE
 - [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
-- [ ] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
+- [x] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
 - [ ] `UXR-C (commits 16-22): advanced table rollout + logs module completion`
 - [ ] `UXR-D (commits 23-30): bots IA/runtime polish + breadcrumb/footer + regression closure`
 - [ ] `L10NQ-A (commits 01-05): i18n P0 blockers (backtest clamp + wrapper hardcoded copy)`
@@ -36,6 +41,10 @@ Operational queue for one-task execution runs.
 - none
 
 ## DONE
+- [x] `UXR-15 fix(api-markets): enforce same universe composition contract on backend`
+  - 2026-04-17: Enforced backend market-universe sync contract for linked symbol groups as `(min-volume filtered catalog U whitelist) - blacklist` in `markets.service` (including sync triggers on `filterRules/exchange/marketType/baseCurrency` updates), and added API regression for composed sync behavior in `markets.e2e`. Validation pack: `pnpm --filter api test -- src/modules/markets/markets.e2e.test.ts` => `9/9 PASS`.
+- [x] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
+  - 2026-04-17: Closed `UXR-B` by completing `UXR-13..UXR-15`; refilled canonical queue for continuation (`NOW`: `UXR-16..UXR-20`, `NEXT`: `UXR-21..UXR-25`, `PIPELINE`: `UXR-26..UXR-30`), preserving grouped execution continuity for `UXR-C` and `UXR-D`.
 - [x] `UXR-14 feat(web-markets-form): compose symbol universe from (min-volume U whitelist) - blacklist`
   - 2026-04-17: Updated markets form composition contract to compute preview universe as `(volume-filtered catalog U whitelist) - blacklist` via shared helper (`composeMarketUniverseSymbols`) and locked regression coverage for composed preview behavior in edit mode. Validation pack: `pnpm --filter web test -- src/features/markets/components/MarketUniverseForm.test.tsx` => `6/6 PASS`.
 - [x] `UXR-13 feat(web-dashboard-manual-order): add manual order panel using existing bot order pipeline`

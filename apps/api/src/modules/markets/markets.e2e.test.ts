@@ -146,7 +146,7 @@ describe('Markets module contract', () => {
     expect(getDeletedRes.body.error.message).toBe('Not found');
   });
 
-  it('syncs linked symbol groups when universe whitelist/blacklist changes', async () => {
+  it('syncs linked symbol groups with composed universe contract (volume U whitelist) - blacklist', async () => {
     const agent = await registerAndLogin('markets-sync@example.com');
 
     const createRes = await agent.post('/dashboard/markets/universes').send(createPayload());
@@ -169,7 +169,11 @@ describe('Markets module contract', () => {
     });
 
     const updateRes = await agent.put(`/dashboard/markets/universes/${universeId}`).send({
-      whitelist: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT'],
+      filterRules: {
+        minQuoteVolumeEnabled: true,
+        minQuoteVolume24h: 2_000_000_000,
+      },
+      whitelist: ['SOLUSDT'],
       blacklist: ['ETHUSDT'],
     });
     expect(updateRes.status).toBe(200);
@@ -178,7 +182,7 @@ describe('Markets module contract', () => {
       where: { id: symbolGroup.id },
       select: { symbols: true },
     });
-    expect(refreshedGroup?.symbols).toEqual(['BTCUSDT', 'SOLUSDT', 'XRPUSDT']);
+    expect(refreshedGroup?.symbols).toEqual(['BTCUSDT', 'SOLUSDT']);
   });
 
   it('returns public market catalog filtered by base currency and market type', async () => {
