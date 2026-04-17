@@ -1,6 +1,7 @@
 # Exchange Context Consistency Plan (EXCTX) - 2026-04-01
 
-Status: partially completed; remaining tasks tracked in canonical plan (reconciled 2026-04-05).
+Status: completed in canonical plan (reconciled with canonical completion log on 2026-04-17); retained as historical design reference.
+Note: active execution history and closure evidence live in `docs/planning/mvp-execution-plan.md` (`EXCTX-01..EXCTX-17` marked done).
 
 Related follow-up (2026-04-04):
 - Exchange placeholder rollout for `BYBIT/OKX/KRAKEN/COINBASE` is tracked in `docs/planning/exchange-placeholder-adapters-plan-2026-04-04.md`.
@@ -169,33 +170,33 @@ Operator diagnostics:
 ## Tiny-Commit Execution Sequence (Proposed)
 
 Phase A - contracts/docs
-- [ ] `EXCTX-01 docs(contract): publish venue-context source-of-truth and invariants for creators/runtime`
-- [ ] `EXCTX-02 docs(decisions): lock MarketUniverse as canonical exchange+marketType+base context owner`
+- [x] `EXCTX-01 docs(contract): publish venue-context source-of-truth and invariants for creators/runtime`
+- [x] `EXCTX-02 docs(decisions): lock MarketUniverse as canonical exchange+marketType+base context owner`
 
 Phase B - schema + migration
 - [x] `EXCTX-03 feat(db): add exchange field to MarketUniverse with BINANCE default`
 - [x] `EXCTX-04 feat(db): add bot live apiKey binding field for explicit execution venue context`
-- [ ] `EXCTX-05 chore(data-migration): backfill existing universes/runs with exchange context snapshot`
+- [x] `EXCTX-05 chore(data-migration): backfill existing universes/runs with exchange context snapshot`
 
 Phase C - API contract
-- [ ] `EXCTX-06 feat(api-markets): extend market-universe and catalog contracts with exchange context`
-- [ ] `EXCTX-07 feat(api-backtests): derive and persist exchange context from selected market universe`
-- [ ] `EXCTX-08 feat(api-bots): enforce bot/group/apiKey venue-context compatibility on create/activate`
+- [x] `EXCTX-06 feat(api-markets): extend market-universe and catalog contracts with exchange context`
+- [x] `EXCTX-07 feat(api-backtests): derive and persist exchange context from selected market universe`
+- [x] `EXCTX-08 feat(api-bots): enforce bot/group/apiKey venue-context compatibility on create/activate`
 
 Phase D - runtime/engine
-- [ ] `EXCTX-09 refactor(engine): introduce venue-aware market data provider contract`
-- [ ] `EXCTX-10 refactor(runtime): add exchange to stream-event context and enforce exchange+marketType match`
-- [ ] `EXCTX-11 feat(execution): bind live execution account selection to bot venue context`
+- [x] `EXCTX-09 refactor(engine): introduce venue-aware market data provider contract`
+- [x] `EXCTX-10 refactor(runtime): add exchange to stream-event context and enforce exchange+marketType match`
+- [x] `EXCTX-11 feat(execution): bind live execution account selection to bot venue context`
 
 Phase E - web UX
-- [ ] `EXCTX-12 feat(web-backtest-creator): show explicit exchange/marketType/base context bound to market group`
-- [ ] `EXCTX-13 feat(web-bot-creator): show explicit venue context and live api-key compatibility hints`
-- [ ] `EXCTX-14 test(web): add creator regression coverage for venue-context rendering and validation copy`
+- [x] `EXCTX-12 feat(web-backtest-creator): show explicit exchange/marketType/base context bound to market group`
+- [x] `EXCTX-13 feat(web-bot-creator): show explicit venue context and live api-key compatibility hints`
+- [x] `EXCTX-14 test(web): add creator regression coverage for venue-context rendering and validation copy`
 
 Phase F - verification
-- [ ] `EXCTX-15 test(api+runtime): add context mismatch contract tests for backtest/bot/live paths`
-- [ ] `EXCTX-16 test(e2e): add end-to-end venue consistency scenario (backtest->paper->live)`
-- [ ] `EXCTX-17 chore(qa): manual smoke checklist and evidence capture for creator/runtime consistency`
+- [x] `EXCTX-15 test(api+runtime): add context mismatch contract tests for backtest/bot/live paths`
+- [x] `EXCTX-16 test(e2e): add end-to-end venue consistency scenario (backtest->paper->live)`
+- [x] `EXCTX-17 chore(qa): manual smoke checklist and evidence capture for creator/runtime consistency`
 
 ## Done Criteria
 - Creator-selected context and runtime/execution context are provably identical.

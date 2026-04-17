@@ -1,5 +1,8 @@
 # VPS Live-Test Readiness Plan (2026-04-09)
 
+Status: historical pre-go-live checklist; superseded by closed RC gates/live evidence on 2026-04-10.
+Note: unchecked boxes below are retained as historical/template operator steps and are not an active delivery queue.
+
 Goal: reach a controlled, low-risk state where LIVE mode can be tested on VPS with real exchange side effects and clear rollback path.
 
 ## Execution Snapshot (2026-04-09)
@@ -9,9 +12,9 @@ Goal: reach a controlled, low-risk state where LIVE mode can be tested on VPS wi
 - [x] Local restore drill PASS (`ops:db:restore-drill:local`).
 - [x] Backup/restore script hardening applied to avoid restore-DB name collisions in consecutive runs (`scripts/verifyLocalBackupRestore.mjs`).
 - [ ] Deploy smoke on target environment (`ops:deploy:smoke`) blocked: no reachable API/WEB target in current context.
-- [ ] Production Gate 2 (`SLO observation`) blocked: missing target URL + admin token for production collection.
-- [ ] Production Gate 3 (`incident contacts/escalation`) still open.
-- [ ] Production Gate 4 (`formal sign-offs`) still open.
+- [x] Production Gate 2 (`SLO observation`) closed (PASS in `docs/operations/v1-rc-external-gates-status.md`).
+- [x] Production Gate 3 (`incident contacts/escalation`) closed (PASS in `docs/operations/v1-rc-external-gates-status.md`).
+- [x] Production Gate 4 (`formal sign-offs`) closed (PASS in `docs/operations/v1-rc-external-gates-status.md`).
 
 Latest generated evidence references:
 - `docs/operations/v1-rc-external-gates-status.md`
@@ -29,7 +32,7 @@ Inputs required to continue execution on target VPS/PROD:
 
 - [x] Backtest details page resilience fix delivered (`404` run handling + partial fetch tolerance).
 - [x] Runtime pre-check for exchange minimum order constraints delivered (prevent pointless LIVE order submissions).
-- [ ] Production exit-gates remain open (SLO window evidence, target-env backup/restore, queue-lag review, formal sign-offs).
+- [x] Production exit-gates closed via RC evidence pipeline (`docs/operations/v1-rc-external-gates-status.md`, gates 1-4 PASS).
 
 ## Execution Rules
 

@@ -128,3 +128,22 @@ After completing the full planned group: push immediately after the final commit
 - Evidence:
   - User-reported rework caused by unnecessary footer language-switcher flag change (2026-04-17).
   - User feedback that large, multi-thread commits increase drift risk and rework (2026-04-17).
+
+### 2026-04-17 - PLANNING SOURCE-OF-TRUTH CROSS-CHECK
+- Context: answering "what is planned next" in a repository with both canonical queues and historical checklists/templates.
+- Symptom: assistant reports "nothing planned" from canonical queue, while other docs still contain unchecked boxes; later tasks are rediscovered and cause context churn.
+- Root cause: no explicit two-tier planning read (active canonical queue vs non-canonical/historical docs) before status response.
+- Guardrail:
+  - `BEFORE SAYING "NO TASKS PLANNED", RUN TWO-TIER CHECK:`
+  - `TIER 1 (ACTIVE): canonical planning files only.`
+  - `TIER 2 (BACKGROUND): all docs unchecked items, explicitly labeled as historical/template/non-active when applicable.`
+- Preferred pattern:
+```text
+When user asks "what is planned":
+1) Report ACTIVE queue from canonical files.
+2) Separately report any non-canonical open checklists as "background/historical".
+3) If mismatch exists, propose sync/archival update to avoid future drift.
+```
+- Avoid: collapsing all unchecked boxes into one queue or ignoring non-canonical unchecked docs entirely.
+- Evidence:
+  - Observed mismatch on 2026-04-17: canonical planning files had 0 open tasks while legacy docs still had many unchecked checklists (including EXCTX/VPS readiness artifacts).
