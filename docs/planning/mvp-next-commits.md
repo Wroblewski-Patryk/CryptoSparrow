@@ -31,7 +31,7 @@ Operational queue for one-task execution runs.
 - [x] `UXR-E-B (commits UXR-E-05..UXR-E-08): action rollout + dashboard manual-order/wallet polish`
 - [x] `UXR-E-C (commits UXR-E-09..UXR-E-12): shell polish + regression closure`
 - [x] `UXR-F-A (commits UXR-F-01..UXR-F-04): shared dashboard form-system foundation + guardrails`
-- [ ] `UXR-F-B (commits UXR-F-05..UXR-F-08): wrapper/i18n shell unification + wallets/markets/backtests migration`
+- [x] `UXR-F-B (commits UXR-F-05..UXR-F-08): wrapper/i18n shell unification + wallets/markets/backtests migration`
 - [ ] `UXR-F-C (commits UXR-F-09..UXR-F-12): strategies/bots migration + standardized form UX/mobile action bar`
 - [ ] `UXR-F-D (commits UXR-F-13..UXR-F-14): focused regression pack + closure sync`
 - [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
@@ -48,7 +48,8 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
-- [x] `UXR-F-B progress: completed UXR-F-05..UXR-F-07 (group in progress)`
+- [x] `UXR-F-B closed: completed UXR-F-05..UXR-F-08`
+  - 2026-04-18: Completed `UXR-F-08` by aligning `BacktestCreateForm` internals to shared `ui/forms` primitives (`FormSectionCard`, `FormGrid`, `SelectField`, `NumberField`, `TextareaField`) while preserving venue-context and seed-config contracts. Validation: `pnpm --filter web test -- src/features/backtest/components/BacktestCreateForm.test.tsx` => `4/4 PASS`; `pnpm --filter web run typecheck` => `PASS`.
   - 2026-04-18: Completed `UXR-F-07` by migrating `MarketUniverseForm` from feature-local `FieldControls` to shared `ui/forms` primitives (`TextField`, `SelectField`, `FormField`) and deleting obsolete `FieldControls.tsx`. Validation: `pnpm --filter web test -- src/features/markets/components/MarketUniverseForm.test.tsx` => `6/6 PASS`; `pnpm --filter web run typecheck` => `PASS`.
   - 2026-04-18: Completed `UXR-F-06` by migrating `WalletCreateEditForm` to shared `ui/forms` primitives with unified section/field contract, validation summary surfacing, and guarded first-invalid focus behavior compatible with test/runtime environments. Validation: `pnpm --filter web test -- src/features/wallets/components/WalletCreateEditForm.test.tsx` => `4/4 PASS`; `pnpm --filter web run typecheck` => `PASS`.
   - 2026-04-18: Completed `UXR-F-05` by migrating dashboard create/edit wrappers to namespace-driven copy and shared form-shell contract across wallets/markets/strategies/bots wrappers.

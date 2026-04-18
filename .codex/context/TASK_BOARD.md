@@ -17,16 +17,49 @@ Last updated: 2026-04-18
 
 ## READY
 
-- [ ] UXR-F-08 Migrate backtests create form to shared ui/forms primitives
+- [ ] UXR-F-09 Migrate strategies create/edit form internals to shared ui/forms primitives
   - Status: READY
-  - Group: Dashboard Forms Unification (`UXR-F-B`)
+  - Group: Dashboard Forms Unification (`UXR-F-C`)
   - Owner: Frontend Builder
-  - Depends on: UXR-F-07
-  - Priority: P2
+  - Depends on: UXR-F-B
+  - Priority: P1
 
 ## BACKLOG
 
-- [ ] (none)
+- [ ] UXR-F-10 Migrate bots create/edit form internals to shared ui/forms primitives
+  - Status: BACKLOG
+  - Group: Dashboard Forms Unification (`UXR-F-C`)
+  - Owner: Frontend Builder
+  - Depends on: UXR-F-09
+  - Priority: P1
+
+- [ ] UXR-F-11 Standardize form submit/disabled states and validation summary+focus behavior
+  - Status: BACKLOG
+  - Group: Dashboard Forms Unification (`UXR-F-C`)
+  - Owner: Frontend Builder
+  - Depends on: UXR-F-10
+  - Priority: P1
+
+- [ ] UXR-F-12 Add reusable mobile sticky action bar pattern for long dashboard forms
+  - Status: BACKLOG
+  - Group: Dashboard Forms Unification (`UXR-F-C`)
+  - Owner: Frontend Builder
+  - Depends on: UXR-F-11
+  - Priority: P2
+
+- [ ] UXR-F-13 Run focused cross-form regression pack for UXR-F-C
+  - Status: BACKLOG
+  - Group: Dashboard Forms Unification (`UXR-F-D`)
+  - Owner: QA/Test
+  - Depends on: UXR-F-12
+  - Priority: P1
+
+- [ ] UXR-F-14 Publish UXR-F closure sync and evidence notes across canonical docs/context
+  - Status: BACKLOG
+  - Group: Dashboard Forms Unification (`UXR-F-D`)
+  - Owner: Product Docs
+  - Depends on: UXR-F-13
+  - Priority: P1
 
 ## IN_PROGRESS
 
@@ -48,3 +81,4 @@ Last updated: 2026-04-18
 - [x] UXR-F-05 Unify dashboard create/edit wrappers with shared shell and namespace-driven copy
 - [x] UXR-F-06 Migrate wallet create/edit form to shared ui/forms primitives
 - [x] UXR-F-07 Migrate markets create/edit form to shared ui/forms primitives
+- [x] UXR-F-08 Migrate backtests create form to shared ui/forms primitives

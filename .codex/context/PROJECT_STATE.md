@@ -20,8 +20,8 @@ Last updated: 2026-04-18
   and IA changes.
 - 2026-04-17: Portuguese rollout is locked to `pt-PT`; `pt-BR` is not part of
   the current localization wave.
-- 2026-04-18: active execution focus remains the `L10NQ-D` cleanup wave, with
-  dashboard selector and form-polish waves queued behind it.
+- 2026-04-18: active execution focus moved to `UXR-F` dashboard form-system
+  unification after closing `L10NQ-D`.
 
 ## Technical Baseline
 - Backend: Node.js 20+, Express API, Prisma, TypeScript
@@ -100,13 +100,13 @@ Last updated: 2026-04-18
 
 ## Current Focus
 - Main active objective: execute `UXR-F` dashboard form-system unification
-  waves (`B -> D`) on top of closed Stage A foundation, without regressing
+  waves (`C -> D`) on top of closed Stages A and B, without regressing
   runtime safety, docs parity, or release readiness.
 - Top blockers:
-  - wrapper-level create/edit page shells still need full unification onto
-    shared `ui/forms` and namespace-driven copy (`UXR-F-05`).
-  - wallets/markets/backtests forms still require migration from local controls
-    to shared field primitives (`UXR-F-06..08`).
+  - strategies/bots forms still require full internal migration to shared
+    `ui/forms` primitives (`UXR-F-09..10`).
+  - cross-form submit/validation/mobile ergonomics still require standardized
+    closure implementation (`UXR-F-11..12`).
   - forms `C/D` closure waves require careful regression control to avoid
     deploy-time breakage while improving UX consistency.
 - Success criteria for this phase:
@@ -122,6 +122,9 @@ Last updated: 2026-04-18
 - 2026-04-18: closed `UXR-F-A` (`UXR-F-01..UXR-F-04`) by freezing Stage A
   migration boundaries, adding shared `ui/forms` core+field primitives with
   tests, and enforcing cross-feature generic form import guardrails.
+- 2026-04-18: closed `UXR-F-B` (`UXR-F-05..UXR-F-08`) by unifying create/edit
+  wrapper i18n shell copy and migrating wallets/markets/backtests create-edit
+  forms to shared `ui/forms` primitives with focused regression evidence.
 - 2026-04-18: refreshed the repo-specific agent workflow so the canonical queue,
   validation contract, deployment contract, and learning journal are aligned.
 

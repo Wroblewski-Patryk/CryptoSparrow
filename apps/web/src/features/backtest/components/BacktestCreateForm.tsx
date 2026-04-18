@@ -9,7 +9,7 @@ import { listMarketUniverses } from '../../markets/services/markets.service';
 import { MarketUniverse } from '../../markets/types/marketUniverse.type';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { hasFormText, normalizeFormText, resolveFormErrorMessage } from '@/lib/forms';
-import { FormField, TextField } from '@/ui/forms';
+import { FormGrid, FormSectionCard, NumberField, SelectField, TextField, TextareaField } from '@/ui/forms';
 
 type BacktestCreateFormProps = {
   formId?: string;
@@ -175,6 +175,36 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
     !submitting &&
     !universesLoading &&
     !strategiesLoading;
+  const strategyOptions = useMemo(
+    () =>
+      strategies.length > 0
+        ? strategies.map((strategy) => ({
+            value: strategy.id,
+            label: strategy.name,
+          }))
+        : [
+            {
+              value: '',
+              label: copy.noStrategies,
+            },
+          ],
+    [copy.noStrategies, strategies]
+  );
+  const marketUniverseOptions = useMemo(
+    () =>
+      marketUniverses.length > 0
+        ? marketUniverses.map((universe) => ({
+            value: universe.id,
+            label: `${universe.name} (${universe.exchange ?? 'BINANCE'} - ${universe.marketType}/${universe.baseCurrency})`,
+          }))
+        : [
+            {
+              value: '',
+              label: copy.noUniverses,
+            },
+          ],
+    [copy.noUniverses, marketUniverses]
+  );
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -204,9 +234,8 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
         </div>
 
         <div className='space-y-4'>
-          <section className='rounded-lg border border-base-300 bg-base-100 p-3 space-y-3'>
-            <h3 className='text-xs font-semibold uppercase tracking-wide opacity-70'>{copy.sectionRunConfig}</h3>
-            <div className='grid gap-3 md:grid-cols-2'>
+          <FormSectionCard title={copy.sectionRunConfig}>
+            <FormGrid columns={2}>
               <TextField
                 id='backtest-run-name'
                 label={copy.runName}
@@ -218,37 +247,23 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
                 placeholder={copy.runNamePlaceholder}
               />
 
-              <FormField label={copy.strategy}>
-                <select
-                  className='select select-bordered'
-                  value={strategyId}
-                  onChange={(event) => setStrategyId(event.target.value)}
-                  disabled={strategiesLoading}
-                >
-                  {strategies.length === 0 ? <option value=''>{copy.noStrategies}</option> : null}
-                  {strategies.map((strategy) => (
-                    <option key={strategy.id} value={strategy.id}>
-                      {strategy.name}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
+              <SelectField
+                id='backtest-strategy-id'
+                label={copy.strategy}
+                value={strategyId}
+                onChange={setStrategyId}
+                options={strategyOptions}
+                disabled={strategiesLoading || strategies.length === 0}
+              />
 
-              <FormField label={copy.marketGroup}>
-                <select
-                  className='select select-bordered'
-                  value={marketUniverseId}
-                  onChange={(event) => setMarketUniverseId(event.target.value)}
-                  disabled={universesLoading}
-                >
-                  {marketUniverses.length === 0 ? <option value=''>{copy.noUniverses}</option> : null}
-                  {marketUniverses.map((universe) => (
-                    <option key={universe.id} value={universe.id}>
-                      {universe.name} ({universe.exchange ?? 'BINANCE'} - {universe.marketType}/{universe.baseCurrency})
-                    </option>
-                  ))}
-                </select>
-              </FormField>
+              <SelectField
+                id='backtest-market-universe-id'
+                label={copy.marketGroup}
+                value={marketUniverseId}
+                onChange={setMarketUniverseId}
+                options={marketUniverseOptions}
+                disabled={universesLoading || marketUniverses.length === 0}
+              />
 
               <div className='md:col-span-2 rounded-md border border-base-300/70 bg-base-200/40 px-3 py-2'>
                 <p className='text-[11px] font-semibold uppercase tracking-wide opacity-70'>
@@ -274,58 +289,53 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
                 )}
                 <p className='mt-2 text-xs opacity-70'>{copy.venueContextHint}</p>
               </div>
-            </div>
-          </section>
+            </FormGrid>
+          </FormSectionCard>
 
-          <section className='rounded-lg border border-base-300 bg-base-100 p-3 space-y-3'>
-            <h3 className='text-xs font-semibold uppercase tracking-wide opacity-70'>{copy.sectionSimParams}</h3>
-            <div className='grid gap-3 md:grid-cols-2'>
-              <FormField label={copy.maxCandles}>
-                <input
-                  className='input input-bordered'
-                  value={maxCandles}
-                  onChange={(event) => setMaxCandles(event.target.value)}
-                  inputMode='numeric'
-                  min={MAX_CANDLES_MIN}
-                  max={MAX_CANDLES_MAX}
-                  placeholder='1200'
-                />
-                {!hasValidMaxCandles ? (
-                  <p className='mt-1 text-xs text-error'>
-                    {copy.maxCandlesErrorPrefix} {MAX_CANDLES_MIN} - {MAX_CANDLES_MAX}.
-                  </p>
-                ) : null}
-              </FormField>
+          <FormSectionCard title={copy.sectionSimParams}>
+            <FormGrid columns={2}>
+              <NumberField
+                id='backtest-max-candles'
+                label={copy.maxCandles}
+                value={maxCandles}
+                onChange={setMaxCandles}
+                min={MAX_CANDLES_MIN}
+                max={MAX_CANDLES_MAX}
+                placeholder='1200'
+                inputMode='numeric'
+                error={
+                  hasValidMaxCandles
+                    ? undefined
+                    : `${copy.maxCandlesErrorPrefix} ${MAX_CANDLES_MIN} - ${MAX_CANDLES_MAX}.`
+                }
+              />
 
-              <FormField label={copy.initialBalance}>
-                <input
-                  className='input input-bordered'
-                  value={initialBalance}
-                  onChange={(event) => setInitialBalance(event.target.value)}
-                  inputMode='decimal'
-                  min={INITIAL_BALANCE_MIN}
-                  max={INITIAL_BALANCE_MAX}
-                  placeholder='10000'
-                />
-                {!hasValidInitialBalance ? (
-                  <p className='mt-1 text-xs text-error'>
-                    {copy.initialBalanceErrorPrefix} {INITIAL_BALANCE_MIN} - {INITIAL_BALANCE_MAX}.
-                  </p>
-                ) : null}
-              </FormField>
+              <NumberField
+                id='backtest-initial-balance'
+                label={copy.initialBalance}
+                value={initialBalance}
+                onChange={setInitialBalance}
+                min={INITIAL_BALANCE_MIN}
+                max={INITIAL_BALANCE_MAX}
+                placeholder='10000'
+                error={
+                  hasValidInitialBalance
+                    ? undefined
+                    : `${copy.initialBalanceErrorPrefix} ${INITIAL_BALANCE_MIN} - ${INITIAL_BALANCE_MAX}.`
+                }
+              />
 
-              <div className='md:col-span-2'>
-                <FormField label={copy.notes}>
-                  <textarea
-                    className='textarea textarea-bordered min-h-24'
-                    value={notes}
-                    onChange={(event) => setNotes(event.target.value)}
-                    placeholder={copy.notesPlaceholder}
-                  />
-                </FormField>
-              </div>
-            </div>
-          </section>
+              <TextareaField
+                id='backtest-notes'
+                label={copy.notes}
+                value={notes}
+                onChange={setNotes}
+                placeholder={copy.notesPlaceholder}
+                className='md:col-span-2'
+                rows={4}
+              />
+            </FormGrid>
+          </FormSectionCard>
         </div>
       </div>
     </form>
