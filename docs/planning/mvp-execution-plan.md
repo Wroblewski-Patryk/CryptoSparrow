@@ -1799,7 +1799,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `L10NQ-D-07 refactor(markets-localization): migrate MarketUniverseForm/SearchableMultiSelect copy and remove pl fallback`
 - [x] `L10NQ-D-08 refactor(backtests-fallback-removal): remove pl fallback drift and explicit pt copy in backtests surfaces`
 - [x] `L10NQ-D-09 refactor(bots-page-copy): localize bot create/edit/assistant/preview page labels and remaining bot copy`
-- [ ] `L10NQ-D-10 refactor(dashboard-home-copy): localize TP/SL/Notes/manual-order literals in HomeLiveWidgets`
+- [x] `L10NQ-D-10 refactor(dashboard-home-copy): localize TP/SL/Notes/manual-order literals in HomeLiveWidgets`
 - [ ] `L10NQ-D-11 refactor(global-offline-risk-copy): localize offline page and risk notice footer`
 - [ ] `L10NQ-D-12 refactor(shared-foundation-aria): localize shared aria/title strings in modal/table/loading/layout primitives`
 - [ ] `L10NQ-D-13 refactor(shared-footer-labels): align footer/public shell labels to translation keys`
@@ -1810,6 +1810,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `L10NQ-D-18 qa(final-pack-and-closure): run full i18n regression/build pack and publish closure evidence`
 
 ### Progress Log (Phase L10NQ-D - Full Web i18n Coverage and Single-Standard Enforcement)
+- 2026-04-18: Completed `L10NQ-D-10` by migrating HomeLiveWidgets dashboard runtime literals for close/edit/manual-order UX from local branch-based copy to `dashboard-home.runtime` namespace keys (`closePosition*`, `manualOrder*`, `editPosition*`) with `en/pl/pt` parity, and aligning route-scoped tests for localized labels/placeholders in edit modal/manual-order surface. Validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `13/13 PASS`; `pnpm --filter web run typecheck` => `PASS`.
 - 2026-04-18: Completed `L10NQ-D-09` by localizing remaining bot page-level breadcrumbs/actions (`create`, `edit`, `assistant`, `preview`) via `dashboard-bots`/`dashboard-shell` namespace keys, removing residual hardcoded wallet copy from `BotsManagement` (`wallet` label/aria/empty option), fixing garbled market-context separators, and localizing wallet-load error toast in `useBotsListController`; aligned bots module tests with route-scoped i18n context for `/dashboard/bots`. Validation: `pnpm --filter web test -- src/app/dashboard/bots/create/page.test.tsx src/app/dashboard/bots/[id]/edit/page.test.tsx src/features/bots/components/BotsManagement.test.tsx` => `15/15 PASS`; `pnpm --filter web run typecheck` => `PASS`.
 - 2026-04-18: Completed `L10NQ-D-08` by migrating backtests create/list/table copy from local locale branching to `dashboard-backtests` namespace keys (`createForm`, `listView`, `runsTable`) across `en/pl/pt`, removing implicit `pl` fallback drift (including `BacktestRunDetails` locale default alignment) and aligning route-scoped i18n tests for backtests create/list paths. Validation: `pnpm --filter web test -- src/features/backtest/components/BacktestCreateForm.test.tsx src/features/backtest/components/BacktestsListView.test.tsx` => `6/6 PASS`; `pnpm --filter web run typecheck` => `PASS`.
 - 2026-04-18: Completed `L10NQ-D-07` by migrating `MarketUniverseForm` + `SearchableMultiSelect` from local in-component dictionaries and hardcoded select/dropdown literals to `dashboard-markets.form` namespace keys (`en/pl/pt`), removing locale fallback drift in markets surfaces, and wiring shared multi-select labels through localized props (`selected count`, `search`, `select filtered`, `clear`, legacy-symbol description, volume template). Validation: `pnpm --filter web test -- src/features/markets/components/MarketUniverseForm.test.tsx` => `6/6 PASS`; `pnpm --filter web run typecheck` => `PASS`.
@@ -1843,3 +1844,22 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 
 ### Progress Log (Phase UXR-E - Table Action System + Clone + Dashboard Polish)
 - 2026-04-18: Queued post-`L10NQ-D` implementation wave with detailed execution plan in `docs/planning/uxr-e-table-actions-clone-dashboard-polish-plan-2026-04-18.md`, split into grouped batches `UXR-E-A..UXR-E-C` for executor continuity.
+
+## Phase UXR-F - Dashboard Create/Edit Forms UX/UI Unification (Queued 2026-04-18)
+- [ ] `UXR-F-01 docs(contract): freeze unified dashboard create/edit form UX contract and migration boundaries`
+- [ ] `UXR-F-02 feat(web-ui-forms-core): add FormPageShell/FormSectionCard/FormGrid/FormField/FormAlert/FormValidationSummary primitives`
+- [ ] `UXR-F-03 feat(web-ui-forms-fields): add Text/Number/Select/Textarea/Toggle/RadioGroup/Range/Compound shared field components`
+- [ ] `UXR-F-04 test(web-ui-forms-guardrail): add primitive tests and enforce no cross-feature generic field-control imports`
+- [ ] `UXR-F-05 refactor(web-form-page-shell-i18n): unify create/edit wrappers with FormPageShell and namespace-driven breadcrumbs/actions`
+- [ ] `UXR-F-06 refactor(web-wallet-form): migrate wallets create/edit to ui/forms with unified validation summary + first-error focus`
+- [ ] `UXR-F-07 refactor(web-markets-form): migrate markets create/edit to ui/forms and remove feature-local generic control dependency`
+- [ ] `UXR-F-08 refactor(web-backtests-form): migrate backtest create form to ui/forms and drop markets-control coupling`
+- [ ] `UXR-F-09 refactor(web-strategy-form): preserve strategy tab strengths while aligning section internals to shared form primitives`
+- [ ] `UXR-F-10 refactor(web-bot-form): migrate bot create/edit to shared form primitives and reduce dense-grid ergonomics issues`
+- [ ] `UXR-F-11 feat(web-form-ux): standardize submitting/disabled states plus inline errors + summary + first-invalid scroll/focus`
+- [ ] `UXR-F-12 feat(web-form-mobile): add reusable sticky mobile action bar pattern for long dashboard forms`
+- [ ] `UXR-F-13 test(web-form-regression): run/extend focused form migration + i18n wrapper tests for scoped routes`
+- [ ] `UXR-F-14 qa(web-form-closure): run typecheck/build and publish closure sync evidence`
+
+### Progress Log (Phase UXR-F - Dashboard Create/Edit Forms UX/UI Unification)
+- 2026-04-18: Queued non-blocking implementation wave in `docs/planning/uxr-f-dashboard-forms-unification-plan-2026-04-18.md`, split into grouped execution batches `UXR-F-A..UXR-F-D` with stage DoD, per-stage risk/rollback plan, and explicit test packs; queue inserted without modifying active executor `NOW`.

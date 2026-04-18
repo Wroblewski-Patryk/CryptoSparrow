@@ -317,6 +317,29 @@ This file tracks intentionally unresolved architecture choices so implementation
   - `docs/architecture/wallet-source-of-truth-contract.md`
   - `docs/planning/wallet-module-implementation-plan-2026-04-07.md`
 
+## Dashboard Create/Edit Forms UX/UI Unification Contract
+- Decision state: resolved on 2026-04-18.
+- Decision:
+  - all dashboard create/edit forms in scope must converge to one shared form system under `apps/web/src/ui/forms/*`.
+  - preserve strategy form strengths (tabbed section clarity) while aligning field, spacing, and validation behavior to common primitives.
+- Locked behavior:
+  - required shared primitives:
+    - `FormPageShell`
+    - `FormSectionCard`
+    - `FormGrid`
+    - `FormField`
+    - `TextField`, `NumberField`, `SelectField`, `TextareaField`, `ToggleField`, `RadioGroupField`, `RangeField`, `CompoundField`
+    - `FormAlert`, `FormValidationSummary`
+  - generic controls must not be imported cross-feature (for example backtests using markets controls).
+  - wrappers for create/edit pages must use namespace-driven i18n for title, breadcrumbs, and actions (no inline locale dictionaries).
+  - validation contract is standardized:
+    - inline errors + summary block,
+    - submit-time focus/scroll to first invalid field,
+    - consistent submitting/disabled/loading states.
+  - long forms should use section/tabs ergonomics where needed (especially markets), and support mobile sticky action bar pattern when save actions leave viewport.
+- Canonical reference:
+  - `docs/planning/uxr-f-dashboard-forms-unification-plan-2026-04-18.md`
+
 ## Numeric Locale Input Policy (Comma vs Dot)
 - Decision state: resolved on 2026-04-02.
 - Decision:

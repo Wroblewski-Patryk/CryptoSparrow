@@ -11,7 +11,7 @@ Operational queue for one-task execution runs.
 - [x] `L10NQ-D-07 refactor(markets-localization): migrate MarketUniverseForm/SearchableMultiSelect copy and remove pl fallback`
 - [x] `L10NQ-D-08 refactor(backtests-fallback-removal): remove pl fallback drift and explicit pt copy in backtests surfaces`
 - [x] `L10NQ-D-09 refactor(bots-page-copy): localize bot create/edit/assistant/preview page labels and remaining bot copy`
-- [ ] `L10NQ-D-10 refactor(dashboard-home-copy): localize TP/SL/Notes/manual-order literals in HomeLiveWidgets`
+- [x] `L10NQ-D-10 refactor(dashboard-home-copy): localize TP/SL/Notes/manual-order literals in HomeLiveWidgets`
 ## NEXT
 - [ ] `L10NQ-D-11 refactor(global-offline-risk-copy): localize offline page and risk notice footer`
 - [ ] `L10NQ-D-12 refactor(shared-foundation-aria): localize shared aria/title strings in modal/table/loading/layout primitives`
@@ -24,12 +24,16 @@ Operational queue for one-task execution runs.
 - [ ] `L10NQ-D-18 qa(final-pack-and-closure): run full i18n regression/build pack and publish closure evidence`
 ## GROUP QUEUE
 - [x] `L10NQ-D-A (commits 01-05): inventory + guardrail hardening + auth/admin migration`
-- [ ] `L10NQ-D-B (commits 06-10): reports/markets/backtests/bots/home copy migration`
+- [x] `L10NQ-D-B (commits 06-10): reports/markets/backtests/bots/home copy migration`
 - [ ] `L10NQ-D-C (commits 11-18): shared foundation localization + parity/smoke/closure`
 - [ ] `DBSEL-A (commits DBSEL-01..DBSEL-05): dashboard mixed-mode selector parity hotfix (LIVE + PAPER)`
 - [ ] `UXR-E-A (commits UXR-E-01..UXR-E-04): table action system + clone foundation`
 - [ ] `UXR-E-B (commits UXR-E-05..UXR-E-08): action rollout + dashboard manual-order/wallet polish`
 - [ ] `UXR-E-C (commits UXR-E-09..UXR-E-12): shell polish + regression closure`
+- [ ] `UXR-F-A (commits UXR-F-01..UXR-F-04): shared dashboard form-system foundation + guardrails`
+- [ ] `UXR-F-B (commits UXR-F-05..UXR-F-08): wrapper/i18n shell unification + wallets/markets/backtests migration`
+- [ ] `UXR-F-C (commits UXR-F-09..UXR-F-12): strategies/bots migration + standardized form UX/mobile action bar`
+- [ ] `UXR-F-D (commits UXR-F-13..UXR-F-14): focused regression pack + closure sync`
 - [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
 - [x] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
 - [x] `UXR-C (commits 16-22): advanced table rollout + logs module completion`
@@ -44,6 +48,10 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
+- [x] `L10NQ-D-B (commits 06-10): reports/markets/backtests/bots/home copy migration`
+  - 2026-04-18: Closed `L10NQ-D-B` by completing `L10NQ-D-06..L10NQ-D-10` (reports/markets/backtests/bots/dashboard-home copy migration), including removal of HomeLiveWidgets local branch-based literals for manual-order and position-edit flows in favor of `dashboard-home.runtime` namespace keys with `en/pl/pt` parity and route-scoped test alignment.
+- [x] `UXR-F planning queued (dashboard create/edit forms UX/UI unification)`
+  - 2026-04-18: Published queued implementation wave plan in `docs/planning/uxr-f-dashboard-forms-unification-plan-2026-04-18.md` with tiny-commit execution order (`UXR-F-01..UXR-F-14`), stage DoD, per-stage risk/rollback, and test packs; appended grouped queue batches `UXR-F-A..UXR-F-D` without changing active `NOW`.
 - [x] `DBSEL-A planning queued (dashboard mixed-mode selector parity)`
   - 2026-04-18: Published dashboard runtime selector parity hotfix plan in `docs/planning/dashboard-runtime-bot-selector-parity-plan-2026-04-18.md` after confirming live-only clamp in `useHomeLiveWidgetsController`, and queued grouped execution batch `DBSEL-A` for mixed active `LIVE + PAPER` selector visibility fix.
 - [x] `L10NQ-D-A (commits 01-05): inventory + guardrail hardening + auth/admin migration`
