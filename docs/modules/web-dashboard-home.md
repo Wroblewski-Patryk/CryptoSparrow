@@ -107,3 +107,12 @@ pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets
   - deterministic ordering and cap (`MAX_DASHBOARD_BOTS`) stay unchanged.
 - Degraded contract:
   - if selected active bot has no runtime session, it remains selectable and runtime panel shows degraded/no-session copy instead of dropping that bot from selector.
+
+## 12. Table Action and Clone Contract Linkage (`UXR-E`)
+- Shared table action semantics:
+  - dashboard-home adjacent list modules (`wallets`, `markets`, `strategies`, `backtests`, `bots`) must reuse one action tone/icon matrix (`edit`, `delete`, `clone`, `preview`, `runtime`, `details`) from shared `TableUi` presets.
+- Clone invariants (cross-module dependency for dashboard operators):
+  - cloned entities are named deterministically as `<name> (clone)`, then numbered on collisions.
+  - clone flow copies only editable create-contract fields; runtime/history/system identifiers are never cloned.
+- Operator continuity note:
+  - cloned wallets/markets/strategies are expected to appear immediately in list context so they can be attached to bot/runtime workflows without manual page reload.

@@ -1842,7 +1842,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-18: Queued selector parity hotfix plan in `docs/planning/dashboard-runtime-bot-selector-parity-plan-2026-04-18.md` after code-level confirmation that dashboard runtime scope is clamped to `LIVE` bots when any live bot is active (`useHomeLiveWidgetsController`), which hides active `PAPER` bots from selector.
 
 ## Phase UXR-E - Table Action System + Clone + Dashboard Polish (Queued 2026-04-18)
-- [ ] `UXR-E-01 docs(contract): freeze table action semantics and clone naming contract for wallets/markets/strategies`
+- [x] `UXR-E-01 docs(contract): freeze table action semantics and clone naming contract for wallets/markets/strategies`
 - [ ] `UXR-E-02 refactor(web-table-actions-core): add shared action presets in TableUi for standard and dedicated table actions`
 - [ ] `UXR-E-03 feat(web-wallets-clone): add wallets list duplicate action with create-from-existing flow and clone-marked naming`
 - [ ] `UXR-E-04 feat(web-markets-clone): add markets list duplicate action with create-from-existing flow and clone-marked naming`
@@ -1856,6 +1856,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `UXR-E-12 qa(regression-pack): run focused web regression pack for table actions, clone flows, dashboard manual-order/wallet polish, and shell/footer contracts`
 
 ### Progress Log (Phase UXR-E - Table Action System + Clone + Dashboard Polish)
+- 2026-04-18: Completed `UXR-E-01` by freezing canonical table action semantics and clone naming/payload invariants in `docs/planning/open-decisions.md` (action tone/icon matrix + deterministic clone naming/collision policy + editable-fields-only clone payload rules), and linking dashboard-home module contract notes in `docs/modules/web-dashboard-home.md` for runtime operator continuity.
 - 2026-04-18: Queued post-`L10NQ-D` implementation wave with detailed execution plan in `docs/planning/uxr-e-table-actions-clone-dashboard-polish-plan-2026-04-18.md`, split into grouped batches `UXR-E-A..UXR-E-C` for executor continuity.
 
 ## Phase UXR-F - Dashboard Create/Edit Forms UX/UI Unification (Queued 2026-04-18)

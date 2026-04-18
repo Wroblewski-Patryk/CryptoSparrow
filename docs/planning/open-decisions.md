@@ -735,6 +735,30 @@ This file tracks intentionally unresolved architecture choices so implementation
   - `docs/planning/dashboard-runtime-bot-selector-parity-plan-2026-04-18.md`
   - `docs/modules/web-dashboard-home.md`
 
+## Table Action Semantics and Clone Naming Contract
+- Decision state: resolved on 2026-04-18.
+- Decision:
+  - table row actions use one shared semantic matrix for tone and icon meaning across dashboard modules.
+  - clone action for list entities (`wallets`, `markets`, `strategies`) is first-class and follows deterministic naming and payload invariants.
+- Locked behavior:
+  - canonical table action matrix:
+    - `edit`: tone `info`, edit icon.
+    - `delete`: tone `danger`, trash icon.
+    - `clone`: tone `neutral`, duplicate icon.
+    - `preview`: tone `neutral`, preview/detail icon.
+    - `runtime`: dedicated non-danger accent tone (`info` in this wave), runtime icon.
+    - `details`/expand: tone `neutral`, chevron toggle icon.
+  - clone naming contract:
+    - first clone name: `<original> (clone)`.
+    - next collisions: `<original> (clone 2)`, `<original> (clone 3)`, ... (deterministic incremental suffix).
+  - clone payload contract:
+    - clone only user-editable configuration fields used by module create contract.
+    - never copy runtime IDs/history IDs/system timestamps.
+    - target context (`exchange/marketType/baseCurrency/mode`) must remain unchanged unless user edits after clone creation.
+- Canonical references:
+  - `docs/planning/uxr-e-table-actions-clone-dashboard-polish-plan-2026-04-18.md`
+  - `docs/planning/mvp-execution-plan.md`
+
 ## Execution and Backtest Parity Policy
 - Decision state: resolved on 2026-03-22.
 - V1 direction:
