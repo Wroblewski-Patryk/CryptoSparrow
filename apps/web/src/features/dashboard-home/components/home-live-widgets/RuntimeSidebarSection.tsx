@@ -1,4 +1,4 @@
-import { LuBot, LuChartCandlestick, LuChartLine, LuListChecks, LuShieldCheck, LuTrophy, LuWallet } from "react-icons/lu";
+import { LuArrowDownRight, LuArrowUpRight, LuBot, LuChartCandlestick, LuChartLine, LuListChecks, LuShieldCheck, LuTrophy, LuWallet } from "react-icons/lu";
 import { normalizeSymbol } from "@/lib/symbols";
 import type { RuntimeSelectedData, RuntimeSnapshot, RuntimeSummary } from "./types";
 
@@ -19,6 +19,28 @@ type RuntimeSidebarSectionProps = {
   formatPercent: (value: number) => string;
   formatDateTime: (value?: string | null) => string;
   sessionBadgeClassName: (status?: string | null) => string;
+  manualOrder: {
+    title: string;
+    symbolLabel: string;
+    sideLabel: string;
+    quantityLabel: string;
+    openLabel: string;
+    openingLabel: string;
+    buyLabel: string;
+    sellLabel: string;
+    noSymbolsLabel: string;
+    botContext: string;
+    symbolOptions: string[];
+    symbol: string;
+    side: "BUY" | "SELL";
+    quantity: string;
+    isSubmitting: boolean;
+    isActionDisabled: boolean;
+    onSymbolChange: (symbol: string) => void;
+    onSideChange: (side: "BUY" | "SELL") => void;
+    onQuantityChange: (quantity: string) => void;
+    onSubmit: () => void;
+  };
   text: {
     walletTitle: string;
     selectedBot: string;
@@ -361,6 +383,93 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
                     : "-"}
                 </span>
               </p>
+
+              <section
+                className="mt-2 rounded-box border border-base-300/45 bg-base-100/60 p-2.5"
+                data-testid="manual-order-panel"
+              >
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide opacity-70">
+                    {props.manualOrder.title}
+                  </p>
+                  <span className="text-[10px] opacity-65">{props.manualOrder.botContext}</span>
+                </div>
+                <div className="space-y-2">
+                  <label className="form-control gap-1">
+                    <span className="label-text text-xs">{props.manualOrder.symbolLabel}</span>
+                    <select
+                      className="select select-bordered select-sm"
+                      value={props.manualOrder.symbol}
+                      disabled={props.manualOrder.isSubmitting || props.manualOrder.symbolOptions.length === 0}
+                      onChange={(event) => props.manualOrder.onSymbolChange(event.target.value)}
+                    >
+                      {props.manualOrder.symbolOptions.length === 0 ? (
+                        <option value="">{props.manualOrder.noSymbolsLabel}</option>
+                      ) : null}
+                      {props.manualOrder.symbolOptions.map((symbol) => (
+                        <option key={symbol} value={symbol}>
+                          {symbol}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="space-y-1">
+                    <span className="label-text text-xs">{props.manualOrder.sideLabel}</span>
+                    <div className="grid grid-cols-2 gap-1 rounded-box border border-base-300/55 bg-base-100/40 p-1">
+                      <button
+                        type="button"
+                        className={`btn btn-xs h-8 min-h-8 justify-start gap-1.5 border ${
+                          props.manualOrder.side === "BUY"
+                            ? "border-success/55 bg-success/15 text-success"
+                            : "border-base-300 bg-base-100/55 text-base-content/75"
+                        }`}
+                        disabled={props.manualOrder.isSubmitting}
+                        onClick={() => props.manualOrder.onSideChange("BUY")}
+                      >
+                        <LuArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+                        {props.manualOrder.buyLabel}
+                      </button>
+                      <button
+                        type="button"
+                        className={`btn btn-xs h-8 min-h-8 justify-start gap-1.5 border ${
+                          props.manualOrder.side === "SELL"
+                            ? "border-error/55 bg-error/15 text-error"
+                            : "border-base-300 bg-base-100/55 text-base-content/75"
+                        }`}
+                        disabled={props.manualOrder.isSubmitting}
+                        onClick={() => props.manualOrder.onSideChange("SELL")}
+                      >
+                        <LuArrowDownRight className="h-3.5 w-3.5" aria-hidden />
+                        {props.manualOrder.sellLabel}
+                      </button>
+                    </div>
+                  </div>
+                  <label className="form-control gap-1">
+                    <span className="label-text text-xs">{props.manualOrder.quantityLabel}</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      step="0.000001"
+                      className="input input-bordered input-sm"
+                      value={props.manualOrder.quantity}
+                      disabled={props.manualOrder.isSubmitting}
+                      onChange={(event) => props.manualOrder.onQuantityChange(event.target.value)}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm w-full"
+                    onClick={props.manualOrder.onSubmit}
+                    disabled={props.manualOrder.isSubmitting || props.manualOrder.isActionDisabled}
+                  >
+                    {props.manualOrder.isSubmitting ? (
+                      <span className="loading loading-spinner loading-xs" aria-hidden />
+                    ) : null}
+                    {props.manualOrder.isSubmitting ? props.manualOrder.openingLabel : props.manualOrder.openLabel}
+                  </button>
+                </div>
+              </section>
             </div>
           </div>
         </section>

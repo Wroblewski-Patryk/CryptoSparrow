@@ -886,10 +886,11 @@ describe("HomeLiveWidgets", () => {
     });
 
     renderSubject();
+    expect(await screen.findByTestId("manual-order-panel")).toBeInTheDocument();
 
-    const symbolInput = await screen.findByLabelText(/Symbol/i);
-    fireEvent.change(symbolInput, { target: { value: "btcusdt" } });
-    fireEvent.change(screen.getByLabelText(/Side|Kierunek/i), { target: { value: "SELL" } });
+    const symbolSelect = await screen.findByLabelText(/Symbol/i);
+    fireEvent.change(symbolSelect, { target: { value: "BTCUSDT" } });
+    fireEvent.click(screen.getByRole("button", { name: /sprzedaj|sell/i }));
     fireEvent.change(screen.getByLabelText(/Qty|Ilosc/i), { target: { value: "0.25" } });
     fireEvent.click(screen.getByRole("button", { name: /Otworz zlecenie reczne|Open manual order/i }));
 
@@ -1039,10 +1040,10 @@ describe("HomeLiveWidgets", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /Wstecz|Prev/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /Dalej|Next/i })).toBeInTheDocument();
-      expect(screen.getByText("SOLUSDT")).toBeInTheDocument();
+      expect(screen.getAllByText("SOLUSDT").length).toBeGreaterThan(0);
     });
 
-    const signalsAnchor = screen.getByText("SOLUSDT");
+    const [signalsAnchor] = screen.getAllByText("SOLUSDT");
     const openPositionsTab = screen.getByRole("tab", { name: /Pozycje|Positions/i });
     expect(openPositionsTab.compareDocumentPosition(signalsAnchor) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });

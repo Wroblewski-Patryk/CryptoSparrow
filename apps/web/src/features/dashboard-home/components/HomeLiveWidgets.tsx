@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { LuBot, LuChartCandlestick, LuChartLine, LuChevronDown, LuListChecks, LuPackageOpen, LuPencil, LuWallet, LuX } from "react-icons/lu";
 import { toast } from "sonner";
 
@@ -739,8 +739,20 @@ export default function HomeLiveWidgets() {
     const options = new Set<string>();
     for (const item of selectedData?.symbols ?? []) options.add(normalizeSymbol(item.symbol));
     for (const item of selectedData?.open ?? []) options.add(normalizeSymbol(item.symbol));
-    return [...options];
+    return [...options].sort((left, right) => left.localeCompare(right));
   }, [selectedData?.open, selectedData?.symbols]);
+
+  useEffect(() => {
+    if (manualOrderSymbolOptions.length === 0) {
+      if (manualOrderSymbol !== "") setManualOrderSymbol("");
+      return;
+    }
+
+    const normalized = normalizeSymbol(manualOrderSymbol);
+    if (!normalized || !manualOrderSymbolOptions.includes(normalized)) {
+      setManualOrderSymbol(manualOrderSymbolOptions[0] ?? "");
+    }
+  }, [manualOrderSymbol, manualOrderSymbolOptions]);
 
   const handleSubmitManualOrder = useCallback(async () => {
     if (!selected) return;
@@ -1169,76 +1181,6 @@ export default function HomeLiveWidgets() {
                   <p>{selectedPlaceholderHint}</p>
                 </div>
               ) : null}
-              <section className="rounded-box border border-base-300/70 bg-base-200/45 p-3">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <h3 className="text-sm font-semibold">{manualOrderPanelTitle}</h3>
-                    <p className="text-xs opacity-70">
-                      {selected?.bot.name} | {selected?.bot.mode}
-                    </p>
-                  </div>
-                </div>
-                <div className="grid gap-2 md:grid-cols-[minmax(0,1.4fr)_auto_minmax(0,0.9fr)_auto]">
-                  <label className="form-control gap-1">
-                    <span className="label-text text-xs">{t("dashboard.home.runtime.symbol")}</span>
-                    <input
-                      type="text"
-                      className="input input-bordered input-sm"
-                      placeholder={t("dashboard.home.runtime.manualOrderSymbolPlaceholder")}
-                      value={manualOrderSymbol}
-                      list="runtime-manual-order-symbols"
-                      disabled={isSubmittingManualOrder}
-                      onChange={(event) => setManualOrderSymbol(event.target.value)}
-                    />
-                    <datalist id="runtime-manual-order-symbols">
-                      {manualOrderSymbolOptions.map((symbol) => (
-                        <option key={symbol} value={symbol} />
-                      ))}
-                    </datalist>
-                  </label>
-                  <label className="form-control gap-1">
-                    <span className="label-text text-xs">{t("dashboard.home.runtime.side")}</span>
-                    <select
-                      className="select select-bordered select-sm"
-                      value={manualOrderSide}
-                      disabled={isSubmittingManualOrder}
-                      onChange={(event) =>
-                        setManualOrderSide(event.target.value === "SELL" ? "SELL" : "BUY")
-                      }
-                    >
-                      <option value="BUY">{t("dashboard.home.runtime.manualOrderBuyLabel")}</option>
-                      <option value="SELL">{t("dashboard.home.runtime.manualOrderSellLabel")}</option>
-                    </select>
-                  </label>
-                  <label className="form-control gap-1">
-                    <span className="label-text text-xs">{t("dashboard.home.runtime.qty")}</span>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      min="0"
-                      step="0.000001"
-                      className="input input-bordered input-sm"
-                      value={manualOrderQuantity}
-                      disabled={isSubmittingManualOrder}
-                      onChange={(event) => setManualOrderQuantity(event.target.value)}
-                    />
-                  </label>
-                  <div className="flex items-end">
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm w-full md:w-auto"
-                      onClick={() => void handleSubmitManualOrder()}
-                      disabled={isSubmittingManualOrder || !selectedRuntimeCapabilityAvailable}
-                    >
-                      {isSubmittingManualOrder ? (
-                        <span className="loading loading-spinner loading-xs" aria-hidden />
-                      ) : null}
-                      {isSubmittingManualOrder ? manualOrderSubmittingLabel : manualOrderOpenLabel}
-                    </button>
-                  </div>
-                </div>
-              </section>
-
               <RuntimeDataSection
                 runtimeDataTab={runtimeDataTab}
                 onRuntimeDataTabChange={setRuntimeDataTab}
@@ -1340,6 +1282,28 @@ export default function HomeLiveWidgets() {
           formatPercent={formatPercent}
           formatDateTime={formatDateTime}
           sessionBadgeClassName={sessionBadge}
+          manualOrder={{
+            title: manualOrderPanelTitle,
+            symbolLabel: t("dashboard.home.runtime.symbol"),
+            sideLabel: t("dashboard.home.runtime.side"),
+            quantityLabel: t("dashboard.home.runtime.qty"),
+            openLabel: manualOrderOpenLabel,
+            openingLabel: manualOrderSubmittingLabel,
+            buyLabel: t("dashboard.home.runtime.manualOrderBuyLabel"),
+            sellLabel: t("dashboard.home.runtime.manualOrderSellLabel"),
+            noSymbolsLabel: t("dashboard.home.runtime.noSignalData"),
+            botContext: selected ? `${selected.bot.name} | ${selected.bot.mode}` : "-",
+            symbolOptions: manualOrderSymbolOptions,
+            symbol: manualOrderSymbol,
+            side: manualOrderSide,
+            quantity: manualOrderQuantity,
+            isSubmitting: isSubmittingManualOrder,
+            isActionDisabled: !selectedRuntimeCapabilityAvailable || manualOrderSymbolOptions.length === 0,
+            onSymbolChange: setManualOrderSymbol,
+            onSideChange: setManualOrderSide,
+            onQuantityChange: setManualOrderQuantity,
+            onSubmit: () => void handleSubmitManualOrder(),
+          }}
           text={{
             walletTitle: t("dashboard.home.runtime.walletTitle"),
             selectedBot: t("dashboard.home.runtime.selectedBot"),
