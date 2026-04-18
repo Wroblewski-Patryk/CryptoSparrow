@@ -69,4 +69,27 @@ describe("PageTitle accessibility contract", () => {
     expect(description?.textContent ?? "").toContain("Create");
     expect(description?.textContent ?? "").toContain("Bots");
   });
+
+  it("uses relaxed action button sizing and wider action spacing", () => {
+    renderWithI18n(
+      <PageTitle
+        title="Wallets"
+        breadcrumb={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Wallets" },
+        ]}
+        onAdd={() => {}}
+        addLabel="Create"
+      />
+    );
+
+    const createButton = screen.getByRole("button", { name: "Create" });
+    expect(createButton.className).not.toMatch(/\bbtn-xs\b/);
+    expect(createButton.className).not.toMatch(/\bh-7\b/);
+    expect(createButton.className).not.toMatch(/\bmin-h-7\b/);
+
+    const actionContainer = createButton.closest("div");
+    expect(actionContainer).not.toBeNull();
+    expect(actionContainer?.className).toContain("gap-3");
+  });
 });

@@ -27,7 +27,7 @@ interface PageTitleProps {
 }
 
 export const PAGE_TITLE_ACTION_BASE_CLASS =
-  "btn btn-xs h-7 min-h-7 border transition-colors duration-150";
+  "btn border transition-colors duration-150";
 export const PAGE_TITLE_ACTION_CREATE_CLASS = `${PAGE_TITLE_ACTION_BASE_CLASS} border-primary/45 bg-primary/10 text-primary hover:border-primary/70 hover:bg-primary/20`;
 export const PAGE_TITLE_ACTION_SAVE_CLASS = `${PAGE_TITLE_ACTION_BASE_CLASS} border-success/45 bg-success/10 text-success hover:border-success/70 hover:bg-success/20`;
 
@@ -193,7 +193,7 @@ export function PageTitle({
         </nav>
       </div>
 
-      {renderedActions ? <div className="mt-4 flex flex-wrap items-center gap-2 md:mt-0">{renderedActions}</div> : null}
+      {renderedActions ? <div className="mt-4 flex flex-wrap items-center gap-3 md:mt-0">{renderedActions}</div> : null}
     </div>
   );
 }

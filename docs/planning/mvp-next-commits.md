@@ -48,7 +48,8 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
-- [x] `UXR-E-C progress: completed UXR-E-09 (shell polish in progress)`
+- [x] `UXR-E-C progress: completed UXR-E-09..UXR-E-10 (shell polish in progress)`
+  - 2026-04-18: Completed `UXR-E-10` by updating `PageTitle` action contract to remove forced compact sizing (`btn-xs`, `h-7`, `min-h-7`) and widening actions container spacing to `gap-3`, with explicit regression assertions in `PageTitle.a11y.test.tsx`. Validation: `tsc --noEmit -p apps/web/tsconfig.json` => `PASS`; targeted Vitest run blocked in this sandbox (`spawn EPERM`).
   - 2026-04-18: Completed `UXR-E-09` by refactoring runtime sidebar wallet KPI block into inline summary rows (removed icon-card styling, preserved portfolio/free/in-positions readability, and added subtle row border tones for free/in-positions) with regression lock in `HomeLiveWidgets.test.tsx` (`wallet-kpi-row` no grid contract). Validation: `tsc --noEmit -p apps/web/tsconfig.json` => `PASS`; targeted Vitest run is blocked in current sandbox due `spawn EPERM` (esbuild child process restriction).
 - [x] `UXR-E-B progress: completed UXR-E-05..UXR-E-08 (group closed)`
   - 2026-04-18: Completed `UXR-E-08` by adding runtime-sidebar manual-order estimates (`notional` + `margin`) computed from qty, live symbol price, and effective leverage (with `SPOT` fallback `1x`), plus regression assertions in `HomeLiveWidgets.test.tsx` and `en/pl/pt` namespace key additions for estimate labels. Validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `15/15 PASS`; `pnpm --filter web run typecheck` => `PASS`.
