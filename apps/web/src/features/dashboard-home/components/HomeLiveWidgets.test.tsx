@@ -1384,6 +1384,7 @@ describe("HomeLiveWidgets", () => {
     await waitFor(() => {
       const walletKpiRow = screen.getByTestId("wallet-kpi-row");
       expect(walletKpiRow).toBeInTheDocument();
+      expect(walletKpiRow.className).not.toMatch(/grid-cols/i);
 
       const portfolioCard = screen.getByTestId("wallet-kpi-portfolio");
       const freeFundsCard = screen.getByTestId("wallet-kpi-free-funds");

@@ -48,6 +48,8 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
+- [x] `UXR-E-C progress: completed UXR-E-09 (shell polish in progress)`
+  - 2026-04-18: Completed `UXR-E-09` by refactoring runtime sidebar wallet KPI block into inline summary rows (removed icon-card styling, preserved portfolio/free/in-positions readability, and added subtle row border tones for free/in-positions) with regression lock in `HomeLiveWidgets.test.tsx` (`wallet-kpi-row` no grid contract). Validation: `tsc --noEmit -p apps/web/tsconfig.json` => `PASS`; targeted Vitest run is blocked in current sandbox due `spawn EPERM` (esbuild child process restriction).
 - [x] `UXR-E-B progress: completed UXR-E-05..UXR-E-08 (group closed)`
   - 2026-04-18: Completed `UXR-E-08` by adding runtime-sidebar manual-order estimates (`notional` + `margin`) computed from qty, live symbol price, and effective leverage (with `SPOT` fallback `1x`), plus regression assertions in `HomeLiveWidgets.test.tsx` and `en/pl/pt` namespace key additions for estimate labels. Validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `15/15 PASS`; `pnpm --filter web run typecheck` => `PASS`.
   - 2026-04-18: Completed `UXR-E-07` by moving runtime manual-order controls under wallet context in `RuntimeSidebarSection` (guided symbol select + BUY/SELL pill controls) and wiring deterministic symbol selection synchronization in `HomeLiveWidgets`; updated `HomeLiveWidgets.test.tsx` for `manual-order-panel` contract and guided interactions. Validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `15/15 PASS`; `pnpm --filter web run typecheck` => `PASS`.

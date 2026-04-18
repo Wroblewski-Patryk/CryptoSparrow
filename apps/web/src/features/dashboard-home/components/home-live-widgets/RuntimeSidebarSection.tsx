@@ -130,6 +130,7 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
       label: props.text.portfolio,
       value: walletTotal != null ? props.formatAmountWithUnit(walletTotal) : "-",
       toneClass: "text-base-content",
+      rowClassName: "border-base-300/45",
       percent: null as string | null,
       testId: "wallet-kpi-portfolio",
     },
@@ -138,6 +139,7 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
       label: props.text.freeFunds,
       value: walletFree != null ? props.formatAmountWithUnit(walletFree) : "-",
       toneClass: "text-primary",
+      rowClassName: "border-primary/35",
       percent: walletFreePct != null ? props.formatPercent(walletFreePct) : null,
       testId: "wallet-kpi-free-funds",
     },
@@ -146,6 +148,7 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
       label: props.text.inPositionsShort,
       value: props.formatAmountWithUnit(selectedUsedMargin),
       toneClass: "text-secondary",
+      rowClassName: "border-secondary/35",
       percent: walletInPositionsPct != null ? props.formatPercent(walletInPositionsPct) : null,
       testId: "wallet-kpi-in-positions",
     },
@@ -381,24 +384,25 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
                 </p>
               ) : null}
               <div
-                className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-3"
+                className="space-y-1.5 pt-1"
                 data-testid="wallet-kpi-row"
               >
                 {walletKpis.map((kpi) => (
-                  <div
+                  <p
                     key={kpi.key}
-                    className="rounded-box border border-base-300/45 bg-base-100/60 px-2 py-1.5"
+                    className={`flex items-center justify-between gap-2 rounded-box border bg-base-100/35 px-2 py-1.5 ${kpi.rowClassName}`}
                     data-testid={kpi.testId}
                   >
-                    <p className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide opacity-65">
-                      <LuWallet className="h-3 w-3" aria-hidden />
+                    <span className="text-[10px] uppercase tracking-wide opacity-65">
                       {kpi.label}
-                    </p>
-                    <p className="mt-1 text-xs font-semibold">{kpi.value}</p>
-                    <p className={`mt-0.5 text-[11px] font-semibold ${kpi.toneClass}`}>
-                      {kpi.percent ?? "-"}
-                    </p>
-                  </div>
+                    </span>
+                    <span className="text-right">
+                      <span className="block text-xs font-semibold">{kpi.value}</span>
+                      <span className={`block text-[11px] font-semibold ${kpi.toneClass}`}>
+                        {kpi.percent ?? "-"}
+                      </span>
+                    </span>
+                  </p>
                 ))}
               </div>
               <div className="space-y-2">
