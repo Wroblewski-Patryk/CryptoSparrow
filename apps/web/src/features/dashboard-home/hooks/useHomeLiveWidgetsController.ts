@@ -201,8 +201,7 @@ export const useHomeLiveWidgetsController = ({
       }
 
       const active = ordered.filter((x) => x.isActive);
-      const liveActive = active.filter((x) => x.mode === "LIVE");
-      const activeScope = liveActive.length > 0 ? liveActive : active;
+      const activeScope = active;
       if (activeScope.length === 0) {
         setSnapshots([]);
         setSelectedBotId(null);
