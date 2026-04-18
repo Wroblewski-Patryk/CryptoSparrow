@@ -39,6 +39,23 @@
     "navigation": "Navegacao do painel",
     "utilityNavigation": "Navegacao utilitaria do painel"
   },
+  "profileBasic": {
+    "avatarAlt": "Avatar",
+    "avatarUploadChanged": "Avatar atualizado!",
+    "avatarUploadFailed": "Nao foi possivel guardar o avatar.",
+    "profileSaved": "Alteracoes do perfil guardadas.",
+    "profileSaveFailed": "Nao foi possivel guardar alteracoes do perfil.",
+    "addAvatar": "Adicionar avatar",
+    "changeAvatar": "Alterar avatar",
+    "nameLabel": "Nome / Alcunha",
+    "namePlaceholder": "John Doe",
+    "emailLabel": "Email",
+    "emailPlaceholder": "user@example.com",
+    "timeZoneLabel": "Fuso horario",
+    "timeZoneAuto": "Auto (sistema)",
+    "timeZoneHint": "Esta definicao afeta a formatacao de data/hora em toda a aplicacao.",
+    "saveChanges": "Guardar alteracoes"
+  },
   "footer": {
     "rights": "Todos os direitos reservados."
   },

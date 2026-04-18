@@ -39,6 +39,23 @@ export const dashboardShellPl = {
     "navigation": "Nawigacja dashboardu",
     "utilityNavigation": "Nawigacja narzedzi dashboardu"
   },
+  "profileBasic": {
+    "avatarAlt": "Avatar",
+    "avatarUploadChanged": "Avatar zmieniony!",
+    "avatarUploadFailed": "Nie udalo sie zapisac avatara.",
+    "profileSaved": "Zapisano zmiany profilu!",
+    "profileSaveFailed": "Nie udalo sie zapisac zmian.",
+    "addAvatar": "Dodaj avatar",
+    "changeAvatar": "Zmien avatar",
+    "nameLabel": "Imie / Nick",
+    "namePlaceholder": "John Doe",
+    "emailLabel": "Email",
+    "emailPlaceholder": "user@example.com",
+    "timeZoneLabel": "Strefa czasowa",
+    "timeZoneAuto": "Auto (system)",
+    "timeZoneHint": "Ustawienie wplywa na format dat i godzin zdarzen w calej aplikacji.",
+    "saveChanges": "Zapisz zmiany"
+  },
   "footer": {
     "rights": "Wszelkie prawa zastrzezone."
   },

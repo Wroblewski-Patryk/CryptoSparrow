@@ -16,9 +16,20 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-vi.mock('@/i18n/I18nProvider', () => ({
-  useI18n: () => ({ locale: 'pl' }),
-}));
+vi.mock('@/i18n/I18nProvider', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/i18n/I18nProvider')>();
+  return {
+    ...actual,
+    useI18n: () => ({
+      locale: 'pl' as const,
+      t: (key: string) => key,
+      timeZone: 'UTC',
+      timeZonePreference: 'auto',
+      setLocale: vi.fn(),
+      setTimeZonePreference: vi.fn(),
+    }),
+  };
+});
 
 vi.mock('@/features/profile/services/apiKeys.service', () => ({
   fetchApiKeys: fetchApiKeysMock,

@@ -28,40 +28,8 @@ const COMMON_TIME_ZONES = [
 const formatTimeZoneLabel = (value: string) => value.replaceAll("_", " ");
 
 export default function ProfileForm() {
-  const { locale, timeZone, timeZonePreference, setTimeZonePreference } = useI18n();
+  const { timeZone, timeZonePreference, setTimeZonePreference, t } = useI18n();
   const { user, updateUser, loading } = useUser();
-  const copy =
-    locale === "pl"
-      ? {
-          avatarAlt: "Avatar",
-          avatarUploadChanged: "Avatar zmieniony!",
-          avatarUploadFailed: "Nie udalo sie zapisac avatara.",
-          profileSaved: "Zapisano zmiany profilu!",
-          profileSaveFailed: "Nie udalo sie zapisac zmian.",
-          addAvatar: "Dodaj avatar",
-          changeAvatar: "Zmien avatar",
-          nameLabel: "Imie / Nick",
-          emailLabel: "Email",
-          timeZoneLabel: "Strefa czasowa",
-          timeZoneAuto: "Auto (system)",
-          timeZoneHint: "Ustawienie wplywa na format dat i godzin zdarzen w calej aplikacji.",
-          saveChanges: "Zapisz zmiany",
-        }
-      : {
-          avatarAlt: "Avatar",
-          avatarUploadChanged: "Avatar updated!",
-          avatarUploadFailed: "Could not save avatar.",
-          profileSaved: "Profile changes saved.",
-          profileSaveFailed: "Could not save profile changes.",
-          addAvatar: "Add avatar",
-          changeAvatar: "Change avatar",
-          nameLabel: "Name / Nickname",
-          emailLabel: "Email",
-          timeZoneLabel: "Time zone",
-          timeZoneAuto: "Auto (system)",
-          timeZoneHint: "This setting affects date/time rendering across the application.",
-          saveChanges: "Save changes",
-        };
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -89,9 +57,9 @@ export default function ProfileForm() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setAvatarUrl(response.data.url);
-      toast.success(copy.avatarUploadChanged);
+      toast.success(t("dashboard.profileBasic.avatarUploadChanged"));
     } catch {
-      toast.error(copy.avatarUploadFailed);
+      toast.error(t("dashboard.profileBasic.avatarUploadFailed"));
     }
   };
 
@@ -106,9 +74,9 @@ export default function ProfileForm() {
           timeZonePreference,
         },
       });
-      toast.success(copy.profileSaved);
+      toast.success(t("dashboard.profileBasic.profileSaved"));
     } catch {
-      toast.error(copy.profileSaveFailed);
+      toast.error(t("dashboard.profileBasic.profileSaveFailed"));
     } finally {
       setSaving(false);
     }
@@ -121,7 +89,7 @@ export default function ProfileForm() {
           {avatarUrl ? (
             <Image
               src={avatarUrl}
-              alt={copy.avatarAlt}
+              alt={t("dashboard.profileBasic.avatarAlt")}
               width={192}
               height={192}
               loader={({ src }) => src}
@@ -141,7 +109,9 @@ export default function ProfileForm() {
           />
           <label htmlFor="avatar-upload">
             <span className="btn btn-outline btn-info w-full mt-2 cursor-pointer">
-              {avatarUrl ? copy.changeAvatar : copy.addAvatar}
+              {avatarUrl
+                ? t("dashboard.profileBasic.changeAvatar")
+                : t("dashboard.profileBasic.addAvatar")}
             </span>
           </label>
         </div>
@@ -149,11 +119,11 @@ export default function ProfileForm() {
         <div className="flex-grow">
           <div className="form-control mb-4">
             <label className="label">
-              <span className="label-text">{copy.nameLabel}</span>
+              <span className="label-text">{t("dashboard.profileBasic.nameLabel")}</span>
             </label>
             <input
               type="text"
-              placeholder="John Doe"
+              placeholder={t("dashboard.profileBasic.namePlaceholder")}
               className="input input-bordered w-full"
               value={name}
               onChange={(event) => setName(event.target.value)}
@@ -162,11 +132,11 @@ export default function ProfileForm() {
 
           <div className="form-control mb-4">
             <label className="label">
-              <span className="label-text">{copy.emailLabel}</span>
+              <span className="label-text">{t("dashboard.profileBasic.emailLabel")}</span>
             </label>
             <input
               type="email"
-              placeholder="user@example.com"
+              placeholder={t("dashboard.profileBasic.emailPlaceholder")}
               className="input input-bordered w-full"
               value={email}
               disabled
@@ -175,21 +145,21 @@ export default function ProfileForm() {
 
           <div className="form-control mb-4">
             <label className="label">
-              <span className="label-text">{copy.timeZoneLabel}</span>
+              <span className="label-text">{t("dashboard.profileBasic.timeZoneLabel")}</span>
             </label>
             <select
               className="select select-bordered w-full"
               value={timeZonePreference}
               onChange={(event) => setTimeZonePreference(event.target.value)}
             >
-              <option value="auto">{`${copy.timeZoneAuto} (${timeZone})`}</option>
+              <option value="auto">{`${t("dashboard.profileBasic.timeZoneAuto")} (${timeZone})`}</option>
               {[...new Set([...COMMON_TIME_ZONES, timeZone])].sort((a, b) => a.localeCompare(b)).map((zone) => (
                 <option key={zone} value={zone}>
                   {formatTimeZoneLabel(zone)}
                 </option>
               ))}
             </select>
-            <span className="mt-1 text-xs opacity-70">{copy.timeZoneHint}</span>
+            <span className="mt-1 text-xs opacity-70">{t("dashboard.profileBasic.timeZoneHint")}</span>
           </div>
 
           <button
@@ -197,7 +167,7 @@ export default function ProfileForm() {
             type="submit"
             disabled={saving || loading}
           >
-            {copy.saveChanges}
+            {t("dashboard.profileBasic.saveChanges")}
           </button>
         </div>
       </div>

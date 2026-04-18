@@ -211,6 +211,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
           validationAllocationPercent: 'Percent allocation cannot exceed 100.',
           modePaperHint: 'PAPER mode shows simulation-only fields.',
           modeLiveHint: 'LIVE mode shows exchange execution fields only.',
+          hiddenSubmit: 'Submit wallet form',
         },
         pl: {
           loading: 'Ladowanie formularza...',
@@ -262,6 +263,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
           validationAllocationPercent: 'W trybie procentowym wartosc nie moze przekraczac 100.',
           modePaperHint: 'W PAPER pokazujemy tylko pola symulacyjne.',
           modeLiveHint: 'W LIVE pokazujemy tylko pola wykonania gieldowego.',
+          hiddenSubmit: 'Zapisz formularz portfela',
         },
         pt: {
           loading: 'A carregar formulario...',
@@ -313,6 +315,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
           validationAllocationPercent: 'A alocacao percentual nao pode ultrapassar 100.',
           modePaperHint: 'No modo PAPER mostramos apenas campos de simulacao.',
           modeLiveHint: 'No modo LIVE mostramos apenas campos de execucao da corretora.',
+          hiddenSubmit: 'Submeter formulario da carteira',
         },
       } as const)[locale],
     [locale]
@@ -923,7 +926,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
       </aside>
 
       <button type='submit' className='sr-only' disabled={submitting}>
-        hidden-submit
+        {copy.hiddenSubmit}
       </button>
     </form>
   );

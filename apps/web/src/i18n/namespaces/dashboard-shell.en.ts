@@ -39,6 +39,23 @@ export const dashboardShellEn = {
     "navigation": "Dashboard navigation",
     "utilityNavigation": "Dashboard utility navigation"
   },
+  "profileBasic": {
+    "avatarAlt": "Avatar",
+    "avatarUploadChanged": "Avatar updated!",
+    "avatarUploadFailed": "Could not save avatar.",
+    "profileSaved": "Profile changes saved.",
+    "profileSaveFailed": "Could not save profile changes.",
+    "addAvatar": "Add avatar",
+    "changeAvatar": "Change avatar",
+    "nameLabel": "Name / Nickname",
+    "namePlaceholder": "John Doe",
+    "emailLabel": "Email",
+    "emailPlaceholder": "user@example.com",
+    "timeZoneLabel": "Time zone",
+    "timeZoneAuto": "Auto (system)",
+    "timeZoneHint": "This setting affects date/time rendering across the application.",
+    "saveChanges": "Save changes"
+  },
   "footer": {
     "rights": "All rights reserved."
   },
