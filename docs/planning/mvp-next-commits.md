@@ -27,7 +27,7 @@ Operational queue for one-task execution runs.
 - [x] `L10NQ-D-B (commits 06-10): reports/markets/backtests/bots/home copy migration`
 - [x] `L10NQ-D-C (commits 11-18): shared foundation localization + parity/smoke/closure`
 - [x] `DBSEL-A (commits DBSEL-01..DBSEL-05): dashboard mixed-mode selector parity hotfix (LIVE + PAPER)`
-- [ ] `UXR-E-A (commits UXR-E-01..UXR-E-04): table action system + clone foundation`
+- [x] `UXR-E-A (commits UXR-E-01..UXR-E-04): table action system + clone foundation`
 - [ ] `UXR-E-B (commits UXR-E-05..UXR-E-08): action rollout + dashboard manual-order/wallet polish`
 - [ ] `UXR-E-C (commits UXR-E-09..UXR-E-12): shell polish + regression closure`
 - [ ] `UXR-F-A (commits UXR-F-01..UXR-F-04): shared dashboard form-system foundation + guardrails`
@@ -48,6 +48,8 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
+- [x] `UXR-E-A (commits UXR-E-01..UXR-E-04): table action system + clone foundation`
+  - 2026-04-18: Closed `UXR-E-A` by completing `UXR-E-01..UXR-E-04` (frozen action/clone contract in canonical docs, added shared table-action preset layer in `TableUi`, implemented wallets clone action with deterministic `(clone)` naming + create-from-existing payload + list append callback + test coverage, and implemented markets clone action with same deterministic naming/payload/list-append contract + component coverage). Validation: `pnpm --filter web test -- src/features/wallets/components/WalletsListTable.test.tsx src/features/markets/components/MarketUniversesTable.test.tsx` => `3/3 PASS`; `pnpm --filter web run typecheck` => `PASS`.
 - [x] `DBSEL-A (commits DBSEL-01..DBSEL-05): dashboard mixed-mode selector parity hotfix (LIVE + PAPER)`
   - 2026-04-18: Closed `DBSEL-A` by completing `DBSEL-01..DBSEL-05` (contract freeze for mixed `LIVE + PAPER` selector behavior, red regression for hidden active `PAPER` option when `LIVE` exists, removal of live-only snapshot clamp in `useHomeLiveWidgetsController`, mixed-mode selector persistence + degraded no-session regression coverage, and focused QA closure artifacts in `docs/operations/_artifacts-dbsel-a-selector-parity-2026-04-18.json` + `docs/operations/dbsel-a-selector-parity-closure-2026-04-18.md`). Validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `15/15 PASS`; `pnpm --filter web run typecheck` + `pnpm --filter web run build` => `PASS`.
 - [x] `L10NQ-D-C (commits 11-18): shared foundation localization + parity/smoke/closure`
