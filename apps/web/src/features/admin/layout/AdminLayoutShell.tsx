@@ -29,7 +29,7 @@ export default function AdminLayoutShell({ children }: { children: ReactNode }) 
       <footer className="border-t border-base-300/60 bg-base-200/70 py-4 text-base-content/80">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-4">
           <p className="text-sm">
-            &copy; {year} Soar. {t("admin.layout.footer.rights")}
+            &copy; {year} {t("public.brand.name")}. {t("admin.layout.footer.rights")}
           </p>
           <FooterPreferencesSwitchers />
         </div>

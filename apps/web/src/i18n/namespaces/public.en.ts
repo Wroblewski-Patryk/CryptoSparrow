@@ -14,6 +14,18 @@ export const publicEn = {
     loadingTableRows: "Loading table rows",
     filterRows: "Filter rows",
   },
+  brand: {
+    name: "Soar",
+  },
+  shell: {
+    dashboard: "Dashboard",
+    admin: "Admin",
+    login: "Login",
+    register: "Register",
+  },
+  footer: {
+    rights: "All rights reserved.",
+  },
   offline: {
     title: "Offline Mode",
     description: "Soar is temporarily offline. Check your connection and try again.",

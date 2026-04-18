@@ -19,12 +19,20 @@ vi.mock('../../components/AppLogoLink', () => ({
 }));
 
 describe('Public Header', () => {
+  const t = (key: string) => {
+    if (key === 'public.shell.dashboard') return 'Dashboard';
+    if (key === 'public.shell.admin') return 'Admin';
+    if (key === 'public.shell.login') return 'Login';
+    if (key === 'public.shell.register') return 'Register';
+    return key;
+  };
+
   it('shows dashboard and admin buttons for logged-in admin user', () => {
     useAuthMock.mockReturnValue({
       user: { email: 'admin@example.com', userId: 'u1', role: 'ADMIN' },
       loading: false,
     });
-    useI18nMock.mockReturnValue({ locale: 'en' });
+    useI18nMock.mockReturnValue({ t });
 
     render(<Header />);
 
@@ -37,7 +45,7 @@ describe('Public Header', () => {
       user: { email: 'user@example.com', userId: 'u2', role: 'USER' },
       loading: false,
     });
-    useI18nMock.mockReturnValue({ locale: 'en' });
+    useI18nMock.mockReturnValue({ t });
 
     render(<Header />);
 
