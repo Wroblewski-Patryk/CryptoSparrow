@@ -183,10 +183,10 @@ describe("BotCreateEditForm", () => {
     const { container } = renderWithI18n();
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Bot name")).toBeInTheDocument();
+      expect(screen.getByLabelText("Name")).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByLabelText("Bot name"), { target: { value: "Live Runner" } });
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Live Runner" } });
     const form = container.querySelector("form");
     expect(form).not.toBeNull();
     fireEvent.submit(form as HTMLFormElement);
@@ -226,7 +226,7 @@ describe("BotCreateEditForm", () => {
     renderWithI18n();
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Bot name")).toBeInTheDocument();
+      expect(screen.getByLabelText("Name")).toBeInTheDocument();
     });
 
     expect(screen.getByLabelText("Active")).toBeDisabled();
@@ -254,10 +254,10 @@ describe("BotCreateEditForm", () => {
     const { container } = renderWithI18n();
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Bot name")).toBeInTheDocument();
+      expect(screen.getByLabelText("Name")).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByLabelText("Bot name"), { target: { value: "Wallet payload bot" } });
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Wallet payload bot" } });
     const form = container.querySelector("form");
     expect(form).not.toBeNull();
     fireEvent.submit(form as HTMLFormElement);

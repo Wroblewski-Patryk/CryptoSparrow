@@ -66,6 +66,11 @@ export const dashboardBotsPl = {
     "maxOpenLabel": "Max open positions",
     "placeholderActivationBlocked": "Wybrana gielda dziala jako placeholder. Aktywacja bota jest niedostepna.",
     "placeholderActivationHint": "Wybrana gielda dziala jako placeholder. Aktywacja runtime dla trybu {mode} nie jest jeszcze wdrozona.",
+    "validationSummaryTitle": "Popraw zaznaczone pola bota przed zapisem.",
+    "nameRequiredValidation": "Nazwa bota jest wymagana.",
+    "walletRequiredValidation": "Wybierz portfel.",
+    "strategyRequiredValidation": "Wybierz strategie.",
+    "marketGroupRequiredValidation": "Wybierz grupe rynkow.",
     "creatingCta": "Tworzenie...",
     "createCta": "Dodaj bota"
   },

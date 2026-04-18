@@ -17,6 +17,7 @@ import { listWallets } from '@/features/wallets/services/wallets.service';
 import { Wallet } from '@/features/wallets/types/wallet.type';
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
 import { normalizeSymbol } from '@/lib/symbols';
+import { FormAlert, FormGrid, FormSectionCard, FormValidationSummary, SelectField, TextField, ToggleField } from '@/ui/forms';
 import {
   createBot,
   getBot,
@@ -80,6 +81,7 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
   const [strategies, setStrategies] = useState<StrategyDto[]>([]);
   const [marketGroups, setMarketGroups] = useState<MarketUniverse[]>([]);
   const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [showValidation, setShowValidation] = useState(false);
   const [form, setForm] = useState<BotFormState>({
     name: '',
     walletId: '',
@@ -151,6 +153,30 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
     () => wallets.find((wallet) => wallet.id === form.walletId) ?? null,
     [wallets, form.walletId]
   );
+  const walletOptions = useMemo(
+    () =>
+      wallets.map((wallet) => ({
+        value: wallet.id,
+        label: `${wallet.name} (${wallet.mode} / ${wallet.exchange} / ${wallet.marketType} / ${wallet.baseCurrency})`,
+      })),
+    [wallets]
+  );
+  const strategyOptions = useMemo(
+    () =>
+      strategies.map((strategy) => ({
+        value: strategy.id,
+        label: strategy.name,
+      })),
+    [strategies]
+  );
+  const marketGroupOptions = useMemo(
+    () =>
+      marketGroups.map((group) => ({
+        value: group.id,
+        label: `${group.name} (${group.exchange ?? 'BINANCE'} - ${group.marketType}/${group.baseCurrency})`,
+      })),
+    [marketGroups]
+  );
 
   const selectedMode = selectedWallet?.mode ?? 'PAPER';
   const canActivateForMode = useMemo(() => {
@@ -181,11 +207,54 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
     if (canActivateForMode && walletContextMatches) return;
     setForm((prev) => ({ ...prev, isActive: false }));
   }, [canActivateForMode, form.isActive, walletContextMatches]);
+  const fieldErrors = useMemo(() => {
+    const errors: Partial<Record<keyof BotFormState, string>> = {};
+    if (!form.name.trim()) {
+      errors.name = t('dashboard.bots.create.nameRequiredValidation');
+    }
+    if (!form.walletId) {
+      errors.walletId = t('dashboard.bots.create.walletRequiredValidation');
+    }
+    if (!form.strategyId) {
+      errors.strategyId = t('dashboard.bots.create.strategyRequiredValidation');
+    }
+    if (!form.marketGroupId) {
+      errors.marketGroupId = t('dashboard.bots.create.marketGroupRequiredValidation');
+    }
+    return errors;
+  }, [form.marketGroupId, form.name, form.strategyId, form.walletId, t]);
+  const hasValidationErrors = Object.keys(fieldErrors).length > 0;
+  const validationSummaryErrors = useMemo(
+    () => Object.values(fieldErrors).filter((value): value is string => Boolean(value)),
+    [fieldErrors]
+  );
+  const focusFirstInvalidField = useCallback(() => {
+    const firstKey = (Object.keys(fieldErrors) as Array<keyof BotFormState>)[0];
+    if (!firstKey) return;
+    const fieldIdByKey: Record<keyof BotFormState, string> = {
+      name: 'bot-name',
+      walletId: 'bot-wallet',
+      strategyId: 'bot-strategy',
+      marketGroupId: 'bot-market-group',
+      isActive: 'bot-active',
+      liveOptIn: 'bot-live-opt-in',
+    };
+    const target = document.getElementById(fieldIdByKey[firstKey]);
+    if (!target) return;
+    if (typeof target.focus === 'function') {
+      target.focus();
+    }
+    if (typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [fieldErrors]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!form.name.trim() || !form.strategyId || !form.marketGroupId || !form.walletId) {
+    setShowValidation(true);
+    if (hasValidationErrors) {
       toast.error(t('dashboard.bots.create.description'));
+      focusFirstInvalidField();
       return;
     }
     if (!walletContextMatches) {
@@ -292,106 +361,84 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
 
   return (
     <>
-      <form id={formId} onSubmit={handleSubmit} className='space-y-4 rounded-box border border-base-300/60 bg-base-100/80 p-4'>
+      <form id={formId} onSubmit={handleSubmit} className='space-y-4'>
+        {showValidation && hasValidationErrors ? (
+          <FormValidationSummary
+            title={t('dashboard.bots.create.validationSummaryTitle')}
+            errors={validationSummaryErrors}
+          />
+        ) : null}
         <fieldset disabled={submitting} className='space-y-4'>
-          <section className='space-y-3 rounded-box border border-base-300/60 bg-base-200/55 p-3'>
-            <h2 className='text-base font-semibold'>{t('dashboard.bots.create.sectionSetup')}</h2>
-            <p className='text-xs opacity-70'>{t('dashboard.bots.create.sectionSetupDescription')}</p>
+          <FormSectionCard
+            title={t('dashboard.bots.create.sectionSetup')}
+            description={t('dashboard.bots.create.sectionSetupDescription')}
+            className='bg-base-100/80'
+          >
+            <FormGrid columns={3}>
+              <TextField
+                id='bot-name'
+                label={t('dashboard.bots.create.nameLabel')}
+                placeholder={t('dashboard.bots.create.namePlaceholder')}
+                value={form.name}
+                onChange={(value) => setForm((prev) => ({ ...prev, name: value }))}
+                error={showValidation ? fieldErrors.name : undefined}
+              />
 
-            <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-4'>
-              <label className='form-control gap-1'>
-                <span className='label-text'>{t('dashboard.bots.create.nameLabel')}</span>
-                <input
-                  className='input input-bordered'
-                  aria-label={t('dashboard.bots.create.nameAria')}
-                  placeholder={t('dashboard.bots.create.namePlaceholder')}
-                  value={form.name}
-                  onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-                />
-              </label>
+              <SelectField
+                id='bot-wallet'
+                label={t('dashboard.bots.create.walletSummaryLabel')}
+                value={form.walletId}
+                options={walletOptions}
+                onChange={(value) => setForm((prev) => ({ ...prev, walletId: value }))}
+                error={showValidation ? fieldErrors.walletId : undefined}
+              />
 
-              <label className='form-control gap-1'>
-                <span className='label-text'>{t('dashboard.bots.create.walletSummaryLabel')}</span>
-                <select
-                  className='select select-bordered'
-                  value={form.walletId}
-                  onChange={(event) => setForm((prev) => ({ ...prev, walletId: event.target.value }))}
-                >
-                  {wallets.map((wallet) => (
-                    <option key={wallet.id} value={wallet.id}>
-                      {wallet.name} ({wallet.mode} / {wallet.exchange} / {wallet.marketType} / {wallet.baseCurrency})
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <SelectField
+                id='bot-strategy'
+                label={t('dashboard.bots.create.strategyLabel')}
+                value={form.strategyId}
+                options={strategyOptions}
+                onChange={(value) => setForm((prev) => ({ ...prev, strategyId: value }))}
+                error={showValidation ? fieldErrors.strategyId : undefined}
+              />
 
-              <label className='form-control gap-1'>
-                <span className='label-text'>{t('dashboard.bots.create.strategyLabel')}</span>
-                <select
-                  className='select select-bordered'
-                  aria-label={t('dashboard.bots.create.strategyAria')}
-                  value={form.strategyId}
-                  onChange={(event) => setForm((prev) => ({ ...prev, strategyId: event.target.value }))}
-                >
-                  {strategies.map((strategy) => (
-                    <option key={strategy.id} value={strategy.id}>
-                      {strategy.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <SelectField
+                id='bot-market-group'
+                label={t('dashboard.bots.create.marketGroupLabel')}
+                value={form.marketGroupId}
+                options={marketGroupOptions}
+                onChange={(value) => setForm((prev) => ({ ...prev, marketGroupId: value }))}
+                className='xl:col-span-2'
+                error={showValidation ? fieldErrors.marketGroupId : undefined}
+              />
 
-              <label className='form-control gap-1'>
-                <span className='label-text'>{t('dashboard.bots.create.marketGroupLabel')}</span>
-                <select
-                  className='select select-bordered'
-                  aria-label={t('dashboard.bots.create.marketGroupAria')}
-                  value={form.marketGroupId}
-                  onChange={(event) => setForm((prev) => ({ ...prev, marketGroupId: event.target.value }))}
-                >
-                  {marketGroups.map((group) => (
-                    <option key={group.id} value={group.id}>
-                      {group.name} ({group.exchange ?? 'BINANCE'} - {group.marketType}/{group.baseCurrency})
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
+              <ToggleField
+                id='bot-active'
+                label={t('dashboard.bots.list.columns.active')}
+                checked={form.isActive}
+                onChange={(checked) => setForm((prev) => ({ ...prev, isActive: checked }))}
+                disabled={!canActivateForMode || !walletContextMatches}
+              />
+            </FormGrid>
 
-            <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-4'>
-              <label className='form-control gap-1'>
-                <span className='label-text'>{t('dashboard.bots.list.columns.active')}</span>
-                <input
-                  type='checkbox'
-                  className='toggle toggle-success'
-                  checked={form.isActive}
-                  disabled={!canActivateForMode || !walletContextMatches}
-                  onChange={(event) => setForm((prev) => ({ ...prev, isActive: event.target.checked }))}
-                />
-              </label>
-
+            <FormGrid columns={2} className='mt-1'>
               {selectedMode === 'LIVE' ? (
-                <label className='form-control gap-1'>
-                  <span className='label-text'>{t('dashboard.bots.list.columns.liveOptIn')}</span>
-                  <input
-                    type='checkbox'
-                    className='toggle toggle-warning'
-                    checked={form.liveOptIn}
-                    onChange={(event) => setForm((prev) => ({ ...prev, liveOptIn: event.target.checked }))}
-                  />
-                  <span className='label-text-alt text-xs opacity-70'>
-                    {t('dashboard.bots.create.liveOptInHelper')}
-                  </span>
-                </label>
+                <ToggleField
+                  id='bot-live-opt-in'
+                  label={t('dashboard.bots.list.columns.liveOptIn')}
+                  checked={form.liveOptIn}
+                  onChange={(checked) => setForm((prev) => ({ ...prev, liveOptIn: checked }))}
+                  hint={t('dashboard.bots.create.liveOptInHelper')}
+                />
               ) : (
-                <div className='rounded-md border border-base-300/60 bg-base-100/70 px-3 py-2 text-xs opacity-75'>
+                <FormAlert variant='info' className='h-fit'>
                   {t('dashboard.bots.create.liveOptInPaperInfo')}
-                </div>
+                </FormAlert>
               )}
 
               <div
                 data-testid='wallet-context-summary'
-                className='rounded-md border border-base-300/60 bg-base-100/70 px-3 py-2 text-xs opacity-80 space-y-1 md:col-span-2'
+                className='rounded-md border border-base-300/60 bg-base-100/70 px-3 py-2 text-xs opacity-80 space-y-1'
               >
                 <div>
                   <span className='font-semibold'>{t('dashboard.bots.create.walletSummaryLabel')}:</span>{' '}
@@ -415,12 +462,10 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
                   </div>
                 ) : null}
               </div>
-            </div>
+            </FormGrid>
 
             {!walletContextMatches ? (
-              <div className='alert alert-warning'>
-                <span>{t('dashboard.bots.create.walletContextMismatchAlert')}</span>
-              </div>
+              <FormAlert variant='warning'>{t('dashboard.bots.create.walletContextMismatchAlert')}</FormAlert>
             ) : null}
 
             {selectedStrategy ? (
@@ -431,7 +476,7 @@ export default function BotCreateEditForm({ editId = null, formId = 'bot-form' }
                 {deriveStrategyMaxOpenPositions(selectedStrategy)}
               </div>
             ) : null}
-          </section>
+          </FormSectionCard>
         </fieldset>
       </form>
       {confirmModal}

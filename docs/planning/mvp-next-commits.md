@@ -48,6 +48,8 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
+- [x] `UXR-F-C progress: completed UXR-F-10 (group in progress)`
+  - 2026-04-18: Completed `UXR-F-10` by migrating `BotCreateEditForm` internals to shared `ui/forms` primitives and adding unified submit-time validation summary plus first-invalid focus behavior for required setup fields (`name`, `wallet`, `strategy`, `market group`) while preserving wallet-context safety checks and wallet-first create payload contract. Validation: `pnpm --filter web test -- src/features/bots/components/BotCreateEditForm.test.tsx src/i18n/translations.test.ts` => `9/9 PASS`; `pnpm --filter web run typecheck` => `PASS`.
 - [x] `UXR-F-C progress: completed UXR-F-09 (group in progress)`
   - 2026-04-18: Completed `UXR-F-09` by aligning strategy form shell and `Basic` section to shared `ui/forms` primitives while preserving tab navigation, and migrating strategy-form copy from locale-branching to namespace-driven `dashboard.strategies.form.*` keys (`en/pl/pt` parity). Validation: `pnpm --filter web test -- src/i18n/translations.test.ts src/features/strategies/components/StrategyFormSections/Indicators.test.tsx` => `11/11 PASS`; `pnpm --filter web run typecheck` => `PASS`.
 - [x] `UXR-F-B closed: completed UXR-F-05..UXR-F-08`

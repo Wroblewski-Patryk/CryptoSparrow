@@ -66,6 +66,11 @@ export const dashboardBotsPt = {
     "maxOpenLabel": "Max open positions",
     "placeholderActivationBlocked": "Selected exchange is in placeholder mode. Bot activation is unavailable.",
     "placeholderActivationHint": "Placeholder exchange selected. Runtime activation for {mode} mode is not implemented yet.",
+    "validationSummaryTitle": "Corrige os campos assinalados do bot antes de guardar.",
+    "nameRequiredValidation": "O nome do bot e obrigatorio.",
+    "walletRequiredValidation": "A selecao de carteira e obrigatoria.",
+    "strategyRequiredValidation": "A selecao de estrategia e obrigatoria.",
+    "marketGroupRequiredValidation": "A selecao de grupo de mercado e obrigatoria.",
     "creatingCta": "A criar...",
     "createCta": "Adicionar bot"
   },
