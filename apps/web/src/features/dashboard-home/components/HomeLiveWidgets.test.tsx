@@ -226,6 +226,128 @@ describe("HomeLiveWidgets", () => {
     expect(container.querySelector(".btn.btn-outline.btn-sm")).toBeNull();
   });
 
+  it("shows both active LIVE and active PAPER bots in dashboard selector", async () => {
+    listBotsMock.mockResolvedValue([
+      {
+        id: "bot-live-active",
+        name: "Mixed Live Bot",
+        mode: "LIVE",
+        paperStartBalance: 10000,
+        marketType: "FUTURES",
+        positionMode: "ONE_WAY",
+        strategyId: "str-live-active",
+        isActive: true,
+        liveOptIn: true,
+        maxOpenPositions: 2,
+      },
+      {
+        id: "bot-paper-active",
+        name: "Mixed Paper Bot",
+        mode: "PAPER",
+        paperStartBalance: 10000,
+        marketType: "FUTURES",
+        positionMode: "ONE_WAY",
+        strategyId: "str-paper-active",
+        isActive: true,
+        liveOptIn: false,
+        maxOpenPositions: 2,
+      },
+    ]);
+
+    listBotRuntimeSessionsMock.mockImplementation(async (botId: string) => [
+      {
+        id: `session-${botId}`,
+        botId,
+        mode: botId.includes("live") ? "LIVE" : "PAPER",
+        status: "RUNNING",
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: null,
+        lastHeartbeatAt: "2026-03-31T10:05:00.000Z",
+        stopReason: null,
+        errorMessage: null,
+        createdAt: "2026-03-31T10:00:00.000Z",
+        updatedAt: "2026-03-31T10:05:00.000Z",
+        durationMs: 300000,
+        eventsCount: 0,
+        symbolsTracked: 0,
+        summary: {
+          totalSignals: 0,
+          dcaCount: 0,
+          closedTrades: 0,
+          realizedPnl: 0,
+        },
+      },
+    ]);
+
+    listBotRuntimeSessionSymbolStatsMock.mockResolvedValue({
+      sessionId: "session-any",
+      items: [],
+      summary: {
+        totalSignals: 0,
+        longEntries: 0,
+        shortEntries: 0,
+        exits: 0,
+        dcaCount: 0,
+        closedTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        totalPnl: 0,
+        grossProfit: 0,
+        grossLoss: 0,
+        feesPaid: 0,
+      },
+    });
+
+    listBotRuntimeSessionPositionsMock.mockResolvedValue({
+      sessionId: "session-any",
+      total: 0,
+      openCount: 0,
+      closedCount: 0,
+      openOrdersCount: 0,
+      showDynamicStopColumns: false,
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      summary: {
+        realizedPnl: 0,
+        unrealizedPnl: 0,
+        feesPaid: 0,
+      },
+      openOrders: [],
+      openItems: [],
+      historyItems: [],
+    });
+
+    listBotRuntimeSessionTradesMock.mockResolvedValue({
+      sessionId: "session-any",
+      total: 0,
+      meta: {
+        page: 1,
+        pageSize: 25,
+        total: 0,
+        totalPages: 0,
+        hasPrev: false,
+        hasNext: false,
+      },
+      window: {
+        startedAt: "2026-03-31T10:00:00.000Z",
+        finishedAt: "2026-03-31T10:05:00.000Z",
+      },
+      items: [],
+    });
+
+    renderSubject();
+
+    await waitFor(() => {
+      expect(screen.getByText(/Wybrany bot|Selected bot/i)).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: /Mixed Live Bot/i })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: /Mixed Paper Bot/i })).toBeInTheDocument();
+    });
+  });
+
   it("renders runtime summary, monitored bots and market signals", async () => {
     listBotsMock.mockResolvedValue([
       {
