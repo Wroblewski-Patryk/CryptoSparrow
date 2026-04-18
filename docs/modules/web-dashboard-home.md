@@ -46,7 +46,7 @@ Out of scope:
 
 ## 4. Runtime Flows
 - Initial load flow:
-  1. List bots and prioritize active scope (LIVE first, then PAPER).
+  1. List bots and build active scope mode-agnostically (`PAPER` + `LIVE`) with deterministic ordering and dashboard cap.
   2. For selected bots load sessions, runtime graph, symbol stats, and positions.
   3. Build unified runtime snapshot and summary metrics.
 - Live refresh flow:
@@ -99,3 +99,11 @@ pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets
 - Operator note:
   - unresolved external takeover states (`UNOWNED`, `AMBIGUOUS`, `MANUAL_ONLY`) are not actionable from dashboard close flow.
   - onboarding sequence remains wallet-first when runtime context is missing (`/dashboard/wallets/list` as first step).
+
+## 11. Runtime Selector Parity (`DBSEL-A`)
+- Selector contract:
+  - dashboard runtime selector includes all active bots regardless of mode (`PAPER` and `LIVE` together).
+  - active bot mode must not filter out another active mode from selector options.
+  - deterministic ordering and cap (`MAX_DASHBOARD_BOTS`) stay unchanged.
+- Degraded contract:
+  - if selected active bot has no runtime session, it remains selectable and runtime panel shows degraded/no-session copy instead of dropping that bot from selector.

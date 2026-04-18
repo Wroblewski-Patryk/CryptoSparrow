@@ -1827,13 +1827,14 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-18: Initialized `L10NQ-D` with deterministic full-scope audit artifacts (`docs/operations/_artifacts-l10nq-d-coverage-audit-2026-04-18.json`, `docs/operations/l10nq-d-coverage-audit-2026-04-18.md`, `docs/operations/l10nq-d-route-coverage-matrix-2026-04-18.md`) and canonical execution plan `docs/planning/l10nq-d-total-web-i18n-coverage-plan-2026-04-18.md`.
 
 ## Phase DBSEL-A - Dashboard Mixed-Mode Bot Selector Parity Hotfix (Queued 2026-04-18)
-- [ ] `DBSEL-01 docs(contract): freeze dashboard selector parity contract for mixed active LIVE+PAPER modes`
+- [x] `DBSEL-01 docs(contract): freeze dashboard selector parity contract for mixed active LIVE+PAPER modes`
 - [ ] `DBSEL-02 test(web-dashboard-red): add failing regression for missing active PAPER bot in selector when LIVE bot exists`
 - [ ] `DBSEL-03 fix(web-dashboard-controller): remove live-only active scope clamp in useHomeLiveWidgetsController`
 - [ ] `DBSEL-04 test(web-dashboard-selector-state): lock mixed-mode selection persistence and no-session degrade path`
 - [ ] `DBSEL-05 qa(regression-pack): run focused dashboard runtime selector parity test/typecheck/build pack`
 
 ### Progress Log (Phase DBSEL-A - Dashboard Mixed-Mode Bot Selector Parity Hotfix)
+- 2026-04-18: Completed `DBSEL-01` by freezing selector parity contract in canonical docs (`open-decisions` + `web-dashboard-home`): dashboard runtime selector is mode-agnostic for active bots (`PAPER + LIVE`), deterministic cap/order remain unchanged, and active bot without runtime session must stay selectable with degraded/no-session panel state.
 - 2026-04-18: Queued selector parity hotfix plan in `docs/planning/dashboard-runtime-bot-selector-parity-plan-2026-04-18.md` after code-level confirmation that dashboard runtime scope is clamped to `LIVE` bots when any live bot is active (`useHomeLiveWidgetsController`), which hides active `PAPER` bots from selector.
 
 ## Phase UXR-E - Table Action System + Clone + Dashboard Polish (Queued 2026-04-18)

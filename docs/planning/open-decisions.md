@@ -721,6 +721,20 @@ This file tracks intentionally unresolved architecture choices so implementation
   - `docs/modules/api-bots.md`
   - `docs/modules/web-dashboard-home.md`
 
+## Dashboard Runtime Selector Mixed-Mode Parity
+- Decision state: resolved on 2026-04-18.
+- Decision:
+  - dashboard runtime bot selector is mode-agnostic for active bots and must include both `PAPER` and `LIVE` active entries concurrently.
+  - selector options are sourced from active bot scope only, with deterministic ordering and dashboard cap unchanged.
+  - active bot without runtime session remains visible/selectable; sidebar/runtime panel must show degraded `no session` state instead of removing that bot from selector.
+- Locked behavior:
+  - no `LIVE`-first clamp is allowed when constructing dashboard selector options.
+  - mixed active modes (`PAPER + LIVE`) are first-class and selectable in one runtime context switcher.
+  - deterministic cap (`MAX_DASHBOARD_BOTS`) and ordering guarantees remain in effect.
+- Canonical references:
+  - `docs/planning/dashboard-runtime-bot-selector-parity-plan-2026-04-18.md`
+  - `docs/modules/web-dashboard-home.md`
+
 ## Execution and Backtest Parity Policy
 - Decision state: resolved on 2026-03-22.
 - V1 direction:
