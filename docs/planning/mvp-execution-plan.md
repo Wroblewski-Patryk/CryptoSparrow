@@ -1830,10 +1830,11 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `DBSEL-01 docs(contract): freeze dashboard selector parity contract for mixed active LIVE+PAPER modes`
 - [x] `DBSEL-02 test(web-dashboard-red): add failing regression for missing active PAPER bot in selector when LIVE bot exists`
 - [x] `DBSEL-03 fix(web-dashboard-controller): remove live-only active scope clamp in useHomeLiveWidgetsController`
-- [ ] `DBSEL-04 test(web-dashboard-selector-state): lock mixed-mode selection persistence and no-session degrade path`
+- [x] `DBSEL-04 test(web-dashboard-selector-state): lock mixed-mode selection persistence and no-session degrade path`
 - [ ] `DBSEL-05 qa(regression-pack): run focused dashboard runtime selector parity test/typecheck/build pack`
 
 ### Progress Log (Phase DBSEL-A - Dashboard Mixed-Mode Bot Selector Parity Hotfix)
+- 2026-04-18: Completed `DBSEL-04` by adding mixed-mode selector-state regression coverage in `HomeLiveWidgets.test.tsx` (`keeps mixed-mode selection stable and renders no-session degrade state for active bot`) that verifies cross-mode selection persistence (`LIVE <-> PAPER`), localStorage persistence of selected bot, and degraded `NO_SESSION` + warning state for active bot without runtime session.
 - 2026-04-18: Completed `DBSEL-03` by removing the `LIVE`-only active scope clamp in `useHomeLiveWidgetsController` (`activeScope = active`) so runtime snapshots are built from all active bots (`LIVE + PAPER`) while preserving existing deterministic ordering and `MAX_DASHBOARD_BOTS` cap.
 - 2026-04-18: Completed `DBSEL-02` by adding red regression coverage in `HomeLiveWidgets.test.tsx` (`shows both active LIVE and active PAPER bots in dashboard selector`) that asserts mixed active modes must both appear in selector options. Verified failure against current clamp behavior: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` failed with missing option `/Mixed Paper Bot/i`.
 - 2026-04-18: Completed `DBSEL-01` by freezing selector parity contract in canonical docs (`open-decisions` + `web-dashboard-home`): dashboard runtime selector is mode-agnostic for active bots (`PAPER + LIVE`), deterministic cap/order remain unchanged, and active bot without runtime session must stay selectable with degraded/no-session panel state.
