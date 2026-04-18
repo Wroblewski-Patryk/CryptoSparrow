@@ -26,6 +26,7 @@ Operational queue for one-task execution runs.
 - [x] `L10NQ-D-A (commits 01-05): inventory + guardrail hardening + auth/admin migration`
 - [ ] `L10NQ-D-B (commits 06-10): reports/markets/backtests/bots/home copy migration`
 - [ ] `L10NQ-D-C (commits 11-18): shared foundation localization + parity/smoke/closure`
+- [ ] `DBSEL-A (commits DBSEL-01..DBSEL-05): dashboard mixed-mode selector parity hotfix (LIVE + PAPER)`
 - [ ] `UXR-E-A (commits UXR-E-01..UXR-E-04): table action system + clone foundation`
 - [ ] `UXR-E-B (commits UXR-E-05..UXR-E-08): action rollout + dashboard manual-order/wallet polish`
 - [ ] `UXR-E-C (commits UXR-E-09..UXR-E-12): shell polish + regression closure`
@@ -43,6 +44,8 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
+- [x] `DBSEL-A planning queued (dashboard mixed-mode selector parity)`
+  - 2026-04-18: Published dashboard runtime selector parity hotfix plan in `docs/planning/dashboard-runtime-bot-selector-parity-plan-2026-04-18.md` after confirming live-only clamp in `useHomeLiveWidgetsController`, and queued grouped execution batch `DBSEL-A` for mixed active `LIVE + PAPER` selector visibility fix.
 - [x] `L10NQ-D-A (commits 01-05): inventory + guardrail hardening + auth/admin migration`
   - 2026-04-18: Closed `L10NQ-D-A` by completing `L10NQ-D-01..L10NQ-D-05` (frozen full-scope route-reachable audit artifacts and module/shared split docs, added deterministic pnpm-runnable route-reachable i18n audit command + JSON contract in `scripts/auditRouteReachableI18n.mjs` and `docs/operations/i18n-route-reachable-audit-contract.md`, hardened guardrails with seeded regression fixture coverage for local-copy/fallback-pl/hardcoded-UI checks, migrated auth forms/hooks/pages/password-toggle to `auth` namespace keys with `pl` fallback removal, and migrated admin users/subscriptions/layout copy to `admin` namespace keys including modal backdrop close label). Validation: `pnpm --filter web test -- src/i18n/guardrails.test.ts src/i18n/namespaceRegistry.test.ts src/i18n/translations.test.ts src/features/auth/components/LoginForm.test.tsx src/features/auth/components/RegisterForm.test.tsx src/features/auth/hooks/useLoginForm.test.tsx src/features/admin/users/pages/AdminUsersPage.test.tsx src/features/admin/subscriptions/pages/AdminSubscriptionsPage.test.tsx` => `24/24 PASS`; `pnpm i18n:audit:route-reachable:web` => `PASS`; `pnpm --filter web run typecheck` + `pnpm --filter web run build` + `pnpm --filter api run typecheck` + `pnpm --filter api build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
 - [x] `UXR-E planning queued (post-L10NQ-D)`

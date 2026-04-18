@@ -1813,6 +1813,16 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-18: Completed `L10NQ-D-A` by closing `L10NQ-D-01..L10NQ-D-05` (frozen full route-reachable i18n inventory + module/shared split baseline, added deterministic route-reachable audit command `pnpm i18n:audit:route-reachable:web` with JSON contract doc in `docs/operations/i18n-route-reachable-audit-contract.md`, hardened i18n guardrails with seeded regression fixture and hard-fail checks for local-copy/fallback-pl/hardcoded monitored contexts, migrated auth forms/hooks/pages/password-toggle to `auth` namespace keys with locale fallback drift removed, and migrated admin users/subscriptions/layout copy + modal backdrop close label to `admin` namespace keys). Validation: `pnpm --filter web test -- src/i18n/guardrails.test.ts src/i18n/namespaceRegistry.test.ts src/i18n/translations.test.ts src/features/auth/components/LoginForm.test.tsx src/features/auth/components/RegisterForm.test.tsx src/features/auth/hooks/useLoginForm.test.tsx src/features/admin/users/pages/AdminUsersPage.test.tsx src/features/admin/subscriptions/pages/AdminSubscriptionsPage.test.tsx` => `24/24 PASS`; `pnpm i18n:audit:route-reachable:web` => `PASS`; `pnpm --filter web run typecheck` + `pnpm --filter web run build` + `pnpm --filter api run typecheck` + `pnpm --filter api build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
 - 2026-04-18: Initialized `L10NQ-D` with deterministic full-scope audit artifacts (`docs/operations/_artifacts-l10nq-d-coverage-audit-2026-04-18.json`, `docs/operations/l10nq-d-coverage-audit-2026-04-18.md`, `docs/operations/l10nq-d-route-coverage-matrix-2026-04-18.md`) and canonical execution plan `docs/planning/l10nq-d-total-web-i18n-coverage-plan-2026-04-18.md`.
 
+## Phase DBSEL-A - Dashboard Mixed-Mode Bot Selector Parity Hotfix (Queued 2026-04-18)
+- [ ] `DBSEL-01 docs(contract): freeze dashboard selector parity contract for mixed active LIVE+PAPER modes`
+- [ ] `DBSEL-02 test(web-dashboard-red): add failing regression for missing active PAPER bot in selector when LIVE bot exists`
+- [ ] `DBSEL-03 fix(web-dashboard-controller): remove live-only active scope clamp in useHomeLiveWidgetsController`
+- [ ] `DBSEL-04 test(web-dashboard-selector-state): lock mixed-mode selection persistence and no-session degrade path`
+- [ ] `DBSEL-05 qa(regression-pack): run focused dashboard runtime selector parity test/typecheck/build pack`
+
+### Progress Log (Phase DBSEL-A - Dashboard Mixed-Mode Bot Selector Parity Hotfix)
+- 2026-04-18: Queued selector parity hotfix plan in `docs/planning/dashboard-runtime-bot-selector-parity-plan-2026-04-18.md` after code-level confirmation that dashboard runtime scope is clamped to `LIVE` bots when any live bot is active (`useHomeLiveWidgetsController`), which hides active `PAPER` bots from selector.
+
 ## Phase UXR-E - Table Action System + Clone + Dashboard Polish (Queued 2026-04-18)
 - [ ] `UXR-E-01 docs(contract): freeze table action semantics and clone naming contract for wallets/markets/strategies`
 - [ ] `UXR-E-02 refactor(web-table-actions-core): add shared action presets in TableUi for standard and dedicated table actions`
