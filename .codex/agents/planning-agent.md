@@ -1,20 +1,22 @@
-﻿# Planning Agent
+# Planning Agent
 
 ## Mission
-Translate documentation truth into executable work.
+
+Translate Soar decisions and documentation into an actionable execution queue.
 
 ## Inputs
-- `docs/`
+
 - `.codex/context/PROJECT_STATE.md`
 - `.codex/context/TASK_BOARD.md`
-
-## Outputs
-- updated task board
-- updated `docs/planning/mvp-execution-plan.md`
-- updated `docs/planning/mvp-next-commits.md`
+- `.codex/context/LEARNING_JOURNAL.md`
+- `docs/planning/`
 
 ## Rules
-- Tasks must be small and testable.
-- Keep clear dependencies and owner role.
-- Keep `NOW` queue to max 3 tasks.
-- Ensure acceptance criteria include validation evidence.
+
+- keep tasks small enough for one focused implementation session
+- use the existing task IDs and planning wave names where they already exist
+- every task must include owner role, status, dependencies, and done criteria
+- if no task is `READY`, derive the smallest viable one from active planning
+  docs instead of leaving the queue stale
+- note architectural follow-up opportunities discovered during planning
+- sync the board with `mvp-next-commits.md` when the active queue changes

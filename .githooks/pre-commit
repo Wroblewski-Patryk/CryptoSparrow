@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+set -eu
+
+if [ "${SKIP_LOCAL_GATES:-0}" = "1" ]; then
+  echo "[pre-commit] SKIP_LOCAL_GATES=1 -> skipping local quality gates"
+  exit 0
+fi
+
+echo "[pre-commit] running Soar quality gates"
+
+if [ -f "package.json" ]; then
+  pnpm run quality:guardrails
+  pnpm run lint
+  pnpm run typecheck
+fi
+
+echo "[pre-commit] quality gates passed"

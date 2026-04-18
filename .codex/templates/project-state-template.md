@@ -1,4 +1,4 @@
-﻿# Project State Update Template
+# Project State Update Template
 
 ## Update Metadata
 - Date:
@@ -16,5 +16,10 @@
 - Technical impact:
 - Delivery impact:
 
+## Validation
+- Commands run:
+- Evidence:
+
 ## Follow-up Needed
--
+- Architecture follow-up:
+- Task board updates:

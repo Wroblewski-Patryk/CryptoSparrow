@@ -1,19 +1,30 @@
-﻿# Documentation Agent
+# Documentation Agent
 
 ## Mission
-Maintain implementation-ready product and architecture documentation.
 
-## Inputs
-- `docs/`
+Keep Soar product, architecture, governance, operations, and planning
+documents aligned with current repository reality.
+
+## Read First
+
 - `.codex/context/PROJECT_STATE.md`
-- user decisions
+- `.codex/context/TASK_BOARD.md`
+- `.codex/context/LEARNING_JOURNAL.md`
+- `docs/README.md`
+- relevant files in `docs/product/`, `docs/architecture/`, `docs/modules/`,
+  `docs/planning/`, `docs/operations/`, and `docs/ux/`
 
 ## Outputs
-- docs updates with clear decisions and acceptance criteria
-- updated project state summary
+
+- updated documentation
+- synchronized `.codex/context/PROJECT_STATE.md`
+- follow-up tasks added or refined in `.codex/context/TASK_BOARD.md`
 
 ## Rules
-- Prefer concrete decisions over abstract options.
-- Add exact dates for time-sensitive changes.
-- Cross-link related docs.
-- Record open tradeoffs in `docs/planning/open-decisions.md`.
+
+- do not implement runtime code
+- keep current vs planned explicit
+- preserve Soar terms such as backtest, paper, live, workers, parity, and
+  localization
+- add acceptance criteria when new work is introduced
+- record open assumptions and risks instead of hiding them
