@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { EmptyState, ErrorState, LoadingState, SuccessState } from "../../../ui/components/ViewState";
+import { useI18n } from "../../../i18n/I18nProvider";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { getBacktestRunReport, listBacktestRuns } from "../../backtest/services/backtests.service";
 import { BacktestReport, BacktestRun } from "../../backtest/types/backtest.type";
@@ -20,6 +21,7 @@ const avg = (values: number[]) => {
 };
 
 export default function PerformanceReportsView() {
+  const { t } = useI18n();
   const { formatCurrency, formatNumber, formatPercent } = useLocaleFormatting();
   const [rows, setRows] = useState<RunReportRow[]>([]);
   const [modeRows, setModeRows] = useState<CrossModePerformanceRow[]>([]);
@@ -42,11 +44,11 @@ export default function PerformanceReportsView() {
       setModeRows(modePerformance.rows);
       setRows(withReports.filter((item): item is RunReportRow => item != null));
     } catch (err: unknown) {
-      setError(getAxiosMessage(err) ?? "Nie udalo sie pobrac raportow performance.");
+      setError(getAxiosMessage(err) ?? t("dashboard.reports.states.errorFallback"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
@@ -69,14 +71,14 @@ export default function PerformanceReportsView() {
     };
   }, [rows]);
 
-  if (loading) return <LoadingState title="Ladowanie reports performance" />;
+  if (loading) return <LoadingState title={t("dashboard.reports.states.loadingTitle")} />;
 
   if (error) {
     return (
       <ErrorState
-        title="Nie udalo sie pobrac reports performance"
+        title={t("dashboard.reports.states.errorTitle")}
         description={error}
-        retryLabel="Sprobuj ponownie"
+        retryLabel={t("dashboard.reports.states.retryLabel")}
         onRetry={() => void load()}
       />
     );
@@ -85,8 +87,8 @@ export default function PerformanceReportsView() {
   if (rows.length === 0) {
     return (
       <EmptyState
-        title="Brak raportow performance"
-        description="Gdy pojawia sie zakonczone backtesty z reportem, zobaczysz je tutaj."
+        title={t("dashboard.reports.states.emptyTitle")}
+        description={t("dashboard.reports.states.emptyDescription")}
       />
     );
   }
@@ -94,20 +96,20 @@ export default function PerformanceReportsView() {
   return (
     <div className="space-y-4">
       <SuccessState
-        title="Reports performance loaded"
-        description={`Wczytano ${rows.length} raportow do analizy wydajnosci.`}
+        title={t("dashboard.reports.states.successTitle")}
+        description={t("dashboard.reports.states.successDescription").replace("{count}", String(rows.length))}
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="card border border-base-300/60 bg-base-200/60">
           <div className="card-body p-4">
-            <p className="text-sm opacity-70">Reports</p>
+            <p className="text-sm opacity-70">{t("dashboard.reports.cards.reports")}</p>
             <p className="text-3xl font-bold">{metrics.runsCount}</p>
           </div>
         </div>
         <div className="card border border-base-300/60 bg-base-200/60">
           <div className="card-body p-4">
-            <p className="text-sm opacity-70">Avg Net PnL</p>
+            <p className="text-sm opacity-70">{t("dashboard.reports.cards.avgNetPnl")}</p>
               <p className={`text-3xl font-bold ${metrics.avgNetPnl >= 0 ? "text-success" : "text-error"}`}>
               {formatCurrency(metrics.avgNetPnl)}
             </p>
@@ -115,13 +117,13 @@ export default function PerformanceReportsView() {
         </div>
         <div className="card border border-base-300/60 bg-base-200/60">
           <div className="card-body p-4">
-            <p className="text-sm opacity-70">Avg Win Rate</p>
+            <p className="text-sm opacity-70">{t("dashboard.reports.cards.avgWinRate")}</p>
             <p className="text-3xl font-bold text-info">{formatPercent(metrics.avgWinRate)}</p>
           </div>
         </div>
         <div className="card border border-base-300/60 bg-base-200/60">
           <div className="card-body p-4">
-            <p className="text-sm opacity-70">Best Run</p>
+            <p className="text-sm opacity-70">{t("dashboard.reports.cards.bestRun")}</p>
             <p className="text-sm font-semibold truncate">{metrics.bestRunName}</p>
             <p className="text-xl font-bold text-success">{formatCurrency(metrics.bestNetPnl)}</p>
           </div>
@@ -129,20 +131,20 @@ export default function PerformanceReportsView() {
       </div>
 
       <div className="rounded-box border border-base-300/60 bg-base-100/80 p-4">
-        <h2 className="text-lg font-semibold">Cross-mode performance</h2>
+        <h2 className="text-lg font-semibold">{t("dashboard.reports.sections.crossMode.title")}</h2>
         <p className="mt-1 text-sm text-base-content/70">
-          Porownanie skutecznosci BACKTEST vs PAPER vs LIVE.
+          {t("dashboard.reports.sections.crossMode.description")}
         </p>
         <div className="mt-3 overflow-x-auto">
           <table className="table table-zebra">
             <thead>
               <tr>
-                <th>Mode</th>
-                <th>Trades</th>
-                <th>Win Rate</th>
-                <th>Net PnL</th>
-                <th>Gross Profit</th>
-                <th>Gross Loss</th>
+                <th>{t("dashboard.reports.sections.crossMode.table.mode")}</th>
+                <th>{t("dashboard.reports.sections.crossMode.table.trades")}</th>
+                <th>{t("dashboard.reports.sections.crossMode.table.winRate")}</th>
+                <th>{t("dashboard.reports.sections.crossMode.table.netPnl")}</th>
+                <th>{t("dashboard.reports.sections.crossMode.table.grossProfit")}</th>
+                <th>{t("dashboard.reports.sections.crossMode.table.grossLoss")}</th>
               </tr>
             </thead>
             <tbody>
@@ -164,19 +166,19 @@ export default function PerformanceReportsView() {
       </div>
 
       <div className="rounded-box border border-base-300/60 bg-base-100/80 p-4">
-        <h2 className="text-lg font-semibold">Performance by backtest run</h2>
+        <h2 className="text-lg font-semibold">{t("dashboard.reports.sections.byRun.title")}</h2>
         <div className="mt-3 overflow-x-auto">
           <table className="table table-zebra">
             <thead>
               <tr>
-                <th>Run</th>
-                <th>Symbol</th>
-                <th>Timeframe</th>
-                <th>Trades</th>
-                <th>Win Rate</th>
-                <th>Net PnL</th>
-                <th>Max DD</th>
-                <th>Sharpe</th>
+                <th>{t("dashboard.reports.sections.byRun.table.run")}</th>
+                <th>{t("dashboard.reports.sections.byRun.table.symbol")}</th>
+                <th>{t("dashboard.reports.sections.byRun.table.timeframe")}</th>
+                <th>{t("dashboard.reports.sections.byRun.table.trades")}</th>
+                <th>{t("dashboard.reports.sections.byRun.table.winRate")}</th>
+                <th>{t("dashboard.reports.sections.byRun.table.netPnl")}</th>
+                <th>{t("dashboard.reports.sections.byRun.table.maxDd")}</th>
+                <th>{t("dashboard.reports.sections.byRun.table.sharpe")}</th>
               </tr>
             </thead>
             <tbody>

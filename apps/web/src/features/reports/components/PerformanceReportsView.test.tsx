@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import PerformanceReportsView from "./PerformanceReportsView";
+import { I18nProvider } from "@/i18n/I18nProvider";
 
 const listRunsMock = vi.hoisted(() => vi.fn());
 const getReportMock = vi.hoisted(() => vi.fn());
@@ -17,6 +18,20 @@ vi.mock("../services/reports.service", () => ({
 }));
 
 describe("PerformanceReportsView", () => {
+  afterEach(() => {
+    window.localStorage.removeItem("cryptosparrow-locale");
+    window.history.pushState({}, "", "/");
+  });
+
+  const renderWithI18n = () => {
+    window.history.pushState({}, "", "/dashboard/reports");
+    return render(
+      <I18nProvider>
+        <PerformanceReportsView />
+      </I18nProvider>
+    );
+  };
+
   it("renders empty state when there are no completed runs", async () => {
     listRunsMock.mockResolvedValue([]);
     getReportMock.mockResolvedValue(null);
@@ -26,10 +41,10 @@ describe("PerformanceReportsView", () => {
       rows: [],
     });
 
-    render(<PerformanceReportsView />);
+    renderWithI18n();
 
     await waitFor(() => {
-      expect(screen.getByText("Brak raportow performance")).toBeInTheDocument();
+      expect(screen.getByText("No performance reports yet")).toBeInTheDocument();
     });
   });
 
@@ -99,10 +114,10 @@ describe("PerformanceReportsView", () => {
       ],
     });
 
-    render(<PerformanceReportsView />);
+    renderWithI18n();
 
     await waitFor(() => {
-      expect(screen.getByText("Reports performance loaded")).toBeInTheDocument();
+      expect(screen.getByText("Performance reports loaded")).toBeInTheDocument();
       expect(screen.getByText("Cross-mode performance")).toBeInTheDocument();
       expect(screen.getByText("BACKTEST")).toBeInTheDocument();
       expect(screen.getByText("PAPER")).toBeInTheDocument();
@@ -110,6 +125,23 @@ describe("PerformanceReportsView", () => {
       expect(screen.getByText("Performance by backtest run")).toBeInTheDocument();
       expect(screen.getByText("BTCUSDT")).toBeInTheDocument();
       expect(screen.getAllByText("Run Alpha").length).toBeGreaterThan(0);
+    });
+  });
+
+  it("uses dashboard-reports pt namespace copy when locale is pt", async () => {
+    window.localStorage.setItem("cryptosparrow-locale", "pt");
+    listRunsMock.mockResolvedValue([]);
+    getReportMock.mockResolvedValue(null);
+    getCrossModePerformanceMock.mockResolvedValue({
+      generatedAt: "2026-03-24T00:00:00.000Z",
+      modeResolution: "BOT_CURRENT_MODE",
+      rows: [],
+    });
+
+    renderWithI18n();
+
+    await waitFor(() => {
+      expect(screen.getByText("Sem relatorios de performance")).toBeInTheDocument();
     });
   });
 });
