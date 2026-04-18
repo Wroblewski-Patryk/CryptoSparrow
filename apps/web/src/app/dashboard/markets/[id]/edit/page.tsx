@@ -12,6 +12,7 @@ import { runAsyncWithState } from '@/lib/async';
 import { resolveUiErrorMessage } from '@/lib/errorResolver';
 import { LuChartCandlestick, LuPencilLine, LuSave } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
+import { FormMobileActionBar } from '@/ui/forms';
 
 const MARKET_UNIVERSE_ACTIVE_BOT_ERROR = 'market universe is used by active bot and cannot be edited';
 const MARKET_FORM_ID = 'market-universe-form-edit';
@@ -87,7 +88,12 @@ export default function MarketsEditPage() {
           },
         ]}
         actions={
-          <button type='submit' form={MARKET_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS} disabled={submitting}>
+          <button
+            type='submit'
+            form={MARKET_FORM_ID}
+            className={`${PAGE_TITLE_ACTION_SAVE_CLASS} hidden md:inline-flex`}
+            disabled={submitting}
+          >
             <LuSave className='h-4 w-4' />
             {submitting ? copy.savingLabel : copy.submitLabel}
           </button>
@@ -112,6 +118,12 @@ export default function MarketsEditPage() {
           onSubmit={handleUpdate}
         />
       ) : null}
+      <FormMobileActionBar>
+        <button type='submit' form={MARKET_FORM_ID} className='btn btn-primary w-full' disabled={submitting || loading}>
+          <LuSave className='h-4 w-4' />
+          {submitting ? copy.savingLabel : copy.submitLabel}
+        </button>
+      </FormMobileActionBar>
     </section>
   );
 }

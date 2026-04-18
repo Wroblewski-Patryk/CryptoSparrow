@@ -11,6 +11,7 @@ import { runAsyncWithState } from '@/lib/async';
 import { resolveUiErrorMessage } from '@/lib/errorResolver';
 import { LuChartCandlestick, LuPlus, LuSave } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
+import { FormMobileActionBar } from '@/ui/forms';
 
 const MARKET_FORM_ID = 'market-universe-form-create';
 
@@ -49,7 +50,12 @@ export default function MarketsCreatePage() {
           { label: t('dashboard.markets.createLabel'), icon: <LuPlus className='h-3.5 w-3.5' /> },
         ]}
         actions={
-          <button type='submit' form={MARKET_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS} disabled={submitting}>
+          <button
+            type='submit'
+            form={MARKET_FORM_ID}
+            className={`${PAGE_TITLE_ACTION_SAVE_CLASS} hidden md:inline-flex`}
+            disabled={submitting}
+          >
             <LuSave className='h-4 w-4' />
             {submitting ? savingLabel : saveLabel}
           </button>
@@ -57,6 +63,12 @@ export default function MarketsCreatePage() {
       />
 
       <MarketUniverseForm formId={MARKET_FORM_ID} mode='create' submitting={submitting} onSubmit={handleCreate} />
+      <FormMobileActionBar>
+        <button type='submit' form={MARKET_FORM_ID} className='btn btn-primary w-full' disabled={submitting}>
+          <LuSave className='h-4 w-4' />
+          {submitting ? savingLabel : saveLabel}
+        </button>
+      </FormMobileActionBar>
     </section>
   );
 }

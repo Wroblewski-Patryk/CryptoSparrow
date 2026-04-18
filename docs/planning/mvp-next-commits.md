@@ -32,7 +32,7 @@ Operational queue for one-task execution runs.
 - [x] `UXR-E-C (commits UXR-E-09..UXR-E-12): shell polish + regression closure`
 - [x] `UXR-F-A (commits UXR-F-01..UXR-F-04): shared dashboard form-system foundation + guardrails`
 - [x] `UXR-F-B (commits UXR-F-05..UXR-F-08): wrapper/i18n shell unification + wallets/markets/backtests migration`
-- [ ] `UXR-F-C (commits UXR-F-09..UXR-F-12): strategies/bots migration + standardized form UX/mobile action bar`
+- [x] `UXR-F-C (commits UXR-F-09..UXR-F-12): strategies/bots migration + standardized form UX/mobile action bar`
 - [ ] `UXR-F-D (commits UXR-F-13..UXR-F-14): focused regression pack + closure sync`
 - [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
 - [x] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
@@ -48,6 +48,8 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
+- [x] `UXR-F-C progress: completed UXR-F-12 (group closed)`
+  - 2026-04-18: Completed `UXR-F-12` by adding reusable sticky mobile action bar primitive (`FormMobileActionBar`) and applying it to long dashboard forms (`bots`, `wallets`, `markets`) so save action remains reachable on mobile while desktop action layout remains unchanged (`hidden md:inline-flex` top actions + mobile sticky save). Validation: `pnpm --filter web test -- src/ui/forms/FormPrimitives.test.tsx src/app/dashboard/bots/create/page.test.tsx src/app/dashboard/bots/[id]/edit/page.test.tsx src/app/dashboard/wallets/create/page.test.tsx src/app/dashboard/wallets/[id]/edit/page.test.tsx` => `13/13 PASS`; `pnpm --filter web run typecheck` => `PASS`.
 - [x] `UXR-F-C progress: completed UXR-F-11 (group in progress)`
   - 2026-04-18: Completed `UXR-F-11` by standardizing submit-state ergonomics and validation synchronization across scoped forms: `MarketUniverseForm` + `BacktestCreateForm` + `StrategyForm` now share summary/inline/first-invalid behavior, and markets/backtests/strategies create-edit wrappers now expose disabled/loading save actions during submit. Validation: `pnpm --filter web test -- src/features/markets/components/MarketUniverseForm.test.tsx src/features/backtest/components/BacktestCreateForm.test.tsx src/features/strategies/components/StrategyForm.test.tsx src/i18n/translations.test.ts` => `17/17 PASS`; `pnpm --filter web run typecheck` => `PASS`; `pnpm i18n:audit:route-reachable:web` => `PASS`.
 - [x] `UXR-F-C progress: completed UXR-F-10 (group in progress)`

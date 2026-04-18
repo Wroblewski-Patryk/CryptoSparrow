@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { FormAlert } from './FormAlert';
 import { FormField } from './FormField';
 import { FormGrid } from './FormGrid';
+import { FormMobileActionBar } from './FormMobileActionBar';
 import { FormPageShell } from './FormPageShell';
 import { FormSectionCard } from './FormSectionCard';
 import { FormValidationSummary } from './FormValidationSummary';
@@ -75,5 +76,16 @@ describe('Form primitives', () => {
     render(<FormValidationSummary errors={[]} />);
     expect(screen.queryByTestId('form-validation-summary')).not.toBeInTheDocument();
   });
-});
 
+  it('renders mobile sticky action bar with spacer', () => {
+    render(
+      <FormMobileActionBar>
+        <button type='button'>Save</button>
+      </FormMobileActionBar>
+    );
+
+    expect(screen.getByTestId('form-mobile-action-bar')).toBeInTheDocument();
+    expect(screen.getByTestId('form-mobile-action-spacer')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+  });
+});

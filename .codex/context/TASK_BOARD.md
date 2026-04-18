@@ -17,21 +17,14 @@ Last updated: 2026-04-18
 
 ## READY
 
-- [ ] UXR-F-12 Add reusable mobile sticky action bar pattern for long dashboard forms
-  - Status: READY
-  - Group: Dashboard Forms Unification (`UXR-F-C`)
-  - Owner: Frontend Builder
-  - Depends on: UXR-F-11
-  - Priority: P2
-
-## BACKLOG
-
 - [ ] UXR-F-13 Run focused cross-form regression pack for UXR-F-C
-  - Status: BACKLOG
+  - Status: READY
   - Group: Dashboard Forms Unification (`UXR-F-D`)
   - Owner: QA/Test
   - Depends on: UXR-F-12
   - Priority: P1
+
+## BACKLOG
 
 - [ ] UXR-F-14 Publish UXR-F closure sync and evidence notes across canonical docs/context
   - Status: BACKLOG
@@ -64,3 +57,4 @@ Last updated: 2026-04-18
 - [x] UXR-F-09 Migrate strategies create/edit form internals to shared ui/forms primitives
 - [x] UXR-F-10 Migrate bots create/edit form internals to shared ui/forms primitives
 - [x] UXR-F-11 Standardize form submit/disabled states and validation summary+focus behavior
+- [x] UXR-F-12 Add reusable mobile sticky action bar pattern for long dashboard forms

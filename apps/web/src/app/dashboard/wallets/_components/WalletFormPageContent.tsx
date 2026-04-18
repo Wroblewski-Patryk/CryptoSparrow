@@ -3,6 +3,7 @@
 import { LuPencilLine, LuPlus, LuSave, LuWallet } from 'react-icons/lu';
 
 import { useI18n } from '@/i18n/I18nProvider';
+import { FormMobileActionBar } from '@/ui/forms';
 import { PAGE_TITLE_ACTION_SAVE_CLASS, PageTitle } from '@/ui/layout/dashboard/PageTitle';
 import WalletCreateEditForm from '@/features/wallets/components/WalletCreateEditForm';
 import { dashboardRoutes } from '@/ui/layout/dashboard/dashboardRoutes';
@@ -32,7 +33,7 @@ export default function WalletFormPageContent({ mode, editId }: WalletFormPageCo
           },
         ]}
         actions={
-          <button type='submit' form={WALLET_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS}>
+          <button type='submit' form={WALLET_FORM_ID} className={`${PAGE_TITLE_ACTION_SAVE_CLASS} hidden md:inline-flex`}>
             <LuSave className='h-4 w-4' />
             {t('dashboard.wallets.saveLabel')}
           </button>
@@ -40,6 +41,12 @@ export default function WalletFormPageContent({ mode, editId }: WalletFormPageCo
       />
 
       <WalletCreateEditForm formId={WALLET_FORM_ID} editId={isEditMode ? editId ?? null : null} />
+      <FormMobileActionBar>
+        <button type='submit' form={WALLET_FORM_ID} className='btn btn-primary w-full'>
+          <LuSave className='h-4 w-4' />
+          {t('dashboard.wallets.saveLabel')}
+        </button>
+      </FormMobileActionBar>
     </section>
   );
 }

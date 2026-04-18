@@ -4,6 +4,7 @@ import { LuBot, LuPencilLine, LuPlus, LuSave } from 'react-icons/lu';
 
 import BotCreateEditForm from '@/features/bots/components/BotCreateEditForm';
 import { useI18n } from '@/i18n/I18nProvider';
+import { FormMobileActionBar } from '@/ui/forms';
 import { PAGE_TITLE_ACTION_SAVE_CLASS, PageTitle } from '@/ui/layout/dashboard/PageTitle';
 
 type BotFormPageContentProps = {
@@ -30,7 +31,7 @@ export default function BotFormPageContent({ mode, editId }: BotFormPageContentP
           },
         ]}
         actions={
-          <button type='submit' form={formId} className={PAGE_TITLE_ACTION_SAVE_CLASS}>
+          <button type='submit' form={formId} className={`${PAGE_TITLE_ACTION_SAVE_CLASS} hidden md:inline-flex`}>
             <LuSave className='h-4 w-4' />
             {t('dashboard.bots.page.saveAction')}
           </button>
@@ -38,7 +39,12 @@ export default function BotFormPageContent({ mode, editId }: BotFormPageContentP
       />
 
       <BotCreateEditForm formId={formId} editId={isEditMode ? editId ?? null : null} />
+      <FormMobileActionBar>
+        <button type='submit' form={formId} className='btn btn-primary w-full'>
+          <LuSave className='h-4 w-4' />
+          {t('dashboard.bots.page.saveAction')}
+        </button>
+      </FormMobileActionBar>
     </section>
   );
 }
-
