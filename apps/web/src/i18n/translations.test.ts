@@ -85,4 +85,57 @@ describe("translations", () => {
       expect(ptValue, `PT translation should not be EN placeholder for key: ${key}`).not.toEqual(enValue);
     }
   });
+
+  it("keeps non-empty localized values for L10NQ-D expansion keys", () => {
+    const expandedKeys = [
+      "public.offline.title",
+      "public.offline.description",
+      "public.a11y.skipToMainContent",
+      "public.a11y.closeModal",
+      "public.brand.name",
+      "public.shell.dashboard",
+      "public.footer.rights",
+      "dashboard.a11y.navigation",
+      "dashboard.riskNotice.title",
+      "dashboard.riskNotice.openAuditLogs",
+      "dashboard.profileBasic.saveChanges",
+      "dashboard.profileBasic.timeZoneHint",
+      "dashboard.backtests.legacy.createTitle",
+      "dashboard.backtests.legacy.summaryTab",
+      "dashboard.backtests.legacy.noTradesTitle",
+      "dashboard.backtests.legacy.modalTitle",
+    ];
+
+    for (const key of expandedKeys) {
+      const enValue = readNested(translations.en as unknown as Record<string, unknown>, key);
+      const plValue = readNested(translations.pl as unknown as Record<string, unknown>, key);
+      const ptValue = readNested(translations.pt as unknown as Record<string, unknown>, key);
+
+      expect(enValue, `Missing EN key: ${key}`).toEqual(expect.any(String));
+      expect(plValue, `Missing PL key: ${key}`).toEqual(expect.any(String));
+      expect(ptValue, `Missing PT key: ${key}`).toEqual(expect.any(String));
+      expect(String(enValue).trim().length, `Empty EN translation: ${key}`).toBeGreaterThan(0);
+      expect(String(plValue).trim().length, `Empty PL translation: ${key}`).toBeGreaterThan(0);
+      expect(String(ptValue).trim().length, `Empty PT translation: ${key}`).toBeGreaterThan(0);
+    }
+  });
+
+  it("uses pt-PT localized copy for selected L10NQ-D expansion keys", () => {
+    const localizedPtKeys = [
+      "public.offline.title",
+      "dashboard.profileBasic.saveChanges",
+      "dashboard.backtests.legacy.createTitle",
+      "dashboard.backtests.legacy.noTradesTitle",
+      "dashboard.backtests.legacy.modalClose",
+    ];
+
+    for (const key of localizedPtKeys) {
+      const enValue = readNested(translations.en as unknown as Record<string, unknown>, key);
+      const ptValue = readNested(translations.pt as unknown as Record<string, unknown>, key);
+
+      expect(enValue, `Missing EN key: ${key}`).toEqual(expect.any(String));
+      expect(ptValue, `Missing PT key: ${key}`).toEqual(expect.any(String));
+      expect(ptValue, `PT translation should not be EN placeholder for key: ${key}`).not.toEqual(enValue);
+    }
+  });
 });
