@@ -2,6 +2,11 @@ export const dashboardBotsEn = {
   "page": {
     "title": "Bots Operations Center",
     "breadcrumb": "Bots Operations",
+    "breadcrumbCreate": "Create",
+    "breadcrumbUpdate": "Update",
+    "breadcrumbAssistant": "Assistant",
+    "breadcrumbPreview": "Preview",
+    "saveAction": "Save",
     "alertPrefix": "Module",
     "alertMiddle": "is used for runtime operations. Global app overview and account context are available in",
     "alertSuffix": "."
@@ -20,6 +25,9 @@ export const dashboardBotsEn = {
     "nameLabel": "Name",
     "namePlaceholder": "Momentum Runner",
     "nameAria": "Bot name",
+    "walletLabel": "Wallet",
+    "walletAria": "Bot wallet",
+    "noWalletsOption": "No wallets",
     "modeLabel": "Mode",
     "modeAria": "Bot mode",
     "paperBalanceLabel": "Paper start balance",
@@ -117,6 +125,7 @@ export const dashboardBotsEn = {
   },
   "toasts": {
     "marketGroupsLoadFailed": "Failed to load market groups",
+    "walletsLoadFailed": "Failed to load wallets",
     "created": "Bot created",
     "duplicateActiveTitle": "An active bot for this wallet + strategy + market group already exists",
     "duplicateActiveDescription": "Use a different wallet, strategy or market group tuple.",

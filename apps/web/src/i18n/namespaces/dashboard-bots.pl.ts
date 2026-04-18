@@ -2,6 +2,11 @@ export const dashboardBotsPl = {
   "page": {
     "title": "Centrum operacyjne botow",
     "breadcrumb": "Operacje botow",
+    "breadcrumbCreate": "Tworzenie",
+    "breadcrumbUpdate": "Aktualizacja",
+    "breadcrumbAssistant": "Asystent",
+    "breadcrumbPreview": "Podglad",
+    "saveAction": "Zapisz",
     "alertPrefix": "Modul",
     "alertMiddle": "sluzy do operacji runtime. Globalny podglad aplikacji i przekroj konta masz w",
     "alertSuffix": "."
@@ -20,6 +25,9 @@ export const dashboardBotsPl = {
     "nameLabel": "Nazwa",
     "namePlaceholder": "Momentum Runner",
     "nameAria": "Nazwa bota",
+    "walletLabel": "Portfel",
+    "walletAria": "Portfel bota",
+    "noWalletsOption": "Brak portfeli",
     "modeLabel": "Tryb",
     "modeAria": "Tryb bota",
     "paperBalanceLabel": "Paper start balance",
@@ -117,6 +125,7 @@ export const dashboardBotsPl = {
   },
   "toasts": {
     "marketGroupsLoadFailed": "Nie udalo sie pobrac grup rynkow",
+    "walletsLoadFailed": "Nie udalo sie pobrac portfeli",
     "created": "Bot utworzony",
     "duplicateActiveTitle": "Aktywny bot dla tej krotki portfel + strategia + grupa rynkow juz istnieje",
     "duplicateActiveDescription": "Wybierz inna krotke: portfel, strategia lub grupa rynkow.",

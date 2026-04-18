@@ -1,6 +1,8 @@
 import { PageTitle } from "@/ui/layout/dashboard/PageTitle";
 import BotsManagement from "@/features/bots/components/BotsManagement";
 import { LuBot, LuList } from "react-icons/lu";
+import { dashboardShellEn } from "@/i18n/namespaces/dashboard-shell.en";
+import { dashboardBotsEn } from "@/i18n/namespaces/dashboard-bots.en";
 
 type BotAssistantPageProps = {
   params: Promise<{
@@ -14,12 +16,12 @@ export default async function BotAssistantPage({ params }: BotAssistantPageProps
   return (
     <section className="w-full space-y-4">
       <PageTitle
-        title="Bots"
+        title={dashboardShellEn.nav.bots}
         icon={<LuBot className="h-5 w-5" />}
         breadcrumb={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Bots", href: "/dashboard/bots" },
-          { label: "Assistant", icon: <LuList className="h-3.5 w-3.5" /> },
+          { label: dashboardShellEn.common.dashboard, href: "/dashboard" },
+          { label: dashboardShellEn.nav.bots, href: "/dashboard/bots" },
+          { label: dashboardBotsEn.page.breadcrumbAssistant, icon: <LuList className="h-3.5 w-3.5" /> },
         ]}
       />
 

@@ -456,15 +456,17 @@ export default function BotsManagement({
                 />
               </label>
               <label className={FIELD_WRAPPER_CLASS}>
-                <span className="label-text">Wallet</span>
+                <span className="label-text">{t("dashboard.bots.create.walletLabel")}</span>
                 <select
                   className="select select-bordered"
-                  aria-label="wallet"
+                  aria-label={t("dashboard.bots.create.walletAria")}
                   value={walletId}
                   onChange={(event) => setWalletId(event.target.value)}
                   disabled={wallets.length === 0}
                 >
-                  {wallets.length === 0 ? <option value="">No wallets</option> : null}
+                  {wallets.length === 0 ? (
+                    <option value="">{t("dashboard.bots.create.noWalletsOption")}</option>
+                  ) : null}
                   {wallets.map((wallet) => (
                     <option key={wallet.id} value={wallet.id}>
                       {wallet.name} ({wallet.mode} · {wallet.exchange}/{wallet.marketType}/{wallet.baseCurrency})
@@ -504,7 +506,7 @@ export default function BotsManagement({
                   {marketGroups.length === 0 ? <option value="">{t("dashboard.bots.create.noMarketGroups")}</option> : null}
                   {marketGroups.map((group) => (
                     <option key={group.id} value={group.id}>
-                      {group.name} ({group.exchange ?? "BINANCE"} Â· {group.marketType}/{group.baseCurrency})
+                      {group.name} ({group.exchange ?? "BINANCE"} · {group.marketType}/{group.baseCurrency})
                     </option>
                   ))}
                 </select>
@@ -514,7 +516,7 @@ export default function BotsManagement({
                   <p className="uppercase tracking-wide opacity-60">{t("dashboard.bots.create.marketSummaryLabel")}</p>
                   <p className="font-medium">
                     {selectedMarketGroup
-                      ? `${selectedMarketGroup.exchange ?? "BINANCE"} Â· ${selectedMarketGroup.marketType}/${selectedMarketGroup.baseCurrency}`
+                      ? `${selectedMarketGroup.exchange ?? "BINANCE"} · ${selectedMarketGroup.marketType}/${selectedMarketGroup.baseCurrency}`
                       : "-"}
                   </p>
                 </div>

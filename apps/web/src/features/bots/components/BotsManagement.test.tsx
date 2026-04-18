@@ -80,10 +80,12 @@ afterEach(() => {
   listRuntimePositionsMock.mockReset();
   listRuntimeTradesMock.mockReset();
   listWalletsMock.mockClear();
+  window.history.pushState({}, "", "/");
 });
 
 const renderWithI18n = () => {
   window.localStorage.setItem("cryptosparrow-locale", "pl");
+  window.history.pushState({}, "", "/dashboard/bots");
   return render(
     <I18nProvider>
       <BotsManagement />
@@ -121,12 +123,12 @@ describe("BotsManagement", () => {
 
     renderWithI18n();
     await waitFor(() => {
-      expect(screen.getByLabelText("wallet")).toHaveValue("w-paper");
+    expect(screen.getByLabelText(/wallet|bot wallet|portfel/i)).toHaveValue("w-paper");
       expect(screen.getByText("PAPER")).toBeInTheDocument();
       expect(screen.getByText(/12.*345/)).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByLabelText("wallet"), {
+    fireEvent.change(screen.getByLabelText(/wallet|bot wallet|portfel/i), {
       target: { value: "w-live" },
     });
     expect(screen.getByText("LIVE")).toBeInTheDocument();
@@ -211,7 +213,7 @@ describe("BotsManagement", () => {
     fireEvent.change(screen.getByPlaceholderText("Momentum Runner"), {
       target: { value: "Live Runner" },
     });
-    expect(screen.getByLabelText("wallet")).toHaveValue("w-live");
+    expect(screen.getByLabelText(/wallet|bot wallet|portfel/i)).toHaveValue("w-live");
     fireEvent.click(screen.getByRole("button", { name: "Dodaj bota" }));
 
     await waitFor(() => {
@@ -674,7 +676,7 @@ describe("BotsManagement", () => {
       expect(screen.getByDisplayValue("Monitor Bot")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("tab", { name: /Operacje runtime|Monitoring/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Operacje runtime|Monitoring|Runtime operations/i }));
 
     await waitFor(() => {
       expect(listRuntimeSessionsMock).toHaveBeenCalledWith("b-monitor", { status: undefined, limit: 50 });
@@ -863,7 +865,7 @@ describe("BotsManagement", () => {
       expect(screen.getByDisplayValue("Stale Bot")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("tab", { name: /Operacje runtime|Monitoring/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Operacje runtime|Monitoring|Runtime operations/i }));
 
     await waitFor(() => {
       expect(listRuntimeSessionsMock).toHaveBeenCalledTimes(1);
@@ -1034,7 +1036,7 @@ describe("BotsManagement", () => {
       expect(screen.getByDisplayValue("Refresh Bot")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("tab", { name: /Operacje runtime|Monitoring/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Operacje runtime|Monitoring|Runtime operations/i }));
 
     await waitFor(() => {
       expect(listRuntimeSessionsMock).toHaveBeenCalledTimes(1);
@@ -1256,7 +1258,7 @@ describe("BotsManagement", () => {
       expect(screen.getByDisplayValue("SSE Bot")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("tab", { name: /Operacje runtime|Monitoring/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Operacje runtime|Monitoring|Runtime operations/i }));
 
     await waitFor(() => {
       expect(listRuntimeSessionsMock).toHaveBeenCalled();

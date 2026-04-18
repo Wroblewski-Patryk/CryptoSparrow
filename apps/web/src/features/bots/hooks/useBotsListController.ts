@@ -123,14 +123,14 @@ export const useBotsListController = ({ confirmLiveRisk, t }: UseBotsListControl
       } catch (err: unknown) {
         if (!mounted) return;
         setWallets([]);
-        toast.error("Wallets load failed", { description: getAxiosMessage(err) });
+        toast.error(t("dashboard.bots.toasts.walletsLoadFailed"), { description: getAxiosMessage(err) });
       }
     };
     void loadWalletOptions();
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [t]);
 
   const canCreate = useMemo(
     () =>
