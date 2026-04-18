@@ -1,9 +1,9 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LuTrash2, LuPencilLine } from "react-icons/lu";
+
 import { toast } from "sonner";
-import { deleteStrategy, listStrategies } from "../api/strategies.api";
+import { createStrategy, deleteStrategy, listStrategies } from "../api/strategies.api";
 import { StrategyDto } from "../types/StrategyForm.type";
 import { EmptyState, ErrorState } from "@/ui/components/ViewState";
 import { SkeletonTableRows } from "@/ui/components/loading";
@@ -11,8 +11,10 @@ import { useLocaleFormatting } from "@/i18n/useLocaleFormatting";
 import { useI18n } from "@/i18n/I18nProvider";
 import DataTable, { DataTableColumn } from "@/ui/components/DataTable";
 import ConfirmModal from "@/ui/components/ConfirmModal";
-import { TableIconButtonAction } from "@/ui/components/TableUi";
+import { TablePresetButtonAction } from "@/ui/components/TableUi";
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
+import { dtoToForm } from "../utils/StrategyForm.map";
+import { buildNextCloneName } from "@/lib/cloneNaming";
 
 export default function StrategiesList() {
   const { locale } = useI18n();
@@ -22,6 +24,7 @@ export default function StrategiesList() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyDto | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [cloningId, setCloningId] = useState<string | null>(null);
   const router = useRouter();
 
   const copy = useMemo(
@@ -31,6 +34,9 @@ export default function StrategiesList() {
             loadFailedTitle: "Nie udalo sie pobrac listy strategii",
             strategyDeleted: "Strategia usunieta",
             deleteFailed: "Blad usuwania strategii",
+            clone: "Klonuj",
+            cloneFailed: "Blad klonowania strategii",
+            strategyCloned: "Strategia sklonowana",
             colName: "Nazwa",
             colLeverage: "Dzwignia",
             colInterval: "Interwal",
@@ -54,6 +60,9 @@ export default function StrategiesList() {
             loadFailedTitle: "Could not load strategies list",
             strategyDeleted: "Strategy deleted",
             deleteFailed: "Failed to delete strategy",
+            clone: "Clone",
+            cloneFailed: "Failed to clone strategy",
+            strategyCloned: "Strategy cloned",
             colName: "Name",
             colLeverage: "Leverage",
             colInterval: "Interval",
@@ -113,6 +122,29 @@ export default function StrategiesList() {
     }
   };
 
+  const handleClone = useCallback(
+    async (strategy: StrategyDto) => {
+      setCloningId(strategy.id);
+      try {
+        const cloneName = buildNextCloneName(
+          strategy.name,
+          strategies.map((item) => item.name)
+        );
+        const cloned = await createStrategy({
+          ...dtoToForm(strategy),
+          name: cloneName,
+        });
+        setStrategies((prev) => [...prev, cloned]);
+        toast.success(copy.strategyCloned);
+      } catch (err: unknown) {
+        toast.error(getAxiosMessage(err) ?? copy.cloneFailed);
+      } finally {
+        setCloningId(null);
+      }
+    },
+    [copy.cloneFailed, copy.strategyCloned, strategies]
+  );
+
   const columns = useMemo<DataTableColumn<StrategyDto>[]>(
     () => [
       {
@@ -148,25 +180,30 @@ export default function StrategiesList() {
       {
         key: "actions",
         label: copy.colActions,
-        className: "w-28 text-center",
+        className: "w-40 text-center",
         render: (row) => (
           <div className="flex items-center justify-center gap-2">
-            <TableIconButtonAction
+            <TablePresetButtonAction
+              preset="edit"
               label={copy.edit}
-              icon={<LuPencilLine className="h-3.5 w-3.5" />}
               onClick={() => router.push(`/dashboard/strategies/${row.id}/edit`)}
             />
-            <TableIconButtonAction
+            <TablePresetButtonAction
+              preset="clone"
+              label={copy.clone}
+              onClick={() => void handleClone(row)}
+              disabled={cloningId === row.id}
+            />
+            <TablePresetButtonAction
+              preset="delete"
               label={copy.remove}
-              icon={<LuTrash2 className="h-3.5 w-3.5" />}
               onClick={() => setSelectedStrategy(row)}
-              tone="danger"
             />
           </div>
         ),
       },
     ],
-    [copy, formatDate, router]
+    [cloningId, copy, formatDate, handleClone, router]
   );
 
   return (
