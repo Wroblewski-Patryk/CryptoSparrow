@@ -13,50 +13,26 @@ const integerInputProps = numericInputProps(strategyNumericContracts.integer);
 const decimalInputProps = numericInputProps(strategyNumericContracts.decimal2);
 
 export function Additional({ data, setData }: AdditionalProps) {
-  const { locale } = useI18n();
-  const copy = useMemo(
-    () =>
-      locale === "pl"
-        ? {
-            positions: "Pozycje",
-            orders: "Zlecenia",
-            maxCount: "Maksymalna ilosc",
-            lifetime: "Dlugosc zycia",
-            unitMin: "min",
-            unitHour: "godz.",
-            unitDay: "dni",
-            unitWeek: "tygodnie",
-            dca: "DCA",
-            basic: "Podstawowe",
-            advanced: "Zaawansowane",
-            times: "Ile razy",
-            triggerLevel: "Poziom triggera (%)",
-            multiplier: "Mnoznik",
-            levelPercent: "Poziom (%)",
-            removeLevel: "Usun poziom",
-            addLevel: "+ Dodaj poziom",
-          }
-        : {
-            positions: "Positions",
-            orders: "Orders",
-            maxCount: "Maximum count",
-            lifetime: "Lifetime",
-            unitMin: "min",
-            unitHour: "h",
-            unitDay: "days",
-            unitWeek: "weeks",
-            dca: "DCA",
-            basic: "Basic",
-            advanced: "Advanced",
-            times: "How many times",
-            triggerLevel: "Trigger level (%)",
-            multiplier: "Multiplier",
-            levelPercent: "Level (%)",
-            removeLevel: "Remove level",
-            addLevel: "+ Add level",
-          },
-    [locale],
-  );
+  const { t } = useI18n();
+  const copy = useMemo(() => ({
+    positions: t("dashboard.strategies.form.additional.positions"),
+    orders: t("dashboard.strategies.form.additional.orders"),
+    maxCount: t("dashboard.strategies.form.additional.maxCount"),
+    lifetime: t("dashboard.strategies.form.additional.lifetime"),
+    unitMin: t("dashboard.strategies.form.additional.unitMin"),
+    unitHour: t("dashboard.strategies.form.additional.unitHour"),
+    unitDay: t("dashboard.strategies.form.additional.unitDay"),
+    unitWeek: t("dashboard.strategies.form.additional.unitWeek"),
+    dca: t("dashboard.strategies.form.additional.dca"),
+    basic: t("dashboard.strategies.form.additional.basic"),
+    advanced: t("dashboard.strategies.form.additional.advanced"),
+    times: t("dashboard.strategies.form.additional.times"),
+    triggerLevel: t("dashboard.strategies.form.additional.triggerLevel"),
+    multiplier: t("dashboard.strategies.form.additional.multiplier"),
+    levelPercent: t("dashboard.strategies.form.additional.levelPercent"),
+    removeLevel: t("dashboard.strategies.form.additional.removeLevel"),
+    addLevel: t("dashboard.strategies.form.additional.addLevel"),
+  }), [t]);
 
   const patch = (changes: Partial<typeof data>) => setData((prev) => ({ ...prev, ...changes }));
 

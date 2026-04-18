@@ -4,12 +4,69 @@ import Indicators from "./Indicators";
 import type { IndicatorMeta, UserIndicator } from "../../types/StrategyForm.type";
 
 let mockLocale: "en" | "pl" | "pt" = "en";
+const indicatorCopyByLocale = {
+  en: {
+    "dashboard.strategies.form.indicators.collapse": "Collapse",
+    "dashboard.strategies.form.indicators.expand": "Expand",
+    "dashboard.strategies.form.indicators.moveUp": "Move up",
+    "dashboard.strategies.form.indicators.moveDown": "Move down",
+    "dashboard.strategies.form.indicators.removeIndicator": "Remove indicator",
+    "dashboard.strategies.form.indicators.group": "Group",
+    "dashboard.strategies.form.indicators.indicator": "Indicator",
+    "dashboard.strategies.form.indicators.indicatorParams": "Indicator parameters",
+    "dashboard.strategies.form.indicators.condition": "Condition",
+    "dashboard.strategies.form.indicators.value": "Value",
+    "dashboard.strategies.form.indicators.valueFrom": "Value from",
+    "dashboard.strategies.form.indicators.valueTo": "Value to",
+    "dashboard.strategies.form.indicators.weight": "Weight",
+    "dashboard.strategies.form.indicators.addIndicator": "+ Add indicator",
+    "dashboard.strategies.form.indicators.sideLong": "Long",
+    "dashboard.strategies.form.indicators.sideShort": "Short",
+  },
+  pl: {
+    "dashboard.strategies.form.indicators.collapse": "Zwin",
+    "dashboard.strategies.form.indicators.expand": "Rozwin",
+    "dashboard.strategies.form.indicators.moveUp": "Wyzej",
+    "dashboard.strategies.form.indicators.moveDown": "Nizej",
+    "dashboard.strategies.form.indicators.removeIndicator": "Usun wskaznik",
+    "dashboard.strategies.form.indicators.group": "Grupa",
+    "dashboard.strategies.form.indicators.indicator": "Wskaznik",
+    "dashboard.strategies.form.indicators.indicatorParams": "Parametry wskaznika",
+    "dashboard.strategies.form.indicators.condition": "Warunek",
+    "dashboard.strategies.form.indicators.value": "Wartosc",
+    "dashboard.strategies.form.indicators.valueFrom": "Wartosc od",
+    "dashboard.strategies.form.indicators.valueTo": "Wartosc do",
+    "dashboard.strategies.form.indicators.weight": "Waga",
+    "dashboard.strategies.form.indicators.addIndicator": "+ Dodaj wskaznik",
+    "dashboard.strategies.form.indicators.sideLong": "Long",
+    "dashboard.strategies.form.indicators.sideShort": "Short",
+  },
+  pt: {
+    "dashboard.strategies.form.indicators.collapse": "Recolher",
+    "dashboard.strategies.form.indicators.expand": "Expandir",
+    "dashboard.strategies.form.indicators.moveUp": "Subir",
+    "dashboard.strategies.form.indicators.moveDown": "Descer",
+    "dashboard.strategies.form.indicators.removeIndicator": "Remover indicador",
+    "dashboard.strategies.form.indicators.group": "Grupo",
+    "dashboard.strategies.form.indicators.indicator": "Indicador",
+    "dashboard.strategies.form.indicators.indicatorParams": "Parametros do indicador",
+    "dashboard.strategies.form.indicators.condition": "Condicao",
+    "dashboard.strategies.form.indicators.value": "Valor",
+    "dashboard.strategies.form.indicators.valueFrom": "Valor de",
+    "dashboard.strategies.form.indicators.valueTo": "Valor ate",
+    "dashboard.strategies.form.indicators.weight": "Peso",
+    "dashboard.strategies.form.indicators.addIndicator": "+ Adicionar indicador",
+    "dashboard.strategies.form.indicators.sideLong": "Long",
+    "dashboard.strategies.form.indicators.sideShort": "Short",
+  },
+} as const;
 
 vi.mock("@/i18n/I18nProvider", () => ({
   useI18n: () => ({
     locale: mockLocale,
     setLocale: vi.fn(),
-    t: vi.fn(),
+    t: (key: string) =>
+      indicatorCopyByLocale[mockLocale][key as keyof (typeof indicatorCopyByLocale)[typeof mockLocale]] ?? key,
   }),
 }));
 

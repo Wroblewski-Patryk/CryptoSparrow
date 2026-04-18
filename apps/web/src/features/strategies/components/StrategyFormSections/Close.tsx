@@ -11,42 +11,23 @@ import {
 const decimalInputProps = numericInputProps(strategyNumericContracts.decimal2);
 
 export function Close({ data, setData }: CloseProps) {
-  const { locale } = useI18n();
+  const { t } = useI18n();
   const close = data;
 
-  const copy = useMemo(
-    () =>
-      locale === "pl"
-        ? {
-            modeBasic: "Podstawowe (TP/SL)",
-            modeAdvanced: "Zaawansowane (TTP/TSL)",
-            basicTitle: "Podstawowe ustawienia zamkniecia",
-            advancedTitle: "Zaawansowane ustawienia zamkniecia",
-            takeProfit: "Take Profit (%)",
-            stopLoss: "Stop Loss (%)",
-            ttp: "Trailing Take Profit",
-            tsl: "Trailing Stop Loss",
-            percent: "Procent (%)",
-            arm: "Ramie",
-            removeThreshold: "Usun prog",
-            addThreshold: "+ Dodaj prog",
-          }
-        : {
-            modeBasic: "Basic (TP/SL)",
-            modeAdvanced: "Advanced (TTP/TSL)",
-            basicTitle: "Basic close settings",
-            advancedTitle: "Advanced close settings",
-            takeProfit: "Take Profit (%)",
-            stopLoss: "Stop Loss (%)",
-            ttp: "Trailing Take Profit",
-            tsl: "Trailing Stop Loss",
-            percent: "Percent (%)",
-            arm: "Arm",
-            removeThreshold: "Remove threshold",
-            addThreshold: "+ Add threshold",
-          },
-    [locale],
-  );
+  const copy = useMemo(() => ({
+    modeBasic: t("dashboard.strategies.form.close.modeBasic"),
+    modeAdvanced: t("dashboard.strategies.form.close.modeAdvanced"),
+    basicTitle: t("dashboard.strategies.form.close.basicTitle"),
+    advancedTitle: t("dashboard.strategies.form.close.advancedTitle"),
+    takeProfit: t("dashboard.strategies.form.close.takeProfit"),
+    stopLoss: t("dashboard.strategies.form.close.stopLoss"),
+    ttp: t("dashboard.strategies.form.close.ttp"),
+    tsl: t("dashboard.strategies.form.close.tsl"),
+    percent: t("dashboard.strategies.form.close.percent"),
+    arm: t("dashboard.strategies.form.close.arm"),
+    removeThreshold: t("dashboard.strategies.form.close.removeThreshold"),
+    addThreshold: t("dashboard.strategies.form.close.addThreshold"),
+  }), [t]);
 
   const setClose = (changes: Partial<CloseConditions>) =>
     setData((prev) => ({ ...prev, ...changes }));

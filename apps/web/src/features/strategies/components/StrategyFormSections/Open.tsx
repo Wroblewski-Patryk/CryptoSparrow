@@ -2,33 +2,23 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useI18n } from "@/i18n/I18nProvider";
 import { handleError } from "@/lib/handleError";
+import { FormSectionCard, RadioGroupField } from "@/ui/forms";
 import { listStrategyIndicators } from "../../api/strategies.api";
 import { IndicatorMeta, OpenProps, UserIndicator } from "../../types/StrategyForm.type";
 import Indicators from "./Indicators";
 
 export function Open({ data, setData }: OpenProps) {
-  const { locale } = useI18n();
+  const { t } = useI18n();
   const [availableIndicators, setAvailableIndicators] = useState<IndicatorMeta[]>([]);
 
-  const copy = useMemo(
-    () =>
-      locale === "pl"
-        ? {
-            loadIndicatorsFailed: "Nie udalo sie pobrac listy wskaznikow",
-            direction: "Kierunek",
-            directionLong: "Long",
-            directionBoth: "Oba",
-            directionShort: "Short",
-          }
-        : {
-            loadIndicatorsFailed: "Could not load indicators list",
-            direction: "Direction",
-            directionLong: "Long",
-            directionBoth: "Both",
-            directionShort: "Short",
-          },
-    [locale],
-  );
+  const copy = useMemo(() => ({
+    title: t("dashboard.strategies.form.open.title"),
+    loadIndicatorsFailed: t("dashboard.strategies.form.open.loadIndicatorsFailed"),
+    direction: t("dashboard.strategies.form.open.direction"),
+    directionLong: t("dashboard.strategies.form.open.directionLong"),
+    directionBoth: t("dashboard.strategies.form.open.directionBoth"),
+    directionShort: t("dashboard.strategies.form.open.directionShort"),
+  }), [t]);
 
   useEffect(() => {
     (async () => {
@@ -60,62 +50,38 @@ export function Open({ data, setData }: OpenProps) {
   const layout = spans[data.direction];
 
   return (
-    <div className="w-full">
-      <div className="form-control mb-6">
-        <label className="label mb-2">
-          <span className="label-text">{copy.direction}</span>
-        </label>
-        <div className="flex flex-row flex-wrap gap-4">
-          <label className="flex cursor-pointer items-center gap-2">
-            <input
-              type="radio"
-              name="direction"
-              className="radio radio-success"
-              checked={data.direction === "long"}
-              onChange={() => setDirection("long")}
+    <FormSectionCard title={copy.title}>
+      <div className="w-full">
+        <RadioGroupField
+          id="strategy-open-direction"
+          label={copy.direction}
+          value={data.direction}
+          options={[
+            { value: "long", label: copy.directionLong },
+            { value: "both", label: copy.directionBoth },
+            { value: "short", label: copy.directionShort },
+          ]}
+          onChange={(value) => setDirection(value as "both" | "long" | "short")}
+        />
+        <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
+          <div className={`${layout.left} transition-all duration-500 ease-in-out`}>
+            <Indicators
+              side="LONG"
+              indicators={availableIndicators}
+              value={data.indicatorsLong}
+              setValue={setIndicatorsLong}
             />
-            <span className="label-text">{copy.directionLong}</span>
-          </label>
-          <label className="flex cursor-pointer items-center gap-2">
-            <input
-              type="radio"
-              name="direction"
-              className="radio radio-primary"
-              checked={data.direction === "both"}
-              onChange={() => setDirection("both")}
+          </div>
+          <div className={`${layout.right} transition-all duration-500 ease-in-out`}>
+            <Indicators
+              side="SHORT"
+              indicators={availableIndicators}
+              value={data.indicatorsShort}
+              setValue={setIndicatorsShort}
             />
-            <span className="label-text">{copy.directionBoth}</span>
-          </label>
-          <label className="flex cursor-pointer items-center gap-2">
-            <input
-              type="radio"
-              name="direction"
-              className="radio radio-error"
-              checked={data.direction === "short"}
-              onChange={() => setDirection("short")}
-            />
-            <span className="label-text">{copy.directionShort}</span>
-          </label>
+          </div>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
-        <div className={`${layout.left} transition-all duration-500 ease-in-out`}>
-          <Indicators
-            side="LONG"
-            indicators={availableIndicators}
-            value={data.indicatorsLong}
-            setValue={setIndicatorsLong}
-          />
-        </div>
-        <div className={`${layout.right} transition-all duration-500 ease-in-out`}>
-          <Indicators
-            side="SHORT"
-            indicators={availableIndicators}
-            value={data.indicatorsShort}
-            setValue={setIndicatorsShort}
-          />
-        </div>
-      </div>
-    </div>
+    </FormSectionCard>
   );
 }

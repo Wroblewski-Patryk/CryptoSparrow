@@ -96,67 +96,25 @@ const normalizeConditionValue = (
 };
 
 export default function Indicators({ side, indicators, value, setValue }: IndicatorsProps) {
-  const { locale } = useI18n();
-  const copy = useMemo(
-    () =>
-      ({
-        en: {
-          collapse: "Collapse",
-          expand: "Expand",
-          moveUp: "Move up",
-          moveDown: "Move down",
-          removeIndicator: "Remove indicator",
-          group: "Group",
-          indicator: "Indicator",
-          indicatorParams: "Indicator parameters",
-          condition: "Condition",
-          value: "Value",
-          valueFrom: "Value from",
-          valueTo: "Value to",
-          weight: "Weight",
-          addIndicator: "+ Add indicator",
-          sideLong: "Long",
-          sideShort: "Short",
-        },
-        pl: {
-          collapse: "Zwin",
-          expand: "Rozwin",
-          moveUp: "Wyzej",
-          moveDown: "Nizej",
-          removeIndicator: "Usun wskaznik",
-          group: "Grupa",
-          indicator: "Wskaznik",
-          indicatorParams: "Parametry wskaznika",
-          condition: "Warunek",
-          value: "Wartosc",
-          valueFrom: "Wartosc od",
-          valueTo: "Wartosc do",
-          weight: "Waga",
-          addIndicator: "+ Dodaj wskaznik",
-          sideLong: "Long",
-          sideShort: "Short",
-        },
-        pt: {
-          collapse: "Recolher",
-          expand: "Expandir",
-          moveUp: "Subir",
-          moveDown: "Descer",
-          removeIndicator: "Remover indicador",
-          group: "Grupo",
-          indicator: "Indicador",
-          indicatorParams: "Parametros do indicador",
-          condition: "Condicao",
-          value: "Valor",
-          valueFrom: "Valor de",
-          valueTo: "Valor ate",
-          weight: "Peso",
-          addIndicator: "+ Adicionar indicador",
-          sideLong: "Long",
-          sideShort: "Short",
-        },
-      } as const)[locale],
-    [locale],
-  );
+  const { locale, t } = useI18n();
+  const copy = useMemo(() => ({
+    collapse: t("dashboard.strategies.form.indicators.collapse"),
+    expand: t("dashboard.strategies.form.indicators.expand"),
+    moveUp: t("dashboard.strategies.form.indicators.moveUp"),
+    moveDown: t("dashboard.strategies.form.indicators.moveDown"),
+    removeIndicator: t("dashboard.strategies.form.indicators.removeIndicator"),
+    group: t("dashboard.strategies.form.indicators.group"),
+    indicator: t("dashboard.strategies.form.indicators.indicator"),
+    indicatorParams: t("dashboard.strategies.form.indicators.indicatorParams"),
+    condition: t("dashboard.strategies.form.indicators.condition"),
+    value: t("dashboard.strategies.form.indicators.value"),
+    valueFrom: t("dashboard.strategies.form.indicators.valueFrom"),
+    valueTo: t("dashboard.strategies.form.indicators.valueTo"),
+    weight: t("dashboard.strategies.form.indicators.weight"),
+    addIndicator: t("dashboard.strategies.form.indicators.addIndicator"),
+    sideLong: t("dashboard.strategies.form.indicators.sideLong"),
+    sideShort: t("dashboard.strategies.form.indicators.sideShort"),
+  }), [t]);
   const normalizedIndicators = indicators.map((indicator) => ({
     ...indicator,
     group: resolveIndicatorGroupKey({
