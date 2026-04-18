@@ -38,6 +38,12 @@
   "footer": {
     "rights": "Todos os direitos reservados."
   },
+  "riskNotice": {
+    "title": "Aviso de risco de trading: decisoes automaticas podem causar perdas reais de capital.",
+    "description": "Antes de ativar LIVE, confirme que limites de risco, emergency stop e chaves API estao configurados corretamente.",
+    "openAuditLogs": "Abrir logs de auditoria",
+    "securitySettings": "Definicoes de seguranca"
+  },
   "logs": {
     "title": "Registo de auditoria",
     "breadcrumbLogs": "Logs",

@@ -38,6 +38,12 @@ export const dashboardShellEn = {
   "footer": {
     "rights": "All rights reserved."
   },
+  "riskNotice": {
+    "title": "Trading risk notice: automated decisions can cause real capital losses.",
+    "description": "Before enabling LIVE, verify that risk limits, emergency stop, and API keys are configured correctly.",
+    "openAuditLogs": "Open Audit Logs",
+    "securitySettings": "Security Settings"
+  },
   "logs": {
     "title": "Audit Trail",
     "breadcrumbLogs": "Logs",

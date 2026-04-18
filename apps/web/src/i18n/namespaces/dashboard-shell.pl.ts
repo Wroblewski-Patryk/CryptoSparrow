@@ -38,6 +38,12 @@ export const dashboardShellPl = {
   "footer": {
     "rights": "Wszelkie prawa zastrzezone."
   },
+  "riskNotice": {
+    "title": "Ostrzezenie o ryzyku: decyzje automatyczne moga powodowac realne straty kapitalu.",
+    "description": "Przed wlaczeniem LIVE upewnij sie, ze limity ryzyka, emergency stop i klucze API sa poprawnie skonfigurowane.",
+    "openAuditLogs": "Otworz logi audytu",
+    "securitySettings": "Ustawienia bezpieczenstwa"
+  },
   "logs": {
     "title": "Dziennik audytu",
     "breadcrumbLogs": "Logi",
