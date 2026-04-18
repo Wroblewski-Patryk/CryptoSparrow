@@ -48,7 +48,8 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
-- [x] `UXR-F-B progress: completed UXR-F-05..UXR-F-06 (group in progress)`
+- [x] `UXR-F-B progress: completed UXR-F-05..UXR-F-07 (group in progress)`
+  - 2026-04-18: Completed `UXR-F-07` by migrating `MarketUniverseForm` from feature-local `FieldControls` to shared `ui/forms` primitives (`TextField`, `SelectField`, `FormField`) and deleting obsolete `FieldControls.tsx`. Validation: `pnpm --filter web test -- src/features/markets/components/MarketUniverseForm.test.tsx` => `6/6 PASS`; `pnpm --filter web run typecheck` => `PASS`.
   - 2026-04-18: Completed `UXR-F-06` by migrating `WalletCreateEditForm` to shared `ui/forms` primitives with unified section/field contract, validation summary surfacing, and guarded first-invalid focus behavior compatible with test/runtime environments. Validation: `pnpm --filter web test -- src/features/wallets/components/WalletCreateEditForm.test.tsx` => `4/4 PASS`; `pnpm --filter web run typecheck` => `PASS`.
   - 2026-04-18: Completed `UXR-F-05` by migrating dashboard create/edit wrappers to namespace-driven copy and shared form-shell contract across wallets/markets/strategies/bots wrappers.
 - [x] `UXR-F-A progress: completed UXR-F-01..UXR-F-04 (group closed)`

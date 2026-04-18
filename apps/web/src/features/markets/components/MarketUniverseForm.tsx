@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LuCheck, LuFilter, LuList } from 'react-icons/lu';
-import { FieldWrapper, SelectField, TextInputField } from './FieldControls';
+import { FormField, SelectField, TextField } from '@/ui/forms';
 import SearchableMultiSelect, { MultiSelectOption } from './SearchableMultiSelect';
 import { fetchMarketCatalog } from '../services/markets.service';
 import { CreateMarketUniverseInput, MarketCatalogEntry, MarketUniverse } from '../types/marketUniverse.type';
@@ -301,6 +301,18 @@ export default function MarketUniverseForm({
       (previewSymbols.length > 0 || !exchangeSupportsMarketCatalog),
     [exchangeSupportsMarketCatalog, name, previewSymbols.length, submitting]
   );
+  const exchangeOptions = useMemo(
+    () => EXCHANGES.map((item) => ({ value: item, label: item })),
+    []
+  );
+  const marketTypeOptions = useMemo(
+    () => MARKET_TYPES.map((item) => ({ value: item, label: item })),
+    []
+  );
+  const baseCurrencyOptions = useMemo(
+    () => baseCurrencies.map((item) => ({ value: item, label: item })),
+    [baseCurrencies]
+  );
 
   const handleBaseCurrencyChange = async (nextBaseCurrency: string) => {
     const normalizedBaseCurrency = normalizeFormBaseCurrency(nextBaseCurrency);
@@ -385,27 +397,36 @@ export default function MarketUniverseForm({
 
         <div className='grid gap-3 md:grid-cols-4'>
           <div className='md:col-span-2'>
-            <TextInputField label={labels.groupName} placeholder={labels.groupNamePlaceholder} value={name} onChange={setName} />
-            {hasNameError ? <p className='mt-1 text-xs text-error'>{labels.groupNameError}</p> : null}
+            <TextField
+              id='market-universe-name'
+              label={labels.groupName}
+              placeholder={labels.groupNamePlaceholder}
+              value={name}
+              onChange={setName}
+              error={hasNameError ? labels.groupNameError : undefined}
+            />
           </div>
           <SelectField
+            id='market-universe-exchange'
             label={labels.exchange}
             value={exchange}
-            options={EXCHANGES}
+            options={exchangeOptions}
             onChange={(next) => void handleExchangeChange(next)}
             disabled={catalogLoading}
           />
           <SelectField
+            id='market-universe-market-type'
             label={labels.marketType}
             value={marketType}
-            options={MARKET_TYPES}
+            options={marketTypeOptions}
             onChange={(next) => void handleMarketTypeChange(next)}
             disabled={catalogLoading}
           />
           <SelectField
+            id='market-universe-base-currency'
             label={labels.baseCurrency}
             value={baseCurrency}
-            options={baseCurrencies}
+            options={baseCurrencyOptions}
             onChange={(next) => void handleBaseCurrencyChange(next)}
             disabled={catalogLoading || baseCurrencies.length === 0}
           />
@@ -422,7 +443,7 @@ export default function MarketUniverseForm({
 
         <div className='mt-4 rounded-xl border border-base-300 bg-base-200 p-3'>
           <div className='grid gap-3 lg:grid-cols-2'>
-            <FieldWrapper label={labels.volumeFilterLabel}>
+            <FormField label={labels.volumeFilterLabel}>
               <div className='space-y-2'>
                 <label className='label cursor-pointer justify-start gap-3 p-0'>
                   <input
@@ -446,7 +467,7 @@ export default function MarketUniverseForm({
                   disabled={!minQuoteVolumeEnabled}
                 />
               </div>
-            </FieldWrapper>
+            </FormField>
             <div className='rounded-box border border-base-300 bg-base-100 px-3 py-2 text-sm'>
               <p>
                 {labels.minVolume}:{' '}
