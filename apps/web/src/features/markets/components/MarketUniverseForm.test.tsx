@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MarketUniverseForm from './MarketUniverseForm';
+import { I18nProvider } from '@/i18n/I18nProvider';
 
 const fetchCatalogMock = vi.hoisted(() => vi.fn());
 
@@ -11,8 +13,17 @@ vi.mock('../services/markets.service', () => ({
 describe('MarketUniverseForm', () => {
   beforeEach(() => {
     fetchCatalogMock.mockReset();
+    window.localStorage.setItem('cryptosparrow-locale', 'pl');
+    window.history.pushState({}, '', '/dashboard/markets/create');
     window.location.hash = '';
   });
+
+  const renderWithI18n = (props: ComponentProps<typeof MarketUniverseForm>) =>
+    render(
+      <I18nProvider>
+        <MarketUniverseForm {...props} />
+      </I18nProvider>
+    );
 
   it('loads saved volume filter value in edit mode and uses it in preview', async () => {
     fetchCatalogMock.mockResolvedValue({
@@ -42,10 +53,9 @@ describe('MarketUniverseForm', () => {
       ],
     });
 
-    render(
-      <MarketUniverseForm
-        mode='edit'
-        initial={{
+    renderWithI18n({
+      mode: 'edit',
+      initial: {
           id: 'u1',
           name: 'Ulubione',
           marketType: 'FUTURES',
@@ -53,11 +63,10 @@ describe('MarketUniverseForm', () => {
           filterRules: { minQuoteVolumeEnabled: true, minQuoteVolume24h: 500 },
           whitelist: [],
           blacklist: [],
-        }}
-        submitting={false}
-        onSubmit={async () => undefined}
-      />
-    );
+      },
+      submitting: false,
+      onSubmit: async () => undefined,
+    });
 
     await waitFor(() => {
       expect(fetchCatalogMock).toHaveBeenCalled();
@@ -107,10 +116,9 @@ describe('MarketUniverseForm', () => {
       ],
     });
 
-    render(
-      <MarketUniverseForm
-        mode='edit'
-        initial={{
+    renderWithI18n({
+      mode: 'edit',
+      initial: {
           id: 'u-compose-1',
           name: 'Compose Contract',
           marketType: 'FUTURES',
@@ -118,11 +126,10 @@ describe('MarketUniverseForm', () => {
           filterRules: { minQuoteVolumeEnabled: true, minQuoteVolume24h: 1500 },
           whitelist: ['SOLUSDT'],
           blacklist: ['ETHUSDT'],
-        }}
-        submitting={false}
-        onSubmit={async () => undefined}
-      />
-    );
+      },
+      submitting: false,
+      onSubmit: async () => undefined,
+    });
 
     await waitFor(() => {
       expect(fetchCatalogMock).toHaveBeenCalled();
@@ -159,10 +166,9 @@ describe('MarketUniverseForm', () => {
       ],
     });
 
-    render(
-      <MarketUniverseForm
-        mode='edit'
-        initial={{
+    renderWithI18n({
+      mode: 'edit',
+      initial: {
           id: 'u-edit-1',
           name: 'Ulubione',
           marketType: 'FUTURES',
@@ -170,11 +176,10 @@ describe('MarketUniverseForm', () => {
           filterRules: { minQuoteVolumeEnabled: false },
           whitelist: ['BTCUSDT'],
           blacklist: ['ETHUSDT'],
-        }}
-        submitting={false}
-        onSubmit={async () => undefined}
-      />
-    );
+      },
+      submitting: false,
+      onSubmit: async () => undefined,
+    });
 
     await waitFor(() => {
       expect(fetchCatalogMock).toHaveBeenCalled();
@@ -205,10 +210,9 @@ describe('MarketUniverseForm', () => {
       ],
     });
 
-    render(
-      <MarketUniverseForm
-        mode='edit'
-        initial={{
+    renderWithI18n({
+      mode: 'edit',
+      initial: {
           id: 'u-edit-legacy',
           name: 'Legacy symbols',
           marketType: 'FUTURES',
@@ -216,11 +220,10 @@ describe('MarketUniverseForm', () => {
           filterRules: { minQuoteVolumeEnabled: false },
           whitelist: ['XRPUSDT'],
           blacklist: [],
-        }}
-        submitting={false}
-        onSubmit={async () => undefined}
-      />
-    );
+      },
+      submitting: false,
+      onSubmit: async () => undefined,
+    });
 
     await waitFor(() => {
       expect(fetchCatalogMock).toHaveBeenCalled();
@@ -245,13 +248,11 @@ describe('MarketUniverseForm', () => {
 
     const onSubmit = vi.fn().mockResolvedValue(undefined);
 
-    const { container } = render(
-      <MarketUniverseForm
-        mode='create'
-        submitting={false}
-        onSubmit={onSubmit}
-      />
-    );
+    const { container } = renderWithI18n({
+      mode: 'create',
+      submitting: false,
+      onSubmit,
+    });
 
     fireEvent.change(screen.getByPlaceholderText('Top Futures'), {
       target: { value: 'OKX Placeholder Universe' },
@@ -308,9 +309,7 @@ describe('MarketUniverseForm', () => {
     });
 
     const onSubmit = vi.fn().mockResolvedValue(undefined);
-    const { container } = render(
-      <MarketUniverseForm mode='create' submitting={false} onSubmit={onSubmit} />
-    );
+    const { container } = renderWithI18n({ mode: 'create', submitting: false, onSubmit });
 
     await waitFor(() => {
       expect(fetchCatalogMock).toHaveBeenCalled();

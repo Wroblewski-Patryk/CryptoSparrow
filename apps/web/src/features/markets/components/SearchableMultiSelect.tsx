@@ -15,6 +15,12 @@ type SearchableMultiSelectProps = {
   selectedValues: string[];
   onChange: (next: string[]) => void;
   emptyText?: string;
+  selectedSummaryLabel?: string;
+  selectedCountLabel?: string;
+  placeholderLabel?: string;
+  searchPlaceholder?: string;
+  selectFilteredLabel?: string;
+  clearLabel?: string;
   maxListHeightClassName?: string;
 };
 
@@ -25,7 +31,13 @@ export default function SearchableMultiSelect({
   options,
   selectedValues,
   onChange,
-  emptyText = 'Brak opcji',
+  emptyText = 'No options',
+  selectedSummaryLabel = 'Selected',
+  selectedCountLabel = 'Selected: {count}',
+  placeholderLabel = 'Select...',
+  searchPlaceholder = 'Search...',
+  selectFilteredLabel = 'Select filtered',
+  clearLabel = 'Clear',
   maxListHeightClassName = 'max-h-72',
 }: SearchableMultiSelectProps) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
@@ -62,28 +74,33 @@ export default function SearchableMultiSelect({
       <span className="label-text">{label}</span>
       <details ref={detailsRef} className="dropdown w-full">
         <summary className="btn btn-outline btn-sm w-full justify-between">
-          <span className="truncate">{selectedValues.length > 0 ? `Wybrano: ${selectedValues.length}` : 'Wybierz...'}</span>
+          <span className="truncate">
+            {selectedValues.length > 0
+              ? selectedCountLabel.replace('{count}', String(selectedValues.length))
+              : placeholderLabel}
+          </span>
           <span className="opacity-60">v</span>
         </summary>
         <div className="dropdown-content z-[70] mt-2 w-full rounded-box border border-base-300 bg-base-100 p-3 shadow-xl">
           <div className="mb-2">
             <input
               className="input input-bordered input-sm w-full"
-              placeholder="Szukaj..."
+              placeholder={searchPlaceholder}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
           </div>
           <div className="mb-2 flex gap-2">
             <button type="button" className="btn btn-xs btn-ghost" onClick={selectAllFiltered}>
-              Zaznacz znalezione
+              {selectFilteredLabel}
             </button>
             <button type="button" className="btn btn-xs btn-ghost" onClick={clearAll}>
-              Wyczysc
+              {clearLabel}
             </button>
           </div>
           <ul
             className={`menu rounded-box border border-base-300 bg-base-200 ${maxListHeightClassName} overflow-y-auto overflow-x-hidden`}
+            aria-label={selectedSummaryLabel}
           >
             {filteredOptions.length === 0 && <li className="px-3 py-2 text-sm opacity-70">{emptyText}</li>}
             {filteredOptions.map((option) => (

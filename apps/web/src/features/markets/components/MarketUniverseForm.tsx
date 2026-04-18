@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LuCheck, LuFilter, LuList } from 'react-icons/lu';
 import { FieldWrapper, SelectField, TextInputField } from './FieldControls';
 import SearchableMultiSelect, { MultiSelectOption } from './SearchableMultiSelect';
@@ -20,19 +20,21 @@ import {
   supportsExchangeCapability,
 } from '@/features/exchanges/exchangeCapabilities';
 import { EXCHANGE_MARKET_TYPES, type ExchangeMarketType } from '@cryptosparrow/shared';
-import { I18nContext } from '@/i18n/I18nProvider';
+import { useI18n } from '@/i18n/I18nProvider';
 
 const MARKET_TYPES: ExchangeMarketType[] = [...EXCHANGE_MARKET_TYPES];
 const EXCHANGES: ExchangeOption[] = [...EXCHANGE_OPTIONS];
 
-const formatVolumeLabel = (value: number) => {
-  if (!Number.isFinite(value) || value <= 0) return 'vol 24h: 0';
-  if (value >= 1_000_000_000) return `vol 24h: ${(value / 1_000_000_000).toFixed(2)}B`;
-  if (value >= 1_000_000) return `vol 24h: ${(value / 1_000_000).toFixed(2)}M`;
-  if (value >= 1_000) return `vol 24h: ${(value / 1_000).toFixed(2)}K`;
-  return `vol 24h: ${value.toFixed(0)}`;
+const formatVolumeLabel = (value: number, template: string) => {
+  const formatValue = () => {
+    if (!Number.isFinite(value) || value <= 0) return '0';
+    if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)}B`;
+    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
+    if (value >= 1_000) return `${(value / 1_000).toFixed(2)}K`;
+    return value.toFixed(0);
+  };
+  return template.replace('{value}', formatValue());
 };
-const LEGACY_SYMBOL_DESCRIPTION = 'Poza aktualnym katalogiem (zapisane w grupie)';
 
 const resolveSavedMinVolume = (initial?: MarketUniverse | null) => {
   const rules = (initial?.filterRules ?? null) as
@@ -68,125 +70,56 @@ export default function MarketUniverseForm({
   submitting,
   onSubmit,
 }: MarketUniverseFormProps) {
-  const i18n = useContext(I18nContext);
-  const locale = i18n?.locale ?? 'pl';
-  const copy = {
-    en: {
-      loadCatalogError: 'Could not load market catalog from exchange.',
-      sectionTitle: 'Market configuration',
-      modeEdit: 'Edit',
-      modeCreate: 'Create',
-      groupName: 'Group name',
-      groupNamePlaceholder: 'Top Futures',
-      groupNameError: 'Provide market group name.',
-      exchange: 'Exchange',
-      marketType: 'Market type',
-      baseCurrency: 'Base currency',
-      placeholderBadge: 'PLACEHOLDER',
-      placeholderDescription:
-        'Placeholder exchange selected. Public catalog for this exchange is not implemented yet. You can still save the universe context.',
-      volumeFilterLabel: 'Filter: minimum quote volume 24h',
-      volumeFilterEnabled: 'Filter enabled',
-      volumeFilterDisabled: 'Filter disabled',
-      minVolume: 'Min volume',
-      maxVolume: 'Max volume',
-      availableAfterFilter: 'Available after filter',
-      symbolSelectionTitle: 'Symbol selection',
-      selectAll: 'Select all',
-      clearAll: 'Clear',
-      whitelistCount: 'Whitelist',
-      blacklistCount: 'Blacklist',
-      resultCount: 'Result',
-      whitelistLabel: 'Whitelist',
-      blacklistLabel: 'Blacklist',
-      whitelistEmpty: 'Whitelist is empty.',
-      blacklistEmpty: 'Blacklist is empty.',
-      catalogLoading: 'Loading market catalog...',
-      previewTitle: 'Filtered list preview',
-      marketsCount: 'Markets count',
-      previewHint: 'Alphabetical order. Applied: market type + base currency + volume + whitelist - blacklist.',
-      previewEmptyWarning: 'No symbols after filters. Add whitelist entries or adjust filters.',
-      previewSearchPlaceholder: 'Search in list...',
-      previewNoMarkets: 'No markets after applying filters.',
-    },
-    pl: {
-      loadCatalogError: 'Nie udalo sie pobrac katalogu rynkow z gieldy.',
-      sectionTitle: 'Konfiguracja rynku',
-      modeEdit: 'Edycja',
-      modeCreate: 'Tworzenie',
-      groupName: 'Nazwa grupy',
-      groupNamePlaceholder: 'Top Futures',
-      groupNameError: 'Podaj nazwe grupy rynkow.',
-      exchange: 'Gielda',
-      marketType: 'Market type',
-      baseCurrency: 'Base currency',
-      placeholderBadge: 'PLACEHOLDER',
-      placeholderDescription:
-        'Wybrano placeholder exchange. Publiczny katalog dla tej gieldy nie jest jeszcze dostepny. Nadal mozesz zapisac kontekst grupy.',
-      volumeFilterLabel: 'Filtr: minimalny wolumen quote 24h',
-      volumeFilterEnabled: 'Filtr wlaczony',
-      volumeFilterDisabled: 'Filtr wylaczony',
-      minVolume: 'Min wolumen',
-      maxVolume: 'Max wolumen',
-      availableAfterFilter: 'Dostepnych po filtrze',
-      symbolSelectionTitle: 'Selekcja symboli',
-      selectAll: 'Wybierz wszystkie',
-      clearAll: 'Wyczysc',
-      whitelistCount: 'Whitelist',
-      blacklistCount: 'Blacklist',
-      resultCount: 'Wynik',
-      whitelistLabel: 'Whitelist',
-      blacklistLabel: 'Blacklist',
-      whitelistEmpty: 'Brak whitelist.',
-      blacklistEmpty: 'Brak blacklist.',
-      catalogLoading: 'Ladowanie katalogu rynkow...',
-      previewTitle: 'Podglad listy po filtrach',
-      marketsCount: 'Liczba rynkow',
-      previewHint: 'Kolejnosc alfabetyczna. Zastosowano: market type + base currency + volume + whitelist - blacklist.',
-      previewEmptyWarning: 'Brak symboli po filtrach. Dodaj whitelist albo zmien filtry.',
-      previewSearchPlaceholder: 'Szukaj w liscie...',
-      previewNoMarkets: 'Brak rynkow po zastosowaniu filtrow.',
-    },
-    pt: {
-      loadCatalogError: 'Nao foi possivel carregar catalogo de mercados da exchange.',
-      sectionTitle: 'Configuracao de mercado',
-      modeEdit: 'Editar',
-      modeCreate: 'Criar',
-      groupName: 'Nome do grupo',
-      groupNamePlaceholder: 'Top Futures',
-      groupNameError: 'Indica nome do grupo de mercados.',
-      exchange: 'Exchange',
-      marketType: 'Market type',
-      baseCurrency: 'Base currency',
-      placeholderBadge: 'PLACEHOLDER',
-      placeholderDescription:
-        'Exchange placeholder selecionada. Catalogo publico para esta exchange ainda nao esta implementado. Podes guardar o contexto do universo.',
-      volumeFilterLabel: 'Filtro: volume quote minimo 24h',
-      volumeFilterEnabled: 'Filtro ativo',
-      volumeFilterDisabled: 'Filtro inativo',
-      minVolume: 'Volume min',
-      maxVolume: 'Volume max',
-      availableAfterFilter: 'Disponiveis apos filtro',
-      symbolSelectionTitle: 'Selecao de simbolos',
-      selectAll: 'Selecionar todos',
-      clearAll: 'Limpar',
-      whitelistCount: 'Whitelist',
-      blacklistCount: 'Blacklist',
-      resultCount: 'Resultado',
-      whitelistLabel: 'Whitelist',
-      blacklistLabel: 'Blacklist',
-      whitelistEmpty: 'Whitelist vazia.',
-      blacklistEmpty: 'Blacklist vazia.',
-      catalogLoading: 'A carregar catalogo de mercados...',
-      previewTitle: 'Pre-visualizacao apos filtros',
-      marketsCount: 'Numero de mercados',
-      previewHint: 'Ordem alfabetica. Aplicado: market type + base currency + volume + whitelist - blacklist.',
-      previewEmptyWarning: 'Sem simbolos apos filtros. Adiciona whitelist ou ajusta filtros.',
-      previewSearchPlaceholder: 'Pesquisar na lista...',
-      previewNoMarkets: 'Sem mercados apos aplicar filtros.',
-    },
-  } as const;
-  const labels = copy[locale];
+  const { t } = useI18n();
+  const labels = useMemo(
+    () => ({
+      loadCatalogError: t('dashboard.markets.form.loadCatalogError'),
+      sectionTitle: t('dashboard.markets.form.sectionTitle'),
+      modeEdit: t('dashboard.markets.form.modeEdit'),
+      modeCreate: t('dashboard.markets.form.modeCreate'),
+      groupName: t('dashboard.markets.form.groupName'),
+      groupNamePlaceholder: t('dashboard.markets.form.groupNamePlaceholder'),
+      groupNameError: t('dashboard.markets.form.groupNameError'),
+      exchange: t('dashboard.markets.form.exchange'),
+      marketType: t('dashboard.markets.form.marketType'),
+      baseCurrency: t('dashboard.markets.form.baseCurrency'),
+      placeholderBadge: t('dashboard.markets.form.placeholderBadge'),
+      placeholderDescription: t('dashboard.markets.form.placeholderDescription'),
+      volumeFilterLabel: t('dashboard.markets.form.volumeFilterLabel'),
+      volumeFilterEnabled: t('dashboard.markets.form.volumeFilterEnabled'),
+      volumeFilterDisabled: t('dashboard.markets.form.volumeFilterDisabled'),
+      minVolume: t('dashboard.markets.form.minVolume'),
+      maxVolume: t('dashboard.markets.form.maxVolume'),
+      availableAfterFilter: t('dashboard.markets.form.availableAfterFilter'),
+      symbolSelectionTitle: t('dashboard.markets.form.symbolSelectionTitle'),
+      selectAll: t('dashboard.markets.form.selectAll'),
+      clearAll: t('dashboard.markets.form.clearAll'),
+      whitelistCount: t('dashboard.markets.form.whitelistCount'),
+      blacklistCount: t('dashboard.markets.form.blacklistCount'),
+      resultCount: t('dashboard.markets.form.resultCount'),
+      whitelistLabel: t('dashboard.markets.form.whitelistLabel'),
+      blacklistLabel: t('dashboard.markets.form.blacklistLabel'),
+      whitelistEmpty: t('dashboard.markets.form.whitelistEmpty'),
+      blacklistEmpty: t('dashboard.markets.form.blacklistEmpty'),
+      catalogLoading: t('dashboard.markets.form.catalogLoading'),
+      previewTitle: t('dashboard.markets.form.previewTitle'),
+      marketsCount: t('dashboard.markets.form.marketsCount'),
+      previewHint: t('dashboard.markets.form.previewHint'),
+      previewEmptyWarning: t('dashboard.markets.form.previewEmptyWarning'),
+      previewSearchPlaceholder: t('dashboard.markets.form.previewSearchPlaceholder'),
+      previewNoMarkets: t('dashboard.markets.form.previewNoMarkets'),
+      volumeLabelTemplate: t('dashboard.markets.form.volumeLabelTemplate'),
+      volumeFilterOff: t('dashboard.markets.form.volumeFilterOff'),
+      legacySymbolDescription: t('dashboard.markets.form.legacySymbolDescription'),
+      multiSelectSummaryLabel: t('dashboard.markets.form.multiSelectSummaryLabel'),
+      multiSelectSelectedCount: t('dashboard.markets.form.multiSelectSelectedCount'),
+      multiSelectPlaceholder: t('dashboard.markets.form.multiSelectPlaceholder'),
+      multiSelectSearch: t('dashboard.markets.form.multiSelectSearch'),
+      multiSelectSelectFiltered: t('dashboard.markets.form.multiSelectSelectFiltered'),
+      multiSelectClear: t('dashboard.markets.form.multiSelectClear'),
+    }),
+    [t]
+  );
 
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
@@ -312,9 +245,9 @@ export default function MarketUniverseForm({
       filteredCatalogMarkets.map((market) => ({
         value: market.symbol,
         label: market.displaySymbol,
-        description: formatVolumeLabel(market.quoteVolume24h),
+        description: formatVolumeLabel(market.quoteVolume24h, labels.volumeLabelTemplate),
       })),
-    [filteredCatalogMarkets]
+    [filteredCatalogMarkets, labels.volumeLabelTemplate]
   );
   const marketOptionSymbols = useMemo(
     () => new Set(marketOptions.map((option) => option.value)),
@@ -327,9 +260,9 @@ export default function MarketUniverseForm({
       .map((symbol) => ({
         value: symbol,
         label: symbol,
-        description: LEGACY_SYMBOL_DESCRIPTION,
+        description: labels.legacySymbolDescription,
       }));
-  }, [blacklistSymbols, marketOptionSymbols, whitelistSymbols]);
+  }, [blacklistSymbols, labels.legacySymbolDescription, marketOptionSymbols, whitelistSymbols]);
   const selectionOptions = useMemo<MultiSelectOption[]>(
     () => [...marketOptions, ...persistedSelectionOptions],
     [marketOptions, persistedSelectionOptions]
@@ -518,11 +451,14 @@ export default function MarketUniverseForm({
               <p>
                 {labels.minVolume}:{' '}
                 <span className='font-mono'>
-                  {minQuoteVolumeEnabled ? formatVolumeLabel(minQuoteVolume) : 'OFF'}
+                  {minQuoteVolumeEnabled
+                    ? formatVolumeLabel(minQuoteVolume, labels.volumeLabelTemplate)
+                    : labels.volumeFilterOff}
                 </span>
               </p>
               <p>
-                {labels.maxVolume}: <span className='font-mono'>{formatVolumeLabel(maxQuoteVolume)}</span>
+                {labels.maxVolume}:{' '}
+                <span className='font-mono'>{formatVolumeLabel(maxQuoteVolume, labels.volumeLabelTemplate)}</span>
               </p>
               <p className='opacity-70'>{labels.availableAfterFilter}: {marketOptions.length}</p>
             </div>
@@ -564,6 +500,12 @@ export default function MarketUniverseForm({
             selectedValues={whitelistSymbols}
             onChange={setWhitelistSymbols}
             emptyText={labels.whitelistEmpty}
+            selectedSummaryLabel={labels.multiSelectSummaryLabel}
+            selectedCountLabel={labels.multiSelectSelectedCount}
+            placeholderLabel={labels.multiSelectPlaceholder}
+            searchPlaceholder={labels.multiSelectSearch}
+            selectFilteredLabel={labels.multiSelectSelectFiltered}
+            clearLabel={labels.multiSelectClear}
             maxListHeightClassName='max-h-80'
           />
           <SearchableMultiSelect
@@ -572,6 +514,12 @@ export default function MarketUniverseForm({
             selectedValues={blacklistSymbols}
             onChange={setBlacklistSymbols}
             emptyText={labels.blacklistEmpty}
+            selectedSummaryLabel={labels.multiSelectSummaryLabel}
+            selectedCountLabel={labels.multiSelectSelectedCount}
+            placeholderLabel={labels.multiSelectPlaceholder}
+            searchPlaceholder={labels.multiSelectSearch}
+            selectFilteredLabel={labels.multiSelectSelectFiltered}
+            clearLabel={labels.multiSelectClear}
             maxListHeightClassName='max-h-80'
           />
         </div>
