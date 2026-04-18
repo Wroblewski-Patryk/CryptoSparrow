@@ -48,6 +48,8 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
+- [x] `UXR-F-C progress: completed UXR-F-11 (group in progress)`
+  - 2026-04-18: Completed `UXR-F-11` by standardizing submit-state ergonomics and validation synchronization across scoped forms: `MarketUniverseForm` + `BacktestCreateForm` + `StrategyForm` now share summary/inline/first-invalid behavior, and markets/backtests/strategies create-edit wrappers now expose disabled/loading save actions during submit. Validation: `pnpm --filter web test -- src/features/markets/components/MarketUniverseForm.test.tsx src/features/backtest/components/BacktestCreateForm.test.tsx src/features/strategies/components/StrategyForm.test.tsx src/i18n/translations.test.ts` => `17/17 PASS`; `pnpm --filter web run typecheck` => `PASS`; `pnpm i18n:audit:route-reachable:web` => `PASS`.
 - [x] `UXR-F-C progress: completed UXR-F-10 (group in progress)`
   - 2026-04-18: Completed `UXR-F-10` by migrating `BotCreateEditForm` internals to shared `ui/forms` primitives and adding unified submit-time validation summary plus first-invalid focus behavior for required setup fields (`name`, `wallet`, `strategy`, `market group`) while preserving wallet-context safety checks and wallet-first create payload contract. Validation: `pnpm --filter web test -- src/features/bots/components/BotCreateEditForm.test.tsx src/i18n/translations.test.ts` => `9/9 PASS`; `pnpm --filter web run typecheck` => `PASS`.
 - [x] `UXR-F-C progress: completed UXR-F-09 (group in progress)`

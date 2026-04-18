@@ -32,6 +32,7 @@ export default function StrategiesEditPage() {
     activeBotDescription: t('dashboard.strategies.page.activeBotDescription'),
     saveFailed: t('dashboard.strategies.page.saveFailed'),
     save: t('dashboard.strategies.saveLabel'),
+    saving: t('dashboard.strategies.page.saving'),
     titleFallback: t('dashboard.strategies.title'),
     breadcrumbStrategies: t('dashboard.strategies.title'),
     breadcrumbEdit: t('dashboard.strategies.editLabel'),
@@ -95,7 +96,7 @@ export default function StrategiesEditPage() {
             disabled={submitting}
           >
             <LuSave className='h-4 w-4' />
-            {copy.save}
+            {submitting ? copy.saving : copy.save}
           </button>
         }
       />
@@ -109,7 +110,9 @@ export default function StrategiesEditPage() {
           onRetry={() => router.push('/dashboard/strategies/list')}
         />
       ) : null}
-      {!loading && !error && initial ? <StrategiesForm formId={STRATEGY_FORM_ID} initial={initial} onSubmit={handleUpdate} /> : null}
+      {!loading && !error && initial ? (
+        <StrategiesForm formId={STRATEGY_FORM_ID} initial={initial} onSubmit={handleUpdate} submitting={submitting} />
+      ) : null}
     </section>
   );
 }

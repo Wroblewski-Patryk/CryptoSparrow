@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LuCheck, LuFilter, LuList } from 'react-icons/lu';
-import { FormField, SelectField, TextField } from '@/ui/forms';
+import { FormField, FormValidationSummary, SelectField, TextField } from '@/ui/forms';
 import SearchableMultiSelect, { MultiSelectOption } from './SearchableMultiSelect';
 import { fetchMarketCatalog } from '../services/markets.service';
 import { CreateMarketUniverseInput, MarketCatalogEntry, MarketUniverse } from '../types/marketUniverse.type';
@@ -117,6 +117,8 @@ export default function MarketUniverseForm({
       multiSelectSearch: t('dashboard.markets.form.multiSelectSearch'),
       multiSelectSelectFiltered: t('dashboard.markets.form.multiSelectSelectFiltered'),
       multiSelectClear: t('dashboard.markets.form.multiSelectClear'),
+      validationSummaryTitle: t('dashboard.markets.form.validationSummaryTitle'),
+      symbolsRequiredValidation: t('dashboard.markets.form.symbolsRequiredValidation'),
     }),
     [t]
   );
@@ -301,6 +303,43 @@ export default function MarketUniverseForm({
       (previewSymbols.length > 0 || !exchangeSupportsMarketCatalog),
     [exchangeSupportsMarketCatalog, name, previewSymbols.length, submitting]
   );
+  const fieldErrors = useMemo(() => {
+    const errors: { name?: string; symbols?: string } = {};
+    if (!hasFormText(name)) {
+      errors.name = labels.groupNameError;
+    }
+    if (exchangeSupportsMarketCatalog && previewSymbols.length === 0) {
+      errors.symbols = labels.symbolsRequiredValidation;
+    }
+    return errors;
+  }, [
+    exchangeSupportsMarketCatalog,
+    labels.groupNameError,
+    labels.symbolsRequiredValidation,
+    name,
+    previewSymbols.length,
+  ]);
+  const hasValidationErrors = Object.keys(fieldErrors).length > 0;
+  const validationSummaryErrors = useMemo(
+    () => Object.values(fieldErrors).filter((error): error is string => Boolean(error)),
+    [fieldErrors]
+  );
+  const focusFirstInvalidField = useCallback(() => {
+    const firstField = (Object.keys(fieldErrors) as Array<keyof typeof fieldErrors>)[0];
+    if (!firstField) return;
+    const targetIdByField: Record<keyof typeof fieldErrors, string> = {
+      name: 'market-universe-name',
+      symbols: 'market-universe-preview-search',
+    };
+    const target = document.getElementById(targetIdByField[firstField]);
+    if (!target) return;
+    if (typeof target.focus === 'function') {
+      target.focus();
+    }
+    if (typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [fieldErrors]);
   const exchangeOptions = useMemo(
     () => EXCHANGES.map((item) => ({ value: item, label: item })),
     []
@@ -358,8 +397,12 @@ export default function MarketUniverseForm({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submitting) return;
     setShowValidation(true);
-    if (!canSubmit) return;
+    if (!canSubmit || hasValidationErrors) {
+      focusFirstInvalidField();
+      return;
+    }
 
     const mergedWhitelist = uniqueSortedSymbols(whitelistSymbols);
     const mergedBlacklistSet = new Set(uniqueSortedSymbols(blacklistSymbols));
@@ -381,11 +424,15 @@ export default function MarketUniverseForm({
   };
 
   const sliderStep = Math.max(1, Math.floor(maxQuoteVolume / 200));
-  const hasNameError = showValidation && !hasFormText(name);
-  const hasSymbolsError = showValidation && exchangeSupportsMarketCatalog && previewSymbols.length === 0;
+  const hasNameError = showValidation && Boolean(fieldErrors.name);
+  const hasSymbolsError = showValidation && Boolean(fieldErrors.symbols);
 
   return (
     <form id={formId} onSubmit={handleSubmit} className='space-y-4'>
+      {showValidation && hasValidationErrors ? (
+        <FormValidationSummary title={labels.validationSummaryTitle} errors={validationSummaryErrors} />
+      ) : null}
+      <fieldset disabled={submitting} className='space-y-4'>
       <section className='rounded-box border border-base-300/60 bg-base-100/85 p-4'>
         <div className='mb-3 flex items-center gap-2'>
           <LuFilter className='h-4 w-4 text-primary' aria-hidden />
@@ -569,6 +616,7 @@ export default function MarketUniverseForm({
 
         <div className='mt-3'>
           <input
+            id='market-universe-preview-search'
             className='input input-bordered input-sm w-full'
             placeholder={labels.previewSearchPlaceholder}
             value={previewQuery}
@@ -590,6 +638,7 @@ export default function MarketUniverseForm({
           )}
         </div>
       </section>
+      </fieldset>
     </form>
   );
 }

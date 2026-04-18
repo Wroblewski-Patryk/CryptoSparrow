@@ -66,12 +66,15 @@ describe('BacktestCreateForm', () => {
     });
 
     fireEvent.change(screen.getByPlaceholderText('1200'), { target: { value: '10' } });
-    expect(screen.getByText('Podaj liczbe z zakresu 100 - 10000.')).toBeInTheDocument();
+    expect(screen.queryByText('Podaj liczbe z zakresu 100 - 10000.')).not.toBeInTheDocument();
 
     const form = container.querySelector('form');
     expect(form).not.toBeNull();
     fireEvent.submit(form as HTMLFormElement);
     expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getAllByText('Podaj liczbe z zakresu 100 - 10000.').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('form-validation-summary')).toBeInTheDocument();
+    expect(screen.getByLabelText('Maksymalna liczba swiec na rynek (auto-limit)')).toHaveFocus();
   });
 
   it('submits valid payload with strategy interval and parsed maxCandles', async () => {

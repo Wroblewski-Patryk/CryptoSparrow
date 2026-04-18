@@ -18,6 +18,8 @@ export default function StrategiesCreatePage() {
   const { t } = useI18n();
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const saveLabel = t('dashboard.strategies.saveLabel');
+  const savingLabel = t('dashboard.strategies.page.saving');
 
   const handleCreate = async (form: StrategyFormState) => {
     const createdMessage = t('dashboard.strategies.page.created');
@@ -54,12 +56,12 @@ export default function StrategiesCreatePage() {
             disabled={submitting}
           >
             <LuSave className='h-4 w-4' />
-            {t('dashboard.strategies.saveLabel')}
+            {submitting ? savingLabel : saveLabel}
           </button>
         }
       />
 
-      <StrategiesForm formId={STRATEGY_FORM_ID} onSubmit={handleCreate} />
+      <StrategiesForm formId={STRATEGY_FORM_ID} onSubmit={handleCreate} submitting={submitting} />
     </section>
   );
 }

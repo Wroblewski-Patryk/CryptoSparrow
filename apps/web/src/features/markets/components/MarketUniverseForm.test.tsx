@@ -320,6 +320,8 @@ describe('MarketUniverseForm', () => {
     fireEvent.submit(form as HTMLFormElement);
 
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByText('Podaj nazwe grupy rynkow.')).toBeInTheDocument();
+    expect(screen.getAllByText('Podaj nazwe grupy rynkow.').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('form-validation-summary')).toBeInTheDocument();
+    expect(screen.getByLabelText('Nazwa grupy')).toHaveFocus();
   });
 });

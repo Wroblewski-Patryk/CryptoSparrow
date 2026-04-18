@@ -37,6 +37,7 @@ export default function MarketsEditPage() {
     errorTitle: t('dashboard.markets.page.errorTitle'),
     backToList: t('dashboard.markets.page.backToList'),
     submitLabel: t('dashboard.markets.saveLabel'),
+    savingLabel: t('dashboard.markets.page.saving'),
     updatePrefix: t('dashboard.markets.page.updatePrefix'),
   } as const;
 
@@ -88,7 +89,7 @@ export default function MarketsEditPage() {
         actions={
           <button type='submit' form={MARKET_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS} disabled={submitting}>
             <LuSave className='h-4 w-4' />
-            {copy.submitLabel}
+            {submitting ? copy.savingLabel : copy.submitLabel}
           </button>
         }
       />

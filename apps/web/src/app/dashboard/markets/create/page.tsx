@@ -18,6 +18,8 @@ export default function MarketsCreatePage() {
   const { t } = useI18n();
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const saveLabel = t('dashboard.markets.saveLabel');
+  const savingLabel = t('dashboard.markets.page.saving');
 
   const handleCreate = async (payload: CreateMarketUniverseInput) => {
     const createdMessage = t('dashboard.markets.page.created');
@@ -47,9 +49,9 @@ export default function MarketsCreatePage() {
           { label: t('dashboard.markets.createLabel'), icon: <LuPlus className='h-3.5 w-3.5' /> },
         ]}
         actions={
-          <button type='submit' form={MARKET_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS}>
+          <button type='submit' form={MARKET_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS} disabled={submitting}>
             <LuSave className='h-4 w-4' />
-            {t('dashboard.markets.saveLabel')}
+            {submitting ? savingLabel : saveLabel}
           </button>
         }
       />

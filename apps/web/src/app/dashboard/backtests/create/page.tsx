@@ -19,6 +19,8 @@ export default function BacktestsCreatePage() {
   const { t } = useI18n();
   const [submitting, setSubmitting] = useState(false);
   const createLabel = t('dashboard.backtests.createLabel');
+  const saveLabel = t('dashboard.backtests.saveLabel');
+  const savingLabel = t('dashboard.backtests.createForm.creating');
 
   const handleCreate = async (payload: CreateBacktestRunInput) => {
     const createFailed = t('dashboard.backtests.toastCreateFailed');
@@ -46,9 +48,9 @@ export default function BacktestsCreatePage() {
           { label: createLabel, icon: <LuPlus className='h-3.5 w-3.5' /> },
         ]}
         actions={
-          <button type='submit' form={BACKTEST_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS}>
+          <button type='submit' form={BACKTEST_FORM_ID} className={PAGE_TITLE_ACTION_SAVE_CLASS} disabled={submitting}>
             <LuSave className='h-4 w-4' />
-            {t('dashboard.backtests.saveLabel')}
+            {submitting ? savingLabel : saveLabel}
           </button>
         }
       />

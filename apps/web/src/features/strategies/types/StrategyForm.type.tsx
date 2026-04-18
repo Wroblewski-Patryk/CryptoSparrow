@@ -14,6 +14,7 @@ export type StrategyFormProps = {
     onSubmit?: (data: StrategyFormState) => Promise<void>;
     mode?: "create" | "edit";
     formId?: string;
+    submitting?: boolean;
 };
 
 export type StrategyFormState = {
@@ -31,6 +32,10 @@ export type StrategyFormState = {
 export type BasicProps = {
     data: StrategyFormState;
     setData: (updater: (prev: StrategyFormState) => StrategyFormState) => void;
+    errors?: {
+        name?: string;
+        interval?: string;
+    };
 };
 
 //SECTION OPEN

@@ -12,7 +12,7 @@ import {
 const leverageInputProps = numericInputProps(strategyNumericContracts.integer);
 const walletRiskInputProps = numericInputProps(strategyNumericContracts.decimal2);
 
-export function Basic({ data, setData }: BasicProps) {
+export function Basic({ data, setData, errors }: BasicProps) {
   const { t } = useI18n();
   const copy = useMemo(() => ({
     title: t("dashboard.strategies.form.basic.title"),
@@ -60,6 +60,7 @@ export function Basic({ data, setData }: BasicProps) {
           placeholder={copy.namePlaceholder}
           value={data.name}
           onChange={(value) => setData((prev) => ({ ...prev, name: value }))}
+          error={errors?.name}
         />
 
         <TextareaField
@@ -77,6 +78,7 @@ export function Basic({ data, setData }: BasicProps) {
           value={data.interval}
           options={intervalOptions}
           onChange={(value) => setData((prev) => ({ ...prev, interval: value }))}
+          error={errors?.interval}
         />
 
         <div className="space-y-3">

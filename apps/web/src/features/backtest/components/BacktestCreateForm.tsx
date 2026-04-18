@@ -1,6 +1,6 @@
 'use client';
 
-import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { listStrategies } from '../../strategies/api/strategies.api';
 import { StrategyDto } from '../../strategies/types/StrategyForm.type';
@@ -9,7 +9,7 @@ import { listMarketUniverses } from '../../markets/services/markets.service';
 import { MarketUniverse } from '../../markets/types/marketUniverse.type';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { hasFormText, normalizeFormText, resolveFormErrorMessage } from '@/lib/forms';
-import { FormGrid, FormSectionCard, NumberField, SelectField, TextField, TextareaField } from '@/ui/forms';
+import { FormGrid, FormSectionCard, FormValidationSummary, NumberField, SelectField, TextField, TextareaField } from '@/ui/forms';
 
 type BacktestCreateFormProps = {
   formId?: string;
@@ -66,6 +66,10 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
       notesPlaceholder: t('dashboard.backtests.createForm.notesPlaceholder'),
       suggestedStrategyFallback: t('dashboard.backtests.createForm.suggestedStrategyFallback'),
       suggestedMarketFallback: t('dashboard.backtests.createForm.suggestedMarketFallback'),
+      validationSummaryTitle: t('dashboard.backtests.createForm.validationSummaryTitle'),
+      runNameRequiredValidation: t('dashboard.backtests.createForm.runNameRequiredValidation'),
+      strategyRequiredValidation: t('dashboard.backtests.createForm.strategyRequiredValidation'),
+      marketGroupRequiredValidation: t('dashboard.backtests.createForm.marketGroupRequiredValidation'),
     }),
     [t]
   );
@@ -76,6 +80,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
   const [notes, setNotes] = useState('');
   const [maxCandles, setMaxCandles] = useState('1200');
   const [initialBalance, setInitialBalance] = useState('10000');
+  const [showValidation, setShowValidation] = useState(false);
 
   const [strategies, setStrategies] = useState<StrategyDto[]>([]);
   const [marketUniverses, setMarketUniverses] = useState<MarketUniverse[]>([]);
@@ -175,6 +180,68 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
     !submitting &&
     !universesLoading &&
     !strategiesLoading;
+  const maxCandlesErrorMessage = `${copy.maxCandlesErrorPrefix} ${MAX_CANDLES_MIN} - ${MAX_CANDLES_MAX}.`;
+  const initialBalanceErrorMessage = `${copy.initialBalanceErrorPrefix} ${INITIAL_BALANCE_MIN} - ${INITIAL_BALANCE_MAX}.`;
+  const fieldErrors = useMemo(() => {
+    const errors: {
+      runName?: string;
+      strategyId?: string;
+      marketUniverseId?: string;
+      maxCandles?: string;
+      initialBalance?: string;
+    } = {};
+    if (!hasFormText(name)) {
+      errors.runName = copy.runNameRequiredValidation;
+    }
+    if (!hasFormText(strategyId)) {
+      errors.strategyId = copy.strategyRequiredValidation;
+    }
+    if (!hasFormText(marketUniverseId)) {
+      errors.marketUniverseId = copy.marketGroupRequiredValidation;
+    }
+    if (!hasValidMaxCandles) {
+      errors.maxCandles = maxCandlesErrorMessage;
+    }
+    if (!hasValidInitialBalance) {
+      errors.initialBalance = initialBalanceErrorMessage;
+    }
+    return errors;
+  }, [
+    copy.marketGroupRequiredValidation,
+    copy.runNameRequiredValidation,
+    copy.strategyRequiredValidation,
+    hasValidInitialBalance,
+    hasValidMaxCandles,
+    initialBalanceErrorMessage,
+    marketUniverseId,
+    maxCandlesErrorMessage,
+    name,
+    strategyId,
+  ]);
+  const hasValidationErrors = Object.keys(fieldErrors).length > 0;
+  const validationSummaryErrors = useMemo(
+    () => Object.values(fieldErrors).filter((error): error is string => Boolean(error)),
+    [fieldErrors]
+  );
+  const focusFirstInvalidField = useCallback(() => {
+    const firstField = (Object.keys(fieldErrors) as Array<keyof typeof fieldErrors>)[0];
+    if (!firstField) return;
+    const targetIdByField: Record<keyof typeof fieldErrors, string> = {
+      runName: 'backtest-run-name',
+      strategyId: 'backtest-strategy-id',
+      marketUniverseId: 'backtest-market-universe-id',
+      maxCandles: 'backtest-max-candles',
+      initialBalance: 'backtest-initial-balance',
+    };
+    const target = document.getElementById(targetIdByField[firstField]);
+    if (!target) return;
+    if (typeof target.focus === 'function') {
+      target.focus();
+    }
+    if (typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [fieldErrors]);
   const strategyOptions = useMemo(
     () =>
       strategies.length > 0
@@ -208,7 +275,12 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!canSubmit || !selectedStrategy) return;
+    if (submitting) return;
+    setShowValidation(true);
+    if (!canSubmit || hasValidationErrors || !selectedStrategy) {
+      focusFirstInvalidField();
+      return;
+    }
 
     await onSubmit({
       name: normalizeFormText(name),
@@ -225,6 +297,10 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
 
   return (
     <form id={formId} onSubmit={handleSubmit} className='space-y-4'>
+      {showValidation && hasValidationErrors ? (
+        <FormValidationSummary title={copy.validationSummaryTitle} errors={validationSummaryErrors} />
+      ) : null}
+      <fieldset disabled={submitting} className='space-y-4'>
       <div className='rounded-box border border-base-300/60 bg-base-100/80 p-4 md:p-5 space-y-5'>
         <div className='flex flex-wrap items-start gap-3'>
           <div className='space-y-1'>
@@ -245,6 +321,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
                   setNameEdited(true);
                 }}
                 placeholder={copy.runNamePlaceholder}
+                error={showValidation ? fieldErrors.runName : undefined}
               />
 
               <SelectField
@@ -254,6 +331,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
                 onChange={setStrategyId}
                 options={strategyOptions}
                 disabled={strategiesLoading || strategies.length === 0}
+                error={showValidation ? fieldErrors.strategyId : undefined}
               />
 
               <SelectField
@@ -263,6 +341,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
                 onChange={setMarketUniverseId}
                 options={marketUniverseOptions}
                 disabled={universesLoading || marketUniverses.length === 0}
+                error={showValidation ? fieldErrors.marketUniverseId : undefined}
               />
 
               <div className='md:col-span-2 rounded-md border border-base-300/70 bg-base-200/40 px-3 py-2'>
@@ -304,9 +383,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
                 placeholder='1200'
                 inputMode='numeric'
                 error={
-                  hasValidMaxCandles
-                    ? undefined
-                    : `${copy.maxCandlesErrorPrefix} ${MAX_CANDLES_MIN} - ${MAX_CANDLES_MAX}.`
+                  showValidation ? fieldErrors.maxCandles : undefined
                 }
               />
 
@@ -319,9 +396,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
                 max={INITIAL_BALANCE_MAX}
                 placeholder='10000'
                 error={
-                  hasValidInitialBalance
-                    ? undefined
-                    : `${copy.initialBalanceErrorPrefix} ${INITIAL_BALANCE_MIN} - ${INITIAL_BALANCE_MAX}.`
+                  showValidation ? fieldErrors.initialBalance : undefined
                 }
               />
 
@@ -338,6 +413,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
           </FormSectionCard>
         </div>
       </div>
+      </fieldset>
     </form>
   );
 }
