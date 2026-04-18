@@ -1872,7 +1872,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 
 ## Phase UXR-F - Dashboard Create/Edit Forms UX/UI Unification (Queued 2026-04-18)
 - [x] `UXR-F-01 docs(contract): freeze unified dashboard create/edit form UX contract and migration boundaries`
-- [ ] `UXR-F-02 feat(web-ui-forms-core): add FormPageShell/FormSectionCard/FormGrid/FormField/FormAlert/FormValidationSummary primitives`
+- [x] `UXR-F-02 feat(web-ui-forms-core): add FormPageShell/FormSectionCard/FormGrid/FormField/FormAlert/FormValidationSummary primitives`
 - [ ] `UXR-F-03 feat(web-ui-forms-fields): add Text/Number/Select/Textarea/Toggle/RadioGroup/Range/Compound shared field components`
 - [ ] `UXR-F-04 test(web-ui-forms-guardrail): add primitive tests and enforce no cross-feature generic field-control imports`
 - [ ] `UXR-F-05 refactor(web-form-page-shell-i18n): unify create/edit wrappers with FormPageShell and namespace-driven breadcrumbs/actions`
@@ -1887,5 +1887,6 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `UXR-F-14 qa(web-form-closure): run typecheck/build and publish closure sync evidence`
 
 ### Progress Log (Phase UXR-F - Dashboard Create/Edit Forms UX/UI Unification)
+- 2026-04-18: Completed `UXR-F-02` by adding shared `ui/forms` core primitives (`FormPageShell`, `FormSectionCard`, `FormGrid`, `FormField`, `FormAlert`, `FormValidationSummary`) with barrel exports and baseline component tests in `FormPrimitives.test.tsx`. Validation: `pnpm --filter web test -- src/ui/forms/FormPrimitives.test.tsx` => `5/5 PASS`; `pnpm --filter web run typecheck` => `PASS`.
 - 2026-04-18: Completed `UXR-F-01` by locking Stage A migration boundaries in canonical decision contract (`open-decisions`): Stage A is restricted to docs freeze, shared `ui/forms` primitives, and import-boundary guardrail enforcement, with no wrapper/business-flow migration outside guardrail safety.
 - 2026-04-18: Queued non-blocking implementation wave in `docs/planning/uxr-f-dashboard-forms-unification-plan-2026-04-18.md`, split into grouped execution batches `UXR-F-A..UXR-F-D` with stage DoD, per-stage risk/rollback plan, and explicit test packs; queue inserted without modifying active executor `NOW`.
