@@ -9,8 +9,8 @@ export type StrategyPreset = {
   form: StrategyFormState;
 };
 
-type LocalizedText = { en: string; pl: string; pt?: string };
-type LocalizedTags = { en: string[]; pl: string[]; pt?: string[] };
+type LocalizedText = { en: string; pl: string; pt: string };
+type LocalizedTags = { en: string[]; pl: string[]; pt: string[] };
 export type StrategyPresetPresentation = {
   name: string;
   description: string;
@@ -457,69 +457,81 @@ const localizedPresetCopy: Record<
   { name: LocalizedText; description: LocalizedText; tags: LocalizedTags }
 > = {
   "scalp-rsi-stochastic": {
-    name: { en: "Scalp (RSI + Stochastic)", pl: "Scalp (RSI + Stochastic)" },
+    name: { en: "Scalp (RSI + Stochastic)", pl: "Scalp (RSI + Stochastic)", pt: "Scalp (RSI + Estocastico)" },
     description: {
       en: "Very short-term setup for micro pullback entries on fast charts.",
       pl: "Bardzo krotkoterminowy setup pod mikro cofniecia na szybkich wykresach.",
+      pt: "Setup de prazo muito curto para entradas em micro recuos em graficos rapidos.",
     },
     tags: {
       en: ["scalp", "rsi", "stochastic", "fast"],
       pl: ["scalp", "rsi", "stochastic", "szybki"],
+      pt: ["scalp", "rsi", "estocastico", "rapido"],
     },
   },
   "day-trend-ema-adx": {
-    name: { en: "Day Trend (EMA + ADX)", pl: "Day Trend (EMA + ADX)" },
+    name: { en: "Day Trend (EMA + ADX)", pl: "Day Trend (EMA + ADX)", pt: "Day Trend (EMA + ADX)" },
     description: {
       en: "Intraday trend-follow setup with trend strength filter.",
       pl: "Intraday trend-follow z filtrem sily trendu.",
+      pt: "Setup intradiario de seguimento de tendencia com filtro de forca de tendencia.",
     },
     tags: {
       en: ["day-trend", "ema", "adx", "intraday"],
       pl: ["day-trend", "ema", "adx", "intraday"],
+      pt: ["day-trend", "ema", "adx", "intraday"],
     },
   },
   "swing-macd-rsi": {
-    name: { en: "Swing (MACD + RSI)", pl: "Swing (MACD + RSI)" },
+    name: { en: "Swing (MACD + RSI)", pl: "Swing (MACD + RSI)", pt: "Swing (MACD + RSI)" },
     description: {
       en: "Multi-session setup for larger directional moves.",
       pl: "Wielosesyjny setup pod wieksze ruchy kierunkowe.",
+      pt: "Setup multi-sessao para movimentos direcionais maiores.",
     },
     tags: {
       en: ["swing", "macd", "rsi", "higher-timeframe"],
       pl: ["swing", "macd", "rsi", "wyzszy-interwal"],
+      pt: ["swing", "macd", "rsi", "timeframe-superior"],
     },
   },
   "mean-reversion-rsi-bb": {
-    name: { en: "Mean Reversion (RSI + BB)", pl: "Mean Reversion (RSI + BB)" },
+    name: { en: "Mean Reversion (RSI + BB)", pl: "Mean Reversion (RSI + BB)", pt: "Mean Reversion (RSI + BB)" },
     description: {
       en: "Counter-trend setup using RSI extremes and Bollinger context.",
       pl: "Counter-trend z ekstremami RSI i kontekstem Wsteg Bollingera.",
+      pt: "Setup contra-tendencia com extremos de RSI e contexto de Bollinger.",
     },
     tags: {
       en: ["mean-reversion", "rsi", "bollinger", "counter-trend"],
       pl: ["mean-reversion", "rsi", "bollinger", "counter-trend"],
+      pt: ["mean-reversion", "rsi", "bollinger", "counter-trend"],
     },
   },
   "breakout-roc-adx": {
-    name: { en: "Breakout (ROC + ADX)", pl: "Breakout (ROC + ADX)" },
+    name: { en: "Breakout (ROC + ADX)", pl: "Breakout (ROC + ADX)", pt: "Breakout (ROC + ADX)" },
     description: {
       en: "Breakout continuation preset for expansion phases.",
       pl: "Preset breakout continuation pod fazy ekspansji.",
+      pt: "Preset de continuacao de breakout para fases de expansao.",
     },
     tags: {
       en: ["breakout", "roc", "adx", "expansion"],
       pl: ["breakout", "roc", "adx", "ekspansja"],
+      pt: ["breakout", "roc", "adx", "expansao"],
     },
   },
   "perp-bias-derivatives": {
-    name: { en: "Perp Bias (Funding + OI + OB)", pl: "Perp Bias (Funding + OI + OB)" },
+    name: { en: "Perp Bias (Funding + OI + OB)", pl: "Perp Bias (Funding + OI + OB)", pt: "Perp Bias (Funding + OI + OB)" },
     description: {
       en: "Futures-only directional bias preset using derivatives filters.",
       pl: "Preset futures-only z filtrem derywatow i biasem kierunkowym.",
+      pt: "Preset de vies direcional apenas para futuros com filtros de derivados.",
     },
     tags: {
       en: ["perp-bias", "funding", "open-interest", "orderbook"],
       pl: ["perp-bias", "funding", "open-interest", "orderbook"],
+      pt: ["perp-bias", "funding", "open-interest", "orderbook"],
     },
   },
 };

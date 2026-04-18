@@ -10,6 +10,7 @@ import {
   LoadingState,
   SuccessState,
 } from "../../../ui/components/ViewState";
+import { useOptionalI18n } from "../../../i18n/useOptionalI18n";
 import { useLocaleFormatting } from "../../../i18n/useLocaleFormatting";
 import { listStrategies } from "../../strategies/api/strategies.api";
 import { StrategyDto } from "../../strategies/types/StrategyForm.type";
@@ -61,6 +62,7 @@ const toSparklinePoints = (series: number[]) => {
 };
 
 export function BacktestsList() {
+  const { t } = useOptionalI18n();
   const { formatCurrency, formatDateTime, formatNumber, formatPercent } = useLocaleFormatting();
   const [runs, setRuns] = useState<BacktestRun[]>([]);
   const [strategies, setStrategies] = useState<StrategyDto[]>([]);
@@ -81,6 +83,79 @@ export function BacktestsList() {
   const [strategyId, setStrategyId] = useState("");
   const [notes, setNotes] = useState("");
 
+  const statusLabels = useMemo(
+    () => ({
+      ALL: t("dashboard.backtests.legacy.statusAll"),
+      PENDING: t("dashboard.backtests.legacy.statusPending"),
+      RUNNING: t("dashboard.backtests.legacy.statusRunning"),
+      COMPLETED: t("dashboard.backtests.legacy.statusCompleted"),
+      FAILED: t("dashboard.backtests.legacy.statusFailed"),
+      CANCELED: t("dashboard.backtests.legacy.statusCanceled"),
+    }),
+    [t]
+  );
+
+  const copy = useMemo(
+    () => ({
+      createTitle: t("dashboard.backtests.legacy.createTitle"),
+      createDescription: t("dashboard.backtests.legacy.createDescription"),
+      nameLabel: t("dashboard.backtests.runsTable.colName"),
+      namePlaceholder: t("dashboard.backtests.legacy.namePlaceholder"),
+      symbolLabel: t("dashboard.backtests.runsTable.colSymbol"),
+      symbolPlaceholder: t("dashboard.backtests.legacy.symbolPlaceholder"),
+      timeframeLabel: t("dashboard.backtests.runsTable.colTimeframe"),
+      timeframePlaceholder: t("dashboard.backtests.legacy.timeframePlaceholder"),
+      strategyLabel: t("dashboard.backtests.createForm.strategy"),
+      noStrategy: t("dashboard.backtests.createForm.noStrategies"),
+      statusFilterLabel: t("dashboard.backtests.legacy.statusFilterLabel"),
+      notesLabel: t("dashboard.backtests.createForm.notes"),
+      notesPlaceholder: t("dashboard.backtests.createForm.notesPlaceholder"),
+      refreshList: t("dashboard.backtests.legacy.refreshList"),
+      creating: t("dashboard.backtests.createForm.creating"),
+      createRun: t("dashboard.backtests.legacy.createRun"),
+      loadingRunsTitle: t("dashboard.backtests.listView.loadingTitle"),
+      errorRunsTitle: t("dashboard.backtests.listView.errorTitle"),
+      retry: t("dashboard.backtests.listView.retry"),
+      emptyRunsTitle: t("dashboard.backtests.listView.emptyTitle"),
+      emptyRunsDescription: t("dashboard.backtests.listView.emptyDescription"),
+      loadedSuccessTitle: t("dashboard.backtests.legacy.loadedSuccessTitle"),
+      loadedSuccessDescriptionPrefix: t("dashboard.backtests.legacy.loadedSuccessDescriptionPrefix"),
+      actionHeader: t("dashboard.backtests.runsTable.colActions"),
+      preview: t("dashboard.backtests.runsTable.preview"),
+      selectRunTitle: t("dashboard.backtests.legacy.selectRunTitle"),
+      selectRunDescription: t("dashboard.backtests.legacy.selectRunDescription"),
+      loadingRunDetailsTitle: t("dashboard.backtests.legacy.loadingRunDetailsTitle"),
+      summaryTab: t("dashboard.backtests.legacy.summaryTab"),
+      tradesTab: t("dashboard.backtests.legacy.tradesTab"),
+      rawTab: t("dashboard.backtests.legacy.rawTab"),
+      openOverlay: t("dashboard.backtests.legacy.openOverlay"),
+      reportNotReadyTitle: t("dashboard.backtests.legacy.reportNotReadyTitle"),
+      reportNotReadyDescription: t("dashboard.backtests.legacy.reportNotReadyDescription"),
+      netPnl: t("dashboard.backtests.legacy.netPnl"),
+      winRate: t("dashboard.backtests.legacy.winRate"),
+      totalTrades: t("dashboard.backtests.legacy.totalTrades"),
+      maxDrawdown: t("dashboard.backtests.legacy.maxDrawdown"),
+      overlayQuality: t("dashboard.backtests.legacy.overlayQuality"),
+      equityOverlay: t("dashboard.backtests.legacy.equityOverlay"),
+      equityNoData: t("dashboard.backtests.legacy.equityNoData"),
+      grossProfit: t("dashboard.backtests.legacy.grossProfit"),
+      grossLoss: t("dashboard.backtests.legacy.grossLoss"),
+      noTradesTitle: t("dashboard.backtests.legacy.noTradesTitle"),
+      noTradesDescription: t("dashboard.backtests.legacy.noTradesDescription"),
+      side: t("dashboard.backtests.legacy.side"),
+      entry: t("dashboard.backtests.legacy.entry"),
+      exit: t("dashboard.backtests.legacy.exit"),
+      modalTitle: t("dashboard.backtests.legacy.modalTitle"),
+      modalReportMissing: t("dashboard.backtests.legacy.modalReportMissing"),
+      modalRunStatus: t("dashboard.backtests.legacy.modalRunStatus"),
+      modalClose: t("dashboard.backtests.legacy.modalClose"),
+      closeBackdrop: t("public.a11y.closeModalBackdrop"),
+      detailsLoadError: t("dashboard.backtests.legacy.detailsLoadError"),
+      loadRunsError: t("dashboard.backtests.legacy.loadRunsError"),
+    }),
+    [t]
+  );
+
   const selectedRun = useMemo(
     () => runs.find((run) => run.id === selectedRunId) ?? null,
     [runs, selectedRunId]
@@ -92,10 +167,14 @@ export function BacktestsList() {
     const winRate = report?.winRate ?? 0;
     const maxDrawdown = report?.maxDrawdown ?? 100;
     const sharpe = report?.sharpe ?? 0;
-    if ((report?.netPnl ?? 0) > 0 && winRate >= 55 && maxDrawdown <= 20 && sharpe >= 1) return "Strong";
-    if ((report?.netPnl ?? 0) > 0 && winRate >= 45) return "Stable";
-    return "Risky";
-  }, [report]);
+    if ((report?.netPnl ?? 0) > 0 && winRate >= 55 && maxDrawdown <= 20 && sharpe >= 1) {
+      return t("dashboard.backtests.legacy.overlayQualityStrong");
+    }
+    if ((report?.netPnl ?? 0) > 0 && winRate >= 45) {
+      return t("dashboard.backtests.legacy.overlayQualityStable");
+    }
+    return t("dashboard.backtests.legacy.overlayQualityRisky");
+  }, [report, t]);
 
   const loadRuns = useCallback(async () => {
     setLoading(true);
@@ -105,11 +184,11 @@ export function BacktestsList() {
       setRuns(data);
       setSelectedRunId((prev) => prev ?? data[0]?.id ?? null);
     } catch (err: unknown) {
-      setError(getAxiosMessage(err) ?? "Nie udalo sie pobrac backtest runs.");
+      setError(getAxiosMessage(err) ?? copy.loadRunsError);
     } finally {
       setLoading(false);
     }
-  }, [selectedStatus]);
+  }, [copy.loadRunsError, selectedStatus]);
 
   const loadDetails = useCallback(async (runId: string) => {
     setDetailsLoading(true);
@@ -121,7 +200,7 @@ export function BacktestsList() {
       setTrades(tradesData);
       setReport(reportData);
     } catch (err: unknown) {
-      toast.error("Nie udalo sie pobrac szczegolow backtestu", {
+      toast.error(copy.detailsLoadError, {
         description: getAxiosMessage(err),
       });
       setTrades([]);
@@ -129,7 +208,7 @@ export function BacktestsList() {
     } finally {
       setDetailsLoading(false);
     }
-  }, []);
+  }, [copy.detailsLoadError]);
 
   useEffect(() => {
     void loadRuns();
@@ -171,9 +250,9 @@ export function BacktestsList() {
       });
       setRuns((prev) => [created, ...prev]);
       setSelectedRunId(created.id);
-      toast.success("Backtest run utworzony");
+      toast.success(t("dashboard.backtests.toastCreated"));
     } catch (err: unknown) {
-      toast.error("Nie udalo sie utworzyc backtestu", {
+      toast.error(t("dashboard.backtests.toastCreateFailed"), {
         description: getAxiosMessage(err),
       });
     } finally {
@@ -184,44 +263,44 @@ export function BacktestsList() {
   return (
     <div className="space-y-5">
       <form onSubmit={handleCreate} className="rounded-box border border-base-300/60 bg-base-200/60 p-4">
-        <h2 className="text-lg font-semibold">Nowy backtest run</h2>
-        <p className="text-sm opacity-70">Utworz run, a potem sprawdz summary, trades i overlay raportu.</p>
+        <h2 className="text-lg font-semibold">{copy.createTitle}</h2>
+        <p className="text-sm opacity-70">{copy.createDescription}</p>
         <div className="mt-3 grid gap-3 md:grid-cols-3">
           <label className="form-control">
-            <span className="label-text">Name</span>
+            <span className="label-text">{copy.nameLabel}</span>
             <input
               className="input input-bordered"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="MVP Backtest Run"
+              placeholder={copy.namePlaceholder}
             />
           </label>
           <label className="form-control">
-            <span className="label-text">Symbol</span>
+            <span className="label-text">{copy.symbolLabel}</span>
             <input
               className="input input-bordered"
               value={symbol}
               onChange={(event) => setSymbol(event.target.value)}
-              placeholder="BTCUSDT"
+              placeholder={copy.symbolPlaceholder}
             />
           </label>
           <label className="form-control">
-            <span className="label-text">Timeframe</span>
+            <span className="label-text">{copy.timeframeLabel}</span>
             <input
               className="input input-bordered"
               value={timeframe}
               onChange={(event) => setTimeframe(event.target.value)}
-              placeholder="5m"
+              placeholder={copy.timeframePlaceholder}
             />
           </label>
           <label className="form-control md:col-span-2">
-            <span className="label-text">Strategy (optional)</span>
+            <span className="label-text">{copy.strategyLabel}</span>
             <select
               className="select select-bordered"
               value={strategyId}
               onChange={(event) => setStrategyId(event.target.value)}
             >
-              <option value="">No strategy</option>
+              <option value="">{copy.noStrategy}</option>
               {strategies.map((strategy) => (
                 <option key={strategy.id} value={strategy.id}>
                   {strategy.name}
@@ -230,7 +309,7 @@ export function BacktestsList() {
             </select>
           </label>
           <label className="form-control">
-            <span className="label-text">Status filter</span>
+            <span className="label-text">{copy.statusFilterLabel}</span>
             <select
               className="select select-bordered"
               value={selectedStatus}
@@ -238,61 +317,64 @@ export function BacktestsList() {
             >
               {statuses.map((status) => (
                 <option key={status} value={status}>
-                  {status}
+                  {statusLabels[status]}
                 </option>
               ))}
             </select>
           </label>
           <label className="form-control md:col-span-3">
-            <span className="label-text">Notes (optional)</span>
+            <span className="label-text">{copy.notesLabel}</span>
             <textarea
               className="textarea textarea-bordered"
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
-              placeholder="Run notes"
+              placeholder={copy.notesPlaceholder}
             />
           </label>
         </div>
         <div className="mt-3 flex justify-end gap-2">
           <button type="button" className="btn btn-outline btn-sm" onClick={() => void loadRuns()}>
-            Odswiez liste
+            {copy.refreshList}
           </button>
           <button type="submit" className="btn btn-primary btn-sm" disabled={creating}>
-            {creating ? "Tworzenie..." : "Utworz run"}
+            {creating ? copy.creating : copy.createRun}
           </button>
         </div>
       </form>
 
-      {loading && <LoadingState title="Ladowanie backtest runs" />}
+      {loading && <LoadingState title={copy.loadingRunsTitle} />}
       {!loading && error && (
         <ErrorState
-          title="Nie udalo sie pobrac backtest runs"
+          title={copy.errorRunsTitle}
           description={error}
-          retryLabel="Sprobuj ponownie"
+          retryLabel={copy.retry}
           onRetry={() => void loadRuns()}
         />
       )}
       {!loading && !error && runs.length === 0 && (
         <EmptyState
-          title="Brak backtest runs"
-          description="Utworz pierwszy run i sprawdz wynik w sekcji summary."
+          title={copy.emptyRunsTitle}
+          description={copy.emptyRunsDescription}
         />
       )}
 
       {!loading && !error && runs.length > 0 && (
         <div className="grid gap-4 xl:grid-cols-3">
           <div className="xl:col-span-2 rounded-box border border-base-300/60 bg-base-200/60 p-4">
-            <SuccessState title="Backtest runs loaded" description={`Pobrano ${runs.length} run(s).`} />
+            <SuccessState
+              title={copy.loadedSuccessTitle}
+              description={`${copy.loadedSuccessDescriptionPrefix} ${runs.length}`}
+            />
             <div className="mt-3 overflow-x-auto">
               <table className="table table-zebra">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Symbol</th>
-                    <th>Timeframe</th>
-                    <th>Status</th>
-                    <th>Started</th>
-                    <th>Akcja</th>
+                    <th>{t("dashboard.backtests.runsTable.colName")}</th>
+                    <th>{t("dashboard.backtests.runsTable.colSymbol")}</th>
+                    <th>{t("dashboard.backtests.runsTable.colTimeframe")}</th>
+                    <th>{t("dashboard.backtests.runsTable.colStatus")}</th>
+                    <th>{t("dashboard.backtests.runsTable.colStart")}</th>
+                    <th>{copy.actionHeader}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -311,7 +393,7 @@ export function BacktestsList() {
                           className="btn btn-xs btn-outline"
                           onClick={() => setSelectedRunId(run.id)}
                         >
-                          Podglad
+                          {copy.preview}
                         </button>
                       </td>
                     </tr>
@@ -324,19 +406,19 @@ export function BacktestsList() {
           <div className="rounded-box border border-base-300/60 bg-base-200/60 p-4">
             {!selectedRun && (
               <DegradedState
-                title="Wybierz run"
-                description="Aby zobaczyc summary/trades i otworzyc overlay, wybierz run z tabeli."
+                title={copy.selectRunTitle}
+                description={copy.selectRunDescription}
               />
             )}
 
-            {selectedRun && detailsLoading && <LoadingState title="Ladowanie szczegolow runa" />}
+            {selectedRun && detailsLoading && <LoadingState title={copy.loadingRunDetailsTitle} />}
 
             {selectedRun && !detailsLoading && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Summary</h3>
+                  <h3 className="text-lg font-semibold">{copy.summaryTab}</h3>
                   <button type="button" className="btn btn-xs btn-primary" onClick={() => setOverlayOpen(true)}>
-                    Open Overlay
+                    {copy.openOverlay}
                   </button>
                 </div>
 
@@ -346,21 +428,21 @@ export function BacktestsList() {
                     className={`tab ${activeTab === "summary" ? "tab-active" : ""}`}
                     onClick={() => setActiveTab("summary")}
                   >
-                    Summary
+                    {copy.summaryTab}
                   </button>
                   <button
                     type="button"
                     className={`tab ${activeTab === "trades" ? "tab-active" : ""}`}
                     onClick={() => setActiveTab("trades")}
                   >
-                    Trades
+                    {copy.tradesTab}
                   </button>
                   <button
                     type="button"
                     className={`tab ${activeTab === "raw" ? "tab-active" : ""}`}
                     onClick={() => setActiveTab("raw")}
                   >
-                    Raw
+                    {copy.rawTab}
                   </button>
                 </div>
 
@@ -368,33 +450,33 @@ export function BacktestsList() {
                   <div className="space-y-2">
                     {!report && (
                       <DegradedState
-                        title="Report nie jest jeszcze gotowy"
-                        description="Run istnieje, ale backend nie zapisal jeszcze raportu."
+                        title={copy.reportNotReadyTitle}
+                        description={copy.reportNotReadyDescription}
                       />
                     )}
                     {report && (
                       <div className="grid grid-cols-2 gap-2">
                         <div className="stat bg-base-100 rounded-lg p-3">
-                          <div className="stat-title">Net PnL</div>
+                          <div className="stat-title">{copy.netPnl}</div>
                           <div className={`stat-value text-xl ${pnlClass(report.netPnl)}`}>{formatCurrency(report.netPnl)}</div>
                         </div>
                         <div className="stat bg-base-100 rounded-lg p-3">
-                          <div className="stat-title">Win Rate</div>
+                          <div className="stat-title">{copy.winRate}</div>
                           <div className="stat-value text-xl">{formatPercent(report.winRate)}</div>
                         </div>
                         <div className="stat bg-base-100 rounded-lg p-3">
-                          <div className="stat-title">Total Trades</div>
+                          <div className="stat-title">{copy.totalTrades}</div>
                           <div className="stat-value text-xl">{formatNumber(report.totalTrades)}</div>
                         </div>
                         <div className="stat bg-base-100 rounded-lg p-3">
-                          <div className="stat-title">Max Drawdown</div>
+                          <div className="stat-title">{copy.maxDrawdown}</div>
                           <div className="stat-value text-xl">{formatPercent(report.maxDrawdown)}</div>
                         </div>
                         <div className="stat bg-base-100 rounded-lg p-3 col-span-2">
-                          <div className="stat-title">Overlay Quality</div>
+                          <div className="stat-title">{copy.overlayQuality}</div>
                           <div className="stat-value text-xl">{overlayQuality}</div>
                           <div className="stat-desc">
-                            WinRate {formatPercent(report.winRate)} / MaxDD {formatPercent(report.maxDrawdown)} / Sharpe{" "}
+                            {copy.winRate} {formatPercent(report.winRate)} / {copy.maxDrawdown} {formatPercent(report.maxDrawdown)} / Sharpe{" "}
                             {formatNumber(report.sharpe, { maximumFractionDigits: 2 })}
                           </div>
                         </div>
@@ -402,11 +484,11 @@ export function BacktestsList() {
                     )}
 
                     <div className="rounded-lg border border-base-300 bg-base-100 p-3">
-                      <p className="text-sm font-medium">Equity Overlay</p>
+                      <p className="text-sm font-medium">{copy.equityOverlay}</p>
                       {equityCurvePoints ? (
                         <svg
                           role="img"
-                          aria-label="Backtest equity overlay"
+                          aria-label={copy.equityOverlay}
                           className="mt-2 h-[76px] w-full"
                           viewBox="0 0 280 70"
                           preserveAspectRatio="none"
@@ -420,12 +502,11 @@ export function BacktestsList() {
                           />
                         </svg>
                       ) : (
-                        <p className="mt-2 text-xs opacity-70">Brak danych trades do narysowania overlayu equity.</p>
+                        <p className="mt-2 text-xs opacity-70">{copy.equityNoData}</p>
                       )}
                       {report && (
                         <p className="mt-2 text-xs opacity-70">
-                          Net PnL {formatCurrency(report.netPnl)} | Gross Profit {formatCurrency(report.grossProfit)} | Gross
-                          Loss {formatCurrency(report.grossLoss)}
+                          {copy.netPnl} {formatCurrency(report.netPnl)} | {copy.grossProfit} {formatCurrency(report.grossProfit)} | {copy.grossLoss} {formatCurrency(report.grossLoss)}
                         </p>
                       )}
                     </div>
@@ -435,16 +516,16 @@ export function BacktestsList() {
                 {activeTab === "trades" && (
                   <div className="overflow-x-auto">
                     {trades.length === 0 ? (
-                      <EmptyState title="Brak trades" description="Brak transakcji przypisanych do tego runa." />
+                      <EmptyState title={copy.noTradesTitle} description={copy.noTradesDescription} />
                     ) : (
                       <table className="table table-xs">
                         <thead>
                           <tr>
-                            <th>Symbol</th>
-                            <th>Side</th>
-                            <th>Entry</th>
-                            <th>Exit</th>
-                            <th>PnL</th>
+                            <th>{t("dashboard.backtests.runsTable.colSymbol")}</th>
+                            <th>{copy.side}</th>
+                            <th>{copy.entry}</th>
+                            <th>{copy.exit}</th>
+                            <th>{copy.netPnl}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -477,28 +558,30 @@ export function BacktestsList() {
       {overlayOpen && selectedRun && (
         <dialog className="modal modal-open">
           <div className="modal-box">
-            <h3 className="font-bold text-lg">Backtest Overlay Summary</h3>
+            <h3 className="font-bold text-lg">{copy.modalTitle}</h3>
             <p className="text-sm opacity-70 mt-1">
               {selectedRun.name} / {selectedRun.symbol} / {selectedRun.timeframe}
             </p>
             {!report && (
-              <p className="mt-3 text-sm">Report not available yet. Run status: {selectedRun.status}.</p>
+              <p className="mt-3 text-sm">
+                {copy.modalReportMissing} {copy.modalRunStatus}: {selectedRun.status}.
+              </p>
             )}
             {report && (
               <div className="mt-3 space-y-2">
                 <p>
-                  Net PnL: <strong className={pnlClass(report.netPnl)}>{formatCurrency(report.netPnl)}</strong>
+                  {copy.netPnl}: <strong className={pnlClass(report.netPnl)}>{formatCurrency(report.netPnl)}</strong>
                 </p>
-                <p>Win rate: <strong>{formatPercent(report.winRate)}</strong></p>
+                <p>{copy.winRate}: <strong>{formatPercent(report.winRate)}</strong></p>
                 <p>Sharpe: <strong>{formatNumber(report.sharpe, { maximumFractionDigits: 2 })}</strong></p>
-                <p>Total trades: <strong>{formatNumber(report.totalTrades)}</strong></p>
-                <p>Overlay quality: <strong>{overlayQuality}</strong></p>
+                <p>{copy.totalTrades}: <strong>{formatNumber(report.totalTrades)}</strong></p>
+                <p>{copy.overlayQuality}: <strong>{overlayQuality}</strong></p>
                 <div className="rounded-lg border border-base-300 bg-base-100 p-3">
-                  <p className="text-xs font-medium">Equity Overlay</p>
+                  <p className="text-xs font-medium">{copy.equityOverlay}</p>
                   {equityCurvePoints ? (
                     <svg
                       role="img"
-                      aria-label="Backtest equity overlay modal"
+                      aria-label={`${copy.equityOverlay} modal`}
                       className="mt-2 h-[76px] w-full"
                       viewBox="0 0 280 70"
                       preserveAspectRatio="none"
@@ -512,20 +595,20 @@ export function BacktestsList() {
                       />
                     </svg>
                   ) : (
-                    <p className="mt-2 text-xs opacity-70">Brak trades do overlayu.</p>
+                    <p className="mt-2 text-xs opacity-70">{copy.equityNoData}</p>
                   )}
                 </div>
               </div>
             )}
             <div className="modal-action">
               <button type="button" className="btn" onClick={() => setOverlayOpen(false)}>
-                Zamknij
+                {copy.modalClose}
               </button>
             </div>
           </div>
           <form method="dialog" className="modal-backdrop">
             <button type="button" onClick={() => setOverlayOpen(false)}>
-              close
+              {copy.closeBackdrop}
             </button>
           </form>
         </dialog>

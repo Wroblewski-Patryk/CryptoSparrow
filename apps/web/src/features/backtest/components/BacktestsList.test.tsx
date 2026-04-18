@@ -30,7 +30,7 @@ describe("BacktestsList", () => {
     render(<BacktestsList />);
 
     await waitFor(() => {
-      expect(screen.getByText("Brak backtest runs")).toBeInTheDocument();
+      expect(screen.getByText("No backtest runs")).toBeInTheDocument();
     });
   });
 

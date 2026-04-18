@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { strategyPresets } from "./strategyPresets";
+import { getStrategyPresetPresentation, strategyPresets } from "./strategyPresets";
 
 describe("strategyPresets", () => {
   it("contains canonical trader archetypes", () => {
@@ -25,5 +25,16 @@ describe("strategyPresets", () => {
     expect(shortNames).toEqual(
       expect.arrayContaining(["FUNDING_RATE_ZSCORE", "OPEN_INTEREST_ZSCORE", "ORDER_BOOK_IMBALANCE"]),
     );
+  });
+
+  it("provides localized preset presentation for en/pl/pt locales", () => {
+    for (const preset of strategyPresets) {
+      for (const locale of ["en", "pl", "pt"] as const) {
+        const presentation = getStrategyPresetPresentation(preset, locale);
+        expect(presentation.name).toBeTruthy();
+        expect(presentation.description).toBeTruthy();
+        expect(presentation.tags.length).toBeGreaterThan(0);
+      }
+    }
   });
 });
