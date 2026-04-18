@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { I18nProvider } from "@/i18n/I18nProvider";
 import DataTable, { type DataTableColumn } from "./DataTable";
 
 type Row = {
@@ -8,6 +9,11 @@ type Row = {
 };
 
 describe("DataTable", () => {
+  beforeEach(() => {
+    window.localStorage.setItem("cryptosparrow-locale", "en");
+    window.history.pushState({}, "", "/dashboard");
+  });
+
   it("applies horizontal padding for empty-state message", () => {
     const columns: DataTableColumn<Row>[] = [
       {
@@ -18,12 +24,14 @@ describe("DataTable", () => {
     ];
 
     render(
-      <DataTable<Row>
-        rows={[]}
-        columns={columns}
-        getRowId={(row) => row.id}
-        emptyText="Brak wpisow"
-      />,
+      <I18nProvider>
+        <DataTable<Row>
+          rows={[]}
+          columns={columns}
+          getRowId={(row) => row.id}
+          emptyText="Brak wpisow"
+        />
+      </I18nProvider>,
     );
 
     const emptyMessage = screen.getByText("Brak wpisow");
@@ -41,12 +49,14 @@ describe("DataTable", () => {
     ];
 
     render(
-      <DataTable<Row>
-        rows={[{ id: "1", name: "Alpha" }]}
-        columns={columns}
-        getRowId={(row) => row.id}
-        advancedMode
-      />
+      <I18nProvider>
+        <DataTable<Row>
+          rows={[{ id: "1", name: "Alpha" }]}
+          columns={columns}
+          getRowId={(row) => row.id}
+          advancedMode
+        />
+      </I18nProvider>
     );
 
     expect(screen.getByRole("button", { name: "Columns" })).toBeInTheDocument();

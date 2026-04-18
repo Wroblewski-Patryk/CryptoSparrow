@@ -11,6 +11,7 @@ import {
   readTableColumnVisibilityPreference,
   saveTableColumnVisibilityPreference,
 } from '@/features/profile/services/profileBasicCache';
+import { useOptionalI18n } from '@/i18n/useOptionalI18n';
 import InlinePager from './InlinePager';
 
 export type DataTableColumn<T> = {
@@ -186,6 +187,7 @@ export default function DataTable<T>({
   settingsControlsIconOnly = false,
   advancedMode = false,
 }: DataTableProps<T>) {
+  const { t } = useOptionalI18n();
   const effectivePaginationEnabled = paginationEnabled || advancedMode;
   const effectiveColumnVisibilityEnabled = advancedMode ? true : columnVisibilityEnabled;
   const effectiveSettingsGroupVisible = advancedMode ? true : settingsGroupVisible;
@@ -541,7 +543,7 @@ export default function DataTable<T>({
               />
               <button
                 type='button'
-                aria-label='Filter rows'
+                aria-label={t('public.a11y.filterRows')}
                 className='btn btn-ghost btn-xs absolute right-1 top-1/2 h-7 min-h-7 w-7 -translate-y-1/2 rounded-full opacity-70 hover:opacity-100'
                 onClick={applySearch}
               >

@@ -1,5 +1,6 @@
 'use client';
 
+import { useOptionalI18n } from '@/i18n/useOptionalI18n';
 import LanguageSwitcher from '../layout/dashboard/LanguageSwitcher';
 import ThemeSwitcher from './ThemeSwitch';
 
@@ -14,8 +15,10 @@ export default function FooterPreferencesSwitchers({
   summaryClassName = '',
   tone = 'header',
 }: FooterPreferencesSwitchersProps) {
+  const { t } = useOptionalI18n();
+
   return (
-    <nav aria-label="Footer preferences" className={`h-full ${className}`.trim()}>
+    <nav aria-label={t('public.a11y.footerPreferences')} className={`h-full ${className}`.trim()}>
       <ul className="menu menu-horizontal h-full p-0 gap-1 items-center">
         <li><LanguageSwitcher placement="top" summaryClassName={summaryClassName} tone={tone} /></li>
         <li><ThemeSwitcher placement="top" summaryClassName={summaryClassName} tone={tone} /></li>

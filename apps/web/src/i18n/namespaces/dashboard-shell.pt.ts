@@ -35,6 +35,10 @@
     "polish": "Polaco",
     "portuguese": "Portugues (PT)"
   },
+  "a11y": {
+    "navigation": "Navegacao do painel",
+    "utilityNavigation": "Navegacao utilitaria do painel"
+  },
   "footer": {
     "rights": "Todos os direitos reservados."
   },

@@ -1,5 +1,7 @@
 'use client';
 
+import { useOptionalI18n } from '@/i18n/useOptionalI18n';
+
 type SkeletonCardBlockProps = {
   cards?: number;
   title?: boolean;
@@ -13,10 +15,12 @@ export default function SkeletonCardBlock({
   linesPerCard = 3,
   className = '',
 }: SkeletonCardBlockProps) {
+  const { t } = useOptionalI18n();
+
   return (
     <section
       aria-busy='true'
-      aria-label='Loading cards'
+      aria-label={t('public.a11y.loadingCards')}
       className={`space-y-3 rounded-box border border-base-300/60 bg-base-100/80 p-4 ${className}`.trim()}
     >
       {title ? <div className='skeleton h-6 w-44' /> : null}

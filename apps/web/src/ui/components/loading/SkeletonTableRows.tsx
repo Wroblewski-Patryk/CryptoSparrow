@@ -1,5 +1,7 @@
 'use client';
 
+import { useOptionalI18n } from '@/i18n/useOptionalI18n';
+
 type SkeletonTableRowsProps = {
   columns?: number;
   rows?: number;
@@ -15,13 +17,14 @@ export default function SkeletonTableRows({
   toolbar = true,
   className = '',
 }: SkeletonTableRowsProps) {
+  const { t } = useOptionalI18n();
   const safeColumns = Math.max(1, columns);
   const safeRows = Math.max(1, rows);
 
   return (
     <section
       aria-busy='true'
-      aria-label='Loading table rows'
+      aria-label={t('public.a11y.loadingTableRows')}
       className={`space-y-3 rounded-box border border-base-300/60 bg-base-100/80 p-4 ${className}`.trim()}
     >
       {title ? <div className='skeleton h-6 w-40' /> : null}

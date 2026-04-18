@@ -1,5 +1,7 @@
 'use client';
 
+import { useOptionalI18n } from '@/i18n/useOptionalI18n';
+
 type ConfirmModalProps = {
   open: boolean;
   title: string;
@@ -23,6 +25,8 @@ export default function ConfirmModal({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
+  const { t } = useOptionalI18n();
+
   if (!open) return null;
 
   return (
@@ -44,7 +48,14 @@ export default function ConfirmModal({
           </button>
         </div>
       </div>
-      <div className='modal-backdrop' role='button' aria-label='Close modal' tabIndex={0} onClick={onCancel} onKeyDown={() => onCancel()} />
+      <div
+        className='modal-backdrop'
+        role='button'
+        aria-label={t('public.a11y.closeModal')}
+        tabIndex={0}
+        onClick={onCancel}
+        onKeyDown={() => onCancel()}
+      />
     </dialog>
   );
 }

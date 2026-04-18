@@ -1,5 +1,7 @@
 'use client';
 
+import { useOptionalI18n } from '@/i18n/useOptionalI18n';
+
 type SkeletonFormBlockProps = {
   fields?: number;
   columns?: 1 | 2;
@@ -15,12 +17,13 @@ export default function SkeletonFormBlock({
   submitButton = true,
   className = '',
 }: SkeletonFormBlockProps) {
+  const { t } = useOptionalI18n();
   const gridClass = columns === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2';
 
   return (
     <section
       aria-busy='true'
-      aria-label='Loading form'
+      aria-label={t('public.a11y.loadingForm')}
       className={`space-y-4 rounded-box border border-base-300/60 bg-base-100/80 p-4 ${className}`.trim()}
     >
       {title ? <div className='skeleton h-6 w-52' /> : null}

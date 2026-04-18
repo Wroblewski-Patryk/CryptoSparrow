@@ -1,4 +1,7 @@
+'use client';
+
 import type { KeyboardEvent, ReactNode } from "react";
+import { useOptionalI18n } from "@/i18n/useOptionalI18n";
 
 type FormModalProps = {
   open: boolean;
@@ -19,6 +22,8 @@ export default function FormModal({
   children,
   actions,
 }: FormModalProps) {
+  const { t } = useOptionalI18n();
+
   if (!open) return null;
 
   const handleBackdropKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -38,7 +43,7 @@ export default function FormModal({
       <div
         className="modal-backdrop"
         role="button"
-        aria-label="Close modal"
+        aria-label={t("public.a11y.closeModal")}
         tabIndex={0}
         onClick={onClose}
         onKeyDown={handleBackdropKeyDown}

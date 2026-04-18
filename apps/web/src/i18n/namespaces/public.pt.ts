@@ -4,6 +4,16 @@ export const publicPt = {
     pl: "Polaco",
     pt: "Portugues (PT)",
   },
+  a11y: {
+    skipToMainContent: "Saltar para o conteudo principal",
+    closeModal: "Fechar modal",
+    footerPreferences: "Preferencias do rodape",
+    loadingCards: "A carregar cards",
+    loadingForm: "A carregar formulario",
+    loadingKpiRow: "A carregar linha KPI",
+    loadingTableRows: "A carregar linhas da tabela",
+    filterRows: "Filtrar linhas",
+  },
   offline: {
     title: "Modo offline",
     description: "O Soar esta temporariamente offline. Verifique a ligacao e tente novamente.",

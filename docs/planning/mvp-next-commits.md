@@ -14,7 +14,7 @@ Operational queue for one-task execution runs.
 - [x] `L10NQ-D-10 refactor(dashboard-home-copy): localize TP/SL/Notes/manual-order literals in HomeLiveWidgets`
 ## NEXT
 - [x] `L10NQ-D-11 refactor(global-offline-risk-copy): localize offline page and risk notice footer`
-- [ ] `L10NQ-D-12 refactor(shared-foundation-aria): localize shared aria/title strings in modal/table/loading/layout primitives`
+- [x] `L10NQ-D-12 refactor(shared-foundation-aria): localize shared aria/title strings in modal/table/loading/layout primitives`
 - [ ] `L10NQ-D-13 refactor(shared-footer-labels): align footer/public shell labels to translation keys`
 - [ ] `L10NQ-D-14 refactor(low-score-module-cleanup): clear residual route-reachable literals in profile/wallet components`
 - [ ] `L10NQ-D-15 cleanup(non-route-legacy-copy): align legacy BacktestsList + strategy presets localization contract`

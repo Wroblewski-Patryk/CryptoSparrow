@@ -35,6 +35,10 @@ export const dashboardShellPl = {
     "polish": "Polski",
     "portuguese": "Portugalski (PT)"
   },
+  "a11y": {
+    "navigation": "Nawigacja dashboardu",
+    "utilityNavigation": "Nawigacja narzedzi dashboardu"
+  },
   "footer": {
     "rights": "Wszelkie prawa zastrzezone."
   },

@@ -1,15 +1,18 @@
 'use client';
 
+import { useOptionalI18n } from '@/i18n/useOptionalI18n';
+
 type SkeletonKpiRowProps = {
   items?: number;
   className?: string;
 };
 
 export default function SkeletonKpiRow({ items = 4, className = '' }: SkeletonKpiRowProps) {
+  const { t } = useOptionalI18n();
   return (
     <section
       aria-busy='true'
-      aria-label='Loading KPI row'
+      aria-label={t('public.a11y.loadingKpiRow')}
       className={`grid gap-3 sm:grid-cols-2 xl:grid-cols-4 ${className}`.trim()}
     >
       {Array.from({ length: items }).map((_, index) => (

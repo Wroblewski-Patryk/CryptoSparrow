@@ -220,7 +220,7 @@ export default function Header() {
             />
           </div>
 
-          <nav aria-label="Dashboard navigation" className="hidden xl:flex flex-1 min-w-0 overflow-visible justify-center">
+          <nav aria-label={t('dashboard.a11y.navigation')} className="hidden xl:flex flex-1 min-w-0 overflow-visible justify-center">
             <ul className="menu menu-horizontal p-1 gap-1.5 flex-nowrap whitespace-nowrap overflow-visible items-center justify-center">
               <li>
                 <Link
@@ -260,7 +260,7 @@ export default function Header() {
           </nav>
 
           <div className="flex-none flex items-center gap-1 pl-2 xl:pl-4">
-            <nav aria-label="Dashboard utility navigation" className="hidden lg:block">
+            <nav aria-label={t('dashboard.a11y.utilityNavigation')} className="hidden lg:block">
               <ul className="menu menu-horizontal p-0 gap-1 items-center">
                 <li><ProfileButton /></li>
               </ul>
@@ -293,7 +293,7 @@ export default function Header() {
               id="dashboard-mobile-nav"
               className="mx-auto h-full w-full max-w-7xl overflow-y-auto overscroll-contain p-4 space-y-4"
             >
-              <nav aria-label="Dashboard navigation" className="w-full">
+              <nav aria-label={t('dashboard.a11y.navigation')} className="w-full">
                 <ul className="menu rounded-box p-0 gap-1 w-full">
                   {allLinks.map((item, index) => {
                     const ItemIcon = item.icon;

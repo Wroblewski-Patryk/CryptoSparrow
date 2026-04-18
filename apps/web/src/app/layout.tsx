@@ -6,6 +6,7 @@ import { Lato, Titillium_Web } from 'next/font/google';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '../context/AuthContext';
 import ServiceWorkerRegistration from '../ui/pwa/ServiceWorkerRegistration';
+import SkipToContentLink from '../ui/components/SkipToContentLink';
 import { themeBootstrapScript } from '../security/themeBootstrap';
 
 const titilliumWeb = Titillium_Web({
@@ -71,9 +72,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         suppressHydrationWarning
         className={`${lato.variable} ${titilliumWeb.variable} font-body`}
       >
-        <a href="#main-content" className="skip-link">
-          Skip to main content
-        </a>
+        <SkipToContentLink />
         <Toaster position="bottom-center" duration={2500} closeButton richColors />
         <ServiceWorkerRegistration />
         <AuthProvider>{children}</AuthProvider>
