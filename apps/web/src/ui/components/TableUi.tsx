@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { type ReactNode } from 'react';
+import { LuActivity, LuCopy, LuEye, LuListTree, LuPencilLine, LuTrash2 } from 'react-icons/lu';
 
 type ActionTone = 'neutral' | 'info' | 'danger';
 type BadgeTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
+export type TableActionPreset = 'edit' | 'delete' | 'clone' | 'preview' | 'runtime' | 'details';
 
 const actionClassByTone: Record<ActionTone, string> = {
   neutral:
@@ -22,6 +24,40 @@ const badgeClassByTone: Record<BadgeTone, string> = {
   warning: 'badge badge-sm badge-outline border-warning/45 bg-warning/10 text-warning',
   danger: 'badge badge-sm badge-outline border-error/45 bg-error/10 text-error',
 };
+
+type ActionPresetConfig = {
+  tone: ActionTone;
+  icon: ReactNode;
+};
+
+const actionPresetConfig: Record<TableActionPreset, ActionPresetConfig> = {
+  edit: {
+    tone: 'info',
+    icon: <LuPencilLine className='h-3.5 w-3.5' />,
+  },
+  delete: {
+    tone: 'danger',
+    icon: <LuTrash2 className='h-3.5 w-3.5' />,
+  },
+  clone: {
+    tone: 'neutral',
+    icon: <LuCopy className='h-3.5 w-3.5' />,
+  },
+  preview: {
+    tone: 'neutral',
+    icon: <LuEye className='h-3.5 w-3.5' />,
+  },
+  runtime: {
+    tone: 'info',
+    icon: <LuActivity className='h-3.5 w-3.5' />,
+  },
+  details: {
+    tone: 'neutral',
+    icon: <LuListTree className='h-3.5 w-3.5' />,
+  },
+};
+
+export const resolveTableActionPreset = (preset: TableActionPreset): ActionPresetConfig => actionPresetConfig[preset];
 
 type TableIconLinkActionProps = {
   href: string;
@@ -42,6 +78,26 @@ export function TableIconLinkAction({
         {icon}
       </Link>
     </span>
+  );
+}
+
+type TablePresetLinkActionProps = Omit<TableIconLinkActionProps, 'icon' | 'tone'> & {
+  preset: TableActionPreset;
+  icon?: ReactNode;
+};
+
+export function TablePresetLinkAction({
+  preset,
+  icon,
+  ...props
+}: TablePresetLinkActionProps) {
+  const resolved = resolveTableActionPreset(preset);
+  return (
+    <TableIconLinkAction
+      {...props}
+      tone={resolved.tone}
+      icon={icon ?? resolved.icon}
+    />
   );
 }
 
@@ -74,6 +130,26 @@ export function TableIconButtonAction({
         {icon}
       </button>
     </span>
+  );
+}
+
+type TablePresetButtonActionProps = Omit<TableIconButtonActionProps, 'icon' | 'tone'> & {
+  preset: TableActionPreset;
+  icon?: ReactNode;
+};
+
+export function TablePresetButtonAction({
+  preset,
+  icon,
+  ...props
+}: TablePresetButtonActionProps) {
+  const resolved = resolveTableActionPreset(preset);
+  return (
+    <TableIconButtonAction
+      {...props}
+      tone={resolved.tone}
+      icon={icon ?? resolved.icon}
+    />
   );
 }
 
