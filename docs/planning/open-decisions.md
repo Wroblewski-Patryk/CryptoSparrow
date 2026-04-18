@@ -322,6 +322,12 @@ This file tracks intentionally unresolved architecture choices so implementation
 - Decision:
   - all dashboard create/edit forms in scope must converge to one shared form system under `apps/web/src/ui/forms/*`.
   - preserve strategy form strengths (tabbed section clarity) while aligning field, spacing, and validation behavior to common primitives.
+- Migration boundaries (Stage A lock):
+  - Stage A scope is limited to:
+    - contract freeze in canonical planning docs,
+    - creation of shared `ui/forms` primitives and canonical field components,
+    - import-boundary guardrail for generic cross-feature field-control imports.
+  - Stage A does not change route wrappers, page copy, or business form flow behavior beyond import-boundary safety required by guardrails.
 - Locked behavior:
   - required shared primitives:
     - `FormPageShell`
