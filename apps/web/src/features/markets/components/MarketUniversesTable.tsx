@@ -1,20 +1,20 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { LuPencilLine, LuTrash2 } from 'react-icons/lu';
 import { useLocaleFormatting } from '../../../i18n/useLocaleFormatting';
 import { useI18n } from '../../../i18n/I18nProvider';
 import DataTable, { DataTableColumn } from '../../../ui/components/DataTable';
 import ConfirmModal from '../../../ui/components/ConfirmModal';
-import { TableIconButtonAction, TableToneBadge } from '../../../ui/components/TableUi';
-import { deleteMarketUniverse, fetchMarketCatalog } from '../services/markets.service';
+import { TablePresetButtonAction, TableToneBadge } from '../../../ui/components/TableUi';
+import { createMarketUniverse, deleteMarketUniverse, fetchMarketCatalog } from '../services/markets.service';
 import { MarketUniverse } from '../types/marketUniverse.type';
 import { uniqueSortedSymbols } from '../utils/marketUniverseHelpers';
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
 import { normalizeBaseCurrency } from '@/lib/symbols';
 import { normalizeUppercaseToken } from '@/lib/text';
+import { buildNextCloneName } from '@/lib/cloneNaming';
 
 const MARKET_UNIVERSE_ACTIVE_BOT_DELETE_ERROR =
   'market universe is used by active bot and cannot be deleted';
@@ -22,6 +22,7 @@ const MARKET_UNIVERSE_ACTIVE_BOT_DELETE_ERROR =
 type MarketUniversesTableProps = {
   rows: MarketUniverse[];
   onDeleted: (id: string) => void;
+  onCloned?: (row: MarketUniverse) => void;
 };
 
 type ResolvedTickers = {
@@ -48,11 +49,12 @@ const resolveMinVolumeRules = (row: MarketUniverse) => {
 const buildCatalogKey = (row: MarketUniverse) =>
   `${normalizeUppercaseToken(row.exchange ?? 'BINANCE')}|${row.marketType}|${normalizeBaseCurrency(row.baseCurrency)}`;
 
-export default function MarketUniversesTable({ rows, onDeleted }: MarketUniversesTableProps) {
+export default function MarketUniversesTable({ rows, onDeleted, onCloned }: MarketUniversesTableProps) {
   const { locale } = useI18n();
   const router = useRouter();
   const { formatDate } = useLocaleFormatting();
   const [deleteTarget, setDeleteTarget] = useState<MarketUniverse | null>(null);
+  const [cloningId, setCloningId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [resolvedTickersMap, setResolvedTickersMap] = useState<Record<string, ResolvedTickers>>({});
@@ -74,6 +76,9 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
           hide: 'Hide',
           edit: 'Edit',
           remove: 'Delete',
+          clone: 'Clone',
+          clonedToast: 'Markets entry cloned',
+          cloneFailedTitle: 'Could not clone markets entry',
           deletedToast: 'Markets entry deleted',
           deleteFailedTitle: 'Could not delete markets entry',
           activeBotDeleteTitle: 'Cannot delete markets entry because an active bot is using it',
@@ -101,6 +106,9 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
           hide: 'Ukryj',
           edit: 'Edytuj',
           remove: 'Usun',
+          clone: 'Klonuj',
+          clonedToast: 'Pozycja rynkow sklonowana',
+          cloneFailedTitle: 'Nie udalo sie sklonowac pozycji rynkow',
           deletedToast: 'Pozycja rynkow usunieta',
           deleteFailedTitle: 'Nie udalo sie usunac pozycji rynkow',
           activeBotDeleteTitle: 'Nie mozna usunac pozycji rynkow, bo aktywny bot z niej korzysta',
@@ -128,6 +136,9 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
           hide: 'Ocultar',
           edit: 'Editar',
           remove: 'Remover',
+          clone: 'Clonar',
+          clonedToast: 'Entrada de mercados clonada',
+          cloneFailedTitle: 'Nao foi possivel clonar a entrada de mercados',
           deletedToast: 'Entrada de mercados removida',
           deleteFailedTitle: 'Nao foi possivel remover a entrada de mercados',
           activeBotDeleteTitle: 'Nao e possivel remover: um bot ativo usa esta entrada',
@@ -214,6 +225,27 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
     };
   }, [rows]);
 
+  const handleClone = useCallback(async (row: MarketUniverse) => {
+    setCloningId(row.id);
+    try {
+      const created = await createMarketUniverse({
+        name: buildNextCloneName(row.name, rows.map((item) => item.name)),
+        exchange: row.exchange,
+        marketType: row.marketType,
+        baseCurrency: row.baseCurrency,
+        filterRules: row.filterRules ?? undefined,
+        whitelist: [...row.whitelist],
+        blacklist: [...row.blacklist],
+      });
+      onCloned?.(created);
+      toast.success(copy.clonedToast);
+    } catch (error: unknown) {
+      toast.error(copy.cloneFailedTitle, { description: getAxiosMessage(error) });
+    } finally {
+      setCloningId(null);
+    }
+  }, [copy.cloneFailedTitle, copy.clonedToast, onCloned, rows]);
+
   const columns = useMemo<DataTableColumn<MarketUniverse>[]>(
     () => [
       { key: 'name', label: copy.colName, sortable: true, accessor: (row) => row.name },
@@ -260,25 +292,30 @@ export default function MarketUniversesTable({ rows, onDeleted }: MarketUniverse
       {
         key: 'actions',
         label: copy.colActions,
-        className: 'w-28 text-center',
+        className: 'w-44 text-center',
         render: (row) => (
           <div className='flex items-center justify-center gap-2'>
-            <TableIconButtonAction
+            <TablePresetButtonAction
+              preset='edit'
               label={copy.edit}
-              icon={<LuPencilLine className='h-3.5 w-3.5' />}
               onClick={() => router.push(`/dashboard/markets/${row.id}/edit`)}
             />
-            <TableIconButtonAction
+            <TablePresetButtonAction
+              preset='clone'
+              label={copy.clone}
+              onClick={() => void handleClone(row)}
+              disabled={cloningId === row.id}
+            />
+            <TablePresetButtonAction
+              preset='delete'
               label={copy.remove}
-              icon={<LuTrash2 className='h-3.5 w-3.5' />}
               onClick={() => setDeleteTarget(row)}
-              tone='danger'
             />
           </div>
         ),
       },
     ],
-    [copy, expandedRows, formatDate, resolvedTickersMap, router]
+    [cloningId, copy, expandedRows, formatDate, handleClone, resolvedTickersMap, router]
   );
 
   const handleConfirmDelete = async () => {

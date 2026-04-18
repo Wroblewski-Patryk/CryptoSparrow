@@ -96,7 +96,11 @@ export default function MarketsListPage() {
         <EmptyState title={copy.emptyTitle} description={copy.emptyDescription} />
       ) : null}
       {!loading && !error && rows.length > 0 ? (
-        <MarketUniversesTable rows={rows} onDeleted={(id) => setRows((prev) => prev.filter((item) => item.id !== id))} />
+        <MarketUniversesTable
+          rows={rows}
+          onDeleted={(id) => setRows((prev) => prev.filter((item) => item.id !== id))}
+          onCloned={(row) => setRows((prev) => [...prev, row])}
+        />
       ) : null}
     </section>
   );
