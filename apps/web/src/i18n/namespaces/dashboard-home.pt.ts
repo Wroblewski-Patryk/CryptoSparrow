@@ -147,6 +147,8 @@ export const dashboardHomePt = {
     "manualOrderSymbolPlaceholder": "BTCUSDT",
     "manualOrderBuyLabel": "Comprar",
     "manualOrderSellLabel": "Vender",
+    "manualOrderNotionalEstimate": "Notional (est.)",
+    "manualOrderMarginEstimate": "Margin (est.)",
     "editPositionButton": "Editar posicao",
     "editPositionTitle": "Edicao da posicao",
     "editPositionDescription": "Ajusta TP/SL e notas. O botao de gravar fica ativo apos a integracao da API.",

@@ -24,6 +24,9 @@ type RuntimeSidebarSectionProps = {
     symbolLabel: string;
     sideLabel: string;
     quantityLabel: string;
+    notionalEstimateLabel: string;
+    marginEstimateLabel: string;
+    priceLabel: string;
     openLabel: string;
     openingLabel: string;
     buyLabel: string;
@@ -188,15 +191,52 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
     primaryStrategyFromGroup?.strategy?.interval ??
     fallbackLegacyStrategy?.strategy?.interval ??
     "-";
-  const selectedStrategyLeverage = (() => {
+  const selectedStrategyLeverageValue = (() => {
     const fromRuntimeGraph = (primaryStrategyFromGroup?.strategy as { leverage?: unknown } | undefined)?.leverage;
     if (typeof fromRuntimeGraph === "number" && Number.isFinite(fromRuntimeGraph) && fromRuntimeGraph > 0) {
-      return `${fromRuntimeGraph}x`;
+      return fromRuntimeGraph;
     }
     const fromOpenPosition = props.selectedData?.open?.find((item) => Number.isFinite(item.leverage) && item.leverage > 0);
-    if (fromOpenPosition) return `${fromOpenPosition.leverage}x`;
+    if (fromOpenPosition) return fromOpenPosition.leverage;
+    return null;
+  })();
+  const selectedStrategyLeverage = (() => {
+    if (selectedStrategyLeverageValue != null) return `${selectedStrategyLeverageValue}x`;
     return "-";
   })();
+  const manualOrderSymbolKey = normalizeSymbol(props.manualOrder.symbol);
+  const manualOrderLivePrice = (() => {
+    if (!manualOrderSymbolKey) return null;
+    const symbolItem = props.selectedData?.symbols.find((item) => normalizeSymbol(item.symbol) === manualOrderSymbolKey);
+    if (typeof symbolItem?.liveLastPrice === "number" && Number.isFinite(symbolItem.liveLastPrice) && symbolItem.liveLastPrice > 0) {
+      return symbolItem.liveLastPrice;
+    }
+    const openPositionItem = props.selectedData?.open.find((item) => normalizeSymbol(item.symbol) === manualOrderSymbolKey);
+    if (typeof openPositionItem?.liveMarkPrice === "number" && Number.isFinite(openPositionItem.liveMarkPrice) && openPositionItem.liveMarkPrice > 0) {
+      return openPositionItem.liveMarkPrice;
+    }
+    if (typeof openPositionItem?.entryPrice === "number" && Number.isFinite(openPositionItem.entryPrice) && openPositionItem.entryPrice > 0) {
+      return openPositionItem.entryPrice;
+    }
+    return null;
+  })();
+  const manualOrderQuantityValue = (() => {
+    const parsed = Number(props.manualOrder.quantity);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  })();
+  const manualOrderLeverageForEstimate =
+    selectedStrategyLeverageValue ??
+    (props.selected?.bot.marketType === "SPOT" ? 1 : null);
+  const manualOrderNotionalEstimate =
+    manualOrderQuantityValue != null && manualOrderLivePrice != null
+      ? manualOrderQuantityValue * manualOrderLivePrice
+      : null;
+  const manualOrderMarginEstimate =
+    manualOrderNotionalEstimate != null &&
+      manualOrderLeverageForEstimate != null &&
+      manualOrderLeverageForEstimate > 0
+      ? manualOrderNotionalEstimate / manualOrderLeverageForEstimate
+      : null;
   const selectedBaseCurrency = (() => {
     const fromWallet = selectedWallet?.baseCurrency;
     if (fromWallet) return fromWallet.toUpperCase();
@@ -457,6 +497,37 @@ export default function RuntimeSidebarSection(props: RuntimeSidebarSectionProps)
                       onChange={(event) => props.manualOrder.onQuantityChange(event.target.value)}
                     />
                   </label>
+                  <div
+                    className="rounded-box border border-base-300/45 bg-base-100/55 p-2 text-[11px]"
+                    data-testid="manual-order-estimates"
+                  >
+                    <p className="flex items-center justify-between gap-2">
+                      <span className="opacity-65">{props.manualOrder.notionalEstimateLabel}</span>
+                      <span className="font-semibold" data-testid="manual-order-notional-estimate">
+                        {manualOrderNotionalEstimate != null ? props.formatAmountWithUnit(manualOrderNotionalEstimate) : "-"}
+                      </span>
+                    </p>
+                    <p className="mt-1 flex items-center justify-between gap-2">
+                      <span className="opacity-65">{props.manualOrder.marginEstimateLabel}</span>
+                      <span className="font-semibold" data-testid="manual-order-margin-estimate">
+                        {manualOrderMarginEstimate != null ? props.formatAmountWithUnit(manualOrderMarginEstimate) : "-"}
+                      </span>
+                    </p>
+                    <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] opacity-70">
+                      <span>
+                        {props.manualOrder.priceLabel}:{" "}
+                        <span data-testid="manual-order-price">
+                          {manualOrderLivePrice != null ? props.formatAmountWithUnit(manualOrderLivePrice) : "-"}
+                        </span>
+                      </span>
+                      <span>
+                        {props.text.leverage}:{" "}
+                        <span data-testid="manual-order-leverage">
+                          {manualOrderLeverageForEstimate != null ? `${manualOrderLeverageForEstimate}x` : "-"}
+                        </span>
+                      </span>
+                    </p>
+                  </div>
                   <button
                     type="button"
                     className="btn btn-primary btn-sm w-full"

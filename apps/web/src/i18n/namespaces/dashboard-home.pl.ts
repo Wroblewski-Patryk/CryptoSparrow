@@ -147,6 +147,8 @@ export const dashboardHomePl = {
     "manualOrderSymbolPlaceholder": "BTCUSDT",
     "manualOrderBuyLabel": "Kup",
     "manualOrderSellLabel": "Sprzedaj",
+    "manualOrderNotionalEstimate": "Nominal (szac.)",
+    "manualOrderMarginEstimate": "Margin (szac.)",
     "editPositionButton": "Edytuj pozycje",
     "editPositionTitle": "Edycja pozycji",
     "editPositionDescription": "Dostosuj TP/SL i notatki. Zapis zostanie aktywowany po podpieciu API.",

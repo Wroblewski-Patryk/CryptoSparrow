@@ -28,7 +28,7 @@ Operational queue for one-task execution runs.
 - [x] `L10NQ-D-C (commits 11-18): shared foundation localization + parity/smoke/closure`
 - [x] `DBSEL-A (commits DBSEL-01..DBSEL-05): dashboard mixed-mode selector parity hotfix (LIVE + PAPER)`
 - [x] `UXR-E-A (commits UXR-E-01..UXR-E-04): table action system + clone foundation`
-- [ ] `UXR-E-B (commits UXR-E-05..UXR-E-08): action rollout + dashboard manual-order/wallet polish`
+- [x] `UXR-E-B (commits UXR-E-05..UXR-E-08): action rollout + dashboard manual-order/wallet polish`
 - [ ] `UXR-E-C (commits UXR-E-09..UXR-E-12): shell polish + regression closure`
 - [ ] `UXR-F-A (commits UXR-F-01..UXR-F-04): shared dashboard form-system foundation + guardrails`
 - [ ] `UXR-F-B (commits UXR-F-05..UXR-F-08): wrapper/i18n shell unification + wallets/markets/backtests migration`
@@ -48,7 +48,8 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
-- [x] `UXR-E-B progress: completed UXR-E-05..UXR-E-07 (action rollout in progress)`
+- [x] `UXR-E-B progress: completed UXR-E-05..UXR-E-08 (group closed)`
+  - 2026-04-18: Completed `UXR-E-08` by adding runtime-sidebar manual-order estimates (`notional` + `margin`) computed from qty, live symbol price, and effective leverage (with `SPOT` fallback `1x`), plus regression assertions in `HomeLiveWidgets.test.tsx` and `en/pl/pt` namespace key additions for estimate labels. Validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `15/15 PASS`; `pnpm --filter web run typecheck` => `PASS`.
   - 2026-04-18: Completed `UXR-E-07` by moving runtime manual-order controls under wallet context in `RuntimeSidebarSection` (guided symbol select + BUY/SELL pill controls) and wiring deterministic symbol selection synchronization in `HomeLiveWidgets`; updated `HomeLiveWidgets.test.tsx` for `manual-order-panel` contract and guided interactions. Validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `15/15 PASS`; `pnpm --filter web run typecheck` => `PASS`.
   - 2026-04-18: Completed `UXR-E-06` by migrating `BacktestsRunsTable` and `BotsListTable` to canonical `TableUi` preset actions (`preview/runtime/edit/delete`) and adding focused regression coverage (`BacktestsRunsTable.test.tsx`, updated `BotsListTable.test.tsx`). Validation: `pnpm --filter web test -- src/features/markets/components/MarketUniversesTable.test.tsx src/features/strategies/components/StrategiesList.test.tsx src/features/backtest/components/BacktestsRunsTable.test.tsx src/features/bots/components/BotsListTable.test.tsx` => `5/5 PASS`; `pnpm --filter web run typecheck` => `PASS`.
 - [x] `UXR-E-A (commits UXR-E-01..UXR-E-04): table action system + clone foundation`

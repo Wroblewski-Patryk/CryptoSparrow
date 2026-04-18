@@ -108,6 +108,7 @@ describe("HomeLiveWidgets", () => {
                 id: "str-1",
                 name: "Test RSI",
                 interval: "5m",
+                leverage: 10,
               },
             },
           ],
@@ -892,6 +893,10 @@ describe("HomeLiveWidgets", () => {
     fireEvent.change(symbolSelect, { target: { value: "BTCUSDT" } });
     fireEvent.click(screen.getByRole("button", { name: /sprzedaj|sell/i }));
     fireEvent.change(screen.getByLabelText(/Qty|Ilosc/i), { target: { value: "0.25" } });
+    expect(screen.getByTestId("manual-order-price")).toHaveTextContent(/68[\s\u00a0,.]*000/i);
+    expect(screen.getByTestId("manual-order-notional-estimate")).toHaveTextContent(/17[\s\u00a0,.]*000/i);
+    expect(screen.getByTestId("manual-order-margin-estimate")).toHaveTextContent(/1[\s\u00a0,.]*700/i);
+    expect(screen.getByTestId("manual-order-leverage")).toHaveTextContent("10x");
     fireEvent.click(screen.getByRole("button", { name: /Otworz zlecenie reczne|Open manual order/i }));
 
     await waitFor(() => {
