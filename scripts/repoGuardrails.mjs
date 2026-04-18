@@ -12,6 +12,9 @@ const FORBIDDEN_LOCKFILES = new Set([
 ]);
 
 const SOURCE_FILE_RE = /^apps\/(?:web|api)\/src\/.+\.(?:ts|tsx|js|jsx)$/;
+const WEB_FEATURE_SOURCE_FILE_RE = /^apps\/web\/src\/features\/([^/]+)\/.+\.(?:ts|tsx|js|jsx)$/;
+const WEB_FEATURE_FIELD_CONTROLS_RE =
+  /^apps\/web\/src\/features\/([^/]+)\/components\/FieldControls\.(?:ts|tsx|js|jsx)$/;
 const DEFAULT_MAX_FILE_BYTES = 90_000;
 const SOURCE_FILE_BUDGET_RULES = [
   { match: /^apps\/api\/src\//, budget: 90_000 },
@@ -125,11 +128,111 @@ const validateSourceFileBudgets = (trackedFiles) => {
   ];
 };
 
+const resolveCandidateFile = (baseAbsolutePath) => {
+  const candidates = [
+    baseAbsolutePath,
+    `${baseAbsolutePath}.ts`,
+    `${baseAbsolutePath}.tsx`,
+    `${baseAbsolutePath}.js`,
+    `${baseAbsolutePath}.jsx`,
+    path.join(baseAbsolutePath, "index.ts"),
+    path.join(baseAbsolutePath, "index.tsx"),
+    path.join(baseAbsolutePath, "index.js"),
+    path.join(baseAbsolutePath, "index.jsx"),
+  ];
+
+  for (const candidate of candidates) {
+    if (!fs.existsSync(candidate)) continue;
+    const stats = fs.statSync(candidate);
+    if (!stats.isFile()) continue;
+    return normalize(path.relative(ROOT_DIR, candidate));
+  }
+
+  return null;
+};
+
+const extractImportSpecifiers = (sourceText) => {
+  const specifiers = [];
+
+  const staticImportRegex = /(?:import|export)\s+[^'"`]*?\sfrom\s+['"`]([^'"`]+)['"`]/g;
+  for (const match of sourceText.matchAll(staticImportRegex)) {
+    specifiers.push(match[1]);
+  }
+
+  const dynamicImportRegex = /import\(\s*['"`]([^'"`]+)['"`]\s*\)/g;
+  for (const match of sourceText.matchAll(dynamicImportRegex)) {
+    specifiers.push(match[1]);
+  }
+
+  return specifiers;
+};
+
+const resolveWebImportSpecifier = (fromFilePath, specifier) => {
+  let absoluteBasePath = null;
+
+  if (specifier.startsWith("./") || specifier.startsWith("../")) {
+    absoluteBasePath = path.resolve(path.dirname(path.join(ROOT_DIR, fromFilePath)), specifier);
+  } else if (specifier.startsWith("@/")) {
+    absoluteBasePath = path.resolve(ROOT_DIR, "apps", "web", "src", specifier.slice(2));
+  } else {
+    return null;
+  }
+
+  return resolveCandidateFile(absoluteBasePath);
+};
+
+const validateWebFormImportBoundaries = (trackedFiles) => {
+  const violations = [];
+  const webFeatureFiles = trackedFiles.filter((filePath) => WEB_FEATURE_SOURCE_FILE_RE.test(filePath));
+
+  for (const sourceFilePath of webFeatureFiles) {
+    const sourceMatch = WEB_FEATURE_SOURCE_FILE_RE.exec(sourceFilePath);
+    if (!sourceMatch) continue;
+    const sourceFeature = sourceMatch[1];
+
+    const absolutePath = path.join(ROOT_DIR, sourceFilePath);
+    const sourceText = fs.readFileSync(absolutePath, "utf8");
+    const specifiers = extractImportSpecifiers(sourceText);
+
+    for (const specifier of specifiers) {
+      if (!specifier.includes("FieldControls")) continue;
+      const resolvedImport = resolveWebImportSpecifier(sourceFilePath, specifier);
+      if (!resolvedImport) continue;
+
+      const targetMatch = WEB_FEATURE_FIELD_CONTROLS_RE.exec(resolvedImport);
+      if (!targetMatch) continue;
+
+      const targetFeature = targetMatch[1];
+      if (targetFeature === sourceFeature) continue;
+
+      violations.push({
+        sourceFilePath,
+        sourceFeature,
+        targetFeature,
+        specifier,
+        resolvedImport,
+      });
+    }
+  }
+
+  if (violations.length === 0) return [];
+
+  return [
+    `Web form import boundary violated (cross-feature generic FieldControls import detected):\n${violations
+      .map(
+        ({ sourceFilePath, sourceFeature, targetFeature, specifier, resolvedImport }) =>
+          `  - ${sourceFilePath} (${sourceFeature}) imports ${specifier} -> ${resolvedImport} (${targetFeature})`
+      )
+      .join("\n")}\nUse shared controls from apps/web/src/ui/forms/* instead.`,
+  ];
+};
+
 const run = () => {
   const trackedFiles = readTrackedFiles();
   const errors = [
     ...validateLockfilePolicy(trackedFiles),
     ...validateSourceFileBudgets(trackedFiles),
+    ...validateWebFormImportBoundaries(trackedFiles),
   ];
 
   if (errors.length > 0) {

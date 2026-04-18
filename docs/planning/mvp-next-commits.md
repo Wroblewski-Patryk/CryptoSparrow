@@ -30,7 +30,7 @@ Operational queue for one-task execution runs.
 - [x] `UXR-E-A (commits UXR-E-01..UXR-E-04): table action system + clone foundation`
 - [x] `UXR-E-B (commits UXR-E-05..UXR-E-08): action rollout + dashboard manual-order/wallet polish`
 - [x] `UXR-E-C (commits UXR-E-09..UXR-E-12): shell polish + regression closure`
-- [ ] `UXR-F-A (commits UXR-F-01..UXR-F-04): shared dashboard form-system foundation + guardrails`
+- [x] `UXR-F-A (commits UXR-F-01..UXR-F-04): shared dashboard form-system foundation + guardrails`
 - [ ] `UXR-F-B (commits UXR-F-05..UXR-F-08): wrapper/i18n shell unification + wallets/markets/backtests migration`
 - [ ] `UXR-F-C (commits UXR-F-09..UXR-F-12): strategies/bots migration + standardized form UX/mobile action bar`
 - [ ] `UXR-F-D (commits UXR-F-13..UXR-F-14): focused regression pack + closure sync`
@@ -48,6 +48,11 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
+- [x] `UXR-F-A progress: completed UXR-F-01..UXR-F-04 (group closed)`
+  - 2026-04-18: Completed `UXR-F-04` by enforcing no cross-feature generic `FieldControls` imports in `scripts/repoGuardrails.mjs` and removing existing backtest coupling (`BacktestCreateForm` now imports shared `ui/forms`). Validation: `pnpm --filter web test -- src/ui/forms/FormPrimitives.test.tsx src/ui/forms/FormFields.test.tsx src/features/backtest/components/BacktestCreateForm.test.tsx` => `13/13 PASS`; `pnpm --filter web run typecheck` + `pnpm run quality:guardrails` => `PASS`.
+  - 2026-04-18: Completed `UXR-F-03` by adding canonical shared field primitives (`Text/Number/Select/Textarea/Toggle/RadioGroup/Range/Compound`) under `apps/web/src/ui/forms` with interaction coverage in `FormFields.test.tsx`.
+  - 2026-04-18: Completed `UXR-F-02` by introducing shared form core primitives (`FormPageShell`, `FormSectionCard`, `FormGrid`, `FormField`, `FormAlert`, `FormValidationSummary`) and baseline tests in `FormPrimitives.test.tsx`.
+  - 2026-04-18: Completed `UXR-F-01` by locking Stage A migration boundaries in canonical decision docs (`open-decisions`, `mvp-execution-plan`).
 - [x] `UXR-E-C progress: completed UXR-E-09..UXR-E-12 (group closed)`
   - 2026-04-18: Completed `UXR-E-12` closure pack after fixing public-footer layout test environment contract (`matchMedia` mock): `next build` => `PASS`, `tsc --noEmit -p apps/web/tsconfig.json` => `PASS`, focused Vitest pack => `11/11 files PASS`, `30/30 tests PASS`.
   - 2026-04-18: Completed `UXR-E-11` by removing `(PT)` suffix from Portuguese labels (`public.localeNames.pt`, `dashboard-shell.common.languages.portuguese`), updating `LanguageSwitcher`/`I18nProvider` expectations, and centering public footer rows on mobile with new `Footer.layout` regression in public shell. Validation: `tsc --noEmit -p apps/web/tsconfig.json` => `PASS`; full focused regression pack confirmed in `UXR-E-12`.

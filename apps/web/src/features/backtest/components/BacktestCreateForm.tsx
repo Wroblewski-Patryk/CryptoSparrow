@@ -5,11 +5,11 @@ import { toast } from 'sonner';
 import { listStrategies } from '../../strategies/api/strategies.api';
 import { StrategyDto } from '../../strategies/types/StrategyForm.type';
 import { CreateBacktestRunInput } from '../types/backtest.type';
-import { FieldWrapper, TextInputField } from '../../markets/components/FieldControls';
 import { listMarketUniverses } from '../../markets/services/markets.service';
 import { MarketUniverse } from '../../markets/types/marketUniverse.type';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { hasFormText, normalizeFormText, resolveFormErrorMessage } from '@/lib/forms';
+import { FormField, TextField } from '@/ui/forms';
 
 type BacktestCreateFormProps = {
   formId?: string;
@@ -207,7 +207,8 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
           <section className='rounded-lg border border-base-300 bg-base-100 p-3 space-y-3'>
             <h3 className='text-xs font-semibold uppercase tracking-wide opacity-70'>{copy.sectionRunConfig}</h3>
             <div className='grid gap-3 md:grid-cols-2'>
-              <TextInputField
+              <TextField
+                id='backtest-run-name'
                 label={copy.runName}
                 value={name}
                 onChange={(value) => {
@@ -217,7 +218,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
                 placeholder={copy.runNamePlaceholder}
               />
 
-              <FieldWrapper label={copy.strategy}>
+              <FormField label={copy.strategy}>
                 <select
                   className='select select-bordered'
                   value={strategyId}
@@ -231,9 +232,9 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
                     </option>
                   ))}
                 </select>
-              </FieldWrapper>
+              </FormField>
 
-              <FieldWrapper label={copy.marketGroup}>
+              <FormField label={copy.marketGroup}>
                 <select
                   className='select select-bordered'
                   value={marketUniverseId}
@@ -247,7 +248,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
                     </option>
                   ))}
                 </select>
-              </FieldWrapper>
+              </FormField>
 
               <div className='md:col-span-2 rounded-md border border-base-300/70 bg-base-200/40 px-3 py-2'>
                 <p className='text-[11px] font-semibold uppercase tracking-wide opacity-70'>
@@ -279,7 +280,7 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
           <section className='rounded-lg border border-base-300 bg-base-100 p-3 space-y-3'>
             <h3 className='text-xs font-semibold uppercase tracking-wide opacity-70'>{copy.sectionSimParams}</h3>
             <div className='grid gap-3 md:grid-cols-2'>
-              <FieldWrapper label={copy.maxCandles}>
+              <FormField label={copy.maxCandles}>
                 <input
                   className='input input-bordered'
                   value={maxCandles}
@@ -294,9 +295,9 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
                     {copy.maxCandlesErrorPrefix} {MAX_CANDLES_MIN} - {MAX_CANDLES_MAX}.
                   </p>
                 ) : null}
-              </FieldWrapper>
+              </FormField>
 
-              <FieldWrapper label={copy.initialBalance}>
+              <FormField label={copy.initialBalance}>
                 <input
                   className='input input-bordered'
                   value={initialBalance}
@@ -311,17 +312,17 @@ export default function BacktestCreateForm({ formId = 'backtest-form', submittin
                     {copy.initialBalanceErrorPrefix} {INITIAL_BALANCE_MIN} - {INITIAL_BALANCE_MAX}.
                   </p>
                 ) : null}
-              </FieldWrapper>
+              </FormField>
 
               <div className='md:col-span-2'>
-                <FieldWrapper label={copy.notes}>
+                <FormField label={copy.notes}>
                   <textarea
                     className='textarea textarea-bordered min-h-24'
                     value={notes}
                     onChange={(event) => setNotes(event.target.value)}
                     placeholder={copy.notesPlaceholder}
                   />
-                </FieldWrapper>
+                </FormField>
               </div>
             </div>
           </section>

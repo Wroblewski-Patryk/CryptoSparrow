@@ -17,66 +17,46 @@ Last updated: 2026-04-18
 
 ## READY
 
-- [ ] L10NQ-D-11 Localize global offline page and risk notice footer
+- [ ] UXR-F-05 Unify dashboard create/edit wrappers with shared shell and namespace-driven copy
   - Status: READY
-  - Group: Total Web I18n Coverage
+  - Group: Dashboard Forms Unification (`UXR-F-B`)
   - Owner: Frontend Builder
-  - Depends on: none
+  - Depends on: UXR-F-A
   - Priority: P1
   - Files:
-    - `apps/web/src/`
+    - `apps/web/src/app/dashboard/**/create/page.tsx`
+    - `apps/web/src/app/dashboard/**/[id]/edit/page.tsx`
+    - `apps/web/src/i18n/namespaces/dashboard-*.ts`
     - `docs/planning/mvp-next-commits.md`
   - Done when:
-    - offline page and risk notice footer copy are fully localized
-    - `en`, `pl`, and `pt` remain aligned for touched keys
-    - route-reachable audit and targeted web validation pass
+    - wrapper-level create/edit copy is namespace-driven
+    - page wrappers align to shared form-shell contract
+    - no inline locale maps remain in scoped wrappers
   - Validation:
     - `pnpm --filter web run test -- --run`
     - `pnpm --filter web run typecheck`
-    - `pnpm i18n:audit:route-reachable:web`
 
 ## BACKLOG
 
-- [ ] L10NQ-D-12 Localize shared aria, title, and foundation strings
+- [ ] UXR-F-06 Migrate wallet create/edit form to shared ui/forms primitives
   - Status: BACKLOG
-  - Group: Total Web I18n Coverage
+  - Group: Dashboard Forms Unification (`UXR-F-B`)
   - Owner: Frontend Builder
-  - Depends on: L10NQ-D-11
+  - Depends on: UXR-F-05
   - Priority: P1
 
-- [ ] L10NQ-D-13 Align footer and public-shell labels to translation keys
+- [ ] UXR-F-07 Migrate markets create/edit form to shared ui/forms primitives
   - Status: BACKLOG
-  - Group: Total Web I18n Coverage
+  - Group: Dashboard Forms Unification (`UXR-F-B`)
   - Owner: Frontend Builder
-  - Depends on: L10NQ-D-12
+  - Depends on: UXR-F-06
   - Priority: P1
 
-- [ ] L10NQ-D-14 Clear residual low-score literals in profile and wallet areas
+- [ ] UXR-F-08 Migrate backtests create form to shared ui/forms primitives
   - Status: BACKLOG
-  - Group: Total Web I18n Coverage
+  - Group: Dashboard Forms Unification (`UXR-F-B`)
   - Owner: Frontend Builder
-  - Depends on: L10NQ-D-13
-  - Priority: P2
-
-- [ ] L10NQ-D-15 Align residual legacy backtests and strategy-preset copy
-  - Status: BACKLOG
-  - Group: Total Web I18n Coverage
-  - Owner: Frontend Builder
-  - Depends on: L10NQ-D-14
-  - Priority: P2
-
-- [ ] DBSEL-01 Restore mixed runtime selector parity for concurrent LIVE and PAPER contexts
-  - Status: BACKLOG
-  - Group: Dashboard Runtime Selector Parity
-  - Owner: Backend Builder
-  - Depends on: L10NQ-D-15
-  - Priority: P2
-
-- [ ] UXR-F-01 Lock shared dashboard form-system scope and first migration slice
-  - Status: BACKLOG
-  - Group: Dashboard Forms Unification
-  - Owner: Planning Agent
-  - Depends on: L10NQ-D-15
+  - Depends on: UXR-F-07
   - Priority: P2
 
 ## IN_PROGRESS
@@ -95,3 +75,4 @@ Last updated: 2026-04-18
 
 - [x] SOAR-000 Establish Soar-specific agent workflow scaffolding refresh
 - [x] L10NQ-D-06..10 Reports, markets, backtests, bots, and dashboard-home copy migration completed and reflected in `docs/planning/mvp-next-commits.md`
+- [x] UXR-F-A closed: `UXR-F-01..UXR-F-04` (contract freeze + shared `ui/forms` core/fields + import-boundary guardrail enforcement)

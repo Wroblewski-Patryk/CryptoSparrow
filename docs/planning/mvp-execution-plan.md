@@ -1874,7 +1874,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [x] `UXR-F-01 docs(contract): freeze unified dashboard create/edit form UX contract and migration boundaries`
 - [x] `UXR-F-02 feat(web-ui-forms-core): add FormPageShell/FormSectionCard/FormGrid/FormField/FormAlert/FormValidationSummary primitives`
 - [x] `UXR-F-03 feat(web-ui-forms-fields): add Text/Number/Select/Textarea/Toggle/RadioGroup/Range/Compound shared field components`
-- [ ] `UXR-F-04 test(web-ui-forms-guardrail): add primitive tests and enforce no cross-feature generic field-control imports`
+- [x] `UXR-F-04 test(web-ui-forms-guardrail): add primitive tests and enforce no cross-feature generic field-control imports`
 - [ ] `UXR-F-05 refactor(web-form-page-shell-i18n): unify create/edit wrappers with FormPageShell and namespace-driven breadcrumbs/actions`
 - [ ] `UXR-F-06 refactor(web-wallet-form): migrate wallets create/edit to ui/forms with unified validation summary + first-error focus`
 - [ ] `UXR-F-07 refactor(web-markets-form): migrate markets create/edit to ui/forms and remove feature-local generic control dependency`
@@ -1887,6 +1887,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `UXR-F-14 qa(web-form-closure): run typecheck/build and publish closure sync evidence`
 
 ### Progress Log (Phase UXR-F - Dashboard Create/Edit Forms UX/UI Unification)
+- 2026-04-18: Completed `UXR-F-04` by adding repository guardrail enforcement for cross-feature `FieldControls` imports in `scripts/repoGuardrails.mjs` and removing the existing backtests->markets generic-control dependency (`BacktestCreateForm` now uses `ui/forms` primitives). Validation: `pnpm --filter web test -- src/ui/forms/FormPrimitives.test.tsx src/ui/forms/FormFields.test.tsx src/features/backtest/components/BacktestCreateForm.test.tsx` => `13/13 PASS`; `pnpm --filter web run typecheck` => `PASS`; `pnpm run quality:guardrails` => `PASS`.
 - 2026-04-18: Completed `UXR-F-03` by adding shared field primitives (`TextField`, `NumberField`, `SelectField`, `TextareaField`, `ToggleField`, `RadioGroupField`, `RangeField`, `CompoundField`) in `ui/forms` with unified label/hint/error contract and interaction tests in `FormFields.test.tsx`. Validation: `pnpm --filter web test -- src/ui/forms/FormPrimitives.test.tsx src/ui/forms/FormFields.test.tsx` => `9/9 PASS`; `pnpm --filter web run typecheck` => `PASS`.
 - 2026-04-18: Completed `UXR-F-02` by adding shared `ui/forms` core primitives (`FormPageShell`, `FormSectionCard`, `FormGrid`, `FormField`, `FormAlert`, `FormValidationSummary`) with barrel exports and baseline component tests in `FormPrimitives.test.tsx`. Validation: `pnpm --filter web test -- src/ui/forms/FormPrimitives.test.tsx` => `5/5 PASS`; `pnpm --filter web run typecheck` => `PASS`.
 - 2026-04-18: Completed `UXR-F-01` by locking Stage A migration boundaries in canonical decision contract (`open-decisions`): Stage A is restricted to docs freeze, shared `ui/forms` primitives, and import-boundary guardrail enforcement, with no wrapper/business-flow migration outside guardrail safety.

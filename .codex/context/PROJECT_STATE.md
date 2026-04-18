@@ -99,25 +99,29 @@ Last updated: 2026-04-18
   rollback according to `docs/operations/deployment-rollback-playbook.md`
 
 ## Current Focus
-- Main active objective: finish the current web-localization closure wave
-  without regressing runtime safety, docs parity, or release readiness
+- Main active objective: execute `UXR-F` dashboard form-system unification
+  waves (`B -> D`) on top of closed Stage A foundation, without regressing
+  runtime safety, docs parity, or release readiness.
 - Top blockers:
-  - residual hardcoded or low-score localized copy remains in shared dashboard
-    surfaces
-  - the active planning queue in `mvp-next-commits.md` is ahead of the current
-    task board and needs explicit mapping for the executor
-  - dashboard selector and forms-polish waves are queued behind localization
-    closure and must not start early
+  - wrapper-level create/edit page shells still need full unification onto
+    shared `ui/forms` and namespace-driven copy (`UXR-F-05`).
+  - wallets/markets/backtests forms still require migration from local controls
+    to shared field primitives (`UXR-F-06..08`).
+  - forms `C/D` closure waves require careful regression control to avoid
+    deploy-time breakage while improving UX consistency.
 - Success criteria for this phase:
-  - `L10NQ-D` finishes with deterministic route-reachable and parity evidence
-  - canonical queue files and task board stay aligned
-  - no regressions in auth, runtime, operator clarity, or deploy confidence
+  - `UXR-F-B..D` complete with deterministic test/typecheck/build evidence.
+  - canonical queue files and task board stay aligned after each group closure.
+  - no regressions in auth, runtime, operator clarity, or deploy confidence.
 
 ## Recent Progress
 - 2026-04-17: closed `BTMM-C`, `L10NQ-A`, `L10NQ-B`, `L10NQ-C`, `UXR-D`,
   `DOCSYNC-A`, and `A11Y-A` waves with evidence-backed validation.
 - 2026-04-18: closed `L10NQ-D-B` (`L10NQ-D-06..10`) and published follow-up
   planning for selector parity and dashboard form-system unification.
+- 2026-04-18: closed `UXR-F-A` (`UXR-F-01..UXR-F-04`) by freezing Stage A
+  migration boundaries, adding shared `ui/forms` core+field primitives with
+  tests, and enforcing cross-feature generic form import guardrails.
 - 2026-04-18: refreshed the repo-specific agent workflow so the canonical queue,
   validation contract, deployment contract, and learning journal are aligned.
 
