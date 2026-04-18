@@ -134,7 +134,8 @@ describe('WalletCreateEditForm', () => {
     fireEvent.submit(form as HTMLFormElement);
 
     expect(createWalletMock).not.toHaveBeenCalled();
-    expect(screen.getByText('Podaj nazwe portfela.')).toBeInTheDocument();
+    expect(screen.getByTestId('form-validation-summary')).toBeInTheDocument();
+    expect(screen.getAllByText('Podaj nazwe portfela.').length).toBeGreaterThan(0);
   });
 
   it('renders only mode-relevant fields when switching between LIVE and PAPER', async () => {

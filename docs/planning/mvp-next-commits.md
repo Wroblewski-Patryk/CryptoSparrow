@@ -48,6 +48,9 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
+- [x] `UXR-F-B progress: completed UXR-F-05..UXR-F-06 (group in progress)`
+  - 2026-04-18: Completed `UXR-F-06` by migrating `WalletCreateEditForm` to shared `ui/forms` primitives with unified section/field contract, validation summary surfacing, and guarded first-invalid focus behavior compatible with test/runtime environments. Validation: `pnpm --filter web test -- src/features/wallets/components/WalletCreateEditForm.test.tsx` => `4/4 PASS`; `pnpm --filter web run typecheck` => `PASS`.
+  - 2026-04-18: Completed `UXR-F-05` by migrating dashboard create/edit wrappers to namespace-driven copy and shared form-shell contract across wallets/markets/strategies/bots wrappers.
 - [x] `UXR-F-A progress: completed UXR-F-01..UXR-F-04 (group closed)`
   - 2026-04-18: Completed `UXR-F-04` by enforcing no cross-feature generic `FieldControls` imports in `scripts/repoGuardrails.mjs` and removing existing backtest coupling (`BacktestCreateForm` now imports shared `ui/forms`). Validation: `pnpm --filter web test -- src/ui/forms/FormPrimitives.test.tsx src/ui/forms/FormFields.test.tsx src/features/backtest/components/BacktestCreateForm.test.tsx` => `13/13 PASS`; `pnpm --filter web run typecheck` + `pnpm run quality:guardrails` => `PASS`.
   - 2026-04-18: Completed `UXR-F-03` by adding canonical shared field primitives (`Text/Number/Select/Textarea/Toggle/RadioGroup/Range/Compound`) under `apps/web/src/ui/forms` with interaction coverage in `FormFields.test.tsx`.

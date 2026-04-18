@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { LuActivity, LuBadgeCheck, LuWallet } from 'react-icons/lu';
+import { LuBadgeCheck } from 'react-icons/lu';
 
 import { useI18n } from '@/i18n/I18nProvider';
 import {
@@ -21,6 +21,16 @@ import {
 import { fetchApiKeys } from '@/features/profile/services/apiKeys.service';
 import type { ApiKey } from '@/features/profile/types/apiKey.type';
 import { ErrorState, LoadingState } from '@/ui/components/ViewState';
+import {
+  FormAlert,
+  FormField,
+  FormGrid,
+  FormSectionCard,
+  FormValidationSummary,
+  NumberField,
+  SelectField,
+  TextField,
+} from '@/ui/forms';
 import {
   hasFormText,
   normalizeFormBaseCurrency,
@@ -461,6 +471,35 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
     () => apiKeys.filter((item) => item.exchange === form.exchange),
     [apiKeys, form.exchange]
   );
+  const exchangeOptions = useMemo(
+    () => EXCHANGE_OPTIONS.map((exchange) => ({ value: exchange, label: exchange })),
+    []
+  );
+  const marketTypeSelectOptions = useMemo(
+    () => marketTypeOptions.map((marketType) => ({ value: marketType, label: marketType })),
+    [marketTypeOptions]
+  );
+  const baseCurrencyOptions = useMemo(
+    () => resolvedBaseCurrencyOptions.map((currency) => ({ value: currency, label: currency })),
+    [resolvedBaseCurrencyOptions]
+  );
+  const liveAllocationModeOptions = useMemo(
+    () => [
+      { value: 'PERCENT', label: '%' },
+      { value: 'FIXED', label: normalizeSymbol(form.baseCurrency) || 'USDT' },
+    ],
+    [form.baseCurrency]
+  );
+  const apiKeyOptions = useMemo(
+    () => [
+      { value: '', label: copy.notSelected },
+      ...compatibleApiKeys.map((apiKey) => ({
+        value: apiKey.id,
+        label: `${apiKey.label} (${apiKey.exchange})`,
+      })),
+    ],
+    [compatibleApiKeys, copy.notSelected]
+  );
 
   const setMode = useCallback((nextMode: WalletMode) => {
     setForm((prev) => {
@@ -528,6 +567,38 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
   }, [copy.validationAllocationPercent, copy.validationAllocationValue, copy.validationApiKey, copy.validationBaseCurrency, copy.validationName, form]);
 
   const hasValidationErrors = Object.keys(fieldErrors).length > 0;
+  const validationSummaryErrors = useMemo(
+    () => Object.values(fieldErrors).filter((value): value is string => Boolean(value)),
+    [fieldErrors]
+  );
+  const focusFirstInvalidField = useCallback(() => {
+    const fieldIdByKey: Record<keyof WalletFormState, string> = {
+      name: 'wallet-name',
+      mode: 'wallet-mode-paper',
+      exchange: 'wallet-exchange',
+      marketType: 'wallet-market-type',
+      baseCurrency: 'wallet-base-currency',
+      paperInitialBalance: 'wallet-paper-initial-balance',
+      liveAllocationMode: 'wallet-live-allocation-mode',
+      liveAllocationValue: 'wallet-live-allocation-value',
+      apiKeyId: 'wallet-api-key',
+    };
+
+    const firstKey = (Object.keys(fieldErrors) as Array<keyof WalletFormState>)[0];
+    if (!firstKey) return;
+
+    const targetId = fieldIdByKey[firstKey];
+    if (!targetId) return;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+
+    if (typeof target.focus === 'function') {
+      target.focus();
+    }
+    if (typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [fieldErrors]);
   const selectedApiKey = useMemo(
     () => compatibleApiKeys.find((item) => item.id === form.apiKeyId) ?? null,
     [compatibleApiKeys, form.apiKeyId]
@@ -591,6 +662,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
 
     if (!canSaveMode || hasValidationErrors) {
       toast.error(copy.saveValidation);
+      focusFirstInvalidField();
       return;
     }
 
@@ -640,23 +712,26 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
   return (
     <form id={formId} onSubmit={handleSubmit} className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]'>
       <div className='space-y-4'>
-        <section className='space-y-3 rounded-box border border-base-300/60 bg-base-100/80 p-4'>
-          <h2 className='text-base font-semibold'>{copy.sectionBasics}</h2>
-          <div className='grid gap-3 md:grid-cols-2'>
-            <label className='form-control gap-1'>
-              <span className='label-text'>{copy.name}</span>
-              <input
-                className='input input-bordered'
-                value={form.name}
-                onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-              />
-              {showValidation && fieldErrors.name ? <span className='text-xs text-error'>{fieldErrors.name}</span> : null}
-            </label>
+        {showValidation && hasValidationErrors ? <FormValidationSummary errors={validationSummaryErrors} /> : null}
 
-            <div className='form-control gap-1'>
-              <span className='label-text'>{copy.mode}</span>
+        <FormSectionCard title={copy.sectionBasics}>
+          <FormGrid columns={2}>
+            <TextField
+              id='wallet-name'
+              label={copy.name}
+              value={form.name}
+              onChange={(value) => setForm((prev) => ({ ...prev, name: value }))}
+              error={showValidation ? fieldErrors.name : undefined}
+            />
+
+            <FormField
+              label={copy.mode}
+              hint={form.mode === 'LIVE' ? copy.modeLiveHint : copy.modePaperHint}
+              className='md:col-span-2'
+            >
               <div className='join'>
                 <button
+                  id='wallet-mode-paper'
                   type='button'
                   className={`btn join-item ${form.mode === 'PAPER' ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() => setMode('PAPER')}
@@ -665,6 +740,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
                   {copy.modePaper}
                 </button>
                 <button
+                  id='wallet-mode-live'
                   type='button'
                   className={`btn join-item ${form.mode === 'LIVE' ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() => setMode('LIVE')}
@@ -673,103 +749,76 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
                   {copy.modeLive}
                 </button>
               </div>
-              <span className='text-xs opacity-70'>
-                {form.mode === 'LIVE' ? copy.modeLiveHint : copy.modePaperHint}
-              </span>
-            </div>
+            </FormField>
 
-            <label className='form-control gap-1'>
-              <span className='label-text'>{copy.exchange}</span>
-              <select
-                className='select select-bordered'
-                value={form.exchange}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, exchange: event.target.value as WalletFormState['exchange'] }))
-                }
-              >
-                {EXCHANGE_OPTIONS.map((exchange) => (
-                  <option key={exchange} value={exchange}>
-                    {exchange}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <SelectField
+              id='wallet-exchange'
+              label={copy.exchange}
+              value={form.exchange}
+              options={exchangeOptions}
+              onChange={(value) => setForm((prev) => ({ ...prev, exchange: value as WalletFormState['exchange'] }))}
+            />
 
-            <label className='form-control gap-1'>
-              <span className='label-text'>{copy.marketType}</span>
-              <select
-                className='select select-bordered'
-                value={form.marketType}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, marketType: event.target.value as WalletMarketType }))
-                }
-                disabled={walletMetadataLoading}
-              >
-                {marketTypeOptions.map((marketType) => (
-                  <option key={marketType} value={marketType}>
-                    {marketType}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <SelectField
+              id='wallet-market-type'
+              label={copy.marketType}
+              value={form.marketType}
+              options={marketTypeSelectOptions}
+              onChange={(value) => setForm((prev) => ({ ...prev, marketType: value as WalletMarketType }))}
+              disabled={walletMetadataLoading}
+            />
 
-            <label className='form-control gap-1'>
-              <span className='label-text'>{copy.baseCurrency}</span>
+            <FormField
+              label={copy.baseCurrency}
+              htmlFor='wallet-base-currency'
+              error={showValidation ? fieldErrors.baseCurrency : undefined}
+            >
               <select
-                className='select select-bordered'
+                id='wallet-base-currency'
+                className='select select-bordered w-full'
                 value={form.baseCurrency}
                 onChange={(event) => setForm((prev) => ({ ...prev, baseCurrency: normalizeFormSymbol(event.target.value) }))}
                 disabled={walletMetadataLoading}
               >
-                {resolvedBaseCurrencyOptions.map((currency) => (
-                  <option key={currency} value={currency}>
-                    {currency}
+                {baseCurrencyOptions.map((currency) => (
+                  <option key={currency.value} value={currency.value}>
+                    {currency.label}
                   </option>
                 ))}
               </select>
-              {walletMetadataLoading ? (
-                <span className='text-xs opacity-70'>{copy.baseCurrencyLoading}</span>
-              ) : null}
-              {walletMetadataError ? (
-                <span className='text-xs text-warning'>{walletMetadataError}</span>
-              ) : null}
-              {showValidation && fieldErrors.baseCurrency ? (
-                <span className='text-xs text-error'>{fieldErrors.baseCurrency}</span>
-              ) : null}
-            </label>
-
-          </div>
-        </section>
+              {walletMetadataLoading ? <span className='mt-1 text-xs opacity-70'>{copy.baseCurrencyLoading}</span> : null}
+              {walletMetadataError ? <span className='mt-1 text-xs text-warning'>{walletMetadataError}</span> : null}
+            </FormField>
+          </FormGrid>
+        </FormSectionCard>
 
         {form.mode === 'PAPER' ? (
-          <section className='space-y-3 rounded-box border border-base-300/60 bg-base-100/80 p-4'>
-            <h2 className='text-base font-semibold'>{copy.sectionPaper}</h2>
-            <div className='grid gap-3 md:grid-cols-2'>
-              <label className='form-control gap-1'>
-                <span className='label-text'>{copy.paperInitialBalance}</span>
-                <input
-                  type='number'
-                  min={0}
-                  step={0.01}
-                  className='input input-bordered'
-                  value={form.paperInitialBalance}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, paperInitialBalance: Number(event.target.value) || 0 }))
-                  }
-                />
-              </label>
-            </div>
-          </section>
+          <FormSectionCard title={copy.sectionPaper}>
+            <FormGrid columns={2}>
+              <NumberField
+                id='wallet-paper-initial-balance'
+                label={copy.paperInitialBalance}
+                value={form.paperInitialBalance}
+                onChange={(value) => setForm((prev) => ({ ...prev, paperInitialBalance: Number(value) || 0 }))}
+                min={0}
+                step={0.01}
+              />
+            </FormGrid>
+          </FormSectionCard>
         ) : null}
 
         {form.mode === 'LIVE' ? (
-          <section className='space-y-3 rounded-box border border-base-300/60 bg-base-100/80 p-4'>
-            <h2 className='text-base font-semibold'>{copy.sectionLive}</h2>
-            <div className='grid gap-3 md:grid-cols-2'>
-              <label className='form-control gap-1 md:col-span-2'>
-                <span className='label-text'>{copy.liveAllocation}</span>
+          <FormSectionCard title={copy.sectionLive}>
+            <FormGrid columns={2}>
+              <FormField
+                label={copy.liveAllocation}
+                htmlFor='wallet-live-allocation-value'
+                className='md:col-span-2'
+                error={showValidation ? fieldErrors.liveAllocationValue : undefined}
+              >
                 <div className='join'>
                   <input
+                    id='wallet-live-allocation-value'
                     type='number'
                     min={0.01}
                     step={0.01}
@@ -780,62 +829,47 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
                     }
                   />
                   <select
+                    id='wallet-live-allocation-mode'
                     className='select select-bordered join-item w-40'
                     value={form.liveAllocationMode}
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, liveAllocationMode: event.target.value as WalletAllocationMode }))
                     }
                   >
-                    <option value='PERCENT'>%</option>
-                    <option value='FIXED'>{normalizeSymbol(form.baseCurrency) || 'USDT'}</option>
+                    {liveAllocationModeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
-                {showValidation && fieldErrors.liveAllocationValue ? (
-                  <span className='text-xs text-error'>{fieldErrors.liveAllocationValue}</span>
-                ) : null}
-              </label>
+              </FormField>
 
-              <label className='form-control gap-1 md:col-span-2'>
-                <span className='label-text'>{copy.apiKey}</span>
-                <select
-                  className='select select-bordered'
-                  value={form.apiKeyId}
-                  onChange={(event) => {
-                    setForm((prev) => ({ ...prev, apiKeyId: event.target.value }));
-                    setPreview(null);
-                    setPreviewError(null);
-                  }}
-                >
-                  <option value=''>{copy.notSelected}</option>
-                  {compatibleApiKeys.map((apiKey) => (
-                    <option key={apiKey.id} value={apiKey.id}>
-                      {apiKey.label} ({apiKey.exchange})
-                    </option>
-                  ))}
-                </select>
-                {showValidation && fieldErrors.apiKeyId ? (
-                  <span className='text-xs text-error'>{fieldErrors.apiKeyId}</span>
-                ) : null}
-                {compatibleApiKeys.length === 0 ? <span className='text-xs text-warning'>{copy.noApiKeys}</span> : null}
-              </label>
-            </div>
-          </section>
+              <SelectField
+                id='wallet-api-key'
+                label={copy.apiKey}
+                value={form.apiKeyId}
+                options={apiKeyOptions}
+                className='md:col-span-2'
+                onChange={(value) => {
+                  setForm((prev) => ({ ...prev, apiKeyId: value }));
+                  setPreview(null);
+                  setPreviewError(null);
+                }}
+                error={showValidation ? fieldErrors.apiKeyId : undefined}
+              />
+              {compatibleApiKeys.length === 0 ? <p className='text-xs text-warning md:col-span-2'>{copy.noApiKeys}</p> : null}
+            </FormGrid>
+          </FormSectionCard>
         ) : null}
 
         {!canSaveMode ? (
-          <div className='alert alert-warning'>
-            <span>{form.mode === 'LIVE' ? copy.liveUnsupported : copy.paperUnsupported}</span>
-          </div>
+          <FormAlert variant='warning'>{form.mode === 'LIVE' ? copy.liveUnsupported : copy.paperUnsupported}</FormAlert>
         ) : null}
       </div>
 
       <aside className='space-y-4'>
-        <section className='rounded-box border border-base-300/60 bg-base-100/85 p-4 text-sm'>
-          <p className='mb-1 flex items-center gap-2 text-base font-semibold'>
-            <LuWallet className='h-4 w-4' aria-hidden />
-            {copy.sectionSummary}
-          </p>
-          <p className='mb-3 text-xs opacity-70'>{copy.summaryHint}</p>
+        <FormSectionCard title={copy.sectionSummary} description={copy.summaryHint} className='bg-base-100/85 text-sm'>
           <div className='space-y-2'>
             <p className='flex items-center justify-between gap-2'>
               <span className='opacity-65'>{copy.mode}</span>
@@ -869,15 +903,13 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
               </>
             ) : null}
           </div>
-        </section>
+        </FormSectionCard>
 
         {form.mode === 'LIVE' ? (
-          <section className='rounded-box border border-base-300/60 bg-base-100/85 p-4 text-sm'>
-            <div className='mb-3 flex items-center justify-between gap-2'>
-              <p className='flex items-center gap-2 text-base font-semibold'>
-                <LuActivity className='h-4 w-4' aria-hidden />
-                {copy.sectionPreview}
-              </p>
+          <FormSectionCard
+            title={copy.sectionPreview}
+            className='bg-base-100/85 text-sm'
+            actions={
               <button
                 type='button'
                 className='btn btn-xs btn-outline'
@@ -886,11 +918,9 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
               >
                 {previewLoading ? copy.previewFetching : copy.previewFetch}
               </button>
-            </div>
-
-            {!form.apiKeyId || !canSaveMode ? (
-              <p className='text-xs opacity-70'>{copy.previewUnavailable}</p>
-            ) : null}
+            }
+          >
+            {!form.apiKeyId || !canSaveMode ? <p className='text-xs opacity-70'>{copy.previewUnavailable}</p> : null}
             {previewError ? <p className='text-xs text-error'>{previewError}</p> : null}
 
             <div className='space-y-2'>
@@ -921,7 +951,7 @@ export default function WalletCreateEditForm({ editId = null, formId = 'wallet-f
                 </p>
               ) : null}
             </div>
-          </section>
+          </FormSectionCard>
         ) : null}
       </aside>
 
