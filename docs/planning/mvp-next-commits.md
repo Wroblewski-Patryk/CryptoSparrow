@@ -26,7 +26,7 @@ Operational queue for one-task execution runs.
 - [x] `L10NQ-D-A (commits 01-05): inventory + guardrail hardening + auth/admin migration`
 - [x] `L10NQ-D-B (commits 06-10): reports/markets/backtests/bots/home copy migration`
 - [x] `L10NQ-D-C (commits 11-18): shared foundation localization + parity/smoke/closure`
-- [ ] `DBSEL-A (commits DBSEL-01..DBSEL-05): dashboard mixed-mode selector parity hotfix (LIVE + PAPER)`
+- [x] `DBSEL-A (commits DBSEL-01..DBSEL-05): dashboard mixed-mode selector parity hotfix (LIVE + PAPER)`
 - [ ] `UXR-E-A (commits UXR-E-01..UXR-E-04): table action system + clone foundation`
 - [ ] `UXR-E-B (commits UXR-E-05..UXR-E-08): action rollout + dashboard manual-order/wallet polish`
 - [ ] `UXR-E-C (commits UXR-E-09..UXR-E-12): shell polish + regression closure`
@@ -48,6 +48,8 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
+- [x] `DBSEL-A (commits DBSEL-01..DBSEL-05): dashboard mixed-mode selector parity hotfix (LIVE + PAPER)`
+  - 2026-04-18: Closed `DBSEL-A` by completing `DBSEL-01..DBSEL-05` (contract freeze for mixed `LIVE + PAPER` selector behavior, red regression for hidden active `PAPER` option when `LIVE` exists, removal of live-only snapshot clamp in `useHomeLiveWidgetsController`, mixed-mode selector persistence + degraded no-session regression coverage, and focused QA closure artifacts in `docs/operations/_artifacts-dbsel-a-selector-parity-2026-04-18.json` + `docs/operations/dbsel-a-selector-parity-closure-2026-04-18.md`). Validation: `pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx` => `15/15 PASS`; `pnpm --filter web run typecheck` + `pnpm --filter web run build` => `PASS`.
 - [x] `L10NQ-D-C (commits 11-18): shared foundation localization + parity/smoke/closure`
   - 2026-04-18: Closed `L10NQ-D-C` by completing `L10NQ-D-11..L10NQ-D-18` (offline+risk notice localization, shared a11y key migration, shell/footer key alignment, profile/wallet residual literal cleanup, legacy backtests/presets localization contract hardening, expanded `en/pl/pt` parity assertions, route-level locale smoke on high-impact routes, and final closure evidence artifacts in `docs/operations/_artifacts-l10nq-d-closure-2026-04-18.json` + `docs/operations/l10nq-d-closure-2026-04-18.md`). Validation: `pnpm --filter web test -- src/i18n/translations.test.ts src/i18n/namespaceRegistry.test.ts src/i18n/guardrails.test.ts src/i18n/I18nProvider.test.tsx src/i18n/I18nProvider.route-loading.test.tsx src/i18n/routeLocaleSmoke.test.ts` => `16/16 PASS`; `pnpm --filter web run typecheck` + `pnpm --filter web run build` + `docker build -f apps/api/Dockerfile.worker.backtest .` => `PASS`.
 - [x] `L10NQ-D-B (commits 06-10): reports/markets/backtests/bots/home copy migration`

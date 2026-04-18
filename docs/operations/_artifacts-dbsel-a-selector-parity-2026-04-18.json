@@ -1,0 +1,32 @@
+{
+  "phase": "DBSEL-A",
+  "date": "2026-04-18",
+  "scope": [
+    "DBSEL-01",
+    "DBSEL-02",
+    "DBSEL-03",
+    "DBSEL-04",
+    "DBSEL-05"
+  ],
+  "commands": [
+    {
+      "cmd": "pnpm --filter web test -- src/features/dashboard-home/components/HomeLiveWidgets.test.tsx",
+      "status": "PASS",
+      "details": "15/15 tests passed"
+    },
+    {
+      "cmd": "pnpm --filter web run typecheck",
+      "status": "PASS"
+    },
+    {
+      "cmd": "pnpm --filter web run build",
+      "status": "PASS"
+    }
+  ],
+  "nonBlockingNotes": [
+    "Known test stderr noise: React act(...) warnings in I18nProvider flow",
+    "Known test stderr noise: intermittent jsdom AggregateError logs",
+    "Build includes pre-existing lint warnings outside DBSEL scope"
+  ],
+  "result": "Dashboard mixed-mode runtime selector parity closed"
+}
