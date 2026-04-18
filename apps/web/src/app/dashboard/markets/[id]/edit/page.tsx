@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { PAGE_TITLE_ACTION_SAVE_CLASS, PageTitle } from '@/ui/layout/dashboard/PageTitle';
 import { ErrorState, LoadingState } from '@/ui/components/ViewState';
@@ -17,7 +17,7 @@ const MARKET_UNIVERSE_ACTIVE_BOT_ERROR = 'market universe is used by active bot 
 const MARKET_FORM_ID = 'market-universe-form-edit';
 
 export default function MarketsEditPage() {
-  const { locale, t } = useI18n();
+  const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [initial, setInitial] = useState<MarketUniverse | null>(null);
@@ -25,53 +25,20 @@ export default function MarketsEditPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const copy = useMemo(
-    () => ({
-      en: {
-        updated: 'Markets entry updated',
-        activeBotTitle: 'Markets entry is currently used by an active bot',
-        activeBotDescription: 'Disable the bot and then save changes.',
-        saveFailed: 'Could not save changes',
-        titleFallback: 'Markets',
-        breadcrumbMarkets: 'Markets',
-        breadcrumbEdit: 'Edit',
-        loading: 'Loading markets entry',
-        errorTitle: 'Could not load markets entry',
-        backToList: 'Back to list',
-        submitLabel: 'Save',
-        updatePrefix: 'Update:',
-      },
-      pl: {
-        updated: 'Grupa rynkow zaktualizowana',
-        activeBotTitle: 'Grupa rynkow jest aktualnie uzywana przez aktywnego bota',
-        activeBotDescription: 'Wylacz bota, a potem zapisz zmiany.',
-        saveFailed: 'Nie udalo sie zapisac zmian',
-        titleFallback: 'Rynki',
-        breadcrumbMarkets: 'Rynki',
-        breadcrumbEdit: 'Edycja',
-        loading: 'Ladowanie grupy rynkow',
-        errorTitle: 'Nie udalo sie pobrac grupy rynkow',
-        backToList: 'Powrot do listy',
-        submitLabel: 'Zapisz',
-        updatePrefix: 'Aktualizacja:',
-      },
-      pt: {
-        updated: 'Grupo de mercados atualizado',
-        activeBotTitle: 'Este grupo de mercados esta em uso por um bot ativo',
-        activeBotDescription: 'Desativa o bot e depois guarda as alteracoes.',
-        saveFailed: 'Nao foi possivel guardar alteracoes',
-        titleFallback: 'Mercados',
-        breadcrumbMarkets: 'Mercados',
-        breadcrumbEdit: 'Editar',
-        loading: 'A carregar grupo de mercados',
-        errorTitle: 'Nao foi possivel carregar grupo de mercados',
-        backToList: 'Voltar a lista',
-        submitLabel: 'Guardar',
-        updatePrefix: 'Atualizacao:',
-      },
-    } as const)[locale],
-    [locale]
-  );
+  const copy = {
+    updated: t('dashboard.markets.page.updated'),
+    activeBotTitle: t('dashboard.markets.page.activeBotTitle'),
+    activeBotDescription: t('dashboard.markets.page.activeBotDescription'),
+    saveFailed: t('dashboard.markets.page.saveFailed'),
+    titleFallback: t('dashboard.markets.title'),
+    breadcrumbMarkets: t('dashboard.markets.title'),
+    breadcrumbEdit: t('dashboard.markets.editLabel'),
+    loading: t('dashboard.markets.page.loading'),
+    errorTitle: t('dashboard.markets.page.errorTitle'),
+    backToList: t('dashboard.markets.page.backToList'),
+    submitLabel: t('dashboard.markets.saveLabel'),
+    updatePrefix: t('dashboard.markets.page.updatePrefix'),
+  } as const;
 
   useEffect(() => {
     const load = async () => {

@@ -4,6 +4,18 @@ export const dashboardMarketsEn = {
   createLabel: "Create",
   editLabel: "Edit",
   saveLabel: "Save",
+  page: {
+    created: "Markets entry created",
+    createFailed: "Could not create markets entry",
+    updated: "Markets entry updated",
+    activeBotTitle: "Markets entry is currently used by an active bot",
+    activeBotDescription: "Disable the bot and then save changes.",
+    saveFailed: "Could not save changes",
+    loading: "Loading markets entry",
+    errorTitle: "Could not load markets entry",
+    backToList: "Back to list",
+    updatePrefix: "Update:",
+  },
   form: {
     loadCatalogError: "Could not load market catalog from exchange.",
     sectionTitle: "Market configuration",

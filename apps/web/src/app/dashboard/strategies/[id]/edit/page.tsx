@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { PAGE_TITLE_ACTION_SAVE_CLASS, PageTitle } from '@/ui/layout/dashboard/PageTitle';
@@ -18,7 +18,7 @@ const STRATEGY_USED_BY_ACTIVE_BOT_ERROR = 'strategy is used by active bot and ca
 const STRATEGY_FORM_ID = 'strategy-form-edit';
 
 export default function StrategiesEditPage() {
-  const { locale, t } = useI18n();
+  const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [initial, setInitial] = useState<StrategyFormState | null>(null);
@@ -26,53 +26,20 @@ export default function StrategiesEditPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const copy = useMemo(
-    () => ({
-      en: {
-        updated: 'Strategy updated',
-        activeBotTitle: 'Strategy is currently used by an active bot',
-        activeBotDescription: 'Disable the bot or set it inactive before editing strategy.',
-        saveFailed: 'Failed to save strategy',
-        save: 'Save',
-        titleFallback: 'Strategies',
-        breadcrumbStrategies: 'Strategies',
-        breadcrumbEdit: 'Edit',
-        loading: 'Loading strategy',
-        errorTitle: 'Could not load strategy',
-        backToList: 'Back to list',
-        updatePrefix: 'Update:',
-      },
-      pl: {
-        updated: 'Strategia zaktualizowana',
-        activeBotTitle: 'Strategia jest aktualnie uzywana przez aktywnego bota',
-        activeBotDescription: 'Wylacz bota lub ustaw go jako nieaktywny przed edycja strategii.',
-        saveFailed: 'Blad zapisu strategii',
-        save: 'Save',
-        titleFallback: 'Strategie',
-        breadcrumbStrategies: 'Strategie',
-        breadcrumbEdit: 'Edycja',
-        loading: 'Ladowanie strategii',
-        errorTitle: 'Nie udalo sie pobrac strategii',
-        backToList: 'Powrot do listy',
-        updatePrefix: 'Aktualizacja:',
-      },
-      pt: {
-        updated: 'Estrategia atualizada',
-        activeBotTitle: 'A estrategia esta a ser usada por um bot ativo',
-        activeBotDescription: 'Desativa o bot ou marca-o inativo antes de editar.',
-        saveFailed: 'Falha ao guardar estrategia',
-        save: 'Save',
-        titleFallback: 'Estrategias',
-        breadcrumbStrategies: 'Estrategias',
-        breadcrumbEdit: 'Editar',
-        loading: 'A carregar estrategia',
-        errorTitle: 'Nao foi possivel carregar estrategia',
-        backToList: 'Voltar a lista',
-        updatePrefix: 'Atualizacao:',
-      },
-    } as const)[locale],
-    [locale]
-  );
+  const copy = {
+    updated: t('dashboard.strategies.page.updated'),
+    activeBotTitle: t('dashboard.strategies.page.activeBotTitle'),
+    activeBotDescription: t('dashboard.strategies.page.activeBotDescription'),
+    saveFailed: t('dashboard.strategies.page.saveFailed'),
+    save: t('dashboard.strategies.saveLabel'),
+    titleFallback: t('dashboard.strategies.title'),
+    breadcrumbStrategies: t('dashboard.strategies.title'),
+    breadcrumbEdit: t('dashboard.strategies.editLabel'),
+    loading: t('dashboard.strategies.page.loading'),
+    errorTitle: t('dashboard.strategies.page.errorTitle'),
+    backToList: t('dashboard.strategies.page.backToList'),
+    updatePrefix: t('dashboard.strategies.page.updatePrefix'),
+  } as const;
 
   useEffect(() => {
     const load = async () => {

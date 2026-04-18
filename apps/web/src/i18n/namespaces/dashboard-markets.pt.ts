@@ -4,6 +4,18 @@ export const dashboardMarketsPt = {
   createLabel: "Criar",
   editLabel: "Editar",
   saveLabel: "Guardar",
+  page: {
+    created: "Grupo de mercados criado",
+    createFailed: "Nao foi possivel criar o grupo de mercados",
+    updated: "Grupo de mercados atualizado",
+    activeBotTitle: "Este grupo de mercados esta em uso por um bot ativo",
+    activeBotDescription: "Desativa o bot e depois guarda as alteracoes.",
+    saveFailed: "Nao foi possivel guardar alteracoes",
+    loading: "A carregar grupo de mercados",
+    errorTitle: "Nao foi possivel carregar grupo de mercados",
+    backToList: "Voltar a lista",
+    updatePrefix: "Atualizacao:",
+  },
   form: {
     loadCatalogError: "Nao foi possivel carregar catalogo de mercados da exchange.",
     sectionTitle: "Configuracao de mercado",

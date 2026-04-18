@@ -4,6 +4,18 @@ export const dashboardMarketsPl = {
   createLabel: "Tworzenie",
   editLabel: "Edycja",
   saveLabel: "Zapisz",
+  page: {
+    created: "Grupa rynkow utworzona",
+    createFailed: "Nie udalo sie utworzyc grupy rynkow",
+    updated: "Grupa rynkow zaktualizowana",
+    activeBotTitle: "Grupa rynkow jest aktualnie uzywana przez aktywnego bota",
+    activeBotDescription: "Wylacz bota, a potem zapisz zmiany.",
+    saveFailed: "Nie udalo sie zapisac zmian",
+    loading: "Ladowanie grupy rynkow",
+    errorTitle: "Nie udalo sie pobrac grupy rynkow",
+    backToList: "Powrot do listy",
+    updatePrefix: "Aktualizacja:",
+  },
   form: {
     loadCatalogError: "Nie udalo sie pobrac katalogu rynkow z gieldy.",
     sectionTitle: "Konfiguracja rynku",
