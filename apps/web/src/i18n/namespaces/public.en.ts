@@ -2,7 +2,7 @@ export const publicEn = {
   localeNames: {
     en: "English",
     pl: "Polish",
-    pt: "Portuguese (PT)",
+    pt: "Portuguese",
   },
   a11y: {
     skipToMainContent: "Skip to main content",

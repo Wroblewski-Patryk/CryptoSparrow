@@ -33,7 +33,7 @@
     "timeZoneAuto": "Auto (Sistema)",
     "english": "Ingles",
     "polish": "Polaco",
-    "portuguese": "Portugues (PT)"
+    "portuguese": "Portugues"
   },
   "a11y": {
     "navigation": "Navegacao do painel",

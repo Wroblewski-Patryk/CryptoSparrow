@@ -27,11 +27,11 @@ describe("LanguageSwitcher visual contract", () => {
     });
 
     fireEvent.click(screen.getByLabelText(/language|jezyk/i));
-    fireEvent.click(screen.getByRole("button", { name: /portugalski \(pt\)|portuguese \(pt\)|portugues \(pt\)/i }));
+    fireEvent.click(screen.getByRole("button", { name: /portugalski|portuguese|portugues/i }));
 
     await waitFor(() => {
       expect(screen.getAllByTestId("flag-pt").length).toBeGreaterThan(0);
-      expect(screen.getAllByText("Portugues (PT)").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Portugues").length).toBeGreaterThan(0);
     });
   });
 });

@@ -28,12 +28,12 @@ describe("I18nProvider", () => {
     });
 
     fireEvent.click(screen.getByLabelText(/language|jezyk|idioma/i));
-    fireEvent.click(screen.getByRole("button", { name: /portugalski \(pt\)|portuguese \(pt\)|portugues \(pt\)/i }));
+    fireEvent.click(screen.getByRole("button", { name: /portugalski|portuguese|portugues/i }));
 
     await waitFor(() => {
       expect(document.documentElement.lang).toBe("pt");
       expect(window.localStorage.getItem("cryptosparrow-locale")).toBe("pt");
-      expect(screen.getByLabelText(/language|jezyk|idioma/i)).toHaveTextContent("Portugues (PT)");
+      expect(screen.getByLabelText(/language|jezyk|idioma/i)).toHaveTextContent("Portugues");
     });
   });
 });

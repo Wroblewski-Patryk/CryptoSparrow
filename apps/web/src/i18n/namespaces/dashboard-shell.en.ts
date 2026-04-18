@@ -33,7 +33,7 @@ export const dashboardShellEn = {
     "timeZoneAuto": "Auto (System)",
     "english": "English",
     "polish": "Polish",
-    "portuguese": "Portuguese (PT)"
+    "portuguese": "Portuguese"
   },
   "a11y": {
     "navigation": "Dashboard navigation",
