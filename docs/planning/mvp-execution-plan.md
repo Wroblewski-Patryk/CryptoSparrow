@@ -1904,6 +1904,8 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 
 ## Phase QH-LINT - Post-Closure Build Warning Debt (2026-04-18)
 - [x] `QH-LINT-01 chore(web-build-warning-cleanup): remove no-unused-vars warnings from bots/dashboard-home files and verify web build/typecheck`
+- [x] `QH-LINT-02 chore(web-hook-deps-cleanup): resolve remaining exhaustive-deps warnings in backtests/wallets table flows`
 
 ### Progress Log (Phase QH-LINT - Post-Closure Build Warning Debt)
+- 2026-04-18: Completed `QH-LINT-02` by removing remaining `react-hooks/exhaustive-deps` warnings in touched scope: `BacktestsRunsTable` now uses stable `getStatusLabel` callback with aligned `columns` memo dependencies, and `WalletsListTable` now uses stable `handleClone` callback to prevent memo dependency churn. Validation: `pnpm --filter web run build` => `PASS` (clean warning surface), `pnpm --filter web run typecheck` => `PASS`.
 - 2026-04-18: Completed `QH-LINT-01` as derived next tiny task after canonical queue saturation (`mvp-next-commits` + `TASK_BOARD` contained no unchecked tasks). Removed no-unused warning sources in `BotsManagement.tsx`, `BotsManagement.test.tsx`, `HomeLiveWidgets.tsx`, and `useCloseRuntimePositionAction.ts` without behavior changes. Validation: `pnpm --filter web run build` => `PASS` (warning count reduced to two remaining `react-hooks/exhaustive-deps` warnings); `pnpm --filter web run typecheck` => `PASS` (after `.next/types` refresh by build).

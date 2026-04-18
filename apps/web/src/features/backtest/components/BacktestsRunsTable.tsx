@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import DataTable, { DataTableColumn } from '@/ui/components/DataTable';
 import ConfirmModal from '@/ui/components/ConfirmModal';
@@ -53,13 +53,22 @@ export default function BacktestsRunsTable({ rows, onDeleted }: BacktestsRunsTab
     }),
     [t]
   );
-  const getStatusLabel = (status: BacktestStatus) => {
-    if (status === 'PENDING') return copy.statusPending;
-    if (status === 'RUNNING') return copy.statusRunning;
-    if (status === 'COMPLETED') return copy.statusCompleted;
-    if (status === 'FAILED') return copy.statusFailed;
-    return copy.statusCanceled;
-  };
+  const getStatusLabel = useCallback(
+    (status: BacktestStatus) => {
+      if (status === 'PENDING') return copy.statusPending;
+      if (status === 'RUNNING') return copy.statusRunning;
+      if (status === 'COMPLETED') return copy.statusCompleted;
+      if (status === 'FAILED') return copy.statusFailed;
+      return copy.statusCanceled;
+    },
+    [
+      copy.statusCanceled,
+      copy.statusCompleted,
+      copy.statusFailed,
+      copy.statusPending,
+      copy.statusRunning,
+    ]
+  );
 
   const handleDelete = async () => {
     if (!selectedDeleteRun) return;
@@ -142,12 +151,8 @@ export default function BacktestsRunsTable({ rows, onDeleted }: BacktestsRunsTab
       copy.colTimeframe,
       copy.delete,
       copy.preview,
-      copy.statusCanceled,
-      copy.statusCompleted,
-      copy.statusFailed,
-      copy.statusPending,
-      copy.statusRunning,
       formatDateTime,
+      getStatusLabel,
     ]
   );
 

@@ -154,28 +154,31 @@ export default function WalletsListTable({ rows, onDeleted, onCloned }: WalletsL
     }
   };
 
-  const handleClone = async (wallet: Wallet) => {
-    setCloningId(wallet.id);
-    try {
-      const clonedWallet = await createWallet({
-        name: buildNextCloneName(wallet.name, rows.map((item) => item.name)),
-        mode: wallet.mode,
-        exchange: wallet.exchange,
-        marketType: wallet.marketType,
-        baseCurrency: wallet.baseCurrency,
-        paperInitialBalance: wallet.paperInitialBalance,
-        liveAllocationMode: wallet.liveAllocationMode ?? null,
-        liveAllocationValue: wallet.liveAllocationValue ?? null,
-        apiKeyId: wallet.apiKeyId ?? null,
-      });
-      onCloned?.(clonedWallet);
-      toast.success(copy.cloned);
-    } catch (err) {
-      toast.error(copy.cloneFailed, { description: getAxiosMessage(err) });
-    } finally {
-      setCloningId(null);
-    }
-  };
+  const handleClone = useCallback(
+    async (wallet: Wallet) => {
+      setCloningId(wallet.id);
+      try {
+        const clonedWallet = await createWallet({
+          name: buildNextCloneName(wallet.name, rows.map((item) => item.name)),
+          mode: wallet.mode,
+          exchange: wallet.exchange,
+          marketType: wallet.marketType,
+          baseCurrency: wallet.baseCurrency,
+          paperInitialBalance: wallet.paperInitialBalance,
+          liveAllocationMode: wallet.liveAllocationMode ?? null,
+          liveAllocationValue: wallet.liveAllocationValue ?? null,
+          apiKeyId: wallet.apiKeyId ?? null,
+        });
+        onCloned?.(clonedWallet);
+        toast.success(copy.cloned);
+      } catch (err) {
+        toast.error(copy.cloneFailed, { description: getAxiosMessage(err) });
+      } finally {
+        setCloningId(null);
+      }
+    },
+    [copy.cloneFailed, copy.cloned, onCloned, rows]
+  );
 
   const columns = useMemo<DataTableColumn<Wallet>[]>(
     () => [

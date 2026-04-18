@@ -37,6 +37,7 @@ Last updated: 2026-04-18
 
 ## DONE
 
+- [x] QH-LINT-02 Resolve remaining `react-hooks/exhaustive-deps` warnings in backtests/wallets table components
 - [x] QH-LINT-01 Remove `no-unused-vars` warning noise in web build-critical dashboard/bots files
 - [x] SOAR-000 Establish Soar-specific agent workflow scaffolding refresh
 - [x] L10NQ-D-06..10 Reports, markets, backtests, bots, and dashboard-home copy migration completed and reflected in `docs/planning/mvp-next-commits.md`
