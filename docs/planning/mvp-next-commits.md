@@ -48,6 +48,8 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
+- [x] `UXR-E-B progress: completed UXR-E-05..UXR-E-06 (action rollout in progress)`
+  - 2026-04-18: Completed `UXR-E-06` by migrating `BacktestsRunsTable` and `BotsListTable` to canonical `TableUi` preset actions (`preview/runtime/edit/delete`) and adding focused regression coverage (`BacktestsRunsTable.test.tsx`, updated `BotsListTable.test.tsx`). Validation: `pnpm --filter web test -- src/features/markets/components/MarketUniversesTable.test.tsx src/features/strategies/components/StrategiesList.test.tsx src/features/backtest/components/BacktestsRunsTable.test.tsx src/features/bots/components/BotsListTable.test.tsx` => `5/5 PASS`; `pnpm --filter web run typecheck` => `PASS`.
 - [x] `UXR-E-A (commits UXR-E-01..UXR-E-04): table action system + clone foundation`
   - 2026-04-18: Closed `UXR-E-A` by completing `UXR-E-01..UXR-E-04` (frozen action/clone contract in canonical docs, added shared table-action preset layer in `TableUi`, implemented wallets clone action with deterministic `(clone)` naming + create-from-existing payload + list append callback + test coverage, and implemented markets clone action with same deterministic naming/payload/list-append contract + component coverage). Validation: `pnpm --filter web test -- src/features/wallets/components/WalletsListTable.test.tsx src/features/markets/components/MarketUniversesTable.test.tsx` => `3/3 PASS`; `pnpm --filter web run typecheck` => `PASS`.
 - [x] `DBSEL-A (commits DBSEL-01..DBSEL-05): dashboard mixed-mode selector parity hotfix (LIVE + PAPER)`

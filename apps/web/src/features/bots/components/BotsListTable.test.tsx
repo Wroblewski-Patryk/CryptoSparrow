@@ -59,11 +59,13 @@ describe("BotsListTable", () => {
       expect(screen.getByText("Paper Bot")).toBeInTheDocument();
     });
 
-    const runtimeLink = screen.getByRole("link", { name: /operacje runtime/i });
-    const editLink = screen.getByRole("link", { name: /edytuj/i });
+    const runtimeLink = screen.getByRole("link", { name: /runtime operations|operacje runtime/i });
+    const editLink = screen.getByRole("link", { name: /edit|edytuj/i });
 
     expect(runtimeLink).toHaveAttribute("href", "/dashboard/bots/bot-1/preview");
     expect(editLink).toHaveAttribute("href", "/dashboard/bots/bot-1/edit");
+    expect(runtimeLink.className).toContain("text-info");
+    expect(editLink.className).toContain("text-info");
     expect(screen.queryByRole("link", { name: /asystent/i })).not.toBeInTheDocument();
   });
 
@@ -114,7 +116,7 @@ describe("BotsListTable", () => {
 
     expect(screen.getByText("PLACEHOLDER")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText("Szukaj botow (np. BTCUSDT)"), {
+    fireEvent.change(screen.getByPlaceholderText(/Search bots|Szukaj botow/i), {
       target: { value: "okx" },
     });
 

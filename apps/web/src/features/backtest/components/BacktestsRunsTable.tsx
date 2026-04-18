@@ -2,10 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { LuPencilLine, LuTrash2 } from 'react-icons/lu';
 import DataTable, { DataTableColumn } from '@/ui/components/DataTable';
 import ConfirmModal from '@/ui/components/ConfirmModal';
-import { TableIconButtonAction, TableIconLinkAction, TableToneBadge } from '@/ui/components/TableUi';
+import { TablePresetButtonAction, TablePresetLinkAction, TableToneBadge } from '@/ui/components/TableUi';
 import { useLocaleFormatting } from '@/i18n/useLocaleFormatting';
 import { BacktestRun, BacktestStatus } from '../types/backtest.type';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -120,16 +119,15 @@ export default function BacktestsRunsTable({ rows, onDeleted }: BacktestsRunsTab
         className: 'w-28 text-center',
         render: (row) => (
           <div className='flex items-center justify-center gap-2'>
-            <TableIconLinkAction
+            <TablePresetLinkAction
+              preset='preview'
               href={`/dashboard/backtests/${row.id}`}
               label={`${copy.preview} ${row.name}`}
-              icon={<LuPencilLine className='h-3.5 w-3.5' />}
             />
-            <TableIconButtonAction
+            <TablePresetButtonAction
+              preset='delete'
               label={copy.delete}
-              icon={<LuTrash2 className='h-3.5 w-3.5' />}
               onClick={() => setSelectedDeleteRun(row)}
-              tone='danger'
             />
           </div>
         ),

@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { LuLayoutDashboard, LuPencilLine, LuTrash2 } from "react-icons/lu";
 import { useRouter } from "next/navigation";
 
 import ConfirmModal from "@/ui/components/ConfirmModal";
 import DataTable, { DataTableColumn } from "@/ui/components/DataTable";
-import { TableIconButtonAction, TableIconLinkAction, TableToneBadge } from "@/ui/components/TableUi";
+import { TablePresetButtonAction, TablePresetLinkAction, TableToneBadge } from "@/ui/components/TableUi";
 import { EmptyState, ErrorState, LoadingState } from "@/ui/components/ViewState";
 import { dashboardRoutes } from "@/ui/layout/dashboard/dashboardRoutes";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -163,21 +162,20 @@ export default function BotsListTable() {
       className: "w-[140px] text-right",
       render: (row) => (
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <TableIconLinkAction
+          <TablePresetLinkAction
+            preset="runtime"
             href={dashboardRoutes.bots.preview(row.id)}
             label={t("dashboard.bots.tabs.monitoring")}
-            icon={<LuLayoutDashboard className="h-3.5 w-3.5" />}
           />
-          <TableIconLinkAction
+          <TablePresetLinkAction
+            preset="edit"
             href={dashboardRoutes.bots.edit(row.id)}
             label={t("dashboard.bots.list.edit")}
-            icon={<LuPencilLine className="h-3.5 w-3.5" />}
           />
-          <TableIconButtonAction
+          <TablePresetButtonAction
+            preset="delete"
             label={t("dashboard.bots.list.delete")}
-            icon={<LuTrash2 className="h-3.5 w-3.5" />}
             onClick={() => setSelectedDeleteBot(row)}
-            tone="danger"
           />
         </div>
       ),
