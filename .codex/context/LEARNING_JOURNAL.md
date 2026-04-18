@@ -178,3 +178,18 @@ if ($LASTEXITCODE -eq 0) { pnpm --filter web run typecheck }
 - Avoid: treating missing `.next/types` errors as app-code regressions before refreshing Next.js generated types.
 - Evidence:
   - Observed on 2026-04-18 during `L10NQ-D-18`: `typecheck` failed with missing `.next/types/app/...`; after fixing build blocker and running `next build`, `typecheck` passed.
+
+### 2026-04-18 - Sandbox `spawn EPERM` for `next build` / `vitest` requires escalation
+- Context: running web validation commands in Codex desktop `workspace-write` sandbox.
+- Symptom: `next build` and `vitest` fail early with `Error: spawn EPERM` (esbuild/child-process startup), and follow-up checks (`tsc`) can fail from stale/missing `.next/types`.
+- Root cause: sandbox process-spawn restriction for toolchain subprocesses in this environment.
+- Guardrail: if build/test commands fail with `spawn EPERM`, rerun those exact commands with `require_escalated`; then rerun `tsc --noEmit` after successful `next build`.
+- Preferred pattern:
+```text
+1) Run next build (if EPERM -> rerun with escalation).
+2) Run focused vitest pack (if EPERM -> rerun with escalation).
+3) Run tsc --noEmit after build to validate `.next/types`.
+```
+- Avoid: treating `spawn EPERM` as application-code failure or closing a QA task before retrying with escalation.
+- Evidence:
+  - Observed on 2026-04-18 during `UXR-E-12` closure pack; non-escalated `next/vitest` failed with `spawn EPERM`, escalated reruns passed (`next build` PASS, focused Vitest pack `30/30` PASS).

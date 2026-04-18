@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { I18nProvider } from "../../../i18n/I18nProvider";
 import Footer from "./Footer";
@@ -7,6 +7,19 @@ import Footer from "./Footer";
 describe("Public footer mobile layout", () => {
   it("keeps both rows centered on mobile and split on desktop", () => {
     window.localStorage.setItem("cryptosparrow-locale", "en");
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockImplementation(() => ({
+        matches: false,
+        media: "",
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
 
     render(
       <I18nProvider>

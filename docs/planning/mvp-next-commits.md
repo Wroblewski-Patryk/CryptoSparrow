@@ -29,7 +29,7 @@ Operational queue for one-task execution runs.
 - [x] `DBSEL-A (commits DBSEL-01..DBSEL-05): dashboard mixed-mode selector parity hotfix (LIVE + PAPER)`
 - [x] `UXR-E-A (commits UXR-E-01..UXR-E-04): table action system + clone foundation`
 - [x] `UXR-E-B (commits UXR-E-05..UXR-E-08): action rollout + dashboard manual-order/wallet polish`
-- [ ] `UXR-E-C (commits UXR-E-09..UXR-E-12): shell polish + regression closure`
+- [x] `UXR-E-C (commits UXR-E-09..UXR-E-12): shell polish + regression closure`
 - [ ] `UXR-F-A (commits UXR-F-01..UXR-F-04): shared dashboard form-system foundation + guardrails`
 - [ ] `UXR-F-B (commits UXR-F-05..UXR-F-08): wrapper/i18n shell unification + wallets/markets/backtests migration`
 - [ ] `UXR-F-C (commits UXR-F-09..UXR-F-12): strategies/bots migration + standardized form UX/mobile action bar`
@@ -48,8 +48,9 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
-- [x] `UXR-E-C progress: completed UXR-E-09..UXR-E-11 (shell polish in progress)`
-  - 2026-04-18: Completed `UXR-E-11` by removing `(PT)` suffix from Portuguese labels (`public.localeNames.pt`, `dashboard-shell.common.languages.portuguese`), updating `LanguageSwitcher`/`I18nProvider` expectations, and centering public footer rows on mobile with new `Footer.layout` regression in public shell. Validation: `tsc --noEmit -p apps/web/tsconfig.json` => `PASS`; targeted Vitest run blocked in this sandbox (`spawn EPERM`).
+- [x] `UXR-E-C progress: completed UXR-E-09..UXR-E-12 (group closed)`
+  - 2026-04-18: Completed `UXR-E-12` closure pack after fixing public-footer layout test environment contract (`matchMedia` mock): `next build` => `PASS`, `tsc --noEmit -p apps/web/tsconfig.json` => `PASS`, focused Vitest pack => `11/11 files PASS`, `30/30 tests PASS`.
+  - 2026-04-18: Completed `UXR-E-11` by removing `(PT)` suffix from Portuguese labels (`public.localeNames.pt`, `dashboard-shell.common.languages.portuguese`), updating `LanguageSwitcher`/`I18nProvider` expectations, and centering public footer rows on mobile with new `Footer.layout` regression in public shell. Validation: `tsc --noEmit -p apps/web/tsconfig.json` => `PASS`; full focused regression pack confirmed in `UXR-E-12`.
   - 2026-04-18: Completed `UXR-E-10` by updating `PageTitle` action contract to remove forced compact sizing (`btn-xs`, `h-7`, `min-h-7`) and widening actions container spacing to `gap-3`, with explicit regression assertions in `PageTitle.a11y.test.tsx`. Validation: `tsc --noEmit -p apps/web/tsconfig.json` => `PASS`; targeted Vitest run blocked in this sandbox (`spawn EPERM`).
   - 2026-04-18: Completed `UXR-E-09` by refactoring runtime sidebar wallet KPI block into inline summary rows (removed icon-card styling, preserved portfolio/free/in-positions readability, and added subtle row border tones for free/in-positions) with regression lock in `HomeLiveWidgets.test.tsx` (`wallet-kpi-row` no grid contract). Validation: `tsc --noEmit -p apps/web/tsconfig.json` => `PASS`; targeted Vitest run is blocked in current sandbox due `spawn EPERM` (esbuild child process restriction).
 - [x] `UXR-E-B progress: completed UXR-E-05..UXR-E-08 (group closed)`
