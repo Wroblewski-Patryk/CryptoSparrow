@@ -1901,3 +1901,9 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - 2026-04-18: Completed `UXR-F-02` by adding shared `ui/forms` core primitives (`FormPageShell`, `FormSectionCard`, `FormGrid`, `FormField`, `FormAlert`, `FormValidationSummary`) with barrel exports and baseline component tests in `FormPrimitives.test.tsx`. Validation: `pnpm --filter web test -- src/ui/forms/FormPrimitives.test.tsx` => `5/5 PASS`; `pnpm --filter web run typecheck` => `PASS`.
 - 2026-04-18: Completed `UXR-F-01` by locking Stage A migration boundaries in canonical decision contract (`open-decisions`): Stage A is restricted to docs freeze, shared `ui/forms` primitives, and import-boundary guardrail enforcement, with no wrapper/business-flow migration outside guardrail safety.
 - 2026-04-18: Queued non-blocking implementation wave in `docs/planning/uxr-f-dashboard-forms-unification-plan-2026-04-18.md`, split into grouped execution batches `UXR-F-A..UXR-F-D` with stage DoD, per-stage risk/rollback plan, and explicit test packs; queue inserted without modifying active executor `NOW`.
+
+## Phase QH-LINT - Post-Closure Build Warning Debt (2026-04-18)
+- [x] `QH-LINT-01 chore(web-build-warning-cleanup): remove no-unused-vars warnings from bots/dashboard-home files and verify web build/typecheck`
+
+### Progress Log (Phase QH-LINT - Post-Closure Build Warning Debt)
+- 2026-04-18: Completed `QH-LINT-01` as derived next tiny task after canonical queue saturation (`mvp-next-commits` + `TASK_BOARD` contained no unchecked tasks). Removed no-unused warning sources in `BotsManagement.tsx`, `BotsManagement.test.tsx`, `HomeLiveWidgets.tsx`, and `useCloseRuntimePositionAction.ts` without behavior changes. Validation: `pnpm --filter web run build` => `PASS` (warning count reduced to two remaining `react-hooks/exhaustive-deps` warnings); `pnpm --filter web run typecheck` => `PASS` (after `.next/types` refresh by build).

@@ -103,8 +103,9 @@ Last updated: 2026-04-18
   queue continuity and deploy-safe verification discipline while selecting the
   next planned execution wave.
 - Top blockers:
-  - pre-existing non-blocking web lint warnings remain outside current closure
-    scope and should be cleaned before stricter fail-on-warning gates.
+  - two remaining web lint warnings are `react-hooks/exhaustive-deps` contract
+    gaps (`BacktestsRunsTable`, `WalletsListTable`) and should be resolved
+    before adopting stricter fail-on-warning build gates.
   - next implementation wave selection needs explicit promotion in canonical
     planning queue after `UXR-F-D` closure.
 - Success criteria for this phase:
@@ -126,6 +127,10 @@ Last updated: 2026-04-18
 - 2026-04-18: closed `UXR-F-D` (`UXR-F-13..UXR-F-14`) with focused form/i18n
   regression pack (`33/33` tests PASS), final web `typecheck` + `build` PASS,
   and canonical queue/context synchronization with closure artifacts.
+- 2026-04-18: executed derived tiny continuation task `QH-LINT-01` by removing
+  four `no-unused-vars` warnings in dashboard/bots surfaces and revalidating
+  web build/typecheck; remaining warning debt is now limited to two
+  `react-hooks/exhaustive-deps` findings.
 - 2026-04-18: refreshed the repo-specific agent workflow so the canonical queue,
   validation contract, deployment contract, and learning journal are aligned.
 

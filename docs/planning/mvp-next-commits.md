@@ -34,6 +34,7 @@ Operational queue for one-task execution runs.
 - [x] `UXR-F-B (commits UXR-F-05..UXR-F-08): wrapper/i18n shell unification + wallets/markets/backtests migration`
 - [x] `UXR-F-C (commits UXR-F-09..UXR-F-12): strategies/bots migration + standardized form UX/mobile action bar`
 - [x] `UXR-F-D (commits UXR-F-13..UXR-F-14): focused regression pack + closure sync`
+- [x] `QH-LINT-A (commit QH-LINT-01): post-closure web build warning reduction (unused-vars/imports)`
 - [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
 - [x] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
 - [x] `UXR-C (commits 16-22): advanced table rollout + logs module completion`
@@ -48,6 +49,8 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
+- [x] `QH-LINT-01 chore(web-build-warning-cleanup): remove no-unused-vars warnings in bots/dashboard-home surfaces`
+  - 2026-04-18: Derived next tiny task after closing `UXR-F-D` and clearing canonical queue checkboxes; removed unused import/vars in `BotsManagement.tsx`, `BotsManagement.test.tsx`, `HomeLiveWidgets.tsx`, and `useCloseRuntimePositionAction.ts`. Validation: `pnpm --filter web run build` => `PASS` (warning count reduced to two remaining `react-hooks/exhaustive-deps` warnings in unrelated scope); `pnpm --filter web run typecheck` => `PASS` (rerun after build to refresh `.next/types`).
 - [x] `UXR-F-D closed: completed UXR-F-13..UXR-F-14`
   - 2026-04-18: Completed `UXR-F-13` focused regression pack (`pnpm --filter web test -- src/features/wallets/components/WalletCreateEditForm.test.tsx src/features/markets/components/MarketUniverseForm.test.tsx src/features/backtest/components/BacktestCreateForm.test.tsx src/features/bots/components/BotCreateEditForm.test.tsx src/app/dashboard/wallets/create/page.test.tsx src/app/dashboard/wallets/[id]/edit/page.test.tsx src/app/dashboard/bots/create/page.test.tsx src/app/dashboard/bots/[id]/edit/page.test.tsx src/i18n/translations.test.ts src/i18n/namespaceRegistry.test.ts`) => `10/10 files PASS`, `33/33 tests PASS`; completed `UXR-F-14` closure checks (`pnpm --filter web run typecheck` + `pnpm --filter web run build`) => `PASS`, and published closure evidence in `docs/operations/_artifacts-uxr-f-d-closure-2026-04-18.json` + `docs/operations/uxr-f-d-closure-2026-04-18.md`.
 - [x] `UXR-F-C progress: completed UXR-F-12 (group closed)`

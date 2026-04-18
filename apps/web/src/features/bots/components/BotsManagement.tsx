@@ -11,7 +11,6 @@ import { SkeletonCardBlock, SkeletonFormBlock, SkeletonKpiRow, SkeletonTableRows
 import { BotsManagementTabs } from "./bots-management/BotsManagementTabs";
 import { BotsMonitoringTab } from "./bots-management/BotsMonitoringTab";
 import {
-  Bot,
   TradeMarket,
 } from "../types/bot.type";
 import { supportsExchangeCapability } from "../../exchanges/exchangeCapabilities";

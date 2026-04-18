@@ -54,8 +54,9 @@ export const useCloseRuntimePositionAction = ({
       } finally {
         setClosingPositionById((current) => {
           if (!current[position.id]) return current;
-          const { [position.id]: _removed, ...rest } = current;
-          return rest;
+          const next = { ...current };
+          delete next[position.id];
+          return next;
         });
       }
     },

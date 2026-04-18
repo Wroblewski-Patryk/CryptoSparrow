@@ -62,7 +62,6 @@ import type {
   OpenPositionWithLive,
   RuntimeDataTab,
   RuntimeSelectedData,
-  RuntimeSnapshot,
   RuntimeSummary,
   RuntimeTabItem,
   RuntimeSymbolWithLive,

@@ -1061,7 +1061,9 @@ describe("BotsManagement", () => {
       onerror: ((event: Event) => void) | null = null;
       private listeners = new Map<string, Array<(event: MessageEvent) => void>>();
 
-      constructor(_url: string, _init?: EventSourceInit) {
+      constructor(url: string, init?: EventSourceInit) {
+        void url;
+        void init;
         MockEventSource.instances.push(this);
       }
 
