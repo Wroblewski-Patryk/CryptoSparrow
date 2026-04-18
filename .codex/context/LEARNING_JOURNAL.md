@@ -164,3 +164,17 @@ When user asks "what is planned":
 - Avoid: leaving `NOW/NEXT/PIPELINE` as `none` after publishing a new plan.
 - Evidence:
   - 2026-04-17 user report: executor had no actionable tasks despite existing UXR plan.
+
+### 2026-04-18 - Next.js typecheck depends on fresh `.next/types` snapshot
+- Context: running `pnpm --filter web run typecheck` during closure packs.
+- Symptom: `tsc --noEmit` fails with many `TS6053` missing files under `apps/web/.next/types/app/...` despite unchanged route files.
+- Root cause: web tsconfig includes `.next/types/**/*.ts`; if a prior `next build` fails before finishing type generation (for example lint error), cached `.next/types` can become stale/incomplete.
+- Guardrail: in closure/CI-like verification, run `pnpm --filter web run build` (or `next typegen`) before final standalone `typecheck` when route tree changed or after interrupted builds.
+- Preferred pattern:
+```powershell
+pnpm --filter web run build
+if ($LASTEXITCODE -eq 0) { pnpm --filter web run typecheck }
+```
+- Avoid: treating missing `.next/types` errors as app-code regressions before refreshing Next.js generated types.
+- Evidence:
+  - Observed on 2026-04-18 during `L10NQ-D-18`: `typecheck` failed with missing `.next/types/app/...`; after fixing build blocker and running `next build`, `typecheck` passed.

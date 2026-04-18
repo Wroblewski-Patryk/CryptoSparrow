@@ -11,13 +11,18 @@ const resolveLocale = (raw: string | null): Locale => {
   return DEFAULT_LOCALE;
 };
 
+const readSkipLabel = (value: unknown): string | undefined => {
+  if (value == null || typeof value !== 'object') return undefined;
+  const publicNamespace = value as Record<string, unknown>;
+  const a11y = publicNamespace.a11y;
+  if (a11y == null || typeof a11y !== 'object') return undefined;
+  const label = (a11y as Record<string, unknown>).skipToMainContent;
+  return typeof label === 'string' ? label : undefined;
+};
+
 const getSkipLabel = (locale: Locale): string => {
-  const localized = (translations[locale].public as any)?.a11y?.skipToMainContent as
-    | string
-    | undefined;
-  const fallback = (translations[DEFAULT_LOCALE].public as any)?.a11y?.skipToMainContent as
-    | string
-    | undefined;
+  const localized = readSkipLabel(translations[locale].public);
+  const fallback = readSkipLabel(translations[DEFAULT_LOCALE].public);
   return localized ?? fallback ?? 'Skip to main content';
 };
 
