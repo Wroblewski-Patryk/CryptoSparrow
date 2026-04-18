@@ -1844,7 +1844,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 ## Phase UXR-E - Table Action System + Clone + Dashboard Polish (Queued 2026-04-18)
 - [x] `UXR-E-01 docs(contract): freeze table action semantics and clone naming contract for wallets/markets/strategies`
 - [x] `UXR-E-02 refactor(web-table-actions-core): add shared action presets in TableUi for standard and dedicated table actions`
-- [ ] `UXR-E-03 feat(web-wallets-clone): add wallets list duplicate action with create-from-existing flow and clone-marked naming`
+- [x] `UXR-E-03 feat(web-wallets-clone): add wallets list duplicate action with create-from-existing flow and clone-marked naming`
 - [ ] `UXR-E-04 feat(web-markets-clone): add markets list duplicate action with create-from-existing flow and clone-marked naming`
 - [ ] `UXR-E-05 feat(web-strategies-clone): add strategies list duplicate action with create-from-existing flow and clone-marked naming`
 - [ ] `UXR-E-06 refactor(web-table-actions-rollout): align edit/delete/preview/runtime action icon+tone contract in markets/strategies/backtests/bots`
@@ -1856,6 +1856,7 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 - [ ] `UXR-E-12 qa(regression-pack): run focused web regression pack for table actions, clone flows, dashboard manual-order/wallet polish, and shell/footer contracts`
 
 ### Progress Log (Phase UXR-E - Table Action System + Clone + Dashboard Polish)
+- 2026-04-18: Completed `UXR-E-03` by adding wallet clone row action (`clone` preset) in `WalletsListTable` with deterministic naming (`(clone)`, `(clone N)` via shared `buildNextCloneName` helper), create-from-existing payload mapping aligned to wallet create contract, immediate list append callback in wallets list page, and regression coverage in `WalletsListTable.test.tsx`.
 - 2026-04-18: Completed `UXR-E-02` by introducing shared table action presets in `TableUi` (`edit/delete/clone/preview/runtime/details`) with centralized tone+icon mapping and backward-compatible preset wrappers (`TablePresetButtonAction`, `TablePresetLinkAction`) on top of existing icon action components.
 - 2026-04-18: Completed `UXR-E-01` by freezing canonical table action semantics and clone naming/payload invariants in `docs/planning/open-decisions.md` (action tone/icon matrix + deterministic clone naming/collision policy + editable-fields-only clone payload rules), and linking dashboard-home module contract notes in `docs/modules/web-dashboard-home.md` for runtime operator continuity.
 - 2026-04-18: Queued post-`L10NQ-D` implementation wave with detailed execution plan in `docs/planning/uxr-e-table-actions-clone-dashboard-polish-plan-2026-04-18.md`, split into grouped batches `UXR-E-A..UXR-E-C` for executor continuity.

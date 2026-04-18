@@ -2,24 +2,27 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { LuChevronDown, LuChevronUp, LuPencil, LuTrash2 } from 'react-icons/lu';
+import { LuChevronDown, LuChevronUp } from 'react-icons/lu';
 import { useI18n } from '@/i18n/I18nProvider';
-import { deleteWallet } from '../services/wallets.service';
+import { createWallet, deleteWallet } from '../services/wallets.service';
 import { Wallet } from '../types/wallet.type';
 import { dashboardRoutes } from '@/ui/layout/dashboard/dashboardRoutes';
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
 import ConfirmModal from '@/ui/components/ConfirmModal';
 import DataTable, { DataTableColumn } from '@/ui/components/DataTable';
-import { TableIconButtonAction, TableIconLinkAction, TableToneBadge } from '@/ui/components/TableUi';
+import { TablePresetButtonAction, TablePresetLinkAction, TableToneBadge } from '@/ui/components/TableUi';
+import { buildNextCloneName } from '@/lib/cloneNaming';
 
 type WalletsListTableProps = {
   rows: Wallet[];
   onDeleted: (id: string) => void;
+  onCloned?: (wallet: Wallet) => void;
 };
 
-export default function WalletsListTable({ rows, onDeleted }: WalletsListTableProps) {
+export default function WalletsListTable({ rows, onDeleted, onCloned }: WalletsListTableProps) {
   const { locale } = useI18n();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [cloningId, setCloningId] = useState<string | null>(null);
   const [pendingDeleteWallet, setPendingDeleteWallet] = useState<Wallet | null>(null);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
@@ -40,6 +43,9 @@ export default function WalletsListTable({ rows, onDeleted }: WalletsListTablePr
           deleteConfirm: 'Delete this wallet?',
           deleted: 'Wallet deleted',
           deleteFailed: 'Failed to delete wallet',
+          clone: 'Clone',
+          cloned: 'Wallet cloned',
+          cloneFailed: 'Failed to clone wallet',
           paperLabel: 'paper',
           livePercent: '{value}% of balance',
           liveFixed: '{value} (fixed)',
@@ -68,6 +74,9 @@ export default function WalletsListTable({ rows, onDeleted }: WalletsListTablePr
           deleteConfirm: 'Usunac ten portfel?',
           deleted: 'Portfel usuniety',
           deleteFailed: 'Nie udalo sie usunac portfela',
+          clone: 'Klonuj',
+          cloned: 'Portfel sklonowany',
+          cloneFailed: 'Nie udalo sie sklonowac portfela',
           paperLabel: 'paper',
           livePercent: '{value}% salda',
           liveFixed: '{value} (fixed)',
@@ -96,6 +105,9 @@ export default function WalletsListTable({ rows, onDeleted }: WalletsListTablePr
           deleteConfirm: 'Remover esta carteira?',
           deleted: 'Carteira removida',
           deleteFailed: 'Falha ao remover carteira',
+          clone: 'Clonar',
+          cloned: 'Carteira clonada',
+          cloneFailed: 'Falha ao clonar carteira',
           paperLabel: 'paper',
           livePercent: '{value}% do saldo',
           liveFixed: '{value} (fixo)',
@@ -139,6 +151,29 @@ export default function WalletsListTable({ rows, onDeleted }: WalletsListTablePr
     } finally {
       setDeletingId(null);
       setPendingDeleteWallet(null);
+    }
+  };
+
+  const handleClone = async (wallet: Wallet) => {
+    setCloningId(wallet.id);
+    try {
+      const clonedWallet = await createWallet({
+        name: buildNextCloneName(wallet.name, rows.map((item) => item.name)),
+        mode: wallet.mode,
+        exchange: wallet.exchange,
+        marketType: wallet.marketType,
+        baseCurrency: wallet.baseCurrency,
+        paperInitialBalance: wallet.paperInitialBalance,
+        liveAllocationMode: wallet.liveAllocationMode ?? null,
+        liveAllocationValue: wallet.liveAllocationValue ?? null,
+        apiKeyId: wallet.apiKeyId ?? null,
+      });
+      onCloned?.(clonedWallet);
+      toast.success(copy.cloned);
+    } catch (err) {
+      toast.error(copy.cloneFailed, { description: getAxiosMessage(err) });
+    } finally {
+      setCloningId(null);
     }
   };
 
@@ -187,10 +222,11 @@ export default function WalletsListTable({ rows, onDeleted }: WalletsListTablePr
       {
         key: 'actions',
         label: copy.actions,
-        className: 'w-40 text-right',
+        className: 'w-56 text-right',
         render: (row) => (
           <div className='flex items-center justify-end gap-2'>
-            <TableIconButtonAction
+            <TablePresetButtonAction
+              preset='details'
               label={expandedRows[row.id] ? copy.hideDetails : copy.details}
               icon={
                 expandedRows[row.id] ? (
@@ -206,17 +242,21 @@ export default function WalletsListTable({ rows, onDeleted }: WalletsListTablePr
                 }))
               }
             />
-            <TableIconLinkAction
+            <TablePresetLinkAction
+              preset='edit'
               href={dashboardRoutes.wallets.edit(row.id)}
               label={copy.edit}
-              icon={<LuPencil className='h-3.5 w-3.5' />}
-              tone='info'
             />
-            <TableIconButtonAction
+            <TablePresetButtonAction
+              preset='clone'
+              label={copy.clone}
+              onClick={() => void handleClone(row)}
+              disabled={cloningId === row.id}
+            />
+            <TablePresetButtonAction
+              preset='delete'
               label={deletingId === row.id ? copy.deleting : copy.delete}
-              icon={<LuTrash2 className='h-3.5 w-3.5' />}
               onClick={() => setPendingDeleteWallet(row)}
-              tone='danger'
               disabled={deletingId === row.id}
             />
           </div>
@@ -233,12 +273,15 @@ export default function WalletsListTable({ rows, onDeleted }: WalletsListTablePr
       copy.edit,
       copy.exchange,
       copy.hideDetails,
+      copy.clone,
       copy.marketType,
       copy.mode,
       copy.name,
+      cloningId,
       deletingId,
       expandedRows,
       formatAllocation,
+      handleClone,
     ]
   );
 

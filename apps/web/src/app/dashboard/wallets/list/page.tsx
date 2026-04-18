@@ -101,7 +101,11 @@ export default function WalletsListPage() {
         <EmptyState title={copy.emptyTitle} description={copy.emptyDescription} />
       ) : null}
       {!loading && !error && rows.length > 0 ? (
-        <WalletsListTable rows={rows} onDeleted={(id) => setRows((prev) => prev.filter((item) => item.id !== id))} />
+        <WalletsListTable
+          rows={rows}
+          onDeleted={(id) => setRows((prev) => prev.filter((item) => item.id !== id))}
+          onCloned={(wallet) => setRows((prev) => [...prev, wallet])}
+        />
       ) : null}
     </section>
   );
