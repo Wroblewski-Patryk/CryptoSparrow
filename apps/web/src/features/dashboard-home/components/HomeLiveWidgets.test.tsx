@@ -58,10 +58,12 @@ describe("HomeLiveWidgets", () => {
       takeProfit: null,
       stopLoss: null,
     });
+    window.history.pushState({}, "", "/");
   });
 
   const renderSubject = () => {
     window.localStorage.setItem("cryptosparrow-locale", "pl");
+    window.history.pushState({}, "", "/dashboard");
     lookupCoinIconsMock.mockResolvedValue(new Map());
     getBotRuntimeGraphMock.mockImplementation(async (botId: string) => ({
       bot: {
@@ -1406,7 +1408,7 @@ describe("HomeLiveWidgets", () => {
     fireEvent.click(editButton);
     expect(await screen.findByLabelText(/Take profit \(TP\)/i)).toBeInTheDocument();
     expect(await screen.findByLabelText(/Stop loss \(SL\)/i)).toBeInTheDocument();
-    expect(await screen.findByLabelText(/Notes/i)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/Notes|Notatki|Notas/i)).toBeInTheDocument();
     const closeButton = await screen.findByRole("button", { name: /Zamknij pozycje|Close position/i });
     fireEvent.click(closeButton);
 

@@ -661,42 +661,27 @@ export default function HomeLiveWidgets() {
     hasPrev: false,
     hasNext: false,
   };
-  const closeActionBaseLabel = t("dashboard.home.runtime.actionClose");
-  const closePositionButtonLabel = closeActionBaseLabel === "Close" ? "Close position" : "Zamknij pozycje";
-  const closePositionPendingLabel = closeActionBaseLabel === "Close" ? "Closing..." : "Zamykanie...";
+  const closePositionButtonLabel = t("dashboard.home.runtime.closePositionButton");
+  const closePositionPendingLabel = t("dashboard.home.runtime.closePositionPending");
   const closePositionActionColumnLabel = t("dashboard.home.runtime.filterAction");
-  const closePositionNoSessionLabel =
-    closeActionBaseLabel === "Close" ? "No active runtime session selected." : "Brak aktywnej sesji runtime.";
-  const closePositionSuccessLabel = closeActionBaseLabel === "Close" ? "Position closed." : "Pozycja zamknieta.";
-  const closePositionIgnoredLabel =
-    closeActionBaseLabel === "Close"
-      ? "Position was not closed (already closed or not eligible)."
-      : "Pozycja nie zostala zamknieta (jest juz zamknieta lub nie kwalifikuje sie).";
-  const closePositionErrorLabel = closeActionBaseLabel === "Close" ? "Failed to close position." : "Nie udalo sie zamknac pozycji.";
-  const manualOrderPanelTitle = closeActionBaseLabel === "Close" ? "Manual order" : "Zlecenie reczne";
-  const manualOrderOpenLabel = closeActionBaseLabel === "Close" ? "Open manual order" : "Otworz zlecenie reczne";
-  const manualOrderSubmittingLabel = closeActionBaseLabel === "Close" ? "Opening..." : "Otwieranie...";
-  const manualOrderSuccessLabel = closeActionBaseLabel === "Close" ? "Manual order opened." : "Zlecenie reczne otwarte.";
-  const manualOrderErrorLabel = closeActionBaseLabel === "Close" ? "Failed to open manual order." : "Nie udalo sie otworzyc zlecenia recznego.";
-  const manualOrderInvalidSymbolLabel =
-    closeActionBaseLabel === "Close" ? "Symbol is required." : "Symbol jest wymagany.";
-  const manualOrderInvalidQuantityLabel =
-    closeActionBaseLabel === "Close" ? "Quantity must be a positive number." : "Ilosc musi byc dodatnia liczba.";
-  const editPositionButtonLabel = closeActionBaseLabel === "Close" ? "Edit position" : "Edytuj pozycje";
-  const editPositionModalTitle = closeActionBaseLabel === "Close" ? "Position edit" : "Edycja pozycji";
-  const editPositionModalDescription =
-    closeActionBaseLabel === "Close"
-      ? "Adjust TP/SL and notes. Save action is enabled in the API integration step."
-      : "Dostosuj TP/SL i notatki. Zapis zostanie aktywowany po podpieciu API.";
-  const editPositionSaveLabel = closeActionBaseLabel === "Close" ? "Save changes" : "Zapisz zmiany";
-  const editPositionSaveSuccessLabel =
-    closeActionBaseLabel === "Close" ? "Position settings updated." : "Ustawienia pozycji zaktualizowane.";
-  const editPositionSaveErrorLabel =
-    closeActionBaseLabel === "Close" ? "Failed to save position settings." : "Nie udalo sie zapisac ustawien pozycji.";
-  const editPositionInvalidValueLabel =
-    closeActionBaseLabel === "Close"
-      ? "TP/SL must be positive numbers or empty values."
-      : "TP/SL musza byc dodatnimi liczbami lub pustymi polami.";
+  const closePositionNoSessionLabel = t("dashboard.home.runtime.closePositionNoSession");
+  const closePositionSuccessLabel = t("dashboard.home.runtime.closePositionSuccess");
+  const closePositionIgnoredLabel = t("dashboard.home.runtime.closePositionIgnored");
+  const closePositionErrorLabel = t("dashboard.home.runtime.closePositionError");
+  const manualOrderPanelTitle = t("dashboard.home.runtime.manualOrderTitle");
+  const manualOrderOpenLabel = t("dashboard.home.runtime.manualOrderOpen");
+  const manualOrderSubmittingLabel = t("dashboard.home.runtime.manualOrderOpening");
+  const manualOrderSuccessLabel = t("dashboard.home.runtime.manualOrderSuccess");
+  const manualOrderErrorLabel = t("dashboard.home.runtime.manualOrderError");
+  const manualOrderInvalidSymbolLabel = t("dashboard.home.runtime.manualOrderSymbolRequired");
+  const manualOrderInvalidQuantityLabel = t("dashboard.home.runtime.manualOrderQuantityRequired");
+  const editPositionButtonLabel = t("dashboard.home.runtime.editPositionButton");
+  const editPositionModalTitle = t("dashboard.home.runtime.editPositionTitle");
+  const editPositionModalDescription = t("dashboard.home.runtime.editPositionDescription");
+  const editPositionSaveLabel = t("dashboard.home.runtime.editPositionSave");
+  const editPositionSaveSuccessLabel = t("dashboard.home.runtime.editPositionSaveSuccess");
+  const editPositionSaveErrorLabel = t("dashboard.home.runtime.editPositionSaveError");
+  const editPositionInvalidValueLabel = t("dashboard.home.runtime.editPositionInvalidValue");
 
   const openPositionEdit = useCallback((position: OpenPositionWithLive) => {
     setIsSavingPositionEdit(false);
@@ -1199,7 +1184,7 @@ export default function HomeLiveWidgets() {
                     <input
                       type="text"
                       className="input input-bordered input-sm"
-                      placeholder="BTCUSDT"
+                      placeholder={t("dashboard.home.runtime.manualOrderSymbolPlaceholder")}
                       value={manualOrderSymbol}
                       list="runtime-manual-order-symbols"
                       disabled={isSubmittingManualOrder}
@@ -1221,8 +1206,8 @@ export default function HomeLiveWidgets() {
                         setManualOrderSide(event.target.value === "SELL" ? "SELL" : "BUY")
                       }
                     >
-                      <option value="BUY">BUY</option>
-                      <option value="SELL">SELL</option>
+                      <option value="BUY">{t("dashboard.home.runtime.manualOrderBuyLabel")}</option>
+                      <option value="SELL">{t("dashboard.home.runtime.manualOrderSellLabel")}</option>
                     </select>
                   </label>
                   <label className="form-control gap-1">
@@ -1430,7 +1415,7 @@ export default function HomeLiveWidgets() {
             </section>
             <section className="grid gap-3 md:grid-cols-2">
               <label className="form-control gap-1">
-                <span className="label-text text-xs">Take profit (TP)</span>
+                <span className="label-text text-xs">{t("dashboard.home.runtime.editTakeProfitLabel")}</span>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -1447,7 +1432,7 @@ export default function HomeLiveWidgets() {
                 />
               </label>
               <label className="form-control gap-1">
-                <span className="label-text text-xs">Stop loss (SL)</span>
+                <span className="label-text text-xs">{t("dashboard.home.runtime.editStopLossLabel")}</span>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -1465,7 +1450,7 @@ export default function HomeLiveWidgets() {
               </label>
             </section>
             <label className="form-control gap-1">
-              <span className="label-text text-xs">Notes</span>
+              <span className="label-text text-xs">{t("dashboard.home.runtime.editNotesLabel")}</span>
               <textarea
                 className="textarea textarea-bordered min-h-20"
                 value={positionEditDraft.notes}
@@ -1475,7 +1460,7 @@ export default function HomeLiveWidgets() {
                     current ? { ...current, notes: event.target.value } : current
                   )
                 }
-                placeholder={closeActionBaseLabel === "Close" ? "Optional operator notes" : "Opcjonalne notatki operatora"}
+                placeholder={t("dashboard.home.runtime.editNotesPlaceholder")}
               />
             </label>
             <label className="label cursor-pointer justify-start gap-3 p-0">
@@ -1491,7 +1476,7 @@ export default function HomeLiveWidgets() {
                 }
               />
               <span className="label-text text-xs">
-                {closeActionBaseLabel === "Close" ? "Lock runtime stop rules for this edit" : "Zablokuj runtime stop-rules dla tej edycji"}
+                {t("dashboard.home.runtime.editLockRulesLabel")}
               </span>
             </label>
             <div className="modal-action mt-0">
@@ -1501,7 +1486,7 @@ export default function HomeLiveWidgets() {
                 onClick={closePositionEdit}
                 disabled={isSavingPositionEdit}
               >
-                {closeActionBaseLabel === "Close" ? "Close" : "Zamknij"}
+                {t("dashboard.home.runtime.editCloseButton")}
               </button>
               <button
                 type="button"
