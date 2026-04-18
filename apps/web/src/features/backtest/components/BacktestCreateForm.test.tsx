@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { ComponentProps } from 'react';
 
 import BacktestCreateForm from './BacktestCreateForm';
 import { I18nProvider } from '@/i18n/I18nProvider';
@@ -24,7 +25,15 @@ vi.mock('sonner', () => ({
 describe('BacktestCreateForm', () => {
   afterEach(() => {
     window.localStorage.removeItem('cryptosparrow-locale');
+    window.history.pushState({}, '', '/');
   });
+
+  const renderWithI18n = (props: ComponentProps<typeof BacktestCreateForm>) =>
+    render(
+      <I18nProvider>
+        <BacktestCreateForm {...props} />
+      </I18nProvider>
+    );
 
   it('disables submit and shows validation when maxCandles is out of range', async () => {
     listStrategiesMock.mockResolvedValue([
@@ -47,8 +56,10 @@ describe('BacktestCreateForm', () => {
       },
     ]);
 
+    window.localStorage.setItem('cryptosparrow-locale', 'pl');
+    window.history.pushState({}, '', '/dashboard/backtests/create');
     const onSubmit = vi.fn().mockResolvedValue(undefined);
-    const { container } = render(<BacktestCreateForm submitting={false} onSubmit={onSubmit} />);
+    const { container } = renderWithI18n({ submitting: false, onSubmit });
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('Trend Pulse')).toBeInTheDocument();
@@ -84,8 +95,10 @@ describe('BacktestCreateForm', () => {
       },
     ]);
 
+    window.localStorage.setItem('cryptosparrow-locale', 'pl');
+    window.history.pushState({}, '', '/dashboard/backtests/create');
     const onSubmit = vi.fn().mockResolvedValue(undefined);
-    const { container } = render(<BacktestCreateForm submitting={false} onSubmit={onSubmit} />);
+    const { container } = renderWithI18n({ submitting: false, onSubmit });
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('EMA Crossover')).toBeInTheDocument();
@@ -137,7 +150,9 @@ describe('BacktestCreateForm', () => {
       },
     ]);
 
-    render(<BacktestCreateForm submitting={false} onSubmit={vi.fn()} />);
+    window.localStorage.setItem('cryptosparrow-locale', 'pl');
+    window.history.pushState({}, '', '/dashboard/backtests/create');
+    renderWithI18n({ submitting: false, onSubmit: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('Kontekst venue (powiazany z wybrana grupa rynkow)')).toBeInTheDocument();
@@ -158,6 +173,7 @@ describe('BacktestCreateForm', () => {
 
   it('supports Portuguese locale path without EN/PL clamp in create form copy', async () => {
     window.localStorage.setItem('cryptosparrow-locale', 'pt');
+    window.history.pushState({}, '', '/dashboard/backtests/create');
     listStrategiesMock.mockResolvedValue([
       {
         id: 's4',
@@ -178,11 +194,7 @@ describe('BacktestCreateForm', () => {
       },
     ]);
 
-    render(
-      <I18nProvider>
-        <BacktestCreateForm submitting={false} onSubmit={vi.fn()} />
-      </I18nProvider>
-    );
+    renderWithI18n({ submitting: false, onSubmit: vi.fn() });
 
     await waitFor(() => {
       expect(screen.getByText('Assistente de backtest')).toBeInTheDocument();

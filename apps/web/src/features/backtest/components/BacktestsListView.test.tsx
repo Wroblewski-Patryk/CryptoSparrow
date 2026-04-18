@@ -12,12 +12,22 @@ vi.mock("../services/backtests.service", () => ({
 describe("BacktestsListView loading UX", () => {
   afterEach(() => {
     window.localStorage.removeItem("cryptosparrow-locale");
+    window.history.pushState({}, "", "/");
   });
 
+  const renderWithI18n = () =>
+    render(
+      <I18nProvider>
+        <BacktestsListView />
+      </I18nProvider>
+    );
+
   it("renders skeleton composition while runs list is loading", () => {
+    window.localStorage.setItem("cryptosparrow-locale", "en");
+    window.history.pushState({}, "", "/dashboard/backtests/list");
     listBacktestRunsMock.mockReturnValue(new Promise(() => undefined));
 
-    render(<BacktestsListView />);
+    renderWithI18n();
 
     expect(screen.getByLabelText("Loading KPI row")).toBeInTheDocument();
     expect(screen.getByLabelText("Loading table rows")).toBeInTheDocument();
@@ -25,13 +35,10 @@ describe("BacktestsListView loading UX", () => {
 
   it("renders Portuguese empty-state copy when locale is set to pt", async () => {
     window.localStorage.setItem("cryptosparrow-locale", "pt");
+    window.history.pushState({}, "", "/dashboard/backtests/list");
     listBacktestRunsMock.mockResolvedValue([]);
 
-    render(
-      <I18nProvider>
-        <BacktestsListView />
-      </I18nProvider>
-    );
+    renderWithI18n();
 
     expect(await screen.findByText("Sem execucoes de backtest")).toBeInTheDocument();
     expect(screen.getByText("Cria a primeira execucao para consultar resultados.")).toBeInTheDocument();

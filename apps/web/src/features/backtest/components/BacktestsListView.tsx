@@ -1,43 +1,27 @@
 'use client';
 
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { EmptyState, ErrorState } from '@/ui/components/ViewState';
 import { SkeletonKpiRow, SkeletonTableRows } from '@/ui/components/loading';
 import BacktestsRunsTable from './BacktestsRunsTable';
 import { listBacktestRuns } from '../services/backtests.service';
 import { BacktestRun } from '../types/backtest.type';
-import { I18nContext } from '../../../i18n/I18nProvider';
+import { useI18n } from '../../../i18n/I18nProvider';
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
 
 export default function BacktestsListView() {
-  const i18n = useContext(I18nContext);
-  const locale = i18n?.locale ?? 'pl';
-  const copy = {
-    en: {
-      loadErrorDefault: 'Could not load backtest list.',
-      loadingTitle: 'Loading backtest list',
-      errorTitle: 'Could not load backtest list',
-      retry: 'Try again',
-      emptyTitle: 'No backtest runs',
-      emptyDescription: 'Create the first run to browse results.',
-    },
-    pl: {
-      loadErrorDefault: 'Nie udalo sie pobrac listy backtestow.',
-      loadingTitle: 'Ladowanie listy backtestow',
-      errorTitle: 'Nie udalo sie pobrac listy backtestow',
-      retry: 'Sprobuj ponownie',
-      emptyTitle: 'Brak runow backtestu',
-      emptyDescription: 'Utworz pierwszy run, aby przejrzec wyniki.',
-    },
-    pt: {
-      loadErrorDefault: 'Nao foi possivel carregar a lista de backtests.',
-      loadingTitle: 'A carregar lista de backtests',
-      errorTitle: 'Nao foi possivel carregar lista de backtests',
-      retry: 'Tentar novamente',
-      emptyTitle: 'Sem execucoes de backtest',
-      emptyDescription: 'Cria a primeira execucao para consultar resultados.',
-    },
-  }[locale];
+  const { t } = useI18n();
+  const copy = useMemo(
+    () => ({
+      loadErrorDefault: t('dashboard.backtests.listView.loadErrorDefault'),
+      loadingTitle: t('dashboard.backtests.listView.loadingTitle'),
+      errorTitle: t('dashboard.backtests.listView.errorTitle'),
+      retry: t('dashboard.backtests.listView.retry'),
+      emptyTitle: t('dashboard.backtests.listView.emptyTitle'),
+      emptyDescription: t('dashboard.backtests.listView.emptyDescription'),
+    }),
+    [t]
+  );
   const [rows, setRows] = useState<BacktestRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

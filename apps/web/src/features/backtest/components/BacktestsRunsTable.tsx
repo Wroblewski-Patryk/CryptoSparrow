@@ -1,6 +1,6 @@
 'use client';
 
-import { useContext, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { LuPencilLine, LuTrash2 } from 'react-icons/lu';
 import DataTable, { DataTableColumn } from '@/ui/components/DataTable';
@@ -8,7 +8,7 @@ import ConfirmModal from '@/ui/components/ConfirmModal';
 import { TableIconButtonAction, TableIconLinkAction, TableToneBadge } from '@/ui/components/TableUi';
 import { useLocaleFormatting } from '@/i18n/useLocaleFormatting';
 import { BacktestRun, BacktestStatus } from '../types/backtest.type';
-import { I18nContext } from '../../../i18n/I18nProvider';
+import { useI18n } from '../../../i18n/I18nProvider';
 import { deleteBacktestRun } from '../services/backtests.service';
 import { getAxiosMessage } from '@/lib/getAxiosMessage';
 import { normalizeUppercaseToken } from '@/lib/text';
@@ -25,70 +25,42 @@ const statusBadgeTone = (status: BacktestStatus): 'success' | 'danger' | 'info' 
   return 'warning';
 };
 
-const getStatusLabel = (status: BacktestStatus, locale: 'en' | 'pl' | 'pt') => {
-  if (status === 'PENDING') return locale === 'en' ? 'Pending' : locale === 'pt' ? 'Pendente' : 'Oczekuje';
-  if (status === 'RUNNING') return locale === 'en' ? 'Running' : locale === 'pt' ? 'Em execucao' : 'W toku';
-  if (status === 'COMPLETED') return locale === 'en' ? 'Completed' : locale === 'pt' ? 'Concluido' : 'Zakonczony';
-  if (status === 'FAILED') return locale === 'en' ? 'Failed' : locale === 'pt' ? 'Falhou' : 'Niepowodzenie';
-  return locale === 'en' ? 'Canceled' : locale === 'pt' ? 'Cancelado' : 'Anulowany';
-};
-
 export default function BacktestsRunsTable({ rows, onDeleted }: BacktestsRunsTableProps) {
   const { formatDateTime } = useLocaleFormatting();
-  const i18n = useContext(I18nContext);
-  const locale = i18n?.locale ?? 'pl';
+  const { t } = useI18n();
   const [selectedDeleteRun, setSelectedDeleteRun] = useState<BacktestRun | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const copy = {
-    en: {
-      colName: 'Name',
-      colSymbol: 'Symbol',
-      colTimeframe: 'Interval',
-      colStatus: 'Status',
-      colStart: 'Start',
-      colActions: 'Actions',
-      preview: 'Preview',
-      delete: 'Delete',
-      deleted: 'Backtest run deleted',
-      deleteFailed: 'Could not delete backtest run',
-      deleteTitle: 'Delete backtest run?',
-      cancel: 'Cancel',
-      filterPlaceholder: 'Filter runs...',
-      emptyText: 'No backtest runs.',
-    },
-    pl: {
-      colName: 'Nazwa',
-      colSymbol: 'Symbol',
-      colTimeframe: 'Interwal',
-      colStatus: 'Status',
-      colStart: 'Start',
-      colActions: 'Akcje',
-      preview: 'Podglad',
-      delete: 'Usun',
-      deleted: 'Run backtestu usuniety',
-      deleteFailed: 'Nie udalo sie usunac runa backtestu',
-      deleteTitle: 'Usunac run backtestu?',
-      cancel: 'Anuluj',
-      filterPlaceholder: 'Filtruj runy...',
-      emptyText: 'Brak runow backtestu.',
-    },
-    pt: {
-      colName: 'Nome',
-      colSymbol: 'Simbolo',
-      colTimeframe: 'Intervalo',
-      colStatus: 'Estado',
-      colStart: 'Inicio',
-      colActions: 'Acoes',
-      preview: 'Prever',
-      delete: 'Remover',
-      deleted: 'Execucao de backtest removida',
-      deleteFailed: 'Nao foi possivel remover execucao de backtest',
-      deleteTitle: 'Remover execucao de backtest?',
-      cancel: 'Cancelar',
-      filterPlaceholder: 'Filtrar execucoes...',
-      emptyText: 'Sem execucoes de backtest.',
-    },
-  }[locale];
+  const copy = useMemo(
+    () => ({
+      colName: t('dashboard.backtests.runsTable.colName'),
+      colSymbol: t('dashboard.backtests.runsTable.colSymbol'),
+      colTimeframe: t('dashboard.backtests.runsTable.colTimeframe'),
+      colStatus: t('dashboard.backtests.runsTable.colStatus'),
+      colStart: t('dashboard.backtests.runsTable.colStart'),
+      colActions: t('dashboard.backtests.runsTable.colActions'),
+      preview: t('dashboard.backtests.runsTable.preview'),
+      delete: t('dashboard.backtests.runsTable.delete'),
+      deleted: t('dashboard.backtests.runsTable.deleted'),
+      deleteFailed: t('dashboard.backtests.runsTable.deleteFailed'),
+      deleteTitle: t('dashboard.backtests.runsTable.deleteTitle'),
+      cancel: t('dashboard.backtests.runsTable.cancel'),
+      filterPlaceholder: t('dashboard.backtests.runsTable.filterPlaceholder'),
+      emptyText: t('dashboard.backtests.runsTable.emptyText'),
+      statusPending: t('dashboard.backtests.runsTable.statusPending'),
+      statusRunning: t('dashboard.backtests.runsTable.statusRunning'),
+      statusCompleted: t('dashboard.backtests.runsTable.statusCompleted'),
+      statusFailed: t('dashboard.backtests.runsTable.statusFailed'),
+      statusCanceled: t('dashboard.backtests.runsTable.statusCanceled'),
+    }),
+    [t]
+  );
+  const getStatusLabel = (status: BacktestStatus) => {
+    if (status === 'PENDING') return copy.statusPending;
+    if (status === 'RUNNING') return copy.statusRunning;
+    if (status === 'COMPLETED') return copy.statusCompleted;
+    if (status === 'FAILED') return copy.statusFailed;
+    return copy.statusCanceled;
+  };
 
   const handleDelete = async () => {
     if (!selectedDeleteRun) return;
@@ -133,9 +105,7 @@ export default function BacktestsRunsTable({ rows, onDeleted }: BacktestsRunsTab
         label: copy.colStatus,
         sortable: true,
         accessor: (row) => row.status,
-        render: (row) => (
-          <TableToneBadge label={getStatusLabel(row.status, locale)} tone={statusBadgeTone(row.status)} />
-        ),
+        render: (row) => <TableToneBadge label={getStatusLabel(row.status)} tone={statusBadgeTone(row.status)} />,
       },
       {
         key: 'startedAt',
@@ -165,7 +135,22 @@ export default function BacktestsRunsTable({ rows, onDeleted }: BacktestsRunsTab
         ),
       },
     ],
-    [copy.colActions, copy.colName, copy.colStart, copy.colStatus, copy.colSymbol, copy.colTimeframe, copy.delete, copy.preview, formatDateTime, locale]
+    [
+      copy.colActions,
+      copy.colName,
+      copy.colStart,
+      copy.colStatus,
+      copy.colSymbol,
+      copy.colTimeframe,
+      copy.delete,
+      copy.preview,
+      copy.statusCanceled,
+      copy.statusCompleted,
+      copy.statusFailed,
+      copy.statusPending,
+      copy.statusRunning,
+      formatDateTime,
+    ]
   );
 
   return (

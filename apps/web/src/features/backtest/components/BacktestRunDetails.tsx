@@ -1082,7 +1082,7 @@ function TimelineCandlesChart({
 
 export default function BacktestRunDetails({ runId }: BacktestRunDetailsProps) {
   const i18n = useContext(I18nContext);
-  const locale = i18n?.locale ?? 'pl';
+  const locale = i18n?.locale ?? 'en';
   const { formatCurrency, formatDateTime, formatNumber, formatPercent } = useLocaleFormatting();
   const copy = getBacktestRunDetailsCopy(locale);
   const [timelines, setTimelines] = useState<Record<string, TimelineState>>({});
