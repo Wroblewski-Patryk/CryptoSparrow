@@ -20,7 +20,7 @@ Operational queue for one-task execution runs.
 - [x] `L10NQ-D-15 cleanup(non-route-legacy-copy): align legacy BacktestsList + strategy presets localization contract`
 ## PIPELINE
 - [x] `L10NQ-D-16 test(namespace-parity-expanded): enforce en/pl/pt parity for all new namespace keys`
-- [ ] `L10NQ-D-17 test(route-locale-smoke): add route-level locale smoke tests for highest-impact routes`
+- [x] `L10NQ-D-17 test(route-locale-smoke): add route-level locale smoke tests for highest-impact routes`
 - [ ] `L10NQ-D-18 qa(final-pack-and-closure): run full i18n regression/build pack and publish closure evidence`
 ## GROUP QUEUE
 - [x] `L10NQ-D-A (commits 01-05): inventory + guardrail hardening + auth/admin migration`
