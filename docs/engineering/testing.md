@@ -11,6 +11,8 @@
 - Vitest for unit and integration tests.
 - Supertest for API endpoints.
 - Testing Library for UI behavior.
+- Canonical web closure script for deterministic type generation:
+  - `pnpm run web:verify:build-typecheck`
 
 ## Manual Verification Standard
 - Frontend changes require manual UI verification in addition to automated tests.

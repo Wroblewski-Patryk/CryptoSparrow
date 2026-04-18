@@ -1909,3 +1909,9 @@ ode ./node_modules/prisma/build/index.js db seed --schema prisma/schema.prisma f
 ### Progress Log (Phase QH-LINT - Post-Closure Build Warning Debt)
 - 2026-04-18: Completed `QH-LINT-02` by removing remaining `react-hooks/exhaustive-deps` warnings in touched scope: `BacktestsRunsTable` now uses stable `getStatusLabel` callback with aligned `columns` memo dependencies, and `WalletsListTable` now uses stable `handleClone` callback to prevent memo dependency churn. Validation: `pnpm --filter web run build` => `PASS` (clean warning surface), `pnpm --filter web run typecheck` => `PASS`.
 - 2026-04-18: Completed `QH-LINT-01` as derived next tiny task after canonical queue saturation (`mvp-next-commits` + `TASK_BOARD` contained no unchecked tasks). Removed no-unused warning sources in `BotsManagement.tsx`, `BotsManagement.test.tsx`, `HomeLiveWidgets.tsx`, and `useCloseRuntimePositionAction.ts` without behavior changes. Validation: `pnpm --filter web run build` => `PASS` (warning count reduced to two remaining `react-hooks/exhaustive-deps` warnings); `pnpm --filter web run typecheck` => `PASS` (after `.next/types` refresh by build).
+
+## Phase QH-TSC - Deterministic Web Verification Command (2026-04-18)
+- [x] `QH-TSC-01 chore(web-verify-script): add canonical sequential build+typecheck script and document usage`
+
+### Progress Log (Phase QH-TSC - Deterministic Web Verification Command)
+- 2026-04-18: Completed `QH-TSC-01` by adding `apps/web` script `verify:build-typecheck` (`build && typecheck`) and root shortcut `web:verify:build-typecheck`, then documenting it in `docs/engineering/testing.md` as canonical web closure command. Validation: `pnpm run web:verify:build-typecheck` => `PASS`.

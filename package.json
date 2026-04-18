@@ -10,6 +10,7 @@
     "backend:dev": "pnpm run backend/dev",
     "frontend/dev": "node scripts/dev-frontend.mjs",
     "web/dev": "pnpm run frontend/dev",
+    "web:verify:build-typecheck": "pnpm --filter web run verify:build-typecheck",
     "client/dev": "pnpm run frontend/dev",
     "frontend:dev": "pnpm run frontend/dev",
     "workers/dev": "node scripts/dev-workers.mjs",

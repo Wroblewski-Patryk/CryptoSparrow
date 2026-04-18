@@ -177,6 +177,9 @@ if ($LASTEXITCODE -eq 0) { pnpm --filter web run typecheck }
 ```
 - Important: do not run `web build` and `web typecheck` in parallel in this repo;
   parallel execution can race on `.next/types` generation and cause false `TS6053`.
+- Canonical command shortcut added on 2026-04-18:
+  - `pnpm run web:verify:build-typecheck`
+  - prefer this over manual two-step command invocation in closure packs.
 - Avoid: treating missing `.next/types` errors as app-code regressions before refreshing Next.js generated types.
 - Evidence:
   - Observed on 2026-04-18 during `L10NQ-D-18`: `typecheck` failed with missing `.next/types/app/...`; after fixing build blocker and running `next build`, `typecheck` passed.

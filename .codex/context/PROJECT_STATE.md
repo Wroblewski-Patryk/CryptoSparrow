@@ -103,8 +103,9 @@ Last updated: 2026-04-18
   queue continuity and deploy-safe verification discipline while selecting the
   next planned execution wave.
 - Top blockers:
-  - next implementation wave selection needs explicit promotion in canonical
-    planning queue after `UXR-F-D` closure.
+  - next implementation wave selection still needs explicit promotion in
+    canonical planning queue after closure of `UXR-F` and `QH-*` technical debt
+    slices.
 - Success criteria for this phase:
   - `UXR-F-D` closure evidence (`tests + typecheck + build`) remains green.
   - canonical queue files and task board stay aligned after each group closure.
@@ -131,6 +132,9 @@ Last updated: 2026-04-18
   `react-hooks/exhaustive-deps` warnings in
   `BacktestsRunsTable`/`WalletsListTable`; `web build` and `web typecheck` are
   now green without warning debt in this tracked closure scope.
+- 2026-04-18: completed `QH-TSC-01` by adding canonical sequential web
+  verification command (`pnpm run web:verify:build-typecheck`) and documenting
+  it for closure packs to avoid manual command-order drift.
 - 2026-04-18: refreshed the repo-specific agent workflow so the canonical queue,
   validation contract, deployment contract, and learning journal are aligned.
 

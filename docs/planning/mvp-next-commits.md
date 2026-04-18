@@ -35,6 +35,7 @@ Operational queue for one-task execution runs.
 - [x] `UXR-F-C (commits UXR-F-09..UXR-F-12): strategies/bots migration + standardized form UX/mobile action bar`
 - [x] `UXR-F-D (commits UXR-F-13..UXR-F-14): focused regression pack + closure sync`
 - [x] `QH-LINT-A (commits QH-LINT-01..QH-LINT-02): post-closure web build warning reduction and hook-deps stabilization`
+- [x] `QH-TSC-A (commit QH-TSC-01): canonical web build+typecheck verification script`
 - [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
 - [x] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
 - [x] `UXR-C (commits 16-22): advanced table rollout + logs module completion`
@@ -49,6 +50,8 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
+- [x] `QH-TSC-01 chore(web-verify-script): add canonical sequential build+typecheck script for web`
+  - 2026-04-18: Added deterministic web verification script chain (`apps/web: verify:build-typecheck`, root shortcut `web:verify:build-typecheck`) to avoid `.next/types` race-prone manual command ordering. Validation: `pnpm run web:verify:build-typecheck` => `PASS`.
 - [x] `QH-LINT-02 chore(web-hook-deps-cleanup): resolve remaining exhaustive-deps warnings in backtests/wallets tables`
   - 2026-04-18: Stabilized `BacktestsRunsTable` status-label resolver with `useCallback` and aligned `columns` dependency contract; stabilized `WalletsListTable` clone handler with `useCallback` to prevent per-render function identity churn in table columns memo. Validation: `pnpm --filter web run build` => `PASS` (no lint warnings in touched scope, clean build warning surface); `pnpm --filter web run typecheck` => `PASS` (rerun after build/type generation).
 - [x] `QH-LINT-01 chore(web-build-warning-cleanup): remove no-unused-vars warnings in bots/dashboard-home surfaces`
