@@ -33,7 +33,7 @@ Operational queue for one-task execution runs.
 - [x] `UXR-F-A (commits UXR-F-01..UXR-F-04): shared dashboard form-system foundation + guardrails`
 - [x] `UXR-F-B (commits UXR-F-05..UXR-F-08): wrapper/i18n shell unification + wallets/markets/backtests migration`
 - [x] `UXR-F-C (commits UXR-F-09..UXR-F-12): strategies/bots migration + standardized form UX/mobile action bar`
-- [ ] `UXR-F-D (commits UXR-F-13..UXR-F-14): focused regression pack + closure sync`
+- [x] `UXR-F-D (commits UXR-F-13..UXR-F-14): focused regression pack + closure sync`
 - [x] `UXR-A (commits 01-05): ownership + open-orders parity foundations`
 - [x] `UXR-B (commits 06-15): dashboard/table/action UX + markets/profile/wallet baseline`
 - [x] `UXR-C (commits 16-22): advanced table rollout + logs module completion`
@@ -48,6 +48,8 @@ Operational queue for one-task execution runs.
 - [x] `none`
 
 ## DONE
+- [x] `UXR-F-D closed: completed UXR-F-13..UXR-F-14`
+  - 2026-04-18: Completed `UXR-F-13` focused regression pack (`pnpm --filter web test -- src/features/wallets/components/WalletCreateEditForm.test.tsx src/features/markets/components/MarketUniverseForm.test.tsx src/features/backtest/components/BacktestCreateForm.test.tsx src/features/bots/components/BotCreateEditForm.test.tsx src/app/dashboard/wallets/create/page.test.tsx src/app/dashboard/wallets/[id]/edit/page.test.tsx src/app/dashboard/bots/create/page.test.tsx src/app/dashboard/bots/[id]/edit/page.test.tsx src/i18n/translations.test.ts src/i18n/namespaceRegistry.test.ts`) => `10/10 files PASS`, `33/33 tests PASS`; completed `UXR-F-14` closure checks (`pnpm --filter web run typecheck` + `pnpm --filter web run build`) => `PASS`, and published closure evidence in `docs/operations/_artifacts-uxr-f-d-closure-2026-04-18.json` + `docs/operations/uxr-f-d-closure-2026-04-18.md`.
 - [x] `UXR-F-C progress: completed UXR-F-12 (group closed)`
   - 2026-04-18: Completed `UXR-F-12` by adding reusable sticky mobile action bar primitive (`FormMobileActionBar`) and applying it to long dashboard forms (`bots`, `wallets`, `markets`) so save action remains reachable on mobile while desktop action layout remains unchanged (`hidden md:inline-flex` top actions + mobile sticky save). Validation: `pnpm --filter web test -- src/ui/forms/FormPrimitives.test.tsx src/app/dashboard/bots/create/page.test.tsx src/app/dashboard/bots/[id]/edit/page.test.tsx src/app/dashboard/wallets/create/page.test.tsx src/app/dashboard/wallets/[id]/edit/page.test.tsx` => `13/13 PASS`; `pnpm --filter web run typecheck` => `PASS`.
 - [x] `UXR-F-C progress: completed UXR-F-11 (group in progress)`

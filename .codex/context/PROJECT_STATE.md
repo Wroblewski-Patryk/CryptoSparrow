@@ -99,18 +99,16 @@ Last updated: 2026-04-18
   rollback according to `docs/operations/deployment-rollback-playbook.md`
 
 ## Current Focus
-- Main active objective: execute `UXR-F` dashboard form-system unification
-  waves (`C -> D`) on top of closed Stages A and B, without regressing
-  runtime safety, docs parity, or release readiness.
+- Main active objective: maintain `UXR-F` closure state with evidence-backed
+  queue continuity and deploy-safe verification discipline while selecting the
+  next planned execution wave.
 - Top blockers:
-  - strategies/bots forms still require full internal migration to shared
-    `ui/forms` primitives (`UXR-F-09..10`).
-  - cross-form submit/validation/mobile ergonomics still require standardized
-    closure implementation (`UXR-F-11..12`).
-  - forms `C/D` closure waves require careful regression control to avoid
-    deploy-time breakage while improving UX consistency.
+  - pre-existing non-blocking web lint warnings remain outside current closure
+    scope and should be cleaned before stricter fail-on-warning gates.
+  - next implementation wave selection needs explicit promotion in canonical
+    planning queue after `UXR-F-D` closure.
 - Success criteria for this phase:
-  - `UXR-F-B..D` complete with deterministic test/typecheck/build evidence.
+  - `UXR-F-D` closure evidence (`tests + typecheck + build`) remains green.
   - canonical queue files and task board stay aligned after each group closure.
   - no regressions in auth, runtime, operator clarity, or deploy confidence.
 
@@ -125,6 +123,9 @@ Last updated: 2026-04-18
 - 2026-04-18: closed `UXR-F-B` (`UXR-F-05..UXR-F-08`) by unifying create/edit
   wrapper i18n shell copy and migrating wallets/markets/backtests create-edit
   forms to shared `ui/forms` primitives with focused regression evidence.
+- 2026-04-18: closed `UXR-F-D` (`UXR-F-13..UXR-F-14`) with focused form/i18n
+  regression pack (`33/33` tests PASS), final web `typecheck` + `build` PASS,
+  and canonical queue/context synchronization with closure artifacts.
 - 2026-04-18: refreshed the repo-specific agent workflow so the canonical queue,
   validation contract, deployment contract, and learning journal are aligned.
 

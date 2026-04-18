@@ -1,0 +1,30 @@
+{
+  "phase": "UXR-F-D",
+  "closedAt": "2026-04-18",
+  "tasksClosed": [
+    "UXR-F-13",
+    "UXR-F-14"
+  ],
+  "verification": [
+    {
+      "command": "pnpm --filter web test -- src/features/wallets/components/WalletCreateEditForm.test.tsx src/features/markets/components/MarketUniverseForm.test.tsx src/features/backtest/components/BacktestCreateForm.test.tsx src/features/bots/components/BotCreateEditForm.test.tsx src/app/dashboard/wallets/create/page.test.tsx src/app/dashboard/wallets/[id]/edit/page.test.tsx src/app/dashboard/bots/create/page.test.tsx src/app/dashboard/bots/[id]/edit/page.test.tsx src/i18n/translations.test.ts src/i18n/namespaceRegistry.test.ts",
+      "result": "PASS",
+      "details": "10/10 files passed, 33/33 tests passed"
+    },
+    {
+      "command": "pnpm --filter web run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm --filter web run build",
+      "result": "PASS",
+      "details": "Next.js production build completed; non-blocking lint warnings remain in unrelated files"
+    }
+  ],
+  "nonBlockingNotes": [
+    "Focused vitest pack still emits known React act(...) warnings in BacktestCreateForm tests",
+    "Focused vitest pack still emits known i18n missing-key stderr logs in BotCreateEditForm tests with minimal namespaces loaded",
+    "An earlier pre-closure typecheck attempt hit stale .next/types TS6053 misses; refreshed by successful next build and reran final checks to PASS"
+  ],
+  "status": "PASS"
+}

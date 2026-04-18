@@ -17,21 +17,11 @@ Last updated: 2026-04-18
 
 ## READY
 
-- [ ] UXR-F-13 Run focused cross-form regression pack for UXR-F-C
-  - Status: READY
-  - Group: Dashboard Forms Unification (`UXR-F-D`)
-  - Owner: QA/Test
-  - Depends on: UXR-F-12
-  - Priority: P1
+- [ ] (none)
 
 ## BACKLOG
 
-- [ ] UXR-F-14 Publish UXR-F closure sync and evidence notes across canonical docs/context
-  - Status: BACKLOG
-  - Group: Dashboard Forms Unification (`UXR-F-D`)
-  - Owner: Product Docs
-  - Depends on: UXR-F-13
-  - Priority: P1
+- [ ] (none)
 
 ## IN_PROGRESS
 
@@ -58,3 +48,6 @@ Last updated: 2026-04-18
 - [x] UXR-F-10 Migrate bots create/edit form internals to shared ui/forms primitives
 - [x] UXR-F-11 Standardize form submit/disabled states and validation summary+focus behavior
 - [x] UXR-F-12 Add reusable mobile sticky action bar pattern for long dashboard forms
+- [x] UXR-F-13 Run focused cross-form regression pack for UXR-F-C
+- [x] UXR-F-14 Publish UXR-F closure sync and evidence notes across canonical docs/context
+- [x] UXR-F-D closed: `UXR-F-13..UXR-F-14` (focused regression + closure evidence + canonical queue sync)
